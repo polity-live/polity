@@ -29,6 +29,7 @@ import { ManagementToolbar, SettingsPage } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { Plus } from 'lucide-react';
+import { queries } from '@/zero/queries';
 
 export interface GroupMembershipsContentViewProps {
   accessRoles: any;
@@ -284,6 +285,83 @@ export function GroupMembershipsContentView({
       ),
     [activeGuestAccesses, activeRoleFilterIds, invitedGuestAccesses, requestedGuestAccesses]
   );
+  const membershipRowsById = useMemo(
+    () =>
+      new Map(
+        [...activeMembers, ...pendingRequests, ...pendingInvitations].map((membership: any) => [
+          membership.id,
+          membership,
+        ])
+      ),
+    [activeMembers, pendingInvitations, pendingRequests]
+  );
+  const membershipVirtualSources = useMemo(() => {
+    const makeSource = (statuses: string[], suffix: string, roleIds = activeRoleFilterIds) => ({
+      context: { groupId, statuses, query: memberSearchQuery, roleIds },
+      historyKey: `group-${groupId}-memberships-${suffix}`,
+      getPageQuery: ({ limit, start, dir, settled }: any) => ({
+        query: queries.groups.membershipPage({
+          groupId,
+          statuses,
+          roleIds,
+          query: memberSearchQuery,
+          limit,
+          start,
+          dir,
+        }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      getSingleQuery: ({ id, settled }: any) => ({
+        query: queries.groups.membershipById({ id }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      getRowKey: (row: any) => row.id,
+      toStartRow: (row: any) => ({ created_at: row.created_at, id: row.id }),
+      mapRow: (row: any) => membershipRowsById.get(row.id) ?? row,
+    });
+    return {
+      requested: makeSource(['requested'], 'requested'),
+      invited: makeSource(['invited'], 'invited'),
+      active: makeSource(['active', 'member', 'admin', 'confirmed', 'owner'], 'active'),
+      byRole: (roleId: string) =>
+        makeSource(['active', 'member', 'admin', 'confirmed', 'owner'], `role-${roleId}`, [roleId]),
+    };
+  }, [activeRoleFilterIds, groupId, memberSearchQuery, membershipRowsById]);
+  const guestRowsById = useMemo(
+    () => new Map(filteredGuestAccesses.map((guest: any) => [guest.id, guest])),
+    [filteredGuestAccesses]
+  );
+  const guestVirtualSource = useMemo(
+    () => ({
+      context: {
+        groupId,
+        statuses: ['requested', 'invited', 'active'],
+        query: memberSearchQuery,
+        roleIds: activeRoleFilterIds,
+      },
+      historyKey: `group-${groupId}-guest-accesses`,
+      getPageQuery: ({ limit, start, dir, settled }: any) => ({
+        query: queries.groups.guestAccessPage({
+          groupId,
+          statuses: ['requested', 'invited', 'active'],
+          roleIds: activeRoleFilterIds,
+          query: memberSearchQuery,
+          limit,
+          start,
+          dir,
+        }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      getSingleQuery: ({ id, settled }: any) => ({
+        query: queries.groups.guestAccessById({ id }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      getRowKey: (row: any) => row.id,
+      toStartRow: (row: any) => ({ created_at: row.created_at, id: row.id }),
+      mapRow: (row: any) => guestRowsById.get(row.id) ?? row,
+    }),
+    [activeRoleFilterIds, groupId, guestRowsById, memberSearchQuery]
+  );
   const roleFilterContent =
     showMembershipSearch && roleFilterRoles.length > 0 ? (
       <ParticipationRoleFilterBar
@@ -416,6 +494,7 @@ export function GroupMembershipsContentView({
           <div className="space-y-4">
             <PendingRequestsTable
               requests={filteredPendingRequests}
+              virtualSource={membershipVirtualSources.requested}
               getApprovePreflightInput={membership => ({
                 kind: 'membership_activation',
                 membership_id: membership.id,
@@ -458,6 +537,7 @@ export function GroupMembershipsContentView({
             />
             <PendingInvitationsTable
               invitations={filteredPendingInvitations}
+              virtualSource={membershipVirtualSources.invited}
               onWithdraw={(membershipId, userId) => {
                 console.info('Delete button clicked', {
                   flow: 'group-membership-invitation-withdraw',
@@ -478,6 +558,7 @@ export function GroupMembershipsContentView({
             />
             <ActiveMembersTable
               members={filteredActiveMembers}
+              virtualSource={membershipVirtualSources.active}
               sort={membershipSort}
               onSortChange={handleMembershipSortChange}
               onOpenRightsDialog={handleOpenMemberRights}
@@ -605,6 +686,7 @@ export function GroupMembershipsContentView({
               secondaryActionLabel={translateText('generated.inline.0012_manage_roles_5f9b8531')}
               showProvenanceColumns={showComposition}
               hideEmptyRoleSections
+              getVirtualSource={membershipVirtualSources.byRole}
             />
           </div>
         }
@@ -640,6 +722,7 @@ export function GroupMembershipsContentView({
           <div className="space-y-4">
             <GuestsTable
               guests={filteredGuestAccesses}
+              virtualSource={guestVirtualSource}
               onApprove={guestAccessId => void approveGuestAccess(guestAccessId)}
               onRevoke={guestAccessId => void revokeGuest(guestAccessId)}
             />

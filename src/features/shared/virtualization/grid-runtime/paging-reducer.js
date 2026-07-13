@@ -1,4 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 /**
+ * Vendored paging core; exposed only through the shared Polity grid adapter.
+ *
  * Reducer function for managing the pagination state of the virtualizer.
  *
  * @typeParam TListContextParams - The type of parameters that define the list's query context

@@ -25,6 +25,7 @@ function GroupRelationshipsPage() {
   return (
     <div className="space-y-4">
       <ManageNetworkTab
+        virtualize
         canManageRelationships={canManage('groupRelationships')}
         groupId={groupId}
         groupName={np.groupName}

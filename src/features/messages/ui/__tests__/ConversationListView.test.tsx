@@ -32,11 +32,10 @@ describe('ConversationListView', () => {
         onNewConversationClick={vi.fn()}
         onSearchChange={vi.fn()}
         onSelectConversation={vi.fn()}
-        rowVirtualizer={{
-          getTotalSize: () => 0,
-          getVirtualItems: () => [],
-          measureElement: vi.fn(),
-        }}
+        virtualItems={[]}
+        spaceBefore={0}
+        spaceAfter={0}
+        rowsEmpty
         scrollRef={createRef<HTMLDivElement>()}
         searchQuery=""
         selectedConversationId={null}

@@ -10,6 +10,17 @@ import type { AmendmentThreadRow } from '@/zero/amendments/queries';
 
 export type Thread = Omit<AmendmentThreadRow, 'comments'> & { comments: CommentWithReplies[] };
 
+export function normalizeDiscussionThread(
+  thread: AmendmentThreadRow,
+  sortBy: 'votes' | 'time'
+): Thread {
+  const rootComments = buildCommentTree([...(thread.comments || [])]);
+  return {
+    ...thread,
+    comments: sortComments(rootComments, sortBy).map(comment => sortCommentTree(comment, sortBy)),
+  };
+}
+
 export function useDiscussions(amendmentId: string, sortBy: 'votes' | 'time' = 'votes') {
   // Zero uses limit-based pagination. Increase limit to load more results.
   const [limit, setLimit] = useState(10);
@@ -27,21 +38,7 @@ export function useDiscussions(amendmentId: string, sortBy: 'votes' | 'time' = '
 
   // Process threads with comment trees
   const threads = useMemo(() => {
-    return rawThreads.map(thread => {
-      // Build comment tree
-      const comments = [...(thread.comments || [])];
-      const rootComments = buildCommentTree(comments);
-
-      // Sort root comments and their replies recursively
-      const sortedComments = sortComments(rootComments, sortBy).map(comment =>
-        sortCommentTree(comment, sortBy)
-      );
-
-      return {
-        ...thread,
-        comments: sortedComments,
-      };
-    });
+    return rawThreads.map(thread => normalizeDiscussionThread(thread, sortBy));
   }, [rawThreads, sortBy]);
 
   const isLoading = amendmentLoading || threadsLoading;

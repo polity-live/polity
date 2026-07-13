@@ -62,6 +62,20 @@ vi.mock('@/features/pql/ui/PqlToolbar', () => ({
   ),
 }));
 
+vi.mock('@/features/shared/virtualization', () => ({
+  PolityZeroGridView: ({ renderRow }: { renderRow: (row: any, index: number) => ReactNode }) =>
+    renderRow(
+      {
+        id: 'doc-1',
+        created_at: 1,
+        updated_at: 2,
+        collaborators: [],
+        amendment: { title: 'Document One' },
+      },
+      0
+    ),
+}));
+
 vi.mock('../GroupDocumentCard', () => ({
   GroupDocumentCard: ({ href }: { href: string }) => (
     <a data-testid="group-document-card" href={href}>

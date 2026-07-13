@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { Conversation, Message } from '../types/message.types';
-import { getOtherParticipant } from '../logic/messageUtils';
+import { useStickToBottom } from '@rocicorp/zero-virtual/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { usePolityZeroList } from '@/features/shared/virtualization';
 import type { AiAttachmentEntity } from '@/lib/ai/schemas';
+import { queries } from '@/zero/queries';
+import { getOtherParticipant } from '../logic/messageUtils';
+import type { Conversation, Message } from '../types/message.types';
+
 interface StreamingAssistantMessage {
   text: string;
   isCompressing: boolean;
@@ -16,11 +20,18 @@ interface StreamingAssistantMessage {
   canRetry?: boolean;
   onRetry?: () => Promise<boolean>;
 }
-type VirtualMessageRow =
-  | { type: 'message'; message: Message }
-  | { type: 'assistant-actions' }
-  | { type: 'streaming'; streaming: StreamingAssistantMessage }
-  | { type: 'conversation-request' };
+
+interface MessageStart {
+  created_at: number;
+  id: string;
+}
+
+export type VirtualMessageRow =
+  | { type: 'message'; index: number; key: string | number; message?: Message }
+  | { type: 'assistant-actions'; key: 'assistant-actions' }
+  | { type: 'streaming'; key: 'streaming'; streaming: StreamingAssistantMessage }
+  | { type: 'conversation-request'; key: 'conversation-request' };
+
 interface MessageListProps {
   conversation: Conversation;
   messages?: Message[];
@@ -33,6 +44,7 @@ interface MessageListProps {
   resolveAttachmentCardData?: (entityType: AiAttachmentEntity, entityId: string) => string | null;
   streamingAssistantMessage?: StreamingAssistantMessage;
 }
+
 function isNearBottom(element: HTMLElement, threshold = 96) {
   return element.scrollHeight - element.scrollTop - element.clientHeight <= threshold;
 }
@@ -40,8 +52,6 @@ function isNearBottom(element: HTMLElement, threshold = 96) {
 export function useMessageListController({
   conversation,
   messages,
-  hasMoreOlderMessages = false,
-  onLoadOlderMessages,
   onAtEndChange,
   currentUserId,
   onAcceptConversation,
@@ -50,213 +60,134 @@ export function useMessageListController({
   streamingAssistantMessage,
 }: MessageListProps) {
   const { t } = useTranslation();
-
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const pendingPrependRef = useRef<{ height: number; top: number; count: number } | null>(null);
-
-  const rafRef = useRef<number | null>(null);
-
-  const previousConversationIdRef = useRef<string | null>(null);
-
-  const previousLastMessageIdRef = useRef<string | null>(null);
-
-  const [isAtEnd, setIsAtEnd] = useState(true);
-
-  const [hasNewMessages, setHasNewMessages] = useState(false);
-
+  const initialAnchorRef = useRef<{ conversationId: string; messageId: string | null }>({
+    conversationId: '',
+    messageId: null,
+  });
   const displayMessages = messages ?? conversation.messages;
 
-  const otherUser = getOtherParticipant(conversation, currentUserId);
+  if (initialAnchorRef.current.conversationId !== conversation.id) {
+    initialAnchorRef.current = {
+      conversationId: conversation.id,
+      messageId: displayMessages.at(-1)?.id ?? null,
+    };
+  }
 
+  const listContextParams = useMemo(() => ({ conversationId: conversation.id }), [conversation.id]);
+  const virtualList = usePolityZeroList<typeof listContextParams, Message, MessageStart>({
+    scrollStateKey: `messages-thread-${conversation.id}`,
+    listContextParams,
+    getScrollElement: useCallback(() => scrollRef.current, []),
+    estimateSize: useCallback(() => 92, []),
+    overscan: 10,
+    getRowKey: message => message.id,
+    toStartRow: message => ({ created_at: Number(message.created_at), id: message.id }),
+    getPageQuery: useCallback(
+      ({ limit, start, dir, settled }) => ({
+        query: queries.messages.messagePage({
+          conversationId: conversation.id,
+          limit,
+          start,
+          dir,
+        }) as any,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      [conversation.id]
+    ),
+    getSingleQuery: useCallback(
+      ({ id, settled }) => ({
+        query: queries.messages.messageById({ id }) as any,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      []
+    ),
+    permalinkID: initialAnchorRef.current.messageId ?? undefined,
+  });
+  useStickToBottom(virtualList);
+
+  const otherUser = getOtherParticipant(conversation, currentUserId);
   const otherParticipantName =
     [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') ||
     t('common.labels.unspecifiedUser');
-
   const hasUserRepliedToAssistant = displayMessages.some(
     message => message.sender?.id === currentUserId
   );
 
   const virtualRows = useMemo<VirtualMessageRow[]>(() => {
-    const rows: VirtualMessageRow[] = displayMessages.map(message => ({
+    const rows: VirtualMessageRow[] = virtualList.items.map(item => ({
       type: 'message',
-      message,
+      index: item.index,
+      key: item.key,
+      message: item.row,
     }));
 
     if (isAssistantConversation(conversation) && currentUserId && !hasUserRepliedToAssistant) {
-      rows.push({ type: 'assistant-actions' });
+      rows.push({ type: 'assistant-actions', key: 'assistant-actions' });
     }
-
     if (streamingAssistantMessage) {
-      rows.push({ type: 'streaming', streaming: streamingAssistantMessage });
+      rows.push({ type: 'streaming', key: 'streaming', streaming: streamingAssistantMessage });
     }
-
     if (conversation.type === 'direct' && conversation.status === 'pending') {
-      rows.push({ type: 'conversation-request' });
+      rows.push({ type: 'conversation-request', key: 'conversation-request' });
     }
-
     return rows;
   }, [
     conversation,
     currentUserId,
-    displayMessages,
     hasUserRepliedToAssistant,
     streamingAssistantMessage,
+    virtualList.items,
   ]);
 
-  const virtualizer = useVirtualizer({
-    count: virtualRows.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => 92,
-    overscan: 10,
-    getItemKey: index => {
-      const row = virtualRows[index];
-      if (!row) return index;
-      if (row.type === 'message') return row.message.id;
-      return row.type;
-    },
-  });
-
-  const virtualItems = virtualizer.getVirtualItems();
+  const [isAtEnd, setIsAtEnd] = useState(true);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
+  const previousLastMessageIdRef = useRef<string | null>(displayMessages.at(-1)?.id ?? null);
 
   const updateAtEnd = useCallback(
     (nextIsAtEnd: boolean) => {
       setIsAtEnd(nextIsAtEnd);
       onAtEndChange?.(nextIsAtEnd);
-      if (nextIsAtEnd) {
-        setHasNewMessages(false);
-      }
+      if (nextIsAtEnd) setHasNewMessages(false);
     },
     [onAtEndChange]
   );
-
   const scrollToBottom = useCallback(() => {
-    if (virtualRows.length === 0) return;
-    virtualizer.scrollToIndex(virtualRows.length - 1, { align: 'end' });
-    updateAtEnd(true);
-  }, [updateAtEnd, virtualRows.length, virtualizer]);
-
-  const scheduleScrollToBottom = useCallback(() => {
-    if (rafRef.current != null) return;
-    rafRef.current = window.requestAnimationFrame(() => {
-      rafRef.current = null;
-      scrollToBottom();
-    });
-  }, [scrollToBottom]);
-
-  useEffect(
-    () => () => {
-      if (rafRef.current != null) {
-        window.cancelAnimationFrame(rafRef.current);
-      }
-    },
-    []
-  );
-
-  useLayoutEffect(() => {
-    const element = scrollRef.current;
-    const pending = pendingPrependRef.current;
-    if (!element || !pending || displayMessages.length <= pending.count) return;
-
-    window.requestAnimationFrame(() => {
-      element.scrollTop = pending.top + (element.scrollHeight - pending.height);
-      pendingPrependRef.current = null;
-    });
-  }, [displayMessages.length]);
-
-  useLayoutEffect(() => {
-    if (previousConversationIdRef.current === conversation.id) return;
-
-    previousConversationIdRef.current = conversation.id;
-    previousLastMessageIdRef.current = displayMessages.at(-1)?.id ?? null;
-    window.requestAnimationFrame(scrollToBottom);
-  }, [conversation.id, displayMessages, scrollToBottom]);
-
-  useEffect(() => {
-    const lastMessage = displayMessages.at(-1);
-    const lastMessageId = lastMessage?.id ?? null;
-    const previousLastMessageId = previousLastMessageIdRef.current;
-    previousLastMessageIdRef.current = lastMessageId;
-
-    if (!lastMessageId || previousLastMessageId === lastMessageId) return;
-
-    const sentByCurrentUser = lastMessage?.sender?.id === currentUserId;
-    if (isAtEnd || sentByCurrentUser) {
-      scheduleScrollToBottom();
-    } else {
-      setHasNewMessages(true);
-    }
-  }, [currentUserId, displayMessages, isAtEnd, scheduleScrollToBottom]);
-
-  useEffect(() => {
-    if (!streamingAssistantMessage) return;
-    if (isAtEnd) {
-      scheduleScrollToBottom();
-    }
-  }, [
-    isAtEnd,
-    scheduleScrollToBottom,
-    streamingAssistantMessage?.errorMessage,
-    streamingAssistantMessage?.isCompressing,
-    streamingAssistantMessage?.isThinking,
-    streamingAssistantMessage?.isToolCalling,
-    streamingAssistantMessage?.text,
-    streamingAssistantMessage?.toolName,
-  ]);
-
-  const handleScroll = useCallback(() => {
     const element = scrollRef.current;
     if (!element) return;
+    element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' });
+    updateAtEnd(true);
+  }, [updateAtEnd]);
+  const handleScroll = useCallback(() => {
+    const element = scrollRef.current;
+    if (element) updateAtEnd(isNearBottom(element));
+  }, [updateAtEnd]);
 
-    const nextIsAtEnd = isNearBottom(element);
-    updateAtEnd(nextIsAtEnd);
-
-    if (
-      element.scrollTop < 180 &&
-      hasMoreOlderMessages &&
-      onLoadOlderMessages &&
-      !pendingPrependRef.current
-    ) {
-      pendingPrependRef.current = {
-        height: element.scrollHeight,
-        top: element.scrollTop,
-        count: displayMessages.length,
-      };
-      onLoadOlderMessages();
-    }
-  }, [displayMessages.length, hasMoreOlderMessages, onLoadOlderMessages, updateAtEnd]);
+  useEffect(() => {
+    const latest = displayMessages.at(-1);
+    const previous = previousLastMessageIdRef.current;
+    previousLastMessageIdRef.current = latest?.id ?? null;
+    if (!latest || latest.id === previous) return;
+    if (isAtEnd || latest.sender?.id === currentUserId) scrollToBottom();
+    else setHasNewMessages(true);
+  }, [currentUserId, displayMessages, isAtEnd, scrollToBottom]);
 
   return {
     conversation,
-    messages,
-    hasMoreOlderMessages,
-    onLoadOlderMessages,
-    onAtEndChange,
     currentUserId,
     onAcceptConversation,
     onRejectConversation,
     resolveAttachmentCardData,
-    streamingAssistantMessage,
     t,
     scrollRef,
-    pendingPrependRef,
-    rafRef,
-    previousConversationIdRef,
-    previousLastMessageIdRef,
-    isAtEnd,
-    setIsAtEnd,
     hasNewMessages,
-    setHasNewMessages,
-    displayMessages,
     otherUser,
     otherParticipantName,
-    hasUserRepliedToAssistant,
     virtualRows,
-    virtualizer,
-    virtualItems,
-    updateAtEnd,
+    spaceBefore: virtualList.spaceBefore,
+    spaceAfter: virtualList.spaceAfter,
+    rowsEmpty: virtualList.rowsEmpty,
     scrollToBottom,
-    scheduleScrollToBottom,
     handleScroll,
   };
 }

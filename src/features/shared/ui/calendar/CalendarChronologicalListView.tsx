@@ -134,6 +134,7 @@ export function CalendarChronologicalListView<TItem>({
       items={items}
       language={language}
       renderItem={renderItem}
+      selectedDate={selectedDate}
       scrollAreaRef={scrollAreaRef}
       scrollToTodayMarker={scrollToTodayMarker}
       t={t}

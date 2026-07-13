@@ -7,7 +7,7 @@ import type { SearchListContext } from '../../types/search-document.types';
 
 const mocks = vi.hoisted(() => ({
   useZeroVirtualizer: vi.fn(),
-  useSearchGridVirtualizer: vi.fn(),
+  usePolityZeroGrid: vi.fn(),
 }));
 
 vi.mock('@rocicorp/zero-virtual/react', () => ({
@@ -19,8 +19,8 @@ vi.mock('@rocicorp/zero/react', () => ({
   useQuery: () => [[]],
 }));
 
-vi.mock('../../virtual-grid/use-search-grid-virtualizer', () => ({
-  useSearchGridVirtualizer: mocks.useSearchGridVirtualizer,
+vi.mock('@/features/shared/virtualization', () => ({
+  usePolityZeroGrid: mocks.usePolityZeroGrid,
 }));
 
 vi.mock('@/zero/queries', () => ({
@@ -52,7 +52,7 @@ const context: SearchListContext = {
 describe('search virtualizer controller contracts', () => {
   beforeEach(() => {
     mocks.useZeroVirtualizer.mockReset();
-    mocks.useSearchGridVirtualizer.mockReset();
+    mocks.usePolityZeroGrid.mockReset();
 
     vi.stubGlobal(
       'ResizeObserver',
@@ -95,14 +95,14 @@ describe('search virtualizer controller contracts', () => {
     expect(result.current.spaceAfter).toBe(360);
   });
 
-  it('routes the responsive grid through the feature-local grid adapter', () => {
+  it('routes the responsive grid through the shared grid adapter', () => {
     const virtualizer = {
       getVirtualItems: () => [],
       getTotalSize: () => 0,
       scrollToIndex: vi.fn(),
       measureElement: vi.fn(),
     };
-    mocks.useSearchGridVirtualizer.mockReturnValue({
+    mocks.usePolityZeroGrid.mockReturnValue({
       virtualizer,
       rowAt: vi.fn(),
       complete: true,
@@ -112,7 +112,7 @@ describe('search virtualizer controller contracts', () => {
 
     const { result } = renderHook(() => useVirtualSearchGridController({ context }));
 
-    expect(mocks.useSearchGridVirtualizer).toHaveBeenCalledOnce();
+    expect(mocks.usePolityZeroGrid).toHaveBeenCalledOnce();
     expect(result.current.cells).toEqual([]);
     expect(result.current.totalHeight).toBe(0);
   });

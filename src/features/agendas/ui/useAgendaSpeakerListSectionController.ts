@@ -34,6 +34,7 @@ interface AgendaSpeakerListSectionProps {
   onRemoveFromSpeakerList?: () => void;
   onMarkCompleted?: (speakerId: string) => void;
   className?: string;
+  agendaItemId?: string;
 }
 function formatDuration(ms: number) {
   const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
@@ -60,6 +61,7 @@ export function useAgendaSpeakerListSectionController({
   onRemoveFromSpeakerList,
   onMarkCompleted,
   className,
+  agendaItemId,
 }: AgendaSpeakerListSectionProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
@@ -160,6 +162,7 @@ export function useAgendaSpeakerListSectionController({
     onRemoveFromSpeakerList,
     onMarkCompleted,
     className,
+    agendaItemId,
     t,
     expanded,
     setExpanded,

@@ -1,11 +1,11 @@
 'use client';
 
 import { useMemo, useCallback } from 'react';
+import { useQuery } from '@rocicorp/zero/react';
 import { useAgendaState } from '@/zero/agendas/useAgendaState';
 import { useAuth } from '@/providers/auth-provider';
 import type { ElectionWithDetailsRow } from '@/zero/elections';
-import { useElectionState } from '@/zero/elections/useElectionState';
-import { useVoteState } from '@/zero/votes/useVoteState';
+import { queries } from '@/zero/queries';
 import {
   computeVoteResultSummary,
   type MajorityType,
@@ -159,17 +159,37 @@ export interface UseDecisionTerminalReturn {
  * Hook to fetch and manage Decision Terminal data
  */
 export function useDecisionTerminal(
-  _options: UseDecisionTerminalOptions = {}
+  options: UseDecisionTerminalOptions = {}
 ): UseDecisionTerminalReturn {
-  void _options;
   const { user } = useAuth();
+  const groupIds = options.groupIds ?? [];
 
-  const { electionsWithDetails: electionRows, isLoading: electionsLoading } = useElectionState({
-    includeElectionsWithDetails: true,
-  });
-  const { votesWithDetails: voteRows, isLoading: votesLoading } = useVoteState({
-    includeVotesWithDetails: true,
-  });
+  const [electionRowsData, electionResult] = useQuery(
+    queries.elections.decisionPage({
+      status: undefined,
+      statuses: [],
+      groupIds,
+      query: '',
+      limit: 100,
+      start: null,
+      dir: 'forward',
+    })
+  );
+  const [voteRowsData, voteResult] = useQuery(
+    queries.votes.decisionPage({
+      status: undefined,
+      statuses: [],
+      groupIds,
+      query: '',
+      limit: 100,
+      start: null,
+      dir: 'forward',
+    })
+  );
+  const electionRows = (electionRowsData ?? []) as unknown as ElectionWithDetailsRow[];
+  const voteRows = (voteRowsData ?? []) as unknown as VoteWithDetailsRow[];
+  const electionsLoading = electionResult.type === 'unknown';
+  const votesLoading = voteResult.type === 'unknown';
 
   const agendaEventIds = useMemo(() => {
     const eventIds = new Set<string>();

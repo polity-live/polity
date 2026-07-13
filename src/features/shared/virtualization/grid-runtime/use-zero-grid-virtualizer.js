@@ -1,8 +1,8 @@
-// @ts-nocheck -- vendored compatibility implementation; exercised through its typed adapter API.
+/* global setTimeout, clearTimeout */
 /**
- * Search-grid adapter derived from @rocicorp/zero-virtual 0.5.1.
+ * Application grid adapter derived from @rocicorp/zero-virtual 0.5.1.
  * The upstream source is Apache-2.0 licensed; see LICENSE.md in this directory.
- * Kept feature-local because zero-virtual 0.6 intentionally supports vertical lists only.
+ * Kept behind the shared Polity API because zero-virtual 0.6 intentionally supports vertical lists only.
  */
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { defaultKeyExtractor } from '@tanstack/virtual-core';
@@ -20,6 +20,8 @@ import { pagingReducer } from './paging-reducer';
 import { useRows } from './use-rows';
 // Make sure this is even since we half it for scroll state loading
 const MIN_PAGE_SIZE = 100;
+// Page queries accept at most 200 rows and the adapter requests one look-ahead row.
+const MAX_PAGE_SIZE = 198;
 const NUM_ROWS_FOR_LOADING_SKELETON = 1;
 const TOP_ANCHOR = Object.freeze({
   index: 0,
@@ -249,8 +251,9 @@ function useZeroGridVirtualizerImplementation({
           )
         )
       : MIN_PAGE_SIZE;
-    if (newPageSize > pageSize) {
-      setPageSize(newPageSize);
+    const boundedPageSize = Math.min(MAX_PAGE_SIZE, newPageSize);
+    if (boundedPageSize > pageSize) {
+      setPageSize(boundedPageSize);
     }
   }, [pageSize, virtualizer.scrollRect]);
   useEffect(() => {

@@ -9,7 +9,13 @@ import type { CSSProperties } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Trash2, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { DataTable, TableActionIconButton, type ColumnDef } from '@/features/shared/ui/data-table';
+import {
+  DataTable,
+  VirtualDataTable,
+  TableActionIconButton,
+  type ColumnDef,
+  type VirtualDataTableSource,
+} from '@/features/shared/ui/data-table';
 import { EntityBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import { UserTableCell } from '@/features/shared/ui/data-table';
@@ -37,6 +43,7 @@ interface ActiveMembersTableProps<TMembership extends ParticipationLike> {
   showPartGroupColumn?: boolean;
   showBaseGroupColumn?: boolean;
   showDelegateRepresentationColumn?: boolean;
+  virtualSource?: VirtualDataTableSource<TMembership, any, any>;
 }
 
 export function ActiveMembersTable<TMembership extends ParticipationLike>({
@@ -55,6 +62,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
   showPartGroupColumn = false,
   showBaseGroupColumn = false,
   showDelegateRepresentationColumn = false,
+  virtualSource,
 }: ActiveMembersTableProps<TMembership>) {
   const { t } = useTranslation();
   const directWithoutPathLabel = t('features.groups.memberships.composition.directWithoutPath');
@@ -251,13 +259,21 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
       }
       description={resolvedDescription}
     >
-      <DataTable
-        columns={columns}
-        data={members}
-        getRowId={membership => membership.id}
-        enablePagination={false}
-        emptyTitle={t('components.membershipTables.noActiveMembers')}
-      />
+      {virtualSource ? (
+        <VirtualDataTable
+          columns={columns}
+          source={virtualSource}
+          emptyTitle={t('components.membershipTables.noActiveMembers')}
+        />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={members}
+          getRowId={membership => membership.id}
+          enablePagination={false}
+          emptyTitle={t('components.membershipTables.noActiveMembers')}
+        />
+      )}
     </ManagementSection>
   );
 }

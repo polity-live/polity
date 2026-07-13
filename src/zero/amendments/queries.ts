@@ -11,11 +11,20 @@ import {
   applyVoteVoterOrManagerQueryAccess,
 } from '../rbac/query-access';
 import { zql } from '../schema';
+import { virtualPageLimitSchema } from '../virtualization';
 import type { NormalizedGroupRelationship } from '@/features/network/types/network.types';
 
 const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['active', 'collaborator', 'member', 'admin'];
 const WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ACTIVE_AMENDMENT_COLLABORATOR_STATUSES;
 const NAVIGATION_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ACTIVE_AMENDMENT_COLLABORATOR_STATUSES;
+const discussionThreadStartSchema = z
+  .object({
+    id: z.string(),
+    created_at: z.number().optional(),
+    upvotes: z.number().optional(),
+    downvotes: z.number().optional(),
+  })
+  .nullable();
 
 function applyAmendmentAccess<T>(q: T, userID: string | undefined): T {
   const query = q as any;
@@ -39,6 +48,87 @@ function applyAmendmentAccess<T>(q: T, userID: string | undefined): T {
       )
     )
   ) as T;
+}
+
+type GroupAmendmentDisplayStatus = 'accepted' | 'pending' | 'rejected' | 'withdrawn';
+
+const GROUP_AMENDMENT_DISPLAY_STATUSES: Record<GroupAmendmentDisplayStatus, string[]> = {
+  accepted: ['accepted', 'supported', 'approved', 'merged', 'completed'],
+  rejected: ['rejected', 'declined'],
+  withdrawn: ['withdrawn', 'cancelled'],
+  pending: [
+    'pending',
+    'requested',
+    'open',
+    'active',
+    'in_progress',
+    'forward_confirmed',
+    'previous_decision_outstanding',
+    'tie',
+  ],
+};
+
+function applyGroupAmendmentFilters({
+  groupId,
+  status,
+  displayStatus,
+  hashtag,
+  query,
+  userID,
+}: {
+  groupId: string;
+  status?: string;
+  displayStatus?: GroupAmendmentDisplayStatus;
+  hashtag?: string;
+  query: string;
+  userID?: string;
+}) {
+  const stepRunForGroup = (stepRun: any) =>
+    stepRun.whereExists('event', (event: any) => event.where('group_id', groupId));
+  let q: any = applyAmendmentAccess(zql.amendment, userID).where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('group_id', groupId),
+      exists('group_decisions', (decision: any) => decision.where('group_id', groupId)),
+      exists('event', (event: any) => event.where('group_id', groupId)),
+      exists('current_process_run', (run: any) =>
+        run.whereExists('branches', (branch: any) =>
+          branch.whereExists('step_runs', stepRunForGroup)
+        )
+      )
+    )
+  );
+  if (status) q = q.whereExists('current_process_run', (run: any) => run.where('status', status));
+  if (displayStatus) {
+    const statuses = GROUP_AMENDMENT_DISPLAY_STATUSES[displayStatus];
+    q = q.where(({ or, exists }: any) =>
+      or(
+        exists('group_decisions', (decision: any) =>
+          decision.where('group_id', groupId).where('status', 'IN', statuses)
+        ),
+        exists('current_process_run', (run: any) =>
+          run.whereExists('branches', (branch: any) =>
+            branch.whereExists('step_runs', (stepRun: any) =>
+              stepRunForGroup(stepRun).where(({ or: stepOr, cmp }: any) =>
+                stepOr(cmp('decision_status', 'IN', statuses), cmp('status', 'IN', statuses))
+              )
+            )
+          )
+        )
+      )
+    );
+  }
+  if (hashtag) {
+    q = q.whereExists('amendment_hashtags', (link: any) =>
+      link.whereExists('hashtag', (tag: any) => tag.where('tag', hashtag))
+    );
+  }
+  const term = query.trim();
+  if (term) {
+    q = q.where(({ or, cmp }: any) =>
+      or(cmp('title', 'ILIKE', `%${term}%`), cmp('reason', 'ILIKE', `%${term}%`))
+    );
+  }
+  return q;
 }
 
 function applyAmendmentManagerAccess<T>(q: T, userID: string | undefined): T {
@@ -504,6 +594,73 @@ export const amendmentQueries = {
       )
   ),
 
+  groupAmendmentPage: defineQuery(
+    z.object({
+      groupId: z.string(),
+      status: z.string().optional(),
+      displayStatus: z.enum(['accepted', 'pending', 'rejected', 'withdrawn']).optional(),
+      statuses: z.array(z.string()).default([]),
+      hashtag: z.string().optional(),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: z.object({ id: z.string(), created_at: z.number() }).nullable().default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({
+      args: { groupId, status, displayStatus, hashtag, query, limit, start, dir },
+      ctx: { userID },
+    }) => {
+      let q: any = applyGroupAmendmentFilters({
+        groupId,
+        status,
+        displayStatus,
+        hashtag,
+        query,
+        userID,
+      });
+      const direction = dir === 'backward' ? 'asc' : 'desc';
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q
+        .related('current_process_run', (run: any) =>
+          run.related('branches', (branch: any) => branch.orderBy('created_at', 'asc'))
+        )
+        .related('group_decisions', (decision: any) => decision.where('group_id', groupId))
+        .related('amendment_hashtags', (link: any) => link.related('hashtag'))
+        .limit(limit);
+    }
+  ),
+
+  groupAmendmentCountRows: defineQuery(
+    z.object({
+      groupId: z.string(),
+      displayStatus: z.enum(['accepted', 'pending', 'rejected', 'withdrawn']),
+      hashtag: z.string().optional(),
+      query: z.string().default(''),
+    }),
+    ({ args: { groupId, displayStatus, hashtag, query }, ctx: { userID } }) =>
+      applyGroupAmendmentFilters({
+        groupId,
+        displayStatus,
+        hashtag,
+        query,
+        userID,
+      })
+        .orderBy('created_at', 'desc')
+        .orderBy('id', 'desc')
+  ),
+
+  groupAmendmentById: defineQuery(
+    z.object({ id: z.string() }),
+    ({ args: { id }, ctx: { userID } }) =>
+      applyAmendmentAccess(zql.amendment.where('id', id), userID)
+        .related('current_process_run', q =>
+          q.related('branches', branch => branch.orderBy('created_at', 'asc'))
+        )
+        .related('amendment_hashtags', q => q.related('hashtag'))
+        .one()
+  ),
+
   byUser: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.amendment.where('created_by_id', userID).orderBy('created_at', 'desc')
   ),
@@ -519,6 +676,101 @@ export const amendmentQueries = {
         .related('user')
         .related('role', role => role.related('action_rights'))
         .orderBy('created_at', 'desc')
+  ),
+
+  collaboratorPage: defineQuery(
+    z.object({
+      amendmentId: z.string(),
+      status: z.string().optional(),
+      statuses: z.array(z.string()).default([]),
+      roleId: z.string().optional(),
+      roleIds: z.array(z.string()).default([]),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: z.object({ id: z.string(), created_at: z.number() }).nullable().default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({
+      args: { amendmentId, status, statuses, roleId, roleIds, query, limit, start, dir },
+      ctx: { userID },
+    }) => {
+      let q: any = applyAmendmentCollaboratorRosterAccess(zql.amendment_collaborator, userID)
+        .where('amendment_id', amendmentId)
+        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID));
+      if (status) q = q.where('status', status);
+      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if (roleId) q = q.where('role_id', roleId);
+      if ((roleIds?.length ?? 0) > 0) q = q.where('role_id', 'IN', roleIds);
+      const term = query.trim();
+      if (term)
+        q = q.whereExists('user', (user: any) =>
+          user.where(({ or, cmp }: any) =>
+            or(
+              cmp('first_name', 'ILIKE', `%${term}%`),
+              cmp('last_name', 'ILIKE', `%${term}%`),
+              cmp('handle', 'ILIKE', `%${term}%`)
+            )
+          )
+        );
+      const direction = dir === 'backward' ? 'asc' : 'desc';
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q
+        .related('user')
+        .related('role', (role: any) => role.related('action_rights'))
+        .limit(limit);
+    }
+  ),
+
+  collaborationPageByUser: defineQuery(
+    z.object({
+      userId: z.string(),
+      status: z.string().optional(),
+      statuses: z.array(z.string()).default([]),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: z.object({ id: z.string(), created_at: z.number() }).nullable().default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { userId, status, statuses, query, limit, start, dir }, ctx: { userID } }) => {
+      let q: any = zql.amendment_collaborator
+        .where('user_id', userId)
+        .where(({ or, cmp, exists }: any) =>
+          or(
+            cmp('user_id', userID ?? '__anon__'),
+            exists('amendment', (amendment: any) => applyAmendmentAccess(amendment, userID))
+          )
+        );
+      if (status) q = q.where('status', status);
+      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      const term = query.trim();
+      if (term)
+        q = q.whereExists('amendment', (amendment: any) =>
+          amendment.where(({ or, cmp }: any) =>
+            or(cmp('title', 'ILIKE', `%${term}%`), cmp('reason', 'ILIKE', `%${term}%`))
+          )
+        );
+      const direction = dir === 'backward' ? 'asc' : 'desc';
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q
+        .related('role')
+        .related('amendment', (amendment: any) =>
+          amendment
+            .related('group')
+            .related('amendment_hashtags', (link: any) => link.related('hashtag'))
+            .related('current_process_run', (run: any) => run.related('branches'))
+        )
+        .limit(limit);
+    }
+  ),
+
+  collaboratorById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    applyAmendmentCollaboratorRosterAccess(zql.amendment_collaborator, userID)
+      .where('id', id)
+      .related('user')
+      .related('role', role => role.related('action_rights'))
+      .one()
   ),
 
   streetDesigns: defineQuery(
@@ -551,6 +803,45 @@ export const amendmentQueries = {
           .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID)),
         userID
       ).orderBy('created_at', 'desc')
+  ),
+
+  changeRequestPage: defineQuery(
+    z.object({
+      amendmentId: z.string(),
+      branchId: z.string().optional(),
+      status: z.string().optional(),
+      limit: virtualPageLimitSchema,
+      start: z.object({ id: z.string(), created_at: z.number() }).nullable().default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { amendmentId, branchId, status, limit, start, dir }, ctx: { userID } }) => {
+      let q: any = applyChangeRequestVisibilityAccess(
+        zql.change_request
+          .where('amendment_id', amendmentId)
+          .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID)),
+        userID
+      );
+      if (branchId) q = q.where('process_branch_id', branchId);
+      if (status) q = q.where('status', status);
+      const direction = dir === 'backward' ? 'asc' : 'desc';
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q
+        .related('user')
+        .related('votes', (vote: any) =>
+          applyChangeRequestVotePrivateAccess(vote, userID).related('user')
+        )
+        .limit(limit);
+    }
+  ),
+
+  changeRequestById: defineQuery(
+    z.object({ id: z.string() }),
+    ({ args: { id }, ctx: { userID } }) =>
+      applyChangeRequestVisibilityAccess(zql.change_request.where('id', id), userID)
+        .related('user')
+        .related('votes', vote => applyChangeRequestVotePrivateAccess(vote, userID).related('user'))
+        .one()
   ),
 
   // Change requests with votes and user for voting UI
@@ -800,6 +1091,95 @@ export const amendmentQueries = {
   ),
 
   // Threads with deep relations for discussion views
+  discussionThreadPage: defineQuery(
+    z.object({
+      amendmentId: z.string(),
+      sort: z.enum(['votes', 'time']).default('votes'),
+      limit: virtualPageLimitSchema,
+      start: discussionThreadStartSchema.default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { amendmentId, sort, limit, start, dir }, ctx: { userID } }) => {
+      const direction = dir === 'forward' ? 'desc' : 'asc';
+      let q: any = zql.thread
+        .where('amendment_id', amendmentId)
+        .whereExists('amendment', (amendment: any) => applyAmendmentAccess(amendment, userID))
+        .related('user')
+        .related('votes', (vote: any) =>
+          applyAmendmentThreadVotePrivateAccess(vote, userID).related('user')
+        );
+
+      q =
+        sort === 'votes'
+          ? q.orderBy('upvotes', direction).orderBy('downvotes', dir === 'forward' ? 'asc' : 'desc')
+          : q.orderBy('created_at', direction);
+      q = q.orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q.limit(limit);
+    }
+  ),
+
+  discussionThreadById: defineQuery(
+    z.object({ id: z.string() }),
+    ({ args: { id }, ctx: { userID } }) =>
+      zql.thread
+        .where('id', id)
+        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
+        .related('user')
+        .related('votes', vote =>
+          applyAmendmentThreadVotePrivateAccess(vote, userID).related('user')
+        )
+        .one()
+  ),
+
+  discussionCommentPage: defineQuery(
+    z.object({
+      threadId: z.string(),
+      parentId: z.string().nullable().default(null),
+      limit: virtualPageLimitSchema,
+      start: z.object({ id: z.string(), created_at: z.number() }).nullable().default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { threadId, parentId, limit, start, dir }, ctx: { userID } }) => {
+      const direction = dir === 'backward' ? 'desc' : 'asc';
+      let q: any = zql.comment
+        .where('thread_id', threadId)
+        .where('parent_id', parentId as any)
+        .whereExists('thread', (thread: any) =>
+          thread.whereExists('amendment', (amendment: any) =>
+            applyAmendmentAccess(amendment, userID)
+          )
+        )
+        .orderBy('created_at', direction)
+        .orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q
+        .related('user')
+        .related('votes', (vote: any) =>
+          applyAmendmentCommentVotePrivateAccess(vote, userID).related('user')
+        )
+        .limit(limit);
+    }
+  ),
+
+  discussionCommentById: defineQuery(
+    z.object({ id: z.string() }),
+    ({ args: { id }, ctx: { userID } }) =>
+      zql.comment
+        .where('id', id)
+        .whereExists('thread', thread =>
+          thread.whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
+        )
+        .related('user')
+        .related('votes', vote =>
+          applyAmendmentCommentVotePrivateAccess(vote, userID).related('user')
+        )
+        .related('parent', parent =>
+          parent.related('parent', ancestor => ancestor.related('parent'))
+        )
+        .one()
+  ),
+
   threads: defineQuery(
     z.object({ amendment_id: z.string() }),
     ({ args: { amendment_id }, ctx: { userID } }) =>

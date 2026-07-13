@@ -1,6 +1,7 @@
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
+import { virtualPageLimitSchema } from '../virtualization';
 
 const conversationStartSchema = z
   .object({
@@ -49,7 +50,15 @@ export const messageQueries = {
 
   // Single conversation by ID
   conversationById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    conversationAccessFilter(zql.conversation.where('id', id), userID).one()
+    conversationAccessFilter(zql.conversation.where('id', id), userID)
+      .related('group')
+      .related('event')
+      .related('requested_by')
+      .related('participants', q => q.related('user'))
+      .related('messages', q =>
+        q.orderBy('created_at', 'desc').orderBy('id', 'desc').limit(1).related('sender')
+      )
+      .one()
   ),
 
   // Messages in a conversation
@@ -67,7 +76,7 @@ export const messageQueries = {
   messagePage: defineQuery(
     z.object({
       conversationId: z.string(),
-      limit: z.number().min(1).max(200).default(80),
+      limit: virtualPageLimitSchema,
       start: messageStartSchema.default(null),
       dir: z.enum(['forward', 'backward']).default('forward'),
     }),
@@ -145,7 +154,7 @@ export const messageQueries = {
     z.object({
       filter: z.enum(['all', 'direct', 'group', 'event', 'ai']).default('all'),
       query: z.string().default(''),
-      limit: z.number().min(1).max(100).default(40),
+      limit: virtualPageLimitSchema,
       start: conversationStartSchema.default(null),
       dir: z.enum(['forward', 'backward']).default('forward'),
     }),

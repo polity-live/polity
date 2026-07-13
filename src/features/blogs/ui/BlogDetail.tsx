@@ -20,5 +20,5 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     );
   }
 
-  return <BlogDetailView {...controller} />;
+  return <BlogDetailView {...controller} virtualizeParticipationDirectory />;
 }

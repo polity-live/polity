@@ -1595,6 +1595,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
   return (
     <EventAgendaView
+      virtualizeChangeRequests
       eventId={eventId}
       t={t}
       user={user}

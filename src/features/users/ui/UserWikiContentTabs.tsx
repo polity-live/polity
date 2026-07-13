@@ -7,15 +7,13 @@ import { GroupsListTab } from './GroupListTab';
 import { AmendmentListTab } from './AmendmentListTab';
 import { StatementListTab } from './StatementListTab';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { MasonryGrid } from '@/features/timeline/ui/MasonryGrid';
-import { DynamicTimelineCard } from '@/features/timeline/ui/LazyCardComponents';
-import { buildTimelineCardProps } from '@/features/search/logic/buildTimelineCardProps';
 import { StatementStoryCarousel } from '@/features/statements/ui/StatementStoryCarousel';
 import type { UserProfile, TabSearchState } from '../types/user.types';
-import {
-  buildUserWikiContentItems,
-  type UserWikiContentItem,
-} from '../logic/buildUserWikiContentItems';
+import { PolityZeroGridView } from '@/features/shared/virtualization';
+import { SearchResultCard } from '@/features/search/ui/SearchResultCard';
+import type { SearchDocument } from '@/features/search/types/search-document.types';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
+import { queries } from '@/zero/queries';
 
 interface UserWikiContentTabsProps {
   user: UserProfile;
@@ -35,37 +33,19 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
   const { t } = useTranslation();
   const resolvedAuthorName = authorName || t('common.labels.unspecifiedUser');
 
-  const allItems = useMemo(
-    () =>
-      buildUserWikiContentItems({
-        user,
-        authorName: resolvedAuthorName,
-        authorAvatar,
-      }),
-    [authorAvatar, resolvedAuthorName, user]
+  const allContext = useMemo(
+    () => ({
+      ownerUserId: user.id,
+      query: searchTerms.all,
+      types: ['amendment', 'blog', 'group', 'statement'],
+    }),
+    [searchTerms.all, user.id]
   );
-
-  const filteredAllItems = useMemo(() => {
-    const query = searchTerms.all.trim().toLowerCase();
-    if (!query) {
-      return allItems;
-    }
-
-    return allItems.filter(item => item.searchText.includes(query));
-  }, [allItems, searchTerms.all]);
-
-  const renderMixedTimelineCard = useCallback((item: UserWikiContentItem) => {
-    const { cardType, cardProps } = buildTimelineCardProps(item);
-    if (!cardType || !cardProps) {
-      return null;
-    }
-
-    return <DynamicTimelineCard cardType={cardType} cardProps={cardProps} />;
-  }, []);
 
   const renderAmendmentsTab = () => (
     <AmendmentListTab
       collaborations={user.amendment_collaborations ?? []}
+      userId={user.id}
       searchValue={searchTerms.amendments}
       onSearchChange={(value: string) => handleSearchChange('amendments', value)}
     />
@@ -85,6 +65,7 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
   const renderGroupsTab = () => (
     <GroupsListTab
       memberships={user.group_memberships ?? []}
+      userId={user.id}
       searchValue={searchTerms.groups}
       onSearchChange={(value: string) => handleSearchChange('groups', value)}
     />
@@ -96,6 +77,7 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
       authorName={resolvedAuthorName}
       authorTitle={user.bio ?? undefined}
       authorAvatar={authorAvatar || undefined}
+      userId={user.id}
       searchValue={searchTerms.statements}
       onSearchChange={(value: string) => handleSearchChange('statements', value)}
     />
@@ -121,11 +103,57 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
             placeholder={t('pages.user.all.searchPlaceholder')}
           />
 
-          <MasonryGrid
-            items={filteredAllItems}
-            renderItem={renderMixedTimelineCard}
-            keyExtractor={item => `${item.type}-${item.id}`}
-            itemMotion="reveal"
+          <PolityZeroGridView<SearchDocument, { created_at: number; id: string }, typeof allContext>
+            context={allContext}
+            historyKey={`user-${user.id}-all-content`}
+            getPageQuery={useCallback(
+              ({ limit, start, dir, settled }) => ({
+                query: queries.search.searchDocumentPage({
+                  query: allContext.query,
+                  types: allContext.types,
+                  topics: [],
+                  createdAfter: null,
+                  engagement: 'all',
+                  sort: 'recent',
+                  snapshotAt: null,
+                  bounds: null,
+                  ownerUserId: allContext.ownerUserId,
+                  limit,
+                  start,
+                  dir,
+                }) as never,
+                options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+              }),
+              [allContext]
+            )}
+            getSingleQuery={useCallback(
+              ({ id, settled }) => ({
+                query: queries.search.searchDocumentById({
+                  id,
+                  ownerUserId: user.id,
+                }) as never,
+                options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+              }),
+              [user.id]
+            )}
+            getRowKey={document => document.id}
+            toStartRow={document => ({ created_at: document.created_at, id: document.id })}
+            getLanes={width => (width >= 1280 ? 3 : width >= 720 ? 2 : 1)}
+            estimateSize={360}
+            renderRow={(document, index) => (
+              <div
+                className="civic-load-card-reveal"
+                style={{ '--civic-load-index': Math.min(index, 11) } as React.CSSProperties}
+              >
+                <SearchResultCard document={document} />
+              </div>
+            )}
+            renderSkeleton={() => <Skeleton className="h-[360px] w-full rounded-xl" />}
+            renderEmpty={() => (
+              <p className="text-muted-foreground py-8 text-center">
+                {t('pages.user.all.noResults', { defaultValue: 'No content found.' })}
+              </p>
+            )}
           />
         </TabsContent>
 

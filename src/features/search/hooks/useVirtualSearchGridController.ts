@@ -2,8 +2,8 @@ import { useHistoryScrollState } from '@rocicorp/zero-virtual/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { usePolityZeroGrid } from '@/features/shared/virtualization';
 import { queries } from '@/zero/queries';
-import { useSearchGridVirtualizer } from '../virtual-grid/use-search-grid-virtualizer';
 
 import type {
   SearchDocument,
@@ -111,7 +111,7 @@ export function useVirtualSearchGridController({
     };
   }, []);
 
-  const { virtualizer, rowAt, complete, rowsEmpty, total } = useSearchGridVirtualizer({
+  const { virtualizer, rowAt, complete, rowsEmpty, total } = usePolityZeroGrid<SearchDocument>({
     listContextParams,
     getScrollElement: useCallback(() => parentRef.current, []),
     estimateSize: useCallback(() => SEARCH_CARD_HEIGHT + SEARCH_GRID_GAP, []),

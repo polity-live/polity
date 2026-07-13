@@ -26,11 +26,15 @@ interface EntityNotificationsViewLabels {
 }
 
 interface EntityNotificationsViewProps {
+  entityId: string;
+  entityType: string;
   isLoading: boolean;
-  notifications: Notification[];
-  filteredNotifications: Notification[];
-  unreadNotifications: Notification[];
-  readNotifications: Notification[];
+  notifications?: Notification[];
+  filteredNotifications?: Notification[];
+  unreadNotifications?: Notification[];
+  readNotifications?: Notification[];
+  counts?: { all: number; unread: number };
+  unreadCount?: number;
   searchQuery: string;
   labels: EntityNotificationsViewLabels;
   onSearchQueryChange: (query: string) => void;
@@ -40,11 +44,15 @@ interface EntityNotificationsViewProps {
 }
 
 export function EntityNotificationsView({
+  entityId,
+  entityType,
   isLoading,
-  notifications,
-  filteredNotifications,
-  unreadNotifications,
-  readNotifications,
+  notifications = [],
+  filteredNotifications = [],
+  unreadNotifications = [],
+  readNotifications = [],
+  counts,
+  unreadCount,
   searchQuery,
   labels,
   onSearchQueryChange,
@@ -52,6 +60,10 @@ export function EntityNotificationsView({
   onNotificationClick,
   formatTime,
 }: EntityNotificationsViewProps) {
+  const allCount = counts?.all ?? notifications.length;
+  const filteredUnreadCount = counts?.unread ?? unreadNotifications.length;
+  const totalUnreadCount = unreadCount ?? unreadNotifications.length;
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="all" className="w-full">
@@ -74,21 +86,21 @@ export function EntityNotificationsView({
               <TabsTrigger value="all">
                 {labels.all}
                 <BadgeControl variant="secondary" className="ml-2">
-                  {notifications.length}
+                  {allCount}
                 </BadgeControl>
               </TabsTrigger>
               <TabsTrigger value="unread">
                 {labels.unread}
-                {unreadNotifications.length > 0 ? (
+                {filteredUnreadCount > 0 ? (
                   <BadgeControl variant="default" className="ml-2">
-                    {unreadNotifications.length}
+                    {filteredUnreadCount}
                   </BadgeControl>
                 ) : null}
               </TabsTrigger>
               <TabsTrigger value="read">{labels.read}</TabsTrigger>
             </ScrollableTabsList>
           </div>
-          {unreadNotifications.length > 0 ? (
+          {totalUnreadCount > 0 ? (
             <Button className="shrink-0" onClick={onMarkAllAsRead} variant="outline">
               <CheckCheck className="mr-2 h-4 w-4" />
               {labels.markAllRead}
@@ -99,6 +111,13 @@ export function EntityNotificationsView({
         <TabsContent value="all" className="mt-6">
           <NotificationsList
             notifications={filteredNotifications}
+            virtualQuery={{
+              key: `${entityType}-${entityId}-all`,
+              tab: 'all',
+              searchQuery,
+              entityId,
+              entityType,
+            }}
             isLoading={isLoading}
             emptyIcon={Bell}
             emptyTitle={labels.noNotificationsYet}
@@ -112,6 +131,13 @@ export function EntityNotificationsView({
         <TabsContent value="unread" className="mt-6">
           <NotificationsList
             notifications={unreadNotifications}
+            virtualQuery={{
+              key: `${entityType}-${entityId}-unread`,
+              tab: 'unread',
+              searchQuery,
+              entityId,
+              entityType,
+            }}
             isLoading={isLoading}
             emptyIcon={Check}
             emptyTitle={labels.allCaughtUp}
@@ -125,6 +151,13 @@ export function EntityNotificationsView({
         <TabsContent value="read" className="mt-6">
           <NotificationsList
             notifications={readNotifications}
+            virtualQuery={{
+              key: `${entityType}-${entityId}-read`,
+              tab: 'read',
+              searchQuery,
+              entityId,
+              entityType,
+            }}
             isLoading={isLoading}
             emptyIcon={Bell}
             emptyTitle={labels.noReadNotifications}

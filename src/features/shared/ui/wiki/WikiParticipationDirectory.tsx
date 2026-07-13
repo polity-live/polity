@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { PolityZeroGridView } from '@/features/shared/virtualization';
 
 import type { ParticipationRoleLike } from '@/features/shared/types/participation';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -8,6 +9,7 @@ import { EntitySearchBar } from '@/features/shared/ui/typeahead';
 import { ParticipationRoleFilterBar } from '@/features/shared/ui/participation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { RoleBadge } from '@/features/shared/ui/status';
 import { getEntityToneClasses, type PrimaryEntityTone } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
@@ -53,7 +55,30 @@ export interface WikiParticipationDirectoryProps {
   emptyLabel?: string;
   noResultsLabel?: string;
   leadingCard?: ReactNode;
+  virtualSource?: WikiParticipationVirtualSource;
   className?: string;
+}
+
+interface WikiParticipationCursor {
+  id: string;
+  created_at: number;
+}
+
+export interface WikiParticipationVirtualSource {
+  historyKey: string;
+  context: Record<string, unknown>;
+  getPageQuery: (options: {
+    limit: number;
+    start: WikiParticipationCursor | null;
+    dir: 'forward' | 'backward';
+    settled: boolean;
+    query: string;
+    roleIds: string[];
+  }) => unknown;
+  getSingleQuery: (options: { id: string; settled: boolean }) => unknown;
+  getRowKey: (row: any) => string;
+  toStartRow?: (row: any) => WikiParticipationCursor;
+  mapRow: (row: any) => WikiParticipationItem;
 }
 
 const VISIBLE_PARTICIPATION_STATUSES = new Set([
@@ -147,6 +172,7 @@ export function WikiParticipationDirectory({
   emptyLabel = translateText('components.empty.noResults', 'No results found.'),
   noResultsLabel = translateText('components.empty.noResults', 'No results found.'),
   leadingCard,
+  virtualSource,
   className,
 }: WikiParticipationDirectoryProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -175,6 +201,91 @@ export function WikiParticipationDirectory({
       }),
     [items, normalizedSearch, selectedRoleIdSet, selectedRoleIds.length]
   );
+  const virtualContext = useMemo(
+    () => ({
+      ...virtualSource?.context,
+      query: searchQuery.trim(),
+      roleIds: selectedRoleIds,
+    }),
+    [searchQuery, selectedRoleIds, virtualSource?.context]
+  );
+  const getVirtualPageQuery = useCallback(
+    (options: {
+      limit: number;
+      start: WikiParticipationCursor | null;
+      dir: 'forward' | 'backward';
+      settled: boolean;
+    }) =>
+      virtualSource?.getPageQuery({
+        ...options,
+        query: searchQuery.trim(),
+        roleIds: selectedRoleIds,
+      }),
+    [searchQuery, selectedRoleIds, virtualSource]
+  );
+  const getVirtualSingleQuery = useCallback(
+    (options: { id: string; settled: boolean }) => virtualSource?.getSingleQuery(options),
+    [virtualSource]
+  );
+
+  const renderDirectoryItem = (item: WikiParticipationItem, index: number) => {
+    const loadIndex = Math.min(index + (leadingCard ? 1 : 0), 11);
+    const card = (
+      <Card interactive={item.userId ? 'lift' : 'default'} className="h-full">
+        <CardContent className="flex h-full flex-col gap-4 p-4">
+          <div className="flex items-start gap-3">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={item.avatar ?? undefined} />
+              <AvatarFallback>{getInitials(item.name)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-semibold">{item.name}</p>
+              {item.handle ? (
+                <p className="text-muted-foreground truncate text-sm">@{item.handle}</p>
+              ) : item.email ? (
+                <p className="text-muted-foreground truncate text-sm">{item.email}</p>
+              ) : null}
+            </div>
+          </div>
+
+          {(item.roles?.length ?? 0) > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {item.roles?.map(role => (
+                <RoleBadge key={role.id} className={entityTone.badge} data-role-key={role.id}>
+                  {role.name}
+                </RoleBadge>
+              ))}
+            </div>
+          ) : item.status ? (
+            <p className="text-muted-foreground text-sm">{item.status}</p>
+          ) : null}
+
+          {item.metadata?.length ? (
+            <div className="text-muted-foreground mt-auto flex flex-wrap gap-x-3 gap-y-1 text-xs">
+              {item.metadata.map(metadata => (
+                <span key={metadata}>{metadata}</span>
+              ))}
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
+    );
+
+    return (
+      <div
+        className="civic-load-card-reveal"
+        style={{ '--civic-load-index': loadIndex } as CSSProperties}
+      >
+        {item.userId ? (
+          <Link to="/user/$id" params={{ id: item.userId }} className="block h-full rounded-lg">
+            {card}
+          </Link>
+        ) : (
+          card
+        )}
+      </div>
+    );
+  };
 
   return (
     <section className={cn('mb-8 space-y-4', className)} data-slot="wiki-participation-directory">
@@ -199,12 +310,12 @@ export function WikiParticipationDirectory({
         </div>
       ) : null}
 
-      {visibleItems.length === 0 ? (
+      {!virtualSource && visibleItems.length === 0 ? (
         <p className="text-muted-foreground py-8 text-center">
           {searchQuery || selectedRoleIds.length > 0 ? noResultsLabel : emptyLabel}
         </p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-4">
           {leadingCard ? (
             <div
               className="civic-load-card-reveal"
@@ -217,77 +328,33 @@ export function WikiParticipationDirectory({
               {leadingCard}
             </div>
           ) : null}
-          {visibleItems.map((item, index) => {
-            const loadIndex = Math.min(index + (leadingCard ? 1 : 0), 11);
-            const card = (
-              <Card interactive={item.userId ? 'lift' : 'default'} className="h-full">
-                <CardContent className="flex h-full flex-col gap-4 p-4">
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={item.avatar ?? undefined} />
-                      <AvatarFallback>{getInitials(item.name)}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold">{item.name}</p>
-                      {item.handle ? (
-                        <p className="text-muted-foreground truncate text-sm">@{item.handle}</p>
-                      ) : item.email ? (
-                        <p className="text-muted-foreground truncate text-sm">{item.email}</p>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {(item.roles?.length ?? 0) > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {item.roles?.map(role => (
-                        <RoleBadge
-                          key={role.id}
-                          className={entityTone.badge}
-                          data-role-key={role.id}
-                        >
-                          {role.name}
-                        </RoleBadge>
-                      ))}
-                    </div>
-                  ) : item.status ? (
-                    <p className="text-muted-foreground text-sm">{item.status}</p>
-                  ) : null}
-
-                  {item.metadata?.length ? (
-                    <div className="text-muted-foreground mt-auto flex flex-wrap gap-x-3 gap-y-1 text-xs">
-                      {item.metadata.map(metadata => (
-                        <span key={metadata}>{metadata}</span>
-                      ))}
-                    </div>
-                  ) : null}
-                </CardContent>
-              </Card>
-            );
-
-            return (
-              <div
-                key={item.id}
-                className="civic-load-card-reveal"
-                style={
-                  {
-                    '--civic-load-index': loadIndex,
-                  } as CSSProperties
-                }
-              >
-                {item.userId ? (
-                  <Link
-                    to="/user/$id"
-                    params={{ id: item.userId }}
-                    className="block h-full rounded-lg"
-                  >
-                    {card}
-                  </Link>
-                ) : (
-                  card
-                )}
-              </div>
-            );
-          })}
+          {virtualSource ? (
+            <PolityZeroGridView<any, WikiParticipationCursor, typeof virtualContext>
+              context={virtualContext}
+              historyKey={virtualSource.historyKey}
+              getPageQuery={getVirtualPageQuery}
+              getSingleQuery={getVirtualSingleQuery}
+              getRowKey={virtualSource.getRowKey}
+              toStartRow={
+                virtualSource.toStartRow ??
+                (row => ({ id: row.id, created_at: Number(row.created_at ?? 0) }))
+              }
+              getLanes={width => (width >= 1024 ? 3 : width >= 640 ? 2 : 1)}
+              estimateSize={230}
+              renderRow={(row, index) => renderDirectoryItem(virtualSource.mapRow(row), index)}
+              renderSkeleton={() => <Skeleton className="h-56 w-full rounded-xl" />}
+              renderEmpty={() => (
+                <p className="text-muted-foreground py-8 text-center">
+                  {searchQuery || selectedRoleIds.length > 0 ? noResultsLabel : emptyLabel}
+                </p>
+              )}
+              viewportClassName="max-h-[48rem] min-h-64 overflow-auto"
+            />
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {visibleItems.map(renderDirectoryItem)}
+            </div>
+          )}
         </div>
       )}
     </section>

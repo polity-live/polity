@@ -2,6 +2,9 @@ import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
 import { isAuthenticatedUserId } from '../rbac/query-access';
+import { virtualPageLimitSchema } from '../virtualization';
+
+const statementStartSchema = z.object({ created_at: z.number(), id: z.string() }).nullable();
 
 function applyStatementExpiryAccess<T>(q: T, userID: string | undefined, now = Date.now()): T {
   const query = q as any;
@@ -37,6 +40,56 @@ function applyStatementAccess<T>(q: T, userID: string | undefined, now = Date.no
 }
 
 export const statementQueries = {
+  pageByGroup: defineQuery(
+    z.object({
+      groupId: z.string(),
+      query: z.string().default(''),
+      now: z.number(),
+      limit: virtualPageLimitSchema,
+      start: statementStartSchema.default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { groupId, query, now, limit, start, dir }, ctx: { userID } }) => {
+      const direction = dir === 'forward' ? 'desc' : 'asc';
+      let q: any = applyStatementAccess(zql.statement.where('group_id', groupId), userID, now)
+        .related('user')
+        .related('statement_hashtags', (hashtag: any) => hashtag.related('hashtag'))
+        .related('support_votes', (vote: any) => vote.where('user_id', userID ?? '__anon__'));
+      const normalizedQuery = query.trim();
+      if (normalizedQuery) q = q.where('text', 'ILIKE', `%${normalizedQuery}%`);
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q.limit(limit);
+    }
+  ),
+
+  pageByUser: defineQuery(
+    z.object({
+      userId: z.string(),
+      query: z.string().default(''),
+      now: z.number(),
+      limit: virtualPageLimitSchema,
+      start: statementStartSchema.default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { userId, query, now, limit, start, dir }, ctx: { userID } }) => {
+      const direction = dir === 'forward' ? 'desc' : 'asc';
+      let q: any = applyStatementAccess(zql.statement.where('user_id', userId), userID, now)
+        .related('user')
+        .related('group')
+        .related('statement_hashtags', (hashtag: any) => hashtag.related('hashtag'))
+        .related('support_votes', (vote: any) => vote.where('user_id', userID ?? '__anon__'))
+        .related('surveys', (survey: any) =>
+          survey.related('options', (option: any) => option.related('votes'))
+        );
+      const term = query.trim();
+      if (term) q = q.where('text', 'ILIKE', `%${term}%`);
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q.limit(limit);
+    }
+  ),
+
   // Statements by the current user
   byUser: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.statement
@@ -161,3 +214,4 @@ export const statementQueries = {
 export type StatementByIdWithDetailsRow = QueryRowType<typeof statementQueries.byIdWithDetails>;
 export type StatementByGroupRow = QueryRowType<typeof statementQueries.byGroup>;
 export type StatementByUserRow = QueryRowType<typeof statementQueries.byUser>;
+export type StatementPageByGroupRow = QueryRowType<typeof statementQueries.pageByGroup>;

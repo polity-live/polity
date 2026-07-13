@@ -9,11 +9,16 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { Link } from '@tanstack/react-router';
 import { Search, BookOpen, MessageSquareText, Plus, Edit, Trash2 } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
+import { PolityZeroGridView } from '@/features/shared/virtualization';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
+import { queries } from '@/zero/queries';
 
 type ContentFilter = 'all' | 'blogs' | 'statements';
 
 interface BlogItem {
   id: string;
+  created_at: number;
   title?: string | null;
   description?: string | null;
   image_url?: string | null;
@@ -26,6 +31,7 @@ interface BlogItem {
 
 interface StatementItem {
   id: string;
+  created_at: number;
   text?: string | null;
   user?: {
     first_name?: string | null;
@@ -55,6 +61,145 @@ interface BlogsAndStatementsViewProps {
   canCreateStatement: boolean;
   getEditorUrl: (blogId: string) => string;
   onDeleteBlog: (blogId: string, blogTitle: string) => void;
+}
+
+function VirtualBlogGrid({
+  groupId,
+  searchQuery,
+  canManage,
+  getEditorUrl,
+  onDeleteBlog,
+  compact,
+}: Pick<
+  BlogsAndStatementsViewProps,
+  'groupId' | 'searchQuery' | 'canManage' | 'getEditorUrl' | 'onDeleteBlog'
+> & { compact: boolean }) {
+  const context = useMemo(() => ({ groupId, query: searchQuery.trim() }), [groupId, searchQuery]);
+  return (
+    <PolityZeroGridView<BlogItem, { created_at: number; id: string }, typeof context>
+      context={context}
+      historyKey={`group-${groupId}-blogs`}
+      estimateSize={330}
+      getLanes={width => (width >= 640 ? 2 : 1)}
+      getRowKey={blog => blog.id}
+      toStartRow={blog => ({ created_at: blog.created_at, id: blog.id })}
+      getPageQuery={useCallback(
+        ({ limit, start, dir, settled }) => ({
+          query: queries.blogs.pageByGroup({ ...context, limit, start, dir }) as any,
+          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+        }),
+        [context]
+      )}
+      getSingleQuery={useCallback(
+        ({ id, settled }) => ({
+          query: queries.blogs.byIdWithHashtags({ id }) as any,
+          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+        }),
+        []
+      )}
+      renderRow={blog => (
+        <div className="relative">
+          <BlogTimelineCard
+            blog={{
+              id: blog.id,
+              title: blog.title ?? '',
+              excerpt: blog.description ?? undefined,
+              coverImageUrl: blog.image_url ?? undefined,
+              commentCount: blog.comment_count ?? undefined,
+              groupId: blog.group_id,
+              authorId: blog.user_id ?? undefined,
+              publishedAt: blog.date ?? undefined,
+              hashtags: (blog.blog_hashtags ?? [])
+                .map(link => link.hashtag)
+                .filter((tag): tag is { id: string; tag: string } => Boolean(tag)),
+            }}
+          />
+          {canManage ? (
+            <div className="absolute top-2 right-2 flex gap-1">
+              <Link to={getEditorUrl(blog.id)}>
+                <Button variant="ghost" size="icon" className="bg-background/80 h-7 w-7">
+                  <Edit className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="bg-background/80 text-destructive h-7 w-7"
+                onClick={() => onDeleteBlog(blog.id, blog.title ?? '')}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      )}
+      renderSkeleton={() => <Skeleton className="h-72 w-full rounded-xl" />}
+      renderEmpty={() => null}
+      viewportClassName={compact ? 'h-[36rem] min-h-80 overflow-auto' : undefined}
+    />
+  );
+}
+
+function VirtualStatementGrid({
+  groupId,
+  searchQuery,
+  compact,
+}: Pick<BlogsAndStatementsViewProps, 'groupId' | 'searchQuery'> & { compact: boolean }) {
+  const now = useMemo(() => Date.now(), [groupId]);
+  const context = useMemo(
+    () => ({ groupId, query: searchQuery.trim(), now }),
+    [groupId, now, searchQuery]
+  );
+  return (
+    <PolityZeroGridView<StatementItem, { created_at: number; id: string }, typeof context>
+      context={context}
+      historyKey={`group-${groupId}-statements`}
+      estimateSize={330}
+      getLanes={width => (width >= 640 ? 2 : 1)}
+      getRowKey={statement => statement.id}
+      toStartRow={statement => ({ created_at: statement.created_at, id: statement.id })}
+      getPageQuery={useCallback(
+        ({ limit, start, dir, settled }) => ({
+          query: queries.statements.pageByGroup({ ...context, limit, start, dir }) as any,
+          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+        }),
+        [context]
+      )}
+      getSingleQuery={useCallback(
+        ({ id, settled }) => ({
+          query: queries.statements.byIdWithDetails({ id }) as any,
+          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+        }),
+        []
+      )}
+      renderRow={statement => (
+        <StatementTimelineCard
+          statement={{
+            id: statement.id,
+            content: statement.text ?? '',
+            authorName: statement.user
+              ? [statement.user.first_name, statement.user.last_name].filter(Boolean).join(' ') ||
+                statement.user.handle ||
+                ''
+              : '',
+            authorAvatar: statement.user?.avatar ?? undefined,
+            supportCount: statement.upvotes ?? undefined,
+            opposeCount: statement.downvotes ?? undefined,
+            commentCount: statement.comment_count ?? undefined,
+            imageUrl: statement.image_url ?? undefined,
+            videoUrl: statement.video_url ?? undefined,
+            groupId: statement.group_id ?? undefined,
+            hashtags: (statement.statement_hashtags ?? [])
+              .map(link => link.hashtag)
+              .filter((tag): tag is { id: string; tag: string } => Boolean(tag)),
+          }}
+        />
+      )}
+      renderSkeleton={() => <Skeleton className="h-72 w-full rounded-xl" />}
+      renderEmpty={() => null}
+      viewportClassName={compact ? 'h-[36rem] min-h-80 overflow-auto' : undefined}
+    />
+  );
 }
 
 export function BlogsAndStatementsView({
@@ -137,52 +282,14 @@ export function BlogsAndStatementsView({
               {translateText('generated.inline.0300_blogs_5ef44397')}
             </h2>
           )}
-          <div className="grid gap-4 sm:grid-cols-2">
-            {blogs.map((blog: any) => (
-              <div key={blog.id} className="relative">
-                <BlogTimelineCard
-                  blog={{
-                    id: blog.id,
-                    title: blog.title ?? '',
-                    excerpt: blog.description ?? undefined,
-                    coverImageUrl: blog.image_url ?? undefined,
-                    commentCount: blog.comment_count ?? undefined,
-                    groupId: blog.group_id,
-                    authorId: blog.user_id ?? undefined,
-                    publishedAt: blog.date ?? undefined,
-                    hashtags: (blog.blog_hashtags ?? [])
-                      .map((bh: any) => bh.hashtag)
-                      .filter((h: any): h is { id: string; tag: string } => !!h),
-                  }}
-                />
-                {canManage && (
-                  <div className="absolute top-2 right-2 flex gap-1">
-                    <Link to={getEditorUrl(blog.id)}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="bg-background/80 h-7 w-7 backdrop-blur-sm"
-                      >
-                        <Edit className="h-3.5 w-3.5" />
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="bg-background/80 text-destructive hover:text-destructive h-7 w-7 backdrop-blur-sm"
-                      onClick={e => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onDeleteBlog(blog.id, blog.title ?? '');
-                      }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <VirtualBlogGrid
+            groupId={groupId}
+            searchQuery={searchQuery}
+            canManage={canManage}
+            getEditorUrl={getEditorUrl}
+            onDeleteBlog={onDeleteBlog}
+            compact={filter === 'all'}
+          />
         </div>
       )}
 
@@ -194,32 +301,11 @@ export function BlogsAndStatementsView({
               <MessageSquareText className="h-5 w-5" /> {t('features.statements.title')}
             </h2>
           )}
-          <div className="grid gap-4 sm:grid-cols-2">
-            {statements.map((s: any) => (
-              <StatementTimelineCard
-                key={s.id}
-                statement={{
-                  id: s.id,
-                  content: s.text ?? '',
-                  authorName: s.user
-                    ? [s.user.first_name, s.user.last_name].filter(Boolean).join(' ') ||
-                      s.user.handle ||
-                      ''
-                    : '',
-                  authorAvatar: s.user?.avatar ?? undefined,
-                  supportCount: s.upvotes ?? undefined,
-                  opposeCount: s.downvotes ?? undefined,
-                  commentCount: s.comment_count ?? undefined,
-                  imageUrl: s.image_url ?? undefined,
-                  videoUrl: s.video_url ?? undefined,
-                  groupId: s.group_id ?? undefined,
-                  hashtags: (s.statement_hashtags ?? [])
-                    .map((sh: any) => sh.hashtag)
-                    .filter((h: any): h is { id: string; tag: string } => !!h),
-                }}
-              />
-            ))}
-          </div>
+          <VirtualStatementGrid
+            groupId={groupId}
+            searchQuery={searchQuery}
+            compact={filter === 'all'}
+          />
         </div>
       )}
 

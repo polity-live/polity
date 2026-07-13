@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { Award, CalendarClock, CheckCircle2, Crown, Vote } from 'lucide-react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { PolityLocalListView } from '@/features/shared/virtualization';
 import { stripDelegateElectionMetadata } from '@/features/elections/logic/electionAssignmentMetadata';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
@@ -642,14 +642,6 @@ function DecisionPanelRow({
   );
 }
 
-function getGlobalInitialIndex(decisions: DecisionItem[]) {
-  const activeIndex = decisions.findIndex(decision => decision.temporalBucket === 'active');
-  if (activeIndex >= 0) return activeIndex;
-
-  const firstPastIndex = decisions.findIndex(decision => decision.temporalBucket === 'past');
-  return firstPastIndex >= 0 ? firstPastIndex : 0;
-}
-
 function VirtualDecisionList({
   widget,
   decisions,
@@ -661,66 +653,21 @@ function VirtualDecisionList({
   deltasByDecisionId: Map<string, DecisionLiveDelta[]>;
   onVoteDecision: (decision: DecisionItem) => void;
 }) {
-  const parentRef = useRef<HTMLDivElement>(null);
-  const didInitialScrollRef = useRef(false);
-  const rowVirtualizer = useVirtualizer({
-    count: decisions.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 168,
-    initialRect: { width: 640, height: 720 },
-    overscan: 6,
-  });
-  const measuredVirtualItems = rowVirtualizer.getVirtualItems();
-  const virtualItems =
-    measuredVirtualItems.length > 0
-      ? measuredVirtualItems
-      : decisions.slice(0, Math.min(decisions.length, 12)).map((decision, index) => ({
-          key: decision.id,
-          index,
-          start: index * 168,
-        }));
-  const totalSize = Math.max(rowVirtualizer.getTotalSize(), decisions.length * 168);
-
-  useEffect(() => {
-    if (widget.type !== 'global_decision_timeline' || didInitialScrollRef.current) {
-      return;
-    }
-
-    if (!decisions.length) return;
-
-    didInitialScrollRef.current = true;
-    rowVirtualizer.scrollToIndex(getGlobalInitialIndex(decisions), { align: 'center' });
-  }, [decisions, rowVirtualizer, widget.type]);
-
   return (
-    <div
-      ref={parentRef}
+    <PolityLocalListView
+      items={decisions}
+      getItemKey={decision => `${widget.id}:${decision.sourceId}`}
+      estimateSize={168}
+      overscan={6}
       className="h-full overflow-auto p-2"
-      data-testid="decision-widget-virtual-list"
-    >
-      <div className="relative w-full" style={{ height: `${totalSize}px` }}>
-        {virtualItems.map(virtualItem => {
-          const decision = decisions[virtualItem.index];
-          if (!decision) return null;
-
-          return (
-            <div
-              key={virtualItem.key}
-              data-index={virtualItem.index}
-              ref={rowVirtualizer.measureElement}
-              className="absolute top-0 left-0 w-full pb-2"
-              style={{ transform: `translateY(${virtualItem.start}px)` }}
-            >
-              <DecisionPanelRow
-                decision={decision}
-                deltas={deltasByDecisionId.get(decision.id)}
-                onVoteDecision={onVoteDecision}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </div>
+      renderItem={decision => (
+        <DecisionPanelRow
+          decision={decision}
+          deltas={deltasByDecisionId.get(decision.id)}
+          onVoteDecision={onVoteDecision}
+        />
+      )}
+    />
   );
 }
 

@@ -6,8 +6,69 @@ import {
   applyElectionQueryAccess,
 } from '../rbac/query-access';
 import { zql } from '../schema';
+import { virtualPageLimitSchema } from '../virtualization';
 
 export const electionQueries = {
+  decisionPage: defineQuery(
+    z.object({
+      status: z.string().optional(),
+      statuses: z.array(z.string()).default([]),
+      groupIds: z.array(z.string()).default([]),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: z.object({ id: z.string(), created_at: z.number() }).nullable().default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { status, statuses, groupIds, query, limit, start, dir }, ctx: { userID } }) => {
+      let q: any = applyElectionQueryAccess(zql.election, userID);
+      if (status) q = q.where('status', status);
+      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((groupIds?.length ?? 0) > 0) {
+        q = q.whereExists('agenda_item', (item: any) =>
+          item.whereExists('event', (event: any) => event.where('group_id', 'IN', groupIds))
+        );
+      }
+      if (query.trim()) q = q.where('title', 'ILIKE', `%${query.trim()}%`);
+      const direction = dir === 'backward' ? 'asc' : 'desc';
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q
+        .related('candidates', (candidate: any) => candidate.related('user'))
+        .related('agenda_item', (item: any) =>
+          item.related('event', (event: any) =>
+            event.related('participants', (participant: any) =>
+              participant.where('user_id', userID ?? '__anon__').related('participant_roles')
+            )
+          )
+        )
+        .related('role')
+        .related('offline_tallies', (tally: any) =>
+          tally
+            .whereExists('election', (election: any) =>
+              applyElectionManagerQueryAccess(election, userID)
+            )
+            .related('candidate')
+        )
+        .related('electors', (elector: any) =>
+          applyElectionElectorOrManagerQueryAccess(elector, userID)
+        )
+        .related('indicative_selections', (selection: any) =>
+          selection
+            .whereExists('election', (election: any) =>
+              applyElectionManagerQueryAccess(election, userID)
+            )
+            .related('candidate')
+        )
+        .related('final_selections', (selection: any) =>
+          selection
+            .whereExists('election', (election: any) =>
+              applyElectionManagerQueryAccess(election, userID)
+            )
+            .related('candidate')
+        )
+        .limit(limit);
+    }
+  ),
   // Election by agenda item with full details
   byAgendaItem: defineQuery(
     z.object({ agenda_item_id: z.string() }),

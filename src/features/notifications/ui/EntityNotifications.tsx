@@ -22,6 +22,8 @@ export function EntityNotifications({
         entityType,
         entityName,
       })}
+      entityId={entityId}
+      entityType={entityType}
     />
   );
 }

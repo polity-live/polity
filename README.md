@@ -293,6 +293,38 @@ supabase/         # Supabase config & schema SQL
 tools/deploy/     # Deployment helpers
 ```
 
+## List and Grid Virtualization Pattern
+
+For long lists, feeds, tables, grids, kanban columns, timelines, notification
+lists, and search-like result surfaces, use the shared virtualization
+infrastructure in `src/features/shared/virtualization`.
+
+- Use `usePolityZeroList` for vertical lists backed by `@rocicorp/zero-virtual`
+  0.6.
+- Use `usePolityZeroGrid` for responsive grids, masonry-style feeds, lanes,
+  kanban columns, and card layouts backed by TanStack virtualization.
+- Do not load full arrays and then apply client-side `slice()` paging for
+  paginated UI.
+- Virtualized page queries should use `{ limit, start, dir, ...filter }`. The
+  `start` cursor must include every sort field plus `id`.
+- Add a matching single-item query, such as `thingById`, whenever deep links,
+  selected rows, map selections, or back navigation need permalink resolution.
+- Keep `limit` compatible with query schemas and virtual lookahead windows. Do
+  not reintroduce `.max(100)` validation failures for virtualized pages.
+- Filter, tab, sort, entity id, and view mode values form the stable list
+  context. Context changes reset the window; live updates preserve the visible
+  anchor.
+- Loaded rows and skeleton placeholders need stable keys plus virtual row
+  attributes where applicable, including `data-vrow-index` and `data-vrow-key`
+  for zero-virtual rows.
+- Use count queries only when the UI displays totals or requires a stable
+  scrollbar/count.
+- Prefer query-side filtering and sorting. Do not apply unsupported filters
+  after paging over an incomplete page without clearly validating that
+  limitation.
+- Preserve scroll restoration, new-result indicators, dynamic measurement, and
+  anchor stability when mutating, inserting, deleting, or reordering rows.
+
 ## Tech Stack
 
 - **Framework**: [TanStack Start](https://tanstack.com/start) (Vinxi)

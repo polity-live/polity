@@ -1,25 +1,20 @@
 import { useMemo } from 'react';
+import { useQuery } from '@rocicorp/zero/react';
 import { useAuth } from '@/providers/auth-provider.tsx';
-import { filterAccessibleNotifications } from '@/features/notifications/logic/notificationHelpers.ts';
 import { getUnreadCount } from '@/features/messages/logic/messageUtils';
-import { useUserNotifications } from '@/features/notifications/hooks/useUserNotifications.ts';
 import { useMessageState } from '@/zero/messages/useMessageState.ts';
+import { queries } from '@/zero/queries';
 
 /**
  * Hook to get unread notifications count for the current user
  * Uses the same server-side filtered query as NotificationsPage
  */
 export function useUnreadNotificationsCount() {
-  const { data, isLoading, userId } = useUserNotifications();
-
-  const count = useMemo(() => {
-    if (!userId) return 0;
-    const notifications = data?.notifications || [];
-    const accessible = filterAccessibleNotifications(notifications, userId);
-    return accessible.filter(n => !n.is_read).length;
-  }, [data?.notifications, userId]);
-
-  return { count, isLoading };
+  const { user } = useAuth();
+  const [rows, result] = useQuery(
+    user?.id ? queries.notifications.countRows({ tab: 'unread', query: '' }) : null
+  );
+  return { count: rows?.length ?? 0, isLoading: !!user?.id && result.type === 'unknown' };
 }
 
 /**

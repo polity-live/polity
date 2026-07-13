@@ -89,6 +89,7 @@ export function ChangeRequestsPageContainerView({
   return (
     <>
       <ChangeRequestsView
+        virtualize
         amendmentId={amendmentId}
         approvedCount={approvedChangeRequests.length}
         declinedCount={declinedChangeRequests.length}

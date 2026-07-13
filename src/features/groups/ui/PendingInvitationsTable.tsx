@@ -7,7 +7,13 @@
 import { useMemo, type CSSProperties } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { DataTable, TableActionIconButton, type ColumnDef } from '@/features/shared/ui/data-table';
+import {
+  DataTable,
+  VirtualDataTable,
+  TableActionIconButton,
+  type ColumnDef,
+  type VirtualDataTableSource,
+} from '@/features/shared/ui/data-table';
 import { EntityBadge } from '@/features/shared/ui/status';
 import { Trash2, UserPlus } from 'lucide-react';
 import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';
@@ -28,6 +34,7 @@ interface PendingInvitationsTableProps<TParticipation extends ParticipationLike>
   fallbackRoleLabel?: string;
   withdrawActionLabel?: string;
   showBaseGroupColumn?: boolean;
+  virtualSource?: VirtualDataTableSource<TParticipation, any, any>;
 }
 
 export function PendingInvitationsTable<TParticipation extends ParticipationLike>({
@@ -42,6 +49,7 @@ export function PendingInvitationsTable<TParticipation extends ParticipationLike
   fallbackRoleLabel = 'Member',
   withdrawActionLabel = translateText('generated.inline.0105_withdraw_invitation_0beb2d10'),
   showBaseGroupColumn = false,
+  virtualSource,
 }: PendingInvitationsTableProps<TParticipation>) {
   const directWithoutPathLabel = translateText(
     'features.groups.memberships.composition.directWithoutPath',
@@ -208,13 +216,21 @@ export function PendingInvitationsTable<TParticipation extends ParticipationLike
       }
       description={description}
     >
-      <DataTable
-        columns={columns}
-        data={invitations}
-        getRowId={membership => membership.id}
-        enablePagination={false}
-        tableClassName="[&_td:last-child]:text-right"
-      />
+      {virtualSource ? (
+        <VirtualDataTable
+          columns={columns}
+          source={virtualSource}
+          tableClassName="[&_td:last-child]:text-right"
+        />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={invitations}
+          getRowId={membership => membership.id}
+          enablePagination={false}
+          tableClassName="[&_td:last-child]:text-right"
+        />
+      )}
     </ManagementSection>
   );
 }

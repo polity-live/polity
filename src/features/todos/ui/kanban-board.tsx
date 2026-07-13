@@ -8,9 +8,10 @@ import { KanbanBoardShellView } from './KanbanBoardShellView';
 interface KanbanBoardProps {
   canManageTodos?: boolean;
   todos: Todo[];
+  virtualQuery?: { query: string };
 }
 
-export function KanbanBoard({ canManageTodos = true, todos }: KanbanBoardProps) {
-  const controller = useKanbanBoardController({ canManageTodos, todos });
+export function KanbanBoard({ canManageTodos = true, todos, virtualQuery }: KanbanBoardProps) {
+  const controller = useKanbanBoardController({ canManageTodos, todos, virtualQuery });
   return <KanbanBoardShellView canManageTodos={canManageTodos} controller={controller} />;
 }

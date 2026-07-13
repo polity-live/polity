@@ -7,6 +7,19 @@ import {
   applyVoteVoterOrManagerQueryAccess,
 } from '../rbac/query-access';
 import { zql } from '../schema';
+import { virtualPageLimitSchema } from '../virtualization';
+
+const agendaOrderCursorSchema = z
+  .object({ id: z.string(), order_index: z.number().optional() })
+  .nullable()
+  .default(null);
+const agendaPageDirectionSchema = z.enum(['forward', 'backward']).default('forward');
+
+function applyAgendaOrderCursor(q: any, start: any, dir: string) {
+  const direction = dir === 'backward' ? 'desc' : 'asc';
+  q = q.orderBy('order_index', direction).orderBy('id', direction);
+  return start ? q.start(start, { inclusive: false }) : q;
+}
 
 export const agendaQueries = {
   // All agenda items for an event
@@ -57,6 +70,64 @@ export const agendaQueries = {
         .where('agenda_item_id', agenda_item_id)
         .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID))
         .orderBy('order_index', 'asc')
+  ),
+
+  speakerPage: defineQuery(
+    z.object({
+      agendaItemId: z.string(),
+      limit: virtualPageLimitSchema,
+      start: agendaOrderCursorSchema,
+      dir: agendaPageDirectionSchema,
+    }),
+    ({ args: { agendaItemId, limit, start, dir }, ctx: { userID } }) =>
+      applyAgendaOrderCursor(
+        zql.speaker_list
+          .where('agenda_item_id', agendaItemId)
+          .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID)),
+        start,
+        dir
+      )
+        .related('user')
+        .limit(limit)
+  ),
+
+  speakerById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    zql.speaker_list
+      .where('id', id)
+      .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID))
+      .related('user')
+      .one()
+  ),
+
+  changeRequestPage: defineQuery(
+    z.object({
+      agendaItemId: z.string(),
+      limit: virtualPageLimitSchema,
+      start: z.object({ id: z.string(), order_index: z.number() }).nullable().default(null),
+      dir: agendaPageDirectionSchema,
+    }),
+    ({ args: { agendaItemId, limit, start, dir }, ctx: { userID } }) =>
+      applyAgendaOrderCursor(
+        zql.agenda_item_change_request
+          .where('agenda_item_id', agendaItemId)
+          .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID)),
+        start,
+        dir
+      )
+        .related('change_request', (q: any) => q.related('user'))
+        .related('vote')
+        .limit(limit)
+  ),
+
+  changeRequestById: defineQuery(
+    z.object({ id: z.string() }),
+    ({ args: { id }, ctx: { userID } }) =>
+      zql.agenda_item_change_request
+        .where('id', id)
+        .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID))
+        .related('change_request', q => q.related('user'))
+        .related('vote')
+        .one()
   ),
 
   // Change request timeline for an agenda item (CR voting during events)

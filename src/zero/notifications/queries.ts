@@ -1,6 +1,14 @@
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
+import { virtualPageLimitSchema } from '../virtualization';
+
+const notificationStartSchema = z
+  .object({
+    created_at: z.number(),
+    id: z.string(),
+  })
+  .nullable();
 
 const ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES = [
   'active',
@@ -256,6 +264,93 @@ function buildEntityNotificationQuery(
 }
 
 export const notificationQueries = {
+  page: defineQuery(
+    z.object({
+      tab: z.enum(['all', 'unread', 'read', 'personal', 'entity']).default('all'),
+      query: z.string().default(''),
+      entityId: z.string().nullable().default(null),
+      entityType: z.string().nullable().default(null),
+      limit: virtualPageLimitSchema,
+      start: notificationStartSchema.default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { tab, query, entityId, entityType, limit, start, dir }, ctx: { userID } }) => {
+      const direction = dir === 'forward' ? 'desc' : 'asc';
+      let q: any =
+        entityId && entityType
+          ? buildEntityNotificationQuery(
+              zql.notification
+                .where('recipient_entity_id', entityId)
+                .where('recipient_entity_type', entityType),
+              userID,
+              entityType
+            )
+          : withCommonNotificationRelations(
+              applyNotificationAccess(zql.notification, userID),
+              userID
+            );
+
+      if (tab === 'personal') q = q.where('recipient_id', userID);
+      if (tab === 'entity') {
+        q = q.where('recipient_entity_type', 'IN', ['group', 'event', 'amendment', 'blog']);
+      }
+      if (tab === 'unread') q = q.where('is_read', false);
+      if (tab === 'read') q = q.where('is_read', true);
+
+      const normalizedQuery = query.trim();
+      if (normalizedQuery) {
+        q = q.where(({ or, cmp }: any) =>
+          or(
+            cmp('title', 'ILIKE', `%${normalizedQuery}%`),
+            cmp('message', 'ILIKE', `%${normalizedQuery}%`)
+          )
+        );
+      }
+
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q.limit(limit);
+    }
+  ),
+
+  countRows: defineQuery(
+    z.object({
+      tab: z.enum(['all', 'unread', 'read', 'personal', 'entity']).default('all'),
+      query: z.string().default(''),
+      entityId: z.string().nullable().default(null),
+      entityType: z.string().nullable().default(null),
+    }),
+    ({ args: { tab, query, entityId, entityType }, ctx: { userID } }) => {
+      let q = applyNotificationAccess(zql.notification, userID);
+      if (entityId && entityType) {
+        q = q.where('recipient_entity_id', entityId).where('recipient_entity_type', entityType);
+      }
+      if (tab === 'personal') q = q.where('recipient_id', userID);
+      if (tab === 'entity') {
+        q = q.where('recipient_entity_type', 'IN', ['group', 'event', 'amendment', 'blog']);
+      }
+      if (tab === 'unread') q = q.where('is_read', false);
+      if (tab === 'read') q = q.where('is_read', true);
+      const normalizedQuery = query.trim();
+      if (normalizedQuery) {
+        q = q.where(({ or, cmp }: any) =>
+          or(
+            cmp('title', 'ILIKE', `%${normalizedQuery}%`),
+            cmp('message', 'ILIKE', `%${normalizedQuery}%`)
+          )
+        );
+      }
+      return q.orderBy('created_at', 'desc').orderBy('id', 'desc');
+    }
+  ),
+
+  byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    withCommonNotificationRelations(
+      applyNotificationAccess(zql.notification.where('id', id), userID),
+      userID
+    ).one()
+  ),
+
   // Notifications for the current user
   byUser: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.notification.where('recipient_id', userID).orderBy('created_at', 'desc').limit(500)

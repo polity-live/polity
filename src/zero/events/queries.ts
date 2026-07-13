@@ -16,6 +16,24 @@ import {
   applyVoteVoterOrManagerQueryAccess,
 } from '../rbac/query-access';
 import { zql } from '../schema';
+import { virtualPageLimitSchema } from '../virtualization';
+
+const eventCreatedCursorSchema = z
+  .object({ id: z.string(), created_at: z.number() })
+  .nullable()
+  .default(null);
+const eventDateCursorSchema = z
+  .object({ id: z.string(), start_date: z.number().optional() })
+  .nullable()
+  .default(null);
+const eventPageDirectionSchema = z.enum(['forward', 'backward']).default('forward');
+
+function applyEventCursor<T>(q: T, field: 'created_at' | 'start_date', start: any, dir: string): T {
+  let query: any = q;
+  const direction = dir === 'backward' ? 'asc' : 'desc';
+  query = query.orderBy(field, direction).orderBy('id', direction);
+  return (start ? query.start(start, { inclusive: false }) : query) as T;
+}
 
 const WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
 
@@ -110,6 +128,130 @@ export const eventQueries = {
         .whereExists('event', event => applyEventAccess(event, userID))
         .related('participant_roles', q => q.related('role'))
         .orderBy('created_at', 'asc')
+  ),
+
+  participantPage: defineQuery(
+    z.object({
+      eventId: z.string(),
+      status: z.string().optional(),
+      statuses: z.array(z.string()).default([]),
+      roleId: z.string().optional(),
+      roleIds: z.array(z.string()).default([]),
+      query: z.string().default(''),
+      order: z.enum(['ascending', 'descending']).default('ascending'),
+      limit: virtualPageLimitSchema,
+      start: eventCreatedCursorSchema,
+      dir: eventPageDirectionSchema,
+    }),
+    ({
+      args: { eventId, status, statuses, roleId, roleIds, query, limit, start, dir },
+      ctx: { userID },
+    }) => {
+      let q: any = applyEventParticipantOrManagerQueryAccess(zql.event_participant, userID)
+        .where('event_id', eventId)
+        .whereExists('event', event => applyEventAccess(event, userID));
+      if (status) q = q.where('status', status);
+      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if (roleId)
+        q = q.whereExists('participant_roles', (role: any) => role.where('role_id', roleId));
+      if ((roleIds?.length ?? 0) > 0)
+        q = q.whereExists('participant_roles', (role: any) => role.where('role_id', 'IN', roleIds));
+      const term = query.trim();
+      if (term) {
+        q = q.whereExists('user', (user: any) =>
+          user.where(({ or, cmp }: any) =>
+            or(
+              cmp('first_name', 'ILIKE', `%${term}%`),
+              cmp('last_name', 'ILIKE', `%${term}%`),
+              cmp('handle', 'ILIKE', `%${term}%`)
+            )
+          )
+        );
+      }
+      return applyEventCursor(q, 'created_at', start, dir)
+        .related('user')
+        .related('participant_roles', (role: any) => role.related('role'))
+        .limit(limit);
+    }
+  ),
+
+  participantById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    applyEventParticipantOrManagerQueryAccess(zql.event_participant, userID)
+      .where('id', id)
+      .related('user')
+      .related('participant_roles', q => q.related('role'))
+      .one()
+  ),
+
+  participantPageByUser: defineQuery(
+    z.object({
+      userId: z.string(),
+      status: z.string().optional(),
+      statuses: z.array(z.string()).default([]),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: eventCreatedCursorSchema,
+      dir: eventPageDirectionSchema,
+    }),
+    ({ args: { userId, status, statuses, query, limit, start, dir }, ctx: { userID } }) => {
+      let q = zql.event_participant.where('user_id', userId).where('user_id', userID);
+      if (status) q = q.where('status', status);
+      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      const term = query.trim();
+      if (term)
+        q = q.whereExists('event', (event: any) => event.where('title', 'ILIKE', `%${term}%`));
+      return applyEventCursor(q, 'created_at', start, dir)
+        .related('event', event =>
+          event
+            .related('creator')
+            .related('group')
+            .related('event_hashtags', link => link.related('hashtag'))
+            .related('participants')
+            .related('agenda_items', item => item.related('election').related('amendment'))
+        )
+        .related('participant_roles', role => role.related('role'))
+        .limit(limit);
+    }
+  ),
+
+  calendarPage: defineQuery(
+    z.object({
+      groupId: z.string().optional(),
+      creatorId: z.string().optional(),
+      from: z.number().nullable().default(null),
+      to: z.number().nullable().default(null),
+      query: z.string().default(''),
+      order: z.enum(['ascending', 'descending']).default('ascending'),
+      limit: virtualPageLimitSchema,
+      start: eventDateCursorSchema,
+      dir: eventPageDirectionSchema,
+    }),
+    ({
+      args: { groupId, creatorId, from, to, query, order, limit, start, dir },
+      ctx: { userID },
+    }) => {
+      let q: any = applyEventAccess(zql.event, userID);
+      if (groupId) q = q.where('group_id', groupId);
+      if (creatorId) q = q.where('creator_id', creatorId);
+      if (from != null)
+        q = q.where(({ or, cmp }: any) =>
+          or(cmp('start_date', '>=', from), cmp('is_recurring', true))
+        );
+      if (to != null) q = q.where('start_date', '<=', to);
+      const term = query.trim();
+      if (term) q = q.where('title', 'ILIKE', `%${term}%`);
+      const cursorDirection =
+        order === 'ascending' ? (dir === 'forward' ? 'backward' : 'forward') : dir;
+      return applyEventCursor(q, 'start_date', start, cursorDirection)
+        .related('creator')
+        .related('group')
+        .related('participants', (participant: any) =>
+          applyEventParticipantOrManagerQueryAccess(participant, userID).related('user')
+        )
+        .related('exceptions')
+        .related('event_hashtags', (hashtag: any) => hashtag.related('hashtag'))
+        .limit(limit);
+    }
   ),
 
   offlineParticipants: defineQuery(
@@ -1111,6 +1253,7 @@ export type DelegateElectionAssignmentRow = QueryRowType<
   typeof eventQueries.delegateElectionAssignmentsByEvent
 >;
 export type EventParticipantsByUserRow = QueryRowType<typeof eventQueries.participantsByUser>;
+export type EventParticipantPageByUserRow = QueryRowType<typeof eventQueries.participantPageByUser>;
 export type EventParticipantByParticipatedEventIdsRow = QueryRowType<
   typeof eventQueries.participantsByParticipatedEventIds
 >;

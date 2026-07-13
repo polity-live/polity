@@ -1,5 +1,5 @@
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { DataTable } from '@/features/shared/ui/data-table';
+import { DataTable, VirtualDataTable } from '@/features/shared/ui/data-table';
 import { ManagementSection } from '@/features/shared/ui/form';
 export interface MembershipStatusTableViewProps {
   title: any;
@@ -20,6 +20,7 @@ export interface MembershipStatusTableViewProps {
   getEntityImage: any;
   buildDefaultEntityHref: any;
   columns: any;
+  virtualSource: any;
 }
 
 export function MembershipStatusTableView({
@@ -29,6 +30,7 @@ export function MembershipStatusTableView({
   items,
   statusType,
   columns,
+  virtualSource,
 }: MembershipStatusTableViewProps) {
   if (items.length === 0 && statusType !== 'active') {
     return null;
@@ -49,15 +51,25 @@ export function MembershipStatusTableView({
       }
       description={description}
     >
-      <DataTable
-        columns={columns}
-        data={items}
-        getRowId={(item: any) => item.id}
-        enablePagination={false}
-        emptyTitle={translateText('pages.user.memberships.sections.emptyTitle', {
-          statusType: statusLabel,
-        })}
-      />
+      {virtualSource ? (
+        <VirtualDataTable
+          columns={columns}
+          source={virtualSource}
+          emptyTitle={translateText('pages.user.memberships.sections.emptyTitle', {
+            statusType: statusLabel,
+          })}
+        />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={items}
+          getRowId={(item: any) => item.id}
+          enablePagination={false}
+          emptyTitle={translateText('pages.user.memberships.sections.emptyTitle', {
+            statusType: statusLabel,
+          })}
+        />
+      )}
     </ManagementSection>
   );
 }

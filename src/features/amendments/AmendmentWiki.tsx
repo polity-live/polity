@@ -70,6 +70,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   );
   return (
     <AmendmentWikiView
+      virtualizeParticipationDirectory
       amendmentId={amendmentId}
       t={t}
       user={user}

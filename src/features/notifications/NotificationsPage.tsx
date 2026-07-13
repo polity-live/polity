@@ -11,12 +11,9 @@ export function NotificationsPage() {
       selectedTab={np.selectedTab}
       onSelectedTabChange={np.setSelectedTab}
       tabSwipeHandlers={np.tabSwipeHandlers}
-      unreadCount={np.filteredNotifications.unread.length}
-      searchFilteredNotifications={np.searchFilteredNotifications}
-      paginatedNotifications={np.paginatedNotifications}
+      unreadCount={np.unreadCount}
+      counts={np.counts}
       isInitialLoading={np.isInitialLoading}
-      hasMore={np.hasMore}
-      loadMoreRef={np.loadMoreRef}
       labels={{
         searchPlaceholder: np.t('features.notifications.searchPlaceholder'),
         emptyAllTitle: np.t('features.notifications.empty.noNotificationsYet'),

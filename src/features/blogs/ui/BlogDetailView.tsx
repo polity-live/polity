@@ -48,6 +48,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
+import { queries } from '@/zero/queries';
 
 interface BlogDetailAuthor {
   id?: string;
@@ -70,6 +71,7 @@ interface BlogDetailShareContextItem {
 }
 
 interface BlogDetailViewProps {
+  virtualizeParticipationDirectory?: boolean;
   author?: BlogDetailAuthor;
   blogId: string;
   bloggers: readonly any[];
@@ -106,6 +108,7 @@ interface BlogDetailViewProps {
 }
 
 export function BlogDetailView({
+  virtualizeParticipationDirectory = false,
   author,
   blogId,
   bloggers,
@@ -286,6 +289,58 @@ export function BlogDetailView({
           noResultsLabel={translateText(
             'generated.inline.0036_no_active_bloggers_match_your_search_eae577bf'
           )}
+          virtualSource={
+            virtualizeParticipationDirectory
+              ? {
+                  historyKey: `blog-${blogId}-participation-directory`,
+                  context: {
+                    blogId,
+                    statuses: ['active', 'admin', 'collaborator', 'confirmed', 'member', 'owner'],
+                  },
+                  getPageQuery: ({ limit, start, dir, settled, query, roleIds }) => ({
+                    query: queries.blogs.bloggerPage({
+                      blogId,
+                      statuses: ['active', 'admin', 'collaborator', 'confirmed', 'member', 'owner'],
+                      roleIds,
+                      query,
+                      limit,
+                      start,
+                      dir,
+                    }) as never,
+                    options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+                  }),
+                  getSingleQuery: ({ id, settled }) => ({
+                    query: queries.blogs.bloggerPageById({ id }) as never,
+                    options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+                  }),
+                  getRowKey: row => row.id,
+                  mapRow: blogger => {
+                    const bloggerUser = blogger.user;
+                    const fallbackRole: WikiParticipationRole =
+                      blogger.status === 'owner'
+                        ? { id: 'owner', name: translateText('features.blogs.bloggers.ownerRole') }
+                        : {
+                            id: 'blogger',
+                            name: translateText(
+                              'generated.inline.0032_blogger_9b156370',
+                              'Blogger'
+                            ),
+                          };
+                    const role = normalizeWikiParticipationRole(blogger.role) ?? fallbackRole;
+                    return {
+                      id: blogger.id,
+                      userId: bloggerUser?.id ?? blogger.user_id,
+                      name: getWikiParticipationName(bloggerUser),
+                      handle: bloggerUser?.handle ?? null,
+                      email: bloggerUser?.email ?? null,
+                      avatar: bloggerUser?.avatar ?? null,
+                      status: blogger.status ?? null,
+                      roles: [role],
+                    };
+                  },
+                }
+              : undefined
+          }
         />
 
         <Card className="mb-6">

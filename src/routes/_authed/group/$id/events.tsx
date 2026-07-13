@@ -55,6 +55,7 @@ function GroupEventsPage() {
         onDateSelect={gp.setSelectedDate}
         onEventSelect={gp.onEventSelect}
         onCreateEventRange={gp.onCreateEventRange}
+        listQueryScope={{ groupId: id, query: gp.searchQuery }}
       />
     </div>
   );

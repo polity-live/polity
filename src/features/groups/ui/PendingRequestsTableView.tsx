@@ -4,7 +4,7 @@
  * Displays pending membership requests for group admins to approve or reject.
  */
 
-import { DataTable } from '@/features/shared/ui/data-table';
+import { DataTable, VirtualDataTable } from '@/features/shared/ui/data-table';
 import { Users } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { ManagementSection } from '@/features/shared/ui/form';
@@ -22,6 +22,7 @@ export interface PendingRequestsTableViewProps {
   primaryActionLabel: any;
   secondaryActionLabel: any;
   columns: any;
+  virtualSource?: any;
 }
 
 export function PendingRequestsTableView({
@@ -29,6 +30,7 @@ export function PendingRequestsTableView({
   title,
   description,
   columns,
+  virtualSource,
 }: PendingRequestsTableViewProps) {
   if (requests.length === 0) {
     return null;
@@ -47,13 +49,21 @@ export function PendingRequestsTableView({
       }
       description={description}
     >
-      <DataTable
-        columns={columns}
-        data={requests}
-        getRowId={(membership: any) => membership.id}
-        enablePagination={false}
-        tableClassName="[&_td:last-child]:text-right"
-      />
+      {virtualSource ? (
+        <VirtualDataTable
+          columns={columns}
+          source={virtualSource}
+          tableClassName="[&_td:last-child]:text-right"
+        />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={requests}
+          getRowId={(membership: any) => membership.id}
+          enablePagination={false}
+          tableClassName="[&_td:last-child]:text-right"
+        />
+      )}
     </ManagementSection>
   );
 }

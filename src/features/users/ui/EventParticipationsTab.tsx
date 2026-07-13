@@ -9,6 +9,8 @@ interface EventParticipationsTabProps {
   onDeclineInvitation: (id: string) => void;
   onLeave: (id: string) => void;
   onWithdrawRequest: (id: string) => void;
+  userId: string;
+  searchQuery: string;
 }
 
 export function EventParticipationsTab({
@@ -17,6 +19,8 @@ export function EventParticipationsTab({
   onDeclineInvitation,
   onLeave,
   onWithdrawRequest,
+  userId,
+  searchQuery,
 }: EventParticipationsTabProps) {
   return (
     <div className="space-y-6">
@@ -32,6 +36,8 @@ export function EventParticipationsTab({
         statusType="invited"
         entityKey="event"
         fallbackIcon={Calendar}
+        userId={userId}
+        searchQuery={searchQuery}
         onAccept={onAcceptInvitation}
         onDecline={onDeclineInvitation}
       />
@@ -48,6 +54,8 @@ export function EventParticipationsTab({
         statusType="active"
         entityKey="event"
         fallbackIcon={Calendar}
+        userId={userId}
+        searchQuery={searchQuery}
         onLeave={onLeave}
       />
 
@@ -63,6 +71,8 @@ export function EventParticipationsTab({
         statusType="requested"
         entityKey="event"
         fallbackIcon={Calendar}
+        userId={userId}
+        searchQuery={searchQuery}
         onWithdraw={onWithdrawRequest}
       />
     </div>

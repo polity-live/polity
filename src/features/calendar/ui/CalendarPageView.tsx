@@ -113,6 +113,7 @@ export function CalendarPageView({
         onDateSelect={onDateSelect}
         onEventSelect={onEventSelect}
         onCreateEventRange={onCreateEventRange}
+        listQueryScope={{ query: searchQuery }}
       />
     </div>
   );

@@ -19,10 +19,12 @@ import { StatementStoryCarousel } from '@/features/statements/ui/StatementStoryC
 
 export interface ModernTimelineViewProps extends UseTimelinePageReturn {
   className?: string;
+  virtualizeTimeline?: boolean;
 }
 
 export function ModernTimelineView({
   className,
+  virtualizeTimeline = false,
   userId,
   mode,
   setMode,
@@ -176,6 +178,7 @@ export function ModernTimelineView({
               isLoading={civicTimeline.isLoading}
               onActiveItemChange={setActiveItemId}
               onItemSelect={handleRailItemSelect}
+              queryContext={virtualizeTimeline ? { contentTypes: filters.contentTypes } : undefined}
             />
           </div>
 

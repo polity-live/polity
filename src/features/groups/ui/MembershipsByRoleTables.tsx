@@ -12,7 +12,13 @@ import type {
   ParticipationLike,
   ParticipationRoleLike,
 } from '@/features/shared/types/participation';
-import { DataTable, TableActionIconButton, type ColumnDef } from '@/features/shared/ui/data-table';
+import {
+  DataTable,
+  VirtualDataTable,
+  TableActionIconButton,
+  type ColumnDef,
+  type VirtualDataTableSource,
+} from '@/features/shared/ui/data-table';
 import { CountBadge, EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import { UserTableCell } from '@/features/shared/ui/data-table';
 import type { SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
@@ -47,6 +53,7 @@ interface MembershipsByRoleTablesProps<
   showBaseGroupColumn?: boolean;
   showDelegateRepresentationColumn?: boolean;
   hideEmptyRoleSections?: boolean;
+  getVirtualSource?: (roleId: string) => VirtualDataTableSource<TParticipation, any, any>;
 }
 
 export function MembershipsByRoleTables<
@@ -73,6 +80,7 @@ export function MembershipsByRoleTables<
   showBaseGroupColumn = false,
   showDelegateRepresentationColumn = false,
   hideEmptyRoleSections = false,
+  getVirtualSource,
 }: MembershipsByRoleTablesProps<TRole, TParticipation>) {
   const { t } = useTranslation();
   const directWithoutPathLabel = t('features.groups.memberships.composition.directWithoutPath');
@@ -368,13 +376,21 @@ export function MembershipsByRoleTables<
                 </div>
               ) : null}
             </div>
-            <DataTable
-              columns={columns}
-              data={roleMembers}
-              getRowId={membership => `${section.id}-${membership.id}`}
-              enablePagination={false}
-              emptyTitle={resolvedEmptyStateLabel}
-            />
+            {section.kind === 'role' && getVirtualSource ? (
+              <VirtualDataTable
+                columns={columns}
+                source={getVirtualSource(section.id)}
+                emptyTitle={resolvedEmptyStateLabel}
+              />
+            ) : (
+              <DataTable
+                columns={columns}
+                data={roleMembers}
+                getRowId={membership => `${section.id}-${membership.id}`}
+                enablePagination={false}
+                emptyTitle={resolvedEmptyStateLabel}
+              />
+            )}
           </section>
         );
       })}

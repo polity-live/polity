@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { useQuery } from '@rocicorp/zero/react';
 
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { getNotificationNavigationTarget } from '@/features/notifications/logic/notificationHelpers.ts';
 import type { Notification } from '@/features/notifications/types/notification.types.ts';
 import type { EntityType } from '@/features/notifications/utils/notification-helpers.ts';
 import { useNotificationActions } from '@/zero/notifications/useNotificationActions.ts';
-import { useNotificationState } from '@/zero/notifications/useNotificationState.ts';
+import { queries } from '@/zero/queries';
 
 interface UseEntityNotificationsControllerOptions {
   entityId: string;
@@ -22,35 +23,41 @@ export function useEntityNotificationsController({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { markEntityNotificationRead, markAllEntityNotificationsRead } = useNotificationActions();
-  const { entityNotifications: notifications, isLoading } = useNotificationState({
-    entityFilter: { entityId, entityType },
-  });
   const [searchQuery, setSearchQuery] = useState('');
 
+  const countArgs = { entityId, entityType };
+  const [allRows, allResult] = useQuery(
+    queries.notifications.countRows({
+      ...countArgs,
+      tab: 'all',
+      query: searchQuery,
+    })
+  );
+  const [unreadRows, unreadResult] = useQuery(
+    queries.notifications.countRows({
+      ...countArgs,
+      tab: 'unread',
+      query: searchQuery,
+    })
+  );
+  const [allUnreadRows, allUnreadResult] = useQuery(
+    queries.notifications.countRows({
+      ...countArgs,
+      tab: 'unread',
+      query: '',
+    })
+  );
+  const counts = { all: allRows?.length ?? 0, unread: unreadRows?.length ?? 0 };
+  const unreadCount = allUnreadRows?.length ?? 0;
+  const isLoading = [allResult, unreadResult, allUnreadResult].some(
+    result => result.type === 'unknown'
+  );
+
   useEffect(() => {
-    if (entityId && entityType && notifications.length > 0) {
+    if (entityId && entityType && unreadCount > 0) {
       markAllEntityNotificationsRead({ entity_id: entityId, entity_type: entityType });
     }
-  }, [entityId, entityType, notifications.length, markAllEntityNotificationsRead]);
-
-  const filteredNotifications = useMemo(() => {
-    if (!searchQuery.trim()) return notifications;
-
-    const query = searchQuery.toLowerCase();
-    return notifications.filter(notification => {
-      const senderName = [notification.sender?.first_name, notification.sender?.last_name]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      const title = (notification.title || '').toLowerCase();
-      const message = (notification.message || '').toLowerCase();
-
-      return senderName.includes(query) || title.includes(query) || message.includes(query);
-    });
-  }, [notifications, searchQuery]);
-
-  const unreadNotifications = filteredNotifications.filter(notification => !notification.is_read);
-  const readNotifications = filteredNotifications.filter(notification => notification.is_read);
+  }, [entityId, entityType, markAllEntityNotificationsRead, unreadCount]);
 
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.is_read) {
@@ -83,7 +90,7 @@ export function useEntityNotificationsController({
   };
 
   const markAllAsRead = async () => {
-    if (unreadNotifications.length > 0) {
+    if (unreadCount > 0) {
       await markAllEntityNotificationsRead({ entity_id: entityId, entity_type: entityType });
     }
   };
@@ -114,22 +121,20 @@ export function useEntityNotificationsController({
   };
 
   const statusDescription =
-    unreadNotifications.length > 0
-      ? unreadNotifications.length === 1
+    counts.unread > 0
+      ? counts.unread === 1
         ? t('pages.notifications.entity.unreadCount', {
-            count: unreadNotifications.length,
+            count: counts.unread,
           })
         : t('pages.notifications.entity.unreadCountPlural', {
-            count: unreadNotifications.length,
+            count: counts.unread,
           })
       : t('pages.notifications.entity.allCaughtUp');
 
   return {
     isLoading,
-    notifications,
-    filteredNotifications,
-    unreadNotifications,
-    readNotifications,
+    counts,
+    unreadCount,
     searchQuery,
     labels: {
       loading: t('pages.notifications.entity.loadingNotifications'),

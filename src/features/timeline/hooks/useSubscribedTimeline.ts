@@ -5,11 +5,13 @@
  * Returns content from groups, events, and users the current user follows
  */
 
-import { useMemo, useCallback, useState } from 'react';
-import { useUserGroupSubscriptions } from '@/zero/groups/useGroupState';
-import { useUserEventSubscriptions } from '@/zero/events/useEventState';
+import { useMemo, useCallback } from 'react';
+import { useQuery } from '@rocicorp/zero/react';
+import { queries } from '@/zero/queries';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import type { GroupMembershipPageByUserRow } from '@/zero/groups/queries';
+import type { EventParticipantPageByUserRow } from '@/zero/events/queries';
 
 export interface TimelineItem {
   id: string;
@@ -111,16 +113,24 @@ interface AgendaItemPreview {
 export function useSubscribedTimeline(
   options: UseSubscribedTimelineOptions
 ): UseSubscribedTimelineResult {
-  const { userId, pageSize = 20, sortBy = 'recent' } = options;
-  const [page, setPage] = useState(0);
+  const { userId, sortBy = 'recent' } = options;
 
-  // Query user's group memberships via facade
-  const { memberships: membershipRows, isLoading: membershipLoading } =
-    useUserGroupSubscriptions(userId);
-
-  // Query user's event participations via facade
-  const { participations: participationRows, isLoading: participationLoading } =
-    useUserEventSubscriptions(userId);
+  const [membershipRowsData, membershipResult] = useQuery(
+    queries.groups.membershipPageByUser({
+      userId,
+      query: '',
+      limit: 101,
+      start: null,
+      dir: 'forward',
+    })
+  );
+  const [participationRowsData, participationResult] = useQuery(
+    queries.events.participantPageByUser({ userId, limit: 101, start: null, dir: 'forward' })
+  );
+  const membershipRows: readonly GroupMembershipPageByUserRow[] = membershipRowsData ?? [];
+  const participationRows: readonly EventParticipantPageByUserRow[] = participationRowsData ?? [];
+  const membershipLoading = membershipResult.type === 'unknown';
+  const participationLoading = participationResult.type === 'unknown';
 
   const membershipData = { groupMemberships: membershipRows };
   const participationData = { eventParticipants: participationRows };
@@ -254,26 +264,14 @@ export function useSubscribedTimeline(
     }
   }, [groupItems, eventItems, sortBy]);
 
-  // Paginate items
-  const paginatedItems = useMemo(() => {
-    return allItems.slice(0, (page + 1) * pageSize);
-  }, [allItems, page, pageSize]);
-
-  const loadMore = useCallback(() => {
-    if (paginatedItems.length < allItems.length) {
-      setPage(p => p + 1);
-    }
-  }, [paginatedItems.length, allItems.length]);
-
-  const refresh = useCallback(() => {
-    setPage(0);
-  }, []);
+  const loadMore = useCallback(() => undefined, []);
+  const refresh = useCallback(() => undefined, []);
 
   return {
-    items: paginatedItems,
+    items: allItems,
     isLoading: membershipLoading || participationLoading,
     error: null,
-    hasMore: paginatedItems.length < allItems.length,
+    hasMore: false,
     loadMore,
     refresh,
     subscribedGroupIds,

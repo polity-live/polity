@@ -1,5 +1,5 @@
 import { Trash2, type LucideIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { getMembershipRoleNames } from '@/features/shared/logic/membershipRoleHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
@@ -16,6 +16,7 @@ import type { EventParticipantsByUserRow } from '@/zero/events/queries';
 import type { GroupMembershipsByUserRow } from '@/zero/groups/queries';
 import type { FilterableRecord } from '../hooks/useUserMembershipsFilters';
 import { DangerConfirmDialog } from '@/features/shared/ui/dialog';
+import { queries } from '@/zero/queries';
 
 type EntityKey = 'group' | 'event' | 'amendment' | 'blog';
 
@@ -51,6 +52,8 @@ interface MembershipStatusTableProps {
   getAcceptPreflightInput?: (
     item: FilterableRecord
   ) => GroupConflictMembershipPreflight | null | undefined;
+  userId?: string;
+  searchQuery?: string;
 }
 
 import { InvitationActions } from './InvitationActions';
@@ -69,6 +72,8 @@ export function MembershipStatusTable({
   onWithdraw,
   getEntityHref,
   getAcceptPreflightInput,
+  userId,
+  searchQuery = '',
 }: MembershipStatusTableProps) {
   const [pendingAction, setPendingAction] = useState<{
     kind: 'leave' | 'withdraw';
@@ -256,6 +261,104 @@ export function MembershipStatusTable({
       ),
     },
   ];
+  const rowsById = useMemo(() => new Map(items.map(item => [item.id, item])), [items]);
+  const virtualSource = useMemo(() => {
+    if (!userId) return undefined;
+    const statuses =
+      statusType === 'active'
+        ? entityKey === 'amendment'
+          ? ['active', 'member', 'admin', 'collaborator']
+          : entityKey === 'event'
+            ? ['active', 'member', 'admin', 'confirmed']
+            : ['active', 'member', 'admin', 'confirmed', 'owner']
+        : [statusType];
+    const common = {
+      context: { userId, entityKey, statuses, query: searchQuery },
+      historyKey: `user-${userId}-memberships-${entityKey}-${statusType}`,
+      getRowKey: (row: any) => row.id,
+      toStartRow: (row: any) => ({ created_at: row.created_at, id: row.id }),
+      mapRow: (row: any) => rowsById.get(row.id) ?? row,
+    };
+    const options = ({ settled }: any) => ({ ttl: settled ? ('5m' as const) : ('none' as const) });
+    if (entityKey === 'group') {
+      return {
+        ...common,
+        getPageQuery: ({ limit, start, dir, settled }: any) => ({
+          query: queries.groups.membershipPageByUser({
+            userId,
+            statuses,
+            query: searchQuery,
+            limit,
+            start,
+            dir,
+          }) as never,
+          options: options({ settled }),
+        }),
+        getSingleQuery: ({ id, settled }: any) => ({
+          query: queries.groups.membershipById({ id }) as never,
+          options: options({ settled }),
+        }),
+      };
+    }
+    if (entityKey === 'event') {
+      return {
+        ...common,
+        getPageQuery: ({ limit, start, dir, settled }: any) => ({
+          query: queries.events.participantPageByUser({
+            userId,
+            statuses,
+            query: searchQuery,
+            limit,
+            start,
+            dir,
+          }) as never,
+          options: options({ settled }),
+        }),
+        getSingleQuery: ({ id, settled }: any) => ({
+          query: queries.events.participantById({ id }) as never,
+          options: options({ settled }),
+        }),
+      };
+    }
+    if (entityKey === 'amendment') {
+      return {
+        ...common,
+        getPageQuery: ({ limit, start, dir, settled }: any) => ({
+          query: queries.amendments.collaborationPageByUser({
+            userId,
+            statuses,
+            query: searchQuery,
+            limit,
+            start,
+            dir,
+          }) as never,
+          options: options({ settled }),
+        }),
+        getSingleQuery: ({ id, settled }: any) => ({
+          query: queries.amendments.collaboratorById({ id }) as never,
+          options: options({ settled }),
+        }),
+      };
+    }
+    return {
+      ...common,
+      getPageQuery: ({ limit, start, dir, settled }: any) => ({
+        query: queries.blogs.bloggerMembershipPageByUser({
+          userId,
+          statuses,
+          query: searchQuery,
+          limit,
+          start,
+          dir,
+        }) as never,
+        options: options({ settled }),
+      }),
+      getSingleQuery: ({ id, settled }: any) => ({
+        query: queries.blogs.bloggerPageById({ id }) as never,
+        options: options({ settled }),
+      }),
+    };
+  }, [entityKey, rowsById, searchQuery, statusType, userId]);
   return (
     <>
       <MembershipStatusTableView
@@ -277,6 +380,7 @@ export function MembershipStatusTable({
         getEntityImage={getEntityImage}
         buildDefaultEntityHref={buildDefaultEntityHref}
         columns={columns}
+        virtualSource={virtualSource}
       />
       <DangerConfirmDialog
         open={pendingAction !== null}

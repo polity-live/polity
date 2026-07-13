@@ -69,6 +69,7 @@ const searchDocumentPageArgsSchema = z.object({
   start: searchStartSchema.default(null),
   dir: searchDirectionSchema.default('forward'),
   bounds: searchBoundsSchema.default(null),
+  ownerUserId: z.string().optional(),
 });
 
 function applySearchAccess(q: any, userID: string | undefined) {
@@ -167,6 +168,7 @@ export const searchQueries = {
         start,
         dir,
         bounds,
+        ownerUserId,
       },
       ctx: { userID },
     }) => {
@@ -174,6 +176,7 @@ export const searchQueries = {
       q = applySearchAccess(q, userID);
       q = applySearchText(q, query);
       q = applySpatialBounds(q, bounds);
+      if (ownerUserId) q = q.where('owner_user_id', ownerUserId);
 
       const normalizedTypes = types.map(type => type.trim()).filter(Boolean);
       if (normalizedTypes.length > 0) {
@@ -201,10 +204,11 @@ export const searchQueries = {
   ),
 
   searchDocumentById: defineQuery(
-    z.object({ id: z.string() }),
-    ({ args: { id }, ctx: { userID } }) => {
+    z.object({ id: z.string(), ownerUserId: z.string().optional() }),
+    ({ args: { id, ownerUserId }, ctx: { userID } }) => {
       let q: any = zql.search_document.related('topics').related('group').where('id', id);
       q = applySearchAccess(q, userID);
+      if (ownerUserId) q = q.where('owner_user_id', ownerUserId);
       return q.one();
     }
   ),

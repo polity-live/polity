@@ -1852,6 +1852,7 @@ export function EventAgendaItemDetail({
   );
   return (
     <EventAgendaItemDetailView
+      virtualizeChangeRequests
       eventId={eventId}
       agendaItemId={agendaItemId}
       t={t}

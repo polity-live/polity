@@ -145,6 +145,7 @@ export function UserMeetingSchedulerView({
   setIsBookingDialogOpen,
   setSelectedDate,
   setView,
+  userId,
   view,
 }: UserMeetingSchedulerViewProps) {
   if (isLoading) {
@@ -207,6 +208,7 @@ export function UserMeetingSchedulerView({
           onCancel={handleCancelBooking}
           onDelete={handleDeleteMeeting}
           onSelectInstance={isOwner ? openEditDialog : openBookingDialog}
+          creatorId={userId}
         />
       )}
 

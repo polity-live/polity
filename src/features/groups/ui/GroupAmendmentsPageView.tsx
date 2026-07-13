@@ -60,6 +60,7 @@ export function GroupAmendmentsPageView({
         groupedAmendments={groupedAmendments}
         groupName={groupName}
         groupId={groupId}
+        filters={filters}
       />
     </div>
   );

@@ -39,9 +39,10 @@ function renderRequest(currentUserId: string) {
     displayMessages: [],
     otherUser: null,
     otherParticipantName: 'Mina Bauer',
-    virtualRows: [{ type: 'conversation-request' }],
-    virtualizer: { getTotalSize: () => 92, measureElement: vi.fn() },
-    virtualItems: [{ key: 'request', index: 0, start: 0 }],
+    virtualRows: [{ type: 'conversation-request', key: 'conversation-request' }],
+    spaceBefore: 0,
+    spaceAfter: 0,
+    rowsEmpty: false,
     scrollToBottom: vi.fn(),
     handleScroll: vi.fn(),
   };
