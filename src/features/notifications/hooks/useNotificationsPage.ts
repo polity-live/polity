@@ -1,38 +1,52 @@
 import { useState, useMemo, useCallback } from 'react';
-import { useInfiniteScroll } from '@/features/shared/hooks/useInfiniteScroll';
-import { useNotificationFilters } from './useNotificationFilters';
+import { useQuery } from '@rocicorp/zero/react';
 import { useNotificationActions } from './useNotificationActions';
-import { useUserNotifications } from './useUserNotifications';
 import { useNotificationActions as useZeroNotificationActions } from '@/zero/notifications/useNotificationActions';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import type { Notification } from '../types/notification.types';
 import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { queries } from '@/zero/queries';
 
-const EMPTY_NOTIFICATIONS: Notification[] = [];
-const PAGE_SIZE = 30;
 export type NotificationTab = 'all' | 'unread' | 'read' | 'personal' | 'entity';
 const NOTIFICATION_TAB_ORDER: NotificationTab[] = ['all', 'unread', 'read', 'personal', 'entity'];
 
 export function useNotificationsPage() {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [selectedTab, setSelectedTab] = useState<NotificationTab>('all');
 
-  const { data, isLoading, userId } = useUserNotifications();
   const { markRead, markEntityNotificationRead } = useZeroNotificationActions();
-
-  const notifications = useMemo(
-    () => data?.notifications ?? EMPTY_NOTIFICATIONS,
-    [data?.notifications]
-  );
-
-  const filteredNotifications = useNotificationFilters({ notifications, userId });
   const { handleNotificationClick, handleDeleteNotification } = useNotificationActions();
 
+  const [allRows, allResult] = useQuery(
+    queries.notifications.countRows({ tab: 'all', query: searchQuery })
+  );
+  const [unreadRows, unreadResult] = useQuery(
+    queries.notifications.countRows({ tab: 'unread', query: searchQuery })
+  );
+  const [personalRows, personalResult] = useQuery(
+    queries.notifications.countRows({ tab: 'personal', query: searchQuery })
+  );
+  const [entityRows, entityResult] = useQuery(
+    queries.notifications.countRows({ tab: 'entity', query: searchQuery })
+  );
+  const [allUnreadRows, allUnreadResult] = useQuery(
+    queries.notifications.countRows({ tab: 'unread', query: '' })
+  );
+
+  const counts = useMemo(
+    () => ({
+      all: allRows?.length ?? 0,
+      unread: unreadRows?.length ?? 0,
+      personal: personalRows?.length ?? 0,
+      entity: entityRows?.length ?? 0,
+    }),
+    [allRows?.length, entityRows?.length, personalRows?.length, unreadRows?.length]
+  );
+  const unreadCount = allUnreadRows?.length ?? 0;
+
   const handleMarkAllAsRead = useCallback(async () => {
-    for (const notification of filteredNotifications.unread) {
+    for (const notification of allUnreadRows ?? []) {
       if (notification.recipient_entity_id && notification.recipient_entity_type) {
         await waitForClientApply(
           markEntityNotificationRead({
@@ -46,50 +60,15 @@ export function useNotificationsPage() {
         await waitForClientApply(markRead({ id: notification.id }));
       }
     }
-  }, [filteredNotifications.unread, markEntityNotificationRead, markRead]);
+  }, [allUnreadRows, markEntityNotificationRead, markRead]);
 
-  // Filter notifications based on search query
-  const searchFilteredNotifications = useMemo(() => {
-    const lowerQuery = searchQuery.toLowerCase();
-    const matchesSearch = (n: Notification) =>
-      !searchQuery ||
-      n.title?.toLowerCase().includes(lowerQuery) ||
-      n.message?.toLowerCase().includes(lowerQuery);
-
-    return {
-      all: filteredNotifications.all.filter(matchesSearch),
-      unread: filteredNotifications.unread.filter(matchesSearch),
-      read: filteredNotifications.read.filter(matchesSearch),
-      personal: filteredNotifications.personal.filter(matchesSearch),
-      entity: filteredNotifications.entity.filter(matchesSearch),
-    };
-  }, [filteredNotifications, searchQuery]);
-
-  // Client-side pagination
-  const paginatedNotifications = useMemo(
-    () => ({
-      all: searchFilteredNotifications.all.slice(0, visibleCount),
-      unread: searchFilteredNotifications.unread.slice(0, visibleCount),
-      read: searchFilteredNotifications.read.slice(0, visibleCount),
-      personal: searchFilteredNotifications.personal.slice(0, visibleCount),
-      entity: searchFilteredNotifications.entity.slice(0, visibleCount),
-    }),
-    [searchFilteredNotifications, visibleCount]
-  );
-
-  const hasMore = searchFilteredNotifications.all.length > visibleCount;
-
-  const handleLoadMore = useCallback(() => {
-    setVisibleCount(prev => prev + PAGE_SIZE);
-  }, []);
-
-  const loadMoreRef = useInfiniteScroll({
-    hasMore,
-    isLoading: false,
-    onLoadMore: handleLoadMore,
-  });
-
-  const isInitialLoading = isLoading && notifications.length === 0;
+  const isInitialLoading = [
+    allResult,
+    unreadResult,
+    personalResult,
+    entityResult,
+    allUnreadResult,
+  ].some(result => result.type === 'unknown');
   const selectedTabIndex = NOTIFICATION_TAB_ORDER.indexOf(selectedTab);
   const { handlers: tabSwipeHandlers } = useSwipeNavigation({
     canSwipePrev: selectedTabIndex > 0,
@@ -116,12 +95,9 @@ export function useNotificationsPage() {
     selectedTab,
     setSelectedTab,
     tabSwipeHandlers,
-    filteredNotifications,
-    searchFilteredNotifications,
-    paginatedNotifications,
+    counts,
+    unreadCount,
     isInitialLoading,
-    hasMore,
-    loadMoreRef,
     handleMarkAllAsRead,
     handleNotificationClick,
     handleDeleteNotification,

@@ -83,6 +83,55 @@ The data layer is the **single source of truth** for all database interactions.
 
 ---
 
+## List and Grid Virtualization Pattern
+
+For long lists, feeds, tables, grids, kanban columns, timelines, notification
+lists, and search-like result surfaces, use the shared virtualization
+infrastructure in `src/features/shared/virtualization`.
+
+### Rules
+
+1. **Use the shared hooks.** Use `usePolityZeroList` for vertical lists backed by
+   `@rocicorp/zero-virtual` 0.6. Use `usePolityZeroGrid` for responsive grids,
+   masonry-style feeds, lanes, kanban columns, and card layouts backed by
+   TanStack virtualization.
+
+2. **Do not page incomplete data on the client.** Avoid full-array loads followed
+   by client-side `slice()` paging for paginated UI.
+
+3. **Use cursor-based page queries.** Virtualized page queries should accept
+   `{ limit, start, dir, ...filter }`. The `start` cursor must include every sort
+   field plus `id`.
+
+4. **Add permalink queries where needed.** Add a matching single-item query, such
+   as `thingById`, whenever deep links, selected rows, map selections, or back
+   navigation need permalink resolution.
+
+5. **Keep virtual limits schema-compatible.** `limit` must support virtual
+   lookahead windows. Do not reintroduce `.max(100)` validation failures for
+   virtualized pages.
+
+6. **Treat view state as list context.** Filter, tab, sort, entity id, and view
+   mode values form the stable list context. Context changes reset the window;
+   live updates preserve the visible anchor.
+
+7. **Render stable rows and placeholders.** Loaded rows and skeleton placeholders
+   need stable keys plus virtual row attributes where applicable, including
+   `data-vrow-index` and `data-vrow-key` for zero-virtual rows.
+
+8. **Use counts intentionally.** Add count queries only when the UI displays
+   totals or requires a stable scrollbar/count.
+
+9. **Prefer query-side filtering and sorting.** Do not apply unsupported filters
+   after paging over an incomplete page without clearly validating that
+   limitation.
+
+10. **Preserve scroll behavior.** Mutating, inserting, deleting, or reordering
+    rows must preserve scroll restoration, new-result indicators, dynamic
+    measurement, and anchor stability.
+
+---
+
 ## `src/features/*/logic/` — Pure Logic
 
 Plain TypeScript functions with **no React dependency**.

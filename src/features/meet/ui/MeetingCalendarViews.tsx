@@ -10,6 +10,9 @@ import { useMeetingWeekViewController } from '../hooks/useMeetingWeekViewControl
 import { MeetingInstanceCard } from './MeetingInstanceCard';
 import { CalendarChronologicalListView } from '@/features/shared/ui/calendar';
 import { MeetingWeekViewView } from './MeetingWeekViewView';
+import { PolityZeroListView } from '@/features/shared/virtualization';
+import { queries } from '@/zero/queries';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 
 interface MeetingListViewProps {
   instances: MeetingInstance[];
@@ -19,6 +22,7 @@ interface MeetingListViewProps {
   onDelete: (eventId: string) => void;
   selectedDate: Date;
   onSelectInstance?: (instance: MeetingInstance) => void;
+  creatorId?: string;
 }
 
 interface MeetingWeekViewProps {
@@ -137,8 +141,60 @@ export function MeetingListView({
   onDelete,
   selectedDate,
   onSelectInstance,
+  creatorId,
 }: MeetingListViewProps) {
   const { t } = useTranslation();
+
+  const renderMeeting = (instance: MeetingInstance) => (
+    <MeetingInstanceCard
+      instance={instance}
+      isOwner={isOwner}
+      onBook={onBook}
+      onCancel={onCancel}
+      onDelete={onDelete}
+      onSelect={onSelectInstance}
+    />
+  );
+
+  if (creatorId) {
+    const context = { creatorId, from: null, to: null, query: '', order: 'ascending' as const };
+    return (
+      <PolityZeroListView<any, { start_date: number; id: string }, typeof context>
+        context={context}
+        historyKey={`user-${creatorId}-meetings`}
+        estimateSize={260}
+        getRowKey={event => event.id}
+        toStartRow={event => ({ start_date: event.start_date, id: event.id })}
+        getPageQuery={({ limit, start, dir, settled }) => ({
+          query: queries.events.calendarPage({ ...context, limit, start, dir }) as never,
+          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+        })}
+        getSingleQuery={({ id, settled }) => ({
+          query: queries.events.byId({ id }) as never,
+          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+        })}
+        renderRow={event => {
+          const eventInstances = instances
+            .filter(instance => instance.parentEventId === event.id)
+            .sort((left, right) => left.startDate - right.startDate);
+          return (
+            <div className="space-y-3 pb-4">
+              {eventInstances.map(instance => (
+                <div key={instance.id}>{renderMeeting(instance)}</div>
+              ))}
+            </div>
+          );
+        }}
+        renderSkeleton={() => <Skeleton className="h-52 w-full rounded-xl" />}
+        renderEmpty={() => (
+          <p className="text-muted-foreground py-12 text-center">
+            {t('features.calendar.dayView.noEvents')}
+          </p>
+        )}
+        className="h-[700px] overflow-auto"
+      />
+    );
+  }
 
   return (
     <CalendarChronologicalListView
@@ -147,16 +203,7 @@ export function MeetingListView({
       getItemDate={instance => instance.startDate}
       getItemKey={instance => instance.id}
       emptyText={t('features.calendar.dayView.noEvents')}
-      renderItem={instance => (
-        <MeetingInstanceCard
-          instance={instance}
-          isOwner={isOwner}
-          onBook={onBook}
-          onCancel={onCancel}
-          onDelete={onDelete}
-          onSelect={onSelectInstance}
-        />
-      )}
+      renderItem={renderMeeting}
     />
   );
 }

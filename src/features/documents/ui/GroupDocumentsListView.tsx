@@ -1,4 +1,5 @@
 import { FileText } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
 
 import { PqlToolbar } from '@/features/pql/ui/PqlToolbar';
 import { SectionSkeleton } from '@/features/shared/ui/feedback';
@@ -8,6 +9,20 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { CreateDocumentDialog } from './CreateDocumentDialog';
 import { GroupDocumentCard } from './GroupDocumentCard';
 import type { GroupDocumentsListModel } from '../hooks/useGroupDocumentsList';
+import { PolityZeroGridView } from '@/features/shared/virtualization';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
+import { queries } from '@/zero/queries';
+
+interface VirtualGroupDocument {
+  id: string;
+  created_at: number;
+  updated_at: number;
+  amendment?: { title?: string | null } | null;
+  collaborators?: readonly {
+    id: string;
+    user?: { id: string } | null;
+  }[];
+}
 
 function CreateAction({
   canManageDocuments,
@@ -57,6 +72,58 @@ function DocumentsEmptyState({
         </p>
       </CardContent>
     </Card>
+  );
+}
+
+function VirtualGroupDocumentsGrid({
+  groupId,
+  query,
+  canManageDocuments,
+}: {
+  groupId: string;
+  query: string;
+  canManageDocuments: boolean;
+}) {
+  const context = useMemo(() => ({ groupId, query: query.trim() }), [groupId, query]);
+  const getPageQuery = useCallback(
+    ({ limit, start, dir, settled }: any) => ({
+      query: queries.documents.pageByGroup({ ...context, limit, start, dir }) as any,
+      options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+    }),
+    [context]
+  );
+  const getSingleQuery = useCallback(
+    ({ id, settled }: any) => ({
+      query: queries.documents.byId({ id }) as any,
+      options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+    }),
+    []
+  );
+
+  return (
+    <PolityZeroGridView<VirtualGroupDocument, { updated_at: number; id: string }, typeof context>
+      context={context}
+      historyKey={`group-${groupId}-documents`}
+      estimateSize={190}
+      getLanes={width => (width >= 1024 ? 3 : width >= 640 ? 2 : 1)}
+      getRowKey={document => document.id}
+      toStartRow={document => ({ updated_at: document.updated_at, id: document.id })}
+      getPageQuery={getPageQuery}
+      getSingleQuery={getSingleQuery}
+      renderRow={document => (
+        <GroupDocumentCard
+          document={{ ...document, title: document.amendment?.title }}
+          href={`/group/${groupId}/editor/${document.id}`}
+        />
+      )}
+      renderSkeleton={() => <Skeleton className="h-40 w-full rounded-xl" />}
+      renderEmpty={() => (
+        <DocumentsEmptyState
+          canManageDocuments={canManageDocuments}
+          hasActiveFilters={Boolean(query)}
+        />
+      )}
+    />
   );
 }
 
@@ -148,6 +215,12 @@ export function GroupDocumentsListView({
         <DocumentsEmptyState
           canManageDocuments={canManageDocuments}
           hasActiveFilters={pql.hasActiveFilters}
+        />
+      ) : pql.activeCustomFilterIds.length === 0 ? (
+        <VirtualGroupDocumentsGrid
+          groupId={groupId}
+          query={pql.searchQuery}
+          canManageDocuments={canManageDocuments}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

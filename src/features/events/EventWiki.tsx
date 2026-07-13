@@ -99,6 +99,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
   const eventDescription = typeof event.description === 'string' ? event.description : undefined;
   return (
     <EventWikiContentView
+      virtualizeParticipationDirectory
       agendaStats={agendaStats}
       amendmentsCount={amendmentsCount}
       canAccess={canAccess}

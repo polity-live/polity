@@ -44,6 +44,7 @@ import {
   getOrderedBranches,
 } from '@/features/amendments/logic/amendmentBranchDisplay';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
+import { queries } from '@/zero/queries';
 const AMENDMENT_CARD_SURFACE = `${getEntityGradientClasses('amendment')} ${getMotionPreset('hoverLift')}`;
 
 const AMENDMENT_CREATION_MODES = new Set<EditingMode>([
@@ -125,6 +126,7 @@ function AmendmentWorkflowPhaseRail({ mode, t }: { mode: EditingMode; t: any }) 
 }
 
 export interface AmendmentWikiViewProps {
+  virtualizeParticipationDirectory?: boolean;
   amendmentId: any;
   t: any;
   user: any;
@@ -169,6 +171,7 @@ export interface AmendmentWikiViewProps {
 }
 
 export function AmendmentWikiView({
+  virtualizeParticipationDirectory = false,
   amendmentId,
   t,
   user,
@@ -459,6 +462,50 @@ export function AmendmentWikiView({
         )}
         emptyLabel={translateText('features.amendments.wiki.noCollaborators')}
         noResultsLabel={translateText('features.amendments.wiki.noCollaboratorsMatch')}
+        virtualSource={
+          virtualizeParticipationDirectory
+            ? {
+                historyKey: `amendment-${amendmentId}-participation-directory`,
+                context: {
+                  amendmentId,
+                  statuses: ['active', 'admin', 'collaborator', 'confirmed', 'member', 'owner'],
+                },
+                getPageQuery: ({ limit, start, dir, settled, query, roleIds }) => ({
+                  query: queries.amendments.collaboratorPage({
+                    amendmentId,
+                    statuses: ['active', 'admin', 'collaborator', 'confirmed', 'member', 'owner'],
+                    roleIds,
+                    query,
+                    limit,
+                    start,
+                    dir,
+                  }) as never,
+                  options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+                }),
+                getSingleQuery: ({ id, settled }) => ({
+                  query: queries.amendments.collaboratorById({ id }) as never,
+                  options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+                }),
+                getRowKey: row => row.id,
+                mapRow: collaborator => {
+                  const collaboratorUser = collaborator.user;
+                  const role =
+                    normalizeWikiParticipationRole(collaborator.role) ??
+                    (collaborator.role_id ? collaboratorRoleById.get(collaborator.role_id) : null);
+                  return {
+                    id: collaborator.id,
+                    userId: collaboratorUser?.id ?? collaborator.user_id,
+                    name: getWikiParticipationName(collaboratorUser),
+                    handle: collaboratorUser?.handle ?? null,
+                    email: collaboratorUser?.email ?? null,
+                    avatar: collaboratorUser?.avatar ?? null,
+                    status: collaborator.status ?? null,
+                    roles: role ? [role] : [],
+                  };
+                },
+              }
+            : undefined
+        }
       />
 
       {/* Supported By Section */}

@@ -148,6 +148,8 @@ function UserMembershipsPage() {
       onDeclineInvitation={declineGroupInvitation}
       onLeave={handleLeaveGroup}
       onWithdrawRequest={withdrawGroupRequest}
+      userId={id}
+      searchQuery={searchQuery}
     />
   );
 
@@ -158,6 +160,8 @@ function UserMembershipsPage() {
       onDeclineInvitation={declineEventInvitation}
       onLeave={handleLeaveEvent}
       onWithdrawRequest={withdrawEventRequest}
+      userId={id}
+      searchQuery={searchQuery}
     />
   );
 
@@ -168,6 +172,8 @@ function UserMembershipsPage() {
       onDeclineInvitation={declineCollaborationInvitation}
       onLeave={handleLeaveCollaboration}
       onWithdrawRequest={withdrawCollaborationRequest}
+      userId={id}
+      searchQuery={searchQuery}
     />
   );
 
@@ -179,6 +185,8 @@ function UserMembershipsPage() {
       onLeave={leaveBlog}
       onWithdrawRequest={withdrawBlogRequest}
       getBlogHref={blogId => `/user/${id}/blog/${blogId}`}
+      userId={id}
+      searchQuery={searchQuery}
     />
   );
 

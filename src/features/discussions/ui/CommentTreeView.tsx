@@ -6,6 +6,10 @@ import { UserIdentityLink } from '@/features/shared/ui/UserIdentityLink';
 import { Reply, ArrowUp, ArrowDown, Clock } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { CommentTree } from './CommentTree';
+import { PolityZeroListView } from '@/features/shared/virtualization';
+import { queries } from '@/zero/queries';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
+import type { ReactNode } from 'react';
 export interface CommentTreeViewProps {
   comment: { replies?: any[]; [key: string]: any };
   threadId: any;
@@ -132,23 +136,81 @@ export function CommentTreeView({
       </Card>
 
       {/* Nested Replies */}
-      {comment.replies && comment.replies.length > 0 && (
-        <div className="border-muted ml-8 space-y-3 border-l-2 pl-4">
-          {comment.replies.map((reply: any) => (
-            <CommentTree
-              key={reply.id}
-              comment={reply}
-              threadId={threadId}
-              userId={userId}
-              amendmentId={amendmentId}
-              amendmentTitle={amendmentTitle}
-              senderName={senderName}
-              onCreateComment={onCreateComment}
-              onVoteComment={onVoteComment}
-            />
-          ))}
-        </div>
-      )}
+      <VirtualCommentChildren
+        threadId={threadId}
+        parentId={comment.id}
+        userId={userId}
+        amendmentId={amendmentId}
+        amendmentTitle={amendmentTitle}
+        senderName={senderName}
+        onCreateComment={onCreateComment}
+        onVoteComment={onVoteComment}
+      />
+    </div>
+  );
+}
+
+export function VirtualCommentChildren({
+  threadId,
+  parentId,
+  userId,
+  amendmentId,
+  amendmentTitle,
+  senderName,
+  onCreateComment,
+  onVoteComment,
+  emptyContent = null,
+}: {
+  threadId: string;
+  parentId: string | null;
+  userId?: string;
+  amendmentId?: string;
+  amendmentTitle?: string;
+  senderName?: string;
+  onCreateComment: any;
+  onVoteComment: any;
+  emptyContent?: ReactNode;
+}) {
+  const context = { threadId, parentId };
+  return (
+    <div className={parentId ? 'border-muted ml-8 border-l-2 pl-4' : undefined}>
+      <PolityZeroListView<any, { created_at: number; id: string }, typeof context>
+        context={context}
+        historyKey={`discussion-${threadId}-comments-${parentId ?? 'root'}`}
+        estimateSize={220}
+        windowScroll
+        getRowKey={comment => comment.id}
+        toStartRow={comment => ({ created_at: comment.created_at, id: comment.id })}
+        getPageQuery={({ limit, start, dir, settled }) => ({
+          query: queries.amendments.discussionCommentPage({
+            threadId,
+            parentId,
+            limit,
+            start,
+            dir,
+          }) as never,
+          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+        })}
+        getSingleQuery={({ id, settled }) => ({
+          query: queries.amendments.discussionCommentById({ id }) as never,
+          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+        })}
+        renderRow={comment => (
+          <CommentTree
+            comment={comment}
+            threadId={threadId}
+            userId={userId}
+            amendmentId={amendmentId}
+            amendmentTitle={amendmentTitle}
+            senderName={senderName}
+            onCreateComment={onCreateComment}
+            onVoteComment={onVoteComment}
+          />
+        )}
+        renderSkeleton={() => <Skeleton className="h-48 w-full rounded-xl" />}
+        renderEmpty={() => emptyContent}
+        contentClassName="space-y-3"
+      />
     </div>
   );
 }

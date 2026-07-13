@@ -37,8 +37,10 @@ import { SiblingMembershipModeDescription } from '@/features/network/ui/GroupRel
 import { getCanonicalMembershipModeLabel } from '@/features/network/logic/groupConnectionDerived';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { RelatedGroupsTabs } from '@/features/groups/ui/RelatedGroupsTabs';
+import { queries } from '@/zero/queries';
 
 export interface GroupWikiContentViewProps {
+  virtualizeParticipationDirectory?: boolean;
   groupId: string;
   group: any;
   groupLocation: string;
@@ -148,6 +150,7 @@ function getMembershipWikiRoles(
 }
 
 export function GroupWikiContentView({
+  virtualizeParticipationDirectory = false,
   groupId,
   group,
   groupLocation,
@@ -387,6 +390,47 @@ export function GroupWikiContentView({
           noResultsLabel={translateText('features.groups.wiki.noMembersMatch')}
           leadingCard={
             <WikiRosterSummaryCard totalCount={memberCount} items={memberDirectoryItems} />
+          }
+          virtualSource={
+            virtualizeParticipationDirectory
+              ? {
+                  historyKey: `group-${groupId}-participation-directory`,
+                  context: {
+                    groupId,
+                    statuses: ['active', 'admin', 'collaborator', 'confirmed', 'member', 'owner'],
+                  },
+                  getPageQuery: ({ limit, start, dir, settled, query, roleIds }) => ({
+                    query: queries.groups.membershipPage({
+                      groupId,
+                      statuses: ['active', 'admin', 'collaborator', 'confirmed', 'member', 'owner'],
+                      roleIds,
+                      query,
+                      limit,
+                      start,
+                      dir,
+                    }) as never,
+                    options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+                  }),
+                  getSingleQuery: ({ id, settled }) => ({
+                    query: queries.groups.membershipById({ id }) as never,
+                    options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+                  }),
+                  getRowKey: row => row.id,
+                  mapRow: membership => {
+                    const user = membership.user;
+                    return {
+                      id: membership.id,
+                      userId: user?.id ?? membership.user_id,
+                      name: getWikiParticipationName(user),
+                      handle: user?.handle ?? null,
+                      email: user?.email ?? null,
+                      avatar: user?.avatar ?? null,
+                      status: membership.status ?? null,
+                      roles: getMembershipWikiRoles(membership, electedRolesByUserId),
+                    };
+                  },
+                }
+              : undefined
           }
         />
       </div>

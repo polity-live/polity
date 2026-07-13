@@ -7,9 +7,11 @@ import { getMembershipProvenanceDisplayLabel } from '@/features/groups/logic/mem
 import type { ParticipationProvenanceGroupLike } from '@/features/shared/types/participation';
 import {
   DataTable,
+  VirtualDataTable,
   EntityCell,
   TableActionIconButton,
   type ColumnDef,
+  type VirtualDataTableSource,
 } from '@/features/shared/ui/data-table';
 import { EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
@@ -46,6 +48,7 @@ interface GuestsTableProps<TGuestAccess extends GuestAccessLike> {
   title?: string;
   description?: string;
   showBaseGroupColumn?: boolean;
+  virtualSource?: VirtualDataTableSource<TGuestAccess, any, any>;
 }
 
 function getGuestDisplayName(user: GuestAccessUserLike | null | undefined) {
@@ -115,6 +118,7 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
     'generated.inline.0086_users_with_guest_roles_and_access_rights_6ef79881'
   ),
   showBaseGroupColumn = false,
+  virtualSource,
 }: GuestsTableProps<TGuestAccess>) {
   const directWithoutPathLabel = translateText(
     'features.groups.memberships.composition.directWithoutPath',
@@ -238,13 +242,21 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
       }
       description={description}
     >
-      <DataTable
-        columns={columns}
-        data={[...guests]}
-        getRowId={guest => guest.id}
-        enablePagination={false}
-        emptyTitle={translateText('generated.inline.0687_no_guests_yet_a19e5185')}
-      />
+      {virtualSource ? (
+        <VirtualDataTable
+          columns={columns}
+          source={virtualSource}
+          emptyTitle={translateText('generated.inline.0687_no_guests_yet_a19e5185')}
+        />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={[...guests]}
+          getRowId={guest => guest.id}
+          enablePagination={false}
+          emptyTitle={translateText('generated.inline.0687_no_guests_yet_a19e5185')}
+        />
+      )}
     </ManagementSection>
   );
 }

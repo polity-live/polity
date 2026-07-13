@@ -7,7 +7,7 @@
 import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { type ColumnDef } from '@/features/shared/ui/data-table';
+import { type ColumnDef, type VirtualDataTableSource } from '@/features/shared/ui/data-table';
 import { EntityBadge } from '@/features/shared/ui/status';
 import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';
 import { getMembershipProvenanceDisplayLabel } from '../logic/membershipComposition';
@@ -31,6 +31,7 @@ interface PendingRequestsTableProps<TParticipation extends ParticipationLike> {
   primaryActionLabel?: string;
   secondaryActionLabel?: string;
   showBaseGroupColumn?: boolean;
+  virtualSource?: VirtualDataTableSource<TParticipation, any, any>;
 }
 
 import { PendingRequestActionCell } from './PendingRequestActionCell';
@@ -50,6 +51,7 @@ export function PendingRequestsTable<TParticipation extends ParticipationLike>({
   primaryActionLabel = 'Accept',
   secondaryActionLabel = 'Remove',
   showBaseGroupColumn = false,
+  virtualSource,
 }: PendingRequestsTableProps<TParticipation>) {
   const directWithoutPathLabel = translateText(
     'features.groups.memberships.composition.directWithoutPath',
@@ -208,6 +210,7 @@ export function PendingRequestsTable<TParticipation extends ParticipationLike>({
       primaryActionLabel={primaryActionLabel}
       secondaryActionLabel={secondaryActionLabel}
       columns={columns}
+      virtualSource={virtualSource}
     />
   );
 }

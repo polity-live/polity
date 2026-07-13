@@ -8,15 +8,11 @@ export interface DiscussionsPageContainerViewProps {
   setSortBy: any;
   authUser: any;
   amendment: any;
-  threads: any[];
   isLoading: any;
-  hasMore: any;
-  loadMore: any;
   createThread: any;
   createComment: any;
   voteOnThread: any;
   voteOnComment: any;
-  loadMoreRef: any;
 }
 
 export function DiscussionsPageContainerView({
@@ -28,25 +24,20 @@ export function DiscussionsPageContainerView({
   setSortBy,
   authUser,
   amendment,
-  threads,
   isLoading,
-  hasMore,
   createThread,
   createComment,
   voteOnThread,
   voteOnComment,
-  loadMoreRef,
 }: DiscussionsPageContainerViewProps) {
   return (
     <DiscussionsView
       amendmentId={amendmentId}
       amendmentTitle={amendment?.title ?? undefined}
       authUserEmail={authUser?.email ?? undefined}
-      hasMore={hasMore}
       hasAmendment={Boolean(amendment)}
       isCreateDialogOpen={isCreateDialogOpen}
       isLoading={isLoading}
-      loadMoreRef={loadMoreRef}
       onCreateComment={createComment}
       onCreateDialogOpenChange={setIsCreateDialogOpen}
       onCreateThread={createThread}
@@ -54,7 +45,6 @@ export function DiscussionsPageContainerView({
       onVoteComment={voteOnComment}
       onVoteThread={voteOnThread}
       sortBy={sortBy}
-      threads={threads}
       userId={userId}
     />
   );

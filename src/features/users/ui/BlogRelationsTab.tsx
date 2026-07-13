@@ -10,6 +10,8 @@ interface BlogRelationsTabProps {
   onLeave: (id: string) => void;
   onWithdrawRequest: (id: string) => void;
   getBlogHref: (id: string) => string;
+  userId: string;
+  searchQuery: string;
 }
 
 export function BlogRelationsTab({
@@ -19,6 +21,8 @@ export function BlogRelationsTab({
   onLeave,
   onWithdrawRequest,
   getBlogHref,
+  userId,
+  searchQuery,
 }: BlogRelationsTabProps) {
   return (
     <div className="space-y-6">
@@ -34,6 +38,8 @@ export function BlogRelationsTab({
         statusType="invited"
         entityKey="blog"
         fallbackIcon={BookOpen}
+        userId={userId}
+        searchQuery={searchQuery}
         onAccept={onAcceptInvitation}
         onDecline={onDeclineInvitation}
         getEntityHref={entity => (entity?.id ? getBlogHref(entity.id) : null)}
@@ -51,6 +57,8 @@ export function BlogRelationsTab({
         statusType="active"
         entityKey="blog"
         fallbackIcon={BookOpen}
+        userId={userId}
+        searchQuery={searchQuery}
         onLeave={onLeave}
         getEntityHref={entity => (entity?.id ? getBlogHref(entity.id) : null)}
       />
@@ -67,6 +75,8 @@ export function BlogRelationsTab({
         statusType="requested"
         entityKey="blog"
         fallbackIcon={BookOpen}
+        userId={userId}
+        searchQuery={searchQuery}
         onWithdraw={onWithdrawRequest}
         getEntityHref={entity => (entity?.id ? getBlogHref(entity.id) : null)}
       />

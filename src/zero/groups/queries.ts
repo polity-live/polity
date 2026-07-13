@@ -11,6 +11,24 @@ import {
   applyTodoQueryAccess,
 } from '../rbac/query-access';
 import { zql } from '../schema';
+import { virtualPageLimitSchema } from '../virtualization';
+
+const createdCursorSchema = z
+  .object({ id: z.string(), created_at: z.number() })
+  .nullable()
+  .default(null);
+const pageDirectionSchema = z.enum(['forward', 'backward']).default('forward');
+
+function applyCreatedCursor<T>(
+  q: T,
+  start: { id: string; created_at: number } | null,
+  dir: string
+): T {
+  let query: any = q;
+  const direction = dir === 'backward' ? 'asc' : 'desc';
+  query = query.orderBy('created_at', direction).orderBy('id', direction);
+  return (start ? query.start(start, { inclusive: false }) : query) as T;
+}
 
 const WIKI_ACTIVE_GROUP_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
 
@@ -58,6 +76,134 @@ export const groupQueries = {
         .whereExists('group', group => applyGroupAccess(group, userID))
         .related('membership_roles', q => q.related('role'))
         .orderBy('created_at', 'desc')
+  ),
+
+  membershipPage: defineQuery(
+    z.object({
+      groupId: z.string(),
+      status: z.string().optional(),
+      statuses: z.array(z.string()).default([]),
+      roleId: z.string().optional(),
+      roleIds: z.array(z.string()).default([]),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: createdCursorSchema,
+      dir: pageDirectionSchema,
+    }),
+    ({
+      args: { groupId, status, statuses, roleId, roleIds, query, limit, start, dir },
+      ctx: { userID },
+    }) => {
+      let q: any = applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
+        .where('group_id', groupId)
+        .whereExists('group', group => applyGroupAccess(group, userID));
+      if (status) q = q.where('status', status);
+      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if (roleId)
+        q = q.whereExists('membership_roles', (role: any) => role.where('role_id', roleId));
+      if ((roleIds?.length ?? 0) > 0)
+        q = q.whereExists('membership_roles', (role: any) => role.where('role_id', 'IN', roleIds));
+      const term = query.trim();
+      if (term) {
+        q = q.whereExists('user', (user: any) =>
+          user.where(({ or, cmp }: any) =>
+            or(
+              cmp('first_name', 'ILIKE', `%${term}%`),
+              cmp('last_name', 'ILIKE', `%${term}%`),
+              cmp('handle', 'ILIKE', `%${term}%`)
+            )
+          )
+        );
+      }
+      return applyCreatedCursor(q, start, dir)
+        .related('user')
+        .related('membership_roles', (role: any) => role.related('role'))
+        .limit(limit);
+    }
+  ),
+
+  membershipById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
+      .where('id', id)
+      .related('user')
+      .related('membership_roles', q => q.related('role'))
+      .one()
+  ),
+
+  guestAccessPage: defineQuery(
+    z.object({
+      groupId: z.string(),
+      statuses: z.array(z.string()).default([]),
+      roleIds: z.array(z.string()).default([]),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: createdCursorSchema,
+      dir: pageDirectionSchema,
+    }),
+    ({ args: { groupId, statuses, roleIds, query, limit, start, dir }, ctx: { userID } }) => {
+      let q: any = applyGroupMembershipSelfOrManagerQueryAccess(
+        zql.group_guest_access,
+        userID
+      ).where('group_id', groupId);
+      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((roleIds?.length ?? 0) > 0) {
+        q = q.whereExists('guest_roles', (role: any) => role.where('role_id', 'IN', roleIds));
+      }
+      const term = query.trim();
+      if (term) {
+        q = q.whereExists('user', (user: any) =>
+          user.where(({ or, cmp }: any) =>
+            or(
+              cmp('first_name', 'ILIKE', `%${term}%`),
+              cmp('last_name', 'ILIKE', `%${term}%`),
+              cmp('handle', 'ILIKE', `%${term}%`)
+            )
+          )
+        );
+      }
+      return applyCreatedCursor(q, start, dir)
+        .related('user')
+        .related('guest_roles', (role: any) => role.related('role'))
+        .limit(limit);
+    }
+  ),
+
+  guestAccessById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    applyGroupMembershipSelfOrManagerQueryAccess(zql.group_guest_access, userID)
+      .where('id', id)
+      .related('user')
+      .related('guest_roles', q => q.related('role'))
+      .one()
+  ),
+
+  membershipPageByUser: defineQuery(
+    z.object({
+      userId: z.string(),
+      status: z.string().optional(),
+      statuses: z.array(z.string()).default([]),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: createdCursorSchema,
+      dir: pageDirectionSchema,
+    }),
+    ({ args: { userId, status, statuses, query, limit, start, dir }, ctx: { userID } }) => {
+      let q = zql.group_membership.where('user_id', userId).where('user_id', userID);
+      if (status) q = q.where('status', status);
+      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      const term = query.trim();
+      if (term)
+        q = q.whereExists('group', (group: any) => group.where('name', 'ILIKE', `%${term}%`));
+      return applyCreatedCursor(q, start, dir)
+        .related('group', group =>
+          group
+            .related('owner')
+            .related('group_hashtags', link => link.related('hashtag'))
+            .related('events')
+            .related('amendments')
+        )
+        .related('membership_roles', role => role.related('role'))
+        .limit(limit);
+    }
   ),
 
   roles: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId }, ctx: { userID } }) =>
@@ -722,6 +868,7 @@ export type GroupOfflineMembershipWithRolesAndRightsByGroupIdsRow = QueryRowType
   typeof groupQueries.offlineMembershipsWithRolesAndRightsByGroupIds
 >;
 export type GroupMembershipsByUserRow = QueryRowType<typeof groupQueries.membershipsByUser>;
+export type GroupMembershipPageByUserRow = QueryRowType<typeof groupQueries.membershipPageByUser>;
 export type GroupAccessRoleWithRightsRow = QueryRowType<typeof groupQueries.accessRolesWithRights>;
 export type GroupMembershipWithRolesAndRightsRow = QueryRowType<
   typeof groupQueries.membershipsWithRolesAndRights

@@ -2,8 +2,47 @@ import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { applyDocumentQueryAccess } from '../rbac/query-access';
 import { zql } from '../schema';
+import { virtualPageLimitSchema } from '../virtualization';
+
+const documentStartSchema = z.object({ updated_at: z.number(), id: z.string() }).nullable();
 
 export const documentQueries = {
+  pageByGroup: defineQuery(
+    z.object({
+      groupId: z.string(),
+      query: z.string().default(''),
+      collaboratorId: z.string().optional(),
+      status: z.string().optional(),
+      limit: virtualPageLimitSchema,
+      start: documentStartSchema.default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { groupId, query, collaboratorId, status, limit, start, dir }, ctx: { userID } }) => {
+      const direction = dir === 'forward' ? 'desc' : 'asc';
+      let q: any = applyDocumentQueryAccess(zql.document, userID)
+        .whereExists('amendment', (amendment: any) => amendment.where('group_id', groupId))
+        .related('amendment')
+        .related('collaborators', (collaborator: any) => collaborator.related('user'));
+      const normalizedQuery = query.trim();
+      if (normalizedQuery) {
+        q = q.whereExists('amendment', (amendment: any) =>
+          amendment.where('title', 'ILIKE', `%${normalizedQuery}%`)
+        );
+      }
+      if (collaboratorId)
+        q = q.whereExists('collaborators', (collaborator: any) =>
+          collaborator.where('user_id', collaboratorId)
+        );
+      if (status)
+        q = q.whereExists('amendment', (amendment: any) =>
+          amendment.whereExists('current_process_run', (run: any) => run.where('status', status))
+        );
+      q = q.orderBy('updated_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q.limit(limit);
+    }
+  ),
+
   byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     applyDocumentQueryAccess(zql.document.where('id', id), userID).related('amendment').one()
   ),
@@ -52,3 +91,4 @@ export const documentQueries = {
 // ── Query Row Types ─────────────────────────────────────────────────
 export type DocumentVersionRow = QueryRowType<typeof documentQueries.versions>;
 export type DocumentCollaboratorRow = QueryRowType<typeof documentQueries.collaborators>;
+export type GroupDocumentPageRow = QueryRowType<typeof documentQueries.pageByGroup>;

@@ -9,6 +9,8 @@ interface GroupMembershipsTabProps {
   onDeclineInvitation: (id: string) => void;
   onLeave: (id: string) => void;
   onWithdrawRequest: (id: string) => void;
+  userId: string;
+  searchQuery: string;
 }
 
 export function GroupMembershipsTab({
@@ -17,6 +19,8 @@ export function GroupMembershipsTab({
   onDeclineInvitation,
   onLeave,
   onWithdrawRequest,
+  userId,
+  searchQuery,
 }: GroupMembershipsTabProps) {
   return (
     <div className="space-y-6">
@@ -32,6 +36,8 @@ export function GroupMembershipsTab({
         statusType="invited"
         entityKey="group"
         fallbackIcon={Users}
+        userId={userId}
+        searchQuery={searchQuery}
         onAccept={onAcceptInvitation}
         onDecline={onDeclineInvitation}
         getAcceptPreflightInput={membership => ({
@@ -52,6 +58,8 @@ export function GroupMembershipsTab({
         statusType="active"
         entityKey="group"
         fallbackIcon={Users}
+        userId={userId}
+        searchQuery={searchQuery}
         onLeave={onLeave}
       />
 
@@ -67,6 +75,8 @@ export function GroupMembershipsTab({
         statusType="requested"
         entityKey="group"
         fallbackIcon={Users}
+        userId={userId}
+        searchQuery={searchQuery}
         onWithdraw={onWithdrawRequest}
       />
     </div>

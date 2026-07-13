@@ -12,9 +12,14 @@ import type { KanbanColumn } from '../ui/kanban-board-view';
 interface UseKanbanBoardControllerProps {
   canManageTodos: boolean;
   todos: Todo[];
+  virtualQuery?: { query: string };
 }
 
-export function useKanbanBoardController({ canManageTodos, todos }: UseKanbanBoardControllerProps) {
+export function useKanbanBoardController({
+  canManageTodos,
+  todos,
+  virtualQuery,
+}: UseKanbanBoardControllerProps) {
   const { t } = useTranslation();
   const { updateTodo } = useTodoActions();
   const [draggedTodoId, setDraggedTodoId] = useState<string | null>(null);
@@ -119,6 +124,7 @@ export function useKanbanBoardController({ canManageTodos, todos }: UseKanbanBoa
 
   return {
     columns,
+    virtualQuery,
     draggedTodoId,
     isDetailDialogOpen,
     selectedTodo,

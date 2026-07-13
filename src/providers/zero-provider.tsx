@@ -31,10 +31,12 @@ export function ZeroAppProvider({ children }: { children: React.ReactNode }) {
     [session?.user?.id, session?.user?.email]
   );
   const zeroIdentity = session ? { userID: session.user.id } : {};
+  const zeroIdentityKey = session ? `user:${session.user.id}` : 'anonymous';
 
   return (
     <ZeroReadyContext.Provider value={true}>
       <ZeroProvider
+        key={zeroIdentityKey}
         {...zeroIdentity}
         context={zeroContext}
         cacheURL={cacheURL}

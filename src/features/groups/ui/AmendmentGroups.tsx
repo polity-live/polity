@@ -43,6 +43,7 @@ interface AmendmentGroupsProps {
   };
   groupName?: string;
   groupId?: string;
+  filters?: { searchQuery: string; statusFilter: string; hashtagFilter: string };
 }
 
 export function AmendmentGroups(props: AmendmentGroupsProps) {

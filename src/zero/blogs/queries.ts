@@ -1,6 +1,9 @@
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
+import { virtualPageLimitSchema } from '../virtualization';
+
+const blogStartSchema = z.object({ created_at: z.number(), id: z.string() }).nullable();
 
 function applyBlogAccess<T>(q: T, userID: string | undefined): T {
   const query = q as any;
@@ -98,6 +101,60 @@ function applyBlogCommentVotePrivateAccess<T>(q: T, userID: string | undefined):
 }
 
 export const blogQueries = {
+  pageByGroup: defineQuery(
+    z.object({
+      groupId: z.string(),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: blogStartSchema.default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { groupId, query, limit, start, dir }, ctx: { userID } }) => {
+      const direction = dir === 'forward' ? 'desc' : 'asc';
+      let q: any = applyBlogAccess(zql.blog.where('group_id', groupId), userID).related(
+        'blog_hashtags',
+        (hashtag: any) => hashtag.related('hashtag')
+      );
+      const normalizedQuery = query.trim();
+      if (normalizedQuery) {
+        q = q.where(({ or, cmp }: any) =>
+          or(
+            cmp('title', 'ILIKE', `%${normalizedQuery}%`),
+            cmp('description', 'ILIKE', `%${normalizedQuery}%`)
+          )
+        );
+      }
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q.limit(limit);
+    }
+  ),
+
+  pageByUser: defineQuery(
+    z.object({
+      userId: z.string(),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: blogStartSchema.default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { userId, query, limit, start, dir }, ctx: { userID } }) => {
+      const direction = dir === 'forward' ? 'desc' : 'asc';
+      let q: any = applyBlogAccess(zql.blog, userID)
+        .whereExists('bloggers', (blogger: any) => blogger.where('user_id', userId))
+        .related('bloggers', (blogger: any) => blogger.related('user'))
+        .related('blog_hashtags', (hashtag: any) => hashtag.related('hashtag'));
+      const term = query.trim();
+      if (term)
+        q = q.where(({ or, cmp }: any) =>
+          or(cmp('title', 'ILIKE', `%${term}%`), cmp('description', 'ILIKE', `%${term}%`))
+        );
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q.limit(limit);
+    }
+  ),
+
   // Blogs by the current user (as blogger)
   byUser: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.blog_blogger.where('user_id', userID).related('blog').orderBy('created_at', 'desc')
@@ -166,6 +223,86 @@ export const blogQueries = {
         .where('blog_id', blog_id)
         .whereExists('blog', blog => applyBlogAccess(blog, userID))
         .orderBy('created_at', 'desc')
+  ),
+
+  bloggerPage: defineQuery(
+    z.object({
+      blogId: z.string(),
+      status: z.string().optional(),
+      statuses: z.array(z.string()).default([]),
+      roleId: z.string().optional(),
+      roleIds: z.array(z.string()).default([]),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: z.object({ id: z.string(), created_at: z.number() }).nullable().default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({
+      args: { blogId, status, statuses, roleId, roleIds, query, limit, start, dir },
+      ctx: { userID },
+    }) => {
+      let q: any = zql.blog_blogger
+        .where('blog_id', blogId)
+        .whereExists('blog', (blog: any) => applyBlogAccess(blog, userID));
+      if (status) q = q.where('status', status);
+      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if (roleId) q = q.where('role_id', roleId);
+      if ((roleIds?.length ?? 0) > 0) q = q.where('role_id', 'IN', roleIds);
+      const term = query.trim();
+      if (term) {
+        q = q.whereExists('user', (user: any) =>
+          user.where(({ or, cmp }: any) =>
+            or(
+              cmp('first_name', 'ILIKE', `%${term}%`),
+              cmp('last_name', 'ILIKE', `%${term}%`),
+              cmp('handle', 'ILIKE', `%${term}%`)
+            )
+          )
+        );
+      }
+      const direction = dir === 'backward' ? 'asc' : 'desc';
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q.related('user').related('role').limit(limit);
+    }
+  ),
+
+  bloggerPageById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    zql.blog_blogger
+      .where('id', id)
+      .whereExists('blog', blog => applyBlogAccess(blog, userID))
+      .related('user')
+      .related('role')
+      .one()
+  ),
+
+  bloggerMembershipPageByUser: defineQuery(
+    z.object({
+      userId: z.string(),
+      status: z.string().optional(),
+      statuses: z.array(z.string()).default([]),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: blogStartSchema.default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { userId, status, statuses, query, limit, start, dir }, ctx: { userID } }) => {
+      let q: any = zql.blog_blogger.where('user_id', userId).where('user_id', userID);
+      if (status) q = q.where('status', status);
+      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      const term = query.trim();
+      if (term) q = q.whereExists('blog', (blog: any) => blog.where('title', 'ILIKE', `%${term}%`));
+      const direction = dir === 'backward' ? 'asc' : 'desc';
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q
+        .related('blog', (blog: any) =>
+          blog.related('blog_hashtags', (link: any) => link.related('hashtag'))
+        )
+        .related('user')
+        .related('role')
+        .limit(limit);
+    }
   ),
 
   // Single blog_blogger entry by ID
@@ -247,3 +384,4 @@ export type BlogByIdWithManagementRow = QueryRowType<typeof blogQueries.byIdWith
 export type BlogVersionRow = QueryRowType<typeof blogQueries.versionsByBlogId>;
 export type BlogThreadRow = QueryRowType<typeof blogQueries.blogThread>;
 export type BloggersByUserRow = QueryRowType<typeof blogQueries.bloggersByUser>;
+export type BlogPageByGroupRow = QueryRowType<typeof blogQueries.pageByGroup>;

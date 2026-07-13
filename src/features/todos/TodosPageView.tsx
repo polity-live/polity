@@ -10,7 +10,6 @@ import { TodoDetailDialog } from '@/features/todos/ui/todo-detail-dialog.tsx';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { CheckSquare, Plus } from 'lucide-react';
 import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
 export interface TodosPageViewProps {
@@ -123,15 +122,31 @@ export function TodosPageView({
             </CardContent>
           </Card>
         ) : viewMode === 'kanban' ? (
-          <KanbanBoard todos={filteredTodos} />
+          <KanbanBoard
+            todos={filteredTodos}
+            virtualQuery={
+              activeCustomFilterIds.length === 0 &&
+              Object.values(quickFilterValues ?? {}).every(value =>
+                Array.isArray(value) ? value.length === 0 : !value
+              )
+                ? { query: searchQuery }
+                : undefined
+            }
+          />
         ) : (
-          <ScrollArea className="h-[calc(100vh-20rem)]">
-            <TodoList
-              todos={filteredTodos}
-              onToggleComplete={handleToggleComplete}
-              onTodoClick={handleTodoClick}
-            />
-          </ScrollArea>
+          <TodoList
+            todos={filteredTodos}
+            onToggleComplete={handleToggleComplete}
+            onTodoClick={handleTodoClick}
+            virtualQuery={
+              activeCustomFilterIds.length === 0 &&
+              Object.values(quickFilterValues ?? {}).every(value =>
+                Array.isArray(value) ? value.length === 0 : !value
+              )
+                ? { status: selectedTab, query: searchQuery }
+                : undefined
+            }
+          />
         )}
       </TodosTabs>
 

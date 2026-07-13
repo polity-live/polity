@@ -11,6 +11,7 @@ interface CalendarViewContainerProps {
   onDateSelect: (date: Date) => void;
   onEventSelect: (event: CalendarEvent) => void;
   onCreateEventRange?: (range: { start: Date; end: Date }) => void;
+  listQueryScope?: { groupId?: string; creatorId?: string; query?: string };
 }
 
 export function CalendarViewContainer({
@@ -21,10 +22,16 @@ export function CalendarViewContainer({
   onDateSelect,
   onEventSelect,
   onCreateEventRange,
+  listQueryScope,
 }: CalendarViewContainerProps) {
   if (viewMode === 'list') {
     return (
-      <SharedListView events={events} selectedDate={selectedDate} onEventSelect={onEventSelect} />
+      <SharedListView
+        events={events}
+        selectedDate={selectedDate}
+        onEventSelect={onEventSelect}
+        queryScope={listQueryScope}
+      />
     );
   }
 

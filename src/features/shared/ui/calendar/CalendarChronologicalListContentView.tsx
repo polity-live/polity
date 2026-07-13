@@ -1,9 +1,11 @@
-import { Fragment, useCallback, type CSSProperties } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, type CSSProperties } from 'react';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { ArrowDown, ArrowUp, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils.ts';
+import { usePolityLocalVirtualizer } from '@/features/shared/virtualization';
+import { getListAnchorDateKey } from '@/features/shared/logic/calendarListHelpers';
 
 export interface CalendarChronologicalListContentViewProps {
   daySectionRefs: any;
@@ -14,6 +16,7 @@ export interface CalendarChronologicalListContentViewProps {
   items: any;
   language: any;
   renderItem: any;
+  selectedDate: Date;
   scrollAreaRef: any;
   scrollToTodayMarker: any;
   t: any;
@@ -32,6 +35,7 @@ export function CalendarChronologicalListContentView({
   items,
   language,
   renderItem,
+  selectedDate,
   scrollAreaRef,
   scrollToTodayMarker,
   t,
@@ -40,6 +44,38 @@ export function CalendarChronologicalListContentView({
   todayMarkerRef,
   todayMarkerState,
 }: CalendarChronologicalListContentViewProps) {
+  const getScrollElement = useCallback(
+    () =>
+      scrollAreaRef.current?.querySelector(
+        '[data-radix-scroll-area-viewport]'
+      ) as HTMLDivElement | null,
+    [scrollAreaRef]
+  );
+  const dateKeys = useMemo(
+    () => groupedEntries.map(([dateKey]: [string, any[]]) => dateKey),
+    [groupedEntries]
+  );
+  const itemOffsets = useMemo(() => {
+    let offset = 0;
+    return groupedEntries.map(([, dayItems]: [string, any[]]) => {
+      const current = offset;
+      offset += dayItems.length;
+      return current;
+    });
+  }, [groupedEntries]);
+  const dayVirtualizer = usePolityLocalVirtualizer({
+    count: groupedEntries.length + (todayMarkerIndex === groupedEntries.length ? 1 : 0),
+    getScrollElement,
+    estimateSize: () => 320,
+    overscan: 3,
+  });
+
+  useEffect(() => {
+    const anchorKey = getListAnchorDateKey(dateKeys, selectedDate);
+    const anchorIndex = anchorKey ? dateKeys.indexOf(anchorKey) : -1;
+    if (anchorIndex >= 0) dayVirtualizer.scrollToIndex(anchorIndex, { align: 'start' });
+  }, [dateKeys, dayVirtualizer, selectedDate]);
+
   const renderTodayMarker = useCallback(
     () => (
       <div ref={todayMarkerRef} className="py-1">
@@ -73,8 +109,6 @@ export function CalendarChronologicalListContentView({
     );
   }
 
-  let itemRenderIndex = 0;
-
   return (
     <div className="relative">
       {todayMarkerState !== 'visible' && (
@@ -97,14 +131,37 @@ export function CalendarChronologicalListContentView({
       )}
 
       <ScrollArea ref={scrollAreaRef} className="h-[700px]">
-        <div className="space-y-6">
-          {groupedEntries.map(([dateKey, dayItems]: [string, any[]], index: number) => {
+        <div className="relative w-full" style={{ height: dayVirtualizer.getTotalSize() }}>
+          {dayVirtualizer.getVirtualItems().map(virtualDay => {
+            const index = virtualDay.index;
+            const entry = groupedEntries[index] as [string, any[]] | undefined;
+            if (!entry) {
+              return (
+                <div
+                  key="today-marker-tail"
+                  data-index={index}
+                  ref={dayVirtualizer.measureElement}
+                  className="absolute top-0 left-0 w-full"
+                  style={{ transform: `translateY(${virtualDay.start}px)` }}
+                >
+                  {renderTodayMarker()}
+                </div>
+              );
+            }
+            const [dateKey, dayItems] = entry;
             const isToday = dateKey === todayDateKey;
             const shouldRenderTodayMarker = index === todayMarkerIndex;
             const date = new Date(`${dateKey}T00:00:00`);
+            let itemRenderIndex = itemOffsets[index] ?? 0;
 
             return (
-              <Fragment key={dateKey}>
+              <div
+                key={dateKey}
+                data-index={index}
+                ref={dayVirtualizer.measureElement}
+                className="absolute top-0 left-0 w-full pb-6"
+                style={{ transform: `translateY(${virtualDay.start}px)` }}
+              >
                 {shouldRenderTodayMarker ? renderTodayMarker() : null}
                 <div
                   ref={element => {
@@ -157,10 +214,9 @@ export function CalendarChronologicalListContentView({
                     })}
                   </div>
                 </div>
-              </Fragment>
+              </div>
             );
           })}
-          {todayMarkerIndex === groupedEntries.length ? renderTodayMarker() : null}
         </div>
       </ScrollArea>
     </div>

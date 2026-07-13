@@ -2,6 +2,12 @@ import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { applyGroupQueryAccess } from '../rbac/query-access';
 import { zql } from '../schema';
+import { virtualPageLimitSchema } from '../virtualization';
+
+const networkCursorSchema = z
+  .object({ id: z.string(), updated_at: z.number() })
+  .nullable()
+  .default(null);
 
 function applyGroupConnectionAccess<T>(q: T, userID: string | undefined | null): T {
   return (q as any).where(({ or, exists }: any) =>
@@ -46,6 +52,65 @@ function applyWorkflowApprovalAccess<T>(q: T, userID: string | undefined | null)
 }
 
 export const networkQueries = {
+  groupConnectionPage: defineQuery(
+    z.object({
+      groupId: z.string(),
+      status: z.string().optional(),
+      relationshipType: z.enum(['all', 'parent', 'child', 'sibling']).default('all'),
+      rights: z.array(z.string()).default([]),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: networkCursorSchema,
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({
+      args: { groupId, status, relationshipType, rights, query, limit, start, dir },
+      ctx: { userID },
+    }) => {
+      let q: any = applyGroupConnectionAccess(zql.group_connection, userID).where(
+        ({ cmp, or }: any) =>
+          or(
+            cmp('group_a_id', '=', groupId),
+            cmp('group_b_id', '=', groupId),
+            cmp('from_group_id', '=', groupId),
+            cmp('to_group_id', '=', groupId)
+          )
+      );
+      if (status) q = q.where('status', status);
+      if (relationshipType === 'sibling') q = q.where('connection_type', 'peer');
+      if (relationshipType === 'parent') q = q.where('parent_group_id', groupId);
+      if (relationshipType === 'child') q = q.where('child_group_id', groupId);
+      if ((rights?.length ?? 0) > 0) {
+        q = q.whereExists('grants', (grant: any) =>
+          grant.where('status', 'active').where('right_key', 'IN', rights)
+        );
+      }
+      const term = query.trim();
+      if (term) {
+        q = q.where(({ or, exists }: any) =>
+          or(
+            exists('group_a', (group: any) => group.where('name', 'ILIKE', `%${term}%`)),
+            exists('group_b', (group: any) => group.where('name', 'ILIKE', `%${term}%`))
+          )
+        );
+      }
+      const direction = dir === 'backward' ? 'asc' : 'desc';
+      q = q.orderBy('updated_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q
+        .related('group_a')
+        .related('group_b')
+        .related('parent_group')
+        .related('child_group')
+        .related('from_group')
+        .related('to_group')
+        .related('grants', (grant: any) => grant.orderBy('right_key', 'asc'))
+        .related('membership_rule', (membershipRuleQuery: any) =>
+          membershipRuleQuery.related('required_source_role')
+        )
+        .limit(limit);
+    }
+  ),
   groupConnectionsByGroup: defineQuery(
     z.object({ groupId: z.string() }),
     ({ args: { groupId }, ctx: { userID } }) =>
@@ -283,6 +348,53 @@ export const networkQueries = {
             .orderBy('updated_at', 'desc')
         )
         .orderBy('updated_at', 'desc')
+  ),
+
+  groupConnectionRequestPage: defineQuery(
+    z.object({
+      groupId: z.string(),
+      direction: z.enum(['incoming', 'outgoing']),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: networkCursorSchema,
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({
+      args: { groupId, direction: requestDirection, query, limit, start, dir },
+      ctx: { userID },
+    }) => {
+      let q: any = applyGroupConnectionRequestAccess(zql.group_connection_request, userID)
+        .where(({ cmp, or }: any) =>
+          or(cmp('group_a_id', '=', groupId), cmp('group_b_id', '=', groupId))
+        )
+        .where('status', 'pending');
+      q =
+        requestDirection === 'outgoing'
+          ? q.where('initiator_group_id', groupId)
+          : q.where('initiator_group_id', '!=', groupId);
+      const term = query.trim();
+      if (term) {
+        q = q.where(({ or, exists }: any) =>
+          or(
+            exists('group_a', (group: any) => group.where('name', 'ILIKE', `%${term}%`)),
+            exists('group_b', (group: any) => group.where('name', 'ILIKE', `%${term}%`))
+          )
+        );
+      }
+      const order = dir === 'backward' ? 'asc' : 'desc';
+      q = q.orderBy('updated_at', order).orderBy('id', order);
+      if (start) q = q.start(start, { inclusive: false });
+      return q
+        .related('group_a')
+        .related('group_b')
+        .related('initiator_group')
+        .related('active_connection')
+        .related('grant_requests', (grant: any) => grant.orderBy('right_key', 'asc'))
+        .related('membership_rule_requests', (membership: any) =>
+          membership.related('required_source_role').orderBy('updated_at', 'desc')
+        )
+        .limit(limit);
+    }
   ),
 
   groupConnectionRequestsByPair: defineQuery(

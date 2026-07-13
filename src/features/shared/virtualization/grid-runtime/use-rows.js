@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+// Vendored query windowing core; exposed only through the shared Polity grid adapter.
 import { useQuery } from '@rocicorp/zero/react';
 import { useCallback } from 'react';
 import { assert, unreachable } from './asserts';

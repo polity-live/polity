@@ -20,6 +20,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { Mic, Plus, Users, CheckCircle2, Clock, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { getSpeakerGenderLabel } from '../logic/speakerListGenderQuota';
+import { PolityZeroListView } from '@/features/shared/virtualization';
+import { queries } from '@/zero/queries';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 function formatClockTime(ts: number) {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
@@ -67,6 +70,7 @@ export interface AgendaSpeakerListSectionViewProps {
   showMembershipState: any;
   renderRelativeTime: any;
   renderTimingLabel: any;
+  agendaItemId?: string;
 }
 
 export function AgendaSpeakerListSectionView({
@@ -89,6 +93,7 @@ export function AgendaSpeakerListSectionView({
   showMembershipState,
   renderRelativeTime,
   renderTimingLabel,
+  agendaItemId,
 }: AgendaSpeakerListSectionViewProps) {
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
@@ -123,6 +128,69 @@ export function AgendaSpeakerListSectionView({
                   {t('features.events.agenda.speakerListEmpty')}
                 </p>
               </div>
+            ) : agendaItemId ? (
+              <PolityZeroListView<
+                any,
+                { order_index: number; id: string },
+                { agendaItemId: string }
+              >
+                context={{ agendaItemId }}
+                historyKey={`agenda-${agendaItemId}-speakers`}
+                estimateSize={116}
+                getRowKey={speaker => speaker.id}
+                toStartRow={speaker => ({ order_index: speaker.order_index, id: speaker.id })}
+                getPageQuery={({ limit, start, dir, settled }) => ({
+                  query: queries.agendas.speakerPage({ agendaItemId, limit, start, dir }) as never,
+                  options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+                })}
+                getSingleQuery={({ id, settled }) => ({
+                  query: queries.agendas.speakerById({ id }) as never,
+                  options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+                })}
+                renderRow={row => {
+                  const speaker = speakerQueue.find(candidate => candidate.id === row.id) ?? row;
+                  const speakerName =
+                    speaker.user?.name || speaker.user?.email || t('common.unspecified');
+                  return (
+                    <Card
+                      className={cn('border', speaker.isCurrent && 'border-primary bg-primary/5')}
+                    >
+                      <CardContent className="flex items-center justify-between gap-4 p-4">
+                        <Link
+                          to="/user/$id"
+                          params={{ id: speaker.user?.id ?? '' }}
+                          className="flex min-w-0 items-center gap-3"
+                        >
+                          <Avatar className="h-11 w-11">
+                            <AvatarImage src={speaker.user?.avatar} />
+                            <AvatarFallback>{speakerName[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">{speakerName}</p>
+                            <p className="text-muted-foreground text-sm">
+                              {t('features.events.agenda.speakerPosition', {
+                                count: speaker.order ?? row.order_index,
+                              })}
+                            </p>
+                          </div>
+                        </Link>
+                        {canManageSpeakers && speaker.isCurrent && onMarkCompleted ? (
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() => onMarkCompleted(speaker.id)}
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                          </Button>
+                        ) : null}
+                      </CardContent>
+                    </Card>
+                  );
+                }}
+                renderSkeleton={() => <Skeleton className="h-28 w-full rounded-xl" />}
+                renderEmpty={() => null}
+                className="max-h-[36rem] overflow-auto"
+              />
             ) : (
               <div className="px-10">
                 <Carousel

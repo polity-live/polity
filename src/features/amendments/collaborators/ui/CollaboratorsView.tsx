@@ -25,6 +25,7 @@ import { RolesManagementCard } from './RolesManagementCard.tsx';
 import type { Collaborator, Role } from '../hooks/useCollaborators';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { ManagementToolbar, SettingsPage } from '@/features/shared/ui/form';
+import { queries } from '@/zero/queries';
 
 interface CollaboratorsViewProps {
   activeCollaborators: Collaborator[];
@@ -124,6 +125,42 @@ export function CollaboratorsView({
     () => filterParticipationsByRole(activeCollaborators, activeRoleFilterIds),
     [activeCollaborators, activeRoleFilterIds]
   );
+  const collaboratorRowsById = useMemo(
+    () => new Map(collaborators.map(collaborator => [collaborator.id, collaborator])),
+    [collaborators]
+  );
+  const collaboratorVirtualSources = useMemo(() => {
+    const makeSource = (statuses: string[], suffix: string, roleIds = activeRoleFilterIds) => ({
+      context: { amendmentId, statuses, query: searchQuery, roleIds },
+      historyKey: `amendment-${amendmentId}-collaborators-${suffix}`,
+      getPageQuery: ({ limit, start, dir, settled }: any) => ({
+        query: queries.amendments.collaboratorPage({
+          amendmentId,
+          statuses,
+          roleIds,
+          query: searchQuery,
+          limit,
+          start,
+          dir,
+        }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      getSingleQuery: ({ id, settled }: any) => ({
+        query: queries.amendments.collaboratorById({ id }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      getRowKey: (row: any) => row.id,
+      toStartRow: (row: any) => ({ created_at: row.created_at, id: row.id }),
+      mapRow: (row: any) => collaboratorRowsById.get(row.id) ?? row,
+    });
+    return {
+      requested: makeSource(['requested'], 'requested'),
+      invited: makeSource(['invited'], 'invited'),
+      active: makeSource(['active', 'member', 'admin', 'collaborator'], 'active'),
+      byRole: (roleId: string) =>
+        makeSource(['active', 'member', 'admin', 'collaborator'], `role-${roleId}`, [roleId]),
+    };
+  }, [activeRoleFilterIds, amendmentId, collaboratorRowsById, searchQuery]);
 
   return (
     <SettingsPage
@@ -178,6 +215,7 @@ export function CollaboratorsView({
           <div className="space-y-4">
             <PendingRequestsTable
               requests={filteredPendingRequests}
+              virtualSource={collaboratorVirtualSources.requested}
               onApprove={onApproveRequest}
               onReject={onRejectRequest}
               title={translateText('generated.inline.0102_pending_collaboration_requests_59419bb4')}
@@ -190,6 +228,7 @@ export function CollaboratorsView({
             />
             <PendingInvitationsTable
               invitations={filteredPendingInvitations}
+              virtualSource={collaboratorVirtualSources.invited}
               onWithdraw={onWithdrawInvitation}
               description={translateText(
                 'generated.inline.0105_users_who_have_been_invited_to_this_amendment_525eacce'
@@ -198,6 +237,7 @@ export function CollaboratorsView({
             />
             <ActiveMembersTable
               members={filteredActiveCollaborators}
+              virtualSource={collaboratorVirtualSources.active}
               sort={membershipSort}
               onSortChange={onMembershipSortChange}
               onOpenRightsDialog={onOpenMemberRightsDialog}
@@ -229,6 +269,7 @@ export function CollaboratorsView({
               'generated.inline.0014_no_collaborators_currently_carry_this_role_c0b5b930'
             )}
             hideEmptyRoleSections={activeRoleFilterIds.length > 0}
+            getVirtualSource={collaboratorVirtualSources.byRole}
           />
         }
         rolesContent={

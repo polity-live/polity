@@ -106,6 +106,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
     );
   return (
     <GroupWikiContentView
+      virtualizeParticipationDirectory
       acceptInvitation={acceptInvitation}
       acceptInvitationConflictResponse={acceptInvitationConflictResponse}
       acceptInvitationDisabled={acceptInvitationDisabled}

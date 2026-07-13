@@ -17,6 +17,9 @@ import {
   type CivicTimelineSection,
 } from '../logic/civicTimeline';
 import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
+import { PolityZeroListView } from '@/features/shared/virtualization';
+import { queries } from '@/zero/queries';
+import { mapTimelineEvent } from '../hooks/useCivicTimeline';
 
 interface CivicTimelineRailProps {
   sections: CivicTimelineSection[];
@@ -24,6 +27,10 @@ interface CivicTimelineRailProps {
   isLoading?: boolean;
   onActiveItemChange?: (itemId: string | null) => void;
   onItemSelect?: (item: CivicTimelineItem) => void;
+  queryContext?: {
+    entityIds?: string[];
+    contentTypes: string[];
+  };
 }
 
 const REASON_LABELS: Record<CivicTimelineReason, string> = {
@@ -105,14 +112,206 @@ function TimelineSkeleton() {
   );
 }
 
+function TimelineArticle({
+  item,
+  revealIndex,
+  activeItemId,
+  onActiveItemChange,
+  onItemSelect,
+}: {
+  item: CivicTimelineItem;
+  revealIndex: number;
+  activeItemId?: string | null;
+  onActiveItemChange?: (itemId: string | null) => void;
+  onItemSelect?: (item: CivicTimelineItem) => void;
+}) {
+  const { t } = useTranslation();
+  const Icon = getTypeIcon(item);
+  const isActive = activeItemId === item.id;
+  const reasonLabel = getReasonLabel(item, t);
+  const distanceLabel = formatDistanceKm(item.distanceKm);
+
+  return (
+    <article
+      data-timeline-item-id={item.id}
+      className={cn(
+        'bg-background civic-load-card-reveal relative rounded-lg border p-4 shadow-sm transition-colors',
+        isActive && 'border-primary bg-primary/5'
+      )}
+      style={{ '--civic-load-index': Math.min(revealIndex, 11) } as CSSProperties}
+      onMouseEnter={() => onActiveItemChange?.(item.id)}
+      onMouseLeave={() => onActiveItemChange?.(null)}
+      onFocus={() => onActiveItemChange?.(item.id)}
+      onClick={() => onActiveItemChange?.(item.id)}
+    >
+      <span
+        className={cn(
+          'border-background absolute top-6 -left-[18px] h-2.5 w-2.5 rounded-full border-2',
+          item.reason === 'urgent_decision'
+            ? featureThemeClassName('timelineCivicTimelineRailDangerBackground')
+            : item.isDiscover
+              ? featureThemeClassName('timelineCivicTimelineRailInfoBackground')
+              : featureThemeClassName('timelineCivicTimelineRailSuccessBackground')
+        )}
+      />
+      <div className="flex gap-3">
+        <div
+          className={cn(
+            'bg-muted/40 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border',
+            CONTENT_TYPE_CONFIG[item.type]?.accentColor
+          )}
+        >
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <BadgeControl
+              variant={item.reason === 'urgent_decision' ? 'destructive' : 'secondary'}
+              className="rounded-md"
+            >
+              {reasonLabel}
+            </BadgeControl>
+            <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+              <Clock3 className="h-3.5 w-3.5" />
+              {formatDateTime(getItemTime(item))}
+            </span>
+            {distanceLabel ? (
+              <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+                <MapPin className="h-3.5 w-3.5" />
+                {distanceLabel}
+              </span>
+            ) : null}
+          </div>
+          <h3 className="mt-2 text-base leading-snug font-semibold">
+            <SmartLink
+              href={item.href}
+              onClick={() => onItemSelect?.(item)}
+              className="hover:underline"
+            >
+              {item.title}
+            </SmartLink>
+          </h3>
+          {item.sourceName || item.locationLabel ? (
+            <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+              {item.sourceName ? (
+                <SmartLink
+                  href={item.sourceHref ?? item.href}
+                  className="hover:text-foreground hover:underline"
+                >
+                  {item.sourceName}
+                </SmartLink>
+              ) : null}
+              {item.locationLabel ? (
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {item.locationLabel}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+          {item.description ? (
+            <p className="text-muted-foreground mt-2 line-clamp-2 text-sm">{item.description}</p>
+          ) : null}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {item.status ? (
+              <BadgeControl variant="outline" shape="rounded">
+                {item.status.replace(/[_-]/g, ' ')}
+              </BadgeControl>
+            ) : null}
+            {item.statsLabel ? (
+              <BadgeControl variant="outline" shape="rounded">
+                {item.statsLabel}
+              </BadgeControl>
+            ) : null}
+            {(item.tags ?? []).slice(0, 3).map(tag => (
+              <BadgeControl key={tag} variant="outline" className="rounded-md font-normal">
+                #{tag}
+              </BadgeControl>
+            ))}
+          </div>
+        </div>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" asChild>
+          <SmartLink
+            href={item.href}
+            aria-label={item.primaryActionLabel ?? t('features.timeline.cards.viewDetails')}
+          >
+            <ArrowUpRight className="h-4 w-4" />
+          </SmartLink>
+        </Button>
+      </div>
+    </article>
+  );
+}
+
 export function CivicTimelineRail({
   sections,
   activeItemId,
   isLoading = false,
   onActiveItemChange,
   onItemSelect,
+  queryContext,
 }: CivicTimelineRailProps) {
   const { t } = useTranslation();
+
+  if (queryContext) {
+    const entityIds = queryContext.entityIds ?? [];
+    return (
+      <div data-testid="civic-timeline-rail">
+        <PolityZeroListView<any, { created_at: number; id: string }, any>
+          context={{ entityIds, contentTypes: queryContext.contentTypes }}
+          historyKey="home-civic-timeline"
+          estimateSize={190}
+          getRowKey={row => row.id}
+          toStartRow={row => ({ created_at: row.created_at, id: row.id })}
+          getPageQuery={({ limit, start, dir, settled }) => ({
+            query: queries.common.timelineFeedPage({
+              entityIds,
+              contentTypes: queryContext.contentTypes,
+              limit,
+              start,
+              dir,
+            }) as never,
+            options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+          })}
+          getSingleQuery={({ id, settled }) => ({
+            query: queries.common.timelineFeedById({ id }) as never,
+            options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+          })}
+          permalinkID={
+            activeItemId?.startsWith('timeline-event:')
+              ? activeItemId.slice('timeline-event:'.length)
+              : undefined
+          }
+          renderRow={(row, index) => {
+            const item = mapTimelineEvent(row);
+            return item ? (
+              <TimelineArticle
+                item={item}
+                revealIndex={index}
+                activeItemId={activeItemId}
+                onActiveItemChange={onActiveItemChange}
+                onItemSelect={onItemSelect}
+              />
+            ) : null;
+          }}
+          renderSkeleton={index => <Skeleton key={index} className="h-44 w-full" />}
+          renderEmpty={() =>
+            isLoading ? (
+              <TimelineSkeleton />
+            ) : (
+              <div className="text-muted-foreground flex min-h-64 items-center justify-center rounded-lg border border-dashed px-4 text-center">
+                {t('features.timeline.around.empty', {
+                  defaultValue: 'When civic activity appears around you, it will show up here.',
+                })}
+              </div>
+            )
+          }
+          windowScroll
+          contentClassName="before:bg-border relative space-y-3 pl-4 before:absolute before:top-2 before:bottom-2 before:left-[3px] before:w-px"
+        />
+      </div>
+    );
+  }
 
   if (isLoading && sections.length === 0) {
     return <TimelineSkeleton />;
@@ -155,140 +354,15 @@ export function CivicTimelineRail({
           <div className="before:bg-border relative space-y-3 pl-4 before:absolute before:top-2 before:bottom-2 before:left-[3px] before:w-px">
             {section.items.map(item => {
               const revealIndex = revealItemIndex++;
-              const Icon = getTypeIcon(item);
-              const isActive = activeItemId === item.id;
-              const reasonLabel = getReasonLabel(item, t);
-              const distanceLabel = formatDistanceKm(item.distanceKm);
-
               return (
-                <article
+                <TimelineArticle
                   key={item.id}
-                  data-timeline-item-id={item.id}
-                  className={cn(
-                    'bg-background civic-load-card-reveal relative rounded-lg border p-4 shadow-sm transition-colors',
-                    isActive && 'border-primary bg-primary/5'
-                  )}
-                  style={
-                    {
-                      '--civic-load-index': Math.min(revealIndex, 11),
-                    } as CSSProperties
-                  }
-                  onMouseEnter={() => onActiveItemChange?.(item.id)}
-                  onMouseLeave={() => onActiveItemChange?.(null)}
-                  onFocus={() => onActiveItemChange?.(item.id)}
-                  onClick={() => onActiveItemChange?.(item.id)}
-                >
-                  <span
-                    className={cn(
-                      'border-background absolute top-6 -left-[18px] h-2.5 w-2.5 rounded-full border-2',
-                      item.reason === 'urgent_decision'
-                        ? featureThemeClassName('timelineCivicTimelineRailDangerBackground')
-                        : item.isDiscover
-                          ? featureThemeClassName('timelineCivicTimelineRailInfoBackground')
-                          : featureThemeClassName('timelineCivicTimelineRailSuccessBackground')
-                    )}
-                  />
-
-                  <div className="flex gap-3">
-                    <div
-                      className={cn(
-                        'bg-muted/40 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border',
-                        CONTENT_TYPE_CONFIG[item.type]?.accentColor
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <BadgeControl
-                          variant={item.reason === 'urgent_decision' ? 'destructive' : 'secondary'}
-                          className="rounded-md"
-                        >
-                          {reasonLabel}
-                        </BadgeControl>
-                        <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
-                          <Clock3 className="h-3.5 w-3.5" />
-                          {formatDateTime(getItemTime(item))}
-                        </span>
-                        {distanceLabel && (
-                          <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
-                            <MapPin className="h-3.5 w-3.5" />
-                            {distanceLabel}
-                          </span>
-                        )}
-                      </div>
-
-                      <h3 className="mt-2 text-base leading-snug font-semibold">
-                        <SmartLink
-                          href={item.href}
-                          onClick={() => onItemSelect?.(item)}
-                          className="hover:underline"
-                        >
-                          {item.title}
-                        </SmartLink>
-                      </h3>
-
-                      {(item.sourceName || item.locationLabel) && (
-                        <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                          {item.sourceName && (
-                            <SmartLink
-                              href={item.sourceHref ?? item.href}
-                              className="hover:text-foreground hover:underline"
-                            >
-                              {item.sourceName}
-                            </SmartLink>
-                          )}
-                          {item.locationLabel && (
-                            <span className="inline-flex items-center gap-1">
-                              <MapPin className="h-3.5 w-3.5" />
-                              {item.locationLabel}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {item.description && (
-                        <p className="text-muted-foreground mt-2 line-clamp-2 text-sm">
-                          {item.description}
-                        </p>
-                      )}
-
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        {item.status && (
-                          <BadgeControl variant="outline" shape="rounded">
-                            {item.status.replace(/[_-]/g, ' ')}
-                          </BadgeControl>
-                        )}
-                        {item.statsLabel && (
-                          <BadgeControl variant="outline" shape="rounded">
-                            {item.statsLabel}
-                          </BadgeControl>
-                        )}
-                        {(item.tags ?? []).slice(0, 3).map(tag => (
-                          <BadgeControl
-                            key={tag}
-                            variant="outline"
-                            className="rounded-md font-normal"
-                          >
-                            #{tag}
-                          </BadgeControl>
-                        ))}
-                      </div>
-                    </div>
-
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" asChild>
-                      <SmartLink
-                        href={item.href}
-                        aria-label={
-                          item.primaryActionLabel ?? t('features.timeline.cards.viewDetails')
-                        }
-                      >
-                        <ArrowUpRight className="h-4 w-4" />
-                      </SmartLink>
-                    </Button>
-                  </div>
-                </article>
+                  item={item}
+                  revealIndex={revealIndex}
+                  activeItemId={activeItemId}
+                  onActiveItemChange={onActiveItemChange}
+                  onItemSelect={onItemSelect}
+                />
               );
             })}
           </div>

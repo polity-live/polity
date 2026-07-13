@@ -26,6 +26,8 @@ import {
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
 import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
+import { rowAttributes } from '@/features/shared/virtualization';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 interface StreamingAssistantMessage {
   text: string;
   isCompressing: boolean;
@@ -118,35 +120,20 @@ function StreamingBubble({
 
 export interface MessageListViewProps {
   conversation: any;
-  messages: any;
-  hasMoreOlderMessages: any;
-  onLoadOlderMessages: any;
-  onAtEndChange: any;
   currentUserId: any;
   onAcceptConversation: any;
   onRejectConversation: any;
   resolveAttachmentCardData: any;
-  streamingAssistantMessage: any;
   t: any;
   scrollRef: any;
-  pendingPrependRef: any;
-  rafRef: any;
-  previousConversationIdRef: any;
-  previousLastMessageIdRef: any;
-  isAtEnd: any;
-  setIsAtEnd: any;
   hasNewMessages: any;
-  setHasNewMessages: any;
-  displayMessages: any;
   otherUser: any;
   otherParticipantName: any;
-  hasUserRepliedToAssistant: any;
   virtualRows: any;
-  virtualizer: any;
-  virtualItems: any[];
-  updateAtEnd: any;
+  spaceBefore: number;
+  spaceAfter: number;
+  rowsEmpty: boolean;
   scrollToBottom: any;
-  scheduleScrollToBottom: any;
   handleScroll: any;
 }
 
@@ -162,8 +149,9 @@ export function MessageListView({
   otherUser,
   otherParticipantName,
   virtualRows,
-  virtualizer,
-  virtualItems,
+  spaceBefore,
+  spaceAfter,
+  rowsEmpty,
   scrollToBottom,
   handleScroll,
 }: MessageListViewProps) {
@@ -183,42 +171,45 @@ export function MessageListView({
       )}
 
       <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto">
-        {virtualRows.length === 0 ? (
+        {rowsEmpty && virtualRows.length === 0 ? (
           <div className="flex h-full items-center justify-center py-12">
             <p className="text-muted-foreground text-sm">
               {t('features.messages.conversation.noMessagesYet')}
             </p>
           </div>
         ) : (
-          <div
-            className="relative w-full"
-            style={{
-              height: virtualizer.getTotalSize(),
-            }}
-          >
-            {virtualItems.map((virtualItem: any) => {
-              const row = virtualRows[virtualItem.index];
-              if (!row) return null;
-
-              return (
-                <div
-                  key={virtualItem.key}
-                  data-index={virtualItem.index}
-                  ref={virtualizer.measureElement}
-                  className="absolute top-0 left-0 w-full px-4 pb-4"
-                  style={{
-                    transform: `translateY(${virtualItem.start}px)`,
-                  }}
-                >
-                  {row.type === 'message' && (
-                    <MessageBubble
-                      message={row.message}
-                      isOwnMessage={row.message.sender?.id === currentUserId}
-                      isAssistantConversation={isAssistantConversation(conversation)}
-                      resolveAttachmentCardData={resolveAttachmentCardData}
-                    />
-                  )}
-
+          <div className="w-full">
+            <div style={{ paddingTop: spaceBefore, paddingBottom: spaceAfter }}>
+              {virtualRows
+                .filter((row: any) => row.type === 'message')
+                .map((row: any) => {
+                  return (
+                    <div
+                      key={row.key}
+                      {...rowAttributes(row.index, row.key)}
+                      className="w-full px-4 pb-4"
+                    >
+                      {row.message ? (
+                        <MessageBubble
+                          message={row.message}
+                          isOwnMessage={row.message.sender?.id === currentUserId}
+                          isAssistantConversation={isAssistantConversation(conversation)}
+                          resolveAttachmentCardData={resolveAttachmentCardData}
+                        />
+                      ) : (
+                        <div className="flex items-start gap-3 py-2" aria-hidden="true">
+                          <Skeleton className="h-8 w-8 rounded-full" />
+                          <Skeleton className="h-16 max-w-xl flex-1 rounded-2xl" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+            {virtualRows
+              .filter((row: any) => row.type !== 'message')
+              .map((row: any) => (
+                <div key={row.key} className="w-full px-4 pb-4">
                   {row.type === 'assistant-actions' && currentUserId && (
                     <AriaKaiMessageActions
                       conversationId={conversation.id}
@@ -275,8 +266,7 @@ export function MessageListView({
                     </div>
                   )}
                 </div>
-              );
-            })}
+              ))}
           </div>
         )}
       </div>

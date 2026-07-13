@@ -15,7 +15,7 @@ import { AgendaActionBar } from './AgendaActionBar';
 import { EditElectionVoteDialog } from './EditElectionVoteDialog';
 import { VoteCastDialog } from '@/features/vote-cast/ui/VoteCastDialog';
 import { CandidacyPasswordDialog } from '@/features/elections/ui/CandidacyPasswordDialog';
-import { ChangeRequestCardsList } from './ChangeRequestCardsList';
+import { VirtualAgendaChangeRequestCardsList } from './VirtualAgendaChangeRequestCardsList';
 import { MergeVariantComparisonPanel } from './MergeVariantComparisonPanel';
 import { AccreditationSection } from './AccreditationSection';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -28,6 +28,7 @@ import { isMockCRTimelineItem } from '../logic/createMockCRTimelineItems';
 import { AgendaActiveItemHeader } from './AgendaActiveItemHeader';
 import { AgendaContextTabs, AgendaPageShell, AgendaVotingWorkspace } from './AgendaUiSystem';
 export interface EventAgendaItemDetailViewProps {
+  virtualizeChangeRequests?: boolean;
   eventId: any;
   agendaItemId: any;
   t: any;
@@ -197,6 +198,7 @@ export interface EventAgendaItemDetailViewProps {
 }
 
 export function EventAgendaItemDetailView({
+  virtualizeChangeRequests = false,
   eventId,
   agendaItemId,
   t,
@@ -435,6 +437,7 @@ export function EventAgendaItemDetailView({
 
   const speakerListPanel = (
     <AgendaSpeakerListSection
+      agendaItemId={agendaItem.id}
       className="h-full"
       speakers={speakerListData}
       isUserInSpeakerList={isUserInSpeakerList}
@@ -451,7 +454,8 @@ export function EventAgendaItemDetailView({
   );
 
   const changeRequestResultsPanel = hasChangeRequestResults ? (
-    <ChangeRequestCardsList
+    <VirtualAgendaChangeRequestCardsList
+      virtualize={virtualizeChangeRequests}
       items={crDisplayItems}
       editingMode={agendaBranchEditingMode}
       isVotingActive={isCRVotingActive}

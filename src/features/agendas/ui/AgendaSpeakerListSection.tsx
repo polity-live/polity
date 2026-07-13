@@ -30,6 +30,7 @@ interface AgendaSpeakerListSectionProps {
   onRemoveFromSpeakerList?: () => void;
   onMarkCompleted?: (speakerId: string) => void;
   className?: string;
+  agendaItemId?: string;
 }
 import { useAgendaSpeakerListSectionController } from './useAgendaSpeakerListSectionController';
 import { AgendaSpeakerListSectionView } from './AgendaSpeakerListSectionView';
@@ -47,6 +48,7 @@ export function AgendaSpeakerListSection({
   onRemoveFromSpeakerList,
   onMarkCompleted,
   className,
+  agendaItemId,
 }: AgendaSpeakerListSectionProps) {
   const viewProps = useAgendaSpeakerListSectionController({
     speakers,
@@ -61,6 +63,7 @@ export function AgendaSpeakerListSection({
     onRemoveFromSpeakerList,
     onMarkCompleted,
     className,
+    agendaItemId,
   });
 
   return <AgendaSpeakerListSectionView {...viewProps} />;

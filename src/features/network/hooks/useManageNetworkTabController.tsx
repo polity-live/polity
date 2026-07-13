@@ -35,6 +35,7 @@ export interface ManageNetworkTabProps {
   ) => Promise<void>;
   onRejectRequest: (rels: NormalizedGroupRelationship[]) => Promise<void>;
   onDeleteRelationship: (targetGroupId: string) => void;
+  virtualize?: boolean;
 }
 
 export function useManageNetworkTabController({
@@ -56,6 +57,7 @@ export function useManageNetworkTabController({
   onAcceptRequest,
   onRejectRequest,
   onDeleteRelationship,
+  virtualize = false,
 }: ManageNetworkTabProps) {
   const [manageDialog, setManageDialog] = useState<{
     rels: NormalizedGroupRelationship[];
@@ -114,6 +116,7 @@ export function useManageNetworkTabController({
     onAcceptRequest,
     onRejectRequest,
     onDeleteRelationship,
+    virtualize,
     manageDialog,
     setManageDialog,
     canActivateLink,

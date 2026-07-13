@@ -23,6 +23,25 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   }),
 }));
 
+vi.mock('@/features/shared/virtualization', () => ({
+  rowAttributes: (index: number, key: string) => ({
+    'data-vrow-index': index,
+    'data-vrow-key': key,
+  }),
+  usePolityZeroWindowList: () => ({
+    items: [
+      {
+        index: 0,
+        key: 'notification-entity',
+        row: notification({ id: 'notification-entity', is_read: true }),
+      },
+    ],
+    spaceBefore: 0,
+    spaceAfter: 0,
+    rowsEmpty: false,
+  }),
+}));
+
 afterEach(() => {
   cleanup();
 });
@@ -125,6 +144,8 @@ describe('NotificationItem', () => {
 
     const { container } = render(
       <EntityNotificationsView
+        entityId="group-1"
+        entityType="group"
         isLoading={false}
         notifications={[item]}
         filteredNotifications={[item]}

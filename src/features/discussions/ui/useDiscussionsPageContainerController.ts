@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
-import { useInfiniteScroll } from '@/features/shared/hooks/useInfiniteScroll';
 import { useVotingMutations } from '@/features/votes/hooks/useVotingMutations';
 import { useDiscussionMutations } from '../hooks/useDiscussionMutations';
-import { useDiscussions } from '../hooks/useDiscussions';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { type DiscussionSortMode } from './DiscussionsView';
 
 interface DiscussionsPageContainerProps {
@@ -18,15 +17,10 @@ export function useDiscussionsPageContainerController({
   const [sortBy, setSortBy] = useState<DiscussionSortMode>('votes');
   const { user: authUser } = useAuth();
 
-  const { amendment, threads, isLoading, hasMore, loadMore } = useDiscussions(amendmentId, sortBy);
+  const { amendment, isLoading } = useAmendmentState({ amendmentId });
   const { createThread, createComment } = useDiscussionMutations();
   const { voteOnThread, voteOnComment } = useVotingMutations();
 
-  const loadMoreRef = useInfiniteScroll({
-    hasMore,
-    isLoading,
-    onLoadMore: loadMore,
-  });
   return {
     amendmentId,
     userId,
@@ -36,14 +30,10 @@ export function useDiscussionsPageContainerController({
     setSortBy,
     authUser,
     amendment,
-    threads,
     isLoading,
-    hasMore,
-    loadMore,
     createThread,
     createComment,
     voteOnThread,
     voteOnComment,
-    loadMoreRef,
   };
 }

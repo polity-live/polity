@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/u
 import { Button } from '@/features/shared/ui/ui/button';
 import { UserIdentityLink } from '@/features/shared/ui/UserIdentityLink';
 import { ArrowUp, ArrowDown, Clock, MessageSquare } from 'lucide-react';
-import { CommentTree } from './CommentTree';
+import { VirtualCommentChildren } from './CommentTreeView';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 export interface ThreadCardViewProps {
   thread: any;
@@ -115,27 +115,25 @@ export function ThreadCardView({
       <CardContent>
         {/* Comments */}
         <div className="space-y-4">
-          {sortedComments.map((comment: any) => (
-            <CommentTree
-              key={comment.id}
-              comment={comment}
-              threadId={thread.id}
-              userId={userId}
-              amendmentId={amendmentId}
-              amendmentTitle={amendmentTitle}
-              senderName={senderName}
-              onCreateComment={onCreateComment}
-              onVoteComment={onVoteComment}
-            />
-          ))}
-
-          {sortedComments.length === 0 && !isCommenting && (
-            <p className="text-muted-foreground text-center text-sm">
-              {translateText(
-                'generated.inline.0395_no_comments_yet_be_the_first_to_comment_ba5c0dff'
-              )}
-            </p>
-          )}
+          <VirtualCommentChildren
+            threadId={thread.id}
+            parentId={null}
+            userId={userId}
+            amendmentId={amendmentId}
+            amendmentTitle={amendmentTitle}
+            senderName={senderName}
+            onCreateComment={onCreateComment}
+            onVoteComment={onVoteComment}
+            emptyContent={
+              !isCommenting ? (
+                <p className="text-muted-foreground text-center text-sm">
+                  {translateText(
+                    'generated.inline.0395_no_comments_yet_be_the_first_to_comment_ba5c0dff'
+                  )}
+                </p>
+              ) : null
+            }
+          />
 
           {/* Add Comment */}
           {!isCommenting && (

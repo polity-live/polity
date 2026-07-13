@@ -17,6 +17,11 @@ export {
 } from './DataTableParts';
 export { UserTableCell, type UserTableCellProps } from './UserTableCell';
 export {
+  VirtualDataTable,
+  type VirtualDataTableProps,
+  type VirtualDataTableSource,
+} from './VirtualDataTable';
+export {
   MatrixCheckbox,
   MatrixTable,
   MatrixTableBody,

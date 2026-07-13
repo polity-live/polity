@@ -1,9 +1,11 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useQuery } from '@rocicorp/zero/react';
 import { useAuth } from '@/providers/auth-provider';
 import { useAgendaState } from '@/zero/agendas/useAgendaState';
-import { useCommonState } from '@/zero/common/useCommonState';
+import { queries } from '@/zero/queries';
+import type { SubscriptionPageRow, TimelineFeedPageRow } from '@/zero/common/queries';
 
 export function useSubscriptionTimeline() {
   const { user: authUser } = useAuth();
@@ -11,10 +13,18 @@ export function useSubscriptionTimeline() {
   const shouldQuery = !!authUser?.id;
 
   // Fetch all subscriptions for the current user
-  const { userSubscriptionsForTimeline: subscriptionRows } = useCommonState({
-    subscriberIdForTimeline: shouldQuery ? authUser?.id : undefined,
-  });
-  const subscriptionsLoading = false;
+  const [subscriptionRowsData, subscriptionResult] = useQuery(
+    shouldQuery
+      ? queries.common.subscriptionPage({
+          subscriberId: authUser.id,
+          limit: 101,
+          start: null,
+          dir: 'forward',
+        })
+      : null
+  );
+  const subscriptionRows: readonly SubscriptionPageRow[] = subscriptionRowsData ?? [];
+  const subscriptionsLoading = shouldQuery && subscriptionResult.type === 'unknown';
   const subscriptionsData = { subscribers: subscriptionRows };
 
   const subscribedEventIds = useMemo(() => {
@@ -63,10 +73,19 @@ export function useSubscriptionTimeline() {
     ];
   }, [subscribedEntityIds]);
 
-  const { timelineByEntityIds: timelineRows } = useCommonState({
-    timelineEntityIds: timelineEntityIds.length > 0 ? timelineEntityIds : undefined,
-  });
-  const timelineLoading = false;
+  const [timelineRowsData, timelineResult] = useQuery(
+    timelineEntityIds.length > 0
+      ? queries.common.timelineFeedPage({
+          entityIds: timelineEntityIds,
+          contentTypes: [],
+          limit: 101,
+          start: null,
+          dir: 'forward',
+        })
+      : null
+  );
+  const timelineRows: readonly TimelineFeedPageRow[] = timelineRowsData ?? [];
+  const timelineLoading = timelineEntityIds.length > 0 && timelineResult.type === 'unknown';
   const timelineData = { timelineEvents: timelineRows };
 
   const timelineEventIds = useMemo(() => {

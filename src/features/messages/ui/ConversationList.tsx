@@ -1,8 +1,23 @@
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Conversation } from '../types/message.types';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { usePolityZeroList } from '@/features/shared/virtualization';
 import type { ConversationFilter } from '../hooks/useConversationFilters';
+import { queries } from '@/zero/queries';
+
+interface ConversationStart {
+  pinned?: boolean | null;
+  last_message_at?: number | null;
+  id: string;
+}
+
+function toConversationStart(conversation: Conversation): ConversationStart {
+  return {
+    pinned: conversation.pinned,
+    last_message_at: conversation.last_message_at,
+    id: conversation.id,
+  };
+}
 
 interface ConversationListProps {
   isLoading?: boolean;
@@ -40,12 +55,41 @@ export function ConversationList({
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const filterButtons: ConversationFilter[] = ['all', 'direct', 'group', 'event', 'ai'];
-  const rowVirtualizer = useVirtualizer({
-    count: conversations.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => 92,
+  const listContextParams = useMemo(
+    () => ({ filter: conversationFilter, query: searchQuery.trim() }),
+    [conversationFilter, searchQuery]
+  );
+  const getPageQuery = useCallback(
+    ({ limit, start, dir, settled }: any) => ({
+      query: queries.messages.conversationPage({
+        filter: conversationFilter,
+        query: searchQuery.trim(),
+        limit,
+        start,
+        dir,
+      }) as any,
+      options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+    }),
+    [conversationFilter, searchQuery]
+  );
+  const getSingleQuery = useCallback(
+    ({ id, settled }: any) => ({
+      query: queries.messages.conversationById({ id }) as any,
+      options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+    }),
+    []
+  );
+  const virtualList = usePolityZeroList<typeof listContextParams, Conversation, ConversationStart>({
+    scrollStateKey: 'messages-conversations',
+    listContextParams,
+    getScrollElement: useCallback(() => scrollRef.current, []),
+    estimateSize: useCallback(() => 92, []),
     overscan: 8,
-    getItemKey: index => conversations[index]?.id ?? index,
+    getPageQuery,
+    getSingleQuery,
+    getRowKey: conversation => conversation.id,
+    toStartRow: toConversationStart,
+    permalinkID: selectedConversationId ?? undefined,
   });
   return (
     <ConversationListView
@@ -62,7 +106,10 @@ export function ConversationList({
       onNewConversationClick={onNewConversationClick}
       onSearchChange={onSearchChange}
       onSelectConversation={onSelectConversation}
-      rowVirtualizer={rowVirtualizer}
+      virtualItems={virtualList.items}
+      spaceBefore={virtualList.spaceBefore}
+      spaceAfter={virtualList.spaceAfter}
+      rowsEmpty={virtualList.rowsEmpty}
       scrollRef={scrollRef}
       searchQuery={searchQuery}
       selectedConversationId={selectedConversationId}

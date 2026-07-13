@@ -12,6 +12,7 @@ export function KanbanBoardShellView({ canManageTodos, controller }: KanbanBoard
       <KanbanBoardView
         canManageTodos={canManageTodos}
         columns={controller.columns}
+        virtualQuery={controller.virtualQuery}
         tasksLabel={controller.tasksLabel}
         draggedTodoId={controller.draggedTodoId}
         onColumnDragOver={controller.onColumnDragOver}

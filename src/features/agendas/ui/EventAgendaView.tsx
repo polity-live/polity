@@ -71,7 +71,7 @@ import { computeAgendaStats } from '../logic/computeAgendaStats';
 import { getOfflineTallyDialogTitle, getOfflineTallyTooltip } from '../logic/offlineTallyToolbar';
 import type { CandidatesByElectionRow } from '@/zero/elections/queries';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
-import { ChangeRequestCardsList } from './ChangeRequestCardsList';
+import { VirtualAgendaChangeRequestCardsList } from './VirtualAgendaChangeRequestCardsList';
 import { AgendaActiveItemHeader } from './AgendaActiveItemHeader';
 import {
   AgendaContextTabs,
@@ -83,6 +83,7 @@ import {
 } from './AgendaUiSystem';
 type EventAgendaItemRow = ReturnType<typeof useAgendaItems>['agendaItems'][number];
 export interface EventAgendaViewProps {
+  virtualizeChangeRequests?: boolean;
   eventId: any;
   t: any;
   user: any;
@@ -255,6 +256,7 @@ export interface EventAgendaViewProps {
 }
 
 export function EventAgendaView({
+  virtualizeChangeRequests = false,
   eventId,
   t,
   user,
@@ -482,7 +484,8 @@ export function EventAgendaView({
     const hasChangeRequestSequence =
       Boolean(streamAgendaItem?.amendment_id) && streamVoteSequenceItems.length > 0;
     const changeRequestPanel = hasChangeRequestSequence ? (
-      <ChangeRequestCardsList
+      <VirtualAgendaChangeRequestCardsList
+        virtualize={virtualizeChangeRequests}
         items={streamVoteSequenceItems}
         editingMode={streamAgendaItemAmendmentEditingMode ?? 'event_final_closing_vote'}
         isVotingActive
@@ -1215,6 +1218,7 @@ export function EventAgendaView({
                     speakers={
                       <div data-testid="agenda-overview-context-speakers">
                         <AgendaSpeakerListSection
+                          agendaItemId={streamAgendaItem.id}
                           speakers={streamSpeakerListData}
                           isUserInSpeakerList={isUserInSpeakerList}
                           canManageSpeakers={canManageAgenda}

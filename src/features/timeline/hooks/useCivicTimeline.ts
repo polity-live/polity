@@ -282,7 +282,7 @@ function mapSubscribedItem(item: TimelineItem): CivicTimelineItem | null {
   };
 }
 
-function mapTimelineEvent(
+export function mapTimelineEvent(
   event: ReturnType<typeof useSubscriptionTimeline>['events'][number]
 ): CivicTimelineItem | null {
   const type = normalizeTimelineType(event.content_type || event.entity_type || undefined);

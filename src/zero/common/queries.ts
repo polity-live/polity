@@ -15,6 +15,7 @@ import {
   isAuthenticatedUserId,
 } from '../rbac/query-access';
 import { zql } from '../schema';
+import { virtualPageLimitSchema } from '../virtualization';
 
 function applyUserQueryAccess<T>(q: T, userID: string | undefined | null): T {
   const query = q as any;
@@ -219,6 +220,58 @@ export const commonQueries = {
         .orderBy('created_at', 'desc')
   ),
 
+  timelineFeedPage: defineQuery(
+    z.object({
+      entityIds: z.array(z.string()).default([]),
+      contentTypes: z.array(z.string()).default([]),
+      limit: virtualPageLimitSchema,
+      start: z.object({ id: z.string(), created_at: z.number() }).nullable().default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { entityIds, contentTypes, limit, start, dir }, ctx: { userID } }) => {
+      let q = applyTimelineEventAccess(zql.timeline_event, userID);
+      if (entityIds.length > 0) q = q.where('entity_id', 'IN', entityIds);
+      if (contentTypes.length > 0) q = q.where('content_type', 'IN', contentTypes);
+      const direction = dir === 'backward' ? 'asc' : 'desc';
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q
+        .related('actor')
+        .related('user', user => user.related('user_hashtags', h => h.related('hashtag')))
+        .related('group')
+        .related('event', event =>
+          event
+            .related('event_hashtags', h => h.related('hashtag'))
+            .related('participants', participant =>
+              applyEventParticipantOrManagerQueryAccess(participant, userID)
+            )
+        )
+        .related('amendment', amendment =>
+          amendment.related('amendment_hashtags', h => h.related('hashtag'))
+        )
+        .related('blog', blog => blog.related('blog_hashtags', h => h.related('hashtag')))
+        .related('statement', statement => statement.related('user'))
+        .related('election', election =>
+          election.related('agenda_item', item => item.related('event'))
+        )
+        .limit(limit);
+    }
+  ),
+
+  timelineFeedById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    applyTimelineEventAccess(zql.timeline_event, userID)
+      .where('id', id)
+      .related('actor')
+      .related('user')
+      .related('group')
+      .related('event')
+      .related('amendment')
+      .related('blog')
+      .related('statement')
+      .related('election')
+      .one()
+  ),
+
   // Reactions for an entity
   reactions: defineQuery(
     z.object({ entity_id: z.string(), entity_type: z.string() }),
@@ -266,6 +319,43 @@ export const commonQueries = {
         .related('amendment')
         .related('event', q => q.related('creator'))
         .related('blog')
+  ),
+
+  subscriptionPage: defineQuery(
+    z.object({
+      subscriberId: z.string(),
+      limit: virtualPageLimitSchema,
+      start: z.object({ id: z.string(), created_at: z.number() }).nullable().default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { subscriberId, limit, start, dir }, ctx: { userID } }) => {
+      const direction = dir === 'backward' ? 'asc' : 'desc';
+      let q = zql.subscriber
+        .where('subscriber_id', subscriberId)
+        .where('subscriber_id', userID)
+        .orderBy('created_at', direction)
+        .orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q
+        .related('user')
+        .related('group')
+        .related('amendment')
+        .related('event')
+        .related('blog')
+        .limit(limit);
+    }
+  ),
+
+  subscriptionById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    zql.subscriber
+      .where('id', id)
+      .where('subscriber_id', userID)
+      .related('user')
+      .related('group')
+      .related('amendment')
+      .related('event')
+      .related('blog')
+      .one()
   ),
 
   // Entity subscribers (users subscribed to a user/entity)
@@ -351,6 +441,8 @@ export type TimelineEventsByEntityIdsRow = QueryRowType<
 >;
 export type ReactionRow = QueryRowType<typeof commonQueries.reactions>;
 export type SubscriberRow = QueryRowType<typeof commonQueries.subscribers>;
+export type SubscriptionPageRow = QueryRowType<typeof commonQueries.subscriptionPage>;
+export type TimelineFeedPageRow = QueryRowType<typeof commonQueries.timelineFeedPage>;
 export type UserSubscriptionRow = QueryRowType<typeof commonQueries.userSubscriptions>;
 export type TimelineEventsByContentTypeRow = QueryRowType<
   typeof commonQueries.timelineEventsByContentTypes

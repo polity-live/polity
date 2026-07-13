@@ -7,6 +7,7 @@ import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { Search, MessageCircle, Bot } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { ConversationItem } from './ConversationItem';
+import { rowAttributes } from '@/features/shared/virtualization';
 
 export interface ConversationListViewProps {
   className: any;
@@ -22,7 +23,10 @@ export interface ConversationListViewProps {
   onNewConversationClick: any;
   onSearchChange: any;
   onSelectConversation: any;
-  rowVirtualizer: any;
+  virtualItems: readonly any[];
+  spaceBefore: number;
+  spaceAfter: number;
+  rowsEmpty: boolean;
   scrollRef: any;
   searchQuery: any;
   selectedConversationId: any;
@@ -43,13 +47,16 @@ export function ConversationListView({
   onNewConversationClick,
   onSearchChange,
   onSelectConversation,
-  rowVirtualizer,
+  virtualItems = [],
+  spaceBefore = 0,
+  spaceAfter = 0,
+  rowsEmpty = conversations.length === 0,
   scrollRef,
   searchQuery,
   selectedConversationId,
   t,
 }: ConversationListViewProps) {
-  const showSkeletons = isLoading && conversations.length === 0;
+  const showSkeletons = isLoading && virtualItems.length === 0;
 
   return (
     <Card
@@ -131,7 +138,7 @@ export function ConversationListView({
                 {t('features.messages.syncingConversations', 'Conversations are syncing')}
               </p>
             </div>
-          ) : conversations.length === 0 ? (
+          ) : rowsEmpty ? (
             <div className="py-8 text-center">
               <p className="text-muted-foreground">
                 {searchQuery || conversationFilter !== 'all'
@@ -140,34 +147,29 @@ export function ConversationListView({
               </p>
             </div>
           ) : (
-            <div
-              className="relative"
-              style={{
-                height: rowVirtualizer.getTotalSize(),
-              }}
-            >
-              {rowVirtualizer.getVirtualItems().map((virtualItem: any) => {
-                const conversation = conversations[virtualItem.index];
-                if (!conversation) return null;
-
+            <div style={{ paddingTop: spaceBefore, paddingBottom: spaceAfter }}>
+              {virtualItems.map((virtualItem: any) => {
+                const conversation = virtualItem.row;
                 return (
-                  <div
-                    key={virtualItem.key}
-                    data-index={virtualItem.index}
-                    ref={rowVirtualizer.measureElement}
-                    className="absolute top-0 left-0 w-full pb-1"
-                    style={{
-                      transform: `translateY(${virtualItem.start}px)`,
-                    }}
-                  >
-                    <ConversationItem
-                      conversation={conversation}
-                      currentUserId={currentUserId}
-                      isOnline={conversationOnlineStatus[conversation.id] ?? false}
-                      isSelected={selectedConversationId === conversation.id}
-                      onSelect={onSelectConversation}
-                      onDelete={onDeleteConversationClick}
-                    />
+                  <div key={virtualItem.key} {...rowAttributes(virtualItem.index, virtualItem.key)}>
+                    {conversation ? (
+                      <ConversationItem
+                        conversation={conversation}
+                        currentUserId={currentUserId}
+                        isOnline={conversationOnlineStatus[conversation.id] ?? false}
+                        isSelected={selectedConversationId === conversation.id}
+                        onSelect={onSelectConversation}
+                        onDelete={onDeleteConversationClick}
+                      />
+                    ) : (
+                      <div className="flex items-center gap-3 p-3" aria-hidden="true">
+                        <Skeleton className="h-12 w-12 rounded-2xl" />
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <Skeleton className="h-3 w-2/3" />
+                          <Skeleton className="h-3 w-5/6" />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

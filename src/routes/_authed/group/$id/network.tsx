@@ -41,6 +41,7 @@ function GroupNetworkPage() {
         manageNetworkContent={
           canAccessManageNetwork ? (
             <ManageNetworkTab
+              virtualize
               canManageRelationships={canManageNetwork}
               groupId={groupId}
               groupName={np.groupName}

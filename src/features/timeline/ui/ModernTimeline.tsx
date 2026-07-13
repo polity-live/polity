@@ -17,7 +17,7 @@ export interface ModernTimelineProps {
 export function ModernTimeline({ className, userId, groupId }: ModernTimelineProps) {
   const page = useTimelinePage({ userId, groupId });
 
-  return <ModernTimelineView {...page} className={className} />;
+  return <ModernTimelineView {...page} className={className} virtualizeTimeline />;
 }
 
 export const Timeline = ModernTimeline;

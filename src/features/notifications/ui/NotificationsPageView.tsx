@@ -1,4 +1,4 @@
-import type { MouseEvent, RefObject } from 'react';
+import type { MouseEvent } from 'react';
 import { Bell, Check, Users } from 'lucide-react';
 
 import { EntitySearchBar } from '@/features/shared/ui/typeahead';
@@ -11,12 +11,11 @@ import { NotificationHeader } from './NotificationHeader';
 import { NotificationsList } from './NotificationsList';
 import { NotificationTabs } from './NotificationTabs';
 
-interface NotificationBuckets {
-  all: Notification[];
-  unread: Notification[];
-  read: Notification[];
-  personal: Notification[];
-  entity: Notification[];
+interface NotificationCounts {
+  all: number;
+  unread: number;
+  personal: number;
+  entity: number;
 }
 
 export interface NotificationsPageViewProps {
@@ -26,11 +25,8 @@ export interface NotificationsPageViewProps {
   onSelectedTabChange: (tab: NotificationTab) => void;
   tabSwipeHandlers: SwipeNavigationHandlers;
   unreadCount: number;
-  searchFilteredNotifications: NotificationBuckets;
-  paginatedNotifications: NotificationBuckets;
+  counts: NotificationCounts;
   isInitialLoading: boolean;
-  hasMore: boolean;
-  loadMoreRef: RefObject<HTMLDivElement | null>;
   labels: {
     searchPlaceholder: string;
     emptyAllTitle: string;
@@ -56,11 +52,8 @@ export function NotificationsPageView({
   onSelectedTabChange,
   tabSwipeHandlers,
   unreadCount,
-  searchFilteredNotifications,
-  paginatedNotifications,
+  counts,
   isInitialLoading,
-  hasMore,
-  loadMoreRef,
   labels,
   onMarkAllAsRead,
   onNotificationClick,
@@ -88,10 +81,10 @@ export function NotificationsPageView({
           >
             <div className="min-w-0 flex-1">
               <NotificationTabs
-                allCount={searchFilteredNotifications.all.length}
-                unreadCount={searchFilteredNotifications.unread.length}
-                personalCount={searchFilteredNotifications.personal.length}
-                entityCount={searchFilteredNotifications.entity.length}
+                allCount={counts.all}
+                unreadCount={counts.unread}
+                personalCount={counts.personal}
+                entityCount={counts.entity}
               />
             </div>
             <NotificationHeader unreadCount={unreadCount} onMarkAllAsRead={onMarkAllAsRead} />
@@ -100,7 +93,7 @@ export function NotificationsPageView({
 
         <TabsContent value="all" className="mt-0">
           <NotificationsList
-            notifications={paginatedNotifications.all}
+            virtualQuery={{ key: 'global-all', tab: 'all', searchQuery }}
             isLoading={isInitialLoading}
             emptyIcon={Bell}
             emptyTitle={labels.emptyAllTitle}
@@ -112,7 +105,7 @@ export function NotificationsPageView({
 
         <TabsContent value="unread" className="mt-0">
           <NotificationsList
-            notifications={paginatedNotifications.unread}
+            virtualQuery={{ key: 'global-unread', tab: 'unread', searchQuery }}
             isLoading={isInitialLoading}
             emptyIcon={Check}
             emptyTitle={labels.allCaughtUpTitle}
@@ -124,7 +117,7 @@ export function NotificationsPageView({
 
         <TabsContent value="read" className="mt-0">
           <NotificationsList
-            notifications={paginatedNotifications.read}
+            virtualQuery={{ key: 'global-read', tab: 'read', searchQuery }}
             isLoading={isInitialLoading}
             emptyIcon={Bell}
             emptyTitle={labels.emptyReadTitle}
@@ -136,7 +129,7 @@ export function NotificationsPageView({
 
         <TabsContent value="personal" className="mt-0">
           <NotificationsList
-            notifications={paginatedNotifications.personal}
+            virtualQuery={{ key: 'global-personal', tab: 'personal', searchQuery }}
             isLoading={isInitialLoading}
             emptyIcon={Bell}
             emptyTitle={labels.emptyPersonalTitle}
@@ -148,7 +141,7 @@ export function NotificationsPageView({
 
         <TabsContent value="entity" className="mt-0">
           <NotificationsList
-            notifications={paginatedNotifications.entity}
+            virtualQuery={{ key: 'global-entity', tab: 'entity', searchQuery }}
             isLoading={isInitialLoading}
             emptyIcon={Users}
             emptyTitle={labels.emptyEntityTitle}
@@ -157,8 +150,6 @@ export function NotificationsPageView({
             onDeleteNotification={onDeleteNotification}
           />
         </TabsContent>
-
-        {hasMore ? <div ref={loadMoreRef} className="h-px" /> : null}
       </Tabs>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { RoleTag } from '@/features/groups/ui/RoleTag';
 import { Button } from '@/features/shared/ui/ui/button';
 import { ManagementSection, ManagementToolbar } from '@/features/shared/ui/form';
@@ -10,7 +10,10 @@ import {
   type ActionSubmissionStep,
 } from '@/features/shared/ui/action-submission';
 import { EntitySearchBar, type FilterOption } from '@/features/shared/ui/typeahead';
-import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { DataTable, VirtualDataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { PolityZeroListView } from '@/features/shared/virtualization';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
+import { queries } from '@/zero/queries';
 import { DangerConfirmDialog } from '@/features/shared/ui/dialog';
 import {
   MEMBERSHIP_FLOW_RIGHT,
@@ -76,6 +79,7 @@ export interface ManageNetworkTabProps {
   ) => Promise<void>;
   onRejectRequest: (rels: NormalizedGroupRelationship[]) => Promise<void>;
   onDeleteRelationship: (targetGroupId: string) => void;
+  virtualize?: boolean;
 }
 
 export interface ManageNetworkTabContentViewProps extends ManageNetworkTabProps {
@@ -117,6 +121,7 @@ export function ManageNetworkTabContentView({
   onAcceptRequest,
   onRejectRequest,
   onDeleteRelationship,
+  virtualize = false,
   manageDialog,
   setManageDialog,
   canActivateLink,
@@ -766,6 +771,108 @@ export function ManageNetworkTabContentView({
       : []),
   ];
 
+  const relationshipRowsByPartnerId = useMemo(
+    () => new Map(filteredRelationships.map(relationship => [relationship.group.id, relationship])),
+    [filteredRelationships]
+  );
+  const activeRelationshipSource = useMemo(
+    () => ({
+      context: {
+        groupId,
+        status: 'active',
+        relationshipType: directionFilter,
+        rights: [...manageRightFilter].sort(),
+        query: searchQuery,
+      },
+      historyKey: `group-${groupId}-network-active`,
+      getPageQuery: ({ limit, start, dir, settled }: any) => ({
+        query: queries.network.groupConnectionPage({
+          groupId,
+          status: 'active',
+          relationshipType: directionFilter,
+          rights: [...manageRightFilter],
+          query: searchQuery,
+          limit,
+          start,
+          dir,
+        }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      getSingleQuery: ({ id, settled }: any) => ({
+        query: queries.network.groupConnectionById({ id }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      getRowKey: (row: any) => row._virtualId ?? row.id,
+      toStartRow: (row: any) => ({ updated_at: row.updated_at, id: row.id }),
+      mapRow: (row: any) => {
+        const partnerId = [row.group_a_id, row.group_b_id, row.from_group_id, row.to_group_id].find(
+          id => id && id !== groupId
+        );
+        const summary = partnerId ? relationshipRowsByPartnerId.get(partnerId) : undefined;
+        return summary ? { ...summary, _virtualId: row.id } : row;
+      },
+    }),
+    [directionFilter, groupId, manageRightFilter, relationshipRowsByPartnerId, searchQuery]
+  );
+
+  const requestList = (
+    direction: 'incoming' | 'outgoing',
+    requests: GroupedRelationshipRequest[],
+    columns: ColumnDef<RequestTableRow>[]
+  ) => (
+    <PolityZeroListView<any, { updated_at: number; id: string }, any>
+      context={{ groupId, direction, query: searchQuery }}
+      historyKey={`group-${groupId}-network-${direction}`}
+      estimateSize={190}
+      getRowKey={row => row.id}
+      toStartRow={row => ({ updated_at: row.updated_at, id: row.id })}
+      getPageQuery={({ limit, start, dir, settled }) => ({
+        query: queries.network.groupConnectionRequestPage({
+          groupId,
+          direction,
+          query: searchQuery,
+          limit,
+          start,
+          dir,
+        }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      })}
+      getSingleQuery={({ id, settled }) => ({
+        query: queries.network.groupConnectionRequestById({ id }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      })}
+      renderRow={row => {
+        const request = requests.find(item => item.requestId === row.id);
+        if (!request) return null;
+        return (
+          <div className="space-y-3">
+            <div className="space-y-1 px-3 sm:px-4">
+              <h3 className="text-sm font-semibold">{request.group.name}</h3>
+              <div className="text-muted-foreground text-sm">
+                {renderRequestDescription(
+                  request.group,
+                  request.type,
+                  request.membershipMode,
+                  request.rels.length > 0
+                )}
+              </div>
+            </div>
+            <DataTable
+              columns={columns}
+              data={getRequestRows(request)}
+              getRowId={requestRow => requestRow.id}
+              enablePagination={false}
+            />
+          </div>
+        );
+      }}
+      renderSkeleton={index => <Skeleton key={index} className="h-40 w-full" />}
+      renderEmpty={() => null}
+      className="max-h-[42rem] overflow-auto"
+      contentClassName="space-y-5"
+    />
+  );
+
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-4 px-3 sm:flex-row sm:items-start sm:justify-between sm:px-4">
@@ -830,29 +937,33 @@ export function ManageNetworkTabContentView({
           }
           description={t('common.network.incomingRequestsDescription')}
         >
-          <div className="space-y-5">
-            {incomingRequests.map(req => (
-              <div key={req.group.id} className="space-y-3">
-                <div className="space-y-1 px-3 sm:px-4">
-                  <h3 className="text-sm font-semibold">{req.group.name}</h3>
-                  <div className="text-muted-foreground text-sm">
-                    {renderRequestDescription(
-                      req.group,
-                      req.type,
-                      req.membershipMode,
-                      req.rels.length > 0
-                    )}
+          {virtualize ? (
+            requestList('incoming', incomingRequests, incomingRequestColumns)
+          ) : (
+            <div className="space-y-5">
+              {incomingRequests.map(request => (
+                <div key={request.requestId ?? request.group.id} className="space-y-3">
+                  <div className="space-y-1 px-3 sm:px-4">
+                    <h3 className="text-sm font-semibold">{request.group.name}</h3>
+                    <div className="text-muted-foreground text-sm">
+                      {renderRequestDescription(
+                        request.group,
+                        request.type,
+                        request.membershipMode,
+                        request.rels.length > 0
+                      )}
+                    </div>
                   </div>
+                  <DataTable
+                    columns={incomingRequestColumns}
+                    data={getRequestRows(request)}
+                    getRowId={row => row.id}
+                    enablePagination={false}
+                  />
                 </div>
-                <DataTable
-                  columns={incomingRequestColumns}
-                  data={getRequestRows(req)}
-                  getRowId={row => row.id}
-                  enablePagination={false}
-                />
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </ManagementSection>
       )}
 
@@ -869,29 +980,33 @@ export function ManageNetworkTabContentView({
           }
           description={t('common.network.outgoingRequestsDescription')}
         >
-          <div className="space-y-5">
-            {outgoingRequests.map(req => (
-              <div key={req.group.id} className="space-y-3">
-                <div className="space-y-1 px-3 sm:px-4">
-                  <h3 className="text-sm font-semibold">{req.group.name}</h3>
-                  <div className="text-muted-foreground text-sm">
-                    {renderRequestDescription(
-                      req.group,
-                      req.type,
-                      req.membershipMode,
-                      req.rels.length > 0
-                    )}
+          {virtualize ? (
+            requestList('outgoing', outgoingRequests, outgoingRequestColumns)
+          ) : (
+            <div className="space-y-5">
+              {outgoingRequests.map(request => (
+                <div key={request.requestId ?? request.group.id} className="space-y-3">
+                  <div className="space-y-1 px-3 sm:px-4">
+                    <h3 className="text-sm font-semibold">{request.group.name}</h3>
+                    <div className="text-muted-foreground text-sm">
+                      {renderRequestDescription(
+                        request.group,
+                        request.type,
+                        request.membershipMode,
+                        request.rels.length > 0
+                      )}
+                    </div>
                   </div>
+                  <DataTable
+                    columns={outgoingRequestColumns}
+                    data={getRequestRows(request)}
+                    getRowId={row => row.id}
+                    enablePagination={false}
+                  />
                 </div>
-                <DataTable
-                  columns={outgoingRequestColumns}
-                  data={getRequestRows(req)}
-                  getRowId={row => row.id}
-                  enablePagination={false}
-                />
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </ManagementSection>
       )}
 
@@ -907,16 +1022,24 @@ export function ManageNetworkTabContentView({
         }
         description={t('common.network.activeRelationshipsDescription')}
       >
-        <DataTable
-          columns={activeRelationshipColumns}
-          data={filteredRelationships}
-          getRowId={(relationship, index) =>
-            `${relationship.group.id}-${relationship.type}-${index}`
-          }
-          enablePagination={false}
-          emptyTitle={t('common.network.activeRelationships')}
-          emptyDescription={t('common.network.noRelationshipsFound')}
-        />
+        {virtualize ? (
+          <VirtualDataTable
+            columns={activeRelationshipColumns as ColumnDef<any>[]}
+            source={activeRelationshipSource}
+            emptyTitle={t('common.network.activeRelationships')}
+          />
+        ) : (
+          <DataTable
+            columns={activeRelationshipColumns}
+            data={filteredRelationships}
+            getRowId={(relationship, index) =>
+              `${relationship.group.id}-${relationship.type}-${index}`
+            }
+            enablePagination={false}
+            emptyTitle={t('common.network.activeRelationships')}
+            emptyDescription={t('common.network.noRelationshipsFound')}
+          />
+        )}
       </ManagementSection>
 
       {canManageRelationships && manageDialog ? (

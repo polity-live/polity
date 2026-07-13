@@ -1,8 +1,15 @@
-import type { DragEventHandler } from 'react';
+import { useCallback, useMemo, useRef, type DragEventHandler } from 'react';
 
 import { TodoTimelineCard } from '@/features/timeline/ui/cards/TodoTimelineCard';
 import { cn } from '@/features/shared/utils/utils';
 import type { Todo, TodoStatus } from '../types/todo.types';
+import {
+  PolityLocalListView,
+  rowAttributes,
+  usePolityZeroList,
+} from '@/features/shared/virtualization';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
+import { queries } from '@/zero/queries';
 
 interface KanbanColumn {
   id: TodoStatus;
@@ -23,6 +30,7 @@ interface KanbanBoardViewProps {
   onCardDragEnd: (todo: Todo) => void;
   onCardClick: (todo: Todo) => void;
   onToggleComplete: (todo: Todo) => void;
+  virtualQuery?: { query: string };
 }
 
 function isTodoStatus(status: string | null | undefined): status is TodoStatus {
@@ -31,6 +39,57 @@ function isTodoStatus(status: string | null | undefined): status is TodoStatus {
     status === 'in_progress' ||
     status === 'completed' ||
     status === 'cancelled'
+  );
+}
+
+function VirtualKanbanColumn({
+  column,
+  query,
+  renderTodo,
+}: {
+  column: KanbanColumn;
+  query: string;
+  renderTodo: (todo: Todo) => React.ReactNode;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const context = useMemo(() => ({ status: column.id, query: query.trim() }), [column.id, query]);
+  const list = usePolityZeroList<typeof context, Todo, { created_at: number; id: string }>({
+    scrollStateKey: `todos-kanban-${column.id}`,
+    listContextParams: context,
+    getScrollElement: useCallback(() => scrollRef.current, []),
+    estimateSize: useCallback(() => 144, []),
+    overscan: 6,
+    getRowKey: todo => todo.id,
+    toStartRow: todo => ({ created_at: Number(todo.created_at), id: todo.id }),
+    getPageQuery: useCallback(
+      ({ limit, start, dir, settled }) => ({
+        query: queries.todos.page({ ...context, limit, start, dir }) as any,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      [context]
+    ),
+    getSingleQuery: useCallback(
+      ({ id, settled }) => ({
+        query: queries.todos.byIdWithRelations({ id }) as any,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      []
+    ),
+  });
+
+  return (
+    <div ref={scrollRef} className="max-h-[38rem] min-h-96 overflow-y-auto">
+      <div
+        className="space-y-3"
+        style={{ paddingTop: list.spaceBefore, paddingBottom: list.spaceAfter }}
+      >
+        {list.items.map(item => (
+          <div key={item.key} {...rowAttributes(item.index, item.key)}>
+            {item.row ? renderTodo(item.row) : <Skeleton className="h-32 w-full rounded-xl" />}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -46,6 +105,7 @@ export function KanbanBoardView({
   onCardDragEnd,
   onCardClick,
   onToggleComplete,
+  virtualQuery,
 }: KanbanBoardViewProps) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -63,21 +123,45 @@ export function KanbanBoardView({
             </p>
           </div>
 
-          <div className="space-y-3">
-            {column.todos.map(todo => (
-              <TodoKanbanCardView
-                key={todo.id}
-                canManageTodos={canManageTodos}
-                todo={todo}
-                isDragging={draggedTodoId === todo.id}
-                onMouseDown={onCardMouseDown}
-                onDragStart={onCardDragStart}
-                onDragEnd={onCardDragEnd}
-                onClick={onCardClick}
-                onToggleComplete={onToggleComplete}
-              />
-            ))}
-          </div>
+          {virtualQuery ? (
+            <VirtualKanbanColumn
+              column={column}
+              query={virtualQuery.query}
+              renderTodo={todo => (
+                <TodoKanbanCardView
+                  key={todo.id}
+                  canManageTodos={canManageTodos}
+                  todo={todo}
+                  isDragging={draggedTodoId === todo.id}
+                  onMouseDown={onCardMouseDown}
+                  onDragStart={onCardDragStart}
+                  onDragEnd={onCardDragEnd}
+                  onClick={onCardClick}
+                  onToggleComplete={onToggleComplete}
+                />
+              )}
+            />
+          ) : (
+            <PolityLocalListView
+              items={column.todos}
+              getItemKey={todo => todo.id}
+              estimateSize={144}
+              overscan={12}
+              className="max-h-[38rem] min-h-96 overflow-y-auto"
+              renderItem={todo => (
+                <TodoKanbanCardView
+                  canManageTodos={canManageTodos}
+                  todo={todo}
+                  isDragging={draggedTodoId === todo.id}
+                  onMouseDown={onCardMouseDown}
+                  onDragStart={onCardDragStart}
+                  onDragEnd={onCardDragEnd}
+                  onClick={onCardClick}
+                  onToggleComplete={onToggleComplete}
+                />
+              )}
+            />
+          )}
         </div>
       ))}
     </div>

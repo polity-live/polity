@@ -9,6 +9,8 @@ interface AmendmentCollaborationsTabProps {
   onDeclineInvitation: (id: string) => void;
   onLeave: (id: string) => void;
   onWithdrawRequest: (id: string) => void;
+  userId: string;
+  searchQuery: string;
 }
 
 export function AmendmentCollaborationsTab({
@@ -17,6 +19,8 @@ export function AmendmentCollaborationsTab({
   onDeclineInvitation,
   onLeave,
   onWithdrawRequest,
+  userId,
+  searchQuery,
 }: AmendmentCollaborationsTabProps) {
   return (
     <div className="space-y-6">
@@ -32,6 +36,8 @@ export function AmendmentCollaborationsTab({
         statusType="invited"
         entityKey="amendment"
         fallbackIcon={FileEdit}
+        userId={userId}
+        searchQuery={searchQuery}
         onAccept={onAcceptInvitation}
         onDecline={onDeclineInvitation}
       />
@@ -48,6 +54,8 @@ export function AmendmentCollaborationsTab({
         statusType="active"
         entityKey="amendment"
         fallbackIcon={FileEdit}
+        userId={userId}
+        searchQuery={searchQuery}
         onLeave={onLeave}
       />
 
@@ -63,6 +71,8 @@ export function AmendmentCollaborationsTab({
         statusType="requested"
         entityKey="amendment"
         fallbackIcon={FileEdit}
+        userId={userId}
+        searchQuery={searchQuery}
         onWithdraw={onWithdrawRequest}
       />
     </div>

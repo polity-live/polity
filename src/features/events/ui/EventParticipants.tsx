@@ -44,6 +44,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { ManagementToolbar, SettingsPage } from '@/features/shared/ui/form';
 import { buildEventParticipantCompositionBuckets } from '../logic/eventParticipantComposition';
 import { buildOfflineRosterRowsForEvent } from '../logic/offlineParticipantRows';
+import { queries } from '@/zero/queries';
 
 type EventParticipantRow = ReturnType<typeof useEventParticipantsData>['participants'][number];
 
@@ -266,9 +267,93 @@ export function EventParticipants({
       filterParticipationsByRole(activeParticipantsWithDelegateRepresentation, activeRoleFilterIds),
     [activeParticipantsWithDelegateRepresentation, activeRoleFilterIds]
   );
+  const participantRowsById = useMemo(
+    () =>
+      new Map(
+        [
+          ...activeParticipantsWithDelegateRepresentation,
+          ...pendingRequests,
+          ...pendingInvitations,
+        ].map((participant: any) => [participant.id, participant])
+      ),
+    [activeParticipantsWithDelegateRepresentation, pendingInvitations, pendingRequests]
+  );
+  const participantVirtualSources = useMemo(() => {
+    const makeSource = (statuses: string[], suffix: string, roleIds = activeRoleFilterIds) => ({
+      context: {
+        eventId,
+        statuses,
+        query: participantSearchQuery,
+        roleIds,
+      },
+      historyKey: `event-${eventId}-participants-${suffix}`,
+      getPageQuery: ({ limit, start, dir, settled }: any) => ({
+        query: queries.events.participantPage({
+          eventId,
+          statuses,
+          roleIds,
+          query: participantSearchQuery,
+          limit,
+          start,
+          dir,
+        }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      getSingleQuery: ({ id, settled }: any) => ({
+        query: queries.events.participantById({ id }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      getRowKey: (row: any) => row.id,
+      toStartRow: (row: any) => ({ created_at: row.created_at, id: row.id }),
+      mapRow: (row: any) => participantRowsById.get(row.id) ?? row,
+    });
+    return {
+      requested: makeSource(['requested'], 'requested'),
+      invited: makeSource(['invited'], 'invited'),
+      active: makeSource(['active', 'member', 'admin', 'confirmed'], 'active'),
+      byRole: (roleId: string) =>
+        makeSource(['active', 'member', 'admin', 'confirmed'], `role-${roleId}`, [roleId]),
+    };
+  }, [activeRoleFilterIds, eventId, participantRowsById, participantSearchQuery]);
   const filteredGuestParticipants = useMemo(
     () => filterParticipationsByRole(guestParticipants, activeRoleFilterIds),
     [activeRoleFilterIds, guestParticipants]
+  );
+  const guestParticipantRowsById = useMemo(
+    () =>
+      new Map(filteredGuestParticipants.map((participant: any) => [participant.id, participant])),
+    [filteredGuestParticipants]
+  );
+  const guestParticipantVirtualSource = useMemo(
+    () => ({
+      context: {
+        eventId,
+        statuses: ['requested', 'invited', 'active', 'confirmed'],
+        query: participantSearchQuery,
+        roleIds: guestRoles.map((role: any) => role.id),
+      },
+      historyKey: `event-${eventId}-guest-participants`,
+      getPageQuery: ({ limit, start, dir, settled }: any) => ({
+        query: queries.events.participantPage({
+          eventId,
+          statuses: ['requested', 'invited', 'active', 'confirmed'],
+          roleIds: guestRoles.map((role: any) => role.id),
+          query: participantSearchQuery,
+          limit,
+          start,
+          dir,
+        }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      getSingleQuery: ({ id, settled }: any) => ({
+        query: queries.events.participantById({ id }) as never,
+        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+      }),
+      getRowKey: (row: any) => row.id,
+      toStartRow: (row: any) => ({ created_at: row.created_at, id: row.id }),
+      mapRow: (row: any) => guestParticipantRowsById.get(row.id) ?? row,
+    }),
+    [eventId, guestParticipantRowsById, guestRoles, participantSearchQuery]
   );
   const activePlatformParticipants = useMemo(
     () =>
@@ -616,6 +701,7 @@ export function EventParticipants({
           <div className="space-y-4">
             <PendingRequestsTable
               requests={filteredPendingRequests}
+              virtualSource={participantVirtualSources.requested}
               onApprove={(membershipId, userId) =>
                 approveParticipation(membershipId, userId, authUser?.id ?? undefined, eventTitle)
               }
@@ -631,6 +717,7 @@ export function EventParticipants({
             />
             <PendingInvitationsTable
               invitations={filteredPendingInvitations}
+              virtualSource={participantVirtualSources.invited}
               onWithdraw={(membershipId, userId) =>
                 rejectParticipation(membershipId, userId, authUser?.id ?? undefined, eventTitle)
               }
@@ -642,6 +729,7 @@ export function EventParticipants({
             />
             <ActiveMembersTable
               members={filteredActiveParticipantsForTables}
+              virtualSource={participantVirtualSources.active}
               sort={membershipSort}
               onSortChange={handleParticipantSortChange}
               onOpenRightsDialog={membership => {
@@ -808,6 +896,7 @@ export function EventParticipants({
             showBaseGroupColumn={showBaseGroupColumn}
             showDelegateRepresentationColumn={showDelegateComposition}
             hideEmptyRoleSections={activeRoleFilterIds.length > 0}
+            getVirtualSource={participantVirtualSources.byRole}
           />
         }
         compositionContent={
@@ -839,6 +928,7 @@ export function EventParticipants({
           <div className="space-y-4">
             <GuestsTable
               guests={filteredGuestParticipants}
+              virtualSource={guestParticipantVirtualSource}
               onApprove={guestAccessId => {
                 const guest = guestParticipants.find(
                   participant => participant.id === guestAccessId

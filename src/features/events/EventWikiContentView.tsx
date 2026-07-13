@@ -42,6 +42,7 @@ import {
   type WikiParticipationItem,
   type WikiParticipationRole,
 } from '@/features/shared/ui/wiki';
+import { queries } from '@/zero/queries';
 
 const ELECTION_CARD_SURFACE = `${getEntityGradientClasses('election')} ${getMotionPreset('hoverLift')}`;
 
@@ -80,6 +81,7 @@ function getParticipantWikiRoles(
 }
 
 export interface EventWikiContentViewProps {
+  virtualizeParticipationDirectory?: boolean;
   agendaStats: any;
   amendmentsCount: any;
   canAccess: any;
@@ -113,6 +115,7 @@ export interface EventWikiContentViewProps {
 }
 
 export function EventWikiContentView({
+  virtualizeParticipationDirectory = false,
   amendmentsCount,
   candidacyPasswordError,
   confirmDialogOpen,
@@ -403,6 +406,47 @@ export function EventWikiContentView({
               totalCount={participantTotalCount}
               items={participantDirectoryItems}
             />
+          }
+          virtualSource={
+            virtualizeParticipationDirectory
+              ? {
+                  historyKey: `event-${eventId}-participation-directory`,
+                  context: {
+                    eventId,
+                    statuses: ['active', 'admin', 'collaborator', 'confirmed', 'member', 'owner'],
+                  },
+                  getPageQuery: ({ limit, start, dir, settled, query, roleIds }) => ({
+                    query: queries.events.participantPage({
+                      eventId,
+                      statuses: ['active', 'admin', 'collaborator', 'confirmed', 'member', 'owner'],
+                      roleIds,
+                      query,
+                      limit,
+                      start,
+                      dir,
+                    }) as never,
+                    options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+                  }),
+                  getSingleQuery: ({ id, settled }) => ({
+                    query: queries.events.participantById({ id }) as never,
+                    options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+                  }),
+                  getRowKey: row => row.id,
+                  mapRow: participant => {
+                    const participantUser = participant.user;
+                    return {
+                      id: participant.id,
+                      userId: participantUser?.id ?? participant.user_id,
+                      name: getWikiParticipationName(participantUser),
+                      handle: participantUser?.handle ?? null,
+                      email: participantUser?.email ?? null,
+                      avatar: participantUser?.avatar ?? null,
+                      status: participant.status ?? null,
+                      roles: getParticipantWikiRoles(participant, participantRoleById),
+                    };
+                  },
+                }
+              : undefined
           }
         />
       </div>
