@@ -35,9 +35,12 @@ describe('todo deadline formatting', () => {
     const dueAt = toLocalDeadlineTimestamp('2026-07-19', '14:30');
     const before = new Date(2026, 6, 19, 14, 0).getTime();
     const after = new Date(2026, 6, 19, 15, 0).getTime();
+    const expectedTime = new Date(dueAt ?? 0).toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
-    expect(formatTodoDate(dueAt ?? 0, before)).toContain('Today');
-    expect(formatTodoDate(dueAt ?? 0, before)).toMatch(/14[:.]30/);
+    expect(formatTodoDate(dueAt ?? 0, before)).toBe(`Today, ${expectedTime}`);
     expect(isOverdue(dueAt ?? undefined, 'pending', before)).toBe(false);
     expect(isOverdue(dueAt ?? undefined, 'pending', after)).toBe(true);
     expect(todoDeadlineToFormValues(dueAt)).toEqual({
