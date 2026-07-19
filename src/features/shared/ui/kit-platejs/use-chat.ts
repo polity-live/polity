@@ -10,12 +10,17 @@ export interface PlateEditorChatOptions {
   headers?: Record<string, string>;
 }
 
-interface EditorCommandMessage {
+const DEFAULT_EDITOR_CHAT_OPTIONS: PlateEditorChatOptions = {
+  api: '/api/ai/command',
+  body: {},
+};
+
+export interface EditorCommandMessage {
   role: 'assistant' | 'system' | 'user';
   content: string;
 }
 
-interface LegacyChatMessage {
+export interface LegacyChatMessage {
   content?: string | { text?: string; type?: string }[];
   id?: string;
   parts?: UIMessage['parts'];
@@ -23,6 +28,7 @@ interface LegacyChatMessage {
 }
 
 type LegacyAppendOptions = ChatRequestOptions;
+type EditorUIMessage = UIMessage;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object';
@@ -37,7 +43,7 @@ function getSystemMessageFromBody(body: unknown): EditorCommandMessage | null {
   return content ? { role: 'system', content } : null;
 }
 
-function getMessageTextContent(message: LegacyChatMessage): string {
+export function getMessageTextContent(message: LegacyChatMessage): string {
   const { content, parts } = message;
 
   if (typeof content === 'string') {
@@ -71,29 +77,27 @@ function getMessageTextContent(message: LegacyChatMessage): string {
   return '';
 }
 
-function toLegacyMessage(message: UIMessage): LegacyChatMessage {
+export function toLegacyMessage(message: EditorUIMessage): LegacyChatMessage {
   return {
     ...message,
     content: getMessageTextContent(message),
   };
 }
 
-function toUiMessage(message: LegacyChatMessage, index: number): UIMessage {
-  if (Array.isArray(message.parts)) {
-    return message as UIMessage;
-  }
-
+export function toUiMessage(message: LegacyChatMessage, index: number): EditorUIMessage {
   return {
     id: message.id ?? `editor-message-${index}`,
     role:
       message.role === 'assistant' || message.role === 'system' || message.role === 'user'
         ? message.role
         : 'user',
-    parts: [{ type: 'text', text: getMessageTextContent(message) }],
+    parts: Array.isArray(message.parts)
+      ? [...message.parts]
+      : [{ type: 'text', text: getMessageTextContent(message) }],
   };
 }
 
-function buildEditorCommandBody(
+export function buildEditorCommandBody(
   messages: readonly LegacyChatMessage[],
   body?: unknown
 ): { messages: EditorCommandMessage[] } {
@@ -122,7 +126,7 @@ function buildEditorCommandBody(
   };
 }
 
-function getAppendText(message?: LegacyChatMessage | { text?: string }): string {
+export function getAppendText(message?: LegacyChatMessage | { text?: string }): string {
   if (!message) {
     return '';
   }
@@ -131,16 +135,16 @@ function getAppendText(message?: LegacyChatMessage | { text?: string }): string 
     return message.text;
   }
 
-  return getMessageTextContent(message as LegacyChatMessage);
+  return 'role' in message ? getMessageTextContent(message) : '';
 }
 
 export const useChat = () => {
-  const options: PlateEditorChatOptions = { api: '/api/ai/command', body: {} };
+  const options = DEFAULT_EDITOR_CHAT_OPTIONS;
   const { session } = useAuth();
 
   const transport = React.useMemo(
     () =>
-      new DefaultChatTransport({
+      new DefaultChatTransport<EditorUIMessage>({
         api: options.api ?? '/api/ai/command',
         body: options.body,
         credentials: options.credentials,
@@ -160,14 +164,14 @@ export const useChat = () => {
 
   const chatInstance = React.useMemo(
     () =>
-      new Chat({
+      new Chat<EditorUIMessage>({
         id: 'editor',
         transport,
       }),
     [transport]
   );
 
-  const chat = useBaseChat({ chat: chatInstance });
+  const chat = useBaseChat<EditorUIMessage>({ chat: chatInstance });
 
   const [input, setInput] = React.useState('');
   const messages = React.useMemo(() => chat.messages.map(toLegacyMessage), [chat.messages]);
