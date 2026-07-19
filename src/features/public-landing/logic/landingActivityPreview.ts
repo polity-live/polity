@@ -4,6 +4,9 @@ import type {
 } from '@/features/timeline/logic/civicTimeline';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
+const landingText = (key: string) => translateText(`pages.home.publicLanding.${key}`);
+const landingTags = (key: string) => translateText(`pages.home.publicLanding.${key}`).split('|');
+
 const LANDING_ACTIVITY_BASE_DATE = new Date('2026-06-18T08:30:00.000Z');
 
 export const landingActivityTimelineItems: CivicTimelineItem[] = [
@@ -11,20 +14,18 @@ export const landingActivityTimelineItems: CivicTimelineItem[] = [
     id: 'landing-activity-hearing',
     entityId: 'event-public-hearing',
     type: 'event',
-    title: translateText('generated.inline.0485_public_committee_hearing_scheduled_a5cd3ff0'),
-    description: translateText(
-      'generated.inline.0486_the_parliamentary_group_added_a_public_consul_0a988ee8'
-    ),
+    title: landingText('timeline.items.event.title'),
+    description: landingText('timeline.items.event.description'),
     href: '/event/public-hearing',
-    sourceName: 'Budget Committee',
+    sourceName: landingText('timeline.items.event.source'),
     sourceHref: '/group/budget-committee',
     timestamp: LANDING_ACTIVITY_BASE_DATE,
     startDate: LANDING_ACTIVITY_BASE_DATE,
-    status: 'scheduled',
-    locationLabel: 'Berlin, Parliament',
+    status: landingText('timeline.items.event.status'),
+    locationLabel: landingText('timeline.items.event.location'),
     coordinates: { latitude: 52.5186, longitude: 13.3762 },
-    tags: ['hearing', 'budget', 'climate'],
-    statsLabel: '128 participants',
+    tags: landingTags('timeline.items.event.tags'),
+    statsLabel: landingText('timeline.items.event.stats'),
     reason: 'subscribed',
     distanceKm: 2.4,
   },
@@ -32,19 +33,17 @@ export const landingActivityTimelineItems: CivicTimelineItem[] = [
     id: 'landing-activity-change-request',
     entityId: 'cr-reporting-milestones',
     type: 'workflow',
-    title: translateText('generated.inline.0487_change_request_opened_79db3d8c'),
-    description: translateText(
-      'generated.inline.0488_a_working_group_proposed_measurable_quarterly_e4148ffc'
-    ),
+    title: landingText('timeline.items.changeRequest.title'),
+    description: landingText('timeline.items.changeRequest.description'),
     href: '/amendments/climate-budget/change-requests',
-    sourceName: 'Policy Committee',
+    sourceName: landingText('timeline.items.changeRequest.source'),
     sourceHref: '/group/policy-committee',
     timestamp: new Date('2026-06-18T10:15:00.000Z'),
-    status: 'event_final_closing_vote',
-    locationLabel: 'Potsdam',
+    status: landingText('timeline.items.changeRequest.status'),
+    locationLabel: landingText('timeline.items.changeRequest.location'),
     coordinates: { latitude: 52.3906, longitude: 13.0645 },
-    tags: ['amendment', 'workflow'],
-    statsLabel: '2 comments',
+    tags: landingTags('timeline.items.changeRequest.tags'),
+    statsLabel: landingText('timeline.items.changeRequest.stats'),
     reason: 'active_now',
     distanceKm: 28,
   },
@@ -52,20 +51,18 @@ export const landingActivityTimelineItems: CivicTimelineItem[] = [
     id: 'landing-activity-final-vote',
     entityId: 'vote-final-climate-budget',
     type: 'vote',
-    title: translateText('generated.inline.0489_final_vote_approaching_5fce0714'),
-    description: translateText(
-      'generated.inline.0490_members_review_the_latest_version_and_prepare_13eb2f3d'
-    ),
+    title: landingText('timeline.items.vote.title'),
+    description: landingText('timeline.items.vote.description'),
     href: '/event/public-hearing/agenda/agenda-item-climate-budget-18',
-    sourceName: 'Party Congress',
+    sourceName: landingText('timeline.items.vote.source'),
     sourceHref: '/group/party-congress',
     timestamp: new Date('2026-06-20T13:00:00.000Z'),
     startDate: new Date('2026-06-20T13:00:00.000Z'),
-    status: 'opening_soon',
-    locationLabel: 'Leipzig',
+    status: landingText('timeline.items.vote.status'),
+    locationLabel: landingText('timeline.items.vote.location'),
     coordinates: { latitude: 51.3397, longitude: 12.3731 },
-    tags: ['vote', 'agenda'],
-    statsLabel: '74% support',
+    tags: landingTags('timeline.items.vote.tags'),
+    statsLabel: landingText('timeline.items.vote.stats'),
     reason: 'urgent_decision',
     distanceKm: 150,
   },

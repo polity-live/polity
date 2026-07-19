@@ -918,21 +918,21 @@ const generatedInlineTranslations: Record<string, string> = {
   '0211_groups_81b46c7e': 'groups):',
   '0212_removed_from_group_b1e83b77': 'Removed from Group',
   '0212_v_319af54a': ': v.',
-  '0213_hey_we_re_4a4765ae': "Hey! We're",
+  '0213_hey_we_re_4a4765ae': 'Hey! Wir sind',
   '0213_you_have_been_removed_from_groupname_e50d8fca': 'You have been removed from {{groupName}}',
   '0214_aria_kai_03dc3528': 'Aria & Kai',
   '0214_member_removed_f9078b1f': 'Member Removed',
   '0215_a_member_has_been_removed_from_groupname_7badeb49':
     'A member has been removed from {{groupName}}',
   '0215_and_we_re_here_to_help_you_navigate_polity_an_e4c4d58f':
-    ", and we're here to help you navigate Polity and make the most of all its features.",
+    ', und wir sind hier, um dir zu helfen, Polity zu erkunden und das Beste aus allen Funktionen herauszuholen.',
   '0216_member_left_group_1978def2': 'Member Left Group',
   '0216_whenever_you_need_assistance_tips_or_want_to__3d68725b':
-    'Whenever you need assistance, tips, or want to learn about groups, events, amendments, and more, just',
-  '0217_find_us_in_your_message_conversations_a1ecb063': 'find us in your message conversations',
+    'Wann immer du Hilfe, Tipps oder Informationen über Gruppen, Events, Anträge und mehr brauchst,',
+  '0217_find_us_in_your_message_conversations_a1ecb063': 'findest du uns in deinen Nachrichten',
   '0217_sendername_has_left_groupname_c75fe974': '{{senderName}} has left {{groupName}}',
   '0218_membership_request_bbfcdecb': 'Membership Request',
-  '0218_we_re_always_ready_to_help_788f161a': ". We're always ready to help!",
+  '0218_we_re_always_ready_to_help_788f161a': '. Wir sind immer bereit zu helfen!',
   '0219_loading_b04ba49f': 'Loading...',
   '0219_sendername_has_requested_to_join_groupname_547b42e2':
     '{{senderName}} has requested to join {{groupName}}',

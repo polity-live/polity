@@ -334,6 +334,7 @@ export const timelineTranslations = {
     oppose: 'Dagegen',
     abstain: 'Enthaltung',
     indicationShort: 'Ind',
+    finalVote: 'Schlussabstimmung',
     summary: 'ZUSAMMENFASSUNG',
     problem: 'PROBLEM',
     proposal: 'VORSCHLAG',

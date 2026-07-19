@@ -31,6 +31,21 @@ export const homePageTranslations = {
       description:
         'Gruppen, Veranstaltungen, Rechte und Entscheidungswege als navigierbarer Graph.',
       panelTitle: 'Antragsweg',
+      nodes: {
+        stateParty: 'Landesverband',
+        localBranch: 'Ortsverband Nord',
+        policyCommittee: 'Programmausschuss',
+        partyCongress: 'Parteitag',
+        parliamentaryGroup: 'Fraktion',
+        publicCommitteeHearing: 'Öffentliche Ausschussanhörung',
+        parliamentaryGroupMeeting: 'Fraktionssitzung',
+        hearingLocation: 'Parlament, Raum 2.114',
+        meetingLocation: 'Fraktionsbüro',
+        hearingDescription:
+          'Eine Anhörung, in der die Fraktion das Mandat vorstellt und öffentliches Feedback erhält.',
+        meetingDescription:
+          'Die Fraktion bereitet das Antragspaket nach der Zustimmung des Parteitags vor.',
+      },
     },
     sections: {
       features: {
@@ -139,18 +154,33 @@ export const homePageTranslations = {
           description:
             'Die Generalversammlung hat einen öffentlichen Beratungstermin für den Klima-Budget-Antrag ergänzt.',
           meta: 'Heute, 10:30',
+          source: 'Haushaltsausschuss',
+          location: 'Berlin, Parlament',
+          status: 'geplant',
+          stats: '128 Teilnehmende',
+          tags: 'Anhörung|Haushalt|Klima',
         },
         changeRequest: {
           title: 'Änderungsantrag geöffnet',
           description:
             'Eine Arbeitsgruppe schlägt einen messbaren Meilenstein vor der finalen Abstimmung vor.',
           meta: '2 Kommentare',
+          source: 'Programmausschuss',
+          location: 'Potsdam',
+          status: 'letzte Abschlussabstimmung des Events',
+          stats: '2 Kommentare',
+          tags: 'Änderungsantrag|Workflow',
         },
         vote: {
           title: 'Finale Abstimmung naht',
           description:
             'Mitglieder können die neueste Version prüfen und ihre Abstimmung vorbereiten.',
           meta: '74% Zustimmung',
+          source: 'Parteitag',
+          location: 'Leipzig',
+          status: 'bald eröffnet',
+          stats: '74% Zustimmung',
+          tags: 'Abstimmung|Tagesordnung',
         },
       },
     },

@@ -302,9 +302,9 @@ function DecisionMetricsLine({ decision }: { decision: DecisionItem }) {
   }
 
   if (decision.isIndicationPhase) {
-    parts.push(translateText('features.events.agenda.indicationShort', 'IND'));
+    parts.push(translateText('features.timeline.terminal.indicationShort', 'Ind'));
   } else if (decision.phase === 'final') {
-    parts.push(translateText('features.events.voting.phases.finalVote', 'Final vote'));
+    parts.push(translateText('features.timeline.terminal.finalVote', 'Final Vote'));
   }
 
   if (!parts.length) return null;
