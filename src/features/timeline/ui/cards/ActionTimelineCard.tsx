@@ -290,7 +290,7 @@ export function ActionTimelineCard({ action, onViewDetails, className }: ActionT
           {/* Action icon */}
           <div
             className={cn(
-              'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full',
+              'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg',
               config.iconBg,
               config.iconColor
             )}

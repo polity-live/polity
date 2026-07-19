@@ -41,7 +41,7 @@ export const FEATURE_THEME_CLASS_NAMES = {
   agendaAgendaItemContextCardNeutralText:
     'mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-300',
   agendaAgendaItemContextCardNeutralContrastBadge:
-    'inline-flex items-center gap-1 rounded-full border border-white/50 bg-white/70 px-3 py-1 text-xs font-medium text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-200',
+    'inline-flex items-center gap-1 rounded-md border border-white/50 bg-white/70 px-3 py-1 text-xs font-medium text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-200',
   agendaAgendaItemContextCardNeutralContrastBadgeAlpha:
     'border-white/50 bg-white/70 text-gray-700 dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-200',
   agendaAgendaItemContextCardWarningSurface:
@@ -90,7 +90,7 @@ export const FEATURE_THEME_CLASS_NAMES = {
   agendaEventAgendaThemedBackground:
     'bg-primary absolute -top-3 right-6 left-6 z-20 h-0.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.9)]',
   agendaEventAgendaSuccessContrastRoundIcon:
-    'flex h-6 w-6 items-center justify-center rounded-full border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)] shadow-sm',
+    'flex h-6 w-6 items-center justify-center rounded-md border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)] shadow-sm',
   agendaEventAgendaSuccessBorder: 'border-[var(--badge-success-border)]',
   agendaEventAgendaThemedBorder: 'border-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.25)]',
   agendaEventAgendaThemedBackgroundAlpha:
@@ -104,13 +104,13 @@ export const FEATURE_THEME_CLASS_NAMES = {
     'absolute -top-1 -right-1 h-3 w-3 rounded-full bg-[var(--badge-warning-fg)]',
   agendaEventAgendaContrastBackground: 'relative w-full overflow-hidden rounded-lg bg-black',
   agendaEventAgendaAccentRoundIcon:
-    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-purple-100 md:h-10 md:w-10 dark:bg-purple-900',
+    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-purple-100 md:h-10 md:w-10 dark:bg-purple-900',
   agendaEventAgendaAccentIcon: 'h-4 w-4 text-[var(--badge-accent-fg)] md:h-5 md:w-5',
   agendaEventAgendaWarningRoundIconAlpha:
-    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--badge-warning-bg)] md:h-10 md:w-10',
+    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--badge-warning-bg)] md:h-10 md:w-10',
   agendaEventAgendaWarningIcon: 'h-4 w-4 text-[var(--badge-warning-fg)] md:h-5 md:w-5',
   agendaEventAgendaInfoRoundIcon:
-    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--badge-info-bg)] md:h-10 md:w-10',
+    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--badge-info-bg)] md:h-10 md:w-10',
   agendaEventAgendaInfoIcon: 'h-4 w-4 text-[var(--badge-info-fg)] md:h-5 md:w-5',
   agendaEventStreamSectionSuccessBackground:
     'bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]',
@@ -191,39 +191,39 @@ export const FEATURE_THEME_CLASS_NAMES = {
   assistantAriaKaiStepInfoIcon: 'mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--badge-info-fg)]',
   authAuthGuardInfoLoadingIcon: 'h-8 w-8 animate-spin text-[var(--badge-info-fg)]',
   authGroupSearchStepSuccessGradientSurface:
-    'rounded-full bg-gradient-to-br from-green-500 to-emerald-600 p-4',
+    'rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 p-4',
   authGroupSearchStepContrastIcon: 'h-8 w-8 text-white',
   authGroupSearchStepSuccessNeutralBorder:
     'border-[var(--badge-success-border)] ring-2 ring-[var(--badge-success-border)] ring-offset-2 dark:ring-offset-gray-900',
-  authGroupSearchStepSuccessPanel: 'rounded-full bg-[var(--badge-success-fg)] p-1',
+  authGroupSearchStepSuccessPanel: 'rounded-sm bg-[var(--badge-success-fg)] p-1',
   authGroupSearchStepSuccessContrastIcon: 'h-3 w-3 text-white',
   authMembershipConfirmStepAccentGradientSurface:
-    'rounded-full bg-gradient-to-br from-purple-500 to-violet-600 p-4',
+    'rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 p-4',
   authMembershipConfirmStepSuccessBadge:
     'rounded-lg border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] p-4 text-center',
-  authMembershipConfirmStepSuccessPanel: 'rounded-full bg-[var(--badge-success-fg)] p-2',
+  authMembershipConfirmStepSuccessPanel: 'rounded-md bg-[var(--badge-success-fg)] p-2',
   authMembershipConfirmStepContrastIcon: 'h-5 w-5 text-white',
   authMembershipConfirmStepSuccessText: 'font-medium text-[var(--badge-success-fg)]',
   authNameStepInfoAccentGradientSurface:
-    'rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 p-4',
+    'rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 p-4',
   authNameStepSuccessText: 'text-[var(--badge-success-fg)]',
   authSummaryStepWarningGradientSurface:
-    'rounded-full bg-gradient-to-br from-amber-500 to-orange-600 p-4',
+    'rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 p-4',
   authSummaryStepContrastIcon: 'h-4 w-4 text-white',
   authSummaryStepSuccessText: 'text-sm text-[var(--badge-success-fg)]',
   authSummaryStepSuccessTextAlpha: 'font-semibold text-[var(--badge-success-fg)]',
-  authSummaryStepInfoPanel: 'rounded-full bg-[var(--badge-info-fg)] p-2',
+  authSummaryStepInfoPanel: 'rounded-md bg-[var(--badge-info-fg)] p-2',
   authSummaryStepInfoText: 'text-sm text-[var(--badge-info-fg)]',
   authSummaryStepInfoTextAlpha: 'font-semibold text-[var(--badge-info-fg)]',
   authSummaryStepInfoIcon: 'h-5 w-5 text-[var(--badge-info-fg)]',
-  authSummaryStepNeutralPanel: 'rounded-full bg-[var(--badge-neutral-fg)] p-2',
+  authSummaryStepNeutralPanel: 'rounded-md bg-[var(--badge-neutral-fg)] p-2',
   authSummaryStepNeutralText: 'text-sm text-[var(--badge-neutral-fg)]',
-  authSummaryStepAccentPanel: 'rounded-full bg-[var(--badge-accent-fg)] p-2',
+  authSummaryStepAccentPanel: 'rounded-md bg-[var(--badge-accent-fg)] p-2',
   authSummaryStepAccentText: 'text-sm text-[var(--badge-accent-fg)]',
   authSummaryStepAccentTextAlpha: 'font-semibold text-[var(--badge-accent-fg)]',
   authSummaryStepAccentIcon: 'h-5 w-5 text-[var(--badge-accent-fg)]',
   authAccessDeniedDangerRoundIcon:
-    'mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--badge-danger-bg)]',
+    'mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-xl bg-[var(--badge-danger-bg)]',
   authAccessDeniedDangerIcon: 'h-10 w-10 text-[var(--badge-danger-fg)]',
   authForgotPasswordFormSuccessIcon: 'h-12 w-12 text-[var(--badge-success-fg)]',
   authForgotPasswordFormInfoIcon: 'h-12 w-12 text-[var(--badge-info-fg)]',
@@ -258,7 +258,7 @@ export const FEATURE_THEME_CLASS_NAMES = {
   createCreateFieldsThemedBorderBeta:
     '[&_[data-slot=input]]:border-destructive [&_[data-slot=input]]:focus-visible:ring-destructive/20 dark:[&_[data-slot=input]]:focus-visible:ring-destructive/40 [&_[data-slot=typeahead-selected]]:border-destructive',
   createCreateProgressIndicatorThemedRoundIcon:
-    'flex h-4 w-4 items-center justify-center rounded-full text-[10px]',
+    'flex h-4 w-4 items-center justify-center rounded-sm text-[10px]',
   decisionterminalDecisionStatusSuccessText: 'text-[var(--badge-success-fg)]',
   decisionterminalDecisionStatusWarningText: 'text-[var(--badge-warning-fg)]',
   decisionterminalDecisionStatusWarningTextAlpha: 'text-[var(--badge-warning-fg)]',
@@ -422,13 +422,13 @@ export const FEATURE_THEME_CLASS_NAMES = {
   messageAssistantMessageInputThemedText:
     'text-muted-foreground px-2 pt-1 text-[11px] font-semibold tracking-[0.14em] uppercase',
   messageAssistantMessageInputSuccessRoundIcon:
-    'inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[var(--badge-success-bg)] text-[11px] font-bold leading-none text-[var(--badge-success-fg)]',
+    'inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-sm bg-[var(--badge-success-bg)] text-[11px] font-bold leading-none text-[var(--badge-success-fg)]',
   messageAssistantMessageInputWarningRoundIcon:
-    'inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[var(--badge-warning-bg)] text-[11px] font-bold leading-none text-[var(--badge-warning-fg)]',
+    'inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-sm bg-[var(--badge-warning-bg)] text-[11px] font-bold leading-none text-[var(--badge-warning-fg)]',
   messageAssistantMessageInputSuccessRoundIconAlpha:
-    'inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--badge-success-bg)] text-[11px] font-bold leading-none text-[var(--badge-success-fg)]',
+    'inline-flex h-4 w-4 items-center justify-center rounded-sm bg-[var(--badge-success-bg)] text-[11px] font-bold leading-none text-[var(--badge-success-fg)]',
   messageAssistantMessageInputWarningRoundIconAlpha:
-    'inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--badge-warning-bg)] text-[11px] font-bold leading-none text-[var(--badge-warning-fg)]',
+    'inline-flex h-4 w-4 items-center justify-center rounded-sm bg-[var(--badge-warning-bg)] text-[11px] font-bold leading-none text-[var(--badge-warning-fg)]',
   messageAssistantMessageInputNeutralText: 'text-xs font-medium text-[var(--badge-neutral-fg)]',
   messageAssistantMessageInputNeutralBorder: 'border-t border-[var(--badge-neutral-border)]',
   messageConversationListContrastRing:
@@ -481,7 +481,7 @@ export const FEATURE_THEME_CLASS_NAMES = {
   networkAmendmentPathVisualizationThemedText:
     'text-[11px] font-semibold tracking-[0.18em] uppercase opacity-75',
   networkAmendmentPathVisualizationContrastBadge:
-    'inline-flex items-center gap-2 rounded-full border border-current/15 bg-white/70 px-3 py-1 text-[11px] font-medium dark:bg-black/10',
+    'inline-flex items-center gap-2 rounded-md border border-current/15 bg-white/70 px-3 py-1 text-[11px] font-medium dark:bg-black/10',
   networkAmendmentPathVisualizationContrastPanel:
     'h-auto w-full items-start justify-between p-0 text-left whitespace-normal hover:bg-transparent',
   networkEventNetworkFlowThemedStyle: '3px solid #66bb6a',
@@ -605,7 +605,7 @@ export const FEATURE_THEME_CLASS_NAMES = {
   paymentSubscriptionPlansGridSuccessSurface:
     'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] shadow-[var(--shadow-card)]',
   paymentSubscriptionPlansGridSuccessPanel:
-    'rounded-full border border-[var(--badge-success-border)] bg-[var(--surface-overlay)] px-2 py-0.5 text-xs font-medium text-[var(--badge-success-fg)] shadow-sm',
+    'rounded-md border border-[var(--badge-success-border)] bg-[var(--surface-overlay)] px-2 py-0.5 text-xs font-medium text-[var(--badge-success-fg)] shadow-sm',
   paymentSubscriptionStatusDangerIcon: 'h-4 w-4 text-[var(--badge-danger-fg)]',
   positionPositionsTableWarningIcon: 'h-4 w-4 text-[var(--badge-warning-fg)]',
   positionPositionsTableWarningText: 'mt-2 block font-semibold text-[var(--badge-warning-fg)]',
@@ -777,7 +777,7 @@ export const FEATURE_THEME_CLASS_NAMES = {
   timelineActionTimelineCardWarningBackground: 'bg-[var(--badge-warning-bg)]',
   timelineActionTimelineCardNeutralBackground: 'bg-[var(--badge-neutral-bg)] text-xs',
   timelineActionTimelineCardNeutralRoundIcon:
-    'border-background flex h-8 w-8 items-center justify-center rounded-full border-2 bg-gray-100 text-xs font-medium dark:bg-gray-800',
+    'border-background flex h-8 w-8 items-center justify-center rounded-md border-2 bg-gray-100 text-xs font-medium dark:bg-gray-800',
   timelineActionTimelineCardNeutralPanel:
     'inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700',
   timelineAmendmentTimelineCardSuccessIcon: 'h-3.5 w-3.5 text-[var(--badge-success-fg)]',
@@ -795,7 +795,7 @@ export const FEATURE_THEME_CLASS_NAMES = {
   timelineElectionTimelineCardWarningNeutralIcon:
     'absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 text-[var(--badge-warning-fg)]',
   timelineElectionTimelineCardNeutralRoundIcon:
-    'border-background flex h-10 w-10 items-center justify-center rounded-full border-2 bg-gray-100 text-xs font-medium dark:bg-gray-800',
+    'border-background flex h-10 w-10 items-center justify-center rounded-lg border-2 bg-gray-100 text-xs font-medium dark:bg-gray-800',
   timelineElectionTimelineCardWarningBorder:
     'h-16 w-16 border-4 border-[var(--badge-warning-border)] ring-2 ring-[var(--badge-warning-border)]',
   timelineElectionTimelineCardDangerBackgroundGamma: 'bg-[var(--badge-danger-bg)] text-lg',
@@ -838,7 +838,7 @@ export const FEATURE_THEME_CLASS_NAMES = {
   timelineTimelineCardBaseNeutralBorder:
     'flex min-h-0 flex-col overflow-hidden border border-gray-100 dark:border-gray-800',
   timelineTodoTimelineCardNeutralContrastBadge:
-    'text-foreground h-auto gap-2 rounded-full border-white/70 bg-white/80 px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur transition-colors hover:bg-white dark:border-gray-700/70 dark:bg-gray-950/70 dark:text-gray-100 dark:hover:bg-gray-950',
+    'text-foreground h-auto gap-2 rounded-md border-white/70 bg-white/80 px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur transition-colors hover:bg-white dark:border-gray-700/70 dark:bg-gray-950/70 dark:text-gray-100 dark:hover:bg-gray-950',
   timelineTodoTimelineCardSuccessIcon: 'h-4 w-4 text-[var(--badge-success-fg)]',
   timelineTopicPillSuccessText: 'text-[var(--badge-success-fg)]',
   timelineTopicPillSuccessBorder: 'border-[var(--badge-success-border)]',
@@ -864,7 +864,7 @@ export const FEATURE_THEME_CLASS_NAMES = {
   timelineVideoTimelineCardContrastBackground:
     'absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100',
   timelineVideoTimelineCardContrastPanel:
-    'transform rounded-full bg-white/90 p-4 shadow-lg transition-transform group-hover:scale-110',
+    'transform rounded-xl bg-white/90 p-4 shadow-lg transition-transform group-hover:scale-110',
   timelineVideoTimelineCardNeutralIcon:
     'h-8 w-8 fill-[var(--badge-neutral-fg)] text-[var(--badge-neutral-fg)]',
   timelineVideoTimelineCardContrastBackgroundAlpha:

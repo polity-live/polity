@@ -3,6 +3,7 @@ import type { CSSProperties, RefObject } from 'react';
 
 import { cn } from '@/features/shared/utils/utils';
 import { Card } from '@/features/shared/ui/ui/card';
+import { ZeroVirtualSpacer } from '@/features/shared/virtualization';
 import type { SearchDocument } from '../types/search-document.types';
 import type { SpatialSearchListCell } from '../hooks/useSpatialSearchController';
 import { SEARCH_CARD_HEIGHT } from './VirtualSearchGridView';
@@ -61,15 +62,19 @@ export function SpatialSearchResultsList({
           {emptyLabel}
         </div>
       ) : (
-        <div className="space-y-4" style={{ paddingTop: spaceBefore, paddingBottom: spaceAfter }}>
-          {cells.map(cell => {
+        <div className="space-y-4">
+          <ZeroVirtualSpacer position="before" size={spaceBefore} />
+          {cells.map((cell, itemPosition) => {
             const isActive = cell.document?.id === activeDocumentId;
 
             return (
               <div
                 key={cell.key}
                 {...rowAttributes(cell.index, cell.key)}
-                style={{ height: SEARCH_CARD_HEIGHT }}
+                style={{
+                  height: SEARCH_CARD_HEIGHT,
+                  marginTop: itemPosition === 0 ? 0 : undefined,
+                }}
               >
                 <div
                   data-search-document-id={cell.document?.id}
@@ -97,6 +102,7 @@ export function SpatialSearchResultsList({
               </div>
             );
           })}
+          <ZeroVirtualSpacer position="after" size={spaceAfter} />
         </div>
       )}
     </div>

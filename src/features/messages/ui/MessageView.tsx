@@ -150,7 +150,7 @@ function MessageThreadSkeleton() {
             )}
             style={{ '--civic-stagger-index': index } as CSSProperties}
           >
-            {!own ? <Skeleton className="h-8 w-8 rounded-full" /> : null}
+            {!own ? <Skeleton className="h-8 w-8 rounded-md" /> : null}
             <div className={cn('space-y-2', own ? 'w-1/2' : 'w-2/3')}>
               <Skeleton className="h-16 rounded-2xl" />
               <Skeleton className="h-2 w-24 rounded-full" />

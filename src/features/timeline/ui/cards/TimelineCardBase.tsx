@@ -44,7 +44,7 @@ export function TimelineCardBase({
 
   const cardStyles = cn(
     tone.border,
-    'bg-card text-card-foreground',
+    'bg-card text-card-foreground flex min-h-0 flex-col overflow-hidden border',
     CARD_RADIUS.card,
     shadowClasses,
     getMotionPreset('hoverLift'),

@@ -41,7 +41,7 @@ export function ReasonTooltipView({
             variant="ghost"
             size="icon"
             className={cn(
-              'h-auto w-auto rounded-full p-1 transition-colors',
+              'h-auto w-auto rounded-md p-1 transition-colors',
               'hover:bg-muted focus:ring-ring focus:ring-2 focus:outline-none',
               className
             )}

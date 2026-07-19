@@ -217,7 +217,7 @@ export function EventWikiContentView({
         {/* Organizer Info */}
         <div className="mt-4 flex items-center justify-center gap-3">
           {event.creator?.id ? (
-            <Link to="/user/$id" params={{ id: event.creator.id }} className="rounded-full">
+            <Link to="/user/$id" params={{ id: event.creator.id }} className="rounded-md">
               <Avatar className="h-10 w-10 transition-opacity hover:opacity-90">
                 <AvatarImage src={event.creator?.avatar ?? undefined} />
                 <AvatarFallback>

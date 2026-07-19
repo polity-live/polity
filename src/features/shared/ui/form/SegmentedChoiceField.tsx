@@ -64,7 +64,7 @@ export function SegmentedChoiceField<TValue extends string = string>({
                 data-create-option={option.value}
                 className={cn(
                   'gap-2',
-                  size === 'icon' && 'h-9 w-9 rounded-full text-xs',
+                  size === 'icon' && 'h-9 w-9 rounded-md text-xs',
                   selected && selectedToneClasses[option.tone ?? 'accent']
                 )}
                 onClick={() => onValueChange(option.value)}

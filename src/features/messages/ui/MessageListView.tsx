@@ -26,7 +26,7 @@ import {
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
 import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
-import { rowAttributes } from '@/features/shared/virtualization';
+import { rowAttributes, ZeroVirtualSpacer } from '@/features/shared/virtualization';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 interface StreamingAssistantMessage {
   text: string;
@@ -185,7 +185,8 @@ export function MessageListView({
           </div>
         ) : (
           <div className="w-full">
-            <div style={{ paddingTop: spaceBefore, paddingBottom: spaceAfter }}>
+            <div>
+              <ZeroVirtualSpacer position="before" size={spaceBefore} />
               {virtualRows
                 .filter((row: any) => row.type === 'message')
                 .map((row: any) => {
@@ -204,13 +205,14 @@ export function MessageListView({
                         />
                       ) : (
                         <div className="flex items-start gap-3 py-2" aria-hidden="true">
-                          <Skeleton className="h-8 w-8 rounded-full" />
+                          <Skeleton className="h-8 w-8 rounded-md" />
                           <Skeleton className="h-16 max-w-xl flex-1 rounded-2xl" />
                         </div>
                       )}
                     </div>
                   );
                 })}
+              <ZeroVirtualSpacer position="after" size={spaceAfter} />
             </div>
             {virtualRows
               .filter((row: any) => row.type !== 'message')

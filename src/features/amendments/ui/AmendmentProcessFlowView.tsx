@@ -188,7 +188,7 @@ function AmendmentProcessFlowSkeleton({ label }: { label: string }) {
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
             <div className="space-y-4 rounded-lg border p-4">
               <div className="flex items-center gap-3">
-                <Skeleton className="size-10 rounded-full" />
+                <Skeleton className="size-10 rounded-lg" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-48" />
                   <Skeleton className="h-3 w-64 max-w-full" />

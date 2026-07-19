@@ -478,7 +478,7 @@ function LandingDecisionFlow({ steps }: { steps: string[] }) {
             >
               <span
                 className={cn(
-                  'bg-background flex h-8 w-8 items-center justify-center rounded-full border shadow-sm',
+                  'bg-background flex h-8 w-8 items-center justify-center rounded-md border shadow-sm',
                   isFinalStep
                     ? 'border-highlight/50 text-highlight'
                     : 'border-border text-muted-foreground'

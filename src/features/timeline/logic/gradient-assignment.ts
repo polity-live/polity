@@ -103,7 +103,7 @@ export function getCardShadowClasses(elevated = false): string {
 export const CARD_RADIUS = {
   card: 'rounded-2xl',
   inner: 'rounded-xl',
-  badge: 'rounded-full',
+  badge: 'rounded-md',
 } as const;
 
 /**

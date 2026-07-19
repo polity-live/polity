@@ -30,7 +30,7 @@ export function AiFindingsCardGroup({ presentation }: { presentation: AiPresenta
   return (
     <section className="border-border/70 bg-card/60 overflow-hidden rounded-2xl border">
       <header className="border-border/60 flex items-start gap-3 border-b px-4 py-3">
-        <span className="bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+        <span className="bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
           <Lightbulb className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">

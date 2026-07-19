@@ -29,7 +29,7 @@ export const GroupsList: React.FC<GroupsListProps> = ({ groups, isLoading }) => 
     return (
       <div className="py-12 text-center">
         <div className="mb-4">
-          <div className="bg-muted mx-auto flex h-16 w-16 items-center justify-center rounded-full">
+          <div className="bg-muted mx-auto flex h-16 w-16 items-center justify-center rounded-xl">
             <span className="text-2xl">🔍</span>
           </div>
         </div>

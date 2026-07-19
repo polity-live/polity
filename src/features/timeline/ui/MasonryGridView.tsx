@@ -100,8 +100,8 @@ function MasonryGridSkeleton({ index }: { index: number }) {
           <Skeleton className="h-3 w-full" />
           <Skeleton className="h-3 w-2/3" />
           <div className="flex gap-2 pt-2">
-            <Skeleton className="h-5 w-16 rounded-full" />
-            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-5 w-16 rounded-md" />
+            <Skeleton className="h-5 w-16 rounded-md" />
           </div>
         </div>
       </div>
@@ -116,7 +116,7 @@ export function MasonryGridEmptyView({
 }) {
   return (
     <div className="flex flex-col items-center justify-center space-y-4 py-12 text-center">
-      <div className="bg-muted rounded-full p-4">
+      <div className="bg-muted rounded-xl p-4">
         <Rss className="text-muted-foreground h-8 w-8" />
       </div>
       <div className="space-y-2">

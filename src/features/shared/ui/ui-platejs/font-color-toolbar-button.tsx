@@ -242,7 +242,7 @@ function ColorCustom({
                 size: 'icon',
                 variant: 'outline',
               }),
-              'absolute top-1 right-2 bottom-2 flex size-8 items-center justify-center rounded-full'
+              'absolute top-1 right-2 bottom-2 flex size-8 items-center justify-center rounded-md'
             )}
             onSelect={e => {
               e.preventDefault();
@@ -318,7 +318,7 @@ function ColorDropdownMenuItem({
           size: 'icon',
           variant: 'outline',
         }),
-        'border-muted my-1 flex size-6 items-center justify-center rounded-full border border-solid p-0 transition-all hover:scale-125',
+        'border-muted my-1 flex size-6 items-center justify-center rounded-sm border border-solid p-0 transition-all hover:scale-125',
         !isBrightColor && 'border-transparent',
         isSelected && 'border-primary border-2',
         className

@@ -83,7 +83,7 @@ export function CalendarChronologicalListContentView({
           <div className="bg-border h-px flex-1" />
           <span
             className={cn(
-              'rounded-full border px-3 py-1 text-xs font-semibold tracking-[0.16em] uppercase',
+              'rounded-md border px-3 py-1 text-xs font-semibold tracking-[0.16em] uppercase',
               todayMarkerState === 'visible'
                 ? 'border-primary/40 bg-primary/10 text-primary'
                 : 'border-border bg-background/95 text-muted-foreground'
@@ -117,7 +117,7 @@ export function CalendarChronologicalListContentView({
             type="button"
             variant="outline"
             size="sm"
-            className="bg-background/95 supports-[backdrop-filter]:bg-background/80 pointer-events-auto rounded-full shadow-sm backdrop-blur"
+            className="bg-background/95 supports-[backdrop-filter]:bg-background/80 pointer-events-auto rounded-md shadow-sm backdrop-blur"
             onClick={scrollToTodayMarker}
           >
             {todayMarkerState === 'above' ? (

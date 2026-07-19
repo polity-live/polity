@@ -98,7 +98,7 @@ export function TypeaheadSelectedCard({
                 e.stopPropagation();
                 onRemove();
               }}
-              className="hover:bg-destructive/10 hover:text-destructive relative z-10 rounded-full p-1.5 transition-colors"
+              className="hover:bg-destructive/10 hover:text-destructive relative z-10 rounded-md p-1.5 transition-colors"
               aria-label={translateText('features.search.removeItem', { label: item.label })}
             >
               <X className="h-4 w-4" />

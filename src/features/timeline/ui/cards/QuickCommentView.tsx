@@ -69,7 +69,7 @@ export function QuickCommentView({
       {!isExpanded && (
         <div
           className={cn(
-            'flex items-center gap-2 rounded-full px-3 py-2',
+            'flex items-center gap-2 rounded-lg px-3 py-2',
             'bg-muted/50 hover:bg-muted cursor-text transition-colors'
           )}
           onClick={() => {

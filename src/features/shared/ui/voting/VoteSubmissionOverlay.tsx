@@ -15,12 +15,7 @@ import type { VotingPhaseValue } from './VotingControls';
 export type VoteSubmissionStepKey = 'verify' | 'cast' | 'sync';
 export type VoteSubmissionProgressStatus = 'pending' | 'active' | 'complete' | 'error';
 export type VoteSubmissionStatus =
-  | 'idle'
-  | 'verifying'
-  | 'casting'
-  | 'syncing'
-  | 'success'
-  | 'error';
+  'idle' | 'verifying' | 'casting' | 'syncing' | 'success' | 'error';
 
 export interface VoteSubmissionProgressStep {
   key: VoteSubmissionStepKey;
@@ -247,7 +242,7 @@ export function VoteSubmissionOverlay({
                   {status !== 'error' ? (
                     <span
                       className={cn(
-                        'bg-card absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full border',
+                        'bg-card absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-md border',
                         tone.border
                       )}
                     >
@@ -322,7 +317,7 @@ export function VoteSubmissionOverlay({
                     <div className="flex items-center gap-3">
                       <motion.span
                         className={cn(
-                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
+                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-md border text-xs font-semibold',
                           isComplete ? tone.badge : 'border-border bg-muted text-muted-foreground',
                           isError && 'border-destructive/60 bg-destructive/10 text-destructive'
                         )}

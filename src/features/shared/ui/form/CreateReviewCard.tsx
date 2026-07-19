@@ -38,14 +38,7 @@ import { getHashtagGradient } from '@/features/shared/logic/hashtagHelpers';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type ReviewContentType =
-  | ReviewEntityType
-  | 'meetup'
-  | 'video'
-  | 'image'
-  | 'statement'
-  | 'payment'
-  | 'action'
-  | 'workflow';
+  ReviewEntityType | 'meetup' | 'video' | 'image' | 'statement' | 'payment' | 'action' | 'workflow';
 
 export type ContentType = ReviewContentType;
 
@@ -279,7 +272,7 @@ function ReviewMediaBlock({ media, title }: { media: ReviewMediaPreview; title: 
             )}
           >
             <div className="mb-2 flex items-center gap-2">
-              <div className={cn('rounded-full p-2', getSemanticToneClasses('danger').badge)}>
+              <div className={cn('rounded-md p-2', getSemanticToneClasses('danger').badge)}>
                 <PlayCircle className="h-4 w-4" />
               </div>
               <div>

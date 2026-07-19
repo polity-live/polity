@@ -103,7 +103,7 @@ export const SocialBar: React.FC<SocialBarProps> = ({ socialMedia }) => {
   return (
     <div className="mb-8 flex justify-center py-2">
       <TooltipProvider>
-        <div className="bg-background/85 flex flex-wrap items-center justify-center gap-6 rounded-full border px-6 py-3 shadow-sm backdrop-blur-sm">
+        <div className="bg-background/85 flex flex-wrap items-center justify-center gap-6 rounded-lg border px-6 py-3 shadow-sm backdrop-blur-sm">
           {items.map(item => (
             <SocialItem
               key={item.key}

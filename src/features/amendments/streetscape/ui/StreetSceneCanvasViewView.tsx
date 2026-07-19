@@ -337,7 +337,7 @@ export function StreetSceneCanvasViewView({
               >
                 <MousePointer2 className="size-5 fill-current stroke-white stroke-[1.5]" />
                 <span
-                  className="mt-4 -ml-1 max-w-44 truncate rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow-sm"
+                  className="mt-4 -ml-1 max-w-44 truncate rounded-md px-2 py-0.5 text-xs font-semibold text-white shadow-sm"
                   style={{ backgroundColor: cursor.color }}
                 >
                   {cursor.name}
@@ -362,7 +362,7 @@ export function StreetSceneCanvasViewView({
                 <button
                   type="button"
                   className={cn(
-                    'focus-visible:ring-ring pointer-events-auto absolute flex min-h-8 max-w-52 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold shadow-lg backdrop-blur transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none',
+                    'focus-visible:ring-ring pointer-events-auto absolute flex min-h-8 max-w-52 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-semibold shadow-lg backdrop-blur transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none',
                     getChangeRequestMarkerClassName(marker.tone),
                     selectedChangeRequestId === marker.id && 'ring-ring ring-2'
                   )}

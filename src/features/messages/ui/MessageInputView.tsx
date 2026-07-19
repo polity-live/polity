@@ -104,7 +104,7 @@ export function MessageInputView({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-5 w-5 rounded-full"
+                className="h-5 w-5 rounded-md"
                 onClick={() =>
                   attachments.removeAttachment(attachment.entityType, attachment.entityId)
                 }
@@ -126,7 +126,7 @@ export function MessageInputView({
           <FileUploadTrigger
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-full"
+            className="h-8 w-8 rounded-md"
             disabled={attachments.isUploadingAttachments}
             title={t('features.messages.compose.uploadFiles')}
             aria-label={t('features.messages.compose.uploadFiles')}
@@ -145,7 +145,7 @@ export function MessageInputView({
           <Button
             type="submit"
             size="icon"
-            className="ml-auto h-8 w-8 rounded-full"
+            className="ml-auto h-8 w-8 rounded-md"
             disabled={
               (!messageText.trim() && attachments.selectedAttachments.length === 0) ||
               attachments.isUploadingAttachments

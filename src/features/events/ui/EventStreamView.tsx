@@ -368,7 +368,7 @@ export function EventStreamView({
                     <Button
                       variant="outline"
                       size="icon"
-                      className="absolute top-1/2 left-0 z-10 -translate-y-1/2 rounded-full shadow-lg"
+                      className="absolute top-1/2 left-0 z-10 -translate-y-1/2 rounded-md shadow-lg"
                       onClick={() => scroll('left')}
                     >
                       <ChevronLeft className="h-6 w-6" />
@@ -378,7 +378,7 @@ export function EventStreamView({
                     <Button
                       variant="outline"
                       size="icon"
-                      className="absolute top-1/2 right-0 z-10 -translate-y-1/2 rounded-full shadow-lg"
+                      className="absolute top-1/2 right-0 z-10 -translate-y-1/2 rounded-md shadow-lg"
                       onClick={() => scroll('right')}
                     >
                       <ChevronRight className="h-6 w-6" />
@@ -418,7 +418,7 @@ export function EventStreamView({
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 absolute -top-2 -right-2 z-10 h-6 w-6 rounded-full"
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 absolute -top-2 -right-2 z-10 h-6 w-6 rounded-md"
                               onClick={() => handleRemoveFromSpeakerList(speaker.id)}
                               disabled={removingSpeaker === speaker.id}
                             >

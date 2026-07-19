@@ -174,7 +174,7 @@ export function VoteControlsView({
               {votes.map((vote: any) => (
                 <div
                   key={vote.id}
-                  className="bg-background flex items-center gap-1 rounded-full px-2 py-1 text-xs"
+                  className="bg-background flex items-center gap-1 rounded-md px-2 py-1 text-xs"
                 >
                   <Avatar className="h-5 w-5">
                     {vote.voter?.user ? (
@@ -214,7 +214,7 @@ export function VoteControlsView({
               {notVotedYet.map((collab: any) => (
                 <div
                   key={collab.id}
-                  className="bg-muted flex items-center gap-1 rounded-full px-2 py-1 text-xs opacity-60"
+                  className="bg-muted flex items-center gap-1 rounded-md px-2 py-1 text-xs opacity-60"
                 >
                   <Avatar className="h-5 w-5">
                     {collab.user?.avatar ? (

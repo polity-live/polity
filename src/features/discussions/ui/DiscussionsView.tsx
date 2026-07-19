@@ -15,7 +15,11 @@ import { ThreadCard } from './ThreadCard';
 import { CreateThreadDialog } from './CreateThreadDialog';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
-import { rowAttributes, usePolityZeroWindowList } from '@/features/shared/virtualization';
+import {
+  rowAttributes,
+  usePolityZeroWindowList,
+  ZeroVirtualSpacer,
+} from '@/features/shared/virtualization';
 import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { queries } from '@/zero/queries';
 import type { AmendmentThreadRow } from '@/zero/amendments/queries';
@@ -137,13 +141,14 @@ function VirtualDiscussionThreadList({
   }
 
   return (
-    <div
-      ref={contentRef}
-      className="space-y-6"
-      style={{ paddingTop: virtualList.spaceBefore, paddingBottom: virtualList.spaceAfter }}
-    >
-      {virtualList.items.map(item => (
-        <div key={item.key} {...rowAttributes(item.index, item.key)}>
+    <div ref={contentRef} className="space-y-6">
+      <ZeroVirtualSpacer position="before" size={virtualList.spaceBefore} />
+      {virtualList.items.map((item, itemPosition) => (
+        <div
+          key={item.key}
+          {...rowAttributes(item.index, item.key)}
+          style={itemPosition === 0 ? { marginTop: 0 } : undefined}
+        >
           {item.row ? (
             <ThreadCard
               thread={normalizeDiscussionThread(item.row, sortBy)}
@@ -160,6 +165,7 @@ function VirtualDiscussionThreadList({
           )}
         </div>
       ))}
+      <ZeroVirtualSpacer position="after" size={virtualList.spaceAfter} />
     </div>
   );
 }

@@ -177,7 +177,7 @@ export function NetworkEntityDialogView({
                     <img
                       src={entity.data.avatarFile.url}
                       alt={entity.data.name ?? undefined}
-                      className="h-16 w-16 rounded-full object-cover"
+                      className="h-16 w-16 rounded-md object-cover"
                     />
                   )}
                   <div>

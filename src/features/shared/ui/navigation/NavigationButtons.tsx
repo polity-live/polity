@@ -83,7 +83,7 @@ export function NavigationCloseButton({
       variant="outline"
       size="icon"
       className={cn(
-        'absolute top-6 z-50 h-10 w-10 rounded-full shadow-[var(--shadow-card)]',
+        'absolute top-6 z-50 h-10 w-10 rounded-md shadow-[var(--shadow-card)]',
         getMotionPreset('press'),
         side === 'left' ? 'left-6' : 'right-6',
         className

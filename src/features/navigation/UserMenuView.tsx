@@ -133,7 +133,7 @@ export function UserMenuView({
             data-user-menu-trigger
             variant="ghost"
             className={cn(
-              'hover:bg-accent h-10 w-10 rounded-full p-0',
+              'hover:bg-accent h-10 w-10 rounded-md p-0',
               isMobile && 'h-12 w-12',
               className
             )}

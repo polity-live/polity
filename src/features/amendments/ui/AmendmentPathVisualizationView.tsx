@@ -191,7 +191,7 @@ export function AmendmentPathVisualizationView({
           <div className="mt-6 space-y-3">
             {pathSegments?.map((segment: any, index: number) => (
               <div key={segment.group_id || index} className="flex items-start gap-3">
-                <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold">
+                <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-sm font-semibold">
                   {index + 1}
                 </div>
                 <div className="flex-1">

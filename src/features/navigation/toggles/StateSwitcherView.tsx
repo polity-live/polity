@@ -143,7 +143,7 @@ export function StateSwitcherView({
 
   if (navigationView === 'asButton') {
     return (
-      <div className="bg-background/95 absolute bottom-8 left-1/2 flex -translate-x-1/2 transform gap-2 rounded-full border p-2 shadow-lg backdrop-blur-sm">
+      <div className="bg-background/95 absolute bottom-8 left-1/2 flex -translate-x-1/2 transform gap-2 rounded-lg border p-2 shadow-lg backdrop-blur-sm">
         <StateToggle currentState={navigationView} onStateChange={setNavigationView} />
         <div className="bg-border mx-1 w-px" />
         <LanguageToggle />

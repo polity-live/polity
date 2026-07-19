@@ -110,7 +110,7 @@ export function CreateThreadDialogView({
               )}
             >
               <div className="mx-auto flex max-w-md flex-col items-center gap-4 text-center">
-                <div className="bg-background/80 flex h-12 w-12 items-center justify-center rounded-full border shadow-sm">
+                <div className="bg-background/80 flex h-12 w-12 items-center justify-center rounded-xl border shadow-sm">
                   {isUploading ? (
                     <Loader2 className="text-primary h-5 w-5 animate-spin" />
                   ) : (

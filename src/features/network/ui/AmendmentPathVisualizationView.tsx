@@ -192,7 +192,7 @@ function ProcessStatusBadge({ state, label }: { state: ProcessNodeState; label: 
 
   return (
     <div
-      className="inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium"
+      className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium"
       style={{
         backgroundColor: `color-mix(in oklab, ${status.borderColor} 12%, var(--card))`,
         borderColor: status.borderColor,
@@ -201,7 +201,7 @@ function ProcessStatusBadge({ state, label }: { state: ProcessNodeState; label: 
     >
       <span
         aria-hidden="true"
-        className="flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold"
+        className="flex h-4 w-4 items-center justify-center rounded-sm text-[10px] font-bold"
         style={{
           backgroundColor: 'var(--card)',
           color: status.textColor,
@@ -287,7 +287,7 @@ export function AmendmentPathVisualizationView({
         eventId: segment.eventId,
         label: (
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium tracking-wide uppercase">
+            <div className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium tracking-wide uppercase">
               {segment.eventId ? (
                 <CalendarClock className="h-3.5 w-3.5" />
               ) : (

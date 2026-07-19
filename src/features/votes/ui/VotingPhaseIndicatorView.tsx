@@ -130,7 +130,7 @@ export function VotingPhaseIndicatorView({
       {/* Phase indicator */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={cn('rounded-full p-1', config.color)}>
+          <div className={cn('rounded-md p-1', config.color)}>
             <PhaseIcon className={featureThemeClassName('authSummaryStepContrastIcon')} />
           </div>
           <span className="font-medium">{phaseLabel}</span>
@@ -140,7 +140,7 @@ export function VotingPhaseIndicatorView({
         {phase === 'voting' && duration > 0 && (
           <div
             className={cn(
-              'flex items-center gap-1 rounded-full px-2 py-1 font-mono text-sm',
+              'flex items-center gap-1 rounded-md px-2 py-1 font-mono text-sm',
               isExpired || timeRemaining < 30
                 ? featureThemeClassName('voteVotingPhaseIndicatorDangerBackgroundAlpha')
                 : 'bg-muted'

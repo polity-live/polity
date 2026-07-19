@@ -123,6 +123,7 @@ describe('virtualized page query limits', () => {
     ({ definition, args }) => {
       const validator = definition.validator as ZodType;
 
+      expect(validator.safeParse({ ...args, limit: 51 }).success).toBe(true);
       expect(validator.safeParse({ ...args, limit: 101 }).success).toBe(true);
       expect(validator.safeParse({ ...args, limit: 201 }).success).toBe(false);
     }

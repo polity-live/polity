@@ -141,7 +141,7 @@ export function FileDropzone({
       }}
     >
       <div className="mx-auto flex max-w-md flex-col items-center gap-4 text-center">
-        <div className="bg-background flex size-12 items-center justify-center rounded-full border shadow-sm">
+        <div className="bg-background flex size-12 items-center justify-center rounded-xl border shadow-sm">
           <UploadIcon className="text-primary size-5" />
         </div>
         <div className="space-y-1 text-sm">

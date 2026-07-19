@@ -40,7 +40,7 @@ export function CreateRecoveryState({ draft }: CreateRecoveryStateProps) {
 
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-5 px-6 text-center">
-      <div className="bg-destructive/10 text-destructive flex h-12 w-12 items-center justify-center rounded-full">
+      <div className="bg-destructive/10 text-destructive flex h-12 w-12 items-center justify-center rounded-xl">
         <AlertTriangle className="h-6 w-6" />
       </div>
       <div className="max-w-md space-y-2">

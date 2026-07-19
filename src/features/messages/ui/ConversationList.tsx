@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { Conversation } from '../types/message.types';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { useIsMobileScreen } from '@/features/shared/hooks/useIsMobileScreen';
 import { usePolityZeroList } from '@/features/shared/virtualization';
 import type { ConversationFilter } from '../hooks/useConversationFilters';
 import { queries } from '@/zero/queries';
@@ -53,6 +54,7 @@ export function ConversationList({
   className,
 }: ConversationListProps) {
   const { t } = useTranslation();
+  const isMobileScreen = useIsMobileScreen();
   const scrollRef = useRef<HTMLDivElement>(null);
   const filterButtons: ConversationFilter[] = ['all', 'direct', 'group', 'event', 'ai'];
   const listContextParams = useMemo(
@@ -89,7 +91,7 @@ export function ConversationList({
     getSingleQuery,
     getRowKey: conversation => conversation.id,
     toStartRow: toConversationStart,
-    permalinkID: selectedConversationId ?? undefined,
+    permalinkID: isMobileScreen ? undefined : (selectedConversationId ?? undefined),
   });
   return (
     <ConversationListView
@@ -99,6 +101,7 @@ export function ConversationList({
       conversations={conversations}
       currentUserId={currentUserId}
       filterButtons={filterButtons}
+      isMobileScreen={isMobileScreen}
       isLoading={isLoading}
       onConversationFilterChange={onConversationFilterChange}
       onDeleteConversationClick={onDeleteConversationClick}

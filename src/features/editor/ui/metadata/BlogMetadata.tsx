@@ -90,10 +90,7 @@ export function BlogMetadata({
             {t('features.editor.metadata.bloggers')}:
           </span>
           {bloggers.map(blogger => (
-            <div
-              key={blogger.id}
-              className="bg-muted flex items-center gap-1 rounded-full px-2 py-1"
-            >
+            <div key={blogger.id} className="bg-muted flex items-center gap-1 rounded-md px-2 py-1">
               <Avatar className="h-5 w-5">
                 {blogger.user?.avatar ? (
                   <AvatarImage src={blogger.user.avatar} alt={blogger.user.name || ''} />

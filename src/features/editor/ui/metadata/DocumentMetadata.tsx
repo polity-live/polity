@@ -104,7 +104,7 @@ export function DocumentMetadata({
           <span className="text-muted-foreground text-sm">
             {t('features.editor.metadata.owner')}:
           </span>
-          <div className="bg-muted flex items-center gap-1 rounded-full px-2 py-1">
+          <div className="bg-muted flex items-center gap-1 rounded-md px-2 py-1">
             <Avatar className="h-5 w-5">
               {owner.avatar ? <AvatarImage src={owner.avatar} alt={owner.name || ''} /> : null}
               <AvatarFallback className="text-xs">
@@ -125,10 +125,7 @@ export function DocumentMetadata({
             {t('features.editor.metadata.collaborators')}:
           </span>
           {collaborators.map(collab => (
-            <div
-              key={collab.id}
-              className="bg-muted flex items-center gap-1 rounded-full px-2 py-1"
-            >
+            <div key={collab.id} className="bg-muted flex items-center gap-1 rounded-md px-2 py-1">
               <Avatar className="h-5 w-5">
                 {collab.user?.avatar ? (
                   <AvatarImage src={collab.user.avatar} alt={collab.user.name || ''} />

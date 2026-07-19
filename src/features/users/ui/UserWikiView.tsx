@@ -49,10 +49,10 @@ export function UserWikiView({ page }: UserWikiViewProps) {
         <h1 className="text-4xl font-bold">
           <span className="inline-flex items-center gap-3">
             <span>{page.fullName}</span>
-            <span className="bg-background/80 inline-flex items-center gap-1 rounded-full border px-2 py-1 shadow-sm">
+            <span className="bg-background/80 inline-flex items-center gap-1 rounded-md border px-2 py-1 shadow-sm">
               <BadgeControl
                 variant="secondary"
-                className="rounded-full px-3 py-1 text-xs font-medium"
+                className="rounded-md px-3 py-1 text-xs font-medium"
               >
                 {page.supportTier.label}
               </BadgeControl>
@@ -63,7 +63,7 @@ export function UserWikiView({ page }: UserWikiViewProps) {
                     variant="ghost"
                     size="icon"
                     aria-label={page.supportTier.description}
-                    className="text-muted-foreground hover:text-foreground h-7 w-7 rounded-full"
+                    className="text-muted-foreground hover:text-foreground h-7 w-7 rounded-md"
                   >
                     <CircleHelp className="h-4 w-4" />
                   </Button>

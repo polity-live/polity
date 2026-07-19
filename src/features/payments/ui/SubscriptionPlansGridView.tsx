@@ -176,7 +176,7 @@ export function SubscriptionPlansGridView({
                     {translateText('generated.inline.0986_current_4fc0e2bc')}
                   </span>
                 ) : (
-                  <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs">
+                  <span className="bg-primary text-primary-foreground rounded-md px-2 py-0.5 text-xs">
                     {translateText('generated.inline.0992_popular_9bc2c5b3')}
                   </span>
                 )}

@@ -43,9 +43,9 @@ export function ConversationItem({
         )}
       >
         <div className="relative h-12 w-12 flex-shrink-0">
-          <Avatar className="h-12 w-12 rounded-2xl">
+          <Avatar className="h-12 w-12 rounded-md">
             <AvatarImage src={display.avatar || undefined} />
-            <AvatarFallback className="rounded-2xl">
+            <AvatarFallback className="rounded-md">
               {display.name?.[0]?.toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
@@ -84,7 +84,7 @@ export function ConversationItem({
             {unreadCount > 0 && (
               <BadgeControl
                 variant="default"
-                className="ml-2 h-5 min-w-[20px] flex-shrink-0 rounded-full px-1.5 text-xs"
+                className="ml-2 h-5 min-w-[20px] flex-shrink-0 rounded-md px-1.5 text-xs"
               >
                 {unreadCount > 99 ? '99+' : unreadCount}
               </BadgeControl>

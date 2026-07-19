@@ -21,7 +21,7 @@ primary_region = "fra"
   ZERO_PORT = "4848"
   NODE_ENV = "production"
 
-  # Zero 1.7 defaults to 30 CVR connections, 5 change connections, and
+  # Zero 1.8 defaults to 30 CVR connections, 5 change connections, and
   # max(1, available CPU parallelism - 1) sync workers. ZERO_UPSTREAM_DB has a
   # separate default limit of 20 and does not consume this session-pool budget
   # while it continues to use Supabase's direct database connection.

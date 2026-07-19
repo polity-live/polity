@@ -85,7 +85,7 @@ export function VisibilitySelector({
                     variant="ghost"
                     size="icon"
                     aria-label={option.description}
-                    className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
+                    className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-md"
                     onClick={event => event.preventDefault()}
                     onMouseDown={event => event.preventDefault()}
                   >

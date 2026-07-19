@@ -93,7 +93,7 @@ export function MessagesPageView({
 
   return (
     <>
-      <FeedSplitLayout style={messagesLayoutStyle}>
+      <FeedSplitLayout className="relative" style={messagesLayoutStyle}>
         <ConversationList
           className="h-full"
           isLoading={isLoading}

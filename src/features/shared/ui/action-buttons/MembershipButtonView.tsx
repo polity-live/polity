@@ -68,7 +68,7 @@ export function MembershipButtonView({
         {disabledReason ? (
           <span
             aria-hidden="true"
-            className="inline-flex size-4 items-center justify-center rounded-full border border-current/40 text-[0.65rem] leading-none font-semibold"
+            className="inline-flex size-4 items-center justify-center rounded-sm border border-current/40 text-[0.65rem] leading-none font-semibold"
           >
             ?
           </span>

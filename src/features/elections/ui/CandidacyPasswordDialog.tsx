@@ -152,7 +152,7 @@ export function CandidacyPasswordDialog({
                         <div className="flex flex-col items-center gap-3 text-center">
                           <span
                             className={cn(
-                              'border-primary/30 bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-full border',
+                              'border-primary/30 bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-lg border',
                               'animate-pulse'
                             )}
                             style={{ animationDelay: `${index * 180}ms` }}
