@@ -455,7 +455,6 @@ export function NotificationItem({
                     aria-label={t('features.notifications.item.deleteForEveryone')}
                     title={t('features.notifications.item.deleteForEveryone')}
                     onClick={e => {
-                      e.preventDefault();
                       e.stopPropagation();
                     }}
                   >

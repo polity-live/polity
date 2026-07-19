@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -187,7 +187,7 @@ describe('NotificationItem', () => {
     expect(container.querySelector('.lucide-trash-2')).toBeTruthy();
   });
 
-  it('shows the global delete action only with an explicit capability', () => {
+  it('shows the global delete action only with an explicit capability and opens its dialog', () => {
     const onDeleteForEveryone = vi.fn();
     const item = notification({ is_read: true });
     const { rerender } = render(
@@ -214,6 +214,17 @@ describe('NotificationItem', () => {
     expect(
       screen.getByRole('button', { name: 'features.notifications.item.deleteForEveryone' })
     ).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'features.notifications.item.deleteForEveryone' })
+    );
+    const dialog = screen.getByRole('alertdialog');
+    fireEvent.click(
+      within(dialog).getByRole('button', {
+        name: 'features.notifications.item.deleteForEveryone',
+      })
+    );
+    expect(onDeleteForEveryone).toHaveBeenCalledWith(item.id);
   });
 
   it('hides the single read action for personal and effectively read entity notifications', () => {
