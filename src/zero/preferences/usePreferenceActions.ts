@@ -12,6 +12,7 @@ import type {
   PreferenceNavigationView,
   GroupNetworkLayout,
   DecisionTerminalDashboardConfig,
+  PreferenceCurrency,
 } from './schema';
 import {
   resetPersistedNetworkLayouts,
@@ -33,6 +34,7 @@ export function usePreferenceActions() {
       create_form_style?: CreateFormStyle;
       theme?: Theme;
       language?: PreferenceLanguage;
+      display_currency?: PreferenceCurrency;
       navigation_view?: PreferenceNavigationView;
       group_network_layouts?: Record<string, GroupNetworkLayout>;
       decision_terminal_dashboard?: DecisionTerminalDashboardConfig;
@@ -58,6 +60,7 @@ export function usePreferenceActions() {
             create_form_style: fields.create_form_style ?? 'carousel',
             theme: fields.theme ?? 'system',
             language: fields.language ?? 'en',
+            display_currency: fields.display_currency ?? 'EUR',
             navigation_view: fields.navigation_view ?? 'asButtonList',
             group_network_layouts: fields.group_network_layouts ?? {},
             decision_terminal_dashboard: fields.decision_terminal_dashboard,
@@ -90,6 +93,11 @@ export function usePreferenceActions() {
     (language: PreferenceLanguage) => {
       return upsertPreference({ language });
     },
+    [upsertPreference]
+  );
+
+  const updateDisplayCurrency = useCallback(
+    (currency: PreferenceCurrency) => upsertPreference({ display_currency: currency }),
     [upsertPreference]
   );
 
@@ -153,6 +161,7 @@ export function usePreferenceActions() {
     updateFormStyle,
     updateTheme,
     updateLanguage,
+    updateDisplayCurrency,
     updateNavigationView,
     saveNetworkLayout,
     resetNetworkLayout,

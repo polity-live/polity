@@ -1217,8 +1217,9 @@ export function TargetGroupEventDisplay({
         <div className="bg-muted text-muted-foreground rounded-md p-3 text-xs">
           <p className="font-semibold">
             {translateText('generated.inline.0210_amendment_path_e39aca13')}
-            {pathWithEvents.length}
-            {translateText('generated.inline.0211_groups_81b46c7e')}
+            {translateText('features.amendments.process.groupsCount', {
+              count: pathWithEvents.length,
+            })}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-1">
             {pathWithEvents.map((segment, index) => (

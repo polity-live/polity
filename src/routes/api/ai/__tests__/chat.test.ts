@@ -208,6 +208,7 @@ describe('AI chat route setup errors', () => {
     const response = await handleAiChatRequest(chatRequest(validBody));
     await response.text();
     const attachment = { entityType: 'group', entityId: 'group-1', title: 'Group' };
+    const finalAttachment = { entityType: 'event', entityId: 'event-1', title: 'Event' };
     const presentation = {
       type: 'findings',
       id: 'findings-1',
@@ -218,13 +219,16 @@ describe('AI chat route setup errors', () => {
       ],
     };
     await streamOptions.onStepFinish({
-      toolResults: [{ result: { attachments: [attachment], presentations: [presentation] } }],
+      toolResults: [{ output: { attachments: [attachment], presentations: [presentation] } }],
     });
-    await streamOptions.onFinish({ text: 'Short summary.', toolResults: [] });
+    await streamOptions.onFinish({
+      text: 'Short summary.',
+      toolResults: [{ output: { attachments: [finalAttachment], presentations: [presentation] } }],
+    });
 
     expect(mocks.persistAssistantMessage).toHaveBeenCalledWith('conversation-1', 'Short summary.', {
       version: 1,
-      attachments: [attachment],
+      attachments: [attachment, finalAttachment],
       presentations: [presentation],
     });
   });

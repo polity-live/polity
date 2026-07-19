@@ -17,7 +17,8 @@ import {
   getStreetDesignCostChange,
   resolveStreetDesignBaseState,
 } from '../logic/streetDesignChangeRequestDiff';
-import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
+import { ConvertedCurrencyAmount } from '@/features/shared/ui/currency';
+import { minorToMajor } from '@/features/shared/logic/currency';
 import { parseStoredStreetDesignState } from '../state/streetDesignReducer';
 import type { StreetDesignStateV1 } from '../types';
 
@@ -121,6 +122,7 @@ export function StreetDesignChangeRequestPreview({
             label={t('features.amendments.streetscape.changeRequests.before')}
             unitCostMinor={costChange.beforeUnitCostMinor}
             totalCostMinor={costChange.beforeTotalCostMinor}
+            currency={design.currency}
             t={t}
           />
           <span className="text-muted-foreground self-center">→</span>
@@ -128,6 +130,7 @@ export function StreetDesignChangeRequestPreview({
             label={t('features.amendments.streetscape.changeRequests.after')}
             unitCostMinor={costChange.afterUnitCostMinor}
             totalCostMinor={costChange.afterTotalCostMinor}
+            currency={design.currency}
             t={t}
           />
         </div>
@@ -140,11 +143,13 @@ function CostColumn({
   label,
   unitCostMinor,
   totalCostMinor,
+  currency,
   t,
 }: {
   label: string;
   unitCostMinor: number | null;
   totalCostMinor: number | null;
+  currency: string;
   t: (key: string) => string;
 }) {
   return (
@@ -152,11 +157,25 @@ function CostColumn({
       <p className="text-muted-foreground text-xs font-medium">{label}</p>
       <p className="truncate font-medium">
         {t('features.amendments.streetscape.inspector.price')}:{' '}
-        {unitCostMinor == null ? '—' : formatMinorCurrency(unitCostMinor)}
+        {unitCostMinor == null ? (
+          '—'
+        ) : (
+          <ConvertedCurrencyAmount
+            amount={minorToMajor(unitCostMinor, currency)}
+            currency={currency}
+          />
+        )}
       </p>
       <p className="text-muted-foreground truncate text-xs">
         {t('features.amendments.streetscape.inspector.total')}:{' '}
-        {totalCostMinor == null ? '—' : formatMinorCurrency(totalCostMinor)}
+        {totalCostMinor == null ? (
+          '—'
+        ) : (
+          <ConvertedCurrencyAmount
+            amount={minorToMajor(totalCostMinor, currency)}
+            currency={currency}
+          />
+        )}
       </p>
     </div>
   );

@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public.thread (
   amendment_id UUID,
   statement_id UUID REFERENCES public.statement (id) ON DELETE CASCADE,
   blog_id UUID REFERENCES public.blog (id) ON DELETE CASCADE,
+  todo_id UUID REFERENCES public.todo (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   content TEXT,
   status TEXT NOT NULL DEFAULT 'open',
@@ -24,10 +25,51 @@ CREATE TABLE IF NOT EXISTS public.thread (
 CREATE INDEX idx_thread_document ON public.thread (document_id);
 CREATE INDEX idx_thread_statement ON public.thread (statement_id);
 CREATE INDEX idx_thread_blog ON public.thread (blog_id);
+CREATE UNIQUE INDEX idx_thread_todo_unique ON public.thread (todo_id);
 CREATE INDEX idx_thread_user ON public.thread (user_id);
 
 ALTER TABLE public.thread ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.thread FOR ALL TO service_role USING (true);
+
+CREATE OR REPLACE FUNCTION public.ensure_todo_discussion_thread()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.thread (
+    id,
+    todo_id,
+    user_id,
+    content,
+    status,
+    upvotes,
+    downvotes,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    NEW.id,
+    NEW.id,
+    NEW.creator_id,
+    NULL,
+    'open',
+    0,
+    0,
+    NEW.created_at,
+    NEW.updated_at
+  )
+  ON CONFLICT (todo_id) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS todo_ensure_discussion_thread ON public.todo;
+CREATE TRIGGER todo_ensure_discussion_thread
+AFTER INSERT ON public.todo
+FOR EACH ROW EXECUTE FUNCTION public.ensure_todo_discussion_thread();
 
 -- Comment table
 CREATE TABLE IF NOT EXISTS public.comment (

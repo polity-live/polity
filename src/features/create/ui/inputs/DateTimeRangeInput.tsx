@@ -16,6 +16,15 @@ interface DateTimeRangeInputProps {
   minTime?: string;
   maxDate?: string;
   maxTime?: string;
+  heading?: string;
+  hint?: string;
+  startDateLabel?: string;
+  startTimeLabel?: string;
+  endDateLabel?: string;
+  endTimeLabel?: string;
+  startTimeDisabled?: boolean;
+  endTimeDisabled?: boolean;
+  timeStep?: number;
 }
 
 export function DateTimeRangeInput({
@@ -29,6 +38,15 @@ export function DateTimeRangeInput({
   minTime = '',
   maxDate = '',
   maxTime = '',
+  heading,
+  hint,
+  startDateLabel,
+  startTimeLabel,
+  endDateLabel,
+  endTimeLabel,
+  startTimeDisabled = false,
+  endTimeDisabled = false,
+  timeStep,
 }: DateTimeRangeInputProps) {
   const { t } = useTranslation();
   const selectedStartDate = parseLocalDateInput(startDate);
@@ -55,14 +73,18 @@ export function DateTimeRangeInput({
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <FormControlLabel>{t('pages.create.event.dateTime')}</FormControlLabel>
-        <p className="text-muted-foreground text-sm">{t('pages.create.event.tips.dateTime')}</p>
+        <FormControlLabel>{heading ?? t('pages.create.event.dateTime')}</FormControlLabel>
+        <p className="text-muted-foreground text-sm">
+          {hint ?? t('pages.create.event.tips.dateTime')}
+        </p>
       </div>
       <div className={showEnd ? 'grid gap-4 lg:grid-cols-2' : 'grid gap-4'}>
         <div className="border-border/70 bg-background/70 space-y-3 rounded-xl border p-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <FormControlLabel>{t('pages.create.event.startDate')}</FormControlLabel>
+              <FormControlLabel>
+                {startDateLabel ?? t('pages.create.event.startDate')}
+              </FormControlLabel>
               {selectedStartDate ? (
                 <Button
                   type="button"
@@ -83,20 +105,24 @@ export function DateTimeRangeInput({
             />
           </div>
           <CreateInputField
-            label={t('pages.create.event.startTime')}
+            label={startTimeLabel ?? t('pages.create.event.startTime')}
             hint={t('common.validation.timeHint')}
             type="time"
             value={startTime}
             onValueChange={value => onChange('startTime', value)}
             min={startTimeBoundaryProps.min}
             max={startTimeBoundaryProps.max}
+            disabled={startTimeDisabled}
+            step={timeStep}
           />
         </div>
         {showEnd ? (
           <div className="border-border/70 bg-background/70 space-y-3 rounded-xl border p-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <FormControlLabel>{t('pages.create.event.endDate')}</FormControlLabel>
+                <FormControlLabel>
+                  {endDateLabel ?? t('pages.create.event.endDate')}
+                </FormControlLabel>
                 {selectedEndDate ? (
                   <Button
                     type="button"
@@ -120,13 +146,15 @@ export function DateTimeRangeInput({
               />
             </div>
             <CreateInputField
-              label={t('pages.create.event.endTime')}
+              label={endTimeLabel ?? t('pages.create.event.endTime')}
               hint={t('common.validation.timeHint')}
               type="time"
               value={endTime}
               onValueChange={value => onChange('endTime', value)}
               min={endTimeBoundaryProps.min}
               max={endTimeBoundaryProps.max}
+              disabled={endTimeDisabled}
+              step={timeStep}
             />
           </div>
         ) : null}

@@ -9,6 +9,8 @@ import {
   updateTodoSchema,
   deleteTodoSchema,
   toggleCompleteTodoSchema,
+  archiveTodoSchema,
+  unarchiveTodoSchema,
   createTodoAssignmentSchema,
 } from './schema';
 
@@ -120,6 +122,14 @@ export const todoServerMutators = {
         todoTitle,
       });
     }
+  }),
+
+  archive: defineMutator(archiveTodoSchema, async ({ tx, ctx, args }) => {
+    await mutators.todos.archive.fn({ tx, ctx, args });
+  }),
+
+  unarchive: defineMutator(unarchiveTodoSchema, async ({ tx, ctx, args }) => {
+    await mutators.todos.unarchive.fn({ tx, ctx, args });
   }),
 
   assign: defineMutator(createTodoAssignmentSchema, async ({ tx, ctx, args }) => {

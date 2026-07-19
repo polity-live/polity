@@ -49,15 +49,6 @@ export function useFinancialData(payments: GroupPayment[], groupId: string) {
       })
     );
 
-    // Add available/balance to income chart if positive
-    if (balance > 0) {
-      incomeChartData.push({
-        name: 'Available',
-        value: balance,
-        fill: CHART_COLORS[incomeChartData.length % CHART_COLORS.length],
-      });
-    }
-
     // Prepare data for expenditure chart
     const expenditureChartData: ChartData[] = Object.entries(expenditureByType).map(
       ([type, value], index) => ({

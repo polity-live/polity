@@ -67,6 +67,7 @@ import {
   trackCreateFinalization,
   waitForOptimisticCreate,
 } from '../logic/createFinalization';
+import { toLocalTimestamp } from '@/features/shared/logic/localDateTime';
 
 type GroupType = 'base' | 'hierarchical' | 'sibling';
 type RelationshipDirection = GroupRelationshipDirection;
@@ -612,9 +613,7 @@ export function useCreateGroupForm(): CreateFormConfig {
         };
       });
 
-      const startTimestamp = eventStartDate
-        ? new Date(`${eventStartDate}T${eventStartTime || '00:00'}`).getTime()
-        : null;
+      const startTimestamp = toLocalTimestamp(eventStartDate, eventStartTime);
       const foundingEventTitle = eventName.trim();
       const foundingEvent =
         createConstitutionalEvent && foundingEventTitle && user?.id
@@ -673,7 +672,9 @@ export function useCreateGroupForm(): CreateFormConfig {
         connection_requests: connectionRequests,
         founding_event: foundingEvent,
       };
-      const createGroupResult = createFullGroup(createGroupPayload);
+      const createGroupResult = createFullGroup(createGroupPayload, {
+        notificationMode: 'silent',
+      });
 
       await waitForOptimisticCreate(createGroupResult);
 
@@ -719,7 +720,9 @@ export function useCreateGroupForm(): CreateFormConfig {
           target: groupSubmitTarget,
         },
         retry: () => {
-          const retryResult = createFullGroup(createGroupPayload);
+          const retryResult = createFullGroup(createGroupPayload, {
+            notificationMode: 'silent',
+          });
           trackCreateFinalization({
             result: retryResult,
             draft: {

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useCommonActions, useCommonState } from '@/zero/common';
+import { rankInterestSuggestions, type HashtagUsageRow } from '../onboarding/interestSuggestions';
 
 export type OnboardingStep =
   | 'name'
@@ -99,10 +100,15 @@ export function useOnboarding(): UseOnboardingReturn {
   const { updateProfileClientApplied } = useUserActions();
   const { joinGroup } = useGroupActions();
   const { syncEntityHashtags } = useCommonActions();
-  const { allHashtags, userHashtags } = useCommonState({
+  const { allHashtags, userHashtags, onboardingHashtagUsage } = useCommonState({
     user_id: user?.id,
     loadAllHashtags: true,
+    loadOnboardingHashtagUsage: true,
   });
+  const allInterestSuggestions = useMemo(
+    () => rankInterestSuggestions((onboardingHashtagUsage ?? []) as readonly HashtagUsageRow[]),
+    [onboardingHashtagUsage]
+  );
   const [step, setStep] = useState<OnboardingStep>('name');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -383,8 +389,6 @@ export function useOnboarding(): UseOnboardingReturn {
     sendMembershipRequests,
     skipMembership,
     completeOnboarding,
-    allInterestSuggestions: (allHashtags ?? [])
-      .map(hashtag => hashtag.tag)
-      .filter((tag): tag is string => Boolean(tag)),
+    allInterestSuggestions,
   };
 }

@@ -175,6 +175,9 @@ export const navigationTranslations = {
   },
   commandDialog: {
     placeholder: 'Geben Sie einen Befehl ein oder suchen Sie...',
+    shortcut: {
+      hint: 'Command Box öffnen',
+    },
     noResults: 'Keine Ergebnisse gefunden.',
     groups: {
       primaryNavigation: 'Primäre Navigation',

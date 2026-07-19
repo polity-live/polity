@@ -7,7 +7,7 @@
  * The settings cache is synced from React via useToastSettingsSync().
  */
 import { createElement, type ReactNode } from 'react';
-import { Check } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { toast as sonnerToast, type ExternalToast } from '@/features/shared/ui/ui/sonner';
 
 let inAppEnabled = true;
@@ -17,8 +17,15 @@ export function setInAppNotificationsEnabled(enabled: boolean) {
   inAppEnabled = enabled;
 }
 
-function finalizationSuccessMessage(message: ReactNode) {
-  return createElement('span', { 'data-create-finalization-toast': 'saved' }, message);
+function finalizationMessage(message: ReactNode, state: 'success' | 'error') {
+  return createElement(
+    'span',
+    {
+      'data-create-finalization-toast': state === 'success' ? 'saved' : 'failed',
+      'data-mutation-finalization-toast': state,
+    },
+    message
+  );
 }
 
 function finalizationSuccessIcon() {
@@ -30,6 +37,18 @@ function finalizationSuccessIcon() {
       'data-create-finalization-icon': 'check',
     },
     createElement(Check, { className: 'h-4 w-4' })
+  );
+}
+
+function finalizationErrorIcon() {
+  return createElement(
+    'span',
+    {
+      'aria-hidden': true,
+      className: 'inline-flex',
+      'data-create-finalization-icon': 'error',
+    },
+    createElement(X, { className: 'h-4 w-4' })
   );
 }
 
@@ -49,12 +68,21 @@ export const gatedToast = {
 
   /** Always shows because it completes an already-visible finalization toast */
   finalizationSuccess: (message: string | ReactNode, data?: ExternalToast) =>
-    sonnerToast.success(finalizationSuccessMessage(message), {
+    sonnerToast.success(finalizationMessage(message, 'success'), {
       ...data,
       className: mergeClassName('border-success/60 bg-success/10 text-success', data?.className),
       icon: data?.icon ?? finalizationSuccessIcon(),
       richColors: true,
-      testId: data?.testId ?? 'create-finalization-saved-toast',
+      testId: data?.testId ?? 'mutation-finalization-success-toast',
+    }),
+
+  /** Always shows because it completes an already-visible finalization toast */
+  finalizationError: (message: string | ReactNode, data?: ExternalToast) =>
+    sonnerToast.error(finalizationMessage(message, 'error'), {
+      ...data,
+      icon: data?.icon ?? finalizationErrorIcon(),
+      richColors: true,
+      testId: data?.testId ?? 'mutation-finalization-error-toast',
     }),
 
   /** Gated by inAppNotifications preference */

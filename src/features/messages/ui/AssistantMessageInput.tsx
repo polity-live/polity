@@ -58,6 +58,11 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
     [assistantChat.availableTools]
   );
 
+  const updateTools = useMemo(
+    () => assistantChat.availableTools.filter(tool => tool.kind === 'update'),
+    [assistantChat.availableTools]
+  );
+
   const mentionQuery = useMemo(
     () => parseActiveMentionQuery(messageText, caretPosition),
     [messageText, caretPosition]
@@ -400,6 +405,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
       selectedToolKeySet={selectedToolKeySet}
       searchTools={searchTools}
       createTools={createTools}
+      updateTools={updateTools}
       mentionQuery={mentionQuery}
       skillCommand={skillCommand}
       toolCommand={toolCommand}

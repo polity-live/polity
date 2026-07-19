@@ -21,7 +21,11 @@ import type {
   StreetDesignPlacementSettings,
   StreetDesignPropertyValue,
 } from '../types';
-import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
+import {
+  formatMinorCurrency,
+  getStreetDesignCostCatalogEntry,
+} from '../logic/streetDesignCostCatalog';
+import { majorToMinor, minorToMajor } from '@/features/shared/logic/currency';
 import { getStreetDesignCostLine } from '../logic/streetDesignCosting';
 import { getStreetDesignObjectDefinition } from '../logic/streetDesignObjectRegistry';
 import { getStreetDesignGeometryRotationDeg } from '../logic/streetDesignPlacement';
@@ -44,6 +48,7 @@ interface StreetDesignInspectorViewProps {
   placementPreview: CorridorGeometry | PathCorridorGeometry | null;
   placementMode: 'drag_band' | 'path' | null;
   readOnly: boolean;
+  currency?: string;
   onPlacementPropertyChange: (key: string, value: StreetDesignPropertyValue) => void;
   onPlacementWidthChange: (width: number) => void;
   onPlacementRotationChange: (rotationDeg: number) => void;
@@ -64,10 +69,11 @@ function asInputValue(value: StreetDesignPropertyValue | undefined) {
 function getPlacementTotalMinor(args: {
   placementSettings: StreetDesignPlacementSettings;
   placementPreview: CorridorGeometry | PathCorridorGeometry | null;
+  currency: string;
 }) {
   const definition = getStreetDesignObjectDefinition(args.placementSettings.type);
-  const unitCostMinor =
-    args.placementSettings.customUnitCostMinor ?? definition.suggestedUnitCostMinor;
+  const catalogEntry = getStreetDesignCostCatalogEntry(definition.type, args.currency);
+  const unitCostMinor = args.placementSettings.customUnitCostMinor ?? catalogEntry.unitCostMinor;
 
   if (!args.placementPreview) {
     return unitCostMinor;
@@ -80,8 +86,8 @@ function getPlacementTotalMinor(args: {
     properties: args.placementSettings.properties,
     cost: {
       rule: definition.costRule,
-      currency: 'EUR',
-      suggestedUnitCostMinor: definition.suggestedUnitCostMinor,
+      currency: args.currency,
+      suggestedUnitCostMinor: catalogEntry.unitCostMinor,
       ...(args.placementSettings.customUnitCostMinor == null
         ? {}
         : { customUnitCostMinor: args.placementSettings.customUnitCostMinor }),
@@ -178,6 +184,7 @@ export function StreetDesignInspectorView({
   placementPreview,
   placementMode,
   readOnly,
+  currency = 'EUR',
   onPlacementPropertyChange,
   onPlacementWidthChange,
   onPlacementRotationChange,
@@ -205,9 +212,12 @@ export function StreetDesignInspectorView({
         definition.labelKey
     );
     const hasWidth = definition.toolMode !== 'point' || definition.defaultWidth != null;
-    const unitCostEuro =
-      (placementSettings.customUnitCostMinor ?? definition.suggestedUnitCostMinor) / 100;
-    const totalMinor = getPlacementTotalMinor({ placementSettings, placementPreview });
+    const catalogEntry = getStreetDesignCostCatalogEntry(selectedTool, currency);
+    const unitCostMajor = minorToMajor(
+      placementSettings.customUnitCostMinor ?? catalogEntry.unitCostMinor,
+      currency
+    );
+    const totalMinor = getPlacementTotalMinor({ placementSettings, placementPreview, currency });
     const rotationValue = getPlacementRotationValue(placementSettings, placementPreview);
 
     return (
@@ -369,12 +379,12 @@ export function StreetDesignInspectorView({
                   aria-label={t('features.amendments.streetscape.inspector.price')}
                   min={0}
                   step={0.01}
-                  value={unitCostEuro}
+                  value={unitCostMajor}
                   disabled={readOnly}
                   onChange={event => {
                     const value = event.target.value;
                     onPlacementUnitCostChange(
-                      value === '' ? null : Math.max(0, Math.round(Number(value) * 100))
+                      value === '' ? null : Math.max(0, majorToMinor(Number(value), currency))
                     );
                   }}
                 />
@@ -383,12 +393,12 @@ export function StreetDesignInspectorView({
                 <Label className="text-xs">
                   {t('features.amendments.streetscape.inspector.total')}
                 </Label>
-                <Input value={formatMinorCurrency(totalMinor)} disabled />
+                <Input value={formatMinorCurrency(totalMinor, currency)} disabled />
               </div>
             </div>
             <p className="text-muted-foreground mt-2 text-xs">
               {t('features.amendments.streetscape.inspector.suggestedCost', {
-                cost: formatMinorCurrency(definition.suggestedUnitCostMinor),
+                cost: formatMinorCurrency(catalogEntry.unitCostMinor, currency),
               })}
             </p>
             {placementSettings.customUnitCostMinor != null ? (
@@ -430,9 +440,9 @@ export function StreetDesignInspectorView({
           ? `${t('features.amendments.streetscape.inspector.incline')}: ${selectedOsmWay.incline}`
           : null,
         isFiniteNumber(selectedOsmWay.stepCount)
-          ? `${t('features.amendments.streetscape.inspector.stepCount')}: ${
-              selectedOsmWay.stepCount
-            }`
+          ? `${t('features.amendments.streetscape.inspector.stepCount', {
+              count: selectedOsmWay.stepCount,
+            })}: ${selectedOsmWay.stepCount}`
           : null,
         isFiniteNumber(selectedOsmWay.clearanceMeters)
           ? `${t('features.amendments.streetscape.inspector.clearance')}: ${formatMeters(
@@ -471,7 +481,9 @@ export function StreetDesignInspectorView({
           <div className="grid gap-2 text-sm">
             <div className="bg-muted/20 rounded-md border px-3 py-2">
               <p className="text-muted-foreground text-xs">
-                {t('features.amendments.streetscape.inspector.points')}
+                {t('features.amendments.streetscape.inspector.points', {
+                  count: osmFeaturePoints.length,
+                })}
               </p>
               <p className="font-semibold">{osmFeaturePoints.length}</p>
             </div>
@@ -580,8 +592,10 @@ export function StreetDesignInspectorView({
   const objectLabel = t(
     getStreetDesignObjectVariantLabelKey(selectedObject) ?? definition.labelKey
   );
-  const unitCostEuro =
-    (selectedObject.cost.customUnitCostMinor ?? selectedObject.cost.suggestedUnitCostMinor) / 100;
+  const unitCostMajor = minorToMajor(
+    selectedObject.cost.customUnitCostMinor ?? selectedObject.cost.suggestedUnitCostMinor,
+    selectedObject.cost.currency
+  );
 
   return (
     <aside className="bg-background/95 min-w-0 border-b p-4 shadow-sm xl:border-b-0 xl:border-l">
@@ -785,13 +799,15 @@ export function StreetDesignInspectorView({
                 aria-label={t('features.amendments.streetscape.inspector.price')}
                 min={0}
                 step={0.01}
-                value={unitCostEuro}
+                value={unitCostMajor}
                 disabled={readOnly}
                 onChange={event => {
                   const value = event.target.value;
                   onUnitCostChange(
                     selectedObject.id,
-                    value === '' ? null : Math.max(0, Math.round(Number(value) * 100))
+                    value === ''
+                      ? null
+                      : Math.max(0, majorToMinor(Number(value), selectedObject.cost.currency))
                   );
                 }}
               />
@@ -801,14 +817,20 @@ export function StreetDesignInspectorView({
                 {t('features.amendments.streetscape.inspector.total')}
               </Label>
               <Input
-                value={formatMinorCurrency(selectedObjectCostLine?.totalCostMinor ?? 0)}
+                value={formatMinorCurrency(
+                  selectedObjectCostLine?.totalCostMinor ?? 0,
+                  selectedObject.cost.currency
+                )}
                 disabled
               />
             </div>
           </div>
           <p className="text-muted-foreground mt-2 text-xs">
             {t('features.amendments.streetscape.inspector.suggestedCost', {
-              cost: formatMinorCurrency(selectedObject.cost.suggestedUnitCostMinor),
+              cost: formatMinorCurrency(
+                selectedObject.cost.suggestedUnitCostMinor,
+                selectedObject.cost.currency
+              ),
             })}
           </p>
           {selectedObject.cost.customUnitCostMinor != null ? (

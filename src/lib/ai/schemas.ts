@@ -4,6 +4,7 @@ import { DEFAULT_AI_TOOL_NAMES } from '@/lib/ai/defaultAiTools';
 export const aiProviderSchema = z.enum(['openrouter', 'openai', 'anthropic']);
 export const aiReasoningEffortSchema = z.enum(['low', 'medium', 'high']);
 export const aiToolNameSchema = z.enum(DEFAULT_AI_TOOL_NAMES);
+export const aiAttachmentContextTypeSchema = z.enum(['output', 'update']);
 export const aiAttachmentEntitySchema = z.enum([
   'user',
   'group',
@@ -30,6 +31,7 @@ export const aiChatAttachmentSchema = z.object({
   subtitle: z.string().nullable().optional(),
   prompt_context: z.string().nullable().optional(),
   card_data_json: z.string().nullable().optional(),
+  context_type: aiAttachmentContextTypeSchema.optional(),
   href: z
     .string()
     .regex(/^\/(?!\/)/)
@@ -45,6 +47,7 @@ export const aiModelDescriptorSchema = z.object({
 export type AiProvider = z.infer<typeof aiProviderSchema>;
 export type AiReasoningEffort = z.infer<typeof aiReasoningEffortSchema>;
 export type AiToolName = z.infer<typeof aiToolNameSchema>;
+export type AiAttachmentContextType = z.infer<typeof aiAttachmentContextTypeSchema>;
 export type AiAttachmentEntity = z.infer<typeof aiAttachmentEntitySchema>;
 export type AiChatAttachment = z.infer<typeof aiChatAttachmentSchema>;
 export type AiModelDescriptor = z.infer<typeof aiModelDescriptorSchema>;

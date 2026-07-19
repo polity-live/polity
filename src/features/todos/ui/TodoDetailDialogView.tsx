@@ -52,6 +52,11 @@ import {
 import { Link } from '@tanstack/react-router';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { formatTodoDate } from '../utils/todoFormatters';
+import { TodoDeadlineInput } from '@/features/create/ui/inputs/TodoDeadlineInput';
+import { CommentThread } from '@/features/shared/ui/comments';
+import type { TodoDiscussionController } from '../hooks/useTodoDiscussion';
+import { TodoArchiveAction, TodoArchiveBadge } from './TodoArchiveAction';
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
 type TodoVisibility = 'public' | 'authenticated' | 'private';
@@ -79,29 +84,6 @@ function VisibilityIcon({ visibility }: { visibility: TodoVisibility }) {
     case 'private':
       return <Lock className="text-muted-foreground h-4 w-4" />;
   }
-}
-
-function formatDate(timestamp: number | string): string {
-  const date = new Date(typeof timestamp === 'number' ? timestamp : parseInt(timestamp));
-  const now = new Date();
-  const diffMs = date.getTime() - now.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return translateText('features.todos.dueDate.today');
-  if (diffDays === 1) return translateText('features.todos.dueDate.tomorrow');
-  if (diffDays === -1) return translateText('features.todos.dueDate.yesterday');
-  if (diffDays > 0 && diffDays <= 7) {
-    return translateText('features.todos.dueDate.inDays', { count: diffDays });
-  }
-  if (diffDays < 0 && diffDays >= -7) {
-    return translateText('features.todos.dueDate.daysAgo', { count: Math.abs(diffDays) });
-  }
-
-  return date.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
 }
 
 export interface TodoDetailDialogViewProps {
@@ -136,6 +118,10 @@ export interface TodoDetailDialogViewProps {
   handleCancel: any;
   handleRemoveAssignee: any;
   handleAddAssignee: any;
+  discussion: TodoDiscussionController;
+  isArchiving: boolean;
+  handleArchive: () => void;
+  handleUnarchive: () => void;
 }
 
 export function TodoDetailDialogView({
@@ -162,6 +148,10 @@ export function TodoDetailDialogView({
   handleCancel,
   handleRemoveAssignee,
   handleAddAssignee,
+  discussion,
+  isArchiving,
+  handleArchive,
+  handleUnarchive,
 }: TodoDetailDialogViewProps) {
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
@@ -182,6 +172,11 @@ export function TodoDetailDialogView({
               ) : (
                 <span className="text-2xl">{formData.title}</span>
               )}
+              {todo.archived_at ? (
+                <span className="mt-2 block">
+                  <TodoArchiveBadge />
+                </span>
+              ) : null}
             </DialogTitle>
             <div className="flex shrink-0 items-center gap-2 self-end sm:self-start">
               {isEditing && canManageTodos ? (
@@ -196,10 +191,20 @@ export function TodoDetailDialogView({
                   </Button>
                 </>
               ) : canManageTodos ? (
-                <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
-                  <Edit className="mr-2 h-4 w-4" />
-                  {t('features.todos.actions.edit')}
-                </Button>
+                <>
+                  <TodoArchiveAction
+                    archived={Boolean(todo.archived_at)}
+                    canManage={canManageTodos}
+                    completed={todo.status === 'completed'}
+                    isPending={isArchiving}
+                    onArchive={handleArchive}
+                    onUnarchive={handleUnarchive}
+                  />
+                  <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+                    <Edit className="mr-2 h-4 w-4" />
+                    {t('features.todos.actions.edit')}
+                  </Button>
+                </>
               ) : null}
               <DialogClose asChild>
                 <Button type="button" variant="ghost" size="icon" aria-label={t('common.close')}>
@@ -341,16 +346,16 @@ export function TodoDetailDialogView({
               {t('features.todos.dueDate.title')}
             </FormControlLabel>
             {isEditing && canManageTodos ? (
-              <FormControlInput
-                type="date"
-                value={formData.dueDate}
-                onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
+              <TodoDeadlineInput
+                dueDate={formData.dueDate}
+                dueTime={formData.dueTime}
+                onChange={values => setFormData({ ...formData, ...values })}
               />
             ) : todo.due_date ? (
               <div className="flex items-center gap-2">
                 <Calendar className="text-muted-foreground h-4 w-4" />
                 <span className={isOverdue ? 'text-destructive font-medium' : ''}>
-                  {formatDate(todo.due_date)}
+                  {formatTodoDate(todo.due_date)}
                 </span>
                 {isOverdue && (
                   <BadgeControl variant="destructive" className="ml-2">
@@ -648,6 +653,19 @@ export function TodoDetailDialogView({
               )}
             </div>
           </div>
+
+          {!isEditing ? (
+            <div className="border-t pt-6">
+              <CommentThread
+                comments={discussion.comments}
+                currentUserId={discussion.currentUserId}
+                onAddComment={discussion.onAddComment}
+                onVote={discussion.onVote}
+                isSubmitting={discussion.isSubmitting}
+                linkAuthors
+              />
+            </div>
+          ) : null}
         </div>
       </ScrollableDialogContent>
     </Dialog>

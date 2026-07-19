@@ -352,50 +352,70 @@ export function AmendmentWikiView({
         items={[
           {
             value: amendment.collaborator_count ?? collaboration.collaboratorCount,
-            label: t('components.labels.collaborators'),
+            label: t('components.labels.collaborators', {
+              count: amendment.collaborator_count ?? collaboration.collaboratorCount,
+            }),
           },
-          { value: subscriberCount, label: t('components.labels.subscribers') },
-          { value: amendment.clone_count ?? clones.length, label: t('components.labels.clones') },
-          { value: branchCount, label: t('components.labels.branches') },
-          { value: supportingGroupCount, label: t('components.labels.supportingGroups') },
+          {
+            value: subscriberCount,
+            label: t('components.labels.subscribers', { count: subscriberCount }),
+          },
+          {
+            value: amendment.clone_count ?? clones.length,
+            label: t('components.labels.clones', {
+              count: amendment.clone_count ?? clones.length,
+            }),
+          },
+          {
+            value: branchCount,
+            label: t('components.labels.branches', { count: branchCount }),
+          },
+          {
+            value: supportingGroupCount,
+            label: t('components.labels.supportingGroups', { count: supportingGroupCount }),
+          },
           {
             value: changeRequestCount,
-            label: t('components.labels.changeRequests'),
+            label: t('components.labels.changeRequests', { count: changeRequestCount }),
           },
         ]}
       />
 
       {/* Action Bar */}
       <ActionBar>
-        <SubscribeButton
-          entityType="amendment"
-          entityId={amendmentId}
-          isSubscribed={isSubscribed}
-          onToggleSubscribe={toggleSubscribe}
-          isLoading={subscribeLoading}
-        />
-        <MembershipButton
-          actionType="collaborate"
-          status={collaboration.status}
-          isMember={collaboration.isCollaborator}
-          hasRequested={collaboration.hasRequested}
-          isInvited={collaboration.isInvited}
-          onRequest={collaboration.requestCollaboration}
-          onLeave={collaboration.leaveCollaboration}
-          onAcceptInvitation={collaboration.acceptInvitation}
-          isLoading={collaboration.isLoading}
-        />
-        <VoteButtons
-          upvotes={upvotes}
-          downvotes={downvotes}
-          userVote={normalizedVoteValue}
-          onVote={handleVote}
-          orientation="horizontal"
-        />
-        <Button variant="outline" size="default" onClick={handleClone}>
-          <Copy className="mr-2 h-4 w-4" />
-          {translateText('generated.inline.0071_clone_d8cdb573')}
-        </Button>
+        {user ? (
+          <>
+            <SubscribeButton
+              entityType="amendment"
+              entityId={amendmentId}
+              isSubscribed={isSubscribed}
+              onToggleSubscribe={toggleSubscribe}
+              isLoading={subscribeLoading}
+            />
+            <MembershipButton
+              actionType="collaborate"
+              status={collaboration.status}
+              isMember={collaboration.isCollaborator}
+              hasRequested={collaboration.hasRequested}
+              isInvited={collaboration.isInvited}
+              onRequest={collaboration.requestCollaboration}
+              onLeave={collaboration.leaveCollaboration}
+              onAcceptInvitation={collaboration.acceptInvitation}
+              isLoading={collaboration.isLoading}
+            />
+            <VoteButtons
+              upvotes={upvotes}
+              downvotes={downvotes}
+              userVote={normalizedVoteValue}
+              onVote={handleVote}
+              orientation="horizontal"
+            />
+            <Button variant="outline" size="default" onClick={handleClone}>
+              <Copy className="mr-2 h-4 w-4" />
+              {translateText('generated.inline.0071_clone_d8cdb573')}
+            </Button>
+          </>
+        ) : null}
         <ShareButton
           url={`/amendment/${amendmentId}`}
           title={amendment.title ?? ''}

@@ -4,6 +4,13 @@ import {
   STREET_DESIGN_CURRENCY,
   streetDesignObjectRegistry,
 } from './streetDesignObjectRegistry';
+import {
+  formatCurrencyMinor,
+  majorToMinor,
+  minorToMajor,
+  type CurrencyCode,
+} from '@/features/shared/logic/currency';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
 export interface StreetDesignCostCatalogEntry {
   type: StreetDesignObjectType;
@@ -26,15 +33,19 @@ export const streetDesignCostCatalog = Object.fromEntries(
   ])
 ) as Record<StreetDesignObjectType, StreetDesignCostCatalogEntry>;
 
-export function getStreetDesignCostCatalogEntry(type: StreetDesignObjectType) {
-  return streetDesignCostCatalog[type];
+export function getStreetDesignCostCatalogEntry(
+  type: StreetDesignObjectType,
+  currency: CurrencyCode = STREET_DESIGN_CURRENCY
+) {
+  const entry = streetDesignCostCatalog[type];
+  if (currency === entry.currency) return entry;
+  return {
+    ...entry,
+    currency,
+    unitCostMinor: majorToMinor(minorToMajor(entry.unitCostMinor, entry.currency), currency),
+  };
 }
 
 export function formatMinorCurrency(amountMinor: number, currency = STREET_DESIGN_CURRENCY) {
-  return new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amountMinor / 100);
+  return formatCurrencyMinor(amountMinor, currency, useLanguageStore.getState().language);
 }

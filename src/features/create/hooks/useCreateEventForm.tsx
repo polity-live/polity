@@ -586,7 +586,9 @@ export function useCreateEventForm(): CreateFormConfig {
         hashtags,
         process_task_completions: processTaskCompletions,
       };
-      const createEventResult = createFullEvent(createEventPayload);
+      const createEventResult = createFullEvent(createEventPayload, {
+        notificationMode: 'silent',
+      });
       await createEventResult.client;
 
       context?.reportProgress({ key: 'create', status: 'complete' });

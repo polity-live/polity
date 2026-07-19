@@ -1,22 +1,66 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { useNotificationActions } from './useNotificationActions';
 import { useNotificationActions as useZeroNotificationActions } from '@/zero/notifications/useNotificationActions';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { queries } from '@/zero/queries';
+import {
+  isNotificationActive,
+  isNotificationDismissed,
+  isNotificationPurged,
+  isNotificationRead,
+  type ReadableNotification,
+} from '@/zero/notifications/notificationReadState';
+import { usePermissionEvaluator } from '@/zero/rbac';
+import { canManageEntityNotification } from '../logic/notificationPermissions';
 
-export type NotificationTab = 'all' | 'unread' | 'read' | 'personal' | 'entity';
-const NOTIFICATION_TAB_ORDER: NotificationTab[] = ['all', 'unread', 'read', 'personal', 'entity'];
+export type NotificationTab = 'all' | 'unread' | 'read' | 'personal' | 'entity' | 'trash';
+const NOTIFICATION_TAB_ORDER: NotificationTab[] = [
+  'all',
+  'unread',
+  'read',
+  'personal',
+  'entity',
+  'trash',
+];
+
+interface NotificationCountRows {
+  all: readonly ReadableNotification[];
+  unread: readonly ReadableNotification[];
+  personal: readonly ReadableNotification[];
+  entity: readonly ReadableNotification[];
+  trash: readonly ReadableNotification[];
+}
+
+export function calculateNotificationCounts(rows: NotificationCountRows) {
+  return {
+    all: rows.all.filter(isNotificationActive).length,
+    unread: rows.unread.filter(row => isNotificationActive(row) && !isNotificationRead(row)).length,
+    personal: rows.personal.filter(row => isNotificationActive(row) && !isNotificationRead(row))
+      .length,
+    entity: rows.entity.filter(row => isNotificationActive(row) && !isNotificationRead(row)).length,
+    trash: rows.trash.filter(row => isNotificationDismissed(row) && !isNotificationPurged(row))
+      .length,
+  };
+}
 
 export function useNotificationsPage() {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState<NotificationTab>('all');
+  const permissionEvaluator = usePermissionEvaluator();
 
-  const { markRead, markEntityNotificationRead } = useZeroNotificationActions();
-  const { handleNotificationClick, handleDeleteNotification } = useNotificationActions();
+  const { setAllNotificationsRead } = useZeroNotificationActions();
+  const {
+    handleNotificationClick,
+    handleMarkNotificationAsRead,
+    handleToggleNotificationRead,
+    handleDismissNotification,
+    handleRestoreNotification,
+    handlePurgeNotification,
+    handleDeleteEntityNotificationGlobally,
+  } = useNotificationActions();
 
   const [allRows, allResult] = useQuery(
     queries.notifications.countRows({ tab: 'all', query: searchQuery })
@@ -30,43 +74,43 @@ export function useNotificationsPage() {
   const [entityRows, entityResult] = useQuery(
     queries.notifications.countRows({ tab: 'entity', query: searchQuery })
   );
+  const [trashRows, trashResult] = useQuery(
+    queries.notifications.countRows({ tab: 'trash', query: searchQuery })
+  );
   const [allUnreadRows, allUnreadResult] = useQuery(
     queries.notifications.countRows({ tab: 'unread', query: '' })
   );
 
-  const counts = useMemo(
-    () => ({
-      all: allRows?.length ?? 0,
-      unread: unreadRows?.length ?? 0,
-      personal: personalRows?.length ?? 0,
-      entity: entityRows?.length ?? 0,
-    }),
-    [allRows?.length, entityRows?.length, personalRows?.length, unreadRows?.length]
+  const counts = calculateNotificationCounts({
+    all: allRows ?? [],
+    unread: unreadRows ?? [],
+    personal: personalRows ?? [],
+    entity: entityRows ?? [],
+    trash: trashRows ?? [],
+  });
+  const unreadCount = (allUnreadRows ?? []).filter(
+    row => isNotificationActive(row) && !isNotificationRead(row)
+  ).length;
+  const canDeleteForEveryone = useCallback(
+    (notification: Parameters<typeof canManageEntityNotification>[0]) =>
+      canManageEntityNotification(notification, permissionEvaluator),
+    [permissionEvaluator]
   );
-  const unreadCount = allUnreadRows?.length ?? 0;
 
   const handleMarkAllAsRead = useCallback(async () => {
-    for (const notification of allUnreadRows ?? []) {
-      if (notification.recipient_entity_id && notification.recipient_entity_type) {
-        await waitForClientApply(
-          markEntityNotificationRead({
-            id: crypto.randomUUID(),
-            notification_id: notification.id,
-            entity_id: notification.recipient_entity_id,
-            entity_type: notification.recipient_entity_type,
-          })
-        );
-      } else {
-        await waitForClientApply(markRead({ id: notification.id }));
-      }
-    }
-  }, [allUnreadRows, markEntityNotificationRead, markRead]);
+    setAllNotificationsRead({ scope: { kind: 'inbox' }, read: true });
+  }, [setAllNotificationsRead]);
+
+  const handleMarkAllAsUnread = useCallback(async () => {
+    setAllNotificationsRead({ scope: { kind: 'inbox' }, read: false });
+  }, [setAllNotificationsRead]);
 
   const isInitialLoading = [
     allResult,
     unreadResult,
     personalResult,
     entityResult,
+    trashResult,
     allUnreadResult,
   ].some(result => result.type === 'unknown');
   const selectedTabIndex = NOTIFICATION_TAB_ORDER.indexOf(selectedTab);
@@ -99,7 +143,14 @@ export function useNotificationsPage() {
     unreadCount,
     isInitialLoading,
     handleMarkAllAsRead,
+    handleMarkAllAsUnread,
     handleNotificationClick,
-    handleDeleteNotification,
+    handleMarkNotificationAsRead,
+    handleToggleNotificationRead,
+    handleDismissNotification,
+    handleRestoreNotification,
+    handlePurgeNotification,
+    handleDeleteEntityNotificationGlobally,
+    canDeleteForEveryone,
   };
 }

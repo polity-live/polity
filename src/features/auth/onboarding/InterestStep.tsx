@@ -8,6 +8,7 @@ import { BadgeControl } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { cn } from '@/features/shared/utils/utils.ts';
+import { completeInterestSuggestions } from './interestSuggestions';
 
 interface InterestStepProps {
   selectedInterestTags: string[];
@@ -25,16 +26,7 @@ function getSuggestedTags(rawSuggestions: string, canonicalSuggestions: string[]
     .split(',')
     .map(tag => tag.trim())
     .filter(Boolean);
-  const seen = new Set<string>();
-
-  return [...defaultTags, ...canonicalSuggestions]
-    .filter(tag => {
-      const key = tag.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .slice(0, 14);
+  return completeInterestSuggestions(canonicalSuggestions, defaultTags);
 }
 
 export function InterestStep({
@@ -113,7 +105,7 @@ export function InterestStep({
                 )}
                 onClick={() => onToggleInterestTag(tag)}
               >
-                <Hash className="h-3.5 w-3.5" />#{tag}
+                #{tag}
               </button>
             );
           })}

@@ -72,7 +72,7 @@ export function TypeSelector({
             <TooltipTrigger asChild>
               <Info className="text-muted-foreground h-4 w-4 cursor-help" />
             </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
+            <TooltipContent variant="rich">
               <p className="text-sm">{selectedOption?.description}</p>
             </TooltipContent>
           </Tooltip>

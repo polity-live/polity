@@ -1,30 +1,50 @@
 /* @vitest-environment jsdom */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { NavigationItem, NavigationView } from '@/features/navigation/types/navigation.types';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
+import {
+  KeyboardPlatformProvider,
+  type KeyboardPlatform,
+} from '@/features/shared/keyboard/keyboard-shortcut';
 import { NavItemListView } from '../NavItemListView';
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: (props: any) => {
+  Link: React.forwardRef<HTMLAnchorElement, any>((props, ref) => {
     const linkProps = { ...props };
     delete linkProps.children;
     delete linkProps.preload;
     delete linkProps.to;
     return (
-      <a href={props.to} {...linkProps}>
+      <a ref={ref} href={props.to} {...linkProps}>
         {props.children}
       </a>
     );
-  },
+  }),
 }));
+
+beforeEach(() => {
+  useLanguageStore.setState({ language: 'en' });
+  vi.stubGlobal(
+    'ResizeObserver',
+    class ResizeObserverMock {
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+    }
+  );
+});
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
-const navigationItems = [
+const navigationItems: NavigationItem[] = [
   {
     id: 'home',
     icon: 'Home',
@@ -34,59 +54,20 @@ const navigationItems = [
   },
 ];
 
-function renderButtonList(isMobile: boolean, isPrimary = true) {
+function renderButtonList(
+  isMobile: boolean,
+  isPrimary = true,
+  items = navigationItems,
+  navigationView: NavigationView = 'asButtonList',
+  platform: KeyboardPlatform = 'windows'
+) {
   return render(
-    <NavItemListView
-      navigationItems={navigationItems}
-      isMobile={isMobile}
-      isPrimary={isPrimary}
-      navigationView="asButtonList"
-      pathname="/home"
-      hash=""
-      isRouterPending={false}
-      normalizedHash=""
-      currentRoute="/home"
-      loadingItem={null}
-      setLoadingItem={vi.fn()}
-      handleItemClick={vi.fn()}
-    />
-  );
-}
-
-describe('NavItemListView asButtonList', () => {
-  it.each([
-    ['desktop', false],
-    ['mobile', true],
-  ])('renders a single accessible link with a non-stateful label on %s', (_layout, isMobile) => {
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    renderButtonList(isMobile);
-
-    const link = screen.getByRole('link', { name: 'Home' });
-    expect(link.getAttribute('href')).toBe('/home');
-    expect(link.getAttribute('title')).toBe('Home');
-    expect(link.querySelector('button')).toBeNull();
-
-    fireEvent.mouseEnter(link);
-    link.focus();
-    expect(document.activeElement).toBe(link);
-    expect(consoleError).not.toHaveBeenCalled();
-  });
-
-  it('keeps native labels on secondary desktop navigation links', () => {
-    renderButtonList(false, false);
-
-    const link = screen.getByRole('link', { name: 'Home' });
-    expect(link.getAttribute('title')).toBe('Home');
-  });
-
-  it('runs custom navigation actions without following the placeholder href', () => {
-    const onClick = vi.fn();
-    render(
+    <KeyboardPlatformProvider platform={platform}>
       <NavItemListView
-        navigationItems={[{ ...navigationItems[0], href: undefined, onClick }]}
-        isMobile={false}
-        isPrimary
-        navigationView="asButtonList"
+        navigationItems={items}
+        isMobile={isMobile}
+        isPrimary={isPrimary}
+        navigationView={navigationView}
         pathname="/home"
         hash=""
         isRouterPending={false}
@@ -96,6 +77,222 @@ describe('NavItemListView asButtonList', () => {
         setLoadingItem={vi.fn()}
         handleItemClick={vi.fn()}
       />
+    </KeyboardPlatformProvider>
+  );
+}
+
+describe('NavItemListView', () => {
+  it.each([
+    ['asButton mobile', 'asButton', true],
+    ['asButton desktop', 'asButton', false],
+    ['asButtonList mobile', 'asButtonList', true],
+    ['asButtonList desktop', 'asButtonList', false],
+    ['asLabeledButtonList mobile', 'asLabeledButtonList', true],
+    ['asLabeledButtonList desktop', 'asLabeledButtonList', false],
+  ] as const)('renders the exact badge count at the icon in %s', (_label, view, isMobile) => {
+    renderButtonList(
+      isMobile,
+      false,
+      [
+        {
+          id: 'notifications',
+          icon: 'Bell',
+          label: 'Notifications',
+          href: '/group/group-1/notifications',
+          badge: 137,
+        },
+      ],
+      view
+    );
+
+    const link = screen.getByRole('link', { name: 'Notifications' });
+    const icon = link.querySelector('[data-slot="navigation-item-icon"]');
+    const badge = link.querySelector('[data-slot="navigation-item-badge"]');
+
+    expect(icon).not.toBeNull();
+    expect(icon?.contains(badge)).toBe(true);
+    expect(badge?.textContent).toBe('137');
+    expect(badge?.className).toContain('min-w-5');
+  });
+
+  it('does not render a badge for a zero count', () => {
+    renderButtonList(false, false, [
+      {
+        id: 'notifications',
+        icon: 'Bell',
+        label: 'Notifications',
+        href: '/event/event-1/notifications',
+        badge: 0,
+      },
+    ]);
+
+    expect(screen.getByRole('link', { name: 'Notifications' })).not.toBeNull();
+    expect(document.querySelector('[data-slot="navigation-item-badge"]')).toBeNull();
+  });
+
+  it('renders a single accessible mobile link without a native or custom tooltip', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    renderButtonList(true);
+
+    const link = screen.getByRole('link', { name: 'Home' });
+    expect(link.getAttribute('href')).toBe('/home');
+    expect(link.getAttribute('title')).toBeNull();
+    expect(link.querySelector('button')).toBeNull();
+
+    fireEvent.mouseEnter(link);
+    link.focus();
+    expect(document.activeElement).toBe(link);
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    expect(consoleError).not.toHaveBeenCalled();
+  });
+
+  it('uses the shared tooltip for icon-only secondary desktop navigation', async () => {
+    renderButtonList(false, false);
+
+    const link = screen.getByRole('link', { name: 'Home' });
+    expect(link.getAttribute('title')).toBeNull();
+    link.focus();
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip.textContent).toContain('Home');
+    expect(tooltip.textContent).toContain('Alt ⇧ H');
+  });
+
+  it.each(['asButton', 'asButtonList', 'asLabeledButtonList'] as const)(
+    'shows Calendar and its registered shortcut in the %s desktop navigation',
+    async navigationView => {
+      renderButtonList(
+        false,
+        true,
+        [{ id: 'calendar', icon: 'Calendar', label: 'Calendar', href: '/calendar' }],
+        navigationView
+      );
+
+      const link = screen.getByRole('link', { name: 'Calendar' });
+      expect(link.getAttribute('aria-keyshortcuts')).toBe('Alt+Shift+C');
+      link.focus();
+      const tooltip = await screen.findByRole('tooltip');
+      expect(tooltip.textContent).toContain('Calendar');
+      expect(tooltip.textContent).toContain('Alt ⇧ C');
+    }
+  );
+
+  it.each([
+    ['macos', '⌥ ⇧ C'],
+    ['windows', 'Alt ⇧ C'],
+    ['linux', 'Alt ⇧ C'],
+  ] as const)('shows the active Calendar shortcut on %s', async (platform, expected) => {
+    renderButtonList(
+      false,
+      true,
+      [{ id: 'calendar', icon: 'Calendar', label: 'Calendar', href: '/calendar' }],
+      'asButtonList',
+      platform
+    );
+
+    const link = screen.getByRole('link', { name: 'Calendar' });
+    link.focus();
+    expect((await screen.findByRole('tooltip')).textContent).toContain(expected);
+  });
+
+  it('omits the shortcut badge for unregistered icon navigation items', async () => {
+    renderButtonList(false, true, [
+      { id: 'unregistered', icon: 'Home', label: 'Other', href: '/other' },
+    ]);
+
+    screen.getByRole('link', { name: 'Other' }).focus();
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip.textContent).toBe('Other');
+    expect(tooltip.querySelector('[data-slot="kbd"]')).toBeNull();
+  });
+
+  it.each(['asButton', 'asButtonList', 'asLabeledButtonList'] as const)(
+    'promotes the command box in the %s primary desktop navigation without changing the link',
+    async navigationView => {
+      renderButtonList(
+        false,
+        true,
+        [
+          {
+            id: 'search',
+            icon: 'Search',
+            label: 'Search',
+            href: '/search',
+          },
+        ],
+        navigationView
+      );
+
+      const link = screen.getByRole('link', { name: 'Search' });
+      expect(link.getAttribute('href')).toBe('/search');
+      if (navigationView === 'asButtonList') {
+        expect(link.getAttribute('title')).toBeNull();
+      }
+
+      link.focus();
+
+      const tooltip = await screen.findByRole('tooltip');
+      expect(tooltip.textContent).toContain('Open Command Box');
+      expect(tooltip.textContent).toContain('Ctrl K');
+      expect(screen.getByRole('link', { name: 'Search' })).toBe(link);
+    }
+  );
+
+  it('opens the primary desktop search tooltip on mouse hover', async () => {
+    renderButtonList(false, true, [
+      {
+        id: 'search',
+        icon: 'Search',
+        label: 'Search',
+        href: '/search',
+      },
+    ]);
+
+    fireEvent.pointerMove(screen.getByRole('link', { name: 'Search' }), {
+      pointerType: 'mouse',
+    });
+
+    expect((await screen.findByRole('tooltip')).textContent).toContain('Open Command Box');
+  });
+
+  it.each([
+    ['mobile primary', true, true],
+    ['desktop secondary', false, false],
+  ])(
+    'does not show the command-box tooltip on %s navigation',
+    async (_layout, isMobile, isPrimary) => {
+      renderButtonList(isMobile, isPrimary, [
+        {
+          id: 'search',
+          icon: 'Search',
+          label: 'Search',
+          href: '/search',
+        },
+      ]);
+
+      screen.getByRole('link', { name: 'Search' }).focus();
+      expect(screen.queryByRole('tooltip')).toBeNull();
+    }
+  );
+
+  it('runs custom navigation actions without following the placeholder href', () => {
+    const onClick = vi.fn();
+    render(
+      <KeyboardPlatformProvider platform="windows">
+        <NavItemListView
+          navigationItems={[{ ...navigationItems[0], href: undefined, onClick }]}
+          isMobile={false}
+          isPrimary
+          navigationView="asButtonList"
+          pathname="/home"
+          hash=""
+          isRouterPending={false}
+          normalizedHash=""
+          currentRoute="/home"
+          loadingItem={null}
+          setLoadingItem={vi.fn()}
+          handleItemClick={vi.fn()}
+        />
+      </KeyboardPlatformProvider>
     );
 
     fireEvent.click(screen.getByRole('link', { name: 'Home' }));

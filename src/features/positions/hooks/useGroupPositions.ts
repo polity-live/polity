@@ -11,6 +11,7 @@ import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { formatLocalDateInput, toLocalTimestamp } from '@/features/shared/logic/localDateTime';
 
 export function useGroupRoles(groupId: string) {
   const { roles: rolesData, isLoading } = useFacadeGroupRoles(groupId);
@@ -71,7 +72,6 @@ export function useGroupRoles(groupId: string) {
     const hasRecurringTerm = termNum > 0;
     resetForm();
     setAddDialogOpen(false);
-    toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
 
     try {
       const roleId = crypto.randomUUID();
@@ -88,7 +88,7 @@ export function useGroupRoles(groupId: string) {
           blog_id: null,
           assignment_mode: createElection ? 'elected' : 'assigned',
           visibility: 'public',
-          term_start_date: new Date(firstTermStart).getTime(),
+          term_start_date: toLocalTimestamp(firstTermStart),
           is_recurring: hasRecurringTerm,
           recurrence_pattern: hasRecurringTerm ? 'yearly' : null,
           recurrence_rule: hasRecurringTerm ? `FREQ=YEARLY;INTERVAL=${termNum}` : null,
@@ -196,7 +196,7 @@ export function useGroupRoles(groupId: string) {
           id: editingRole.id,
           name: title.trim(),
           description: description.trim() || '',
-          term_start_date: new Date(firstTermStart).getTime(),
+          term_start_date: toLocalTimestamp(firstTermStart),
           is_recurring: hasRecurringTerm,
           recurrence_pattern: hasRecurringTerm ? 'yearly' : null,
           recurrence_rule: hasRecurringTerm ? `FREQ=YEARLY;INTERVAL=${termNum}` : null,
@@ -408,9 +408,7 @@ export function useGroupRoles(groupId: string) {
     setTitle(role.title || '');
     setDescription(role.description || '');
     setTerm(String(role.term || 4));
-    setFirstTermStart(
-      role.first_term_start ? new Date(role.first_term_start).toISOString().split('T')[0] : ''
-    );
+    setFirstTermStart(formatLocalDateInput(role.first_term_start));
     setEditDialogOpen(true);
   };
 

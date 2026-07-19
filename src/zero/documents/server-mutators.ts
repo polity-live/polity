@@ -17,6 +17,7 @@ import {
   createDocumentVersionSchema,
 } from './schema';
 import { createCommentSchema } from '../discussions/schema';
+import { collectTodoCommentRecipientIds } from '../todos/comment-notifications';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const documentServerMutators = {
@@ -155,6 +156,34 @@ export const documentServerMutators = {
           amendmentId: thread.amendment_id,
           amendmentTitle: aTitle,
         });
+      }
+
+      if (thread?.todo_id) {
+        const [todo, assignments, senderName] = await Promise.all([
+          tx.run(zql.todo.where('id', thread.todo_id).one()),
+          tx.run(zql.todo_assignment.where('todo_id', thread.todo_id)),
+          userName(tx, ctx.userID),
+        ]);
+
+        if (todo) {
+          const recipientIds = collectTodoCommentRecipientIds(
+            todo.creator_id,
+            assignments.map(assignment => assignment.user_id),
+            ctx.userID
+          );
+
+          await Promise.all(
+            recipientIds.map(recipientUserId =>
+              fireNotification('notifyTodoCommentAdded', {
+                senderId: ctx.userID,
+                senderName,
+                recipientUserId,
+                todoId: todo.id,
+                todoTitle: todo.title ?? 'Todo',
+              })
+            )
+          );
+        }
       }
     }
   }),

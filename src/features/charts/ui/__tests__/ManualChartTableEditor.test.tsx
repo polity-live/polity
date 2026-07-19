@@ -36,18 +36,18 @@ describe('ManualChartTableEditor', () => {
   it('adds and removes rows and columns', () => {
     render(<EditorHarness />);
 
-    expect(screen.getAllByTitle('Remove row')).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: 'Remove row' })).toHaveLength(3);
     fireEvent.click(screen.getByRole('button', { name: 'Row' }));
-    expect(screen.getAllByTitle('Remove row')).toHaveLength(4);
+    expect(screen.getAllByRole('button', { name: 'Remove row' })).toHaveLength(4);
 
-    fireEvent.click(screen.getAllByTitle('Remove row')[1]);
-    expect(screen.getAllByTitle('Remove row')).toHaveLength(3);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove row' })[1]);
+    expect(screen.getAllByRole('button', { name: 'Remove row' })).toHaveLength(3);
 
     fireEvent.click(screen.getByRole('button', { name: 'Column' }));
     expect(screen.getByDisplayValue('Column 3')).toBeTruthy();
-    expect(screen.getAllByTitle('Remove column')).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: 'Remove column' })).toHaveLength(3);
 
-    fireEvent.click(screen.getAllByTitle('Remove column')[2]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove column' })[2]);
     expect(screen.queryByDisplayValue('Column 3')).toBeNull();
   });
 });

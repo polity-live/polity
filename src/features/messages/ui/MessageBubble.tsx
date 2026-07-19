@@ -6,7 +6,7 @@ import { cn } from '@/features/shared/utils/utils';
 import { isAssistantUser } from '@/features/assistant/logic/assistantHelpers';
 import { Message } from '../types/message.types';
 import { formatTime } from '../logic/messageUtils';
-import { hasRenderableContextCards, isAssistantErrorContext } from '../logic/contextAttachments';
+import { isAssistantErrorContext } from '../logic/contextAttachments';
 import { AiContextCards } from './AiContextCards';
 import type { AiAttachmentEntity } from '@/lib/ai/schemas';
 
@@ -26,8 +26,6 @@ export function MessageBubble({
   const contextLabel = isAssistantUser(message.sender?.id ?? '') ? 'output' : 'input';
   const hasContent = Boolean(message.content?.trim());
   const isAssistantError = isAssistantErrorContext(message.context_json);
-  const hidePolityLinkPreviews =
-    contextLabel === 'output' && hasRenderableContextCards(message.context_json);
   const useFlatAssistantLayout = isAssistantConversation && !isOwnMessage && !isAssistantError;
 
   return (
@@ -73,7 +71,7 @@ export function MessageBubble({
             ) : (
               <MessageContent
                 content={message.content ?? ''}
-                hidePolityLinkPreviews={hidePolityLinkPreviews}
+                hidePolityLinkPreviews={isAssistantConversation}
                 renderMarkdown={contextLabel === 'output'}
               />
             )}

@@ -1,3 +1,5 @@
+import { parseLocalDateInput } from '@/features/shared/logic/localDateTime';
+
 export interface FilterableCalendarEvent {
   start_date: number;
   title: string;
@@ -15,7 +17,8 @@ export interface CalendarEventFilterOptions {
 
 function isSameCalendarDay(timestamp: number, dateFilter: string): boolean {
   const eventDate = new Date(timestamp);
-  const filterDate = new Date(`${dateFilter}T00:00:00`);
+  const filterDate = parseLocalDateInput(dateFilter);
+  if (!filterDate) return false;
 
   return (
     eventDate.getFullYear() === filterDate.getFullYear() &&

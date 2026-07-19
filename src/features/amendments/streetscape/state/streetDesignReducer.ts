@@ -110,7 +110,10 @@ export type StreetDesignEditorAction =
   | { type: 'delete_object'; objectId: string }
   | { type: 'delete_object_category'; category: StreetDesignObjectCategory };
 
-export function createEmptyStreetDesignState(origin?: StreetDesignOrigin): StreetDesignStateV1 {
+export function createEmptyStreetDesignState(
+  origin?: StreetDesignOrigin,
+  currency = STREET_DESIGN_CURRENCY
+): StreetDesignStateV1 {
   return {
     schemaVersion: 1,
     origin: origin ?? {
@@ -124,7 +127,7 @@ export function createEmptyStreetDesignState(origin?: StreetDesignOrigin): Stree
     hiddenOsmFeatureIds: [],
     showStreetMarkings: true,
     comparisonMode: 'overlay',
-    currency: STREET_DESIGN_CURRENCY,
+    currency,
     costCatalogVersion: STREET_DESIGN_COST_CATALOG_VERSION,
     objects: [],
   };
@@ -225,10 +228,11 @@ function createPlacementSettings(
   };
 }
 
-function getPlacementOverrides(settings: StreetDesignPlacementSettings) {
+function getPlacementOverrides(settings: StreetDesignPlacementSettings, currency?: string) {
   return {
     properties: settings.properties,
     customUnitCostMinor: settings.customUnitCostMinor,
+    currency,
     ...(settings.rotationLocked ? { rotationDeg: settings.rotationDeg } : {}),
   };
 }
@@ -333,7 +337,7 @@ function finishPathPlacementDraft(
     type: state.placementDraft.type,
     points: state.placementDraft.points,
     width: state.placementSettings.width,
-    overrides: getPlacementOverrides(state.placementSettings),
+    overrides: getPlacementOverrides(state.placementSettings, state.design.currency),
   });
 
   return addFinishedPlacementObject(state, object);
@@ -358,7 +362,7 @@ function finishCurrentPlacementDraft(
     start: preview.start,
     end: preview.end,
     width: preview.width,
-    overrides: getPlacementOverrides(state.placementSettings),
+    overrides: getPlacementOverrides(state.placementSettings, state.design.currency),
   });
 
   return addFinishedPlacementObject(state, object);
@@ -611,7 +615,7 @@ export function streetDesignReducer(
           type: state.placementSettings.type,
           point: placementPoint,
           overrides: {
-            ...getPlacementOverrides(state.placementSettings),
+            ...getPlacementOverrides(state.placementSettings, state.design.currency),
             rotationDeg: state.placementSettings.rotationDeg,
           },
         });
@@ -661,7 +665,7 @@ export function streetDesignReducer(
           start: state.placementDraft.start,
           end: placementPoint,
           width: state.placementSettings.width,
-          overrides: getPlacementOverrides(state.placementSettings),
+          overrides: getPlacementOverrides(state.placementSettings, state.design.currency),
         });
 
         return {

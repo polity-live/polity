@@ -36,6 +36,10 @@ export const todosTranslations = {
     assignFailed: 'Benutzer konnte nicht zugewiesen werden',
     userUnassigned: 'Benutzerzuweisung aufgehoben',
     unassignFailed: 'Benutzerzuweisung konnte nicht aufgehoben werden',
+    archived: 'Todo archiviert',
+    archiveFailed: 'Todo konnte nicht archiviert werden',
+    unarchived: 'Todo entarchiviert',
+    unarchiveFailed: 'Todo konnte nicht entarchiviert werden',
   },
   kanban: {
     toDo: 'Zu erledigen',
@@ -54,6 +58,7 @@ export const todosTranslations = {
     completed: 'Abgeschlossen',
     cancelled: 'Abgebrochen',
     overdue: 'Überfällig',
+    archived: 'Archiviert',
   },
   priority: {
     title: 'Priorität',
@@ -75,6 +80,7 @@ export const todosTranslations = {
     inDays: 'In {{count}} Tagen',
     daysAgo: 'Vor {{count}} Tagen',
     yesterday: 'Gestern',
+    timeOptional: 'Uhrzeit (Optional)',
   },
   filters: {
     all: 'Alle Aufgaben',
@@ -108,6 +114,17 @@ export const todosTranslations = {
     duplicate: 'Duplizieren',
     markComplete: 'Als erledigt markieren',
     markIncomplete: 'Als unerledigt markieren',
+    archive: 'Archivieren',
+    unarchive: 'Entarchivieren',
+  },
+  archive: {
+    showArchive: 'Archiv anzeigen',
+    showActive: 'Aktive Todos anzeigen',
+    confirmTitle: 'Todo archivieren?',
+    confirmDescription:
+      'Das Todo verschwindet aus den normalen Ansichten und kann im Archiv wiederhergestellt werden.',
+    cancel: 'Abbrechen',
+    empty: 'Keine archivierten Todos gefunden',
   },
   assignee: {
     title: 'Zuständig',

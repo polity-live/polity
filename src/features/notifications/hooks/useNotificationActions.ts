@@ -1,31 +1,48 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useCallback } from 'react';
+import { useCallback, type MouseEvent } from 'react';
 import { Notification } from '../types/notification.types';
-import { getNotificationNavigationTarget } from '../logic/notificationHelpers';
+import { getNotificationNavigationTarget, isNotificationRead } from '../logic/notificationHelpers';
 import { useNotificationActions as useZeroNotificationActions } from '@/zero/notifications/useNotificationActions';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { serverConfirmed, waitForClientApply } from '@/zero/mutate-with-server-check';
+import { gatedToast as toast } from '../utils/gated-toast';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export function useNotificationActions() {
   const navigate = useNavigate();
-  const { markRead, markEntityNotificationRead, deleteNotification } = useZeroNotificationActions();
+  const { t } = useTranslation();
+  const {
+    setNotificationRead,
+    dismissNotification,
+    restoreNotification,
+    purgeNotificationForUser,
+    deleteEntityNotificationGlobally,
+  } = useZeroNotificationActions();
+
+  const markNotificationAsRead = useCallback(
+    async (notification: Notification) => {
+      if (isNotificationRead(notification)) {
+        return;
+      }
+
+      await waitForClientApply(
+        setNotificationRead({ notificationId: notification.id, read: true })
+      );
+    },
+    [setNotificationRead]
+  );
+
+  const handleMarkNotificationAsRead = useCallback(
+    async (notification: Notification, event?: MouseEvent) => {
+      event?.preventDefault();
+      event?.stopPropagation();
+      await markNotificationAsRead(notification);
+    },
+    [markNotificationAsRead]
+  );
 
   const handleNotificationClick = useCallback(
     async (notification: Notification) => {
-      // Mark as read if not already
-      if (!notification.is_read) {
-        if (notification.recipient_entity_id && notification.recipient_entity_type) {
-          await waitForClientApply(
-            markEntityNotificationRead({
-              id: crypto.randomUUID(),
-              notification_id: notification.id,
-              entity_id: notification.recipient_entity_id,
-              entity_type: notification.recipient_entity_type,
-            })
-          );
-        } else {
-          await waitForClientApply(markRead({ id: notification.id }));
-        }
-      }
+      await markNotificationAsRead(notification);
 
       const navigationTarget = getNotificationNavigationTarget(notification);
 
@@ -85,19 +102,84 @@ export function useNotificationActions() {
         }
       }
     },
-    [markEntityNotificationRead, markRead, navigate]
+    [markNotificationAsRead, navigate]
   );
 
-  const handleDeleteNotification = useCallback(
-    async (notificationId: string, e: React.MouseEvent) => {
-      e.stopPropagation();
-      await waitForClientApply(deleteNotification({ id: notificationId }));
+  const handleToggleNotificationRead = useCallback(
+    async (notification: Notification, e?: React.MouseEvent) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+      await waitForClientApply(
+        setNotificationRead({
+          notificationId: notification.id,
+          read: !isNotificationRead(notification),
+        })
+      );
     },
-    [deleteNotification]
+    [setNotificationRead]
+  );
+
+  const handleDismissNotification = useCallback(
+    async (notificationId: string, e?: React.MouseEvent) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+      const result = dismissNotification({ notificationId });
+      await waitForClientApply(result);
+      try {
+        await serverConfirmed(result);
+        toast.success(t('features.notifications.item.hideForMe'), {
+          action: {
+            label: t('features.notifications.item.restore'),
+            onClick: () => restoreNotification({ notificationId }),
+          },
+        });
+      } catch {
+        // The low-level hook displays the authoritative server error and Zero rolls back.
+      }
+    },
+    [dismissNotification, restoreNotification, t]
+  );
+
+  const handleRestoreNotification = useCallback(
+    async (notificationId: string, e?: React.MouseEvent) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+      await waitForClientApply(restoreNotification({ notificationId }));
+    },
+    [restoreNotification]
+  );
+
+  const handlePurgeNotification = useCallback(
+    async (notificationId: string, e?: React.MouseEvent) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+      await waitForClientApply(purgeNotificationForUser({ notificationId }));
+    },
+    [purgeNotificationForUser]
+  );
+
+  const handleDeleteEntityNotificationGlobally = useCallback(
+    async (notificationId: string) => {
+      const result = deleteEntityNotificationGlobally({ notificationId });
+      await waitForClientApply(result);
+      try {
+        await serverConfirmed(result);
+      } catch {
+        // The low-level action reports the server rejection and Zero rolls back.
+      }
+    },
+    [deleteEntityNotificationGlobally]
   );
 
   return {
     handleNotificationClick,
-    handleDeleteNotification,
+    handleMarkNotificationAsRead,
+    handleToggleNotificationRead,
+    handleDismissNotification,
+    handleRestoreNotification,
+    handlePurgeNotification,
+    handleDeleteEntityNotificationGlobally,
+    // Transitional name for callers that still render the old trash icon.
+    handleDeleteNotification: handleDismissNotification,
   };
 }

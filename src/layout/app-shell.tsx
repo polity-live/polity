@@ -23,6 +23,7 @@ import { useZeroReady } from '@/providers/zero-provider.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import {
   createDocsSecondaryNavItems,
+  createEntitySecondaryNavItemsUnauthenticated,
   createLandingSecondaryNavItems,
   createNavItemsUnauthenticated,
 } from '@/features/navigation/nav-items/nav-items-unauthenticated.tsx';
@@ -97,7 +98,7 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
       return createDocsSecondaryNavItems(navigate, t);
     }
 
-    return null;
+    return createEntitySecondaryNavItemsUnauthenticated(pathname, navigate, t);
   }, [navigate, pathname, t]);
   const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen);
   const isSecondaryNavVisible =

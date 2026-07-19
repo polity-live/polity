@@ -15,6 +15,11 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { PqlToolbar } from '@/features/pql/ui/PqlToolbar';
 import type { GroupPaymentRow } from '@/zero/groups/queries';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { CurrencySelect } from '@/features/shared/ui/form/CurrencySelect';
+import { formatCurrencyMajor, type CurrencyCode } from '@/features/shared/logic/currency';
+import type { CurrencyConversionResult } from '@/features/shared/logic/currency';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 const PAYMENT_TYPE_LABELS: Record<string, string> = {
   membership_fee: 'Membership fee',
   donation: 'Donation',
@@ -99,6 +104,14 @@ export interface PaymentsSectionViewProps {
   filteredItems: any;
   hasActiveFilters: any;
   balanceClass: any;
+  targetCurrency: CurrencyCode;
+  setTargetCurrency: (currency: CurrencyCode) => void;
+  conversionState: {
+    conversions: Record<string, CurrencyConversionResult>;
+    missingPayments: any[];
+    missingOriginalTotals: Record<string, number>;
+    isLoading: boolean;
+  };
 }
 
 export function PaymentsSectionView({
@@ -124,7 +137,17 @@ export function PaymentsSectionView({
   filteredItems,
   hasActiveFilters,
   balanceClass,
+  targetCurrency,
+  setTargetCurrency,
+  conversionState,
 }: PaymentsSectionViewProps) {
+  const { language, t } = useTranslation();
+  const formatTarget = (amount: number) =>
+    formatCurrencyMajor(amount, targetCurrency, language, {
+      approximate: Object.values(conversionState.conversions).some(
+        conversion => conversion.baseCurrency !== conversion.quoteCurrency
+      ),
+    });
   return (
     <Card>
       <CardHeader>
@@ -163,6 +186,29 @@ export function PaymentsSectionView({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="ml-auto max-w-sm space-y-1">
+          <p className="text-muted-foreground text-xs">
+            {t('pages.user.preferences.displayCurrency')}
+          </p>
+          <CurrencySelect value={targetCurrency} onChange={setTargetCurrency} />
+        </div>
+        {conversionState.isLoading ? (
+          <p className="text-muted-foreground text-sm">
+            {language === 'de' ? 'Wechselkurse werden geladen …' : 'Loading exchange rates…'}
+          </p>
+        ) : null}
+        {conversionState.missingPayments.length > 0 ? (
+          <div className="border-warning/40 bg-warning/10 rounded-md border px-3 py-2 text-sm">
+            {t('pages.create.payment.conversionIncomplete', {
+              count: conversionState.missingPayments.length,
+            })}
+            <span className="text-muted-foreground ml-2">
+              {Object.entries(conversionState.missingOriginalTotals)
+                .map(([currency, amount]) => formatCurrencyMajor(amount, currency, language))
+                .join(' · ')}
+            </span>
+          </div>
+        ) : null}
         {/* Summary */}
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
@@ -170,7 +216,7 @@ export function PaymentsSectionView({
               {translateText('generated.inline.0699_income_1c89b1f2')}
             </p>
             <p className={featureThemeClassName('groupPaymentsSectionSuccessText')}>
-              ${summary.income.toFixed(2)}
+              {formatTarget(summary.income)}
             </p>
           </div>
           <div>
@@ -178,14 +224,16 @@ export function PaymentsSectionView({
               {translateText('generated.inline.0700_expenditure_e2cfc2e3')}
             </p>
             <p className={featureThemeClassName('groupPaymentsSectionDangerText')}>
-              ${summary.expenditure.toFixed(2)}
+              {formatTarget(summary.expenditure)}
             </p>
           </div>
           <div>
             <p className="text-muted-foreground text-sm">
               {translateText('generated.inline.0701_balance_90eef613')}
             </p>
-            <p className={`text-xl font-semibold ${balanceClass}`}>${summary.balance.toFixed(2)}</p>
+            <p className={`text-xl font-semibold ${balanceClass}`}>
+              {formatTarget(summary.balance)}
+            </p>
           </div>
         </div>
 
@@ -208,7 +256,10 @@ export function PaymentsSectionView({
                     ))}
                   </Pie>
                   <RechartsTooltip
-                    formatter={value => [`$${Number(value).toFixed(2)}`, 'Amount']}
+                    formatter={value => [
+                      formatTarget(Number(value)),
+                      t('pages.create.payment.amount'),
+                    ]}
                   />
                   <Legend />
                 </PieChart>
@@ -233,7 +284,10 @@ export function PaymentsSectionView({
                     ))}
                   </Pie>
                   <RechartsTooltip
-                    formatter={value => [`$${Number(value).toFixed(2)}`, 'Amount']}
+                    formatter={value => [
+                      formatTarget(Number(value)),
+                      t('pages.create.payment.amount'),
+                    ]}
                   />
                   <Legend />
                 </PieChart>
@@ -293,6 +347,18 @@ export function PaymentsSectionView({
                   direction === 'income'
                     ? featureThemeClassName('decisionterminalDecisionStatusSuccessText')
                     : featureThemeClassName('decisionterminalDecisionStatusDangerTextAlpha');
+                const conversion = conversionState.conversions[payment.id];
+                const originalCurrency = payment.currency || 'EUR';
+                const originalAmount = formatCurrencyMajor(
+                  payment.amount ?? 0,
+                  originalCurrency,
+                  language
+                );
+                const convertedAmount = conversion
+                  ? formatCurrencyMajor(conversion.convertedAmount, targetCurrency, language, {
+                      approximate: originalCurrency !== targetCurrency,
+                    })
+                  : originalAmount;
 
                 return (
                   <div
@@ -322,8 +388,36 @@ export function PaymentsSectionView({
                       </p>
                     </div>
 
-                    <div className={`text-lg font-semibold ${amountClass}`}>
-                      {direction === 'income' ? '+' : '-'}${(payment.amount ?? 0).toFixed(2)}
+                    <div className={`text-right text-lg font-semibold ${amountClass}`}>
+                      <div>
+                        {direction === 'income' ? '+' : '-'}
+                        {convertedAmount}
+                      </div>
+                      {conversion && originalCurrency !== targetCurrency ? (
+                        <TooltipHint
+                          content={`Frankfurter · ${conversion.rateDate} · 1 ${conversion.baseCurrency} = ${conversion.rate} ${conversion.quoteCurrency}`}
+                        >
+                          <div className="text-muted-foreground text-xs font-normal">
+                            {originalAmount} ·{' '}
+                            <a
+                              href="https://frankfurter.dev/"
+                              target="_blank"
+                              rel="noreferrer"
+                              className="underline"
+                            >
+                              Frankfurter
+                            </a>{' '}
+                            {conversion.rateDate}
+                            {conversion.cacheStatus === 'stale'
+                              ? ` · ${language === 'de' ? 'veraltet' : 'stale'}`
+                              : ''}
+                          </div>
+                        </TooltipHint>
+                      ) : !conversion && !conversionState.isLoading ? (
+                        <div className="text-warning text-xs font-normal">
+                          {t('pages.create.payment.conversionUnavailable')}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 );

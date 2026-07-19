@@ -49,6 +49,7 @@ export function useMeetingData(eventId: string) {
     event,
     isLoading: result.type === 'unknown',
     error: null,
+    isAuthenticated: Boolean(user),
     ...computed,
   };
 }

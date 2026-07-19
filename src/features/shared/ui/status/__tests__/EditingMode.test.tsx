@@ -108,7 +108,7 @@ describe('EditingModeMenuItems', () => {
     const helpButtons = screen.getAllByLabelText(SYSTEM_MANAGED_EVENT_MODE_TOOLTIP);
 
     expect(helpButtons).toHaveLength(2);
-    expect(helpButtons[0].getAttribute('title')).toBe(SYSTEM_MANAGED_EVENT_MODE_TOOLTIP);
+    expect(helpButtons[0].getAttribute('aria-label')).toBe(SYSTEM_MANAGED_EVENT_MODE_TOOLTIP);
 
     fireEvent.click(helpButtons[0]);
     expect(screen.getAllByText(SYSTEM_MANAGED_EVENT_MODE_TOOLTIP).length).toBeGreaterThan(0);

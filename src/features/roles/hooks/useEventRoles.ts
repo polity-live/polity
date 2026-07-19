@@ -46,7 +46,6 @@ export function useEventRoles(eventId: string) {
     // Optimistic update: close dialog and show success immediately
     resetForm();
     setAddDialogOpen(false);
-    toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
 
     try {
       const roleId = crypto.randomUUID();

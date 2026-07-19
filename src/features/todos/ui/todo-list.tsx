@@ -38,6 +38,7 @@ function TodoCard({
         groupId: todo.group?.id ?? undefined,
         status: isTodoStatus(todo.status) ? todo.status : undefined,
         creatorId: todo.creator?.id ?? undefined,
+        archived: Boolean(todo.archived_at),
       }}
       canManageTodos={canManageTodos}
       onToggle={canManageTodos ? () => onToggleComplete(todo) : undefined}
@@ -53,7 +54,11 @@ interface TodoListProps {
   todos: Todo[];
   onToggleComplete: (todo: Todo) => void;
   onTodoClick?: (todo: Todo) => void;
-  virtualQuery?: { status: 'all' | TodoStatus; query: string };
+  virtualQuery?: {
+    status: 'all' | TodoStatus;
+    archive: 'active' | 'archived';
+    query: string;
+  };
 }
 
 function VirtualTodoList({
@@ -70,7 +75,7 @@ function VirtualTodoList({
   const virtualList = usePolityZeroList<
     typeof listContextParams,
     Todo,
-    { created_at: number; id: string }
+    { created_at?: number; archived_at?: number; id: string }
   >({
     scrollStateKey: 'todos-list',
     listContextParams,
@@ -78,11 +83,15 @@ function VirtualTodoList({
     estimateSize: useCallback(() => 132, []),
     overscan: 8,
     getRowKey: todo => todo.id,
-    toStartRow: todo => ({ created_at: Number(todo.created_at), id: todo.id }),
+    toStartRow: todo =>
+      queryConfig.archive === 'archived'
+        ? { archived_at: Number(todo.archived_at), id: todo.id }
+        : { created_at: Number(todo.created_at), id: todo.id },
     getPageQuery: useCallback(
       ({ limit, start, dir, settled }) => ({
         query: queries.todos.page({
           status: queryConfig.status,
+          archive: queryConfig.archive,
           query: queryConfig.query,
           limit,
           start,

@@ -14,6 +14,7 @@ vi.mock('@/providers/auth-provider', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string, fallback?: string) => fallback ?? key,
   useTranslation: () => ({ t: (key: string, fallback?: string) => fallback ?? key }),
 }));
 

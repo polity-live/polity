@@ -1388,6 +1388,7 @@ BEGIN
       'priority', NEW.priority,
       'status', NEW.status,
       'due_at', public.search_document_epoch_ms(NEW.due_date),
+      'archived_at', public.search_document_epoch_ms(NEW.archived_at),
       'metadata', jsonb_build_object('event_id', NEW.event_id, 'amendment_id', NEW.amendment_id)
     ),
     NEW.created_at,

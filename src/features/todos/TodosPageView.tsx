@@ -107,24 +107,29 @@ export function TodosPageView({
               <p className="text-muted-foreground mb-4 text-center text-sm">
                 {searchQuery
                   ? t('features.todos.list.noMatchingTodos')
-                  : selectedTab === 'all'
-                    ? t('features.todos.list.noTodosYet')
-                    : t('features.todos.list.noStatusTodos', {
-                        status: t(`features.todos.status.${selectedTab}`),
-                      })}
+                  : selectedTab === 'archived'
+                    ? t('features.todos.archive.empty')
+                    : selectedTab === 'all'
+                      ? t('features.todos.list.noTodosYet')
+                      : t('features.todos.list.noStatusTodos', {
+                          status: t(`features.todos.status.${selectedTab}`),
+                        })}
               </p>
-              <Link to="/create/todo">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('features.todos.create.createFirstTodo')}
-                </Button>
-              </Link>
+              {selectedTab !== 'archived' ? (
+                <Link to="/create/todo">
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    {t('features.todos.create.createFirstTodo')}
+                  </Button>
+                </Link>
+              ) : null}
             </CardContent>
           </Card>
-        ) : viewMode === 'kanban' ? (
+        ) : viewMode === 'kanban' && selectedTab !== 'archived' ? (
           <KanbanBoard
             todos={filteredTodos}
             virtualQuery={
+              selectedTab !== 'archived' &&
               activeCustomFilterIds.length === 0 &&
               Object.values(quickFilterValues ?? {}).every(value =>
                 Array.isArray(value) ? value.length === 0 : !value
@@ -143,7 +148,11 @@ export function TodosPageView({
               Object.values(quickFilterValues ?? {}).every(value =>
                 Array.isArray(value) ? value.length === 0 : !value
               )
-                ? { status: selectedTab, query: searchQuery }
+                ? {
+                    status: selectedTab === 'archived' ? 'all' : selectedTab,
+                    archive: selectedTab === 'archived' ? 'archived' : 'active',
+                    query: searchQuery,
+                  }
                 : undefined
             }
           />

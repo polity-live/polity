@@ -49,6 +49,7 @@ export interface GroupWikiContentViewProps {
   subscriberCount: number;
   eventsCount: number;
   amendmentsCount: number;
+  isAuthenticated: boolean;
   isSubscribed: boolean;
   subscribeLoading: boolean;
   toggleSubscribe: () => void;
@@ -159,6 +160,7 @@ export function GroupWikiContentView({
   subscriberCount,
   eventsCount,
   amendmentsCount,
+  isAuthenticated,
   isSubscribed,
   subscribeLoading,
   toggleSubscribe,
@@ -258,51 +260,61 @@ export function GroupWikiContentView({
       {/* Stats Bar with Events and Amendments */}
       <StatsBar
         items={[
-          { value: memberCount, label: t('components.labels.members') },
-          { value: subscriberCount, label: t('components.labels.subscribers') },
-          { value: eventsCount, label: t('components.labels.events') },
-          { value: amendmentsCount, label: t('components.labels.amendments') },
+          { value: memberCount, label: t('components.labels.members', { count: memberCount }) },
+          {
+            value: subscriberCount,
+            label: t('components.labels.subscribers', { count: subscriberCount }),
+          },
+          { value: eventsCount, label: t('components.labels.events', { count: eventsCount }) },
+          {
+            value: amendmentsCount,
+            label: t('components.labels.amendments', { count: amendmentsCount }),
+          },
         ]}
       />
 
       {/* Action Bar */}
       <ActionBar>
-        <LinkGroupDialog currentGroupId={groupId} currentGroupName={group.name ?? ''} />
-        <SubscribeButton
-          entityType="group"
-          entityId={groupId}
-          isSubscribed={isSubscribed}
-          onToggleSubscribe={toggleSubscribe}
-          isLoading={subscribeLoading}
-        />
-        <MembershipButton
-          actionType="join"
-          status={status}
-          isMember={isMember}
-          hasRequested={hasRequested}
-          isInvited={isInvited}
-          onRequest={requestJoin}
-          onLeave={leaveGroup}
-          onAcceptInvitation={acceptInvitation}
-          isLoading={membershipLoading}
-          loadingLabel={t('common.checks.membership')}
-          disabled={requestJoinActionDisabled || acceptInvitationDisabled}
-          disabledReason={
-            acceptInvitationDisabled
-              ? (acceptInvitationConflictResponse?.summary ??
-                acceptInvitationConflictResponse?.conflicts[0]?.summary)
-              : requestJoinActionDisabled
-                ? requestJoinDisabledReason
-                : undefined
-          }
-          conflictResponse={
-            acceptInvitationDisabled
-              ? acceptInvitationConflictResponse
-              : requestJoinActionDisabled
-                ? requestJoinConflictResponse
-                : null
-          }
-        />
+        {isAuthenticated ? (
+          <>
+            <LinkGroupDialog currentGroupId={groupId} currentGroupName={group.name ?? ''} />
+            <SubscribeButton
+              entityType="group"
+              entityId={groupId}
+              isSubscribed={isSubscribed}
+              onToggleSubscribe={toggleSubscribe}
+              isLoading={subscribeLoading}
+            />
+            <MembershipButton
+              actionType="join"
+              status={status}
+              isMember={isMember}
+              hasRequested={hasRequested}
+              isInvited={isInvited}
+              onRequest={requestJoin}
+              onLeave={leaveGroup}
+              onAcceptInvitation={acceptInvitation}
+              isLoading={membershipLoading}
+              loadingLabel={t('common.checks.membership')}
+              disabled={requestJoinActionDisabled || acceptInvitationDisabled}
+              disabledReason={
+                acceptInvitationDisabled
+                  ? (acceptInvitationConflictResponse?.summary ??
+                    acceptInvitationConflictResponse?.conflicts[0]?.summary)
+                  : requestJoinActionDisabled
+                    ? requestJoinDisabledReason
+                    : undefined
+              }
+              conflictResponse={
+                acceptInvitationDisabled
+                  ? acceptInvitationConflictResponse
+                  : requestJoinActionDisabled
+                    ? requestJoinConflictResponse
+                    : null
+              }
+            />
+          </>
+        ) : null}
         <ShareButton
           url={`/group/${groupId}`}
           title={group.name ?? ''}

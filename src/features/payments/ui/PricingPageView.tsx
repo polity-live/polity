@@ -14,6 +14,14 @@ import {
 import { ContactDialog } from '@/features/shared/ui/contact';
 import { cn } from '@/features/shared/utils/utils';
 import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
+import { ConvertedCurrencyAmount } from '@/features/shared/ui/currency';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+
+const fixedTierAmounts: Record<string, number> = {
+  free: 0,
+  runningCosts: 2,
+  development: 10,
+};
 
 export interface PricingTierViewModel {
   key: string;
@@ -58,6 +66,8 @@ export function PricingPageView({
   enterpriseDescription,
   enterpriseCta,
 }: PricingPageViewProps) {
+  const { language } = useTranslation();
+  const parsedCustomAmount = Number(customAmount);
   return (
     <PageShell contentClassName="max-w-6xl py-12 sm:py-16">
       <PageHeader title={title} description={subtitle} className="items-center text-center" />
@@ -74,27 +84,40 @@ export function PricingPageView({
                 <div className="mt-2">
                   {tier.acceptsCustomAmount ? (
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">{'\u20ac'}</span>
-                      <FormFieldShell label={customAmountLabel} labelClassName="sr-only">
+                      <span className="text-sm font-semibold">EUR</span>
+                      <FormFieldShell className="w-20">
                         {({ id }) => (
                           <FormControlInput
                             id={id}
+                            aria-label={customAmountLabel}
                             type="number"
                             min="0"
                             placeholder="0"
                             value={customAmount}
                             onChange={event => onCustomAmountChange(event.target.value)}
-                            className="h-auto w-20 rounded-none border-0 border-b-2 px-1 py-0 text-3xl font-bold focus-visible:ring-0"
+                            className="h-auto w-full rounded-none border-0 border-b-2 px-1 py-0 text-3xl font-bold focus-visible:ring-0"
                           />
                         )}
                       </FormFieldShell>
                       {tier.period ? (
                         <span className="text-muted-foreground">{tier.period}</span>
                       ) : null}
+                      {Number.isFinite(parsedCustomAmount) && parsedCustomAmount > 0 ? (
+                        <ConvertedCurrencyAmount
+                          amount={parsedCustomAmount}
+                          currency="EUR"
+                          className="ml-2 text-sm"
+                        />
+                      ) : null}
                     </div>
                   ) : (
                     <>
-                      <span className="text-4xl font-bold">{tier.price}</span>
+                      <span className="text-4xl font-bold">
+                        <ConvertedCurrencyAmount
+                          amount={fixedTierAmounts[tier.key] ?? 0}
+                          currency="EUR"
+                        />
+                      </span>
                       {tier.period ? (
                         <span className="text-muted-foreground">{tier.period}</span>
                       ) : null}
@@ -125,6 +148,15 @@ export function PricingPageView({
             </Card>
           ))}
         </div>
+        <p className="text-muted-foreground mt-4 text-center text-xs">
+          {language === 'de'
+            ? 'Der verbindliche Preis und ein späterer Checkout bleiben in EUR; Umrechnungen sind Näherungswerte mit Kursen von '
+            : 'The binding price and checkout remain in EUR; conversions are estimates using rates from '}
+          <a href="https://frankfurter.dev/" target="_blank" rel="noreferrer" className="underline">
+            Frankfurter
+          </a>
+          .
+        </p>
       </Section>
 
       <Section className="bg-muted/50 -mx-4 px-4 py-12 text-center sm:-mx-6 lg:-mx-8">

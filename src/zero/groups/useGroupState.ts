@@ -984,11 +984,17 @@ export function useGroupRoles(groupId: string) {
 // ── Group Todos ─────────────────────────────────────────────────────
 
 export function useGroupTodos(groupId: string) {
-  const [todosData, todosResult] = useQuery(queries.groups.todosByGroup({ groupId }));
+  const [todosData, todosResult] = useQuery(
+    queries.groups.todosByGroup({ groupId, archive: 'active' })
+  );
+  const [archivedTodosData, archivedTodosResult] = useQuery(
+    queries.groups.todosByGroup({ groupId, archive: 'archived' })
+  );
 
   return {
     todos: todosData || [],
-    isLoading: todosResult.type === 'unknown',
+    archivedTodos: archivedTodosData || [],
+    isLoading: todosResult.type === 'unknown' || archivedTodosResult.type === 'unknown',
   };
 }
 

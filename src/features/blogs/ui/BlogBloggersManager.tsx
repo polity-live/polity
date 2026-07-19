@@ -257,8 +257,6 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
         })
       );
 
-      toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
-
       setNewRoleName('');
       setNewRoleDescription('');
       setAddRoleDialogOpen(false);

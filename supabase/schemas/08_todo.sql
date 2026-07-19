@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.todo (
   priority TEXT,
   due_date TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
+  archived_at TIMESTAMPTZ,
   tags JSONB,
   visibility TEXT NOT NULL DEFAULT 'public',
   creator_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -24,6 +25,10 @@ CREATE TABLE IF NOT EXISTS public.todo (
 CREATE INDEX idx_todo_creator ON public.todo (creator_id);
 CREATE INDEX idx_todo_group ON public.todo (group_id);
 CREATE INDEX idx_todo_status ON public.todo (status);
+CREATE INDEX idx_todo_archived_at ON public.todo (archived_at DESC)
+WHERE archived_at IS NOT NULL;
+CREATE INDEX idx_todo_active_status ON public.todo (status)
+WHERE archived_at IS NULL;
 
 ALTER TABLE public.todo ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.todo FOR ALL TO service_role USING (true);

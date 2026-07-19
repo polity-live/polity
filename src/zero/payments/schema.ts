@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { timestampSchema, nullableTimestampSchema } from '../shared/helpers';
+import { currencyCodeSchema } from '@/features/shared/logic/currency';
 
 // ============================================
 // Payment Zod Schemas
@@ -8,6 +9,7 @@ import { timestampSchema, nullableTimestampSchema } from '../shared/helpers';
 const basePaymentSchema = z.object({
   id: z.string(),
   amount: z.number().nullable(),
+  currency: currencyCodeSchema.default('EUR'),
   label: z.string().nullable(),
   type: z.string().nullable(),
   payer_user_id: z.string().nullable(),
@@ -22,6 +24,15 @@ export const selectPaymentSchema = basePaymentSchema;
 export const createPaymentSchema = basePaymentSchema
   .omit({ id: true, created_at: true })
   .extend({ id: z.string() });
+
+export const updatePaymentSchema = basePaymentSchema
+  .pick({ amount: true, label: true, type: true })
+  .partial()
+  .extend({
+    id: z.string(),
+    // Do not inherit the create-time EUR default for partial updates.
+    currency: currencyCodeSchema.optional(),
+  });
 
 export const deletePaymentSchema = z.object({ id: z.string() });
 

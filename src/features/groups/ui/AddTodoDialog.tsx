@@ -11,6 +11,7 @@ interface AddTodoDialogProps {
     description: string;
     priority: string;
     dueDate: string;
+    dueTime: string;
   }) => void;
 }
 

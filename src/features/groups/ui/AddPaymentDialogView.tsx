@@ -31,6 +31,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { CurrencySelect } from '@/features/shared/ui/form/CurrencySelect';
+import { getCurrencyFractionDigits } from '@/features/shared/logic/currency';
 export interface AddPaymentDialogViewProps {
   open: any;
   onOpenChange: any;
@@ -43,6 +45,8 @@ export interface AddPaymentDialogViewProps {
   setType: any;
   amount: any;
   setAmount: any;
+  currency: any;
+  setCurrency: any;
   searchQuery: any;
   setSearchQuery: any;
   popoverOpen: any;
@@ -69,6 +73,8 @@ export function AddPaymentDialogView({
   setType,
   amount,
   setAmount,
+  currency,
+  setCurrency,
   searchQuery,
   setSearchQuery,
   popoverOpen,
@@ -122,6 +128,10 @@ export function AddPaymentDialogView({
               />
             </div>
             <div className="space-y-2">
+              <FormControlLabel>{translateText('pages.create.payment.currency')}</FormControlLabel>
+              <CurrencySelect value={currency} onChange={setCurrency} />
+            </div>
+            <div className="space-y-2">
               <FormControlLabel htmlFor="payment-type">
                 {translateText('generated.inline.0599_type_3deb7456')}
               </FormControlLabel>
@@ -161,9 +171,13 @@ export function AddPaymentDialogView({
               <FormControlInput
                 id="payment-amount"
                 type="number"
-                step="0.01"
+                step={10 ** -getCurrencyFractionDigits(currency)}
                 min="0"
-                placeholder="0.00"
+                placeholder={
+                  getCurrencyFractionDigits(currency) === 0
+                    ? '0'
+                    : `0.${'0'.repeat(getCurrencyFractionDigits(currency))}`
+                }
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
                 required

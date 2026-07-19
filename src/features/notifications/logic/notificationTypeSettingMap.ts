@@ -211,6 +211,7 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   todo_due_soon: { category: 'todoNotifications', key: 'dueDateReminders' },
   todo_overdue: { category: 'todoNotifications', key: 'overdueAlerts' },
   todo_deleted: { category: 'todoNotifications', key: 'taskUpdated' },
+  todo_comment_added: { category: 'todoNotifications', key: 'comments' },
 
   // ── Social Notifications ───────────────────────────────────────────
   new_follower: { category: 'socialNotifications', key: 'newFollowers' },

@@ -161,7 +161,7 @@ export async function handleAiChatRequest(request: Request): Promise<Response> {
       ? [...historyMessages, { role: 'user' as const, content: currentTurnContent }]
       : historyMessages;
 
-    const tools = buildAiTools(session.user.id);
+    const tools = buildAiTools(session.user.id, body.timeZone);
     const activeToolNames: (keyof typeof tools)[] = [
       ...(selectedToolNames.filter(toolName => toolName in tools) as (keyof typeof tools)[]),
       'present_findings',

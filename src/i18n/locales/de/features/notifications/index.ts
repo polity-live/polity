@@ -5,6 +5,7 @@ export const notificationsTranslations = {
   searchPlaceholder: 'Benachrichtigungen suchen...',
   markAllRead: 'Alle als gelesen markieren',
   markAllAsRead: 'Alle als gelesen markieren',
+  markAllAsUnread: 'Alle als ungelesen markieren',
   clearAll: 'Alle löschen',
   noNotifications: 'Keine Benachrichtigungen',
   loading: 'Benachrichtigungen werden geladen...',
@@ -25,12 +26,22 @@ export const notificationsTranslations = {
     noEntity: 'Keine Entitäts-Benachrichtigungen',
     entityAppear:
       'Benachrichtigungen für Gruppen, Veranstaltungen und Anträge, bei denen du dabei bist, werden hier angezeigt',
+    noTrash: 'Der Papierkorb ist leer',
+    trashAppear: 'Ausgeblendete Benachrichtigungen werden hier angezeigt',
   },
   // Toast-Nachrichten für Action-Hooks
   toasts: {
     markReadFailed: 'Benachrichtigung konnte nicht als gelesen markiert werden',
     allMarkedRead: 'Alle Benachrichtigungen als gelesen markiert',
     markAllReadFailed: 'Benachrichtigungen konnten nicht als gelesen markiert werden',
+    allMarkedUnread: 'Alle Benachrichtigungen als ungelesen markiert',
+    dismissFailed: 'Benachrichtigung konnte nicht ausgeblendet werden',
+    restoreFailed: 'Benachrichtigung konnte nicht wiederhergestellt werden',
+    purgeFailed: 'Benachrichtigung konnte nicht endgültig entfernt werden',
+    deletedForEveryone: 'Benachrichtigung wurde für alle entfernt',
+    globalDeleteFailed: 'Benachrichtigung konnte nicht für alle entfernt werden',
+    globalRestoreFailed: 'Benachrichtigung konnte nicht für alle wiederhergestellt werden',
+    contentUpdateFailed: 'Benachrichtigung konnte nicht aktualisiert werden',
     deleted: 'Benachrichtigung gelöscht',
     deleteFailed: 'Benachrichtigung konnte nicht gelöscht werden',
     settingsUpdated: 'Benachrichtigungseinstellungen aktualisiert',
@@ -49,6 +60,7 @@ export const notificationsTranslations = {
     read: 'Gelesen',
     personal: 'Persönlich',
     entity: 'Entität',
+    trash: 'Papierkorb',
     mentions: 'Erwähnungen',
     groups: 'Gruppen',
     events: 'Veranstaltungen',
@@ -57,7 +69,18 @@ export const notificationsTranslations = {
   },
   item: {
     for: 'für',
+    new: 'Neu',
     notification: 'Benachrichtigung',
+    markUnread: 'Als ungelesen markieren',
+    hideForMe: 'Für mich ausblenden',
+    restore: 'Wiederherstellen',
+    removePermanently: 'Endgültig entfernen',
+    deleteForEveryone: 'Für alle löschen',
+  },
+  globalDelete: {
+    title: 'Benachrichtigung für alle löschen?',
+    description:
+      'Diese Benachrichtigung verschwindet für alle berechtigten Nutzer von {{entity}}. Sie kann serverseitig wiederhergestellt werden.',
   },
   types: {
     mention: 'hat dich erwähnt',
@@ -94,6 +117,7 @@ export const notificationsTranslations = {
   generated: {
     titles: {
       todoClaimed: 'Aufgabe übernommen',
+      todoCommentAdded: 'Neuer Aufgabenkommentar',
       eventAssignedToGroup: 'Event einer Gruppe zugeordnet',
       amendmentSupportConfirmed: 'Antragsunterstützung bestätigt',
       amendmentUpvoted: 'Antrag positiv bewertet',
@@ -103,6 +127,7 @@ export const notificationsTranslations = {
     },
     messages: {
       todoClaimed: '{{senderName}} hat die Aufgabe „{{todoTitle}}“ übernommen.',
+      todoCommentAdded: '{{senderName}} hat „{{todoTitle}}“ kommentiert.',
       guestAccessApproved: 'Eine Gastzugangsanfrage in {{groupName}} wurde genehmigt.',
       guestAccessRequested: '{{senderName}} hat Gastzugang zu {{groupName}} angefragt.',
       guestInvited: 'Ein Gast wurde zu {{groupName}} eingeladen.',

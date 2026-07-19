@@ -5,7 +5,6 @@ import type { ReactNode } from 'react';
 import { GripHorizontal } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { cn } from '@/features/shared/utils/utils';
 
 interface DecisionWidgetFrameProps {
@@ -31,25 +30,18 @@ export function DecisionWidgetFrame({
       )}
     >
       <div className="bg-muted/40 flex h-10 shrink-0 items-center gap-2 border-b px-2.5">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label={translateText('generated.inline.0352_move_widget_bfba359d')}
-              title={translateText('generated.inline.0352_move_widget_bfba359d')}
-              className="decision-widget-drag-handle text-muted-foreground hover:text-foreground h-7 w-7 shrink-0 cursor-grab touch-none active:cursor-grabbing"
-              data-testid="decision-widget-drag-handle"
-              data-swipe-lock
-            >
-              <GripHorizontal className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent sideOffset={6}>
-            {translateText('generated.inline.0352_move_widget_bfba359d')}
-          </TooltipContent>
-        </Tooltip>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label={translateText('generated.inline.0352_move_widget_bfba359d')}
+          tooltip={translateText('generated.inline.0352_move_widget_bfba359d')}
+          className="decision-widget-drag-handle text-muted-foreground hover:text-foreground h-7 w-7 shrink-0 cursor-grab touch-none active:cursor-grabbing"
+          data-testid="decision-widget-drag-handle"
+          data-swipe-lock
+        >
+          <GripHorizontal className="h-4 w-4" />
+        </Button>
         <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">{title}</h3>
         {actions}
         {typeof count === 'number' ? (

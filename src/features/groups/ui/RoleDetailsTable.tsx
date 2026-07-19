@@ -140,7 +140,9 @@ export function RoleDetailsTable<TRole extends RoleRow>({
             ) : null}
             <CountBadge
               count={role.action_rights?.length ?? 0}
-              label={translateText('generated.inline.0016_rights_1407cb23')}
+              label={translateText('components.membershipTables.rights', {
+                count: role.action_rights?.length ?? 0,
+              })}
             />
           </div>
         );

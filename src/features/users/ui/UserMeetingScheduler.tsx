@@ -13,6 +13,7 @@ interface UserMeetingSchedulerProps {
 
 export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
   const {
+    isAuthenticated,
     isOwner,
     isLoading,
     owner,
@@ -169,6 +170,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
       isBookingDialogOpen={isBookingDialogOpen}
       isEditDialogOpen={isEditDialogOpen}
       isLoading={isLoading}
+      isAuthenticated={isAuthenticated}
       isOwner={isOwner}
       meetings={meetings}
       navigate={navigate}

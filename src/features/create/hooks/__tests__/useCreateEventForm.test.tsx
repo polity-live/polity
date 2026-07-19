@@ -106,6 +106,7 @@ vi.mock('@/zero/common/hashtagHelpers', () => ({
 vi.mock('@/features/shared/ui/ui/sonner', () => ({
   toast: {
     error: vi.fn(),
+    loading: vi.fn(() => 'toast-1'),
     success: vi.fn(),
   },
 }));
@@ -236,7 +237,8 @@ describe('useCreateEventForm', () => {
     expect(createFullEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         event: expect.objectContaining({ stream_url: 'https://twitch.tv/polity_live' }),
-      })
+      }),
+      { notificationMode: 'silent' }
     );
   });
 });

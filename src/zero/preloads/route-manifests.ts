@@ -136,7 +136,11 @@ export function createCalendarPreloadTask(): PreloadTask {
 
 export function createTodosPreloadTask(): PreloadTask {
   return task('primary:todos', '/todos', [
-    createPreloadEntry('queries.todos.allWithRelations', {}, queries.todos.allWithRelations({})),
+    createPreloadEntry(
+      'queries.todos.allWithRelations',
+      { archive: 'active' },
+      queries.todos.allWithRelations({ archive: 'active' })
+    ),
   ]);
 }
 
@@ -278,7 +282,7 @@ export function createGroupPreloadTasks(groupId: string, viewerId?: string): Pre
       createPreloadEntry(
         'queries.groups.todosByGroup',
         { groupId },
-        queries.groups.todosByGroup({ groupId })
+        queries.groups.todosByGroup({ groupId, archive: 'active' })
       ),
       createPreloadEntry(
         'queries.groups.linksByGroup',

@@ -1,14 +1,25 @@
 import { Button } from '@/features/shared/ui/ui/button';
-import { CheckCheck } from 'lucide-react';
+import { CheckCheck, Ellipsis, Mail } from 'lucide-react';
 import { PushNotificationToggle } from '@/features/notifications/ui/push-notification-toggle.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/features/shared/ui/ui/dropdown-menu';
 
 interface NotificationHeaderProps {
   unreadCount: number;
   onMarkAllAsRead: () => void;
+  onMarkAllAsUnread?: () => void;
 }
 
-export function NotificationHeader({ unreadCount, onMarkAllAsRead }: NotificationHeaderProps) {
+export function NotificationHeader({
+  unreadCount,
+  onMarkAllAsRead,
+  onMarkAllAsUnread,
+}: NotificationHeaderProps) {
   const { t } = useTranslation();
 
   return (
@@ -22,6 +33,21 @@ export function NotificationHeader({ unreadCount, onMarkAllAsRead }: Notificatio
             {t('features.notifications.markAllAsRead')}
           </Button>
         )}
+        {onMarkAllAsUnread ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label={t('common.actions.more')}>
+                <Ellipsis className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onMarkAllAsUnread}>
+                <Mail className="mr-2 h-4 w-4" />
+                {t('features.notifications.markAllAsUnread')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
       </div>
     </>
   );

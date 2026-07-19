@@ -3,7 +3,7 @@ import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
 import { groupName } from '../server-helpers';
-import { createPaymentSchema, deletePaymentSchema } from './schema';
+import { createPaymentSchema, deletePaymentSchema, updatePaymentSchema } from './schema';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const paymentServerMutators = {
@@ -17,8 +17,13 @@ export const paymentServerMutators = {
         senderId: ctx.userID,
         groupId: gId,
         groupName: gName,
+        paymentDescription: args.label,
       });
     }
+  }),
+
+  updatePayment: defineMutator(updatePaymentSchema, async ({ tx, ctx, args }) => {
+    await mutators.payments.updatePayment.fn({ tx, ctx, args });
   }),
 
   deletePayment: defineMutator(deletePaymentSchema, async ({ tx, ctx, args }) => {
@@ -33,6 +38,7 @@ export const paymentServerMutators = {
         senderId: ctx.userID,
         groupId: gId,
         groupName: gName,
+        paymentDescription: pay?.label,
       });
     }
   }),

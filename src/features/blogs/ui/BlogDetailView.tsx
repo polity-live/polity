@@ -243,27 +243,40 @@ export function BlogDetailView({
 
         <StatsBar
           items={[
-            { value: subscriberCount, label: t('components.labels.subscribers') },
-            { value: supporterCount, label: t('components.labels.supporters') },
-            { value: commentCount, label: t('components.labels.comments') },
+            {
+              value: subscriberCount,
+              label: t('components.labels.subscribers', { count: subscriberCount }),
+            },
+            {
+              value: supporterCount,
+              label: t('components.labels.supporters', { count: supporterCount }),
+            },
+            {
+              value: commentCount,
+              label: t('components.labels.comments', { count: commentCount }),
+            },
           ]}
         />
 
         <ActionBar>
-          <SubscribeButton
-            entityType="blog"
-            entityId={blogId}
-            isSubscribed={isSubscribed}
-            onToggleSubscribe={onSubscribeToggle}
-            isLoading={subscribeLoading}
-          />
-          <VoteButtons
-            upvotes={upvotes}
-            downvotes={downvotes}
-            userVote={currentVoteValue}
-            onVote={onVote}
-            orientation="horizontal"
-          />
+          {currentUserId ? (
+            <>
+              <SubscribeButton
+                entityType="blog"
+                entityId={blogId}
+                isSubscribed={isSubscribed}
+                onToggleSubscribe={onSubscribeToggle}
+                isLoading={subscribeLoading}
+              />
+              <VoteButtons
+                upvotes={upvotes}
+                downvotes={downvotes}
+                userVote={currentVoteValue}
+                onVote={onVote}
+                orientation="horizontal"
+              />
+            </>
+          ) : null}
           <ShareButton
             url={viewUrl}
             title={title}

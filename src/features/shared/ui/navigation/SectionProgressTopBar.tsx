@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useRef } from 'react';
 
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Progress } from '@/features/shared/ui/ui/progress';
+import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
 
 export interface SectionProgressTopBarItem {
@@ -89,12 +90,13 @@ export function SectionProgressTopBar({
 
             return (
               <li key={item.id} className="flex-none">
-                <button
+                <Button
                   ref={isActive ? activeItemRef : undefined}
                   type="button"
+                  variant="ghost"
                   aria-current={isActive ? 'step' : undefined}
                   disabled={isDisabled}
-                  title={typeof item.label === 'string' ? item.label : undefined}
+                  tooltip={typeof item.label === 'string' ? item.label : undefined}
                   className={cn(
                     'flex min-w-[7.25rem] items-center gap-2 rounded-md border px-3 py-2 text-left text-xs transition-colors',
                     isActive
@@ -137,7 +139,7 @@ export function SectionProgressTopBar({
                       </span>
                     ) : null}
                   </span>
-                </button>
+                </Button>
               </li>
             );
           })}

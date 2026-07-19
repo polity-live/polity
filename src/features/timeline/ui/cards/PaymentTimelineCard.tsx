@@ -6,12 +6,15 @@ import { ArrowDownLeft, ArrowUpRight, Calendar, Tag } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
+import { useCurrencyConversion } from '@/features/shared/hooks/useCurrencyConversion';
+import { formatCurrencyMajor, type CurrencyCode } from '@/features/shared/logic/currency';
 import {
   TimelineCardBase,
   TimelineCardHeader,
   TimelineCardContent,
   TimelineCardBadge,
 } from './TimelineCardBase';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 
 export interface PaymentTimelineCardProps {
   payment: {
@@ -19,6 +22,7 @@ export interface PaymentTimelineCardProps {
     label: string;
     description?: string | null;
     amount?: number | null;
+    currency?: CurrencyCode | null;
     type?: string | null;
     direction?: 'income' | 'expense' | null;
     createdAt?: string | Date | null;
@@ -28,18 +32,6 @@ export interface PaymentTimelineCardProps {
   };
   href?: string;
   className?: string;
-}
-
-function formatPaymentAmount(value?: number | null): string | null {
-  if (!Number.isFinite(value)) {
-    return null;
-  }
-
-  return new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 2,
-  }).format(value ?? 0);
 }
 
 function formatPaymentDate(value?: string | Date | null): string | null {
@@ -57,6 +49,12 @@ function formatPaymentDate(value?: string | Date | null): string | null {
   }).format(parsed);
 }
 
+function paymentRateDate(value?: string | Date | null): string | undefined {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString().slice(0, 10);
+}
+
 function formatPaymentType(value?: string | null): string | null {
   const normalized = value?.trim();
   if (!normalized) {
@@ -67,8 +65,25 @@ function formatPaymentType(value?: string | null): string | null {
 }
 
 export function PaymentTimelineCard({ payment, href, className }: PaymentTimelineCardProps) {
-  const { t } = useTranslation();
-  const amountLabel = formatPaymentAmount(payment.amount);
+  const { t, language } = useTranslation();
+  const originalCurrency = payment.currency ?? 'EUR';
+  const requestedDate = paymentRateDate(payment.createdAt);
+  const { conversion, isLoading, targetCurrency } = useCurrencyConversion({
+    amount: payment.amount,
+    currency: originalCurrency,
+    date: requestedDate,
+  });
+  const amountLabel = conversion
+    ? formatCurrencyMajor(conversion.convertedAmount, targetCurrency, language, {
+        approximate: targetCurrency !== originalCurrency,
+      })
+    : Number.isFinite(payment.amount)
+      ? formatCurrencyMajor(payment.amount ?? 0, originalCurrency, language)
+      : null;
+  const originalAmountLabel =
+    conversion && targetCurrency !== originalCurrency
+      ? formatCurrencyMajor(payment.amount ?? 0, originalCurrency, language)
+      : null;
   const createdAtLabel = formatPaymentDate(payment.createdAt);
   const paymentTypeLabel = formatPaymentType(payment.type);
   const description = normalizeTimelineText(payment.description);
@@ -91,15 +106,41 @@ export function PaymentTimelineCard({ payment, href, className }: PaymentTimelin
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
             {amountLabel && (
-              <p
-                className={cn(
-                  'text-2xl font-semibold tracking-tight',
-                  isIncome && featureThemeClassName('timelineContentTypeConfigSuccessText'),
-                  isExpense && featureThemeClassName('timelinePaymentTimelineCardDangerText')
-                )}
-              >
-                {amountLabel}
-              </p>
+              <>
+                <p
+                  className={cn(
+                    'text-2xl font-semibold tracking-tight',
+                    isIncome && featureThemeClassName('timelineContentTypeConfigSuccessText'),
+                    isExpense && featureThemeClassName('timelinePaymentTimelineCardDangerText')
+                  )}
+                >
+                  {amountLabel}
+                </p>
+                {originalAmountLabel ? (
+                  <TooltipHint
+                    content={`1 ${originalCurrency} = ${conversion?.rate} ${targetCurrency}; ${conversion?.rateDate}; Frankfurter`}
+                  >
+                    <p className="text-muted-foreground text-xs">
+                      {originalAmountLabel} · {conversion?.rateDate} ·{' '}
+                      <a
+                        href="https://frankfurter.dev/"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline"
+                      >
+                        Frankfurter
+                      </a>
+                      {conversion?.cacheStatus === 'stale'
+                        ? ` · ${language === 'de' ? 'veraltet' : 'stale'}`
+                        : ''}
+                    </p>
+                  </TooltipHint>
+                ) : !isLoading && targetCurrency !== originalCurrency ? (
+                  <p className="text-muted-foreground text-xs">
+                    {t('pages.create.payment.conversionUnavailable', 'Conversion unavailable')}
+                  </p>
+                ) : null}
+              </>
             )}
 
             {payment.counterpartyLabel && (

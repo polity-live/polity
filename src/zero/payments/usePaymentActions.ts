@@ -4,6 +4,10 @@ import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 /**
  * Action hook for payment mutations.
@@ -15,10 +19,12 @@ export function usePaymentActions() {
   const { t } = useTranslation();
 
   const createCustomer = useCallback(
-    (args: Parameters<typeof mutators.payments.createCustomer>[0]) => {
+    (
+      args: Parameters<typeof mutators.payments.createCustomer>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.payments.createCustomer(args));
-      toast.success(t('common.paymentToasts.customerCreated'));
-      onServerError(result, () => toast.error(t('common.paymentToasts.customerCreateFailed')));
+      trackCreationUnlessSilent(result, 'customer', options, args.id);
       return result;
     },
     [zero, t]
@@ -45,10 +51,24 @@ export function usePaymentActions() {
   );
 
   const createPayment = useCallback(
-    (args: Parameters<typeof mutators.payments.createPayment>[0]) => {
+    (
+      args: Parameters<typeof mutators.payments.createPayment>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.payments.createPayment(args));
-      toast.success(t('common.paymentToasts.paymentCreated'));
-      onServerError(result, () => toast.error(t('common.paymentToasts.paymentCreateFailed')));
+      trackCreationUnlessSilent(result, 'payment', options, args.id);
+      return result;
+    },
+    [zero, t]
+  );
+
+  const updatePayment = useCallback(
+    (args: Parameters<typeof mutators.payments.updatePayment>[0]) => {
+      const result = zero.mutate(mutators.payments.updatePayment(args));
+      toast.success(t('common.paymentToasts.paymentUpdated', 'Payment updated'));
+      onServerError(result, () =>
+        toast.error(t('common.paymentToasts.paymentUpdateFailed', 'Failed to update payment'))
+      );
       return result;
     },
     [zero, t]
@@ -69,6 +89,7 @@ export function usePaymentActions() {
     updateSubscription,
     recordPayment,
     createPayment,
+    updatePayment,
     deletePayment,
   };
 }

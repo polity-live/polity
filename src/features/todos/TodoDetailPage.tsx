@@ -18,6 +18,11 @@ export function TodoDetailPage({ todoId }: TodoDetailPageProps) {
     handleCancel,
     handleTitleChange,
     handleFormUpdate,
+    discussion,
+    canManageTodos,
+    isArchiving,
+    handleArchive,
+    handleUnarchive,
   } = useTodoDetailPage(todoId);
   return (
     <TodoDetailPageView
@@ -33,6 +38,11 @@ export function TodoDetailPage({ todoId }: TodoDetailPageProps) {
       handleCancel={handleCancel}
       handleTitleChange={handleTitleChange}
       handleFormUpdate={handleFormUpdate}
+      discussion={discussion}
+      canManageTodos={canManageTodos}
+      isArchiving={isArchiving}
+      handleArchive={handleArchive}
+      handleUnarchive={handleUnarchive}
     />
   );
 }

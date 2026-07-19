@@ -2099,7 +2099,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
     expect(handleOpenVoteDialog).not.toHaveBeenCalled();
   });
 
-  it('shows a disabled agenda-details vote action with offline guidance', () => {
+  it('shows a disabled agenda-details vote action with offline guidance', async () => {
     const handleOpenVoteDialog = vi.fn();
     const item = {
       id: 'agenda-cr-1',
@@ -2149,7 +2149,8 @@ describe('ChangeRequestCardsListView mode labels', () => {
     const button = screen.getByRole('button', { name: 'Cast Indication' });
 
     expect(button.getAttribute('aria-disabled')).toBe('true');
-    expect(button.getAttribute('title')).toBe(offlineTooltip);
+    button.focus();
+    expect((await screen.findByRole('tooltip')).textContent).toContain(offlineTooltip);
 
     fireEvent.click(button);
 

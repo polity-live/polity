@@ -125,7 +125,7 @@ describe('AgendaElectionSection', () => {
     });
 
     expect(delegateTargetLink.getAttribute('href')).toBe('/event/target-event');
-    expect(delegateTargetLink.getAttribute('title')).toBe('Delegate2on1');
+    expect(delegateTargetLink.textContent).toContain('Delegate2on1');
   });
 
   it('shows the delegate participant sync note for closed delegate elections with winners', () => {
@@ -331,7 +331,7 @@ describe('AgendaElectionSection', () => {
     expect(onOpenNamedResults).toHaveBeenCalledTimes(2);
   });
 
-  it('renders the Become Candidate button as blocked with help when passive voting rights are missing', () => {
+  it('renders the Become Candidate button as blocked with help when passive voting rights are missing', async () => {
     render(
       <AgendaElectionSection
         roleName="Board"
@@ -351,7 +351,8 @@ describe('AgendaElectionSection', () => {
     const candidateButton = screen.getByRole('button', { name: /Become Candidate/ });
 
     expect(candidateButton.getAttribute('aria-disabled')).toBe('true');
-    expect(candidateButton.getAttribute('title')).toBe(
+    candidateButton.focus();
+    expect((await screen.findByRole('tooltip')).textContent).toContain(
       'Passive Voting Rights are required to become a candidate in this event.'
     );
     expect(candidateButton.className).toContain('text-muted-foreground');

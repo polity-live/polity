@@ -1,6 +1,7 @@
 import { buildRecurringEventFields } from '@/features/events/logic/buildRecurringEventFields';
 import { parseRRuleToFormState } from '@/features/events/logic/rruleHelpers';
 import type { GroupRole, RoleEditorFormState } from '../types/group.types';
+import { formatLocalDateInput, toLocalTimestamp } from '@/features/shared/logic/localDateTime';
 
 interface RoleEditorMutationOptions {
   allowGuestRequestDefault?: boolean;
@@ -132,11 +133,9 @@ export function formatRoleTermLabel(
 }
 
 export function toDateInput(value: number | null | undefined) {
-  if (!value) return '';
-  return new Date(value).toISOString().slice(0, 10);
+  return formatLocalDateInput(value);
 }
 
 function toTimestamp(value: string) {
-  if (!value) return null;
-  return new Date(`${value}T00:00:00`).getTime();
+  return toLocalTimestamp(value);
 }

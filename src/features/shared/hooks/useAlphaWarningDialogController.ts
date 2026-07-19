@@ -5,7 +5,7 @@ import { translate, useTranslation } from '@/features/shared/hooks/use-translati
 import { AlphaWarningToastContent } from '../ui/AlphaWarningToastContent';
 
 const ALPHA_WARNING_TOAST_ID = 'alpha-warning';
-const ALPHA_WARNING_VERSION = '0.4.1';
+const ALPHA_WARNING_VERSION = '0.5.1';
 const ALPHA_WARNING_ACKNOWLEDGED_VALUE = 'true';
 
 const ALPHA_WARNING_SESSION_KEY = `polity.alphaWarning.${ALPHA_WARNING_VERSION}.acknowledged`;

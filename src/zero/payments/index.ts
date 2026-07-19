@@ -5,6 +5,7 @@ export { payment, stripeCustomer, stripeSubscription, stripePayment } from './ta
 export {
   selectPaymentSchema,
   createPaymentSchema,
+  updatePaymentSchema,
   deletePaymentSchema,
   selectStripeCustomerSchema,
   createStripeCustomerSchema,

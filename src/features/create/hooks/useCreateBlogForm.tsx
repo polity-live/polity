@@ -23,6 +23,7 @@ import {
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
 import { consumeCreateRestoreDraft, trackCreateFinalization } from '../logic/createFinalization';
+import { formatLocalDateInput } from '@/features/shared/logic/localDateTime';
 
 interface CreateBlogSearch {
   groupId?: string;
@@ -47,7 +48,7 @@ export function useCreateBlogForm(): CreateFormConfig {
 
   const [blogId] = useState(() => crypto.randomUUID());
   const [title, setTitle] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => formatLocalDateInput(new Date()));
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [imageURL, setImageURL] = useState('');
@@ -91,7 +92,7 @@ export function useCreateBlogForm(): CreateFormConfig {
     if (!restoreDraft) return;
 
     setTitle(restoreDraft.formState.title ?? '');
-    setDate(restoreDraft.formState.date ?? new Date().toISOString().split('T')[0]);
+    setDate(restoreDraft.formState.date ?? formatLocalDateInput(new Date()));
     setImageURL(restoreDraft.formState.imageURL ?? '');
     setVideoURL(restoreDraft.formState.videoURL ?? '');
     setVisibility(restoreDraft.formState.visibility ?? 'public');
@@ -189,12 +190,13 @@ export function useCreateBlogForm(): CreateFormConfig {
               }
             : null,
       };
-      const createBlogResults = createBlogFull(createBlogPayload);
+      const createBlogResults = createBlogFull(createBlogPayload, {
+        notificationMode: 'silent',
+      });
       await createBlogResults.blogResult.client;
       context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'active' });
 
-      toast.success(t('pages.create.success.created'));
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
       setIsSubmitting(false);

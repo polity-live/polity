@@ -4,6 +4,7 @@ import { type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/features/shared/utils/utils.ts';
 import { toggleVariants } from '@/features/shared/ui/ui/toggle.tsx';
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 const ToggleGroupContext = React.createContext<VariantProps<typeof toggleVariants>>({
   size: 'default',
@@ -30,12 +31,13 @@ const ToggleGroupItem = React.forwardRef<
   React.ElementRef<typeof ToggleGroupPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item> &
     VariantProps<typeof toggleVariants>
->(({ className, children, variant, size, ...props }, ref) => {
+>(({ className, children, variant, size, title, disabled, ...props }, ref) => {
   const context = React.useContext(ToggleGroupContext);
 
-  return (
+  const item = (
     <ToggleGroupPrimitive.Item
       ref={ref}
+      disabled={disabled}
       className={cn(
         toggleVariants({
           variant: context.variant || variant,
@@ -47,6 +49,23 @@ const ToggleGroupItem = React.forwardRef<
     >
       {children}
     </ToggleGroupPrimitive.Item>
+  );
+
+  if (!title) return item;
+
+  const trigger = disabled ? (
+    <span className="inline-flex" tabIndex={0} aria-disabled="true" aria-label={title}>
+      {item}
+    </span>
+  ) : (
+    item
+  );
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+      <TooltipContent>{title}</TooltipContent>
+    </Tooltip>
   );
 });
 

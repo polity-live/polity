@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 
 import { cn } from '@/features/shared/utils/utils';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 
 export type LoadingProgressBarStepStatus = 'pending' | 'active' | 'complete' | 'error';
 
@@ -226,13 +227,13 @@ export function LoadingProgressBar({
           const isComplete = status === 'complete';
           const isActive = status === 'active';
           const isError = status === 'error';
+          const tooltip = typeof step.label === 'string' ? step.label : undefined;
 
-          return (
+          const progressStep = (
             <div
               key={step.key}
               data-slot="loading-progress-step"
               data-status={status}
-              title={typeof step.label === 'string' ? step.label : undefined}
               className={cn(
                 'bg-muted min-w-0 flex-1 overflow-hidden rounded-full',
                 isError && 'bg-destructive/15'
@@ -255,6 +256,14 @@ export function LoadingProgressBar({
                 />
               ) : null}
             </div>
+          );
+
+          return tooltip ? (
+            <TooltipHint key={step.key} content={tooltip}>
+              {progressStep}
+            </TooltipHint>
+          ) : (
+            progressStep
           );
         })}
       </div>

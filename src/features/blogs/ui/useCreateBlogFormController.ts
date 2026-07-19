@@ -8,6 +8,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { formatLocalDateInput } from '@/features/shared/logic/localDateTime';
 export function useCreateBlogFormController() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -16,7 +17,7 @@ export function useCreateBlogFormController() {
   const [blogId] = useState(() => crypto.randomUUID());
   const [formData, setFormData] = useState({
     title: '',
-    date: new Date().toISOString().split('T')[0],
+    date: formatLocalDateInput(new Date()),
     visibility: 'public' as 'public' | 'authenticated' | 'private',
     hashtags: [] as string[],
     imageURL: '',
@@ -107,13 +108,9 @@ export function useCreateBlogFormController() {
       });
       await waitForClientApply(createBlogResults.blogResult);
 
-      toast.success(translateText('generated.inline.0273_blog_post_created_successfully_b4732330'));
       navigate({ to: '/user/$id/blog/$entryId', params: { id: user.id, entryId: blogId } });
     } catch (error) {
       console.error('Failed to create blog post:', error);
-      toast.error(
-        translateText('generated.inline.0274_failed_to_create_blog_post_please_try_again_df40668e')
-      );
       setIsSubmitting(false);
     }
   };

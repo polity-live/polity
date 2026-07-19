@@ -175,6 +175,8 @@ export const notificationsPageTranslations = {
       taskUpdatedDesc: 'Wenn sich Aufgabendetails ändern',
       taskCompleted: 'Aufgabe abgeschlossen',
       taskCompletedDesc: 'Wenn von dir erstellte Aufgaben abgeschlossen werden',
+      comments: 'Kommentare',
+      commentsDesc: 'Wenn jemand eine von dir erstellte oder dir zugewiesene Aufgabe kommentiert',
       dueDateReminders: 'Fälligkeitserinnerungen',
       dueDateRemindersDesc: 'Erinnerungen vor Fälligkeit von Aufgaben',
       overdueAlerts: 'Überfälligkeitsalarme',

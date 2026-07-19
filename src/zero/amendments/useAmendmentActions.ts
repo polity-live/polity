@@ -6,6 +6,10 @@ import { getEditingModeOption } from '@/features/shared/ui/status';
 import type { EditingMode } from './editing-mode-policy';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 /**
  * Action hook for amendment mutations.
@@ -18,18 +22,22 @@ export function useAmendmentActions() {
 
   // ── CRUD ───────────────────────────────────────────────────────────
   const createAmendment = useCallback(
-    (args: Parameters<typeof mutators.amendments.create>[0]) => {
+    (args: Parameters<typeof mutators.amendments.create>[0], options?: CreationMutationOptions) => {
       const result = zero.mutate(mutators.amendments.create(args));
-      toast.success(t('features.amendments.toasts.created'));
-      onServerError(result, () => toast.error(t('features.amendments.toasts.createFailed')));
+      trackCreationUnlessSilent(result, 'amendment', options, args.id);
       return result;
     },
     [zero]
   );
 
   const createFullAmendment = useCallback(
-    (args: Parameters<typeof mutators.amendments.createFull>[0]) => {
-      return zero.mutate(mutators.amendments.createFull(args));
+    (
+      args: Parameters<typeof mutators.amendments.createFull>[0],
+      options?: CreationMutationOptions
+    ) => {
+      const result = zero.mutate(mutators.amendments.createFull(args));
+      trackCreationUnlessSilent(result, 'amendment', options, args.amendment.id);
+      return result;
     },
     [zero]
   );
@@ -186,12 +194,12 @@ export function useAmendmentActions() {
 
   // ── Change Requests ────────────────────────────────────────────────
   const createChangeRequest = useCallback(
-    (args: Parameters<typeof mutators.amendments.createChangeRequest>[0]) => {
+    (
+      args: Parameters<typeof mutators.amendments.createChangeRequest>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.amendments.createChangeRequest(args));
-      toast.success(t('features.amendments.toasts.changeRequestCreated'));
-      onServerError(result, () =>
-        toast.error(t('features.amendments.toasts.changeRequestCreateFailed'))
-      );
+      trackCreationUnlessSilent(result, 'changeRequest', options, args.id);
       return result;
     },
     [zero]

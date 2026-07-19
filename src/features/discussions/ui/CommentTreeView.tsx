@@ -64,27 +64,31 @@ export function CommentTreeView({
           <div className="flex gap-3">
             {/* Vote buttons */}
             <div className="flex flex-col items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-8 w-8 p-0 ${hasUpvoted ? featureThemeClassName('discussionsCommentTreeWarningText') : ''}`}
-                onClick={() => handleVote(1)}
-              >
-                <ArrowUp className="h-4 w-4" />
-              </Button>
+              {userId ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-8 w-8 p-0 ${hasUpvoted ? featureThemeClassName('discussionsCommentTreeWarningText') : ''}`}
+                  onClick={() => handleVote(1)}
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </Button>
+              ) : null}
               <span
                 className={`text-sm font-semibold ${score > 0 ? featureThemeClassName('discussionsCommentTreeWarningText') : score < 0 ? featureThemeClassName('discussionsCommentTreeInfoText') : ''}`}
               >
                 {score}
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-8 w-8 p-0 ${hasDownvoted ? featureThemeClassName('discussionsCommentTreeInfoText') : ''}`}
-                onClick={() => handleVote(-1)}
-              >
-                <ArrowDown className="h-4 w-4" />
-              </Button>
+              {userId ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-8 w-8 p-0 ${hasDownvoted ? featureThemeClassName('discussionsCommentTreeInfoText') : ''}`}
+                  onClick={() => handleVote(-1)}
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </Button>
+              ) : null}
             </div>
 
             {/* Comment content */}
@@ -107,12 +111,14 @@ export function CommentTreeView({
                 </div>
               </div>
               <p className="mb-3 whitespace-pre-wrap">{comment.content}</p>
-              <Button variant="ghost" size="sm" onClick={() => setIsReplying(!isReplying)}>
-                <Reply className="mr-2 h-4 w-4" />
-                {translateText('generated.inline.0377_reply_6c2bb735')}
-              </Button>
+              {userId ? (
+                <Button variant="ghost" size="sm" onClick={() => setIsReplying(!isReplying)}>
+                  <Reply className="mr-2 h-4 w-4" />
+                  {translateText('generated.inline.0377_reply_6c2bb735')}
+                </Button>
+              ) : null}
 
-              {isReplying && (
+              {userId && isReplying && (
                 <div className="mt-4 space-y-2">
                   <FormControlTextarea
                     placeholder={translateText('generated.inline.0378_write_your_reply_fa39b3d9')}

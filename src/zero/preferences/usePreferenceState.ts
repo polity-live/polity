@@ -7,6 +7,7 @@ import type {
   PreferenceNavigationView,
   GroupNetworkLayouts,
   DecisionTerminalDashboardConfig,
+  PreferenceCurrency,
 } from './schema';
 
 /**
@@ -25,6 +26,9 @@ export function usePreferenceState() {
 
   const language: PreferenceLanguage = (preference?.language as PreferenceLanguage) ?? 'en';
 
+  const displayCurrency: PreferenceCurrency =
+    (preference?.display_currency as PreferenceCurrency) ?? 'EUR';
+
   const navigationView: PreferenceNavigationView =
     (preference?.navigation_view as PreferenceNavigationView) ?? 'asButtonList';
 
@@ -40,6 +44,7 @@ export function usePreferenceState() {
     createFormStyle,
     theme,
     language,
+    displayCurrency,
     navigationView,
     groupNetworkLayouts,
     decisionTerminalDashboard,

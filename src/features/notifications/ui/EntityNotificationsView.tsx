@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import { Bell, Check, CheckCheck } from 'lucide-react';
 
 import { BadgeControl } from '@/features/shared/ui/status';
@@ -40,6 +41,11 @@ interface EntityNotificationsViewProps {
   onSearchQueryChange: (query: string) => void;
   onMarkAllAsRead: () => void | Promise<void>;
   onNotificationClick: (notification: Notification) => void | Promise<void>;
+  onMarkAsRead: (notification: Notification, event: MouseEvent) => void | Promise<void>;
+  onToggleRead?: (notification: Notification, event: MouseEvent) => void | Promise<void>;
+  onDismissNotification?: (notificationId: string, event: MouseEvent) => void | Promise<void>;
+  onDeleteForEveryone?: (notificationId: string) => void | Promise<void>;
+  canDeleteForEveryone?: (notification: Notification) => boolean;
   formatTime: (date: string | number) => string;
 }
 
@@ -58,6 +64,11 @@ export function EntityNotificationsView({
   onSearchQueryChange,
   onMarkAllAsRead,
   onNotificationClick,
+  onMarkAsRead,
+  onToggleRead,
+  onDismissNotification,
+  onDeleteForEveryone,
+  canDeleteForEveryone,
   formatTime,
 }: EntityNotificationsViewProps) {
   const allCount = counts?.all ?? notifications.length;
@@ -81,8 +92,8 @@ export function EntityNotificationsView({
         </div>
 
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="min-w-0 flex-1">
-            <ScrollableTabsList>
+          <div className="min-w-0 flex-initial">
+            <ScrollableTabsList className="w-fit max-w-full">
               <TabsTrigger value="all">
                 {labels.all}
                 <BadgeControl variant="secondary" className="ml-2">
@@ -123,6 +134,11 @@ export function EntityNotificationsView({
             emptyTitle={labels.noNotificationsYet}
             emptyDescription={labels.notificationsWillShowHere}
             onNotificationClick={onNotificationClick}
+            onMarkAsRead={onMarkAsRead}
+            onToggleRead={onToggleRead}
+            onDeleteNotification={onDismissNotification}
+            onDeleteForEveryone={onDeleteForEveryone}
+            canDeleteForEveryone={canDeleteForEveryone}
             formatTime={formatTime}
             mode="entity"
           />
@@ -143,6 +159,11 @@ export function EntityNotificationsView({
             emptyTitle={labels.allCaughtUp}
             emptyDescription={labels.allRead}
             onNotificationClick={onNotificationClick}
+            onMarkAsRead={onMarkAsRead}
+            onToggleRead={onToggleRead}
+            onDeleteNotification={onDismissNotification}
+            onDeleteForEveryone={onDeleteForEveryone}
+            canDeleteForEveryone={canDeleteForEveryone}
             formatTime={formatTime}
             mode="entity"
           />
@@ -163,6 +184,11 @@ export function EntityNotificationsView({
             emptyTitle={labels.noReadNotifications}
             emptyDescription={labels.readNotificationsAppearHere}
             onNotificationClick={onNotificationClick}
+            onMarkAsRead={onMarkAsRead}
+            onToggleRead={onToggleRead}
+            onDeleteNotification={onDismissNotification}
+            onDeleteForEveryone={onDeleteForEveryone}
+            canDeleteForEveryone={canDeleteForEveryone}
             formatTime={formatTime}
             mode="entity"
           />

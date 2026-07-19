@@ -212,7 +212,9 @@ export function useCreateStatementForm(): CreateFormConfig {
         to: '/statement/$id',
         params: { id: statementId },
       });
-      const statementResult = createFullStatement(statementPayload);
+      const statementResult = createFullStatement(statementPayload, {
+        notificationMode: 'silent',
+      });
 
       await waitForOptimisticCreate(statementResult);
       context?.reportProgress({ key: 'create', status: 'complete' });
@@ -242,7 +244,9 @@ export function useCreateStatementForm(): CreateFormConfig {
           target: statementTarget,
         },
         retry: () => {
-          const retryResult = createFullStatement(statementPayload);
+          const retryResult = createFullStatement(statementPayload, {
+            notificationMode: 'silent',
+          });
           trackCreateFinalization({
             result: retryResult,
             draft: {

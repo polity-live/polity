@@ -89,8 +89,9 @@ export function convertStreetDesignOsmFeature(args: {
   feature: StreetDesignOsmFeature;
   origin: StreetDesignOrigin;
   createId: () => string;
+  currency?: string;
 }) {
-  const { feature, origin, createId } = args;
+  const { feature, origin, createId, currency } = args;
   const type = feature.mappedObjectType;
   if (!type || feature.mappingConfidence === 'generic') return [];
 
@@ -108,7 +109,7 @@ export function convertStreetDesignOsmFeature(args: {
           id: createId(),
           type: 'tree',
           point,
-          overrides: { properties },
+          overrides: { properties, currency },
         }),
         feature
       )
@@ -122,7 +123,7 @@ export function convertStreetDesignOsmFeature(args: {
           id: createId(),
           type,
           point: center(points),
-          overrides: { properties },
+          overrides: { properties, currency },
         }),
         feature
       ),
@@ -130,7 +131,7 @@ export function convertStreetDesignOsmFeature(args: {
   }
 
   if (feature.geometryKind === 'polygon' && points.length >= 3) {
-    const catalogEntry = getStreetDesignCostCatalogEntry(type);
+    const catalogEntry = getStreetDesignCostCatalogEntry(type, currency);
     const object: StreetDesignObject = {
       id: createId(),
       type,
@@ -153,7 +154,7 @@ export function convertStreetDesignOsmFeature(args: {
           { x: points[0].x, z: points[0].z + 1.5 },
         ];
   if (type === 'parking_area' || type === 'loading_zone') {
-    const catalogEntry = getStreetDesignCostCatalogEntry(type);
+    const catalogEntry = getStreetDesignCostCatalogEntry(type, currency);
     return [
       withProvenance(
         {
@@ -181,7 +182,7 @@ export function convertStreetDesignOsmFeature(args: {
         type,
         points: corridorPoints,
         width: feature.widthMeters ?? definition.defaultWidth,
-        overrides: { properties },
+        overrides: { properties, currency },
       }),
       feature
     ),

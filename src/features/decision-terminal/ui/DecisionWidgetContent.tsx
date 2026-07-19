@@ -302,9 +302,9 @@ function DecisionMetricsLine({ decision }: { decision: DecisionItem }) {
   }
 
   if (decision.isIndicationPhase) {
-    parts.push(translateText('features.events.agenda.indicationShort', 'IND'));
+    parts.push(translateText('features.timeline.terminal.indicationShort', 'Ind'));
   } else if (decision.phase === 'final') {
-    parts.push(translateText('features.events.voting.phases.finalVote', 'Final vote'));
+    parts.push(translateText('features.timeline.terminal.finalVote', 'Final Vote'));
   }
 
   if (!parts.length) return null;
@@ -354,8 +354,8 @@ function WidgetEmpty() {
   return (
     <div className="text-muted-foreground flex h-full min-h-28 items-center justify-center p-4 text-center text-sm">
       {translateText(
-        'features.decisionTerminal.empty.noMatchingDecisions',
-        'No matching decisions'
+        'generated.inline.0349_no_matching_decisions_04f8c20a',
+        'No matching decisions.'
       )}
     </div>
   );
@@ -505,7 +505,7 @@ function ElectionCandidateRows({
                 {candidate.isWinner ? (
                   <BadgeControl tone="warning" size="tiny" className="gap-1">
                     <Crown className="h-3 w-3" />
-                    {translateText('generated.inline.0352_winner_8fbf76a8', 'Winner')}
+                    {translateText('features.timeline.terminal.winner', 'Winner')}
                   </BadgeControl>
                 ) : null}
               </div>

@@ -4,6 +4,7 @@ export const payment = table('payment')
   .columns({
     id: string(),
     amount: number().optional(),
+    currency: string(),
     label: string().optional(),
     type: string().optional(),
     payer_user_id: string().optional(),

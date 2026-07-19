@@ -451,7 +451,11 @@ export function applyAccreditationQueryAccess<T>(q: T, userID: string | undefine
 export function applyDocumentQueryAccess<T>(q: T, userID: string | undefined | null): T {
   const query = q as any;
 
-  if (!isAuthenticatedUserId(userID)) return denyAllRows(q);
+  if (!isAuthenticatedUserId(userID)) {
+    return query.whereExists('amendment', (amendment: any) =>
+      applyAmendmentQueryAccess(amendment, userID)
+    ) as T;
+  }
 
   return query.where(({ or, exists }: any) =>
     or(

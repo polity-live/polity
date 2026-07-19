@@ -1,6 +1,8 @@
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
 import { docsTopicDefinitions } from '@/features/docs/logic/docsTopics.ts';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { isGuestAccessibleEntityPath } from '@/features/auth/logic/guestEntityRouteAccess';
+import { navItemsAuthenticated } from './nav-items-authenticated';
 
 // TanStack Router navigate function type
 type NavigateFn = (opts: { to: string; hash?: string }) => void;
@@ -105,6 +107,51 @@ export const createDocsSecondaryNavItems = (
       onClick: () => navigate({ to: `/docs/${topic.slug}` }),
     })),
   ];
+};
+
+export const createEntitySecondaryNavItemsUnauthenticated = (
+  pathname: string,
+  navigate: NavigateFn,
+  t?: (key: string) => string
+): NavigationItem[] | null => {
+  const navItems = navItemsAuthenticated(navigate, undefined, t);
+  const groupBlogMatch = pathname.match(/^\/group\/([^/]+)\/blog\/([^/]+)/);
+  const userBlogMatch = pathname.match(/^\/user\/([^/]+)\/blog\/([^/]+)/);
+  const directBlogMatch = pathname.match(/^\/blog\/([^/]+)/);
+  const eventMatch = pathname.match(/^\/event\/([^/]+)/);
+  const userMatch = pathname.match(/^\/user\/([^/]+)/);
+  const groupMatch = pathname.match(/^\/group\/([^/]+)/);
+  const amendmentMatch = pathname.match(/^\/amendment\/([^/]+)/);
+
+  let items: NavigationItem[] | null = null;
+
+  if (groupBlogMatch) {
+    items = navItems.getBlogSecondaryNavItems(groupBlogMatch[2], false, false, groupBlogMatch[1]);
+  } else if (userBlogMatch) {
+    items = navItems.getBlogSecondaryNavItems(
+      userBlogMatch[2],
+      false,
+      false,
+      undefined,
+      userBlogMatch[1]
+    );
+  } else if (directBlogMatch) {
+    items = navItems.getBlogSecondaryNavItems(directBlogMatch[1]);
+  } else if (eventMatch) {
+    items = navItems.getEventSecondaryNavItems(eventMatch[1]);
+  } else if (userMatch) {
+    items = navItems.getUserSecondaryNavItems(userMatch[1], false);
+  } else if (groupMatch) {
+    items = navItems.getGroupSecondaryNavItems(groupMatch[1]);
+  } else if (amendmentMatch) {
+    items = navItems.getAmendmentSecondaryNavItems(amendmentMatch[1], true);
+  }
+
+  if (!items) {
+    return null;
+  }
+
+  return items.filter(item => item.href && isGuestAccessibleEntityPath(item.href));
 };
 
 // Backward compatibility - static version for contexts where hooks can't be used

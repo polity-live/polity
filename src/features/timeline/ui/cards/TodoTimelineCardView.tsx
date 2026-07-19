@@ -1,5 +1,14 @@
 import { featureThemeClassName } from '@/features/shared/theme';
-import { CheckSquare, Square, Users, Clock, UserPlus, Activity, UserCheck } from 'lucide-react';
+import {
+  Archive,
+  CheckSquare,
+  Square,
+  Users,
+  Clock,
+  UserPlus,
+  Activity,
+  UserCheck,
+} from 'lucide-react';
 
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { BadgeControl } from '@/features/shared/ui/status';
@@ -86,7 +95,7 @@ export function TodoTimelineCardView({
         badge={<TimelineCardBadge label={labels.contentType} icon={CheckSquare} />}
       >
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {canManageTodos ? (
+          {canManageTodos && !todo.archived ? (
             <Button
               type="button"
               variant="outline"
@@ -105,6 +114,13 @@ export function TodoTimelineCardView({
               )}
               <span>{todo.isCompleted ? labels.completed : labels.markComplete}</span>
             </Button>
+          ) : null}
+
+          {todo.archived ? (
+            <BadgeControl variant="secondary" className="text-xs">
+              <Archive className="mr-1 h-3 w-3" />
+              {labels.archived}
+            </BadgeControl>
           ) : null}
 
           {urgency && !todo.isCompleted ? (
@@ -189,7 +205,7 @@ export function TodoTimelineCardView({
       </TimelineCardContent>
 
       <TimelineCardActions>
-        {canManageTodos && showStatusAction ? (
+        {canManageTodos && showStatusAction && !todo.archived ? (
           <Popover open={statusOpen} onOpenChange={onStatusOpenChange}>
             <PopoverTrigger asChild onClick={event => event.stopPropagation()}>
               <Button variant="outline" size="sm" className="flex items-center gap-1.5">
@@ -225,7 +241,7 @@ export function TodoTimelineCardView({
           </Popover>
         ) : null}
 
-        {canManageTodos ? (
+        {canManageTodos && !todo.archived ? (
           <TimelineCardActionButton
             icon={isAssignedToMe ? UserCheck : UserPlus}
             label={isAssignedToMe ? labels.assignedToMe : labels.assignToMe}

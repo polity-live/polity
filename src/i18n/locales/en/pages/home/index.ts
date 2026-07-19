@@ -30,6 +30,21 @@ export const homePageTranslations = {
       title: 'Example network flow',
       description: 'Groups, events, rights, and decision paths shown as a navigable graph.',
       panelTitle: 'Amendment route',
+      nodes: {
+        stateParty: 'State Party',
+        localBranch: 'Local Branch North',
+        policyCommittee: 'Policy Committee',
+        partyCongress: 'Party Congress',
+        parliamentaryGroup: 'Parliamentary Group',
+        publicCommitteeHearing: 'Public Committee Hearing',
+        parliamentaryGroupMeeting: 'Parliamentary Group Meeting',
+        hearingLocation: 'Parliament, Room 2.114',
+        meetingLocation: 'Parliamentary group office',
+        hearingDescription:
+          'A hearing where the parliamentary group presents the mandate and receives public feedback.',
+        meetingDescription:
+          'The parliamentary group prepares the motion package after party congress approval.',
+      },
     },
     sections: {
       features: {
@@ -137,16 +152,31 @@ export const homePageTranslations = {
           description:
             'The General Assembly added a public consultation slot for the climate budget amendment.',
           meta: 'Today, 10:30',
+          source: 'Budget Committee',
+          location: 'Berlin, Parliament',
+          status: 'scheduled',
+          stats: '128 participants',
+          tags: 'hearing|budget|climate',
         },
         changeRequest: {
           title: 'Change request opened',
           description: 'A working group proposed a measurable milestone before the final vote.',
           meta: '2 comments',
+          source: 'Policy Committee',
+          location: 'Potsdam',
+          status: 'event final closing vote',
+          stats: '2 comments',
+          tags: 'amendment|workflow',
         },
         vote: {
           title: 'Final vote approaching',
           description: 'Members can review the latest version and prepare their vote.',
           meta: '74% support',
+          source: 'Party Congress',
+          location: 'Leipzig',
+          status: 'opening soon',
+          stats: '74% support',
+          tags: 'vote|agenda',
         },
       },
     },

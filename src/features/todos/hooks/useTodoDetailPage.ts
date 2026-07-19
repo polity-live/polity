@@ -4,27 +4,39 @@ import { useTodoMutations } from './useTodoMutations';
 import { TodoFormData, TodoStatus, TodoPriority } from '../types/todo.types';
 import { useAuth } from '@/providers/auth-provider';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
+import { resolveTodoDeadlineTimestamp, todoDeadlineToFormValues } from '../utils/todoFormatters';
+import { useTodoDiscussion } from './useTodoDiscussion';
+import { usePermissions } from '@/zero/rbac';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { useTodoActions } from '@/zero/todos/useTodoActions';
 
 export function useTodoDetailPage(todoId: string) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
   const { updateTodo } = useTodoMutations();
+  const { archiveTodo, unarchiveTodo } = useTodoActions();
   const { user } = useAuth();
 
   const { todo, assignments } = useTodoState({ todoId });
+  const discussion = useTodoDiscussion(todo);
+  const { canManage } = usePermissions({ groupId: todo?.group_id ?? undefined });
 
   // Visibility access check: creator or assignee can access private todos
   const isCreatorOrAssignee =
     !!user?.id &&
     (todo?.creator_id === user.id || (assignments ?? []).some(a => a.user_id === user.id));
   const canAccess = checkEntityAccess(todo?.visibility, !!user?.id, isCreatorOrAssignee);
+  const canManageTodos = Boolean(
+    user?.id && (todo?.group_id ? canManage('groupTodos') : todo?.creator_id === user.id)
+  );
 
   const [formData, setFormData] = useState<TodoFormData>({
     title: todo?.title || '',
     description: todo?.description || '',
     status: (todo?.status || 'pending') as TodoStatus,
     priority: (todo?.priority || 'medium') as TodoPriority,
-    dueDate: todo?.due_date ? new Date(todo.due_date).toISOString().split('T')[0] : '',
+    ...todoDeadlineToFormValues(todo?.due_date),
   });
 
   useEffect(() => {
@@ -34,7 +46,7 @@ export function useTodoDetailPage(todoId: string) {
         description: todo.description || '',
         status: (todo.status || 'pending') as TodoStatus,
         priority: (todo.priority || 'medium') as TodoPriority,
-        dueDate: todo.due_date ? new Date(todo.due_date).toISOString().split('T')[0] : '',
+        ...todoDeadlineToFormValues(todo.due_date),
       });
     }
   }, [todo]);
@@ -48,7 +60,7 @@ export function useTodoDetailPage(todoId: string) {
       description: formData.description,
       status: formData.status,
       priority: formData.priority,
-      due_date: formData.dueDate ? new Date(formData.dueDate).getTime() : null,
+      due_date: resolveTodoDeadlineTimestamp(todo.due_date, formData.dueDate, formData.dueTime),
     };
 
     if (formData.status === 'completed' && todo.status !== 'completed') {
@@ -71,7 +83,7 @@ export function useTodoDetailPage(todoId: string) {
       description: todo.description || '',
       status: (todo.status || 'pending') as TodoStatus,
       priority: (todo.priority || 'medium') as TodoPriority,
-      dueDate: todo.due_date ? new Date(todo.due_date).toISOString().split('T')[0] : '',
+      ...todoDeadlineToFormValues(todo.due_date),
     });
     setIsEditing(false);
   };
@@ -82,6 +94,26 @@ export function useTodoDetailPage(todoId: string) {
 
   const handleFormUpdate = (updates: Partial<TodoFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  const handleArchive = async () => {
+    if (!todo || !canManageTodos || todo.status !== 'completed') return;
+    setIsArchiving(true);
+    try {
+      await waitForClientApply(archiveTodo(todo.id));
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleUnarchive = async () => {
+    if (!todo || !canManageTodos) return;
+    setIsArchiving(true);
+    try {
+      await waitForClientApply(unarchiveTodo(todo.id));
+    } finally {
+      setIsArchiving(false);
+    }
   };
 
   return {
@@ -95,5 +127,10 @@ export function useTodoDetailPage(todoId: string) {
     handleCancel,
     handleTitleChange,
     handleFormUpdate,
+    discussion,
+    canManageTodos,
+    isArchiving,
+    handleArchive,
+    handleUnarchive,
   };
 }

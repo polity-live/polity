@@ -140,4 +140,5 @@ export {
 export { rbacQueries } from './queries';
 
 // Hooks
-export { useCreatableGroupIds, usePermissions } from './usePermissions';
+export { useCreatableGroupIds, usePermissionEvaluator, usePermissions } from './usePermissions';
+export type { PermissionEvaluator } from './usePermissions';

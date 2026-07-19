@@ -7,6 +7,10 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 /**
  * Action hook for event mutations.
@@ -19,18 +23,19 @@ export function useEventActions() {
 
   // ── CRUD ───────────────────────────────────────────────────────────
   const createEvent = useCallback(
-    (args: Parameters<typeof mutators.events.create>[0]) => {
+    (args: Parameters<typeof mutators.events.create>[0], options?: CreationMutationOptions) => {
       const result = zero.mutate(mutators.events.create(args));
-      toast.success(t('features.events.toasts.created'));
-      onServerError(result, () => toast.error(t('features.events.toasts.createFailed')));
+      trackCreationUnlessSilent(result, 'event', options, args.id);
       return result;
     },
     [zero, t]
   );
 
   const createFullEvent = useCallback(
-    (args: Parameters<typeof mutators.events.createFull>[0]) => {
-      return zero.mutate(mutators.events.createFull(args));
+    (args: Parameters<typeof mutators.events.createFull>[0], options?: CreationMutationOptions) => {
+      const result = zero.mutate(mutators.events.createFull(args));
+      trackCreationUnlessSilent(result, 'event', options, args.event.id);
+      return result;
     },
     [zero]
   );
@@ -55,14 +60,12 @@ export function useEventActions() {
   );
 
   const createOfflineParticipant = useCallback(
-    (args: Parameters<typeof mutators.events.createOfflineParticipant>[0]) => {
+    (
+      args: Parameters<typeof mutators.events.createOfflineParticipant>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.events.createOfflineParticipant(args));
-      toast.success(translateText('generated.inline.1273_offline_participant_added_2faf79cd'));
-      onServerError(result, () =>
-        toast.error(
-          translateText('generated.inline.1274_failed_to_add_offline_participant_268b41fe')
-        )
-      );
+      trackCreationUnlessSilent(result, 'participant', options, args.id);
       return result;
     },
     [zero]
@@ -121,10 +124,12 @@ export function useEventActions() {
   );
 
   const inviteParticipant = useCallback(
-    (args: Parameters<typeof mutators.events.inviteParticipant>[0]) => {
+    (
+      args: Parameters<typeof mutators.events.inviteParticipant>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.events.inviteParticipant(args));
-      toast.success(t('features.events.toasts.participantInvited'));
-      onServerError(result, () => toast.error(t('features.events.toasts.inviteFailed')));
+      trackCreationUnlessSilent(result, 'invitation', options, args.id);
       return result;
     },
     [zero, t]
@@ -189,10 +194,9 @@ export function useEventActions() {
 
   // ── Roles ──────────────────────────────────────────────────────────
   const createRole = useCallback(
-    (args: Parameters<typeof mutators.events.createRole>[0]) => {
+    (args: Parameters<typeof mutators.events.createRole>[0], options?: CreationMutationOptions) => {
       const result = zero.mutate(mutators.events.createRole(args));
-      toast.success(t('features.events.toasts.roleCreated'));
-      onServerError(result, () => toast.error(t('features.events.toasts.roleCreateFailed')));
+      trackCreationUnlessSilent(result, 'role', options, args.id);
       return result;
     },
     [zero, t]
@@ -219,10 +223,12 @@ export function useEventActions() {
 
   // ── Event Exceptions ───────────────────────────────────────────────
   const createException = useCallback(
-    (args: Parameters<typeof mutators.events.createException>[0]) => {
+    (
+      args: Parameters<typeof mutators.events.createException>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.events.createException(args));
-      toast.success(t('features.events.toasts.exceptionCreated'));
-      onServerError(result, () => toast.error(t('features.events.toasts.exceptionCreateFailed')));
+      trackCreationUnlessSilent(result, 'eventException', options, args.id);
       return result;
     },
     [zero, t]

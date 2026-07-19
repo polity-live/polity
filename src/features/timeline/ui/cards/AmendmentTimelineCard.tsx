@@ -182,7 +182,9 @@ export function AmendmentTimelineCard({
           {
             icon: Users,
             value: amendment.collaboratorCount,
-            label: t('features.timeline.cards.amendment.collaborators'),
+            label: t('features.timeline.cards.amendment.collaborators', {
+              count: amendment.collaboratorCount,
+            }),
           },
         ]
       : collaboration.collaboratorCount !== undefined
@@ -190,7 +192,9 @@ export function AmendmentTimelineCard({
             {
               icon: Users,
               value: collaboration.collaboratorCount,
-              label: t('features.timeline.cards.amendment.collaborators'),
+              label: t('features.timeline.cards.amendment.collaborators', {
+                count: collaboration.collaboratorCount,
+              }),
             },
           ]
         : []),
@@ -199,7 +203,9 @@ export function AmendmentTimelineCard({
           {
             icon: Building,
             value: amendment.supportingGroupsCount,
-            label: t('features.timeline.cards.amendment.supportingGroups'),
+            label: t('features.timeline.cards.amendment.supportingGroups', {
+              count: amendment.supportingGroupsCount,
+            }),
           },
         ]
       : []),
@@ -208,7 +214,9 @@ export function AmendmentTimelineCard({
           {
             icon: GitPullRequest,
             value: amendment.changeRequestCount,
-            label: t('features.timeline.cards.amendment.changeRequests'),
+            label: t('features.timeline.cards.amendment.changeRequests', {
+              count: amendment.changeRequestCount,
+            }),
           },
         ]
       : []),

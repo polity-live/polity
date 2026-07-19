@@ -4,6 +4,10 @@ import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 /**
  * Action hook for agenda mutations.
@@ -16,19 +20,24 @@ export function useAgendaActions() {
 
   // ── Agenda Items ───────────────────────────────────────────────────
   const createAgendaItem = useCallback(
-    (args: Parameters<typeof mutators.agendas.createAgendaItem>[0]) => {
+    (
+      args: Parameters<typeof mutators.agendas.createAgendaItem>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.agendas.createAgendaItem(args));
-      toast.success(t('common.agendaToasts.itemCreated'));
-      onServerError(result, () => toast.error(t('common.agendaToasts.itemCreateFailed')));
+      trackCreationUnlessSilent(result, 'agendaItem', options, args.id);
       return result;
     },
     [t, zero]
   );
 
   const createFullAgendaItem = useCallback(
-    (args: Parameters<typeof mutators.agendas.createFull>[0]) => {
+    (
+      args: Parameters<typeof mutators.agendas.createFull>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.agendas.createFull(args));
-      onServerError(result, () => toast.error(t('common.agendaToasts.itemCreateFailed')));
+      trackCreationUnlessSilent(result, 'agendaItem', options, args.agenda_items[0]?.id);
       return result;
     },
     [t, zero]
@@ -64,10 +73,12 @@ export function useAgendaActions() {
 
   // ── Speaker List ───────────────────────────────────────────────────
   const addSpeaker = useCallback(
-    (args: Parameters<typeof mutators.agendas.addSpeaker>[0]) => {
+    (
+      args: Parameters<typeof mutators.agendas.addSpeaker>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.agendas.addSpeaker(args));
-      toast.success(t('common.agendaToasts.speakerAdded'));
-      onServerError(result, () => toast.error(t('common.agendaToasts.speakerAddFailed')));
+      trackCreationUnlessSilent(result, 'speaker', options, args.id);
       return result;
     },
     [t, zero]

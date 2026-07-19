@@ -9,6 +9,10 @@ import { mutators } from '../mutators';
 import { onServerError, toMutationError } from '../mutate-with-server-check';
 import { DEFAULT_GROUP_ROLES } from '../rbac/constants';
 import { handleMutationError } from '../rbac/handleMutationError';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 /**
  * Action hook for group mutations.
@@ -21,20 +25,19 @@ export function useGroupActions() {
 
   // ── CRUD ───────────────────────────────────────────────────────────
   const createGroup = useCallback(
-    (args: Parameters<typeof mutators.groups.create>[0]) => {
+    (args: Parameters<typeof mutators.groups.create>[0], options?: CreationMutationOptions) => {
       const result = zero.mutate(mutators.groups.create(args));
-      toast.success(t('features.groups.toasts.created'));
-      onServerError(result, msg =>
-        handleMutationError(toMutationError(msg), t('features.groups.toasts.createFailed'), t)
-      );
+      trackCreationUnlessSilent(result, 'group', options, args.id);
       return result;
     },
     [zero, t]
   );
 
   const createFullGroup = useCallback(
-    (args: Parameters<typeof mutators.groups.createFull>[0]) => {
-      return zero.mutate(mutators.groups.createFull(args));
+    (args: Parameters<typeof mutators.groups.createFull>[0], options?: CreationMutationOptions) => {
+      const result = zero.mutate(mutators.groups.createFull(args));
+      trackCreationUnlessSilent(result, 'group', options, args.group.id);
+      return result;
     },
     [zero]
   );
@@ -70,12 +73,12 @@ export function useGroupActions() {
   );
 
   const createOfflineMember = useCallback(
-    (args: Parameters<typeof mutators.groups.createOfflineMember>[0]) => {
+    (
+      args: Parameters<typeof mutators.groups.createOfflineMember>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.groups.createOfflineMember(args));
-      toast.success(translateText('generated.inline.1280_offline_member_added_53457a7c'));
-      onServerError(result, msg =>
-        handleMutationError(toMutationError(msg), 'Failed to add offline member', t)
-      );
+      trackCreationUnlessSilent(result, 'member', options, args.id);
       return result;
     },
     [zero]
@@ -155,12 +158,12 @@ export function useGroupActions() {
   );
 
   const inviteMember = useCallback(
-    (args: Parameters<typeof mutators.groups.inviteMember>[0]) => {
+    (
+      args: Parameters<typeof mutators.groups.inviteMember>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.groups.inviteMember(args));
-      toast.success(t('features.groups.toasts.invitationSent'));
-      onServerError(result, msg =>
-        handleMutationError(toMutationError(msg), t('features.groups.toasts.inviteFailed'), t)
-      );
+      trackCreationUnlessSilent(result, 'invitation', options, args.id);
       return result;
     },
     [zero]
@@ -183,12 +186,12 @@ export function useGroupActions() {
   );
 
   const inviteGuest = useCallback(
-    (args: Parameters<typeof mutators.groups.inviteGuest>[0]) => {
+    (
+      args: Parameters<typeof mutators.groups.inviteGuest>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.groups.inviteGuest(args));
-      toast.success(translateText('generated.inline.1284_guest_invitation_sent_dd6015e7'));
-      onServerError(result, msg =>
-        handleMutationError(toMutationError(msg), 'Failed to invite guest', t)
-      );
+      trackCreationUnlessSilent(result, 'invitation', options, args.id);
       return result;
     },
     [zero]
@@ -344,12 +347,9 @@ export function useGroupActions() {
 
   // ── Roles ──────────────────────────────────────────────────────────
   const createRole = useCallback(
-    (args: Parameters<typeof mutators.groups.createRole>[0]) => {
+    (args: Parameters<typeof mutators.groups.createRole>[0], options?: CreationMutationOptions) => {
       const result = zero.mutate(mutators.groups.createRole(args));
-      toast.success(t('features.groups.toasts.roleCreated'));
-      onServerError(result, msg =>
-        handleMutationError(toMutationError(msg), t('features.groups.toasts.roleCreateFailed'), t)
-      );
+      trackCreationUnlessSilent(result, 'role', options, args.id);
       return result;
     },
     [zero]
@@ -486,16 +486,12 @@ export function useGroupActions() {
   );
 
   const createRoleHolderHistory = useCallback(
-    (args: Parameters<typeof mutators.groups.createRoleHolderHistory>[0]) => {
+    (
+      args: Parameters<typeof mutators.groups.createRoleHolderHistory>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.groups.createRoleHolderHistory(args));
-      toast.success(t('features.groups.toasts.roleHolderHistoryCreated'));
-      onServerError(result, msg =>
-        handleMutationError(
-          toMutationError(msg),
-          t('features.groups.toasts.roleHolderHistoryCreateFailed'),
-          t
-        )
-      );
+      trackCreationUnlessSilent(result, 'roleHolder', options, args.id);
       return result;
     },
     [zero]

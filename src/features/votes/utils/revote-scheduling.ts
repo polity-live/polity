@@ -1,4 +1,5 @@
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { formatLocalDateInput } from '@/features/shared/logic/localDateTime';
 type TermDuration = 'monthly' | 'quarterly' | 'yearly' | 'biannual';
 
 interface ScheduleRevoteParams {
@@ -115,10 +116,10 @@ export async function scheduleRoleRevote(params: ScheduleRevoteParams): Promise<
 
 function addYears(timestamp: number, years: number) {
   const next = new Date(timestamp);
-  next.setUTCFullYear(next.getUTCFullYear() + years);
+  next.setFullYear(next.getFullYear() + years);
   return next.getTime();
 }
 
 function formatDate(timestamp: number) {
-  return new Date(timestamp).toISOString().slice(0, 10);
+  return formatLocalDateInput(timestamp);
 }

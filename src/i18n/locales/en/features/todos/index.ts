@@ -36,6 +36,10 @@ export const todosTranslations = {
     assignFailed: 'Failed to assign user',
     userUnassigned: 'User unassigned',
     unassignFailed: 'Failed to unassign user',
+    archived: 'Todo archived',
+    archiveFailed: 'Failed to archive todo',
+    unarchived: 'Todo restored',
+    unarchiveFailed: 'Failed to restore todo',
   },
   kanban: {
     toDo: 'To Do',
@@ -54,6 +58,7 @@ export const todosTranslations = {
     completed: 'Completed',
     cancelled: 'Cancelled',
     overdue: 'Overdue',
+    archived: 'Archived',
   },
   priority: {
     title: 'Priority',
@@ -75,6 +80,7 @@ export const todosTranslations = {
     inDays: 'In {{count}} days',
     daysAgo: '{{count}} days ago',
     yesterday: 'Yesterday',
+    timeOptional: 'Time (Optional)',
   },
   filters: {
     all: 'All Tasks',
@@ -108,6 +114,17 @@ export const todosTranslations = {
     duplicate: 'Duplicate',
     markComplete: 'Mark as complete',
     markIncomplete: 'Mark as incomplete',
+    archive: 'Archive',
+    unarchive: 'Restore',
+  },
+  archive: {
+    showArchive: 'Show archive',
+    showActive: 'Show active todos',
+    confirmTitle: 'Archive todo?',
+    confirmDescription:
+      'The todo will disappear from normal views and can be restored from the archive.',
+    cancel: 'Cancel',
+    empty: 'No archived todos found',
   },
   assignee: {
     title: 'Assignee',

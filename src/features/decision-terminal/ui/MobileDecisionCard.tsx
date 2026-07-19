@@ -181,7 +181,7 @@ function ElectionCandidateRows({ decision }: { decision: DecisionItem }) {
                 {candidate.isWinner ? (
                   <BadgeControl tone="warning" size="tiny" className="gap-1">
                     <Crown className="h-3 w-3" />
-                    {translateText('generated.inline.0352_winner_8fbf76a8', 'Winner')}
+                    {translateText('features.timeline.terminal.winner', 'Winner')}
                   </BadgeControl>
                 ) : null}
               </div>

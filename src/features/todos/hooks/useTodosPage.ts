@@ -14,9 +14,9 @@ export function useTodosPage() {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
   const { updateTodo } = useTodoMutations();
-  const { allTodos } = useTodoState({});
+  const { allTodos, archivedTodos } = useTodoState({ includeArchived: true });
 
-  const todosTyped = allTodos;
+  const todosTyped = useMemo(() => [...allTodos, ...archivedTodos], [allTodos, archivedTodos]);
 
   const {
     fields,

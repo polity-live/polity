@@ -102,14 +102,16 @@ export function GroupTimelineCard({
     {
       icon: Users,
       value: group.memberCount ?? membership.memberCount ?? 0,
-      label: t('features.timeline.cards.group.members'),
+      label: t('features.timeline.cards.group.members', {
+        count: group.memberCount ?? membership.memberCount ?? 0,
+      }),
     },
     ...(group.eventCount !== undefined && group.eventCount > 0
       ? [
           {
             icon: Calendar,
             value: group.eventCount,
-            label: t('features.timeline.cards.group.events'),
+            label: t('features.timeline.cards.group.events', { count: group.eventCount }),
           },
         ]
       : []),
@@ -118,7 +120,9 @@ export function GroupTimelineCard({
           {
             icon: ScrollText,
             value: group.amendmentCount,
-            label: t('features.timeline.cards.group.amendments'),
+            label: t('features.timeline.cards.group.amendments', {
+              count: group.amendmentCount,
+            }),
           },
         ]
       : []),

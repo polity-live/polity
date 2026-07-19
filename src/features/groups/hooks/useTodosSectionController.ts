@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useTodoFilters } from '@/features/todos/hooks/useTodoFilters';
 import type { Todo } from '@/features/todos/types/todo.types';
@@ -16,11 +16,18 @@ export function useTodosSectionController({
 }: UseTodosSectionControllerProps) {
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [archiveMode, setArchiveMode] = useState<'active' | 'archived'>('active');
+
+  const archivedCount = useMemo(
+    () => todos.filter(todo => Boolean(todo.archived_at)).length,
+    [todos]
+  );
 
   const filters = useTodoFilters(todos, undefined, {
     storageKey,
     groupId,
     includeStatusQuickFilter: true,
+    archiveMode,
   });
 
   const handleTodoClick = (todo: Todo) => {
@@ -34,5 +41,8 @@ export function useTodosSectionController({
     selectedTodo,
     onDetailDialogOpenChange: setIsDetailDialogOpen,
     onTodoClick: handleTodoClick,
+    archiveMode,
+    setArchiveMode,
+    archivedCount,
   };
 }

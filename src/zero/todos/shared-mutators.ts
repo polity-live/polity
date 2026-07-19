@@ -9,6 +9,8 @@ import {
   updateTodoSchema,
   deleteTodoSchema,
   toggleCompleteTodoSchema,
+  archiveTodoSchema,
+  unarchiveTodoSchema,
   createTodoAssignmentSchema,
   deleteTodoAssignmentSchema,
 } from './schema';
@@ -93,10 +95,24 @@ export const todoSharedMutators = {
     const now = Date.now();
     await tx.mutate.todo.insert({
       ...args,
+      archived_at: null,
       creator_id: ctx.userID,
       created_at: now,
       updated_at: now,
     });
+
+    if (tx.location === 'client') {
+      await tx.mutate.thread.insert({
+        id: args.id,
+        todo_id: args.id,
+        user_id: ctx.userID,
+        status: 'open',
+        upvotes: 0,
+        downvotes: 0,
+        created_at: now,
+        updated_at: now,
+      });
+    }
   }),
 
   createFull: defineMutator(createTodoFullMutatorSchema, async ({ tx, ctx, args }) => {
@@ -108,11 +124,42 @@ export const todoSharedMutators = {
     await authorizeTodoOwnerOrGroupManage(tx, ctx, args.id, 'update');
 
     const { id, ...fields } = args;
+    const existing = await loadTodo(tx, id);
     await tx.mutate.todo.update({
       id,
       ...fields,
+      ...(existing.archived_at && fields.status && fields.status !== 'completed'
+        ? { archived_at: null }
+        : {}),
       updated_at: Date.now(),
     });
+  }),
+
+  archive: defineMutator(archiveTodoSchema, async ({ tx, ctx, args }) => {
+    const existing = await loadTodo(tx, args.id);
+    await authorizeTodoOwnerOrGroupManage(tx, ctx, args.id, 'manage');
+
+    if (existing.status !== 'completed') {
+      throw new Error('Only completed todos can be archived');
+    }
+
+    if (existing.archived_at) {
+      return;
+    }
+
+    const now = Date.now();
+    await tx.mutate.todo.update({ id: args.id, archived_at: now, updated_at: now });
+  }),
+
+  unarchive: defineMutator(unarchiveTodoSchema, async ({ tx, ctx, args }) => {
+    const existing = await loadTodo(tx, args.id);
+    await authorizeTodoOwnerOrGroupManage(tx, ctx, args.id, 'manage');
+
+    if (!existing.archived_at) {
+      return;
+    }
+
+    await tx.mutate.todo.update({ id: args.id, archived_at: null, updated_at: Date.now() });
   }),
 
   // Delete a todo
@@ -164,6 +211,7 @@ export const todoSharedMutators = {
       id: args.id,
       status: isCompleting ? 'completed' : 'open',
       completed_at: isCompleting ? now : 0,
+      archived_at: null,
       updated_at: now,
     });
   }),

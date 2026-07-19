@@ -10,6 +10,7 @@ import {
   FormControlSelectValue,
   FormControlTextarea,
 } from '@/features/shared/ui/form';
+import { TodoDeadlineInput } from '@/features/create/ui/inputs/TodoDeadlineInput';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -29,10 +30,12 @@ interface AddTodoDialogViewProps {
   description: string;
   priority: string;
   dueDate: string;
+  dueTime: string;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onPriorityChange: (value: string) => void;
   onDueDateChange: (value: string) => void;
+  onDueTimeChange: (value: string) => void;
   onSubmit: (event: React.FormEvent) => void;
 }
 
@@ -43,10 +46,12 @@ export function AddTodoDialogView({
   description,
   priority,
   dueDate,
+  dueTime,
   onTitleChange,
   onDescriptionChange,
   onPriorityChange,
   onDueDateChange,
+  onDueTimeChange,
   onSubmit,
 }: AddTodoDialogViewProps) {
   return (
@@ -118,17 +123,14 @@ export function AddTodoDialogView({
                 </FormControlSelectContent>
               </FormControlSelect>
             </div>
-            <div className="space-y-2">
-              <FormControlLabel htmlFor="todo-dueDate">
-                {translateText('generated.inline.0642_due_date_optional_5908e2f2')}
-              </FormControlLabel>
-              <FormControlInput
-                id="todo-dueDate"
-                type="date"
-                value={dueDate}
-                onChange={event => onDueDateChange(event.target.value)}
-              />
-            </div>
+            <TodoDeadlineInput
+              dueDate={dueDate}
+              dueTime={dueTime}
+              onChange={values => {
+                onDueDateChange(values.dueDate);
+                onDueTimeChange(values.dueTime);
+              }}
+            />
           </div>
           <DialogFooter>
             <Button type="submit">

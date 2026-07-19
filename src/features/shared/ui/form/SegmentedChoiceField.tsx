@@ -28,11 +28,11 @@ interface SegmentedChoiceFieldProps<TValue extends string = string> {
 }
 
 const selectedToneClasses: Record<SegmentedChoiceTone, string> = {
-  neutral: getBadgeToneClasses('neutral'),
-  success: getBadgeToneClasses('success'),
-  warning: getBadgeToneClasses('warning'),
-  destructive: getBadgeToneClasses('danger'),
-  accent: getBadgeToneClasses('accent'),
+  neutral: `${getBadgeToneClasses('neutral')} hover:!bg-[var(--badge-neutral-bg)]`,
+  success: `${getBadgeToneClasses('success')} hover:!bg-[var(--badge-success-bg)]`,
+  warning: `${getBadgeToneClasses('warning')} hover:!bg-[var(--badge-warning-bg)]`,
+  destructive: `${getBadgeToneClasses('danger')} hover:!bg-[var(--badge-danger-bg)]`,
+  accent: `${getBadgeToneClasses('accent')} hover:!bg-[var(--badge-accent-bg)]`,
 };
 
 export function SegmentedChoiceField<TValue extends string = string>({

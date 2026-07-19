@@ -145,11 +145,24 @@ export const timelineTranslations = {
     groups: 'groups',
     viewProfile: 'View Profile',
     subscribers: 'Subscribers',
+    subscribers_one: 'Subscriber',
+    subscribers_other: 'Subscribers',
     comments: 'Comments',
+    comments_one: 'Comment',
+    comments_other: 'Comments',
     likes: 'Likes',
     views: 'Views',
     interested: 'Interested',
     videoUnavailable: 'Video unavailable',
+    voteStatus: {
+      open: 'OPEN',
+      closing_soon: 'CLOSING SOON',
+      last_hour: 'LAST HOUR',
+      final_minutes: 'FINAL MINUTES',
+      passed: 'PASSED',
+      failed: 'FAILED',
+      tied: 'TIED',
+    },
     // Election card translations
     election: {
       status: {
@@ -194,8 +207,14 @@ export const timelineTranslations = {
     // Event card translations
     event: {
       participants: 'Participants',
+      participants_one: 'Participant',
+      participants_other: 'Participants',
       elections: 'Elections',
+      elections_one: 'Election',
+      elections_other: 'Elections',
       amendments: 'Amendments',
+      amendments_one: 'Amendment',
+      amendments_other: 'Amendments',
       attending: 'Attending',
       invited: 'Invited',
       pending: 'Pending',
@@ -208,8 +227,14 @@ export const timelineTranslations = {
     // Group card translations
     group: {
       members: 'Members',
+      members_one: 'Member',
+      members_other: 'Members',
       events: 'Events',
+      events_one: 'Event',
+      events_other: 'Events',
       amendments: 'Amendments',
+      amendments_one: 'Amendment',
+      amendments_other: 'Amendments',
       member: 'Member',
       invited: 'Invited',
       pending: 'Pending',
@@ -223,8 +248,14 @@ export const timelineTranslations = {
     // Amendment card translations
     amendment: {
       collaborators: 'Collaborators',
+      collaborators_one: 'Collaborator',
+      collaborators_other: 'Collaborators',
       supportingGroups: 'Supporting Groups',
+      supportingGroups_one: 'Supporting Group',
+      supportingGroups_other: 'Supporting Groups',
       changeRequests: 'Change Requests',
+      changeRequests_one: 'Change Request',
+      changeRequests_other: 'Change Requests',
       collaborator: 'Collaborator',
       invited: 'Invited',
       pending: 'Pending',
@@ -333,6 +364,7 @@ export const timelineTranslations = {
     oppose: 'Oppose',
     abstain: 'Abstain',
     indicationShort: 'Ind',
+    finalVote: 'Final Vote',
     summary: 'SUMMARY',
     problem: 'PROBLEM',
     proposal: 'PROPOSAL',

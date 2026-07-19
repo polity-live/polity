@@ -4,6 +4,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { StatusBadge, type BadgeTone } from '@/features/shared/ui/status';
 import { Button, type ButtonProps } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 import { Check, Loader2, Minus, X } from 'lucide-react';
 
 export type VotingChoiceValue = 'accept' | 'reject' | 'abstain';
@@ -207,9 +208,9 @@ export function VotingResultBadge({
       {showIcon && Icon ? <Icon className="mr-1 h-3 w-3" /> : null}
       <span>{label}</span>
       {winnerName ? (
-        <span className="ml-1 truncate font-normal normal-case" title={winnerName}>
-          {winnerName}
-        </span>
+        <TooltipHint content={winnerName}>
+          <span className="ml-1 truncate font-normal normal-case">{winnerName}</span>
+        </TooltipHint>
       ) : null}
       {percentage !== undefined ? <span className="ml-1 font-normal">{percentage}%</span> : null}
     </StatusBadge>

@@ -27,6 +27,7 @@ interface CreateTextFieldDescriptor extends CreateDescriptorBase {
   disabled?: boolean;
   min?: string | number;
   max?: string | number;
+  step?: string | number;
   maxLength?: number;
   rows?: number;
   multiline?: boolean;

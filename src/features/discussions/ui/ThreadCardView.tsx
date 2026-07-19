@@ -61,27 +61,31 @@ export function ThreadCardView({
         <div className="flex gap-4">
           {/* Vote buttons */}
           <div className="flex flex-col items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`h-8 w-8 p-0 ${hasUpvoted ? featureThemeClassName('discussionsCommentTreeWarningText') : ''}`}
-              onClick={() => handleVote(1)}
-            >
-              <ArrowUp className="h-4 w-4" />
-            </Button>
+            {userId ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-8 w-8 p-0 ${hasUpvoted ? featureThemeClassName('discussionsCommentTreeWarningText') : ''}`}
+                onClick={() => handleVote(1)}
+              >
+                <ArrowUp className="h-4 w-4" />
+              </Button>
+            ) : null}
             <span
               className={`text-sm font-semibold ${score > 0 ? featureThemeClassName('discussionsCommentTreeWarningText') : score < 0 ? featureThemeClassName('discussionsCommentTreeInfoText') : ''}`}
             >
               {score}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`h-8 w-8 p-0 ${hasDownvoted ? featureThemeClassName('discussionsCommentTreeInfoText') : ''}`}
-              onClick={() => handleVote(-1)}
-            >
-              <ArrowDown className="h-4 w-4" />
-            </Button>
+            {userId ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-8 w-8 p-0 ${hasDownvoted ? featureThemeClassName('discussionsCommentTreeInfoText') : ''}`}
+                onClick={() => handleVote(-1)}
+              >
+                <ArrowDown className="h-4 w-4" />
+              </Button>
+            ) : null}
           </div>
 
           {/* Thread content */}
@@ -136,14 +140,14 @@ export function ThreadCardView({
           />
 
           {/* Add Comment */}
-          {!isCommenting && (
+          {userId && !isCommenting && (
             <Button variant="outline" onClick={() => setIsCommenting(true)} className="w-full">
               <MessageSquare className="mr-2 h-4 w-4" />
               {translateText('generated.inline.0396_add_comment_d89450c8')}
             </Button>
           )}
 
-          {isCommenting && (
+          {userId && isCommenting && (
             <div className="space-y-2 rounded-lg border p-4">
               <FormControlTextarea
                 placeholder={translateText('generated.inline.0397_write_your_comment_b1d820b5')}

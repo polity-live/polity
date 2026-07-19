@@ -61,7 +61,7 @@ export function ConversationItem({
             <div className="flex min-w-0 flex-1 items-center gap-1">
               {conversation.pinned && <Pin className="text-primary h-3.5 w-3.5 flex-shrink-0" />}
               <p className="truncate font-semibold">{display.name}</p>
-              {display.isCollective && (
+              {display.isEvent && (
                 <BadgeControl variant="secondary" size="xs" className="ml-1 flex-shrink-0">
                   {display.participantCount}
                 </BadgeControl>

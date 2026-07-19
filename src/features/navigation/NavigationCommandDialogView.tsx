@@ -19,6 +19,7 @@ import {
 } from '@/features/shared/ui/ui/command.tsx';
 import { getIconComponent } from '@/features/navigation/nav-items/icon-map.tsx';
 import { getShortcutForItem } from '@/features/navigation/nav-keyboard/keyboard-navigation.ts';
+import { useResolvedKeyboardShortcut } from '@/features/shared/keyboard/keyboard-shortcut';
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
 import { usePreloadCoordinator } from '@/zero/preloads';
 
@@ -58,10 +59,13 @@ function NavigationCommandItem({
   const IconComponent = getIconComponent(item.icon);
   const preloadContext = usePreloadCoordinator();
   const href = item.preloadTarget?.href ?? item.href;
+  const shortcut = getShortcutForItem(item.id);
+  const resolvedShortcut = useResolvedKeyboardShortcut(shortcut);
 
   return (
     <CommandItem
       key={item.id}
+      aria-keyshortcuts={resolvedShortcut?.ariaKeyShortcuts}
       onSelect={() => onSelect(item)}
       onMouseEnter={() => href && preloadContext?.beginIntent(href)}
       onMouseLeave={() => href && preloadContext?.cancelIntent(href)}
@@ -78,7 +82,7 @@ function NavigationCommandItem({
           </BadgeControl>
         )}
       </div>
-      <CommandShortcut>{getShortcutForItem(item.id).display}</CommandShortcut>
+      {resolvedShortcut ? <CommandShortcut>{resolvedShortcut.display}</CommandShortcut> : null}
     </CommandItem>
   );
 }

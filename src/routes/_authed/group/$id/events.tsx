@@ -16,6 +16,7 @@ function GroupEventsPage() {
   const { id } = Route.useParams();
   const gp = useGroupEventsPage(id);
   const { canCreate } = usePermissions({ groupId: id });
+  const canCreateEvents = canCreate('events');
 
   return (
     <div>
@@ -29,7 +30,7 @@ function GroupEventsPage() {
         title={gp.t('features.calendar.title')}
         headingMode="sr-only"
         actions={
-          canCreate('events') ? (
+          canCreateEvents ? (
             <Link to="/create/event" search={{ groupId: id }}>
               <Button size="sm">
                 <Plus className="mr-1 h-4 w-4" />
@@ -54,7 +55,7 @@ function GroupEventsPage() {
         allEvents={gp.events}
         onDateSelect={gp.setSelectedDate}
         onEventSelect={gp.onEventSelect}
-        onCreateEventRange={gp.onCreateEventRange}
+        onCreateEventRange={canCreateEvents ? gp.onCreateEventRange : undefined}
         listQueryScope={{ groupId: id, query: gp.searchQuery }}
       />
     </div>

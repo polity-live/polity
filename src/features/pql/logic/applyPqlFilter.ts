@@ -1,4 +1,5 @@
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { toLocalTimestamp } from '@/features/shared/logic/localDateTime';
 export type PqlScalar = string | number | boolean;
 
 export type PqlValue = PqlScalar | Date | null | undefined;
@@ -100,7 +101,10 @@ function normalizeRuleScalar<TItem, TFieldKey extends string>(
   }
 
   if (field.kind === 'date') {
-    const parsedValue = Date.parse(trimmedValue);
+    const parsedValue = /^\d{4}-\d{2}-\d{2}$/.test(trimmedValue)
+      ? toLocalTimestamp(trimmedValue)
+      : Date.parse(trimmedValue);
+    if (parsedValue === null) return value;
     return Number.isNaN(parsedValue) ? value : parsedValue;
   }
 

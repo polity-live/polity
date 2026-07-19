@@ -42,7 +42,7 @@ export const SubscriberStatsBar: React.FC<SubscriberStatsBarProps> = ({
   // Add member count if provided
   if (memberCount !== undefined) {
     displayStats.push({
-      label: translateText('generated.inline.0515_members_1cb449c1'),
+      label: translateText('components.labels.members', { count: memberCount }),
       value: memberCount >= 1000 ? formatNumberWithUnit(memberCount).value : memberCount,
       unit: memberCount >= 1000 ? formatNumberWithUnit(memberCount).unit : '',
     });
@@ -51,7 +51,7 @@ export const SubscriberStatsBar: React.FC<SubscriberStatsBarProps> = ({
   // Add collaborator count if provided
   if (collaboratorCount !== undefined) {
     displayStats.push({
-      label: translateText('generated.inline.0020_collaborators_6eb695e5'),
+      label: translateText('components.labels.collaborators', { count: collaboratorCount }),
       value:
         collaboratorCount >= 1000
           ? formatNumberWithUnit(collaboratorCount).value
@@ -63,7 +63,7 @@ export const SubscriberStatsBar: React.FC<SubscriberStatsBarProps> = ({
   // Add participant count if provided
   if (participantCount !== undefined) {
     displayStats.push({
-      label: translateText('generated.inline.0516_participants_cd56e083'),
+      label: translateText('components.labels.participants', { count: participantCount }),
       value:
         participantCount >= 1000 ? formatNumberWithUnit(participantCount).value : participantCount,
       unit: participantCount >= 1000 ? formatNumberWithUnit(participantCount).unit : '',
@@ -73,7 +73,9 @@ export const SubscriberStatsBar: React.FC<SubscriberStatsBarProps> = ({
   // Add amendment collaborations count if provided
   if (amendmentCollaborationsCount !== undefined) {
     displayStats.push({
-      label: translateText('generated.inline.0517_amendment_collab_7409231b'),
+      label: translateText('components.labels.amendmentCollaborations', {
+        count: amendmentCollaborationsCount,
+      }),
       value:
         amendmentCollaborationsCount >= 1000
           ? formatNumberWithUnit(amendmentCollaborationsCount).value
@@ -87,7 +89,7 @@ export const SubscriberStatsBar: React.FC<SubscriberStatsBarProps> = ({
 
   // Add subscriber count
   displayStats.push({
-    label: translateText('generated.inline.0518_subscribers_6f13df39'),
+    label: translateText('components.labels.subscribers', { count: subscriberCount }),
     value: subscriberCount >= 1000 ? formatNumberWithUnit(subscriberCount).value : subscriberCount,
     unit: subscriberCount >= 1000 ? formatNumberWithUnit(subscriberCount).unit : '',
   });

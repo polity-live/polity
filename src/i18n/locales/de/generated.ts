@@ -203,14 +203,14 @@ const generatedInlineTranslations: Record<string, string> = {
   '0044_amendment_e0b72231': 'Amendment:',
   '0044_einzelwahlen_c5379380': 'Einzelwahlen',
   '0044_search_users_by_name_or_handle_00f8d0a6': 'Search users by name or handle...',
-  '0045_active_2bb6b986': 'active',
+  '0045_active_2bb6b986': 'aktiv',
   '0045_all_6a720856': 'All',
   '0045_die_delegiertenversammlung_9744e078': 'die Delegiertenversammlung',
   '0045_role_61e4c27b': 'Role:',
   '0046_online_c3e839df': 'Online',
   '0046_pages_create_agendaitem_title_c019a31a': 'pages.create.agendaItem.title',
   '0046_previous_50f94286': 'Previous',
-  '0046_urgent_8d0cdea0': 'urgent',
+  '0046_urgent_8d0cdea0': 'dringend',
   '0047_delegiertenauftrag_5a165b38': 'Delegiertenauftrag',
   '0047_hybrid_8e01f6bc': 'Hybrid',
   '0047_ind_caba0e5d': 'IND',
@@ -359,8 +359,8 @@ const generatedInlineTranslations: Record<string, string> = {
   '0078_lock_editor_357aaa55': 'Lock Editor',
   '0078_modus_a7f116c3': 'Modus',
   '0078_no_roles_available_ba017ee7': 'No roles available.',
-  '0078_passed_271d60f4': 'Passed',
-  '0079_failed_09fef5d8': 'Failed',
+  '0078_passed_271d60f4': 'Angenommen',
+  '0079_failed_09fef5d8': 'Abgelehnt',
   '0079_konfiguration_faa93ceb': 'Konfiguration',
   '0079_no_roles_selected_3f84503b': 'No roles selected',
   '0079_unlock_editor_b60d9fb1': 'Unlock Editor',
@@ -368,9 +368,9 @@ const generatedInlineTranslations: Record<string, string> = {
   '0080_konkretes_f_lligkeitsdatum_d4cbe17b': 'Konkretes Fälligkeitsdatum',
   '0080_no_explicit_action_rights_are_assigned_throug_a897bc09':
     'No explicit action rights are assigned through the currently selected roles.',
-  '0080_tied_2e9807f6': 'Tied',
+  '0080_tied_2e9807f6': 'Unentschieden',
   '0081_abstimmungsergebnis_ea44fc12': 'Abstimmungsergebnis',
-  '0081_elected_27d35d1d': 'Elected',
+  '0081_elected_27d35d1d': 'Gewählt',
   '0081_gewaehlte_geschwistergruppe_fb3714e2': 'Gewaehlte Geschwistergruppe',
   '0081_save_roles_61bdd2b8': 'Save Roles',
   '0082_clones_8653e7c7': 'Clones (',
@@ -918,21 +918,21 @@ const generatedInlineTranslations: Record<string, string> = {
   '0211_groups_81b46c7e': 'groups):',
   '0212_removed_from_group_b1e83b77': 'Removed from Group',
   '0212_v_319af54a': ': v.',
-  '0213_hey_we_re_4a4765ae': "Hey! We're",
+  '0213_hey_we_re_4a4765ae': 'Hey! Wir sind',
   '0213_you_have_been_removed_from_groupname_e50d8fca': 'You have been removed from {{groupName}}',
   '0214_aria_kai_03dc3528': 'Aria & Kai',
   '0214_member_removed_f9078b1f': 'Member Removed',
   '0215_a_member_has_been_removed_from_groupname_7badeb49':
     'A member has been removed from {{groupName}}',
   '0215_and_we_re_here_to_help_you_navigate_polity_an_e4c4d58f':
-    ", and we're here to help you navigate Polity and make the most of all its features.",
+    ', und wir sind hier, um dir zu helfen, Polity zu erkunden und das Beste aus allen Funktionen herauszuholen.',
   '0216_member_left_group_1978def2': 'Member Left Group',
   '0216_whenever_you_need_assistance_tips_or_want_to__3d68725b':
-    'Whenever you need assistance, tips, or want to learn about groups, events, amendments, and more, just',
-  '0217_find_us_in_your_message_conversations_a1ecb063': 'find us in your message conversations',
+    'Wann immer du Hilfe, Tipps oder Informationen über Gruppen, Events, Anträge und mehr brauchst,',
+  '0217_find_us_in_your_message_conversations_a1ecb063': 'findest du uns in deinen Nachrichten',
   '0217_sendername_has_left_groupname_c75fe974': '{{senderName}} has left {{groupName}}',
   '0218_membership_request_bbfcdecb': 'Membership Request',
-  '0218_we_re_always_ready_to_help_788f161a': ". We're always ready to help!",
+  '0218_we_re_always_ready_to_help_788f161a': '. Wir sind immer bereit zu helfen!',
   '0219_loading_b04ba49f': 'Loading...',
   '0219_sendername_has_requested_to_join_groupname_547b42e2':
     '{{senderName}} has requested to join {{groupName}}',
@@ -1265,9 +1265,9 @@ const generatedInlineTranslations: Record<string, string> = {
   '0339_add_option_39780ac3': '+ Add option',
   '0339_sendername_has_booked_a_meeting_with_you_valu_365a4da6':
     '{{senderName}} has booked a meeting with you{{valuec6f3}} at {{meetingTime}}',
-  '0340_decision_terminal_22b93bd0': 'Decision Terminal',
+  '0340_decision_terminal_22b93bd0': 'Entscheidungsterminal',
   '0340_meeting_cancelled_a5e050bf': 'Meeting Cancelled',
-  '0341_search_decisions_b5f1fd2e': 'Search decisions',
+  '0341_search_decisions_b5f1fd2e': 'Entscheidungen suchen',
   '0341_sendername_has_cancelled_the_meeting_valuec6f_c2ffbabf':
     '{{senderName}} has cancelled the meeting{{valuec6f3}} at {{meetingTime}}',
   '0342_added_to_speaker_list_3ddeaeb0': 'Added to Speaker List',
@@ -1289,7 +1289,7 @@ const generatedInlineTranslations: Record<string, string> = {
     '{{agendaItemTitle}} is now active at {{eventTitle}}',
   '0348_choose_a_widget_for_this_decision_dashboard_f834fc83':
     'Choose a widget for this decision dashboard.',
-  '0349_no_matching_decisions_04f8c20a': 'No matching decisions.',
+  '0349_no_matching_decisions_04f8c20a': 'Keine passenden Entscheidungen.',
   '0349_voting_has_begun_4b41f90b': 'Voting Has Begun',
   '0350_average_turnout_99582121': 'Average turnout',
   '0350_voting_for_agendaitemtitle_has_started_value5_7499d1f8':
@@ -1314,7 +1314,7 @@ const generatedInlineTranslations: Record<string, string> = {
   '0357_election_result_5743abde': 'Election Result',
   '0358_sort_adc4e96a': 'Sort',
   '0358_winnername_has_been_elected_as_roletitle_7a95dc81':
-    '{{winnerName}} has been elected as {{roleTitle}}',
+    '{{winnerName}} wurde als {{roleTitle}} gewählt',
   '0359_limit_24d948e4': 'Limit',
   '0359_revote_scheduled_48676dfd': 'Revote Scheduled',
   '0360_a_revote_for_roletitle_has_been_scheduled_for_4e61e14b':
@@ -2810,7 +2810,7 @@ const generatedInlineTranslations: Record<string, string> = {
   '1162_open_online_meeting_link_ec74dc3b': 'Open online meeting link',
   '1163_book_meeting_1b8711e4': 'Book meeting',
   '1164_cancel_booking_c6085eb5': 'Cancel booking',
-  '1165_no_mapped_activity_yet_caf1290e': 'No mapped activity yet.',
+  '1165_no_mapped_activity_yet_caf1290e': 'Noch keine zugeordnete Aktivität.',
   '1166_map_is_loading_5299ec7c': 'Map is loading.',
   '1167_timeline_mode_8f6d2e57': 'Timeline mode',
   '1168_in_progress_f61eadaf': 'In Progress',
@@ -3073,7 +3073,7 @@ export const generatedTranslations = {
           activeRunDescription:
             'The forwarding lifecycle now follows the canonical process run, branch, and step records.',
           branchBadge: 'Branch',
-          branchCount: 'branch(es)',
+          branchCount: 'Textvarianten',
           branches: 'Branches',
           branchesDescription: 'Each branch keeps its own ordered step runs and resolution state.',
           confirmRetarget: 'Confirm retargeting',
@@ -3093,7 +3093,7 @@ export const generatedTranslations = {
           noGroupDecisions: 'No per-group decisions have been recorded yet.',
           noRunDescription:
             'Choose a start group and reachable target to create the first canonical process run.',
-          openTasks: 'open task(s)',
+          openTasks: 'offene Aufgaben',
           pathLegendHideHint: 'Hide legend',
           pathLegendShowHint: 'Show legend',
           pathNetworkDescription:
@@ -3120,7 +3120,7 @@ export const generatedTranslations = {
           stepApproved: 'Approved',
           stepPending: 'Pending',
           stepRejected: 'Rejected',
-          tasksNeedAttention: 'task(s) need attention',
+          tasksNeedAttention: 'Aufgaben brauchen Aufmerksamkeit',
           unknownGroup: 'Unknown group',
           unknownTarget: 'Unknown target',
           untitledBranch: 'Untitled branch',
@@ -3311,6 +3311,7 @@ export const generatedTranslations = {
             'Skills let Aria & Kai adopt a specific working mode for this conversation.',
           createToolGroup: 'Create tools',
           createToolsDescription: 'Enable or disable all create tools for this message.',
+          updateToolGroup: 'Update-Tools',
           disclaimer:
             'AI answers can be wrong. Check critical political, legal, and procedural claims before acting on them.',
           freeRouterModel: 'Free Models Router',
@@ -3333,6 +3334,7 @@ export const generatedTranslations = {
           noSkillsAvailable: 'No enabled skills are currently available.',
           noToolsAvailable: 'No enabled tools are currently available.',
           outputContextCardLabel: 'Output context',
+          updateContextCardLabel: 'Update-Kontext',
           openResult: 'Öffnen',
           placeholder:
             'Ask Aria & Kai anything. Use # for tools, / for skills, and @ for Polity context.',

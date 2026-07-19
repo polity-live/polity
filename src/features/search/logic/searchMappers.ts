@@ -184,6 +184,7 @@ export function mapMosaicToContentItems(
           updatedAt: item.updated_at ? toDate(item.updated_at) : undefined,
           dueDate: item.due_date ? toDate(item.due_date) : undefined,
           isCompleted: item.status === 'completed',
+          archived: Boolean(item.archived_at),
           groupId: item.group?.id,
           groupName: item.group?.name,
           authorId: item.creator?.id,

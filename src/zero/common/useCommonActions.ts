@@ -8,6 +8,10 @@ import {
   waitForClientApply,
   type MutationResultLike,
 } from '../mutate-with-server-check';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 type EntityType = 'user' | 'group' | 'amendment' | 'event' | 'blog' | 'statement';
 
@@ -172,10 +176,9 @@ export function useCommonActions() {
 
   // ── Links ──────────────────────────────────────────────────────────
   const createLink = useCallback(
-    (args: Parameters<typeof mutators.common.createLink>[0]) => {
+    (args: Parameters<typeof mutators.common.createLink>[0], options?: CreationMutationOptions) => {
       const result = zero.mutate(mutators.common.createLink(args));
-      toast.success(t('common.toasts.linkCreated'));
-      onServerError(result, () => toast.error(t('common.toasts.linkCreateFailed')));
+      trackCreationUnlessSilent(result, 'link', options, args.id);
       return result;
     },
     [zero, t]
@@ -216,8 +219,7 @@ export function useCommonActions() {
   const createTimelineEvent = useCallback(
     (args: Parameters<typeof mutators.common.createTimelineEvent>[0]) => {
       const result = zero.mutate(mutators.common.createTimelineEvent(args));
-      toast.success(t('common.toasts.timelineEventCreated'));
-      onServerError(result, () => toast.error(t('common.toasts.timelineEventCreateFailed')));
+      onServerError(result, message => console.error('Timeline event creation failed:', message));
       return result;
     },
     [zero, t]

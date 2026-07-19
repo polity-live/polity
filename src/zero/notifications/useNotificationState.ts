@@ -1,25 +1,7 @@
 import { useQuery } from '@rocicorp/zero/react';
 import { useMemo } from 'react';
 import { queries } from '../queries';
-
-interface ReadableNotification {
-  is_read: boolean;
-  recipient_entity_type?: string | null;
-  reads?: readonly unknown[] | null;
-}
-
-function applyEntityReadState<T extends ReadableNotification>(
-  notifications: readonly T[] | undefined | null
-) {
-  return (notifications ?? []).map(notification =>
-    notification.recipient_entity_type
-      ? {
-          ...notification,
-          is_read: (notification.reads?.length ?? 0) > 0,
-        }
-      : notification
-  );
-}
+import { applyEntityReadState } from './notificationReadState';
 
 /**
  * Reactive state hook for notification data.

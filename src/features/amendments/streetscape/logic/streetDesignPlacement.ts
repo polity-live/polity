@@ -413,13 +413,15 @@ export interface StreetDesignObjectCreationOverrides {
   properties?: Record<string, StreetDesignPropertyValue>;
   customUnitCostMinor?: number | null;
   rotationDeg?: number;
+  currency?: string;
 }
 
 function createBaseObjectCost(
   definition: StreetDesignObjectDefinition,
-  customUnitCostMinor?: number | null
+  customUnitCostMinor?: number | null,
+  currency?: string
 ) {
-  const catalogEntry = getStreetDesignCostCatalogEntry(definition.type);
+  const catalogEntry = getStreetDesignCostCatalogEntry(definition.type, currency);
 
   return {
     rule: definition.costRule,
@@ -456,7 +458,11 @@ export function createPointStreetDesignObject(args: {
     type: args.type,
     geometry: createPointGeometry(args.point, degToRad(args.overrides?.rotationDeg ?? 0)),
     properties: createObjectProperties(definition, args.overrides?.properties),
-    cost: createBaseObjectCost(definition, args.overrides?.customUnitCostMinor),
+    cost: createBaseObjectCost(
+      definition,
+      args.overrides?.customUnitCostMinor,
+      args.overrides?.currency
+    ),
   };
 }
 
@@ -483,7 +489,11 @@ export function createCorridorStreetDesignObject(args: {
       args.width ?? definition.defaultWidth ?? 2
     ),
     properties: createObjectProperties(definition, args.overrides?.properties),
-    cost: createBaseObjectCost(definition, args.overrides?.customUnitCostMinor),
+    cost: createBaseObjectCost(
+      definition,
+      args.overrides?.customUnitCostMinor,
+      args.overrides?.currency
+    ),
   };
 
   return typeof args.overrides?.rotationDeg === 'number'
@@ -512,7 +522,11 @@ export function createPathCorridorStreetDesignObject(args: {
       args.width ?? ('defaultWidth' in definition ? definition.defaultWidth : undefined) ?? 2
     ),
     properties: createObjectProperties(definition, args.overrides?.properties),
-    cost: createBaseObjectCost(definition, args.overrides?.customUnitCostMinor),
+    cost: createBaseObjectCost(
+      definition,
+      args.overrides?.customUnitCostMinor,
+      args.overrides?.currency
+    ),
   };
 
   return typeof args.overrides?.rotationDeg === 'number'

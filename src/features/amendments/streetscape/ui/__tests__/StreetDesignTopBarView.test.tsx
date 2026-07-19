@@ -178,7 +178,7 @@ describe('StreetDesignTopBarView', () => {
 
     expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Invite' })).toHaveProperty('disabled', true);
-    expect(screen.getByRole('button', { name: '1 CRs' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '1 CR' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Show canvas overlay' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Color changes' })).toBeTruthy();
 
@@ -188,7 +188,7 @@ describe('StreetDesignTopBarView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Color changes' }));
     expect(onChangeRequestColorModeChange).toHaveBeenCalledWith('tinted');
 
-    fireEvent.pointerDown(screen.getByRole('button', { name: '1 CRs' }));
+    fireEvent.pointerDown(screen.getByRole('button', { name: '1 CR' }));
     fireEvent.click(await screen.findByRole('menuitem', { name: /add canopy tree/i }));
     expect(props.onChangeRequestSelect).toHaveBeenCalledWith('cr-tree');
   });

@@ -194,6 +194,7 @@ function toContentItem(document: SearchDocument): SearchContentItem | null {
     startDate: asDate(payload.starts_at),
     endDate: asDate(payload.ends_at),
     isCompleted: payload.status === 'completed',
+    archived: Boolean(payload.archived_at),
     memberCount: getStat(payload, 'members'),
     eventCount: getStat(payload, 'events'),
     attendeeCount: getStat(payload, 'participants', 'attendees'),

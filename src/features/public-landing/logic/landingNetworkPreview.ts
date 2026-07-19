@@ -11,6 +11,8 @@ import {
 import type { EditableRightsLabelEdgeData } from '@/features/network/types/networkEdge.types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
+const landingText = (key: string) => translateText(`pages.home.publicLanding.${key}`);
+
 export interface LandingNetworkEventData {
   id: string;
   title: string;
@@ -63,7 +65,7 @@ export const landingNetworkNodes: LandingNetworkNode[] = [
       position: { x: 10, y: 35 },
       data: {
         kind: 'group',
-        label: getGroupNodeDisplayLabel('State Party', 'parent'),
+        label: getGroupNodeDisplayLabel(landingText('network.nodes.stateParty'), 'parent'),
       },
       style: getGroupNodeStyle('parent', { width: 175 }),
     },
@@ -75,7 +77,7 @@ export const landingNetworkNodes: LandingNetworkNode[] = [
       position: { x: 0, y: 230 },
       data: {
         kind: 'group',
-        label: getGroupNodeDisplayLabel('Local Branch North', 'current'),
+        label: getGroupNodeDisplayLabel(landingText('network.nodes.localBranch'), 'current'),
       },
       style: getGroupNodeStyle('current', { width: 190 }),
     },
@@ -87,7 +89,7 @@ export const landingNetworkNodes: LandingNetworkNode[] = [
       position: { x: 305, y: 118 },
       data: {
         kind: 'group',
-        label: getGroupNodeDisplayLabel('Policy Committee', 'child'),
+        label: getGroupNodeDisplayLabel(landingText('network.nodes.policyCommittee'), 'child'),
       },
       style: getGroupNodeStyle('child', { width: 190 }),
     },
@@ -99,7 +101,10 @@ export const landingNetworkNodes: LandingNetworkNode[] = [
       position: { x: 600, y: 35 },
       data: {
         kind: 'group',
-        label: getGroupNodeDisplayLabel('Party Congress', 'sibling-elected'),
+        label: getGroupNodeDisplayLabel(
+          landingText('network.nodes.partyCongress'),
+          'sibling-elected'
+        ),
       },
       style: getGroupNodeStyle('sibling-elected', { width: 180 }),
     },
@@ -111,7 +116,10 @@ export const landingNetworkNodes: LandingNetworkNode[] = [
       position: { x: 600, y: 245 },
       data: {
         kind: 'group',
-        label: getGroupNodeDisplayLabel('Parliamentary Group', 'sibling-parliament'),
+        label: getGroupNodeDisplayLabel(
+          landingText('network.nodes.parliamentaryGroup'),
+          'sibling-parliament'
+        ),
       },
       style: getGroupNodeStyle('sibling-parliament', { width: 200 }),
     },
@@ -123,15 +131,13 @@ export const landingNetworkNodes: LandingNetworkNode[] = [
       position: { x: 925, y: 95 },
       data: {
         kind: 'event',
-        label: translateText('generated.inline.0491_public_committee_hearing_28c0f541'),
+        label: landingText('network.nodes.publicCommitteeHearing'),
         event: {
           id: 'committee-hearing',
-          title: translateText('generated.inline.0491_public_committee_hearing_28c0f541'),
-          description: translateText(
-            'generated.inline.0492_a_hearing_where_the_parliamentary_group_prese_f05781b8'
-          ),
+          title: landingText('network.nodes.publicCommitteeHearing'),
+          description: landingText('network.nodes.hearingDescription'),
           startDate: Date.UTC(2026, 5, 18, 8, 30),
-          location: 'Parliament, Room 2.114',
+          location: landingText('network.nodes.hearingLocation'),
         },
       },
       style: eventNodeStyle,
@@ -144,15 +150,13 @@ export const landingNetworkNodes: LandingNetworkNode[] = [
       position: { x: 930, y: 300 },
       data: {
         kind: 'event',
-        label: translateText('generated.inline.0493_parliamentary_group_meeting_fd57991a'),
+        label: landingText('network.nodes.parliamentaryGroupMeeting'),
         event: {
           id: 'caucus-meeting',
-          title: translateText('generated.inline.0493_parliamentary_group_meeting_fd57991a'),
-          description: translateText(
-            'generated.inline.0494_the_caucus_prepares_the_motion_package_after__d6448770'
-          ),
+          title: landingText('network.nodes.parliamentaryGroupMeeting'),
+          description: landingText('network.nodes.meetingDescription'),
           startDate: Date.UTC(2026, 5, 20, 13, 0),
-          location: 'Parliamentary group office',
+          location: landingText('network.nodes.meetingLocation'),
         },
       },
       style: eventNodeStyle,
@@ -169,8 +173,8 @@ export const landingNetworkEdges: LandingNetworkEdge[] = [
     sourceGroupId: 'state-party',
     targetGroupId: 'local-branch',
     structuralType: 'parent',
-    sourceName: 'State Party',
-    targetName: 'Local Branch North',
+    sourceName: landingText('network.nodes.stateParty'),
+    targetName: landingText('network.nodes.localBranch'),
     rights: ['informationRight', 'activeVotingRight'],
     rightRelationshipKinds: {
       informationRight: 'active',
@@ -192,8 +196,8 @@ export const landingNetworkEdges: LandingNetworkEdge[] = [
     sourceGroupId: 'local-branch',
     targetGroupId: 'policy-committee',
     structuralType: 'sibling',
-    sourceName: 'Local Branch North',
-    targetName: 'Policy Committee',
+    sourceName: landingText('network.nodes.localBranch'),
+    targetName: landingText('network.nodes.policyCommittee'),
     rights: ['amendmentRight', 'rightToSpeak', 'informationRight'],
     rightRelationshipKinds: {
       amendmentRight: 'active',
@@ -217,8 +221,8 @@ export const landingNetworkEdges: LandingNetworkEdge[] = [
     sourceGroupId: 'policy-committee',
     targetGroupId: 'party-congress',
     structuralType: 'child',
-    sourceName: 'Policy Committee',
-    targetName: 'Party Congress',
+    sourceName: landingText('network.nodes.policyCommittee'),
+    targetName: landingText('network.nodes.partyCongress'),
     rights: ['amendmentRight', 'passiveVotingRight'],
     rightRelationshipKinds: {
       amendmentRight: 'active',
@@ -240,8 +244,8 @@ export const landingNetworkEdges: LandingNetworkEdge[] = [
     sourceGroupId: 'party-congress',
     targetGroupId: 'parliamentary-group',
     structuralType: 'sibling',
-    sourceName: 'Party Congress',
-    targetName: 'Parliamentary Group',
+    sourceName: landingText('network.nodes.partyCongress'),
+    targetName: landingText('network.nodes.parliamentaryGroup'),
     rights: ['activeVotingRight', 'informationRight'],
     rightRelationshipKinds: {
       activeVotingRight: 'active',
@@ -263,8 +267,8 @@ export const landingNetworkEdges: LandingNetworkEdge[] = [
     sourceGroupId: 'parliamentary-group',
     targetGroupId: 'committee-hearing',
     structuralType: 'sibling',
-    sourceName: 'Parliamentary Group',
-    targetName: 'Public Committee Hearing',
+    sourceName: landingText('network.nodes.parliamentaryGroup'),
+    targetName: landingText('network.nodes.publicCommitteeHearing'),
     rights: ['rightToSpeak', 'informationRight'],
     rightRelationshipKinds: {
       rightToSpeak: 'active',
@@ -287,8 +291,8 @@ export const landingNetworkEdges: LandingNetworkEdge[] = [
     sourceGroupId: 'parliamentary-group',
     targetGroupId: 'caucus-meeting',
     structuralType: 'sibling',
-    sourceName: 'Parliamentary Group',
-    targetName: 'Parliamentary Group Meeting',
+    sourceName: landingText('network.nodes.parliamentaryGroup'),
+    targetName: landingText('network.nodes.parliamentaryGroupMeeting'),
     rights: ['activeVotingRight', 'amendmentRight'],
     rightRelationshipKinds: {
       activeVotingRight: 'active',

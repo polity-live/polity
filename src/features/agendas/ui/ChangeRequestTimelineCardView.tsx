@@ -987,7 +987,6 @@ export function ChangeRequestTimelineCardView({
                         )}
                         disabled={votingLoading}
                         aria-disabled={isVoteActionBlocked || undefined}
-                        title={!effectiveCanVote ? resolvedVoteDisabledTooltip : undefined}
                         onClick={e => {
                           e.stopPropagation();
                           if (!isVoteActionBlocked) {
@@ -1000,9 +999,7 @@ export function ChangeRequestTimelineCardView({
                         {!effectiveCanVote ? <CircleHelp className="ml-1 h-3 w-3" /> : null}
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-64">
-                      {resolvedVoteDisabledTooltip}
-                    </TooltipContent>
+                    <TooltipContent variant="rich">{resolvedVoteDisabledTooltip}</TooltipContent>
                   </Tooltip>
                 )}
                 {canStartFinalVoteFromCard && (

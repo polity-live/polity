@@ -175,10 +175,11 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
         feature,
         origin: state.design.origin,
         createId: createObjectId,
+        currency: state.design.currency,
       });
       dispatch({ type: 'import_osm_feature', osmWayId, objects });
     },
-    [state.design.origin, state.design.osmSnapshot]
+    [state.design.currency, state.design.origin, state.design.osmSnapshot]
   );
 
   const undoOsmImport = useCallback((osmWayId: string) => {

@@ -5,6 +5,10 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { AiToolName } from '@/lib/ai/schemas';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 interface UpsertSkillArgs {
   id?: string;
@@ -26,10 +30,11 @@ export function useAiActions() {
   const { t } = useTranslation();
 
   const createSkill = useCallback(
-    (args: UpsertSkillArgs) => {
+    (args: UpsertSkillArgs, options?: CreationMutationOptions) => {
+      const id = args.id ?? crypto.randomUUID();
       const result = zero.mutate(
         mutators.ai.createSkill({
-          id: args.id ?? crypto.randomUUID(),
+          id,
           slug: args.slug,
           name: args.name,
           aliases: args.aliases ?? '',
@@ -38,8 +43,7 @@ export function useAiActions() {
         })
       );
 
-      onServerError(result, msg => console.error('AI skill create failed:', msg));
-      toast.success(t('pages.user.ai.skills.created'));
+      trackCreationUnlessSilent(result, 'aiSkill', options, id);
       return result;
     },
     [t, zero]
@@ -76,17 +80,17 @@ export function useAiActions() {
   );
 
   const createTool = useCallback(
-    (args: UpsertToolArgs) => {
+    (args: UpsertToolArgs, options?: CreationMutationOptions) => {
+      const id = args.id ?? crypto.randomUUID();
       const result = zero.mutate(
         mutators.ai.createTool({
-          id: args.id ?? crypto.randomUUID(),
+          id,
           tool_name: args.tool_name,
           enabled: args.enabled ?? true,
         })
       );
 
-      onServerError(result, msg => console.error('AI tool create failed:', msg));
-      toast.success(t('pages.user.ai.tools.created'));
+      trackCreationUnlessSilent(result, 'aiTool', options, id);
       return result;
     },
     [t, zero]

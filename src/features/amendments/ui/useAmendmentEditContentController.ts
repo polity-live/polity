@@ -527,14 +527,14 @@ export function useAmendmentEditContentController({
           });
         }
       }
-      toast.success(
-        isCreating
-          ? t('pages.create.success.created')
-          : t('features.amendments.editContent.updateSuccess')
-      );
+      if (!isCreating) {
+        toast.success(t('features.amendments.editContent.updateSuccess'));
+      }
       navigate({ to: `/amendment/${amendmentId}` });
     } catch (error) {
-      toast.error(t('features.amendments.editContent.updateFailed'));
+      if (!isCreating) {
+        toast.error(t('features.amendments.editContent.updateFailed'));
+      }
       console.error('Update error:', error);
     } finally {
       setIsSubmitting(false);

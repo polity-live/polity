@@ -8,6 +8,7 @@ export const thread = table('thread')
     amendment_id: string().optional(),
     statement_id: string().optional(),
     blog_id: string().optional(),
+    todo_id: string().optional(),
     user_id: string(),
     content: string().optional(),
     status: string(),

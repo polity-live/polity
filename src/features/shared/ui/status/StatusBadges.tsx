@@ -11,6 +11,7 @@ import {
   type SemanticTone,
 } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 
 export type BadgeTone = BadgeToneKind;
 
@@ -97,9 +98,10 @@ function BaseStatusBadge({
   children,
   tone = 'neutral',
   className,
+  title,
   ...props
 }: BaseStatusBadgeProps) {
-  return (
+  const badge = (
     <Badge
       variant={tone === 'outline' ? 'outline' : 'secondary'}
       className={cn(
@@ -112,6 +114,8 @@ function BaseStatusBadge({
       {children}
     </Badge>
   );
+
+  return title ? <TooltipHint content={title}>{badge}</TooltipHint> : badge;
 }
 
 interface StatusBadgeProps extends Omit<BaseStatusBadgeProps, 'tone'> {
@@ -335,7 +339,7 @@ export function StatusDotIndicator({
   className?: string;
   title?: string;
 }) {
-  return (
+  const dot = (
     <span
       className={cn(
         'border-background inline-flex h-2 w-2 items-center justify-center rounded-full border',
@@ -343,9 +347,10 @@ export function StatusDotIndicator({
         pulse && 'animate-pulse',
         className
       )}
-      title={title}
     />
   );
+
+  return title ? <TooltipHint content={title}>{dot}</TooltipHint> : dot;
 }
 
 interface SemanticBadgeProps extends Omit<StatusBadgeProps, 'children'> {

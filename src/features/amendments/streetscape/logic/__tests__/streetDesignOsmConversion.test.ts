@@ -16,7 +16,12 @@ describe('convertStreetDesignOsmFeature', () => {
       source: 'osm',
     });
 
-    const objects = convertStreetDesignOsmFeature({ feature, origin, createId: () => 'new-1' });
+    const objects = convertStreetDesignOsmFeature({
+      feature,
+      origin,
+      currency: 'USD',
+      createId: () => 'new-1',
+    });
 
     expect(objects).toHaveLength(1);
     expect(objects[0]).toMatchObject({
@@ -24,6 +29,7 @@ describe('convertStreetDesignOsmFeature', () => {
       type: 'charging_station',
       properties: { capacity: 4 },
       provenance: { source: 'osm', featureId: 'charger-1', confidence: 'exact' },
+      cost: { currency: 'USD' },
     });
   });
 

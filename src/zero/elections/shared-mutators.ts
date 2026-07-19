@@ -360,7 +360,22 @@ export const electionSharedMutators = {
     if (tx.location !== 'client') {
       const candidate = await tx.run(zql.election_candidate.where('id', args.id).one());
       if (!candidate) throw new Error('Election candidate not found');
-      await assertElectionManager(tx, ctx, candidate.election_id);
+      const selfEditableFields = new Set(['name', 'description', 'image_url']);
+      const changedFields = Object.keys(args).filter(field => field !== 'id');
+      const isOwnContentUpdate =
+        candidate.user_id === ctx.userID &&
+        changedFields.length > 0 &&
+        changedFields.every(field => selfEditableFields.has(field));
+
+      if (isOwnContentUpdate) {
+        await assertSelfElectionEventRightOrManager(tx, ctx, {
+          electionId: candidate.election_id,
+          userId: candidate.user_id,
+          action: 'passive_voting',
+        });
+      } else {
+        await assertElectionManager(tx, ctx, candidate.election_id);
+      }
     }
     await tx.mutate.election_candidate.update(args);
   }),

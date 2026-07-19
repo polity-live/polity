@@ -24,11 +24,15 @@ const translations: Record<string, string> = {
   'generated.inline.0106_review_event_role_visibility_assignment_mode__9d3e73c1':
     'Review event roles',
   'generated.inline.0016_rights_1407cb23': 'Rights',
+  'components.membershipTables.rights': 'Rights',
   'generated.inline.0719_term_revote_17ae9b60': 'Term',
 };
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, fallback?: string) => fallback ?? translations[key] ?? key,
+  translate: (key: string, paramsOrFallback?: string | Record<string, unknown>) =>
+    (typeof paramsOrFallback === 'string' ? paramsOrFallback : undefined) ??
+    translations[key] ??
+    key,
 }));
 
 afterEach(() => {

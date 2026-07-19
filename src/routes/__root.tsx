@@ -5,6 +5,8 @@ import { ZeroAppProvider } from '@/providers/zero-provider';
 import { AppShell } from '@/layout/app-shell';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
 import { MotionProvider } from '@/features/shared/motion';
+import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
+import { KeyboardPlatformProvider } from '@/features/shared/keyboard/keyboard-shortcut';
 import stylesAssetHref from '../styles.css?url';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -79,15 +81,19 @@ function RootLayout() {
           }}
         />
         <MotionProvider>
-          <AuthProvider>
-            <OnlineUsersProvider>
-              <ZeroAppProvider>
-                <AppShell>
-                  <Outlet />
-                </AppShell>
-              </ZeroAppProvider>
-            </OnlineUsersProvider>
-          </AuthProvider>
+          <KeyboardPlatformProvider>
+            <TooltipProvider delayDuration={250} skipDelayDuration={300}>
+              <AuthProvider>
+                <OnlineUsersProvider>
+                  <ZeroAppProvider>
+                    <AppShell>
+                      <Outlet />
+                    </AppShell>
+                  </ZeroAppProvider>
+                </OnlineUsersProvider>
+              </AuthProvider>
+            </TooltipProvider>
+          </KeyboardPlatformProvider>
         </MotionProvider>
         <Scripts />
       </body>

@@ -15,6 +15,10 @@ import { usePermissions } from '@/zero/rbac/usePermissions.ts';
 import type { Amendment, ActionRight } from '@/zero/rbac/types.ts';
 import { useEntityUnreadCount } from '@/zero/notifications/useEntityUnreadCount.ts';
 import { getBranchPreservingAmendmentNavTarget } from '@/features/navigation/logic/amendmentBranchNavigation';
+import {
+  getEntityNotificationUnreadCount,
+  withEntityNotificationBadge,
+} from '@/features/navigation/logic/entityNotificationBadge';
 
 /**
  * Custom hook that manages navigation items for primary and secondary navigation
@@ -179,8 +183,11 @@ export function useNavigation() {
         canViewTodos: canView('groupTodos'),
       });
 
-    // For amendment, we check if user can view or manage it
-    const canViewAmendment = canView('amendments');
+    // Reading public/authenticated amendment content is distinct from mutation action rights.
+    const canViewAmendment =
+      amendmentData?.visibility === 'public' ||
+      amendmentData?.visibility === 'authenticated' ||
+      canView('amendments');
     const canUpdateAmendment = canUpdate('amendments');
     const canManageAmendment = canManage('amendments');
 
@@ -228,20 +235,17 @@ export function useNavigation() {
     if (!baseSecondaryItems) return null;
 
     // Determine entity unread count based on current route
-    const entityUnreadCount =
-      currentPrimaryRoute === 'group'
-        ? groupUnread
-        : currentPrimaryRoute === 'event'
-          ? eventUnread
-          : currentPrimaryRoute === 'amendment'
-            ? amendmentUnread
-            : currentPrimaryRoute === 'blog'
-              ? blogUnread
-              : 0;
+    const entityUnreadCount = getEntityNotificationUnreadCount(currentPrimaryRoute, {
+      group: groupUnread,
+      event: eventUnread,
+      amendment: amendmentUnread,
+      blog: blogUnread,
+    });
 
     // Secondary items are already localized in the nav item factories.
     // Rebuilding keys from item.id breaks route-style ids like "blogs-and-statements".
     return baseSecondaryItems.map(item => {
+      const itemWithBadge = withEntityNotificationBadge(item, entityUnreadCount);
       const amendmentBranchTarget =
         currentPrimaryRoute === 'amendment'
           ? getBranchPreservingAmendmentNavTarget({
@@ -252,7 +256,7 @@ export function useNavigation() {
           : null;
 
       return {
-        ...item,
+        ...itemWithBadge,
         ...(amendmentBranchTarget
           ? {
               href: amendmentBranchTarget.href,
@@ -263,9 +267,6 @@ export function useNavigation() {
                   search: amendmentBranchTarget.search,
                 } as never),
             }
-          : {}),
-        ...(item.id === 'notifications' && entityUnreadCount > 0
-          ? { badge: entityUnreadCount }
           : {}),
         ...(item.href ? { preloadTarget: { href: item.href } } : {}),
       };

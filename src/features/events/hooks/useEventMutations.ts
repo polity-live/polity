@@ -55,7 +55,9 @@ export function useEventMutations(eventId: string) {
         )
       );
 
-      toast.success(`Successfully invited ${userIds.length} participant(s)`);
+      toast.success(
+        translateText('features.events.participants.inviteSuccess', { count: userIds.length })
+      );
       return { success: true };
     } catch (error) {
       console.error('Failed to invite participants:', error);

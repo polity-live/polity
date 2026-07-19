@@ -24,8 +24,8 @@ export function SupporterDirectoryDetails({ item }: SupporterDirectoryDetailsPro
         <div className="flex items-center gap-1.5">
           <Users className="h-3.5 w-3.5" />
           <span>
-            {item.memberCount}
-            {translateText('generated.inline.0020_members_f13eb585')}
+            {item.memberCount}{' '}
+            {translateText('components.labels.members', { count: item.memberCount })}
           </span>
         </div>
       </div>

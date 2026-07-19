@@ -26,10 +26,19 @@ export function NotificationsPage() {
         emptyPersonalDescription: np.t('features.notifications.empty.personalAppear'),
         emptyEntityTitle: np.t('features.notifications.empty.noEntity'),
         emptyEntityDescription: np.t('features.notifications.empty.entityAppear'),
+        emptyTrashTitle: np.t('features.notifications.empty.noTrash'),
+        emptyTrashDescription: np.t('features.notifications.empty.trashAppear'),
       }}
       onMarkAllAsRead={np.handleMarkAllAsRead}
+      onMarkAllAsUnread={np.handleMarkAllAsUnread}
       onNotificationClick={np.handleNotificationClick}
-      onDeleteNotification={np.handleDeleteNotification}
+      onMarkAsRead={np.handleMarkNotificationAsRead}
+      onToggleRead={np.handleToggleNotificationRead}
+      onDeleteNotification={np.handleDismissNotification}
+      onRestoreNotification={np.handleRestoreNotification}
+      onPurgeNotification={np.handlePurgeNotification}
+      onDeleteForEveryone={np.handleDeleteEntityNotificationGlobally}
+      canDeleteForEveryone={np.canDeleteForEveryone}
     />
   );
 }

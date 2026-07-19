@@ -107,6 +107,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 vi.mock('@/features/shared/ui/ui/sonner', () => ({
   toast: {
     error: vi.fn(),
+    loading: vi.fn(() => 'toast-1'),
     success: vi.fn(),
   },
 }));
@@ -233,7 +234,8 @@ describe('useCreateTodoForm', () => {
       expect.objectContaining({
         title: 'Prepare agenda',
         assigneeId: 'user-current',
-      })
+      }),
+      { notificationMode: 'silent' }
     );
     expect(outcome).toMatchObject({
       status: 'success',
@@ -242,5 +244,82 @@ describe('useCreateTodoForm', () => {
         params: { id: 'todo-1' },
       },
     });
+  });
+
+  it('stores a date-only deadline at the end of the selected local day', async () => {
+    const { result } = renderHook(() => useCreateTodoForm());
+    const titleField = findField(result.current.steps[0].fields ?? [], 'title', 'text');
+    const deadlineField = findField(
+      result.current.steps[3].fields ?? [],
+      'due-date-time',
+      'customComponent'
+    );
+
+    act(() => {
+      titleField.onValueChange('Prepare agenda');
+      (deadlineField.props as { onChange: (values: any) => void }).onChange({
+        dueDate: '2026-07-19',
+        dueTime: '',
+      });
+    });
+
+    await act(async () => {
+      await result.current.onSubmit();
+    });
+
+    expect(createTodo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dueDate: new Date(2026, 6, 19, 23, 59, 59, 999).getTime(),
+      }),
+      { notificationMode: 'silent' }
+    );
+  });
+
+  it('stores an explicit deadline time and clears it when the date is removed', async () => {
+    const { result } = renderHook(() => useCreateTodoForm());
+    const titleField = findField(result.current.steps[0].fields ?? [], 'title', 'text');
+    const deadlineField = findField(
+      result.current.steps[3].fields ?? [],
+      'due-date-time',
+      'customComponent'
+    );
+
+    act(() => {
+      titleField.onValueChange('Prepare agenda');
+      (deadlineField.props as { onChange: (values: any) => void }).onChange({
+        dueDate: '2026-07-19',
+        dueTime: '14:30',
+      });
+    });
+
+    await act(async () => {
+      await result.current.onSubmit();
+    });
+
+    expect(createTodo).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        dueDate: new Date(2026, 6, 19, 14, 30, 0, 0).getTime(),
+      }),
+      { notificationMode: 'silent' }
+    );
+
+    act(() => {
+      const currentDeadlineField = findField(
+        result.current.steps[3].fields ?? [],
+        'due-date-time',
+        'customComponent'
+      );
+      (currentDeadlineField.props as { onChange: (values: any) => void }).onChange({
+        dueDate: '',
+        dueTime: '',
+      });
+    });
+
+    const clearedDeadlineField = findField(
+      result.current.steps[3].fields ?? [],
+      'due-date-time',
+      'customComponent'
+    );
+    expect(clearedDeadlineField.props).toMatchObject({ dueDate: '', dueTime: '' });
   });
 });

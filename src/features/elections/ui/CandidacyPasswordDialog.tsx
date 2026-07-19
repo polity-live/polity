@@ -115,7 +115,9 @@ export function CandidacyPasswordDialog({
                   {typeof candidatesCount === 'number' ? (
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-muted-foreground">
-                        {t('features.events.candidacy.currentCandidates')}
+                        {t('features.events.candidacy.currentCandidates', {
+                          count: candidatesCount,
+                        })}
                       </span>
                       <span className="font-medium">{candidatesCount}</span>
                     </div>

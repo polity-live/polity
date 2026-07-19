@@ -6,6 +6,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { NavigationCommandDialogView } from '../NavigationCommandDialogView';
 import type { NavigationItem } from '../types/navigation.types';
+import {
+  KeyboardPlatformProvider,
+  type KeyboardPlatform,
+} from '@/features/shared/keyboard/keyboard-shortcut';
 
 vi.mock('@/features/shared/ui/ui/command.tsx', () => ({
   CommandDialog: ({ children, open }: { children: ReactNode; open: boolean }) =>
@@ -23,12 +27,14 @@ vi.mock('@/features/shared/ui/ui/command.tsx', () => ({
     children,
     onSelect,
     value,
+    'aria-keyshortcuts': ariaKeyShortcuts,
   }: {
     children: ReactNode;
     onSelect?: () => void;
     value?: string;
+    'aria-keyshortcuts'?: string;
   }) => (
-    <button data-value={value} onClick={() => onSelect?.()}>
+    <button data-value={value} aria-keyshortcuts={ariaKeyShortcuts} onClick={() => onSelect?.()}>
       {children}
     </button>
   ),
@@ -156,4 +162,37 @@ describe('NavigationCommandDialogView', () => {
     expect(screen.queryByRole('region', { name: 'Events' })).toBeNull();
     expect(screen.queryByRole('region', { name: 'Amendments' })).toBeNull();
   });
+
+  it.each([
+    ['macos', '⌥ ⇧ H', 'Alt+Shift+H'],
+    ['windows', 'Alt ⇧ H', 'Alt+Shift+H'],
+    ['linux', 'Alt ⇧ H', 'Alt+Shift+H'],
+  ] as const)(
+    'uses the resolved navigation shortcut in UI and ARIA on %s',
+    (platform: KeyboardPlatform, display, aria) => {
+      render(
+        <KeyboardPlatformProvider platform={platform}>
+          <NavigationCommandDialogView
+            open
+            onOpenChange={vi.fn()}
+            copy={copy}
+            primaryNavItems={primaryNavItems}
+            userNavItems={[]}
+            groupItems={[]}
+            eventItems={[]}
+            amendmentItems={[]}
+            onSelectPrimaryItem={vi.fn()}
+            onSelectUserItem={vi.fn()}
+            onSelectGroupItem={vi.fn()}
+            onSelectEventItem={vi.fn()}
+            onSelectAmendmentItem={vi.fn()}
+          />
+        </KeyboardPlatformProvider>
+      );
+
+      const item = screen.getByRole('button', { name: `Home ${display}` });
+      expect(item.getAttribute('aria-keyshortcuts')).toBe(aria);
+      expect(screen.getByText(display)).toBeTruthy();
+    }
+  );
 });

@@ -16,11 +16,13 @@ const translations = vi.hoisted(() => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, fallback?: string) =>
-    translations[key as keyof typeof translations] ?? fallback ?? key,
+  translate: (key: string, paramsOrFallback?: string | Record<string, unknown>) =>
+    translations[key as keyof typeof translations] ??
+    (typeof paramsOrFallback === 'string' ? paramsOrFallback : key),
   useTranslation: () => ({
-    t: (key: string, fallback?: string) =>
-      translations[key as keyof typeof translations] ?? fallback ?? key,
+    t: (key: string, paramsOrFallback?: string | Record<string, unknown>) =>
+      translations[key as keyof typeof translations] ??
+      (typeof paramsOrFallback === 'string' ? paramsOrFallback : key),
   }),
 }));
 
@@ -164,6 +166,30 @@ function valueForStat(label: string) {
 }
 
 describe('AmendmentWikiView stats', () => {
+  it('shows only share actions to unauthenticated visitors', () => {
+    render(<AmendmentWikiView {...baseProps()} user={null} />);
+
+    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Subscribe' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Membership' })).toBeNull();
+    expect(screen.queryByTestId('vote-buttons')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'generated.inline.0071_clone_d8cdb573' })
+    ).toBeNull();
+  });
+
+  it('keeps amendment actions visible to authenticated users', () => {
+    render(<AmendmentWikiView {...baseProps()} />);
+
+    expect(screen.getByRole('button', { name: 'Subscribe' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Membership' })).toBeTruthy();
+    expect(screen.getByTestId('vote-buttons')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'generated.inline.0071_clone_d8cdb573' })
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
+  });
+
   it('shows the number of current process branches', () => {
     render(<AmendmentWikiView {...baseProps()} />);
 

@@ -9,6 +9,7 @@ export const todo = table('todo')
     priority: string().optional(),
     due_date: number().optional(),
     completed_at: number().optional(),
+    archived_at: number().optional(),
     tags: json<string[]>().optional(),
     visibility: string(),
     creator_id: string(),

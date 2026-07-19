@@ -8,6 +8,7 @@ export const userPreference = table('user_preference')
     create_form_style: string(),
     theme: string(),
     language: string(),
+    display_currency: string(),
     navigation_view: string(),
     group_network_layouts: json<GroupNetworkLayouts>(),
     decision_terminal_dashboard: json<DecisionTerminalDashboardConfig>().optional(),

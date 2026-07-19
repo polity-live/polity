@@ -16,8 +16,16 @@ interface MeetingParticipantViewModel {
 
 export function useMeetingDetailPage(meetingId: string) {
   const navigate = useNavigate();
-  const { event, isLoading, isOwner, hasBooked, bookingCount, isPast, isAvailable } =
-    useMeetingData(meetingId);
+  const {
+    event,
+    isLoading,
+    isAuthenticated,
+    isOwner,
+    hasBooked,
+    bookingCount,
+    isPast,
+    isAvailable,
+  } = useMeetingData(meetingId);
   const { bookMeeting, cancelMeetingBooking } = useMeetingActions();
 
   if (isLoading) {
@@ -61,6 +69,7 @@ export function useMeetingDetailPage(meetingId: string) {
     bookingCount,
     meetingId: event.id,
     description: typeof event.description === 'string' ? event.description : '',
+    isAuthenticated,
     isOwner,
     hasBooked,
     isAvailable,

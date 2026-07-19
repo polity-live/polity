@@ -45,6 +45,15 @@ function getCurrentHostname(): string | null {
   return null;
 }
 
+export function hasHttpUrlCredentials(value: string): boolean {
+  try {
+    const url = new URL(value, getBaseOrigin());
+    return /^(https?:)$/i.test(url.protocol) && Boolean(url.username || url.password);
+  } catch {
+    return false;
+  }
+}
+
 export function detectUrls(text: string): string[] {
   const urlRegex =
     /(https?:\/\/[^\s]+)|(www\.[^\s]+)|(\/?(?:user|group|event|amendment|blog|statement|todos?)\/[a-zA-Z0-9_-]+)/gi;

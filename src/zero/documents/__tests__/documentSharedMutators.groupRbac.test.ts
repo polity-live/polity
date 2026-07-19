@@ -73,6 +73,54 @@ beforeEach(() => {
 });
 
 describe('documentSharedMutators group RBAC', () => {
+  it('allows an authenticated todo viewer to add a comment', async () => {
+    const tx = createTx('server');
+    tx.run
+      .mockResolvedValueOnce({ id: 'thread-1', todo_id: 'todo-1' })
+      .mockResolvedValueOnce({ id: 'todo-1', creator_id: 'user-2' });
+
+    await documentSharedMutators.addComment.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        id: 'comment-1',
+        thread_id: 'thread-1',
+        user_id: 'user-1',
+        parent_id: null,
+        content: 'Looks good',
+        upvotes: 0,
+        downvotes: 0,
+      },
+    });
+
+    expect(tx.mutate.comment.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'comment-1', user_id: 'user-1' })
+    );
+  });
+
+  it('rejects anonymous comments on public todo threads', async () => {
+    const tx = createTx('server');
+    tx.run.mockResolvedValueOnce({ id: 'thread-1', todo_id: 'todo-1' });
+
+    await expect(
+      documentSharedMutators.addComment.fn({
+        tx: tx as never,
+        ctx: { ...createCtx(), userID: 'anon' },
+        args: {
+          id: 'comment-1',
+          thread_id: 'thread-1',
+          user_id: 'anon',
+          parent_id: null,
+          content: 'Anonymous comment',
+          upvotes: 0,
+          downvotes: 0,
+        },
+      })
+    ).rejects.toBeInstanceOf(PermissionError);
+
+    expect(tx.mutate.comment.insert).not.toHaveBeenCalled();
+  });
+
   it('rejects group document creation without manage rights', async () => {
     const tx = createTx('server');
     const error = new PermissionError('manage', 'groupDocuments', 'group:group-1');

@@ -216,10 +216,14 @@ export function BlogBloggersManagerView({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <ScrollableTabsList>
             <TabsTrigger value="bloggers">
-              {`${translateText('generated.inline.0250_bloggers_4e649307')} (${filteredBloggers.length})`}
+              {translateText('features.blogs.bloggers.tabTitle', {
+                count: filteredBloggers.length,
+              })}
             </TabsTrigger>
             <TabsTrigger value="roles">
-              {`${translateText('generated.inline.0251_roles_a7aef93e')} (${rolesData.roles.length})`}
+              {translateText('features.blogs.bloggers.rolesTabTitle', {
+                count: rolesData.roles.length,
+              })}
             </TabsTrigger>
           </ScrollableTabsList>
           {canManageBloggers ? (
@@ -296,11 +300,9 @@ export function BlogBloggersManagerView({
                       </Command>
                       {selectedUsers.length > 0 ? (
                         <div className="text-muted-foreground text-sm">
-                          {translateText('generated.inline.0249_selected_2e084478')}
-                          {selectedUsers.length}{' '}
-                          {selectedUsers.length === 1
-                            ? translateText('generated.inline.0026_user_12dea96f')
-                            : translateText('generated.inline.0027_users_5b7dcd14')}
+                          {translateText('features.blogs.bloggers.selectedUsers', {
+                            count: selectedUsers.length,
+                          })}
                         </div>
                       ) : null}
                     </div>
@@ -312,7 +314,9 @@ export function BlogBloggersManagerView({
                         onClick={handleInviteBloggers}
                         disabled={selectedUsers.length === 0 || isInviting}
                       >
-                        {`Invite ${selectedUsers.length || ''} ${selectedUsers.length === 1 ? translateText('generated.inline.0032_blogger_9b156370') : translateText('generated.inline.0033_bloggers_06e71e76')}`}
+                        {translateText('features.blogs.bloggers.inviteCount', {
+                          count: selectedUsers.length,
+                        })}
                       </Button>
                     </DialogFooter>
                   </>

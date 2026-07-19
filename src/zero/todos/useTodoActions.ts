@@ -5,6 +5,10 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
 import type { TodoUpdateInput } from './schema';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 /**
  * Action hook for todo mutations.
@@ -17,19 +21,18 @@ export function useTodoActions() {
 
   // ── CRUD ───────────────────────────────────────────────────────────
   const createTodo = useCallback(
-    (args: Parameters<typeof mutators.todos.create>[0]) => {
+    (args: Parameters<typeof mutators.todos.create>[0], options?: CreationMutationOptions) => {
       const result = zero.mutate(mutators.todos.create(args));
-      toast.success(t('features.todos.toasts.created'));
-      onServerError(result, () => toast.error(t('features.todos.toasts.createFailed')));
+      trackCreationUnlessSilent(result, 'todo', options, args.id);
       return result;
     },
     [zero, t]
   );
 
   const createFullTodo = useCallback(
-    (args: Parameters<typeof mutators.todos.createFull>[0]) => {
+    (args: Parameters<typeof mutators.todos.createFull>[0], options?: CreationMutationOptions) => {
       const result = zero.mutate(mutators.todos.createFull(args));
-      onServerError(result, () => toast.error(t('features.todos.toasts.createFailed')));
+      trackCreationUnlessSilent(result, 'todo', options, args.todo.id);
       return result;
     },
     [zero, t]
@@ -64,6 +67,26 @@ export function useTodoActions() {
     [zero, t]
   );
 
+  const archiveTodo = useCallback(
+    (id: string) => {
+      const result = zero.mutate(mutators.todos.archive({ id }));
+      toast.success(t('features.todos.toasts.archived'));
+      onServerError(result, () => toast.error(t('features.todos.toasts.archiveFailed')));
+      return result;
+    },
+    [zero, t]
+  );
+
+  const unarchiveTodo = useCallback(
+    (id: string) => {
+      const result = zero.mutate(mutators.todos.unarchive({ id }));
+      toast.success(t('features.todos.toasts.unarchived'));
+      onServerError(result, () => toast.error(t('features.todos.toasts.unarchiveFailed')));
+      return result;
+    },
+    [zero, t]
+  );
+
   // ── Assignments ────────────────────────────────────────────────────
   const assignUser = useCallback(
     (args: Parameters<typeof mutators.todos.assign>[0]) => {
@@ -91,6 +114,8 @@ export function useTodoActions() {
     updateTodo,
     deleteTodo,
     toggleComplete,
+    archiveTodo,
+    unarchiveTodo,
     assignUser,
     unassignUser,
   };

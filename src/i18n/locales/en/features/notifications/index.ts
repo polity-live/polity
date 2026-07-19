@@ -5,6 +5,7 @@ export const notificationsTranslations = {
   searchPlaceholder: 'Search notifications...',
   markAllRead: 'Mark all as read',
   markAllAsRead: 'Mark all as read',
+  markAllAsUnread: 'Mark all as unread',
   clearAll: 'Clear all',
   noNotifications: 'No notifications',
   loading: 'Loading notifications...',
@@ -25,12 +26,22 @@ export const notificationsTranslations = {
     noEntity: 'No entity notifications',
     entityAppear:
       "Notifications for groups, events, and amendments you're part of will appear here",
+    noTrash: 'Trash is empty',
+    trashAppear: 'Hidden notifications will appear here',
   },
   // Toast messages for action hooks
   toasts: {
     markReadFailed: 'Failed to mark notification as read',
     allMarkedRead: 'All notifications marked as read',
     markAllReadFailed: 'Failed to mark all notifications as read',
+    allMarkedUnread: 'All notifications marked as unread',
+    dismissFailed: 'Failed to hide notification',
+    restoreFailed: 'Failed to restore notification',
+    purgeFailed: 'Failed to permanently remove notification',
+    deletedForEveryone: 'Notification removed for everyone',
+    globalDeleteFailed: 'Failed to remove notification for everyone',
+    globalRestoreFailed: 'Failed to restore notification for everyone',
+    contentUpdateFailed: 'Failed to update notification',
     deleted: 'Notification deleted',
     deleteFailed: 'Failed to delete notification',
     settingsUpdated: 'Notification settings updated',
@@ -49,6 +60,7 @@ export const notificationsTranslations = {
     read: 'Read',
     personal: 'Personal',
     entity: 'Entity',
+    trash: 'Trash',
     mentions: 'Mentions',
     groups: 'Groups',
     events: 'Events',
@@ -57,7 +69,18 @@ export const notificationsTranslations = {
   },
   item: {
     for: 'for',
+    new: 'New',
     notification: 'notification',
+    markUnread: 'Mark as unread',
+    hideForMe: 'Hide for me',
+    restore: 'Restore',
+    removePermanently: 'Remove permanently',
+    deleteForEveryone: 'Delete for everyone',
+  },
+  globalDelete: {
+    title: 'Delete notification for everyone?',
+    description:
+      'This notification will disappear for every authorized user of {{entity}}. It can be restored server-side.',
   },
   types: {
     mention: 'mentioned you',
@@ -94,6 +117,7 @@ export const notificationsTranslations = {
   generated: {
     titles: {
       todoClaimed: 'Task claimed',
+      todoCommentAdded: 'New task comment',
       eventAssignedToGroup: 'Event assigned to group',
       amendmentSupportConfirmed: 'Amendment support confirmed',
       amendmentUpvoted: 'Amendment upvoted',
@@ -103,6 +127,7 @@ export const notificationsTranslations = {
     },
     messages: {
       todoClaimed: '{{senderName}} claimed the task “{{todoTitle}}”.',
+      todoCommentAdded: '{{senderName}} commented on “{{todoTitle}}”.',
       guestAccessApproved: 'A guest access request in {{groupName}} has been approved.',
       guestAccessRequested: '{{senderName}} has requested guest access to {{groupName}}.',
       guestInvited: 'A guest has been invited to {{groupName}}.',

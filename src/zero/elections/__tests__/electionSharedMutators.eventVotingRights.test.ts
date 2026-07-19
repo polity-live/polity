@@ -32,6 +32,7 @@ function createTx(rows: unknown[]) {
     mutate: {
       election_candidate: {
         insert: vi.fn(),
+        update: vi.fn(),
         delete: vi.fn(),
       },
       elector: {
@@ -176,6 +177,61 @@ describe('electionSharedMutators event voting rights', () => {
       { userID: 'user-1' },
       expect.objectContaining({ action: 'manage', resource: 'elections', eventId: 'event-1' })
     );
+  });
+
+  it('allows candidates with passive voting rights to update their own profile fields', async () => {
+    allowActions(['passive_voting']);
+    const tx = createTx([candidate, election, agendaItem]);
+
+    await electionSharedMutators.updateCandidate.fn({
+      tx: tx as never,
+      ctx: { userID: 'user-1' } as never,
+      args: { id: 'candidate-1', description: 'Updated statement', image_url: null },
+    });
+
+    expect(canMock).toHaveBeenCalledWith(
+      tx,
+      { userID: 'user-1' },
+      expect.objectContaining({ action: 'passive_voting', resource: 'events', eventId: 'event-1' })
+    );
+    expect(tx.mutate.election_candidate.update).toHaveBeenCalledWith({
+      id: 'candidate-1',
+      description: 'Updated statement',
+      image_url: null,
+    });
+  });
+
+  it('requires manager rights to update another candidate', async () => {
+    allowActions(['manage']);
+    const tx = createTx([secondCandidate, election, agendaItem]);
+
+    await electionSharedMutators.updateCandidate.fn({
+      tx: tx as never,
+      ctx: { userID: 'user-1' } as never,
+      args: { id: 'candidate-2', name: 'Managed name' },
+    });
+
+    expect(canMock).toHaveBeenCalledWith(
+      tx,
+      { userID: 'user-1' },
+      expect.objectContaining({ action: 'manage', resource: 'elections', eventId: 'event-1' })
+    );
+    expect(tx.mutate.election_candidate.update).toHaveBeenCalled();
+  });
+
+  it('rejects own candidate profile updates without passive voting or manager rights', async () => {
+    allowActions([]);
+    const tx = createTx([candidate, election, agendaItem, election, agendaItem]);
+
+    await expect(
+      electionSharedMutators.updateCandidate.fn({
+        tx: tx as never,
+        ctx: { userID: 'user-1' } as never,
+        args: { id: 'candidate-1', description: 'Forbidden' },
+      })
+    ).rejects.toThrow(PermissionError);
+
+    expect(tx.mutate.election_candidate.update).not.toHaveBeenCalled();
   });
 
   it('prevents direct elector creation because snapshots are server-managed', async () => {

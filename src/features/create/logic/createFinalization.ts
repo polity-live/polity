@@ -1,9 +1,12 @@
 import { useSyncExternalStore } from 'react';
-import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
 import type { MutationResultLike } from '@/zero/mutate-with-server-check';
 import { toMutationError } from '@/zero/mutate-with-server-check';
+import {
+  trackMutationFinalization,
+  type CreationEntityKind,
+} from '@/features/notifications/utils/mutation-finalization';
 import type { CreateSubmitTarget } from '../types/create-form.types';
 
 const RECOVERY_PREFIX = 'polity:create:recovery:';
@@ -242,6 +245,25 @@ export async function waitForOptimisticCreate(result: MutationResultLike) {
   await (result.client ?? Promise.resolve());
 }
 
+function getFinalizationEntityKind(draft: CreateRecoveryDraft): CreationEntityKind {
+  switch (draft.entityType) {
+    case 'agenda_item':
+      return 'agendaItem';
+    case 'election':
+      return 'candidate';
+    case 'group':
+    case 'event':
+    case 'amendment':
+    case 'blog':
+    case 'statement':
+    case 'todo':
+    case 'payment':
+      return draft.entityType;
+    default:
+      return 'document';
+  }
+}
+
 export function trackCreateFinalization({ result, draft, retry }: TrackCreateFinalizationArgs) {
   const recoveryDraft: CreateRecoveryDraft = {
     ...draft,
@@ -250,91 +272,32 @@ export function trackCreateFinalization({ result, draft, retry }: TrackCreateFin
   };
   saveCreateRecoveryDraft(recoveryDraft);
 
-  let toastId: string | number | undefined;
-  try {
-    toastId = toast.loading(
-      translateText(
-        'pages.create.progress.finalization.pending',
-        'Finalizing creation in the background...'
-      )
-    );
-  } catch {
-    toastId = undefined;
-  }
-
-  const dismissFinalizationToast = () => {
-    if (toastId === undefined) return;
-    try {
-      toast.dismiss(toastId);
-    } catch {
-      // Some tests mock only the toast variants they assert.
-    }
-  };
-
-  const completeFinalizationToast = () => {
-    if (toastId === undefined) return;
-    try {
-      toast.finalizationSuccess(
-        translateText('pages.create.progress.finalization.saved', 'Saved'),
-        {
-          id: toastId,
-          duration: 1500,
-        }
-      );
-    } catch {
-      // Some tests mock only the toast variants they assert.
-    }
-  };
-
-  result.server
-    .then(serverResult => {
-      if (serverResult.type === 'success') {
-        clearCreateRecoveryDraft(recoveryDraft.id);
-        completeFinalizationToast();
-        return;
-      }
-
-      const error = toMutationError(serverResult.error?.message);
-      markCreateRecoveryDraftFailed(recoveryDraft.id, error);
-      dismissFinalizationToast();
-      toast.error(error.message, {
-        action: {
-          label: translateText('pages.create.recovery.restore', 'Restore'),
-          onClick: () => {
-            const failedDraft = getCreateRecoveryDraft(recoveryDraft.id) ?? recoveryDraft;
-            setCreateRestoreDraft(failedDraft);
-            window.location.assign(failedDraft.createPath);
-          },
+  trackMutationFinalization({
+    result,
+    entityKind: getFinalizationEntityKind(recoveryDraft),
+    operationId: recoveryDraft.id,
+    pendingToast: { testId: 'create-finalization-pending-toast' },
+    successToast: { testId: 'create-finalization-saved-toast' },
+    onSuccess: () => clearCreateRecoveryDraft(recoveryDraft.id),
+    onError: error => markCreateRecoveryDraftFailed(recoveryDraft.id, error),
+    errorToast: () => ({
+      testId: 'create-finalization-error-toast',
+      action: {
+        label: translateText('pages.create.recovery.restore', 'Restore'),
+        onClick: () => {
+          const failedDraft = getCreateRecoveryDraft(recoveryDraft.id) ?? recoveryDraft;
+          setCreateRestoreDraft(failedDraft);
+          window.location.assign(failedDraft.createPath);
         },
-        cancel: retry
-          ? {
-              label: translateText('pages.create.recovery.retry', 'Retry'),
-              onClick: retry,
-            }
-          : undefined,
-      });
-    })
-    .catch(error => {
-      const mutationError = error instanceof Error ? error : toMutationError(null);
-      markCreateRecoveryDraftFailed(recoveryDraft.id, mutationError);
-      dismissFinalizationToast();
-      toast.error(mutationError.message, {
-        action: {
-          label: translateText('pages.create.recovery.restore', 'Restore'),
-          onClick: () => {
-            const failedDraft = getCreateRecoveryDraft(recoveryDraft.id) ?? recoveryDraft;
-            setCreateRestoreDraft(failedDraft);
-            window.location.assign(failedDraft.createPath);
-          },
-        },
-        cancel: retry
-          ? {
-              label: translateText('pages.create.recovery.retry', 'Retry'),
-              onClick: retry,
-            }
-          : undefined,
-      });
-    });
+      },
+      cancel: retry
+        ? {
+            label: translateText('pages.create.recovery.retry', 'Retry'),
+            onClick: retry,
+          }
+        : undefined,
+    }),
+  });
 }
 
 export function openCreateRecoveryTarget(draft: CreateRecoveryDraft) {

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useUserState } from '@/zero/users/useUserState';
 import { useAllGroups } from '@/zero/groups/useGroupState';
 import { toast } from '@/features/shared/ui/ui/sonner';
+import { usePreferenceState } from '@/zero/preferences/usePreferenceState';
 
 interface AddPaymentDialogProps {
   open: boolean;
@@ -12,6 +13,7 @@ interface AddPaymentDialogProps {
     label: string;
     type: string;
     amount: number;
+    currency: string;
     direction: 'income' | 'expense';
     payerUserId?: string;
     payerGroupId?: string;
@@ -28,9 +30,11 @@ export function useAddPaymentDialogController({
   direction,
   groupId,
 }: AddPaymentDialogProps) {
+  const { displayCurrency } = usePreferenceState();
   const [label, setLabel] = useState('');
   const [type, setType] = useState('donation');
   const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState(displayCurrency);
   const [searchQuery, setSearchQuery] = useState('');
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [entityType, setEntityType] = useState<'user' | 'group'>('user');
@@ -42,6 +46,10 @@ export function useAddPaymentDialogController({
 
   const { allUsers } = useUserState({ includeAllUsers: true });
   const { groups: allGroups } = useAllGroups();
+
+  useEffect(() => {
+    if (open) setCurrency(displayCurrency);
+  }, [displayCurrency, open]);
 
   const getUserDisplayName = (user: {
     first_name?: string | null;
@@ -86,6 +94,7 @@ export function useAddPaymentDialogController({
       label: string;
       type: string;
       amount: number;
+      currency: string;
       direction: 'income' | 'expense';
       payerUserId?: string;
       payerGroupId?: string;
@@ -95,6 +104,7 @@ export function useAddPaymentDialogController({
       label,
       type,
       amount: parseFloat(amount),
+      currency,
       direction,
     };
 
@@ -121,6 +131,7 @@ export function useAddPaymentDialogController({
     setLabel('');
     setType('donation');
     setAmount('');
+    setCurrency(displayCurrency);
     setSelectedEntity(null);
     setSearchQuery('');
     setEntityType('user');
@@ -137,6 +148,8 @@ export function useAddPaymentDialogController({
     setType,
     amount,
     setAmount,
+    currency,
+    setCurrency,
     searchQuery,
     setSearchQuery,
     popoverOpen,

@@ -8,6 +8,7 @@ import {
   updateStripeSubscriptionSchema,
   createStripePaymentSchema,
   createPaymentSchema,
+  updatePaymentSchema,
   deletePaymentSchema,
 } from './schema';
 
@@ -98,6 +99,21 @@ export const paymentSharedMutators = {
       ...args,
       created_at: Date.now(),
     });
+  }),
+
+  // Update the editable scalar fields of a payment. Endpoints stay immutable here so
+  // authorization is always evaluated against the payment's existing group scope.
+  updatePayment: defineMutator(updatePaymentSchema, async ({ tx, ctx, args }) => {
+    if (tx.location !== 'client') {
+      const payment = await tx.run(zql.payment.where('id', args.id).one());
+      if (!payment) {
+        throw new Error('Payment not found');
+      }
+
+      await authorizeGroupPaymentManage(tx, ctx, payment);
+    }
+
+    await tx.mutate.payment.update(args);
   }),
 
   // Delete a payment

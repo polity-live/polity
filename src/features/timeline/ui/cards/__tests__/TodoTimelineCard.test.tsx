@@ -111,4 +111,23 @@ describe('TodoTimelineCard', () => {
     expect(screen.queryByText('features.todos.assignee.assignToMe')).toBeNull();
     expect(screen.queryByText('Share')).not.toBeNull();
   });
+
+  it('marks archived todos and hides their operative actions', () => {
+    render(
+      <TodoTimelineCard
+        canManageTodos
+        todo={{
+          id: 'todo-archived',
+          title: 'Archived todo',
+          isCompleted: true,
+          status: 'completed',
+          archived: true,
+        }}
+      />
+    );
+
+    expect(screen.queryByText('features.todos.status.archived')).not.toBeNull();
+    expect(screen.queryByText('features.todos.assignee.assignToMe')).toBeNull();
+    expect(screen.queryByText('features.todos.status.completed')).toBeNull();
+  });
 });

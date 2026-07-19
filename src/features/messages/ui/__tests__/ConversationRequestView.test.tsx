@@ -80,9 +80,9 @@ describe('pending conversation request UI', () => {
     const { rerender } = render(
       <ConversationHeaderView {...(props as any)} currentUserId="user-recipient" />
     );
-    expect(screen.queryByTitle('Cancel request')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cancel request' })).toBeNull();
 
     rerender(<ConversationHeaderView {...(props as any)} currentUserId="user-sender" />);
-    expect(screen.getByTitle('Cancel request')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Cancel request' })).toBeTruthy();
   });
 });

@@ -14,6 +14,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { LoadingProgressBar } from '@/features/shared/ui/feedback';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 import {
   Collapsible,
   CollapsibleContent,
@@ -51,6 +52,8 @@ import type {
 } from '../logic/streetDesignChangeRequests';
 import { getStreetDesignChangeRequestMarker } from '../logic/streetDesignChangeRequests';
 import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
+import { ConvertedCurrencyAmount } from '@/features/shared/ui/currency';
+import { majorToMinor, minorToMajor } from '@/features/shared/logic/currency';
 import { getStreetDesignObjectDefinition } from '../logic/streetDesignObjectRegistry';
 import { getStreetDesignObjectVariantLabelKey } from '../logic/streetDesignVariantCatalog';
 import { getStreetDesignComparisonLayers } from '../logic/streetDesignDiff';
@@ -355,34 +358,34 @@ export function StreetSceneCanvasViewView({
         {!embeddedPreview && showChangeRequests && positionedChangeRequestMarkers.length > 0 ? (
           <div className="pointer-events-none absolute inset-0 z-20">
             {positionedChangeRequestMarkers.map(marker => (
-              <button
-                key={marker.id}
-                type="button"
-                className={cn(
-                  'focus-visible:ring-ring pointer-events-auto absolute flex min-h-8 max-w-52 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold shadow-lg backdrop-blur transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none',
-                  getChangeRequestMarkerClassName(marker.tone),
-                  selectedChangeRequestId === marker.id && 'ring-ring ring-2'
-                )}
-                style={{
-                  left: `${marker.leftPercent}%`,
-                  top: `${marker.topPercent}%`,
-                }}
-                data-testid={`street-design-cr-marker-${marker.id}`}
-                data-change-request-tone={marker.tone}
-                aria-label={marker.label}
-                title={marker.label}
-                onClick={() => onChangeRequestSelect?.(marker.id)}
-              >
-                <span className="font-mono text-[11px]">{marker.displayId}</span>
-                <span
+              <TooltipHint key={marker.id} content={marker.label}>
+                <button
+                  type="button"
                   className={cn(
-                    'size-3 flex-none rounded-full border',
-                    marker.tone === 'remove' && 'border-dashed',
-                    marker.tone === 'update' && 'ring-2 ring-current/30'
+                    'focus-visible:ring-ring pointer-events-auto absolute flex min-h-8 max-w-52 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold shadow-lg backdrop-blur transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none',
+                    getChangeRequestMarkerClassName(marker.tone),
+                    selectedChangeRequestId === marker.id && 'ring-ring ring-2'
                   )}
-                />
-                <span className="min-w-0 truncate">{marker.title}</span>
-              </button>
+                  style={{
+                    left: `${marker.leftPercent}%`,
+                    top: `${marker.topPercent}%`,
+                  }}
+                  data-testid={`street-design-cr-marker-${marker.id}`}
+                  data-change-request-tone={marker.tone}
+                  aria-label={marker.label}
+                  onClick={() => onChangeRequestSelect?.(marker.id)}
+                >
+                  <span className="font-mono text-[11px]">{marker.displayId}</span>
+                  <span
+                    className={cn(
+                      'size-3 flex-none rounded-full border',
+                      marker.tone === 'remove' && 'border-dashed',
+                      marker.tone === 'update' && 'ring-2 ring-current/30'
+                    )}
+                  />
+                  <span className="min-w-0 truncate">{marker.title}</span>
+                </button>
+              </TooltipHint>
             ))}
           </div>
         ) : null}
@@ -643,8 +646,10 @@ function StreetDesignObjectPopover({
   const { t } = useTranslation();
   const definition = getStreetDesignObjectDefinition(object.type);
   const objectLabel = t(getStreetDesignObjectVariantLabelKey(object) ?? definition.labelKey);
-  const unitCostEuro =
-    (object.cost.customUnitCostMinor ?? object.cost.suggestedUnitCostMinor) / 100;
+  const unitCostMajor = minorToMajor(
+    object.cost.customUnitCostMinor ?? object.cost.suggestedUnitCostMinor,
+    object.cost.currency
+  );
   const fieldLabel = (labelKey: string, unit?: string) =>
     unit
       ? t('features.amendments.streetscape.inspector.fieldWithUnit', {
@@ -830,25 +835,32 @@ function StreetDesignObjectPopover({
                 aria-label={t('features.amendments.streetscape.inspector.price')}
                 min={0}
                 step={0.01}
-                value={unitCostEuro}
+                value={unitCostMajor}
                 disabled={readOnly}
                 onChange={event => {
                   const value = event.target.value;
                   onUnitCostChange(
                     object.id,
-                    value === '' ? null : Math.max(0, Math.round(Number(value) * 100))
+                    value === ''
+                      ? null
+                      : Math.max(0, majorToMinor(Number(value), object.cost.currency))
                   );
                 }}
               />
             </div>
             <ReadonlyMetric
               label={t('features.amendments.streetscape.inspector.total')}
-              value={formatMinorCurrency(costLine?.totalCostMinor ?? 0)}
+              value={
+                <ConvertedCurrencyAmount
+                  amount={minorToMajor(costLine?.totalCostMinor ?? 0, object.cost.currency)}
+                  currency={object.cost.currency}
+                />
+              }
             />
           </div>
           <p className="text-muted-foreground mt-2 text-xs">
             {t('features.amendments.streetscape.inspector.suggestedCost', {
-              cost: formatMinorCurrency(object.cost.suggestedUnitCostMinor),
+              cost: formatMinorCurrency(object.cost.suggestedUnitCostMinor, object.cost.currency),
             })}
           </p>
           {object.cost.customUnitCostMinor != null ? (
@@ -975,7 +987,9 @@ export function StreetDesignOsmPopover({
           />
         )}
         <ReadonlyCard
-          label={t('features.amendments.streetscape.inspector.points')}
+          label={t('features.amendments.streetscape.inspector.points', {
+            count: osmFeaturePoints.length,
+          })}
           value={String(osmFeaturePoints.length)}
         />
         {osmWay.widthMeters ? (
@@ -1056,11 +1070,15 @@ export function StreetDesignOsmPopover({
   );
 }
 
-function ReadonlyMetric({ label, value }: { label: string; value: string }) {
+function ReadonlyMetric({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="space-y-1">
       <Label className="text-xs">{label}</Label>
-      <Input value={value} disabled />
+      {typeof value === 'string' || typeof value === 'number' ? (
+        <Input value={value} disabled />
+      ) : (
+        <div className="bg-muted/50 min-h-9 rounded-md border px-3 py-2 text-sm">{value}</div>
+      )}
     </div>
   );
 }

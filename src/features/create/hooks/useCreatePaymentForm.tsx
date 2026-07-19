@@ -1,7 +1,11 @@
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
-import { useAssignableGroupMembersByGroupIds, useGroupById } from '@/zero/groups/useGroupState';
+import {
+  useAssignableGroupMembersByGroupIds,
+  useCurrentUserActiveGroups,
+  useGroupById,
+} from '@/zero/groups/useGroupState';
 import { usePaymentActions } from '@/zero/payments/usePaymentActions';
 import { useUserState } from '@/zero/users/useUserState';
 import { getUserDisplayName } from '@/features/search/utils/searchUtils';
@@ -10,6 +14,13 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { DirectionInput } from '../ui/inputs/DirectionInput';
 import { PaymentTypeInput } from '../ui/inputs/PaymentTypeInput';
+import { CurrencyInput } from '../ui/inputs/CurrencyInput';
+import { usePreferenceState } from '@/zero/preferences/usePreferenceState';
+import {
+  formatCurrencyMajor,
+  getCurrencyFractionDigits,
+  type CurrencyCode,
+} from '@/features/shared/logic/currency';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import { parseCreatePaymentAmount } from '../logic/paymentAmount';
@@ -33,12 +44,27 @@ interface CreatePaymentSearch {
 }
 
 export function useCreatePaymentForm(): CreateFormConfig {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as CreatePaymentSearch;
   const { user } = useAuth();
   const { createPayment } = usePaymentActions();
+  const { displayCurrency, isLoading: isPreferenceLoading } = usePreferenceState();
   const { allUsers } = useUserState({ includeAllUsers: true });
+  const { groups: activeGroups, isLoading: isActiveGroupsLoading } = useCurrentUserActiveGroups();
+  const activeGroupItems = useMemo(
+    () =>
+      activeGroups.map(group => ({
+        id: group.id,
+        entityType: 'group' as const,
+        label: group.name,
+      })),
+    [activeGroups]
+  );
+  const activeGroupIds = useMemo(
+    () => new Set(activeGroups.map(group => group.id)),
+    [activeGroups]
+  );
 
   const groupIdParam = searchParams.groupId;
   const directionParam = searchParams.direction;
@@ -51,6 +77,8 @@ export function useCreatePaymentForm(): CreateFormConfig {
     'membership_fee' | 'donation' | 'subsidies' | 'campaign' | 'material' | 'events' | 'others'
   >('donation');
   const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState<CurrencyCode>(displayCurrency);
+  const hasInitializedCurrency = useRef(false);
   const [entityId, setEntityId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { members: assignableGroupMembers, isLoading: isAssignableGroupMembersLoading } =
@@ -89,6 +117,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
         | 'events'
         | 'others';
       amount?: string;
+      currency?: CurrencyCode;
       entityId?: string;
     }>('payment');
     if (!restoreDraft) return;
@@ -98,8 +127,16 @@ export function useCreatePaymentForm(): CreateFormConfig {
     setLabel(restoreDraft.formState.label ?? '');
     setType(restoreDraft.formState.type ?? 'donation');
     setAmount(restoreDraft.formState.amount ?? '');
+    setCurrency(restoreDraft.formState.currency ?? displayCurrency);
+    hasInitializedCurrency.current = true;
     setEntityId(restoreDraft.formState.entityId ?? '');
   }, []);
+
+  useEffect(() => {
+    if (isPreferenceLoading || hasInitializedCurrency.current) return;
+    hasInitializedCurrency.current = true;
+    setCurrency(displayCurrency);
+  }, [displayCurrency, isPreferenceLoading]);
 
   const syncGroupSearch = useCallback(
     (nextGroupId: string) => {
@@ -136,8 +173,8 @@ export function useCreatePaymentForm(): CreateFormConfig {
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!user) return createBlockedSubmitOutcome();
     if (!label.trim()) return createBlockedSubmitOutcome();
-    if (!groupId || !entityId) return createBlockedSubmitOutcome();
-    const parsedAmount = parseCreatePaymentAmount(amount);
+    if (!activeGroupIds.has(groupId) || !entityId) return createBlockedSubmitOutcome();
+    const parsedAmount = parseCreatePaymentAmount(amount, currency);
     if (parsedAmount == null) return createBlockedSubmitOutcome();
 
     setIsSubmitting(true);
@@ -163,14 +200,14 @@ export function useCreatePaymentForm(): CreateFormConfig {
         label: label.trim(),
         type,
         amount: parsedAmount,
+        currency,
         payer_user_id,
         payer_group_id,
         receiver_user_id,
         receiver_group_id,
       };
-      const paymentResult = createPayment(paymentPayload);
+      const paymentResult = createPayment(paymentPayload, { notificationMode: 'silent' });
       await waitForOptimisticCreate(paymentResult);
-      toast.success(t('pages.create.success.created'));
       context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
@@ -194,6 +231,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
             label,
             type,
             amount,
+            currency,
             entityId,
             returnSection,
           },
@@ -201,7 +239,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
           target: paymentTarget,
         },
         retry: () => {
-          const retryResult = createPayment(paymentPayload);
+          const retryResult = createPayment(paymentPayload, { notificationMode: 'silent' });
           trackCreateFinalization({
             result: retryResult,
             draft: {
@@ -215,6 +253,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
                 label,
                 type,
                 amount,
+                currency,
                 entityId,
                 returnSection,
               },
@@ -235,7 +274,8 @@ export function useCreatePaymentForm(): CreateFormConfig {
   };
 
   const hasEntity = !!entityId;
-  const parsedAmount = parseCreatePaymentAmount(amount);
+  const hasActiveGroup = activeGroupIds.has(groupId);
+  const parsedAmount = parseCreatePaymentAmount(amount, currency);
   const hasValidAmount = parsedAmount != null;
   const detailsInvalidReason = !label.trim()
     ? t('pages.create.payment.validation.labelRequired')
@@ -244,13 +284,13 @@ export function useCreatePaymentForm(): CreateFormConfig {
       : !hasValidAmount
         ? t('pages.create.payment.validation.amountInvalid')
         : null;
-  const counterpartInvalidReason = !groupId
+  const counterpartInvalidReason = !hasActiveGroup
     ? t('pages.create.payment.validation.groupRequired')
     : !hasEntity
       ? t('pages.create.payment.validation.counterpartyRequired')
       : null;
   const paymentInvalidReason = detailsInvalidReason ?? counterpartInvalidReason;
-  const formattedAmount = `${(parsedAmount ?? 0).toFixed(2)} €`;
+  const formattedAmount = formatCurrencyMajor(parsedAmount ?? 0, currency, language);
   const groupDisplayName = group?.name ?? groupId;
   const selectedUser = allUsers.find(currentUser => currentUser.id === entityId);
   const selectedEntityDisplayName = getUserDisplayName(selectedUser) || entityId;
@@ -302,13 +342,23 @@ export function useCreatePaymentForm(): CreateFormConfig {
               hint: t('pages.create.payment.tips.amount'),
               type: 'number',
               min: '0',
-              placeholder: '0.00',
+              step: 10 ** -getCurrencyFractionDigits(currency),
+              placeholder:
+                getCurrencyFractionDigits(currency) === 0
+                  ? '0'
+                  : `0.${'0'.repeat(getCurrencyFractionDigits(currency))}`,
               value: amount,
               onValueChange: setAmount,
               validator: value =>
-                parseCreatePaymentAmount(value) == null
+                parseCreatePaymentAmount(value, currency) == null
                   ? t('pages.create.payment.validation.amountInvalid')
                   : null,
+            },
+            {
+              key: 'currency',
+              kind: 'customComponent',
+              component: CurrencyInput,
+              props: { value: currency, onChange: setCurrency },
             },
             {
               key: 'direction',
@@ -320,7 +370,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
         },
         {
           label: counterpartLabel,
-          isValid: () => !!groupId && hasEntity,
+          isValid: () => hasActiveGroup && hasEntity,
           getInvalidReason: () => counterpartInvalidReason,
           fields: [
             {
@@ -329,12 +379,13 @@ export function useCreatePaymentForm(): CreateFormConfig {
               label: t('pages.create.common.group'),
               required: true,
               props: {
-                entityTypes: ['group'],
+                items: activeGroupItems,
                 value: groupId || undefined,
                 onChange: item => {
                   handleGroupChange(item?.id ?? '');
                 },
                 placeholder: t('pages.create.common.searchGroup'),
+                disabled: isActiveGroupsLoading,
               },
             },
             {
@@ -360,7 +411,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
         },
         {
           label: t('pages.create.common.review'),
-          isValid: () => !!groupId && !!label.trim() && hasValidAmount && hasEntity,
+          isValid: () => hasActiveGroup && !!label.trim() && hasValidAmount && hasEntity,
           getInvalidReason: () => paymentInvalidReason,
           fields: [
             {
@@ -412,10 +463,15 @@ export function useCreatePaymentForm(): CreateFormConfig {
     }),
     [
       groupId,
+      activeGroupIds,
+      activeGroupItems,
+      isActiveGroupsLoading,
+      hasActiveGroup,
       direction,
       label,
       type,
       amount,
+      currency,
       hasValidAmount,
       detailsInvalidReason,
       counterpartInvalidReason,

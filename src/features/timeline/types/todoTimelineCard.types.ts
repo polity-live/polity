@@ -17,6 +17,7 @@ export interface TodoTimelineCardTodo {
   visibility?: 'public' | 'authenticated' | 'private';
   creatorId?: string;
   creatorName?: string;
+  archived?: boolean;
 }
 
 export interface TodoTimelineUrgency {
@@ -33,4 +34,5 @@ export interface TodoTimelineCardLabels {
   assigned: string;
   assignedToMe: string;
   assignToMe: string;
+  archived: string;
 }

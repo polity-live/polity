@@ -30,6 +30,37 @@ import {
   deleteCommentVoteSchema,
 } from '../votes/schema';
 import { applyResolvedSuggestionsToContent } from '@/features/change-requests/logic/applySuggestionToContent';
+import { applyTodoQueryAccess } from '../rbac/query-access';
+
+async function authorizeTodoThreadAccess(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  todoId: string,
+  action: 'create' | 'update' | 'delete' | 'view'
+) {
+  requireAuthenticated(tx, ctx, { action, resource: 'threads', scope: `todo:${todoId}` });
+  if (tx.location === 'client') return;
+
+  const todo = await tx.run(applyTodoQueryAccess(zql.todo.where('id', todoId), ctx.userID).one());
+  if (!todo) {
+    throw new PermissionError(action, 'threads', `todo:${todoId}`);
+  }
+
+  if (action === 'create' || action === 'view' || todo.creator_id === ctx.userID) {
+    return;
+  }
+
+  if (todo.group_id) {
+    await can(tx, ctx, {
+      action: 'manage',
+      resource: 'groupTodos',
+      groupId: todo.group_id,
+    });
+    return;
+  }
+
+  throw new PermissionError(action, 'threads', `todo:${todoId}`);
+}
 
 async function loadDocumentScope(tx: Parameters<typeof can>[0], documentId: string) {
   const document = await tx.run(zql.document.where('id', documentId).one());
@@ -163,6 +194,11 @@ async function authorizeThreadParentAccess(
   if (thread.statement_id) {
     const statement = await tx.run(zql.statement.where('id', thread.statement_id).one());
     requireOwner(tx, ctx, statement?.user_id, { action: 'update', resource: 'statements' });
+    return;
+  }
+
+  if (thread.todo_id) {
+    await authorizeTodoThreadAccess(tx, ctx, thread.todo_id, action);
     return;
   }
 
@@ -338,6 +374,8 @@ export const documentSharedMutators = {
       } else if (args.statement_id) {
         const statement = await tx.run(zql.statement.where('id', args.statement_id).one());
         requireOwner(tx, ctx, statement?.user_id, { action: 'update', resource: 'statements' });
+      } else if (args.todo_id) {
+        await authorizeTodoThreadAccess(tx, ctx, args.todo_id, 'create');
       } else {
         throw new PermissionError('create', 'threads', 'missing parent');
       }

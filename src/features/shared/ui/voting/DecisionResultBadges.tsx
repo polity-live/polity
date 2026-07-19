@@ -82,7 +82,9 @@ export function DecisionResultCompact({
   winnerName?: string;
   className?: string;
 }) {
-  const label = result === 'elected' && winnerName ? winnerName : result.toUpperCase();
+  const { t } = useTranslation();
+  const label =
+    result === 'elected' && winnerName ? winnerName : t(getDecisionResultConfig(result).labelKey);
   const tone =
     result === 'passed' || result === 'elected'
       ? 'success'

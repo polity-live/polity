@@ -1,13 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@rocicorp/zero/react';
 
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
-import { getNotificationNavigationTarget } from '@/features/notifications/logic/notificationHelpers.ts';
+import {
+  getNotificationNavigationTarget,
+  isNotificationRead,
+} from '@/features/notifications/logic/notificationHelpers.ts';
 import type { Notification } from '@/features/notifications/types/notification.types.ts';
 import type { EntityType } from '@/features/notifications/utils/notification-helpers.ts';
-import { useNotificationActions } from '@/zero/notifications/useNotificationActions.ts';
+import { useNotificationActions as useZeroNotificationActions } from '@/zero/notifications/useNotificationActions.ts';
 import { queries } from '@/zero/queries';
+import { useNotificationActions } from './useNotificationActions';
+import { isNotificationActive } from '@/zero/notifications/notificationReadState';
+import { usePermissionEvaluator } from '@/zero/rbac';
+import { canManageEntityNotification } from '../logic/notificationPermissions';
 
 interface UseEntityNotificationsControllerOptions {
   entityId: string;
@@ -21,8 +28,15 @@ export function useEntityNotificationsController({
   entityName,
 }: UseEntityNotificationsControllerOptions) {
   const { t } = useTranslation();
+  const permissionEvaluator = usePermissionEvaluator();
   const navigate = useNavigate();
-  const { markEntityNotificationRead, markAllEntityNotificationsRead } = useNotificationActions();
+  const { setAllNotificationsRead } = useZeroNotificationActions();
+  const {
+    handleMarkNotificationAsRead,
+    handleToggleNotificationRead,
+    handleDismissNotification,
+    handleDeleteEntityNotificationGlobally,
+  } = useNotificationActions();
   const [searchQuery, setSearchQuery] = useState('');
 
   const countArgs = { entityId, entityType };
@@ -47,26 +61,26 @@ export function useEntityNotificationsController({
       query: '',
     })
   );
-  const counts = { all: allRows?.length ?? 0, unread: unreadRows?.length ?? 0 };
-  const unreadCount = allUnreadRows?.length ?? 0;
+  const counts = {
+    all: (allRows ?? []).filter(isNotificationActive).length,
+    unread: (unreadRows ?? []).filter(
+      notification => isNotificationActive(notification) && !isNotificationRead(notification)
+    ).length,
+  };
+  const unreadCount = (allUnreadRows ?? []).filter(
+    notification => isNotificationActive(notification) && !isNotificationRead(notification)
+  ).length;
+  const canDeleteForEveryone = useCallback(
+    (notification: Notification) => canManageEntityNotification(notification, permissionEvaluator),
+    [permissionEvaluator]
+  );
   const isLoading = [allResult, unreadResult, allUnreadResult].some(
     result => result.type === 'unknown'
   );
 
-  useEffect(() => {
-    if (entityId && entityType && unreadCount > 0) {
-      markAllEntityNotificationsRead({ entity_id: entityId, entity_type: entityType });
-    }
-  }, [entityId, entityType, markAllEntityNotificationsRead, unreadCount]);
-
   const handleNotificationClick = async (notification: Notification) => {
-    if (!notification.is_read) {
-      markEntityNotificationRead({
-        id: crypto.randomUUID(),
-        notification_id: notification.id,
-        entity_id: entityId,
-        entity_type: entityType,
-      });
+    if (!isNotificationRead(notification)) {
+      await handleMarkNotificationAsRead(notification);
     }
 
     const navigationTarget = getNotificationNavigationTarget(notification);
@@ -91,7 +105,14 @@ export function useEntityNotificationsController({
 
   const markAllAsRead = async () => {
     if (unreadCount > 0) {
-      await markAllEntityNotificationsRead({ entity_id: entityId, entity_type: entityType });
+      setAllNotificationsRead({
+        scope: {
+          kind: 'entity',
+          entityId,
+          entityType: entityType as 'group' | 'event' | 'amendment' | 'blog',
+        },
+        read: true,
+      });
     }
   };
 
@@ -157,6 +178,11 @@ export function useEntityNotificationsController({
     onSearchQueryChange: setSearchQuery,
     onMarkAllAsRead: markAllAsRead,
     onNotificationClick: handleNotificationClick,
+    onMarkAsRead: handleMarkNotificationAsRead,
+    onToggleRead: handleToggleNotificationRead,
+    onDismissNotification: handleDismissNotification,
+    onDeleteForEveryone: handleDeleteEntityNotificationGlobally,
+    canDeleteForEveryone,
     formatTime,
   };
 }

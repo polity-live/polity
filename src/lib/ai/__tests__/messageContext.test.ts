@@ -4,7 +4,11 @@ import {
   parseAiMessageContext,
   serializeAiMessageContext,
 } from '../messageContext';
-import { extractAiPresentationsFromToolResults } from '../attachments';
+import {
+  dedupeAiChatAttachments,
+  extractAiChatAttachmentsFromToolResults,
+  extractAiPresentationsFromToolResults,
+} from '../attachments';
 
 const groupAttachment = {
   entityType: 'group' as const,
@@ -46,6 +50,72 @@ describe('AI message context', () => {
     });
   });
 
+  it('round-trips update context metadata without changing the V1 envelope', () => {
+    const updateAttachment = { ...groupAttachment, context_type: 'update' as const };
+
+    expect(
+      parseAiMessageContext(serializeAiMessageContext(createAiMessageContext([updateAttachment])))
+    ).toEqual({
+      version: 1,
+      attachments: [updateAttachment],
+      presentations: [],
+    });
+  });
+
+  it('prefers update attachments when the same entity also appears as output', () => {
+    const updated = {
+      ...groupAttachment,
+      title: 'Updated group',
+      context_type: 'update' as const,
+    };
+
+    expect(dedupeAiChatAttachments([updated, groupAttachment])).toEqual([updated]);
+    expect(createAiMessageContext([groupAttachment, updated, groupAttachment]).attachments).toEqual(
+      [updated]
+    );
+    expect(
+      extractAiChatAttachmentsFromToolResults([
+        { output: { attachments: [updated] } },
+        { output: { attachments: [groupAttachment] } },
+      ])
+    ).toEqual([updated]);
+  });
+
+  it('reads AI SDK v6 output envelopes and keeps legacy result compatibility', () => {
+    expect(
+      extractAiChatAttachmentsFromToolResults([
+        { output: { attachments: [groupAttachment] } },
+        { result: { attachments: [groupAttachment] } },
+      ])
+    ).toEqual([groupAttachment]);
+
+    expect(
+      extractAiPresentationsFromToolResults([
+        { output: { presentations: [findings] } },
+        { result: { presentations: [findings] } },
+      ])
+    ).toEqual([findings]);
+  });
+
+  it('prefers output over legacy result and ignores malformed tool payloads', () => {
+    const legacyOnlyAttachment = {
+      ...groupAttachment,
+      entityId: 'legacy-only',
+      title: 'Legacy only',
+    };
+
+    expect(
+      extractAiChatAttachmentsFromToolResults([
+        {
+          output: { attachments: [groupAttachment] },
+          result: { attachments: [legacyOnlyAttachment] },
+        },
+        { output: { attachments: [{ entityType: 'not-an-entity' }] } },
+        null,
+      ])
+    ).toEqual([groupAttachment]);
+  });
+
   it('rejects invalid presentations and the thirteen-item limit', () => {
     const invalid = {
       version: 1,
@@ -77,8 +147,8 @@ describe('AI message context', () => {
   it('extracts and deduplicates findings across tool steps', () => {
     expect(
       extractAiPresentationsFromToolResults([
-        { result: { presentations: [findings] } },
-        { result: { presentations: [findings] } },
+        { output: { presentations: [findings] } },
+        { output: { presentations: [findings] } },
       ])
     ).toEqual([findings]);
   });

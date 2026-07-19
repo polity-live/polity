@@ -20,5 +20,24 @@ if (!('navigation' in globalThis)) {
   });
 }
 
+if (!('ResizeObserver' in globalThis)) {
+  class ResizeObserverMock implements ResizeObserver {
+    observe() {
+      return undefined;
+    }
+    unobserve() {
+      return undefined;
+    }
+    disconnect() {
+      return undefined;
+    }
+  }
+
+  Object.defineProperty(globalThis, 'ResizeObserver', {
+    configurable: true,
+    value: ResizeObserverMock,
+  });
+}
+
 await import('@/i18n/i18n');
 export {};

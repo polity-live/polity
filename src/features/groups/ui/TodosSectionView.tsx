@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { LayoutGrid, List, Plus } from 'lucide-react';
+import { Archive, ArchiveRestore, LayoutGrid, List, Plus } from 'lucide-react';
 
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
@@ -46,6 +46,9 @@ export function TodosSectionView({
   selectedTodo,
   onDetailDialogOpenChange,
   onTodoClick,
+  archiveMode,
+  setArchiveMode,
+  archivedCount,
 }: TodosSectionViewProps) {
   return (
     <>
@@ -54,24 +57,40 @@ export function TodosSectionView({
           <div className="flex items-center justify-between">
             <CardTitle>{translateText('generated.inline.0733_todos_a4114a83')}</CardTitle>
             <div className="flex items-center gap-2">
-              <div className="flex rounded-md border">
-                <Button
-                  variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className="rounded-r-none border-0"
-                  onClick={() => onViewModeChange('kanban')}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className="rounded-l-none border-0"
-                  onClick={() => onViewModeChange('list')}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button
+                variant={archiveMode === 'archived' ? 'secondary' : 'outline'}
+                size="sm"
+                onClick={() => setArchiveMode(archiveMode === 'archived' ? 'active' : 'archived')}
+              >
+                {archiveMode === 'archived' ? (
+                  <ArchiveRestore className="mr-2 h-4 w-4" />
+                ) : (
+                  <Archive className="mr-2 h-4 w-4" />
+                )}
+                {archiveMode === 'archived'
+                  ? translateText('features.todos.archive.showActive')
+                  : `${translateText('features.todos.archive.showArchive')} (${archivedCount})`}
+              </Button>
+              {archiveMode === 'active' ? (
+                <div className="flex rounded-md border">
+                  <Button
+                    variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="rounded-r-none border-0"
+                    onClick={() => onViewModeChange('kanban')}
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="rounded-l-none border-0"
+                    onClick={() => onViewModeChange('list')}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : null}
               {canManageTodos ? (
                 <Button asChild size="sm">
                   <Link
@@ -108,15 +127,17 @@ export function TodosSectionView({
 
           {filteredTodos.length === 0 ? (
             <p className="text-muted-foreground py-8 text-center">
-              {hasActiveFilters
-                ? translateText(
-                    'generated.inline.0114_no_tasks_match_the_current_search_and_filters_48d73ae2'
-                  )
-                : translateText(
-                    'generated.inline.0115_no_tasks_yet_add_the_first_task_to_get_starte_4ec568a6'
-                  )}
+              {archiveMode === 'archived' && !hasActiveFilters
+                ? translateText('features.todos.archive.empty')
+                : hasActiveFilters
+                  ? translateText(
+                      'generated.inline.0114_no_tasks_match_the_current_search_and_filters_48d73ae2'
+                    )
+                  : translateText(
+                      'generated.inline.0115_no_tasks_yet_add_the_first_task_to_get_starte_4ec568a6'
+                    )}
             </p>
-          ) : viewMode === 'kanban' ? (
+          ) : viewMode === 'kanban' && archiveMode === 'active' ? (
             <KanbanBoard canManageTodos={canManageTodos} todos={filteredTodos} />
           ) : (
             <TodoList

@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { SectionSkeleton } from '@/features/shared/ui/feedback';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 import { useDelegateAssemblyCompositionData } from '@/zero/events';
 
 interface DelegateAssemblyCompositionPanelProps {
@@ -189,14 +190,15 @@ function CompositionRowLabel({ row }: { row: DelegateAssemblyCompositionSectionR
   }
 
   return (
-    <Link
-      to="/group/$id"
-      params={{ id: row.groupId }}
-      className="text-primary focus-visible:ring-ring min-w-0 truncate underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-      title={label}
-    >
-      {label}
-    </Link>
+    <TooltipHint content={label}>
+      <Link
+        to="/group/$id"
+        params={{ id: row.groupId }}
+        className="text-primary focus-visible:ring-ring min-w-0 truncate underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+      >
+        {label}
+      </Link>
+    </TooltipHint>
   );
 }
 

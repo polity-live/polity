@@ -24,6 +24,7 @@ function createTx(location: PaymentMutatorTx['location'] = 'server') {
     mutate: {
       payment: {
         insert: vi.fn(),
+        update: vi.fn(),
         delete: vi.fn(),
       },
     },
@@ -54,6 +55,7 @@ describe('paymentSharedMutators group RBAC', () => {
       args: {
         id: 'payment-1',
         amount: 50,
+        currency: 'EUR',
         label: 'Membership',
         type: 'membership_fee',
         payer_user_id: null,
@@ -87,5 +89,58 @@ describe('paymentSharedMutators group RBAC', () => {
     ).rejects.toBe(secondError);
 
     expect(tx.mutate.payment.delete).not.toHaveBeenCalled();
+  });
+
+  it('updates scalar fields after authorizing against the existing group endpoints', async () => {
+    const tx = createTx('server');
+    tx.run.mockResolvedValue({
+      id: 'payment-1',
+      payer_group_id: 'group-1',
+      receiver_group_id: null,
+    });
+    canMock.mockResolvedValue(undefined);
+
+    await paymentSharedMutators.updatePayment.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: { id: 'payment-1', label: 'Updated', amount: 75, currency: 'USD' },
+    });
+
+    expect(canMock).toHaveBeenCalledWith(
+      tx,
+      createCtx(),
+      expect.objectContaining({
+        action: 'manage',
+        resource: 'groupPayments',
+        groupId: 'group-1',
+      })
+    );
+    expect(tx.mutate.payment.update).toHaveBeenCalledWith({
+      id: 'payment-1',
+      label: 'Updated',
+      amount: 75,
+      currency: 'USD',
+    });
+  });
+
+  it('rejects payment updates without manage rights', async () => {
+    const tx = createTx('server');
+    const permissionError = new PermissionError('manage', 'groupPayments', 'group:group-1');
+    tx.run.mockResolvedValue({
+      id: 'payment-1',
+      payer_group_id: 'group-1',
+      receiver_group_id: null,
+    });
+    canMock.mockRejectedValue(permissionError);
+
+    await expect(
+      paymentSharedMutators.updatePayment.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: { id: 'payment-1', label: 'Forbidden' },
+      })
+    ).rejects.toBe(permissionError);
+
+    expect(tx.mutate.payment.update).not.toHaveBeenCalled();
   });
 });

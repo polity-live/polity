@@ -16,6 +16,7 @@ export function useGroupPayments(groupId: string) {
     label: string;
     type: string;
     amount: number;
+    currency: string;
     direction: 'income' | 'expense';
     payerUserId?: string;
     payerGroupId?: string;
@@ -35,6 +36,7 @@ export function useGroupPayments(groupId: string) {
           label: paymentData.label,
           type: paymentData.type,
           amount: paymentData.amount,
+          currency: paymentData.currency,
           payer_user_id: paymentData.payerUserId ?? null,
           payer_group_id: paymentData.payerGroupId ?? null,
           receiver_user_id: paymentData.receiverUserId ?? null,

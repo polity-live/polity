@@ -84,6 +84,53 @@ const allRecipientRelations = [
 ];
 
 describe('notification recipient query authorization', () => {
+  it('does not emit client-unsupported anti-existence predicates', async () => {
+    const { harness, notificationQueries } = await loadNotificationQueries();
+
+    notificationQueries.page.fn({
+      args: {
+        tab: 'unread',
+        query: '',
+        entityId: null,
+        entityType: null,
+        limit: 20,
+        start: null,
+        dir: 'forward',
+      },
+      ctx,
+    });
+
+    const predicateCalls = harness
+      .lastQuery('notification')
+      .calls.filter(call => call[0] === 'where' && typeof call[1] === 'function')
+      .flatMap(call => evaluatePredicate(call[1]));
+    expect(predicateCalls.some(call => call[0] === 'not')).toBe(false);
+  });
+
+  it('includes the recipient group relation in global page and item queries', async () => {
+    const { harness, notificationQueries } = await loadNotificationQueries();
+
+    notificationQueries.page.fn({
+      args: {
+        tab: 'all',
+        query: '',
+        entityId: null,
+        entityType: null,
+        limit: 20,
+        start: null,
+        dir: 'forward',
+      },
+      ctx,
+    });
+
+    expect(relatedNames(harness.lastQuery('notification').calls)).toContain('recipient_group');
+
+    harness.reset();
+    notificationQueries.byId.fn({ args: { id: 'notification-1' }, ctx });
+
+    expect(relatedNames(harness.lastQuery('notification').calls)).toContain('recipient_group');
+  });
+
   it.each(typedCases)(
     '$queryName keeps personal access and only the $entityType recipient path',
     async ({ queryName, args, recipientRelation }) => {

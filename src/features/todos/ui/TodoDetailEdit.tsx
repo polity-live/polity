@@ -1,6 +1,5 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import {
-  FormControlInput,
   FormControlLabel,
   FormControlTextarea,
   FormControlSelect,
@@ -12,6 +11,7 @@ import {
 import { Circle, Clock, CheckCircle2, XCircle, Flag, AlertCircle } from 'lucide-react';
 import { TodoFormData, TodoStatus, TodoPriority } from '../types/todo.types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { TodoDeadlineInput } from '@/features/create/ui/inputs/TodoDeadlineInput';
 
 interface TodoDetailEditProps {
   formData: TodoFormData;
@@ -121,17 +121,11 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
         />
       </div>
 
-      {/* Due Date */}
-      <div>
-        <FormControlLabel className="mb-2 block text-sm font-medium">
-          {translateText('generated.inline.1171_due_date_a1b308ec')}
-        </FormControlLabel>
-        <FormControlInput
-          type="date"
-          value={formData.dueDate}
-          onChange={e => onUpdate({ dueDate: e.target.value })}
-        />
-      </div>
+      <TodoDeadlineInput
+        dueDate={formData.dueDate}
+        dueTime={formData.dueTime}
+        onChange={onUpdate}
+      />
     </div>
   );
 }

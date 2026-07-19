@@ -114,6 +114,7 @@ describe('mutate-with-server-check', () => {
     const sourceRoot = join(repoRoot, 'src');
     const allowedFiles = new Set([
       'features/decision-terminal/hooks/useDecisionVoteDialogController.ts',
+      'features/notifications/hooks/useNotificationActions.ts',
       'features/vote-cast/hooks/useVotePasswordConfirmation.ts',
       'features/vote-cast/ui/VoteCastDialog.tsx',
       'features/votes/hooks/useEventVoting.ts',

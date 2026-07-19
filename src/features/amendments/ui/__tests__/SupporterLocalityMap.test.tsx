@@ -107,7 +107,7 @@ describe('SupporterLocalityMap', () => {
     expect(screen.getByTestId('marker-tooltip').textContent).toContain('Alpha Circle');
     expect(screen.getByTestId('marker-tooltip').textContent).toContain('Berlin, Germany');
     expect(screen.getByTestId('marker-tooltip').textContent?.replace(/\s+/g, '')).toContain(
-      '12members'
+      '12Members'
     );
   });
 

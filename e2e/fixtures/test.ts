@@ -17,6 +17,7 @@ const DEFAULT_AUTH_LOCK_STALE_MS = 10 * 60_000;
 
 interface TestFixtures {
   _createSmokeTimeout: undefined;
+  _mockCurrencyApi: undefined;
   createFlowPage: CreateFlowPage;
   e2eRun: {
     prefix: string;
@@ -129,6 +130,39 @@ async function acquireAuthLock(workerIndex: number) {
 }
 
 export const test = base.extend<TestFixtures, WorkerFixtures>({
+  _mockCurrencyApi: [
+    async ({ page }, use) => {
+      await page.route('**/api/currency/currencies', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ currencies: ['EUR', 'GBP', 'JPY', 'USD'], source: 'test' }),
+        });
+      });
+      await page.route('**/api/currency/rates', async route => {
+        const body = route.request().postDataJSON() as {
+          requests?: { base: string; quote: string; date?: string }[];
+        };
+        const rates = (body.requests ?? []).map(request => ({
+          baseCurrency: request.base,
+          quoteCurrency: request.quote,
+          requestedDate: request.date ?? null,
+          rateDate: request.date ?? '2026-07-17',
+          rate: request.base === request.quote ? 1 : 1.1,
+          source: 'frankfurter',
+          cacheStatus: request.base === request.quote ? 'identity' : 'fresh',
+        }));
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ rates }),
+        });
+      });
+      await use(undefined);
+    },
+    { auto: true },
+  ],
+
   _createSmokeTimeout: [
     // Playwright requires fixture callbacks to destructure the first argument, even when no fixtures are used.
     // eslint-disable-next-line no-empty-pattern

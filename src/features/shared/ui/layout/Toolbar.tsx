@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import * as ToolbarPrimitive from '@radix-ui/react-toolbar';
-import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { type VariantProps, cva } from 'class-variance-authority';
 import { Check, ChevronDown, Loader2 } from 'lucide-react';
 
@@ -11,7 +10,13 @@ import {
   DropdownMenuSeparator,
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
 import { Separator } from '@/features/shared/ui/ui/separator.tsx';
-import { Tooltip, TooltipTrigger } from '@/features/shared/ui/ui/tooltip.tsx';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  type TooltipContentProps,
+} from '@/features/shared/ui/ui/tooltip.tsx';
+import type { KeyboardShortcutDefinition } from '@/features/shared/keyboard/keyboard-shortcut';
 import { cn } from '@/features/shared/utils/utils.ts';
 
 export function Toolbar({
@@ -326,7 +331,10 @@ export function ToolbarGroup({ children, className }: React.ComponentProps<'div'
 
 type TooltipProps<T extends React.ElementType> = {
   tooltip?: React.ReactNode;
-  tooltipContentProps?: Omit<React.ComponentPropsWithoutRef<typeof TooltipContent>, 'children'>;
+  title?: string;
+  tooltipShortcut?: KeyboardShortcutDefinition;
+  tooltipVariant?: TooltipContentProps['variant'];
+  tooltipContentProps?: Omit<TooltipContentProps, 'children' | 'shortcut' | 'variant'>;
   tooltipProps?: Omit<React.ComponentPropsWithoutRef<typeof Tooltip>, 'children'>;
   tooltipTriggerProps?: React.ComponentPropsWithoutRef<typeof TooltipTrigger>;
 } & React.ComponentProps<T>;
@@ -334,6 +342,9 @@ type TooltipProps<T extends React.ElementType> = {
 function withTooltip<T extends React.ElementType>(Component: T) {
   return function ExtendComponent({
     tooltip,
+    title,
+    tooltipShortcut,
+    tooltipVariant,
     tooltipContentProps,
     tooltipProps,
     tooltipTriggerProps,
@@ -343,7 +354,9 @@ function withTooltip<T extends React.ElementType>(Component: T) {
       <ToolbarTooltipContainer
         Component={Component}
         componentProps={props as React.ComponentProps<T>}
-        tooltip={tooltip}
+        tooltip={tooltip ?? title}
+        tooltipShortcut={tooltipShortcut}
+        tooltipVariant={tooltipVariant}
         tooltipContentProps={tooltipContentProps}
         tooltipProps={tooltipProps}
         tooltipTriggerProps={tooltipTriggerProps}
@@ -356,6 +369,8 @@ export function ToolbarTooltipContainer<T extends React.ElementType>({
   Component,
   componentProps,
   tooltip,
+  tooltipShortcut,
+  tooltipVariant,
   tooltipContentProps,
   tooltipProps,
   tooltipTriggerProps,
@@ -372,6 +387,8 @@ export function ToolbarTooltipContainer<T extends React.ElementType>({
       componentProps={componentProps}
       mounted={mounted}
       tooltip={tooltip}
+      tooltipShortcut={tooltipShortcut}
+      tooltipVariant={tooltipVariant}
       tooltipContentProps={tooltipContentProps}
       tooltipProps={tooltipProps}
       tooltipTriggerProps={tooltipTriggerProps}
@@ -384,7 +401,9 @@ interface ToolbarTooltipWrapperViewProps<T extends React.ElementType> {
   componentProps: React.ComponentProps<T>;
   mounted: boolean;
   tooltip?: React.ReactNode;
-  tooltipContentProps?: Omit<React.ComponentPropsWithoutRef<typeof TooltipContent>, 'children'>;
+  tooltipShortcut?: KeyboardShortcutDefinition;
+  tooltipVariant?: TooltipContentProps['variant'];
+  tooltipContentProps?: Omit<TooltipContentProps, 'children' | 'shortcut' | 'variant'>;
   tooltipProps?: Omit<React.ComponentPropsWithoutRef<typeof Tooltip>, 'children'>;
   tooltipTriggerProps?: React.ComponentPropsWithoutRef<typeof TooltipTrigger>;
 }
@@ -394,51 +413,43 @@ function ToolbarTooltipWrapperView<T extends React.ElementType>({
   componentProps,
   mounted,
   tooltip,
+  tooltipShortcut,
+  tooltipVariant,
   tooltipContentProps,
   tooltipProps,
   tooltipTriggerProps,
 }: ToolbarTooltipWrapperViewProps<T>) {
   const component = <Component {...componentProps} />;
+  const { disabled, loading } = componentProps as { disabled?: boolean; loading?: boolean };
+  const trigger =
+    disabled || loading ? (
+      <span
+        className="inline-flex"
+        tabIndex={0}
+        aria-disabled="true"
+        aria-label={typeof tooltip === 'string' ? tooltip : undefined}
+      >
+        {component}
+      </span>
+    ) : (
+      component
+    );
 
   if (tooltip && mounted) {
     return (
-      <Tooltip {...tooltipProps}>
+      <Tooltip shortcut={tooltipShortcut} {...tooltipProps}>
         <TooltipTrigger asChild {...tooltipTriggerProps}>
-          {component}
+          {trigger}
         </TooltipTrigger>
 
-        <TooltipContent {...tooltipContentProps}>{tooltip}</TooltipContent>
+        <TooltipContent variant={tooltipVariant} {...tooltipContentProps}>
+          {tooltip}
+        </TooltipContent>
       </Tooltip>
     );
   }
 
   return component;
-}
-
-function TooltipContent({
-  children,
-  className,
-  // CHANGE
-  sideOffset = 4,
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
-  return (
-    <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Content
-        className={cn(
-          'bg-primary text-primary-foreground z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-md px-3 py-1.5 text-xs text-balance',
-          className
-        )}
-        data-slot="tooltip-content"
-        sideOffset={sideOffset}
-        {...props}
-      >
-        {children}
-        {/* CHANGE */}
-        {/* <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] bg-primary fill-primary" /> */}
-      </TooltipPrimitive.Content>
-    </TooltipPrimitive.Portal>
-  );
 }
 
 export function ToolbarMenuGroup({

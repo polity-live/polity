@@ -130,6 +130,30 @@ export const commonQueries = {
   // All canonical hashtags (for typeahead)
   allHashtags: defineQuery(z.object({}), () => zql.hashtag.orderBy('tag', 'asc')),
 
+  // Canonical hashtags with their accessible usages, used to rank onboarding suggestions.
+  onboardingHashtagUsage: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    zql.hashtag
+      .related('user_hashtags', links =>
+        links.whereExists('user', user => applyUserQueryAccess(user, userID))
+      )
+      .related('group_hashtags', links =>
+        links.whereExists('group', group => applyGroupQueryAccess(group, userID))
+      )
+      .related('amendment_hashtags', links =>
+        links.whereExists('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
+      )
+      .related('event_hashtags', links =>
+        links.whereExists('event', event => applyEventQueryAccess(event, userID))
+      )
+      .related('blog_hashtags', links =>
+        links.whereExists('blog', blog => applyBlogQueryAccess(blog, userID))
+      )
+      .related('statement_hashtags', links =>
+        links.whereExists('statement', statement => applyStatementQueryAccess(statement, userID))
+      )
+      .orderBy('tag', 'asc')
+  ),
+
   // Hashtags for a user (via junction)
   userHashtags: defineQuery(
     z.object({ user_id: z.string() }),

@@ -17,7 +17,9 @@ import { buildAiEntityHref } from '@/lib/ai/entityHref';
 import { executeZeroRead, type ZeroTransaction } from '@/server/zero-mutate';
 import { zql } from '@/zero/schema';
 import { buildAiCreateTools } from './ai-create-tools';
+import { buildAiUpdateTools } from './ai-update-tools';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { formatCurrencyMajor, type CurrencyCode } from '@/features/shared/logic/currency';
 
 const SEARCH_ENTITY_TYPES = [
   'user',
@@ -310,6 +312,7 @@ interface PaymentRow {
   label: string | null;
   type: string | null;
   amount: number | null;
+  currency: string | null;
   payer_group_id: string | null;
   receiver_group_id: string | null;
   created_at: number;
@@ -460,15 +463,15 @@ function formatDate(value: number | null | undefined): string | null {
   }).format(new Date(value ?? 0));
 }
 
-function formatCurrency(value: number | null | undefined): string | null {
+function formatCurrency(
+  value: number | null | undefined,
+  currency: CurrencyCode = 'EUR'
+): string | null {
   if (!Number.isFinite(value)) {
     return null;
   }
 
-  return new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(value ?? 0);
+  return formatCurrencyMajor(value ?? 0, currency, 'de', { currencyDisplay: 'code' });
 }
 
 function toOptionalDate(value: number | null | undefined): Date | undefined {
@@ -1388,7 +1391,11 @@ async function findGroupResources(
             'payment',
             row.id,
             row.label || 'Zahlung',
-            [row.type, formatCurrency(row.amount), formatDate(row.created_at)]
+            [
+              row.type,
+              formatCurrency(row.amount, row.currency ?? 'EUR'),
+              formatDate(row.created_at),
+            ]
               .filter(Boolean)
               .join(' · ') || null,
             group.name ? `Gruppe: ${group.name}` : null,
@@ -1398,6 +1405,7 @@ async function findGroupResources(
               title: row.label || 'Zahlung',
               createdAt: toRequiredDate(row.created_at),
               amount: row.amount,
+              currency: row.currency ?? 'EUR',
               paymentType: row.type,
               paymentDirection: direction,
               groupId,
@@ -1649,9 +1657,10 @@ function buildCreateFlowRoute(
   return query ? `${metadata.route}?${query}` : metadata.route;
 }
 
-export function buildAiTools(userId: string) {
+export function buildAiTools(userId: string, timeZone = 'UTC') {
   return {
-    ...buildAiCreateTools(userId),
+    ...buildAiCreateTools(userId, timeZone),
+    ...buildAiUpdateTools(userId, timeZone),
 
     present_findings: tool({
       description:

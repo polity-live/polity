@@ -4,6 +4,8 @@ import {
   notifyAmendmentOwnerPromoted,
   notifyCollaborationInvite,
   notifyBloggerRoleChanged,
+  notifyPaymentCreated,
+  notifyPaymentDeleted,
   setNotificationDispatch,
   type CreateNotificationInput,
 } from '../notification-helpers';
@@ -23,6 +25,42 @@ function captureNotifications() {
 }
 
 describe('notification helpers', () => {
+  it.each([
+    ['created', notifyPaymentCreated],
+    ['deleted', notifyPaymentDeleted],
+  ])('routes %s group payment notifications to the payments section', async (_state, notify) => {
+    captureNotifications();
+
+    await notify({
+      senderId: 'user-1',
+      groupId: 'group-1',
+      groupName: 'Group One',
+      paymentDescription: 'Membership fee',
+    });
+
+    expect(dispatched).toHaveLength(1);
+    expect(dispatched[0]).toMatchObject({
+      recipient_entity_type: 'group',
+      recipient_entity_id: 'group-1',
+      action_url: '/group/group-1/operation#payments',
+    });
+    expect(dispatched[0]?.message).toContain('Membership fee');
+    expect(dispatched[0]?.message).not.toContain('{{paymentDescription}}');
+  });
+
+  it('uses a localized payment fallback instead of leaking an interpolation placeholder', async () => {
+    captureNotifications();
+
+    await notifyPaymentCreated({
+      senderId: 'user-1',
+      groupId: 'group-1',
+      groupName: 'Group One',
+      paymentDescription: null,
+    });
+
+    expect(dispatched[0]?.message).not.toContain('{{paymentDescription}}');
+  });
+
   it('creates personal and entity notifications for group admin promotions', async () => {
     captureNotifications();
 

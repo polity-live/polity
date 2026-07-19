@@ -4,6 +4,10 @@ import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 /**
  * Action hook for message/conversation mutations.
@@ -16,24 +20,24 @@ export function useMessageActions() {
 
   // ── Conversations ──────────────────────────────────────────────────
   const createConversation = useCallback(
-    (args: Parameters<typeof mutators.messages.createConversation>[0]) => {
+    (
+      args: Parameters<typeof mutators.messages.createConversation>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.messages.createConversation(args));
-      toast.success(t('features.messages.toasts.conversationCreated'));
-      onServerError(result, () =>
-        toast.error(t('features.messages.toasts.conversationCreateFailed'))
-      );
+      trackCreationUnlessSilent(result, 'conversation', options, args.id);
       return result;
     },
     [zero, t]
   );
 
   const createConversationFull = useCallback(
-    (args: Parameters<typeof mutators.messages.createConversationFull>[0]) => {
+    (
+      args: Parameters<typeof mutators.messages.createConversationFull>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.messages.createConversationFull(args));
-      toast.success(t('features.messages.toasts.conversationCreated'));
-      onServerError(result, () =>
-        toast.error(t('features.messages.toasts.conversationCreateFailed'))
-      );
+      trackCreationUnlessSilent(result, 'conversation', options);
       return result;
     },
     [zero, t]
@@ -65,13 +69,9 @@ export function useMessageActions() {
   const deleteConversationFull = useCallback(
     (args: Parameters<typeof mutators.messages.deleteConversationFull>[0]) => {
       const result = zero.mutate(mutators.messages.deleteConversationFull(args));
-      toast.success(t('features.messages.toasts.conversationDeleted'));
-      onServerError(result, () =>
-        toast.error(t('features.messages.toasts.conversationDeleteFailed'))
-      );
       return result;
     },
-    [zero, t]
+    [zero]
   );
 
   // ── Messages ───────────────────────────────────────────────────────
@@ -114,10 +114,12 @@ export function useMessageActions() {
 
   // ── Participants ───────────────────────────────────────────────────
   const addParticipant = useCallback(
-    (args: Parameters<typeof mutators.messages.addParticipant>[0]) => {
+    (
+      args: Parameters<typeof mutators.messages.addParticipant>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.messages.addParticipant(args));
-      toast.success(t('features.messages.toasts.participantAdded'));
-      onServerError(result, () => toast.error(t('features.messages.toasts.participantAddFailed')));
+      trackCreationUnlessSilent(result, 'participant', options, args.id);
       return result;
     },
     [zero, t]

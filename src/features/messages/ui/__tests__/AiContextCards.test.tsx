@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AiContextCards } from '../AiContextCards';
 
@@ -35,5 +35,77 @@ describe('AiContextCards', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /1|more|weitere/i }));
     expect(screen.getByText('Blog result')).toBeTruthy();
+  });
+
+  it('separates assistant output and update results into independent context sections', () => {
+    const attachments = [
+      ...Array.from({ length: 5 }, (_, index) => ({
+        entityType: 'group' as const,
+        entityId: `output-${index}`,
+        title: `Output ${index + 1}`,
+      })),
+      ...Array.from({ length: 5 }, (_, index) => ({
+        entityType: 'event' as const,
+        entityId: `update-${index}`,
+        title: `Update ${index + 1}`,
+        context_type: 'update' as const,
+      })),
+    ];
+
+    render(<AiContextCards attachments={attachments} contextLabel="output" />);
+
+    const outputSection = screen.getByRole('region', { name: /output context/i });
+    const updateSection = screen.getByRole('region', { name: /update/i });
+    expect(within(outputSection).queryByText('Output 5')).toBeNull();
+    expect(within(updateSection).queryByText('Update 5')).toBeNull();
+
+    fireEvent.click(within(outputSection).getByRole('button'));
+    expect(within(outputSection).getByText('Output 5')).toBeTruthy();
+    expect(within(updateSection).queryByText('Update 5')).toBeNull();
+  });
+
+  it('treats every user attachment as input even when it carries update metadata', () => {
+    render(
+      <AiContextCards
+        contextLabel="input"
+        attachments={[
+          {
+            entityType: 'group',
+            entityId: 'group-1',
+            title: 'Previously updated group',
+            context_type: 'update',
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByRole('region', { name: /input context/i })).toBeTruthy();
+    expect(screen.queryByRole('region', { name: /update/i })).toBeNull();
+  });
+
+  it('renders a persisted V1 output entity with its relative route', () => {
+    render(
+      <AiContextCards
+        contextLabel="output"
+        contextJson={JSON.stringify({
+          version: 1,
+          attachments: [
+            {
+              entityType: 'group',
+              entityId: 'group-created',
+              title: 'Created group',
+              context_type: 'output',
+              href: '/group/group-created',
+            },
+          ],
+          presentations: [],
+        })}
+      />
+    );
+
+    expect(screen.getByRole('region', { name: /output context/i })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Created group/ }).getAttribute('href')).toBe(
+      '/group/group-created'
+    );
   });
 });

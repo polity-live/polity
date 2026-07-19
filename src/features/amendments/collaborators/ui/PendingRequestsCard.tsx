@@ -100,8 +100,9 @@ export function PendingRequestsCard({
       <div className="space-y-1.5 px-3 sm:px-4">
         <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
           <Users className="h-5 w-5" />
-          {translateText('generated.inline.0119_pending_collaboration_requests_0e65bf5a')}
-          {requests.length})
+          {translateText('features.amendments.collaborators.pendingRequestsTitle', {
+            count: requests.length,
+          })}
         </h2>
         <p className="text-muted-foreground text-sm">
           {translateText(

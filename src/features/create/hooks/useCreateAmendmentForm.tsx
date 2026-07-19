@@ -43,6 +43,7 @@ import {
   geoLocationFieldsFromShape,
   type GeoLocationShape,
 } from '@/features/shared/logic/geoLocationShape';
+import { toLocalTimestamp } from '@/features/shared/logic/localDateTime';
 
 interface CreateTargetGroupData {
   id: string;
@@ -357,7 +358,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               evaluation_mode: evaluationMode,
               evaluation_date:
                 evaluationMode === 'fixed_date' && evaluationDate
-                  ? new Date(`${evaluationDate}T00:00:00`).getTime()
+                  ? toLocalTimestamp(evaluationDate)
                   : null,
               evaluation_offset_months:
                 evaluationMode === 'relative_to_vote'
@@ -429,7 +430,9 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         to: '/amendment/$id',
         params: { id: amendmentId },
       });
-      const createAmendmentResult = createFullAmendment(createAmendmentPayload);
+      const createAmendmentResult = createFullAmendment(createAmendmentPayload, {
+        notificationMode: 'silent',
+      });
       await waitForOptimisticCreate(createAmendmentResult);
 
       context?.setRecoveryTarget(amendmentTarget);
@@ -471,7 +474,9 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           target: amendmentTarget,
         },
         retry: () => {
-          const retryResult = createFullAmendment(createAmendmentPayload);
+          const retryResult = createFullAmendment(createAmendmentPayload, {
+            notificationMode: 'silent',
+          });
           trackCreateFinalization({
             result: retryResult,
             draft: {
