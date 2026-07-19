@@ -1,5 +1,6 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import type { DecisionStatus } from '@/features/shared/ui/status';
+import { formatCountdownTime } from './formatTimeUtils';
 /**
  * Decision status utilities for the Decision Terminal
  * Calculates status, urgency levels, and formats countdowns
@@ -87,9 +88,9 @@ export function isRecentlyClosed(endsAt: Date | string): boolean {
 }
 
 /**
- * Format countdown as HH:MM:SS or Xd HH:MM:SS for long durations
+ * Format countdown as HH:MM:SS or XdHH:MM:SS for long durations
  */
-export function formatCountdown(endsAt: Date | string): string {
+export function formatCountdown(endsAt: Date | string, locale?: 'en' | 'de'): string {
   const end = new Date(endsAt);
   const now = new Date();
   const diffMs = end.getTime() - now.getTime();
@@ -103,15 +104,7 @@ export function formatCountdown(endsAt: Date | string): string {
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
-  const pad = (n: number) => n.toString().padStart(2, '0');
-
-  if (hours >= 24) {
-    const days = Math.floor(hours / 24);
-    const remainingHours = hours % 24;
-    return `${days}d ${pad(remainingHours)}:${pad(minutes)}:${pad(seconds)}`;
-  }
-
-  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  return formatCountdownTime(hours, minutes, seconds, { locale });
 }
 
 /**

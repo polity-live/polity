@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { formatCountdownTime, formatTimeElapsed } from '../logic/formatTimeUtils';
 
 function calculateTimeRemaining(endsAt: Date): {
   hours: number;
@@ -25,18 +26,6 @@ function calculateTimeRemaining(endsAt: Date): {
   return { hours, minutes, seconds, totalSeconds, isExpired: false };
 }
 
-function formatTime(hours: number, minutes: number, seconds: number): string {
-  const pad = (n: number) => n.toString().padStart(2, '0');
-
-  if (hours >= 24) {
-    const days = Math.floor(hours / 24);
-    const remainingHours = hours % 24;
-    return `${days}d ${pad(remainingHours)}:${pad(minutes)}:${pad(seconds)}`;
-  }
-
-  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-}
-
 function getUrgencyLevel(totalSeconds: number): 'normal' | 'closing' | 'urgent' | 'critical' {
   if (totalSeconds <= 0) return 'normal';
   if (totalSeconds <= 15 * 60) return 'critical';
@@ -45,35 +34,11 @@ function getUrgencyLevel(totalSeconds: number): 'normal' | 'closing' | 'urgent' 
   return 'normal';
 }
 
-function formatEndedAgo(endedAt: Date | string) {
-  const end = new Date(endedAt);
-  const now = new Date();
-  const diffMs = now.getTime() - end.getTime();
-
-  if (diffMs < 0) {
-    return null;
-  }
-
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffDays > 0) {
-    return `${diffDays}d`;
-  }
-
-  if (diffHours > 0) {
-    return `${diffHours}h`;
-  }
-
-  return `${diffMins}m`;
-}
-
 export function useCountdownTimerController(args: {
   endsAt: Date | string;
   onExpire?: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [timeRemaining, setTimeRemaining] = useState(() =>
     calculateTimeRemaining(new Date(args.endsAt))
   );
@@ -93,9 +58,17 @@ export function useCountdownTimerController(args: {
     return () => clearInterval(interval);
   }, [updateTime]);
 
+  const locale = i18n.language === 'de' ? 'de' : 'en';
+  const formattedTime = formatCountdownTime(
+    timeRemaining.hours,
+    timeRemaining.minutes,
+    timeRemaining.seconds,
+    { locale }
+  );
+
   return {
     timeRemaining,
-    formattedTime: formatTime(timeRemaining.hours, timeRemaining.minutes, timeRemaining.seconds),
+    formattedTime,
     urgency: getUrgencyLevel(timeRemaining.totalSeconds),
     labels: {
       ended: t('features.timeline.terminal.ended'),
@@ -104,9 +77,11 @@ export function useCountdownTimerController(args: {
 }
 
 export function useEndedAgoController(endedAt: Date | string) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [, setTick] = useState(0);
-  const timeString = formatEndedAgo(endedAt);
+
+  const locale = i18n.language === 'de' ? 'de' : 'en';
+  const timeString = formatTimeElapsed(endedAt, { locale });
 
   useEffect(() => {
     const interval = setInterval(() => setTick(tick => tick + 1), 60000);
