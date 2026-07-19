@@ -1,6 +1,6 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
-import type { SharedV3ProviderOptions } from '@ai-sdk/provider';
+import type { SharedV4ProviderOptions } from '@ai-sdk/provider';
 import type { LanguageModel } from 'ai';
 import { z } from 'zod';
 import { OPENROUTER_FREE_MODEL_ID } from '@/lib/ai/models';
@@ -39,7 +39,7 @@ export interface AiModelOption {
 
 interface ResolveModelResult {
   model: LanguageModel;
-  providerOptions?: SharedV3ProviderOptions;
+  providerOptions?: SharedV4ProviderOptions;
   credentialProvider: AiProvider | null;
 }
 
