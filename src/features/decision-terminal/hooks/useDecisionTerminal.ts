@@ -34,6 +34,7 @@ import {
   calculateTrend,
   calculateTurnout,
 } from '../logic/trend-calculation';
+import { translateVoteChoiceLabel } from '../logic/voteChoiceTranslation';
 
 function normalizeMajorityType(value?: string | null): MajorityType {
   if (value === 'absolute' || value === 'two_thirds') {
@@ -502,7 +503,7 @@ export function useDecisionTerminal(
         hasConfirmedEventRole: confirmedEventRole,
         choices: (vote.choices || []).map((choice, choiceIndex) => ({
           id: choice.id,
-          label: choice.label || `Choice ${choiceIndex + 1}`,
+          label: translateVoteChoiceLabel(choice, choiceIndex),
         })),
         entity: vote.amendment?.id
           ? {
