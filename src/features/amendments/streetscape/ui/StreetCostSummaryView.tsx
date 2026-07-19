@@ -331,6 +331,7 @@ export function StreetCostSummaryView({
                     <TooltipHint content={getActionLabel('select', categoryLabel)}>
                       <button
                         type="button"
+                        aria-label={getActionLabel('select', categoryLabel)}
                         className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
                         onClick={() => onObjectSelect?.(firstLine?.objectId ?? null)}
                       >
@@ -389,6 +390,7 @@ export function StreetCostSummaryView({
                             <TooltipHint content={getActionLabel('select', lineLabel)}>
                               <button
                                 type="button"
+                                aria-label={getActionLabel('select', lineLabel)}
                                 className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
                                 onClick={() => onObjectSelect?.(line.objectId)}
                               >

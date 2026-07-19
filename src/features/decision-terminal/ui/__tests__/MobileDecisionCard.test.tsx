@@ -17,6 +17,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 
       return labels[key] ?? key;
     },
+    i18n: { language: 'en' },
   }),
 }));
 

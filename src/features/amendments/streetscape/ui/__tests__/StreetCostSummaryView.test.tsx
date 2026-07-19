@@ -42,8 +42,8 @@ describe('StreetCostSummaryView', () => {
         onDeleteObject={onDeleteObject}
       />
     );
-    fireEvent.click(screen.getByTitle('Expand Greenery'));
-    fireEvent.click(screen.getByTitle('Remove Tree'));
+    fireEvent.click(screen.getByRole('button', { name: 'Expand Greenery' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Tree' }));
 
     expect(onDeleteObject).toHaveBeenCalledWith('tree-1');
   });
@@ -63,9 +63,9 @@ describe('StreetCostSummaryView', () => {
     );
 
     expect(screen.getByText('Cost breakdown')).toBeTruthy();
-    expect(screen.getByTitle('Expand Greenery')).toBeTruthy();
-    fireEvent.click(screen.getByTitle('Expand Greenery'));
-    fireEvent.click(screen.getByTitle('Select Tree'));
+    expect(screen.getByRole('button', { name: 'Expand Greenery' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Expand Greenery' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Select Tree' }));
 
     expect(onObjectSelect).toHaveBeenCalledWith('tree-1');
   });
@@ -83,7 +83,7 @@ describe('StreetCostSummaryView', () => {
       />
     );
 
-    fireEvent.click(screen.getByTitle('Remove Greenery'));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Greenery' }));
 
     expect(onDeleteObjectCategory).toHaveBeenCalledWith('greenery');
   });

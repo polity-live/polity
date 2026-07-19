@@ -16,9 +16,11 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, fallback?: string) => fallback ?? key,
+  translate: (key: string, fallback?: string | Record<string, unknown>) =>
+    typeof fallback === 'string' ? fallback : key,
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
+    t: (key: string, fallback?: string | Record<string, unknown>) =>
+      typeof fallback === 'string' ? fallback : key,
   }),
 }));
 
@@ -300,7 +302,9 @@ describe('wiki roster offline summary integration', () => {
         shouldDisableParticipationRequest={false}
         subscribeLoading={false}
         subscriberCount={0}
-        t={(key: string, fallback?: string) => fallback ?? key}
+        t={(key: string, fallback?: string | Record<string, unknown>) =>
+          typeof fallback === 'string' ? fallback : key
+        }
         toggleSubscribe={vi.fn()}
         user={null}
       />

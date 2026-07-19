@@ -50,7 +50,7 @@ describe('StreetDesignToolbarView', () => {
     fireEvent.click(screen.getByRole('button', { name: /place/i }));
     expect(onInteractionModeChange).toHaveBeenCalledWith('place');
 
-    fireEvent.click(screen.getByRole('button', { name: /select/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^select$/i }));
     expect(onInteractionModeChange).toHaveBeenCalledWith('select');
 
     expect(screen.getByText('OSM Existing')).toBeTruthy();
@@ -216,23 +216,23 @@ describe('StreetDesignToolbarView', () => {
     fireEvent.click(screen.getByRole('button', { name: /collapse new elements/i }));
     expect(screen.getByRole('button', { name: /expand new elements/i })).toBeTruthy();
 
-    expect(screen.getByTitle('Expand Greenery')).toBeTruthy();
-    fireEvent.click(screen.getByTitle('Expand Greenery'));
-    expect(screen.getByTitle('Collapse Greenery')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Expand Greenery' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Expand Greenery' }));
+    expect(screen.getByRole('button', { name: 'Collapse Greenery' })).toBeTruthy();
 
-    fireEvent.click(screen.getByTitle('Select Deciduous tree'));
+    fireEvent.click(screen.getByRole('button', { name: 'Select Deciduous tree' }));
     expect(onObjectSelect).toHaveBeenCalledWith('tree-1');
 
-    fireEvent.click(screen.getByTitle('Hide Deciduous tree'));
+    fireEvent.click(screen.getByRole('button', { name: 'Hide Deciduous tree' }));
     expect(onObjectVisibilityChange).toHaveBeenCalledWith('tree-1', false);
 
-    fireEvent.click(screen.getByTitle('Hide Greenery'));
+    fireEvent.click(screen.getByRole('button', { name: 'Hide Greenery' }));
     expect(onObjectCategoryVisibilityChange).toHaveBeenCalledWith('greenery', false);
 
-    fireEvent.click(screen.getByTitle('Remove Deciduous tree'));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Deciduous tree' }));
     expect(onObjectDelete).toHaveBeenCalledWith('tree-1');
 
-    fireEvent.click(screen.getByTitle('Remove Greenery'));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Greenery' }));
     expect(onObjectCategoryDelete).toHaveBeenCalledWith('greenery');
   }, 10_000);
 });

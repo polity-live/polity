@@ -24,7 +24,10 @@ const hookMocks = vi.hoisted(() => ({
   }),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
-  toastLoading: vi.fn(() => 'toast-1'),
+  toastLoading: vi.fn((...args: unknown[]) => {
+    void args;
+    return 'toast-1';
+  }),
 }));
 
 vi.mock('@tanstack/react-router', () => ({

@@ -99,10 +99,10 @@ describe('ChartElement', () => {
     expect(toolbar.className).not.toContain('absolute');
     expect(surface.contains(screen.getByTestId('data-view-renderer'))).toBe(true);
 
-    fireEvent.click(screen.getByTitle('Edit data view'));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit data view' }));
     expect(openDataViewDialog).toHaveBeenCalledWith(element);
 
-    fireEvent.click(screen.getByTitle('Delete data view'));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete data view' }));
     expect(findPath).toHaveBeenCalledWith(element);
     expect(removeNodes).toHaveBeenCalledWith({ at: [0] });
   });

@@ -20,6 +20,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({
     t: (_key: string, options?: { defaultValue?: string } | string) =>
       typeof options === 'string' ? options : (options?.defaultValue ?? _key),
+    i18n: { language: 'en' },
   }),
   translate: (_key: string, options?: { defaultValue?: string } | string) =>
     typeof options === 'string' ? options : (options?.defaultValue ?? _key),
@@ -360,11 +361,11 @@ describe('DecisionTerminal dashboard', () => {
       screen.getAllByText('Move reserve funds into field operations before the evening session.')
         .length
     ).toBeGreaterThan(0);
-    expect(screen.getAllByText('4/8 · 50% · IND').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('4/8 · 50% · Ind').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Closed charter vote').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Session chair election').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Mina Bauer').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('3/5 · 60% · IND').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('3/5 · 60% · Ind').length).toBeGreaterThan(0);
     expect(
       container.querySelectorAll('[data-election-candidate-row="true"]').length
     ).toBeGreaterThan(0);

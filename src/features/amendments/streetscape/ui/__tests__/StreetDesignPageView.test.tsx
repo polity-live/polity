@@ -79,7 +79,7 @@ describe('StreetDesignPageView', () => {
 
     expect(screen.getByText('253 existing')).toBeTruthy();
     expect(screen.getByText('0 elements')).toBeTruthy();
-    expect(screen.getByText(content => /0\s*€/.test(content))).toBeTruthy();
+    expect(screen.getByText(content => /€\s*0(?:[.,]00)?/.test(content))).toBeTruthy();
     expect(screen.getByText('0 CRs')).toBeTruthy();
     expect(screen.getByText('Alexanderplatz, Berlin')).toBeTruthy();
     expect(screen.getByTestId('street-scene-canvas').getAttribute('data-initial-legend-open')).toBe(

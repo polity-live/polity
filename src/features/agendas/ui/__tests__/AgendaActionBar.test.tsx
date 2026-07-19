@@ -170,9 +170,13 @@ describe('AgendaActionBar', () => {
     );
 
     expect(screen.getByText('TOP-1')).toBeTruthy();
-    expect(screen.queryByTitle('features.events.navigation.previous')).toBeNull();
-    expect(screen.queryByTitle('features.events.navigation.complete')).toBeNull();
-    expect(screen.queryByTitle('features.events.navigation.next')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'features.events.navigation.previous' })
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'features.events.navigation.complete' })
+    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'features.events.navigation.next' })).toBeNull();
 
     rerender(
       <AgendaActionBar
@@ -183,7 +187,7 @@ describe('AgendaActionBar', () => {
       />
     );
 
-    expect(screen.queryByTitle('features.events.navigation.start')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'features.events.navigation.start' })).toBeNull();
   });
 
   it('renders agenda lifecycle controls when agenda management rights are present', () => {
@@ -196,9 +200,13 @@ describe('AgendaActionBar', () => {
       />
     );
 
-    expect(screen.getByTitle('features.events.navigation.previous')).toBeTruthy();
-    expect(screen.getByTitle('features.events.navigation.complete')).toBeTruthy();
-    expect(screen.getByTitle('features.events.navigation.next')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'features.events.navigation.previous' })
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'features.events.navigation.complete' })
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'features.events.navigation.next' })).toBeTruthy();
 
     rerender(
       <AgendaActionBar
@@ -210,7 +218,7 @@ describe('AgendaActionBar', () => {
       />
     );
 
-    expect(screen.getByTitle('features.events.navigation.start')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'features.events.navigation.start' })).toBeTruthy();
   });
 
   it('renders the Enter Tally button when enabled by the container', () => {
@@ -235,25 +243,22 @@ describe('AgendaActionBar', () => {
     render(<AgendaActionBar {...baseProps} canManageAgenda onBackToAgenda={() => undefined} />);
 
     expect(
-      screen.getByTitle('features.events.agenda.backToAgenda').closest('a')?.getAttribute('href')
+      screen.getByRole('link', { name: 'features.events.agenda.backToAgenda' }).getAttribute('href')
     ).toBe('/event/event-1/agenda');
     expect(
       screen
-        .getByTitle('features.events.agenda.quickActions.addItem')
-        .closest('a')
-        ?.getAttribute('href')
+        .getByRole('link', { name: 'features.events.agenda.quickActions.addItem' })
+        .getAttribute('href')
     ).toBe('/create/agenda-item?eventId=event-1');
     expect(
       screen
-        .getByTitle('features.events.agenda.quickActions.createElection')
-        .closest('a')
-        ?.getAttribute('href')
+        .getByRole('link', { name: 'features.events.agenda.quickActions.createElection' })
+        .getAttribute('href')
     ).toBe('/create/agenda-item?eventId=event-1&type=election');
     expect(
       screen
-        .getByTitle('features.events.agenda.quickActions.createVote')
-        .closest('a')
-        ?.getAttribute('href')
+        .getByRole('link', { name: 'features.events.agenda.quickActions.createVote' })
+        .getAttribute('href')
     ).toBe('/create/agenda-item?eventId=event-1&type=vote');
   });
 
@@ -310,7 +315,7 @@ describe('AgendaActionBar', () => {
     expect(voteButton?.className).toContain('text-muted-foreground');
   });
 
-  it('renders the disabled Vote button with the provided info tooltip', () => {
+  it('renders the disabled Vote button with the provided info tooltip', async () => {
     const { container } = render(
       <AgendaActionBar
         {...baseProps}
@@ -328,7 +333,8 @@ describe('AgendaActionBar', () => {
     const voteButton = container.querySelector('.civic-ballot-submit');
 
     expect(voteButton?.getAttribute('aria-disabled')).toBe('true');
-    expect(voteButton?.getAttribute('title')).toBe(
+    (voteButton as HTMLElement).focus();
+    expect((await screen.findByRole('tooltip')).textContent).toContain(
       'Geheime indikative Stimmen können nicht geändert werden.'
     );
     expect(voteButton?.className).toContain('text-muted-foreground');
@@ -345,7 +351,9 @@ describe('AgendaActionBar', () => {
     );
 
     expect(
-      screen.getByTitle('features.events.agenda.actions.startFinalVote').hasAttribute('disabled')
+      screen
+        .getByRole('button', { name: 'features.events.agenda.actions.startFinalVote' })
+        .hasAttribute('disabled')
     ).toBe(true);
   });
 
@@ -364,12 +372,10 @@ describe('AgendaActionBar', () => {
     );
 
     expect(
-      screen
-        .getByRole('button', {
-          name: 'Start final change request vote: Branch 2 CR-2',
-        })
-        .getAttribute('title')
-    ).toBe('Start final change request vote: Branch 2 CR-2');
+      screen.getByRole('button', {
+        name: 'Start final change request vote: Branch 2 CR-2',
+      })
+    ).toBeTruthy();
 
     rerender(
       <AgendaActionBar
@@ -381,12 +387,10 @@ describe('AgendaActionBar', () => {
     );
 
     expect(
-      screen
-        .getByRole('button', {
-          name: 'Start final closing vote: Amendment A',
-        })
-        .getAttribute('title')
-    ).toBe('Start final closing vote: Amendment A');
+      screen.getByRole('button', {
+        name: 'Start final closing vote: Amendment A',
+      })
+    ).toBeTruthy();
 
     rerender(
       <AgendaActionBar
@@ -402,12 +406,10 @@ describe('AgendaActionBar', () => {
     );
 
     expect(
-      screen
-        .getByRole('button', {
-          name: 'Close final merge vote Branch 1 VS Branch 2',
-        })
-        .getAttribute('title')
-    ).toBe('Close final merge vote Branch 1 VS Branch 2');
+      screen.getByRole('button', {
+        name: 'Close final merge vote Branch 1 VS Branch 2',
+      })
+    ).toBeTruthy();
   });
 
   it('renders the jump to next voting step action when provided', () => {
@@ -422,7 +424,7 @@ describe('AgendaActionBar', () => {
       />
     );
 
-    screen.getByTitle('Next voting step').click();
+    screen.getByRole('button', { name: 'Next voting step' }).click();
 
     expect(handleJump).toHaveBeenCalledTimes(1);
   });

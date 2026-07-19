@@ -29,6 +29,10 @@ vi.mock('@/features/pql/ui/PqlToolbar', () => ({
   PqlToolbar: () => <div data-testid="pql-toolbar" />,
 }));
 
+vi.mock('@/zero/preferences/usePreferenceState', () => ({
+  usePreferenceState: () => ({ displayCurrency: 'EUR' }),
+}));
+
 import { PaymentsSection } from '../PaymentsSection';
 
 afterEach(() => {

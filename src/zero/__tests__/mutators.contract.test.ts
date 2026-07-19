@@ -20,6 +20,7 @@ async function loadMutatorContext(options: { includeRegistries?: boolean } = {})
   const requireOwnerMock = vi.fn<(...args: unknown[]) => void>(() => undefined);
 
   vi.doMock('@rocicorp/zero', () => ({
+    defineQuery: (_schema: unknown, fn: unknown) => ({ fn }),
     defineMutator: (_schema: unknown, fn: unknown) => ({ fn }),
     defineMutators: (...registries: unknown[]) =>
       registries.reduce<Record<string, unknown>>((merged, registry) => {

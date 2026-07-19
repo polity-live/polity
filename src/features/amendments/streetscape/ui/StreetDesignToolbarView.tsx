@@ -588,6 +588,7 @@ export function StreetDesignToolbarView({
                       <TooltipHint content={getActionLabel('select', categoryLabel)}>
                         <button
                           type="button"
+                          aria-label={getActionLabel('select', categoryLabel)}
                           className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
                           onClick={() => onObjectSelect(firstObject?.id ?? null)}
                         >
@@ -661,6 +662,7 @@ export function StreetDesignToolbarView({
                               <TooltipHint content={getActionLabel('select', objectLabel)}>
                                 <button
                                   type="button"
+                                  aria-label={getActionLabel('select', objectLabel)}
                                   className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
                                   onClick={() => onObjectSelect(object.id)}
                                 >

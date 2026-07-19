@@ -158,7 +158,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
           body: JSON.stringify({ rates }),
         });
       });
-      await use();
+      await use(undefined);
     },
     { auto: true },
   ],

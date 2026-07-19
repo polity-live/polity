@@ -64,6 +64,15 @@ const buttonPresentationClasses: Record<NonNullable<ButtonProps['presentation']>
   floatingShadow: 'shadow-[var(--shadow-floating)]',
 };
 
+function hasTextContent(node: React.ReactNode): boolean {
+  if (typeof node === 'string' || typeof node === 'number') return true;
+  if (Array.isArray(node)) return node.some(hasTextContent);
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+    return hasTextContent(node.props.children);
+  }
+  return false;
+}
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
@@ -90,6 +99,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const showStatus = !asChild && (loading || successState);
     const isDisabled = loading || disabled;
     const tooltipContent = tooltip ?? title;
+    const tooltipLabel =
+      typeof tooltipContent === 'string' && !hasTextContent(children) ? tooltipContent : undefined;
     const statusLabel = loading ? loadingLabel : successLabel;
     const renderedStatusLabel = statusLabel ?? (size === 'icon' ? null : children);
 
@@ -100,6 +111,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         data-loading={loading ? 'true' : undefined}
         data-success={successState ? 'true' : undefined}
         aria-busy={loading || undefined}
+        aria-label={tooltipLabel}
         disabled={isDisabled}
         className={cn(
           showStatus && 'relative',

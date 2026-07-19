@@ -73,14 +73,18 @@ function evaluatePredicate(predicate: unknown): QueryCall[] {
       return ['cmp', ...args];
     },
     exists: (relation: string, fn: (query: FakeQuery) => unknown) => {
-      const child = {
+      const child: FakeQuery = {
         calls: [],
         where: (...args: unknown[]) => {
           calls.push(['where', relation, ...args]);
           if (typeof args[0] === 'function') args[0](helpers);
           return child;
         },
-      } as FakeQuery;
+        related: () => child,
+        orderBy: () => child,
+        limit: () => child,
+        start: () => child,
+      };
       calls.push(['exists', relation]);
       fn(child);
       return ['exists', relation];
