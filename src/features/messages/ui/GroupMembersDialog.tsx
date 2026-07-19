@@ -8,6 +8,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Conversation } from '../types/message.types';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { Link } from '@tanstack/react-router';
 
 interface GroupMembersDialogProps {
   open: boolean;
@@ -22,6 +23,10 @@ export function GroupMembersDialog({ open, onOpenChange, conversation }: GroupMe
     conversation?.event?.title ||
     conversation?.name ||
     t('features.messages.groupMembers.defaultGroupName');
+  const descriptionTemplate = t('features.messages.groupMembers.description', {
+    name: '__GROUP_NAME__',
+  });
+  const [descriptionPrefix, descriptionSuffix] = descriptionTemplate.split('__GROUP_NAME__');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -29,7 +34,21 @@ export function GroupMembersDialog({ open, onOpenChange, conversation }: GroupMe
         <DialogHeader>
           <DialogTitle>{t('features.messages.conversation.participants')}</DialogTitle>
           <DialogDescription>
-            {t('features.messages.groupMembers.description', { groupName: conversationName })}
+            {conversation?.group?.id ? (
+              <>
+                {descriptionPrefix}
+                <Link
+                  to="/group/$id"
+                  params={{ id: conversation.group.id }}
+                  className="font-medium underline underline-offset-2"
+                >
+                  {conversationName}
+                </Link>
+                {descriptionSuffix}
+              </>
+            ) : (
+              t('features.messages.groupMembers.description', { name: conversationName })
+            )}
           </DialogDescription>
         </DialogHeader>
         <div className="max-h-[400px] space-y-2 overflow-y-auto py-4">

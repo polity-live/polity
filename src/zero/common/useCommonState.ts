@@ -27,6 +27,7 @@ export function useCommonState(
     timelineContentLimit?: number;
     // Hashtag queries
     loadAllHashtags?: boolean;
+    loadOnboardingHashtagUsage?: boolean;
   } = {}
 ) {
   // ── Entity-based queries ───────────────────────────────────────────
@@ -76,6 +77,10 @@ export function useCommonState(
   // ── All canonical hashtags (for typeahead) ─────────────────────────
   const [allHashtags, allHashtagsResult] = useQuery(
     args.loadAllHashtags ? queries.common.allHashtags({}) : undefined
+  );
+
+  const [onboardingHashtagUsage, onboardingHashtagUsageResult] = useQuery(
+    args.loadOnboardingHashtagUsage ? queries.common.onboardingHashtagUsage({}) : undefined
   );
 
   const hasLinkFilter = !!(args.group_id || args.user_id);
@@ -154,6 +159,7 @@ export function useCommonState(
     (!!args.event_id && eventHashtagsResult.type === 'unknown') ||
     (!!args.blog_id && blogHashtagsResult.type === 'unknown') ||
     (!!args.loadAllHashtags && allHashtagsResult.type === 'unknown') ||
+    (!!args.loadOnboardingHashtagUsage && onboardingHashtagUsageResult.type === 'unknown') ||
     (hasLinkFilter && linksResult.type === 'unknown') ||
     (hasTimelineEntityFilter && timelineResult.type === 'unknown') ||
     (hasTimelineEntityFilter && reactionsResult.type === 'unknown') ||
@@ -171,6 +177,7 @@ export function useCommonState(
     eventHashtags,
     blogHashtags,
     allHashtags,
+    onboardingHashtagUsage,
     links,
     timeline,
     reactions,

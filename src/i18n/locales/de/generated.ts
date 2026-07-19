@@ -1267,7 +1267,7 @@ const generatedInlineTranslations: Record<string, string> = {
     '{{senderName}} has booked a meeting with you{{valuec6f3}} at {{meetingTime}}',
   '0340_decision_terminal_22b93bd0': 'Entscheidungsterminal',
   '0340_meeting_cancelled_a5e050bf': 'Meeting Cancelled',
-  '0341_search_decisions_b5f1fd2e': 'Search decisions',
+  '0341_search_decisions_b5f1fd2e': 'Entscheidungen suchen',
   '0341_sendername_has_cancelled_the_meeting_valuec6f_c2ffbabf':
     '{{senderName}} has cancelled the meeting{{valuec6f3}} at {{meetingTime}}',
   '0342_added_to_speaker_list_3ddeaeb0': 'Added to Speaker List',
@@ -1289,7 +1289,7 @@ const generatedInlineTranslations: Record<string, string> = {
     '{{agendaItemTitle}} is now active at {{eventTitle}}',
   '0348_choose_a_widget_for_this_decision_dashboard_f834fc83':
     'Choose a widget for this decision dashboard.',
-  '0349_no_matching_decisions_04f8c20a': 'No matching decisions.',
+  '0349_no_matching_decisions_04f8c20a': 'Keine passenden Entscheidungen.',
   '0349_voting_has_begun_4b41f90b': 'Voting Has Begun',
   '0350_average_turnout_99582121': 'Average turnout',
   '0350_voting_for_agendaitemtitle_has_started_value5_7499d1f8':
@@ -1314,7 +1314,7 @@ const generatedInlineTranslations: Record<string, string> = {
   '0357_election_result_5743abde': 'Election Result',
   '0358_sort_adc4e96a': 'Sort',
   '0358_winnername_has_been_elected_as_roletitle_7a95dc81':
-    '{{winnerName}} has been elected as {{roleTitle}}',
+    '{{winnerName}} wurde als {{roleTitle}} gewählt',
   '0359_limit_24d948e4': 'Limit',
   '0359_revote_scheduled_48676dfd': 'Revote Scheduled',
   '0360_a_revote_for_roletitle_has_been_scheduled_for_4e61e14b':
@@ -2810,7 +2810,7 @@ const generatedInlineTranslations: Record<string, string> = {
   '1162_open_online_meeting_link_ec74dc3b': 'Open online meeting link',
   '1163_book_meeting_1b8711e4': 'Book meeting',
   '1164_cancel_booking_c6085eb5': 'Cancel booking',
-  '1165_no_mapped_activity_yet_caf1290e': 'No mapped activity yet.',
+  '1165_no_mapped_activity_yet_caf1290e': 'Noch keine zugeordnete Aktivität.',
   '1166_map_is_loading_5299ec7c': 'Map is loading.',
   '1167_timeline_mode_8f6d2e57': 'Timeline mode',
   '1168_in_progress_f61eadaf': 'In Progress',

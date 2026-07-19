@@ -206,7 +206,7 @@ export function VoteTimelineCard({ vote, href, className }: VoteTimelineCardProp
                   featureThemeClassName('timelineUseSwipeGesturesNeutralBackground')
               )}
             />
-            {vote.status.replace('_', ' ').toUpperCase()}
+            {t(`features.timeline.cards.voteStatus.${vote.status}`)}
           </BadgeControl>
         }
       >

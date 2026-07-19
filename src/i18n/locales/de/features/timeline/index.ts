@@ -150,6 +150,15 @@ export const timelineTranslations = {
     views: 'Aufrufe',
     interested: 'Interessiert',
     videoUnavailable: 'Video nicht verfügbar',
+    voteStatus: {
+      open: 'Offen',
+      closing_soon: 'Schließt bald',
+      last_hour: 'Letzte Stunde',
+      final_minutes: 'Letzte Minuten',
+      passed: 'Angenommen',
+      failed: 'Abgelehnt',
+      tied: 'Unentschieden',
+    },
     // Election card translations
     election: {
       status: {
