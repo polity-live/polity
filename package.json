@@ -115,7 +115,7 @@
     "@tanstack/router-devtools": "^1.167.0",
     "@udecode/cn": "^52.3.4",
     "@xyflow/react": "^12.11.1",
-    "ai": "^6.0.208",
+    "ai": "^7.0.31",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
