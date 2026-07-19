@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
-import { useAssignableGroupMembersByGroupIds, useGroupById } from '@/zero/groups/useGroupState';
+import {
+  useAssignableGroupMembersByGroupIds,
+  useCurrentUserActiveGroups,
+  useGroupById,
+} from '@/zero/groups/useGroupState';
 import { usePaymentActions } from '@/zero/payments/usePaymentActions';
 import { useUserState } from '@/zero/users/useUserState';
 import { getUserDisplayName } from '@/features/search/utils/searchUtils';
@@ -39,6 +43,20 @@ export function useCreatePaymentForm(): CreateFormConfig {
   const { user } = useAuth();
   const { createPayment } = usePaymentActions();
   const { allUsers } = useUserState({ includeAllUsers: true });
+  const { groups: activeGroups, isLoading: isActiveGroupsLoading } = useCurrentUserActiveGroups();
+  const activeGroupItems = useMemo(
+    () =>
+      activeGroups.map(group => ({
+        id: group.id,
+        entityType: 'group' as const,
+        label: group.name,
+      })),
+    [activeGroups]
+  );
+  const activeGroupIds = useMemo(
+    () => new Set(activeGroups.map(group => group.id)),
+    [activeGroups]
+  );
 
   const groupIdParam = searchParams.groupId;
   const directionParam = searchParams.direction;
@@ -136,7 +154,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!user) return createBlockedSubmitOutcome();
     if (!label.trim()) return createBlockedSubmitOutcome();
-    if (!groupId || !entityId) return createBlockedSubmitOutcome();
+    if (!activeGroupIds.has(groupId) || !entityId) return createBlockedSubmitOutcome();
     const parsedAmount = parseCreatePaymentAmount(amount);
     if (parsedAmount == null) return createBlockedSubmitOutcome();
 
@@ -235,6 +253,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
   };
 
   const hasEntity = !!entityId;
+  const hasActiveGroup = activeGroupIds.has(groupId);
   const parsedAmount = parseCreatePaymentAmount(amount);
   const hasValidAmount = parsedAmount != null;
   const detailsInvalidReason = !label.trim()
@@ -244,7 +263,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
       : !hasValidAmount
         ? t('pages.create.payment.validation.amountInvalid')
         : null;
-  const counterpartInvalidReason = !groupId
+  const counterpartInvalidReason = !hasActiveGroup
     ? t('pages.create.payment.validation.groupRequired')
     : !hasEntity
       ? t('pages.create.payment.validation.counterpartyRequired')
@@ -320,7 +339,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
         },
         {
           label: counterpartLabel,
-          isValid: () => !!groupId && hasEntity,
+          isValid: () => hasActiveGroup && hasEntity,
           getInvalidReason: () => counterpartInvalidReason,
           fields: [
             {
@@ -329,12 +348,13 @@ export function useCreatePaymentForm(): CreateFormConfig {
               label: t('pages.create.common.group'),
               required: true,
               props: {
-                entityTypes: ['group'],
+                items: activeGroupItems,
                 value: groupId || undefined,
                 onChange: item => {
                   handleGroupChange(item?.id ?? '');
                 },
                 placeholder: t('pages.create.common.searchGroup'),
+                disabled: isActiveGroupsLoading,
               },
             },
             {
@@ -360,7 +380,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
         },
         {
           label: t('pages.create.common.review'),
-          isValid: () => !!groupId && !!label.trim() && hasValidAmount && hasEntity,
+          isValid: () => hasActiveGroup && !!label.trim() && hasValidAmount && hasEntity,
           getInvalidReason: () => paymentInvalidReason,
           fields: [
             {
@@ -412,6 +432,10 @@ export function useCreatePaymentForm(): CreateFormConfig {
     }),
     [
       groupId,
+      activeGroupIds,
+      activeGroupItems,
+      isActiveGroupsLoading,
+      hasActiveGroup,
       direction,
       label,
       type,

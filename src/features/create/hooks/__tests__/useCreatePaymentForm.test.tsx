@@ -20,6 +20,10 @@ vi.mock('@/providers/auth-provider', () => ({
 }));
 
 vi.mock('@/zero/groups/useGroupState', () => ({
+  useCurrentUserActiveGroups: () => ({
+    groups: [{ id: 'group-1', name: 'Budget Circle' }],
+    isLoading: false,
+  }),
   useAssignableGroupMembersByGroupIds: (groupIds: readonly string[] = []) => ({
     members: groupIds.includes('group-1') ? [{ user_id: 'user-1', user: { id: 'user-1' } }] : [],
     isLoading: false,
@@ -127,6 +131,10 @@ describe('useCreatePaymentForm', () => {
     expect(userField.props).toMatchObject({ disabled: true, allowedUserIds: [] });
 
     const groupField = findField(result.current.steps[1].fields ?? [], 'group', 'typeahead');
+    expect(groupField.props).toMatchObject({
+      items: [{ id: 'group-1', entityType: 'group', label: 'Budget Circle' }],
+      disabled: false,
+    });
     act(() => {
       (groupField.props as { onChange: (item: { id: string } | null) => void }).onChange({
         id: 'group-1',
@@ -142,6 +150,33 @@ describe('useCreatePaymentForm', () => {
       disabled: false,
       allowedUserIds: ['user-1'],
     });
+  });
+
+  it('rejects a payment for a group outside the current user memberships', async () => {
+    const { result } = renderHook(() => useCreatePaymentForm());
+    const labelField = findField(result.current.steps[0].fields ?? [], 'label', 'text');
+    const amountField = findField(result.current.steps[0].fields ?? [], 'amount', 'text');
+    const groupField = findField(result.current.steps[1].fields ?? [], 'group', 'typeahead');
+    const userField = findField(
+      result.current.steps[1].fields ?? [],
+      'entity-user',
+      'customComponent'
+    );
+
+    act(() => {
+      labelField.onValueChange('Membership fee');
+      amountField.onValueChange('12.34');
+      (groupField.props as { onChange: (item: { id: string } | null) => void }).onChange({
+        id: 'group-outside-memberships',
+      });
+      (userField.props as { onChange: (ids: string[]) => void }).onChange(['user-1']);
+    });
+
+    expect(result.current.steps[1].isValid()).toBe(false);
+    await act(async () => {
+      expect(await result.current.onSubmit()).toEqual({ status: 'blocked' });
+    });
+    expect(createPayment).not.toHaveBeenCalled();
   });
 
   it('reports missing payment requirements in submit order', () => {
