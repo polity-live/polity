@@ -84,10 +84,20 @@ export function UserWikiView({ page }: UserWikiViewProps) {
         items={[
           {
             value: page.subscriberCount,
-            label: translateText('components.labels.subscribers'),
+            label: translateText('components.labels.subscribers', {
+              count: page.subscriberCount,
+            }),
           },
-          { value: page.groupCount, label: translateText('components.labels.groups') },
-          { value: page.amendmentCount, label: translateText('components.labels.amendments') },
+          {
+            value: page.groupCount,
+            label: translateText('components.labels.groups', { count: page.groupCount }),
+          },
+          {
+            value: page.amendmentCount,
+            label: translateText('components.labels.amendments', {
+              count: page.amendmentCount,
+            }),
+          },
         ]}
       />
 

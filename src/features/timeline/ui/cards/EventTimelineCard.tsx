@@ -201,14 +201,18 @@ export function EventTimelineCard({
     {
       icon: Users,
       value: event.attendeeCount ?? participation.participantCount ?? 0,
-      label: t('features.timeline.cards.event.participants'),
+      label: t('features.timeline.cards.event.participants', {
+        count: event.attendeeCount ?? participation.participantCount ?? 0,
+      }),
     },
     ...(event.electionsCount !== undefined && event.electionsCount > 0
       ? [
           {
             icon: Trophy,
             value: event.electionsCount,
-            label: t('features.timeline.cards.event.elections'),
+            label: t('features.timeline.cards.event.elections', {
+              count: event.electionsCount,
+            }),
           },
         ]
       : []),
@@ -217,7 +221,9 @@ export function EventTimelineCard({
           {
             icon: ScrollText,
             value: event.amendmentsCount,
-            label: t('features.timeline.cards.event.amendments'),
+            label: t('features.timeline.cards.event.amendments', {
+              count: event.amendmentsCount,
+            }),
           },
         ]
       : []),

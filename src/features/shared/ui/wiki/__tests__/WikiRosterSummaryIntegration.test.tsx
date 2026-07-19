@@ -183,6 +183,7 @@ describe('wiki roster offline summary integration', () => {
         subscriberCount={0}
         eventsCount={0}
         amendmentsCount={0}
+        isAuthenticated
         isSubscribed={false}
         subscribeLoading={false}
         toggleSubscribe={vi.fn()}

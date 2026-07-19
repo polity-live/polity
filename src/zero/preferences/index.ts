@@ -12,6 +12,7 @@ export {
   type CreateFormStyle,
   type Theme,
   type PreferenceLanguage,
+  type PreferenceCurrency,
   type PreferenceNavigationView,
   type NetworkLayoutPosition,
   type GroupNetworkLayout,

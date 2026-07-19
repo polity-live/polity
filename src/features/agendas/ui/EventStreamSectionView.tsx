@@ -33,6 +33,7 @@ import { AccreditationSection } from './AccreditationSection';
 import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 import { EventLivestreamPlayer } from '@/features/events/ui/EventLivestreamPlayer';
 import { getSpeakerGenderLabel } from '../logic/speakerListGenderQuota';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 import {
   INTERACTIVE_HORIZONTAL_ARROW_NAVIGATION_LOCK_SELECTOR,
   useHorizontalArrowNavigation,
@@ -440,12 +441,11 @@ export function EventStreamSectionView({
                                   </Avatar>
                                 </div>
                                 <div className="text-center">
-                                  <h4
-                                    className="truncate text-sm font-semibold"
-                                    title={speakerName}
-                                  >
-                                    {speakerName}
-                                  </h4>
+                                  <TooltipHint content={speakerName}>
+                                    <h4 className="truncate text-sm font-semibold">
+                                      {speakerName}
+                                    </h4>
+                                  </TooltipHint>
                                   {isCurrentUser && (
                                     <BadgeControl variant="secondary" className="mt-1">
                                       {translateText('generated.inline.0055_you_905cb326')}

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
 
+const ASSISTANT_SYSTEM_USER_ID = 'a12a0000-0000-4000-a000-000000000001';
+
 const conversationStartSchema = z
   .object({
     pinned: z.boolean().optional().nullable(),
@@ -177,7 +179,19 @@ export const messageQueries = {
       } else if (filter === 'event') {
         q = q.where('type', 'event');
       } else if (filter === 'ai') {
-        q = q.where('assistant_for_user_id', userID);
+        // Older/automatically provisioned assistant conversations may predate the
+        // assistant_for_user_id marker. Keep the query-side filter aligned with
+        // isAssistantConversation(), which also recognizes Aria & Kai by participant.
+        q = q.where(({ or, cmp, exists }: any) =>
+          or(
+            cmp('assistant_for_user_id', userID),
+            exists('participants', (participant: any) =>
+              participant
+                .where('user_id', ASSISTANT_SYSTEM_USER_ID)
+                .where((operators: any) => isUnsetTimestamp(operators, 'left_at'))
+            )
+          )
+        );
       }
 
       if (normalizedQuery) {

@@ -4,6 +4,10 @@ import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 type ZeroMutationResult = ReturnType<ReturnType<typeof useZero>['mutate']>;
 
@@ -24,10 +28,9 @@ export function useBlogActions() {
 
   // ── CRUD ───────────────────────────────────────────────────────────
   const createBlog = useCallback(
-    (args: Parameters<typeof mutators.blogs.create>[0]) => {
+    (args: Parameters<typeof mutators.blogs.create>[0], options?: CreationMutationOptions) => {
       const result = zero.mutate(mutators.blogs.create(args));
-      toast.success(t('features.blogs.toasts.created'));
-      onServerError(result, () => toast.error(t('features.blogs.toasts.createFailed')));
+      trackCreationUnlessSilent(result, 'blog', options, args.id);
       return result;
     },
     [zero, t]
@@ -54,10 +57,9 @@ export function useBlogActions() {
 
   // ── Entries ────────────────────────────────────────────────────────
   const createEntry = useCallback(
-    (args: Parameters<typeof mutators.blogs.createEntry>[0]) => {
+    (args: Parameters<typeof mutators.blogs.createEntry>[0], options?: CreationMutationOptions) => {
       const result = zero.mutate(mutators.blogs.createEntry(args));
-      toast.success(t('features.blogs.toasts.entryCreated'));
-      onServerError(result, () => toast.error(t('features.blogs.toasts.entryCreateFailed')));
+      trackCreationUnlessSilent(result, 'blogEntry', options, args.id);
       return result;
     },
     [zero, t]
@@ -126,8 +128,9 @@ export function useBlogActions() {
 
   /** Full blog creation. The server-side create mutator bootstraps roles, rights, and owner entry. */
   const createBlogFull = useCallback(
-    (args: BlogFullMutationArgs) => {
+    (args: BlogFullMutationArgs, options?: CreationMutationOptions) => {
       const blogResult = zero.mutate(mutators.blogs.createFull(args));
+      trackCreationUnlessSilent(blogResult, 'blog', options, args.blog.id);
 
       return {
         blogResult,

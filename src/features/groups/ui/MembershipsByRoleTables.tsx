@@ -85,7 +85,6 @@ export function MembershipsByRoleTables<
   const { t } = useTranslation();
   const directWithoutPathLabel = t('features.groups.memberships.composition.directWithoutPath');
   const roleFallbackLabel = t('components.membershipTables.roleFallback');
-  const resolvedCountLabel = countLabel ?? t('components.membershipTables.members', 'members');
   const resolvedMemberDescriptionFallback =
     memberDescriptionFallback ?? t('components.membershipTables.memberDescriptionFallback');
   const resolvedDefaultRequestLabel =
@@ -357,7 +356,10 @@ export function MembershipsByRoleTables<
                   )}
                   <CountBadge
                     count={roleMembers.length}
-                    label={resolvedCountLabel}
+                    label={
+                      countLabel ??
+                      t('components.membershipTables.members', { count: roleMembers.length })
+                    }
                     tone={countTone}
                   />
                 </h2>

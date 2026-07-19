@@ -9,7 +9,11 @@ import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { VOTE_PHASE, VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { waitForClientApply, type MutationResultLike } from '@/zero/mutate-with-server-check';
+import {
+  combineMutationResults,
+  trackMutationFinalization,
+} from '@/features/notifications/utils/mutation-finalization';
 
 export interface CreateAgendaItemFormData {
   title: string;
@@ -85,9 +89,10 @@ export function useCreateAgendaItemFormController() {
       }
 
       const agendaItemId = crypto.randomUUID();
+      const creationResults: MutationResultLike[] = [];
 
-      await waitForClientApply(
-        createAgendaItem({
+      const agendaResult = createAgendaItem(
+        {
           id: agendaItemId,
           title: formData.title,
           description: formData.description || '',
@@ -106,13 +111,16 @@ export function useCreateAgendaItemFormController() {
           majority_type: null,
           time_limit: null,
           voting_phase: null,
-        })
+        },
+        { notificationMode: 'silent' }
       );
+      creationResults.push(agendaResult);
+      await waitForClientApply(agendaResult);
 
       if (formData.type === 'election') {
         const electionId = crypto.randomUUID();
-        await waitForClientApply(
-          createElection({
+        const electionResult = createElection(
+          {
             id: electionId,
             title: formData.title,
             description: formData.description || null,
@@ -125,14 +133,17 @@ export function useCreateAgendaItemFormController() {
             max_votes: 1,
             agenda_item_id: agendaItemId,
             role_id: formData.roleId || null,
-          })
+          },
+          { notificationMode: 'silent' }
         );
+        creationResults.push(electionResult);
+        await waitForClientApply(electionResult);
       }
 
       if (formData.type === 'vote') {
         const voteId = crypto.randomUUID();
-        await waitForClientApply(
-          createVote({
+        const voteResult = createVote(
+          {
             id: voteId,
             title: formData.title,
             description: formData.description || null,
@@ -145,8 +156,11 @@ export function useCreateAgendaItemFormController() {
             visibility: 'public',
             agenda_item_id: agendaItemId,
             amendment_id: formData.amendmentId || null,
-          })
+          },
+          { notificationMode: 'silent' }
         );
+        creationResults.push(voteResult);
+        await waitForClientApply(voteResult);
 
         const defaultChoices = ['Yes', 'No', 'Abstain'];
         for (let i = 0; i < defaultChoices.length; i++) {
@@ -161,9 +175,11 @@ export function useCreateAgendaItemFormController() {
         }
       }
 
-      toast.success(
-        translateText('generated.inline.0023_agenda_item_created_successfully_4eb7ae08')
-      );
+      trackMutationFinalization({
+        result: combineMutationResults(creationResults),
+        entityKind: 'agendaItem',
+        operationId: agendaItemId,
+      });
       navigate({ to: `/event/${formData.eventId}/agenda` });
     } catch (error) {
       console.error('Failed to create agenda item:', error);

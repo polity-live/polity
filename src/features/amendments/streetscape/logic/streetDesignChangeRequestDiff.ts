@@ -1,6 +1,7 @@
 import { toMutableJSONValue, type MutableJSONValue } from '@/zero/shared/helpers';
 import type { StreetDesignObject, StreetDesignStateV1 } from '../types';
 import { getStreetDesignCostLine, getStreetDesignCostSummary } from './streetDesignCosting';
+import { formatCurrencyMinorAudit } from '@/features/shared/logic/currency';
 import {
   STREET_DESIGN_COST_CATALOG_VERSION,
   STREET_DESIGN_CURRENCY,
@@ -419,7 +420,10 @@ function summarizeObject(object: StreetDesignObject) {
 }
 
 function summarizeObjectUnitPrice(object: StreetDesignObject) {
-  return `Unit price: ${(getEffectiveUnitCostMinor(object) / 100).toFixed(2)} ${object.cost.currency}`;
+  return `Unit price: ${formatCurrencyMinorAudit(
+    getEffectiveUnitCostMinor(object),
+    object.cost.currency
+  )}`;
 }
 
 function getEffectiveUnitCostMinor(object: StreetDesignObject) {

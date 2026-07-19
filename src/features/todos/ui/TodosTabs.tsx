@@ -1,18 +1,19 @@
 import { ScrollableTabsList } from '@/features/shared/ui/navigation';
 import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
-import { CheckSquare, Circle, CheckCircle2, XCircle, Clock } from 'lucide-react';
-import { TodoStatus } from '../types/todo.types';
+import { Archive, CheckSquare, Circle, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { TodoTab } from '../types/todo.types';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface TodosTabsProps {
-  selectedTab: 'all' | TodoStatus;
-  setSelectedTab: (tab: 'all' | TodoStatus) => void;
+  selectedTab: TodoTab;
+  setSelectedTab: (tab: TodoTab) => void;
   statusCounts: {
     all: number;
     pending: number;
     in_progress: number;
     completed: number;
     cancelled: number;
+    archived: number;
   };
   children: React.ReactNode;
 }
@@ -42,6 +43,10 @@ export function TodosTabs({ selectedTab, setSelectedTab, statusCounts, children 
         <TabsTrigger value="cancelled" className="flex items-center gap-2">
           <XCircle className="h-4 w-4" />
           {t('features.todos.status.cancelled')} ({statusCounts.cancelled})
+        </TabsTrigger>
+        <TabsTrigger value="archived" className="flex items-center gap-2">
+          <Archive className="h-4 w-4" />
+          {t('features.todos.status.archived')} ({statusCounts.archived})
         </TabsTrigger>
       </ScrollableTabsList>
 

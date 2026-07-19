@@ -4,6 +4,7 @@ import { useCommonActions } from '@/zero/common';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import type { TodoUpdateInput } from '@/zero/todos/schema';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import type { CreationMutationOptions } from '@/features/notifications/utils/mutation-finalization';
 
 /**
  * Orchestration hook for todo mutations.
@@ -14,22 +15,25 @@ export function useTodoMutations() {
   const todoActions = useTodoActions();
   const commonActions = useCommonActions();
 
-  const createTodo = async (todoData: {
-    id?: string;
-    title: string;
-    description?: string;
-    ownerId: string;
-    assigneeId?: string;
-    status?: string;
-    priority?: string;
-    dueDate?: number;
-    tags?: string[];
-    groupId?: string;
-    eventId?: string;
-    amendmentId?: string;
-    senderId?: string;
-    visibility?: 'public' | 'authenticated' | 'private' | 'group';
-  }) => {
+  const createTodo = async (
+    todoData: {
+      id?: string;
+      title: string;
+      description?: string;
+      ownerId: string;
+      assigneeId?: string;
+      status?: string;
+      priority?: string;
+      dueDate?: number;
+      tags?: string[];
+      groupId?: string;
+      eventId?: string;
+      amendmentId?: string;
+      senderId?: string;
+      visibility?: 'public' | 'authenticated' | 'private' | 'group';
+    },
+    options?: CreationMutationOptions
+  ) => {
     setIsLoading(true);
     try {
       const todoId = todoData.id ?? crypto.randomUUID();
@@ -40,8 +44,8 @@ export function useTodoMutations() {
           description: todoData.description ?? '',
           status: todoData.status || 'open',
           priority: todoData.priority || 'medium',
-          due_date: todoData.dueDate ?? 0,
-          completed_at: 0,
+          due_date: todoData.dueDate ?? null,
+          completed_at: todoData.status === 'completed' ? Date.now() : null,
           tags: todoData.tags ?? [],
           visibility: todoData.visibility || 'private',
           group_id: todoData.groupId ?? null,
@@ -91,7 +95,7 @@ export function useTodoMutations() {
             : null,
       };
 
-      const mutationResult = todoActions.createFullTodo(payload);
+      const mutationResult = todoActions.createFullTodo(payload, options);
       await mutationResult.client;
 
       return { success: true, todoId, mutationResult, payload };

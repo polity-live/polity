@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState, type ComponentType } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 import {
   Collapsible,
   CollapsibleContent,
@@ -584,26 +585,27 @@ export function StreetDesignToolbarView({
                           />
                         </Button>
                       </CollapsibleTrigger>
-                      <button
-                        type="button"
-                        className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
-                        title={getActionLabel('select', categoryLabel)}
-                        onClick={() => onObjectSelect(firstObject?.id ?? null)}
-                      >
-                        <span className="flex min-w-0 items-center gap-2">
-                          <CategoryIcon className="size-4 flex-none" />
-                          <span className="truncate font-medium">{categoryLabel}</span>
-                        </span>
-                        <span className="text-muted-foreground flex flex-none items-center gap-2">
-                          <span>{group.objects.length}</span>
-                          <span
-                            className={cn(
-                              'size-2 rounded-full',
-                              isCategoryHidden ? 'bg-muted-foreground/35' : 'bg-success'
-                            )}
-                          />
-                        </span>
-                      </button>
+                      <TooltipHint content={getActionLabel('select', categoryLabel)}>
+                        <button
+                          type="button"
+                          className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
+                          onClick={() => onObjectSelect(firstObject?.id ?? null)}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            <CategoryIcon className="size-4 flex-none" />
+                            <span className="truncate font-medium">{categoryLabel}</span>
+                          </span>
+                          <span className="text-muted-foreground flex flex-none items-center gap-2">
+                            <span>{group.objects.length}</span>
+                            <span
+                              className={cn(
+                                'size-2 rounded-full',
+                                isCategoryHidden ? 'bg-muted-foreground/35' : 'bg-success'
+                              )}
+                            />
+                          </span>
+                        </button>
+                      </TooltipHint>
                       <div className="-mr-1 flex flex-none items-center gap-1">
                         <Button
                           type="button"
@@ -656,23 +658,24 @@ export function StreetDesignToolbarView({
                                 !isEffectivelyVisible && 'text-muted-foreground opacity-70'
                               )}
                             >
-                              <button
-                                type="button"
-                                className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
-                                title={getActionLabel('select', objectLabel)}
-                                onClick={() => onObjectSelect(object.id)}
-                              >
-                                <span className="flex min-w-0 items-center gap-2">
-                                  <Icon className="text-muted-foreground size-3.5 flex-none" />
-                                  <span className="truncate text-xs">{objectLabel}</span>
-                                </span>
-                                <span
-                                  className={cn(
-                                    'size-2 flex-none rounded-full',
-                                    isEffectivelyVisible ? 'bg-success' : 'bg-muted-foreground/35'
-                                  )}
-                                />
-                              </button>
+                              <TooltipHint content={getActionLabel('select', objectLabel)}>
+                                <button
+                                  type="button"
+                                  className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
+                                  onClick={() => onObjectSelect(object.id)}
+                                >
+                                  <span className="flex min-w-0 items-center gap-2">
+                                    <Icon className="text-muted-foreground size-3.5 flex-none" />
+                                    <span className="truncate text-xs">{objectLabel}</span>
+                                  </span>
+                                  <span
+                                    className={cn(
+                                      'size-2 flex-none rounded-full',
+                                      isEffectivelyVisible ? 'bg-success' : 'bg-muted-foreground/35'
+                                    )}
+                                  />
+                                </button>
+                              </TooltipHint>
                               <Button
                                 type="button"
                                 variant="ghost"

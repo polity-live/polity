@@ -157,9 +157,8 @@ export function GroupSelectCard({ group }: { group: SelectableGroup }) {
       {group.memberCount && (
         <CardContent className="pt-0">
           <div className="text-muted-foreground text-xs">
-            {group.memberCount}
-            {translateText('generated.inline.0159_member_6467baa3')}
-            {group.memberCount !== 1 ? 's' : ''}
+            {group.memberCount}{' '}
+            {translateText('components.labels.members', { count: group.memberCount })}
           </div>
         </CardContent>
       )}

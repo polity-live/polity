@@ -68,6 +68,7 @@ interface StreetDesignPageViewProps {
   amendmentId: string;
   amendment: StreetDesignAmendmentSummary;
   isLoading: boolean;
+  showActionBars: boolean;
   readOnly: boolean;
   canEditMapContext: boolean;
   mode: SelectableEditingMode;
@@ -179,6 +180,7 @@ export function StreetDesignPageView({
   amendmentId,
   amendment,
   isLoading,
+  showActionBars,
   readOnly,
   canEditMapContext,
   mode,
@@ -415,97 +417,103 @@ export function StreetDesignPageView({
 
   return (
     <div className="space-y-2 pt-5">
-      <StreetDesignTopBarView
-        readOnly={readOnly}
-        mapContextReadOnly={!canEditMapContext}
-        mode={mode}
-        modeDisabledReasons={modeDisabledReasons}
-        canChangeMode={canChangeMode}
-        isDirty={isDirty}
-        isSaving={isSaving}
-        saveError={saveError}
-        selectedTool={selectedTool}
-        selectedToolProperties={placementSettings.properties}
-        interactionMode={interactionMode}
-        objects={design.objects}
-        selectedObjectId={selectedObjectId}
-        selectedOsmWay={selectedOsmWay}
-        hiddenObjectIds={hiddenObjectIds}
-        hiddenObjectCategories={hiddenObjectCategories}
-        osmLayerVisibility={osmLayerVisibility}
-        showStreetMarkings={showStreetMarkings}
-        comparisonMode={design.comparisonMode}
-        costSummary={costSummary}
-        areaPickerOpen={areaPickerOpen}
-        costSummaryOpen={costSummaryOpen}
-        isLoadingOsm={isLoadingOsm}
-        osmError={osmError}
-        areaPickerContent={areaPickerContent}
-        costSummaryContent={costSummaryContent}
-        onModeChange={onModeChange}
-        onSave={onSave}
-        onToolChange={onToolChange}
-        onInteractionModeChange={onInteractionModeChange}
-        onObjectSelect={selectObject}
-        onObjectVisibilityChange={onObjectVisibilityChange}
-        onObjectCategoryVisibilityChange={onObjectCategoryVisibilityChange}
-        onObjectDelete={onDeleteObject}
-        onObjectCategoryDelete={handleObjectCategoryDelete}
-        onOsmLayerVisibilityChange={onOsmLayerVisibilityChange}
-        onShowStreetMarkingsChange={onShowStreetMarkingsChange}
-        onComparisonModeChange={onComparisonModeChange}
-        onAreaPickerOpenChange={setAreaPickerOpen}
-        onCostSummaryOpenChange={setCostSummaryOpen}
-        onLoadOsm={onLoadOsm}
-        onOsmWayHide={onOsmWayHide}
-      />
+      {showActionBars ? (
+        <StreetDesignTopBarView
+          readOnly={readOnly}
+          mapContextReadOnly={!canEditMapContext}
+          mode={mode}
+          modeDisabledReasons={modeDisabledReasons}
+          canChangeMode={canChangeMode}
+          isDirty={isDirty}
+          isSaving={isSaving}
+          saveError={saveError}
+          selectedTool={selectedTool}
+          selectedToolProperties={placementSettings.properties}
+          interactionMode={interactionMode}
+          objects={design.objects}
+          selectedObjectId={selectedObjectId}
+          selectedOsmWay={selectedOsmWay}
+          hiddenObjectIds={hiddenObjectIds}
+          hiddenObjectCategories={hiddenObjectCategories}
+          osmLayerVisibility={osmLayerVisibility}
+          showStreetMarkings={showStreetMarkings}
+          comparisonMode={design.comparisonMode}
+          costSummary={costSummary}
+          areaPickerOpen={areaPickerOpen}
+          costSummaryOpen={costSummaryOpen}
+          isLoadingOsm={isLoadingOsm}
+          osmError={osmError}
+          areaPickerContent={areaPickerContent}
+          costSummaryContent={costSummaryContent}
+          onModeChange={onModeChange}
+          onSave={onSave}
+          onToolChange={onToolChange}
+          onInteractionModeChange={onInteractionModeChange}
+          onObjectSelect={selectObject}
+          onObjectVisibilityChange={onObjectVisibilityChange}
+          onObjectCategoryVisibilityChange={onObjectCategoryVisibilityChange}
+          onObjectDelete={onDeleteObject}
+          onObjectCategoryDelete={handleObjectCategoryDelete}
+          onOsmLayerVisibilityChange={onOsmLayerVisibilityChange}
+          onShowStreetMarkingsChange={onShowStreetMarkingsChange}
+          onComparisonModeChange={onComparisonModeChange}
+          onAreaPickerOpenChange={setAreaPickerOpen}
+          onCostSummaryOpenChange={setCostSummaryOpen}
+          onLoadOsm={onLoadOsm}
+          onOsmWayHide={onOsmWayHide}
+        />
+      ) : null}
 
-      <AlertDialog
-        open={pendingCategoryDeletion != null}
-        onOpenChange={open => {
-          if (!open) setPendingCategoryDeletion(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t('features.amendments.streetscape.categoryDelete.title')}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('features.amendments.streetscape.categoryDelete.description', {
-                count: pendingCategoryDeletionCount,
-              })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              {t('features.amendments.streetscape.categoryDelete.cancel')}
-            </AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={confirmObjectCategoryDelete}>
-              {t('features.amendments.streetscape.categoryDelete.confirm', {
-                count: pendingCategoryDeletionCount,
-              })}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {showActionBars ? (
+        <AlertDialog
+          open={pendingCategoryDeletion != null}
+          onOpenChange={open => {
+            if (!open) setPendingCategoryDeletion(null);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t('features.amendments.streetscape.categoryDelete.title')}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('features.amendments.streetscape.categoryDelete.description', {
+                  count: pendingCategoryDeletionCount,
+                })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>
+                {t('features.amendments.streetscape.categoryDelete.cancel')}
+              </AlertDialogCancel>
+              <AlertDialogAction variant="destructive" onClick={confirmObjectCategoryDelete}>
+                {t('features.amendments.streetscape.categoryDelete.confirm', {
+                  count: pendingCategoryDeletionCount,
+                })}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
 
       <div className="container mx-auto px-8 pt-8 pb-8">
-        <StreetDesignSecondaryActionBarView
-          amendmentId={amendmentId}
-          title={title}
-          readOnly={readOnly}
-          currentUserId={currentUserId}
-          collaborationDocumentId={collaborationDocumentId}
-          existingCollaboratorIds={existingCollaboratorIds}
-          changeRequests={streetChangeRequests}
-          selectedChangeRequestId={selectedChangeRequestId}
-          showChangeRequests={showChangeRequests}
-          changeRequestColorMode={changeRequestColorMode}
-          onShowChangeRequestsChange={setShowChangeRequests}
-          onChangeRequestColorModeChange={onChangeRequestColorModeChange}
-          onChangeRequestSelect={selectChangeRequest}
-        />
+        {showActionBars ? (
+          <StreetDesignSecondaryActionBarView
+            amendmentId={amendmentId}
+            title={title}
+            readOnly={readOnly}
+            currentUserId={currentUserId}
+            collaborationDocumentId={collaborationDocumentId}
+            existingCollaboratorIds={existingCollaboratorIds}
+            changeRequests={streetChangeRequests}
+            selectedChangeRequestId={selectedChangeRequestId}
+            showChangeRequests={showChangeRequests}
+            changeRequestColorMode={changeRequestColorMode}
+            onShowChangeRequestsChange={setShowChangeRequests}
+            onChangeRequestColorModeChange={onChangeRequestColorModeChange}
+            onChangeRequestSelect={selectChangeRequest}
+          />
+        ) : null}
 
         <StreetDesignWorkspaceView
           contentOnly

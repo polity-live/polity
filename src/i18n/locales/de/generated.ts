@@ -3073,7 +3073,7 @@ export const generatedTranslations = {
           activeRunDescription:
             'The forwarding lifecycle now follows the canonical process run, branch, and step records.',
           branchBadge: 'Branch',
-          branchCount: 'branch(es)',
+          branchCount: 'Textvarianten',
           branches: 'Branches',
           branchesDescription: 'Each branch keeps its own ordered step runs and resolution state.',
           confirmRetarget: 'Confirm retargeting',
@@ -3093,7 +3093,7 @@ export const generatedTranslations = {
           noGroupDecisions: 'No per-group decisions have been recorded yet.',
           noRunDescription:
             'Choose a start group and reachable target to create the first canonical process run.',
-          openTasks: 'open task(s)',
+          openTasks: 'offene Aufgaben',
           pathLegendHideHint: 'Hide legend',
           pathLegendShowHint: 'Show legend',
           pathNetworkDescription:
@@ -3120,7 +3120,7 @@ export const generatedTranslations = {
           stepApproved: 'Approved',
           stepPending: 'Pending',
           stepRejected: 'Rejected',
-          tasksNeedAttention: 'task(s) need attention',
+          tasksNeedAttention: 'Aufgaben brauchen Aufmerksamkeit',
           unknownGroup: 'Unknown group',
           unknownTarget: 'Unknown target',
           untitledBranch: 'Untitled branch',
@@ -3311,6 +3311,7 @@ export const generatedTranslations = {
             'Skills let Aria & Kai adopt a specific working mode for this conversation.',
           createToolGroup: 'Create tools',
           createToolsDescription: 'Enable or disable all create tools for this message.',
+          updateToolGroup: 'Update-Tools',
           disclaimer:
             'AI answers can be wrong. Check critical political, legal, and procedural claims before acting on them.',
           freeRouterModel: 'Free Models Router',
@@ -3333,6 +3334,7 @@ export const generatedTranslations = {
           noSkillsAvailable: 'No enabled skills are currently available.',
           noToolsAvailable: 'No enabled tools are currently available.',
           outputContextCardLabel: 'Output context',
+          updateContextCardLabel: 'Update-Kontext',
           openResult: 'Öffnen',
           placeholder:
             'Ask Aria & Kai anything. Use # for tools, / for skills, and @ for Polity context.',

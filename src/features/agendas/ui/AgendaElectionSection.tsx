@@ -17,7 +17,12 @@ import {
   Expand,
   CircleHelp,
 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipHint,
+  TooltipTrigger,
+} from '@/features/shared/ui/ui/tooltip';
 import {
   useTranslation,
   translate as translateText,
@@ -308,15 +313,16 @@ export function AgendaElectionSection({
               </BadgeControl>
             ) : null}
             {delegateTargetEventId ? (
-              <BadgeControl asChild tone="event" className="hover:opacity-90">
-                <Link
-                  to="/event/$id"
-                  params={{ id: delegateTargetEventId }}
-                  title={delegateTargetEventTitle ?? undefined}
-                >
-                  {roleName}
-                </Link>
-              </BadgeControl>
+              <TooltipHint
+                content={delegateTargetEventTitle ?? ''}
+                disabled={!delegateTargetEventTitle}
+              >
+                <BadgeControl asChild tone="event" className="hover:opacity-90">
+                  <Link to="/event/$id" params={{ id: delegateTargetEventId }}>
+                    {roleName}
+                  </Link>
+                </BadgeControl>
+              </TooltipHint>
             ) : (
               <BadgeControl variant="outline">{roleName}</BadgeControl>
             )}
@@ -536,7 +542,6 @@ export function AgendaElectionSection({
                     isCandidateActionBlocked &&
                       'border-muted-foreground/30 text-muted-foreground opacity-70'
                   )}
-                  title={isCandidateActionBlocked ? candidateActionTooltip : undefined}
                 >
                   {isCandidateLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -842,7 +842,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         to: '/event/$id/agenda/$agendaItemId',
         params: { id: eventId, agendaItemId: primaryAgendaItemId },
       });
-      const createAgendaResult = createFullAgendaItem(createAgendaPayload);
+      const createAgendaResult = createFullAgendaItem(createAgendaPayload, {
+        notificationMode: 'silent',
+      });
       await waitForOptimisticCreate(createAgendaResult);
 
       logElectionFlowClient(creationFlow, 'submit-confirmed', {
@@ -853,7 +855,6 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         seatCount: isElectionType ? resolvedSeatCount : null,
       });
 
-      toast.success(t('pages.create.success.created'));
       context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
@@ -888,7 +889,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           target: agendaTarget,
         },
         retry: () => {
-          const retryResult = createFullAgendaItem(createAgendaPayload);
+          const retryResult = createFullAgendaItem(createAgendaPayload, {
+            notificationMode: 'silent',
+          });
           trackCreateFinalization({
             result: retryResult,
             draft: {

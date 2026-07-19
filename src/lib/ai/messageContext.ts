@@ -52,7 +52,10 @@ export function createAiMessageContext(
 ): AiMessageContextV1 {
   const uniqueAttachments = new Map<string, AiChatAttachment>();
   for (const attachment of attachments) {
-    uniqueAttachments.set(`${attachment.entityType}:${attachment.entityId}`, attachment);
+    const key = `${attachment.entityType}:${attachment.entityId}`;
+    const existing = uniqueAttachments.get(key);
+    if (existing?.context_type === 'update' && attachment.context_type !== 'update') continue;
+    uniqueAttachments.set(key, attachment);
   }
 
   return {

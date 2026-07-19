@@ -612,6 +612,13 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            label={t('pages.notifications.settingsPage.todos.comments')}
+            description={t('pages.notifications.settingsPage.todos.commentsDesc')}
+            checked={settings.todoNotifications.comments}
+            onCheckedChange={checked => updateTodoNotifications({ comments: checked })}
+            disabled={isUpdating}
+          />
+          <SettingItem
             label={t('pages.notifications.settingsPage.todos.dueDateReminders')}
             description={t('pages.notifications.settingsPage.todos.dueDateRemindersDesc')}
             checked={settings.todoNotifications.dueDateReminders}

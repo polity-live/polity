@@ -272,52 +272,65 @@ export function EventWikiContentView({
         items={[
           {
             value: participantTotalCount,
-            label: t('components.labels.participants'),
+            label: t('components.labels.participants', { count: participantTotalCount }),
           },
-          { value: subscriberCount, label: t('components.labels.subscribers') },
+          {
+            value: subscriberCount,
+            label: t('components.labels.subscribers', { count: subscriberCount }),
+          },
           {
             value: electionsCount ?? event.election_count ?? 0,
-            label: t('components.labels.elections'),
+            label: t('components.labels.elections', {
+              count: electionsCount ?? event.election_count ?? 0,
+            }),
           },
           {
             value: amendmentsCount ?? event.amendment_count ?? 0,
-            label: t('components.labels.amendments'),
+            label: t('components.labels.amendments', {
+              count: amendmentsCount ?? event.amendment_count ?? 0,
+            }),
           },
           {
             value: openChangeRequestsCount ?? event.open_change_request_count ?? 0,
-            label: t('components.labels.openChangeRequests'),
+            label: t('components.labels.openChangeRequests', {
+              count: openChangeRequestsCount ?? event.open_change_request_count ?? 0,
+            }),
           },
         ]}
       />
 
       {/* Action Bar */}
       <ActionBar>
-        <SubscribeButton
-          entityType="event"
-          entityId={eventId}
-          isSubscribed={isSubscribed}
-          onToggleSubscribe={toggleSubscribe}
-          isLoading={subscribeLoading}
-        />
-        <MembershipButton
-          actionType="participate"
-          status={participation.status as MembershipStatus | null}
-          isMember={participation.isParticipant}
-          hasRequested={participation.hasRequested}
-          isInvited={participation.isInvited}
-          onRequest={participation.requestParticipation}
-          onLeave={participation.leaveEvent}
-          onAcceptInvitation={participation.acceptInvitation}
-          isLoading={participation.isLoading}
-          disabled={shouldDisableParticipationRequest}
-          disabledReason={participationDisabledReason}
-        />
-        {elections.length > 0 && user && (
-          <Button variant="outline" onClick={() => setElectionsDialogOpen(true)}>
-            <Trophy className="mr-2 h-4 w-4" />
-            {translateText('generated.inline.0428_kandidieren_b1de92a5')}
-          </Button>
-        )}
+        {user ? (
+          <>
+            <SubscribeButton
+              entityType="event"
+              entityId={eventId}
+              isSubscribed={isSubscribed}
+              onToggleSubscribe={toggleSubscribe}
+              isLoading={subscribeLoading}
+            />
+            <MembershipButton
+              actionType="participate"
+              status={participation.status as MembershipStatus | null}
+              isMember={participation.isParticipant}
+              hasRequested={participation.hasRequested}
+              isInvited={participation.isInvited}
+              onRequest={participation.requestParticipation}
+              onLeave={participation.leaveEvent}
+              onAcceptInvitation={participation.acceptInvitation}
+              isLoading={participation.isLoading}
+              disabled={shouldDisableParticipationRequest}
+              disabledReason={participationDisabledReason}
+            />
+            {elections.length > 0 ? (
+              <Button variant="outline" onClick={() => setElectionsDialogOpen(true)}>
+                <Trophy className="mr-2 h-4 w-4" />
+                {translateText('generated.inline.0428_kandidieren_b1de92a5')}
+              </Button>
+            ) : null}
+          </>
+        ) : null}
         <ShareButton
           url={`/event/${eventId}`}
           title={event.title ?? ''}
@@ -387,11 +400,12 @@ export function EventWikiContentView({
       <div className="mb-8">
         <WikiParticipationDirectory
           className="mb-0"
-          title={translateText('generated.inline.0429_participants_cd56e083', 'Participants')}
-          description={translateText(
-            'generated.inline.0442_participant_s_registered_for_this_event_4d97759f',
-            'Participants registered for this event.'
-          )}
+          title={translateText('components.labels.participants', {
+            count: participantTotalCount,
+          })}
+          description={translateText('features.events.wiki.participantsRegistered', {
+            count: participantTotalCount,
+          })}
           items={participantDirectoryItems}
           roles={participantRoles}
           entityType="event"
@@ -500,8 +514,9 @@ export function EventWikiContentView({
                     )}
                     <div className="text-muted-foreground mt-3 flex items-center justify-between text-sm">
                       <span>
-                        {translateText('generated.inline.0436_kandidaten_dce3b6fa')}
-                        {election.candidates?.length || 0}
+                        {translateText('features.events.wiki.candidatesCount', {
+                          count: election.candidates?.length ?? 0,
+                        })}
                       </span>
                       {election.majority_type && (
                         <BadgeControl variant="outline" size="xs">

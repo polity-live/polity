@@ -95,9 +95,10 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
         order_index: 0,
         image_url: imageURL,
       };
-      const candidateResult = addCandidateOptimistic(candidatePayload);
+      const candidateResult = addCandidateOptimistic(candidatePayload, {
+        notificationMode: 'silent',
+      });
       await waitForOptimisticCreate(candidateResult);
-      toast.success(t('pages.create.success.created'));
       context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
@@ -127,7 +128,9 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
           target: candidateTarget,
         },
         retry: () => {
-          const retryResult = addCandidateOptimistic(candidatePayload);
+          const retryResult = addCandidateOptimistic(candidatePayload, {
+            notificationMode: 'silent',
+          });
           trackCreateFinalization({
             result: retryResult,
             draft: {

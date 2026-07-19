@@ -11,6 +11,7 @@ const baseThreadSchema = z.object({
   amendment_id: z.string().nullable(),
   statement_id: z.string().nullable(),
   blog_id: z.string().nullable(),
+  todo_id: z.string().nullable(),
   user_id: z.string(),
   content: z.string().nullable(),
   status: z.string(),

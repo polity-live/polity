@@ -208,6 +208,7 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
             document_id: null,
             amendment_id: null,
             blog_id: null,
+            todo_id: null,
             content: null,
             status: 'open',
             resolved_at: null,

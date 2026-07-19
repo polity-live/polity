@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { generateDistinctUserColorMap } from '@/features/editor/logic/editor-helpers';
 import { useEditorPresence } from '@/features/editor/hooks/useEditorPresence';
@@ -38,7 +38,6 @@ import type {
   StreetDesignOrigin,
   StreetDesignSelectionAddress,
 } from '../types';
-import { STREET_DESIGN_CURRENCY } from '../logic/streetDesignObjectRegistry';
 import {
   createStreetDesignMapSelectionFromBbox,
   createStreetDesignMapSelectionFromCenterRadius,
@@ -60,6 +59,7 @@ import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import { formatStreetDesignSelectionAddress } from '../logic/streetDesignSelectionAddress';
 import { useStreetDesignRemoteCursors } from './useStreetDesignRemoteCursors';
+import { usePreferenceState } from '@/zero/preferences/usePreferenceState';
 
 function originFromCenter(center: StreetDesignGeoPoint, label?: string): StreetDesignOrigin {
   return {
@@ -74,6 +74,11 @@ function isSameCenter(left: StreetDesignGeoPoint, right: StreetDesignGeoPoint) {
 
 export function useStreetDesignPageController(amendmentId: string) {
   const { user } = useAuth();
+  const { displayCurrency, isLoading: isPreferenceLoading } = usePreferenceState();
+  const initialDesignCurrencyRef = useRef<string | null>(null);
+  if (!isPreferenceLoading && initialDesignCurrencyRef.current === null) {
+    initialDesignCurrencyRef.current = displayCurrency;
+  }
   const { user: userRecord } = useUserState({ userId: user?.id });
   const {
     amendment,
@@ -121,8 +126,11 @@ export function useStreetDesignPageController(amendmentId: string) {
   const persistedDesign = useMemo(
     () =>
       parseStoredStreetDesignState(primaryStreetDesign?.design_state) ??
-      createEmptyStreetDesignState(amendmentLocationOrigin ?? undefined),
-    [amendmentLocationOrigin, primaryStreetDesign?.design_state]
+      createEmptyStreetDesignState(
+        amendmentLocationOrigin ?? undefined,
+        initialDesignCurrencyRef.current ?? 'EUR'
+      ),
+    [amendmentLocationOrigin, isPreferenceLoading, primaryStreetDesign?.design_state]
   );
   const editor = useStreetDesignEditorState(persistedDesign);
   const [isLoadingOsm, setIsLoadingOsm] = useState(false);
@@ -651,7 +659,8 @@ export function useStreetDesignPageController(amendmentId: string) {
     activeCursorUserIds,
     amendment,
     amendmentId,
-    isLoading,
+    isLoading: isLoading || isPreferenceLoading,
+    showActionBars: Boolean(user),
     canEdit,
     canChangeMode,
     canVoteOnStreetChangeRequests,
@@ -698,7 +707,7 @@ export function useStreetDesignPageController(amendmentId: string) {
     changeRequestColorMode,
     onChangeRequestColorModeChange: setChangeRequestColorMode,
     onSave: handleSave,
-    costCatalogCurrency: STREET_DESIGN_CURRENCY,
+    costCatalogCurrency: editor.design.currency,
     allStreetChangeRequests: streetChangeRequests,
     streetChangeRequests: visibleStreetChangeRequests,
     streetDesignDiscussions,

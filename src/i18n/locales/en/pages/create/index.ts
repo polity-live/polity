@@ -565,6 +565,7 @@ export const createPageTranslations = {
     descriptionPlaceholder: 'Describe the task',
     dueDateLabel: 'Due Date',
     dueDateOptional: 'Due Date (Optional)',
+    dueTimeOptional: 'Due Time (Optional)',
     priorityLabel: 'Priority',
     priority: {
       low: 'Low',
@@ -705,6 +706,9 @@ export const createPageTranslations = {
     labelPlaceholder: 'Description of payment',
     typeField: 'Type',
     amount: 'Amount',
+    currency: 'Currency',
+    conversionUnavailable: 'Conversion unavailable',
+    conversionIncomplete: '{{count}} payment(s) could not be converted.',
     fromPayer: 'From (Payer)',
     toReceiver: 'To (Receiver)',
     entityUser: 'User',

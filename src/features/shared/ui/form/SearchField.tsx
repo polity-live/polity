@@ -19,6 +19,7 @@ interface SearchFieldProps extends Omit<
   invalid?: boolean;
   required?: boolean;
   clearLabel?: string;
+  emptyEndAdornment?: ReactNode;
   fieldClassName?: string;
   labelClassName?: string;
   descriptionClassName?: string;
@@ -36,6 +37,7 @@ export function SearchField({
   invalid,
   required,
   clearLabel = 'Clear search',
+  emptyEndAdornment,
   fieldClassName,
   labelClassName,
   descriptionClassName,
@@ -44,6 +46,8 @@ export function SearchField({
   className,
   ...props
 }: SearchFieldProps) {
+  const showEmptyEndAdornment = !value && Boolean(emptyEndAdornment);
+
   return (
     <FormFieldShell
       label={label}
@@ -69,7 +73,12 @@ export function SearchField({
             aria-invalid={invalid || undefined}
             onChange={event => onValueChange(event.target.value)}
             required={required}
-            className={cn('pr-9 pl-9', className, inputClassName)}
+            className={cn(
+              'pl-9',
+              showEmptyEndAdornment ? 'pr-20' : 'pr-9',
+              className,
+              inputClassName
+            )}
           />
           {value ? (
             <Button
@@ -82,6 +91,10 @@ export function SearchField({
               <X className="size-4" />
               <span className="sr-only">{clearLabel}</span>
             </Button>
+          ) : showEmptyEndAdornment ? (
+            <div className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2">
+              {emptyEndAdornment}
+            </div>
           ) : null}
         </div>
       )}

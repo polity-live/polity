@@ -7,7 +7,6 @@ const GUEST_RESTRICTED_ENTITY_SEGMENTS = [
   '/notifications',
   '/notification-settings',
   '/operation',
-  '/meet',
 ];
 
 export function isGuestAccessibleEntityPath(pathname: string) {

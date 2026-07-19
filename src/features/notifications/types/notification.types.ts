@@ -144,6 +144,7 @@ export type NotificationType =
   | 'todo_deleted' // 5.3b: Task deleted
   | 'todo_due_soon' // 5.4: Task due soon
   | 'todo_overdue' // 5.5: Task overdue
+  | 'todo_comment_added' // 5.6: Comment or reply added
   // Statement Notifications (6.x)
   | 'statement_response' // 6.1: Statement response
   | 'statement_mention' // 6.2: Statement mention
@@ -165,17 +166,9 @@ export type NotificationType =
   | 'hashtag_mentioned' // 8.5: Hashtag mentioned
   | 'recurring_event_updated'; // 8.6: Recurring event updated
 
-import type { useNotificationState } from '@/zero/notifications/useNotificationState';
 import type { NotificationWithRelationsRow } from '@/zero/notifications/queries';
 
-type UserNotification = ReturnType<typeof useNotificationState>['userNotifications'][number];
-
-export type Notification = UserNotification & {
-  recipient_group?: NotificationWithRelationsRow['recipient_group'];
-  recipient_event?: NotificationWithRelationsRow['recipient_event'];
-  recipient_amendment?: NotificationWithRelationsRow['recipient_amendment'];
-  recipient_blog?: NotificationWithRelationsRow['recipient_blog'];
-};
+export type Notification = NotificationWithRelationsRow;
 
 export interface NotificationFilters {
   all: Notification[];

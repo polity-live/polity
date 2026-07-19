@@ -181,6 +181,7 @@ export function useBlogDetailController({ blogId }: UseBlogDetailControllerOptio
               amendment_id: null,
               statement_id: null,
               blog_id: blogId,
+              todo_id: null,
               content: null,
               status: 'open',
               resolved_at: null,

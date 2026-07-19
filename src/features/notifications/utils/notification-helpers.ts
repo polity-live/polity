@@ -1438,6 +1438,9 @@ async function upsertServerRelationshipNotification(
       message: personalizedConfig.message,
       is_read: false,
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      deleted_at: null,
+      deleted_by_user_id: null,
     })
     .eq('id', recent.id);
 
@@ -1446,18 +1449,22 @@ async function upsertServerRelationshipNotification(
     return false;
   }
 
-  if (recent.recipient_entity_type) {
-    const { error: readError } = await getServerSupabase()
-      .from('notification_read')
-      .delete()
-      .eq('notification_id', recent.id);
+  const { error: stateError } = await getServerSupabase()
+    .from('notification_user_state')
+    .delete()
+    .eq('notification_id', recent.id);
 
-    if (readError) {
-      console.error(
-        '[Notification] Failed to reset relationship notification read state:',
-        readError
-      );
-    }
+  if (stateError) {
+    console.error('[Notification] Failed to reset relationship notification state:', stateError);
+  }
+
+  const { error: readError } = await getServerSupabase()
+    .from('notification_read')
+    .delete()
+    .eq('notification_id', recent.id);
+
+  if (readError) {
+    console.error('[Notification] Failed to reset legacy notification read state:', readError);
   }
 
   return true;
@@ -3676,8 +3683,12 @@ export async function notifyPaymentCreated(params: {
   senderId: string;
   groupId: string;
   groupName: string;
-  paymentDescription: string;
+  paymentDescription?: string | null;
 }) {
+  const paymentDescription =
+    params.paymentDescription?.trim() ||
+    translateText('common.creationFinalization.entities.payment');
+
   return createNotification({
     senderId: params.senderId,
     recipientEntityType: 'group',
@@ -3686,9 +3697,9 @@ export async function notifyPaymentCreated(params: {
     title: translateText('generated.inline.0304_payment_created_3909340c'),
     message: translateText(
       'generated.inline.0305_a_new_payment_paymentdescription_has_been_cre_41676a81',
-      { paymentDescription: params.paymentDescription, groupName: params.groupName }
+      { paymentDescription, groupName: params.groupName }
     ),
-    actionUrl: `/group/${params.groupId}`,
+    actionUrl: `/group/${params.groupId}/operation#payments`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
   });
@@ -3701,8 +3712,12 @@ export async function notifyPaymentDeleted(params: {
   senderId: string;
   groupId: string;
   groupName: string;
-  paymentDescription: string;
+  paymentDescription?: string | null;
 }) {
+  const paymentDescription =
+    params.paymentDescription?.trim() ||
+    translateText('common.creationFinalization.entities.payment');
+
   return createNotification({
     senderId: params.senderId,
     recipientEntityType: 'group',
@@ -3711,9 +3726,9 @@ export async function notifyPaymentDeleted(params: {
     title: translateText('generated.inline.0306_payment_deleted_3434c3ab'),
     message: translateText(
       'generated.inline.0307_the_payment_paymentdescription_has_been_delet_f66608dd',
-      { paymentDescription: params.paymentDescription, groupName: params.groupName }
+      { paymentDescription, groupName: params.groupName }
     ),
-    actionUrl: `/group/${params.groupId}`,
+    actionUrl: `/group/${params.groupId}/operation#payments`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
   });
@@ -5607,6 +5622,27 @@ export async function notifyTodoCompleted(params: {
       todoTitle: params.todoTitle,
     }),
     actionUrl: `/todos`,
+  });
+}
+
+export async function notifyTodoCommentAdded(params: {
+  senderId: string;
+  senderName: string;
+  recipientUserId: string;
+  todoId: string;
+  todoTitle: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientUserId: params.recipientUserId,
+    type: 'todo_comment_added',
+    title: translateText('features.notifications.generated.titles.todoCommentAdded'),
+    message: translateText('features.notifications.generated.messages.todoCommentAdded', {
+      senderName: params.senderName,
+      todoTitle: params.todoTitle,
+    }),
+    actionUrl: `/todos/${params.todoId}`,
+    relatedEntityType: 'todo',
   });
 }
 

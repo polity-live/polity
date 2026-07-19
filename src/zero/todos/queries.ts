@@ -9,14 +9,18 @@ const todoStartSchema = z
     created_at: z.number().optional(),
     updated_at: z.number().optional(),
     due_date: z.number().optional(),
+    archived_at: z.number().optional(),
     id: z.string(),
   })
   .nullable();
+
+const todoArchiveModeSchema = z.enum(['active', 'archived']).default('active');
 
 export const todoQueries = {
   page: defineQuery(
     z.object({
       status: z.enum(['all', 'pending', 'in_progress', 'completed', 'cancelled']).default('all'),
+      archive: todoArchiveModeSchema,
       query: z.string().default(''),
       assigneeId: z.string().optional(),
       groupId: z.string().optional(),
@@ -28,11 +32,26 @@ export const todoQueries = {
       dir: z.enum(['forward', 'backward']).default('forward'),
     }),
     ({
-      args: { status, query, assigneeId, groupId, creatorId, priority, sort, limit, start, dir },
+      args: {
+        status,
+        archive,
+        query,
+        assigneeId,
+        groupId,
+        creatorId,
+        priority,
+        sort,
+        limit,
+        start,
+        dir,
+      },
       ctx: { userID },
     }) => {
       const direction = dir === 'forward' ? 'desc' : 'asc';
       let q: any = applyTodoQueryAccess(zql.todo, userID)
+        .where(({ cmp }) =>
+          archive === 'archived' ? cmp('archived_at', '>', 0) : cmp('archived_at', 'IS', null)
+        )
         .where(({ or, cmp, exists }: any) =>
           or(
             cmp('creator_id', userID),
@@ -63,7 +82,13 @@ export const todoQueries = {
         );
       }
       const sortField =
-        sort === 'updated' ? 'updated_at' : sort === 'due' ? 'due_date' : 'created_at';
+        archive === 'archived'
+          ? 'archived_at'
+          : sort === 'updated'
+            ? 'updated_at'
+            : sort === 'due'
+              ? 'due_date'
+              : 'created_at';
       q = q.orderBy(sortField, direction).orderBy('id', direction);
       if (start) q = q.start(start, { inclusive: false });
       return q.limit(limit);
@@ -72,7 +97,10 @@ export const todoQueries = {
 
   // Todos created by or assigned to the current user
   byUser: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    applyTodoQueryAccess(zql.todo, userID).where('creator_id', userID).orderBy('created_at', 'desc')
+    applyTodoQueryAccess(zql.todo, userID)
+      .where('archived_at', 'IS', null)
+      .where('creator_id', userID)
+      .orderBy('created_at', 'desc')
   ),
 
   // Todos for a specific group
@@ -80,6 +108,7 @@ export const todoQueries = {
     z.object({ group_id: z.string() }),
     ({ args: { group_id }, ctx: { userID } }) =>
       applyTodoQueryAccess(zql.todo, userID)
+        .where('archived_at', 'IS', null)
         .where('group_id', group_id)
         .orderBy('created_at', 'desc')
   ),
@@ -110,38 +139,68 @@ export const todoQueries = {
         .related('group')
         .related('event')
         .related('amendment')
+        .related('threads', thread =>
+          thread.related('user').related('comments', comment =>
+            comment
+              .related('user')
+              .related('votes', vote => vote.where('user_id', userID ?? '__anon__').related('user'))
+              .related('replies', reply =>
+                reply
+                  .related('user')
+                  .related('votes', vote =>
+                    vote.where('user_id', userID ?? '__anon__').related('user')
+                  )
+                  .related('replies', nestedReply =>
+                    nestedReply
+                      .related('user')
+                      .related('votes', vote =>
+                        vote.where('user_id', userID ?? '__anon__').related('user')
+                      )
+                  )
+              )
+          )
+        )
         .one()
   ),
 
   // All todos with full relations (for client-side user filtering)
-  allWithRelations: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    applyTodoQueryAccess(zql.todo, userID)
-      .related('creator')
-      .related('assignments', q => q.related('user'))
-      .related('group')
-      .related('event')
-      .related('amendment')
-      .orderBy('created_at', 'desc')
+  allWithRelations: defineQuery(
+    z.object({ archive: todoArchiveModeSchema }),
+    ({ args: { archive }, ctx: { userID } }) =>
+      applyTodoQueryAccess(zql.todo, userID)
+        .where(({ cmp }) =>
+          archive === 'archived' ? cmp('archived_at', '>', 0) : cmp('archived_at', 'IS', null)
+        )
+        .related('creator')
+        .related('assignments', q => q.related('user'))
+        .related('group')
+        .related('event')
+        .related('amendment')
+        .orderBy(archive === 'archived' ? 'archived_at' : 'created_at', 'desc')
   ),
 
   // Todos by group with full relations
   byGroupWithRelations: defineQuery(
-    z.object({ group_id: z.string() }),
-    ({ args: { group_id }, ctx: { userID } }) =>
+    z.object({ group_id: z.string(), archive: todoArchiveModeSchema }),
+    ({ args: { group_id, archive }, ctx: { userID } }) =>
       applyTodoQueryAccess(zql.todo, userID)
+        .where(({ cmp }) =>
+          archive === 'archived' ? cmp('archived_at', '>', 0) : cmp('archived_at', 'IS', null)
+        )
         .where('group_id', group_id)
         .related('creator')
         .related('assignments', q => q.related('user'))
         .related('group')
         .related('event')
         .related('amendment')
-        .orderBy('created_at', 'desc')
+        .orderBy(archive === 'archived' ? 'archived_at' : 'created_at', 'desc')
   ),
 
   byGroupWithAssignments: defineQuery(
     z.object({ group_id: z.string() }),
     ({ args: { group_id }, ctx: { userID } }) =>
       applyTodoQueryAccess(zql.todo, userID)
+        .where('archived_at', 'IS', null)
         .where('group_id', group_id)
         .related('assignments', q => q.related('user'))
   ),

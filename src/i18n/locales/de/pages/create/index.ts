@@ -587,6 +587,7 @@ export const createPageTranslations = {
     descriptionPlaceholder: 'Beschreibe die Aufgabe',
     dueDateLabel: 'Fälligkeitsdatum',
     dueDateOptional: 'Fälligkeitsdatum (Optional)',
+    dueTimeOptional: 'Fälligkeitszeit (Optional)',
     priorityLabel: 'Priorität',
     priority: {
       low: 'Niedrig',
@@ -728,6 +729,9 @@ export const createPageTranslations = {
     labelPlaceholder: 'Beschreibung der Zahlung',
     typeField: 'Typ',
     amount: 'Betrag',
+    currency: 'Währung',
+    conversionUnavailable: 'Umrechnung nicht verfügbar',
+    conversionIncomplete: '{{count}} Zahlung(en) konnten nicht umgerechnet werden.',
     fromPayer: 'Von (Zahler)',
     toReceiver: 'An (Empfänger)',
     entityUser: 'Benutzer',

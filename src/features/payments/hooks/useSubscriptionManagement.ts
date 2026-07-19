@@ -59,7 +59,7 @@ export function useSubscriptionManagement({
     return activeSubscription.amount === amount;
   };
 
-  // Helper to check if user has a custom plan (not €2 or €10)
+  // Helper to check if user has a custom plan (not the fixed EUR plans)
   const hasCustomPlan = (): boolean => {
     if (!activeSubscription) return false;
     return activeSubscription.amount !== 200 && activeSubscription.amount !== 1000;

@@ -7,6 +7,7 @@ interface AddPaymentDialogProps {
     label: string;
     type: string;
     amount: number;
+    currency: string;
     direction: 'income' | 'expense';
     payerUserId?: string;
     payerGroupId?: string;

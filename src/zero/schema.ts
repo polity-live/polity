@@ -48,6 +48,7 @@ import {
   pushSubscription,
   notificationSetting,
   notificationRead,
+  notificationUserState,
 } from './notifications/table';
 import { blog, blogBlogger } from './blogs/table';
 import { payment, stripeCustomer, stripeSubscription, stripePayment } from './payments/table';
@@ -251,6 +252,7 @@ const zeroTables = [
   pushSubscription,
   notificationSetting,
   notificationRead,
+  notificationUserState,
   // Blogs
   blog,
   blogBlogger,
@@ -414,6 +416,7 @@ export type SearchDocumentAcl = Row<Schema['tables']['search_document_acl']>;
 export type Notification = Row<Schema['tables']['notification']>;
 export type PushSubscription = Row<Schema['tables']['push_subscription']>;
 export type NotificationSetting = Row<Schema['tables']['notification_setting']>;
+export type NotificationUserState = Row<Schema['tables']['notification_user_state']>;
 
 // Blogs
 export type Blog = Row<Schema['tables']['blog']>;

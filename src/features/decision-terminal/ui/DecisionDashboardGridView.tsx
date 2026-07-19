@@ -22,6 +22,7 @@ import {
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 import { DecisionWidgetContent } from './DecisionWidgetContent';
 import { DecisionWidgetFrame } from './DecisionWidgetFrame';
 import type { DecisionItem } from './types';
@@ -41,18 +42,19 @@ export interface DecisionDashboardGridViewProps {
 
 function DecisionResizeHandle(axis: ResizeHandleAxis, ref: Ref<HTMLElement>) {
   return (
-    <span
-      ref={ref}
-      aria-hidden="true"
-      title={translateText('generated.inline.resize_widget_2d9d64d6')}
-      className={cn(
-        `react-resizable-handle react-resizable-handle-${axis}`,
-        'decision-terminal-resize-handle'
-      )}
-      data-resize-axis={axis}
-      data-testid="decision-widget-resize-handle"
-      data-swipe-lock
-    />
+    <TooltipHint content={translateText('generated.inline.resize_widget_2d9d64d6')}>
+      <span
+        ref={ref}
+        aria-hidden="true"
+        className={cn(
+          `react-resizable-handle react-resizable-handle-${axis}`,
+          'decision-terminal-resize-handle'
+        )}
+        data-resize-axis={axis}
+        data-testid="decision-widget-resize-handle"
+        data-swipe-lock
+      />
+    </TooltipHint>
   );
 }
 

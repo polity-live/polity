@@ -3,6 +3,7 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 import { TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 
 export type TrendDirection = 'up' | 'down' | 'stable' | 'volatile';
 
@@ -83,16 +84,16 @@ export function TrendIndicator({
   const Icon = config.Icon;
 
   if (compact) {
+    const tooltip = `Trend: ${formatPercentageChange(trend.percentage)}`;
     return (
-      <span
-        className={cn('font-mono text-xs font-medium', config.colorClass, className)}
-        title={`Trend: ${formatPercentageChange(trend.percentage)}`}
-      >
-        {config.symbol}
-        {showPercentage && (
-          <span className="ml-0.5">{formatPercentageChange(trend.percentage)}</span>
-        )}
-      </span>
+      <TooltipHint content={tooltip}>
+        <span className={cn('font-mono text-xs font-medium', config.colorClass, className)}>
+          {config.symbol}
+          {showPercentage && (
+            <span className="ml-0.5">{formatPercentageChange(trend.percentage)}</span>
+          )}
+        </span>
+      </TooltipHint>
     );
   }
 
@@ -127,8 +128,8 @@ export function TrendArrow({
   const config = getTrendConfig(direction);
 
   return (
-    <span className={cn('font-mono', config.colorClass, className)} title={`Trend: ${direction}`}>
-      {config.symbol}
-    </span>
+    <TooltipHint content={`Trend: ${direction}`}>
+      <span className={cn('font-mono', config.colorClass, className)}>{config.symbol}</span>
+    </TooltipHint>
   );
 }

@@ -344,11 +344,12 @@ export const navItemsAuthenticated = (
   // Function to create amendment secondary navigation items for a specific amendment
   const getAmendmentSecondaryNavItems = (
     amendmentId: string,
-    canView = false,
-    canUpdate = false,
+    canReadContent = false,
+    _canUpdate = false,
     canManage = false,
     canViewNotifications = false
   ): NavigationItem[] => {
+    void _canUpdate;
     const items: NavigationItem[] = [
       {
         id: 'overview',
@@ -359,8 +360,8 @@ export const navItemsAuthenticated = (
       },
     ];
 
-    // Add items requiring update/manage permission
-    if (canUpdate || canManage) {
+    // Publicly readable amendment content must not depend on mutation rights.
+    if (canReadContent) {
       items.push({
         id: 'text',
         label: t ? t('navigation.secondary.amendment.text') : 'Full Text',
@@ -370,8 +371,7 @@ export const navItemsAuthenticated = (
       });
     }
 
-    // Add items requiring view permission
-    if (canView) {
+    if (canReadContent) {
       items.push({
         id: 'changeRequests',
         label: t ? t('navigation.secondary.amendment.changeRequests') : 'Change Requests',

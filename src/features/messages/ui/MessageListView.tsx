@@ -39,12 +39,14 @@ interface StreamingAssistantMessage {
   canRetry?: boolean;
   onRetry?: () => Promise<boolean>;
 }
-function StreamingBubble({
+export function StreamingBubble({
   streamingAssistantMessage,
   otherUser,
+  hidePolityLinkPreviews,
 }: {
   streamingAssistantMessage: StreamingAssistantMessage;
   otherUser: ReturnType<typeof getOtherParticipant>;
+  hidePolityLinkPreviews: boolean;
 }) {
   const { t } = useTranslation();
   if (!otherUser) return null;
@@ -57,7 +59,11 @@ function StreamingBubble({
       </Avatar>
       <div className="max-w-3xl min-w-0 flex-1 space-y-3 py-1">
         {streamingAssistantMessage.text && (
-          <MessageContent content={streamingAssistantMessage.text} renderMarkdown />
+          <MessageContent
+            content={streamingAssistantMessage.text}
+            hidePolityLinkPreviews={hidePolityLinkPreviews}
+            renderMarkdown
+          />
         )}
 
         {(streamingAssistantMessage.isThinking ||
@@ -221,6 +227,7 @@ export function MessageListView({
                     <StreamingBubble
                       streamingAssistantMessage={row.streaming}
                       otherUser={otherUser}
+                      hidePolityLinkPreviews={isAssistantConversation(conversation)}
                     />
                   )}
 

@@ -116,14 +116,18 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-function t(key: string, fallback?: string) {
+function t(key: string, paramsOrFallback?: string | Record<string, string | number>) {
   const translations: Record<string, string> = {
     'features.amendments.process.title': 'Antragsprozess',
     'features.amendments.process.activeRunDescription': 'Active run',
     'features.amendments.process.addAdditionalPath': 'Add additional path',
     'features.amendments.process.targetGroup': 'Zielgruppe',
-    'features.amendments.process.branchCount': 'branch(es)',
-    'features.amendments.process.openTasks': 'open task(s)',
+    'features.amendments.process.branchCount': '{{count}} text variants',
+    'features.amendments.process.branchCount_one': '{{count}} text variant',
+    'features.amendments.process.branchCount_other': '{{count}} text variants',
+    'features.amendments.process.openTasks': '{{count}} open tasks',
+    'features.amendments.process.openTasks_one': '{{count}} open task',
+    'features.amendments.process.openTasks_other': '{{count}} open tasks',
     'features.amendments.process.flowTab': 'Flow',
     'features.amendments.process.stepsTab': 'Steps',
     'features.amendments.process.pathVisualization': 'Process flow',
@@ -145,7 +149,17 @@ function t(key: string, fallback?: string) {
     'features.amendments.process.noGroupDecisions': 'No group decisions',
   };
 
-  return translations[key] ?? fallback ?? key;
+  const params = typeof paramsOrFallback === 'object' ? paramsOrFallback : undefined;
+  const pluralKey =
+    typeof params?.count === 'number' ? `${key}_${params.count === 1 ? 'one' : 'other'}` : key;
+  const template =
+    translations[pluralKey] ??
+    translations[key] ??
+    (typeof paramsOrFallback === 'string' ? paramsOrFallback : key);
+
+  return template.replace(/\{\{(\w+)\}\}/g, (match, name: string) =>
+    params?.[name] === undefined ? match : String(params[name])
+  );
 }
 
 function step(id: string, branchId: string, order: number, groupName: string) {
@@ -273,6 +287,16 @@ function baseProps(): AmendmentProcessFlowViewProps {
 }
 
 describe('AmendmentProcessFlowView branch redesign', () => {
+  it('renders the public process read-only without management actions', () => {
+    render(<AmendmentProcessFlowView {...baseProps()} user={null} canManageProcess={false} />);
+
+    expect(screen.getByText('Antragsprozess')).toBeTruthy();
+    expect(screen.getByTestId('branch-selector')).toBeTruthy();
+    expect(screen.getAllByRole('link', { name: 'Open text variant' }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'Add additional path' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Edit events' })).toBeNull();
+  });
+
   it('hides the source group from the summary and shows process stats', () => {
     render(<AmendmentProcessFlowView {...baseProps()} />);
 
@@ -280,8 +304,8 @@ describe('AmendmentProcessFlowView branch redesign', () => {
     expect(screen.queryByText('B1')).toBeNull();
     expect(screen.getByText('K1')).toBeTruthy();
     expect(screen.getByText('Workflow A')).toBeTruthy();
-    expect(screen.getByText(/2 branch\(es\)/)).toBeTruthy();
-    expect(screen.getByText(/1 open task\(s\)/)).toBeTruthy();
+    expect(screen.getByText('2 text variants')).toBeTruthy();
+    expect(screen.getByText('1 open task')).toBeTruthy();
   });
 
   it('renders the shared branch switcher and default flow tab for the selected branch', () => {

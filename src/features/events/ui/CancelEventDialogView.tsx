@@ -198,7 +198,11 @@ export function CancelEventDialogView({
               {targetEventId && (
                 <div className="text-muted-foreground mt-2 flex items-center gap-2 text-sm">
                   <BadgeControl variant="secondary">{selectedItems.length}</BadgeControl>
-                  <span>{t('features.events.cancel.reassign.itemCount')}</span>
+                  <span>
+                    {t('features.events.cancel.reassign.itemCount', {
+                      count: selectedItems.length,
+                    })}
+                  </span>
                   <ArrowRight className="h-4 w-4" />
                   <span>{availableEvents.find((e: any) => e.id === targetEventId)?.title}</span>
                 </div>

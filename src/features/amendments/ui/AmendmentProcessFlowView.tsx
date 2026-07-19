@@ -219,6 +219,7 @@ export interface AmendmentProcessFlowViewProps {
   t: any;
   navigate: any;
   user: any;
+  canManageProcess?: boolean;
   selectorOpen: any;
   setSelectorOpen: any;
   pendingSelection: any;
@@ -273,6 +274,7 @@ export function AmendmentProcessFlowView({
   t,
   navigate,
   user,
+  canManageProcess = Boolean(user),
   selectorOpen,
   setSelectorOpen,
   pendingSelection,
@@ -309,14 +311,6 @@ export function AmendmentProcessFlowView({
 }: AmendmentProcessFlowViewProps) {
   const processSubmissionActive = processSubmission.isActive;
 
-  if (!user) {
-    return (
-      <div className="flex h-[480px] items-center justify-center">
-        <p className="text-muted-foreground">{t('features.amendments.process.pleaseLogin')}</p>
-      </div>
-    );
-  }
-
   if (isLoading) {
     return <AmendmentProcessFlowSkeleton label={t('common.loading.pageSkeleton.entity')} />;
   }
@@ -338,16 +332,18 @@ export function AmendmentProcessFlowView({
               </CardDescription>
             </div>
 
-            <Button
-              onClick={() => {
-                setPendingSelection(null);
-                setSelectorOpen(true);
-              }}
-            >
-              {currentRun
-                ? t('features.amendments.process.addAdditionalPath', 'Add additional path')
-                : t('features.amendments.process.createPath', 'Create path')}
-            </Button>
+            {canManageProcess ? (
+              <Button
+                onClick={() => {
+                  setPendingSelection(null);
+                  setSelectorOpen(true);
+                }}
+              >
+                {currentRun
+                  ? t('features.amendments.process.addAdditionalPath', 'Add additional path')
+                  : t('features.amendments.process.createPath', 'Create path')}
+              </Button>
+            ) : null}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -379,7 +375,7 @@ export function AmendmentProcessFlowView({
                   className={cn('gap-1.5', getInfoBadgeClassName('count'))}
                 >
                   <GitBranch className="mr-1 h-3 w-3" />
-                  {branches.length} {t('features.amendments.process.branchCount')}
+                  {t('features.amendments.process.branchCount', { count: branches.length })}
                 </BadgeControl>
                 <BadgeControl
                   variant={openTasks.length > 0 ? 'secondary' : 'outline'}
@@ -391,7 +387,7 @@ export function AmendmentProcessFlowView({
                   )}
                 >
                   <Clock3 className="mr-1 h-3 w-3" />
-                  {openTasks.length} {t('features.amendments.process.openTasks')}
+                  {t('features.amendments.process.openTasks', { count: openTasks.length })}
                 </BadgeControl>
               </div>
 
@@ -705,9 +701,9 @@ export function AmendmentProcessFlowView({
                             variant={openChangeRequestCount > 0 ? 'secondary' : 'outline'}
                             className={getInfoBadgeClassName('count')}
                           >
-                            {openChangeRequestCount}{' '}
                             {t(
                               'features.amendments.process.openChangeRequests',
+                              { count: openChangeRequestCount },
                               'open change requests'
                             )}
                           </BadgeControl>
@@ -760,11 +756,14 @@ export function AmendmentProcessFlowView({
                         {branchTasks.length > 0 ? (
                           <div className="rounded-lg border border-dashed p-3 text-xs">
                             <p className="font-medium">
-                              {t('features.amendments.process.openTasks')}
+                              {t('features.amendments.process.openTasks', {
+                                count: branchTasks.length,
+                              })}
                             </p>
                             <p className="text-muted-foreground mt-1">
-                              {branchTasks.length}{' '}
-                              {t('features.amendments.process.tasksNeedAttention')}
+                              {t('features.amendments.process.tasksNeedAttention', {
+                                count: branchTasks.length,
+                              })}
                             </p>
                           </div>
                         ) : null}
@@ -784,16 +783,18 @@ export function AmendmentProcessFlowView({
                             {t('features.amendments.process.openTextVariant')}
                           </Link>
                         </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="justify-start gap-2"
-                          onClick={() => openBranchEventEditor(branch)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                          {t('features.amendments.process.editEvents', 'Edit events')}
-                        </Button>
+                        {canManageProcess ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="justify-start gap-2"
+                            onClick={() => openBranchEventEditor(branch)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                            {t('features.amendments.process.editEvents', 'Edit events')}
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -937,7 +938,9 @@ export function AmendmentProcessFlowView({
 
                   <div className="flex flex-wrap gap-2">
                     <BadgeControl variant="outline" className={getInfoBadgeClassName('count')}>
-                      {run.branches?.length ?? 0} {t('features.amendments.process.branchCount')}
+                      {t('features.amendments.process.branchCount', {
+                        count: run.branches?.length ?? 0,
+                      })}
                     </BadgeControl>
                     <BadgeControl
                       variant={
@@ -951,8 +954,10 @@ export function AmendmentProcessFlowView({
                           : getInfoBadgeClassName('step')
                       }
                     >
-                      {run.tasks?.filter((task: any) => task.status !== 'completed').length ?? 0}{' '}
-                      {t('features.amendments.process.openTasks')}
+                      {t('features.amendments.process.openTasks', {
+                        count:
+                          run.tasks?.filter((task: any) => task.status !== 'completed').length ?? 0,
+                      })}
                     </BadgeControl>
                   </div>
                 </div>
@@ -962,326 +967,330 @@ export function AmendmentProcessFlowView({
         </Card>
       ) : null}
 
-      <Dialog
-        open={Boolean(eventEditorBranch)}
-        onOpenChange={open => {
-          if (!open && !isReplanningBranchEvents) {
-            closeBranchEventEditor();
-          }
-        }}
-      >
-        <ScrollableDialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>
-              {t('features.amendments.process.editBranchEventsTitle', 'Edit branch events')}
-            </DialogTitle>
-            <DialogDescription>
-              {t(
-                'features.amendments.process.editBranchEventsDescription',
-                'Events can be changed after the last decided group in this branch.'
-              )}
-            </DialogDescription>
-          </DialogHeader>
+      {canManageProcess ? (
+        <Dialog
+          open={Boolean(eventEditorBranch)}
+          onOpenChange={open => {
+            if (!open && !isReplanningBranchEvents) {
+              closeBranchEventEditor();
+            }
+          }}
+        >
+          <ScrollableDialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>
+                {t('features.amendments.process.editBranchEventsTitle', 'Edit branch events')}
+              </DialogTitle>
+              <DialogDescription>
+                {t(
+                  'features.amendments.process.editBranchEventsDescription',
+                  'Events can be changed after the last decided group in this branch.'
+                )}
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="space-y-3">
-            {branchEventEditorRows.map(row => {
-              const step = row.step;
-              const currentEvent =
-                row.selectedEventId && step.event?.id === row.selectedEventId ? step.event : null;
+            <div className="space-y-3">
+              {branchEventEditorRows.map(row => {
+                const step = row.step;
+                const currentEvent =
+                  row.selectedEventId && step.event?.id === row.selectedEventId ? step.event : null;
 
-              return (
-                <div key={step.id} className="rounded-lg border p-4">
-                  <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <BadgeControl
-                          variant="outline"
-                          className={cn('gap-1.5', getInfoBadgeClassName('step'))}
-                        >
-                          {t('features.amendments.process.step')} {step.order_index + 1}
-                        </BadgeControl>
-                        <BadgeControl
-                          variant={getBadgeVariant(step.status)}
-                          className={getStatusBadgeClassName(step.status)}
-                        >
-                          {step.status}
-                        </BadgeControl>
-                        {row.isDecided ? (
+                return (
+                  <div key={step.id} className="rounded-lg border p-4">
+                    <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
                           <BadgeControl
-                            variant="secondary"
-                            className={cn('gap-1.5', getInfoBadgeClassName('current'))}
+                            variant="outline"
+                            className={cn('gap-1.5', getInfoBadgeClassName('step'))}
                           >
-                            <CheckCircle2 className="mr-1 h-3 w-3" />
-                            {t('features.amendments.process.decidedStep', 'Decided')}
+                            {t('features.amendments.process.step')} {step.order_index + 1}
                           </BadgeControl>
-                        ) : null}
-                      </div>
-                      <p className="font-medium">
-                        {step.target_group?.name ??
-                          step.source_group?.name ??
-                          step.workflow_step?.label ??
-                          t('features.amendments.process.unknownGroup')}
-                      </p>
-                      {row.segment?.requiredAfter || row.segment?.requiredBefore ? (
-                        <div className="text-muted-foreground flex flex-wrap gap-3 text-xs">
-                          {row.segment?.requiredAfter ? (
-                            <span>
-                              {t('features.amendments.process.notBefore', 'Not before')}{' '}
-                              {formatDateTime(row.segment.requiredAfter)}
-                            </span>
-                          ) : null}
-                          {row.segment?.requiredBefore ? (
-                            <span>
-                              {t('features.amendments.process.notAfter', 'Not after')}{' '}
-                              {formatDateTime(row.segment.requiredBefore)}
-                            </span>
+                          <BadgeControl
+                            variant={getBadgeVariant(step.status)}
+                            className={getStatusBadgeClassName(step.status)}
+                          >
+                            {step.status}
+                          </BadgeControl>
+                          {row.isDecided ? (
+                            <BadgeControl
+                              variant="secondary"
+                              className={cn('gap-1.5', getInfoBadgeClassName('current'))}
+                            >
+                              <CheckCircle2 className="mr-1 h-3 w-3" />
+                              {t('features.amendments.process.decidedStep', 'Decided')}
+                            </BadgeControl>
                           ) : null}
                         </div>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {row.editable ? (
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                      <div className="min-w-0 flex-1">
-                        {row.eligibleEvents.length > 0 ? (
-                          <TypeaheadSearch
-                            items={toTypeaheadItems(
-                              row.eligibleEvents,
-                              'event',
-                              (event: any) => event.title || 'Event',
-                              (event: any) => formatDateTime(event.start_date),
-                              undefined,
-                              (event: any) => `/event/${event.id}`
-                            )}
-                            value={row.selectedEventId ?? undefined}
-                            onChange={(item: TypeaheadItem | null) =>
-                              updateBranchEventDraft(step.id, item?.id ?? null)
-                            }
-                            placeholder={t(
-                              'features.amendments.process.selectEventForStep',
-                              'Select event for this step'
-                            )}
-                            disablePortal
-                          />
-                        ) : (
-                          <div className="text-muted-foreground rounded-md border border-dashed p-3 text-xs">
-                            {t(
-                              'features.amendments.process.noEligibleEventForStep',
-                              'No eligible event found for this step.'
-                            )}
+                        <p className="font-medium">
+                          {step.target_group?.name ??
+                            step.source_group?.name ??
+                            step.workflow_step?.label ??
+                            t('features.amendments.process.unknownGroup')}
+                        </p>
+                        {row.segment?.requiredAfter || row.segment?.requiredBefore ? (
+                          <div className="text-muted-foreground flex flex-wrap gap-3 text-xs">
+                            {row.segment?.requiredAfter ? (
+                              <span>
+                                {t('features.amendments.process.notBefore', 'Not before')}{' '}
+                                {formatDateTime(row.segment.requiredAfter)}
+                              </span>
+                            ) : null}
+                            {row.segment?.requiredBefore ? (
+                              <span>
+                                {t('features.amendments.process.notAfter', 'Not after')}{' '}
+                                {formatDateTime(row.segment.requiredBefore)}
+                              </span>
+                            ) : null}
                           </div>
-                        )}
+                        ) : null}
                       </div>
-                      {row.selectedEventId ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => updateBranchEventDraft(step.id, null)}
-                          aria-label={t('features.amendments.process.clearEvent', 'Clear event')}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      ) : null}
                     </div>
-                  ) : (
-                    <div className="text-muted-foreground rounded-md border border-dashed p-3 text-sm">
-                      {currentEvent?.title ??
-                        step.event?.title ??
-                        t('features.amendments.process.noEventSelected', 'No event selected')}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
 
-          <DialogFooter separator>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={closeBranchEventEditor}
-              disabled={isReplanningBranchEvents}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              type="button"
-              onClick={saveBranchEventReplan}
-              disabled={
-                isReplanningBranchEvents || !branchEventEditorRows.some(row => row.editable)
-              }
-            >
-              {isReplanningBranchEvents
-                ? t('features.amendments.process.processing')
-                : t('features.amendments.process.saveEventChanges', 'Save event changes')}
-            </Button>
-          </DialogFooter>
-        </ScrollableDialogContent>
-      </Dialog>
+                    {row.editable ? (
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <div className="min-w-0 flex-1">
+                          {row.eligibleEvents.length > 0 ? (
+                            <TypeaheadSearch
+                              items={toTypeaheadItems(
+                                row.eligibleEvents,
+                                'event',
+                                (event: any) => event.title || 'Event',
+                                (event: any) => formatDateTime(event.start_date),
+                                undefined,
+                                (event: any) => `/event/${event.id}`
+                              )}
+                              value={row.selectedEventId ?? undefined}
+                              onChange={(item: TypeaheadItem | null) =>
+                                updateBranchEventDraft(step.id, item?.id ?? null)
+                              }
+                              placeholder={t(
+                                'features.amendments.process.selectEventForStep',
+                                'Select event for this step'
+                              )}
+                              disablePortal
+                            />
+                          ) : (
+                            <div className="text-muted-foreground rounded-md border border-dashed p-3 text-xs">
+                              {t(
+                                'features.amendments.process.noEligibleEventForStep',
+                                'No eligible event found for this step.'
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {row.selectedEventId ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => updateBranchEventDraft(step.id, null)}
+                            aria-label={t('features.amendments.process.clearEvent', 'Clear event')}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="text-muted-foreground rounded-md border border-dashed p-3 text-sm">
+                        {currentEvent?.title ??
+                          step.event?.title ??
+                          t('features.amendments.process.noEventSelected', 'No event selected')}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
 
-      <Dialog
-        open={selectorOpen}
-        onOpenChange={open => {
-          if (processSubmissionActive) {
-            return;
-          }
-          setSelectorOpen(open);
-          if (!open) {
-            setPendingSelection(null);
-          }
-        }}
-      >
-        <ScrollableDialogContent
-          showCloseButton={!processSubmissionActive}
-          className="flex h-screen w-screen max-w-none flex-col overflow-hidden rounded-none border-0 p-0 sm:h-screen sm:max-w-none"
+            <DialogFooter separator>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeBranchEventEditor}
+                disabled={isReplanningBranchEvents}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="button"
+                onClick={saveBranchEventReplan}
+                disabled={
+                  isReplanningBranchEvents || !branchEventEditorRows.some(row => row.editable)
+                }
+              >
+                {isReplanningBranchEvents
+                  ? t('features.amendments.process.processing')
+                  : t('features.amendments.process.saveEventChanges', 'Save event changes')}
+              </Button>
+            </DialogFooter>
+          </ScrollableDialogContent>
+        </Dialog>
+      ) : null}
+
+      {canManageProcess && user ? (
+        <Dialog
+          open={selectorOpen}
+          onOpenChange={open => {
+            if (processSubmissionActive) {
+              return;
+            }
+            setSelectorOpen(open);
+            if (!open) {
+              setPendingSelection(null);
+            }
+          }}
         >
-          {!processSubmissionActive ? (
-            <>
-              <DialogHeader>
-                <DialogTitle className="px-6 pt-6">
-                  {currentRun
+          <ScrollableDialogContent
+            showCloseButton={!processSubmissionActive}
+            className="flex h-screen w-screen max-w-none flex-col overflow-hidden rounded-none border-0 p-0 sm:h-screen sm:max-w-none"
+          >
+            {!processSubmissionActive ? (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="px-6 pt-6">
+                    {currentRun
+                      ? t(
+                          'features.amendments.process.addAdditionalPathDialogTitle',
+                          'Add additional path'
+                        )
+                      : t('features.amendments.process.startDialogTitle')}
+                  </DialogTitle>
+                  <DialogDescription className="px-6">
+                    {currentRun
+                      ? t(
+                          'features.amendments.process.additionalPathSelectorDescription',
+                          'Choose an unused start group and schedule the path to the current target.'
+                        )
+                      : t('features.amendments.process.selectorDescription')}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+                  <div className="space-y-6">
+                    <TargetGroupEventSelector
+                      userId={user.id}
+                      collaborators={selectorCollaborators}
+                      disablePortal
+                      allowGroupWithoutEvent
+                      allowSourceGroupAsTarget
+                      excludedSourceGroupIds={currentRun ? existingBranchStartGroupIds : []}
+                      fixedTargetGroupId={currentRun?.selected_target_group_id ?? null}
+                      fixedWorkflowId={currentRun?.selected_target_workflow_id ?? null}
+                      lockTargetSelection={Boolean(currentRun)}
+                      layoutScope={
+                        currentRun ? 'amendment-process-additional-path' : 'amendment-process-start'
+                      }
+                      selectedGroupId={currentRun?.selected_target_group_id ?? undefined}
+                      selectedPathMode={currentRun ? currentRunPathMode : undefined}
+                      selectedWorkflowId={currentRun?.selected_target_workflow_id ?? undefined}
+                      onSelect={setPendingSelection}
+                    />
+
+                    {pendingSelection ? (
+                      <TargetGroupEventDisplay
+                        groupData={{
+                          id: pendingSelection.groupData.id,
+                          name: pendingSelection.groupData.name ?? null,
+                          description: richTextToPlainText(pendingSelection.groupData.description),
+                          member_count: pendingSelection.groupData.member_count ?? null,
+                          event_count: pendingSelection.groupData.event_count ?? null,
+                          amendment_count: pendingSelection.groupData.amendment_count ?? null,
+                        }}
+                        eventData={
+                          pendingSelection.eventData
+                            ? {
+                                id: pendingSelection.eventData.id,
+                                title: pendingSelection.eventData.title ?? null,
+                                start_date: pendingSelection.eventData.start_date ?? null,
+                                location_name: pendingSelection.eventData.location_name ?? null,
+                                description: richTextToPlainText(
+                                  pendingSelection.eventData.description
+                                ),
+                                participant_count:
+                                  pendingSelection.eventData.participant_count ?? null,
+                              }
+                            : null
+                        }
+                        pathWithEvents={pendingSelection.pathWithEvents}
+                      />
+                    ) : (
+                      <div className="border-border bg-muted/30 rounded-lg border border-dashed p-4 text-sm">
+                        {t('features.amendments.process.selectorHint')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <DialogFooter separator className="px-6 py-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSelectorOpen(false);
+                      setPendingSelection(null);
+                    }}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button onClick={handleConfirmSelection} disabled={!pendingSelection || isSaving}>
+                    {isSaving
+                      ? t('features.amendments.process.processing')
+                      : currentRun
+                        ? t(
+                            'features.amendments.process.confirmAdditionalPath',
+                            'Add additional path'
+                          )
+                        : t('features.amendments.process.confirmStart')}
+                  </Button>
+                </DialogFooter>
+              </>
+            ) : null}
+            <ActionSubmissionOverlay
+              kind="process"
+              status={processSubmission.status}
+              steps={processSubmission.progressSteps}
+              error={processSubmission.error}
+              preview={{
+                entityLabel: currentRun
+                  ? t('features.amendments.process.addAdditionalPath', 'Add additional path')
+                  : t('features.amendments.process.createPath', 'Create path'),
+                title:
+                  amendment?.title ??
+                  (currentRun
                     ? t(
                         'features.amendments.process.addAdditionalPathDialogTitle',
                         'Add additional path'
                       )
-                    : t('features.amendments.process.startDialogTitle')}
-                </DialogTitle>
-                <DialogDescription className="px-6">
-                  {currentRun
-                    ? t(
-                        'features.amendments.process.additionalPathSelectorDescription',
-                        'Choose an unused start group and schedule the path to the current target.'
-                      )
-                    : t('features.amendments.process.selectorDescription')}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
-                <div className="space-y-6">
-                  <TargetGroupEventSelector
-                    userId={user.id}
-                    collaborators={selectorCollaborators}
-                    disablePortal
-                    allowGroupWithoutEvent
-                    allowSourceGroupAsTarget
-                    excludedSourceGroupIds={currentRun ? existingBranchStartGroupIds : []}
-                    fixedTargetGroupId={currentRun?.selected_target_group_id ?? null}
-                    fixedWorkflowId={currentRun?.selected_target_workflow_id ?? null}
-                    lockTargetSelection={Boolean(currentRun)}
-                    layoutScope={
-                      currentRun ? 'amendment-process-additional-path' : 'amendment-process-start'
-                    }
-                    selectedGroupId={currentRun?.selected_target_group_id ?? undefined}
-                    selectedPathMode={currentRun ? currentRunPathMode : undefined}
-                    selectedWorkflowId={currentRun?.selected_target_workflow_id ?? undefined}
-                    onSelect={setPendingSelection}
-                  />
-
-                  {pendingSelection ? (
-                    <TargetGroupEventDisplay
-                      groupData={{
-                        id: pendingSelection.groupData.id,
-                        name: pendingSelection.groupData.name ?? null,
-                        description: richTextToPlainText(pendingSelection.groupData.description),
-                        member_count: pendingSelection.groupData.member_count ?? null,
-                        event_count: pendingSelection.groupData.event_count ?? null,
-                        amendment_count: pendingSelection.groupData.amendment_count ?? null,
-                      }}
-                      eventData={
-                        pendingSelection.eventData
-                          ? {
-                              id: pendingSelection.eventData.id,
-                              title: pendingSelection.eventData.title ?? null,
-                              start_date: pendingSelection.eventData.start_date ?? null,
-                              location_name: pendingSelection.eventData.location_name ?? null,
-                              description: richTextToPlainText(
-                                pendingSelection.eventData.description
-                              ),
-                              participant_count:
-                                pendingSelection.eventData.participant_count ?? null,
-                            }
-                          : null
-                      }
-                      pathWithEvents={pendingSelection.pathWithEvents}
-                    />
-                  ) : (
-                    <div className="border-border bg-muted/30 rounded-lg border border-dashed p-4 text-sm">
-                      {t('features.amendments.process.selectorHint')}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <DialogFooter separator className="px-6 py-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSelectorOpen(false);
-                    setPendingSelection(null);
-                  }}
-                >
-                  {t('common.cancel')}
-                </Button>
-                <Button onClick={handleConfirmSelection} disabled={!pendingSelection || isSaving}>
-                  {isSaving
-                    ? t('features.amendments.process.processing')
-                    : currentRun
-                      ? t(
-                          'features.amendments.process.confirmAdditionalPath',
-                          'Add additional path'
-                        )
-                      : t('features.amendments.process.confirmStart')}
-                </Button>
-              </DialogFooter>
-            </>
-          ) : null}
-          <ActionSubmissionOverlay
-            kind="process"
-            status={processSubmission.status}
-            steps={processSubmission.progressSteps}
-            error={processSubmission.error}
-            preview={{
-              entityLabel: currentRun
-                ? t('features.amendments.process.addAdditionalPath', 'Add additional path')
-                : t('features.amendments.process.createPath', 'Create path'),
-              title:
-                amendment?.title ??
-                (currentRun
-                  ? t(
-                      'features.amendments.process.addAdditionalPathDialogTitle',
-                      'Add additional path'
+                    : t('features.amendments.process.startDialogTitle')),
+                description: pendingSelection?.eventData?.title
+                  ? `${pendingSelection.groupData.name ?? pendingSelection.groupId} · ${
+                      pendingSelection.eventData.title
+                    }`
+                  : (pendingSelection?.groupData.name ?? pendingSelection?.groupId),
+                path:
+                  pendingSelection?.pathWithEvents
+                    ?.map(
+                      (segment: any) => segment.group?.name ?? segment.groupName ?? segment.group_id
                     )
-                  : t('features.amendments.process.startDialogTitle')),
-              description: pendingSelection?.eventData?.title
-                ? `${pendingSelection.groupData.name ?? pendingSelection.groupId} · ${
-                    pendingSelection.eventData.title
-                  }`
-                : (pendingSelection?.groupData.name ?? pendingSelection?.groupId),
-              path:
-                pendingSelection?.pathWithEvents
-                  ?.map(
-                    (segment: any) => segment.group?.name ?? segment.groupName ?? segment.group_id
-                  )
-                  .filter(Boolean) ?? [],
-              badges: [
-                pendingSelection?.pathMode === 'workflow' ? 'Workflow-Pfad' : 'Hierarchie-Pfad',
-              ],
-            }}
-            target={{
-              label: t('common.done', 'Fertig'),
-              onClick: () => {
-                processSubmission.reset();
-                setSelectorOpen(false);
-                setPendingSelection(null);
-              },
-            }}
-            onBack={processSubmission.reset}
-            onRetry={() => void processSubmission.retry()}
-          />
-        </ScrollableDialogContent>
-      </Dialog>
+                    .filter(Boolean) ?? [],
+                badges: [
+                  pendingSelection?.pathMode === 'workflow' ? 'Workflow-Pfad' : 'Hierarchie-Pfad',
+                ],
+              }}
+              target={{
+                label: t('common.done', 'Fertig'),
+                onClick: () => {
+                  processSubmission.reset();
+                  setSelectorOpen(false);
+                  setPendingSelection(null);
+                },
+              }}
+              onBack={processSubmission.reset}
+              onRetry={() => void processSubmission.retry()}
+            />
+          </ScrollableDialogContent>
+        </Dialog>
+      ) : null}
     </div>
   );
 }

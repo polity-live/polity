@@ -13,6 +13,7 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       amendmentId={controller.amendmentId}
       amendment={controller.amendment}
       isLoading={controller.isLoading}
+      showActionBars={controller.showActionBars}
       readOnly={controller.readOnly}
       canEditMapContext={controller.canEditMapContext}
       mode={controller.mode}

@@ -19,6 +19,15 @@ function createTx(location: NotificationMutatorTx['location'] = 'server') {
     mutate: {
       notification: {
         insert: vi.fn(),
+        update: vi.fn(),
+      },
+      notification_user_state: {
+        insert: vi.fn(),
+        update: vi.fn(),
+      },
+      notification_read: {
+        insert: vi.fn(),
+        delete: vi.fn(),
       },
     },
   };
@@ -93,5 +102,96 @@ describe('notificationSharedMutators authorization', () => {
         is_read: false,
       })
     );
+  });
+
+  it('rejects state changes for another personal recipient', async () => {
+    const tx = createTx('server');
+    tx.run.mockResolvedValueOnce({ ...notificationArgs, recipient_id: 'user-2' });
+
+    await expect(
+      notificationSharedMutators.setNotificationRead.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: { notificationId: notificationArgs.id, read: true },
+      })
+    ).rejects.toThrow(PermissionError);
+
+    expect(tx.mutate.notification_user_state.insert).not.toHaveBeenCalled();
+  });
+
+  it('writes state only with the authenticated personal recipient id', async () => {
+    const tx = createTx('server');
+    tx.run
+      .mockResolvedValueOnce({ ...notificationArgs, recipient_id: 'user-1' })
+      .mockResolvedValueOnce(undefined);
+
+    await notificationSharedMutators.setNotificationRead.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: { notificationId: notificationArgs.id, read: true },
+    });
+
+    expect(tx.mutate.notification_user_state.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notification_id: notificationArgs.id,
+        user_id: 'user-1',
+        read_at: expect.any(Number),
+      })
+    );
+  });
+
+  it('allows the group owner to soft-delete an entity notification globally', async () => {
+    const tx = createTx('server');
+    const entityNotification = {
+      ...notificationArgs,
+      recipient_id: null,
+      recipient_entity_type: 'group',
+      recipient_entity_id: 'group-1',
+      recipient_group_id: 'group-1',
+    };
+    tx.run
+      .mockResolvedValueOnce(entityNotification)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 'group-1' }]);
+
+    await notificationSharedMutators.deleteEntityNotificationGlobally.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: { notificationId: entityNotification.id },
+    });
+
+    expect(tx.mutate.notification.update).toHaveBeenCalledWith({
+      id: entityNotification.id,
+      deleted_at: expect.any(Number),
+      deleted_by_user_id: 'user-1',
+      updated_at: expect.any(Number),
+    });
+  });
+
+  it('rejects global deletion when manageNotifications is unavailable', async () => {
+    const tx = createTx('server');
+    const entityNotification = {
+      ...notificationArgs,
+      recipient_id: null,
+      recipient_entity_type: 'group',
+      recipient_entity_id: 'group-1',
+      recipient_group_id: 'group-1',
+    };
+    tx.run
+      .mockResolvedValueOnce(entityNotification)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+
+    await expect(
+      notificationSharedMutators.deleteEntityNotificationGlobally.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: { notificationId: entityNotification.id },
+      })
+    ).rejects.toThrow(PermissionError);
+
+    expect(tx.mutate.notification.update).not.toHaveBeenCalled();
   });
 });

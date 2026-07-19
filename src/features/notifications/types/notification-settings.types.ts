@@ -153,6 +153,8 @@ export interface TodoNotificationSettings {
   dueDateReminders: boolean;
   /** Overdue alerts */
   overdueAlerts: boolean;
+  /** Comments and replies on a task */
+  comments: boolean;
 }
 
 // ============================================================================
@@ -291,6 +293,7 @@ export const DEFAULT_TODO_NOTIFICATIONS: TodoNotificationSettings = {
   taskCompleted: true,
   dueDateReminders: true,
   overdueAlerts: true,
+  comments: true,
 };
 
 export const DEFAULT_SOCIAL_NOTIFICATIONS: SocialNotificationSettings = {

@@ -39,7 +39,6 @@ export const pricingPageTranslations = {
         'Server für alle am Laufen halten',
         'Zuverlässige Verfügbarkeit & Leistung sichern',
         'Datensicherheit & Backups unterstützen',
-        'Unsere ewige Dankbarkeit ❤️',
       ],
       cta: 'Betriebskosten decken',
       helpText:
@@ -56,6 +55,7 @@ export const pricingPageTranslations = {
         'Demokratische Werkzeuge für Gemeinschaften stärken',
         'Zugänglichkeit für lokale Organisationen unterstützen',
         'Infrastruktur für globale Bürgerbeteiligung aufbauen',
+        'Unsere ewige Dankbarkeit ❤️',
       ],
       cta: 'Entwicklung unterstützen',
       helpText: 'Hilf uns, neue Funktionen zu entwickeln und die Plattform für alle zu verbessern.',

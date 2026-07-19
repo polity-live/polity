@@ -94,8 +94,9 @@ export function PendingInvitationsCard({
       <div className="space-y-1.5 px-3 sm:px-4">
         <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
           <UserPlus className="h-5 w-5" />
-          {translateText('generated.inline.0115_pending_invitations_8f697e53')}
-          {invitations.length})
+          {translateText('features.amendments.collaborators.pendingInvitationsTitle', {
+            count: invitations.length,
+          })}
         </h2>
         <p className="text-muted-foreground text-sm">
           {translateText(

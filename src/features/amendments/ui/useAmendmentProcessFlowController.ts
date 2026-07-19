@@ -27,6 +27,7 @@ import {
   resolveSelectedBranchId,
 } from '@/features/amendments/logic/amendmentBranchDisplay';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { getAmendmentPermissionFlags } from '@/features/amendments/logic/amendmentPermissions';
 interface AmendmentProcessFlowProps {
   amendmentId: string;
   requestedBranchId?: string | null;
@@ -108,6 +109,19 @@ export function useAmendmentProcessFlowController({
   });
 
   const currentRun = amendment?.current_process_run ?? null;
+  const amendmentPermissionFlags = useMemo(
+    () =>
+      getAmendmentPermissionFlags(
+        amendment ? { ...amendment, collaborators } : amendment,
+        user?.id
+      ),
+    [amendment, collaborators, user?.id]
+  );
+  const canManageProcess =
+    Boolean(user?.id) &&
+    (amendment?.created_by_id === user?.id ||
+      amendmentPermissionFlags.canChangeMode ||
+      amendmentPermissionFlags.canManageChangeRequestVotes);
 
   const allRuns = useMemo(
     () =>
@@ -486,29 +500,37 @@ export function useAmendmentProcessFlowController({
     });
   }, [allEvents, allEventsById, eventDraftsByStepRunId, eventEditorBranch]);
 
-  const openBranchEventEditor = useCallback((branch: any) => {
-    const drafts: Record<string, string | null> = {};
-    for (const step of branch?.step_runs ?? []) {
-      drafts[step.id] = step.event_id ?? null;
-    }
-    setEventDraftsByStepRunId(drafts);
-    setEventEditorBranchId(branch?.id ?? null);
-  }, []);
+  const openBranchEventEditor = useCallback(
+    (branch: any) => {
+      if (!canManageProcess) return;
+      const drafts: Record<string, string | null> = {};
+      for (const step of branch?.step_runs ?? []) {
+        drafts[step.id] = step.event_id ?? null;
+      }
+      setEventDraftsByStepRunId(drafts);
+      setEventEditorBranchId(branch?.id ?? null);
+    },
+    [canManageProcess]
+  );
 
   const closeBranchEventEditor = useCallback(() => {
     setEventEditorBranchId(null);
     setEventDraftsByStepRunId({});
   }, []);
 
-  const updateBranchEventDraft = useCallback((stepRunId: string, eventId: string | null) => {
-    setEventDraftsByStepRunId(previous => ({
-      ...previous,
-      [stepRunId]: eventId,
-    }));
-  }, []);
+  const updateBranchEventDraft = useCallback(
+    (stepRunId: string, eventId: string | null) => {
+      if (!canManageProcess) return;
+      setEventDraftsByStepRunId(previous => ({
+        ...previous,
+        [stepRunId]: eventId,
+      }));
+    },
+    [canManageProcess]
+  );
 
   const saveBranchEventReplan = useCallback(() => {
-    if (!eventEditorBranch) {
+    if (!canManageProcess || !eventEditorBranch) {
       return;
     }
 
@@ -557,6 +579,7 @@ export function useAmendmentProcessFlowController({
       });
   }, [
     branchEventEditorRows,
+    canManageProcess,
     closeBranchEventEditor,
     eventDraftsByStepRunId,
     eventEditorBranch,
@@ -566,7 +589,7 @@ export function useAmendmentProcessFlowController({
   ]);
 
   const handleConfirmSelection = () => {
-    if (!pendingSelection || !amendment || !user) {
+    if (!canManageProcess || !pendingSelection || !amendment || !user) {
       return;
     }
 
@@ -632,6 +655,7 @@ export function useAmendmentProcessFlowController({
     t,
     navigate,
     user,
+    canManageProcess,
     selectorOpen,
     setSelectorOpen,
     pendingSelection,

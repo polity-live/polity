@@ -12,6 +12,8 @@ interface TodoDetailHeaderProps {
   onSave: () => void;
   onCancel: () => void;
   onTitleChange?: (title: string) => void;
+  canEdit?: boolean;
+  archiveAction?: React.ReactNode;
 }
 
 export function TodoDetailHeader({
@@ -23,6 +25,8 @@ export function TodoDetailHeader({
   onSave,
   onCancel,
   onTitleChange,
+  canEdit = true,
+  archiveAction,
 }: TodoDetailHeaderProps) {
   return (
     <div className="flex items-start justify-between">
@@ -51,10 +55,15 @@ export function TodoDetailHeader({
             </Button>
           </>
         ) : (
-          <Button onClick={onEdit} variant="outline" size="sm">
-            <Edit className="mr-2 h-4 w-4" />
-            {translateText('generated.inline.0729_edit_5301648d')}
-          </Button>
+          <>
+            {archiveAction}
+            {canEdit ? (
+              <Button onClick={onEdit} variant="outline" size="sm">
+                <Edit className="mr-2 h-4 w-4" />
+                {translateText('generated.inline.0729_edit_5301648d')}
+              </Button>
+            ) : null}
+          </>
         )}
       </div>
     </div>

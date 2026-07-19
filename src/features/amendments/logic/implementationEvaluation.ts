@@ -1,4 +1,5 @@
 import { computeVoteResult, type MajorityType } from '@/features/votes/logic/computeVoteResult';
+import { parseLocalDateInput } from '@/features/shared/logic/localDateTime';
 
 export type AmendmentProcessStatus =
   | 'pending_event'
@@ -69,7 +70,7 @@ function normalizeDateInput(value: number | string) {
   }
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return new Date(`${value}T00:00:00`);
+    return parseLocalDateInput(value) ?? new Date(Number.NaN);
   }
 
   return new Date(value);

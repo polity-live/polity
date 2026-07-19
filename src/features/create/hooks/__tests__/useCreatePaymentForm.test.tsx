@@ -39,6 +39,10 @@ vi.mock('@/zero/payments/usePaymentActions', () => ({
   }),
 }));
 
+vi.mock('@/zero/preferences/usePreferenceState', () => ({
+  usePreferenceState: () => ({ displayCurrency: 'EUR', isLoading: false }),
+}));
+
 vi.mock('@/zero/users/useUserState', () => ({
   useUserState: () => ({
     allUsers: [{ id: 'user-1', first_name: 'Ari', last_name: 'Example', handle: 'ari' }],
@@ -53,12 +57,14 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
     })[key] ?? key,
   useTranslation: () => ({
     t: (key: string) => key,
+    language: 'en',
   }),
 }));
 
 vi.mock('@/features/shared/ui/ui/sonner', () => ({
   toast: {
     error: vi.fn(),
+    loading: vi.fn(() => 'toast-1'),
     success: vi.fn(),
   },
 }));
@@ -116,6 +122,7 @@ describe('useCreatePaymentForm', () => {
       'label',
       'type',
       'amount',
+      'currency',
       'direction',
     ]);
     expect(result.current.steps[1].fields?.map(field => field.key)).toEqual([
@@ -261,7 +268,8 @@ describe('useCreatePaymentForm', () => {
         payer_group_id: null,
         receiver_user_id: null,
         receiver_group_id: 'group-1',
-      })
+      }),
+      { notificationMode: 'silent' }
     );
   });
 
@@ -290,7 +298,8 @@ describe('useCreatePaymentForm', () => {
         payer_group_id: 'group-1',
         receiver_user_id: 'user-1',
         receiver_group_id: null,
-      })
+      }),
+      { notificationMode: 'silent' }
     );
   });
 });

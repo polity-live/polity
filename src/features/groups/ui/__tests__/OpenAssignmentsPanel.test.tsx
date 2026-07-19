@@ -97,12 +97,17 @@ vi.mock('react-i18next', () => {
     'features.groups.memberships.openAssignments.filters.emptyDescription':
       'Adjust the filters to show more assignments.',
     'features.groups.memberships.openAssignments.seatCount': 'Seats',
+    'features.groups.memberships.openAssignments.seatCount_one': 'Seat',
+    'features.groups.memberships.openAssignments.seatCount_other': 'Seats',
     'features.groups.memberships.openAssignments.completedSeatCount': 'Elected',
     'features.groups.memberships.openAssignments.scheduledSeatCount': 'Scheduled',
     'features.groups.memberships.openAssignments.openSeatCount': 'Open',
     'features.groups.memberships.openAssignments.delegateDescription.hasCurrently': 'currently has',
     'features.groups.memberships.openAssignments.delegateDescription.seatPlural': 'delegate seats',
     'features.groups.memberships.openAssignments.delegateDescription.seatSingular': 'delegate seat',
+    'features.groups.memberships.openAssignments.delegateDescription.seats': 'delegate seats',
+    'features.groups.memberships.openAssignments.delegateDescription.seats_one': 'delegate seat',
+    'features.groups.memberships.openAssignments.delegateDescription.seats_other': 'delegate seats',
     'features.groups.memberships.openAssignments.delegateDescription.for': 'for',
     'features.groups.memberships.openAssignments.delegateElectionHelpBeforeGroup':
       'Create the delegate election for',
@@ -134,7 +139,11 @@ vi.mock('react-i18next', () => {
     useTranslation: () => ({
       i18n: { language: 'en' },
       t: (key: string, params?: Record<string, string | number>) => {
-        const template = translations[key] ?? key;
+        const pluralKey =
+          typeof params?.count === 'number'
+            ? `${key}_${params.count === 1 ? 'one' : 'other'}`
+            : key;
+        const template = translations[pluralKey] ?? translations[key] ?? key;
 
         return template.replace(/\{\{(\w+)\}\}/g, (_, paramKey: string) =>
           params?.[paramKey] === undefined ? `{{${paramKey}}}` : String(params[paramKey])

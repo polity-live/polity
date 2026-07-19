@@ -1,7 +1,7 @@
 'use client';
 
 import isPropValid from '@emotion/is-prop-valid';
-import { lazy, Suspense, type ComponentProps } from 'react';
+import { lazy, Suspense, useRef, type ComponentProps } from 'react';
 import type { FilerobotImageEditorConfig } from 'react-filerobot-image-editor';
 import { StyleSheetManager } from 'styled-components';
 
@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogTitle } from '@/features/shared/ui/ui/dial
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { buildEditorTheme, ImageEditorVendorStyles, readEditorCssVar } from './ImageEditorTheme';
+import { ImageEditorTooltipBridge } from './ImageEditorTooltipBridge';
 
 type SavedImageData = Parameters<NonNullable<FilerobotImageEditorConfig['onSave']>>[0];
 type DialogContentProps = ComponentProps<typeof DialogContent>;
@@ -67,58 +69,6 @@ const TARGET_LAYOUT_TRANSLATIONS = {
   storyPortrait: 'Story portrait',
   storyPortraitDescription: '1080 x 1920',
 };
-
-function cssVar(name: string, fallback: string) {
-  if (typeof window === 'undefined') return fallback;
-  const value = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return value || fallback;
-}
-
-function buildEditorTheme(): NonNullable<FilerobotImageEditorConfig['theme']> {
-  const background = cssVar('--background', '#07110e');
-  const card = cssVar('--card', '#101a16');
-  const foreground = cssVar('--foreground', '#f4efe4');
-  const primary = cssVar('--primary', '#f4efe4');
-  const border = cssVar('--border', '#2b3731');
-  const muted = cssVar('--muted-foreground', '#9da69f');
-  const accent = cssVar('--accent', card);
-  const destructive = cssVar('--destructive', '#ef4444');
-
-  return {
-    palette: {
-      'bg-primary': background,
-      'bg-primary-active': accent,
-      'bg-secondary': card,
-      'bg-stateless': card,
-      'bg-active': accent,
-      'bg-hover': accent,
-      'accent-primary': primary,
-      'accent-primary-active': primary,
-      'accent-stateless': primary,
-      'icon-primary': foreground,
-      'icons-secondary': muted,
-      'icons-muted': muted,
-      'icons-placeholder': muted,
-      'borders-primary': border,
-      'borders-secondary': border,
-      'borders-strong': primary,
-      'borders-disabled': border,
-      'borders-item': border,
-      'txt-primary': foreground,
-      'txt-secondary': muted,
-      'txt-placeholder': muted,
-      'btn-disabled-text': muted,
-      error: destructive,
-      warning: destructive,
-      success: cssVar('--success', primary),
-      'light-shadow': 'rgb(0 0 0 / 0.24)',
-    },
-    typography: {
-      fontFamily:
-        'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    },
-  };
-}
 
 function dataUrlToBlob(dataUrl: string) {
   return fetch(dataUrl).then(response => response.blob());
@@ -211,6 +161,7 @@ export function ImageEditorDialog({
   onSave,
 }: ImageEditorDialogProps) {
   const { t, language } = useTranslation();
+  const editorHostRef = useRef<HTMLDivElement>(null);
   const previewPixelRatio =
     typeof window === 'undefined' ? 1 : Math.max(window.devicePixelRatio || 1, 1);
 
@@ -237,87 +188,91 @@ export function ImageEditorDialog({
         <Suspense
           fallback={<ImageEditorLoadingSkeleton label={t('common.status.loading', 'Loading...')} />}
         >
-          <StyleSheetManager shouldForwardProp={shouldForwardEditorProp}>
-            <FilerobotImageEditor
-              source={imageUrl}
-              theme={buildEditorTheme()}
-              annotationsCommon={{
-                fill: cssVar('--foreground', '#f4efe4'),
-                stroke: cssVar('--primary', '#f4efe4'),
-              }}
-              Crop={{
-                autoResize: true,
-                presetsFolders: [
-                  {
-                    titleKey: 'polityTargets',
-                    groups: [
-                      {
-                        titleKey: 'targetLayouts',
-                        items: [
-                          {
-                            titleKey: 'avatarSquare',
-                            descriptionKey: 'avatarSquareDescription',
-                            width: 512,
-                            height: 512,
-                            ratio: 1,
-                          },
-                          {
-                            titleKey: 'profileCover',
-                            descriptionKey: 'profileCoverDescription',
-                            width: 1024,
-                            height: 256,
-                            ratio: 4,
-                          },
-                          {
-                            titleKey: 'groupCover',
-                            descriptionKey: 'groupCoverDescription',
-                            width: 1024,
-                            height: 256,
-                            ratio: 4,
-                          },
-                          {
-                            titleKey: 'amendmentCover',
-                            descriptionKey: 'amendmentCoverDescription',
-                            width: 1024,
-                            height: 256,
-                            ratio: 4,
-                          },
-                          {
-                            titleKey: 'storyPortrait',
-                            descriptionKey: 'storyPortraitDescription',
-                            width: 1080,
-                            height: 1920,
-                            ratio: 9 / 16,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              }}
-              defaultTabId="Adjust"
-              defaultToolId="Crop"
-              defaultSavedImageType="png"
-              defaultSavedImageQuality={0.92}
-              translations={TARGET_LAYOUT_TRANSLATIONS}
-              language={language}
-              savingPixelRatio={2}
-              previewPixelRatio={previewPixelRatio}
-              closeAfterSave={false}
-              onBeforeSave={() => false}
-              onClose={() => onOpenChange(false)}
-              onSave={async imageData => {
-                try {
-                  const editedFile = await savedImageDataToFile(imageData);
-                  const success = await onSave(editedFile);
-                  if (success) onOpenChange(false);
-                } catch (error) {
-                  console.error('Image editor save error:', error);
-                  toast.error(t('common.actions.uploadImageFailed'));
-                }
-              }}
-            />
-          </StyleSheetManager>
+          <div ref={editorHostRef} className="h-full w-full">
+            <StyleSheetManager shouldForwardProp={shouldForwardEditorProp}>
+              <ImageEditorVendorStyles />
+              <FilerobotImageEditor
+                source={imageUrl}
+                theme={buildEditorTheme()}
+                annotationsCommon={{
+                  fill: readEditorCssVar('--foreground', '#17201c'),
+                  stroke: readEditorCssVar('--primary', '#12362d'),
+                }}
+                Crop={{
+                  autoResize: true,
+                  presetsFolders: [
+                    {
+                      titleKey: 'polityTargets',
+                      groups: [
+                        {
+                          titleKey: 'targetLayouts',
+                          items: [
+                            {
+                              titleKey: 'avatarSquare',
+                              descriptionKey: 'avatarSquareDescription',
+                              width: 512,
+                              height: 512,
+                              ratio: 1,
+                            },
+                            {
+                              titleKey: 'profileCover',
+                              descriptionKey: 'profileCoverDescription',
+                              width: 1024,
+                              height: 256,
+                              ratio: 4,
+                            },
+                            {
+                              titleKey: 'groupCover',
+                              descriptionKey: 'groupCoverDescription',
+                              width: 1024,
+                              height: 256,
+                              ratio: 4,
+                            },
+                            {
+                              titleKey: 'amendmentCover',
+                              descriptionKey: 'amendmentCoverDescription',
+                              width: 1024,
+                              height: 256,
+                              ratio: 4,
+                            },
+                            {
+                              titleKey: 'storyPortrait',
+                              descriptionKey: 'storyPortraitDescription',
+                              width: 1080,
+                              height: 1920,
+                              ratio: 9 / 16,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                }}
+                defaultTabId="Adjust"
+                defaultToolId="Crop"
+                defaultSavedImageType="png"
+                defaultSavedImageQuality={0.92}
+                translations={TARGET_LAYOUT_TRANSLATIONS}
+                language={language}
+                savingPixelRatio={2}
+                previewPixelRatio={previewPixelRatio}
+                closeAfterSave={false}
+                onBeforeSave={() => false}
+                onClose={() => onOpenChange(false)}
+                onSave={async imageData => {
+                  try {
+                    const editedFile = await savedImageDataToFile(imageData);
+                    const success = await onSave(editedFile);
+                    if (success) onOpenChange(false);
+                  } catch (error) {
+                    console.error('Image editor save error:', error);
+                    toast.error(t('common.actions.uploadImageFailed'));
+                  }
+                }}
+              />
+            </StyleSheetManager>
+            <ImageEditorTooltipBridge hostRef={editorHostRef} />
+          </div>
         </Suspense>
       </DialogContent>
     </Dialog>

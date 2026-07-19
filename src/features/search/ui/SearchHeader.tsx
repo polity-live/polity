@@ -1,9 +1,12 @@
 import { SearchField } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
+import { Kbd } from '@/features/shared/ui/ui/kbd';
 import { FilterButton } from '@/features/shared/ui/filter-controls';
 import { Filter, List, MapPinned } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { SearchViewMode } from '../hooks/useSearchURL';
+import { commandDialogShortcut } from '@/features/navigation/nav-keyboard/keyboard-navigation';
+import { useResolvedKeyboardShortcut } from '@/features/shared/keyboard/keyboard-shortcut';
 
 interface SearchHeaderProps {
   searchQuery: string;
@@ -33,6 +36,7 @@ export function SearchHeader({
   onViewChange,
 }: SearchHeaderProps) {
   const { t } = useTranslation();
+  const commandDialogShortcutResolved = useResolvedKeyboardShortcut(commandDialogShortcut);
 
   return (
     <>
@@ -46,6 +50,15 @@ export function SearchHeader({
             placeholder={t('features.search.placeholderDetailed')}
             clearLabel={t('common.actions.clear')}
             fieldClassName="flex-1"
+            inputClassName="pr-9 md:pr-20"
+            emptyEndAdornment={
+              commandDialogShortcutResolved ? (
+                <Kbd className="hidden md:inline-flex" aria-hidden="true">
+                  {commandDialogShortcutResolved.display}
+                </Kbd>
+              ) : undefined
+            }
+            aria-keyshortcuts={commandDialogShortcutResolved?.ariaKeyShortcuts}
           />
           <div
             className="border-input bg-background inline-flex shrink-0 overflow-hidden rounded-md border"

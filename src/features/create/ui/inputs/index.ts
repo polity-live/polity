@@ -15,10 +15,12 @@ export { StatusInput } from './StatusInput';
 export { DirectionInput } from './DirectionInput';
 export { AgendaTypeInput } from './AgendaTypeInput';
 export { PaymentTypeInput } from './PaymentTypeInput';
+export { CurrencyInput } from './CurrencyInput';
 export { DelegateAllocationInput } from './DelegateAllocationInput';
 
 // Composite inputs
 export { DateTimeRangeInput } from './DateTimeRangeInput';
+export { TodoDeadlineInput } from './TodoDeadlineInput';
 export { DeadlinesInput } from './DeadlinesInput';
 export { GroupRelationshipsInput } from './GroupRelationshipsInput';
 export { ConstitutionalEventInput } from './ConstitutionalEventInput';

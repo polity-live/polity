@@ -29,6 +29,7 @@ import {
   isAmendmentAuthor,
   hasActiveVotingRight,
   hasPassiveVotingRight,
+  type PermissionScope,
 } from './check';
 import type {
   PermissionContext,
@@ -58,6 +59,12 @@ interface UsePermissionsData {
   bloggerRelations: BloggerRelation[] | undefined;
   ownedGroupIds: string[] | undefined;
   isLoading: boolean;
+}
+
+export interface PermissionEvaluator {
+  can: (scope: PermissionScope, action: ActionType, resource: ResourceType) => boolean;
+  isLoading: boolean;
+  userId: string | undefined;
 }
 
 interface PermissionRoleLinkLike {
@@ -187,6 +194,34 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
   );
 
   return { memberships, guestAccesses, participations, bloggerRelations, ownedGroupIds, isLoading };
+}
+
+/**
+ * Evaluates arbitrary entity scopes with the same pure permission checker used
+ * by the authoritative server-side can() helper. This loads permission data
+ * once and is intended for lists that need to evaluate several entity rows.
+ */
+export function usePermissionEvaluator(): PermissionEvaluator {
+  const userId = useAuthUserId();
+  const { memberships, guestAccesses, participations, bloggerRelations, ownedGroupIds, isLoading } =
+    usePermissionsData(userId);
+
+  return useMemo(
+    () => ({
+      isLoading,
+      userId,
+      can: (scope: PermissionScope, action: ActionType, resource: ResourceType) => {
+        if (!userId || isLoading) return false;
+        return checkPermission(
+          { userId, memberships, guestAccesses, participations, bloggerRelations, ownedGroupIds },
+          scope,
+          action,
+          resource
+        );
+      },
+    }),
+    [bloggerRelations, guestAccesses, isLoading, memberships, ownedGroupIds, participations, userId]
+  );
 }
 
 // ============================================================================

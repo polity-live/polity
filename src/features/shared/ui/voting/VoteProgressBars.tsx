@@ -1,11 +1,12 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
+  TooltipHint,
   TooltipTrigger,
 } from '@/features/shared/ui/ui/tooltip';
 import {
@@ -64,6 +65,22 @@ const ELECTION_SEGMENT_COLORS = [
   'bg-chart-5',
 ];
 
+function ProgressSegment({
+  className,
+  style,
+  tooltip,
+}: {
+  className?: string;
+  style: CSSProperties;
+  tooltip: string;
+}) {
+  return (
+    <TooltipHint content={tooltip}>
+      <div className={className} style={style} />
+    </TooltipHint>
+  );
+}
+
 function CompactStackedBar({
   segments,
   className,
@@ -82,11 +99,11 @@ function CompactStackedBar({
               const percentage = (segment.value / total) * 100;
 
               return (
-                <div
+                <ProgressSegment
                   key={segment.id}
                   className={cn(segment.colorClass, 'transition-all duration-300')}
                   style={{ width: `${Math.round(percentage)}%` }}
-                  title={`${segment.label}: ${Math.round(segment.value)} (${Math.round(percentage)}%)`}
+                  tooltip={`${segment.label}: ${Math.round(segment.value)} (${Math.round(percentage)}%)`}
                 />
               );
             })
@@ -137,27 +154,27 @@ export function VoteProgressBar({
         aria-valuemax={100}
       >
         {percentages.support > 0 ? (
-          <div
+          <ProgressSegment
             className={cn(
               'bg-[var(--badge-success-fg)]',
               animated && 'transition-all duration-500'
             )}
             style={{ width: `${Math.round(percentages.support)}%` }}
-            title={t('features.timeline.terminal.support', { count: votes.support })}
+            tooltip={t('features.timeline.terminal.support', { count: votes.support })}
           />
         ) : null}
         {percentages.oppose > 0 ? (
-          <div
+          <ProgressSegment
             className={cn('bg-[var(--badge-danger-fg)]', animated && 'transition-all duration-500')}
             style={{ width: `${Math.round(percentages.oppose)}%` }}
-            title={t('features.timeline.terminal.oppose', { count: votes.oppose })}
+            tooltip={t('features.timeline.terminal.oppose', { count: votes.oppose })}
           />
         ) : null}
         {percentages.abstain > 0 ? (
-          <div
+          <ProgressSegment
             className={cn('bg-muted-foreground/45', animated && 'transition-all duration-500')}
             style={{ width: `${Math.round(percentages.abstain)}%` }}
-            title={t('features.timeline.terminal.abstain', { count: votes.abstain })}
+            tooltip={t('features.timeline.terminal.abstain', { count: votes.abstain })}
           />
         ) : null}
       </div>

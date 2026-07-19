@@ -5,6 +5,7 @@ import { stripeCreateCheckoutFn } from '@/server/stripe-create-checkout';
 import { stripeCancelSubscriptionFn } from '@/server/stripe-cancel-subscription';
 import { stripeRepairCheckoutSessionFn } from '@/server/stripe-repair-checkout-session';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { majorToMinor } from '@/features/shared/logic/currency';
 import { useAuth } from '@/providers/auth-provider';
 
 // Co-located types
@@ -123,7 +124,7 @@ export function useStripeCheckout({
     setIsCheckoutLoading(true);
     try {
       const data = await stripeCreateCheckoutFn({
-        data: { amount: euros * 100, userId },
+        data: { amount: majorToMinor(euros, 'EUR'), userId },
         headers,
       });
 

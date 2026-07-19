@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -19,7 +19,14 @@ vi.mock('@tanstack/react-router', () => ({
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string, fallback?: string) => fallback ?? key,
   useTranslation: () => ({
-    t: (key: string) => (key === 'features.notifications.item.notification' ? 'notification' : key),
+    t: (key: string) => {
+      if (key === 'features.notifications.item.notification') return 'notification';
+      if (key === 'features.notifications.item.new') return 'New';
+      if (key === 'features.notifications.actions.markRead') return 'Mark as read';
+      if (key === 'common.creationFinalization.entities.payment') return 'Payment';
+      if (key === 'common.actions.delete') return 'Delete';
+      return key;
+    },
   }),
 }));
 
@@ -98,7 +105,12 @@ describe('NotificationItem', () => {
     expect(card?.className).toContain('shadow-[var(--shadow-panel)]');
     expectNoLeftBorderClasses(container);
     expect(screen.getAllByText('Membership requested').length).toBeGreaterThan(0);
-    expect(screen.getByText(/Civic Group/)).toBeTruthy();
+    expect(screen.getByText('Civic Group')).toBeTruthy();
+    expect(screen.queryByText('Civic Group notification')).toBeNull();
+    const newBadge = screen.getByText('New');
+    expect(newBadge.className).toContain('bg-[var(--badge-success-bg)]');
+    expect(newBadge.className).toContain('font-mono');
+    expect(newBadge.className).toContain('uppercase');
     expect(container.querySelectorAll('[data-slot="badge-control"]').length).toBeGreaterThan(0);
   });
 
@@ -110,7 +122,9 @@ describe('NotificationItem', () => {
       />
     );
 
-    expect(container.querySelector('button')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'features.notifications.item.hideForMe' })
+    ).toBeNull();
 
     rerender(
       <NotificationItem
@@ -120,7 +134,138 @@ describe('NotificationItem', () => {
       />
     );
 
-    expect(container.querySelector('button')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'features.notifications.item.hideForMe' })
+    ).toBeTruthy();
+    expect(container.querySelector('.lucide-trash-2')).toBeTruthy();
+  });
+
+  it('marks only an unread notification as read without activating the card', () => {
+    const onNotificationClick = vi.fn();
+    const onMarkAsRead = vi.fn();
+    const item = notification({
+      related_user: undefined,
+      related_user_id: null,
+    });
+
+    render(
+      <NotificationItem
+        notification={item}
+        onNotificationClick={onNotificationClick}
+        onMarkAsRead={onMarkAsRead}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark as read' }));
+
+    expect(onMarkAsRead).toHaveBeenCalledWith(item, expect.any(Object));
+    expect(onNotificationClick).not.toHaveBeenCalled();
+    expect(document.querySelector('.lucide-mail-open')).toBeTruthy();
+  });
+
+  it('deletes through a bin icon without activating the card', () => {
+    const onNotificationClick = vi.fn();
+    const onDeleteNotification = vi.fn();
+    const item = notification({
+      is_read: true,
+      related_user: undefined,
+      related_user_id: null,
+    });
+
+    const { container } = render(
+      <NotificationItem
+        notification={item}
+        onNotificationClick={onNotificationClick}
+        onDeleteNotification={onDeleteNotification}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'features.notifications.item.hideForMe' }));
+
+    expect(onDeleteNotification).toHaveBeenCalledWith(item.id, expect.any(Object));
+    expect(onNotificationClick).not.toHaveBeenCalled();
+    expect(container.querySelector('.lucide-trash-2')).toBeTruthy();
+  });
+
+  it('shows the global delete action only with an explicit capability', () => {
+    const onDeleteForEveryone = vi.fn();
+    const item = notification({ is_read: true });
+    const { rerender } = render(
+      <NotificationItem
+        notification={item}
+        onNotificationClick={vi.fn()}
+        onDeleteForEveryone={onDeleteForEveryone}
+      />
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'features.notifications.item.deleteForEveryone' })
+    ).toBeNull();
+
+    rerender(
+      <NotificationItem
+        notification={item}
+        onNotificationClick={vi.fn()}
+        onDeleteForEveryone={onDeleteForEveryone}
+        canDeleteForEveryone
+      />
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'features.notifications.item.deleteForEveryone' })
+    ).toBeTruthy();
+  });
+
+  it('hides the single read action for personal and effectively read entity notifications', () => {
+    const onMarkAsRead = vi.fn();
+    const { rerender } = render(
+      <NotificationItem
+        notification={notification({ is_read: true })}
+        onNotificationClick={vi.fn()}
+        onMarkAsRead={onMarkAsRead}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Mark as read' })).toBeNull();
+
+    rerender(
+      <NotificationItem
+        notification={notification({
+          is_read: false,
+          recipient_entity_type: 'group',
+          recipient_entity_id: 'group-1',
+          reads: [
+            {
+              id: 'read-1',
+              notification_id: 'notification-1',
+              entity_type: 'group',
+              entity_id: 'group-1',
+              read_by_user_id: 'user-1',
+              read_at: Date.now(),
+            },
+          ],
+        })}
+        onNotificationClick={vi.fn()}
+        onMarkAsRead={onMarkAsRead}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Mark as read' })).toBeNull();
+  });
+
+  it('replaces leaked payment placeholders in previously stored notifications', () => {
+    render(
+      <NotificationItem
+        notification={notification({
+          type: 'group_payment_created',
+          message: 'A new payment "{{paymentDescription}}" has been created in Group One',
+        })}
+        onNotificationClick={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('A new payment "Payment" has been created in Group One')).toBeTruthy();
+    expect(screen.queryByText(/\{\{paymentDescription\}\}/)).toBeNull();
   });
 
   it('renders entity-page notifications through the same card slot', () => {
@@ -156,6 +301,7 @@ describe('NotificationItem', () => {
         onSearchQueryChange={vi.fn()}
         onMarkAllAsRead={vi.fn()}
         onNotificationClick={vi.fn()}
+        onMarkAsRead={vi.fn()}
         formatTime={() => 'now'}
       />
     );

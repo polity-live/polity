@@ -5,7 +5,8 @@
 -- Payment table
 CREATE TABLE IF NOT EXISTS public.payment (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  amount NUMERIC(12,2),
+  amount NUMERIC(16,4),
+  currency TEXT NOT NULL DEFAULT 'EUR' CHECK (currency ~ '^[A-Z]{3}$'),
   label TEXT,
   type TEXT,
   payer_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
@@ -14,6 +15,12 @@ CREATE TABLE IF NOT EXISTS public.payment (
   receiver_group_id UUID,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE public.payment ALTER COLUMN amount TYPE NUMERIC(16,4);
+ALTER TABLE public.payment ADD COLUMN IF NOT EXISTS currency TEXT NOT NULL DEFAULT 'EUR';
+ALTER TABLE public.payment DROP CONSTRAINT IF EXISTS payment_currency_check;
+ALTER TABLE public.payment
+  ADD CONSTRAINT payment_currency_check CHECK (currency ~ '^[A-Z]{3}$');
 
 CREATE INDEX idx_payment_payer_user ON public.payment (payer_user_id);
 CREATE INDEX idx_payment_receiver_user ON public.payment (receiver_user_id);

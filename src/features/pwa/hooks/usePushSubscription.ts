@@ -267,6 +267,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
           ? err.message
           : tRef.current('components.pushNotifications.errors.unsubscribeFailed')
       );
+      throw err;
     } finally {
       setIsLoading(false);
     }

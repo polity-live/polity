@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
-import { timestampSchema, nullableTimestampSchema, jsonStringArraySchema } from '../shared/helpers';
+import { timestampSchema, jsonStringArraySchema } from '../shared/helpers';
 import { createTimelineEventSchema } from '../common/schema';
 
 // ============================================
@@ -12,8 +12,9 @@ const baseTodoSchema = z.object({
   description: z.string().nullable(),
   status: z.string().nullable(),
   priority: z.string().nullable(),
-  due_date: nullableTimestampSchema,
-  completed_at: nullableTimestampSchema,
+  due_date: z.number().nullable(),
+  completed_at: z.number().nullable(),
+  archived_at: z.number().nullable(),
   tags: jsonStringArraySchema.nullable(),
   visibility: z.string(),
   creator_id: z.string(),
@@ -26,7 +27,7 @@ const baseTodoSchema = z.object({
 
 export const selectTodoSchema = baseTodoSchema;
 export const createTodoSchema = baseTodoSchema
-  .omit({ id: true, created_at: true, updated_at: true, creator_id: true })
+  .omit({ id: true, created_at: true, updated_at: true, creator_id: true, archived_at: true })
   .extend({ id: z.string() });
 export const updateTodoSchema = baseTodoSchema
   .pick({
@@ -43,6 +44,8 @@ export const updateTodoSchema = baseTodoSchema
   .extend({ id: z.string() });
 export const deleteTodoSchema = z.object({ id: z.string() });
 export const toggleCompleteTodoSchema = z.object({ id: z.string() });
+export const archiveTodoSchema = z.object({ id: z.string() });
+export const unarchiveTodoSchema = z.object({ id: z.string() });
 
 // ============================================
 // Todo Assignment

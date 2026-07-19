@@ -31,6 +31,9 @@ function createTx(location: TodoMutatorTx['location'] = 'server') {
         insert: vi.fn(),
         delete: vi.fn(),
       },
+      thread: {
+        insert: vi.fn(),
+      },
     },
   };
 }
@@ -47,6 +50,38 @@ beforeEach(() => {
 });
 
 describe('todoSharedMutators group RBAC', () => {
+  it('creates the single discussion thread in the optimistic client transaction', async () => {
+    const tx = createTx('client');
+
+    await todoSharedMutators.create.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        id: 'todo-1',
+        title: 'Todo One',
+        description: '',
+        status: 'pending',
+        priority: 'medium',
+        due_date: null,
+        completed_at: null,
+        tags: [],
+        visibility: 'private',
+        group_id: null,
+        event_id: null,
+        amendment_id: null,
+      },
+    });
+
+    expect(tx.mutate.thread.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'todo-1',
+        todo_id: 'todo-1',
+        user_id: 'user-1',
+        status: 'open',
+      })
+    );
+  });
+
   it('rejects group todo creation without manage rights', async () => {
     const tx = createTx('server');
     const error = new PermissionError('manage', 'groupTodos', 'group:group-1');
@@ -172,5 +207,118 @@ describe('todoSharedMutators group RBAC', () => {
     ).rejects.toBe(error);
 
     expect(tx.mutate.todo.update).not.toHaveBeenCalled();
+  });
+
+  it('archives a completed standalone todo for its creator', async () => {
+    const tx = createTx('server');
+    tx.run.mockResolvedValue({
+      id: 'todo-1',
+      creator_id: 'user-1',
+      group_id: null,
+      status: 'completed',
+      archived_at: null,
+    });
+
+    await todoSharedMutators.archive.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: { id: 'todo-1' },
+    });
+
+    expect(tx.mutate.todo.update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'todo-1', archived_at: expect.any(Number) })
+    );
+  });
+
+  it('does not archive an incomplete todo', async () => {
+    const tx = createTx('server');
+    tx.run.mockResolvedValue({
+      id: 'todo-1',
+      creator_id: 'user-1',
+      group_id: null,
+      status: 'pending',
+      archived_at: null,
+    });
+
+    await expect(
+      todoSharedMutators.archive.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: { id: 'todo-1' },
+      })
+    ).rejects.toThrow('Only completed todos can be archived');
+
+    expect(tx.mutate.todo.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects standalone todo archiving by an assignee who is not the creator', async () => {
+    const tx = createTx('server');
+    tx.run.mockResolvedValue({
+      id: 'todo-1',
+      creator_id: 'user-2',
+      group_id: null,
+      status: 'completed',
+      archived_at: null,
+    });
+
+    await expect(
+      todoSharedMutators.archive.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: { id: 'todo-1' },
+      })
+    ).rejects.toBeInstanceOf(PermissionError);
+  });
+
+  it('keeps archive and unarchive calls idempotent', async () => {
+    const tx = createTx('server');
+    tx.run.mockResolvedValue({
+      id: 'todo-1',
+      creator_id: 'user-1',
+      group_id: null,
+      status: 'completed',
+      archived_at: 123,
+      completed_at: 100,
+    });
+
+    await todoSharedMutators.archive.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: { id: 'todo-1' },
+    });
+    expect(tx.mutate.todo.update).not.toHaveBeenCalled();
+
+    await todoSharedMutators.unarchive.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: { id: 'todo-1' },
+    });
+    expect(tx.mutate.todo.update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'todo-1', archived_at: null })
+    );
+    expect(tx.mutate.todo.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ status: expect.anything() })
+    );
+  });
+
+  it('automatically unarchives when status changes away from completed', async () => {
+    const tx = createTx('client');
+    tx.run.mockResolvedValue({
+      id: 'todo-1',
+      creator_id: 'user-1',
+      group_id: null,
+      status: 'completed',
+      archived_at: 123,
+    });
+
+    await todoSharedMutators.update.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: { id: 'todo-1', status: 'pending' },
+    });
+
+    expect(tx.mutate.todo.update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'todo-1', status: 'pending', archived_at: null })
+    );
   });
 });

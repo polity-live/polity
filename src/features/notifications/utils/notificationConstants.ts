@@ -211,6 +211,7 @@ const NOTIFICATION_ICON_MAP = {
   todo_deleted: Trash2,
   todo_due_soon: Clock,
   todo_overdue: AlertTriangle,
+  todo_comment_added: MessageSquare,
 
   // Statements
   statement_response: MessageSquare,

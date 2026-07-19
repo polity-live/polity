@@ -54,12 +54,11 @@ export function ReasonTooltipView({
             <Info className="text-muted-foreground h-3.5 w-3.5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent
-          side="bottom"
-          className={cn('flex items-center gap-2 px-3 py-2', config.bgClass)}
-        >
-          <Icon className={cn('h-4 w-4', config.colorClass)} />
-          <span className="text-sm">{reasonText}</span>
+        <TooltipContent side="bottom" variant="rich">
+          <div className="flex items-center gap-2">
+            <Icon className={cn('h-4 w-4', config.colorClass)} />
+            <span className="text-sm">{reasonText}</span>
+          </div>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

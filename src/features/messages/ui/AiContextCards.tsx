@@ -8,6 +8,7 @@ import {
   ExternalLink,
   FileText,
   Image as ImageIcon,
+  Pencil,
   Search,
   Sparkles,
 } from 'lucide-react';
@@ -58,7 +59,7 @@ interface AiContextCardsProps {
   className?: string;
 }
 
-type RenderableContextCard =
+type ResultContextCard =
   | {
       kind: 'upload';
       key: string;
@@ -66,10 +67,19 @@ type RenderableContextCard =
       cardPayload: UploadAttachmentCardPayload;
     }
   | {
-      kind: 'skill' | 'entity';
+      kind: 'entity';
       key: string;
       attachment: AiChatAttachment;
     };
+
+interface SkillContextCard {
+  kind: 'skill';
+  key: string;
+  attachment: AiChatAttachment;
+}
+
+type RenderableContextCard = ResultContextCard | SkillContextCard;
+type ContextSectionType = 'input' | 'output' | 'update';
 
 function parseUploadPayload(cardDataJson?: string | null): UploadAttachmentCardPayload | null {
   if (!cardDataJson) return null;
@@ -205,6 +215,76 @@ function UploadContextCard({
   );
 }
 
+function ContextCardSection({
+  cards,
+  contextType,
+}: {
+  cards: readonly ResultContextCard[];
+  contextType: ContextSectionType;
+}) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  const visibleCards = expanded ? cards : cards.slice(0, INITIAL_VISIBLE_RESULTS);
+  const hiddenCount = Math.max(0, cards.length - INITIAL_VISIBLE_RESULTS);
+  const label =
+    contextType === 'input'
+      ? t('features.messages.ai.inputContextCardLabel')
+      : contextType === 'update'
+        ? t('features.messages.ai.updateContextCardLabel')
+        : t('features.messages.ai.outputContextCardLabel');
+  const ContextIcon = contextType === 'update' ? Pencil : Search;
+
+  if (cards.length === 0) return null;
+
+  return (
+    <section
+      aria-label={label}
+      className="border-border/70 bg-card/60 overflow-hidden rounded-2xl border"
+    >
+      <header className="border-border/60 flex items-center gap-2 border-b px-4 py-3">
+        <ContextIcon className="text-muted-foreground h-4 w-4" />
+        <p className="min-w-0 flex-1 truncate text-sm font-semibold">{label}</p>
+        <BadgeControl variant="outline" size="tiny">
+          {cards.length}
+        </BadgeControl>
+      </header>
+      <div className="grid gap-2 p-3 sm:grid-cols-2">
+        {visibleCards.map(card =>
+          card.kind === 'upload' ? (
+            <UploadContextCard
+              key={card.key}
+              attachment={card.attachment}
+              cardPayload={card.cardPayload}
+            />
+          ) : (
+            <EntityResultCard key={card.key} attachment={card.attachment} />
+          )
+        )}
+      </div>
+      {hiddenCount > 0 ? (
+        <div className="border-border/60 border-t px-3 py-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="w-full"
+            onClick={() => setExpanded(value => !value)}
+          >
+            {expanded ? (
+              <ChevronUp className="mr-2 h-4 w-4" />
+            ) : (
+              <ChevronDown className="mr-2 h-4 w-4" />
+            )}
+            {expanded
+              ? t('features.messages.ai.showFewerResults')
+              : t('features.messages.ai.showMoreResults', { count: hiddenCount })}
+          </Button>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 export function AiContextCards({
   attachments,
   contextJson,
@@ -213,7 +293,6 @@ export function AiContextCards({
   className,
 }: AiContextCardsProps) {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
   const resolvedAttachments = useMemo(
     () => attachments ?? parseContextAttachments(contextJson),
     [attachments, contextJson]
@@ -234,63 +313,25 @@ export function AiContextCards({
       }),
     [resolveAttachmentCardData, resolvedAttachments]
   );
-  const resultCards = cards.filter(card => card.kind !== 'skill');
-  const skillCards = cards.filter(card => card.kind === 'skill');
-  const visibleCards = expanded ? resultCards : resultCards.slice(0, INITIAL_VISIBLE_RESULTS);
-  const hiddenCount = resultCards.length - INITIAL_VISIBLE_RESULTS;
+  const resultCards = cards.filter((card): card is ResultContextCard => card.kind !== 'skill');
+  const skillCards = cards.filter((card): card is SkillContextCard => card.kind === 'skill');
+  const inputCards = contextLabel === 'input' ? resultCards : [];
+  const outputCards =
+    contextLabel === 'output'
+      ? resultCards.filter(card => card.attachment.context_type !== 'update')
+      : [];
+  const updateCards =
+    contextLabel === 'output'
+      ? resultCards.filter(card => card.attachment.context_type === 'update')
+      : [];
 
   if (cards.length === 0 && presentations.length === 0) return null;
 
   return (
     <div className={cn('space-y-3 md:max-w-3xl', className)}>
-      {resultCards.length > 0 ? (
-        <section className="border-border/70 bg-card/60 overflow-hidden rounded-2xl border">
-          <header className="border-border/60 flex items-center gap-2 border-b px-4 py-3">
-            <Search className="text-muted-foreground h-4 w-4" />
-            <p className="min-w-0 flex-1 truncate text-sm font-semibold">
-              {contextLabel === 'output'
-                ? t('features.messages.ai.outputContextCardLabel')
-                : t('features.messages.ai.inputContextCardLabel')}
-            </p>
-            <BadgeControl variant="outline" size="tiny">
-              {resultCards.length}
-            </BadgeControl>
-          </header>
-          <div className="grid gap-2 p-3 sm:grid-cols-2">
-            {visibleCards.map(card =>
-              card.kind === 'upload' ? (
-                <UploadContextCard
-                  key={card.key}
-                  attachment={card.attachment}
-                  cardPayload={card.cardPayload}
-                />
-              ) : (
-                <EntityResultCard key={card.key} attachment={card.attachment} />
-              )
-            )}
-          </div>
-          {hiddenCount > 0 ? (
-            <div className="border-border/60 border-t px-3 py-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="w-full"
-                onClick={() => setExpanded(value => !value)}
-              >
-                {expanded ? (
-                  <ChevronUp className="mr-2 h-4 w-4" />
-                ) : (
-                  <ChevronDown className="mr-2 h-4 w-4" />
-                )}
-                {expanded
-                  ? t('features.messages.ai.showFewerResults')
-                  : t('features.messages.ai.showMoreResults', { count: hiddenCount })}
-              </Button>
-            </div>
-          ) : null}
-        </section>
-      ) : null}
+      <ContextCardSection cards={inputCards} contextType="input" />
+      <ContextCardSection cards={outputCards} contextType="output" />
+      <ContextCardSection cards={updateCards} contextType="update" />
 
       {presentations.map(presentation => (
         <AiFindingsCardGroup key={presentation.id} presentation={presentation} />

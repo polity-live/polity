@@ -21,6 +21,7 @@ vi.mock('@/features/notifications/utils/gated-toast', () => ({
   gatedToast: {
     dismiss: vi.fn(),
     error: vi.fn(),
+    finalizationError: vi.fn(),
     finalizationSuccess: vi.fn(),
     loading: vi.fn(),
   },
@@ -140,7 +141,6 @@ describe('create finalization tracking', () => {
   });
 
   it('turns the pending toast into a short success state after server success', async () => {
-    vi.mocked(gatedToast.loading).mockReturnValue('toast-1');
     const draft = createDraft();
 
     trackCreateFinalization({
@@ -150,21 +150,25 @@ describe('create finalization tracking', () => {
       draft,
     });
 
-    expect(gatedToast.loading).toHaveBeenCalledWith('Finalizing creation in the background...');
+    expect(gatedToast.loading).toHaveBeenCalledWith(
+      'Group is being finalized in the background…',
+      expect.objectContaining({
+        id: 'creation:group:group:group-1',
+        testId: 'create-finalization-pending-toast',
+      })
+    );
     expect(getCreateRecoveryDraft(draft.id)).toMatchObject({ status: 'pending' });
 
-    await Promise.resolve();
+    await vi.waitFor(() => expect(getCreateRecoveryDraft(draft.id)).toBeNull());
 
-    expect(getCreateRecoveryDraft(draft.id)).toBeNull();
-    expect(gatedToast.finalizationSuccess).toHaveBeenCalledWith('Saved', {
-      id: 'toast-1',
+    expect(gatedToast.finalizationSuccess).toHaveBeenCalledWith('Group was created successfully.', {
+      id: 'creation:group:group:group-1',
       duration: 1500,
+      testId: 'create-finalization-saved-toast',
     });
-    expect(gatedToast.dismiss).not.toHaveBeenCalled();
   });
 
-  it('still dismisses the loading toast and shows recovery actions after server rejection', async () => {
-    vi.mocked(gatedToast.loading).mockReturnValue('toast-1');
+  it('turns the same toast into an error with recovery actions after server rejection', async () => {
     const draft = createDraft();
     const retry = vi.fn();
 
@@ -179,16 +183,19 @@ describe('create finalization tracking', () => {
       retry,
     });
 
-    await Promise.resolve();
+    await vi.waitFor(() =>
+      expect(getCreateRecoveryDraft(draft.id)).toMatchObject({ status: 'failed' })
+    );
 
     expect(getCreateRecoveryDraft(draft.id)).toMatchObject({
       status: 'failed',
       errorMessage: 'Server rejected create',
     });
-    expect(gatedToast.dismiss).toHaveBeenCalledWith('toast-1');
-    expect(gatedToast.error).toHaveBeenCalledWith(
-      'Server rejected create',
+    expect(gatedToast.finalizationError).toHaveBeenCalledWith(
+      'Group could not be created.',
       expect.objectContaining({
+        id: 'creation:group:group:group-1',
+        description: 'Server rejected create',
         action: expect.objectContaining({ label: 'Restore' }),
         cancel: expect.objectContaining({ label: 'Retry', onClick: retry }),
       })
@@ -196,21 +203,23 @@ describe('create finalization tracking', () => {
     expect(gatedToast.finalizationSuccess).not.toHaveBeenCalled();
   });
 
-  it('does not throw when the loading toast has no id', async () => {
-    vi.mocked(gatedToast.loading).mockImplementation(() => undefined as unknown as string);
+  it('uses an entity-specific candidate message', async () => {
     const draft = createDraft();
 
     trackCreateFinalization({
       result: {
         server: Promise.resolve({ type: 'success' }),
       },
-      draft,
+      draft: {
+        ...draft,
+        entityType: 'election',
+        createPath: '/create/election-candidate',
+      },
     });
 
-    await Promise.resolve();
-
-    expect(getCreateRecoveryDraft(draft.id)).toBeNull();
-    expect(gatedToast.finalizationSuccess).not.toHaveBeenCalled();
-    expect(gatedToast.dismiss).not.toHaveBeenCalled();
+    expect(gatedToast.loading).toHaveBeenCalledWith(
+      'Candidacy is being finalized in the background…',
+      expect.any(Object)
+    );
   });
 });

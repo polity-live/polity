@@ -5,7 +5,8 @@ import {
   type PqlQuickFilterDefinition,
 } from '@/features/pql/hooks/usePqlCollection';
 import type { PqlFieldDefinition } from '@/features/pql/logic/applyPqlFilter';
-import { Todo, TodoStatus } from '../types/todo.types';
+import { Todo, TodoTab } from '../types/todo.types';
+import { toLocalDayTimestamp, toLocalTimestamp } from '@/features/shared/logic/localDateTime';
 
 export type TodoFieldKey =
   | 'title'
@@ -23,6 +24,7 @@ interface UseTodoFiltersOptions {
   storageKey?: string;
   groupId?: string;
   includeStatusQuickFilter?: boolean;
+  archiveMode?: 'active' | 'archived';
 }
 
 function getTodoUserLabel(
@@ -101,8 +103,12 @@ function getTodoDueDatePreset(todo: Todo): string | null {
   return null;
 }
 
-function sortTodos(items: Todo[]): Todo[] {
+function sortTodos(items: Todo[], archived: boolean): Todo[] {
   return [...items].sort((leftTodo, rightTodo) => {
+    if (archived) {
+      return (rightTodo.archived_at ?? 0) - (leftTodo.archived_at ?? 0);
+    }
+
     if (leftTodo.due_date && rightTodo.due_date) {
       return leftTodo.due_date - rightTodo.due_date;
     }
@@ -125,7 +131,7 @@ export function useTodoFilters(
   options: UseTodoFiltersOptions = {}
 ) {
   const { t } = useTranslation();
-  const [selectedTab, setSelectedTab] = useState<'all' | TodoStatus>('all');
+  const [selectedTab, setSelectedTab] = useState<TodoTab>('all');
   const assigneeOptions = useMemo(() => {
     const nextOptions = new Map<string, { value: string; label: string; keywords: string[] }>();
 
@@ -300,7 +306,7 @@ export function useTodoFilters(
         label: t('features.todos.dueDate.title'),
         kind: 'date',
         operators: ['eq', 'gt', 'gte', 'lt', 'lte', 'is_set'],
-        getValue: todo => todo.due_date,
+        getValue: todo => toLocalDayTimestamp(todo.due_date),
       },
       {
         key: 'created_at',
@@ -342,7 +348,7 @@ export function useTodoFilters(
             return null;
           }
 
-          return new Date(normalizedDate).getTime();
+          return toLocalTimestamp(normalizedDate);
         },
       },
       {
@@ -383,11 +389,16 @@ export function useTodoFilters(
       : availableTodos;
   }, [todos, userId]);
 
-  const tabScopedTodos = useMemo(
-    () =>
-      selectedTab === 'all' ? scopedTodos : scopedTodos.filter(todo => todo.status === selectedTab),
-    [scopedTodos, selectedTab]
-  );
+  const tabScopedTodos = useMemo(() => {
+    if (options.archiveMode === 'archived' || selectedTab === 'archived') {
+      return scopedTodos.filter(todo => Boolean(todo.archived_at));
+    }
+
+    const activeTodos = scopedTodos.filter(todo => !todo.archived_at);
+    return selectedTab === 'all'
+      ? activeTodos
+      : activeTodos.filter(todo => todo.status === selectedTab);
+  }, [options.archiveMode, scopedTodos, selectedTab]);
 
   const pqlState = usePqlCollection({
     items: tabScopedTodos,
@@ -396,7 +407,8 @@ export function useTodoFilters(
     storageKey: options.storageKey,
     groupId: options.groupId,
     searchValues: [getTodoSearchValues],
-    sortItems: sortTodos,
+    sortItems: items =>
+      sortTodos(items, options.archiveMode === 'archived' || selectedTab === 'archived'),
   });
 
   return {

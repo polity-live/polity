@@ -4,6 +4,10 @@ import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 /**
  * Action hook for statement mutations.
@@ -16,19 +20,21 @@ export function useStatementActions() {
 
   // ── CRUD ───────────────────────────────────────────────────────────
   const createStatement = useCallback(
-    (args: Parameters<typeof mutators.statements.create>[0]) => {
+    (args: Parameters<typeof mutators.statements.create>[0], options?: CreationMutationOptions) => {
       const result = zero.mutate(mutators.statements.create(args));
-      toast.success(t('features.statements.toasts.created'));
-      onServerError(result, () => toast.error(t('features.statements.toasts.createFailed')));
+      trackCreationUnlessSilent(result, 'statement', options, args.id);
       return result;
     },
     [zero]
   );
 
   const createFullStatement = useCallback(
-    (args: Parameters<typeof mutators.statements.createFull>[0]) => {
+    (
+      args: Parameters<typeof mutators.statements.createFull>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.statements.createFull(args));
-      onServerError(result, () => toast.error(t('features.statements.toasts.createFailed')));
+      trackCreationUnlessSilent(result, 'statement', options, args.statement.id);
       return result;
     },
     [zero, t]
@@ -83,10 +89,12 @@ export function useStatementActions() {
 
   // ── Surveys ────────────────────────────────────────────────────────
   const createSurvey = useCallback(
-    (args: Parameters<typeof mutators.statements.createSurvey>[0]) => {
+    (
+      args: Parameters<typeof mutators.statements.createSurvey>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.statements.createSurvey(args));
-      toast.success(t('features.statements.toasts.surveyCreated'));
-      onServerError(result, () => toast.error(t('features.statements.toasts.surveyCreateFailed')));
+      trackCreationUnlessSilent(result, 'survey', options, args.id);
       return result;
     },
     [zero, t]

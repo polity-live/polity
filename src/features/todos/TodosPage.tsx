@@ -5,7 +5,14 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { TodosPageView } from './TodosPageView';
 import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation';
 
-const TODO_TAB_ORDER = ['all', 'pending', 'in_progress', 'completed', 'cancelled'] as const;
+const TODO_TAB_ORDER = [
+  'all',
+  'pending',
+  'in_progress',
+  'completed',
+  'cancelled',
+  'archived',
+] as const;
 
 export function TodosPage() {
   const { t } = useTranslation();

@@ -255,10 +255,7 @@ export class CreateFlowPage {
   }
 
   private finalizationLoadingToast() {
-    return this.page
-      .locator('[data-sonner-toast]')
-      .filter({ hasText: 'Finalizing creation in the background' })
-      .first();
+    return this.page.getByTestId('create-finalization-pending-toast').first();
   }
 
   private async waitForFinalizationStartedOrSaved() {

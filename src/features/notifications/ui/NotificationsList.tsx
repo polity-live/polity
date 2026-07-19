@@ -1,20 +1,21 @@
-import { useCallback, useMemo, useRef, type CSSProperties } from 'react';
+import { type CSSProperties } from 'react';
+import { useQuery } from '@rocicorp/zero/react';
 
 import { FeedStatePanel } from '@/features/shared/ui/feed';
 import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import type { Notification } from '../types/notification.types';
 import { NotificationItem } from './NotificationItem';
 import { queries } from '@/zero/queries';
-import { rowAttributes, usePolityZeroWindowList } from '@/features/shared/virtualization';
-
-interface NotificationStart {
-  created_at: number;
-  id: string;
-}
+import {
+  isNotificationActive,
+  isNotificationDismissed,
+  isNotificationPurged,
+  isNotificationRead,
+} from '@/zero/notifications/notificationReadState';
 
 export interface NotificationVirtualQuery {
   key: string;
-  tab: 'all' | 'unread' | 'read' | 'personal' | 'entity';
+  tab: 'all' | 'unread' | 'read' | 'personal' | 'entity' | 'trash';
   searchQuery: string;
   entityId?: string | null;
   entityType?: string | null;
@@ -28,9 +29,15 @@ interface NotificationsListProps {
   emptyTitle: string;
   emptyDescription: string;
   onNotificationClick: (notification: Notification) => void | Promise<void>;
+  onMarkAsRead?: (notification: Notification, e: React.MouseEvent) => void | Promise<void>;
+  onToggleRead?: (notification: Notification, e: React.MouseEvent) => void | Promise<void>;
   onDeleteNotification?: (notificationId: string, e: React.MouseEvent) => void | Promise<void>;
+  onRestoreNotification?: (notificationId: string, e: React.MouseEvent) => void | Promise<void>;
+  onPurgeNotification?: (notificationId: string, e: React.MouseEvent) => void | Promise<void>;
+  onDeleteForEveryone?: (notificationId: string) => void | Promise<void>;
+  canDeleteForEveryone?: (notification: Notification) => boolean;
   formatTime?: (date: string | number) => string;
-  mode?: 'global' | 'entity';
+  mode?: 'global' | 'entity' | 'trash';
   showRecipientBadge?: boolean;
   virtualQuery?: NotificationVirtualQuery;
 }
@@ -41,86 +48,65 @@ function VirtualNotificationsList({
   emptyTitle,
   emptyDescription,
   onNotificationClick,
+  onMarkAsRead,
+  onToggleRead,
   onDeleteNotification,
+  onRestoreNotification,
+  onPurgeNotification,
+  onDeleteForEveryone,
+  canDeleteForEveryone,
   formatTime,
   mode,
   showRecipientBadge,
 }: Omit<NotificationsListProps, 'notifications' | 'isLoading' | 'virtualQuery'> & {
   queryConfig: NotificationVirtualQuery;
 }) {
-  const contentRef = useRef<HTMLDivElement>(null);
-  const listContextParams = useMemo(
-    () => ({
+  const [rows, result] = useQuery(
+    queries.notifications.countRows({
       tab: queryConfig.tab,
       query: queryConfig.searchQuery.trim(),
       entityId: queryConfig.entityId ?? null,
       entityType: queryConfig.entityType ?? null,
-    }),
-    [queryConfig]
+    })
   );
-  const virtualList = usePolityZeroWindowList<
-    typeof listContextParams,
-    Notification,
-    NotificationStart
-  >({
-    scrollStateKey: `notifications-${queryConfig.key}`,
-    listContextParams,
-    getScrollElement: useCallback(() => contentRef.current, []),
-    estimateSize: useCallback(() => 104, []),
-    overscan: 8,
-    getRowKey: notification => notification.id,
-    toStartRow: notification => ({
-      created_at: Number(notification.created_at),
-      id: notification.id,
-    }),
-    getPageQuery: useCallback(
-      ({ limit, start, dir, settled }) => ({
-        query: queries.notifications.page({ ...listContextParams, limit, start, dir }) as any,
-        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
-      }),
-      [listContextParams]
-    ),
-    getSingleQuery: useCallback(
-      ({ id, settled }) => ({
-        query: queries.notifications.byId({ id }) as any,
-        options: { ttl: settled ? ('5m' as const) : ('none' as const) },
-      }),
-      []
-    ),
-    permalinkID: queryConfig.permalinkID ?? undefined,
+  const visibleRows = (rows ?? []).filter(notification => {
+    if (queryConfig.tab === 'trash') {
+      return isNotificationDismissed(notification) && !isNotificationPurged(notification);
+    }
+    if (!isNotificationActive(notification)) return false;
+    if (queryConfig.tab === 'unread') return !isNotificationRead(notification);
+    if (queryConfig.tab === 'read') return isNotificationRead(notification);
+    return true;
   });
 
-  if (virtualList.rowsEmpty) {
+  if (result.type === 'unknown') return <SectionSkeleton rows={5} />;
+  if (visibleRows.length === 0) {
     return <FeedStatePanel icon={EmptyIcon} title={emptyTitle} description={emptyDescription} />;
   }
 
   return (
-    <div
-      ref={contentRef}
-      data-slot="feed-list"
-      className="space-y-3"
-      style={{ paddingTop: virtualList.spaceBefore, paddingBottom: virtualList.spaceAfter }}
-    >
-      {virtualList.items.map(item => (
+    <div data-slot="feed-list" className="space-y-3">
+      {visibleRows.map((notification, index) => (
         <div
-          key={item.key}
-          {...rowAttributes(item.index, item.key)}
+          key={notification.id}
           data-slot="notification-list-item"
           className="civic-load-card-reveal"
-          style={{ '--civic-load-index': Math.min(item.index, 11) } as CSSProperties}
+          style={{ '--civic-load-index': Math.min(index, 11) } as CSSProperties}
         >
-          {item.row ? (
-            <NotificationItem
-              notification={item.row}
-              onNotificationClick={onNotificationClick}
-              onDeleteNotification={onDeleteNotification}
-              formatTime={formatTime}
-              mode={mode}
-              showRecipientBadge={showRecipientBadge}
-            />
-          ) : (
-            <SectionSkeleton rows={1} />
-          )}
+          <NotificationItem
+            notification={notification}
+            onNotificationClick={onNotificationClick}
+            onMarkAsRead={onMarkAsRead}
+            onToggleRead={onToggleRead}
+            onDeleteNotification={onDeleteNotification}
+            onRestoreNotification={onRestoreNotification}
+            onPurgeNotification={onPurgeNotification}
+            onDeleteForEveryone={onDeleteForEveryone}
+            canDeleteForEveryone={canDeleteForEveryone?.(notification) ?? false}
+            formatTime={formatTime}
+            mode={mode}
+            showRecipientBadge={showRecipientBadge}
+          />
         </div>
       ))}
     </div>
@@ -134,13 +120,19 @@ export function NotificationsList({
   emptyTitle,
   emptyDescription,
   onNotificationClick,
+  onMarkAsRead,
+  onToggleRead,
   onDeleteNotification,
+  onRestoreNotification,
+  onPurgeNotification,
+  onDeleteForEveryone,
+  canDeleteForEveryone,
   formatTime,
   mode = 'global',
   showRecipientBadge = true,
   virtualQuery,
 }: NotificationsListProps) {
-  if (virtualQuery) {
+  if (virtualQuery && notifications.length === 0) {
     return (
       <VirtualNotificationsList
         queryConfig={virtualQuery}
@@ -148,7 +140,13 @@ export function NotificationsList({
         emptyTitle={emptyTitle}
         emptyDescription={emptyDescription}
         onNotificationClick={onNotificationClick}
+        onMarkAsRead={onMarkAsRead}
+        onToggleRead={onToggleRead}
         onDeleteNotification={onDeleteNotification}
+        onRestoreNotification={onRestoreNotification}
+        onPurgeNotification={onPurgeNotification}
+        onDeleteForEveryone={onDeleteForEveryone}
+        canDeleteForEveryone={canDeleteForEveryone}
         formatTime={formatTime}
         mode={mode}
         showRecipientBadge={showRecipientBadge}
@@ -179,7 +177,13 @@ export function NotificationsList({
           <NotificationItem
             notification={notification}
             onNotificationClick={onNotificationClick}
+            onMarkAsRead={onMarkAsRead}
+            onToggleRead={onToggleRead}
             onDeleteNotification={onDeleteNotification}
+            onRestoreNotification={onRestoreNotification}
+            onPurgeNotification={onPurgeNotification}
+            onDeleteForEveryone={onDeleteForEveryone}
+            canDeleteForEveryone={canDeleteForEveryone?.(notification) ?? false}
             formatTime={formatTime}
             mode={mode}
             showRecipientBadge={showRecipientBadge}

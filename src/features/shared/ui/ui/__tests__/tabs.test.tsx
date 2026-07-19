@@ -25,7 +25,9 @@ describe('TabsList', () => {
     expect(tabsList.className).toContain('scrollbar-hide');
     expect(tabsList.className).toContain('min-w-0');
     expect(tabsList.className).toContain('max-w-full');
+    expect(tabsList.className).toContain('min-h-10');
     expect(tabsList.className).toContain('overflow-x-auto');
+    expect(tabsList.className).toContain('overflow-y-hidden');
     expect(tabsList.className).toContain('overscroll-x-contain');
     expect(tabsList.className).toContain('justify-start');
   });

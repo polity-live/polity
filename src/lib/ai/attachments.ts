@@ -14,13 +14,26 @@ const presentationResultSchema = z.object({
   presentations: z.array(aiPresentationBlockSchema).default([]),
 });
 
+function readToolResultPayload(toolResult: unknown): unknown {
+  if (!toolResult || typeof toolResult !== 'object') return undefined;
+
+  const resultRecord = toolResult as Record<string, unknown>;
+  if ('output' in resultRecord) return resultRecord.output;
+  if ('result' in resultRecord) return resultRecord.result;
+
+  return undefined;
+}
+
 export function dedupeAiChatAttachments(
   attachments: readonly AiChatAttachment[]
 ): AiChatAttachment[] {
   const unique = new Map<string, AiChatAttachment>();
 
   for (const attachment of attachments) {
-    unique.set(`${attachment.entityType}:${attachment.entityId}`, attachment);
+    const key = `${attachment.entityType}:${attachment.entityId}`;
+    const existing = unique.get(key);
+    if (existing?.context_type === 'update' && attachment.context_type !== 'update') continue;
+    unique.set(key, attachment);
   }
 
   return [...unique.values()];
@@ -32,8 +45,7 @@ export function extractAiPresentationsFromToolResults(
   const presentations: AiPresentationBlock[] = [];
 
   for (const toolResult of toolResults) {
-    if (!toolResult || typeof toolResult !== 'object' || !('result' in toolResult)) continue;
-    const parsed = presentationResultSchema.safeParse((toolResult as { result?: unknown }).result);
+    const parsed = presentationResultSchema.safeParse(readToolResultPayload(toolResult));
     if (parsed.success) presentations.push(...parsed.data.presentations);
   }
 
@@ -46,12 +58,7 @@ export function extractAiChatAttachmentsFromToolResults(
   const attachments: AiChatAttachment[] = [];
 
   for (const toolResult of toolResults) {
-    if (!toolResult || typeof toolResult !== 'object' || !('result' in toolResult)) {
-      continue;
-    }
-
-    const result = (toolResult as { result?: unknown }).result;
-    const parsed = attachmentResultSchema.safeParse(result);
+    const parsed = attachmentResultSchema.safeParse(readToolResultPayload(toolResult));
     if (parsed.success) {
       attachments.push(...parsed.data.attachments);
     }

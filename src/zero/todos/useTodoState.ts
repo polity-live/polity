@@ -6,13 +6,25 @@ import { queries } from '../queries';
  * Reactive state hook for todo data.
  * Returns all query-derived state — no mutations.
  */
-export function useTodoState(args: { groupId?: string; todoId?: string; userId?: string }) {
+export function useTodoState(args: {
+  groupId?: string;
+  todoId?: string;
+  userId?: string;
+  includeArchived?: boolean;
+}) {
   // All todos with relations (for client-side user filtering)
-  const [allTodos, allTodosResult] = useQuery(queries.todos.allWithRelations({}));
+  const [activeTodos, allTodosResult] = useQuery(
+    queries.todos.allWithRelations({ archive: 'active' })
+  );
+  const [archivedTodos, archivedTodosResult] = useQuery(
+    args.includeArchived ? queries.todos.allWithRelations({ archive: 'archived' }) : undefined
+  );
 
   // Todos for a specific group with relations
   const [groupTodos, groupTodosResult] = useQuery(
-    args.groupId ? queries.todos.byGroupWithRelations({ group_id: args.groupId }) : undefined
+    args.groupId
+      ? queries.todos.byGroupWithRelations({ group_id: args.groupId, archive: 'active' })
+      : undefined
   );
 
   // Single todo by ID with relations
@@ -27,11 +39,11 @@ export function useTodoState(args: { groupId?: string; todoId?: string; userId?:
 
   // User-filtered todos
   const userTodos = useMemo(() => {
-    if (!allTodos || !args.userId) return allTodos ?? [];
-    return allTodos.filter(
+    if (!activeTodos || !args.userId) return activeTodos ?? [];
+    return activeTodos.filter(
       t => t.creator?.id === args.userId || t.assignments?.some(a => a.user?.id === args.userId)
     );
-  }, [allTodos, args.userId]);
+  }, [activeTodos, args.userId]);
 
   // Derived status buckets
   const openTodos = useMemo(
@@ -49,12 +61,14 @@ export function useTodoState(args: { groupId?: string; todoId?: string; userId?:
 
   const isLoading =
     allTodosResult.type === 'unknown' ||
+    (args.includeArchived ? archivedTodosResult.type === 'unknown' : false) ||
     (args.groupId ? groupTodosResult.type === 'unknown' : false) ||
     (args.todoId ? todoResult.type === 'unknown' : false);
 
   return {
     userTodos,
-    allTodos: allTodos ?? [],
+    allTodos: activeTodos ?? [],
+    archivedTodos: archivedTodos ?? [],
     groupTodos,
     todo,
     assignments,

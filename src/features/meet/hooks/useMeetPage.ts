@@ -209,22 +209,24 @@ export function useMeetPage(userId: string) {
   // Handlers
   const handleBookMeeting = useCallback(
     async (instance: MeetingInstance) => {
+      if (!currentUser?.id) return;
       await waitForClientApply(
         meetingActions.bookMeeting(instance.parentEventId, instance.instanceDate)
       );
       setIsBookingDialogOpen(false);
       setSelectedInstance(null);
     },
-    [meetingActions]
+    [currentUser?.id, meetingActions]
   );
 
   const handleCancelBooking = useCallback(
     async (instance: MeetingInstance) => {
+      if (!currentUser?.id) return;
       await waitForClientApply(
         meetingActions.cancelMeetingBooking(instance.parentEventId, instance.instanceDate)
       );
     },
-    [meetingActions]
+    [currentUser?.id, meetingActions]
   );
 
   const handleCreateMeeting = useCallback(
@@ -267,15 +269,17 @@ export function useMeetPage(userId: string) {
 
   const handleDeleteMeeting = useCallback(
     async (eventId: string) => {
+      if (!isOwner) return;
       await waitForClientApply(
         eventActions.cancelEvent({ id: eventId, cancel_reason: 'Deleted by owner' })
       );
     },
-    [eventActions]
+    [eventActions, isOwner]
   );
 
   const handleUpdateMeeting = useCallback(
     async (args: UpdateMeetingArgs) => {
+      if (!isOwner) return;
       const endDate = addHours(args.startDate, args.durationMinutes / 60);
 
       await waitForClientApply(
@@ -293,17 +297,22 @@ export function useMeetPage(userId: string) {
         })
       );
     },
-    [eventActions]
+    [eventActions, isOwner]
   );
 
-  const openBookingDialog = useCallback((instance: MeetingInstance) => {
-    setSelectedInstance(instance);
-    setIsBookingDialogOpen(true);
-  }, []);
+  const openBookingDialog = useCallback(
+    (instance: MeetingInstance) => {
+      if (!currentUser?.id) return;
+      setSelectedInstance(instance);
+      setIsBookingDialogOpen(true);
+    },
+    [currentUser?.id]
+  );
 
   return {
     // Auth state
     currentUser,
+    isAuthenticated: Boolean(currentUser),
     isOwner,
     isLoading,
     owner: meetings[0]?.creator ?? null,

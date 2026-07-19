@@ -167,8 +167,9 @@ export function ActiveCollaboratorsCard({
       <div className="space-y-1.5 px-3 sm:px-4">
         <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
           <Users className="h-5 w-5" />
-          {translateText('generated.inline.0087_active_collaborators_7b4089f1')}
-          {collaborators.length})
+          {translateText('features.amendments.collaborators.activeTitle', {
+            count: collaborators.length,
+          })}
         </h2>
         <p className="text-muted-foreground text-sm">
           {translateText(

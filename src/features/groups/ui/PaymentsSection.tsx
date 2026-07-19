@@ -1,5 +1,5 @@
 import { featureThemeClassName } from '@/features/shared/theme';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   usePqlCollection,
   type PqlQuickFilterDefinition,
@@ -8,11 +8,16 @@ import type { PqlFieldDefinition } from '@/features/pql/logic/applyPqlFilter';
 import type { GroupPaymentRow } from '@/zero/groups/queries';
 import type { ChartData, FinancialSummary } from '../types/group.types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { usePreferenceState } from '@/zero/preferences/usePreferenceState';
+import { usePaymentConversions } from '../hooks/usePaymentConversions';
+import { useFinancialData } from '../hooks/useFinancialData';
+import type { CurrencyCode } from '@/features/shared/logic/currency';
 
 type PaymentFieldKey =
   | 'label'
   | 'type'
   | 'amount'
+  | 'currency'
   | 'direction'
   | 'counterparty_keys'
   | 'created_at';
@@ -123,10 +128,21 @@ export function PaymentsSection({
   groupId,
   storageKey,
   payments,
-  summary,
-  incomeData,
-  expenditureData,
+  summary: _summary,
+  incomeData: _incomeData,
+  expenditureData: _expenditureData,
 }: PaymentsSectionProps) {
+  void _summary;
+  void _incomeData;
+  void _expenditureData;
+  const { displayCurrency } = usePreferenceState();
+  const [targetCurrency, setTargetCurrency] = useState<CurrencyCode>(displayCurrency);
+  useEffect(() => setTargetCurrency(displayCurrency), [displayCurrency]);
+  const conversionState = usePaymentConversions(payments, targetCurrency);
+  const { summary, incomeData, expenditureData } = useFinancialData(
+    conversionState.convertiblePayments,
+    groupId
+  );
   const counterpartyOptions = useMemo(() => {
     const nextOptions = new Map<string, { value: string; label: string; keywords: string[] }>();
 
@@ -180,6 +196,16 @@ export function PaymentsSection({
         getValue: payment => payment.amount,
       },
       {
+        key: 'currency',
+        label: translateText('pages.create.payment.currency'),
+        kind: 'enum',
+        operators: ['eq', 'in'],
+        options: Array.from(new Set(payments.map(payment => payment.currency || 'EUR'))).map(
+          currency => ({ value: currency, label: currency })
+        ),
+        getValue: payment => payment.currency || 'EUR',
+      },
+      {
         key: 'direction',
         label: translateText('generated.inline.0170_direction_fd8e45ba'),
         kind: 'enum',
@@ -209,13 +235,14 @@ export function PaymentsSection({
         getValue: payment => payment.created_at,
       },
     ],
-    [counterpartyOptions, groupId]
+    [counterpartyOptions, groupId, payments]
   );
 
   const quickFilters = useMemo<readonly PqlQuickFilterDefinition<PaymentFieldKey>[]>(
     () => [
       { fieldKey: 'direction', label: translateText('generated.inline.0170_direction_fd8e45ba') },
       { fieldKey: 'type', label: translateText('generated.inline.0168_type_3deb7456') },
+      { fieldKey: 'currency', label: translateText('pages.create.payment.currency') },
     ],
     []
   );
@@ -283,6 +310,9 @@ export function PaymentsSection({
       filteredItems={filteredItems}
       hasActiveFilters={hasActiveFilters}
       balanceClass={balanceClass}
+      targetCurrency={targetCurrency}
+      setTargetCurrency={setTargetCurrency}
+      conversionState={conversionState}
     />
   );
 }

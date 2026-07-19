@@ -1,4 +1,5 @@
 import type { Notification } from '../types/notification.types';
+import { isNotificationRead as isNotificationReadState } from '@/zero/notifications/notificationReadState';
 
 export interface MessageNavigationSearch {
   conversationId?: string;
@@ -218,6 +219,14 @@ export function getNotificationNavigationHref(notification: Notification): strin
   }
 
   return null;
+}
+
+/**
+ * Entity notifications store read state per user in notification_read rows,
+ * while personal notifications use the notification's is_read column.
+ */
+export function isNotificationRead(notification: Notification): boolean {
+  return isNotificationReadState(notification);
 }
 
 /**

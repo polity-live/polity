@@ -4,16 +4,22 @@ import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 export function useGroupConnectionActions() {
   const zero = useZero();
   const { t } = useTranslation();
 
   const createGroupConnection = useCallback(
-    (args: Parameters<typeof mutators.network.createGroupConnection>[0]) => {
+    (
+      args: Parameters<typeof mutators.network.createGroupConnection>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.network.createGroupConnection(args));
-      toast.success(t('common.network.relationshipsCreated'));
-      onServerError(result, () => toast.error(t('common.network.relationshipSaveError')));
+      trackCreationUnlessSilent(result, 'groupConnection', options, args.id);
       return result;
     },
     [zero, t]

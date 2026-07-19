@@ -18,6 +18,7 @@ import {
 import { GripVertical, Shield } from 'lucide-react';
 import { RoleTag } from './RoleTag';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 export interface RolesPermissionsTableViewProps {
   roles: any[];
   onTogglePermission: any;
@@ -146,23 +147,25 @@ export function RolesPermissionsTableView({
                               isPermissionDisabled?.(role, resource, action) ?? null;
                             return (
                               <MatrixTableCell key={role.id} className="text-center">
-                                <div
-                                  className="flex justify-center"
-                                  title={disabledReason ?? undefined}
+                                <TooltipHint
+                                  content={disabledReason ?? ''}
+                                  disabled={!disabledReason}
                                 >
-                                  <MatrixCheckbox
-                                    checked={hasRight}
-                                    disabled={Boolean(disabledReason)}
-                                    onCheckedChange={() =>
-                                      onTogglePermission(
-                                        role.id,
-                                        resource,
-                                        action,
-                                        hasRight || false
-                                      )
-                                    }
-                                  />
-                                </div>
+                                  <div className="flex justify-center">
+                                    <MatrixCheckbox
+                                      checked={hasRight}
+                                      disabled={Boolean(disabledReason)}
+                                      onCheckedChange={() =>
+                                        onTogglePermission(
+                                          role.id,
+                                          resource,
+                                          action,
+                                          hasRight || false
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                </TooltipHint>
                               </MatrixTableCell>
                             );
                           })}

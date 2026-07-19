@@ -6,6 +6,10 @@ import { toMutableJSONValue } from '@/zero/shared/helpers';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import {
+  combineMutationResults,
+  trackMutationFinalization,
+} from '@/features/notifications/utils/mutation-finalization';
 import type { PathWithEventSegment } from '@/features/amendments/logic/amendmentPathHelpers';
 import { useCreateAmendmentPath } from './useCreateAmendmentPath';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -130,46 +134,52 @@ export function useCloneAmendment(
         });
       }
 
-      const createAmendmentResult = createAmendment({
-        id: cloneId,
-        title: translateText('generated.inline.0016_valuea36c_clone_a73c56fa', {
-          valuea36c: amendment.title ?? '',
-        }),
-        code: amendment.code ? `${amendment.code}-CLONE` : '',
-        reason: amendment.reason ?? '',
-        category: amendment.category ?? '',
-        preamble: amendment.preamble ?? '',
-        group_id: targetGroupId,
-        event_id: selectedEventId,
-        clone_source_id: amendmentId,
-        origin_amendment_id: amendment.origin_amendment_id ?? amendmentId,
-        document_id: null,
-        country: amendment.country ?? null,
-        region: amendment.region ?? null,
-        post_code: amendment.post_code ?? null,
-        city: amendment.city ?? null,
-        street: amendment.street ?? null,
-        house_number: amendment.house_number ?? null,
-        latitude: amendment.latitude ?? null,
-        longitude: amendment.longitude ?? null,
-        tags: amendment.tags ?? [],
-        visibility: amendment.visibility ?? 'public',
-        discussions: [],
-        x: '',
-        youtube: '',
-        linkedin: '',
-        website: '',
-        image_url: amendment.image_url ?? null,
-        video_url: amendment.video_url ?? null,
-      });
+      const createAmendmentResult = createAmendment(
+        {
+          id: cloneId,
+          title: translateText('generated.inline.0016_valuea36c_clone_a73c56fa', {
+            valuea36c: amendment.title ?? '',
+          }),
+          code: amendment.code ? `${amendment.code}-CLONE` : '',
+          reason: amendment.reason ?? '',
+          category: amendment.category ?? '',
+          preamble: amendment.preamble ?? '',
+          group_id: targetGroupId,
+          event_id: selectedEventId,
+          clone_source_id: amendmentId,
+          origin_amendment_id: amendment.origin_amendment_id ?? amendmentId,
+          document_id: null,
+          country: amendment.country ?? null,
+          region: amendment.region ?? null,
+          post_code: amendment.post_code ?? null,
+          city: amendment.city ?? null,
+          street: amendment.street ?? null,
+          house_number: amendment.house_number ?? null,
+          latitude: amendment.latitude ?? null,
+          longitude: amendment.longitude ?? null,
+          tags: amendment.tags ?? [],
+          visibility: amendment.visibility ?? 'public',
+          discussions: [],
+          x: '',
+          youtube: '',
+          linkedin: '',
+          website: '',
+          image_url: amendment.image_url ?? null,
+          video_url: amendment.video_url ?? null,
+        },
+        { notificationMode: 'silent' }
+      );
       await waitForClientApply(createAmendmentResult);
 
-      const createDocumentResult = createDocument({
-        id: cloneDocumentId,
-        amendment_id: cloneId,
-        content: toMutableJSONValue(originalDocument?.content ?? { type: 'doc', content: [] }),
-        editing_mode: 'edit',
-      });
+      const createDocumentResult = createDocument(
+        {
+          id: cloneDocumentId,
+          amendment_id: cloneId,
+          content: toMutableJSONValue(originalDocument?.content ?? { type: 'doc', content: [] }),
+          editing_mode: 'edit',
+        },
+        { notificationMode: 'silent' }
+      );
       await waitForClientApply(createDocumentResult);
 
       await waitForClientApply(
@@ -191,7 +201,19 @@ export function useCloneAmendment(
         });
       }
 
-      toast.success(translateText('generated.inline.0153_amendment_cloned_successfully_e51bc162'));
+      trackMutationFinalization({
+        result: combineMutationResults([createAmendmentResult, createDocumentResult]),
+        entityKind: 'amendment',
+        operationId: cloneId,
+        messages: {
+          pending: translateText(
+            'common.creationFinalization.clonePending',
+            'Antrag wird im Hintergrund dupliziert …'
+          ),
+          success: translateText('generated.inline.0153_amendment_cloned_successfully_e51bc162'),
+          error: translateText('generated.inline.0154_failed_to_clone_amendment_85f2f2a1'),
+        },
+      });
       setCloneDialogOpen(false);
       navigate({ to: `/amendment/${cloneId}` });
     } catch (error) {

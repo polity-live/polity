@@ -28,6 +28,7 @@ export function useDiscussionMutations() {
           document_id: fileId ?? null,
           statement_id: null,
           blog_id: null,
+          todo_id: null,
           user_id: _userId,
           content,
           status: 'open',

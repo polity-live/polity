@@ -175,6 +175,8 @@ export const notificationsPageTranslations = {
       taskUpdatedDesc: 'When task details change',
       taskCompleted: 'Task Completed',
       taskCompletedDesc: 'When tasks you created are completed',
+      comments: 'Comments',
+      commentsDesc: 'When someone comments on a task you created or are assigned to',
       dueDateReminders: 'Due Date Reminders',
       dueDateRemindersDesc: 'Reminders before tasks are due',
       overdueAlerts: 'Overdue Alerts',

@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GroupWikiContentView, type GroupWikiContentViewProps } from '../GroupWikiContentView';
@@ -16,9 +16,11 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, fallback?: string) => fallback ?? key,
+  translate: (key: string, paramsOrFallback?: string | Record<string, unknown>) =>
+    typeof paramsOrFallback === 'string' ? paramsOrFallback : key,
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
+    t: (key: string, paramsOrFallback?: string | Record<string, unknown>) =>
+      typeof paramsOrFallback === 'string' ? paramsOrFallback : key,
   }),
 }));
 
@@ -136,6 +138,7 @@ function renderGroupWikiContent(overrides: Partial<GroupWikiContentViewProps> = 
     subscriberCount: 0,
     eventsCount: 0,
     amendmentsCount: 0,
+    isAuthenticated: true,
     isSubscribed: false,
     subscribeLoading: false,
     toggleSubscribe: vi.fn(),
@@ -166,6 +169,24 @@ function renderGroupWikiContent(overrides: Partial<GroupWikiContentViewProps> = 
 }
 
 describe('GroupWikiContentView', () => {
+  it('shows only share actions to unauthenticated visitors', () => {
+    renderGroupWikiContent({ isAuthenticated: false });
+
+    expect(screen.getByRole('button', { name: 'share' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'link group' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'subscribe' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'membership' })).toBeNull();
+  });
+
+  it('keeps group actions visible to authenticated users', () => {
+    renderGroupWikiContent({ isAuthenticated: true });
+
+    expect(screen.getByRole('button', { name: 'link group' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'subscribe' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'membership' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'share' })).toBeTruthy();
+  });
+
   it('owns the entity page frame so public routes keep a gutter without shell wrapping', () => {
     const { container } = renderGroupWikiContent();
 

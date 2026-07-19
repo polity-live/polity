@@ -112,6 +112,27 @@ function baseProps() {
 }
 
 describe('ChangeRequestsView branch sections', () => {
+  it('keeps a signed-out viewer read-only while rendering the change requests', () => {
+    render(
+      <ChangeRequestsView
+        {...baseProps()}
+        userId={undefined}
+        canManageInternalVotes={false}
+        canVoteInternal={false}
+        canVoteEvent={false}
+      />
+    );
+
+    expect(screen.getByTestId('change-request-cards-list')).toBeTruthy();
+    expect(changeRequestCardsListMock.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        userId: undefined,
+        canManage: false,
+        canVote: false,
+      })
+    );
+  });
+
   it('renders a page skeleton while change requests load', () => {
     render(<ChangeRequestsView {...baseProps()} isLoading />);
 

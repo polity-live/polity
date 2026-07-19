@@ -8,10 +8,11 @@ import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { toLocalDeadlineTimestamp } from '@/features/shared/logic/localDateTime';
 
 export function useGroupTodos(groupId: string, userId?: string) {
   const [isLoading, setIsLoading] = useState(false);
-  const { todos: todosData, isLoading: isQuerying } = useFacadeGroupTodos(groupId);
+  const { todos: todosData, archivedTodos, isLoading: isQuerying } = useFacadeGroupTodos(groupId);
   const {
     createTodo: createTodoAction,
     updateTodo: updateTodoAction,
@@ -19,13 +20,14 @@ export function useGroupTodos(groupId: string, userId?: string) {
     assignUser: assignUserAction,
   } = useTodoActions();
 
-  const todos = todosData;
+  const todos = [...todosData, ...archivedTodos];
 
   const addTodo = async (todoData: {
     title: string;
     description: string;
     priority: string;
     dueDate: string;
+    dueTime: string;
     assigneeUserIds?: string[];
     groupName?: string;
   }) => {
@@ -45,8 +47,8 @@ export function useGroupTodos(groupId: string, userId?: string) {
           description: todoData.description,
           priority: todoData.priority,
           status: 'pending',
-          due_date: todoData.dueDate ? new Date(todoData.dueDate).getTime() : 0,
-          completed_at: 0,
+          due_date: toLocalDeadlineTimestamp(todoData.dueDate, todoData.dueTime),
+          completed_at: null,
           tags: [],
           visibility: 'group',
           group_id: groupId,

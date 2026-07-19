@@ -6,6 +6,7 @@ import { hasUnreadConversationRequest } from '../logic/messageUtils';
 import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from '@/features/assistant/constants';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { trackMutationFinalization } from '@/features/notifications/utils/mutation-finalization';
 
 export function useMessageMutations() {
   const actions = useMessageActions();
@@ -122,11 +123,9 @@ export function useMessageMutations() {
       );
 
       void creatorId;
-      toast.success(translateText('generated.inline.0737_conversation_created_dab567d8'));
       return { success: true, conversationId };
     } catch (error) {
       console.error('Failed to create conversation:', error);
-      toast.error(translateText('generated.inline.0738_failed_to_create_conversation_262c227b'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -179,11 +178,9 @@ export function useMessageMutations() {
         })
       );
 
-      toast.success(translateText('generated.inline.0739_ai_conversation_created_9ea58896'));
       return { success: true, conversationId };
     } catch (error) {
       console.error('Failed to create AI conversation:', error);
-      toast.error(translateText('generated.inline.0740_failed_to_create_ai_conversation_5e33d409'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -271,37 +268,61 @@ export function useMessageMutations() {
   };
 
   const rejectConversation = async (conversation: Conversation) => {
+    let finalizationStarted = false;
     try {
-      await waitForClientApply(
-        actions.deleteConversationFull({
-          id: conversation.id,
-          messageIds: conversation.messages.map(message => message.id),
-          participantIds: conversation.participants.map(participant => participant.id),
-        })
-      );
-      toast.success(translateText('generated.inline.0745_conversation_rejected_12876dbb'));
+      const mutationResult = actions.deleteConversationFull({
+        id: conversation.id,
+        messageIds: conversation.messages.map(message => message.id),
+        participantIds: conversation.participants.map(participant => participant.id),
+      });
+      trackMutationFinalization({
+        result: mutationResult,
+        entityKind: 'conversation',
+        operationId: `reject:${conversation.id}`,
+        messages: {
+          pending: translateText('features.messages.toasts.conversationRejecting'),
+          success: translateText('features.messages.toasts.conversationRejected'),
+          error: translateText('features.messages.toasts.conversationRejectFailed'),
+        },
+      });
+      finalizationStarted = true;
+      await waitForClientApply(mutationResult);
       return { success: true };
     } catch (error) {
       console.error('Failed to reject conversation:', error);
-      toast.error(translateText('generated.inline.0746_failed_to_reject_conversation_2f236793'));
+      if (!finalizationStarted) {
+        toast.error(translateText('features.messages.toasts.conversationRejectFailed'));
+      }
       return { success: false, error };
     }
   };
 
   const deleteConversation = async (conversation: Conversation) => {
+    let finalizationStarted = false;
     try {
-      await waitForClientApply(
-        actions.deleteConversationFull({
-          id: conversation.id,
-          messageIds: conversation.messages.map(message => message.id),
-          participantIds: conversation.participants.map(participant => participant.id),
-        })
-      );
-      toast.success(translateText('generated.inline.0747_conversation_deleted_798eb3c2'));
+      const mutationResult = actions.deleteConversationFull({
+        id: conversation.id,
+        messageIds: conversation.messages.map(message => message.id),
+        participantIds: conversation.participants.map(participant => participant.id),
+      });
+      trackMutationFinalization({
+        result: mutationResult,
+        entityKind: 'conversation',
+        operationId: `delete:${conversation.id}`,
+        messages: {
+          pending: translateText('features.messages.toasts.conversationDeleting'),
+          success: translateText('features.messages.toasts.conversationDeleted'),
+          error: translateText('features.messages.toasts.conversationDeleteFailed'),
+        },
+      });
+      finalizationStarted = true;
+      await waitForClientApply(mutationResult);
       return { success: true };
     } catch (error) {
       console.error('Failed to delete conversation:', error);
-      toast.error(translateText('generated.inline.0748_failed_to_delete_conversation_61f9456d'));
+      if (!finalizationStarted) {
+        toast.error(translateText('features.messages.toasts.conversationDeleteFailed'));
+      }
       return { success: false, error };
     }
   };

@@ -8,6 +8,7 @@ import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEve
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { formatLocalDateInput } from '@/features/shared/logic/localDateTime';
 
 export interface BlogFormData {
   title: string;
@@ -32,7 +33,7 @@ export function useBlogEditPage(
 
   const [formData, setFormData] = useState<BlogFormData>({
     title: '',
-    date: new Date().toISOString().split('T')[0] ?? '',
+    date: formatLocalDateInput(new Date()),
     imageURL: '',
     videoURL: '',
     visibility: 'public' as Visibility,
@@ -70,7 +71,7 @@ export function useBlogEditPage(
         .filter((t): t is string => !!t);
       setFormData({
         title: blog.title || '',
-        date: blog.date || new Date().toISOString().split('T')[0] || '',
+        date: blog.date || formatLocalDateInput(new Date()),
         imageURL: blog.image_url || '',
         videoURL: blog.video_url || '',
         visibility: (blog.visibility as Visibility) ?? 'public',

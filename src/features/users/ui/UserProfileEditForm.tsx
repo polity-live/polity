@@ -20,6 +20,7 @@ import { SubscriptionStatus } from '@/features/payments/ui/SubscriptionStatus';
 import { FormStyleSelector } from '@/features/create/ui/FormStyleSelector';
 import { ThemeToggle } from '@/features/navigation/toggles/theme-toggle';
 import { LanguageToggle } from '@/features/navigation/toggles/language-toggle';
+import { CurrencyPreferenceControl } from './CurrencyPreferenceControl';
 import { NavigationViewStateToggle } from '@/features/navigation/toggles/NavigationViewStateToggle';
 import { PwaInstallPanel } from '@/features/pwa/ui';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -227,6 +228,12 @@ export function UserProfileEditForm({
               description={t('pages.user.preferences.languageDescription')}
             >
               <LanguageToggle side="bottom" />
+            </SettingsPanel>
+            <SettingsPanel
+              title={t('pages.user.preferences.displayCurrency')}
+              description={t('pages.user.preferences.displayCurrencyDescription')}
+            >
+              <CurrencyPreferenceControl />
             </SettingsPanel>
             <SettingsPanel
               title={t('pages.user.preferences.navigationStyle')}

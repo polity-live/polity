@@ -125,10 +125,12 @@ function VirtualDiscussionThreadList({
               'generated.inline.0393_no_discussion_threads_yet_start_a_conversatio_e634e88d'
             )}
           </p>
-          <Button onClick={() => onCreateDialogOpenChange(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            {translateText('generated.inline.0394_create_first_thread_e26d65a7')}
-          </Button>
+          {userId ? (
+            <Button onClick={() => onCreateDialogOpenChange(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              {translateText('generated.inline.0394_create_first_thread_e26d65a7')}
+            </Button>
+          ) : null}
         </CardContent>
       </Card>
     );
@@ -238,10 +240,12 @@ export function DiscussionsView({
               </FormControlSelectContent>
             </FormControlSelect>
           </div>
-          <Button onClick={() => onCreateDialogOpenChange(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            {translateText('generated.inline.0392_new_thread_66826f91')}
-          </Button>
+          {userId ? (
+            <Button onClick={() => onCreateDialogOpenChange(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              {translateText('generated.inline.0392_new_thread_66826f91')}
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -259,15 +263,17 @@ export function DiscussionsView({
         />
       </div>
 
-      <CreateThreadDialog
-        amendmentId={amendmentId}
-        userId={userId}
-        amendmentTitle={amendmentTitle}
-        senderName={authUserEmail}
-        open={isCreateDialogOpen}
-        onOpenChange={onCreateDialogOpenChange}
-        onCreateThread={onCreateThread}
-      />
+      {userId ? (
+        <CreateThreadDialog
+          amendmentId={amendmentId}
+          userId={userId}
+          amendmentTitle={amendmentTitle}
+          senderName={authUserEmail}
+          open={isCreateDialogOpen}
+          onOpenChange={onCreateDialogOpenChange}
+          onCreateThread={onCreateThread}
+        />
+      ) : null}
     </PageWrapper>
   );
 }

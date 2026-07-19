@@ -7,6 +7,7 @@ import {
   type PqlScalar,
 } from './applyPqlFilter';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { toLocalTimestamp } from '@/features/shared/logic/localDateTime';
 
 type PqlTokenType =
   | 'word'
@@ -259,7 +260,10 @@ function coerceTokenValue<TItem, TFieldKey extends string>(
   }
 
   if (field.kind === 'date') {
-    const parsedValue = Date.parse(rawValue);
+    const parsedValue = /^\d{4}-\d{2}-\d{2}$/.test(rawValue)
+      ? toLocalTimestamp(rawValue)
+      : Date.parse(rawValue);
+    if (parsedValue === null) return null;
     return Number.isNaN(parsedValue) ? null : parsedValue;
   }
 

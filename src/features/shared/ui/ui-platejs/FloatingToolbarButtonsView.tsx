@@ -17,6 +17,7 @@ import { MoreToolbarButton } from './more-toolbar-button.tsx';
 import { SuggestionToolbarButton } from './suggestion-toolbar-button.tsx';
 import { ToolbarGroup } from '@/features/shared/ui/layout';
 import { TurnIntoToolbarButton } from './turn-into-toolbar-button.tsx';
+import { editorShortcuts } from './editor-shortcuts';
 export interface FloatingToolbarButtonsViewProps {
   readOnly: any;
   t: any;
@@ -37,26 +38,43 @@ export function FloatingToolbarButtonsView({ readOnly, t }: FloatingToolbarButto
           <ToolbarGroup>
             <TurnIntoToolbarButton />
 
-            <MarkToolbarButton nodeType={KEYS.bold} tooltip={t('plateJs.toolbar.bold')}>
+            <MarkToolbarButton
+              nodeType={KEYS.bold}
+              tooltip={t('plateJs.toolbar.bold')}
+              tooltipShortcut={editorShortcuts.bold}
+            >
               <BoldIcon />
             </MarkToolbarButton>
 
-            <MarkToolbarButton nodeType={KEYS.italic} tooltip={t('plateJs.toolbar.italic')}>
+            <MarkToolbarButton
+              nodeType={KEYS.italic}
+              tooltip={t('plateJs.toolbar.italic')}
+              tooltipShortcut={editorShortcuts.italic}
+            >
               <ItalicIcon />
             </MarkToolbarButton>
 
-            <MarkToolbarButton nodeType={KEYS.underline} tooltip={t('plateJs.toolbar.underline')}>
+            <MarkToolbarButton
+              nodeType={KEYS.underline}
+              tooltip={t('plateJs.toolbar.underline')}
+              tooltipShortcut={editorShortcuts.underline}
+            >
               <UnderlineIcon />
             </MarkToolbarButton>
 
             <MarkToolbarButton
               nodeType={KEYS.strikethrough}
               tooltip={t('plateJs.toolbar.strikethrough')}
+              tooltipShortcut={editorShortcuts.strikethrough}
             >
               <StrikethroughIcon />
             </MarkToolbarButton>
 
-            <MarkToolbarButton nodeType={KEYS.code} tooltip={t('plateJs.toolbar.code')}>
+            <MarkToolbarButton
+              nodeType={KEYS.code}
+              tooltip={t('plateJs.toolbar.code')}
+              tooltipShortcut={editorShortcuts.code}
+            >
               <Code2Icon />
             </MarkToolbarButton>
 

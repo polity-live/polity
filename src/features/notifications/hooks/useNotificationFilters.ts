@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Notification, NotificationFilters } from '../types/notification.types';
-import { filterAccessibleNotifications } from '../logic/notificationHelpers';
+import { filterAccessibleNotifications, isNotificationRead } from '../logic/notificationHelpers';
 
 interface UseNotificationFiltersProps {
   notifications: Notification[];
@@ -17,11 +17,11 @@ export function useNotificationFilters({
   );
 
   const unreadNotifications = useMemo(() => {
-    return accessibleNotifications.filter(n => !n.is_read);
+    return accessibleNotifications.filter(n => !isNotificationRead(n));
   }, [accessibleNotifications]);
 
   const readNotifications = useMemo(() => {
-    return accessibleNotifications.filter(n => n.is_read);
+    return accessibleNotifications.filter(isNotificationRead);
   }, [accessibleNotifications]);
 
   const personalNotifications = useMemo(() => {

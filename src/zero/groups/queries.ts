@@ -720,14 +720,21 @@ export const groupQueries = {
 
   /** Todos for a group with creator, assignments→user, and group */
   todosByGroup: defineQuery(
-    z.object({ groupId: z.string() }),
-    ({ args: { groupId }, ctx: { userID } }) =>
+    z.object({
+      groupId: z.string(),
+      archive: z.enum(['active', 'archived']).default('active'),
+    }),
+    ({ args: { groupId, archive }, ctx: { userID } }) =>
       applyTodoQueryAccess(zql.todo, userID)
+        .where(({ cmp }) =>
+          archive === 'archived' ? cmp('archived_at', '>', 0) : cmp('archived_at', 'IS', null)
+        )
         .where('group_id', groupId)
         .whereExists('group', group => applyGroupAccess(group, userID))
         .related('creator')
         .related('assignments', q => q.where('user_id', userID ?? '__anon__').related('user'))
         .related('group')
+        .orderBy(archive === 'archived' ? 'archived_at' : 'created_at', 'desc')
   ),
 
   /** Links belonging to a group */

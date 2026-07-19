@@ -114,6 +114,7 @@ import {
   pushSubscription,
   notificationSetting,
   notificationRead,
+  notificationUserState,
 } from './notifications/table';
 // Blogs
 import { blog, blogBlogger } from './blogs/table';
@@ -1590,6 +1591,7 @@ export const threadRelationships = relationships(thread, ({ one, many }) => ({
   amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
   statement: one({ sourceField: ['statement_id'], destSchema: statement, destField: ['id'] }),
   blog: one({ sourceField: ['blog_id'], destSchema: blog, destField: ['id'] }),
+  todo: one({ sourceField: ['todo_id'], destSchema: todo, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
   comments: many({ sourceField: ['id'], destSchema: comment, destField: ['thread_id'] }),
   votes: many({ sourceField: ['id'], destSchema: threadVote, destField: ['thread_id'] }),
@@ -1803,6 +1805,7 @@ export const todoRelationships = relationships(todo, ({ one, many }) => ({
   amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
   assignments: many({ sourceField: ['id'], destSchema: todoAssignment, destField: ['todo_id'] }),
   timeline_events: many({ sourceField: ['id'], destSchema: timelineEvent, destField: ['todo_id'] }),
+  threads: many({ sourceField: ['id'], destSchema: thread, destField: ['todo_id'] }),
 }));
 
 export const todoAssignmentRelationships = relationships(todoAssignment, ({ one }) => ({
@@ -1937,6 +1940,11 @@ export const notificationRelationships = relationships(notification, ({ one, man
     destSchema: notificationRead,
     destField: ['notification_id'],
   }),
+  viewer_state: many({
+    sourceField: ['id'],
+    destSchema: notificationUserState,
+    destField: ['notification_id'],
+  }),
 }));
 
 export const pushSubscriptionRelationships = relationships(pushSubscription, ({ one }) => ({
@@ -1955,6 +1963,18 @@ export const notificationReadRelationships = relationships(notificationRead, ({ 
   }),
   read_by_user: one({ sourceField: ['read_by_user_id'], destSchema: user, destField: ['id'] }),
 }));
+
+export const notificationUserStateRelationships = relationships(
+  notificationUserState,
+  ({ one }) => ({
+    notification: one({
+      sourceField: ['notification_id'],
+      destSchema: notification,
+      destField: ['id'],
+    }),
+    user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+  })
+);
 
 // ============================================
 // Blog relationships
@@ -2475,6 +2495,7 @@ export const allRelationships = [
   pushSubscriptionRelationships,
   notificationSettingRelationships,
   notificationReadRelationships,
+  notificationUserStateRelationships,
   // Blogs
   blogRelationships,
   blogBloggerRelationships,

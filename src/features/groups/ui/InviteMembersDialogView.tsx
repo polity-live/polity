@@ -227,12 +227,9 @@ export function InviteMembersDialogView({
           error={actionSubmission.error}
           preview={{
             entityLabel: inviteLabel,
-            title: translateText(
-              selectedUsers.length === 1
-                ? 'features.groups.memberships.selectedUserTitle'
-                : 'features.groups.memberships.selectedUsersTitle',
-              { count: selectedUsers.length }
-            ),
+            title: translateText('features.groups.memberships.selectedUsersTitle', {
+              count: selectedUsers.length,
+            }),
             description: dialogTitle,
             badges: selectedRoleNames.length ? selectedRoleNames : [roleSectionTitle],
           }}

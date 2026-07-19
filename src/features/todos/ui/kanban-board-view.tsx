@@ -63,7 +63,7 @@ function VirtualKanbanColumn({
     toStartRow: todo => ({ created_at: Number(todo.created_at), id: todo.id }),
     getPageQuery: useCallback(
       ({ limit, start, dir, settled }) => ({
-        query: queries.todos.page({ ...context, limit, start, dir }) as any,
+        query: queries.todos.page({ ...context, archive: 'active', limit, start, dir }) as any,
         options: { ttl: settled ? ('5m' as const) : ('none' as const) },
       }),
       [context]
@@ -210,6 +210,7 @@ export function TodoKanbanCardView({
           groupId: todo.group?.id ?? undefined,
           status: isTodoStatus(todo.status) ? todo.status : undefined,
           creatorId: todo.creator?.id ?? undefined,
+          archived: Boolean(todo.archived_at),
         }}
         canManageTodos={canManageTodos}
         onToggle={canManageTodos ? () => onToggleComplete(todo) : undefined}

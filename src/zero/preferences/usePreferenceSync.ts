@@ -9,6 +9,7 @@ import { onServerError } from '../mutate-with-server-check';
 import type { ThemeType } from '@/features/shared/global-state/theme.store';
 import type { Language } from '@/features/shared/global-state/language.store';
 import type { NavigationView } from '@/features/navigation/types/navigation.types';
+import { useDisplayCurrencyStore } from '@/features/shared/global-state/currency.store';
 
 /**
  * Bidirectional sync between persisted DB preferences and Zustand stores.
@@ -35,6 +36,7 @@ export function usePreferenceSync() {
 
   const setNavigationView = useNavigationStore(state => state.setNavigationView);
   const navigationView = useNavigationStore(state => state.navigationView);
+  const setDisplayCurrency = useDisplayCurrencyStore(state => state.setDisplayCurrency);
 
   // Track previous values to avoid writing back what we just loaded
   const prevTheme = useRef(theme);
@@ -55,6 +57,7 @@ export function usePreferenceSync() {
             create_form_style: 'carousel',
             theme: 'system',
             language: 'en',
+            display_currency: 'EUR',
             navigation_view: 'asButtonList',
             group_network_layouts: {},
             ...fields,
@@ -83,6 +86,7 @@ export function usePreferenceSync() {
     // New user: trigger-created defaults have updated_at === created_at.
     // Push current Zustand values (browser-derived) to DB instead of overwriting them.
     const isNewUser = preference.created_at === preference.updated_at;
+    setDisplayCurrency(preference.display_currency ?? 'EUR');
 
     if (isNewUser) {
       // Zustand → DB: persist browser-derived values
@@ -117,6 +121,7 @@ export function usePreferenceSync() {
     setTheme,
     setLanguage,
     setNavigationView,
+    setDisplayCurrency,
     theme,
     language,
     navigationView,

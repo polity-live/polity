@@ -33,6 +33,7 @@ import type { CandidatesByElectionRow } from '@/zero/elections/queries';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
 import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 import { getSpeakerGenderLabel } from '@/features/agendas/logic/speakerListGenderQuota';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 import {
   INTERACTIVE_HORIZONTAL_ARROW_NAVIGATION_LOCK_SELECTOR,
   useHorizontalArrowNavigation,
@@ -437,9 +438,9 @@ export function EventStreamView({
 
                             {/* Speaker Name */}
                             <div className="text-center">
-                              <h3 className="truncate text-lg font-semibold" title={speakerName}>
-                                {speakerName}
-                              </h3>
+                              <TooltipHint content={speakerName}>
+                                <h3 className="truncate text-lg font-semibold">{speakerName}</h3>
+                              </TooltipHint>
                               {isCurrentUser && (
                                 <BadgeControl variant="secondary" className="mt-1">
                                   {translateText('generated.inline.0055_you_905cb326')}
@@ -454,12 +455,11 @@ export function EventStreamView({
 
                             {/* Speaker Title */}
                             <div className="text-center">
-                              <p
-                                className="text-muted-foreground truncate text-sm"
-                                title={speaker.title ?? undefined}
-                              >
-                                {speaker.title}
-                              </p>
+                              <TooltipHint content={speaker.title ?? ''}>
+                                <p className="text-muted-foreground truncate text-sm">
+                                  {speaker.title}
+                                </p>
+                              </TooltipHint>
                             </div>
 
                             {/* Time Badge */}

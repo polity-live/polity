@@ -63,6 +63,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
     readOnly,
     restoreVersion,
     saveStatus,
+    showTopToolbar,
     selectedCrIds,
     setActiveCursorUserIds,
     setContent,
@@ -187,61 +188,63 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
   return (
     <div className={cn('container mx-auto px-8 pb-8', compactToolbarSpacing ? 'pt-2' : 'pt-8')}>
       {/* Top toolbar */}
-      <div className="scrollbar-hide -mx-8 mb-6 overflow-x-auto px-8 sm:mx-0 sm:px-0">
-        <div className="flex w-max min-w-full items-center justify-end gap-4">
-          {/* Share Button */}
-          {capabilities.sharing && (
-            <ShareButton
-              url={`/${entityType}/${entityId}`}
-              title={title}
-              description={entity.metadata?.amendmentCode || ''}
-            />
-          )}
-
-          {/* Version Control */}
-          {capabilities.versioning && userId && contentEntityId && !plateReadOnly && (
-            <VersionControl
-              entityType={entityType}
-              entityId={contentEntityId}
-              currentContent={content}
-              currentUserId={userId}
-              onRestoreVersion={restoreVersion}
-              amendmentId={amendmentId}
-              amendmentTitle={amendmentTitle}
-            />
-          )}
-
-          {/* Suggestion View Toggle (visible in suggest/vote modes) */}
-          {(mode === 'suggest_internal' ||
-            mode === 'suggest_event' ||
-            mode === 'vote_internal' ||
-            mode === 'event_final_closing_vote') &&
-            discussions.length > 0 && (
-              <SuggestionViewToggle
-                discussions={discussions}
-                selectedCrIds={selectedCrIds}
-                onSelectedCrIdsChange={setSelectedCrIds}
+      {showTopToolbar ? (
+        <div className="scrollbar-hide -mx-8 mb-6 overflow-x-auto px-8 sm:mx-0 sm:px-0">
+          <div className="flex w-max min-w-full items-center justify-end gap-4">
+            {/* Share Button */}
+            {capabilities.sharing && (
+              <ShareButton
+                url={`/${entityType}/${entityId}`}
+                title={title}
+                description={entity.metadata?.amendmentCode || ''}
               />
             )}
 
-          {/* Invite Collaborators */}
-          {capabilities.invites && userId && !readOnly && (
-            <InviteCollaboratorDialog
-              entityType={entityType}
-              entityId={contentEntityId}
-              currentUserId={userId}
-              entityTitle={title}
-              existingCollaboratorIds={existingCollaboratorIds}
-            />
-          )}
+            {/* Version Control */}
+            {capabilities.versioning && userId && contentEntityId && !plateReadOnly && (
+              <VersionControl
+                entityType={entityType}
+                entityId={contentEntityId}
+                currentContent={content}
+                currentUserId={userId}
+                onRestoreVersion={restoreVersion}
+                amendmentId={amendmentId}
+                amendmentTitle={amendmentTitle}
+              />
+            )}
 
-          {statusBadgeLabel ? (
-            <BadgeControl variant="outline" textTransform="capitalize">
-              {statusBadgeLabel}
-            </BadgeControl>
-          ) : null}
+            {/* Suggestion View Toggle (visible in suggest/vote modes) */}
+            {(mode === 'suggest_internal' ||
+              mode === 'suggest_event' ||
+              mode === 'vote_internal' ||
+              mode === 'event_final_closing_vote') &&
+              discussions.length > 0 && (
+                <SuggestionViewToggle
+                  discussions={discussions}
+                  selectedCrIds={selectedCrIds}
+                  onSelectedCrIdsChange={setSelectedCrIds}
+                />
+              )}
+
+            {/* Invite Collaborators */}
+            {capabilities.invites && userId && !readOnly && (
+              <InviteCollaboratorDialog
+                entityType={entityType}
+                entityId={contentEntityId}
+                currentUserId={userId}
+                entityTitle={title}
+                existingCollaboratorIds={existingCollaboratorIds}
+              />
+            )}
+
+            {statusBadgeLabel ? (
+              <BadgeControl variant="outline" textTransform="capitalize">
+                {statusBadgeLabel}
+              </BadgeControl>
+            ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Editor Card */}
       <Card className="mt-4">

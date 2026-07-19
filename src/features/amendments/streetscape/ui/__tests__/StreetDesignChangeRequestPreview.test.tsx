@@ -106,6 +106,6 @@ describe('StreetDesignChangeRequestPreview helpers', () => {
     expect(screen.getByText('After')).toBeTruthy();
     expect(screen.getAllByText(/Price:/)).toHaveLength(2);
     expect(screen.getAllByText(/Total:/)).toHaveLength(2);
-    expect(screen.getAllByText(/123,45/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/123[,.]45/).length).toBeGreaterThan(0);
   });
 });

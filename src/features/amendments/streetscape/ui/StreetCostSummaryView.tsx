@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 import {
   Collapsible,
   CollapsibleContent,
@@ -33,7 +34,8 @@ import type {
   StreetDesignObjectCategory,
   StreetDesignObjectType,
 } from '../types';
-import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
+import { ConvertedCurrencyAmount } from '@/features/shared/ui/currency';
+import { minorToMajor } from '@/features/shared/logic/currency';
 
 interface StreetCostSummaryViewProps {
   summary: StreetDesignCostSummary;
@@ -120,6 +122,18 @@ const categoryIcons = {
   water: Waves,
 } satisfies Record<StreetDesignObjectCategory, LucideIcon>;
 
+function StreetCurrencyAmount({
+  amountMinor,
+  currency,
+}: {
+  amountMinor: number;
+  currency: string;
+}) {
+  return (
+    <ConvertedCurrencyAmount amount={minorToMajor(amountMinor, currency)} currency={currency} />
+  );
+}
+
 export function StreetCostSummaryView({
   summary,
   comparisonMode,
@@ -190,7 +204,10 @@ export function StreetCostSummaryView({
             </div>
             <div className="text-right">
               <p className="text-xl font-semibold">
-                {formatMinorCurrency(summary.totalCostMinor, summary.currency)}
+                <StreetCurrencyAmount
+                  amountMinor={summary.totalCostMinor}
+                  currency={summary.currency}
+                />
               </p>
               <p className="text-muted-foreground text-xs">
                 {t('features.amendments.streetscape.cost.estimate')}
@@ -208,7 +225,10 @@ export function StreetCostSummaryView({
                 <div key={category.category} className="bg-muted/20 rounded-md border px-3 py-2">
                   <p className="text-xs font-medium">{getCategoryLabel(category.category)}</p>
                   <p className="text-sm font-semibold">
-                    {formatMinorCurrency(category.totalCostMinor, summary.currency)}
+                    <StreetCurrencyAmount
+                      amountMinor={category.totalCostMinor}
+                      currency={summary.currency}
+                    />
                   </p>
                 </div>
               ))
@@ -308,31 +328,35 @@ export function StreetCostSummaryView({
                         />
                       </Button>
                     </CollapsibleTrigger>
-                    <button
-                      type="button"
-                      className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
-                      title={getActionLabel('select', categoryLabel)}
-                      onClick={() => onObjectSelect?.(firstLine?.objectId ?? null)}
-                    >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <CategoryIcon className="size-4 flex-none" />
-                        <span className="truncate font-medium">{categoryLabel}</span>
-                      </span>
-                      <span className="text-muted-foreground flex flex-none items-center gap-2">
-                        <span>{group.lines.length}</span>
-                        <span className="text-foreground max-w-[8rem] truncate text-xs font-semibold">
-                          {formatMinorCurrency(group.totalCostMinor, summary.currency)}
+                    <TooltipHint content={getActionLabel('select', categoryLabel)}>
+                      <button
+                        type="button"
+                        className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
+                        onClick={() => onObjectSelect?.(firstLine?.objectId ?? null)}
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <CategoryIcon className="size-4 flex-none" />
+                          <span className="truncate font-medium">{categoryLabel}</span>
                         </span>
-                        <span
-                          className={cn(
-                            'size-2 rounded-full',
-                            group.lines.some(line => selectedObjectId === line.objectId)
-                              ? 'bg-success'
-                              : 'bg-muted-foreground/35'
-                          )}
-                        />
-                      </span>
-                    </button>
+                        <span className="text-muted-foreground flex flex-none items-center gap-2">
+                          <span>{group.lines.length}</span>
+                          <span className="text-foreground max-w-[8rem] truncate text-xs font-semibold">
+                            <StreetCurrencyAmount
+                              amountMinor={group.totalCostMinor}
+                              currency={summary.currency}
+                            />
+                          </span>
+                          <span
+                            className={cn(
+                              'size-2 rounded-full',
+                              group.lines.some(line => selectedObjectId === line.objectId)
+                                ? 'bg-success'
+                                : 'bg-muted-foreground/35'
+                            )}
+                          />
+                        </span>
+                      </button>
+                    </TooltipHint>
                     <div className="-mr-1 flex flex-none items-center gap-1">
                       <Button
                         type="button"
@@ -362,34 +386,41 @@ export function StreetCostSummaryView({
                               isSelected && 'border-brand/40 bg-brand/10 text-brand'
                             )}
                           >
-                            <button
-                              type="button"
-                              className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
-                              title={getActionLabel('select', lineLabel)}
-                              onClick={() => onObjectSelect?.(line.objectId)}
-                            >
-                              <span className="flex min-w-0 items-center gap-2">
-                                <Icon className="text-muted-foreground size-3.5 flex-none" />
-                                <span className="min-w-0 truncate">
-                                  <span className="block truncate text-xs">{lineLabel}</span>
-                                  <span className="text-muted-foreground block truncate text-[11px]">
-                                    {line.quantity.toFixed(line.quantity % 1 ? 1 : 0)} x{' '}
-                                    {formatMinorCurrency(line.unitCostMinor, summary.currency)}
+                            <TooltipHint content={getActionLabel('select', lineLabel)}>
+                              <button
+                                type="button"
+                                className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
+                                onClick={() => onObjectSelect?.(line.objectId)}
+                              >
+                                <span className="flex min-w-0 items-center gap-2">
+                                  <Icon className="text-muted-foreground size-3.5 flex-none" />
+                                  <span className="min-w-0 truncate">
+                                    <span className="block truncate text-xs">{lineLabel}</span>
+                                    <span className="text-muted-foreground block truncate text-[11px]">
+                                      {line.quantity.toFixed(line.quantity % 1 ? 1 : 0)} x{' '}
+                                      <StreetCurrencyAmount
+                                        amountMinor={line.unitCostMinor}
+                                        currency={summary.currency}
+                                      />
+                                    </span>
                                   </span>
                                 </span>
-                              </span>
-                              <span className="flex flex-none items-center gap-2 text-right">
-                                <span className="max-w-[7rem] truncate text-xs font-semibold">
-                                  {formatMinorCurrency(line.totalCostMinor, summary.currency)}
+                                <span className="flex flex-none items-center gap-2 text-right">
+                                  <span className="max-w-[7rem] truncate text-xs font-semibold">
+                                    <StreetCurrencyAmount
+                                      amountMinor={line.totalCostMinor}
+                                      currency={summary.currency}
+                                    />
+                                  </span>
+                                  <span
+                                    className={cn(
+                                      'size-2 flex-none rounded-full',
+                                      isSelected ? 'bg-success' : 'bg-muted-foreground/35'
+                                    )}
+                                  />
                                 </span>
-                                <span
-                                  className={cn(
-                                    'size-2 flex-none rounded-full',
-                                    isSelected ? 'bg-success' : 'bg-muted-foreground/35'
-                                  )}
-                                />
-                              </span>
-                            </button>
+                              </button>
+                            </TooltipHint>
                             <Button
                               type="button"
                               size="icon"

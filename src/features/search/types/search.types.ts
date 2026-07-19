@@ -104,6 +104,7 @@ export interface SearchContentItem {
   status?: string | null;
   dueDate?: Date;
   isCompleted?: boolean;
+  archived?: boolean;
   isRecurring?: boolean;
   recurrencePattern?: string | null;
   assigneeCount?: number;

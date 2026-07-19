@@ -6,6 +6,8 @@ import { InlineNotice, SectionSkeleton } from '@/features/shared/ui/feedback';
 import { SettingsPanel } from '@/features/shared/ui/form';
 import { StatusBadge, type BadgeTone } from '@/features/shared/ui/status';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { ConvertedCurrencyAmount } from '@/features/shared/ui/currency';
+import { minorToMajor } from '@/features/shared/logic/currency';
 
 export interface SubscriptionData {
   hasSubscription: boolean;
@@ -90,13 +92,6 @@ function PaymentStatusIcon({ status }: { status: string }) {
   }
 }
 
-function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency.toUpperCase(),
-  }).format(amount / 100);
-}
-
 export function SubscriptionStatusView({ data, isLoading, error }: SubscriptionStatusViewProps) {
   if (isLoading) {
     return (
@@ -150,7 +145,10 @@ export function SubscriptionStatusView({ data, isLoading, error }: SubscriptionS
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="font-semibold">
-                  {formatCurrency(activeSubscription.amount, activeSubscription.currency)}
+                  <ConvertedCurrencyAmount
+                    amount={minorToMajor(activeSubscription.amount, activeSubscription.currency)}
+                    currency={activeSubscription.currency}
+                  />
                   <span className="text-muted-foreground text-sm font-normal">
                     /{activeSubscription.interval}
                   </span>
@@ -208,7 +206,11 @@ export function SubscriptionStatusView({ data, isLoading, error }: SubscriptionS
                   <PaymentStatusIcon status={payment.status} />
                   <div>
                     <p className="text-sm font-medium">
-                      {formatCurrency(payment.amount, payment.currency)}
+                      <ConvertedCurrencyAmount
+                        amount={minorToMajor(payment.amount, payment.currency)}
+                        currency={payment.currency}
+                        date={(payment.paidAt ?? payment.createdAt).slice(0, 10)}
+                      />
                     </p>
                     <p className="text-muted-foreground text-xs">
                       {payment.paidAt
@@ -239,7 +241,11 @@ export function SubscriptionStatusView({ data, isLoading, error }: SubscriptionS
               >
                 <div>
                   <p className="text-sm font-medium">
-                    {formatCurrency(subscription.amount, subscription.currency)}
+                    <ConvertedCurrencyAmount
+                      amount={minorToMajor(subscription.amount, subscription.currency)}
+                      currency={subscription.currency}
+                      date={subscription.createdAt.slice(0, 10)}
+                    />
                     <span className="text-muted-foreground">/{subscription.interval}</span>
                   </p>
                   <p className="text-muted-foreground text-xs">

@@ -320,6 +320,8 @@ export interface EditorViewProps {
   backLabel?: string;
   /** Use tighter spacing above the editor action toolbar */
   compactToolbarSpacing?: boolean;
+  /** Render the complete editor action toolbar. */
+  showTopToolbar?: boolean;
   /** Agenda item ID for amendment CR voting initialization */
   agendaItemId?: string;
   /** Process branch ID for branch-specific amendment text variants */

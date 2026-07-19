@@ -150,7 +150,7 @@ export function ConversationHeader({
                     </Button>
                   </PopoverTrigger>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs space-y-2 text-left">
+                <TooltipContent side="bottom" variant="rich">
                   <AiResponseInformation t={t} />
                 </TooltipContent>
               </Tooltip>

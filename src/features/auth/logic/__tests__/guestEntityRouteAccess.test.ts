@@ -10,6 +10,9 @@ describe('guestEntityRouteAccess', () => {
     expect(isGuestAccessibleEntityPath('/amendment/amendment-1')).toBe(true);
     expect(isGuestAccessibleEntityPath('/blog/blog-1')).toBe(true);
     expect(isGuestAccessibleEntityPath('/user/user-1/blog/blog-1')).toBe(true);
+    expect(isGuestAccessibleEntityPath('/user/user-1/meet')).toBe(true);
+    expect(isGuestAccessibleEntityPath('/amendment/amendment-1/text')).toBe(true);
+    expect(isGuestAccessibleEntityPath('/amendment/amendment-1/change-requests')).toBe(true);
   });
 
   it('does not treat non-entity pages as guest-accessible authed routes', () => {
@@ -25,6 +28,5 @@ describe('guestEntityRouteAccess', () => {
     expect(isGuestAccessibleEntityPath('/event/event-1/notifications')).toBe(false);
     expect(isGuestAccessibleEntityPath('/user/user-1/notification-settings')).toBe(false);
     expect(isGuestAccessibleEntityPath('/group/group-1/operation')).toBe(false);
-    expect(isGuestAccessibleEntityPath('/user/user-1/meet')).toBe(false);
   });
 });

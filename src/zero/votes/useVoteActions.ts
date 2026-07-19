@@ -12,6 +12,10 @@ import {
   trackServerFinalization,
 } from '../mutate-with-server-check';
 import { VOTE_CAST_SUCCESS_TOAST_ID } from '@/features/vote-cast/logic/voteCastToast';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 /**
  * Action hook for vote mutations.
@@ -30,10 +34,9 @@ export function useVoteActions() {
   // ── Votes ──────────────────────────────────────────────────────────
 
   const createVote = useCallback(
-    (args: Parameters<typeof mutators.votes.createVote>[0]) => {
+    (args: Parameters<typeof mutators.votes.createVote>[0], options?: CreationMutationOptions) => {
       const result = zero.mutate(mutators.votes.createVote(args));
-      toast.success(t('common.agendaToasts.voteCreated'));
-      onServerError(result, () => toast.error(t('common.agendaToasts.voteCreateFailed')));
+      trackCreationUnlessSilent(result, 'vote', options, args.id);
       return result;
     },
     [t, zero]

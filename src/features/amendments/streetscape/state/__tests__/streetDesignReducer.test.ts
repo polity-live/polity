@@ -6,12 +6,30 @@ import {
 } from '../../logic/streetDesignPlacement';
 import {
   createInitialStreetDesignEditorState,
+  createEmptyStreetDesignState,
   parseStoredStreetDesignState,
   streetDesignReducer,
 } from '../streetDesignReducer';
 import { getStreetDesignHiddenOsmFeatureIds } from '../../logic/streetDesignOsm';
 
 describe('streetDesignReducer', () => {
+  it('keeps a new design currency and applies it to placed objects', () => {
+    const design = createEmptyStreetDesignState(undefined, 'JPY');
+    const initialState = createInitialStreetDesignEditorState(design);
+    const placing = streetDesignReducer(initialState, {
+      type: 'set_tool',
+      objectType: 'bank',
+    });
+    const placed = streetDesignReducer(placing, {
+      type: 'scene_pointer_down',
+      point: { x: 1, z: 2 },
+      id: 'bank-jpy',
+    });
+
+    expect(placed.design.currency).toBe('JPY');
+    expect(placed.design.objects[0].cost.currency).toBe('JPY');
+  });
+
   it('starts in select mode by default', () => {
     const initialState = createInitialStreetDesignEditorState();
 

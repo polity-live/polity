@@ -6,6 +6,7 @@ export interface TodoStatusCounts {
   in_progress: number;
   completed: number;
   cancelled: number;
+  archived: number;
 }
 
 /**
@@ -19,17 +20,22 @@ export function computeTodoStats(
   todos: Todo[] | undefined,
   userId: string | undefined
 ): TodoStatusCounts {
-  if (!todos) return { all: 0, pending: 0, in_progress: 0, completed: 0, cancelled: 0 };
+  if (!todos) {
+    return { all: 0, pending: 0, in_progress: 0, completed: 0, cancelled: 0, archived: 0 };
+  }
 
   const userTodos = todos.filter(
     todo => todo.creator?.id === userId || todo.assignments?.some(a => a.user?.id === userId)
   );
 
+  const activeTodos = userTodos.filter(todo => !todo.archived_at);
+
   return {
-    all: userTodos.length,
-    pending: userTodos.filter(t => t.status === 'pending').length,
-    in_progress: userTodos.filter(t => t.status === 'in_progress').length,
-    completed: userTodos.filter(t => t.status === 'completed').length,
-    cancelled: userTodos.filter(t => t.status === 'cancelled').length,
+    all: activeTodos.length,
+    pending: activeTodos.filter(t => t.status === 'pending').length,
+    in_progress: activeTodos.filter(t => t.status === 'in_progress').length,
+    completed: activeTodos.filter(t => t.status === 'completed').length,
+    cancelled: activeTodos.filter(t => t.status === 'cancelled').length,
+    archived: userTodos.filter(todo => Boolean(todo.archived_at)).length,
   };
 }

@@ -5,10 +5,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const hookMocks = vi.hoisted(() => ({
   navigate: vi.fn(),
-  createAmendment: vi.fn(() => 'create-amendment-result'),
+  createAmendment: vi.fn(() => ({
+    client: Promise.resolve(),
+    server: Promise.resolve({ type: 'success' as const }),
+  })),
   updateAmendment: vi.fn(async () => undefined),
   addAmendmentCollaborator: vi.fn(),
-  createDocument: vi.fn(() => 'create-document-result'),
+  createDocument: vi.fn(() => ({
+    client: Promise.resolve(),
+    server: Promise.resolve({ type: 'success' as const }),
+  })),
   createAmendmentPath: vi.fn(async () => undefined),
   waitForClientApply: vi.fn(async (result: unknown) => {
     void result;
@@ -18,6 +24,7 @@ const hookMocks = vi.hoisted(() => ({
   }),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
+  toastLoading: vi.fn(() => 'toast-1'),
 }));
 
 vi.mock('@tanstack/react-router', () => ({
@@ -56,6 +63,7 @@ vi.mock('@/features/shared/ui/ui/sonner', () => ({
   toast: {
     success: (...args: unknown[]) => hookMocks.toastSuccess(...args),
     error: (...args: unknown[]) => hookMocks.toastError(...args),
+    loading: (...args: unknown[]) => hookMocks.toastLoading(...args),
   },
 }));
 
@@ -130,14 +138,16 @@ describe('useCloneAmendment', () => {
         clone_source_id: 'source-amendment',
         document_id: null,
         discussions: [],
-      })
+      }),
+      { notificationMode: 'silent' }
     );
     expect(hookMocks.createDocument).toHaveBeenCalledWith(
       expect.objectContaining({
         id: '00000000-0000-4000-8000-000000000002',
         amendment_id: '00000000-0000-4000-8000-000000000001',
         content: originalContent,
-      })
+      }),
+      { notificationMode: 'silent' }
     );
     expect(hookMocks.updateAmendment).toHaveBeenCalledWith({
       id: '00000000-0000-4000-8000-000000000001',

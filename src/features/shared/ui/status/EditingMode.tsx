@@ -294,7 +294,6 @@ export function EditingModeMenuItems({
                   <button
                     type="button"
                     aria-label={helpText}
-                    title={helpText}
                     className="text-muted-foreground hover:text-foreground focus-visible:ring-ring ml-auto rounded-sm p-1 outline-hidden focus-visible:ring-2"
                     onPointerDown={event => {
                       event.preventDefault();
@@ -309,7 +308,7 @@ export function EditingModeMenuItems({
                     <CircleHelpIcon className="h-4 w-4" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-64">{helpText}</TooltipContent>
+                <TooltipContent variant="rich">{helpText}</TooltipContent>
               </Tooltip>
             ) : null}
           </DropdownMenuRadioItem>

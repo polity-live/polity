@@ -4,6 +4,10 @@ import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 /**
  * Action hook for document mutations.
@@ -16,10 +20,9 @@ export function useDocumentActions() {
 
   // ── CRUD ───────────────────────────────────────────────────────────
   const createDocument = useCallback(
-    (args: Parameters<typeof mutators.documents.create>[0]) => {
+    (args: Parameters<typeof mutators.documents.create>[0], options?: CreationMutationOptions) => {
       const result = zero.mutate(mutators.documents.create(args));
-      toast.success(t('features.documents.toasts.created'));
-      onServerError(result, () => toast.error(t('features.documents.toasts.createFailed')));
+      trackCreationUnlessSilent(result, 'document', options, args.id);
       return result;
     },
     [zero]
@@ -55,10 +58,12 @@ export function useDocumentActions() {
 
   // ── Versions ───────────────────────────────────────────────────────
   const createVersion = useCallback(
-    (args: Parameters<typeof mutators.documents.createVersion>[0]) => {
+    (
+      args: Parameters<typeof mutators.documents.createVersion>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.documents.createVersion(args));
-      toast.success(t('features.documents.toasts.versionCreated'));
-      onServerError(result, () => toast.error(t('features.documents.toasts.versionCreateFailed')));
+      trackCreationUnlessSilent(result, 'documentVersion', options, args.id);
       return result;
     },
     [zero]
@@ -85,10 +90,12 @@ export function useDocumentActions() {
 
   // ── Threads ────────────────────────────────────────────────────────
   const createThread = useCallback(
-    (args: Parameters<typeof mutators.documents.createThread>[0]) => {
+    (
+      args: Parameters<typeof mutators.documents.createThread>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.documents.createThread(args));
-      toast.success(t('features.documents.toasts.threadCreated'));
-      onServerError(result, () => toast.error(t('features.documents.toasts.threadCreateFailed')));
+      trackCreationUnlessSilent(result, 'documentThread', options, args.id);
       return result;
     },
     [zero, t]
@@ -105,10 +112,12 @@ export function useDocumentActions() {
 
   // ── Comments ───────────────────────────────────────────────────────
   const addComment = useCallback(
-    (args: Parameters<typeof mutators.documents.addComment>[0]) => {
+    (
+      args: Parameters<typeof mutators.documents.addComment>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.documents.addComment(args));
-      toast.success(t('features.documents.toasts.commentAdded'));
-      onServerError(result, () => toast.error(t('features.documents.toasts.commentAddFailed')));
+      trackCreationUnlessSilent(result, 'comment', options, args.id);
       return result;
     },
     [zero, t]
@@ -147,12 +156,12 @@ export function useDocumentActions() {
 
   // ── Collaboration ──────────────────────────────────────────────────
   const addCollaborator = useCallback(
-    (args: Parameters<typeof mutators.documents.addCollaborator>[0]) => {
+    (
+      args: Parameters<typeof mutators.documents.addCollaborator>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.documents.addCollaborator(args));
-      toast.success(t('features.documents.toasts.collaboratorAdded'));
-      onServerError(result, () =>
-        toast.error(t('features.documents.toasts.collaboratorAddFailed'))
-      );
+      trackCreationUnlessSilent(result, 'collaborator', options, args.id);
       return result;
     },
     [zero]

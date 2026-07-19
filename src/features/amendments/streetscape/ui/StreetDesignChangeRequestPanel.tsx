@@ -767,15 +767,18 @@ function geometryRotation(object: StreetDesignObject) {
 }
 
 function objectUnitCost(object: StreetDesignObject) {
-  return formatMinorCurrency(object.cost.customUnitCostMinor ?? object.cost.suggestedUnitCostMinor);
+  return formatMinorCurrency(
+    object.cost.customUnitCostMinor ?? object.cost.suggestedUnitCostMinor,
+    object.cost.currency
+  );
 }
 
 function objectTotalCost(object: StreetDesignObject) {
-  return formatMinorCurrency(getStreetDesignCostLine(object).totalCostMinor);
+  return formatMinorCurrency(getStreetDesignCostLine(object).totalCostMinor, object.cost.currency);
 }
 
 function objectSuggestedCost(object: StreetDesignObject) {
-  return formatMinorCurrency(object.cost.suggestedUnitCostMinor);
+  return formatMinorCurrency(object.cost.suggestedUnitCostMinor, object.cost.currency);
 }
 
 function formatNumber(value: number) {

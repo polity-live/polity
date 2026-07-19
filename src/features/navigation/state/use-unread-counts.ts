@@ -4,6 +4,17 @@ import { useAuth } from '@/providers/auth-provider.tsx';
 import { getUnreadCount } from '@/features/messages/logic/messageUtils';
 import { useMessageState } from '@/zero/messages/useMessageState.ts';
 import { queries } from '@/zero/queries';
+import {
+  isNotificationActive,
+  isNotificationRead,
+  type ReadableNotification,
+} from '@/zero/notifications/notificationReadState';
+
+export function countUnreadNotifications(rows: readonly ReadableNotification[] | undefined) {
+  return (rows ?? []).filter(
+    notification => isNotificationActive(notification) && !isNotificationRead(notification)
+  ).length;
+}
 
 /**
  * Hook to get unread notifications count for the current user
@@ -14,7 +25,8 @@ export function useUnreadNotificationsCount() {
   const [rows, result] = useQuery(
     user?.id ? queries.notifications.countRows({ tab: 'unread', query: '' }) : null
   );
-  return { count: rows?.length ?? 0, isLoading: !!user?.id && result.type === 'unknown' };
+  const count = useMemo(() => countUnreadNotifications(rows), [rows]);
+  return { count, isLoading: !!user?.id && result.type === 'unknown' };
 }
 
 /**

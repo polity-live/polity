@@ -1,6 +1,6 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import { useState } from 'react';
-import { differenceInDays, format, isPast, isToday } from 'date-fns';
+import { differenceInCalendarDays, isPast, isToday } from 'date-fns';
 import { toast } from '@/features/shared/ui/ui/sonner';
 
 import { useTodoMutations } from '@/features/todos/hooks/useTodoMutations';
@@ -14,15 +14,18 @@ import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { useTodoState } from '@/zero/todos/useTodoState';
 import type { TodoTimelineCardTodo, TodoTimelineUrgency } from '../types/todoTimelineCard.types';
+import { formatTodoDate, formatTodoTime } from '@/features/todos/utils/todoFormatters';
 
 function getUrgencyConfig(dueDate: Date): TodoTimelineUrgency {
-  const daysUntilDue = differenceInDays(dueDate, new Date());
+  const daysUntilDue = differenceInCalendarDays(dueDate, new Date());
+  const timeLabel = formatTodoTime(dueDate);
+  const withTime = (label: string) => (timeLabel ? `${label} · ${timeLabel}` : label);
 
   if (isPast(dueDate)) {
     return {
       color: featureThemeClassName('timelineUseTodoTimelineCardDangerText'),
       bgColor: featureThemeClassName('timelineUseTodoTimelineCardDangerBackground'),
-      label: translateText('generated.inline.0533_overdue_07217c77'),
+      label: withTime(translateText('generated.inline.0533_overdue_07217c77')),
     };
   }
 
@@ -30,7 +33,7 @@ function getUrgencyConfig(dueDate: Date): TodoTimelineUrgency {
     return {
       color: featureThemeClassName('timelineUseTodoTimelineCardDangerText'),
       bgColor: featureThemeClassName('timelineUseTodoTimelineCardDangerBackground'),
-      label: translateText('generated.inline.0534_due_today_e2219e75'),
+      label: withTime(translateText('generated.inline.0534_due_today_e2219e75')),
     };
   }
 
@@ -38,9 +41,11 @@ function getUrgencyConfig(dueDate: Date): TodoTimelineUrgency {
     return {
       color: featureThemeClassName('timelineUseTodoTimelineCardWarningText'),
       bgColor: featureThemeClassName('timelineUseTodoTimelineCardWarningBackground'),
-      label: translateText('generated.inline.0535_due_in_daysuntildue_days_bb3b7b94', {
-        daysUntilDue,
-      }),
+      label: withTime(
+        translateText('generated.inline.0535_due_in_daysuntildue_days_bb3b7b94', {
+          daysUntilDue,
+        })
+      ),
     };
   }
 
@@ -48,16 +53,18 @@ function getUrgencyConfig(dueDate: Date): TodoTimelineUrgency {
     return {
       color: featureThemeClassName('editorEditorHeaderWarningText'),
       bgColor: featureThemeClassName('timelineUseTodoTimelineCardWarningBackgroundAlpha'),
-      label: translateText('generated.inline.0535_due_in_daysuntildue_days_bb3b7b94', {
-        daysUntilDue,
-      }),
+      label: withTime(
+        translateText('generated.inline.0535_due_in_daysuntildue_days_bb3b7b94', {
+          daysUntilDue,
+        })
+      ),
     };
   }
 
   return {
     color: featureThemeClassName('timelineUseTodoTimelineCardSuccessText'),
     bgColor: featureThemeClassName('timelineUseTodoTimelineCardSuccessBackground'),
-    label: format(dueDate, 'MMM d'),
+    label: formatTodoDate(dueDate.getTime()),
   };
 }
 
@@ -96,6 +103,8 @@ export function useTodoTimelineCardController({
   };
 
   const handleStatusUpdate = async (newStatus: TodoStatus) => {
+    if (todo.archived) return;
+
     await updateTodo(
       todo.id,
       { status: newStatus },
@@ -111,6 +120,8 @@ export function useTodoTimelineCardController({
   };
 
   const handleAssignToMe = async () => {
+    if (todo.archived) return;
+
     if (!user?.id) {
       toast.error(t('features.todos.kanban.updateFailed'));
       return;
@@ -164,6 +175,7 @@ export function useTodoTimelineCardController({
       assigned: t('features.timeline.cards.assigned'),
       assignedToMe: t('features.todos.assignee.assignedToMe'),
       assignToMe: t('features.todos.assignee.assignToMe'),
+      archived: t('features.todos.status.archived'),
     },
   };
 }

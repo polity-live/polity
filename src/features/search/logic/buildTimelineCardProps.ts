@@ -13,6 +13,7 @@ interface PaymentTimelineCardItem {
   description?: string | null;
   createdAt: Date;
   amount?: number | null;
+  currency?: string | null;
   paymentType?: string | null;
   paymentDirection?: 'income' | 'expense' | null;
   groupId?: string | null;
@@ -86,6 +87,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
           organizerId: item.authorId ?? undefined,
           groupName: item.groupName,
           groupId: item.groupId,
+          archived: item.archived,
           isAttending: false,
         },
       };
@@ -188,6 +190,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
           label: item.title,
           description: item.description,
           amount: item.amount,
+          currency: item.currency,
           type: item.paymentType,
           direction: item.paymentDirection,
           createdAt: item.createdAt,

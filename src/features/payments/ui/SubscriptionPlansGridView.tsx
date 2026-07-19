@@ -10,6 +10,9 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { Loader2 } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { ConvertedCurrencyAmount } from '@/features/shared/ui/currency';
+import { useCurrency } from '@/features/shared/hooks/useCurrency';
+import { minorToMajor } from '@/features/shared/logic/currency';
 
 interface SubscriptionPlansGridViewProps {
   activeAmount: number;
@@ -41,6 +44,7 @@ export function SubscriptionPlansGridView({
   onAmountChange,
   onCustomSubmit,
 }: SubscriptionPlansGridViewProps) {
+  const { formatMajor, language } = useCurrency();
   return (
     <Card>
       <CardHeader>
@@ -75,7 +79,7 @@ export function SubscriptionPlansGridView({
                   </span>
                 )}
               </div>
-              <p className="text-2xl font-bold">€0</p>
+              <p className="text-2xl font-bold">{formatMajor(0, 'EUR')}</p>
               <p className="text-muted-foreground text-xs">/month</p>
             </div>
             <p className="text-muted-foreground mb-4 text-sm">
@@ -122,7 +126,9 @@ export function SubscriptionPlansGridView({
                   </span>
                 )}
               </div>
-              <p className="text-2xl font-bold">€2</p>
+              <p className="text-2xl font-bold">
+                <ConvertedCurrencyAmount amount={2} currency="EUR" />
+              </p>
               <p className="text-muted-foreground text-xs">/month</p>
             </div>
             <p className="text-muted-foreground mb-4 text-sm">
@@ -175,7 +181,9 @@ export function SubscriptionPlansGridView({
                   </span>
                 )}
               </div>
-              <p className="text-2xl font-bold">€10</p>
+              <p className="text-2xl font-bold">
+                <ConvertedCurrencyAmount amount={10} currency="EUR" />
+              </p>
               <p className="text-muted-foreground text-xs">/month</p>
             </div>
             <p className="text-muted-foreground mb-4 text-sm">
@@ -223,25 +231,32 @@ export function SubscriptionPlansGridView({
                 )}
               </div>
               <div className="mb-1 flex items-baseline gap-1">
-                <span className="mr-1 text-2xl font-bold">€</span>
                 {hasCustomPlan ? (
-                  <span className="text-2xl font-bold">{(activeAmount / 100).toFixed(0)}</span>
+                  <span className="text-2xl font-bold">
+                    <ConvertedCurrencyAmount
+                      amount={minorToMajor(activeAmount, 'EUR')}
+                      currency="EUR"
+                    />
+                  </span>
                 ) : (
-                  <FormControlInput
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={3}
-                    value={customAmount}
-                    onChange={e => onAmountChange(e.target.value.slice(-1))}
-                    onKeyDown={e => {
-                      if (e.key === 'Backspace') {
-                        e.preventDefault();
-                        onAmountChange('');
-                      }
-                    }}
-                    placeholder="0"
-                    className="h-10 w-20"
-                  />
+                  <>
+                    <span className="text-muted-foreground text-sm font-semibold">EUR</span>
+                    <FormControlInput
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={3}
+                      value={customAmount}
+                      onChange={e => onAmountChange(e.target.value.slice(-1))}
+                      onKeyDown={e => {
+                        if (e.key === 'Backspace') {
+                          e.preventDefault();
+                          onAmountChange('');
+                        }
+                      }}
+                      placeholder="0"
+                      className="h-10 w-20"
+                    />
+                  </>
                 )}
               </div>
               <p className="text-muted-foreground text-xs">/month</p>
@@ -278,6 +293,20 @@ export function SubscriptionPlansGridView({
             {translateText(
               'generated.inline.0996_all_features_remain_free_your_contribution_he_4b402e38'
             )}
+          </p>
+          <p className="text-muted-foreground mt-1 text-xs">
+            {language === 'de'
+              ? 'Der Checkout wird in EUR abgerechnet. Umgerechnete Werte sind Schätzungen mit '
+              : 'Checkout is charged in EUR. Converted values are estimates using '}
+            <a
+              href="https://frankfurter.dev/"
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              {language === 'de' ? 'Kursen von Frankfurter' : 'Frankfurter rates'}
+            </a>
+            .
           </p>
         </div>
       </CardContent>

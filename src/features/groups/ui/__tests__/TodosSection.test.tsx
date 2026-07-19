@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -23,7 +23,7 @@ vi.mock('@/features/todos/hooks/useTodoFilters', () => ({
     deleteCustomFilter: vi.fn(),
     activeCustomFilterIds: [],
     toggleCustomFilter: vi.fn(),
-    filteredTodos: [],
+    filteredTodos: [{ id: 'todo-1' }],
     hasActiveFilters: false,
   }),
 }));
@@ -71,5 +71,14 @@ describe('TodosSection', () => {
     render(<TodosSection {...baseProps} canManageTodos />);
 
     expect(screen.queryByText('Add Task')).not.toBeNull();
+  });
+
+  it('switches the group archive to list view', () => {
+    render(<TodosSection {...baseProps} canManageTodos />);
+
+    expect(screen.queryByTestId('kanban-board')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Show archive/ }));
+    expect(screen.queryByTestId('todo-list')).not.toBeNull();
+    expect(screen.queryByTestId('kanban-board')).toBeNull();
   });
 });

@@ -48,7 +48,7 @@ export interface AssistantSkillOption {
 export interface AssistantToolOption {
   name: AiToolName;
   label: string;
-  kind: 'search' | 'create';
+  kind: 'search' | 'create' | 'update';
   description: string;
   enabled: boolean;
 }
@@ -74,6 +74,7 @@ interface AssistantChatRequestPayload {
   skillSlugs: string[];
   toolNames: AiToolName[];
   attachments: AiChatAttachment[];
+  timeZone: string;
 }
 
 interface ActiveToolCallState {
@@ -435,6 +436,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
               skillSlugs: selectedSkills.map(skill => skill.slug),
               toolNames: selectedToolNames,
               attachments: attachmentsForRequest,
+              timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
             }
           : null);
 

@@ -2,7 +2,11 @@
 
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { isPolityLink, parseMessageWithLinks } from '@/features/messages/utils/url-utils.ts';
+import {
+  hasHttpUrlCredentials,
+  isPolityLink,
+  parseMessageWithLinks,
+} from '@/features/messages/utils/url-utils.ts';
 import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 import { cn } from '@/features/shared/utils/utils';
 import { LinkPreview } from './LinkPreview.tsx';
@@ -22,7 +26,10 @@ export function MessageContent({
 }: MessageContentProps) {
   const parts = parseMessageWithLinks(content);
   const urls = parts.filter(p => p.type === 'url').map(p => p.content);
-  const previewUrls = hidePolityLinkPreviews ? urls.filter(url => !isPolityLink(url)) : urls;
+  const safePreviewUrls = urls.filter(url => !hasHttpUrlCredentials(url));
+  const previewUrls = hidePolityLinkPreviews
+    ? safePreviewUrls.filter(url => !isPolityLink(url))
+    : safePreviewUrls;
 
   return (
     <div className={cn('space-y-2', className)}>
@@ -66,7 +73,7 @@ export function MessageContent({
               <td className="border-b px-3 py-2 align-top last:border-b-0">{children}</td>
             ),
             a: ({ href = '', children }) => {
-              if (!href) {
+              if (!href || hasHttpUrlCredentials(href)) {
                 return <span>{children}</span>;
               }
               if (isInternalPolityHref(href)) {
@@ -99,6 +106,10 @@ export function MessageContent({
         <div className="whitespace-pre-wrap">
           {parts.map((part, index) => {
             if (part.type === 'text') {
+              return <span key={index}>{part.content}</span>;
+            }
+
+            if (hasHttpUrlCredentials(part.content)) {
               return <span key={index}>{part.content}</span>;
             }
 
@@ -147,6 +158,10 @@ function isInternalPolityHref(href: string): boolean {
 }
 
 function safeMarkdownUrlTransform(url: string): string {
+  if (hasHttpUrlCredentials(url)) {
+    return '';
+  }
+
   if (/^\/(?!\/)/.test(url) || /^(https?:|mailto:)/i.test(url)) {
     return defaultUrlTransform(url);
   }

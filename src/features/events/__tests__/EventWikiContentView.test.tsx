@@ -39,7 +39,8 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, fallback?: string) => fallback ?? key,
+  translate: (key: string, paramsOrFallback?: string | Record<string, unknown>) =>
+    typeof paramsOrFallback === 'string' ? paramsOrFallback : key,
   useTranslation: () => ({
     t: (key: string) => key,
   }),
@@ -170,7 +171,8 @@ function renderEventWikiContent(overrides: Partial<EventWikiContentViewProps> = 
     shouldDisableParticipationRequest: false,
     subscribeLoading: false,
     subscriberCount: 0,
-    t: (key: string, fallback?: string) => fallback ?? key,
+    t: (key: string, paramsOrFallback?: string | Record<string, unknown>) =>
+      typeof paramsOrFallback === 'string' ? paramsOrFallback : key,
     toggleSubscribe: vi.fn(),
     user: null,
   };
@@ -179,6 +181,31 @@ function renderEventWikiContent(overrides: Partial<EventWikiContentViewProps> = 
 }
 
 describe('EventWikiContentView', () => {
+  it('shows only share actions to unauthenticated visitors', () => {
+    renderEventWikiContent({ user: null, elections: [{ id: 'election-1' }] });
+
+    expect(screen.getByRole('button', { name: 'share' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'subscribe' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'participate' })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'generated.inline.0428_kandidieren_b1de92a5' })
+    ).toBeNull();
+  });
+
+  it('keeps event actions visible to authenticated users', () => {
+    renderEventWikiContent({
+      user: { id: 'user-1' },
+      elections: [{ id: 'election-1' }],
+    });
+
+    expect(screen.getByRole('button', { name: 'subscribe' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'participate' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'generated.inline.0428_kandidieren_b1de92a5' })
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'share' })).toBeTruthy();
+  });
+
   it('uses computed agenda counters instead of stale persisted event counters', () => {
     renderEventWikiContent({
       amendmentsCount: 2,

@@ -80,7 +80,9 @@ export function RolesManagementCardView({
       cell: ({ row }) => (
         <CountBadge
           count={row.original.action_rights?.length ?? 0}
-          label={translateText('generated.inline.0016_rights_1407cb23')}
+          label={translateText('components.membershipTables.rights', {
+            count: row.original.action_rights?.length ?? 0,
+          })}
         />
       ),
     },

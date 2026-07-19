@@ -6,6 +6,7 @@ import { getRightToneClasses } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status/StatusBadges';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 
 export const RIGHT_TYPES = [
   'informationRight',
@@ -128,18 +129,19 @@ export function RightBadgeVisual({
     <span className="relative inline-flex shrink-0 overflow-visible align-middle">
       {badge}
       {requestKind && requestStatusLabel ? (
-        <span
-          className={cn(
-            'border-background absolute -top-1 -right-1 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full border shadow-sm',
-            requestKind === 'incoming'
-              ? 'text-background bg-[var(--badge-info-fg)]'
-              : 'text-background bg-[var(--badge-warning-fg)]'
-          )}
-          aria-label={requestStatusLabel}
-          title={requestStatusLabel}
-        >
-          <RequestIcon className="h-2 w-2" />
-        </span>
+        <TooltipHint content={requestStatusLabel}>
+          <span
+            className={cn(
+              'border-background absolute -top-1 -right-1 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full border shadow-sm',
+              requestKind === 'incoming'
+                ? 'text-background bg-[var(--badge-info-fg)]'
+                : 'text-background bg-[var(--badge-warning-fg)]'
+            )}
+            aria-label={requestStatusLabel}
+          >
+            <RequestIcon className="h-2 w-2" />
+          </span>
+        </TooltipHint>
       ) : null}
     </span>
   );

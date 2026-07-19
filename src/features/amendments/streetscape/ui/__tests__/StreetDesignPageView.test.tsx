@@ -62,6 +62,18 @@ afterEach(() => {
 });
 
 describe('StreetDesignPageView', () => {
+  it('hides both action bars for a signed-out read-only viewer', () => {
+    render(
+      <StreetDesignPageView
+        {...createPageProps({ showActionBars: false, readOnly: true, currentUserId: undefined })}
+      />
+    );
+
+    expect(screen.queryByTestId('street-design-topbar')).toBeNull();
+    expect(screen.queryByTestId('street-design-secondary-action-bar')).toBeNull();
+    expect(screen.getByTestId('street-scene-canvas')).toBeTruthy();
+  });
+
   it('shows KPI badges and opens the navigation help popover', () => {
     render(<StreetDesignPageView {...createPageProps()} />);
 
@@ -188,6 +200,7 @@ function createPageProps(overrides: Partial<Parameters<typeof StreetDesignPageVi
     amendmentId: 'amendment-1',
     amendment: { title: 'Safer street' },
     isLoading: false,
+    showActionBars: true,
     readOnly: false,
     canEditMapContext: true,
     mode: 'edit',

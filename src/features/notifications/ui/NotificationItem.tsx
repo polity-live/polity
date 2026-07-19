@@ -10,7 +10,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { LinkSurface } from '@/features/shared/ui/navigation/LinkSurface.tsx';
 import { SmartLink, isPlainLeftClick } from '@/features/shared/ui/navigation/SmartLink.tsx';
-import { Users, X } from 'lucide-react';
+import { Mail, MailOpen, RotateCcw, Trash2, Users } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import type { Notification, NotificationType } from '../types/notification.types';
 import { getNotificationIcon } from '../utils/notificationConstants';
@@ -18,6 +18,7 @@ import {
   formatTime as formatNotificationTime,
   getDisplayName,
   getNotificationNavigationHref,
+  isNotificationRead,
 } from '../logic/notificationHelpers';
 import {
   useTranslation,
@@ -27,6 +28,17 @@ import {
   ENTITY_COLORS,
   type EntityType as EntityColorType,
 } from '@/features/shared/utils/entity-colors';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/features/shared/ui/ui/alert-dialog';
 
 type NotificationEntity =
   | NonNullable<Notification['recipient_group']>
@@ -41,9 +53,15 @@ type NotificationEntity =
 interface NotificationItemProps {
   notification: Notification;
   onNotificationClick: (notification: Notification) => void | Promise<void>;
+  onMarkAsRead?: (notification: Notification, e: MouseEvent) => void | Promise<void>;
+  onToggleRead?: (notification: Notification, e: MouseEvent) => void | Promise<void>;
   onDeleteNotification?: (notificationId: string, e: MouseEvent) => void | Promise<void>;
+  onRestoreNotification?: (notificationId: string, e: MouseEvent) => void | Promise<void>;
+  onPurgeNotification?: (notificationId: string, e: MouseEvent) => void | Promise<void>;
+  onDeleteForEveryone?: (notificationId: string) => void | Promise<void>;
+  canDeleteForEveryone?: boolean;
   formatTime?: (date: string | number) => string;
-  mode?: 'global' | 'entity';
+  mode?: 'global' | 'entity' | 'trash';
   showRecipientBadge?: boolean;
 }
 
@@ -274,7 +292,13 @@ function EntityMeta({
 export function NotificationItem({
   notification,
   onNotificationClick,
+  onMarkAsRead,
+  onToggleRead,
   onDeleteNotification,
+  onRestoreNotification,
+  onPurgeNotification,
+  onDeleteForEveryone,
+  canDeleteForEveryone = false,
   formatTime = formatNotificationTime,
   mode = 'global',
   showRecipientBadge = true,
@@ -291,6 +315,13 @@ export function NotificationItem({
   const entityColors = entityType ? ENTITY_COLORS[entityType] : null;
   const hasEntityContext = Boolean(recipientEntity || onBehalfEntity);
   const hasRelatedUser = Boolean(notification.related_user);
+  const isRead = isNotificationRead(notification);
+  const message = notification.message?.replaceAll(
+    '{{paymentDescription}}',
+    t('common.creationFinalization.entities.payment')
+  );
+  const showDeleteForEveryone =
+    mode !== 'trash' && Boolean(onDeleteForEveryone) && canDeleteForEveryone;
 
   const cardContent = (
     <CardContent className="flex items-start gap-3 p-3">
@@ -317,7 +348,7 @@ export function NotificationItem({
 
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-col gap-1">
-            <p className={cn('text-sm font-medium', !notification.is_read && 'font-semibold')}>
+            <p className={cn('text-sm font-medium', !isRead && 'font-semibold')}>
               {notification.title}
             </p>
             {showRecipientBadge && hasEntityContext && (recipientEntity || onBehalfEntity) ? (
@@ -327,31 +358,134 @@ export function NotificationItem({
               >
                 <Users className="mr-1 h-3 w-3 shrink-0" />
                 <span className="truncate">
-                  {getEntityLabel(recipientEntity || onBehalfEntity)}{' '}
-                  {t('features.notifications.item.notification')}
+                  {getEntityLabel(recipientEntity || onBehalfEntity)}
                 </span>
               </BadgeControl>
             ) : null}
           </div>
-          {!notification.is_read ? <BadgeControl variant="default" size="dot" /> : null}
+          {!isRead ? (
+            <BadgeControl
+              tone="success"
+              size="xs"
+              shape="rounded"
+              textStyle="mono"
+              textTransform="uppercase"
+              className="font-bold tracking-wide shadow-sm"
+            >
+              {t('features.notifications.item.new')}
+            </BadgeControl>
+          ) : null}
         </div>
 
-        <p className="text-muted-foreground text-sm">{notification.message}</p>
+        <p className="text-muted-foreground text-sm">{message}</p>
         <div className="flex items-center justify-between gap-3">
           <p className="text-muted-foreground text-xs">{formatTime(notification.created_at)}</p>
-          {onDeleteNotification ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 shrink-0"
-              onClick={e => {
-                e.preventDefault();
-                void onDeleteNotification(notification.id, e);
-              }}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          ) : null}
+          <div className="flex items-center gap-1">
+            {mode !== 'trash' && (onToggleRead || (!isRead && onMarkAsRead)) ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0"
+                aria-label={t(
+                  isRead
+                    ? 'features.notifications.item.markUnread'
+                    : 'features.notifications.actions.markRead'
+                )}
+                title={t(
+                  isRead
+                    ? 'features.notifications.item.markUnread'
+                    : 'features.notifications.actions.markRead'
+                )}
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  void (onToggleRead ?? onMarkAsRead)?.(notification, e);
+                }}
+              >
+                {isRead ? <Mail className="h-3.5 w-3.5" /> : <MailOpen className="h-3.5 w-3.5" />}
+              </Button>
+            ) : null}
+            {mode === 'trash' && onRestoreNotification ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0"
+                aria-label={t('features.notifications.item.restore')}
+                title={t('features.notifications.item.restore')}
+                onClick={e => void onRestoreNotification(notification.id, e)}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </Button>
+            ) : null}
+            {mode === 'trash' && onPurgeNotification ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-destructive h-6 w-6 shrink-0"
+                aria-label={t('features.notifications.item.removePermanently')}
+                title={t('features.notifications.item.removePermanently')}
+                onClick={e => void onPurgeNotification(notification.id, e)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            ) : null}
+            {mode !== 'trash' && onDeleteNotification ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0"
+                aria-label={t('features.notifications.item.hideForMe')}
+                title={t('features.notifications.item.hideForMe')}
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  void onDeleteNotification(notification.id, e);
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            ) : null}
+            {showDeleteForEveryone ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive h-6 w-6 shrink-0"
+                    aria-label={t('features.notifications.item.deleteForEveryone')}
+                    title={t('features.notifications.item.deleteForEveryone')}
+                    onClick={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {t('features.notifications.globalDelete.title')}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t('features.notifications.globalDelete.description', {
+                        entity: getEntityLabel(recipientEntity),
+                      })}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => void onDeleteForEveryone?.(notification.id)}
+                    >
+                      {t('features.notifications.item.deleteForEveryone')}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : null}
+          </div>
         </div>
       </div>
     </CardContent>

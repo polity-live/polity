@@ -30,6 +30,9 @@ export const notification = table('notification')
     recipient_blog_id: string().optional(),
     category: string().optional(),
     created_at: number(),
+    updated_at: number(),
+    deleted_at: number().optional(),
+    deleted_by_user_id: string().optional(),
   })
   .primaryKey('id');
 
@@ -71,5 +74,23 @@ export const notificationRead = table('notification_read')
     entity_id: string(),
     read_by_user_id: string().optional(),
     read_at: number(),
+  })
+  .primaryKey('id');
+
+/**
+ * Canonical per-recipient inbox state. A missing row means an unread, active
+ * notification. notification_read remains temporarily for rolling-client
+ * compatibility and is removed after the migration window.
+ */
+export const notificationUserState = table('notification_user_state')
+  .columns({
+    id: string(),
+    notification_id: string(),
+    user_id: string(),
+    read_at: number().optional(),
+    dismissed_at: number().optional(),
+    purged_at: number().optional(),
+    created_at: number(),
+    updated_at: number(),
   })
   .primaryKey('id');

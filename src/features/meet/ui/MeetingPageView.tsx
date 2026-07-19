@@ -25,6 +25,7 @@ type MeetingPageViewProps =
       bookingCount: number;
       meetingId: string;
       description: string;
+      isAuthenticated: boolean;
       isOwner: boolean;
       hasBooked: boolean;
       isAvailable: boolean;
@@ -72,6 +73,7 @@ export function MeetingPageView(props: MeetingPageViewProps) {
         meetingId={props.meetingId}
         title={props.title}
         description={props.description}
+        isAuthenticated={props.isAuthenticated}
         isOwner={props.isOwner}
         hasBooked={props.hasBooked}
         isAvailable={props.isAvailable}

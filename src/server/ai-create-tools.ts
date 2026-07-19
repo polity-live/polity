@@ -23,6 +23,15 @@ import { serverMutators } from '@/zero/server-mutators';
 import { zql } from '@/zero/schema';
 import { VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  formatDateInputInTimeZone,
+  toTimestampInTimeZone,
+} from '@/features/shared/logic/localDateTime';
+import {
+  currencyCodeSchema,
+  formatCurrencyMajor,
+  type CurrencyCode,
+} from '@/features/shared/logic/currency';
 
 const visibilitySchema = z.enum(['public', 'authenticated', 'private']);
 const groupTypeSchema = z.enum(['base', 'hierarchical', 'sibling']);
@@ -135,7 +144,7 @@ interface CreateEventArgs {
   invited_user_ids?: string[];
 }
 
-function formatDate(value: number | null | undefined): string | null {
+export function formatDate(value: number | null | undefined): string | null {
   if (!Number.isFinite(value)) {
     return null;
   }
@@ -146,14 +155,11 @@ function formatDate(value: number | null | undefined): string | null {
   }).format(new Date(value ?? 0));
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(value);
+export function formatCurrency(value: number, currency: CurrencyCode): string {
+  return formatCurrencyMajor(value, currency, 'de', { currencyDisplay: 'code' });
 }
 
-function truncate(value: string | null | undefined, maxLength = 240): string | null {
+export function truncate(value: string | null | undefined, maxLength = 240): string | null {
   if (!value) {
     return null;
   }
@@ -166,21 +172,26 @@ function truncate(value: string | null | undefined, maxLength = 240): string | n
   return `${trimmed.slice(0, maxLength - 1)}…`;
 }
 
-function parseOptionalTimestamp(value?: string | null): number | null {
+export function parseOptionalTimestamp(
+  value?: string | null,
+  options: { timeZone?: string; dateOnlyBoundary?: 'start' | 'end' } = {}
+): number | null {
   const normalized = value?.trim();
   if (!normalized) {
     return null;
   }
 
-  const parsed = Date.parse(normalized);
-  if (Number.isNaN(parsed)) {
+  const parsed = toTimestampInTimeZone(normalized, options.timeZone, {
+    dateOnlyBoundary: options.dateOnlyBoundary,
+  });
+  if (parsed === null) {
     throw new Error(`Invalid date/time value: ${normalized}`);
   }
 
   return parsed;
 }
 
-function normalizeStringList(values?: readonly string[] | null): string[] {
+export function normalizeStringList(values?: readonly string[] | null): string[] {
   return [...new Set((values ?? []).map(value => value.trim()).filter(Boolean))];
 }
 
@@ -193,7 +204,7 @@ function isUuidReference(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
-function toRichText(
+export function toRichText(
   value?: string | null
 ): { type: string; children: { text: string }[] }[] | null {
   const normalized = value?.trim();
@@ -204,7 +215,7 @@ function toRichText(
   return [{ type: 'p', children: [{ text: normalized }] }];
 }
 
-function buildAttachment(
+export function buildAttachment(
   entityType: AiAttachmentEntity,
   entityId: string,
   title: string,
@@ -245,13 +256,25 @@ function toItemSummary(attachment: AiChatAttachment): ToolItemSummary {
   };
 }
 
-function buildCreatedResult(summary: string, attachment: AiChatAttachment, route: string) {
+export function buildMutationResult(
+  summary: string,
+  attachment: AiChatAttachment,
+  route: string,
+  contextType: NonNullable<AiChatAttachment['context_type']> = 'output'
+) {
+  const contextAttachment = { ...attachment, context_type: contextType };
   return {
     summary,
     route,
-    items: [toItemSummary(attachment)],
-    attachments: [attachment],
+    items: [toItemSummary(contextAttachment)],
+    attachments: [contextAttachment],
   };
+}
+
+const buildCreatedResult = buildMutationResult;
+
+export function buildUpdatedResult(summary: string, attachment: AiChatAttachment, route: string) {
+  return buildMutationResult(summary, attachment, route, 'update');
 }
 
 async function assertGroupAccess(
@@ -675,7 +698,7 @@ async function createEventWithDefaults(
   await runZeroMutator(tx, serverMutators.events.create(buildEventCreateArgs(args)), ctx);
 }
 
-export function buildAiCreateTools(userId: string) {
+export function buildAiCreateTools(userId: string, timeZone = 'UTC') {
   const zeroContext = createZeroContext(userId);
 
   return {
@@ -913,7 +936,7 @@ export function buildAiCreateTools(userId: string) {
               visibility,
               location_type: 'physical',
               location_name: constitutionalEvent.location ?? null,
-              start_date: parseOptionalTimestamp(constitutionalEvent.startsAt),
+              start_date: parseOptionalTimestamp(constitutionalEvent.startsAt, { timeZone }),
               invited_user_ids: normalizedInviteUserIds,
             });
           }
@@ -1004,8 +1027,8 @@ export function buildAiCreateTools(userId: string) {
         totalDelegateSeats,
       }) => {
         const eventId = crypto.randomUUID();
-        const startTimestamp = parseOptionalTimestamp(startsAt);
-        const endTimestamp = parseOptionalTimestamp(endsAt);
+        const startTimestamp = parseOptionalTimestamp(startsAt, { timeZone });
+        const endTimestamp = parseOptionalTimestamp(endsAt, { timeZone });
         let resolvedGroupId: string | null = null;
         let groupName: string | undefined;
 
@@ -1038,8 +1061,10 @@ export function buildAiCreateTools(userId: string) {
             has_delegates: eventType === 'delegate_assembly',
             total_delegate_seats:
               eventType === 'delegate_assembly' ? (totalDelegateSeats ?? null) : null,
-            delegates_nomination_deadline: parseOptionalTimestamp(delegatesNominationDeadline),
-            amendment_deadline: parseOptionalTimestamp(amendmentDeadline),
+            delegates_nomination_deadline: parseOptionalTimestamp(delegatesNominationDeadline, {
+              timeZone,
+            }),
+            amendment_deadline: parseOptionalTimestamp(amendmentDeadline, { timeZone }),
             invited_user_ids: normalizeStringList(invitedUserIds),
           });
 
@@ -1335,10 +1360,8 @@ export function buildAiCreateTools(userId: string) {
       execute: async ({ title, date, visibility, hashtags, imageUrl, groupId }) => {
         const blogId = crypto.randomUUID();
         const now = Date.now();
-        const publishedAt = (() => {
-          const resolved = date?.trim() ? new Date(date.trim()) : new Date(now);
-          return Number.isNaN(resolved.getTime()) ? new Date(now) : resolved;
-        })();
+        const localDate = date?.trim() || formatDateInputInTimeZone(now, timeZone);
+        const publishedAt = new Date(toTimestampInTimeZone(localDate, timeZone) ?? now);
         let resolvedGroupId: string | null = null;
 
         await executeZeroTransaction(zeroContext, async (tx, ctx) => {
@@ -1353,7 +1376,7 @@ export function buildAiCreateTools(userId: string) {
               title,
               description: '',
               content: null,
-              date: date?.trim() || new Date().toISOString().split('T')[0],
+              date: localDate,
               image_url: imageUrl ?? null,
               video_url: null,
               visibility,
@@ -1375,7 +1398,7 @@ export function buildAiCreateTools(userId: string) {
           'blog',
           blogId,
           title,
-          [date?.trim() || new Date().toISOString().split('T')[0], visibility].join(' · '),
+          [localDate, visibility].join(' · '),
           null,
           {
             id: blogId,
@@ -1431,7 +1454,10 @@ export function buildAiCreateTools(userId: string) {
         const todoId = crypto.randomUUID();
         const now = Date.now();
         const assignedUserId = assigneeId?.trim() || userId;
-        const dueTimestamp = parseOptionalTimestamp(dueDate);
+        const dueTimestamp = parseOptionalTimestamp(dueDate, {
+          timeZone,
+          dateOnlyBoundary: 'end',
+        });
         let resolvedEventId: string | null = null;
         let notificationGroupId: string | null = null;
         let groupName: string | undefined;
@@ -1632,6 +1658,7 @@ export function buildAiCreateTools(userId: string) {
         label: z.string().trim().min(1),
         type: paymentTypeSchema.default('donation'),
         amount: z.number().positive(),
+        currency: currencyCodeSchema.optional(),
         counterpartyUserId: z.string().trim().min(1).optional(),
         counterpartyGroupId: z
           .string()
@@ -1646,6 +1673,7 @@ export function buildAiCreateTools(userId: string) {
         label,
         type,
         amount,
+        currency,
         counterpartyUserId,
         counterpartyGroupId,
       }) => {
@@ -1662,8 +1690,13 @@ export function buildAiCreateTools(userId: string) {
         let groupName = 'Group';
         let resolvedCounterpartyGroupId: string | null = null;
         let counterpartyLabel: string | null = null;
+        let resolvedCurrency: CurrencyCode = currency ?? 'EUR';
 
         await executeZeroTransaction(zeroContext, async (tx, ctx) => {
+          if (!currency) {
+            const preference = await tx.run(zql.user_preference.where('user_id', userId).one());
+            resolvedCurrency = (preference?.display_currency as CurrencyCode | undefined) ?? 'EUR';
+          }
           const accessibleGroup = await assertGroupAccess(tx, userId, groupId);
           notificationGroupId = accessibleGroup.id;
           groupName = accessibleGroup.name ?? 'Group';
@@ -1685,6 +1718,7 @@ export function buildAiCreateTools(userId: string) {
               label,
               type,
               amount,
+              currency: resolvedCurrency,
               payer_user_id: direction === 'income' ? (counterpartyUserId ?? null) : null,
               payer_group_id:
                 direction === 'income' ? resolvedCounterpartyGroupId : notificationGroupId,
@@ -1707,7 +1741,7 @@ export function buildAiCreateTools(userId: string) {
           'payment',
           paymentId,
           label,
-          [direction, type, formatCurrency(amount)].join(' · '),
+          [direction, type, formatCurrency(amount, resolvedCurrency)].join(' · '),
           null,
           {
             id: paymentId,
@@ -1715,6 +1749,7 @@ export function buildAiCreateTools(userId: string) {
             title: label,
             createdAt: new Date(),
             amount,
+            currency: resolvedCurrency,
             paymentType: type,
             paymentDirection: direction,
             groupId: notificationGroupId,

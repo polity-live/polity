@@ -17,9 +17,9 @@ import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 interface MeetingListViewProps {
   instances: MeetingInstance[];
   isOwner: boolean;
-  onBook: (instance: MeetingInstance) => void;
-  onCancel: (instance: MeetingInstance) => void;
-  onDelete: (eventId: string) => void;
+  onBook?: (instance: MeetingInstance) => void;
+  onCancel?: (instance: MeetingInstance) => void;
+  onDelete?: (eventId: string) => void;
   selectedDate: Date;
   onSelectInstance?: (instance: MeetingInstance) => void;
   creatorId?: string;

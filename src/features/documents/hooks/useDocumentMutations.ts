@@ -11,6 +11,10 @@ import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  combineMutationResults,
+  trackMutationFinalization,
+} from '@/features/notifications/utils/mutation-finalization';
 
 interface UseDocumentMutationsResult {
   createDocument: (title: string, groupId: string, userId: string) => Promise<string | null>;
@@ -61,14 +65,15 @@ export function useDocumentMutations(_groupId: string): UseDocumentMutationsResu
     }
 
     setIsCreating(true);
+    let finalizationStarted = false;
 
     try {
       // Create an amendment as the group-linking container for this document.
       // Documents are associated with groups through amendment.group_id, so we
       // must create a minimal amendment first, then attach the document to it.
       const amendmentId = crypto.randomUUID();
-      await waitForClientApply(
-        createAmendment({
+      const amendmentResult = createAmendment(
+        {
           id: amendmentId,
           title,
           group_id: groupId,
@@ -96,12 +101,13 @@ export function useDocumentMutations(_groupId: string): UseDocumentMutationsResu
           youtube: null,
           linkedin: null,
           website: null,
-        })
+        },
+        { notificationMode: 'silent' }
       );
 
       const docId = crypto.randomUUID();
-      await waitForClientApply(
-        createDocAction({
+      const documentResult = createDocAction(
+        {
           id: docId,
           amendment_id: amendmentId,
           content: [
@@ -115,22 +121,35 @@ export function useDocumentMutations(_groupId: string): UseDocumentMutationsResu
             },
           ],
           editing_mode: 'single',
-        })
+        },
+        { notificationMode: 'silent' }
       );
 
       // Add creator as collaborator so the document is user-attributed.
-      await waitForClientApply(
-        addCollaborator({
+      const collaboratorResult = addCollaborator(
+        {
           id: crypto.randomUUID(),
           document_id: docId,
           user_id: userId,
           role_id: null,
           status: 'active',
           visibility: 'group',
-        })
+        },
+        { notificationMode: 'silent' }
       );
 
-      toast.success(translateText('generated.inline.0400_document_created_successfully_730aa2a8'));
+      const combinedResult = combineMutationResults([
+        amendmentResult,
+        documentResult,
+        collaboratorResult,
+      ]);
+      trackMutationFinalization({
+        result: combinedResult,
+        entityKind: 'document',
+        operationId: docId,
+      });
+      finalizationStarted = true;
+      await waitForClientApply(combinedResult);
 
       // Navigate to the new document
       navigate({ to: `/group/${groupId}/editor/${docId}` });
@@ -138,7 +157,9 @@ export function useDocumentMutations(_groupId: string): UseDocumentMutationsResu
       return docId;
     } catch (error) {
       console.error('Failed to create document:', error);
-      toast.error(translateText('generated.inline.0401_failed_to_create_document_c9b3aacf'));
+      if (!finalizationStarted) {
+        toast.error(translateText('generated.inline.0401_failed_to_create_document_c9b3aacf'));
+      }
       return null;
     } finally {
       setIsCreating(false);

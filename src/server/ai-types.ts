@@ -33,6 +33,7 @@ export const aiChatRequestSchema = z.object({
   skillSlugs: z.array(z.string().trim().min(1)).default([]),
   toolNames: z.array(aiToolNameSchema).default([]),
   attachments: z.array(aiChatAttachmentSchema).default([]),
+  timeZone: z.string().trim().min(1).default('UTC'),
 });
 
 export const aiCredentialSaveSchema = z.object({

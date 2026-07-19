@@ -11,7 +11,9 @@ vi.mock('@tanstack/react-router', () => ({
     </a>
   ),
 }));
-vi.mock('../LinkPreview.tsx', () => ({ LinkPreview: () => null }));
+vi.mock('../LinkPreview.tsx', () => ({
+  LinkPreview: ({ url }: { url: string }) => <div data-testid="link-preview">{url}</div>,
+}));
 
 afterEach(cleanup);
 
@@ -52,5 +54,48 @@ describe('MessageContent Markdown', () => {
   it('keeps normal chat content as plain text', () => {
     render(<MessageContent content="**not bold**" />);
     expect(screen.getByText('**not bold**').tagName).toBe('SPAN');
+  });
+
+  it('hides Polity entity previews while preserving inline links and external previews', () => {
+    render(
+      <MessageContent content="See /group/group-1 and https://example.com" hidePolityLinkPreviews />
+    );
+
+    expect(screen.getByRole('link', { name: '/group/group-1' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'https://example.com' })).toBeTruthy();
+    expect(screen.getAllByTestId('link-preview')).toHaveLength(1);
+    expect(screen.getByTestId('link-preview').textContent).toBe('https://example.com');
+  });
+
+  it('keeps Polity entity previews when preview suppression is disabled', () => {
+    render(<MessageContent content="See /group/group-1 and https://example.com" />);
+
+    expect(screen.getAllByTestId('link-preview')).toHaveLength(2);
+  });
+
+  it('blocks credential-bearing HTTP URLs in Markdown and link previews', () => {
+    render(
+      <MessageContent
+        renderMarkdown
+        content={
+          '[Suspicious](https://polity@example.com/group/group-1) [Password](https://user:secret@example.com/private)'
+        }
+      />
+    );
+
+    expect(screen.queryByRole('link', { name: 'Suspicious' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Password' })).toBeNull();
+    expect(screen.getByText('Suspicious').tagName).toBe('SPAN');
+    expect(screen.getByText('Password').tagName).toBe('SPAN');
+    expect(screen.queryByTestId('link-preview')).toBeNull();
+  });
+
+  it('renders a credential-bearing plain URL as text without a preview', () => {
+    const suspiciousUrl = 'https://polity@example.com/group/group-1';
+    render(<MessageContent content={suspiciousUrl} />);
+
+    expect(screen.queryByRole('link', { name: suspiciousUrl })).toBeNull();
+    expect(screen.getByText(suspiciousUrl).tagName).toBe('SPAN');
+    expect(screen.queryByTestId('link-preview')).toBeNull();
   });
 });

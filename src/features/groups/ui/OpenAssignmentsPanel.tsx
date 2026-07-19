@@ -12,6 +12,7 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { CalendarPlus2, CheckCircle2, Clock3, Search, Vote } from 'lucide-react';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 import {
   getElectionModeLabel,
   normalizeDelegateElectionMode,
@@ -357,13 +358,11 @@ function GroupInlineLink({
   }
 
   return (
-    <a
-      href={`/group/${group.id}`}
-      className="text-primary underline-offset-4 hover:underline"
-      title={label}
-    >
-      {label}
-    </a>
+    <TooltipHint content={label}>
+      <a href={`/group/${group.id}`} className="text-primary underline-offset-4 hover:underline">
+        {label}
+      </a>
+    </TooltipHint>
   );
 }
 
@@ -382,9 +381,9 @@ function DelegateAssignmentDescription({ assignment }: { assignment: GroupOpenAs
       <GroupInlineLink group={assignment.sourceGroup} fallback={sourceGroupFallback} />{' '}
       {t('features.groups.memberships.openAssignments.delegateDescription.hasCurrently')}{' '}
       {seatCount.toLocaleString()}{' '}
-      {seatCount === 1
-        ? t('features.groups.memberships.openAssignments.delegateDescription.seatSingular')
-        : t('features.groups.memberships.openAssignments.delegateDescription.seatPlural')}{' '}
+      {t('features.groups.memberships.openAssignments.delegateDescription.seats', {
+        count: seatCount,
+      })}{' '}
       {t('features.groups.memberships.openAssignments.delegateDescription.for')}{' '}
       <GroupInlineLink group={assignment.targetGroup} fallback={targetGroupFallback} />.
     </p>
@@ -671,7 +670,9 @@ export function OpenAssignmentsPanel({
               <div className="flex flex-wrap gap-2">
                 <CountBadge
                   count={assignment.seatCount ?? 0}
-                  label={t('features.groups.memberships.openAssignments.seatCount')}
+                  label={t('features.groups.memberships.openAssignments.seatCount', {
+                    count: assignment.seatCount ?? 0,
+                  })}
                 />
                 <CountBadge
                   count={assignment.completedSeatCount ?? 0}

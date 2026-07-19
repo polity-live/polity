@@ -28,6 +28,7 @@ export function useEditorViewModel({
   backUrl,
   backLabel,
   compactToolbarSpacing = false,
+  showTopToolbar = true,
   agendaItemId,
   processBranchId,
 }: EditorViewProps) {
@@ -378,6 +379,7 @@ export function useEditorViewModel({
     canVoteOnChangeRequests,
     capabilities,
     compactToolbarSpacing,
+    showTopToolbar,
     content,
     contentEntityId,
     currentUser,

@@ -8,6 +8,8 @@ export {
   updateTodoSchema,
   deleteTodoSchema,
   toggleCompleteTodoSchema,
+  archiveTodoSchema,
+  unarchiveTodoSchema,
   selectTodoAssignmentSchema,
   createTodoAssignmentSchema,
   deleteTodoAssignmentSchema,

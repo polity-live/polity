@@ -42,9 +42,11 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, fallback?: string) => fallback ?? key,
+  translate: (key: string, paramsOrFallback?: string | Record<string, unknown>) =>
+    typeof paramsOrFallback === 'string' ? paramsOrFallback : key,
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
+    t: (key: string, paramsOrFallback?: string | Record<string, unknown>) =>
+      typeof paramsOrFallback === 'string' ? paramsOrFallback : key,
   }),
 }));
 

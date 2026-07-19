@@ -43,14 +43,16 @@ export function BlogTimelineCard({ blog, href, className }: BlogTimelineCardProp
     {
       icon: Users,
       value: subscription.subscriberCount ?? 0,
-      label: t('features.timeline.cards.subscribers'),
+      label: t('features.timeline.cards.subscribers', {
+        count: subscription.subscriberCount ?? 0,
+      }),
     },
     ...(blog.commentCount !== undefined
       ? [
           {
             icon: MessageSquare,
             value: blog.commentCount,
-            label: t('features.timeline.cards.comments'),
+            label: t('features.timeline.cards.comments', { count: blog.commentCount }),
           },
         ]
       : []),

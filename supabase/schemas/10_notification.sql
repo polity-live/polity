@@ -31,7 +31,40 @@ CREATE TABLE IF NOT EXISTS public.notification (
   recipient_amendment_id UUID,
   recipient_blog_id UUID,
   category TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ,
+  deleted_by_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  CONSTRAINT notification_recipient_target_shape CHECK (
+    (
+      recipient_id IS NOT NULL
+      AND recipient_entity_type IS NULL
+      AND recipient_entity_id IS NULL
+      AND recipient_group_id IS NULL
+      AND recipient_event_id IS NULL
+      AND recipient_amendment_id IS NULL
+      AND recipient_blog_id IS NULL
+    )
+    OR
+    (
+      recipient_id IS NULL
+      AND recipient_entity_type IN ('group', 'event', 'amendment', 'blog')
+      AND recipient_entity_id IS NOT NULL
+      AND num_nonnulls(
+        recipient_group_id,
+        recipient_event_id,
+        recipient_amendment_id,
+        recipient_blog_id
+      ) = 1
+    )
+  ),
+  CONSTRAINT notification_recipient_target_consistency CHECK (
+    recipient_entity_type IS NULL
+    OR (recipient_entity_type = 'group' AND recipient_group_id = recipient_entity_id)
+    OR (recipient_entity_type = 'event' AND recipient_event_id = recipient_entity_id)
+    OR (recipient_entity_type = 'amendment' AND recipient_amendment_id = recipient_entity_id)
+    OR (recipient_entity_type = 'blog' AND recipient_blog_id = recipient_entity_id)
+  )
 );
 
 CREATE INDEX idx_notification_recipient ON public.notification (recipient_id);
@@ -44,6 +77,8 @@ CREATE INDEX idx_notification_recipient_amendment ON public.notification (recipi
 CREATE INDEX idx_notification_recipient_blog ON public.notification (recipient_blog_id, created_at);
 CREATE INDEX idx_notification_recipient_read ON public.notification (recipient_id, is_read);
 CREATE INDEX idx_notification_category ON public.notification (category);
+CREATE INDEX idx_notification_active_created ON public.notification (created_at DESC)
+WHERE deleted_at IS NULL;
 
 ALTER TABLE public.notification ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.notification FOR ALL TO service_role USING (true);
@@ -104,3 +139,28 @@ CREATE INDEX idx_notification_read_entity ON public.notification_read (entity_ty
 
 ALTER TABLE public.notification_read ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.notification_read FOR ALL TO service_role USING (true);
+
+-- Canonical per-user notification inbox state
+CREATE TABLE IF NOT EXISTS public.notification_user_state (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  notification_id UUID NOT NULL REFERENCES public.notification (id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  read_at TIMESTAMPTZ,
+  dismissed_at TIMESTAMPTZ,
+  purged_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT notification_user_state_per_user_key UNIQUE (notification_id, user_id),
+  CONSTRAINT notification_user_state_order CHECK (
+    purged_at IS NULL OR dismissed_at IS NOT NULL
+  )
+);
+
+CREATE INDEX idx_notification_user_state_user
+ON public.notification_user_state (user_id, dismissed_at, purged_at, read_at);
+CREATE INDEX idx_notification_user_state_notification
+ON public.notification_user_state (notification_id, user_id);
+
+ALTER TABLE public.notification_user_state ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.notification_user_state
+FOR ALL TO service_role USING (true);

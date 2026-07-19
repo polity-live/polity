@@ -4,9 +4,9 @@ import type { MeetingInstance } from '../hooks/useMeetPage';
 interface MeetingInstanceCardProps {
   instance: MeetingInstance;
   isOwner: boolean;
-  onBook: (instance: MeetingInstance) => void;
-  onCancel: (instance: MeetingInstance) => void;
-  onDelete: (eventId: string) => void;
+  onBook?: (instance: MeetingInstance) => void;
+  onCancel?: (instance: MeetingInstance) => void;
+  onDelete?: (eventId: string) => void;
   onSelect?: (instance: MeetingInstance) => void;
 }
 
@@ -56,9 +56,9 @@ export function MeetingInstanceCard({
         isRecurringInstance: instance.isRecurringInstance,
         participants,
       }}
-      onBook={() => onBook(instance)}
-      onCancel={() => onCancel(instance)}
-      onDelete={isOwner ? () => onDelete(instance.parentEventId) : undefined}
+      onBook={onBook ? () => onBook(instance) : undefined}
+      onCancel={onCancel ? () => onCancel(instance) : undefined}
+      onDelete={isOwner && onDelete ? () => onDelete(instance.parentEventId) : undefined}
       onSelect={onSelect ? () => onSelect(instance) : undefined}
     />
   );

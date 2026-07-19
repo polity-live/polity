@@ -159,7 +159,13 @@ export function AiSettingsTab() {
       cell: ({ row }) => (
         <StatusBadge
           status={row.original.kind}
-          tone={row.original.kind === 'create' ? 'warning' : 'info'}
+          tone={
+            row.original.kind === 'create'
+              ? 'warning'
+              : row.original.kind === 'update'
+                ? 'accent'
+                : 'info'
+          }
         >
           {row.original.kind}
         </StatusBadge>

@@ -607,10 +607,14 @@ export function useGroupUpdate(
         allHashtags ?? []
       );
 
-      toast.success(translateText('generated.inline.0586_group_updated_successfully_131579a7'));
+      if (!isCreating) {
+        toast.success(translateText('generated.inline.0586_group_updated_successfully_131579a7'));
+      }
       navigate({ to: `/group/${groupId}` });
     } catch (error) {
-      toast.error(translateText('generated.inline.0587_failed_to_update_group_185c81aa'));
+      if (!isCreating) {
+        toast.error(translateText('generated.inline.0587_failed_to_update_group_185c81aa'));
+      }
       console.error('Update error:', error);
     } finally {
       setIsSubmitting(false);

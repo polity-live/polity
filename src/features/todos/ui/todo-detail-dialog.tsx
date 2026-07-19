@@ -1,11 +1,20 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useGroupState } from '@/zero/groups/useGroupState.ts';
 import { useTodoActions } from '@/zero/todos/useTodoActions.ts';
+import { useTodoState } from '@/zero/todos/useTodoState.ts';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { Todo } from '../types/todo.types';
+import {
+  isOverdue as isTodoOverdue,
+  resolveTodoDeadlineTimestamp,
+  todoDeadlineToFormValues,
+} from '../utils/todoFormatters';
+import { useTodoDiscussion } from '../hooks/useTodoDiscussion';
+import { useAuth } from '@/providers/auth-provider';
+import { usePermissions } from '@/zero/rbac';
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -17,6 +26,7 @@ interface TodoFormData {
   status: TodoStatus;
   priority: TodoPriority;
   dueDate: string;
+  dueTime: string;
   tags: string[];
   visibility: TodoVisibility;
 }
@@ -42,28 +52,46 @@ function getInitialFormData(todo: Todo): TodoFormData {
     description: todo.description || '',
     status: (todo.status || 'pending') as TodoStatus,
     priority: (todo.priority || 'medium') as TodoPriority,
-    dueDate: todo.due_date ? new Date(todo.due_date).toISOString().split('T')[0] : '',
+    ...todoDeadlineToFormValues(todo.due_date),
     tags: todo.tags || [],
     visibility: (todo.visibility || 'private') as TodoVisibility,
   };
 }
 import { TodoDetailDialogView } from './TodoDetailDialogView';
 export function TodoDetailDialog({
-  canManageTodos = true,
-  todo,
+  canManageTodos,
+  todo: initialTodo,
   open,
   onOpenChange,
 }: TodoDetailDialogProps) {
   const { t } = useTranslation();
-  const { updateTodo, assignUser, unassignUser } = useTodoActions();
+  const { user } = useAuth();
+  const { updateTodo, assignUser, unassignUser, archiveTodo, unarchiveTodo } = useTodoActions();
+  const { todo: liveTodo } = useTodoState({ todoId: initialTodo.id });
+  const todo = liveTodo ?? initialTodo;
+  const discussion = useTodoDiscussion(liveTodo);
+  const { canManage } = usePermissions({ groupId: todo.group_id ?? undefined });
+  const effectiveCanManageTodos =
+    canManageTodos ??
+    Boolean(user?.id && (todo.group_id ? canManage('groupTodos') : todo.creator_id === user.id));
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>(() => getSelectedUserIds(todo));
   const [formData, setFormData] = useState<TodoFormData>(() => getInitialFormData(todo));
 
-  const isOverdue = todo.due_date && todo.status !== 'completed' && todo.due_date < Date.now();
+  useEffect(() => {
+    if (isEditing) {
+      return;
+    }
+
+    setFormData(getInitialFormData(todo));
+    setSelectedUserIds(getSelectedUserIds(todo));
+  }, [isEditing, todo]);
+
+  const isOverdue = isTodoOverdue(todo.due_date ?? undefined, todo.status ?? '');
   const visibilityLabels: Record<TodoVisibility, string> = {
     public: t('common.visibility.public'),
     authenticated: t('common.visibility.authenticated'),
@@ -106,7 +134,7 @@ export function TodoDetailDialog({
   };
 
   const handleSave = async () => {
-    if (!canManageTodos) {
+    if (!effectiveCanManageTodos) {
       return;
     }
 
@@ -117,7 +145,7 @@ export function TodoDetailDialog({
         description: formData.description,
         status: formData.status,
         priority: formData.priority,
-        due_date: formData.dueDate ? new Date(formData.dueDate).getTime() : null,
+        due_date: resolveTodoDeadlineTimestamp(todo.due_date, formData.dueDate, formData.dueTime),
         tags: formData.tags,
         visibility: formData.visibility,
       };
@@ -167,6 +195,26 @@ export function TodoDetailDialog({
     }
   };
 
+  const handleArchive = async () => {
+    if (!effectiveCanManageTodos || todo.status !== 'completed') return;
+    setIsArchiving(true);
+    try {
+      await waitForClientApply(archiveTodo(todo.id));
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleUnarchive = async () => {
+    if (!effectiveCanManageTodos) return;
+    setIsArchiving(true);
+    try {
+      await waitForClientApply(unarchiveTodo(todo.id));
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
   const handleCancel = () => {
     resetForm();
   };
@@ -184,7 +232,7 @@ export function TodoDetailDialog({
   };
   return (
     <TodoDetailDialogView
-      canManageTodos={canManageTodos}
+      canManageTodos={effectiveCanManageTodos}
       todo={todo}
       open={open}
       onOpenChange={onOpenChange}
@@ -215,6 +263,10 @@ export function TodoDetailDialog({
       handleCancel={handleCancel}
       handleRemoveAssignee={handleRemoveAssignee}
       handleAddAssignee={handleAddAssignee}
+      discussion={discussion}
+      isArchiving={isArchiving}
+      handleArchive={handleArchive}
+      handleUnarchive={handleUnarchive}
     />
   );
 }

@@ -8,6 +8,7 @@ interface NotificationTabsProps {
   unreadCount: number;
   personalCount: number;
   entityCount: number;
+  trashCount: number;
 }
 
 export function NotificationTabs({
@@ -15,11 +16,12 @@ export function NotificationTabs({
   unreadCount,
   personalCount,
   entityCount,
+  trashCount,
 }: NotificationTabsProps) {
   const { t } = useTranslation();
 
   return (
-    <ScrollableTabsList>
+    <ScrollableTabsList className="w-fit max-w-full">
       <TabsTrigger value="all">
         {t('features.notifications.filters.all')}
         <BadgeControl variant="secondary" className="ml-2">
@@ -46,6 +48,14 @@ export function NotificationTabs({
         <BadgeControl variant="secondary" className="ml-2">
           {entityCount}
         </BadgeControl>
+      </TabsTrigger>
+      <TabsTrigger value="trash">
+        {t('features.notifications.filters.trash')}
+        {trashCount > 0 ? (
+          <BadgeControl variant="secondary" className="ml-2">
+            {trashCount}
+          </BadgeControl>
+        ) : null}
       </TabsTrigger>
     </ScrollableTabsList>
   );

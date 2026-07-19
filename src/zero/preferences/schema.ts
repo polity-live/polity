@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { timestampSchema } from '../shared/helpers';
+import { currencyCodeSchema, type CurrencyCode } from '@/features/shared/logic/currency';
 
 // ============================================
 // User Preference
@@ -103,6 +104,7 @@ const baseUserPreferenceSchema = z.object({
   create_form_style: createFormStyleEnum,
   theme: themeEnum,
   language: languageEnum,
+  display_currency: currencyCodeSchema.default('EUR'),
   navigation_view: navigationViewEnum,
   group_network_layouts: groupNetworkLayoutsSchema,
   decision_terminal_dashboard: decisionTerminalDashboardConfigSchema.optional(),
@@ -121,6 +123,7 @@ export const updateUserPreferenceSchema = z.object({
   create_form_style: createFormStyleEnum.optional(),
   theme: themeEnum.optional(),
   language: languageEnum.optional(),
+  display_currency: currencyCodeSchema.optional(),
   navigation_view: navigationViewEnum.optional(),
   group_network_layouts: groupNetworkLayoutsSchema.optional(),
   decision_terminal_dashboard: decisionTerminalDashboardConfigSchema.optional(),
@@ -133,6 +136,7 @@ export type UserPreference = z.infer<typeof selectUserPreferenceSchema>;
 export type CreateFormStyle = z.infer<typeof createFormStyleEnum>;
 export type Theme = z.infer<typeof themeEnum>;
 export type PreferenceLanguage = z.infer<typeof languageEnum>;
+export type PreferenceCurrency = CurrencyCode;
 export type PreferenceNavigationView = z.infer<typeof navigationViewEnum>;
 export type NetworkLayoutPosition = z.infer<typeof networkLayoutPositionSchema>;
 export type GroupNetworkLayout = z.infer<typeof groupNetworkLayoutSchema>;

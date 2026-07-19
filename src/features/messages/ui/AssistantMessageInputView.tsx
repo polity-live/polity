@@ -31,6 +31,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
+import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { ChatComposer, chatComposerTextareaClassName } from './ChatComposer';
 import {
@@ -141,6 +142,7 @@ export interface AssistantMessageInputViewProps {
   selectedToolKeySet: any;
   searchTools: any;
   createTools: any;
+  updateTools: any;
   mentionQuery: any;
   skillCommand: any;
   toolCommand: any;
@@ -194,6 +196,7 @@ export function AssistantMessageInputView({
   selectedToolKeySet,
   searchTools,
   createTools,
+  updateTools,
   attachmentTypeSuggestions,
   attachmentSuggestions,
   skillSuggestions,
@@ -500,13 +503,15 @@ export function AssistantMessageInputView({
                             {formatContextWindow(assistantChat.selectedModel.context_window)}
                           </BadgeControl>
                           {selectedModelHint && (
-                            <span
-                              className={selectedModelHint.className}
-                              title={selectedModelHint.message}
-                              aria-label={selectedModelHint.message}
-                            >
-                              ?
-                            </span>
+                            <TooltipHint content={selectedModelHint.message} variant="rich">
+                              <span
+                                className={selectedModelHint.className}
+                                aria-label={selectedModelHint.message}
+                                tabIndex={0}
+                              >
+                                ?
+                              </span>
+                            </TooltipHint>
                           )}
                         </span>
                       )}
@@ -548,13 +553,15 @@ export function AssistantMessageInputView({
                                 {translateText('generated.inline.0114_ctx_4024700f')}
                                 {formatContextWindow(model.context_window)}
                               </BadgeControl>
-                              <span
-                                className={modelHintClass}
-                                title={modelHint}
-                                aria-label={modelHint}
-                              >
-                                ?
-                              </span>
+                              <TooltipHint content={modelHint} variant="rich">
+                                <span
+                                  className={modelHintClass}
+                                  aria-label={modelHint}
+                                  tabIndex={0}
+                                >
+                                  ?
+                                </span>
+                              </TooltipHint>
                             </span>
                           </div>
                         </FormControlSelectItem>
@@ -573,25 +580,31 @@ export function AssistantMessageInputView({
                 }
                 disabled={!assistantChat.selectedModel?.supports_reasoning_effort}
               >
-                <FormControlSelectTrigger
-                  className="hover:bg-muted/60 h-8 w-8 justify-center rounded-full border-0 bg-transparent px-0 shadow-none [&>svg:last-child]:hidden"
-                  aria-label={t('features.messages.ai.reasoning')}
-                  title={t('features.messages.ai.reasoning')}
-                >
-                  {(() => {
-                    const selectedOption =
-                      REASONING_OPTIONS.find(
-                        option => option.value === assistantChat.reasoningEffort
-                      ) ?? REASONING_OPTIONS[1];
-                    return (
-                      <div
-                        className={`flex h-6 w-6 items-center justify-center rounded-full ${selectedOption.gradientClass}`}
-                      >
-                        <selectedOption.Icon className="h-3 w-3 flex-shrink-0" />
-                      </div>
-                    );
-                  })()}
-                </FormControlSelectTrigger>
+                <TooltipHint content={t('features.messages.ai.reasoning')}>
+                  <span
+                    className="inline-flex"
+                    tabIndex={assistantChat.selectedModel?.supports_reasoning_effort ? -1 : 0}
+                  >
+                    <FormControlSelectTrigger
+                      className="hover:bg-muted/60 h-8 w-8 justify-center rounded-full border-0 bg-transparent px-0 shadow-none [&>svg:last-child]:hidden"
+                      aria-label={t('features.messages.ai.reasoning')}
+                    >
+                      {(() => {
+                        const selectedOption =
+                          REASONING_OPTIONS.find(
+                            option => option.value === assistantChat.reasoningEffort
+                          ) ?? REASONING_OPTIONS[1];
+                        return (
+                          <div
+                            className={`flex h-6 w-6 items-center justify-center rounded-full ${selectedOption.gradientClass}`}
+                          >
+                            <selectedOption.Icon className="h-3 w-3 flex-shrink-0" />
+                          </div>
+                        );
+                      })()}
+                    </FormControlSelectTrigger>
+                  </span>
+                </TooltipHint>
                 <FormControlSelectContent>
                   <div className="px-3 py-2">
                     <div
@@ -659,6 +672,21 @@ export function AssistantMessageInputView({
                     </CommandGroup>
                     <CommandGroup heading={t('features.messages.ai.createToolGroup')}>
                       {createTools.map((tool: any) => {
+                        const selected = selectedToolKeySet.has(tool.name);
+                        return (
+                          <CommandItem
+                            key={tool.name}
+                            value={`${tool.label} ${tool.name} ${tool.description}`}
+                            onSelect={() => assistantChat.setToolSelection(tool.name, !selected)}
+                          >
+                            <Check className={selected ? 'opacity-100' : 'opacity-0'} />
+                            <span className="min-w-0 flex-1 truncate">{tool.label}</span>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                    <CommandGroup heading={t('features.messages.ai.updateToolGroup')}>
+                      {updateTools.map((tool: any) => {
                         const selected = selectedToolKeySet.has(tool.name);
                         return (
                           <CommandItem
@@ -772,30 +800,41 @@ export function AssistantMessageInputView({
           <div className="space-y-5 overflow-y-auto px-4 pb-6">
             <section className="space-y-2">
               <h3 className="text-sm font-semibold">{t('features.messages.ai.toolSelector')}</h3>
-              <div className="grid gap-1">
-                {assistantChat.availableTools.map((tool: any) => {
-                  const selected = selectedToolKeySet.has(tool.name);
-                  return (
-                    <Button
-                      key={tool.name}
-                      type="button"
-                      variant="ghost"
-                      className="h-auto justify-start gap-3 px-2 py-2 text-left"
-                      onClick={() => assistantChat.setToolSelection(tool.name, !selected)}
-                    >
-                      <span className="flex h-5 w-5 items-center justify-center rounded border">
-                        {selected ? <Check className="h-3.5 w-3.5" /> : null}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-medium">{tool.label}</span>
-                        <span className="text-muted-foreground block truncate text-xs">
-                          {tool.description}
-                        </span>
-                      </span>
-                    </Button>
-                  );
-                })}
-              </div>
+              {[searchTools, createTools, updateTools].map((tools, index) => (
+                <div key={index} className="space-y-1">
+                  <h4 className="text-muted-foreground px-2 text-xs font-medium">
+                    {index === 0
+                      ? t('features.messages.ai.searchToolGroup')
+                      : index === 1
+                        ? t('features.messages.ai.createToolGroup')
+                        : t('features.messages.ai.updateToolGroup')}
+                  </h4>
+                  <div className="grid gap-1">
+                    {tools.map((tool: any) => {
+                      const selected = selectedToolKeySet.has(tool.name);
+                      return (
+                        <Button
+                          key={tool.name}
+                          type="button"
+                          variant="ghost"
+                          className="h-auto justify-start gap-3 px-2 py-2 text-left"
+                          onClick={() => assistantChat.setToolSelection(tool.name, !selected)}
+                        >
+                          <span className="flex h-5 w-5 items-center justify-center rounded border">
+                            {selected ? <Check className="h-3.5 w-3.5" /> : null}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-medium">{tool.label}</span>
+                            <span className="text-muted-foreground block truncate text-xs">
+                              {tool.description}
+                            </span>
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </section>
             <section className="space-y-2">
               <h3 className="text-sm font-semibold">{t('features.messages.ai.skillSelector')}</h3>

@@ -55,6 +55,7 @@ export function CreateTextDescriptorFieldView({
       disabled={field.disabled}
       min={field.min}
       max={field.max}
+      step={field.step}
       maxLength={field.maxLength}
       rows={field.rows}
       multiline={field.multiline}

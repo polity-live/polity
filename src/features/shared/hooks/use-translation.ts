@@ -58,11 +58,19 @@ function translateWithLanguage(
   paramsOrFallback?: string | Record<string, string | number | undefined | null>,
   fallback?: string
 ): string {
-  const translation = getNestedValue(translations[language], key);
-
   const isParams = typeof paramsOrFallback === 'object' && paramsOrFallback !== null;
   const params = isParams ? paramsOrFallback : undefined;
   const finalFallback = isParams ? fallback : (paramsOrFallback as string | undefined);
+  const count = params?.count;
+  const pluralKey =
+    typeof count === 'number' ? `${key}_${count === 1 ? 'one' : 'other'}` : undefined;
+  const pluralTranslation = pluralKey
+    ? getNestedValue(translations[language], pluralKey)
+    : undefined;
+  const translation =
+    pluralKey && pluralTranslation !== pluralKey
+      ? pluralTranslation
+      : getNestedValue(translations[language], key);
 
   const result = translation !== key ? translation : finalFallback || key;
 

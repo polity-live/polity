@@ -510,7 +510,6 @@ export function useGroupMutations(groupId: string) {
         );
       }
 
-      toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
       return { success: true, roleId };
     } catch (error) {
       console.error('Failed to create role:', error);

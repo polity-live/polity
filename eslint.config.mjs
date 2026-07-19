@@ -33,6 +33,14 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+      'no-restricted-syntax': [
+        'error',
+        ...['button', 'a', 'input', 'select', 'textarea', 'summary'].map(tag => ({
+          selector: `JSXOpeningElement[name.name='${tag}'] > JSXAttribute[name.name='title']`,
+          message:
+            'Native title tooltips are not allowed on interactive elements. Use the shared Tooltip or a tooltip prop instead.',
+        })),
+      ],
     },
   },
   {

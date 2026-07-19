@@ -5,6 +5,10 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError, trackServerFinalization } from '../mutate-with-server-check';
 import { VOTE_CAST_SUCCESS_TOAST_ID } from '@/features/vote-cast/logic/voteCastToast';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 /**
  * Action hook for election mutations.
@@ -23,10 +27,12 @@ export function useElectionActions() {
   // ── Elections ──────────────────────────────────────────────────────
 
   const createElection = useCallback(
-    (args: Parameters<typeof mutators.elections.createElection>[0]) => {
+    (
+      args: Parameters<typeof mutators.elections.createElection>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.elections.createElection(args));
-      toast.success(t('common.agendaToasts.electionCreated'));
-      onServerError(result, () => toast.error(t('common.agendaToasts.electionCreateFailed')));
+      trackCreationUnlessSilent(result, 'election', options, args.id);
       return result;
     },
     [t, zero]
@@ -63,19 +69,24 @@ export function useElectionActions() {
   // ── Candidates ─────────────────────────────────────────────────────
 
   const addCandidate = useCallback(
-    (args: Parameters<typeof mutators.elections.addCandidate>[0]) => {
+    (
+      args: Parameters<typeof mutators.elections.addCandidate>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.elections.addCandidate(args));
-      toast.success(t('common.agendaToasts.candidateAdded'));
-      onServerError(result, () => toast.error(t('common.agendaToasts.candidateAddFailed')));
+      trackCreationUnlessSilent(result, 'candidate', options, args.id);
       return result;
     },
     [t, zero]
   );
 
   const addCandidateOptimistic = useCallback(
-    (args: Parameters<typeof mutators.elections.addCandidate>[0]) => {
+    (
+      args: Parameters<typeof mutators.elections.addCandidate>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.elections.addCandidate(args));
-      onServerError(result, () => toast.error(t('common.agendaToasts.candidateAddFailed')));
+      trackCreationUnlessSilent(result, 'candidate', options, args.id);
       return result;
     },
     [t, zero]

@@ -144,6 +144,8 @@ function AmendmentTextPage() {
         entityType="amendment"
         entityId={id}
         userId={user?.id}
+        readOnly={!user}
+        showTopToolbar={Boolean(user)}
         userRecord={mappedUserRecord}
         agendaItemId={agendaItemId}
         processBranchId={selectedBranchId}

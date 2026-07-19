@@ -88,6 +88,11 @@ code {
   --shadow-card: 0 1px 2px rgb(23 32 28 / 0.08), 0 16px 36px rgb(23 32 28 / 0.07);
   --shadow-floating: 0 20px 48px rgb(23 32 28 / 0.18);
   --focus-ring: 0 0 0 3px color-mix(in oklab, var(--ring) 32%, transparent);
+  --tooltip: #12362d;
+  --tooltip-foreground: #fffcf6;
+  --tooltip-border: #31564d;
+  --tooltip-shortcut-bg: rgb(255 252 246 / 0.12);
+  --tooltip-shortcut-border: rgb(255 252 246 / 0.24);
   --scrollbar-track: color-mix(in oklab, var(--background) 88%, var(--brand) 12%);
   --scrollbar-thumb: color-mix(in oklab, var(--brand) 50%, var(--card) 50%);
   --scrollbar-thumb-hover: color-mix(in oklab, var(--highlight) 34%, var(--brand) 66%);
@@ -214,6 +219,11 @@ code {
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.28), 0 22px 48px rgb(0 0 0 / 0.24);
   --shadow-floating: 0 24px 64px rgb(0 0 0 / 0.42);
   --focus-ring: 0 0 0 3px color-mix(in oklab, var(--ring) 38%, transparent);
+  --tooltip: #18231f;
+  --tooltip-foreground: #f4efe4;
+  --tooltip-border: #2b3731;
+  --tooltip-shortcut-bg: rgb(244 239 228 / 0.12);
+  --tooltip-shortcut-border: rgb(244 239 228 / 0.24);
   --scrollbar-track: color-mix(in oklab, var(--background) 82%, var(--highlight) 18%);
   --scrollbar-thumb: color-mix(in oklab, var(--highlight) 52%, var(--muted) 48%);
   --scrollbar-thumb-hover: color-mix(in oklab, var(--highlight) 68%, var(--brand) 32%);

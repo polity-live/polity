@@ -1,4 +1,5 @@
 import type { IconName } from '../nav-items/icon-map.tsx';
+import type { KeyboardShortcutDefinition } from '@/features/shared/keyboard/keyboard-shortcut';
 
 export type ScreenType = 'mobile' | 'desktop' | 'automatic';
 
@@ -28,7 +29,4 @@ export interface NavigationProps {
 /**
  * Shortcut representation with display text and keys array
  */
-export interface KeyboardShortcut {
-  display: string;
-  keys: string[];
-}
+export type KeyboardShortcut = KeyboardShortcutDefinition;

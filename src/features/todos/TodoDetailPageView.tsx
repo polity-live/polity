@@ -7,6 +7,9 @@ import { TodoDetailHeader } from './ui/TodoDetailHeader';
 import { TodoDetailView } from './ui/TodoDetailView';
 import { TodoDetailEdit } from './ui/TodoDetailEdit';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import { CommentThread } from '@/features/shared/ui/comments';
+import type { TodoDiscussionController } from './hooks/useTodoDiscussion';
+import { TodoArchiveAction, TodoArchiveBadge } from './ui/TodoArchiveAction';
 export interface TodoDetailPageViewProps {
   todoId: any;
   t: any;
@@ -20,6 +23,11 @@ export interface TodoDetailPageViewProps {
   handleCancel: any;
   handleTitleChange: any;
   handleFormUpdate: any;
+  discussion: TodoDiscussionController;
+  canManageTodos: boolean;
+  isArchiving: boolean;
+  handleArchive: () => void;
+  handleUnarchive: () => void;
 }
 
 export function TodoDetailPageView({
@@ -35,6 +43,11 @@ export function TodoDetailPageView({
   handleCancel,
   handleTitleChange,
   handleFormUpdate,
+  discussion,
+  canManageTodos,
+  isArchiving,
+  handleArchive,
+  handleUnarchive,
 }: TodoDetailPageViewProps) {
   if (!todo) {
     return (
@@ -77,6 +90,11 @@ export function TodoDetailPageView({
 
       <Card>
         <CardHeader>
+          {todo.archived_at ? (
+            <div className="mb-2">
+              <TodoArchiveBadge />
+            </div>
+          ) : null}
           <TodoDetailHeader
             isEditing={isEditing}
             isSaving={isSaving}
@@ -86,6 +104,17 @@ export function TodoDetailPageView({
             onSave={handleSave}
             onCancel={handleCancel}
             onTitleChange={handleTitleChange}
+            canEdit={canManageTodos}
+            archiveAction={
+              <TodoArchiveAction
+                archived={Boolean(todo.archived_at)}
+                canManage={canManageTodos}
+                completed={todo.status === 'completed'}
+                isPending={isArchiving}
+                onArchive={handleArchive}
+                onUnarchive={handleUnarchive}
+              />
+            }
           />
         </CardHeader>
 
@@ -97,6 +126,21 @@ export function TodoDetailPageView({
           )}
         </CardContent>
       </Card>
+
+      {!isEditing ? (
+        <Card className="mt-6">
+          <CardContent className="pt-6">
+            <CommentThread
+              comments={discussion.comments}
+              currentUserId={discussion.currentUserId}
+              onAddComment={discussion.onAddComment}
+              onVote={discussion.onVote}
+              isSubmitting={discussion.isSubmitting}
+              linkAuthors
+            />
+          </CardContent>
+        </Card>
+      ) : null}
     </>
   );
 }

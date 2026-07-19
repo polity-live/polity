@@ -4,6 +4,10 @@ import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
+import {
+  trackCreationUnlessSilent,
+  type CreationMutationOptions,
+} from '@/features/notifications/utils/mutation-finalization';
 
 /**
  * Action hook for workflow mutations.
@@ -22,10 +26,12 @@ export function useWorkflowActions() {
   );
 
   const createWorkflow = useCallback(
-    (args: Parameters<typeof mutators.network.createWorkflow>[0]) => {
+    (
+      args: Parameters<typeof mutators.network.createWorkflow>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.network.createWorkflow(args));
-      toast.success(t('features.network.toasts.workflowCreated'));
-      onServerError(result, () => toast.error(t('features.network.toasts.workflowCreateFailed')));
+      trackCreationUnlessSilent(result, 'workflow', options, args.id);
       return result;
     },
     [zero, t]
@@ -51,9 +57,12 @@ export function useWorkflowActions() {
   );
 
   const createWorkflowStep = useCallback(
-    (args: Parameters<typeof mutators.network.createWorkflowStep>[0]) => {
+    (
+      args: Parameters<typeof mutators.network.createWorkflowStep>[0],
+      options?: CreationMutationOptions
+    ) => {
       const result = zero.mutate(mutators.network.createWorkflowStep(args));
-      onServerError(result, () => toast.error(t('features.network.toasts.stepCreateFailed')));
+      trackCreationUnlessSilent(result, 'workflowStep', options, args.id);
       return result;
     },
     [zero, t]

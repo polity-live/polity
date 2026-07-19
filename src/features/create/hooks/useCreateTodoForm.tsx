@@ -23,6 +23,7 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { PriorityInput } from '../ui/inputs/PriorityInput';
 import { StatusInput } from '../ui/inputs/StatusInput';
+import { TodoDeadlineInput } from '../ui/inputs/TodoDeadlineInput';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
@@ -41,6 +42,7 @@ import {
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
 import { consumeCreateRestoreDraft, trackCreateFinalization } from '../logic/createFinalization';
+import { toLocalDeadlineTimestamp } from '@/features/shared/logic/localDateTime';
 
 interface CreateTodoSearch {
   groupId?: string;
@@ -127,6 +129,7 @@ export function useCreateTodoForm(): CreateFormConfig {
     'pending'
   );
   const [dueDate, setDueDate] = useState('');
+  const [dueTime, setDueTime] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('private');
   const [tags, setTags] = useState<string[]>([]);
   const [assigneeId, setAssigneeId] = useState('');
@@ -143,6 +146,7 @@ export function useCreateTodoForm(): CreateFormConfig {
       priority?: 'low' | 'medium' | 'high';
       status?: 'pending' | 'in_progress' | 'completed' | 'cancelled';
       dueDate?: string;
+      dueTime?: string;
       tags?: string[];
       groupId?: string;
       visibility?: 'public' | 'authenticated' | 'private';
@@ -155,6 +159,7 @@ export function useCreateTodoForm(): CreateFormConfig {
     setPriority(restoreDraft.formState.priority ?? 'medium');
     setStatus(restoreDraft.formState.status ?? 'pending');
     setDueDate(restoreDraft.formState.dueDate ?? '');
+    setDueTime(restoreDraft.formState.dueTime ?? '');
     setTags(restoreDraft.formState.tags ?? []);
     setGroupId(restoreDraft.formState.groupId ?? '');
     setVisibility(restoreDraft.formState.visibility ?? 'private');
@@ -218,18 +223,21 @@ export function useCreateTodoForm(): CreateFormConfig {
     if (!title.trim() || !user?.id) return createBlockedSubmitOutcome();
     try {
       context?.reportProgress({ key: 'create', status: 'active' });
-      const createResult = await createTodo({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        ownerId: user.id,
-        assigneeId: assigneeId || user.id,
-        priority,
-        status,
-        dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
-        tags,
-        groupId: groupId || undefined,
-        visibility: groupId ? 'group' : visibility,
-      });
+      const createResult = await createTodo(
+        {
+          title: title.trim(),
+          description: description.trim() || undefined,
+          ownerId: user.id,
+          assigneeId: assigneeId || user.id,
+          priority,
+          status,
+          dueDate: toLocalDeadlineTimestamp(dueDate, dueTime) ?? undefined,
+          tags,
+          groupId: groupId || undefined,
+          visibility: groupId ? 'group' : visibility,
+        },
+        { notificationMode: 'silent' }
+      );
       if (!createResult.success || !createResult.todoId || !createResult.mutationResult) {
         throw createResult.error ?? new Error(t('pages.create.error.createFailed'));
       }
@@ -264,6 +272,7 @@ export function useCreateTodoForm(): CreateFormConfig {
             priority,
             status,
             dueDate,
+            dueTime,
             tags,
             groupId,
             visibility,
@@ -272,8 +281,6 @@ export function useCreateTodoForm(): CreateFormConfig {
           target,
         },
       });
-
-      toast.success(t('pages.create.success.created'));
 
       if (returnSection === 'todos' && groupId) {
         return createSuccessSubmitOutcome(target);
@@ -386,12 +393,17 @@ export function useCreateTodoForm(): CreateFormConfig {
           optional: true,
           fields: [
             {
-              key: 'due-date',
-              kind: 'text',
-              label: t('pages.create.todo.dueDateOptional'),
-              value: dueDate,
-              onValueChange: setDueDate,
-              type: 'date',
+              key: 'due-date-time',
+              kind: 'customComponent',
+              component: TodoDeadlineInput,
+              props: {
+                dueDate,
+                dueTime,
+                onChange: (values: { dueDate: string; dueTime: string }) => {
+                  setDueDate(values.dueDate);
+                  setDueTime(values.dueTime);
+                },
+              },
             },
             {
               key: 'visibility',
@@ -442,7 +454,12 @@ export function useCreateTodoForm(): CreateFormConfig {
                         value: t(`features.todos.status.${status}`),
                       },
                       ...(dueDate
-                        ? [{ label: t('pages.create.todo.dueDateLabel'), value: dueDate }]
+                        ? [
+                            {
+                              label: t('pages.create.todo.dueDateLabel'),
+                              value: `${dueDate}${dueTime ? ` ${dueTime}` : ''}`,
+                            },
+                          ]
                         : []),
                     ],
                   },
@@ -483,6 +500,7 @@ export function useCreateTodoForm(): CreateFormConfig {
       status,
       assigneeId,
       dueDate,
+      dueTime,
       visibility,
       visibilityLabel,
       titleInvalidReason,
