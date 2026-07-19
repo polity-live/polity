@@ -72,7 +72,7 @@
     "@platejs/table": "^53.0.9",
     "@platejs/toc": "^53.0.0",
     "@platejs/toggle": "^53.0.0",
-    "@radix-ui/react-accordion": "^1.2.14",
+    "@radix-ui/react-accordion": "^1.2.16",
     "@radix-ui/react-alert-dialog": "^1.1.17",
     "@radix-ui/react-aspect-ratio": "^1.1.10",
     "@radix-ui/react-avatar": "^1.2.0",
