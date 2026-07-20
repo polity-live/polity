@@ -9,8 +9,8 @@
 
 ## Prerequisites
 
-- **Node.js 22+** (recommended via [nvm](https://github.com/nvm-sh/nvm))
-- **npm**
+- **Node.js 24.x LTS** (recommended via [nvm](https://github.com/nvm-sh/nvm))
+- **npm 11.18.0**
 - **Docker Desktop** (for local Supabase and Zero development)
 - **Supabase CLI** (`npm i -g supabase` or use `npx supabase`)
 
@@ -155,8 +155,8 @@ npm run zero:dev
 | `npm run dev`             | Start the dev server on port 3000            |
 | `npm run build`           | Production build                             |
 | `npm run start`           | Start the production server                  |
-| `npm run lint`            | Lint with ESLint                             |
-| `npm run lint:check`      | Lint with ESLint via `npx`                   |
+| `npm run lint`            | Lint with Oxlint                             |
+| `npm run lint:check`      | Check lint rules with Oxlint                 |
 | `npm run lint:fix`        | Lint and auto-fix                            |
 | `npm run test`            | Run unit tests with Vitest                   |
 | `npm run test:e2e`        | Run E2E tests with Playwright                |

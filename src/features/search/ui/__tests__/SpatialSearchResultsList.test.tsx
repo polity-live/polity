@@ -79,16 +79,21 @@ describe('SpatialSearchResultsList', () => {
     expect(scrollContainer.className).toContain('overflow-auto');
     expect(scrollContainer.className).toContain('lg:h-full');
     expect(scrollContainer.className).not.toContain('100dvh');
-    expect(wrapper?.parentElement?.getAttribute('data-vrow-index')).toBe('0');
-    expect(wrapper?.parentElement?.getAttribute('data-vrow-key')).toBe('cell-0');
-    const content = wrapper?.parentElement?.parentElement;
+    const virtualRow = wrapper?.parentElement;
+    expect(virtualRow).not.toBeNull();
+    if (!virtualRow) {
+      throw new Error('Expected the result card to be wrapped in a virtual row');
+    }
+    expect(virtualRow.getAttribute('data-vrow-index')).toBe('0');
+    expect(virtualRow.getAttribute('data-vrow-key')).toBe('cell-0');
+    const content = virtualRow.parentElement;
     const beforeSpacer = content?.querySelector('[data-zero-virtual-spacer="before"]');
     const afterSpacer = content?.querySelector('[data-zero-virtual-spacer="after"]');
     expect(content?.style.paddingTop).toBe('');
     expect(content?.style.paddingBottom).toBe('');
     expect((beforeSpacer as HTMLElement).style.height).toBe('24px');
     expect((afterSpacer as HTMLElement).style.height).toBe('48px');
-    expect((wrapper?.parentElement as HTMLElement).style.marginTop).toBe('0px');
+    expect(virtualRow.style.marginTop).toBe('0px');
     expect(card.textContent).toContain('Active Group');
     expect(wrapper?.className).toContain('border-primary');
     expect(wrapper?.className).toContain('bg-primary/5');

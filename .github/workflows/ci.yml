@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: "22.x"
-  NPM_VERSION: "10.9.2"
+  NODE_VERSION: "24.x"
+  NPM_VERSION: "11.18.0"
 
 jobs:
   static-analysis:

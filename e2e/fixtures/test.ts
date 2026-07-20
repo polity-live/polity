@@ -165,7 +165,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 
   _createSmokeTimeout: [
     // Playwright requires fixture callbacks to destructure the first argument, even when no fixtures are used.
-    // eslint-disable-next-line no-empty-pattern
+    // oxlint-disable-next-line no-empty-pattern
     async ({}, use, testInfo) => {
       let releaseSmokeLock: (() => Promise<void>) | undefined;
 
@@ -221,7 +221,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   },
 
   // Playwright requires fixture callbacks to destructure the first argument, even when no fixtures are used.
-  // eslint-disable-next-line no-empty-pattern
+  // oxlint-disable-next-line no-empty-pattern
   e2eRun: async ({}, use, testInfo) => {
     const prefix = `E2E-${testInfo.workerIndex}-${Date.now()}-${sanitizeTitle(testInfo.title)}`;
     await use({ prefix });

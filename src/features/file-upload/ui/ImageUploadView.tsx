@@ -1,5 +1,4 @@
 import { featureThemeClassName } from '@/features/shared/theme';
-import type React from 'react';
 import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';

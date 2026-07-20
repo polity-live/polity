@@ -2,15 +2,44 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 
-let _supabase: SupabaseClient | null = null;
-function getSupabase(): SupabaseClient {
+type TimelineEventValue =
+  | string
+  | number
+  | boolean
+  | null
+  | string[]
+  | Record<string, string | number | boolean | null>
+  | Record<string, number>
+  | Date;
+
+type TimelineEventInsert = Record<string, TimelineEventValue>;
+
+interface TimelineDatabase {
+  public: {
+    Tables: {
+      timeline_event: {
+        Row: TimelineEventInsert;
+        Insert: TimelineEventInsert;
+        Update: Partial<TimelineEventInsert>;
+        Relationships: [];
+      };
+    };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+  };
+}
+
+type TimelineSupabaseClient = SupabaseClient<TimelineDatabase>;
+
+let _supabase: TimelineSupabaseClient | null = null;
+function getSupabase(): TimelineSupabaseClient {
   if (!_supabase) {
     const url = process.env.SUPABASE_URL ?? '';
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
     if (!url) {
       throw new Error('[Timeline] SUPABASE_URL is not configured');
     }
-    _supabase = createClient(url, key);
+    _supabase = createClient<TimelineDatabase>(url, key);
   }
   return _supabase;
 }
@@ -172,17 +201,7 @@ export const createTimelineEvent = createServerFn({ method: 'POST' })
     }): Promise<void> => {
       const eventId = crypto.randomUUID();
 
-      const insertData: Record<
-        string,
-        | string
-        | number
-        | boolean
-        | null
-        | string[]
-        | Record<string, string | number | boolean | null>
-        | Record<string, number>
-        | Date
-      > = {
+      const insertData: TimelineEventInsert = {
         id: eventId,
         event_type: eventType,
         entity_type: entityType,
