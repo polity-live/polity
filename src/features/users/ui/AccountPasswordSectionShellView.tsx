@@ -12,14 +12,12 @@ interface AccountPasswordSectionShellViewProps {
 export function AccountPasswordSectionShellView({
   accountPasswordProps,
   confirmationDialogProps,
-  requiresInitialPassword,
+  requiresInitialPassword: _requiresInitialPassword,
 }: AccountPasswordSectionShellViewProps) {
   return (
     <>
       <AccountPasswordSectionView {...accountPasswordProps} />
-      {requiresInitialPassword ? null : (
-        <CurrentPasswordConfirmationDialog {...confirmationDialogProps} />
-      )}
+      <CurrentPasswordConfirmationDialog {...confirmationDialogProps} />
     </>
   );
 }
