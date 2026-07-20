@@ -58,4 +58,25 @@ test.describe('virtualized routes', () => {
 
     expect(failures).toEqual([]);
   });
+
+  test('restores conversations after using the mobile thread back button @smoke', async ({
+    page,
+  }) => {
+    const failures = collectVirtualizerFailures(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/messages');
+
+    const conversation = page.getByRole('button', { name: /Aria & Kai/ }).first();
+    await expect(conversation).toBeVisible({ timeout: 40_000 });
+    await conversation.click();
+
+    const backButton = page.getByRole('button', { name: 'Go Back' });
+    await expect(backButton).toBeVisible();
+    await backButton.click();
+
+    await expect(conversation).toBeVisible();
+    await expect(page.getByText('No conversations yet')).toHaveCount(0);
+    await expect(page.getByText('No conversations found')).toHaveCount(0);
+    expect(failures).toEqual([]);
+  });
 });

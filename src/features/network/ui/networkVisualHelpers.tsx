@@ -3,12 +3,7 @@ import React, { type CSSProperties, type ReactNode } from 'react';
 import { RightBadge } from '@/features/shared/ui/status';
 
 export type GroupNodeVisualVariant =
-  | 'current'
-  | 'parent'
-  | 'child'
-  | 'sibling-open'
-  | 'sibling-elected'
-  | 'sibling-parliament';
+  'current' | 'parent' | 'child' | 'sibling-open' | 'sibling-elected' | 'sibling-parliament';
 
 type GroupNodeVisualRole = 'current' | 'parent' | 'child' | 'sibling';
 

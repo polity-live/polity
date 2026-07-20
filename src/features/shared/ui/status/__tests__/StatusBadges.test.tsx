@@ -64,6 +64,23 @@ describe('StatusBadges', () => {
     expect(eventBadge.className).not.toContain('--badge-event');
   });
 
+  it('uses rounded corners by default and preserves an explicit pill shape', () => {
+    render(
+      <div>
+        <BadgeControl>Rounded badge</BadgeControl>
+        <BadgeControl shape="pill">Pill badge</BadgeControl>
+      </div>
+    );
+
+    const roundedBadge = screen.getByText('Rounded badge');
+    const pillBadge = screen.getByText('Pill badge');
+
+    expect(roundedBadge.className).toContain('rounded-md');
+    expect(roundedBadge.className).not.toContain('rounded-full');
+    expect(pillBadge.className).toContain('rounded-full');
+    expect(pillBadge.className).not.toContain('rounded-md');
+  });
+
   it('keeps gradient right badges readable on hover like right filters', () => {
     render(<RightBadge right="amendmentRight" />);
 

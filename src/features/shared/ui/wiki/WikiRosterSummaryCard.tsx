@@ -71,7 +71,7 @@ export function WikiRosterSummaryCard({
       <CardContent className="flex h-full min-h-32 flex-col justify-between gap-4 p-4">
         <div className="flex items-start justify-between gap-3">
           <p className="text-sm leading-5 font-medium">{nonSignedUpLabel}</p>
-          <span className="bg-background/70 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--badge-info-border)]">
+          <span className="bg-background/70 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--badge-info-border)]">
             <UserMinus className="h-4 w-4" aria-hidden="true" />
           </span>
         </div>

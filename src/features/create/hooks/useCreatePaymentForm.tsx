@@ -109,13 +109,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
       direction?: 'income' | 'expense';
       label?: string;
       type?:
-        | 'membership_fee'
-        | 'donation'
-        | 'subsidies'
-        | 'campaign'
-        | 'material'
-        | 'events'
-        | 'others';
+        'membership_fee' | 'donation' | 'subsidies' | 'campaign' | 'material' | 'events' | 'others';
       amount?: string;
       currency?: CurrencyCode;
       entityId?: string;

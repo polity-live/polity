@@ -7,7 +7,7 @@ import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { Search, MessageCircle, Bot } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { ConversationItem } from './ConversationItem';
-import { rowAttributes } from '@/features/shared/virtualization';
+import { rowAttributes, ZeroVirtualSpacer } from '@/features/shared/virtualization';
 
 export interface ConversationListViewProps {
   className: any;
@@ -16,6 +16,7 @@ export interface ConversationListViewProps {
   conversations: any;
   currentUserId: any;
   filterButtons: any;
+  isMobileScreen?: boolean;
   isLoading?: boolean;
   onConversationFilterChange: any;
   onDeleteConversationClick: any;
@@ -40,6 +41,7 @@ export function ConversationListView({
   conversations,
   currentUserId,
   filterButtons,
+  isMobileScreen = false,
   isLoading = false,
   onConversationFilterChange,
   onDeleteConversationClick,
@@ -57,12 +59,15 @@ export function ConversationListView({
   t,
 }: ConversationListViewProps) {
   const showSkeletons = isLoading && virtualItems.length === 0;
+  const isConcealedMobileList = isMobileScreen && Boolean(selectedConversationId);
 
   return (
     <Card
+      aria-hidden={isConcealedMobileList || undefined}
+      inert={isConcealedMobileList}
       className={cn(
         'flex h-full min-h-0 flex-col overflow-hidden md:col-span-1',
-        selectedConversationId && 'hidden md:flex',
+        isConcealedMobileList && 'pointer-events-none invisible absolute inset-0',
         className
       )}
     >
@@ -127,7 +132,7 @@ export function ConversationListView({
                   className="civic-stagger-item flex items-center gap-3 rounded-lg border border-transparent p-3"
                   style={{ '--civic-stagger-index': index } as CSSProperties}
                 >
-                  <Skeleton className="h-12 w-12 rounded-2xl" />
+                  <Skeleton className="h-12 w-12 rounded-md" />
                   <div className="min-w-0 flex-1 space-y-2">
                     <Skeleton className="h-3 w-2/3" />
                     <Skeleton className="h-3 w-5/6" />
@@ -147,11 +152,16 @@ export function ConversationListView({
               </p>
             </div>
           ) : (
-            <div style={{ paddingTop: spaceBefore, paddingBottom: spaceAfter }}>
-              {virtualItems.map((virtualItem: any) => {
+            <div>
+              <ZeroVirtualSpacer position="before" size={spaceBefore} />
+              {virtualItems.map((virtualItem: any, itemPosition: number) => {
                 const conversation = virtualItem.row;
                 return (
-                  <div key={virtualItem.key} {...rowAttributes(virtualItem.index, virtualItem.key)}>
+                  <div
+                    key={virtualItem.key}
+                    {...rowAttributes(virtualItem.index, virtualItem.key)}
+                    style={itemPosition === 0 ? { marginTop: 0 } : undefined}
+                  >
                     {conversation ? (
                       <ConversationItem
                         conversation={conversation}
@@ -163,7 +173,7 @@ export function ConversationListView({
                       />
                     ) : (
                       <div className="flex items-center gap-3 p-3" aria-hidden="true">
-                        <Skeleton className="h-12 w-12 rounded-2xl" />
+                        <Skeleton className="h-12 w-12 rounded-md" />
                         <div className="min-w-0 flex-1 space-y-2">
                           <Skeleton className="h-3 w-2/3" />
                           <Skeleton className="h-3 w-5/6" />
@@ -173,6 +183,7 @@ export function ConversationListView({
                   </div>
                 );
               })}
+              <ZeroVirtualSpacer position="after" size={spaceAfter} />
             </div>
           )}
         </div>

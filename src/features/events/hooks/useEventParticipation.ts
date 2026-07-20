@@ -7,12 +7,7 @@ import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type ParticipationStatus =
-  | 'invited'
-  | 'requested'
-  | 'active'
-  | 'member'
-  | 'admin'
-  | 'confirmed';
+  'invited' | 'requested' | 'active' | 'member' | 'admin' | 'confirmed';
 
 export function useEventParticipation(eventId: string) {
   const { user } = useAuth();

@@ -17,13 +17,7 @@ export function normalizeVotePhase(status?: string) {
     normalized === 'tied'
   ) {
     return normalized as
-      | 'open'
-      | 'closing_soon'
-      | 'last_hour'
-      | 'final_minutes'
-      | 'passed'
-      | 'failed'
-      | 'tied';
+      'open' | 'closing_soon' | 'last_hour' | 'final_minutes' | 'passed' | 'failed' | 'tied';
   }
   return 'open';
 }

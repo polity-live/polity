@@ -124,7 +124,7 @@ export function GeoAddressMapView({
         </MapContainer>
         {isBusy ? (
           <div className="bg-background/60 absolute inset-0 flex items-center justify-center backdrop-blur-[1px]">
-            <div className="bg-background text-foreground rounded-full border px-3 py-1 text-xs font-medium shadow-sm">
+            <div className="bg-background text-foreground rounded-md border px-3 py-1 text-xs font-medium shadow-sm">
               {busyLabel}
             </div>
           </div>

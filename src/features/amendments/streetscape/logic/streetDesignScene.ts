@@ -270,8 +270,7 @@ function setRotateHandleObjectId(object: Object3D, objectId: string) {
 
 function getIntersectionUserDataValue(intersections: import('three').Intersection[], key: string) {
   return intersections.find(hit => hit.object.userData[key])?.object.userData[key] as
-    | string
-    | undefined;
+    string | undefined;
 }
 
 function addPickPolygon(args: {
@@ -1007,12 +1006,7 @@ function addCarLaneMarkings(args: {
 }
 
 export type StreetDesignTreeRenderKind =
-  | 'deciduous'
-  | 'conifer'
-  | 'fruit'
-  | 'columnar_poplar'
-  | 'ornamental_cherry'
-  | 'flowering_plum';
+  'deciduous' | 'conifer' | 'fruit' | 'columnar_poplar' | 'ornamental_cherry' | 'flowering_plum';
 
 export type StreetDesignTreeCanopyShape = 'rounded_lobes' | 'stacked_cones' | 'columnar_lobes';
 

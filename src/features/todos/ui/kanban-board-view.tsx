@@ -7,6 +7,7 @@ import {
   PolityLocalListView,
   rowAttributes,
   usePolityZeroList,
+  ZeroVirtualSpacer,
 } from '@/features/shared/virtualization';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { queries } from '@/zero/queries';
@@ -79,15 +80,18 @@ function VirtualKanbanColumn({
 
   return (
     <div ref={scrollRef} className="max-h-[38rem] min-h-96 overflow-y-auto">
-      <div
-        className="space-y-3"
-        style={{ paddingTop: list.spaceBefore, paddingBottom: list.spaceAfter }}
-      >
-        {list.items.map(item => (
-          <div key={item.key} {...rowAttributes(item.index, item.key)}>
+      <div className="space-y-3">
+        <ZeroVirtualSpacer position="before" size={list.spaceBefore} />
+        {list.items.map((item, itemPosition) => (
+          <div
+            key={item.key}
+            {...rowAttributes(item.index, item.key)}
+            style={itemPosition === 0 ? { marginTop: 0 } : undefined}
+          >
             {item.row ? renderTodo(item.row) : <Skeleton className="h-32 w-full rounded-xl" />}
           </div>
         ))}
+        <ZeroVirtualSpacer position="after" size={list.spaceAfter} />
       </div>
     </div>
   );

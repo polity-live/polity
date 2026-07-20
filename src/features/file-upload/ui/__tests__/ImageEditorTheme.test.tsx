@@ -1,5 +1,5 @@
 /* @vitest-environment jsdom */
-/* eslint-disable no-restricted-syntax -- The bridge test must model native title attributes emitted by the vendor editor. */
+/* oxlint-disable polity/no-native-title-tooltip -- The bridge test must model native title attributes emitted by the vendor editor. */
 
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useRef } from 'react';

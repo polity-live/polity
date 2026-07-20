@@ -164,8 +164,7 @@ describe('useStreetAreaPickerController', () => {
 
   it('ignores a reverse-geocoding response after the selection moves again', async () => {
     let resolveReverseRequest:
-      | ((value: Awaited<ReturnType<typeof geoapifyReverseFn>>) => void)
-      | undefined;
+      ((value: Awaited<ReturnType<typeof geoapifyReverseFn>>) => void) | undefined;
     vi.mocked(geoapifyReverseFn).mockImplementation(
       () =>
         new Promise(resolve => {

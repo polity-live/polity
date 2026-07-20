@@ -286,7 +286,7 @@ export function ActionSubmissionOverlay({
                   {status !== 'error' ? (
                     <span
                       className={cn(
-                        'bg-card absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full border',
+                        'bg-card absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-md border',
                         tone.border
                       )}
                     >
@@ -314,7 +314,7 @@ export function ActionSubmissionOverlay({
                     {preview.path.map((entry, index) => (
                       <span key={index} className="flex items-center gap-2">
                         {index > 0 ? <span className="text-muted-foreground">→</span> : null}
-                        <span className="bg-background/70 rounded-full border px-3 py-1 text-sm">
+                        <span className="bg-background/70 rounded-md border px-3 py-1 text-sm">
                           {entry}
                         </span>
                       </span>
@@ -327,7 +327,7 @@ export function ActionSubmissionOverlay({
                     {preview.people.slice(0, 8).map(person => (
                       <div
                         key={person.id}
-                        className="border-border/70 bg-background/70 flex items-center gap-2 rounded-full border px-2 py-1 text-sm"
+                        className="border-border/70 bg-background/70 flex items-center gap-2 rounded-md border px-2 py-1 text-sm"
                       >
                         <Avatar className="h-7 w-7">
                           {person.avatar ? (
@@ -339,7 +339,7 @@ export function ActionSubmissionOverlay({
                       </div>
                     ))}
                     {preview.people.length > 8 ? (
-                      <span className="border-border/70 bg-background/70 rounded-full border px-3 py-1 text-sm">
+                      <span className="border-border/70 bg-background/70 rounded-md border px-3 py-1 text-sm">
                         +{preview.people.length - 8}
                       </span>
                     ) : null}
@@ -351,7 +351,7 @@ export function ActionSubmissionOverlay({
                     {preview.badges.map((badge, index) => (
                       <span
                         key={index}
-                        className="border-border/70 bg-background/70 rounded-full border px-3 py-1 text-sm"
+                        className="border-border/70 bg-background/70 rounded-md border px-3 py-1 text-sm"
                       >
                         {badge}
                       </span>
@@ -384,7 +384,7 @@ export function ActionSubmissionOverlay({
                     <div className="flex items-center gap-3">
                       <motion.span
                         className={cn(
-                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
+                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-md border text-xs font-semibold',
                           isComplete ? tone.badge : 'border-border bg-muted text-muted-foreground',
                           isError && 'border-destructive/60 bg-destructive/10 text-destructive'
                         )}

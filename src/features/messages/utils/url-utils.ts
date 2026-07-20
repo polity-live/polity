@@ -1,13 +1,7 @@
 // URL detection and parsing utilities
 
 export type PolityLinkEntityType =
-  | 'user'
-  | 'group'
-  | 'event'
-  | 'amendment'
-  | 'blog'
-  | 'statement'
-  | 'todo';
+  'user' | 'group' | 'event' | 'amendment' | 'blog' | 'statement' | 'todo';
 
 export interface PolityLink {
   type: PolityLinkEntityType;

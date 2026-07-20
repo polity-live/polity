@@ -26,7 +26,7 @@ export function SettingItem({
         <FormControlLabel className="text-sm font-medium">
           {label}
           {adminOnly && (
-            <span className="bg-muted text-muted-foreground ml-2 rounded-full px-2 py-0.5 text-xs">
+            <span className="bg-muted text-muted-foreground ml-2 rounded-md px-2 py-0.5 text-xs">
               {t('pages.notifications.settingsPage.adminOnly')}
             </span>
           )}

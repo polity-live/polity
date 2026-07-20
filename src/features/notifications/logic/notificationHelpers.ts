@@ -12,8 +12,7 @@ export interface MessageNavigationSearch {
 }
 
 export type NotificationNavigationTarget =
-  | { kind: 'messages'; search: MessageNavigationSearch }
-  | { kind: 'route'; to: string };
+  { kind: 'messages'; search: MessageNavigationSearch } | { kind: 'route'; to: string };
 
 const ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES = new Set([
   'active',
@@ -249,16 +248,14 @@ export function filterAccessibleNotifications(
           roles?:
             | readonly {
                 action_rights?:
-                  | readonly { action?: string | null; resource?: string | null }[]
-                  | null;
+                  readonly { action?: string | null; resource?: string | null }[] | null;
               }[]
             | null;
           membership_roles?:
             | readonly {
                 role?: {
                   action_rights?:
-                    | readonly { action?: string | null; resource?: string | null }[]
-                    | null;
+                    readonly { action?: string | null; resource?: string | null }[] | null;
                 } | null;
               }[]
             | null;
@@ -266,8 +263,7 @@ export function filterAccessibleNotifications(
             | readonly {
                 role?: {
                   action_rights?:
-                    | readonly { action?: string | null; resource?: string | null }[]
-                    | null;
+                    readonly { action?: string | null; resource?: string | null }[] | null;
                 } | null;
               }[]
             | null;
@@ -298,16 +294,14 @@ export function filterAccessibleNotifications(
           roles?:
             | readonly {
                 action_rights?:
-                  | readonly { action?: string | null; resource?: string | null }[]
-                  | null;
+                  readonly { action?: string | null; resource?: string | null }[] | null;
               }[]
             | null;
           membership_roles?:
             | readonly {
                 role?: {
                   action_rights?:
-                    | readonly { action?: string | null; resource?: string | null }[]
-                    | null;
+                    readonly { action?: string | null; resource?: string | null }[] | null;
                 } | null;
               }[]
             | null;
@@ -315,8 +309,7 @@ export function filterAccessibleNotifications(
             | readonly {
                 role?: {
                   action_rights?:
-                    | readonly { action?: string | null; resource?: string | null }[]
-                    | null;
+                    readonly { action?: string | null; resource?: string | null }[] | null;
                 } | null;
               }[]
             | null;

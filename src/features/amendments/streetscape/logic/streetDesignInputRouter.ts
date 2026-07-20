@@ -1,13 +1,7 @@
 import type { StreetDesignInteractionMode } from '../types';
 
 export type StreetDesignInputAction =
-  | 'move'
-  | 'zoom'
-  | 'turn'
-  | 'select'
-  | 'place'
-  | 'objectRotate'
-  | 'none';
+  'move' | 'zoom' | 'turn' | 'select' | 'place' | 'objectRotate' | 'none';
 
 export interface StreetDesignPointerActionInput {
   mode: StreetDesignInteractionMode;

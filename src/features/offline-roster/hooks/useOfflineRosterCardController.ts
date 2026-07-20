@@ -16,11 +16,7 @@ import type {
 } from '../types';
 
 type OfflineRosterManageSubmitStatus =
-  | 'idle'
-  | 'submitting-single'
-  | 'submitting-csv'
-  | 'success-single'
-  | 'success-csv';
+  'idle' | 'submitting-single' | 'submitting-csv' | 'success-single' | 'success-csv';
 
 const MANAGE_SUBMIT_SUCCESS_DELAY_MS = 650;
 

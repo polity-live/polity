@@ -2,20 +2,13 @@ export type NetworkTab = 'current-network' | 'manage-network' | 'manage-workflow
 export type GroupRelationshipType = 'parent' | 'child' | 'sibling';
 export type GroupRelationshipFilter = 'all' | GroupRelationshipType;
 export type GroupRelationshipDirection =
-  | 'none'
-  | 'current_grants_right_to_partner'
-  | 'partner_grants_right_to_current'
-  | 'mutual';
+  'none' | 'current_grants_right_to_partner' | 'partner_grants_right_to_current' | 'mutual';
 export type GroupConnectionComposerTab = 'advanced' | 'preset';
 export type GroupConnectionPreset = 'parent' | 'child' | 'elected' | 'role_members_to_partner';
 export type CanonicalMembershipMode =
-  | 'none'
-  | 'all_members'
-  | 'role_members'
-  | 'selected_source_groups';
+  'none' | 'all_members' | 'role_members' | 'selected_source_groups';
 export type RelativeMembershipDirection =
-  | 'current_members_to_partner'
-  | 'partner_members_to_current';
+  'current_members_to_partner' | 'partner_members_to_current';
 
 export interface GroupConnectionComposerMembershipRuleValue {
   membershipMode: CanonicalMembershipMode;

@@ -58,7 +58,7 @@ export function GlobalLoadingAnimation({
         </div>
 
         {/* Connection status pill */}
-        <div className="border-border bg-muted/50 flex items-center gap-2 rounded-full border px-4 py-1.5">
+        <div className="border-border bg-muted/50 flex items-center gap-2 rounded-lg border px-4 py-1.5">
           <span
             className={`inline-block h-2 w-2 rounded-full ${
               connectionStatus === 'connected'

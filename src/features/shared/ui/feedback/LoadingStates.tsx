@@ -99,7 +99,7 @@ export function AppBootLoadingState({
                 <div className="flex items-center gap-3 text-left">
                   <span
                     className={cn(
-                      'bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full',
+                      'bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-md',
                       index === 0 && !isSlow && 'animate-pulse'
                     )}
                   >
@@ -293,7 +293,7 @@ function EntityPageSkeleton({ label, className }: Omit<PageSkeletonProps, 'varia
     >
       <span className="sr-only">{resolvedLabel}</span>
       <div className="space-y-3">
-        <Skeleton className="h-5 w-32 rounded-full" />
+        <Skeleton className="h-5 w-32 rounded-md" />
         <Skeleton className="h-10 w-80 max-w-full" />
         <Skeleton className="h-4 w-full max-w-2xl" />
       </div>
@@ -368,7 +368,7 @@ export function SectionSkeleton({
           className={cn('border-border bg-card rounded-md border', isCompact ? 'p-3' : 'p-4')}
         >
           <div className="flex items-start gap-3">
-            <Skeleton className={cn('shrink-0 rounded-full', isCompact ? 'size-8' : 'size-10')} />
+            <Skeleton className={cn('shrink-0 rounded-md', isCompact ? 'size-8' : 'size-10')} />
             <div className="min-w-0 flex-1 space-y-2">
               <Skeleton className="h-4 w-2/5" />
               <Skeleton className="h-3 w-full" />

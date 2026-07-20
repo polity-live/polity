@@ -633,10 +633,14 @@ describe('EventAgendaItemDetailView', () => {
     );
 
     const listProps = changeRequestCardsListMock.mock.calls.at(-1)?.[0];
+    const onOpenVoteDialog = listProps?.onOpenVoteDialog;
 
-    expect(typeof listProps?.onOpenVoteDialog).toBe('function');
+    expect(typeof onOpenVoteDialog).toBe('function');
 
-    (listProps?.onOpenVoteDialog as (itemId: string) => void)(crItem.id);
+    if (typeof onOpenVoteDialog !== 'function') {
+      throw new Error('Expected the change request vote dialog callback to be available');
+    }
+    onOpenVoteDialog(crItem.id);
 
     expect(setSelectedCRToolbarItemId).toHaveBeenCalledWith(crItem.id);
     expect(handleVoteClick).toHaveBeenCalledTimes(1);
@@ -788,7 +792,11 @@ describe('EventAgendaItemDetailView', () => {
       })
     );
 
-    (actionBarProps?.onJumpToNextVoteStep as () => void)();
+    const onJumpToNextVoteStep = actionBarProps?.onJumpToNextVoteStep;
+    if (typeof onJumpToNextVoteStep !== 'function') {
+      throw new Error('Expected the jump-to-next-vote-step callback to be available');
+    }
+    onJumpToNextVoteStep();
 
     expect(handleJumpToNextStartableSequenceItem).toHaveBeenCalledTimes(1);
   });

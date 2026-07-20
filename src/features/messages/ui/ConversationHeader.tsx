@@ -70,9 +70,9 @@ export function ConversationHeader({
 
   const avatarContent = (
     <div className="relative h-10 w-10 flex-shrink-0">
-      <Avatar className="h-10 w-10 rounded-2xl">
+      <Avatar className="h-10 w-10 rounded-md">
         <AvatarImage src={display.avatar || undefined} />
-        <AvatarFallback className="rounded-2xl">
+        <AvatarFallback className="rounded-md">
           {display.name?.[0]?.toUpperCase() || 'U'}
         </AvatarFallback>
       </Avatar>
@@ -143,7 +143,7 @@ export function ConversationHeader({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="border-border/70 text-muted-foreground hover:text-foreground h-6 w-6 flex-shrink-0 rounded-full border text-xs font-semibold"
+                      className="border-border/70 text-muted-foreground hover:text-foreground h-6 w-6 flex-shrink-0 rounded-md border text-xs font-semibold"
                       aria-label={t('features.messages.ai.information')}
                     >
                       ?

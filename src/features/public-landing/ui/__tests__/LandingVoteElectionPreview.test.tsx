@@ -5,30 +5,28 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { LandingVoteElectionPreview } from '../PublicLandingPage';
 
-const translationArrays = vi.hoisted(
-  (): Record<string, string[]> => ({
-    'pages.home.publicLanding.voteElectionPreview.voteChoices': [
-      'Yes|138|62',
-      'No|54|24',
-      'Abstain|31|14',
-    ],
-    'pages.home.publicLanding.voteElectionPreview.electionCandidates': [
-      'Maya Schneider|Speaker|84|44',
-      'Jonas Weber|Deputy|61|32',
-      'Aylin Kaya|Board seat|45|24',
-    ],
-    'pages.home.publicLanding.voteElectionPreview.metrics': [
-      '223 votes recorded',
-      '71% turnout',
-      'Quorum reached',
-    ],
-    'pages.home.publicLanding.voteElectionPreview.checklist': [
-      'Voting window open',
-      'Named results prepared',
-      'Election record generated automatically',
-    ],
-  })
-);
+const translationArrays = vi.hoisted((): Record<string, string[]> => ({
+  'pages.home.publicLanding.voteElectionPreview.voteChoices': [
+    'Yes|138|62',
+    'No|54|24',
+    'Abstain|31|14',
+  ],
+  'pages.home.publicLanding.voteElectionPreview.electionCandidates': [
+    'Maya Schneider|Speaker|84|44',
+    'Jonas Weber|Deputy|61|32',
+    'Aylin Kaya|Board seat|45|24',
+  ],
+  'pages.home.publicLanding.voteElectionPreview.metrics': [
+    '223 votes recorded',
+    '71% turnout',
+    'Quorum reached',
+  ],
+  'pages.home.publicLanding.voteElectionPreview.checklist': [
+    'Voting window open',
+    'Named results prepared',
+    'Election record generated automatically',
+  ],
+}));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string, fallback?: string) => fallback ?? key,

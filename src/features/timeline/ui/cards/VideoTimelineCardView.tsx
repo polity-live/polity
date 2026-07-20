@@ -179,10 +179,10 @@ export function VideoTimelineCardView({
                 <img
                   src={video.authorAvatar}
                   alt={video.authorName}
-                  className="h-5 w-5 rounded-full object-cover"
+                  className="h-5 w-5 rounded-md object-cover"
                 />
               ) : (
-                <div className="bg-muted flex h-5 w-5 items-center justify-center rounded-full">
+                <div className="bg-muted flex h-5 w-5 items-center justify-center rounded-md">
                   <User className="h-3 w-3" />
                 </div>
               )}

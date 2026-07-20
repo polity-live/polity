@@ -238,7 +238,7 @@ export function AssistantMessageInputView({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5 rounded-full"
+                    className="h-5 w-5 rounded-md"
                     onClick={() => assistantChat.setSkillSelection(skill.slug, false)}
                   >
                     <X className="h-3 w-3" />
@@ -262,7 +262,7 @@ export function AssistantMessageInputView({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5 rounded-full"
+                    className="h-5 w-5 rounded-md"
                     onClick={() =>
                       assistantChat.removeAttachment(attachment.entityType, attachment.entityId)
                     }
@@ -477,7 +477,7 @@ export function AssistantMessageInputView({
                   value={assistantChat.selectedModelKey}
                   onValueChange={assistantChat.setSelectedModelKey}
                 >
-                  <FormControlSelectTrigger className="bg-muted/60 h-8 gap-2 rounded-full border-0 shadow-none">
+                  <FormControlSelectTrigger className="bg-muted/60 h-8 gap-2 rounded-md border-0 shadow-none">
                     <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
                       <span
                         className={`min-w-0 flex-1 truncate text-left ${assistantChat.selectedModel ? 'text-foreground' : 'text-muted-foreground'}`}
@@ -586,7 +586,7 @@ export function AssistantMessageInputView({
                     tabIndex={assistantChat.selectedModel?.supports_reasoning_effort ? -1 : 0}
                   >
                     <FormControlSelectTrigger
-                      className="hover:bg-muted/60 h-8 w-8 justify-center rounded-full border-0 bg-transparent px-0 shadow-none [&>svg:last-child]:hidden"
+                      className="hover:bg-muted/60 h-8 w-8 justify-center rounded-md border-0 bg-transparent px-0 shadow-none [&>svg:last-child]:hidden"
                       aria-label={t('features.messages.ai.reasoning')}
                     >
                       {(() => {
@@ -596,7 +596,7 @@ export function AssistantMessageInputView({
                           ) ?? REASONING_OPTIONS[1];
                         return (
                           <div
-                            className={`flex h-6 w-6 items-center justify-center rounded-full ${selectedOption.gradientClass}`}
+                            className={`flex h-6 w-6 items-center justify-center rounded-md ${selectedOption.gradientClass}`}
                           >
                             <selectedOption.Icon className="h-3 w-3 flex-shrink-0" />
                           </div>
@@ -623,7 +623,7 @@ export function AssistantMessageInputView({
                     <FormControlSelectItem key={option.value} value={option.value}>
                       <div className="flex items-center gap-2">
                         <span
-                          className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${option.gradientClass}`}
+                          className={`inline-flex h-6 w-6 items-center justify-center rounded-md ${option.gradientClass}`}
                         >
                           <option.Icon className="h-3 w-3" />
                         </span>
@@ -734,7 +734,7 @@ export function AssistantMessageInputView({
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-full sm:hidden"
+              className="h-8 w-8 rounded-md sm:hidden"
               onClick={() => setAssistantSettingsOpen(true)}
               title={t('features.messages.ai.settings')}
             >
@@ -744,7 +744,7 @@ export function AssistantMessageInputView({
             <FileUploadTrigger
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-full"
+              className="h-8 w-8 rounded-md"
               disabled={assistantChat.isUploadingAttachments}
               title={t('features.messages.compose.uploadFiles')}
               aria-label={t('features.messages.compose.uploadFiles')}
@@ -766,7 +766,7 @@ export function AssistantMessageInputView({
             <Button
               type="button"
               size="icon"
-              className="ml-auto h-8 w-8 rounded-full"
+              className="ml-auto h-8 w-8 rounded-md"
               disabled={
                 !messageText.trim() ||
                 assistantChat.isSending ||

@@ -219,7 +219,7 @@ function renderWorkflowApprovalTag(args: {
     <Link
       to="/group/$id"
       params={{ id: approvalGroupId }}
-      className="focus-visible:ring-ring inline-flex rounded-full transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+      className="focus-visible:ring-ring inline-flex rounded-md transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
     >
       {badge}
     </Link>

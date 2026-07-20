@@ -139,9 +139,7 @@ export interface StatDataViewProjection {
 }
 
 export type DataViewProjection =
-  | ChartDataViewProjection
-  | TableDataViewProjection
-  | StatDataViewProjection;
+  ChartDataViewProjection | TableDataViewProjection | StatDataViewProjection;
 
 export interface GovDataImportResult {
   datasetId: string;

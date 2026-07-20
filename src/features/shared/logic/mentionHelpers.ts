@@ -17,9 +17,7 @@ export interface ParsedHashtag {
 }
 
 export type ParsedToken =
-  | ParsedMention
-  | ParsedHashtag
-  | { type: 'text'; value: string; start: number; end: number };
+  ParsedMention | ParsedHashtag | { type: 'text'; value: string; start: number; end: number };
 
 const MENTION_REGEX = /(?:^|(?<=\s))@([\w.-]+)/g;
 const HASHTAG_REGEX = /(?:^|(?<=\s))#([\w-]+)/g;

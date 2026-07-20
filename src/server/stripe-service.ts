@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 
 import { getSession } from '@/lib/supabase/server';
 
-const STRIPE_API_VERSION = '2026-05-27.dahlia';
+const STRIPE_API_VERSION = '2026-06-24.dahlia';
 const CUSTOM_AMOUNT_MIN_CENTS = 100;
 const CUSTOM_AMOUNT_MAX_CENTS = 99_900;
 
@@ -800,8 +800,7 @@ export async function executeStripeSubscriptionStatus(
     limit: 10,
   });
   const activeSubscription = subscriptions.data.find(sub => sub.status === 'active') as
-    | SubscriptionWithPeriod
-    | undefined;
+    SubscriptionWithPeriod | undefined;
   const invoices = await stripe.invoices.list({
     customer: customer.id,
     limit: 10,

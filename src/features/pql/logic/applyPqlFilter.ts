@@ -46,8 +46,7 @@ export interface PqlExpressionGroup<TFieldKey extends string = string> {
 }
 
 export type PqlExpression<TFieldKey extends string = string> =
-  | PqlExpressionCondition<TFieldKey>
-  | PqlExpressionGroup<TFieldKey>;
+  PqlExpressionCondition<TFieldKey> | PqlExpressionGroup<TFieldKey>;
 
 export interface PqlFilter<TFieldKey extends string = string> {
   id: string;

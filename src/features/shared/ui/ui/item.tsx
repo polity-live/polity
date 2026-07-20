@@ -62,7 +62,7 @@ function ItemMedia({
       className={cn(
         'flex shrink-0 items-center justify-center',
         variant === 'icon' && 'bg-muted text-muted-foreground size-8 rounded-md',
-        variant === 'avatar' && 'size-10 overflow-hidden rounded-full',
+        variant === 'avatar' && 'size-10 overflow-hidden rounded-md',
         variant === 'image' && 'size-12 overflow-hidden rounded-md',
         className
       )}

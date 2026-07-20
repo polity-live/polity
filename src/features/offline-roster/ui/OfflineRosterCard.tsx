@@ -795,7 +795,7 @@ export function OfflineRosterCardView({
                             <div className="flex items-center gap-3">
                               <motion.span
                                 className={cn(
-                                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
+                                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-md border text-xs font-semibold',
                                   isComplete
                                     ? 'border-success/40 bg-success/10 text-success'
                                     : 'border-border bg-muted text-muted-foreground'

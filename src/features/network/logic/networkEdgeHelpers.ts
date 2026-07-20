@@ -25,14 +25,7 @@ import type {
 type TranslationFn = (key: string, defaultValue?: string) => string;
 type DirectionInput = Exclude<NetworkEdgeRelationshipDirection, 'bidirectional'>;
 export type CivicNetworkEdgeTone =
-  | 'neutral'
-  | 'accent'
-  | 'info'
-  | 'warning'
-  | 'success'
-  | 'danger'
-  | 'group'
-  | PrimaryEntityTone;
+  'neutral' | 'accent' | 'info' | 'warning' | 'success' | 'danger' | 'group' | PrimaryEntityTone;
 
 export interface CivicNetworkEdgeStyleArgs {
   tone?: CivicNetworkEdgeTone;

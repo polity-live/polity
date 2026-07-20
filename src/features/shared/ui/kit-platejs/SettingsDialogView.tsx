@@ -74,7 +74,7 @@ export function SettingsDialogView({
           variant="default"
           className={cn(
             'group fixed right-4 bottom-4 z-50 size-10 overflow-hidden',
-            'rounded-full shadow-md hover:shadow-lg'
+            'rounded-md shadow-md hover:shadow-lg'
           )}
           // data-block-hide
         >
@@ -98,7 +98,7 @@ export function SettingsDialogView({
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <div
-                className={cn('size-8 rounded-full p-2', getSemanticToneClasses('accent').surface)}
+                className={cn('size-8 rounded-md p-2', getSemanticToneClasses('accent').surface)}
               >
                 <Wand2Icon className={cn('size-4', getSemanticToneClasses('accent').text)} />
               </div>
@@ -170,7 +170,7 @@ export function SettingsDialogView({
           {/* Upload Settings Group */}
           {/* <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="size-8 rounded-full bg-red-100 p-2 dark:bg-red-900">
+              <div className="size-8 rounded-md bg-red-100 p-2 dark:bg-red-900">
                 <Upload className="size-4 text-red-600 dark:text-red-400" />
               </div>
               <h4 className="font-semibold">Upload</h4>

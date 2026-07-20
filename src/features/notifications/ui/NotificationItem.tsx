@@ -325,7 +325,7 @@ export function NotificationItem({
 
   const cardContent = (
     <CardContent className="flex items-start gap-3 p-3">
-      <div className={cn('mt-0.5 rounded-full border p-1.5', iconTone.surface)}>
+      <div className={cn('mt-0.5 rounded-md border p-1.5', iconTone.surface)}>
         <Icon className="h-3.5 w-3.5" />
       </div>
 

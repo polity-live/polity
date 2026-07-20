@@ -654,9 +654,7 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
   const documentId = branch?.document_id ?? amendment.document_id;
   const document = documentId ? await tx.run(zql.document.where('id', documentId).one()) : null;
   let nextDocumentContent = document?.content as
-    | Parameters<typeof applyChangeRequestVoteResultToContent>[0]
-    | null
-    | undefined;
+    Parameters<typeof applyChangeRequestVoteResultToContent>[0] | null | undefined;
   let documentContentChanged = false;
   let documentVersionCreated = false;
   let eligibleUserIds: Set<string> | null = null;

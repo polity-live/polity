@@ -501,7 +501,7 @@ interface BadgeControlProps extends ComponentProps<typeof Badge> {
 export function BadgeControl({
   tone,
   size = 'default',
-  shape = 'pill',
+  shape = 'rounded',
   textStyle = 'default',
   textTransform = 'none',
   pulse = false,
@@ -520,6 +520,7 @@ export function BadgeControl({
         size === 'sm' && 'text-sm',
         size === 'md' && 'px-4 py-2 text-base',
         size === 'dot' && 'h-2 w-2 rounded-full p-0',
+        shape === 'pill' && 'rounded-full',
         shape === 'rounded' && 'rounded-md',
         textStyle === 'mono' && 'font-mono',
         textTransform === 'uppercase' && 'uppercase',

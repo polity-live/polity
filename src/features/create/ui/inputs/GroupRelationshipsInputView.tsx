@@ -154,7 +154,7 @@ export function GroupRelationshipsInputView({
                     onClick={() => onRemove(link.groupId)}
                     variant="ghost"
                     size="icon"
-                    className="hover:bg-destructive/10 hover:text-destructive h-7 w-7 rounded-full"
+                    className="hover:bg-destructive/10 hover:text-destructive h-7 w-7 rounded-md"
                   >
                     <X className="h-4 w-4" />
                   </Button>

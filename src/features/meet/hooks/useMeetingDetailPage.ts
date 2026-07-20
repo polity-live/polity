@@ -37,23 +37,20 @@ export function useMeetingDetailPage(meetingId: string) {
   }
 
   const creator = event.creator as
-    | { id: string; first_name?: string | null; avatar?: string | null }
-    | undefined;
+    { id: string; first_name?: string | null; avatar?: string | null } | undefined;
   const participants = (event.participants ?? [])
-    .map(
-      (participant): MeetingParticipantViewModel => ({
-        id: participant.id ?? '',
-        status: participant.status ?? '',
-        booker: participant.user
-          ? {
-              id: participant.user.id,
-              name: participant.user.first_name ?? undefined,
-              handle: participant.user.handle ?? undefined,
-              avatar: participant.user.avatar ?? undefined,
-            }
-          : undefined,
-      })
-    )
+    .map((participant): MeetingParticipantViewModel => ({
+      id: participant.id ?? '',
+      status: participant.status ?? '',
+      booker: participant.user
+        ? {
+            id: participant.user.id,
+            name: participant.user.first_name ?? undefined,
+            handle: participant.user.handle ?? undefined,
+            avatar: participant.user.avatar ?? undefined,
+          }
+        : undefined,
+    }))
     .filter(participant => participant.booker?.id !== event.creator_id);
 
   return {

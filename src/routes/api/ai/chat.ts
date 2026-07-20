@@ -43,11 +43,7 @@ function getStreamErrorMessage(error: unknown): string {
 }
 
 export type AiChatErrorCode =
-  | 'INVALID_REQUEST'
-  | 'UNAUTHORIZED'
-  | 'FORBIDDEN'
-  | 'MODEL_UNAVAILABLE'
-  | 'CHAT_SETUP_FAILED';
+  'INVALID_REQUEST' | 'UNAUTHORIZED' | 'FORBIDDEN' | 'MODEL_UNAVAILABLE' | 'CHAT_SETUP_FAILED';
 
 export interface AiChatErrorResponse {
   code: AiChatErrorCode;

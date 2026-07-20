@@ -199,10 +199,7 @@ export function AIMenu() {
 }
 
 type EditorChatState =
-  | 'cursorCommand'
-  | 'cursorSuggestion'
-  | 'selectionCommand'
-  | 'selectionSuggestion';
+  'cursorCommand' | 'cursorSuggestion' | 'selectionCommand' | 'selectionSuggestion';
 
 export const AIMenuItems = ({ setValue }: { setValue: (value: string) => void }) => {
   const { t } = useTranslation();

@@ -19,7 +19,7 @@
   ],
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.oxc": "explicit"
   },
   "prettier.requireConfig": true,
   "[typescript]": {

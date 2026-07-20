@@ -10,13 +10,7 @@ import { useCommonActions, useCommonState } from '@/zero/common';
 import { rankInterestSuggestions, type HashtagUsageRow } from '../onboarding/interestSuggestions';
 
 export type OnboardingStep =
-  | 'name'
-  | 'interests'
-  | 'groupSearch'
-  | 'confirm'
-  | 'ariaKai'
-  | 'appInstall'
-  | 'summary';
+  'name' | 'interests' | 'groupSearch' | 'confirm' | 'ariaKai' | 'appInstall' | 'summary';
 
 export interface Group {
   id: string;

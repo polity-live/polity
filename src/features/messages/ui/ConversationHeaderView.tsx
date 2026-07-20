@@ -42,7 +42,14 @@ export function ConversationHeaderView({
   return (
     <CardHeader separator className="flex-shrink-0 flex-row items-center justify-between space-y-0">
       <div className="flex items-center">
-        <Button variant="ghost" size="icon" className="mr-2 md:hidden" onClick={onBack}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="mr-2 md:hidden"
+          onClick={onBack}
+          aria-label={t('common.goBack')}
+          title={t('common.goBack')}
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex items-center">{identityContent}</div>

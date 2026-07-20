@@ -124,7 +124,7 @@ export function SharedMonthView({
                   <div className="mb-1 flex justify-end">
                     <span
                       className={cn(
-                        'inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium',
+                        'inline-flex h-6 w-6 items-center justify-center rounded-md text-xs font-medium',
                         isCurrentDay && 'bg-primary text-primary-foreground',
                         isSelected && !isCurrentDay && 'bg-accent-foreground/10 font-bold'
                       )}

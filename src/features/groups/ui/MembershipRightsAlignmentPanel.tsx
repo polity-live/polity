@@ -255,8 +255,7 @@ function ActionRightList({
   variant,
 }: {
   rights: readonly (
-    | ActionRightDefinition
-    | { key: string; resource: string; action: string; label: string }
+    ActionRightDefinition | { key: string; resource: string; action: string; label: string }
   )[];
   variant: 'missing' | 'extra';
 }) {

@@ -89,6 +89,7 @@ export function SearchHeader({
           <Button
             variant="outline"
             size="icon"
+            className="rounded-md"
             onClick={() => setShowFilters(!showFilters)}
             aria-label={t('features.search.filters.title')}
           >

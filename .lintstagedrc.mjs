@@ -14,7 +14,7 @@ export default {
     }
 
     if (lintableFiles.length > 0) {
-      commands.push(`eslint --fix ${quoteFiles(lintableFiles)}`);
+      commands.push(`oxlint --fix ${quoteFiles(lintableFiles)}`);
     }
 
     return commands;

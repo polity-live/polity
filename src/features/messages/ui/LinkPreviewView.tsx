@@ -88,7 +88,7 @@ export function LinkPreviewSkeleton() {
   return (
     <Card className="animate-pulse">
       <CardContent className="flex items-center gap-3 p-3">
-        <div className="bg-muted h-10 w-10 flex-shrink-0 rounded-full" />
+        <div className="bg-muted h-10 w-10 flex-shrink-0 rounded-lg" />
         <div className="min-w-0 flex-1 space-y-2">
           <div className="bg-muted h-4 w-3/4 rounded" />
           <div className="bg-muted h-3 w-1/2 rounded" />

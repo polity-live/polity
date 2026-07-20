@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
+/* oxlint-disable no-unused-expressions */
 // Vendored query windowing core; exposed only through the shared Polity grid adapter.
 import { useQuery } from '@rocicorp/zero/react';
 import { useCallback } from 'react';

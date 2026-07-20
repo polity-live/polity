@@ -1,6 +1,7 @@
 import { useCallback, useRef, type ReactNode, type RefObject } from 'react';
 
 import { usePolityZeroList, usePolityZeroWindowList } from './usePolityZeroList';
+import { ZeroVirtualSpacer } from './ZeroVirtualSpacer';
 import { rowAttributes, type ZeroVirtualizerResult } from '@rocicorp/zero-virtual/react';
 
 interface PageOptions<TStart> {
@@ -115,15 +116,18 @@ function PolityZeroListBody<TRow>({
   if (list.rowsEmpty) return renderEmpty();
 
   const content = (
-    <div
-      className={contentClassName}
-      style={{ paddingTop: list.spaceBefore, paddingBottom: list.spaceAfter }}
-    >
-      {list.items.map(item => (
-        <div key={item.key} {...rowAttributes(item.index, item.key)}>
+    <div className={contentClassName}>
+      <ZeroVirtualSpacer position="before" size={list.spaceBefore} />
+      {list.items.map((item, itemPosition) => (
+        <div
+          key={item.key}
+          {...rowAttributes(item.index, item.key)}
+          style={itemPosition === 0 ? { marginTop: 0 } : undefined}
+        >
           {item.row ? renderRow(item.row, item.index) : renderSkeleton(item.index)}
         </div>
       ))}
+      <ZeroVirtualSpacer position="after" size={list.spaceAfter} />
     </div>
   );
 

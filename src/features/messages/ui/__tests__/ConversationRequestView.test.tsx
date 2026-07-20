@@ -25,7 +25,7 @@ const pendingConversation = {
   requested_by_id: 'user-sender',
 };
 
-function renderRequest(currentUserId: string) {
+function renderRequest(currentUserId: string, overrides: Record<string, unknown> = {}) {
   const props = {
     conversation: pendingConversation,
     currentUserId,
@@ -45,6 +45,7 @@ function renderRequest(currentUserId: string) {
     rowsEmpty: false,
     scrollToBottom: vi.fn(),
     handleScroll: vi.fn(),
+    ...overrides,
   };
 
   render(<MessageListView {...(props as any)} />);
@@ -84,5 +85,24 @@ describe('pending conversation request UI', () => {
 
     rerender(<ConversationHeaderView {...(props as any)} currentUserId="user-sender" />);
     expect(screen.getByRole('button', { name: 'Cancel request' })).toBeTruthy();
+  });
+
+  it('renders message extents as content spacers', () => {
+    renderRequest('user-recipient', {
+      virtualRows: [{ type: 'message', key: 'message-0', index: 0, message: null }],
+      spaceBefore: 16,
+      spaceAfter: 32,
+    });
+
+    const row = document.querySelector('[data-vrow-index="0"]') as HTMLElement;
+    const content = row.parentElement as HTMLElement;
+    expect(content.style.paddingTop).toBe('');
+    expect(content.style.paddingBottom).toBe('');
+    expect(
+      (content.querySelector('[data-zero-virtual-spacer="before"]') as HTMLElement).style.height
+    ).toBe('16px');
+    expect(
+      (content.querySelector('[data-zero-virtual-spacer="after"]') as HTMLElement).style.height
+    ).toBe('32px');
   });
 });

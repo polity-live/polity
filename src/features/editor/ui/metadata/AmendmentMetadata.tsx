@@ -65,10 +65,7 @@ export function AmendmentMetadata({
             {t('features.editor.metadata.collaborators')}:
           </span>
           {collaborators.map(collab => (
-            <div
-              key={collab.id}
-              className="bg-muted flex items-center gap-1 rounded-full px-2 py-1"
-            >
+            <div key={collab.id} className="bg-muted flex items-center gap-1 rounded-md px-2 py-1">
               <Avatar className="h-5 w-5">
                 {collab.user?.avatar ? (
                   <AvatarImage src={collab.user.avatar} alt={collab.user.name || ''} />

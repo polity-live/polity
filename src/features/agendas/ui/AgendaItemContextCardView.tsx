@@ -361,22 +361,14 @@ export function AgendaItemContextCardView({
                 <AgendaTypeBadge
                   type={
                     agendaItem.type as
-                      | 'election'
-                      | 'vote'
-                      | 'speech'
-                      | 'discussion'
-                      | 'accreditation'
+                      'election' | 'vote' | 'speech' | 'discussion' | 'accreditation'
                   }
                 />
                 {showHeaderStatusBadge ? (
                   <AgendaStatusBadge
                     status={
                       agendaItem.status as
-                        | 'completed'
-                        | 'in-progress'
-                        | 'pending'
-                        | 'planned'
-                        | 'active'
+                        'completed' | 'in-progress' | 'pending' | 'planned' | 'active'
                     }
                   />
                 ) : null}

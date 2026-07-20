@@ -61,7 +61,7 @@ export function HashtagInputView({
             <span
               key={tag}
               className={cn(
-                'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm',
+                'inline-flex items-center gap-1 rounded-md border px-3 py-1 text-sm',
                 getHashtagGradient(tag)
               )}
             >
@@ -70,7 +70,7 @@ export function HashtagInputView({
               <button
                 type="button"
                 onClick={() => removeHashtag(tag)}
-                className="hover:bg-muted/40 ml-1 rounded-full"
+                className="hover:bg-muted/40 ml-1 rounded-sm"
               >
                 <X className="h-3 w-3" />
               </button>

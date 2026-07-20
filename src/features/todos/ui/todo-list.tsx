@@ -4,6 +4,7 @@ import {
   PolityLocalListView,
   rowAttributes,
   usePolityZeroList,
+  ZeroVirtualSpacer,
 } from '@/features/shared/virtualization';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { queries } from '@/zero/queries';
@@ -112,12 +113,14 @@ function VirtualTodoList({
 
   return (
     <div ref={scrollRef} className="h-[calc(100vh-20rem)] overflow-y-auto">
-      <div
-        className="space-y-3"
-        style={{ paddingTop: virtualList.spaceBefore, paddingBottom: virtualList.spaceAfter }}
-      >
-        {virtualList.items.map(item => (
-          <div key={item.key} {...rowAttributes(item.index, item.key)}>
+      <div className="space-y-3">
+        <ZeroVirtualSpacer position="before" size={virtualList.spaceBefore} />
+        {virtualList.items.map((item, itemPosition) => (
+          <div
+            key={item.key}
+            {...rowAttributes(item.index, item.key)}
+            style={itemPosition === 0 ? { marginTop: 0 } : undefined}
+          >
             {item.row ? (
               <TodoCard
                 todo={item.row}
@@ -130,6 +133,7 @@ function VirtualTodoList({
             )}
           </div>
         ))}
+        <ZeroVirtualSpacer position="after" size={virtualList.spaceAfter} />
       </div>
     </div>
   );

@@ -175,7 +175,7 @@ const EmojiButton = React.memo(function EmojiButton({
       type="button"
     >
       <div
-        className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100"
+        className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-100"
         aria-hidden="true"
       />
       <span
@@ -350,7 +350,7 @@ function EmojiPickerSearchBar({
     <div className="flex items-center px-2">
       <div className="relative flex grow items-center">
         <input
-          className="bg-muted placeholder:text-muted-foreground block w-full appearance-none rounded-full border-0 px-10 py-2 text-sm outline-none focus-visible:outline-none"
+          className="bg-muted placeholder:text-muted-foreground block w-full appearance-none rounded-lg border-0 px-10 py-2 text-sm outline-none focus-visible:outline-none"
           value={searchValue}
           onChange={event => setSearch(event.target.value)}
           placeholder={t('plateJs.emoji.search')}
@@ -385,7 +385,7 @@ function EmojiPickerSearchAndClear({
           size="icon"
           variant="ghost"
           className={cn(
-            'text-popover-foreground absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-none bg-transparent hover:bg-transparent'
+            'text-popover-foreground absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md border-none bg-transparent hover:bg-transparent'
           )}
           onClick={clearSearch}
           title={t('plateJs.emoji.clear')}
@@ -479,7 +479,7 @@ function EmojiPickerNavigation({
                     size="sm"
                     variant="ghost"
                     className={cn(
-                      'text-muted-foreground hover:bg-muted hover:text-muted-foreground h-fit rounded-full fill-current p-1.5',
+                      'text-muted-foreground hover:bg-muted hover:text-muted-foreground h-fit rounded-md fill-current p-1.5',
                       id === focusedCategory &&
                         'bg-accent text-accent-foreground pointer-events-none fill-current'
                     )}

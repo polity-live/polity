@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
+/* oxlint-disable no-unused-expressions */
 /**
  * Vendored paging core; exposed only through the shared Polity grid adapter.
  *

@@ -7,12 +7,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { SemanticBadge, type BadgeTone } from './StatusBadges';
 
 export type DocsSignalTone =
-  | 'entry'
-  | 'action'
-  | 'collaboration'
-  | 'attention'
-  | 'decision'
-  | 'result';
+  'entry' | 'action' | 'collaboration' | 'attention' | 'decision' | 'result';
 
 const docsSignalToneMap: Record<DocsSignalTone, BadgeTone> = {
   entry: 'info',

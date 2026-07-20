@@ -516,8 +516,7 @@ export function buildAssistantAttachmentOption(
 function countDecisionsForChoice(
   choiceId: string | undefined,
   decisions:
-    | readonly { choice?: { id?: string | null } | null; choice_id?: string | null }[]
-    | undefined
+    readonly { choice?: { id?: string | null } | null; choice_id?: string | null }[] | undefined
 ): number {
   if (!choiceId || !decisions) {
     return 0;

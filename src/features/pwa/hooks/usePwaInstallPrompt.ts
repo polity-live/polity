@@ -3,22 +3,11 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 
 export type PwaInstallStatus =
-  | 'checking'
-  | 'installed'
-  | 'promptable'
-  | 'manual-ios'
-  | 'reload-required'
-  | 'unavailable';
+  'checking' | 'installed' | 'promptable' | 'manual-ios' | 'reload-required' | 'unavailable';
 export type PwaInstallPlatform = 'ios' | 'android' | 'desktop' | 'unknown';
 export type PwaInstallOutcome = 'accepted' | 'dismissed' | 'unavailable' | null;
 export type PwaServiceWorkerStatus =
-  | 'checking'
-  | 'unsupported'
-  | 'registering'
-  | 'registered'
-  | 'ready'
-  | 'controlled'
-  | 'error';
+  'checking' | 'unsupported' | 'registering' | 'registered' | 'ready' | 'controlled' | 'error';
 export type PwaInstallPromptSource = 'early-script' | 'react-listener' | null;
 
 interface BeforeInstallPromptEvent extends Event {

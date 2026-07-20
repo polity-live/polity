@@ -94,9 +94,7 @@ export async function createChangeRequestVoteOrderContext(
   changeRequests: readonly AnyRecord[]
 ) {
   const amendment = (await tx.run(zql.amendment.where('id', amendmentId).one())) as
-    | AnyRecord
-    | null
-    | undefined;
+    AnyRecord | null | undefined;
   const branchIds = [
     ...new Set(
       changeRequests
