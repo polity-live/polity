@@ -166,6 +166,7 @@
     "recharts": "^3.9.2",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
+    "resend": "^6.17.2",
     "rrule": "^2.8.1",
     "sonner": "^2.0.5",
     "stripe": "^22.3.2",

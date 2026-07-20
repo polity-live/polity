@@ -6,6 +6,7 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { createClient } from '@/lib/supabase/client';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { getAuthRedirectUrl } from '@/features/auth/logic/authRedirects';
 
 const AUTH_SERVICE_UNAVAILABLE_MESSAGE =
   'Authentication service is temporarily unavailable. Please try again in a moment.';
@@ -122,7 +123,13 @@ export const useAuthStore = create<AuthState>()(
       try {
         const supabase = createClient();
         const { data, error } = await retryTransientAuthFailure(() =>
-          supabase.auth.signUp({ email, password })
+          supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: getAuthRedirectUrl('/auth/callback'),
+            },
+          })
         );
 
         if (error) {
@@ -205,7 +212,7 @@ export const useAuthStore = create<AuthState>()(
           supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-              redirectTo: `${window.location.origin}/auth/callback`,
+              redirectTo: getAuthRedirectUrl('/auth/callback'),
             },
           })
         );
@@ -239,7 +246,9 @@ export const useAuthStore = create<AuthState>()(
         const supabase = createClient();
         const { error } = await retryTransientAuthFailure(() =>
           supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/auth/sign-in`,
+            redirectTo: getAuthRedirectUrl(
+              `/auth/callback?next=${encodeURIComponent('/auth/reset-password')}`
+            ),
           })
         );
 

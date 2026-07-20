@@ -33,6 +33,7 @@ import { Route as ApiQueryRouteImport } from './routes/api/query'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth/reset-password'
 import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
 import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthVerifyRouteImport } from './routes/auth/verify'
@@ -74,6 +75,8 @@ import { Route as ApiEurostatImportStepRouteImport } from './routes/api/eurostat
 import { Route as ApiEurostatProjectionRouteImport } from './routes/api/eurostat/projection'
 import { Route as ApiGovdataCatalogueRouteImport } from './routes/api/govdata/catalogue'
 import { Route as ApiGovdataImportRouteImport } from './routes/api/govdata/import'
+import { Route as ApiNewsletterSyncRouteImport } from './routes/api/newsletter/sync'
+import { Route as ApiResendWebhookRouteImport } from './routes/api/resend/webhook'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
 import { Route as AuthedAmendmentIdIndexRouteImport } from './routes/_authed/amendment/$id/index'
 import { Route as AuthedAmendmentIdChangeRequestsRouteImport } from './routes/_authed/amendment/$id/change-requests'
@@ -254,6 +257,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthSignInRoute = AuthSignInRouteImport.update({
@@ -461,6 +469,16 @@ const ApiGovdataCatalogueRoute = ApiGovdataCatalogueRouteImport.update({
 const ApiGovdataImportRoute = ApiGovdataImportRouteImport.update({
   id: '/api/govdata/import',
   path: '/api/govdata/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNewsletterSyncRoute = ApiNewsletterSyncRouteImport.update({
+  id: '/api/newsletter/sync',
+  path: '/api/newsletter/sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiResendWebhookRoute = ApiResendWebhookRouteImport.update({
+  id: '/api/resend/webhook',
+  path: '/api/resend/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
@@ -830,6 +848,7 @@ export interface FileRoutesByFullPath {
   '/api/query': typeof ApiQueryRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify': typeof AuthVerifyRoute
@@ -871,6 +890,8 @@ export interface FileRoutesByFullPath {
   '/api/eurostat/projection': typeof ApiEurostatProjectionRoute
   '/api/govdata/catalogue': typeof ApiGovdataCatalogueRoute
   '/api/govdata/import': typeof ApiGovdataImportRoute
+  '/api/newsletter/sync': typeof ApiNewsletterSyncRoute
+  '/api/resend/webhook': typeof ApiResendWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/create/': typeof AuthedCreateIndexRoute
   '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
@@ -956,6 +977,7 @@ export interface FileRoutesByTo {
   '/api/query': typeof ApiQueryRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify': typeof AuthVerifyRoute
@@ -992,6 +1014,8 @@ export interface FileRoutesByTo {
   '/api/eurostat/projection': typeof ApiEurostatProjectionRoute
   '/api/govdata/catalogue': typeof ApiGovdataCatalogueRoute
   '/api/govdata/import': typeof ApiGovdataImportRoute
+  '/api/newsletter/sync': typeof ApiNewsletterSyncRoute
+  '/api/resend/webhook': typeof ApiResendWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/create': typeof AuthedCreateIndexRoute
   '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
@@ -1076,6 +1100,7 @@ export interface FileRoutesById {
   '/api/query': typeof ApiQueryRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify': typeof AuthVerifyRoute
@@ -1117,6 +1142,8 @@ export interface FileRoutesById {
   '/api/eurostat/projection': typeof ApiEurostatProjectionRoute
   '/api/govdata/catalogue': typeof ApiGovdataCatalogueRoute
   '/api/govdata/import': typeof ApiGovdataImportRoute
+  '/api/newsletter/sync': typeof ApiNewsletterSyncRoute
+  '/api/resend/webhook': typeof ApiResendWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/_authed/create/': typeof AuthedCreateIndexRoute
   '/_authed/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
@@ -1206,6 +1233,7 @@ export interface FileRouteTypes {
     | '/api/query'
     | '/auth/callback'
     | '/auth/forgot-password'
+    | '/auth/reset-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/auth/verify'
@@ -1247,6 +1275,8 @@ export interface FileRouteTypes {
     | '/api/eurostat/projection'
     | '/api/govdata/catalogue'
     | '/api/govdata/import'
+    | '/api/newsletter/sync'
+    | '/api/resend/webhook'
     | '/api/stripe/webhook'
     | '/create/'
     | '/amendment/$id/change-requests'
@@ -1332,6 +1362,7 @@ export interface FileRouteTypes {
     | '/api/query'
     | '/auth/callback'
     | '/auth/forgot-password'
+    | '/auth/reset-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/auth/verify'
@@ -1368,6 +1399,8 @@ export interface FileRouteTypes {
     | '/api/eurostat/projection'
     | '/api/govdata/catalogue'
     | '/api/govdata/import'
+    | '/api/newsletter/sync'
+    | '/api/resend/webhook'
     | '/api/stripe/webhook'
     | '/create'
     | '/amendment/$id/change-requests'
@@ -1451,6 +1484,7 @@ export interface FileRouteTypes {
     | '/api/query'
     | '/auth/callback'
     | '/auth/forgot-password'
+    | '/auth/reset-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/auth/verify'
@@ -1492,6 +1526,8 @@ export interface FileRouteTypes {
     | '/api/eurostat/projection'
     | '/api/govdata/catalogue'
     | '/api/govdata/import'
+    | '/api/newsletter/sync'
+    | '/api/resend/webhook'
     | '/api/stripe/webhook'
     | '/_authed/create/'
     | '/_authed/amendment/$id/change-requests'
@@ -1592,6 +1628,8 @@ export interface RootRouteChildren {
   ApiEurostatProjectionRoute: typeof ApiEurostatProjectionRoute
   ApiGovdataCatalogueRoute: typeof ApiGovdataCatalogueRoute
   ApiGovdataImportRoute: typeof ApiGovdataImportRoute
+  ApiNewsletterSyncRoute: typeof ApiNewsletterSyncRoute
+  ApiResendWebhookRoute: typeof ApiResendWebhookRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   ApiDatasetsDatasetIdDetailsRoute: typeof ApiDatasetsDatasetIdDetailsRoute
   ApiDatasetsSnapshotIdProjectionRoute: typeof ApiDatasetsSnapshotIdProjectionRoute
@@ -1766,6 +1804,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/auth/forgot-password'
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
       parentRoute: typeof AuthRoute
     }
     '/auth/sign-in': {
@@ -2053,6 +2098,20 @@ declare module '@tanstack/react-router' {
       path: '/api/govdata/import'
       fullPath: '/api/govdata/import'
       preLoaderRoute: typeof ApiGovdataImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/newsletter/sync': {
+      id: '/api/newsletter/sync'
+      path: '/api/newsletter/sync'
+      fullPath: '/api/newsletter/sync'
+      preLoaderRoute: typeof ApiNewsletterSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/resend/webhook': {
+      id: '/api/resend/webhook'
+      path: '/api/resend/webhook'
+      fullPath: '/api/resend/webhook'
+      preLoaderRoute: typeof ApiResendWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/stripe/webhook': {
@@ -2796,6 +2855,7 @@ const AuthedRouteWithChildren =
 interface AuthRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   AuthSignInRoute: typeof AuthSignInRoute
   AuthSignUpRoute: typeof AuthSignUpRoute
   AuthVerifyRoute: typeof AuthVerifyRoute
@@ -2805,6 +2865,7 @@ interface AuthRouteChildren {
 const AuthRouteChildren: AuthRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
   AuthSignInRoute: AuthSignInRoute,
   AuthSignUpRoute: AuthSignUpRoute,
   AuthVerifyRoute: AuthVerifyRoute,
@@ -2860,6 +2921,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiEurostatProjectionRoute: ApiEurostatProjectionRoute,
   ApiGovdataCatalogueRoute: ApiGovdataCatalogueRoute,
   ApiGovdataImportRoute: ApiGovdataImportRoute,
+  ApiNewsletterSyncRoute: ApiNewsletterSyncRoute,
+  ApiResendWebhookRoute: ApiResendWebhookRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   ApiDatasetsDatasetIdDetailsRoute: ApiDatasetsDatasetIdDetailsRoute,
   ApiDatasetsSnapshotIdProjectionRoute: ApiDatasetsSnapshotIdProjectionRoute,

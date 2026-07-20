@@ -17,6 +17,8 @@ export function useAccountPasswordSectionController() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [currentPassword, setCurrentPassword] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [confirmationMode, setConfirmationMode] = useState<'password' | 'code'>('password');
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [passwordTouched, setPasswordTouched] = useState(false);
@@ -58,6 +60,8 @@ export function useAccountPasswordSectionController() {
 
     if (!open) {
       setCurrentPassword('');
+      setVerificationCode('');
+      setConfirmationMode('password');
       setDialogError(null);
     }
   };
@@ -80,6 +84,13 @@ export function useAccountPasswordSectionController() {
 
     if (requiresInitialPassword) {
       const result = await updateAccountPassword(password);
+      if (result.verificationRequired) {
+        setVerificationCode('');
+        setConfirmationMode('code');
+        setIsDialogOpen(true);
+        return;
+      }
+
       if (result.success) {
         resetForm();
         return;
@@ -90,12 +101,25 @@ export function useAccountPasswordSectionController() {
     }
 
     setCurrentPassword('');
+    setVerificationCode('');
+    setConfirmationMode('password');
     setDialogError(null);
     setIsDialogOpen(true);
   };
 
   const handleConfirm = async () => {
-    const result = await updateAccountPassword(password, currentPassword);
+    const result = await updateAccountPassword(
+      password,
+      currentPassword,
+      confirmationMode === 'code' ? verificationCode : undefined
+    );
+    if (result.verificationRequired) {
+      setVerificationCode('');
+      setConfirmationMode('code');
+      setDialogError(null);
+      return;
+    }
+
     if (result.success) {
       resetForm();
       handleDialogOpenChange(false);
@@ -151,11 +175,17 @@ export function useAccountPasswordSectionController() {
     confirmationDialogProps: {
       open: isDialogOpen,
       isSubmitting: isUpdating,
+      mode: confirmationMode,
       password: currentPassword,
+      code: verificationCode,
       error: dialogError,
       onOpenChange: handleDialogOpenChange,
       onPasswordChange: (value: string) => {
         setCurrentPassword(value);
+        setDialogError(null);
+      },
+      onCodeChange: (value: string) => {
+        setVerificationCode(value);
         setDialogError(null);
       },
       onConfirm: handleConfirm,

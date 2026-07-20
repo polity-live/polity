@@ -21,12 +21,13 @@ port = 54323
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+additional_redirect_urls = ["http://localhost:3000/auth/callback", "http://localhost:3000/auth/reset-password"]
 
 [auth.email]
 enable_signup = true
-double_confirm_changes = false
-enable_confirmations = false
+double_confirm_changes = true
+enable_confirmations = true
+secure_password_change = true
 
 [auth.email.template.confirmation]
 subject = "Confirm your signup for Polity"
@@ -52,6 +53,16 @@ content_path = "./supabase/email-templates/reset-password.html"
 subject = "Confirm reauthentication for Polity"
 content_path = "./supabase/email-templates/reauthentication.html"
 
+[auth.email.notification.password_changed]
+enabled = true
+subject = "Your Polity password was changed"
+content_path = "./email-templates/password-changed.html"
+
+[auth.email.notification.email_changed]
+enabled = true
+subject = "Your Polity email address was changed"
+content_path = "./email-templates/email-changed.html"
+
 [auth.external.google]
 enabled = true
 client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
@@ -61,6 +72,9 @@ skip_nonce_check = false
 [storage]
 enabled = true
 file_size_limit = "50MiB"
+
+[storage.vector]
+enabled = false
 
 [storage.buckets.avatars]
 public = true

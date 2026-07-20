@@ -43,7 +43,7 @@ export const userPageTranslations = {
     confirmationSent: 'Confirmation email sent to the new address',
     failed: 'Failed to update email',
     initialPasswordRequired:
-      'Set an initial account password in the section above before changing your account email.',
+      'Because your account has no password, confirm this change using the emails sent to your old and new addresses.',
   },
   securityConfirmation: {
     title: 'Confirm Change',
@@ -56,6 +56,10 @@ export const userPageTranslations = {
     invalidPassword: 'Current password is incorrect',
     initialPasswordRequired: 'Set an initial account password first',
     unavailable: 'Unable to verify your current password right now',
+    codeTitle: 'Enter the email code',
+    codeDescription: 'We sent you a six-digit code. Enter it to confirm the password change.',
+    codeLabel: 'Verification code',
+    codePlaceholder: '6-digit code',
   },
   settingsForm: {
     avatar: {

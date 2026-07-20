@@ -4,6 +4,7 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 
 import { createClient } from '@/lib/supabase/client';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { getSafeAuthRedirect } from '@/features/auth/logic/authRedirects';
 
 export function useAuthCallbackPageController() {
   const { t } = useTranslation();
@@ -12,11 +13,12 @@ export function useAuthCallbackPageController() {
   useEffect(() => {
     let isActive = true;
 
-    const finalizeGoogleAuth = async () => {
+    const finalizeAuthCallback = async () => {
       try {
         const supabase = createClient();
         const searchParams = new URLSearchParams(window.location.search);
         const code = searchParams.get('code');
+        const destination = getSafeAuthRedirect(searchParams.get('next'));
 
         if (code) {
           try {
@@ -48,7 +50,7 @@ export function useAuthCallbackPageController() {
         }
 
         if (isActive) {
-          navigate({ to: '/' });
+          navigate({ to: destination });
         }
       } catch (error) {
         console.error('Failed to complete auth callback:', error);
@@ -60,7 +62,7 @@ export function useAuthCallbackPageController() {
       }
     };
 
-    void finalizeGoogleAuth();
+    void finalizeAuthCallback();
 
     return () => {
       isActive = false;

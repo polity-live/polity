@@ -64,6 +64,16 @@ export function useAccountEmailSectionController() {
       return;
     }
 
+    if (requiresInitialPassword) {
+      const result = await updateAccountEmail(trimmedNewEmail);
+      if (result.success) {
+        resetForm();
+        return;
+      }
+      setError(result.error ?? null);
+      return;
+    }
+
     setCurrentPassword('');
     setDialogError(null);
     setIsDialogOpen(true);
