@@ -43,7 +43,7 @@ export const userPageTranslations = {
     confirmationSent: 'Bestätigungs-E-Mail an die neue Adresse gesendet',
     failed: 'E-Mail konnte nicht aktualisiert werden',
     initialPasswordRequired:
-      'Lege zuerst im oberen Bereich ein initiales Konto-Passwort fest, bevor du deine Konto-E-Mail änderst.',
+      'Da dein Konto kein Passwort verwendet, bestätigst du die Änderung über die E-Mails an deine alte und neue Adresse.',
   },
   securityConfirmation: {
     title: 'Änderung bestätigen',
@@ -56,6 +56,11 @@ export const userPageTranslations = {
     invalidPassword: 'Das aktuelle Passwort ist falsch',
     initialPasswordRequired: 'Lege zuerst ein initiales Konto-Passwort fest',
     unavailable: 'Dein aktuelles Passwort kann gerade nicht überprüft werden',
+    codeTitle: 'E-Mail-Code eingeben',
+    codeDescription:
+      'Wir haben dir einen sechsstelligen Code gesendet. Gib ihn ein, um die Passwortänderung zu bestätigen.',
+    codeLabel: 'Bestätigungscode',
+    codePlaceholder: '6-stelliger Code',
   },
   settingsForm: {
     avatar: {

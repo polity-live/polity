@@ -8,10 +8,12 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
+import { getAuthRedirectUrl } from '@/features/auth/logic/authRedirects';
 
 interface AccountActionResult {
   success: boolean;
   error?: string;
+  verificationRequired?: boolean;
 }
 
 interface UseAccountActionsReturn {
@@ -19,7 +21,8 @@ interface UseAccountActionsReturn {
   verifyCurrentPassword: (currentPassword: string) => Promise<AccountActionResult>;
   updateAccountPassword: (
     newPassword: string,
-    currentPassword?: string
+    currentPassword?: string,
+    nonce?: string
   ) => Promise<AccountActionResult>;
   updateAccountEmail: (newEmail: string, currentPassword?: string) => Promise<AccountActionResult>;
 }
@@ -90,7 +93,11 @@ export function useAccountActions(): UseAccountActionsReturn {
   );
 
   const updateAccountPassword = useCallback(
-    async (newPassword: string, currentPassword?: string): Promise<AccountActionResult> => {
+    async (
+      newPassword: string,
+      currentPassword?: string,
+      nonce?: string
+    ): Promise<AccountActionResult> => {
       setIsUpdating(true);
       try {
         if (authStateLoading || !user || user.hasPassword === null) {
@@ -100,7 +107,7 @@ export function useAccountActions(): UseAccountActionsReturn {
           };
         }
 
-        if (user.hasPassword) {
+        if (!nonce && user.hasPassword) {
           const verificationResult = await verifyCurrentPassword(currentPassword ?? '');
           if (!verificationResult.success) {
             return verificationResult;
@@ -108,7 +115,17 @@ export function useAccountActions(): UseAccountActionsReturn {
         }
 
         const supabase = createClient();
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (!nonce) {
+          const { error } = await supabase.auth.reauthenticate();
+          if (error) throw error;
+          return { success: false, verificationRequired: true };
+        }
+
+        const { error } = await supabase.auth.updateUser({
+          password: newPassword,
+          nonce,
+          ...(user.hasPassword && currentPassword ? { current_password: currentPassword } : {}),
+        });
 
         if (error) {
           throw error;
@@ -144,20 +161,18 @@ export function useAccountActions(): UseAccountActionsReturn {
           };
         }
 
-        if (!user.hasPassword) {
-          return {
-            success: false,
-            error: t('pages.user.securityConfirmation.initialPasswordRequired'),
-          };
-        }
-
-        const verificationResult = await verifyCurrentPassword(currentPassword ?? '');
-        if (!verificationResult.success) {
-          return verificationResult;
+        if (user.hasPassword) {
+          const verificationResult = await verifyCurrentPassword(currentPassword ?? '');
+          if (!verificationResult.success) {
+            return verificationResult;
+          }
         }
 
         const supabase = createClient();
-        const { data, error } = await supabase.auth.updateUser({ email: newEmail });
+        const { data, error } = await supabase.auth.updateUser(
+          { email: newEmail },
+          { emailRedirectTo: getAuthRedirectUrl('/auth/callback') }
+        );
 
         if (error) {
           throw error;

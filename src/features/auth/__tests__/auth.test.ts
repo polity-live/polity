@@ -30,6 +30,13 @@ describe('useAuthStore signUpWithPassword', () => {
 
     expect(result).toEqual({ status: 'authenticated' });
     expect(useAuthStore.getState().error).toBeNull();
+    expect(signUpMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: {
+          emailRedirectTo: expect.stringMatching(/\/auth\/callback$/),
+        },
+      })
+    );
   }, 10000);
 
   it('returns confirmation_required when signup succeeds without a session', async () => {

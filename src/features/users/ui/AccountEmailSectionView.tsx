@@ -62,39 +62,38 @@ export function AccountEmailSectionView({
           className="bg-muted"
         />
 
-        {requiresInitialPassword ? (
-          <p className="text-muted-foreground text-sm">{copy.initialPasswordRequired}</p>
-        ) : (
-          <form onSubmit={onSubmit} className="space-y-4">
-            <TextField
-              id="new-email"
-              type="email"
-              label={copy.newEmail}
-              placeholder={copy.newEmailPlaceholder}
-              value={newEmail}
-              onValueChange={onNewEmailChange}
-              onBlur={onNewEmailBlur}
-              description={copy.emailHint}
-              descriptionClassName={cn(
-                'text-xs',
-                showEmailError && 'text-destructive',
-                showEmailSuccess && featureThemeClassName('authNameStepSuccessText')
-              )}
-              invalid={showEmailError}
-              required
-              disabled={isBusy}
-              autoComplete="email"
-              data-valid={showEmailSuccess ? 'true' : undefined}
-            />
+        <form onSubmit={onSubmit} className="space-y-4">
+          {requiresInitialPassword ? (
+            <p className="text-muted-foreground text-sm">{copy.initialPasswordRequired}</p>
+          ) : null}
+          <TextField
+            id="new-email"
+            type="email"
+            label={copy.newEmail}
+            placeholder={copy.newEmailPlaceholder}
+            value={newEmail}
+            onValueChange={onNewEmailChange}
+            onBlur={onNewEmailBlur}
+            description={copy.emailHint}
+            descriptionClassName={cn(
+              'text-xs',
+              showEmailError && 'text-destructive',
+              showEmailSuccess && featureThemeClassName('authNameStepSuccessText')
+            )}
+            invalid={showEmailError}
+            required
+            disabled={isBusy}
+            autoComplete="email"
+            data-valid={showEmailSuccess ? 'true' : undefined}
+          />
 
-            {error ? <InlineNotice variant="destructive">{error}</InlineNotice> : null}
+          {error ? <InlineNotice variant="destructive">{error}</InlineNotice> : null}
 
-            <FormButton type="submit" disabled={!isValid || isBusy}>
-              {isBusy ? <Spinner className="mr-2" /> : null}
-              {isBusy ? copy.updating : copy.update}
-            </FormButton>
-          </form>
-        )}
+          <FormButton type="submit" disabled={!isValid || isBusy}>
+            {isBusy ? <Spinner className="mr-2" /> : null}
+            {isBusy ? copy.updating : copy.update}
+          </FormButton>
+        </form>
       </div>
     </SettingsPanel>
   );
