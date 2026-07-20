@@ -6,12 +6,7 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils.ts';
 
 export type CivicMotionTimelineTone =
-  | 'neutral'
-  | 'accent'
-  | 'info'
-  | 'success'
-  | 'warning'
-  | 'danger';
+  'neutral' | 'accent' | 'info' | 'success' | 'warning' | 'danger';
 
 export interface CivicMotionTimelineItem {
   description?: ReactNode;

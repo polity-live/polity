@@ -563,9 +563,7 @@ export const agendaServerMutators = {
 
         eventForAgenda = agendaItem?.event_id
           ? ((await tx.run(zql.event.where('id', agendaItem.event_id).one())) as
-              | Record<string, any>
-              | null
-              | undefined)
+              Record<string, any> | null | undefined)
           : null;
         return eventForAgenda;
       };

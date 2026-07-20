@@ -50,9 +50,7 @@ export function useSupportConfirmationPanelController({ groupId }: SupportConfir
     setProcessingId,
     dateLocale,
     status: (isLoading ? 'loading' : pendingConfirmations.length === 0 ? 'empty' : 'ready') as
-      | 'loading'
-      | 'empty'
-      | 'ready',
+      'loading' | 'empty' | 'ready',
     handleConfirm,
     handleDecline,
   };

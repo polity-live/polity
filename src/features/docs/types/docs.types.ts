@@ -32,12 +32,7 @@ export type DocsTopicSlug =
 export type DocsCategory = 'people' | 'collaboration' | 'governance' | 'coordination' | 'systems';
 
 export type DocsSignalTone =
-  | 'entry'
-  | 'action'
-  | 'collaboration'
-  | 'attention'
-  | 'decision'
-  | 'result';
+  'entry' | 'action' | 'collaboration' | 'attention' | 'decision' | 'result';
 
 export interface DocsProcessStep {
   id: string;

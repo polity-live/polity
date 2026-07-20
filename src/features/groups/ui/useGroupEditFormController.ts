@@ -226,9 +226,7 @@ export function useGroupEditFormController({
                     ? formData.connected_group_id
                     : groupId,
                 membership_mode: siblingMembershipRule.membership_mode as
-                  | 'all_members'
-                  | 'role_members'
-                  | 'selected_source_groups',
+                  'all_members' | 'role_members' | 'selected_source_groups',
                 required_source_role_id: siblingMembershipRule.required_source_role_id,
                 eligible_origin_group_ids: siblingMembershipRule.eligible_origin_group_ids,
               }

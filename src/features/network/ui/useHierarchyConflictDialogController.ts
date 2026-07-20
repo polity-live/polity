@@ -61,9 +61,7 @@ function buildGroupConnectionPreflightFromRelationships(
           member_source_group_id: firstRelationship.member_source_group_id as string,
           member_target_group_id: firstRelationship.member_target_group_id as string,
           membership_mode: firstRelationship.membership_mode as
-            | 'all_members'
-            | 'role_members'
-            | 'selected_source_groups',
+            'all_members' | 'role_members' | 'selected_source_groups',
           required_source_role_id: firstRelationship.required_source_role_id,
           eligible_origin_group_ids: firstRelationship.eligible_origin_group_ids,
         }

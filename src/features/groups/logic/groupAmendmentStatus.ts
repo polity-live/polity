@@ -1,9 +1,5 @@
 export type GroupAmendmentBadgeStatus =
-  | 'accepted'
-  | 'approved'
-  | 'rejected'
-  | 'pending'
-  | 'withdrawn';
+  'accepted' | 'approved' | 'rejected' | 'pending' | 'withdrawn';
 
 export type GroupAmendmentDisplayStatus = 'accepted' | 'rejected' | 'pending' | 'withdrawn';
 

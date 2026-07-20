@@ -3,10 +3,7 @@ export type SpeakerGender = (typeof SPEAKER_GENDERS)[number];
 export type BinarySpeakerGender = 'male' | 'female';
 
 export type GenderQuotaBlockReason =
-  | 'missing-gender'
-  | 'unsupported-gender'
-  | 'expected-male'
-  | 'expected-female';
+  'missing-gender' | 'unsupported-gender' | 'expected-male' | 'expected-female';
 
 export interface SpeakerListGenderQuotaSpeaker {
   order?: number | null;

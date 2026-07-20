@@ -21,9 +21,7 @@ import {
 
 export type StreetDesignLegendSource = 'existing' | 'planned';
 export type StreetDesignLegendEntryKind =
-  | 'existing-layer'
-  | 'placement-preset'
-  | 'placement-fallback';
+  'existing-layer' | 'placement-preset' | 'placement-fallback';
 
 export interface StreetDesignLegendEntry {
   id: string;

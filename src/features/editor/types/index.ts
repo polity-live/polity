@@ -177,10 +177,7 @@ export type { DocumentVersionRow as EditorVersion } from '@/zero/documents/queri
  * Version creation type
  */
 export type VersionCreationType =
-  | 'manual'
-  | 'suggestion_added'
-  | 'suggestion_accepted'
-  | 'suggestion_declined';
+  'manual' | 'suggestion_added' | 'suggestion_accepted' | 'suggestion_declined';
 
 /**
  * Normalized entity data for the editor

@@ -1,10 +1,7 @@
 import type { RecurrencePattern } from './rruleHelpers';
 
 export type EventTimeSeriesValidationError =
-  | 'missing-required-range'
-  | 'missing-start-date'
-  | 'missing-weekdays'
-  | null;
+  'missing-required-range' | 'missing-start-date' | 'missing-weekdays' | null;
 
 interface EventTimeSeriesValidationArgs {
   startDate: string;

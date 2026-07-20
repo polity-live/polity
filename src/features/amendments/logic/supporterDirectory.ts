@@ -164,8 +164,7 @@ export function deriveSupporterDirectoryItems(args: {
   for (const [groupId, decision] of currentSupporterDecisionsByGroupId) {
     const latestConfirmation = latestConfirmationByGroupId.get(groupId);
     const latestConfirmationStatus = latestConfirmation?.status as
-      | SupportConfirmationStatus
-      | undefined;
+      SupportConfirmationStatus | undefined;
 
     if (latestConfirmationStatus && EXCLUDED_CONFIRMATION_STATUSES.has(latestConfirmationStatus)) {
       continue;

@@ -7,10 +7,7 @@ export type StreetDesignInteractionMode = 'place' | 'select' | 'camera';
 export type StreetDesignGeometryKind = 'point' | 'line' | 'polygon' | 'corridor';
 
 export type StreetDesignCostRule =
-  | 'per_item'
-  | 'per_meter'
-  | 'per_square_meter'
-  | 'per_parking_space';
+  'per_item' | 'per_meter' | 'per_square_meter' | 'per_parking_space';
 
 export type StreetDesignToolMode = 'point' | 'drag-band' | 'path' | 'polygon';
 
@@ -188,10 +185,7 @@ export interface PathCorridorGeometry {
 }
 
 export type StreetDesignGeometry =
-  | PointGeometry
-  | PolygonGeometry
-  | CorridorGeometry
-  | PathCorridorGeometry;
+  PointGeometry | PolygonGeometry | CorridorGeometry | PathCorridorGeometry;
 
 export type StreetDesignPropertyValue = string | number | boolean | null;
 
@@ -302,12 +296,7 @@ export type StreetDesignOsmFeatureKind =
 export type StreetDesignOsmFeatureGeometryKind = 'point' | 'line' | 'polygon';
 
 export type StreetDesignOsmStructureKind =
-  | 'bridge'
-  | 'viaduct'
-  | 'embankment'
-  | 'tunnel'
-  | 'cutting'
-  | 'steps';
+  'bridge' | 'viaduct' | 'embankment' | 'tunnel' | 'cutting' | 'steps';
 
 export type StreetDesignOsmElevationSource = 'osm' | 'heuristic' | 'surface';
 

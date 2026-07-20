@@ -13,13 +13,7 @@ import { useSyncedVotingTimer } from '../hooks/useVotingTimer';
 import { CheckCircle, PlayCircle, PauseCircle, Timer, Vote } from 'lucide-react';
 
 type VotingPhase =
-  | 'setup'
-  | 'introduction'
-  | 'voting'
-  | 'closed'
-  | 'internal'
-  | 'indication'
-  | 'final';
+  'setup' | 'introduction' | 'voting' | 'closed' | 'internal' | 'indication' | 'final';
 type VotingResult = 'passed' | 'rejected' | 'tie' | null;
 
 interface VotingPhaseIndicatorProps {

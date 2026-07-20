@@ -343,8 +343,7 @@ describe('DataViewDialog', () => {
     for (const eventName of ['onEscapeKeyDown', 'onPointerDownOutside', 'onInteractOutside']) {
       const preventDefault = vi.fn();
       const handler = dialogMocks.contentProps[eventName] as
-        | ((event: { preventDefault: () => void }) => void)
-        | undefined;
+        ((event: { preventDefault: () => void }) => void) | undefined;
       handler?.({ preventDefault });
       expect(preventDefault).toHaveBeenCalledOnce();
     }

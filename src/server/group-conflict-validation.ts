@@ -303,8 +303,7 @@ async function buildMembershipActivationConflicts(
   const membership =
     args.membership_id != null
       ? ((await tx.run(zql.group_membership.where('id', args.membership_id).one())) as
-          | MembershipRow
-          | undefined)
+          MembershipRow | undefined)
       : null;
   const targetGroupId = args.group_id ?? membership?.group_id ?? null;
   const targetUserId = args.user_id ?? membership?.user_id ?? ctx.userID;

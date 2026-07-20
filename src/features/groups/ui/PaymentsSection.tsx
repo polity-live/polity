@@ -14,13 +14,7 @@ import { useFinancialData } from '../hooks/useFinancialData';
 import type { CurrencyCode } from '@/features/shared/logic/currency';
 
 type PaymentFieldKey =
-  | 'label'
-  | 'type'
-  | 'amount'
-  | 'currency'
-  | 'direction'
-  | 'counterparty_keys'
-  | 'created_at';
+  'label' | 'type' | 'amount' | 'currency' | 'direction' | 'counterparty_keys' | 'created_at';
 
 const PAYMENT_TYPE_LABELS: Record<string, string> = {
   membership_fee: 'Membership fee',

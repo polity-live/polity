@@ -10,9 +10,8 @@ import { resolveGroupConflictPreflight } from './group-conflict-validation';
 
 export const groupConflictPreflightFn = createServerFn({ method: 'POST' })
   .validator(groupConflictPreflightSchema.parse)
-  .handler(
-    async ({ data }): Promise<Awaited<ReturnType<typeof executeGroupConflictPreflight>>> =>
-      executeGroupConflictPreflight(data)
+  .handler(async ({ data }): Promise<Awaited<ReturnType<typeof executeGroupConflictPreflight>>> =>
+    executeGroupConflictPreflight(data)
   );
 
 async function executeGroupConflictPreflight(data: GroupConflictPreflightInput) {

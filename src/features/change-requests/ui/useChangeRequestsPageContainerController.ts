@@ -77,9 +77,7 @@ function getTimelineItemBranchId(item: ChangeRequestTimelineRow): string | null 
     _processBranchId?: string | null;
   };
   const rawChangeRequest = item.change_request as
-    | { process_branch_id?: string | null; processBranchId?: string | null }
-    | null
-    | undefined;
+    { process_branch_id?: string | null; processBranchId?: string | null } | null | undefined;
 
   return (
     item.process_branch_id ??

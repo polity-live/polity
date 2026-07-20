@@ -94,13 +94,9 @@ export const sortResults = <T extends SortableItem>(items: readonly T[], sortBy:
   if (sortBy === 'date') {
     return [...items].sort((a, b) => {
       const dateA = (a.created_at ?? a.date ?? a.joined_at ?? new Date(0)) as
-        | string
-        | number
-        | Date;
+        string | number | Date;
       const dateB = (b.created_at ?? b.date ?? b.joined_at ?? new Date(0)) as
-        | string
-        | number
-        | Date;
+        string | number | Date;
       return new Date(dateB).getTime() - new Date(dateA).getTime();
     });
   }

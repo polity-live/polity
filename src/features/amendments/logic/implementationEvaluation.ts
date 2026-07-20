@@ -25,11 +25,7 @@ export type ImplementationEvaluationStatus =
   | undefined;
 
 export type ImplementationEvaluationMode =
-  | 'none'
-  | 'fixed_date'
-  | 'relative_to_vote'
-  | null
-  | undefined;
+  'none' | 'fixed_date' | 'relative_to_vote' | null | undefined;
 
 interface ImplementationReviewVoteLike {
   majority_type?: string | null;

@@ -4,12 +4,7 @@ import {
 } from '@/features/shared/ui/form/ValidatedInputField';
 
 export type GeoAddressField =
-  | 'country'
-  | 'region'
-  | 'city'
-  | 'post_code'
-  | 'street'
-  | 'house_number';
+  'country' | 'region' | 'city' | 'post_code' | 'street' | 'house_number';
 
 export interface GeoAddressValues {
   country: string;

@@ -47,12 +47,7 @@ type ButtonProps = React.ComponentProps<'button'> &
     tooltipShortcut?: KeyboardShortcutDefinition;
     tooltipVariant?: 'compact' | 'rich';
     presentation?:
-      | 'default'
-      | 'transparentGhost'
-      | 'success'
-      | 'monoCompact'
-      | 'mutedTiny'
-      | 'floatingShadow';
+      'default' | 'transparentGhost' | 'success' | 'monoCompact' | 'mutedTiny' | 'floatingShadow';
   };
 
 const buttonPresentationClasses: Record<NonNullable<ButtonProps['presentation']>, string> = {

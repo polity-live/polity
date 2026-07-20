@@ -5,14 +5,7 @@ import { cn } from '@/features/shared/utils/utils';
 export interface TopicPillProps {
   topic: string;
   variant?:
-    | 'default'
-    | 'climate'
-    | 'urban'
-    | 'transport'
-    | 'budget'
-    | 'education'
-    | 'health'
-    | 'housing';
+    'default' | 'climate' | 'urban' | 'transport' | 'budget' | 'education' | 'health' | 'housing';
   size?: 'sm' | 'md';
   className?: string;
   onClick?: () => void;

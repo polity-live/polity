@@ -40,9 +40,7 @@ interface AgendaItemTimelineCardItem {
 }
 
 export type TimelineCardItem =
-  | SearchContentItem
-  | PaymentTimelineCardItem
-  | AgendaItemTimelineCardItem;
+  SearchContentItem | PaymentTimelineCardItem | AgendaItemTimelineCardItem;
 
 export function buildTimelineCardProps(item: TimelineCardItem): {
   cardType: CardType | null;

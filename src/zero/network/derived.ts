@@ -63,25 +63,13 @@ export interface DerivedGroupNetworkMeta {
   connected_group_id: string | null;
   sibling_membership_mode: 'open' | 'elected' | 'parliament' | null;
   primary_sibling_membership_mode:
-    | 'none'
-    | 'all_members'
-    | 'role_members'
-    | 'selected_source_groups'
-    | null;
+    'none' | 'all_members' | 'role_members' | 'selected_source_groups' | null;
   sibling_role_id: string | null;
   parliament_source_group_ids: string[];
   primary_incoming_sibling_membership_mode:
-    | 'none'
-    | 'all_members'
-    | 'role_members'
-    | 'selected_source_groups'
-    | null;
+    'none' | 'all_members' | 'role_members' | 'selected_source_groups' | null;
   primary_outgoing_sibling_membership_mode:
-    | 'none'
-    | 'all_members'
-    | 'role_members'
-    | 'selected_source_groups'
-    | null;
+    'none' | 'all_members' | 'role_members' | 'selected_source_groups' | null;
   incoming_sibling_role_id: string | null;
   outgoing_sibling_role_id: string | null;
   incoming_parliament_source_group_ids: string[];

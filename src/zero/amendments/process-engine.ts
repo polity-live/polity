@@ -34,9 +34,7 @@ type SelectionMode = 'default_target_workflow' | 'explicit_workflow' | null;
 type MergeStrategy = 'winner_continues' | null;
 type AgendaType = 'amendment' | 'implementation_review' | 'support_confirmation';
 type ProcessTaskNotificationType =
-  | 'schedule_event'
-  | 'implementation_evaluation'
-  | 'support_confirmation';
+  'schedule_event' | 'implementation_evaluation' | 'support_confirmation';
 
 interface EnrichedPathSegmentInput {
   groupId: string;
@@ -797,16 +795,14 @@ function normalizeMainScopeChangeRequestsForFirstBranch(
         changeRequestCreatedAt(left.created_at) - changeRequestCreatedAt(right.created_at);
       return byCreatedAt !== 0 ? byCreatedAt : String(left.id).localeCompare(String(right.id));
     })
-    .map(
-      (changeRequest, index): MainScopeChangeRequest => ({
-        ...changeRequest,
-        branch_sequence_number: index + 1,
-        title:
-          changeRequest.title == null || /^CR-\d+$/.test(String(changeRequest.title))
-            ? `CR-${index + 1}`
-            : changeRequest.title,
-      })
-    );
+    .map((changeRequest, index): MainScopeChangeRequest => ({
+      ...changeRequest,
+      branch_sequence_number: index + 1,
+      title:
+        changeRequest.title == null || /^CR-\d+$/.test(String(changeRequest.title))
+          ? `CR-${index + 1}`
+          : changeRequest.title,
+    }));
 
   const candidateByDiscussionId = new Map<string, string>();
   const discussionIdsByChangeRequestId = new Map<string, string[]>();

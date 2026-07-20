@@ -41,13 +41,8 @@ export function useGroupSearchCardController({ group }: UseGroupSearchCardContro
         hashtags: extractHashtags(group.group_hashtags),
         membershipStatus:
           (userMembership?.status as
-            | 'active'
-            | 'admin'
-            | 'invited'
-            | 'requested'
-            | 'member'
-            | null
-            | undefined) || (role === 'Visitor' ? null : 'member'),
+            'active' | 'admin' | 'invited' | 'requested' | 'member' | null | undefined) ||
+          (role === 'Visitor' ? null : 'member'),
       },
     };
   }

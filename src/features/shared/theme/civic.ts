@@ -1,12 +1,5 @@
 export type SemanticTone =
-  | 'neutral'
-  | 'info'
-  | 'success'
-  | 'warning'
-  | 'danger'
-  | 'destructive'
-  | 'accent'
-  | 'outline';
+  'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'destructive' | 'accent' | 'outline';
 
 export type PrimaryEntityTone = 'user' | 'group' | 'event' | 'amendment' | 'blog';
 

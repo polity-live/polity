@@ -178,8 +178,7 @@ export const useChat = () => {
   const setMessages = React.useCallback(
     (
       nextMessages:
-        | LegacyChatMessage[]
-        | ((currentMessages: LegacyChatMessage[]) => LegacyChatMessage[])
+        LegacyChatMessage[] | ((currentMessages: LegacyChatMessage[]) => LegacyChatMessage[])
     ) => {
       chat.setMessages(currentMessages => {
         const currentLegacyMessages = currentMessages.map(toLegacyMessage);
