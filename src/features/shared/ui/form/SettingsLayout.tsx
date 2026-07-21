@@ -114,10 +114,18 @@ interface SettingsActionBarProps {
   className?: string;
 }
 
-export function SettingsActionBar({ children, className }: SettingsActionBarProps) {
+interface FloatingActionBarProps extends SettingsActionBarProps {
+  dataSlot?: string;
+}
+
+export function FloatingActionBar({
+  children,
+  className,
+  dataSlot = 'floating-action-bar',
+}: FloatingActionBarProps) {
   return (
     <div
-      data-slot="settings-action-bar"
+      data-slot={dataSlot}
       className={cn(
         'bg-background/95 supports-[backdrop-filter]:bg-background/80 border-border/70 sticky bottom-3 z-20 rounded-xl border p-3 shadow-lg backdrop-blur',
         className
@@ -125,6 +133,14 @@ export function SettingsActionBar({ children, className }: SettingsActionBarProp
     >
       {children}
     </div>
+  );
+}
+
+export function SettingsActionBar({ children, className }: SettingsActionBarProps) {
+  return (
+    <FloatingActionBar dataSlot="settings-action-bar" className={className}>
+      {children}
+    </FloatingActionBar>
   );
 }
 

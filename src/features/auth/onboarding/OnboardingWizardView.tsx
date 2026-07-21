@@ -132,19 +132,19 @@ export function OnboardingWizardView({
   }));
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-background flex h-dvh min-h-0 flex-col overflow-hidden">
       <SectionProgressTopBar
         sticky
         activeId={step}
-        className="lg:hidden"
+        className="flex-none lg:hidden"
         countLabel={`${activeStepIndex + 1}/${STEP_ORDER.length}`}
         items={mobileStepItems}
         label={t('onboarding.shell.progressLabel')}
         progressValue={STEP_PROGRESS[step]}
       />
 
-      <main className="mx-auto grid min-h-[calc(100svh-5.75rem)] w-full max-w-7xl gap-5 px-4 py-4 sm:px-6 lg:min-h-screen lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)] lg:gap-8 lg:px-8 lg:py-10">
-        <aside className="hidden flex-col justify-between gap-6 lg:sticky lg:top-10 lg:flex lg:max-h-[calc(100svh-5rem)] lg:border-r lg:pr-8">
+      <main className="mx-auto grid min-h-0 w-full max-w-7xl flex-1 gap-5 px-4 pt-4 sm:px-6 lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)] lg:gap-8 lg:px-8 lg:pt-8">
+        <aside className="hidden min-h-0 scrollbar-thin flex-col justify-between gap-6 overflow-y-auto overscroll-contain lg:flex lg:border-r lg:pr-8 lg:pb-8">
           <div className="space-y-8">
             <div className="space-y-4">
               <BadgeControl variant="outline">{t('onboarding.shell.progressLabel')}</BadgeControl>
@@ -228,8 +228,8 @@ export function OnboardingWizardView({
           </div>
         </aside>
 
-        <section className="flex items-start justify-center lg:min-h-0 lg:items-center">
-          <div className="w-full max-w-5xl">
+        <section className="flex min-h-0 justify-center overflow-hidden">
+          <div className="flex h-full min-h-0 w-full max-w-5xl flex-col">
             {error && (
               <div className="border-destructive/40 bg-destructive/10 text-destructive mb-5 rounded-lg border px-4 py-3 text-sm">
                 {error}
@@ -237,7 +237,7 @@ export function OnboardingWizardView({
             )}
 
             <div
-              className="space-y-8"
+              className="min-h-0 flex-1"
               style={{ touchAction: 'pan-y' }}
               {...swipeNavigationHandlers}
             >

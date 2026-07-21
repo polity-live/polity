@@ -53,6 +53,7 @@ export {
 } from './SegmentedChoiceField';
 export { SettingsPanel } from './SettingsPanel';
 export {
+  FloatingActionBar,
   ManagementSection,
   ManagementToolbar,
   SettingsActionBar,

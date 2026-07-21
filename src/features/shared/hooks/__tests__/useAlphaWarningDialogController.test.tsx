@@ -16,7 +16,7 @@ vi.mock('sonner', () => ({
   },
 }));
 
-const ALPHA_WARNING_SESSION_KEY = 'polity.alphaWarning.0.5.1.acknowledged';
+const ALPHA_WARNING_SESSION_KEY = 'polity.alphaWarning.0.7.1.acknowledged';
 const ALPHA_WARNING_TOAST_ID = 'alpha-warning';
 
 interface AlphaWarningToastOptions {

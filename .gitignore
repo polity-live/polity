@@ -144,6 +144,8 @@ test-output.txt
 /e2e-results/
 /.playwright-cli/
 /output/
+/.react-email/
+/emails/out/
 
 # Playwright
 /blob-report/

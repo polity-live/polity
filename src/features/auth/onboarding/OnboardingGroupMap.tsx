@@ -61,7 +61,7 @@ function averageCenter(groups: Group[]): [number, number] {
 
 function OnboardingGroupMapMessage({ message }: { message: string }) {
   return (
-    <div className="bg-muted/20 text-muted-foreground flex h-64 items-center justify-center rounded-lg border border-dashed px-4 text-center text-sm sm:h-72 lg:h-[24rem]">
+    <div className="bg-muted/20 text-muted-foreground flex h-64 items-center justify-center rounded-lg border border-dashed px-4 text-center text-sm sm:h-72 lg:h-[clamp(14rem,30dvh,24rem)]">
       {message}
     </div>
   );
@@ -111,7 +111,7 @@ function OnboardingGroupMapView({
       <MapContainer
         center={center}
         zoom={zoom}
-        className="h-64 w-full sm:h-72 lg:h-[24rem]"
+        className="h-64 w-full sm:h-72 lg:h-[clamp(14rem,30dvh,24rem)]"
         attributionControl={false}
       >
         <TileLayer
@@ -239,7 +239,7 @@ export function OnboardingGroupMap({
     return (
       <MapPanelSkeleton
         label={t('onboarding.groupStep.mapLoading')}
-        heightClassName="h-64 sm:h-72 lg:h-[24rem]"
+        heightClassName="h-64 sm:h-72 lg:h-[clamp(14rem,30dvh,24rem)]"
         className="rounded-lg"
       />
     );

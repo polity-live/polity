@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { TabsContent } from '@/features/shared/ui/ui/tabs';
 import {
+  FloatingActionBar,
   ManagementToolbar,
   ManagementSection,
   SettingsActionBar,
@@ -45,6 +46,22 @@ function TestSettings({ onChange = vi.fn() }: { onChange?: (value: string) => vo
 }
 
 describe('SettingsLayout', () => {
+  it('exposes the floating action surface without changing the settings action slot', () => {
+    const { container } = render(
+      <>
+        <FloatingActionBar>Floating controls</FloatingActionBar>
+        <SettingsActionBar>Settings controls</SettingsActionBar>
+      </>
+    );
+
+    const floatingBar = container.querySelector('[data-slot="floating-action-bar"]');
+    const settingsBar = container.querySelector('[data-slot="settings-action-bar"]');
+
+    expect(floatingBar?.className).toContain('backdrop-blur');
+    expect(floatingBar?.className).toContain('shadow-lg');
+    expect(settingsBar?.className).toContain('sticky');
+  });
+
   it('keeps a semantic heading without rendering a visible page header in sr-only mode', () => {
     const { container } = render(
       <SettingsPage title="Participants" description="Town Hall" headingMode="sr-only">
