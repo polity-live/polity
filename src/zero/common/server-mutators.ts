@@ -22,6 +22,8 @@ export const commonServerMutators = {
   subscribe: defineMutator(createSubscriberSchema, async ({ tx, ctx, args }) => {
     await mutators.common.subscribe.fn({ tx, ctx, args });
 
+    const senderName = await userName(tx, ctx.userID);
+
     if (args.user_id) await recomputeUserCounters(tx, args.user_id);
     if (args.group_id) await recomputeGroupCounters(tx, args.group_id);
     if (args.event_id) await recomputeEventCounters(tx, args.event_id);
@@ -32,6 +34,7 @@ export const commonServerMutators = {
       const gName = await groupName(tx, args.group_id);
       fireNotification('notifyGroupNewSubscriber', {
         senderId: ctx.userID,
+        senderName,
         groupId: args.group_id,
         groupName: gName,
       });
@@ -39,6 +42,7 @@ export const commonServerMutators = {
       const eTitle = await eventTitle(tx, args.event_id);
       fireNotification('notifyEventNewSubscriber', {
         senderId: ctx.userID,
+        senderName,
         eventId: args.event_id,
         eventTitle: eTitle,
       });
@@ -46,6 +50,7 @@ export const commonServerMutators = {
       const aTitle = await amendmentTitle(tx, args.amendment_id);
       fireNotification('notifyAmendmentNewSubscriber', {
         senderId: ctx.userID,
+        senderName,
         amendmentId: args.amendment_id,
         amendmentTitle: aTitle,
       });
@@ -57,6 +62,7 @@ export const commonServerMutators = {
       ]);
       fireNotification('notifyBlogNewSubscriber', {
         senderId: ctx.userID,
+        senderName,
         blogId: args.blog_id,
         blogTitle: bTitle,
         groupId: blogRow?.group_id ?? undefined,
@@ -65,7 +71,7 @@ export const commonServerMutators = {
     } else if (args.user_id && args.user_id !== ctx.userID) {
       await fireNotification('notifyNewFollower', {
         senderId: ctx.userID,
-        senderName: await userName(tx, ctx.userID),
+        senderName,
         recipientUserId: args.user_id,
       });
     }

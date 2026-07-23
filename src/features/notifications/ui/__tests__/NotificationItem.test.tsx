@@ -22,6 +22,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
     t: (key: string) => {
       if (key === 'features.notifications.item.notification') return 'notification';
       if (key === 'features.notifications.item.new') return 'New';
+      if (key === 'features.notifications.item.for') return 'for';
       if (key === 'features.notifications.actions.markRead') return 'Mark as read';
       if (key === 'common.creationFinalization.entities.payment') return 'Payment';
       if (key === 'common.actions.delete') return 'Delete';
@@ -277,6 +278,83 @@ describe('NotificationItem', () => {
 
     expect(screen.getByText('A new payment "Payment" has been created in Group One')).toBeTruthy();
     expect(screen.queryByText(/\{\{paymentDescription\}\}/)).toBeNull();
+  });
+
+  it('replaces leaked sender placeholders in previously stored notifications', () => {
+    render(
+      <NotificationItem
+        notification={notification({
+          type: 'group_new_subscriber',
+          message: '{{senderName}} has subscribed to Civic Group',
+        })}
+        onNotificationClick={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Ada Lovelace has subscribed to Civic Group')).toBeTruthy();
+    expect(screen.queryByText(/\{\{senderName\}\}/)).toBeNull();
+  });
+
+  it('renders a duplicated actor as sender to recipient entity', () => {
+    const actor = {
+      id: 'user-1',
+      first_name: 'Ada',
+      last_name: 'Lovelace',
+      email: 'ada@example.com',
+      avatar: null,
+    } as NonNullable<Notification['sender']>;
+
+    const { container } = render(
+      <NotificationItem
+        notification={notification({
+          type: 'group_new_subscriber',
+          message: 'Ada Lovelace has subscribed to Civic Group',
+          sender: actor,
+          related_user: actor,
+          related_user_id: actor.id,
+        })}
+        onNotificationClick={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByText('Ada Lovelace')).toHaveLength(1);
+    expect(screen.getByText('->')).toBeTruthy();
+    expect(screen.queryByText('for')).toBeNull();
+    expect(container.textContent).not.toContain('Ada Lovelace->Ada Lovelace');
+  });
+
+  it('renders a duplicated actor as sender to the on-behalf entity in personal copies', () => {
+    const actor = {
+      id: 'user-1',
+      first_name: 'Ada',
+      last_name: 'Lovelace',
+      email: 'ada@example.com',
+      avatar: null,
+    } as NonNullable<Notification['sender']>;
+
+    render(
+      <NotificationItem
+        notification={notification({
+          type: 'collaboration_request',
+          message: 'Ada Lovelace has requested to collaborate on Civic Amendment',
+          sender: actor,
+          related_user: actor,
+          related_user_id: actor.id,
+          recipient_group: undefined,
+          on_behalf_of_amendment: {
+            id: 'amendment-1',
+            title: 'Civic Amendment',
+            image_url: null,
+          } as NonNullable<Notification['on_behalf_of_amendment']>,
+        })}
+        onNotificationClick={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByText('Ada Lovelace')).toHaveLength(1);
+    expect(screen.getByText('->')).toBeTruthy();
+    expect(screen.getAllByText('Civic Amendment').length).toBeGreaterThan(0);
+    expect(screen.queryByText('for')).toBeNull();
   });
 
   it('renders entity-page notifications through the same card slot', () => {

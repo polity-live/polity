@@ -83,9 +83,9 @@ export function PricingPageView({
                 <CardTitle className="text-2xl">{tier.name}</CardTitle>
                 <div className="mt-2">
                   {tier.acceptsCustomAmount ? (
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-sm font-semibold">EUR</span>
-                      <FormFieldShell className="w-20">
+                    <div className="flex min-w-0 flex-wrap items-baseline gap-x-1 gap-y-1">
+                      <span className="shrink-0 text-sm font-semibold">EUR</span>
+                      <FormFieldShell className="w-20 shrink-0">
                         {({ id }) => (
                           <FormControlInput
                             id={id}
@@ -100,13 +100,13 @@ export function PricingPageView({
                         )}
                       </FormFieldShell>
                       {tier.period ? (
-                        <span className="text-muted-foreground">{tier.period}</span>
+                        <span className="text-muted-foreground shrink-0">{tier.period}</span>
                       ) : null}
                       {Number.isFinite(parsedCustomAmount) && parsedCustomAmount > 0 ? (
                         <ConvertedCurrencyAmount
                           amount={parsedCustomAmount}
                           currency="EUR"
-                          className="ml-2 text-sm"
+                          className="min-w-0 basis-full pt-1 text-sm [overflow-wrap:anywhere]"
                         />
                       ) : null}
                     </div>

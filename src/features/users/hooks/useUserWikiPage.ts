@@ -215,9 +215,8 @@ export function useUserWikiPage({ userId }: UserWikiPageOptions): UserWikiPageSt
     onToggleSubscribe: toggleSubscribe,
     onMessage: () =>
       navigate({
-        to: `/messages?userId=${encodeURIComponent(user.id || '')}&name=${encodeURIComponent(
-          resolvedFullName
-        )}`,
+        to: '/messages',
+        search: { userId: user.id },
       }),
   };
 }

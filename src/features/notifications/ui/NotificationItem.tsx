@@ -311,15 +311,20 @@ export function NotificationItem({
   const notificationHref = getNotificationNavigationHref(notification);
   const recipientEntity = getRecipientEntity(notification);
   const onBehalfEntity = getOnBehalfEntity(notification);
+  const contextEntity = onBehalfEntity || recipientEntity;
   const entityType = getEntityType(notification);
   const entityColors = entityType ? ENTITY_COLORS[entityType] : null;
   const hasEntityContext = Boolean(recipientEntity || onBehalfEntity);
   const hasRelatedUser = Boolean(notification.related_user);
+  const hasDuplicateActor =
+    Boolean(notification.sender?.id) &&
+    notification.sender?.id === notification.related_user?.id &&
+    Boolean(contextEntity);
   const isRead = isNotificationRead(notification);
-  const message = notification.message?.replaceAll(
-    '{{paymentDescription}}',
-    t('common.creationFinalization.entities.payment')
-  );
+  const senderName = getDisplayName(notification.sender ?? notification.related_user);
+  const message = notification.message
+    ?.replaceAll('{{senderName}}', senderName)
+    .replaceAll('{{paymentDescription}}', t('common.creationFinalization.entities.payment'));
   const showDeleteForEveryone =
     mode !== 'trash' && Boolean(onDeleteForEveryone) && canDeleteForEveryone;
 
@@ -332,17 +337,29 @@ export function NotificationItem({
       <div className="min-w-0 flex-1 space-y-1">
         {notification.sender || notification.related_user || onBehalfEntity ? (
           <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-            <UserMeta user={notification.sender} />
-            {notification.sender && onBehalfEntity ? (
-              <span className="shrink-0">{t('features.notifications.item.for')}</span>
-            ) : null}
-            {onBehalfEntity ? (
-              <EntityMeta notification={notification} entity={onBehalfEntity} />
-            ) : null}
-            {(notification.sender || onBehalfEntity) && hasRelatedUser ? (
-              <span className="shrink-0">-&gt;</span>
-            ) : null}
-            {hasRelatedUser ? <UserMeta user={notification.related_user} linkAfterName /> : null}
+            {hasDuplicateActor && contextEntity ? (
+              <>
+                <UserMeta user={notification.sender} />
+                <span className="shrink-0">-&gt;</span>
+                <EntityMeta notification={notification} entity={contextEntity} />
+              </>
+            ) : (
+              <>
+                <UserMeta user={notification.sender} />
+                {notification.sender && onBehalfEntity ? (
+                  <span className="shrink-0">{t('features.notifications.item.for')}</span>
+                ) : null}
+                {onBehalfEntity ? (
+                  <EntityMeta notification={notification} entity={onBehalfEntity} />
+                ) : null}
+                {(notification.sender || onBehalfEntity) && hasRelatedUser ? (
+                  <span className="shrink-0">-&gt;</span>
+                ) : null}
+                {hasRelatedUser ? (
+                  <UserMeta user={notification.related_user} linkAfterName />
+                ) : null}
+              </>
+            )}
           </div>
         ) : null}
 

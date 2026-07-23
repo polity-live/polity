@@ -33,9 +33,9 @@ function createTx(location: CommonMutatorTx['location'] = 'server') {
   };
 }
 
-function createCtx(): CommonMutatorCtx {
+function createCtx(userID = 'user-1'): CommonMutatorCtx {
   return {
-    userID: 'user-1',
+    userID,
     email: 'user@example.com',
   };
 }
@@ -91,15 +91,54 @@ describe('commonSharedMutators link authorization', () => {
 });
 
 describe('commonSharedMutators subscription authorization', () => {
-  it('allows a signed-in user to subscribe to a public amendment without amendment role rights', async () => {
+  const subscriptionTargets = [
+    { field: 'user_id', id: 'target-user' },
+    { field: 'group_id', id: 'group-1' },
+    { field: 'event_id', id: 'event-1' },
+    { field: 'amendment_id', id: 'amendment-1' },
+    { field: 'blog_id', id: 'blog-1' },
+  ] as const;
+
+  it.each(subscriptionTargets)(
+    'allows a signed-in user to subscribe through visibility access to $field without role rights',
+    async ({ field, id }) => {
+      const tx = createTx('server');
+      tx.run.mockResolvedValueOnce({ id, visibility: 'authenticated' });
+      const args = {
+        id: 'subscription-1',
+        user_id: null,
+        group_id: null,
+        amendment_id: null,
+        event_id: null,
+        blog_id: null,
+        [field]: id,
+      };
+
+      await expect(
+        commonSharedMutators.subscribe.fn({
+          tx: tx as never,
+          ctx: createCtx(),
+          args,
+        })
+      ).resolves.toBeUndefined();
+
+      expect(canMock).not.toHaveBeenCalled();
+      expect(tx.mutate.subscriber.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'subscription-1',
+          [field]: id,
+          subscriber_id: 'user-1',
+        })
+      );
+    }
+  );
+
+  it('allows a private target returned by the shared visibility filter', async () => {
     const tx = createTx('server');
     tx.run.mockResolvedValueOnce({
       id: 'amendment-1',
-      title: 'Public amendment',
-      visibility: 'public',
-      created_by_id: 'author-user',
-      group_id: null,
-      event_id: null,
+      title: 'Private but visible amendment',
+      visibility: 'private',
     });
 
     await expect(
@@ -127,51 +166,8 @@ describe('commonSharedMutators subscription authorization', () => {
     );
   });
 
-  it('allows a signed-in user to subscribe to an authenticated amendment without amendment role rights', async () => {
+  it('rejects a target hidden by the shared visibility filter', async () => {
     const tx = createTx('server');
-    tx.run.mockResolvedValueOnce({
-      id: 'amendment-1',
-      title: 'Authenticated amendment',
-      visibility: 'authenticated',
-      created_by_id: 'author-user',
-      group_id: null,
-      event_id: null,
-    });
-
-    await expect(
-      commonSharedMutators.subscribe.fn({
-        tx: tx as never,
-        ctx: createCtx(),
-        args: {
-          id: 'subscription-1',
-          user_id: null,
-          group_id: null,
-          amendment_id: 'amendment-1',
-          event_id: null,
-          blog_id: null,
-        },
-      })
-    ).resolves.toBeUndefined();
-
-    expect(tx.mutate.subscriber.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'subscription-1',
-        amendment_id: 'amendment-1',
-        subscriber_id: 'user-1',
-      })
-    );
-  });
-
-  it('rejects subscribing to a private amendment without view access', async () => {
-    const tx = createTx('server');
-    tx.run.mockResolvedValueOnce({
-      id: 'amendment-1',
-      title: 'Private amendment',
-      visibility: 'private',
-      created_by_id: 'author-user',
-      group_id: null,
-      event_id: null,
-    });
     tx.run.mockResolvedValueOnce(null);
 
     await expect(
@@ -189,6 +185,28 @@ describe('commonSharedMutators subscription authorization', () => {
       })
     ).rejects.toThrow(PermissionError);
 
+    expect(tx.mutate.subscriber.insert).not.toHaveBeenCalled();
+  });
+
+  it('rejects unauthenticated subscriptions before reading the target', async () => {
+    const tx = createTx('server');
+
+    await expect(
+      commonSharedMutators.subscribe.fn({
+        tx: tx as never,
+        ctx: createCtx('anon'),
+        args: {
+          id: 'subscription-1',
+          user_id: null,
+          group_id: 'group-1',
+          amendment_id: null,
+          event_id: null,
+          blog_id: null,
+        },
+      })
+    ).rejects.toThrow(PermissionError);
+
+    expect(tx.run).not.toHaveBeenCalled();
     expect(tx.mutate.subscriber.insert).not.toHaveBeenCalled();
   });
 });
