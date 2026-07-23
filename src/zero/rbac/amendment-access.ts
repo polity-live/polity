@@ -39,24 +39,46 @@ export async function assertCanViewAmendment(
   }
 
   const collaborator = await tx.run(
-    zql.amendment_collaborator.where('amendment_id', amendmentId).where('user_id', ctx.userID).one()
+    zql.amendment_collaborator
+      .where('amendment_id', amendmentId)
+      .where('user_id', ctx.userID)
+      .where('status', 'IN', ['active', 'collaborator', 'member', 'admin'])
+      .one()
   );
   if (collaborator) {
     return amendment;
   }
 
   if (amendment.group_id) {
-    const membership = await tx.run(
-      zql.group_membership.where('group_id', amendment.group_id).where('user_id', ctx.userID).one()
-    );
-    if (membership) {
+    const [group, membership, guestAccess] = await Promise.all([
+      tx.run(zql.group.where('id', amendment.group_id).where('owner_id', ctx.userID).one()),
+      tx.run(
+        zql.group_membership
+          .where('group_id', amendment.group_id)
+          .where('user_id', ctx.userID)
+          .where('status', 'IN', ['active', 'member', 'admin'])
+          .one()
+      ),
+      tx.run(
+        zql.group_guest_access
+          .where('group_id', amendment.group_id)
+          .where('user_id', ctx.userID)
+          .where('status', 'active')
+          .one()
+      ),
+    ]);
+    if (group || membership || guestAccess) {
       return amendment;
     }
   }
 
   if (amendment.event_id) {
     const participation = await tx.run(
-      zql.event_participant.where('event_id', amendment.event_id).where('user_id', ctx.userID).one()
+      zql.event_participant
+        .where('event_id', amendment.event_id)
+        .where('user_id', ctx.userID)
+        .where('status', 'IN', ['active', 'confirmed', 'member', 'admin'])
+        .one()
     );
     if (participation) {
       return amendment;

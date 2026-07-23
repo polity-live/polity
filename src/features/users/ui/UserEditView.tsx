@@ -14,6 +14,9 @@ export interface UserEditViewProps {
   updateField: any;
   uploadAvatar: any;
   activeSubscription: any;
+  pendingChange: any;
+  hasStripeCustomer: any;
+  subscriptionRefreshKey: any;
   isPlanActive: any;
   hasCustomPlan: any;
   getActivePlanAmount: any;
@@ -22,6 +25,7 @@ export interface UserEditViewProps {
   handleSubscribe: any;
   handleCustomAmount: any;
   handleCancelSubscription: any;
+  handleManageBilling: any;
 }
 
 export function UserEditView({
@@ -36,6 +40,9 @@ export function UserEditView({
   updateField,
   uploadAvatar,
   activeSubscription,
+  pendingChange,
+  hasStripeCustomer,
+  subscriptionRefreshKey,
   isPlanActive,
   hasCustomPlan,
   getActivePlanAmount,
@@ -43,6 +50,7 @@ export function UserEditView({
   handleSubscribe,
   handleCustomAmount,
   handleCancelSubscription,
+  handleManageBilling,
 }: UserEditViewProps) {
   if (isLoading) {
     return (
@@ -61,6 +69,9 @@ export function UserEditView({
       activeTab={activeTab}
       onTabChange={onTabChange}
       activeSubscriptionAmount={getActivePlanAmount()}
+      pendingChange={pendingChange}
+      hasStripeCustomer={hasStripeCustomer}
+      subscriptionRefreshKey={subscriptionRefreshKey}
       isCheckoutLoading={isCheckoutLoading}
       isPlanActive={isPlanActive}
       hasCustomPlan={hasCustomPlan()}
@@ -74,6 +85,7 @@ export function UserEditView({
       onCancelSubscription={() =>
         activeSubscription?.id ? handleCancelSubscription(activeSubscription.id) : undefined
       }
+      onManageBilling={handleManageBilling}
     />
   );
 }

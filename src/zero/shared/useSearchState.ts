@@ -4,8 +4,6 @@ import { queries } from '../queries';
 import { useAgendaState } from '../agendas/useAgendaState';
 import { useElectionState } from '../elections/useElectionState';
 import { useCommonState } from '../common/useCommonState';
-import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
-import { resolveRouteVisibilityAccess } from '@/features/auth/logic/routeVisibilityAccess';
 
 interface SearchGroupRoleLike {
   id?: string | null;
@@ -197,61 +195,18 @@ export function useSearchState(options: SearchOptions = {}) {
   // TODO: Removed with voting session migration
   // searchableVotingSessions query no longer exists
 
-  // ── Visibility filtering ────────────────────────────────────────────
-  // Only show public entities or private entities where the user has a relationship.
-
-  const visibleUsers = useMemo(
-    () => (users ?? []).filter(u => resolveRouteVisibilityAccess([u.visibility], !!userId).allowed),
-    [users, userId]
-  );
-
+  // Server-side query policies are authoritative. A second client-side model
+  // previously hid valid private results and incorrectly inherited parent
+  // visibility for otherwise public child entities.
+  const visibleUsers = users ?? [];
   const visibleGroups = useMemo(
-    () =>
-      (groups ?? [])
-        .map(group => normalizeSearchableGroup(group))
-        .filter(g => resolveRouteVisibilityAccess([g.visibility], !!userId).allowed),
-    [groups, userId]
+    () => (groups ?? []).map(group => normalizeSearchableGroup(group)),
+    [groups]
   );
-
-  const visibleStatements = useMemo(
-    () =>
-      (statements ?? []).filter(s =>
-        checkEntityAccess(s.visibility, !!userId, s.user_id === userId)
-      ),
-    [statements, userId]
-  );
-
-  const visibleBlogs = useMemo(
-    () =>
-      (blogs ?? []).filter(
-        b =>
-          resolveRouteVisibilityAccess(
-            [
-              b.visibility,
-              b.group?.visibility,
-              ...(b.group ? [] : (b.bloggers ?? []).map(blogger => blogger.user?.visibility)),
-            ],
-            !!userId
-          ).allowed
-      ),
-    [blogs, userId]
-  );
-
-  const visibleAmendments = useMemo(
-    () =>
-      (amendments ?? []).filter(
-        a => resolveRouteVisibilityAccess([a.visibility, a.group?.visibility], !!userId).allowed
-      ),
-    [amendments, userId]
-  );
-
-  const visibleEvents = useMemo(
-    () =>
-      (events ?? []).filter(
-        e => resolveRouteVisibilityAccess([e.visibility, e.group?.visibility], !!userId).allowed
-      ),
-    [events, userId]
-  );
+  const visibleStatements = statements ?? [];
+  const visibleBlogs = blogs ?? [];
+  const visibleAmendments = amendments ?? [];
+  const visibleEvents = events ?? [];
 
   const visibleEventIds = useMemo(() => new Set(visibleEvents.map(e => e.id)), [visibleEvents]);
 
@@ -267,15 +222,7 @@ export function useSearchState(options: SearchOptions = {}) {
       ...assignedTodos,
     ]);
 
-    return rawTodos.filter(t =>
-      checkEntityAccess(
-        t.visibility,
-        !!userId,
-        t.creator_id === userId ||
-          assignedTodoIds.includes(t.id) ||
-          (t.group_id ? memberGroupIds.includes(t.group_id) : false)
-      )
-    );
+    return rawTodos;
   }, [
     publicTodos,
     createdTodos,

@@ -6,6 +6,7 @@ import {
   applyDocumentQueryAccess,
   applyEventManagerQueryAccess,
   applyEventQueryAccess,
+  applyGroupQueryAccess,
   applyGroupManagerQueryAccess,
   applyGroupMembershipSelfOrManagerQueryAccess,
   applyTodoQueryAccess,
@@ -33,20 +34,7 @@ function applyCreatedCursor<T>(
 const WIKI_ACTIVE_GROUP_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
 
 function applyGroupAccess<T>(q: T, userID: string | undefined): T {
-  const query = q as any;
-
-  if (!userID || userID === 'anon') {
-    return query.where('visibility', 'public') as T;
-  }
-
-  return query.where(({ or, cmp, exists }: any) =>
-    or(
-      cmp('visibility', 'IN', ['public', 'authenticated']),
-      cmp('owner_id', userID),
-      exists('memberships', (membership: any) => membership.where('user_id', userID)),
-      exists('guest_accesses', (guestAccess: any) => guestAccess.where('user_id', userID))
-    )
-  ) as T;
+  return applyGroupQueryAccess(q, userID);
 }
 
 export const groupQueries = {
@@ -808,10 +796,9 @@ export const groupQueries = {
       .limit(20);
   }),
 
-  /** Public groups with optional limit */
-  publicGroups: defineQuery(z.object({}), () =>
-    zql.group
-      .where('visibility', 'public')
+  /** Groups visible to the current viewer (legacy query name kept for callers). */
+  publicGroups: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    applyGroupAccess(zql.group, userID)
       .related('group_hashtags', q => q.related('hashtag'))
       .limit(100)
   ),

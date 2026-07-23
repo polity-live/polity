@@ -73,6 +73,199 @@ beforeEach(() => {
 });
 
 describe('documentSharedMutators group RBAC', () => {
+  it('allows any authenticated viewer to create a thread on a public statement', async () => {
+    const tx = createTx('server');
+    tx.run.mockResolvedValueOnce({
+      id: 'statement-1',
+      user_id: 'author-1',
+      visibility: 'public',
+      expires_at: null,
+    });
+
+    await documentSharedMutators.createThread.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        id: 'thread-1',
+        statement_id: 'statement-1',
+        amendment_id: null,
+        document_id: null,
+        blog_id: null,
+        todo_id: null,
+        user_id: 'user-1',
+        content: null,
+        status: 'open',
+        resolved_at: 0,
+        position: 0,
+        upvotes: 0,
+        downvotes: 0,
+      },
+    });
+
+    expect(tx.mutate.thread.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'thread-1', user_id: 'user-1' })
+    );
+  });
+
+  it('allows any authenticated viewer to create a thread on a public amendment', async () => {
+    const tx = createTx('server');
+    tx.run.mockResolvedValueOnce({
+      id: 'amendment-1',
+      created_by_id: 'author-1',
+      visibility: 'public',
+    });
+
+    await documentSharedMutators.createThread.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        id: 'thread-1',
+        statement_id: null,
+        amendment_id: 'amendment-1',
+        document_id: null,
+        blog_id: null,
+        todo_id: null,
+        user_id: 'user-1',
+        content: 'A discussion',
+        status: 'open',
+        resolved_at: 0,
+        position: 0,
+        upvotes: 0,
+        downvotes: 0,
+      },
+    });
+
+    expect(canMock).not.toHaveBeenCalled();
+    expect(tx.mutate.thread.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'thread-1', user_id: 'user-1' })
+    );
+  });
+
+  it('allows an active group member to comment on a private statement', async () => {
+    const tx = createTx('server');
+    tx.run
+      .mockResolvedValueOnce({ id: 'thread-1', statement_id: 'statement-1' })
+      .mockResolvedValueOnce({
+        id: 'statement-1',
+        user_id: 'author-1',
+        group_id: 'group-1',
+        visibility: 'private',
+        expires_at: null,
+      })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'membership-1', status: 'active' })
+      .mockResolvedValueOnce(null);
+
+    await documentSharedMutators.addComment.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        id: 'comment-1',
+        thread_id: 'thread-1',
+        user_id: 'user-1',
+        parent_id: null,
+        content: 'Member feedback',
+        upvotes: 0,
+        downvotes: 0,
+      },
+    });
+
+    expect(tx.mutate.comment.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'comment-1', user_id: 'user-1' })
+    );
+  });
+
+  it('rejects an unrelated authenticated user on a private statement', async () => {
+    const tx = createTx('server');
+    tx.run
+      .mockResolvedValueOnce({ id: 'thread-1', statement_id: 'statement-1' })
+      .mockResolvedValueOnce({
+        id: 'statement-1',
+        user_id: 'author-1',
+        group_id: 'group-1',
+        visibility: 'private',
+        expires_at: null,
+      })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
+
+    await expect(
+      documentSharedMutators.addComment.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: {
+          id: 'comment-1',
+          thread_id: 'thread-1',
+          user_id: 'user-1',
+          parent_id: null,
+          content: 'Should be denied',
+          upvotes: 0,
+          downvotes: 0,
+        },
+      })
+    ).rejects.toBeInstanceOf(PermissionError);
+
+    expect(tx.mutate.comment.insert).not.toHaveBeenCalled();
+  });
+
+  it('allows an authenticated viewer to vote on a public statement comment', async () => {
+    const tx = createTx('server');
+    tx.run
+      .mockResolvedValueOnce({ id: 'comment-1', thread_id: 'thread-1' })
+      .mockResolvedValueOnce({ id: 'thread-1', statement_id: 'statement-1' })
+      .mockResolvedValueOnce({
+        id: 'statement-1',
+        user_id: 'author-1',
+        visibility: 'public',
+        expires_at: null,
+      });
+
+    await documentSharedMutators.voteComment.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        id: 'vote-1',
+        comment_id: 'comment-1',
+        user_id: 'user-1',
+        vote: 1,
+      },
+    });
+
+    expect(tx.mutate.comment_vote.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'vote-1', user_id: 'user-1' })
+    );
+  });
+
+  it('rejects anonymous thread creation even on public blogs', async () => {
+    const tx = createTx('server');
+
+    await expect(
+      documentSharedMutators.createThread.fn({
+        tx: tx as never,
+        ctx: { ...createCtx(), userID: 'anon' },
+        args: {
+          id: 'thread-1',
+          statement_id: null,
+          amendment_id: null,
+          document_id: null,
+          blog_id: 'blog-1',
+          todo_id: null,
+          user_id: 'anon',
+          content: null,
+          status: 'open',
+          resolved_at: 0,
+          position: 0,
+          upvotes: 0,
+          downvotes: 0,
+        },
+      })
+    ).rejects.toBeInstanceOf(PermissionError);
+
+    expect(tx.run).not.toHaveBeenCalled();
+    expect(tx.mutate.thread.insert).not.toHaveBeenCalled();
+  });
+
   it('allows an authenticated todo viewer to add a comment', async () => {
     const tx = createTx('server');
     tx.run

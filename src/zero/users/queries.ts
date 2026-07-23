@@ -62,7 +62,7 @@ export const userQueries = {
     applyUserAccess(zql.user.where('id', id), userID)
       .related('statements', q =>
         applyStatementQueryAccess(q, userID)
-          .related('group')
+          .related('group', group => applyGroupQueryAccess(group, userID))
           .related('statement_hashtags', q2 => q2.related('hashtag'))
           .related('support_votes', q2 => q2.where('user_id', userID ?? '__anon__'))
           .related('surveys', q2 =>

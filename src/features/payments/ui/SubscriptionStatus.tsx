@@ -5,8 +5,9 @@ import { SubscriptionStatusView } from './SubscriptionStatusView';
 
 interface SubscriptionStatusProps {
   userId: string;
+  refreshKey?: number;
 }
 
-export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
-  return <SubscriptionStatusView {...useSubscriptionStatusController({ userId })} />;
+export function SubscriptionStatus({ userId, refreshKey }: SubscriptionStatusProps) {
+  return <SubscriptionStatusView {...useSubscriptionStatusController({ userId, refreshKey })} />;
 }

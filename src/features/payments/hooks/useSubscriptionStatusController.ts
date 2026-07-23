@@ -6,10 +6,12 @@ import type { SubscriptionData } from '../ui/SubscriptionStatusView';
 
 interface UseSubscriptionStatusControllerOptions {
   userId: string;
+  refreshKey?: number;
 }
 
 export function useSubscriptionStatusController({
   userId,
+  refreshKey = 0,
 }: UseSubscriptionStatusControllerOptions) {
   const [data, setData] = useState<SubscriptionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +45,7 @@ export function useSubscriptionStatusController({
     if (userId) {
       void fetchSubscriptionStatus();
     }
-  }, [session?.access_token, userId]);
+  }, [refreshKey, session?.access_token, userId]);
 
   return {
     data,

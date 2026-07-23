@@ -13,26 +13,43 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { ConvertedCurrencyAmount } from '@/features/shared/ui/currency';
 import { useCurrency } from '@/features/shared/hooks/useCurrency';
 import { minorToMajor } from '@/features/shared/logic/currency';
+import type { PendingPlanChange } from './SubscriptionPlansGrid';
 
 interface SubscriptionPlansGridViewProps {
   activeAmount: number;
+  pendingChange: PendingPlanChange;
   isLoading: boolean;
-  onSubscribe: (priceId: string) => void;
+  onSubscribe: (plan: 'running' | 'development') => void;
   onCancel: () => void;
   isPlanActive: (amount: number) => boolean;
   hasCustomPlan: boolean;
   customAmount: string;
   customAmountValue: string;
-  priceIds: {
-    running: string;
-    development: string;
-  };
   onAmountChange: (value: string) => void;
   onCustomSubmit: () => void;
 }
 
+function ActivePlanBadge({ pendingFreeDate }: { pendingFreeDate: string | null }) {
+  return (
+    <span className={featureThemeClassName('paymentSubscriptionPlansGridSuccessPanel')}>
+      {pendingFreeDate
+        ? translateText('features.payments.plans.activeUntil', { date: pendingFreeDate })
+        : translateText('generated.inline.0986_current_4fc0e2bc')}
+    </span>
+  );
+}
+
+function PendingFreeHint({ show }: { show: boolean }) {
+  return show ? (
+    <p className="text-primary -mt-2 mb-4 text-xs font-medium">
+      {translateText('features.payments.plans.thenFree')}
+    </p>
+  ) : null;
+}
+
 export function SubscriptionPlansGridView({
   activeAmount,
+  pendingChange,
   isLoading,
   onSubscribe,
   onCancel,
@@ -40,11 +57,14 @@ export function SubscriptionPlansGridView({
   hasCustomPlan,
   customAmount,
   customAmountValue,
-  priceIds,
   onAmountChange,
   onCustomSubmit,
 }: SubscriptionPlansGridViewProps) {
   const { formatMajor, language } = useCurrency();
+  const pendingFreeDate = pendingChange
+    ? new Date(pendingChange.effectiveAt).toLocaleDateString(language === 'de' ? 'de-DE' : 'en-US')
+    : null;
+
   return (
     <Card>
       <CardHeader>
@@ -63,7 +83,9 @@ export function SubscriptionPlansGridView({
             className={`rounded-lg border p-4 transition-shadow ${
               activeAmount === 0
                 ? featureThemeClassName('paymentSubscriptionPlansGridSuccessSurface')
-                : 'hover:shadow-md'
+                : pendingFreeDate
+                  ? 'border-primary bg-primary/5'
+                  : 'hover:shadow-md'
             }`}
           >
             <div className="mb-2">
@@ -71,13 +93,17 @@ export function SubscriptionPlansGridView({
                 <h3 className="font-semibold">
                   {translateText('generated.inline.0752_free_75f52718')}
                 </h3>
-                {activeAmount === 0 && (
+                {activeAmount === 0 ? (
                   <span
                     className={featureThemeClassName('paymentSubscriptionPlansGridSuccessPanel')}
                   >
                     {translateText('generated.inline.0986_current_4fc0e2bc')}
                   </span>
-                )}
+                ) : pendingFreeDate ? (
+                  <span className="bg-primary text-primary-foreground rounded-md px-2 py-0.5 text-xs">
+                    {translateText('features.payments.plans.nextPlan')}
+                  </span>
+                ) : null}
               </div>
               <p className="text-2xl font-bold">{formatMajor(0, 'EUR')}</p>
               <p className="text-muted-foreground text-xs">/month</p>
@@ -85,13 +111,20 @@ export function SubscriptionPlansGridView({
             <p className="text-muted-foreground mb-4 text-sm">
               {translateText('generated.inline.0987_full_access_to_all_features_8315d07d')}
             </p>
+            {pendingFreeDate ? (
+              <p className="text-primary -mt-2 mb-4 text-xs font-medium">
+                {translateText('features.payments.plans.freeFrom', {
+                  date: pendingFreeDate,
+                })}
+              </p>
+            ) : null}
             <Button
               type="button"
               variant={activeAmount === 0 ? 'default' : 'outline'}
               size="sm"
               className="w-full"
-              onClick={() => activeAmount !== 0 && onCancel()}
-              disabled={isLoading || activeAmount === 0}
+              onClick={() => activeAmount !== 0 && !pendingFreeDate && onCancel()}
+              disabled={isLoading || activeAmount === 0 || !!pendingFreeDate}
             >
               {isLoading ? (
                 <>
@@ -100,6 +133,8 @@ export function SubscriptionPlansGridView({
                 </>
               ) : activeAmount === 0 ? (
                 translateText('generated.inline.0126_active_a733b809')
+              ) : pendingFreeDate ? (
+                translateText('features.payments.plans.changeScheduled')
               ) : (
                 translateText('generated.inline.0127_switch_to_free_5a577638')
               )}
@@ -118,13 +153,7 @@ export function SubscriptionPlansGridView({
                 <h3 className="font-semibold">
                   {translateText('generated.inline.0989_running_costs_53720f67')}
                 </h3>
-                {isPlanActive(200) && (
-                  <span
-                    className={featureThemeClassName('paymentSubscriptionPlansGridSuccessPanel')}
-                  >
-                    {translateText('generated.inline.0986_current_4fc0e2bc')}
-                  </span>
-                )}
+                {isPlanActive(200) ? <ActivePlanBadge pendingFreeDate={pendingFreeDate} /> : null}
               </div>
               <p className="text-2xl font-bold">
                 <ConvertedCurrencyAmount amount={2} currency="EUR" />
@@ -136,13 +165,14 @@ export function SubscriptionPlansGridView({
                 'generated.inline.0990_cover_server_costs_and_infrastructure_862c080e'
               )}
             </p>
+            <PendingFreeHint show={isPlanActive(200) && !!pendingFreeDate} />
             <Button
               type="button"
               variant={isPlanActive(200) ? 'default' : 'outline'}
               size="sm"
               className="w-full"
-              onClick={() => !isPlanActive(200) && onSubscribe(priceIds.running)}
-              disabled={isLoading || !priceIds.running || isPlanActive(200)}
+              onClick={() => !isPlanActive(200) && onSubscribe('running')}
+              disabled={isLoading || isPlanActive(200)}
             >
               {isLoading ? (
                 <>
@@ -170,11 +200,7 @@ export function SubscriptionPlansGridView({
                   {translateText('generated.inline.0991_development_4c17aadf')}
                 </h3>
                 {isPlanActive(1000) ? (
-                  <span
-                    className={featureThemeClassName('paymentSubscriptionPlansGridSuccessPanel')}
-                  >
-                    {translateText('generated.inline.0986_current_4fc0e2bc')}
-                  </span>
+                  <ActivePlanBadge pendingFreeDate={pendingFreeDate} />
                 ) : (
                   <span className="bg-primary text-primary-foreground rounded-md px-2 py-0.5 text-xs">
                     {translateText('generated.inline.0992_popular_9bc2c5b3')}
@@ -189,13 +215,14 @@ export function SubscriptionPlansGridView({
             <p className="text-muted-foreground mb-4 text-sm">
               {translateText('generated.inline.0993_fund_new_features_and_improvements_d23cf557')}
             </p>
+            <PendingFreeHint show={isPlanActive(1000) && !!pendingFreeDate} />
             <Button
               type="button"
               size="sm"
               className="w-full"
               variant={isPlanActive(1000) ? 'default' : undefined}
-              onClick={() => !isPlanActive(1000) && onSubscribe(priceIds.development)}
-              disabled={isLoading || !priceIds.development || isPlanActive(1000)}
+              onClick={() => !isPlanActive(1000) && onSubscribe('development')}
+              disabled={isLoading || isPlanActive(1000)}
             >
               {isLoading ? (
                 <>
@@ -222,13 +249,7 @@ export function SubscriptionPlansGridView({
                 <h3 className="font-semibold">
                   {translateText('generated.inline.0994_your_choice_668515a1')}
                 </h3>
-                {hasCustomPlan && (
-                  <span
-                    className={featureThemeClassName('paymentSubscriptionPlansGridSuccessPanel')}
-                  >
-                    {translateText('generated.inline.0986_current_4fc0e2bc')}
-                  </span>
-                )}
+                {hasCustomPlan ? <ActivePlanBadge pendingFreeDate={pendingFreeDate} /> : null}
               </div>
               <div className="mb-1 flex items-baseline gap-1">
                 {hasCustomPlan ? (
@@ -266,6 +287,7 @@ export function SubscriptionPlansGridView({
                 'generated.inline.0995_voluntary_amount_to_support_the_platform_b35bab29'
               )}
             </p>
+            <PendingFreeHint show={hasCustomPlan && !!pendingFreeDate} />
             <Button
               type="button"
               variant={hasCustomPlan ? 'default' : 'outline'}

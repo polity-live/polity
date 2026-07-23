@@ -48,11 +48,41 @@ Use `.env.example` as the source of truth and copy its values into the mode-spec
 
 #### Payments
 
-| Service    | Used for                                                              | Environment variables                                                                                                      | Required              |
-| ---------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| **Stripe** | Checkout, billing portal, subscription status, cancellation, webhooks | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `VITE_STRIPE_PRICE_RUNNING`, `VITE_STRIPE_PRICE_DEVELOPMENT`, `VITE_APP_URL` | Required for payments |
+| Service    | Used for                                                              | Environment variables                                                                                                                                                                      | Required              |
+| ---------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------- |
+| **Stripe** | Checkout, billing portal, subscription status, cancellation, webhooks | `STRIPE_MODE`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_RUNNING`, `STRIPE_PRICE_DEVELOPMENT`, `STRIPE_PRODUCT_CUSTOM`, `STRIPE_PORTAL_CONFIGURATION_ID`, `VITE_APP_URL` | Required for payments |
 
-Configure the Stripe webhook endpoint as `/api/stripe/webhook` on the deployed app domain.
+Stripe IDs and secrets are server-only. The browser sends only the plan name (`running`,
+`development`, or `custom`) and an optional custom amount. `STRIPE_MODE=test` accepts only test
+keys and test resources; `STRIPE_MODE=live` accepts only live keys and live resources.
+
+##### Stripe development workflow
+
+1. Configure `.env.development.local` with test prices, a test custom-amount product, a test
+   customer-portal configuration, and `VITE_APP_URL=http://localhost:3000`.
+2. Start the app with `npm run dev`.
+3. In a second terminal, run `npm run stripe:listen`.
+4. Copy the Stripe CLI's `whsec_...` value into `STRIPE_WEBHOOK_SECRET` and restart the dev server
+   whenever it changes.
+5. Complete checkouts with Stripe test cards, then inspect Stripe CLI delivery and the
+   `stripe_customer`, `stripe_subscription`, and `stripe_payment` mirrors in Supabase.
+
+The checkout redirect repair remains available when the CLI listener is not running. Changes made
+in the customer portal are reconciled after the browser returns to the app.
+
+##### Stripe production setup
+
+- Create separate test and live customer-portal configurations. Enable invoice history, payment
+  methods, customer data, and cancellation at period end; keep portal plan switching disabled.
+- Create the live webhook endpoint at
+  `https://www.polity.live/api/stripe/webhook` for:
+  `checkout.session.completed`, `customer.subscription.created`,
+  `customer.subscription.updated`, `customer.subscription.deleted`,
+  `invoice.payment_succeeded`, and `invoice.payment_failed`.
+- Set Vercel Production to `STRIPE_MODE=live`, use only `sk_live_...` and live resource IDs, and
+  store the endpoint signing secret as `STRIPE_WEBHOOK_SECRET`.
+- Do not expose live Stripe secrets to Preview deployments. Use test resources there or disable
+  payments.
 
 #### Maps and location
 
@@ -158,6 +188,7 @@ npm run zero:dev
 | `npm run lint`            | Lint with Oxlint                             |
 | `npm run lint:check`      | Check lint rules with Oxlint                 |
 | `npm run lint:fix`        | Lint and auto-fix                            |
+| `npm run stripe:listen`   | Forward supported Stripe test events locally |
 | `npm run test`            | Run unit tests with Vitest                   |
 | `npm run test:e2e`        | Run E2E tests with Playwright                |
 | `npm run test:e2e:ui`     | Run E2E tests with Playwright UI             |

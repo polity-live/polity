@@ -11,6 +11,7 @@ import {
   applyGroupMembershipSelfOrManagerQueryAccess,
   applyGroupQueryAccess,
   applyStatementQueryAccess,
+  applySearchDocumentQueryAccess,
   applyTodoQueryAccess,
   applyUserQueryAccess,
   isAuthenticatedUserId,
@@ -71,23 +72,6 @@ const searchDocumentPageArgsSchema = z.object({
   bounds: searchBoundsSchema.default(null),
   ownerUserId: z.string().optional(),
 });
-
-function applySearchAccess(q: any, userID: string | undefined) {
-  if (!userID || userID === 'anon') {
-    return q.where('visibility', 'public');
-  }
-
-  return q.where(({ or, cmp, exists }: any) =>
-    or(
-      cmp('visibility', 'IN', ['public', 'authenticated']),
-      cmp('owner_user_id', userID),
-      exists('acl', (acl: any) => acl.where('user_id', userID)),
-      exists('group', (group: any) =>
-        group.whereExists('memberships', (membership: any) => membership.where('user_id', userID))
-      )
-    )
-  );
-}
 
 function applySearchText(q: any, query: string) {
   const normalizedQuery = normalizeSearchQuery(query);
@@ -172,8 +156,10 @@ export const searchQueries = {
       },
       ctx: { userID },
     }) => {
-      let q: any = zql.search_document.related('topics').related('group');
-      q = applySearchAccess(q, userID);
+      let q: any = zql.search_document
+        .related('topics')
+        .related('group', group => applyGroupQueryAccess(group, userID));
+      q = applySearchDocumentQueryAccess(q, userID);
       q = applySearchText(q, query);
       q = applySpatialBounds(q, bounds);
       if (ownerUserId) q = q.where('owner_user_id', ownerUserId);
@@ -206,8 +192,11 @@ export const searchQueries = {
   searchDocumentById: defineQuery(
     z.object({ id: z.string(), ownerUserId: z.string().optional() }),
     ({ args: { id, ownerUserId }, ctx: { userID } }) => {
-      let q: any = zql.search_document.related('topics').related('group').where('id', id);
-      q = applySearchAccess(q, userID);
+      let q: any = zql.search_document
+        .related('topics')
+        .related('group', group => applyGroupQueryAccess(group, userID))
+        .where('id', id);
+      q = applySearchDocumentQueryAccess(q, userID);
       if (ownerUserId) q = q.where('owner_user_id', ownerUserId);
       return q.one();
     }
@@ -215,8 +204,12 @@ export const searchQueries = {
 
   searchDocumentTopics: defineQuery(
     z.object({ limit: z.number().min(1).max(500).default(120) }),
-    ({ args: { limit } }) =>
-      zql.search_document_topic.orderBy('topic', 'asc').orderBy('document_id', 'asc').limit(limit)
+    ({ args: { limit }, ctx: { userID } }) =>
+      zql.search_document_topic
+        .whereExists('document', document => applySearchDocumentQueryAccess(document, userID))
+        .orderBy('topic', 'asc')
+        .orderBy('document_id', 'asc')
+        .limit(limit)
   ),
 
   searchableUsers: defineQuery(searchArgsSchema, ({ args: { limit, query }, ctx: { userID } }) => {
@@ -254,7 +247,7 @@ export const searchQueries = {
       : applyGroupQueryAccess(zql.group, userID);
 
     return groupsQuery
-      .related('owner')
+      .related('owner', user => applyUserQueryAccess(user, userID))
       .related('group_hashtags', q => q.related('hashtag'))
       .related('memberships', q =>
         q
@@ -282,8 +275,8 @@ export const searchQueries = {
         : applyStatementQueryAccess(zql.statement, userID);
 
       return statementsQuery
-        .related('user')
-        .related('group')
+        .related('user', user => applyUserQueryAccess(user, userID))
+        .related('group', group => applyGroupQueryAccess(group, userID))
         .related('statement_hashtags', q => q.related('hashtag'))
         .related('support_votes', q =>
           q.where('user_id', isAuthenticatedUserId(userID) ? userID : '__anon__')
@@ -312,12 +305,12 @@ export const searchQueries = {
       : applyBlogQueryAccess(zql.blog, userID);
 
     return blogsQuery
-      .related('group')
+      .related('group', group => applyGroupQueryAccess(group, userID))
       .related('blog_hashtags', q => q.related('hashtag'))
       .related('bloggers', q =>
         q
           .where('user_id', isAuthenticatedUserId(userID) ? userID : '__anon__')
-          .related('user')
+          .related('user', user => applyUserQueryAccess(user, userID))
           .related('role')
       )
       .related('support_votes', q =>
@@ -353,7 +346,7 @@ export const searchQueries = {
         .related('change_requests', q =>
           q.where('user_id', isAuthenticatedUserId(userID) ? userID : '__anon__')
         )
-        .related('group')
+        .related('group', group => applyGroupQueryAccess(group, userID))
         .related('current_process_run', q =>
           q.related('branches', bq => bq.orderBy('created_at', 'asc'))
         )
@@ -374,10 +367,12 @@ export const searchQueries = {
       : applyEventQueryAccess(zql.event, userID);
 
     return eventsQuery
-      .related('creator')
-      .related('group')
+      .related('creator', user => applyUserQueryAccess(user, userID))
+      .related('group', group => applyGroupQueryAccess(group, userID))
       .related('participants', q =>
-        applyEventParticipantOrManagerQueryAccess(q, userID).related('user')
+        applyEventParticipantOrManagerQueryAccess(q, userID).related('user', user =>
+          applyUserQueryAccess(user, userID)
+        )
       )
       .related('event_hashtags', q => q.related('hashtag'))
       .related('roles', q =>
@@ -399,7 +394,7 @@ export const searchQueries = {
     ({ args: { user_id }, ctx: { userID } }) =>
       requireQueryUser(zql.group_membership, userID)
         .where('user_id', user_id)
-        .related('group')
+        .related('group', group => applyGroupQueryAccess(group, userID))
         .related('membership_roles', q => q.related('role'))
   ),
 
@@ -410,15 +405,15 @@ export const searchQueries = {
         .where('user_id', user_id)
         .related('todo', q =>
           applyTodoQueryAccess(q, userID)
-            .related('group')
-            .related('creator')
+            .related('group', group => applyGroupQueryAccess(group, userID))
+            .related('creator', user => applyUserQueryAccess(user, userID))
             .related('assignments', q =>
               q
                 .where('user_id', isAuthenticatedUserId(userID) ? userID : '__anon__')
-                .related('user')
+                .related('user', user => applyUserQueryAccess(user, userID))
             )
         )
-        .related('user')
+        .related('user', user => applyUserQueryAccess(user, userID))
   ),
 
   searchableTodos: defineQuery(searchArgsSchema, ({ args: { limit, query }, ctx: { userID } }) => {
@@ -428,10 +423,12 @@ export const searchQueries = {
       : applyTodoQueryAccess(zql.todo, userID);
 
     return todosQuery
-      .related('group')
-      .related('creator')
+      .related('group', group => applyGroupQueryAccess(group, userID))
+      .related('creator', user => applyUserQueryAccess(user, userID))
       .related('assignments', q =>
-        q.where('user_id', isAuthenticatedUserId(userID) ? userID : '__anon__').related('user')
+        q
+          .where('user_id', isAuthenticatedUserId(userID) ? userID : '__anon__')
+          .related('user', user => applyUserQueryAccess(user, userID))
       )
       .orderBy('created_at', 'desc')
       .limit(limit);
@@ -451,10 +448,12 @@ export const searchQueries = {
           );
 
       return todosQuery
-        .related('group')
-        .related('creator')
+        .related('group', group => applyGroupQueryAccess(group, userID))
+        .related('creator', user => applyUserQueryAccess(user, userID))
         .related('assignments', q =>
-          q.where('user_id', isAuthenticatedUserId(userID) ? userID : '__anon__').related('user')
+          q
+            .where('user_id', isAuthenticatedUserId(userID) ? userID : '__anon__')
+            .related('user', user => applyUserQueryAccess(user, userID))
         )
         .orderBy('created_at', 'desc')
         .limit(limit);
@@ -472,10 +471,12 @@ export const searchQueries = {
         : applyTodoQueryAccess(zql.todo, userID).where('group_id', 'IN', group_ids);
 
       return todosQuery
-        .related('group')
-        .related('creator')
+        .related('group', group => applyGroupQueryAccess(group, userID))
+        .related('creator', user => applyUserQueryAccess(user, userID))
         .related('assignments', q =>
-          q.where('user_id', isAuthenticatedUserId(userID) ? userID : '__anon__').related('user')
+          q
+            .where('user_id', isAuthenticatedUserId(userID) ? userID : '__anon__')
+            .related('user', user => applyUserQueryAccess(user, userID))
         )
         .orderBy('created_at', 'desc')
         .limit(limit);

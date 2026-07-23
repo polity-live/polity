@@ -19,4 +19,20 @@ export const paymentsTranslations = {
     },
     notAvailable: 'N/A',
   },
+  billing: {
+    title: 'Billing',
+    description: 'Manage invoices, payment methods, and cancellations securely with Stripe.',
+    manage: 'Manage payments',
+    synced: 'Billing data has been updated.',
+    portalError: 'The customer portal could not be opened.',
+  },
+  plans: {
+    activeUntil: 'Active until {{date}}',
+    thenFree: 'You will automatically switch to Free after that.',
+    nextPlan: 'Next plan',
+    freeFrom: 'Free from {{date}}',
+    changeScheduled: 'Change scheduled',
+    cancellationScheduled:
+      'Your switch to Free at the end of the billing period has been scheduled.',
+  },
 } as const;

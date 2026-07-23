@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react';
+import { CreditCard, Loader2 } from 'lucide-react';
 import { TabsContent } from '@/features/shared/ui/ui/tabs';
 import {
   FormActions,
@@ -29,12 +29,14 @@ import { AccountPasswordSection } from './AccountPasswordSection';
 import { AccountEmailSection } from './AccountEmailSection';
 import { NotificationSettingsContent } from '@/features/notifications/ui/NotificationSettingsContent';
 import { AiSettingsTab } from './AiSettingsTab';
+import { Button } from '@/features/shared/ui/ui/button';
 import {
   geoLocationFieldsFromShape,
   geoLocationShapeFromFields,
 } from '@/features/shared/logic/geoLocationShape';
 import type { Value } from 'platejs';
 import type { UserProfileFormData } from '../hooks/useUserProfileForm';
+import type { PendingPlanChange } from '@/features/payments/ui/SubscriptionPlansGrid';
 
 interface UserProfileEditFormProps {
   formData: UserProfileFormData;
@@ -43,6 +45,9 @@ interface UserProfileEditFormProps {
   activeTab?: string;
   onTabChange?: (tab: string) => void;
   activeSubscriptionAmount: number;
+  pendingChange: PendingPlanChange;
+  hasStripeCustomer: boolean;
+  subscriptionRefreshKey: number;
   isCheckoutLoading: boolean;
   isPlanActive: (amount: number) => boolean;
   hasCustomPlan: boolean;
@@ -54,9 +59,10 @@ interface UserProfileEditFormProps {
     field: K,
     value: UserProfileFormData[K]
   ) => void;
-  onSubscribe: (priceId: string) => void;
+  onSubscribe: (plan: 'running' | 'development') => void;
   onCustomAmount: (euros: number) => void;
   onCancelSubscription: () => void;
+  onManageBilling: () => void;
 }
 
 export function UserProfileEditForm({
@@ -66,6 +72,9 @@ export function UserProfileEditForm({
   activeTab,
   onTabChange,
   activeSubscriptionAmount,
+  pendingChange,
+  hasStripeCustomer,
+  subscriptionRefreshKey,
   isCheckoutLoading,
   isPlanActive,
   hasCustomPlan,
@@ -77,6 +86,7 @@ export function UserProfileEditForm({
   onSubscribe,
   onCustomAmount,
   onCancelSubscription,
+  onManageBilling,
 }: UserProfileEditFormProps) {
   const { t } = useTranslation();
   const tabs: SettingsTab[] = [
@@ -261,6 +271,7 @@ export function UserProfileEditForm({
           <div className="space-y-6">
             <SubscriptionPlansGrid
               activeAmount={activeSubscriptionAmount}
+              pendingChange={pendingChange}
               isLoading={isCheckoutLoading}
               onSubscribe={onSubscribe}
               onCustomAmount={onCustomAmount}
@@ -269,7 +280,28 @@ export function UserProfileEditForm({
               hasCustomPlan={hasCustomPlan}
             />
 
-            <SubscriptionStatus userId={userId} />
+            {hasStripeCustomer ? (
+              <SettingsPanel
+                title={t('features.payments.billing.title')}
+                description={t('features.payments.billing.description')}
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onManageBilling}
+                  disabled={isCheckoutLoading}
+                >
+                  {isCheckoutLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <CreditCard className="mr-2 h-4 w-4" />
+                  )}
+                  {t('features.payments.billing.manage')}
+                </Button>
+              </SettingsPanel>
+            ) : null}
+
+            <SubscriptionStatus userId={userId} refreshKey={subscriptionRefreshKey} />
           </div>
         </TabsContent>
 

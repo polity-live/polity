@@ -27,7 +27,7 @@ import { roleCreateSchema, actionRightCreateSchema } from '../groups/schema';
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 const ACTIVE_BLOGGER_STATUSES = new Set(['owner', 'admin', 'member', 'writer']);
 
-async function assertCanViewBlog(
+export async function assertCanViewBlog(
   tx: Parameters<typeof can>[0],
   ctx: Parameters<typeof can>[1],
   blogId: string
@@ -42,13 +42,33 @@ async function assertCanViewBlog(
   if (canReadVisibility(blog.visibility, ctx, false)) return;
 
   const relation = await tx.run(
-    zql.blog_blogger.where('blog_id', blogId).where('user_id', ctx.userID).one()
+    zql.blog_blogger
+      .where('blog_id', blogId)
+      .where('user_id', ctx.userID)
+      .where('status', 'IN', [...ACTIVE_BLOGGER_STATUSES])
+      .one()
   );
-  if (relation && ACTIVE_BLOGGER_STATUSES.has(relation.status ?? '')) return;
+  if (relation) return;
 
   if (blog.group_id) {
-    await can(tx, ctx, { action: 'view', resource: 'blogs', groupId: blog.group_id });
-    return;
+    const [group, membership, guestAccess] = await Promise.all([
+      tx.run(zql.group.where('id', blog.group_id).where('owner_id', ctx.userID).one()),
+      tx.run(
+        zql.group_membership
+          .where('group_id', blog.group_id)
+          .where('user_id', ctx.userID)
+          .where('status', 'IN', ['active', 'member', 'admin'])
+          .one()
+      ),
+      tx.run(
+        zql.group_guest_access
+          .where('group_id', blog.group_id)
+          .where('user_id', ctx.userID)
+          .where('status', 'active')
+          .one()
+      ),
+    ]);
+    if (group || membership || guestAccess) return;
   }
 
   throw new PermissionError('view', 'blogs', `blog:${blogId}`);

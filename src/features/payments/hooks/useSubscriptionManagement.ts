@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { stripeSubscriptionStatusFn } from '@/server/stripe-subscription-status';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -7,8 +7,8 @@ export interface SubscriptionData {
   id: string;
   amount: number;
   status: string;
-  current_period_end?: number;
-  cancel_at_period_end?: boolean;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
 }
 
 export interface UseSubscriptionManagementOptions {
@@ -17,6 +17,7 @@ export interface UseSubscriptionManagementOptions {
 
 export interface UseSubscriptionManagementReturn {
   activeSubscription: SubscriptionData | null;
+  hasStripeCustomer: boolean;
   isLoading: boolean;
   fetchSubscription: () => Promise<void>;
   isPlanActive: (amount: number) => boolean;
@@ -28,10 +29,11 @@ export function useSubscriptionManagement({
   userId,
 }: UseSubscriptionManagementOptions): UseSubscriptionManagementReturn {
   const [activeSubscription, setActiveSubscription] = useState<SubscriptionData | null>(null);
+  const [hasStripeCustomer, setHasStripeCustomer] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { session } = useAuth();
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     if (!userId || !session?.access_token) return;
 
     setIsLoading(true);
@@ -41,17 +43,18 @@ export function useSubscriptionManagement({
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       setActiveSubscription(data.subscription);
+      setHasStripeCustomer(data.hasCustomer);
     } catch (error) {
       console.error('Failed to fetch subscription:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [session?.access_token, userId]);
 
   // Fetch active subscription on mount and when userId changes
   useEffect(() => {
-    fetchSubscription();
-  }, [session?.access_token, userId]);
+    void fetchSubscription();
+  }, [fetchSubscription]);
 
   // Helper to check if a plan is currently active
   const isPlanActive = (amount: number): boolean => {
@@ -73,6 +76,7 @@ export function useSubscriptionManagement({
 
   return {
     activeSubscription,
+    hasStripeCustomer,
     isLoading,
     fetchSubscription,
     isPlanActive,

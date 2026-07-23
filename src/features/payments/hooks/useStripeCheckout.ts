@@ -4,9 +4,15 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 import { stripeCreateCheckoutFn } from '@/server/stripe-create-checkout';
 import { stripeCancelSubscriptionFn } from '@/server/stripe-cancel-subscription';
 import { stripeRepairCheckoutSessionFn } from '@/server/stripe-repair-checkout-session';
+import { stripeCreatePortalFn } from '@/server/stripe-create-portal';
+import { stripeReconcileCustomerFn } from '@/server/stripe-reconcile-customer';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { majorToMinor } from '@/features/shared/logic/currency';
 import { useAuth } from '@/providers/auth-provider';
+import {
+  splitStripeRedirectSearch,
+  type StripeRedirectSearch,
+} from '@/features/payments/logic/stripeRedirectSearch';
 
 // Co-located types
 export interface UseStripeCheckoutOptions {
@@ -16,9 +22,10 @@ export interface UseStripeCheckoutOptions {
 
 export interface UseStripeCheckoutReturn {
   isCheckoutLoading: boolean;
-  handleSubscribe: (priceId: string) => Promise<void>;
+  handleSubscribe: (plan: 'running' | 'development') => Promise<void>;
   handleCustomAmount: (euros: number) => Promise<void>;
   handleCancelSubscription: (subscriptionId: string) => Promise<void>;
+  handleManageBilling: () => Promise<void>;
 }
 
 export function useStripeCheckout({
@@ -26,7 +33,7 @@ export function useStripeCheckout({
   onSubscriptionChange,
 }: UseStripeCheckoutOptions): UseStripeCheckoutReturn {
   const navigate = useNavigate();
-  const searchParams = useSearch({ strict: false }) as Record<string, string>;
+  const searchParams = useSearch({ strict: false }) as StripeRedirectSearch;
   const { session } = useAuth();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const handledRedirectRef = useRef<string | null>(null);
@@ -40,43 +47,53 @@ export function useStripeCheckout({
     return { Authorization: `Bearer ${session.access_token}` };
   };
 
-  // Show success/cancel message from Stripe redirect
+  // Repair checkout redirects and reconcile changes made in the Stripe portal.
   useEffect(() => {
-    const { success, canceled, session_id: sessionId, ...remainingSearch } = searchParams;
+    const { action, remainingSearch } = splitStripeRedirectSearch(searchParams);
     const redirectKey =
-      success === 'true'
-        ? `success:${sessionId ?? 'missing'}`
-        : canceled === 'true'
-          ? 'canceled'
-          : null;
+      action.type === 'checkout-success'
+        ? `success:${action.sessionId ?? 'missing'}`
+        : action.type === 'billing-return'
+          ? 'billing-return'
+          : action.type === 'checkout-canceled'
+            ? 'canceled'
+            : null;
 
-    if (success === 'true') {
+    if (action.type === 'checkout-success' || action.type === 'billing-return') {
       if (!session?.access_token) return;
       if (handledRedirectRef.current === redirectKey) return;
       handledRedirectRef.current = redirectKey;
 
       void (async () => {
         try {
-          if (sessionId) {
+          if (action.type === 'checkout-success' && action.sessionId) {
             await stripeRepairCheckoutSessionFn({
-              data: { sessionId, userId },
+              data: { sessionId: action.sessionId, userId },
+              headers: { Authorization: `Bearer ${session.access_token}` },
+            });
+          } else {
+            await stripeReconcileCustomerFn({
+              data: { userId },
               headers: { Authorization: `Bearer ${session.access_token}` },
             });
           }
         } catch (error) {
-          console.error('Checkout repair sync failed:', error);
+          console.error('Stripe reconciliation failed:', error);
         } finally {
-          toast.success(
-            translateText(
-              'generated.inline.0973_subscription_successful_thank_you_for_your_su_5b3118fb'
-            )
-          );
-          // Clear the query param to prevent duplicate toasts
+          if (action.type === 'checkout-success') {
+            toast.success(
+              translateText(
+                'generated.inline.0973_subscription_successful_thank_you_for_your_su_5b3118fb'
+              )
+            );
+          } else {
+            toast.success(translateText('features.payments.billing.synced'));
+          }
           navigate({ to: window.location.pathname, search: remainingSearch, replace: true });
           onSubscriptionChange?.();
         }
       })();
-    } else if (canceled === 'true') {
+    } else if (action.type === 'checkout-canceled') {
       if (handledRedirectRef.current === redirectKey) return;
       handledRedirectRef.current = redirectKey;
 
@@ -90,14 +107,14 @@ export function useStripeCheckout({
     }
   }, [searchParams, navigate, onSubscriptionChange, session?.access_token, userId]);
 
-  const handleSubscribe = async (priceId: string) => {
+  const handleSubscribe = async (plan: 'running' | 'development') => {
     const headers = getAuthHeaders();
     if (!headers) return;
 
     setIsCheckoutLoading(true);
     try {
       const data = await stripeCreateCheckoutFn({
-        data: { priceId, userId },
+        data: { plan, userId },
         headers,
       });
 
@@ -124,7 +141,7 @@ export function useStripeCheckout({
     setIsCheckoutLoading(true);
     try {
       const data = await stripeCreateCheckoutFn({
-        data: { amount: majorToMinor(euros, 'EUR'), userId },
+        data: { plan: 'custom', amount: majorToMinor(euros, 'EUR'), userId },
         headers,
       });
 
@@ -156,9 +173,11 @@ export function useStripeCheckout({
       });
 
       if (data.success) {
-        toast.success(
-          translateText('generated.inline.0977_subscription_canceled_successfully_fb691132')
-        );
+        await stripeReconcileCustomerFn({
+          data: { userId },
+          headers,
+        });
+        toast.success(translateText('features.payments.plans.cancellationScheduled'));
         onSubscriptionChange?.();
       } else {
         toast.error(translateText('generated.inline.0978_failed_to_cancel_subscription_9291c45e'));
@@ -171,10 +190,34 @@ export function useStripeCheckout({
     }
   };
 
+  const handleManageBilling = async () => {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    setIsCheckoutLoading(true);
+    try {
+      const data = await stripeCreatePortalFn({
+        data: {},
+        headers,
+      });
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(translateText('features.payments.billing.portalError'));
+      }
+    } catch (error) {
+      toast.error(translateText('features.payments.billing.portalError'));
+      console.error('Billing portal error:', error);
+    } finally {
+      setIsCheckoutLoading(false);
+    }
+  };
+
   return {
     isCheckoutLoading,
     handleSubscribe,
     handleCustomAmount,
     handleCancelSubscription,
+    handleManageBilling,
   };
 }

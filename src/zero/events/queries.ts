@@ -7,10 +7,12 @@ import {
   applyElectionElectorOrManagerQueryAccess,
   applyElectionManagerQueryAccess,
   applyElectionQueryAccess,
+  applyEventQueryAccess,
   applyEventManagerQueryAccess,
   applyEventParticipantOrManagerQueryAccess,
   applyGroupQueryAccess,
   applyGroupMembershipSelfOrManagerQueryAccess,
+  applyRoleQueryAccess,
   applyVoteManagerQueryAccess,
   applyVoteQueryAccess,
   applyVoteVoterOrManagerQueryAccess,
@@ -38,29 +40,7 @@ function applyEventCursor<T>(q: T, field: 'created_at' | 'start_date', start: an
 const WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
 
 function applyEventAccess<T>(q: T, userID: string | undefined): T {
-  const query = q as any;
-
-  if (!userID || userID === 'anon') {
-    return query.where('visibility', 'public') as T;
-  }
-
-  return query.where(({ or, cmp, exists }: any) =>
-    or(
-      cmp('visibility', 'IN', ['public', 'authenticated']),
-      cmp('creator_id', userID),
-      exists('participants', (participant: any) => participant.where('user_id', userID)),
-      exists('group', (group: any) =>
-        group.where(({ or, cmp, exists }: any) =>
-          or(
-            cmp('visibility', 'IN', ['public', 'authenticated']),
-            cmp('owner_id', userID),
-            exists('memberships', (membership: any) => membership.where('user_id', userID)),
-            exists('guest_accesses', (guestAccess: any) => guestAccess.where('user_id', userID))
-          )
-        )
-      )
-    )
-  ) as T;
+  return applyEventQueryAccess(q, userID);
 }
 
 function applyEventParticipantEventAccess<T>(q: T, userID: string | undefined): T {
@@ -1054,7 +1034,7 @@ export const eventQueries = {
 
   /** All roles with group relation */
   rolesWithGroups: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.role
+    applyRoleQueryAccess(zql.role, userID)
       .where('scope', 'group')
       .where('assignment_mode', 'elected')
       .whereExists('group', group => applyGroupQueryAccess(group, userID))

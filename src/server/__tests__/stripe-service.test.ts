@@ -4,6 +4,7 @@ import {
   executeStripeCancelSubscription,
   executeStripeCreateCheckout,
   executeStripeCreatePortal,
+  executeStripeReconcileCustomer,
   executeStripeRepairCheckoutSession,
   executeStripeSubscriptionStatus,
   handleStripeWebhook,
@@ -140,6 +141,29 @@ function createStripeMock(overrides: Record<string, any> = {}) {
       sessions: {
         create: vi.fn(async () => ({ url: 'https://billing.stripe.test/session' })),
       },
+      configurations: {
+        retrieve: vi.fn(async (id: string) => ({
+          id,
+          active: true,
+          livemode: false,
+        })),
+      },
+    },
+    prices: {
+      retrieve: vi.fn(async (id: string) => ({
+        id,
+        active: true,
+        livemode: false,
+        currency: 'eur',
+        recurring: { interval: 'month' },
+      })),
+    },
+    products: {
+      retrieve: vi.fn(async (id: string) => ({
+        id,
+        active: true,
+        livemode: false,
+      })),
     },
     customers: {
       retrieve: vi.fn(async (id: string) => ({ id, metadata: { userId: 'user-1' } })),
@@ -170,7 +194,27 @@ function createStripeMock(overrides: Record<string, any> = {}) {
         },
       })),
       list: vi.fn(async () => ({ data: [] })),
-      cancel: vi.fn(async (id: string) => ({ id, status: 'canceled' })),
+      update: vi.fn(async (id: string) => ({
+        id,
+        customer: 'cus_1',
+        status: 'active',
+        current_period_start: 1_700_000_000,
+        current_period_end: 1_702_592_000,
+        cancel_at_period_end: true,
+        canceled_at: null,
+        created: 1_700_000_000,
+        currency: 'eur',
+        items: {
+          data: [
+            {
+              price: {
+                unit_amount: 200,
+                recurring: { interval: 'month' },
+              },
+            },
+          ],
+        },
+      })),
     },
     invoices: {
       list: vi.fn(async () => ({ data: [] })),
@@ -186,11 +230,15 @@ function createStripeMock(overrides: Record<string, any> = {}) {
 
 beforeEach(() => {
   vi.restoreAllMocks();
-  process.env.STRIPE_SECRET_KEY = 'sk_test_mock';
-  process.env.STRIPE_WEBHOOK_SECRET = 'whsec_mock';
-  process.env.VITE_APP_URL = 'https://app.example';
-  process.env.VITE_STRIPE_PRICE_RUNNING = 'price_running';
-  process.env.VITE_STRIPE_PRICE_DEVELOPMENT = 'price_development';
+  vi.unstubAllEnvs();
+  vi.stubEnv('STRIPE_MODE', 'test');
+  vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_mock');
+  vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_mock');
+  vi.stubEnv('STRIPE_PRICE_RUNNING', 'price_running');
+  vi.stubEnv('STRIPE_PRICE_DEVELOPMENT', 'price_development');
+  vi.stubEnv('STRIPE_PRODUCT_CUSTOM', 'prod_custom');
+  vi.stubEnv('STRIPE_PORTAL_CONFIGURATION_ID', 'bpc_test');
+  vi.stubEnv('VITE_APP_URL', 'https://app.example');
 });
 
 describe('Stripe service security', () => {
@@ -200,7 +248,7 @@ describe('Stripe service security', () => {
 
     await expect(
       executeStripeCreateCheckout(
-        { priceId: 'price_running' },
+        { plan: 'running' },
         { stripe, supabase: client as any, user: null }
       )
     ).rejects.toThrow('Unauthorized');
@@ -214,22 +262,22 @@ describe('Stripe service security', () => {
 
     await expect(
       executeStripeCreateCheckout(
-        { priceId: 'price_running', userId: 'user-2' },
+        { plan: 'running', userId: 'user-2' },
         { stripe, supabase: client as any, user: { id: 'user-1', email: 'u@example.com' } }
       )
     ).rejects.toThrow('Forbidden');
   });
 
-  it('rejects arbitrary client supplied price ids', async () => {
+  it('rejects amounts on a fixed server-side plan', async () => {
     const { client } = createFakeSupabase();
     const stripe = createStripeMock();
 
     await expect(
       executeStripeCreateCheckout(
-        { priceId: 'price_attacker' },
+        { plan: 'running', amount: 500 },
         { stripe, supabase: client as any, user: { id: 'user-1', email: 'u@example.com' } }
       )
-    ).rejects.toThrow('Invalid Stripe price');
+    ).rejects.toThrow('Fixed Stripe plans do not accept a custom amount');
 
     expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
   });
@@ -238,10 +286,11 @@ describe('Stripe service security', () => {
     const { client } = createFakeSupabase();
     const stripe = createStripeMock();
 
-    await executeStripeCreateCheckout(
-      { priceId: 'price_running', origin: 'https://evil.example' } as any,
-      { stripe, supabase: client as any, user: { id: 'user-1', email: 'u@example.com' } }
-    );
+    await executeStripeCreateCheckout({ plan: 'running', origin: 'https://evil.example' } as any, {
+      stripe,
+      supabase: client as any,
+      user: { id: 'user-1', email: 'u@example.com' },
+    });
 
     const params = stripe.checkout.sessions.create.mock.calls[0][0];
     expect(params.success_url).toContain('https://app.example/user/user-1/settings');
@@ -251,7 +300,64 @@ describe('Stripe service security', () => {
     expect(params.cancel_url).toContain('canceled=true');
     expect(params.success_url).not.toContain('evil.example');
     expect(params.line_items).toEqual([{ price: 'price_running', quantity: 1 }]);
-    expect(stripe.subscriptions.cancel).not.toHaveBeenCalled();
+    expect(stripe.subscriptions.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects a test checkout configured with a live Stripe price', async () => {
+    const { client } = createFakeSupabase();
+    const stripe = createStripeMock({
+      prices: {
+        retrieve: vi.fn(async () => ({
+          active: true,
+          livemode: true,
+          currency: 'eur',
+          recurring: { interval: 'month' },
+        })),
+      },
+    });
+
+    await expect(
+      executeStripeCreateCheckout(
+        { plan: 'running' },
+        { stripe, supabase: client as any, user: { id: 'user-1', email: 'u@example.com' } }
+      )
+    ).rejects.toThrow('does not belong to the configured Stripe mode');
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+  });
+
+  it('creates custom subscriptions from the server-side product configuration', async () => {
+    const { client } = createFakeSupabase();
+    const stripe = createStripeMock();
+
+    await executeStripeCreateCheckout(
+      { plan: 'custom', amount: 500 },
+      { stripe, supabase: client as any, user: { id: 'user-1', email: 'u@example.com' } }
+    );
+
+    expect(stripe.products.retrieve).toHaveBeenCalledWith('prod_custom');
+    expect(stripe.checkout.sessions.create.mock.calls[0][0].line_items).toEqual([
+      {
+        price_data: {
+          currency: 'eur',
+          product: 'prod_custom',
+          recurring: { interval: 'month' },
+          unit_amount: 500,
+        },
+        quantity: 1,
+      },
+    ]);
+  });
+
+  it('rejects a secret key whose prefix does not match STRIPE_MODE', async () => {
+    const { client } = createFakeSupabase();
+    vi.stubEnv('STRIPE_MODE', 'live');
+
+    await expect(
+      executeStripeCreateCheckout(
+        { plan: 'running' },
+        { supabase: client as any, user: { id: 'user-1', email: 'u@example.com' } }
+      )
+    ).rejects.toThrow('STRIPE_SECRET_KEY must use the sk_live_ prefix');
   });
 
   it('rejects subscription status for a forged user id', async () => {
@@ -329,26 +435,30 @@ describe('Stripe service security', () => {
     expect(stripe.invoices.list).not.toHaveBeenCalled();
   });
 
-  it('rejects billing portal sessions for customers owned by another user', async () => {
+  it('creates a portal session only for the authenticated user customer', async () => {
     const { client } = createFakeSupabase({
       stripe_customer: [
         {
           id: 'customer-row-1',
-          user_id: 'user-2',
-          stripe_customer_id: 'cus_2',
+          user_id: 'user-1',
+          stripe_customer_id: 'cus_1',
         },
       ],
     });
     const stripe = createStripeMock();
 
-    await expect(
-      executeStripeCreatePortal(
-        { customerId: 'cus_2' },
-        { stripe, supabase: client as any, user: { id: 'user-1', email: 'u@example.com' } }
-      )
-    ).rejects.toThrow('Forbidden');
+    await executeStripeCreatePortal({ customerId: 'cus_attacker' } as any, {
+      stripe,
+      supabase: client as any,
+      user: { id: 'user-1', email: 'u@example.com' },
+    });
 
-    expect(stripe.billingPortal.sessions.create).not.toHaveBeenCalled();
+    expect(stripe.billingPortal.configurations.retrieve).toHaveBeenCalledWith('bpc_test');
+    expect(stripe.billingPortal.sessions.create).toHaveBeenCalledWith({
+      customer: 'cus_1',
+      configuration: 'bpc_test',
+      return_url: 'https://app.example/user/user-1/settings?tab=subscriptions&billing_return=true',
+    });
   });
 
   it('rejects canceling subscriptions owned by another user', async () => {
@@ -364,7 +474,7 @@ describe('Stripe service security', () => {
     const stripe = createStripeMock({
       subscriptions: {
         retrieve: vi.fn(async () => ({ customer: 'cus_2' })),
-        cancel: vi.fn(),
+        update: vi.fn(),
       },
     });
 
@@ -375,7 +485,35 @@ describe('Stripe service security', () => {
       )
     ).rejects.toThrow('Forbidden');
 
-    expect(stripe.subscriptions.cancel).not.toHaveBeenCalled();
+    expect(stripe.subscriptions.update).not.toHaveBeenCalled();
+  });
+
+  it('schedules owned subscriptions to cancel at the end of the billing period', async () => {
+    const { db, client } = createFakeSupabase({
+      stripe_customer: [
+        {
+          id: 'customer-row-1',
+          user_id: 'user-1',
+          stripe_customer_id: 'cus_1',
+        },
+      ],
+    });
+    const stripe = createStripeMock();
+
+    const result = await executeStripeCancelSubscription(
+      { subscriptionId: 'sub_1' },
+      { stripe, supabase: client as any, user: { id: 'user-1', email: 'u@example.com' } }
+    );
+
+    expect(stripe.subscriptions.update).toHaveBeenCalledWith('sub_1', {
+      cancel_at_period_end: true,
+    });
+    expect(db.stripe_subscription[0]).toMatchObject({
+      stripe_subscription_id: 'sub_1',
+      cancel_at_period_end: true,
+      status: 'active',
+    });
+    expect(result.subscription.cancelAtPeriodEnd).toBe(true);
   });
 });
 
@@ -469,6 +607,80 @@ describe('Stripe checkout repair sync', () => {
   });
 });
 
+describe('Stripe customer reconciliation', () => {
+  it('refreshes subscriptions and invoices directly from Stripe', async () => {
+    const { db, client } = createFakeSupabase({
+      stripe_customer: [
+        {
+          id: 'customer-row-1',
+          user_id: 'user-1',
+          stripe_customer_id: 'cus_1',
+        },
+      ],
+    });
+    const stripe = createStripeMock({
+      subscriptions: {
+        retrieve: vi.fn(),
+        list: vi.fn(async () => ({
+          data: [
+            {
+              id: 'sub_reconciled',
+              customer: 'cus_1',
+              status: 'active',
+              current_period_start: 1_700_000_000,
+              current_period_end: 1_702_592_000,
+              cancel_at_period_end: false,
+              canceled_at: null,
+              created: 1_700_000_000,
+              currency: 'eur',
+              items: {
+                data: [
+                  {
+                    price: {
+                      unit_amount: 1000,
+                      recurring: { interval: 'month' },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        })),
+      },
+      invoices: {
+        list: vi.fn(async () => ({
+          data: [
+            {
+              id: 'in_reconciled',
+              customer: 'cus_1',
+              parent: { subscription_details: { subscription: 'sub_reconciled' } },
+              amount_paid: 1000,
+              amount_due: 1000,
+              currency: 'eur',
+              created: 1_700_000_100,
+              status: 'paid',
+              status_transitions: { paid_at: 1_700_000_110 },
+            },
+          ],
+        })),
+      },
+    });
+
+    const result = await executeStripeReconcileCustomer(
+      { userId: 'user-1' },
+      { stripe, supabase: client as any, user: { id: 'user-1', email: 'u@example.com' } }
+    );
+
+    expect(db.stripe_subscription).toHaveLength(1);
+    expect(db.stripe_payment).toHaveLength(1);
+    expect(result).toMatchObject({
+      hasCustomer: true,
+      subscription: { id: 'sub_reconciled', amount: 1000 },
+      payments: [{ id: 'in_reconciled', status: 'paid' }],
+    });
+  });
+});
+
 describe('Stripe webhook handling', () => {
   it('rejects webhook requests with missing signatures', async () => {
     const response = await handleStripeWebhookRequest(
@@ -497,12 +709,28 @@ describe('Stripe webhook handling', () => {
     });
   });
 
+  it('rejects webhook events from the wrong Stripe mode', async () => {
+    const { client } = createFakeSupabase();
+    const stripe = createStripeMock();
+    stripe.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_live',
+      type: 'checkout.session.completed',
+      livemode: true,
+      data: { object: {} },
+    });
+
+    await expect(
+      handleStripeWebhook({ rawBody: '{}', signature: 'sig' }, { stripe, supabase: client as any })
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
   it('upserts customer.subscription.created events into mirrored subscriptions', async () => {
     const { db, client } = createFakeSupabase();
     const stripe = createStripeMock();
     stripe.webhooks.constructEvent.mockReturnValue({
       id: 'evt_subscription_created',
       type: 'customer.subscription.created',
+      livemode: false,
       data: {
         object: {
           id: 'sub_created',
@@ -548,11 +776,59 @@ describe('Stripe webhook handling', () => {
     });
   });
 
+  it.each([
+    ['customer.subscription.updated', 'active'],
+    ['customer.subscription.deleted', 'canceled'],
+  ] as const)('upserts %s events', async (eventType, status) => {
+    const { db, client } = createFakeSupabase();
+    const stripe = createStripeMock();
+    stripe.webhooks.constructEvent.mockReturnValue({
+      id: `evt_${eventType}`,
+      type: eventType,
+      livemode: false,
+      data: {
+        object: {
+          id: 'sub_changed',
+          customer: 'cus_1',
+          status,
+          current_period_start: 1_700_000_000,
+          current_period_end: 1_702_592_000,
+          cancel_at_period_end: status === 'canceled',
+          canceled_at: status === 'canceled' ? 1_700_000_100 : null,
+          created: 1_700_000_000,
+          currency: 'eur',
+          items: {
+            data: [
+              {
+                price: {
+                  unit_amount: 200,
+                  recurring: { interval: 'month' },
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    await handleStripeWebhook(
+      { rawBody: '{}', signature: 'sig' },
+      { stripe, supabase: client as any }
+    );
+
+    expect(db.stripe_subscription).toHaveLength(1);
+    expect(db.stripe_subscription[0]).toMatchObject({
+      stripe_subscription_id: 'sub_changed',
+      status,
+    });
+  });
+
   it('upserts completed checkout subscriptions with interval_period and tolerates duplicate events', async () => {
     const { db, client } = createFakeSupabase();
     const event = {
       id: 'evt_checkout',
       type: 'checkout.session.completed',
+      livemode: false,
       data: {
         object: {
           metadata: { userId: 'user-1' },
@@ -602,6 +878,7 @@ describe('Stripe webhook handling', () => {
       .mockReturnValueOnce({
         id: 'evt_paid',
         type: 'invoice.payment_succeeded',
+        livemode: false,
         data: {
           object: {
             id: 'in_1',
@@ -618,6 +895,7 @@ describe('Stripe webhook handling', () => {
       .mockReturnValueOnce({
         id: 'evt_paid_duplicate',
         type: 'invoice.payment_succeeded',
+        livemode: false,
         data: {
           object: {
             id: 'in_1',
@@ -634,6 +912,7 @@ describe('Stripe webhook handling', () => {
       .mockReturnValueOnce({
         id: 'evt_failed',
         type: 'invoice.payment_failed',
+        livemode: false,
         data: {
           object: {
             id: 'in_2',
@@ -672,5 +951,59 @@ describe('Stripe webhook handling', () => {
       status: 'failed',
       paid_at: null,
     });
+  });
+
+  it('returns HTTP 500 when a valid event cannot be synchronized', async () => {
+    const { db } = createFakeSupabase();
+    const failingClient = {
+      from: (table: TableName) => {
+        const query = new FakeSupabaseQuery(db, table) as any;
+        if (table === 'stripe_subscription') {
+          query.upsert = vi.fn(async () => ({ error: { message: 'database unavailable' } }));
+        }
+        return query;
+      },
+    };
+    const stripe = createStripeMock();
+    stripe.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_db_failure',
+      type: 'customer.subscription.updated',
+      livemode: false,
+      data: {
+        object: {
+          id: 'sub_failure',
+          customer: 'cus_1',
+          status: 'active',
+          current_period_start: 1_700_000_000,
+          current_period_end: 1_702_592_000,
+          cancel_at_period_end: false,
+          canceled_at: null,
+          created: 1_700_000_000,
+          currency: 'eur',
+          items: {
+            data: [
+              {
+                price: {
+                  unit_amount: 200,
+                  recurring: { interval: 'month' },
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const response = await handleStripeWebhookRequest(
+      new Request('https://app.example/api/stripe/webhook', {
+        method: 'POST',
+        headers: { 'stripe-signature': 'sig' },
+        body: '{}',
+      }),
+      { stripe, supabase: failingClient as any }
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.text()).resolves.toContain('database unavailable');
   });
 });

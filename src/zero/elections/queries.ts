@@ -1,9 +1,13 @@
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
+  applyAgendaItemQueryAccess,
   applyElectionElectorOrManagerQueryAccess,
   applyElectionManagerQueryAccess,
   applyElectionQueryAccess,
+  applyEventQueryAccess,
+  applyGroupQueryAccess,
+  applyRoleQueryAccess,
 } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
@@ -270,9 +274,17 @@ export const electionQueries = {
   // Elections for search (role+group, candidates, agenda_item+event)
   electionsForSearch: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     applyElectionQueryAccess(zql.election, userID)
-      .related('role', q => q.related('group'))
+      .related('role', role =>
+        applyRoleQueryAccess(role, userID).related('group', group =>
+          applyGroupQueryAccess(group, userID)
+        )
+      )
       .related('candidates')
-      .related('agenda_item', q => q.related('event'))
+      .related('agenda_item', agendaItem =>
+        applyAgendaItemQueryAccess(agendaItem, userID).related('event', event =>
+          applyEventQueryAccess(event, userID)
+        )
+      )
   ),
 
   // Pending elections
