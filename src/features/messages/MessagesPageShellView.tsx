@@ -38,6 +38,7 @@ export function MessagesPageShellView({ mp }: MessagesPageShellViewProps) {
           userSearchDialogOpen={mp.userSearchDialogOpen}
           onUserSearchDialogOpenChange={mp.setUserSearchDialogOpen}
           newConversationSearch={mp.newConversationSearch}
+          newConversationTargetUserId={mp.newConversationTargetUserId}
           memberListDialogOpen={mp.memberListDialogOpen}
           onMemberListDialogOpenChange={mp.setMemberListDialogOpen}
           deleteDialogOpen={mp.deleteDialogOpen}

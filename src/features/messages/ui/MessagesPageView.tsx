@@ -30,6 +30,7 @@ export interface MessagesPageViewProps {
   userSearchDialogOpen: boolean;
   onUserSearchDialogOpenChange: (open: boolean) => void;
   newConversationSearch: string;
+  newConversationTargetUserId?: string;
   memberListDialogOpen: boolean;
   onMemberListDialogOpenChange: (open: boolean) => void;
   deleteDialogOpen: boolean;
@@ -70,6 +71,7 @@ export function MessagesPageView({
   userSearchDialogOpen,
   onUserSearchDialogOpenChange,
   newConversationSearch,
+  newConversationTargetUserId,
   memberListDialogOpen,
   onMemberListDialogOpenChange,
   deleteDialogOpen,
@@ -138,6 +140,7 @@ export function MessagesPageView({
         onOpenChange={onUserSearchDialogOpenChange}
         currentUserId={currentUserId}
         initialSearchQuery={newConversationSearch}
+        initialUserId={newConversationTargetUserId}
         onUserSelect={onCreateConversationRequest}
         existingConversationUserIds={existingConversationUserIds}
       />

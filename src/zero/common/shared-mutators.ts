@@ -1,6 +1,5 @@
 import { defineMutator } from '@rocicorp/zero';
 import { can } from '../rbac/can';
-import { assertCanViewAmendment } from '../rbac/amendment-access';
 import {
   denyPublicApiMutation,
   requireAuthenticated,
@@ -8,6 +7,13 @@ import {
   requireSelf,
 } from '../rbac/authorize';
 import { PermissionError } from '../rbac/errors';
+import {
+  applyAmendmentQueryAccess,
+  applyBlogQueryAccess,
+  applyEventQueryAccess,
+  applyGroupQueryAccess,
+  applyUserQueryAccess,
+} from '../rbac/query-access';
 import { zql } from '../schema';
 import {
   createHashtagSchema,
@@ -54,30 +60,37 @@ async function assertCanViewSubscriptionTarget(
   requireAuthenticated(tx, ctx, { action: 'create', resource: 'notifications' });
 
   if (args.user_id) {
-    const user = await tx.run(zql.user.where('id', args.user_id).one());
-    if (!user) throw new Error('User not found');
-    if (
-      user.id === ctx.userID ||
-      user.visibility === 'public' ||
-      user.visibility === 'authenticated'
-    ) {
-      return;
-    }
-    requireOwner(tx, ctx, user.id, { action: 'view', resource: '$users' });
-    return;
+    const user = await tx.run(
+      applyUserQueryAccess(zql.user, ctx.userID).where('id', args.user_id).one()
+    );
+    if (!user) throw new PermissionError('view', '$users', `user:${args.user_id}`);
   }
 
   if (args.group_id) {
-    await can(tx, ctx, { action: 'view', resource: 'groups', groupId: args.group_id });
+    const group = await tx.run(
+      applyGroupQueryAccess(zql.group, ctx.userID).where('id', args.group_id).one()
+    );
+    if (!group) throw new PermissionError('view', 'groups', `group:${args.group_id}`);
   }
   if (args.amendment_id) {
-    await assertCanViewAmendment(tx, ctx, args.amendment_id);
+    const amendment = await tx.run(
+      applyAmendmentQueryAccess(zql.amendment, ctx.userID).where('id', args.amendment_id).one()
+    );
+    if (!amendment) {
+      throw new PermissionError('view', 'amendments', `amendment:${args.amendment_id}`);
+    }
   }
   if (args.event_id) {
-    await can(tx, ctx, { action: 'view', resource: 'events', eventId: args.event_id });
+    const event = await tx.run(
+      applyEventQueryAccess(zql.event, ctx.userID).where('id', args.event_id).one()
+    );
+    if (!event) throw new PermissionError('view', 'events', `event:${args.event_id}`);
   }
   if (args.blog_id) {
-    await can(tx, ctx, { action: 'view', resource: 'blogs', blogId: args.blog_id });
+    const blog = await tx.run(
+      applyBlogQueryAccess(zql.blog, ctx.userID).where('id', args.blog_id).one()
+    );
+    if (!blog) throw new PermissionError('view', 'blogs', `blog:${args.blog_id}`);
   }
 }
 

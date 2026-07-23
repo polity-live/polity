@@ -145,6 +145,8 @@ function toContentItem(document: SearchDocument): SearchContentItem | null {
   const tags = collectTags(document, payload);
   const groupName = document.group?.name ?? undefined;
   const subtitle = document.subtitle ?? undefined;
+  const description =
+    type === 'user' ? document.summary || undefined : document.summary || document.search_text;
   const handle = payload.handle ?? (subtitle?.startsWith('@') ? subtitle.slice(1) : undefined);
   const agendaEventId = getFirstString(
     [payloadRecord, metadata],
@@ -175,7 +177,7 @@ function toContentItem(document: SearchDocument): SearchContentItem | null {
     id: document.entity_id,
     type,
     title: document.title,
-    description: document.summary || document.search_text || undefined,
+    description,
     imageUrl: document.image_url,
     sourceType,
     sourceId,

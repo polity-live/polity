@@ -113,6 +113,62 @@ describe('SearchResultCard', () => {
     );
   });
 
+  it('does not expose indexed user search text as the card bio', () => {
+    render(
+      <SearchResultCard
+        document={makeSearchDocument({
+          id: 'user:user-1',
+          entity_id: 'user-1',
+          entity_type: 'user',
+          title: 'Vyb Shetty',
+          summary: null,
+          search_text: 'Vyb Shetty vyb.shetty@example.com',
+          owner_user_id: 'user-1',
+          card_payload: {
+            type: 'user',
+            handle: 'vyb',
+          },
+        })}
+      />
+    );
+
+    const { card, props } = readDynamicCardProps() as {
+      card: HTMLElement;
+      props: { user?: { bio?: string } };
+    };
+
+    expect(card.getAttribute('data-card-type')).toBe('user');
+    expect(props.user?.bio).toBeUndefined();
+    expect(card.textContent).not.toContain('vyb.shetty@example.com');
+  });
+
+  it('keeps an explicit user bio from the search document summary', () => {
+    render(
+      <SearchResultCard
+        document={makeSearchDocument({
+          id: 'user:user-1',
+          entity_id: 'user-1',
+          entity_type: 'user',
+          title: 'Vyb Shetty',
+          summary: 'Community organizer',
+          search_text: 'Vyb Shetty vyb.shetty@example.com Community organizer',
+          owner_user_id: 'user-1',
+          card_payload: {
+            type: 'user',
+            handle: 'vyb',
+          },
+        })}
+      />
+    );
+
+    const { props } = readDynamicCardProps() as {
+      card: HTMLElement;
+      props: { user?: { bio?: string } };
+    };
+
+    expect(props.user?.bio).toBe('Community organizer');
+  });
+
   it.each([
     {
       name: 'group',

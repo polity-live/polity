@@ -22,6 +22,7 @@ interface NewConversationDialogViewProps {
   userSearchQuery: string;
   onUserSearchQueryChange: (query: string) => void;
   filteredUsers: FilteredUser[];
+  isTargetedSearch: boolean;
 }
 
 export function NewConversationDialogView({
@@ -31,6 +32,7 @@ export function NewConversationDialogView({
   userSearchQuery,
   onUserSearchQueryChange,
   filteredUsers,
+  isTargetedSearch,
 }: NewConversationDialogViewProps) {
   const { t } = useTranslation();
 
@@ -55,7 +57,7 @@ export function NewConversationDialogView({
             {filteredUsers.length === 0 ? (
               <div className="py-8 text-center">
                 <p className="text-muted-foreground">
-                  {userSearchQuery
+                  {isTargetedSearch || userSearchQuery
                     ? t('features.messages.compose.noUsersFound')
                     : t('features.messages.compose.startTyping')}
                 </p>

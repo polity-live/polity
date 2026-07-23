@@ -8,6 +8,7 @@ import { MessagesPageView } from '../MessagesPageView';
 const captured = vi.hoisted(() => ({
   conversationListProps: undefined as any,
   messageViewProps: undefined as any,
+  newConversationDialogProps: undefined as any,
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
@@ -32,7 +33,10 @@ vi.mock('../MessageView', () => ({
 }));
 
 vi.mock('../NewConversationDialog', () => ({
-  NewConversationDialog: () => <div data-testid="new-conversation-dialog" />,
+  NewConversationDialog: (props: any) => {
+    captured.newConversationDialogProps = props;
+    return <div data-testid="new-conversation-dialog" />;
+  },
 }));
 
 vi.mock('../GroupMembersDialog', () => ({
@@ -64,6 +68,7 @@ const baseProps = {
   userSearchDialogOpen: false,
   onUserSearchDialogOpenChange: vi.fn(),
   newConversationSearch: '',
+  newConversationTargetUserId: undefined,
   memberListDialogOpen: false,
   onMemberListDialogOpenChange: vi.fn(),
   deleteDialogOpen: false,
@@ -85,6 +90,7 @@ describe('MessagesPageView loading structure', () => {
   beforeEach(() => {
     captured.conversationListProps = undefined;
     captured.messageViewProps = undefined;
+    captured.newConversationDialogProps = undefined;
   });
 
   it('keeps the split shell mounted while conversations load', () => {
@@ -95,5 +101,17 @@ describe('MessagesPageView loading structure', () => {
     expect(captured.conversationListProps.isLoading).toBe(true);
     expect(captured.messageViewProps.isThreadLoading).toBe(true);
     expect(screen.queryByText('features.messages.loading')).toBeNull();
+  });
+
+  it('forwards the UUID target to the new conversation dialog', () => {
+    render(
+      <MessagesPageView
+        {...baseProps}
+        isLoading={false}
+        newConversationTargetUserId="target-user-id"
+      />
+    );
+
+    expect(captured.newConversationDialogProps.initialUserId).toBe('target-user-id');
   });
 });

@@ -24,6 +24,9 @@ export function useMessagesPage() {
   // Dialog state
   const [userSearchDialogOpen, setUserSearchDialogOpen] = useState(false);
   const [newConversationSearch, setNewConversationSearch] = useState('');
+  const [newConversationTargetUserId, setNewConversationTargetUserId] = useState<
+    string | undefined
+  >();
   const [memberListDialogOpen, setMemberListDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
@@ -122,7 +125,6 @@ export function useMessagesPage() {
 
   const messageConversationId = searchParams.conversationId;
   const messageUserId = searchParams.userId;
-  const messageUserName = searchParams.name || '';
 
   const clearComposeIntentFromUrl = useCallback(() => {
     const {
@@ -159,6 +161,7 @@ export function useMessagesPage() {
 
       if (!open) {
         setNewConversationSearch('');
+        setNewConversationTargetUserId(undefined);
         clearComposeIntentFromUrl();
       }
     },
@@ -172,6 +175,7 @@ export function useMessagesPage() {
     if (shouldOpen) {
       setUserSearchDialogOpen(true);
       setNewConversationSearch(search ?? '');
+      setNewConversationTargetUserId(undefined);
       clearComposeIntentFromUrl();
     }
   }, [searchParams, clearComposeIntentFromUrl]);
@@ -187,6 +191,7 @@ export function useMessagesPage() {
     setSearchQuery('');
     setUserSearchDialogOpen(false);
     setNewConversationSearch('');
+    setNewConversationTargetUserId(undefined);
     clearComposeIntentFromUrl();
   }, [
     messageConversationId,
@@ -212,19 +217,18 @@ export function useMessagesPage() {
       setSearchQuery('');
       setUserSearchDialogOpen(false);
       setNewConversationSearch('');
+      setNewConversationTargetUserId(undefined);
       clearComposeIntentFromUrl();
       return;
     }
 
-    if (!messageUserName) return;
-
     setUserSearchDialogOpen(true);
-    setNewConversationSearch(messageUserName);
+    setNewConversationSearch('');
+    setNewConversationTargetUserId(messageUserId);
     clearComposeIntentFromUrl();
   }, [
     messageConversationId,
     messageUserId,
-    messageUserName,
     conversations,
     isLoading,
     clearComposeIntentFromUrl,
@@ -263,6 +267,7 @@ export function useMessagesPage() {
     if (existingConversation) {
       setSelectedConversationId(existingConversation.id);
       setUserSearchDialogOpen(false);
+      setNewConversationTargetUserId(undefined);
       clearComposeIntentFromUrl();
       return;
     }
@@ -276,6 +281,7 @@ export function useMessagesPage() {
     if (result.success && result.conversationId) {
       setSelectedConversationId(result.conversationId);
       setUserSearchDialogOpen(false);
+      setNewConversationTargetUserId(undefined);
       clearComposeIntentFromUrl();
     }
   };
@@ -348,6 +354,7 @@ export function useMessagesPage() {
 
   const openNewConversationDialog = () => {
     setNewConversationSearch('');
+    setNewConversationTargetUserId(undefined);
     setUserSearchDialogOpen(true);
   };
 
@@ -389,6 +396,7 @@ export function useMessagesPage() {
     userSearchDialogOpen,
     setUserSearchDialogOpen: handleUserSearchDialogOpenChange,
     newConversationSearch,
+    newConversationTargetUserId,
     memberListDialogOpen,
     setMemberListDialogOpen,
     deleteDialogOpen,

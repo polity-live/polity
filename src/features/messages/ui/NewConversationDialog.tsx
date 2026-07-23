@@ -7,6 +7,7 @@ interface NewConversationDialogProps {
   currentUserId?: string;
   onUserSelect: (userId: string) => void;
   initialSearchQuery?: string;
+  initialUserId?: string;
   existingConversationUserIds?: string[]; // User IDs that already have a direct conversation
 }
 
@@ -16,6 +17,7 @@ export function NewConversationDialog({
   currentUserId,
   onUserSelect,
   initialSearchQuery,
+  initialUserId,
   existingConversationUserIds = [],
 }: NewConversationDialogProps) {
   return (
@@ -27,6 +29,7 @@ export function NewConversationDialog({
         open,
         currentUserId,
         initialSearchQuery,
+        initialUserId,
         existingConversationUserIds,
       })}
     />
