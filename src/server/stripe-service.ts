@@ -7,6 +7,17 @@ import { getSession } from '@/lib/supabase/server';
 const STRIPE_API_VERSION = '2026-06-24.dahlia';
 const CUSTOM_AMOUNT_MIN_CENTS = 100;
 const CUSTOM_AMOUNT_MAX_CENTS = 99_900;
+const SUPPORTED_WEBHOOK_EVENTS = new Set<Stripe.Event.Type>([
+  'checkout.session.completed',
+  'customer.subscription.created',
+  'customer.subscription.updated',
+  'customer.subscription.deleted',
+  'invoice.payment_succeeded',
+  'invoice.payment_failed',
+]);
+
+export type StripeMode = 'test' | 'live';
+export type StripePlan = 'running' | 'development' | 'custom';
 
 interface SubscriptionWithPeriod extends Stripe.Subscription {
   current_period_start?: number;
@@ -20,7 +31,7 @@ interface StripeUser {
 
 type SupabaseClient = ReturnType<typeof createClient>;
 
-interface StripeServiceDeps {
+export interface StripeServiceDeps {
   request?: Request;
   stripe?: Stripe;
   supabase?: SupabaseClient;
@@ -28,7 +39,7 @@ interface StripeServiceDeps {
 }
 
 export interface StripeCheckoutInput {
-  priceId?: string;
+  plan: StripePlan;
   amount?: number;
   userId?: string;
 }
@@ -42,8 +53,10 @@ export interface StripeRepairCheckoutSessionInput {
   userId?: string;
 }
 
-export interface StripeCreatePortalInput {
-  customerId?: string;
+export type StripeCreatePortalInput = Record<string, never>;
+
+export interface StripeReconcileCustomerInput {
+  userId?: string;
 }
 
 export interface StripeCancelSubscriptionInput {
@@ -66,15 +79,36 @@ export class StripeWebhookHttpError extends Error {
 }
 
 function getRequiredEnv(name: string): string {
-  const value = process.env[name];
+  const value = process.env[name]?.trim();
   if (!value) {
     throw new Error(`${name} is not defined`);
   }
   return value;
 }
 
+function getStripeMode(): StripeMode {
+  const mode = getRequiredEnv('STRIPE_MODE');
+  if (mode !== 'test' && mode !== 'live') {
+    throw new Error('STRIPE_MODE must be either test or live');
+  }
+  return mode;
+}
+
+function expectedLivemode(): boolean {
+  return getStripeMode() === 'live';
+}
+
+function assertSecretKeyMatchesMode(secretKey: string): void {
+  const expectedPrefix = expectedLivemode() ? 'sk_live_' : 'sk_test_';
+  if (!secretKey.startsWith(expectedPrefix)) {
+    throw new Error(`STRIPE_SECRET_KEY must use the ${expectedPrefix} prefix`);
+  }
+}
+
 function getStripe(): Stripe {
-  return new Stripe(getRequiredEnv('STRIPE_SECRET_KEY'), {
+  const secretKey = getRequiredEnv('STRIPE_SECRET_KEY');
+  assertSecretKeyMatchesMode(secretKey);
+  return new Stripe(secretKey, {
     apiVersion: STRIPE_API_VERSION,
   });
 }
@@ -130,52 +164,106 @@ async function readRequestUser(requestOverride?: Request): Promise<StripeUser | 
     : null;
 }
 
-function getAllowedPriceIds(): Set<string> {
-  return new Set(
-    [process.env.VITE_STRIPE_PRICE_RUNNING, process.env.VITE_STRIPE_PRICE_DEVELOPMENT].filter(
-      (priceId): priceId is string => !!priceId
-    )
-  );
+function getFixedPriceId(plan: Exclude<StripePlan, 'custom'>): string {
+  return getRequiredEnv(plan === 'running' ? 'STRIPE_PRICE_RUNNING' : 'STRIPE_PRICE_DEVELOPMENT');
 }
 
 function getCheckoutLineItems(
   data: StripeCheckoutInput
 ): Stripe.Checkout.SessionCreateParams.LineItem[] {
-  if (data.priceId && data.amount) {
-    throw new Error('Choose either a Stripe price or a custom amount');
+  if (data.plan !== 'custom') {
+    if (data.amount !== undefined) {
+      throw new Error('Fixed Stripe plans do not accept a custom amount');
+    }
+    return [{ price: getFixedPriceId(data.plan), quantity: 1 }];
   }
 
-  if (data.priceId) {
-    if (!getAllowedPriceIds().has(data.priceId)) {
-      throw new Error('Invalid Stripe price');
-    }
-
-    return [{ price: data.priceId, quantity: 1 }];
+  if (
+    !Number.isInteger(data.amount) ||
+    (data.amount ?? 0) < CUSTOM_AMOUNT_MIN_CENTS ||
+    (data.amount ?? 0) > CUSTOM_AMOUNT_MAX_CENTS
+  ) {
+    throw new Error('Custom amount must be between EUR 1 and EUR 999');
   }
 
-  if (data.amount) {
-    if (
-      !Number.isInteger(data.amount) ||
-      data.amount < CUSTOM_AMOUNT_MIN_CENTS ||
-      data.amount > CUSTOM_AMOUNT_MAX_CENTS
-    ) {
-      throw new Error('Custom amount must be between EUR 1 and EUR 999');
-    }
-
-    return [
-      {
-        price_data: {
-          currency: 'eur',
-          product_data: { name: 'Custom Monthly Contribution' },
-          recurring: { interval: 'month' },
-          unit_amount: data.amount,
-        },
-        quantity: 1,
+  return [
+    {
+      price_data: {
+        currency: 'eur',
+        product: getRequiredEnv('STRIPE_PRODUCT_CUSTOM'),
+        recurring: { interval: 'month' },
+        unit_amount: data.amount,
       },
-    ];
+      quantity: 1,
+    },
+  ];
+}
+
+const validatedCatalogs = new WeakMap<object, Set<string>>();
+const validatedPortalConfigurations = new WeakMap<object, string>();
+
+function assertResourceMode(resourceName: string, livemode: boolean): void {
+  if (livemode !== expectedLivemode()) {
+    throw new Error(`${resourceName} does not belong to the configured Stripe mode`);
+  }
+}
+
+async function validateFixedPrice(
+  stripe: Stripe,
+  plan: Exclude<StripePlan, 'custom'>
+): Promise<void> {
+  const priceId = getFixedPriceId(plan);
+  const price = await stripe.prices.retrieve(priceId);
+  assertResourceMode(`Stripe price ${priceId}`, price.livemode);
+  if (!price.active || price.currency !== 'eur' || price.recurring?.interval !== 'month') {
+    throw new Error(`Stripe price ${priceId} must be active, monthly, and denominated in EUR`);
+  }
+}
+
+async function validateCustomProduct(stripe: Stripe): Promise<void> {
+  const productId = getRequiredEnv('STRIPE_PRODUCT_CUSTOM');
+  const product = await stripe.products.retrieve(productId);
+  if ('deleted' in product && product.deleted) {
+    throw new Error(`Stripe product ${productId} is deleted`);
+  }
+  assertResourceMode(`Stripe product ${productId}`, product.livemode);
+  if (!product.active) {
+    throw new Error(`Stripe product ${productId} must be active`);
+  }
+}
+
+async function validateCheckoutConfiguration(stripe: Stripe, plan: StripePlan): Promise<void> {
+  const resourceId = plan === 'custom' ? process.env.STRIPE_PRODUCT_CUSTOM : getFixedPriceId(plan);
+  const fingerprint = `${getStripeMode()}:${plan}:${resourceId}`;
+  const validated = validatedCatalogs.get(stripe);
+  if (validated?.has(fingerprint)) {
+    return;
   }
 
-  throw new Error('Either priceId or amount is required');
+  if (plan === 'custom') {
+    await validateCustomProduct(stripe);
+  } else {
+    await validateFixedPrice(stripe, plan);
+  }
+  const nextValidated = validated ?? new Set<string>();
+  nextValidated.add(fingerprint);
+  validatedCatalogs.set(stripe, nextValidated);
+}
+
+async function validatePortalConfiguration(stripe: Stripe): Promise<string> {
+  const configurationId = getRequiredEnv('STRIPE_PORTAL_CONFIGURATION_ID');
+  const fingerprint = `${getStripeMode()}:${configurationId}`;
+  if (validatedPortalConfigurations.get(stripe) === fingerprint) {
+    return configurationId;
+  }
+
+  const configuration = await stripe.billingPortal.configurations.retrieve(configurationId);
+  assertResourceMode(`Stripe portal configuration ${configurationId}`, configuration.livemode);
+  if (!configuration.active) {
+    throw new Error(`Stripe portal configuration ${configurationId} must be active`);
+  }
+  validatedPortalConfigurations.set(stripe, fingerprint);
+  return configurationId;
 }
 
 function isDeletedCustomer(
@@ -516,10 +604,42 @@ async function syncRecentInvoicesForCustomer(
   for (const invoice of invoices.data) {
     if (invoice.status === 'paid') {
       await upsertStripePayment(stripe, supabase, invoice, 'paid');
-    } else if (invoice.status === 'uncollectible' || invoice.status === 'void') {
+    } else if (
+      invoice.status === 'uncollectible' ||
+      invoice.status === 'void' ||
+      (invoice.attempted && invoice.status === 'open')
+    ) {
       await upsertStripePayment(stripe, supabase, invoice, 'failed');
     }
   }
+}
+
+async function reconcileStripeCustomer(
+  stripe: Stripe,
+  supabase: SupabaseClient,
+  user: StripeUser
+): Promise<boolean> {
+  const customer = await findStripeCustomerForUser(stripe, supabase, user.id);
+  if (!customer) {
+    return false;
+  }
+
+  const customerEntityId = await upsertStripeCustomer(supabase, {
+    userId: user.id,
+    stripeCustomerId: customer.id,
+    email: customer.email ?? user.email ?? null,
+  });
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customer.id,
+    status: 'all',
+    limit: 100,
+  });
+
+  for (const subscription of subscriptions.data) {
+    await upsertStripeSubscription(supabase, customerEntityId, customer.id, subscription);
+  }
+  await syncRecentInvoicesForCustomer(stripe, supabase, customer.id);
+  return true;
 }
 
 async function getCustomerEntityForSubscription(
@@ -645,6 +765,7 @@ async function loadMirroredSubscriptionStatus(supabase: SupabaseClient, userId: 
   );
 
   return {
+    hasCustomer: true,
     hasSubscription: !!activeSubscription,
     subscription: activeSubscription
       ? {
@@ -685,6 +806,7 @@ export async function executeStripeCreateCheckout(
   const user = await requireAuthenticatedUser(data.userId, deps);
   const stripe = deps.stripe ?? getStripe();
   const supabase = deps.supabase ?? getSupabase();
+  await validateCheckoutConfiguration(stripe, data.plan);
   const customer = await findStripeCustomerForUser(stripe, supabase, user.id);
   const origin = getAppOrigin();
   const settingsUrl = new URL(`/user/${encodeURIComponent(user.id)}/settings`, origin);
@@ -704,9 +826,9 @@ export async function executeStripeCreateCheckout(
     cancel_url: cancelUrl.toString(),
     line_items: getCheckoutLineItems(data),
     client_reference_id: user.id,
-    metadata: { userId: user.id },
+    metadata: { userId: user.id, plan: data.plan },
     subscription_data: {
-      metadata: { userId: user.id },
+      metadata: { userId: user.id, plan: data.plan },
     },
     ...(customer ? { customer: customer.id } : user.email ? { customer_email: user.email } : {}),
   };
@@ -720,27 +842,29 @@ export async function executeStripeCreateCheckout(
 }
 
 export async function executeStripeCreatePortal(
-  data: StripeCreatePortalInput,
+  _data: StripeCreatePortalInput,
   deps: StripeServiceDeps = {}
 ) {
   const user = await requireAuthenticatedUser(undefined, deps);
   const stripe = deps.stripe ?? getStripe();
   const supabase = deps.supabase ?? getSupabase();
-  const customerId =
-    data.customerId ?? (await findStripeCustomerForUser(stripe, supabase, user.id))?.id;
+  const customerId = (await findStripeCustomerForUser(stripe, supabase, user.id))?.id;
 
   if (!customerId) {
     throw new Error('Stripe customer not found');
   }
 
   await assertStripeCustomerBelongsToUser(stripe, supabase, customerId, user.id);
+  const configuration = await validatePortalConfiguration(stripe);
 
   const origin = getAppOrigin();
   const returnUrl = new URL(`/user/${encodeURIComponent(user.id)}/settings`, origin);
   returnUrl.searchParams.set('tab', 'subscriptions');
+  returnUrl.searchParams.set('billing_return', 'true');
 
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,
+    configuration,
     return_url: returnUrl.toString(),
   });
 
@@ -759,13 +883,18 @@ export async function executeStripeCancelSubscription(
 
   await assertStripeCustomerBelongsToUser(stripe, supabase, customerId, user.id);
 
-  const canceledSubscription = await stripe.subscriptions.cancel(data.subscriptionId);
+  const canceledSubscription = await stripe.subscriptions.update(data.subscriptionId, {
+    cancel_at_period_end: true,
+  });
+  const customerEntityId = await getCustomerEntityIdForStripeCustomer(stripe, supabase, customerId);
+  await upsertStripeSubscription(supabase, customerEntityId, customerId, canceledSubscription);
 
   return {
     success: true,
     subscription: {
       id: canceledSubscription.id,
       status: canceledSubscription.status,
+      cancelAtPeriodEnd: canceledSubscription.cancel_at_period_end,
     },
   };
 }
@@ -787,6 +916,7 @@ export async function executeStripeSubscriptionStatus(
 
   if (!customer) {
     return {
+      hasCustomer: false,
       hasSubscription: false,
       subscription: null,
       allSubscriptions: [],
@@ -807,6 +937,7 @@ export async function executeStripeSubscriptionStatus(
   });
 
   return {
+    hasCustomer: true,
     hasSubscription: !!activeSubscription,
     subscription: activeSubscription
       ? {
@@ -880,6 +1011,17 @@ export async function executeStripeRepairCheckoutSession(
   return executeStripeSubscriptionStatus({ userId: user.id }, { stripe, supabase, user });
 }
 
+export async function executeStripeReconcileCustomer(
+  data: StripeReconcileCustomerInput,
+  deps: StripeServiceDeps = {}
+) {
+  const user = await requireAuthenticatedUser(data.userId, deps);
+  const stripe = deps.stripe ?? getStripe();
+  const supabase = deps.supabase ?? getSupabase();
+  await reconcileStripeCustomer(stripe, supabase, user);
+  return executeStripeSubscriptionStatus({ userId: user.id }, { stripe, supabase, user });
+}
+
 export async function handleStripeWebhook(data: StripeWebhookInput, deps: StripeServiceDeps = {}) {
   const stripe = deps.stripe ?? getStripe();
   const supabase = deps.supabase ?? getSupabase();
@@ -897,6 +1039,23 @@ export async function handleStripeWebhook(data: StripeWebhookInput, deps: Stripe
       400
     );
   }
+
+  if (event.livemode !== expectedLivemode()) {
+    throw new StripeWebhookHttpError(
+      `Stripe event mode does not match STRIPE_MODE=${getStripeMode()}`,
+      400
+    );
+  }
+
+  console.info(
+    JSON.stringify({
+      scope: 'stripe-webhook',
+      eventId: event.id,
+      eventType: event.type,
+      livemode: event.livemode,
+      supported: SUPPORTED_WEBHOOK_EVENTS.has(event.type),
+    })
+  );
 
   switch (event.type) {
     case 'checkout.session.completed':

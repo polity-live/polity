@@ -12,38 +12,12 @@ import {
   applyGroupMembershipSelfOrManagerQueryAccess,
   applyGroupQueryAccess,
   applyTodoQueryAccess,
+  applyStatementQueryAccess,
+  applyUserQueryAccess,
   isAuthenticatedUserId,
 } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
-
-function applyUserQueryAccess<T>(q: T, userID: string | undefined | null): T {
-  const query = q as any;
-
-  if (!isAuthenticatedUserId(userID)) {
-    return query.where('visibility', 'public') as T;
-  }
-
-  return query.where(({ or, cmp }: any) =>
-    or(cmp('visibility', 'IN', ['public', 'authenticated']), cmp('id', userID))
-  ) as T;
-}
-
-function applyStatementQueryAccess<T>(q: T, userID: string | undefined | null): T {
-  const query = q as any;
-
-  if (!isAuthenticatedUserId(userID)) {
-    return query.where('visibility', 'public') as T;
-  }
-
-  return query.where(({ or, cmp, exists }: any) =>
-    or(
-      cmp('visibility', 'IN', ['public', 'authenticated']),
-      cmp('user_id', userID),
-      exists('group', (group: any) => applyGroupQueryAccess(group, userID))
-    )
-  ) as T;
-}
 
 function applySubscriberQueryAccess<T>(q: T, userID: string | undefined | null): T {
   const query = q as any;

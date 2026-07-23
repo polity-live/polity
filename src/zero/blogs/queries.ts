@@ -1,33 +1,13 @@
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
+import { applyBlogQueryAccess } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
 
 const blogStartSchema = z.object({ created_at: z.number(), id: z.string() }).nullable();
 
 function applyBlogAccess<T>(q: T, userID: string | undefined): T {
-  const query = q as any;
-
-  if (!userID || userID === 'anon') {
-    return query.where('visibility', 'public') as T;
-  }
-
-  return query.where(({ or, cmp, exists }: any) =>
-    or(
-      cmp('visibility', 'IN', ['public', 'authenticated']),
-      exists('bloggers', (blogger: any) => blogger.where('user_id', userID)),
-      exists('group', (group: any) =>
-        group.where(({ or, cmp, exists }: any) =>
-          or(
-            cmp('visibility', 'IN', ['public', 'authenticated']),
-            cmp('owner_id', userID),
-            exists('memberships', (membership: any) => membership.where('user_id', userID)),
-            exists('guest_accesses', (guestAccess: any) => guestAccess.where('user_id', userID))
-          )
-        )
-      )
-    )
-  ) as T;
+  return applyBlogQueryAccess(q, userID);
 }
 
 function applyBlogManagerAccess<T>(q: T, userID: string | undefined): T {

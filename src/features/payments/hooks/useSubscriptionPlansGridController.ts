@@ -1,10 +1,5 @@
 import { useState } from 'react';
 
-const PRICE_IDS = {
-  running: import.meta.env.VITE_STRIPE_PRICE_RUNNING || '',
-  development: import.meta.env.VITE_STRIPE_PRICE_DEVELOPMENT || '',
-} as const;
-
 export function useSubscriptionPlansGridController(onCustomAmount: (euros: number) => void) {
   const [customAmount, setCustomAmount] = useState('');
 
@@ -33,7 +28,6 @@ export function useSubscriptionPlansGridController(onCustomAmount: (euros: numbe
   return {
     customAmount,
     customAmountValue: getCustomAmountValue(),
-    priceIds: PRICE_IDS,
     onAmountChange: handleAmountChange,
     onCustomSubmit: handleCustomSubmit,
   };

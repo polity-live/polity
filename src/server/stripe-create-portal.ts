@@ -3,10 +3,7 @@ import { z } from 'zod';
 
 import { executeStripeCreatePortal } from './stripe-service';
 
-const stripeCreatePortalSchema = z.object({
-  customerId: z.string().optional(),
-  returnOrigin: z.string().optional(),
-});
+const stripeCreatePortalSchema = z.object({}).strict();
 
 export const stripeCreatePortalFn = createServerFn({ method: 'POST' })
   .validator(stripeCreatePortalSchema.parse)

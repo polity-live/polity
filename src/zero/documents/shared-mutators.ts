@@ -31,6 +31,9 @@ import {
 } from '../votes/schema';
 import { applyResolvedSuggestionsToContent } from '@/features/change-requests/logic/applySuggestionToContent';
 import { applyTodoQueryAccess } from '../rbac/query-access';
+import { assertCanViewAmendment } from '../rbac/amendment-access';
+import { assertCanViewStatement } from '../statements/shared-mutators';
+import { assertCanViewBlog } from '../blogs/shared-mutators';
 
 async function authorizeTodoThreadAccess(
   tx: Parameters<typeof can>[0],
@@ -164,11 +167,52 @@ async function authorizeDocumentCreateForAmendment(
   }
 }
 
-async function authorizeThreadParentAccess(
+async function authorizeThreadParentParticipation(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  thread: NonNullable<Awaited<ReturnType<typeof authorizeDocumentScopeByThread>>>
+) {
+  if (tx.location === 'client') return;
+
+  requireAuthenticated(tx, ctx, {
+    action: 'create',
+    resource: 'comments',
+    scope: `thread:${thread.id}`,
+  });
+
+  if (thread.document_id) {
+    await authorizeDocumentGroupManage(tx, ctx, thread.document_id);
+    return;
+  }
+
+  if (thread.amendment_id) {
+    await assertCanViewAmendment(tx, ctx, thread.amendment_id);
+    return;
+  }
+
+  if (thread.blog_id) {
+    await assertCanViewBlog(tx, ctx, thread.blog_id);
+    return;
+  }
+
+  if (thread.statement_id) {
+    await assertCanViewStatement(tx, ctx, thread.statement_id);
+    return;
+  }
+
+  if (thread.todo_id) {
+    await authorizeTodoThreadAccess(tx, ctx, thread.todo_id, 'view');
+    return;
+  }
+
+  throw new PermissionError('view', 'threads', `thread:${thread.id}`);
+}
+
+async function authorizeThreadParentManage(
   tx: Parameters<typeof can>[0],
   ctx: Parameters<typeof can>[1],
   thread: NonNullable<Awaited<ReturnType<typeof authorizeDocumentScopeByThread>>>,
-  action: 'create' | 'update' | 'delete' | 'view' = 'view'
+  action: 'update' | 'delete'
 ) {
   if (tx.location === 'client') return;
 
@@ -183,17 +227,13 @@ async function authorizeThreadParentAccess(
   }
 
   if (thread.blog_id) {
-    await can(tx, ctx, {
-      action: action === 'view' ? 'view' : 'update',
-      resource: 'blogs',
-      blogId: thread.blog_id,
-    });
+    await can(tx, ctx, { action: 'update', resource: 'blogs', blogId: thread.blog_id });
     return;
   }
 
   if (thread.statement_id) {
     const statement = await tx.run(zql.statement.where('id', thread.statement_id).one());
-    requireOwner(tx, ctx, statement?.user_id, { action: 'update', resource: 'statements' });
+    requireOwner(tx, ctx, statement?.user_id, { action, resource: 'statements' });
     return;
   }
 
@@ -219,7 +259,7 @@ async function authorizeThreadAuthorOrParentManage(
     return;
   }
 
-  await authorizeThreadParentAccess(tx, ctx, thread, action);
+  await authorizeThreadParentManage(tx, ctx, thread, action);
 }
 
 async function authorizeCommentAuthorOrParentManage(
@@ -241,7 +281,7 @@ async function authorizeCommentAuthorOrParentManage(
   }
 
   const thread = await authorizeDocumentScopeByThread(tx, ctx, comment.thread_id);
-  await authorizeThreadParentAccess(tx, ctx, thread, action);
+  await authorizeThreadParentManage(tx, ctx, thread, action);
 }
 
 async function authorizeDocumentScopeByThread(
@@ -259,7 +299,7 @@ async function authorizeDocumentScopeByThread(
 
 async function authorizeDocumentScopeByComment(
   tx: Parameters<typeof can>[0],
-  ctx: Parameters<typeof can>[1],
+  _ctx: Parameters<typeof can>[1],
   commentId: string
 ) {
   const comment = await tx.run(zql.comment.where('id', commentId).one());
@@ -267,7 +307,6 @@ async function authorizeDocumentScopeByComment(
     throw new Error('Comment not found');
   }
 
-  await authorizeDocumentScopeByThread(tx, ctx, comment.thread_id);
   return comment;
 }
 
@@ -361,19 +400,15 @@ export const documentSharedMutators = {
 
   createThread: defineMutator(createThreadSchema, async ({ tx, ctx, args }) => {
     if (tx.location !== 'client') {
+      requireAuthenticated(tx, ctx, { action: 'create', resource: 'threads' });
       if (args.document_id) {
         await authorizeDocumentGroupManage(tx, ctx, args.document_id);
       } else if (args.amendment_id) {
-        await can(tx, ctx, {
-          action: 'create',
-          resource: 'threads',
-          amendmentId: args.amendment_id,
-        });
+        await assertCanViewAmendment(tx, ctx, args.amendment_id);
       } else if (args.blog_id) {
-        await can(tx, ctx, { action: 'view', resource: 'blogs', blogId: args.blog_id });
+        await assertCanViewBlog(tx, ctx, args.blog_id);
       } else if (args.statement_id) {
-        const statement = await tx.run(zql.statement.where('id', args.statement_id).one());
-        requireOwner(tx, ctx, statement?.user_id, { action: 'update', resource: 'statements' });
+        await assertCanViewStatement(tx, ctx, args.statement_id);
       } else if (args.todo_id) {
         await authorizeTodoThreadAccess(tx, ctx, args.todo_id, 'create');
       } else {
@@ -395,7 +430,7 @@ export const documentSharedMutators = {
   addComment: defineMutator(createCommentSchema, async ({ tx, ctx, args }) => {
     if (tx.location !== 'client') {
       const thread = await authorizeDocumentScopeByThread(tx, ctx, args.thread_id);
-      await authorizeThreadParentAccess(tx, ctx, thread, 'create');
+      await authorizeThreadParentParticipation(tx, ctx, thread);
     }
 
     const now = Date.now();
@@ -412,7 +447,7 @@ export const documentSharedMutators = {
   voteThread: defineMutator(createThreadVoteSchema, async ({ tx, ctx, args }) => {
     if (tx.location !== 'client') {
       const thread = await authorizeDocumentScopeByThread(tx, ctx, args.thread_id);
-      await authorizeThreadParentAccess(tx, ctx, thread, 'view');
+      await authorizeThreadParentParticipation(tx, ctx, thread);
     }
 
     const now = Date.now();
@@ -427,7 +462,7 @@ export const documentSharedMutators = {
     if (tx.location !== 'client') {
       const comment = await authorizeDocumentScopeByComment(tx, ctx, args.comment_id);
       const thread = await authorizeDocumentScopeByThread(tx, ctx, comment.thread_id);
-      await authorizeThreadParentAccess(tx, ctx, thread, 'view');
+      await authorizeThreadParentParticipation(tx, ctx, thread);
     }
 
     const now = Date.now();
@@ -488,6 +523,9 @@ export const documentSharedMutators = {
       }
 
       requireOwner(tx, ctx, commentVote.user_id, { action: 'update', resource: 'commentVotes' });
+      const comment = await authorizeDocumentScopeByComment(tx, ctx, commentVote.comment_id);
+      const thread = await authorizeDocumentScopeByThread(tx, ctx, comment.thread_id);
+      await authorizeThreadParentParticipation(tx, ctx, thread);
     }
 
     await tx.mutate.comment_vote.update(args);
@@ -502,6 +540,9 @@ export const documentSharedMutators = {
       }
 
       requireOwner(tx, ctx, commentVote.user_id, { action: 'delete', resource: 'commentVotes' });
+      const comment = await authorizeDocumentScopeByComment(tx, ctx, commentVote.comment_id);
+      const thread = await authorizeDocumentScopeByThread(tx, ctx, comment.thread_id);
+      await authorizeThreadParentParticipation(tx, ctx, thread);
     }
 
     await tx.mutate.comment_vote.delete({ id: args.id });
@@ -516,6 +557,8 @@ export const documentSharedMutators = {
       }
 
       requireOwner(tx, ctx, threadVote.user_id, { action: 'update', resource: 'threads' });
+      const thread = await authorizeDocumentScopeByThread(tx, ctx, threadVote.thread_id);
+      await authorizeThreadParentParticipation(tx, ctx, thread);
     }
 
     await tx.mutate.thread_vote.update(args);
@@ -530,6 +573,8 @@ export const documentSharedMutators = {
       }
 
       requireOwner(tx, ctx, threadVote.user_id, { action: 'delete', resource: 'threads' });
+      const thread = await authorizeDocumentScopeByThread(tx, ctx, threadVote.thread_id);
+      await authorizeThreadParentParticipation(tx, ctx, thread);
     }
 
     await tx.mutate.thread_vote.delete({ id: args.id });

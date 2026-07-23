@@ -1,3 +1,5 @@
+import { useCallback, useState } from 'react';
+
 import { useUserData } from '../hooks/useUserData';
 import { useUserProfileForm } from '../hooks/useUserProfileForm';
 import { useAvatarUpload } from '../hooks/useAvatarUpload';
@@ -26,14 +28,32 @@ export function UserEdit({ userId, activeTab, onTabChange }: UserEditProps) {
 
   const {
     activeSubscription,
+    hasStripeCustomer,
     isPlanActive,
     hasCustomPlan,
     getActivePlanAmount,
     fetchSubscription,
   } = useSubscriptionManagement({ userId });
+  const [subscriptionRefreshKey, setSubscriptionRefreshKey] = useState(0);
+  const pendingChange =
+    activeSubscription?.cancelAtPeriodEnd && activeSubscription.currentPeriodEnd
+      ? {
+          target: 'free' as const,
+          effectiveAt: activeSubscription.currentPeriodEnd,
+        }
+      : null;
+  const refreshSubscriptions = useCallback(async () => {
+    await fetchSubscription();
+    setSubscriptionRefreshKey(value => value + 1);
+  }, [fetchSubscription]);
 
-  const { isCheckoutLoading, handleSubscribe, handleCustomAmount, handleCancelSubscription } =
-    useStripeCheckout({ userId, onSubscriptionChange: fetchSubscription });
+  const {
+    isCheckoutLoading,
+    handleSubscribe,
+    handleCustomAmount,
+    handleCancelSubscription,
+    handleManageBilling,
+  } = useStripeCheckout({ userId, onSubscriptionChange: refreshSubscriptions });
   return (
     <UserEditView
       userId={userId}
@@ -48,6 +68,9 @@ export function UserEdit({ userId, activeTab, onTabChange }: UserEditProps) {
       updateField={updateField}
       uploadAvatar={uploadAvatar}
       activeSubscription={activeSubscription}
+      pendingChange={pendingChange}
+      hasStripeCustomer={hasStripeCustomer}
+      subscriptionRefreshKey={subscriptionRefreshKey}
       isPlanActive={isPlanActive}
       hasCustomPlan={hasCustomPlan}
       getActivePlanAmount={getActivePlanAmount}
@@ -56,6 +79,7 @@ export function UserEdit({ userId, activeTab, onTabChange }: UserEditProps) {
       handleSubscribe={handleSubscribe}
       handleCustomAmount={handleCustomAmount}
       handleCancelSubscription={handleCancelSubscription}
+      handleManageBilling={handleManageBilling}
     />
   );
 }

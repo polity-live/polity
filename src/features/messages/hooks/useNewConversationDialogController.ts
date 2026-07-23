@@ -19,8 +19,8 @@ export function useNewConversationDialogController({
   existingConversationUserIds,
 }: UseNewConversationDialogControllerOptions) {
   const [userSearchQuery, setUserSearchQuery] = useState('');
-  const { publicUsers: allUsers, user: initialUser } = useUserState({
-    includePublicUsers: true,
+  const { allUsers, user: initialUser } = useUserState({
+    includeAllUsers: true,
     userId: initialUserId,
   });
 

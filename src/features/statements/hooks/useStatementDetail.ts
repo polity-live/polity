@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useStatementState } from '@/zero/statements/useStatementState';
-import { useStatementActions } from '@/zero/statements/useStatementActions';
 import { useStatementMutations } from '@/features/statements/hooks/useStatementMutations';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAuth } from '@/providers/auth-provider';
@@ -35,8 +34,6 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
     createSurveyVote,
     deleteSurveyVote,
   } = useStatementMutations();
-
-  const { updateStatement: updateStatementRaw } = useStatementActions();
 
   const { createThread, addComment, voteComment, updateCommentVote, deleteCommentVote } =
     useDocumentActions();
@@ -231,19 +228,8 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
           downvotes: 0,
         })
       );
-
-      // Increment denormalized comment_count on the statement
-      await waitForClientApply(updateStatementRaw({ id, comment_count: computedCommentCount + 1 }));
     },
-    [
-      userId,
-      id,
-      discussionThread,
-      createThread,
-      addComment,
-      updateStatementRaw,
-      computedCommentCount,
-    ]
+    [userId, id, discussionThread, createThread, addComment]
   );
 
   const handleCommentVote = useCallback(

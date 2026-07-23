@@ -1,6 +1,10 @@
-import { handleStripeWebhook, StripeWebhookHttpError } from './stripe-service';
+import {
+  handleStripeWebhook,
+  StripeWebhookHttpError,
+  type StripeServiceDeps,
+} from './stripe-service';
 
-export async function handleStripeWebhookRequest(request: Request) {
+export async function handleStripeWebhookRequest(request: Request, deps: StripeServiceDeps = {}) {
   const signature = request.headers.get('stripe-signature');
 
   if (!signature) {
@@ -9,7 +13,7 @@ export async function handleStripeWebhookRequest(request: Request) {
 
   try {
     const rawBody = await request.text();
-    const result = await handleStripeWebhook({ rawBody, signature });
+    const result = await handleStripeWebhook({ rawBody, signature }, deps);
 
     return Response.json(result);
   } catch (error) {

@@ -2,6 +2,9 @@ import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
   applyAgendaItemQueryAccess,
+  applyAmendmentQueryAccess,
+  applyElectionQueryAccess,
+  applyEventQueryAccess,
   applyVoteManagerQueryAccess,
   applyVoteQueryAccess,
   applyVoteVoterOrManagerQueryAccess,
@@ -42,9 +45,9 @@ export const agendaQueries = {
     ({ args: { event_ids }, ctx: { userID } }) =>
       applyAgendaItemQueryAccess(zql.agenda_item, userID)
         .where('event_id', 'IN', event_ids)
-        .related('event')
-        .related('election')
-        .related('amendment')
+        .related('event', event => applyEventQueryAccess(event, userID))
+        .related('election', election => applyElectionQueryAccess(election, userID))
+        .related('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
         .related('votes', q => applyVoteQueryAccess(q, userID))
   ),
 

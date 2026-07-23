@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyChangeRequestVisibilityAccess, applyDocumentQueryAccess } from '../query-access';
+import {
+  applyChangeRequestVisibilityAccess,
+  applyDocumentQueryAccess,
+  applyGroupQueryAccess,
+  applySearchDocumentQueryAccess,
+  applyTodoQueryAccess,
+} from '../query-access';
 
 type Call = readonly [string, ...unknown[]];
 
@@ -74,5 +80,78 @@ describe('public content query access', () => {
       ['visibility_scope', 'public'],
       ['visibility_scope', '__public_only__'],
     ]);
+  });
+
+  it('limits anonymous search documents to public visibility', () => {
+    const query = createQuery();
+
+    applySearchDocumentQueryAccess(query, undefined);
+
+    expect(query.calls).toEqual([['where', 'visibility', 'public']]);
+  });
+
+  it('uses the materialized ACL for private authenticated search results', () => {
+    const query = createQuery();
+
+    applySearchDocumentQueryAccess(query, 'user-1');
+
+    expect(query.calls).toEqual([
+      ['where', expect.any(Function)],
+      ['exists', 'acl', [['where', 'user_id', 'user-1']]],
+    ]);
+  });
+
+  it('only treats active memberships and guest access as private group relationships', () => {
+    const query = createQuery();
+
+    applyGroupQueryAccess(query, 'user-1');
+
+    expect(query.calls).toContainEqual([
+      'exists',
+      'memberships',
+      [
+        ['where', 'user_id', 'user-1'],
+        ['where', 'status', 'IN', ['active', 'member', 'admin']],
+      ],
+    ]);
+    expect(query.calls).toContainEqual([
+      'exists',
+      'guest_accesses',
+      [
+        ['where', 'user_id', 'user-1'],
+        ['where', 'status', 'IN', ['active']],
+      ],
+    ]);
+  });
+
+  it('carries active event and amendment relationships into private task access', () => {
+    const query = createQuery();
+
+    applyTodoQueryAccess(query, 'user-1');
+
+    const eventCall = query.calls.find(call => call[0] === 'exists' && call[1] === 'event');
+    const amendmentCall = query.calls.find(call => call[0] === 'exists' && call[1] === 'amendment');
+    const eventCalls = eventCall?.[2] as Call[];
+    const amendmentCalls = amendmentCall?.[2] as Call[];
+
+    expect(eventCalls).toContainEqual([
+      'exists',
+      'participants',
+      [
+        ['where', 'user_id', 'user-1'],
+        ['where', 'status', 'IN', ['active', 'confirmed', 'member', 'admin']],
+      ],
+    ]);
+    expect(eventCalls.some(call => call[0] === 'exists' && call[1] === 'group')).toBe(true);
+    expect(amendmentCalls).toContainEqual([
+      'exists',
+      'collaborators',
+      [
+        ['where', 'user_id', 'user-1'],
+        ['where', 'status', 'IN', ['active', 'collaborator', 'member', 'admin']],
+      ],
+    ]);
+    expect(amendmentCalls.some(call => call[0] === 'exists' && call[1] === 'group')).toBe(true);
+    expect(amendmentCalls.some(call => call[0] === 'exists' && call[1] === 'event')).toBe(true);
   });
 });

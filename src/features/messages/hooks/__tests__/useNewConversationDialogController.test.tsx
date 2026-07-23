@@ -7,7 +7,7 @@ import { ARIA_KAI_USER_ID } from '@/features/auth/constants';
 import { useNewConversationDialogController } from '../useNewConversationDialogController';
 
 const userState = vi.hoisted(() => ({
-  publicUsers: [] as {
+  allUsers: [] as {
     id: string;
     first_name: string | null;
     last_name: string | null;
@@ -35,7 +35,7 @@ const baseOptions = {
 
 describe('useNewConversationDialogController', () => {
   beforeEach(() => {
-    userState.publicUsers = [
+    userState.allUsers = [
       { id: 'named-user', first_name: 'Vyb', last_name: 'Shetty', handle: 'vyb' },
       { id: 'other-user', first_name: 'Other', last_name: 'User', handle: 'other' },
     ];

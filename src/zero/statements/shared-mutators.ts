@@ -2,7 +2,7 @@ import { defineMutator } from '@rocicorp/zero';
 import { zql } from '../schema';
 import { can } from '../rbac/can';
 import { canReadVisibility, requireAuthenticated, requireOwner } from '../rbac/authorize';
-import { PermissionError, isPermissionError } from '../rbac/errors';
+import { PermissionError } from '../rbac/errors';
 import {
   createStatementSchema,
   createStatementFullMutatorSchema,
@@ -41,7 +41,7 @@ async function loadStatementForSurveyOption(tx: Parameters<typeof can>[0], optio
   return loadStatementForSurvey(tx, option.survey_id);
 }
 
-async function assertCanViewStatement(
+export async function assertCanViewStatement(
   tx: Parameters<typeof can>[0],
   ctx: Parameters<typeof can>[1],
   statementId: string
@@ -60,11 +60,25 @@ async function assertCanViewStatement(
   }
 
   if (statement.group_id) {
-    try {
-      await can(tx, ctx, { action: 'view', resource: 'groups', groupId: statement.group_id });
-      if (canReadVisibility(statement.visibility, ctx, true)) return;
-    } catch (error) {
-      if (!isPermissionError(error)) throw error;
+    const [group, membership, guestAccess] = await Promise.all([
+      tx.run(zql.group.where('id', statement.group_id).where('owner_id', ctx.userID).one()),
+      tx.run(
+        zql.group_membership
+          .where('group_id', statement.group_id)
+          .where('user_id', ctx.userID)
+          .where('status', 'IN', ['active', 'member', 'admin'])
+          .one()
+      ),
+      tx.run(
+        zql.group_guest_access
+          .where('group_id', statement.group_id)
+          .where('user_id', ctx.userID)
+          .where('status', 'active')
+          .one()
+      ),
+    ]);
+    if (group || membership || guestAccess) {
+      return;
     }
   }
 

@@ -11,10 +11,80 @@ export function requireQueryUser<T>(q: T, userID: string | undefined | null, fie
   return (q as any).where(field, userID) as T;
 }
 
+export function applySearchDocumentQueryAccess<T>(q: T, userID: string | undefined | null): T {
+  const query = q as any;
+
+  if (!isAuthenticatedUserId(userID)) {
+    return query.where('visibility', 'public') as T;
+  }
+
+  return query.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('visibility', 'IN', ['public', 'authenticated']),
+      exists('acl', (acl: any) => acl.where('user_id', userID))
+    )
+  ) as T;
+}
+
 const ACTIVE_GROUP_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
 const ACTIVE_GROUP_GUEST_ACCESS_STATUSES = ['active'];
 const ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
 const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['active', 'collaborator', 'member', 'admin'];
+const ACTIVE_BLOGGER_STATUSES = ['owner', 'admin', 'member', 'writer'];
+
+function applyGroupPrivateRelationshipQueryAccess<T>(q: T, userID: string): T {
+  const query = q as any;
+  return query.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('owner_id', userID),
+      exists('memberships', (membership: any) =>
+        membership.where('user_id', userID).where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+      ),
+      exists('guest_accesses', (guestAccess: any) =>
+        guestAccess
+          .where('user_id', userID)
+          .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES)
+      )
+    )
+  ) as T;
+}
+
+function applyEventPrivateRelationshipQueryAccess<T>(q: T, userID: string): T {
+  const query = q as any;
+  return query.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('creator_id', userID),
+      exists('participants', (participant: any) =>
+        participant
+          .where('user_id', userID)
+          .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
+      ),
+      exists('group', (group: any) => applyGroupPrivateRelationshipQueryAccess(group, userID))
+    )
+  ) as T;
+}
+
+function applyAmendmentPrivateRelationshipQueryAccess<T>(q: T, userID: string): T {
+  const query = q as any;
+  return query.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('created_by_id', userID),
+      exists('collaborators', (collaborator: any) =>
+        collaborator
+          .where('user_id', userID)
+          .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+      ),
+      exists('group', (group: any) => applyGroupPrivateRelationshipQueryAccess(group, userID)),
+      exists('event', (event: any) =>
+        event.whereExists('participants', (participant: any) =>
+          participant
+            .where('user_id', userID)
+            .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
+        )
+      )
+    )
+  ) as T;
+}
 
 export function applyUserQueryAccess<T>(q: T, userID: string | undefined | null): T {
   const query = q as any;
@@ -39,8 +109,14 @@ export function applyGroupQueryAccess<T>(q: T, userID: string | undefined | null
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       cmp('owner_id', userID),
-      exists('memberships', (membership: any) => membership.where('user_id', userID)),
-      exists('guest_accesses', (guestAccess: any) => guestAccess.where('user_id', userID))
+      exists('memberships', (membership: any) =>
+        membership.where('user_id', userID).where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+      ),
+      exists('guest_accesses', (guestAccess: any) =>
+        guestAccess
+          .where('user_id', userID)
+          .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES)
+      )
     )
   ) as T;
 }
@@ -133,14 +209,25 @@ export function applyEventQueryAccess<T>(q: T, userID: string | undefined | null
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       cmp('creator_id', userID),
-      exists('participants', (participant: any) => participant.where('user_id', userID)),
+      exists('participants', (participant: any) =>
+        participant
+          .where('user_id', userID)
+          .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
+      ),
       exists('group', (group: any) =>
         group.where(({ or, cmp, exists }: any) =>
           or(
-            cmp('visibility', 'IN', ['public', 'authenticated']),
             cmp('owner_id', userID),
-            exists('memberships', (membership: any) => membership.where('user_id', userID)),
-            exists('guest_accesses', (guestAccess: any) => guestAccess.where('user_id', userID))
+            exists('memberships', (membership: any) =>
+              membership
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+            ),
+            exists('guest_accesses', (guestAccess: any) =>
+              guestAccess
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES)
+            )
           )
         )
       )
@@ -215,13 +302,33 @@ export function applyAmendmentQueryAccess<T>(q: T, userID: string | undefined | 
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       cmp('created_by_id', userID),
-      exists('collaborators', (collaborator: any) => collaborator.where('user_id', userID)),
+      exists('collaborators', (collaborator: any) =>
+        collaborator
+          .where('user_id', userID)
+          .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+      ),
       exists('group', (group: any) =>
-        group.whereExists('memberships', (membership: any) => membership.where('user_id', userID))
+        group.where(({ or, cmp, exists }: any) =>
+          or(
+            cmp('owner_id', userID),
+            exists('memberships', (membership: any) =>
+              membership
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+            ),
+            exists('guest_accesses', (guestAccess: any) =>
+              guestAccess
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES)
+            )
+          )
+        )
       ),
       exists('event', (event: any) =>
         event.whereExists('participants', (participant: any) =>
-          participant.where('user_id', userID)
+          participant
+            .where('user_id', userID)
+            .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
         )
       )
     )
@@ -258,9 +365,25 @@ export function applyBlogQueryAccess<T>(q: T, userID: string | undefined | null)
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
-      exists('bloggers', (blogger: any) => blogger.where('user_id', userID)),
+      exists('bloggers', (blogger: any) =>
+        blogger.where('user_id', userID).where('status', 'IN', ACTIVE_BLOGGER_STATUSES)
+      ),
       exists('group', (group: any) =>
-        group.whereExists('memberships', (membership: any) => membership.where('user_id', userID))
+        group.where(({ or, cmp, exists }: any) =>
+          or(
+            cmp('owner_id', userID),
+            exists('memberships', (membership: any) =>
+              membership
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+            ),
+            exists('guest_accesses', (guestAccess: any) =>
+              guestAccess
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES)
+            )
+          )
+        )
       )
     )
   ) as T;
@@ -285,7 +408,23 @@ export function applyStatementQueryAccess<T>(q: T, userID: string | undefined | 
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       cmp('user_id', userID),
-      exists('group', (group: any) => applyGroupQueryAccess(group, userID))
+      exists('group', (group: any) =>
+        group.where(({ or, cmp, exists }: any) =>
+          or(
+            cmp('owner_id', userID),
+            exists('memberships', (membership: any) =>
+              membership
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+            ),
+            exists('guest_accesses', (guestAccess: any) =>
+              guestAccess
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES)
+            )
+          )
+        )
+      )
     )
   ) as T;
 }
@@ -303,20 +442,25 @@ export function applyTodoQueryAccess<T>(q: T, userID: string | undefined | null)
       cmp('creator_id', userID),
       exists('assignments', (assignment: any) => assignment.where('user_id', userID)),
       exists('group', (group: any) =>
-        group.whereExists('memberships', (membership: any) => membership.where('user_id', userID))
-      ),
-      exists('event', (event: any) =>
-        event.whereExists('participants', (participant: any) =>
-          participant.where('user_id', userID)
-        )
-      ),
-      exists('amendment', (amendment: any) =>
-        amendment.where(({ or, cmp, exists }: any) =>
+        group.where(({ or, cmp, exists }: any) =>
           or(
-            cmp('created_by_id', userID),
-            exists('collaborators', (collaborator: any) => collaborator.where('user_id', userID))
+            cmp('owner_id', userID),
+            exists('memberships', (membership: any) =>
+              membership
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+            ),
+            exists('guest_accesses', (guestAccess: any) =>
+              guestAccess
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES)
+            )
           )
         )
+      ),
+      exists('event', (event: any) => applyEventPrivateRelationshipQueryAccess(event, userID)),
+      exists('amendment', (amendment: any) =>
+        applyAmendmentPrivateRelationshipQueryAccess(amendment, userID)
       )
     )
   ) as T;
@@ -342,18 +486,93 @@ export function applyElectionQueryAccess<T>(q: T, userID: string | undefined | n
   const query = q as any;
 
   if (!isAuthenticatedUserId(userID)) {
-    return query
-      .where('visibility', 'public')
-      .whereExists('agenda_item', (agendaItem: any) =>
-        applyAgendaItemQueryAccess(agendaItem, userID)
-      ) as T;
+    return query.where('visibility', 'public') as T;
   }
 
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
-      exists('agenda_item', (agendaItem: any) => applyAgendaItemQueryAccess(agendaItem, userID)),
-      exists('electors', (elector: any) => elector.where('user_id', userID))
+      exists('electors', (elector: any) => elector.where('user_id', userID)),
+      exists('agenda_item', (agendaItem: any) =>
+        agendaItem.where(({ or: itemOr, exists: itemExists }: any) =>
+          itemOr(
+            itemExists('event', (event: any) =>
+              event.where(({ or: eventOr, cmp: eventCmp, exists: eventExists }: any) =>
+                eventOr(
+                  eventCmp('creator_id', userID),
+                  eventExists('participants', (participant: any) =>
+                    participant
+                      .where('user_id', userID)
+                      .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
+                  ),
+                  eventExists('group', (group: any) =>
+                    group.where(({ or: groupOr, cmp: groupCmp, exists: groupExists }: any) =>
+                      groupOr(
+                        groupCmp('owner_id', userID),
+                        groupExists('memberships', (membership: any) =>
+                          membership
+                            .where('user_id', userID)
+                            .where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+                        ),
+                        groupExists('guest_accesses', (guestAccess: any) =>
+                          guestAccess
+                            .where('user_id', userID)
+                            .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES)
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            ),
+            itemExists('amendment', (amendment: any) =>
+              amendment.where(
+                ({ or: amendmentOr, cmp: amendmentCmp, exists: amendmentExists }: any) =>
+                  amendmentOr(
+                    amendmentCmp('created_by_id', userID),
+                    amendmentExists('collaborators', (collaborator: any) =>
+                      collaborator
+                        .where('user_id', userID)
+                        .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+                    )
+                  )
+              )
+            )
+          )
+        )
+      )
+    )
+  ) as T;
+}
+
+export function applyDatasetQueryAccess<T>(q: T, userID: string | undefined | null): T {
+  const query = q as any;
+
+  if (!isAuthenticatedUserId(userID)) {
+    return query.where('visibility', 'public') as T;
+  }
+
+  return query.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('visibility', 'IN', ['public', 'authenticated']),
+      cmp('owner_user_id', userID),
+      exists('group', (group: any) =>
+        group.where(({ or: groupOr, cmp: groupCmp, exists: groupExists }: any) =>
+          groupOr(
+            groupCmp('owner_id', userID),
+            groupExists('memberships', (membership: any) =>
+              membership
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+            ),
+            groupExists('guest_accesses', (guestAccess: any) =>
+              guestAccess
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES)
+            )
+          )
+        )
+      )
     )
   ) as T;
 }
@@ -396,9 +615,71 @@ export function applyVoteQueryAccess<T>(q: T, userID: string | undefined | null)
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
-      exists('agenda_item', (agendaItem: any) => applyAgendaItemQueryAccess(agendaItem, userID)),
-      exists('amendment', (amendment: any) => applyAmendmentQueryAccess(amendment, userID)),
-      exists('voters', (voter: any) => voter.where('user_id', userID))
+      exists('voters', (voter: any) => voter.where('user_id', userID)),
+      exists('agenda_item', (agendaItem: any) =>
+        agendaItem.whereExists('event', (event: any) =>
+          event.where(({ or: eventOr, cmp: eventCmp, exists: eventExists }: any) =>
+            eventOr(
+              eventCmp('creator_id', userID),
+              eventExists('participants', (participant: any) =>
+                participant
+                  .where('user_id', userID)
+                  .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
+              )
+            )
+          )
+        )
+      ),
+      exists('amendment', (amendment: any) =>
+        amendment.where(({ or: amendmentOr, cmp: amendmentCmp, exists: amendmentExists }: any) =>
+          amendmentOr(
+            amendmentCmp('created_by_id', userID),
+            amendmentExists('collaborators', (collaborator: any) =>
+              collaborator
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+            )
+          )
+        )
+      )
+    )
+  ) as T;
+}
+
+export function applyRoleQueryAccess<T>(q: T, userID: string | undefined | null): T {
+  const query = q as any;
+
+  if (!isAuthenticatedUserId(userID)) {
+    return query.where('visibility', 'public') as T;
+  }
+
+  return query.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('visibility', 'IN', ['public', 'authenticated']),
+      exists('holders', (holder: any) =>
+        holder.where('user_id', userID).where('end_date', 'IS', null)
+      ),
+      exists('group_membership_roles', (link: any) =>
+        link.whereExists('group_membership', (membership: any) =>
+          membership
+            .where('user_id', userID)
+            .where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+        )
+      ),
+      exists('group_guest_roles', (link: any) =>
+        link.whereExists('group_guest_access', (guestAccess: any) =>
+          guestAccess
+            .where('user_id', userID)
+            .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES)
+        )
+      ),
+      exists('event_participant_roles', (link: any) =>
+        link.whereExists('event_participant', (participant: any) =>
+          participant
+            .where('user_id', userID)
+            .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
+        )
+      )
     )
   ) as T;
 }

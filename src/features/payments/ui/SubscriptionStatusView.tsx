@@ -10,6 +10,7 @@ import { ConvertedCurrencyAmount } from '@/features/shared/ui/currency';
 import { minorToMajor } from '@/features/shared/logic/currency';
 
 export interface SubscriptionData {
+  hasCustomer: boolean;
   hasSubscription: boolean;
   subscription: {
     id: string;

@@ -2,10 +2,16 @@ import { useSubscriptionPlansGridController } from '@/features/payments/hooks/us
 
 import { SubscriptionPlansGridView } from './SubscriptionPlansGridView';
 
+export type PendingPlanChange = {
+  target: 'free';
+  effectiveAt: string;
+} | null;
+
 interface SubscriptionPlansGridProps {
   activeAmount: number;
+  pendingChange: PendingPlanChange;
   isLoading: boolean;
-  onSubscribe: (priceId: string) => void;
+  onSubscribe: (plan: 'running' | 'development') => void;
   onCustomAmount: (euros: number) => void;
   onCancel: () => void;
   isPlanActive: (amount: number) => boolean;

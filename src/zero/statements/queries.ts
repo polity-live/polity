@@ -1,7 +1,7 @@
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
-import { isAuthenticatedUserId } from '../rbac/query-access';
+import { applyStatementQueryAccess, isAuthenticatedUserId } from '../rbac/query-access';
 import { virtualPageLimitSchema } from '../virtualization';
 
 const statementStartSchema = z.object({ created_at: z.number(), id: z.string() }).nullable();
@@ -21,22 +21,7 @@ function applyStatementExpiryAccess<T>(q: T, userID: string | undefined, now = D
 }
 
 function applyStatementAccess<T>(q: T, userID: string | undefined, now = Date.now()): T {
-  const query = q as any;
-  const visibleQuery = applyStatementExpiryAccess(query, userID, now) as any;
-
-  if (!userID || userID === 'anon') {
-    return visibleQuery.where('visibility', 'public') as T;
-  }
-
-  return visibleQuery.where(({ or, cmp, exists }: any) =>
-    or(
-      cmp('visibility', 'IN', ['public', 'authenticated']),
-      cmp('user_id', userID),
-      exists('group', (group: any) =>
-        group.whereExists('memberships', (membership: any) => membership.where('user_id', userID))
-      )
-    )
-  ) as T;
+  return applyStatementExpiryAccess(applyStatementQueryAccess(q, userID), userID, now);
 }
 
 export const statementQueries = {

@@ -3,14 +3,14 @@ import { z } from 'zod';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { UserEdit } from '@/features/users/ui/UserEdit';
 import { useAuth } from '@/providers/auth-provider';
+import { stripeRedirectSearchSchema } from '@/features/payments/logic/stripeRedirectSearch';
 
 const settingsSearchSchema = z.object({
   tab: z
     .enum(['basic-info', 'preferences', 'subscriptions', 'passwords', 'notifications', 'ai'])
     .catch('basic-info')
     .optional(),
-  success: z.string().optional(),
-  canceled: z.string().optional(),
+  ...stripeRedirectSearchSchema.shape,
 });
 
 type SettingsTab = NonNullable<z.infer<typeof settingsSearchSchema>['tab']>;

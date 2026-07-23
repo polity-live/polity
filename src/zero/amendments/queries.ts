@@ -2,6 +2,7 @@ import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
   applyAgendaItemQueryAccess,
+  applyAmendmentQueryAccess,
   applyChangeRequestVisibilityAccess,
   applyDocumentQueryAccess,
   applyEventQueryAccess,
@@ -27,27 +28,7 @@ const discussionThreadStartSchema = z
   .nullable();
 
 function applyAmendmentAccess<T>(q: T, userID: string | undefined): T {
-  const query = q as any;
-
-  if (!userID || userID === 'anon') {
-    return query.where('visibility', 'public') as T;
-  }
-
-  return query.where(({ or, cmp, exists }: any) =>
-    or(
-      cmp('visibility', 'IN', ['public', 'authenticated']),
-      cmp('created_by_id', userID),
-      exists('collaborators', (collaborator: any) => collaborator.where('user_id', userID)),
-      exists('group', (group: any) =>
-        group.whereExists('memberships', (membership: any) => membership.where('user_id', userID))
-      ),
-      exists('event', (event: any) =>
-        event.whereExists('participants', (participant: any) =>
-          participant.where('user_id', userID)
-        )
-      )
-    )
-  ) as T;
+  return applyAmendmentQueryAccess(q, userID);
 }
 
 type GroupAmendmentDisplayStatus = 'accepted' | 'pending' | 'rejected' | 'withdrawn';

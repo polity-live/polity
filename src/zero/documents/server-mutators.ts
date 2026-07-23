@@ -17,7 +17,38 @@ import {
   createDocumentVersionSchema,
 } from './schema';
 import { createCommentSchema } from '../discussions/schema';
+import {
+  createCommentVoteSchema,
+  createThreadVoteSchema,
+  deleteCommentVoteSchema,
+  deleteThreadVoteSchema,
+  updateCommentVoteSchema,
+  updateThreadVoteSchema,
+} from '../votes/schema';
 import { collectTodoCommentRecipientIds } from '../todos/comment-notifications';
+
+async function recomputeThreadVoteCounters(tx: Parameters<typeof groupName>[0], threadId: string) {
+  const votes = await tx.run(zql.thread_vote.where('thread_id', threadId));
+  await tx.mutate.thread.update({
+    id: threadId,
+    upvotes: votes.filter(vote => vote.vote === 1).length,
+    downvotes: votes.filter(vote => vote.vote === -1).length,
+    updated_at: Date.now(),
+  });
+}
+
+async function recomputeCommentVoteCounters(
+  tx: Parameters<typeof groupName>[0],
+  commentId: string
+) {
+  const votes = await tx.run(zql.comment_vote.where('comment_id', commentId));
+  await tx.mutate.comment.update({
+    id: commentId,
+    upvotes: votes.filter(vote => vote.vote === 1).length,
+    downvotes: votes.filter(vote => vote.vote === -1).length,
+    updated_at: Date.now(),
+  });
+}
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const documentServerMutators = {
@@ -142,6 +173,17 @@ export const documentServerMutators = {
         });
       }
 
+      if (thread?.statement_id) {
+        const statement = await tx.run(zql.statement.where('id', thread.statement_id).one());
+        if (statement) {
+          await tx.mutate.statement.update({
+            id: thread.statement_id,
+            comment_count: (statement.comment_count ?? 0) + 1,
+            updated_at: Date.now(),
+          });
+        }
+      }
+
       if (thread?.amendment_id) {
         await recomputeAmendmentCounters(tx, thread.amendment_id);
 
@@ -186,5 +228,39 @@ export const documentServerMutators = {
         }
       }
     }
+  }),
+
+  voteThread: defineMutator(createThreadVoteSchema, async ({ tx, ctx, args }) => {
+    await mutators.documents.voteThread.fn({ tx, ctx, args });
+    await recomputeThreadVoteCounters(tx, args.thread_id);
+  }),
+
+  updateThreadVote: defineMutator(updateThreadVoteSchema, async ({ tx, ctx, args }) => {
+    const vote = await tx.run(zql.thread_vote.where('id', args.id).one());
+    await mutators.documents.updateThreadVote.fn({ tx, ctx, args });
+    if (vote) await recomputeThreadVoteCounters(tx, vote.thread_id);
+  }),
+
+  deleteThreadVote: defineMutator(deleteThreadVoteSchema, async ({ tx, ctx, args }) => {
+    const vote = await tx.run(zql.thread_vote.where('id', args.id).one());
+    await mutators.documents.deleteThreadVote.fn({ tx, ctx, args });
+    if (vote) await recomputeThreadVoteCounters(tx, vote.thread_id);
+  }),
+
+  voteComment: defineMutator(createCommentVoteSchema, async ({ tx, ctx, args }) => {
+    await mutators.documents.voteComment.fn({ tx, ctx, args });
+    await recomputeCommentVoteCounters(tx, args.comment_id);
+  }),
+
+  updateCommentVote: defineMutator(updateCommentVoteSchema, async ({ tx, ctx, args }) => {
+    const vote = await tx.run(zql.comment_vote.where('id', args.id).one());
+    await mutators.documents.updateCommentVote.fn({ tx, ctx, args });
+    if (vote) await recomputeCommentVoteCounters(tx, vote.comment_id);
+  }),
+
+  deleteCommentVote: defineMutator(deleteCommentVoteSchema, async ({ tx, ctx, args }) => {
+    const vote = await tx.run(zql.comment_vote.where('id', args.id).one());
+    await mutators.documents.deleteCommentVote.fn({ tx, ctx, args });
+    if (vote) await recomputeCommentVoteCounters(tx, vote.comment_id);
   }),
 };

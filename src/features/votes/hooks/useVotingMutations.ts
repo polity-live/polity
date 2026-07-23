@@ -20,8 +20,8 @@ export function useVotingMutations() {
       threadId: string,
       voteValue: number,
       currentVote: { id: string; vote?: number | null } | undefined,
-      currentUpvotes = 0,
-      currentDownvotes = 0,
+      _currentUpvotes = 0,
+      _currentDownvotes = 0,
       userId?: string
     ) => {
       if (!userId) {
@@ -34,25 +34,10 @@ export function useVotingMutations() {
           if (currentVote.vote === voteValue) {
             // Same vote → remove
             await waitForClientApply(actions.deleteThreadVote(currentVote.id));
-            await waitForClientApply(
-              actions.updateThread({
-                id: threadId,
-                upvotes: voteValue === 1 ? Math.max(0, currentUpvotes - 1) : currentUpvotes,
-                downvotes: voteValue === -1 ? Math.max(0, currentDownvotes - 1) : currentDownvotes,
-              })
-            );
           } else {
             // Different vote → change
             await waitForClientApply(
               actions.updateThreadVote({ id: currentVote.id, vote: voteValue })
-            );
-            await waitForClientApply(
-              actions.updateThread({
-                id: threadId,
-                upvotes: voteValue === 1 ? currentUpvotes + 1 : Math.max(0, currentUpvotes - 1),
-                downvotes:
-                  voteValue === -1 ? currentDownvotes + 1 : Math.max(0, currentDownvotes - 1),
-              })
             );
           }
         } else {
@@ -63,13 +48,6 @@ export function useVotingMutations() {
               vote: voteValue,
               thread_id: threadId,
               user_id: userId,
-            })
-          );
-          await waitForClientApply(
-            actions.updateThread({
-              id: threadId,
-              upvotes: voteValue === 1 ? currentUpvotes + 1 : currentUpvotes,
-              downvotes: voteValue === -1 ? currentDownvotes + 1 : currentDownvotes,
             })
           );
         }
@@ -86,8 +64,8 @@ export function useVotingMutations() {
       commentId: string,
       voteValue: number,
       currentVote: { id: string; vote: number | null } | undefined,
-      currentUpvotes = 0,
-      currentDownvotes = 0,
+      _currentUpvotes = 0,
+      _currentDownvotes = 0,
       userId?: string
     ) => {
       if (!userId) {
@@ -100,25 +78,10 @@ export function useVotingMutations() {
           if (currentVote.vote === voteValue) {
             // Same vote → remove
             await waitForClientApply(actions.deleteCommentVote(currentVote.id));
-            await waitForClientApply(
-              actions.updateComment({
-                id: commentId,
-                upvotes: voteValue === 1 ? Math.max(0, currentUpvotes - 1) : currentUpvotes,
-                downvotes: voteValue === -1 ? Math.max(0, currentDownvotes - 1) : currentDownvotes,
-              })
-            );
           } else {
             // Different vote → change
             await waitForClientApply(
               actions.updateCommentVote({ id: currentVote.id, vote: voteValue })
-            );
-            await waitForClientApply(
-              actions.updateComment({
-                id: commentId,
-                upvotes: voteValue === 1 ? currentUpvotes + 1 : Math.max(0, currentUpvotes - 1),
-                downvotes:
-                  voteValue === -1 ? currentDownvotes + 1 : Math.max(0, currentDownvotes - 1),
-              })
             );
           }
         } else {
@@ -129,13 +92,6 @@ export function useVotingMutations() {
               vote: voteValue,
               comment_id: commentId,
               user_id: userId,
-            })
-          );
-          await waitForClientApply(
-            actions.updateComment({
-              id: commentId,
-              upvotes: voteValue === 1 ? currentUpvotes + 1 : currentUpvotes,
-              downvotes: voteValue === -1 ? currentDownvotes + 1 : currentDownvotes,
             })
           );
         }

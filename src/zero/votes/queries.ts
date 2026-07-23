@@ -1,6 +1,9 @@
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
+  applyAgendaItemQueryAccess,
+  applyAmendmentQueryAccess,
+  applyEventQueryAccess,
   applyVoteManagerQueryAccess,
   applyVoteQueryAccess,
   applyVoteVoterOrManagerQueryAccess,
@@ -64,14 +67,14 @@ export const voteQueries = {
   // Votes with full details (for decision terminal/listing)
   votesWithDetails: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     applyVoteQueryAccess(zql.vote, userID)
-      .related('agenda_item', q =>
-        q.related('event', eventQuery =>
-          eventQuery.related('participants', participantQuery =>
+      .related('agenda_item', agendaItem =>
+        applyAgendaItemQueryAccess(agendaItem, userID).related('event', event =>
+          applyEventQueryAccess(event, userID).related('participants', participantQuery =>
             participantQuery.where('user_id', userID ?? '__anon__').related('participant_roles')
           )
         )
       )
-      .related('amendment')
+      .related('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
       .related('choices', q => q.orderBy('order_index', 'asc'))
       .related('offline_tallies', q =>
         q.whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID)).related('choice')
