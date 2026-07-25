@@ -5,6 +5,10 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { getSafeAuthRedirect } from '@/features/auth/logic/authRedirects';
+import {
+  consumePendingGoogleLanguage,
+  normalizeAuthLanguage,
+} from '@/features/auth/logic/authLanguage';
 
 export function useAuthCallbackPageController() {
   const { t } = useTranslation();
@@ -40,6 +44,19 @@ export function useAuthCallbackPageController() {
 
         if (!user?.id) {
           throw new Error(t('auth.callback.failed'));
+        }
+
+        const pendingGoogleLanguage = consumePendingGoogleLanguage();
+        if (
+          pendingGoogleLanguage &&
+          normalizeAuthLanguage(user.user_metadata.language) !== pendingGoogleLanguage
+        ) {
+          const { error } = await supabase.auth.updateUser({
+            data: { language: pendingGoogleLanguage },
+          });
+          if (error) {
+            console.warn('Failed to synchronize Google auth language:', error.message);
+          }
         }
 
         const createdAt = new Date(user.created_at).getTime();

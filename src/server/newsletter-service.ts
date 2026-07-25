@@ -10,6 +10,7 @@ export interface NewsletterSyncJob {
   email: string;
   previous_email: string | null;
   resend_contact_id: string | null;
+  language: NewsletterLanguage;
   subscribed: boolean;
   attempt_count: number;
 }
@@ -19,12 +20,16 @@ interface NewsletterSubscription {
   email: string;
   subscribed: boolean;
   resend_contact_id: string | null;
+  language: NewsletterLanguage;
 }
+
+export type NewsletterLanguage = 'de' | 'en';
 
 interface NewsletterConfig {
   apiKey: string;
   webhookSecret: string;
-  segmentId: string;
+  segmentIdDe: string;
+  segmentIdEn: string;
   topicId: string;
   syncSecret: string;
   environment: 'development' | 'production';
@@ -61,6 +66,10 @@ function requiredEnv(name: string): string {
   return value;
 }
 
+function optionalEnv(name: string): string {
+  return process.env[name]?.trim() ?? '';
+}
+
 function readConfig(overrides: Partial<NewsletterConfig> = {}): NewsletterConfig {
   const environmentValue =
     overrides.environment ?? process.env.NEWSLETTER_ENVIRONMENT ?? 'development';
@@ -71,7 +80,8 @@ function readConfig(overrides: Partial<NewsletterConfig> = {}): NewsletterConfig
   return {
     apiKey: overrides.apiKey ?? requiredEnv('RESEND_API_KEY'),
     webhookSecret: overrides.webhookSecret ?? process.env.RESEND_WEBHOOK_SECRET?.trim() ?? '',
-    segmentId: overrides.segmentId ?? requiredEnv('RESEND_SEGMENT_ID'),
+    segmentIdDe: overrides.segmentIdDe ?? optionalEnv('RESEND_SEGMENT_ID_DE'),
+    segmentIdEn: overrides.segmentIdEn ?? optionalEnv('RESEND_SEGMENT_ID_EN'),
     topicId: overrides.topicId ?? requiredEnv('RESEND_TOPIC_ID'),
     syncSecret: overrides.syncSecret ?? process.env.NEWSLETTER_SYNC_SECRET?.trim() ?? '',
     environment: environmentValue,
@@ -84,6 +94,22 @@ function readConfig(overrides: Partial<NewsletterConfig> = {}): NewsletterConfig
         .map(value => value.trim().toLowerCase())
         .filter(Boolean),
   };
+}
+
+function assertNewsletterSegmentsConfigured(config: NewsletterConfig) {
+  const requiredSegments = [
+    ['RESEND_SEGMENT_ID_EN', config.segmentIdEn],
+    ...(config.environment === 'production'
+      ? ([['RESEND_SEGMENT_ID_DE', config.segmentIdDe]] as const)
+      : []),
+  ];
+  const missing = requiredSegments.filter(([, value]) => !value).map(([name]) => name);
+  if (missing.length > 0) {
+    throw new Error(`Newsletter segments are not configured: ${missing.join(', ')}`);
+  }
+  if (config.environment === 'production' && config.segmentIdDe === config.segmentIdEn) {
+    throw new Error('Production newsletter segments must use different IDs');
+  }
 }
 
 function getSupabase(deps: NewsletterServiceDeps): SupabaseClient {
@@ -126,12 +152,16 @@ function recipientAllowed(email: string, config: NewsletterConfig): boolean {
   );
 }
 
+function normalizeNewsletterLanguage(value: unknown): NewsletterLanguage {
+  return value === 'de' ? 'de' : 'en';
+}
+
 async function loadSubscription(
   supabase: SupabaseClient,
   userId: string
 ): Promise<NewsletterSubscription | null> {
   const { data, error } = await table(supabase, 'newsletter_subscription')
-    .select('user_id,email,subscribed,resend_contact_id')
+    .select('user_id,email,language,subscribed,resend_contact_id')
     .eq('user_id', userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -148,21 +178,34 @@ async function ensureContact(
   resend: Resend,
   config: NewsletterConfig,
   subscription: NewsletterSubscription
-): Promise<string> {
+): Promise<{ contactId: string; subscribed: boolean }> {
   if (!recipientAllowed(subscription.email, config)) {
     throw new Error(`Recipient ${subscription.email} is not allowed outside production`);
   }
 
+  const language = normalizeNewsletterLanguage(subscription.language);
+  const targetSegmentId =
+    config.environment === 'development'
+      ? config.segmentIdEn
+      : language === 'de'
+        ? config.segmentIdDe
+        : config.segmentIdEn;
+  const segmentsToRemove = [config.segmentIdDe, config.segmentIdEn].filter(
+    segmentId => segmentId && segmentId !== targetSegmentId
+  );
   const contact = subscription.resend_contact_id
     ? await resend.contacts.get({ id: subscription.resend_contact_id })
     : null;
-  let contactId = contact && !contact.error ? contact.data?.id : null;
+  let contactData = contact && !contact.error ? contact.data : null;
+  let contactId = contactData?.id ?? null;
 
   if (!contactId) {
     const existing = await findContact(resend, subscription.email);
+    contactData = existing;
     contactId = existing?.id ?? null;
   }
 
+  let createdContact = false;
   if (!contactId) {
     const created = await resend.contacts.create({
       email: subscription.email,
@@ -170,8 +213,9 @@ async function ensureContact(
       properties: {
         polity_user_id: subscription.user_id,
         environment: config.environment,
+        language,
       },
-      segments: [{ id: config.segmentId }],
+      segments: [{ id: targetSegmentId }],
       topics: [
         { id: config.topicId, subscription: subscription.subscribed ? 'opt_in' : 'opt_out' },
       ],
@@ -180,41 +224,58 @@ async function ensureContact(
     if (created.error || !created.data?.id) {
       const existingAfterConflict = await findContact(resend, subscription.email);
       if (!existingAfterConflict?.id) throw new Error(messageFromResendError(created.error));
+      contactData = existingAfterConflict;
       contactId = existingAfterConflict.id;
     } else {
       contactId = created.data.id;
+      createdContact = true;
     }
   }
 
   const updated = await resend.contacts.update({
     id: contactId,
-    unsubscribed: !subscription.subscribed,
     properties: {
       polity_user_id: subscription.user_id,
       environment: config.environment,
+      language,
     },
   });
   if (updated.error) throw new Error(messageFromResendError(updated.error));
 
   const segments = await resend.contacts.segments.list({ contactId });
   if (segments.error) throw new Error(messageFromResendError(segments.error));
-  if (!segments.data?.data.some(segment => segment.id === config.segmentId)) {
-    const added = await resend.contacts.segments.add({ contactId, segmentId: config.segmentId });
+  const currentSegmentIds = new Set(segments.data?.data.map(segment => segment.id) ?? []);
+  if (!currentSegmentIds.has(targetSegmentId)) {
+    const added = await resend.contacts.segments.add({ contactId, segmentId: targetSegmentId });
     if (added.error) throw new Error(messageFromResendError(added.error));
   }
+  for (const segmentId of segmentsToRemove) {
+    if (!currentSegmentIds.has(segmentId)) continue;
+    const removed = await resend.contacts.segments.remove({ contactId, segmentId });
+    if (removed.error) throw new Error(messageFromResendError(removed.error));
+  }
 
-  const topics = await resend.contacts.topics.update({
-    id: contactId,
-    topics: [
-      {
-        id: config.topicId,
-        subscription: subscription.subscribed ? 'opt_in' : 'opt_out',
-      },
-    ],
-  });
+  if (createdContact) {
+    return { contactId, subscribed: subscription.subscribed };
+  }
+
+  const topics = await resend.contacts.topics.list({ id: contactId });
   if (topics.error) throw new Error(messageFromResendError(topics.error));
+  const topicSubscription = topics.data?.data.find(
+    topic => topic.id === config.topicId
+  )?.subscription;
 
-  return contactId;
+  if (!subscription.subscribed && topicSubscription !== 'opt_out') {
+    const topicUpdate = await resend.contacts.topics.update({
+      id: contactId,
+      topics: [{ id: config.topicId, subscription: 'opt_out' }],
+    });
+    if (topicUpdate.error) throw new Error(messageFromResendError(topicUpdate.error));
+  }
+
+  const remainsSubscribed =
+    subscription.subscribed && !contactData?.unsubscribed && topicSubscription === 'opt_in';
+  return { contactId, subscribed: remainsSubscribed };
 }
 
 async function removeContact(resend: Resend, selector: { id: string } | { email: string }) {
@@ -286,14 +347,15 @@ async function processJob(
     await removeContact(resend, previousContact);
   }
 
-  const contactId = await ensureContact(resend, config, current);
+  const contact = await ensureContact(resend, config, current);
   const now = new Date().toISOString();
   const { error } = await table(supabase, 'newsletter_subscription')
     .update({
-      resend_contact_id: contactId,
-      sync_status: current.subscribed ? 'synced' : 'unsubscribed',
-      subscribed_at: current.subscribed ? now : undefined,
-      unsubscribed_at: current.subscribed ? null : now,
+      resend_contact_id: contact.contactId,
+      subscribed: contact.subscribed,
+      sync_status: contact.subscribed ? 'synced' : 'unsubscribed',
+      subscribed_at: contact.subscribed ? now : undefined,
+      unsubscribed_at: contact.subscribed ? null : now,
       last_synced_at: now,
       last_error: null,
       updated_at: now,
@@ -306,6 +368,7 @@ async function processJob(
 export async function executeNewsletterSync(deps: NewsletterServiceDeps = {}) {
   const config = readConfig(deps.config);
   if (!config.syncEnabled) return { enabled: false, processed: 0, failed: 0 };
+  assertNewsletterSegmentsConfigured(config);
 
   const supabase = getSupabase(deps);
   const resend = getResend(deps, config);

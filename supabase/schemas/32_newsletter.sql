@@ -5,6 +5,7 @@
 CREATE TABLE IF NOT EXISTS public.newsletter_subscription (
   user_id UUID PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
   email TEXT NOT NULL,
+  language TEXT NOT NULL DEFAULT 'en' CHECK (language IN ('de', 'en')),
   subscribed BOOLEAN NOT NULL DEFAULT true,
   sync_status TEXT NOT NULL DEFAULT 'pending'
     CHECK (sync_status IN ('pending', 'synced', 'unsubscribed', 'error', 'deleted')),
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.newsletter_sync_outbox (
   email TEXT NOT NULL,
   previous_email TEXT,
   resend_contact_id TEXT,
+  language TEXT NOT NULL DEFAULT 'en' CHECK (language IN ('de', 'en')),
   subscribed BOOLEAN NOT NULL DEFAULT true,
   status TEXT NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
@@ -75,11 +77,20 @@ SET search_path = ''
 AS $$
 DECLARE
   current_subscription public.newsletter_subscription%ROWTYPE;
+  target_language TEXT;
 BEGIN
-  INSERT INTO public.newsletter_subscription (user_id, email)
-  VALUES (target_user_id, target_email)
+  SELECT CASE WHEN preference.language IN ('de', 'en') THEN preference.language ELSE 'en' END
+    INTO target_language
+    FROM public.user_preference AS preference
+    WHERE preference.user_id = target_user_id;
+
+  target_language := COALESCE(target_language, 'en');
+
+  INSERT INTO public.newsletter_subscription (user_id, email, language)
+  VALUES (target_user_id, target_email, target_language)
   ON CONFLICT (user_id) DO UPDATE
     SET email = excluded.email,
+        language = excluded.language,
         updated_at = now()
   RETURNING * INTO current_subscription;
 
@@ -88,12 +99,14 @@ BEGIN
     operation,
     email,
     resend_contact_id,
+    language,
     subscribed
   ) VALUES (
     target_user_id,
     'upsert',
     target_email,
     current_subscription.resend_contact_id,
+    current_subscription.language,
     current_subscription.subscribed
   );
 END;
@@ -144,6 +157,7 @@ BEGIN
         email,
         previous_email,
         resend_contact_id,
+        language,
         subscribed
       ) VALUES (
         NEW.id,
@@ -151,6 +165,7 @@ BEGIN
         NEW.email,
         OLD.email,
         current_subscription.resend_contact_id,
+        current_subscription.language,
         current_subscription.subscribed
       );
     END IF;
@@ -179,12 +194,14 @@ BEGIN
       operation,
       email,
       resend_contact_id,
+      language,
       subscribed
     ) VALUES (
       OLD.id,
       'delete',
       current_subscription.email,
       current_subscription.resend_contact_id,
+      current_subscription.language,
       current_subscription.subscribed
     );
   END IF;
@@ -202,6 +219,57 @@ CREATE OR REPLACE TRIGGER on_auth_user_newsletter_deleted
   BEFORE DELETE ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_auth_user_newsletter_delete();
+
+CREATE OR REPLACE FUNCTION public.handle_newsletter_language_change()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  normalized_language TEXT;
+  current_subscription public.newsletter_subscription%ROWTYPE;
+BEGIN
+  IF NEW.language IS NOT DISTINCT FROM OLD.language THEN
+    RETURN NEW;
+  END IF;
+
+  normalized_language := CASE WHEN NEW.language IN ('de', 'en') THEN NEW.language ELSE 'en' END;
+
+  UPDATE public.newsletter_subscription
+    SET language = normalized_language,
+        sync_status = 'pending',
+        last_error = NULL,
+        updated_at = now()
+    WHERE user_id = NEW.user_id
+    RETURNING * INTO current_subscription;
+
+  IF FOUND THEN
+    INSERT INTO public.newsletter_sync_outbox (
+      user_id,
+      operation,
+      email,
+      resend_contact_id,
+      language,
+      subscribed
+    ) VALUES (
+      current_subscription.user_id,
+      'upsert',
+      current_subscription.email,
+      current_subscription.resend_contact_id,
+      current_subscription.language,
+      current_subscription.subscribed
+    );
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER on_user_preference_newsletter_language_changed
+  AFTER UPDATE OF language ON public.user_preference
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_newsletter_language_change();
 
 CREATE OR REPLACE FUNCTION public.claim_newsletter_sync_jobs(job_limit INTEGER DEFAULT 100)
 RETURNS SETOF public.newsletter_sync_outbox
@@ -234,5 +302,6 @@ $$;
 REVOKE ALL ON FUNCTION public.enqueue_newsletter_subscription(UUID, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.handle_auth_user_newsletter_change() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.handle_auth_user_newsletter_delete() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.handle_newsletter_language_change() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.claim_newsletter_sync_jobs(INTEGER) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.claim_newsletter_sync_jobs(INTEGER) TO service_role;

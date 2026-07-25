@@ -30,37 +30,37 @@ enable_confirmations = true
 secure_password_change = true
 
 [auth.email.template.confirmation]
-subject = "Confirm your signup for Polity"
+subject = '{{ if eq .Data.language `de` }}Bestätige deine E-Mail-Adresse für Polity{{ else }}Confirm your email address for Polity{{ end }}'
 content_path = "./supabase/email-templates/confirm-signup.html"
 
 [auth.email.template.invite]
-subject = "You have been invited to Polity"
+subject = '{{ if eq .Data.language `de` }}Du wurdest zu Polity eingeladen{{ else }}You have been invited to Polity{{ end }}'
 content_path = "./supabase/email-templates/invite.html"
 
 [auth.email.template.magic_link]
-subject = "Your Magic Link for Polity"
+subject = '{{ if eq .Data.language `de` }}{{ .Token }} ist dein Polity-Anmeldecode{{ else }}{{ .Token }} is your Polity sign-in code{{ end }}'
 content_path = "./supabase/email-templates/magic-link.html"
 
 [auth.email.template.email_change]
-subject = "Confirm your email change for Polity"
+subject = '{{ if eq .Data.language `de` }}Bestätige deine neue E-Mail-Adresse für Polity{{ else }}Confirm your new email address for Polity{{ end }}'
 content_path = "./supabase/email-templates/confirm-email-change.html"
 
 [auth.email.template.recovery]
-subject = "Reset your password for Polity"
+subject = '{{ if eq .Data.language `de` }}Setze dein Polity-Passwort zurück{{ else }}Reset your Polity password{{ end }}'
 content_path = "./supabase/email-templates/reset-password.html"
 
 [auth.email.template.reauthentication]
-subject = "Confirm reauthentication for Polity"
+subject = '{{ if eq .Data.language `de` }}{{ .Token }} ist dein Polity-Bestätigungscode{{ else }}{{ .Token }} is your Polity verification code{{ end }}'
 content_path = "./supabase/email-templates/reauthentication.html"
 
 [auth.email.notification.password_changed]
 enabled = true
-subject = "Your Polity password was changed"
+subject = '{{ if eq .Data.language `de` }}Dein Polity-Passwort wurde geändert{{ else }}Your Polity password was changed{{ end }}'
 content_path = "./email-templates/password-changed.html"
 
 [auth.email.notification.email_changed]
 enabled = true
-subject = "Your Polity email address was changed"
+subject = '{{ if eq .Data.language `de` }}Deine Polity-E-Mail-Adresse wurde geändert{{ else }}Your Polity email address was changed{{ end }}'
 content_path = "./email-templates/email-changed.html"
 
 [auth.external.google]

@@ -32,9 +32,12 @@ describe('useAuthStore signUpWithPassword', () => {
     expect(useAuthStore.getState().error).toBeNull();
     expect(signUpMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        options: {
+        options: expect.objectContaining({
+          data: {
+            language: 'en',
+          },
           emailRedirectTo: expect.stringMatching(/\/auth\/callback$/),
-        },
+        }),
       })
     );
   }, 10000);

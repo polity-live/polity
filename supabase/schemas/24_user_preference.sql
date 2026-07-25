@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public.user_preference (
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE UNIQUE,
   create_form_style TEXT NOT NULL DEFAULT 'carousel',
   theme TEXT NOT NULL DEFAULT 'system',
-  language TEXT NOT NULL DEFAULT 'en',
+  language TEXT NOT NULL DEFAULT 'en' CHECK (language IN ('de', 'en')),
   display_currency TEXT NOT NULL DEFAULT 'EUR' CHECK (display_currency ~ '^[A-Z]{3}$'),
   navigation_view TEXT NOT NULL DEFAULT 'asButtonList',
   group_network_layouts JSONB NOT NULL DEFAULT '{}'::jsonb,

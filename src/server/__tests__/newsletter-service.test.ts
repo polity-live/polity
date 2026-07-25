@@ -149,6 +149,10 @@ function createFakeResend() {
           segmentMembership.set(contactId, current);
           return { data: { id: segmentId }, error: null };
         }),
+        remove: vi.fn(async ({ contactId, segmentId }: Row) => {
+          segmentMembership.get(contactId)?.delete(segmentId);
+          return { data: { id: segmentId, deleted: true }, error: null };
+        }),
       },
       topics: {
         update: vi.fn(async ({ id, topics }: Row) => {
@@ -176,6 +180,7 @@ function createFakeResend() {
   return {
     resend,
     contacts,
+    segmentMembership,
     topicMembership,
     setEvent: (event: any) => {
       verifiedEvent = event;
@@ -189,7 +194,8 @@ function createFakeResend() {
 const config = {
   apiKey: 're_test',
   webhookSecret: 'whsec_test',
-  segmentId: 'segment',
+  segmentIdDe: 'segment-de',
+  segmentIdEn: 'segment-en',
   topicId: 'topic',
   syncSecret: 'sync-secret',
   environment: 'production' as const,
@@ -205,6 +211,7 @@ function job(overrides: Partial<NewsletterSyncJob> = {}): NewsletterSyncJob {
     email: 'person@example.com',
     previous_email: null,
     resend_contact_id: null,
+    language: 'en',
     subscribed: true,
     attempt_count: 1,
     ...overrides,
@@ -213,6 +220,18 @@ function job(overrides: Partial<NewsletterSyncJob> = {}): NewsletterSyncJob {
 
 describe('newsletter sync', () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it('stays disabled before language segments are configured', async () => {
+    const result = await executeNewsletterSync({
+      config: {
+        ...config,
+        segmentIdDe: '',
+        segmentIdEn: '',
+        syncEnabled: false,
+      },
+    });
+    expect(result).toEqual({ enabled: false, processed: 0, failed: 0 });
+  });
 
   it('creates a contact in the configured segment and topic', async () => {
     const db = createFakeSupabase({
@@ -238,7 +257,8 @@ describe('newsletter sync', () => {
     expect(api.resend.contacts.create).toHaveBeenCalledWith(
       expect.objectContaining({
         email: 'person@example.com',
-        segments: [{ id: 'segment' }],
+        properties: expect.objectContaining({ language: 'en' }),
+        segments: [{ id: 'segment-en' }],
         topics: [{ id: 'topic', subscription: 'opt_in' }],
       })
     );
@@ -362,6 +382,63 @@ describe('newsletter sync', () => {
     expect(api.resend.contacts.create).not.toHaveBeenCalled();
   });
 
+  it.each(['de', 'en'] as const)(
+    'uses the single English development segment for a %s contact',
+    async language => {
+      const db = createFakeSupabase({
+        subscriptions: [
+          {
+            user_id: 'user-1',
+            email: 'allowed@example.com',
+            language,
+            subscribed: true,
+            resend_contact_id: null,
+          },
+        ],
+        jobs: [job({ email: 'allowed@example.com', language })],
+      });
+      const api = createFakeResend();
+
+      await executeNewsletterSync({
+        supabase: db.client as any,
+        resend: api.resend as any,
+        config: {
+          ...config,
+          environment: 'development',
+          segmentIdDe: '',
+          allowedRecipients: ['allowed@example.com'],
+        },
+      });
+
+      expect(api.resend.contacts.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          properties: expect.objectContaining({ language }),
+          segments: [{ id: 'segment-en' }],
+        })
+      );
+    }
+  );
+
+  it('requires separate German and English segments in production', async () => {
+    await expect(
+      executeNewsletterSync({
+        config: {
+          ...config,
+          segmentIdDe: '',
+        },
+      })
+    ).rejects.toThrow('RESEND_SEGMENT_ID_DE');
+
+    await expect(
+      executeNewsletterSync({
+        config: {
+          ...config,
+          segmentIdDe: 'segment-en',
+        },
+      })
+    ).rejects.toThrow('must use different IDs');
+  });
+
   it('records a failed attempt with an exponential retry delay', async () => {
     const db = createFakeSupabase({
       subscriptions: [
@@ -394,6 +471,76 @@ describe('newsletter sync', () => {
       locked_at: null,
     });
     expect(new Date(db.jobs[0].available_at).getTime()).toBeGreaterThanOrEqual(startedAt + 15_000);
+  });
+
+  it('moves a German production contact out of the English segment', async () => {
+    const db = createFakeSupabase({
+      subscriptions: [
+        {
+          user_id: 'user-1',
+          email: 'person@example.com',
+          language: 'de',
+          subscribed: true,
+          resend_contact_id: 'contact-1',
+        },
+      ],
+      jobs: [job({ language: 'de', resend_contact_id: 'contact-1' })],
+    });
+    const api = createFakeResend();
+    api.contacts.set('contact-1', {
+      id: 'contact-1',
+      email: 'person@example.com',
+      unsubscribed: false,
+    });
+    api.segmentMembership.set('contact-1', new Set(['segment-en']));
+    api.topicMembership.set('contact-1', 'opt_in');
+
+    await executeNewsletterSync({ supabase: db.client as any, resend: api.resend as any, config });
+
+    expect(api.segmentMembership.get('contact-1')).toEqual(new Set(['segment-de']));
+    expect(api.resend.contacts.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'contact-1',
+        properties: expect.objectContaining({ language: 'de' }),
+      })
+    );
+  });
+
+  it('never reverses an existing global or topic unsubscribe', async () => {
+    const db = createFakeSupabase({
+      subscriptions: [
+        {
+          user_id: 'user-1',
+          email: 'person@example.com',
+          language: 'en',
+          subscribed: true,
+          resend_contact_id: 'contact-1',
+        },
+      ],
+      jobs: [job({ resend_contact_id: 'contact-1' })],
+    });
+    const api = createFakeResend();
+    api.contacts.set('contact-1', {
+      id: 'contact-1',
+      email: 'person@example.com',
+      unsubscribed: true,
+    });
+    api.topicMembership.set('contact-1', 'opt_out');
+
+    await executeNewsletterSync({ supabase: db.client as any, resend: api.resend as any, config });
+
+    expect(api.resend.contacts.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ unsubscribed: false })
+    );
+    expect(api.resend.contacts.topics.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        topics: [{ id: 'topic', subscription: 'opt_in' }],
+      })
+    );
+    expect(db.subscriptions[0]).toMatchObject({
+      subscribed: false,
+      sync_status: 'unsubscribed',
+    });
   });
 });
 

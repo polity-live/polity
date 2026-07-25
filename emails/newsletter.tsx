@@ -3,61 +3,98 @@ import { Button, Heading, Hr, Section, Text } from 'react-email';
 
 import { PolityEmailLayout, polityEmailUrls } from './_components/polity-email-layout';
 
-export const newsletterPreviewText =
-  'Neue Möglichkeiten für Zusammenarbeit, Entscheidungen und Beteiligung bei Polity.';
+export const newsletterContent = {
+  de: {
+    closing: 'Danke, dass du Polity mitgestaltest.',
+    closingTeam: 'Dein Polity-Team',
+    cta: 'Polity öffnen',
+    eyebrow: 'Newsletter',
+    feature:
+      'Von der ersten Idee bis zur verbindlichen Abstimmung bleibt der gesamte Prozess nachvollziehbar. So wissen alle Beteiligten, was diskutiert wurde und wie es weitergeht.',
+    featureLabel: 'Im Fokus',
+    featureTitle: 'Gemeinsam zu klaren Entscheidungen',
+    kicker: 'Neues aus der Polity-Community',
+    lead: 'Polity bringt Diskussionen, Entscheidungen und gemeinsames Handeln an einen Ort. Hier findest du die wichtigsten Neuigkeiten und Ideen aus der Community.',
+    next: 'Teile hier eine Vorschau auf kommende Funktionen, Veranstaltungen oder Entscheidungen und verlinke direkt zu den passenden Inhalten.',
+    nextTitle: 'Was als Nächstes kommt',
+    preview: 'Neue Möglichkeiten für Zusammenarbeit, Entscheidungen und Beteiligung bei Polity.',
+    subject: 'Neues aus der Polity-Community',
+    title: 'Mehr Überblick. Mehr Beteiligung.',
+    updates:
+      'Nutze diesen Bereich für Neuigkeiten aus Gruppen, laufende Beteiligungsprozesse oder einen kurzen Blick hinter die Kulissen von Polity.',
+    updatesTitle: 'Was sich gerade bewegt',
+  },
+  en: {
+    closing: 'Thank you for helping shape Polity.',
+    closingTeam: 'The Polity team',
+    cta: 'Open Polity',
+    eyebrow: 'Newsletter',
+    feature:
+      'From the first idea to the final vote, the complete process remains transparent. Everyone can see what was discussed and what happens next.',
+    featureLabel: 'In focus',
+    featureTitle: 'Clear decisions, made together',
+    kicker: 'News from the Polity community',
+    lead: 'Polity brings discussions, decisions, and collective action together in one place. Here are the latest updates and ideas from the community.',
+    next: 'Use this space to preview upcoming features, events, or decisions and link directly to the relevant content.',
+    nextTitle: 'What comes next',
+    preview: 'New ways to collaborate, decide, and participate with Polity.',
+    subject: 'News from the Polity community',
+    title: 'More clarity. More participation.',
+    updates:
+      'Use this section for news from groups, active participation processes, or a brief look behind the scenes at Polity.',
+    updatesTitle: 'What is moving right now',
+  },
+} as const;
 
-export default function NewsletterEmail() {
+export default function NewsletterEmail({ language = 'de' }: { language?: 'de' | 'en' }) {
+  const content = newsletterContent[language];
   return (
-    <PolityEmailLayout eyebrow="Newsletter" previewText={newsletterPreviewText}>
+    <PolityEmailLayout eyebrow={content.eyebrow} language={language} previewText={content.preview}>
       <Text className="polity-kicker" style={kickerStyle}>
-        Neues aus der Polity-Community
+        {content.kicker}
       </Text>
       <Heading className="polity-title" style={titleStyle}>
-        Mehr Überblick. Mehr Beteiligung.
+        {content.title}
       </Heading>
       <Text className="polity-copy" style={leadStyle}>
-        Polity bringt Diskussionen, Entscheidungen und gemeinsames Handeln an einen Ort. Hier
-        findest du die wichtigsten Neuigkeiten und Ideen aus der Community.
+        {content.lead}
       </Text>
 
       <Section className="polity-panel" style={featureStyle}>
         <Text className="polity-kicker" style={featureLabelStyle}>
-          Im Fokus
+          {content.featureLabel}
         </Text>
         <Heading className="polity-heading" as="h2" style={sectionTitleStyle}>
-          Gemeinsam zu klaren Entscheidungen
+          {content.featureTitle}
         </Heading>
         <Text className="polity-copy" style={copyStyle}>
-          Von der ersten Idee bis zur verbindlichen Abstimmung bleibt der gesamte Prozess
-          nachvollziehbar. So wissen alle Beteiligten, was diskutiert wurde und wie es weitergeht.
+          {content.feature}
         </Text>
         <Button href={polityEmailUrls.app} style={primaryButtonStyle}>
-          Polity öffnen
+          {content.cta}
         </Button>
       </Section>
 
       <Hr className="polity-divider" style={dividerStyle} />
 
       <Heading className="polity-heading" as="h2" style={sectionTitleStyle}>
-        Was sich gerade bewegt
+        {content.updatesTitle}
       </Heading>
       <Text className="polity-copy" style={copyStyle}>
-        Nutze diesen Bereich für Neuigkeiten aus Gruppen, laufende Beteiligungsprozesse oder einen
-        kurzen Blick hinter die Kulissen von Polity.
+        {content.updates}
       </Text>
 
       <Heading className="polity-heading" as="h2" style={sectionTitleStyle}>
-        Was als Nächstes kommt
+        {content.nextTitle}
       </Heading>
       <Text className="polity-copy" style={copyStyle}>
-        Teile hier eine Vorschau auf kommende Funktionen, Veranstaltungen oder Entscheidungen und
-        verlinke direkt zu den passenden Inhalten.
+        {content.next}
       </Text>
 
       <Text className="polity-muted" style={closingStyle}>
-        Danke, dass du Polity mitgestaltest.
+        {content.closing}
         <br />
-        Dein Polity-Team
+        {content.closingTeam}
       </Text>
     </PolityEmailLayout>
   );
