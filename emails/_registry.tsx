@@ -1,12 +1,14 @@
 import { createElement, type ReactElement } from 'react';
 import { render, toPlainText } from 'react-email';
 
-import NewsletterEmail, { newsletterPreviewText } from './newsletter';
-import ProductUpdateEmail, { productUpdatePreviewText } from './product-update';
+import NewsletterEmail, { newsletterContent } from './newsletter';
+import ProductUpdateEmail, { productUpdateContent } from './product-update';
 
 export const polityTemplateSlugs = ['newsletter', 'product-update'] as const;
 export type PolityTemplateSlug = (typeof polityTemplateSlugs)[number];
 export type PolityTemplateEnvironment = 'development' | 'production';
+export type PolityTemplateLocale = 'de' | 'en';
+export const polityTemplateLocales: PolityTemplateLocale[] = ['de', 'en'];
 
 export type PolityTemplateVariable =
   | { fallbackValue?: string | null; key: string; type: 'string' }
@@ -16,6 +18,7 @@ export interface PolityTemplateDefinition {
   alias: string;
   component: ReactElement;
   environment: PolityTemplateEnvironment;
+  locale: PolityTemplateLocale;
   from: string;
   name: string;
   previewText: string;
@@ -27,34 +30,33 @@ export interface PolityTemplateDefinition {
 
 type TemplateSource = Omit<
   PolityTemplateDefinition,
-  'alias' | 'component' | 'environment' | 'name'
+  'alias' | 'component' | 'environment' | 'locale' | 'name' | 'previewText' | 'subject'
 > & {
   aliasBase: string;
-  component: () => ReactElement;
+  component: (locale: PolityTemplateLocale) => ReactElement;
+  content: Record<PolityTemplateLocale, { preview: string; subject: string }>;
   nameBase: string;
 };
 
 const templateSources: Record<PolityTemplateSlug, TemplateSource> = {
   newsletter: {
-    aliasBase: 'polity-newsletter-de',
-    component: () => createElement(NewsletterEmail),
+    aliasBase: 'polity-newsletter',
+    component: locale => createElement(NewsletterEmail, { language: locale }),
+    content: newsletterContent,
     from: 'Polity <team@polity.live>',
     nameBase: 'Polity Newsletter',
-    previewText: newsletterPreviewText,
     replyTo: 'team@polity.live',
     slug: 'newsletter',
-    subject: 'Neues aus der Polity-Community',
     variables: [],
   },
   'product-update': {
-    aliasBase: 'polity-product-update-de',
-    component: () => createElement(ProductUpdateEmail),
+    aliasBase: 'polity-product-update',
+    component: locale => createElement(ProductUpdateEmail, { language: locale }),
+    content: productUpdateContent,
     from: 'Polity <team@polity.live>',
     nameBase: 'Polity Produktupdate',
-    previewText: productUpdatePreviewText,
     replyTo: 'team@polity.live',
     slug: 'product-update',
-    subject: 'Produktupdate: Neues bei Polity',
     variables: [],
   },
 };
@@ -65,21 +67,23 @@ export function isPolityTemplateSlug(value: string): value is PolityTemplateSlug
 
 export function getPolityTemplateDefinition(
   slug: PolityTemplateSlug,
-  environment: PolityTemplateEnvironment
+  environment: PolityTemplateEnvironment,
+  locale: PolityTemplateLocale = 'de'
 ): PolityTemplateDefinition {
   const source = templateSources[slug];
   const environmentLabel = environment === 'production' ? 'Production' : 'Development';
 
   return {
-    alias: `${source.aliasBase}-${environment}`,
-    component: source.component(),
+    alias: `${source.aliasBase}-${locale}-${environment}`,
+    component: source.component(locale),
     environment,
     from: source.from,
-    name: `${source.nameBase} [${environmentLabel}]`,
-    previewText: source.previewText,
+    locale,
+    name: `${source.nameBase} ${locale.toUpperCase()} [${environmentLabel}]`,
+    previewText: source.content[locale].preview,
     replyTo: source.replyTo,
     slug: source.slug,
-    subject: source.subject,
+    subject: source.content[locale].subject,
     variables: source.variables,
   };
 }

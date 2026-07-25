@@ -1,269 +1,589 @@
-<!doctype html>
-<html
-  lang="en"
-  xmlns="http://www.w3.org/1999/xhtml"
-  xmlns:o="urn:schemas-microsoft-com:office:office"
->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html dir="ltr" lang="{{ if eq .Data.language `de` }}de{{ else }}en{{ end }}">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+    <meta name="x-apple-disable-message-reformatting" />
     <meta name="color-scheme" content="light dark" />
     <meta name="supported-color-schemes" content="light dark" />
-    <title>Confirm reauthentication for Polity</title>
-    <!--[if mso]>
-      <noscript>
-        <xml>
-          <o:OfficeDocumentSettings>
-            <o:PixelsPerInch>96</o:PixelsPerInch>
-          </o:OfficeDocumentSettings>
-        </xml>
-      </noscript>
-    <![endif]-->
+    <title>
+      {{ if eq .Data.language `de` }}{{ .Token }} ist dein Polity-Bestätigungscode{{ else }}{{
+      .Token }} is your Polity verification code{{ end }}
+    </title>
+    <title>
+      {{ if eq .Data.language `de` }}{{ .Token }} ist dein Polity-Bestätigungscode{{ else }}{{
+      .Token }} is your Polity verification code{{ end }}
+    </title>
     <style>
       @media (prefers-color-scheme: dark) {
-        .email-body {
-          background-color: #09090b !important;
+        .polity-auth-body {
+          background-color: #07110e !important;
         }
-        .email-card {
-          background-color: #18181b !important;
-          border-color: #27272a !important;
+        .polity-auth-shell,
+        .polity-auth-content {
+          background-color: #101a16 !important;
+          border-color: #2b3731 !important;
         }
-        .email-heading {
-          color: #fafafa !important;
+        .polity-auth-header,
+        .polity-auth-footer {
+          background-color: #0d1713 !important;
         }
-        .email-text {
-          color: #e4e4e7 !important;
+        .polity-auth-wordmark,
+        .polity-auth-title,
+        .polity-auth-code {
+          color: #f4efe4 !important;
         }
-        .email-muted {
-          color: #a1a1aa !important;
+        .polity-auth-copy,
+        .polity-auth-warning-copy {
+          color: #d7d0c3 !important;
         }
-        .email-divider {
-          border-color: #27272a !important;
+        .polity-auth-brandline,
+        .polity-auth-muted,
+        .polity-auth-footer-copy {
+          color: #a8b1aa !important;
         }
-        .email-logo-text {
-          color: #fafafa !important;
+        .polity-auth-eyebrow,
+        .polity-auth-code-label {
+          color: #f2d39b !important;
         }
-        .email-code {
-          background-color: #27272a !important;
-          color: #fafafa !important;
-          border-color: #3f3f46 !important;
+        .polity-auth-code-panel {
+          background-color: #18231f !important;
+          border-color: #45534c !important;
+        }
+        .polity-auth-warning {
+          background-color: #282117 !important;
+          border-color: #725b32 !important;
+        }
+        .polity-auth-divider {
+          border-color: #2b3731 !important;
+        }
+      }
+      @media screen and (max-width: 520px) {
+        .polity-auth-shell {
+          width: 100% !important;
+        }
+        .polity-auth-header,
+        .polity-auth-content,
+        .polity-auth-footer {
+          padding-left: 22px !important;
+          padding-right: 22px !important;
+        }
+        .polity-auth-title {
+          font-size: 28px !important;
+          line-height: 35px !important;
         }
       }
     </style>
   </head>
   <body
-    class="email-body"
-    style="
-      margin: 0;
-      padding: 0;
-      background-color: #f4f4f5;
-      -webkit-text-size-adjust: 100%;
-      -ms-text-size-adjust: 100%;
-    "
+    class="polity-auth-body"
+    dir="ltr"
+    lang="en"
+    style="background-color: #f7f5ef; margin: 0; padding: 0"
   >
+    <!--$--><!--html--><!--head-->
+    <div
+      style="
+        display: none;
+        overflow: hidden;
+        line-height: 1px;
+        opacity: 0;
+        max-height: 0;
+        max-width: 0;
+      "
+      data-skip-in-text="true"
+    >
+      {{ if eq .Data.language `de` }}{{ .Token }} ist dein Polity-Bestätigungscode{{ else }}{{
+      .Token }} is your Polity verification code{{ end }}
+      <div>
+         ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿
+      </div>
+    </div>
+    <!--body-->
     <table
-      role="presentation"
+      border="0"
+      width="100%"
       cellpadding="0"
       cellspacing="0"
-      width="100%"
-      style="background-color: #f4f4f5"
-      class="email-body"
+      role="presentation"
+      align="center"
     >
-      <tr>
-        <td align="center" style="padding: 40px 20px">
-          <!-- Logo -->
-          <table
-            role="presentation"
-            cellpadding="0"
-            cellspacing="0"
-            width="600"
-            style="max-width: 600px"
-          >
-            <tr>
-              <td align="center" style="padding-bottom: 32px">
-                <img
-                  src="{{ .SiteURL }}/logo192.png"
-                  width="44"
-                  height="44"
-                  alt="Polity"
-                  style="display: block; border: 0; margin: 0 auto 12px auto"
-                />
-                <p
-                  class="email-logo-text"
-                  style="
-                    margin: 0;
-                    font-family:
-                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-                      Arial, sans-serif;
-                    font-size: 18px;
-                    font-weight: 700;
-                    letter-spacing: 0.05em;
-                    color: #09090b;
-                    text-transform: uppercase;
-                  "
-                >
-                  POLITY
-                </p>
-              </td>
-            </tr>
-          </table>
-
-          <!-- Card -->
-          <table
-            class="email-card"
-            role="presentation"
-            cellpadding="0"
-            cellspacing="0"
-            width="600"
+      <tbody>
+        <tr>
+          <td
+            dir="ltr"
+            lang="en"
             style="
-              max-width: 600px;
-              background-color: #ffffff;
-              border: 1px solid #e4e4e7;
-              border-radius: 8px;
-              border-collapse: separate;
+              background-color: #f7f5ef;
+              color: #17201c;
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+              margin: 0;
+              padding: 32px 12px;
             "
           >
-            <tr>
-              <td style="padding: 48px 40px">
-                <!-- Heading -->
-                <h1
-                  class="email-heading"
-                  style="
-                    margin: 0 0 8px 0;
-                    font-family:
-                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-                      Arial, sans-serif;
-                    font-size: 22px;
-                    font-weight: 600;
-                    color: #09090b;
-                    line-height: 1.4;
-                  "
-                >
-                  Confirm reauthentication
-                </h1>
-
-                <!-- Divider -->
-                <hr
-                  class="email-divider"
-                  style="border: none; border-top: 1px solid #e4e4e7; margin: 20px 0"
-                />
-
-                <!-- Body -->
-                <p
-                  class="email-text"
-                  style="
-                    margin: 0 0 28px 0;
-                    font-family:
-                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-                      Arial, sans-serif;
-                    font-size: 15px;
-                    color: #3f3f46;
-                    line-height: 1.6;
-                  "
-                >
-                  Enter the following verification code to confirm your identity. This code will
-                  expire shortly.
-                </p>
-
-                <!-- Token Code -->
-                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                  <tr>
-                    <td align="center" style="padding: 0 0 28px 0">
-                      <table role="presentation" cellpadding="0" cellspacing="0">
+            <table
+              align="center"
+              width="100%"
+              class="polity-auth-shell"
+              border="0"
+              cellpadding="0"
+              cellspacing="0"
+              role="presentation"
+              style="
+                max-width: 600px;
+                background-color: #fffcf6;
+                border: 1px solid #d9d2c3;
+                border-radius: 8px;
+                margin: 0 auto;
+                overflow: hidden;
+                width: 100%;
+              "
+            >
+              <tbody>
+                <tr style="width: 100%">
+                  <td>
+                    <table
+                      align="center"
+                      width="100%"
+                      border="0"
+                      cellpadding="0"
+                      cellspacing="0"
+                      role="presentation"
+                      class="polity-auth-header"
+                      style="background-color: #f2eee4; border-bottom: 1px solid #d9d2c3"
+                    >
+                      <tbody>
                         <tr>
-                          <td
-                            class="email-code"
-                            align="center"
-                            style="
-                              background-color: #f4f4f5;
-                              border: 1px solid #e4e4e7;
-                              border-radius: 6px;
-                              padding: 20px 40px;
-                            "
-                          >
-                            <span
-                              style="
-                                font-family:
-                                  'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo,
-                                  monospace;
-                                font-size: 32px;
-                                font-weight: 600;
-                                letter-spacing: 0.2em;
-                                color: #09090b;
-                              "
-                              >{{ .Token }}</span
-                            >
+                          <td style="padding: 22px 34px">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                              <tbody>
+                                <tr>
+                                  <td style="padding-right: 13px; width: 42px">
+                                    <img
+                                      alt="Polity"
+                                      height="42"
+                                      src="{{ .SiteURL }}/android-chrome-192x192.png"
+                                      style="
+                                        display: block;
+                                        outline: none;
+                                        border: none;
+                                        text-decoration: none;
+                                        border-radius: 6px;
+                                      "
+                                      width="42"
+                                    />
+                                  </td>
+                                  <td>
+                                    <p
+                                      class="polity-auth-wordmark"
+                                      style="
+                                        font-size: 17px;
+                                        line-height: 20px;
+                                        color: #17201c;
+                                        font-weight: 750;
+                                        margin: 0;
+                                        margin-top: 0;
+                                        margin-bottom: 0;
+                                        margin-left: 0;
+                                        margin-right: 0;
+                                      "
+                                    >
+                                      POLITY
+                                    </p>
+                                    <p
+                                      class="polity-auth-brandline"
+                                      style="
+                                        font-size: 10px;
+                                        line-height: 15px;
+                                        color: #6c4a16;
+                                        font-weight: 650;
+                                        margin: 2px 0 0;
+                                        text-transform: uppercase;
+                                        margin-top: 2px;
+                                        margin-right: 0;
+                                        margin-bottom: 0;
+                                        margin-left: 0;
+                                      "
+                                    >
+                                      Participation · decisions · action
+                                    </p>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
                           </td>
                         </tr>
-                      </table>
-                    </td>
-                  </tr>
-                </table>
-
-                <!-- Note -->
-                <p
-                  class="email-muted"
-                  style="
-                    margin: 0;
-                    font-family:
-                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-                      Arial, sans-serif;
-                    font-size: 13px;
-                    color: #71717a;
-                    line-height: 1.6;
-                    text-align: center;
-                  "
-                >
-                  Enter this code in the app to continue. Do not share this code with anyone.
-                </p>
-              </td>
-            </tr>
-          </table>
-
-          <!-- Footer -->
-          <table
-            role="presentation"
-            cellpadding="0"
-            cellspacing="0"
-            width="600"
-            style="max-width: 600px"
-          >
-            <tr>
-              <td align="center" style="padding: 28px 0 0 0">
-                <p
-                  class="email-muted"
-                  style="
-                    margin: 0 0 4px 0;
-                    font-family:
-                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-                      Arial, sans-serif;
-                    font-size: 12px;
-                    color: #a1a1aa;
-                    line-height: 1.6;
-                  "
-                >
-                  &copy; 2026 Polity. All rights reserved.
-                </p>
-                <p
-                  class="email-muted"
-                  style="
-                    margin: 0;
-                    font-family:
-                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-                      Arial, sans-serif;
-                    font-size: 12px;
-                    color: #a1a1aa;
-                    line-height: 1.6;
-                  "
-                >
-                  If you didn't request this code, please secure your account immediately.
-                </p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
+                      </tbody>
+                    </table>
+                    <table
+                      align="center"
+                      width="100%"
+                      border="0"
+                      cellpadding="0"
+                      cellspacing="0"
+                      role="presentation"
+                      class="polity-auth-content"
+                      style="background-color: #fffcf6"
+                    >
+                      <tbody>
+                        <tr>
+                          <td style="padding: 40px 34px 34px">
+                            {{ if eq .Data.language `de` }}
+                            <p
+                              class="polity-auth-eyebrow"
+                              style="
+                                font-size: 12px;
+                                line-height: 18px;
+                                color: #6c4a16;
+                                font-weight: 700;
+                                margin: 0 0 9px;
+                                text-transform: uppercase;
+                                margin-top: 0;
+                                margin-right: 0;
+                                margin-bottom: 9px;
+                                margin-left: 0;
+                              "
+                            >
+                              Identität bestätigen
+                            </p>
+                            <h1
+                              class="polity-auth-title"
+                              style="
+                                color: #17201c;
+                                font-size: 32px;
+                                font-weight: 720;
+                                line-height: 40px;
+                                margin: 0 0 18px;
+                              "
+                            >
+                              Bestätige, dass du es bist.
+                            </h1>
+                            <p
+                              class="polity-auth-copy"
+                              style="
+                                font-size: 16px;
+                                line-height: 25px;
+                                color: #3f4944;
+                                margin: 0 0 22px;
+                                margin-top: 0;
+                                margin-right: 0;
+                                margin-bottom: 22px;
+                                margin-left: 0;
+                              "
+                            >
+                              Verwende diesen einmaligen Code, um deine Identität für die
+                              angeforderte Kontoänderung zu bestätigen.
+                            </p>
+                            <table
+                              align="center"
+                              width="100%"
+                              border="0"
+                              cellpadding="0"
+                              cellspacing="0"
+                              role="presentation"
+                              class="polity-auth-code-panel"
+                              style="
+                                background-color: #f2eee4;
+                                border: 1px solid #c9c0af;
+                                border-radius: 6px;
+                                margin: 8px 0 24px;
+                              "
+                            >
+                              <tbody>
+                                <tr>
+                                  <td style="padding: 18px 22px">
+                                    <p
+                                      class="polity-auth-code-label"
+                                      style="
+                                        font-size: 11px;
+                                        line-height: 16px;
+                                        color: #6c4a16;
+                                        font-weight: 700;
+                                        margin: 0 0 6px;
+                                        text-transform: uppercase;
+                                        margin-top: 0;
+                                        margin-right: 0;
+                                        margin-bottom: 6px;
+                                        margin-left: 0;
+                                      "
+                                    >
+                                      Dein Bestätigungscode
+                                    </p>
+                                    <p
+                                      class="polity-auth-code"
+                                      style="
+                                        font-size: 30px;
+                                        line-height: 36px;
+                                        color: #17201c;
+                                        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                                        font-weight: 750;
+                                        margin: 0;
+                                        margin-top: 0;
+                                        margin-bottom: 0;
+                                        margin-left: 0;
+                                        margin-right: 0;
+                                      "
+                                    >
+                                      {{ .Token }}
+                                    </p>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                            <table
+                              align="center"
+                              width="100%"
+                              border="0"
+                              cellpadding="0"
+                              cellspacing="0"
+                              role="presentation"
+                              class="polity-auth-warning"
+                              style="
+                                background-color: #f5ecd8;
+                                border: 1px solid #d2ad63;
+                                border-radius: 6px;
+                                margin-top: 12px;
+                              "
+                            >
+                              <tbody>
+                                <tr>
+                                  <td style="padding: 15px 17px">
+                                    <p
+                                      class="polity-auth-warning-copy"
+                                      style="
+                                        font-size: 13px;
+                                        line-height: 20px;
+                                        color: #5b4a2c;
+                                        margin: 0;
+                                        margin-top: 0;
+                                        margin-bottom: 0;
+                                        margin-left: 0;
+                                        margin-right: 0;
+                                      "
+                                    >
+                                      Falls du keine sicherheitsrelevante Änderung angefordert hast,
+                                      ändere dein Passwort und kontaktiere uns.
+                                    </p>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                            {{ else }}
+                            <p
+                              class="polity-auth-eyebrow"
+                              style="
+                                font-size: 12px;
+                                line-height: 18px;
+                                color: #6c4a16;
+                                font-weight: 700;
+                                margin: 0 0 9px;
+                                text-transform: uppercase;
+                                margin-top: 0;
+                                margin-right: 0;
+                                margin-bottom: 9px;
+                                margin-left: 0;
+                              "
+                            >
+                              Verify identity
+                            </p>
+                            <h1
+                              class="polity-auth-title"
+                              style="
+                                color: #17201c;
+                                font-size: 32px;
+                                font-weight: 720;
+                                line-height: 40px;
+                                margin: 0 0 18px;
+                              "
+                            >
+                              Confirm it is you.
+                            </h1>
+                            <p
+                              class="polity-auth-copy"
+                              style="
+                                font-size: 16px;
+                                line-height: 25px;
+                                color: #3f4944;
+                                margin: 0 0 22px;
+                                margin-top: 0;
+                                margin-right: 0;
+                                margin-bottom: 22px;
+                                margin-left: 0;
+                              "
+                            >
+                              Use this one-time code to verify your identity for the requested
+                              account change.
+                            </p>
+                            <table
+                              align="center"
+                              width="100%"
+                              border="0"
+                              cellpadding="0"
+                              cellspacing="0"
+                              role="presentation"
+                              class="polity-auth-code-panel"
+                              style="
+                                background-color: #f2eee4;
+                                border: 1px solid #c9c0af;
+                                border-radius: 6px;
+                                margin: 8px 0 24px;
+                              "
+                            >
+                              <tbody>
+                                <tr>
+                                  <td style="padding: 18px 22px">
+                                    <p
+                                      class="polity-auth-code-label"
+                                      style="
+                                        font-size: 11px;
+                                        line-height: 16px;
+                                        color: #6c4a16;
+                                        font-weight: 700;
+                                        margin: 0 0 6px;
+                                        text-transform: uppercase;
+                                        margin-top: 0;
+                                        margin-right: 0;
+                                        margin-bottom: 6px;
+                                        margin-left: 0;
+                                      "
+                                    >
+                                      Your verification code
+                                    </p>
+                                    <p
+                                      class="polity-auth-code"
+                                      style="
+                                        font-size: 30px;
+                                        line-height: 36px;
+                                        color: #17201c;
+                                        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                                        font-weight: 750;
+                                        margin: 0;
+                                        margin-top: 0;
+                                        margin-bottom: 0;
+                                        margin-left: 0;
+                                        margin-right: 0;
+                                      "
+                                    >
+                                      {{ .Token }}
+                                    </p>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                            <table
+                              align="center"
+                              width="100%"
+                              border="0"
+                              cellpadding="0"
+                              cellspacing="0"
+                              role="presentation"
+                              class="polity-auth-warning"
+                              style="
+                                background-color: #f5ecd8;
+                                border: 1px solid #d2ad63;
+                                border-radius: 6px;
+                                margin-top: 12px;
+                              "
+                            >
+                              <tbody>
+                                <tr>
+                                  <td style="padding: 15px 17px">
+                                    <p
+                                      class="polity-auth-warning-copy"
+                                      style="
+                                        font-size: 13px;
+                                        line-height: 20px;
+                                        color: #5b4a2c;
+                                        margin: 0;
+                                        margin-top: 0;
+                                        margin-bottom: 0;
+                                        margin-left: 0;
+                                        margin-right: 0;
+                                      "
+                                    >
+                                      If you did not request a security-sensitive change, reset your
+                                      password and contact us.
+                                    </p>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                            {{ end }}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <table
+                      align="center"
+                      width="100%"
+                      border="0"
+                      cellpadding="0"
+                      cellspacing="0"
+                      role="presentation"
+                      class="polity-auth-footer"
+                      style="background-color: #f2eee4"
+                    >
+                      <tbody>
+                        <tr>
+                          <td style="padding: 0 34px 26px">
+                            <hr
+                              class="polity-auth-divider"
+                              style="
+                                width: 100%;
+                                border: 0;
+                                border-color: transparent;
+                                border-top: 1px solid #d9d2c3;
+                                margin: 0;
+                              "
+                            />
+                            <p
+                              class="polity-auth-footer-copy"
+                              style="
+                                font-size: 11px;
+                                line-height: 18px;
+                                color: #7f8983;
+                                margin: 22px 0 0;
+                                text-align: center;
+                                margin-top: 22px;
+                                margin-right: 0;
+                                margin-bottom: 0;
+                                margin-left: 0;
+                              "
+                            >
+                              Polity ·<!-- -->
+                              <a
+                                href="{{ .SiteURL }}"
+                                style="
+                                  color: #6c4a16;
+                                  text-decoration-line: none;
+                                  text-decoration: underline;
+                                "
+                                target="_blank"
+                                >polity.live</a
+                              >
+                              <!-- -->·<!-- -->
+                              <a
+                                href="mailto:team@polity.live"
+                                style="
+                                  color: #6c4a16;
+                                  text-decoration-line: none;
+                                  text-decoration: underline;
+                                "
+                                target="_blank"
+                                >team@polity.live</a
+                              >
+                            </p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </tbody>
     </table>
+    <!--/$-->
   </body>
 </html>

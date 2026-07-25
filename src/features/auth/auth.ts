@@ -7,6 +7,8 @@ import { immer } from 'zustand/middleware/immer';
 import { createClient } from '@/lib/supabase/client';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { getAuthRedirectUrl } from '@/features/auth/logic/authRedirects';
+import { storePendingGoogleLanguage } from '@/features/auth/logic/authLanguage';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
 const AUTH_SERVICE_UNAVAILABLE_MESSAGE =
   'Authentication service is temporarily unavailable. Please try again in a moment.';
@@ -122,11 +124,13 @@ export const useAuthStore = create<AuthState>()(
 
       try {
         const supabase = createClient();
+        const language = useLanguageStore.getState().language;
         const { data, error } = await retryTransientAuthFailure(() =>
           supabase.auth.signUp({
             email,
             password,
             options: {
+              data: { language },
               emailRedirectTo: getAuthRedirectUrl('/auth/callback'),
             },
           })
@@ -177,6 +181,7 @@ export const useAuthStore = create<AuthState>()(
 
       try {
         const supabase = createClient();
+        storePendingGoogleLanguage(useLanguageStore.getState().language);
         const { error } = await retryTransientAuthFailure(() =>
           supabase.auth.signInWithPassword({ email, password })
         );
@@ -281,8 +286,15 @@ export const useAuthStore = create<AuthState>()(
 
       try {
         const supabase = createClient();
+        const language = useLanguageStore.getState().language;
         const { error } = await retryTransientAuthFailure(() =>
-          supabase.auth.signInWithOtp({ email })
+          supabase.auth.signInWithOtp({
+            email,
+            options: {
+              data: { language },
+              emailRedirectTo: getAuthRedirectUrl('/auth/callback'),
+            },
+          })
         );
 
         if (error) {

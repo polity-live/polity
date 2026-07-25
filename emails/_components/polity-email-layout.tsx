@@ -12,12 +12,37 @@ const urls = {
 interface PolityEmailLayoutProps {
   children: ReactNode;
   eyebrow: string;
+  language: 'de' | 'en';
   previewText: string;
 }
 
-export function PolityEmailLayout({ children, eyebrow, previewText }: PolityEmailLayoutProps) {
+export function PolityEmailLayout({
+  children,
+  eyebrow,
+  language,
+  previewText,
+}: PolityEmailLayoutProps) {
+  const footer =
+    language === 'de'
+      ? {
+          app: 'Polity öffnen',
+          imprint: 'Impressum',
+          privacy: 'Datenschutz',
+          reason:
+            'Du erhältst diese E-Mail, weil deine bestätigte Polity-Adresse für den Newsletter eingetragen ist.',
+          unsubscribe: 'Newsletter abbestellen',
+        }
+      : {
+          app: 'Open Polity',
+          imprint: 'Legal notice',
+          privacy: 'Privacy',
+          reason:
+            'You are receiving this email because your confirmed Polity address is subscribed to the newsletter.',
+          unsubscribe: 'Unsubscribe from newsletter',
+        };
+
   return (
-    <Html lang="de">
+    <Html lang={language}>
       <Head>
         <meta name="color-scheme" content="light dark" />
         <meta name="supported-color-schemes" content="light dark" />
@@ -53,24 +78,23 @@ export function PolityEmailLayout({ children, eyebrow, previewText }: PolityEmai
           <Section className="polity-footer" style={footerStyle}>
             <Hr className="polity-divider" style={footerDividerStyle} />
             <Text className="polity-footer-text" style={footerTextStyle}>
-              Du erhältst diese E-Mail, weil deine bestätigte Polity-Adresse für den Newsletter
-              eingetragen ist.
+              {footer.reason}
             </Text>
             <Text className="polity-footer-links" style={footerLinksStyle}>
               <Link className="polity-footer-link" href={urls.app} style={footerLinkStyle}>
-                Polity öffnen
+                {footer.app}
               </Link>
               <span style={separatorStyle}>·</span>
               <Link className="polity-footer-link" href={urls.imprint} style={footerLinkStyle}>
-                Impressum
+                {footer.imprint}
               </Link>
               <span style={separatorStyle}>·</span>
               <Link className="polity-footer-link" href={urls.privacy} style={footerLinkStyle}>
-                Datenschutz
+                {footer.privacy}
               </Link>
               <span style={separatorStyle}>·</span>
               <Link className="polity-footer-link" href={urls.unsubscribe} style={footerLinkStyle}>
-                Newsletter abbestellen
+                {footer.unsubscribe}
               </Link>
             </Text>
             <Text className="polity-address" style={addressStyle}>

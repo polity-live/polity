@@ -1,5 +1,6 @@
 import {
   getPolityTemplateDefinition,
+  polityTemplateLocales,
   polityTemplateSlugs,
   renderPolityTemplate,
   type PolityTemplateEnvironment,
@@ -10,19 +11,26 @@ const aliases = new Set<string>();
 
 for (const environment of environments) {
   for (const slug of polityTemplateSlugs) {
-    const definition = getPolityTemplateDefinition(slug, environment);
-    if (aliases.has(definition.alias)) {
-      throw new Error(`Duplicate template alias: ${definition.alias}`);
+    for (const locale of polityTemplateLocales) {
+      const definition = getPolityTemplateDefinition(slug, environment, locale);
+      if (aliases.has(definition.alias)) {
+        throw new Error(`Duplicate template alias: ${definition.alias}`);
+      }
+      aliases.add(definition.alias);
+
+      const { html, text } = await renderPolityTemplate(definition);
+      assertIncludes(html, `lang="${locale}"`, definition.alias);
+      assertIncludes(html, '{{{RESEND_UNSUBSCRIBE_URL}}}', definition.alias);
+      assertIncludes(html, 'https://www.polity.live/imprint', definition.alias);
+      assertIncludes(html, 'https://www.polity.live/privacy-policy', definition.alias);
+      assertIncludes(
+        text,
+        locale === 'de' ? 'Newsletter abbestellen' : 'Unsubscribe from newsletter',
+        definition.alias
+      );
+
+      console.log(`ok ${definition.alias} (${html.length} HTML chars, ${text.length} text chars)`);
     }
-    aliases.add(definition.alias);
-
-    const { html, text } = await renderPolityTemplate(definition);
-    assertIncludes(html, '{{{RESEND_UNSUBSCRIBE_URL}}}', definition.alias);
-    assertIncludes(html, 'https://www.polity.live/imprint', definition.alias);
-    assertIncludes(html, 'https://www.polity.live/privacy-policy', definition.alias);
-    assertIncludes(text, 'Newsletter abbestellen', definition.alias);
-
-    console.log(`ok ${definition.alias} (${html.length} HTML chars, ${text.length} text chars)`);
   }
 }
 

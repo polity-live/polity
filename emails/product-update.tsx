@@ -3,49 +3,96 @@ import { Button, Heading, Hr, Section, Text } from 'react-email';
 
 import { PolityEmailLayout, polityEmailUrls } from './_components/polity-email-layout';
 
-export const productUpdatePreviewText =
-  'Ein kompakter Überblick über die neuesten Verbesserungen bei Polity.';
+export const productUpdateContent = {
+  de: {
+    blocks: [
+      {
+        copy: 'Seiten, Dialoge und Werkzeuge folgen jetzt einem konsistenten Civic-Design. Informationen lassen sich schneller scannen, ohne dass wichtige Details verloren gehen.',
+        label: 'Neu',
+        title: 'Ein ruhigerer Arbeitsbereich',
+      },
+      {
+        copy: 'Status, nächste Schritte und offene Entscheidungen werden deutlicher dargestellt. Das hilft besonders bei längeren Beteiligungs- und Abstimmungsprozessen.',
+        label: 'Verbessert',
+        title: 'Bessere Orientierung in Prozessen',
+      },
+      {
+        copy: 'Zahlreiche kleinere Korrekturen reduzieren Unterbrechungen und sorgen für verlässlichere Aktualisierungen zwischen deinen Geräten.',
+        label: 'Behoben',
+        title: 'Stabilität im Alltag',
+      },
+    ],
+    closing: 'Fragen oder Feedback? Antworte einfach auf diese E-Mail.',
+    closingTeam: 'Dein Polity-Team',
+    cta: 'Update in Polity ansehen',
+    eyebrow: 'Produktupdate',
+    kicker: 'Produktupdate · Juli 2026',
+    lead: 'Dieses Update verbessert die tägliche Zusammenarbeit und macht wichtige Entscheidungen leichter auffindbar.',
+    preview: 'Ein kompakter Überblick über die neuesten Verbesserungen bei Polity.',
+    subject: 'Produktupdate: Neues bei Polity',
+    title: 'Polity wird klarer und schneller.',
+  },
+  en: {
+    blocks: [
+      {
+        copy: 'Pages, dialogs, and tools now follow a consistent civic design. Information is easier to scan without losing important detail.',
+        label: 'New',
+        title: 'A calmer workspace',
+      },
+      {
+        copy: 'Statuses, next steps, and open decisions are presented more clearly, especially across longer participation and voting processes.',
+        label: 'Improved',
+        title: 'Better orientation in processes',
+      },
+      {
+        copy: 'Numerous smaller fixes reduce interruptions and make updates across your devices more reliable.',
+        label: 'Fixed',
+        title: 'Everyday stability',
+      },
+    ],
+    closing: 'Questions or feedback? Simply reply to this email.',
+    closingTeam: 'The Polity team',
+    cta: 'View the update in Polity',
+    eyebrow: 'Product update',
+    kicker: 'Product update · July 2026',
+    lead: 'This update improves everyday collaboration and makes important decisions easier to find.',
+    preview: 'A compact overview of the latest improvements to Polity.',
+    subject: 'Product update: What is new at Polity',
+    title: 'Polity is becoming clearer and faster.',
+  },
+} as const;
 
-export default function ProductUpdateEmail() {
+export default function ProductUpdateEmail({ language = 'de' }: { language?: 'de' | 'en' }) {
+  const content = productUpdateContent[language];
   return (
-    <PolityEmailLayout eyebrow="Produktupdate" previewText={productUpdatePreviewText}>
+    <PolityEmailLayout eyebrow={content.eyebrow} language={language} previewText={content.preview}>
       <Text className="polity-kicker" style={kickerStyle}>
-        Produktupdate · Juli 2026
+        {content.kicker}
       </Text>
       <Heading className="polity-title" style={titleStyle}>
-        Polity wird klarer und schneller.
+        {content.title}
       </Heading>
       <Text className="polity-copy" style={leadStyle}>
-        Dieses Update verbessert die tägliche Zusammenarbeit und macht wichtige Entscheidungen
-        leichter auffindbar.
+        {content.lead}
       </Text>
 
-      <UpdateBlock label="Neu" title="Ein ruhigerer Arbeitsbereich">
-        Seiten, Dialoge und Werkzeuge folgen jetzt einem konsistenten Civic-Design. Informationen
-        lassen sich schneller scannen, ohne dass wichtige Details verloren gehen.
-      </UpdateBlock>
-
-      <UpdateBlock label="Verbessert" title="Bessere Orientierung in Prozessen">
-        Status, nächste Schritte und offene Entscheidungen werden deutlicher dargestellt. Das hilft
-        besonders bei längeren Beteiligungs- und Abstimmungsprozessen.
-      </UpdateBlock>
-
-      <UpdateBlock label="Behoben" title="Stabilität im Alltag">
-        Zahlreiche kleinere Korrekturen reduzieren Unterbrechungen und sorgen für verlässlichere
-        Aktualisierungen zwischen deinen Geräten.
-      </UpdateBlock>
+      {content.blocks.map(block => (
+        <UpdateBlock key={block.label} label={block.label} title={block.title}>
+          {block.copy}
+        </UpdateBlock>
+      ))}
 
       <Section style={ctaSectionStyle}>
         <Button href={polityEmailUrls.app} style={primaryButtonStyle}>
-          Update in Polity ansehen
+          {content.cta}
         </Button>
       </Section>
 
       <Hr className="polity-divider" style={dividerStyle} />
       <Text className="polity-muted" style={closingStyle}>
-        Fragen oder Feedback? Antworte einfach auf diese E-Mail.
+        {content.closing}
         <br />
-        Dein Polity-Team
+        {content.closingTeam}
       </Text>
     </PolityEmailLayout>
   );

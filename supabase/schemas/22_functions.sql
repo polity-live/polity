@@ -169,8 +169,15 @@ BEGIN
   INSERT INTO public.notification_setting (user_id)
   VALUES (NEW.id);
 
-  INSERT INTO public.user_preference (user_id)
-  VALUES (NEW.id);
+  INSERT INTO public.user_preference (user_id, language)
+  VALUES (
+    NEW.id,
+    CASE
+      WHEN NEW.raw_user_meta_data->>'language' IN ('de', 'en')
+        THEN NEW.raw_user_meta_data->>'language'
+      ELSE 'en'
+    END
+  );
 
   PERFORM public.ensure_assistant_conversation(NEW.id);
 

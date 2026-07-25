@@ -10,6 +10,7 @@ import type { ThemeType } from '@/features/shared/global-state/theme.store';
 import type { Language } from '@/features/shared/global-state/language.store';
 import type { NavigationView } from '@/features/navigation/types/navigation.types';
 import { useDisplayCurrencyStore } from '@/features/shared/global-state/currency.store';
+import { createClient } from '@/lib/supabase/client';
 
 /**
  * Bidirectional sync between persisted DB preferences and Zustand stores.
@@ -77,6 +78,15 @@ export function usePreferenceSync() {
     [zero]
   );
 
+  const persistAuthLanguage = useCallback(async (nextLanguage: Language) => {
+    const { error } = await createClient().auth.updateUser({
+      data: { language: nextLanguage },
+    });
+    if (error) {
+      console.error('Auth language update failed:', error.message);
+    }
+  }, []);
+
   // DB → Zustand (existing user) or Zustand → DB (new user) on first load
   useEffect(() => {
     if (isLoading || hasSynced.current || !preference) return;
@@ -142,7 +152,8 @@ export function usePreferenceSync() {
     if (language === prevLanguage.current) return;
     prevLanguage.current = language;
     persistField({ language });
-  }, [language, persistField]);
+    void persistAuthLanguage(language);
+  }, [language, persistField, persistAuthLanguage]);
 
   // Zustand → DB: persist navigation view changes
   useEffect(() => {
