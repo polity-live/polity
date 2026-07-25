@@ -22,7 +22,6 @@ import { useAuth } from '@/providers/auth-provider.tsx';
 import { useZeroReady } from '@/providers/zero-provider.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import {
-  createDocsSecondaryNavItems,
   createEntitySecondaryNavItemsUnauthenticated,
   createLandingSecondaryNavItems,
   createNavItemsUnauthenticated,
@@ -92,10 +91,6 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
   const secondaryNavItems = useMemo(() => {
     if (isLandingPath(pathname)) {
       return createLandingSecondaryNavItems(navigate, t);
-    }
-
-    if (pathname.startsWith('/docs')) {
-      return createDocsSecondaryNavItems(navigate, t);
     }
 
     return createEntitySecondaryNavItemsUnauthenticated(pathname, navigate, t);
@@ -318,7 +313,15 @@ function PageFrame({ children, frame }: { children: ReactNode; frame: AppShellPa
     return <>{children}</>;
   }
 
-  return <div className={APP_SHELL_PAGE_FRAME_CLASS[frame]}>{children}</div>;
+  return (
+    <div
+      data-slot="app-shell-page-frame"
+      data-frame={frame}
+      className={APP_SHELL_PAGE_FRAME_CLASS[frame]}
+    >
+      {children}
+    </div>
+  );
 }
 
 function getMarginClasses({

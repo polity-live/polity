@@ -1,5 +1,4 @@
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
-import { docsTopicDefinitions } from '@/features/docs/logic/docsTopics.ts';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { isGuestAccessibleEntityPath } from '@/features/auth/logic/guestEntityRouteAccess';
 import { navItemsAuthenticated } from './nav-items-authenticated';
@@ -84,28 +83,6 @@ export const createLandingSecondaryNavItems = (
       href: '/#imprint',
       onClick: () => navigate({ to: '/', hash: 'imprint' }),
     },
-  ];
-};
-
-export const createDocsSecondaryNavItems = (
-  navigate: NavigateFn,
-  t?: (key: string) => string
-): NavigationItem[] => {
-  return [
-    {
-      id: 'docs-overview',
-      icon: 'BookOpen',
-      label: t ? t('pages.docs.overview.navLabel') : 'Overview',
-      href: '/docs',
-      onClick: () => navigate({ to: '/docs' }),
-    },
-    ...docsTopicDefinitions.map(topic => ({
-      id: `docs-${topic.slug}`,
-      icon: topic.icon,
-      label: t ? t(`pages.docs.topics.${topic.slug}.navLabel`) : topic.slug,
-      href: `/docs/${topic.slug}`,
-      onClick: () => navigate({ to: `/docs/${topic.slug}` }),
-    })),
   ];
 };
 

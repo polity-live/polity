@@ -173,7 +173,7 @@ function LandingAmendmentEditorPreview({
               editorVariant="demo"
               containerVariant="demo"
               containerClassName="max-h-[22rem] overflow-y-auto rounded-md border bg-background"
-              editorClassName="min-h-[16rem] px-5 py-4"
+              editorClassName="min-h-[16rem] py-4 pr-12 pl-5"
             />
           </div>
         </div>

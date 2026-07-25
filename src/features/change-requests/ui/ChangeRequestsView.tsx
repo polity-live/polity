@@ -13,9 +13,6 @@ import { PageSkeleton } from '@/features/shared/ui/feedback';
 import type { ChangeRequestBranchSection } from '../logic/changeRequestsViewModel';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 import type { StreetDesignPreviewSource } from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
-import { PolityZeroListView } from '@/features/shared/virtualization';
-import { queries } from '@/zero/queries';
-import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 
 interface ChangeRequestsViewProps {
   virtualize?: boolean;
@@ -34,7 +31,10 @@ interface ChangeRequestsViewProps {
   isLoading: boolean;
   openCount: number;
   timelineItems: ChangeRequestTimelineRow[];
+  obsoleteTimelineItems?: ChangeRequestTimelineRow[];
+  obsoleteDiffMap?: Record<string, ChangeRequestDiffData>;
   branchSections?: ChangeRequestBranchSection[];
+  obsoleteBranchSections?: ChangeRequestBranchSection[];
   branchSelectorBranches?: readonly AmendmentProcessBranchSource[];
   selectedBranchId?: string | null;
   branchDiffCandidates?: VariantDiffCandidate[];
@@ -64,7 +64,10 @@ export function ChangeRequestsView({
   hasAmendment,
   isLoading,
   timelineItems,
+  obsoleteTimelineItems = [],
+  obsoleteDiffMap = {},
   branchSections = [],
+  obsoleteBranchSections = [],
   branchSelectorBranches = [],
   selectedBranchId,
   branchDiffCandidates = [],
@@ -100,174 +103,91 @@ export function ChangeRequestsView({
     sectionDocumentContent,
     sectionDiscussions,
     sectionEditingMode,
-    sectionBranchId,
+    sectionObsoleteItems = [],
+    sectionObsoleteDiffMap = {},
   }: {
     items: ChangeRequestTimelineRow[];
     sectionDiffMap: Record<string, ChangeRequestDiffData>;
     sectionDocumentContent?: Value;
     sectionDiscussions: TDiscussion[];
     sectionEditingMode?: EditingMode | null;
-    sectionBranchId?: string | null;
+    sectionObsoleteItems?: ChangeRequestTimelineRow[];
+    sectionObsoleteDiffMap?: Record<string, ChangeRequestDiffData>;
   }) => {
     const resolvedEditingMode = sectionEditingMode ?? editingMode ?? 'edit';
     const isSectionInternalVotingStage = resolvedEditingMode === 'vote_internal';
     const isSectionEventVotingStage =
       resolvedEditingMode === 'suggest_event' || resolvedEditingMode === 'event_final_closing_vote';
 
-    if (!virtualize) {
-      return (
-        <ChangeRequestCardsList
-          items={items}
-          editingMode={resolvedEditingMode}
-          isVotingActive={isSectionInternalVotingStage || isSectionEventVotingStage}
-          userId={userId}
-          diffMap={sectionDiffMap}
-          documentContent={sectionDocumentContent}
-          streetDesigns={streetDesigns}
-          discussions={sectionDiscussions}
-          amendmentId={amendmentId}
-          agendaItemId={agendaItemId}
-          canManage={isSectionInternalVotingStage && Boolean(canManageInternalVotes)}
-          canVote={
-            isSectionInternalVotingStage
-              ? Boolean(canVoteInternal)
-              : isSectionEventVotingStage && Boolean(canVoteEvent)
-          }
-          hideInlineVotingControls={isSectionEventVotingStage}
-          showAgendaDetailsVoteActions={isSectionEventVotingStage}
-          hasUserVoted={
-            isSectionInternalVotingStage
-              ? hasUserVoted
-              : isSectionEventVotingStage
-                ? hasUserVotedOnEventCR
-                : undefined
-          }
-          getUserSelectedChoiceIds={
-            isSectionInternalVotingStage
-              ? getUserSelectedChoiceIds
-              : isSectionEventVotingStage
-                ? getEventCRSelectedChoiceIds
-                : undefined
-          }
-          onCastVote={
-            isSectionInternalVotingStage
-              ? onCastInternalVote
-              : isSectionEventVotingStage
-                ? onCastEventCRVote
-                : undefined
-          }
-          onOpenVoteDialog={isSectionEventVotingStage ? onOpenEventCRVoteDialog : undefined}
-          onFinalizeInternalVote={isSectionInternalVotingStage ? onFinalizeInternalVote : undefined}
-        />
-      );
-    }
-
-    const context = { amendmentId, branchId: sectionBranchId ?? undefined };
     return (
-      <PolityZeroListView<any, { created_at: number; id: string }, typeof context>
-        context={context}
-        historyKey={`amendment-${amendmentId}-change-requests-${sectionBranchId ?? 'all'}`}
-        estimateSize={340}
-        getRowKey={row => row.id}
-        toStartRow={row => ({ created_at: row.created_at, id: row.id })}
-        getPageQuery={({ limit, start, dir, settled }) => ({
-          query: queries.amendments.changeRequestPage({
-            amendmentId,
-            branchId: sectionBranchId ?? undefined,
-            limit,
-            start,
-            dir,
-          }) as never,
-          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
-        })}
-        getSingleQuery={({ id, settled }) => ({
-          query: queries.amendments.changeRequestById({ id }) as never,
-          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
-        })}
-        renderRow={row => {
-          const item =
-            items.find(candidate => candidate.change_request_id === row.id) ??
-            items.find(candidate => (candidate.change_request as any)?.id === row.id) ??
-            ({
-              id: `change-request-${row.id}`,
-              change_request_id: row.id,
-              change_request: row,
-              created_at: row.created_at,
-              type: 'change_request',
-            } as unknown as ChangeRequestTimelineRow);
-          return (
-            <ChangeRequestCardsList
-              items={[item]}
-              editingMode={resolvedEditingMode}
-              isVotingActive={isSectionInternalVotingStage || isSectionEventVotingStage}
-              userId={userId}
-              diffMap={sectionDiffMap}
-              documentContent={sectionDocumentContent}
-              streetDesigns={streetDesigns}
-              discussions={sectionDiscussions}
-              amendmentId={amendmentId}
-              agendaItemId={agendaItemId}
-              canManage={isSectionInternalVotingStage && Boolean(canManageInternalVotes)}
-              canVote={
-                isSectionInternalVotingStage
-                  ? Boolean(canVoteInternal)
-                  : isSectionEventVotingStage && Boolean(canVoteEvent)
-              }
-              hideInlineVotingControls={isSectionEventVotingStage}
-              showAgendaDetailsVoteActions={isSectionEventVotingStage}
-              hasUserVoted={
-                isSectionInternalVotingStage
-                  ? hasUserVoted
-                  : isSectionEventVotingStage
-                    ? hasUserVotedOnEventCR
-                    : undefined
-              }
-              getUserSelectedChoiceIds={
-                isSectionInternalVotingStage
-                  ? getUserSelectedChoiceIds
-                  : isSectionEventVotingStage
-                    ? getEventCRSelectedChoiceIds
-                    : undefined
-              }
-              onCastVote={
-                isSectionInternalVotingStage
-                  ? onCastInternalVote
-                  : isSectionEventVotingStage
-                    ? onCastEventCRVote
-                    : undefined
-              }
-              onOpenVoteDialog={isSectionEventVotingStage ? onOpenEventCRVoteDialog : undefined}
-              onFinalizeInternalVote={
-                isSectionInternalVotingStage ? onFinalizeInternalVote : undefined
-              }
-            />
-          );
-        }}
-        renderSkeleton={() => <Skeleton className="h-80 w-full rounded-xl" />}
-        renderEmpty={() => (
-          <div className="rounded-lg border border-dashed p-6 text-center">
-            <FileEdit className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
-            <p className="text-muted-foreground text-sm">
-              {translateText(
-                'generated.inline.0290_no_change_requests_for_this_branch_4fd98d30',
-                'No change requests for this branch.'
-              )}
-            </p>
-          </div>
-        )}
-        className="max-h-[48rem] overflow-auto"
+      <ChangeRequestCardsList
+        items={items}
+        obsoleteItems={sectionObsoleteItems}
+        editingMode={resolvedEditingMode}
+        isVotingActive={isSectionInternalVotingStage || isSectionEventVotingStage}
+        virtualize={virtualize}
+        containerVariant="frameless"
+        userId={userId}
+        diffMap={{ ...sectionDiffMap, ...sectionObsoleteDiffMap }}
+        documentContent={sectionDocumentContent}
+        streetDesigns={streetDesigns}
+        discussions={sectionDiscussions}
+        amendmentId={amendmentId}
+        agendaItemId={agendaItemId}
+        canManage={isSectionInternalVotingStage && Boolean(canManageInternalVotes)}
+        canVote={
+          isSectionInternalVotingStage
+            ? Boolean(canVoteInternal)
+            : isSectionEventVotingStage && Boolean(canVoteEvent)
+        }
+        hideInlineVotingControls={isSectionEventVotingStage}
+        showAgendaDetailsVoteActions={isSectionEventVotingStage}
+        hasUserVoted={
+          isSectionInternalVotingStage
+            ? hasUserVoted
+            : isSectionEventVotingStage
+              ? hasUserVotedOnEventCR
+              : undefined
+        }
+        getUserSelectedChoiceIds={
+          isSectionInternalVotingStage
+            ? getUserSelectedChoiceIds
+            : isSectionEventVotingStage
+              ? getEventCRSelectedChoiceIds
+              : undefined
+        }
+        onCastVote={
+          isSectionInternalVotingStage
+            ? onCastInternalVote
+            : isSectionEventVotingStage
+              ? onCastEventCRVote
+              : undefined
+        }
+        onOpenVoteDialog={isSectionEventVotingStage ? onOpenEventCRVoteDialog : undefined}
+        onFinalizeInternalVote={isSectionInternalVotingStage ? onFinalizeInternalVote : undefined}
       />
     );
   };
-  const hasBranchSections = branchSections.length > 0;
+  const effectiveBranchSections = [...branchSections];
+  for (const obsoleteSection of obsoleteBranchSections) {
+    if (!effectiveBranchSections.some(section => section.branchId === obsoleteSection.branchId)) {
+      effectiveBranchSections.push({
+        ...obsoleteSection,
+        timelineItems: [],
+        diffMap: {},
+        discussions: [],
+      });
+    }
+  }
+  const hasBranchSections = effectiveBranchSections.length > 0;
   const selectedBranchSection =
     hasBranchSections && selectedBranchId
-      ? (branchSections.find(section => section.branchId === selectedBranchId) ?? null)
+      ? (effectiveBranchSections.find(section => section.branchId === selectedBranchId) ?? null)
       : null;
   const displayedBranchSections = hasBranchSections
     ? selectedBranchSection
       ? [selectedBranchSection]
-      : branchSections
+      : effectiveBranchSections
     : [];
 
   if (isLoading) {
@@ -297,11 +217,9 @@ export function ChangeRequestsView({
 
   return (
     <PageWrapper>
-      <div className="space-y-6 pt-5">
-        <h1 className="sr-only">
-          {translateText('generated.inline.0285_change_requests_af9a9fa4')}
-        </h1>
+      <h1 className="sr-only">{translateText('generated.inline.0285_change_requests_af9a9fa4')}</h1>
 
+      <div className="space-y-6">
         {branchSelectorBranches.length > 0 && onBranchChange ? (
           <AmendmentBranchSelectorSection
             branches={branchSelectorBranches}
@@ -313,7 +231,7 @@ export function ChangeRequestsView({
           />
         ) : null}
 
-        <div className="container mx-auto px-8">
+        <div data-slot="change-requests-page-content" className="w-full">
           {hasBranchSections ? (
             <div className="space-y-8" data-testid="change-request-branch-sections">
               {displayedBranchSections.map(section => (
@@ -323,7 +241,12 @@ export function ChangeRequestsView({
                   data-testid="change-request-branch-section"
                   data-branch-id={section.branchId ?? 'main'}
                 >
-                  {section.timelineItems.length > 0 ? (
+                  {section.timelineItems.length > 0 ||
+                  obsoleteBranchSections.some(
+                    obsoleteSection =>
+                      obsoleteSection.branchId === section.branchId &&
+                      obsoleteSection.timelineItems.length > 0
+                  ) ? (
                     renderChangeRequestList({
                       items: section.timelineItems,
                       sectionDiffMap: section.diffMap,
@@ -331,7 +254,14 @@ export function ChangeRequestsView({
                       sectionDiscussions:
                         section.discussions.length > 0 ? section.discussions : discussions,
                       sectionEditingMode: section.editingMode,
-                      sectionBranchId: section.branchId,
+                      sectionObsoleteItems:
+                        obsoleteBranchSections.find(
+                          obsoleteSection => obsoleteSection.branchId === section.branchId
+                        )?.timelineItems ?? [],
+                      sectionObsoleteDiffMap:
+                        obsoleteBranchSections.find(
+                          obsoleteSection => obsoleteSection.branchId === section.branchId
+                        )?.diffMap ?? {},
                     })
                   ) : (
                     <div className="rounded-lg border border-dashed p-6 text-center">
@@ -354,7 +284,8 @@ export function ChangeRequestsView({
               sectionDocumentContent: documentContent,
               sectionDiscussions: discussions,
               sectionEditingMode: editingMode,
-              sectionBranchId: selectedBranchId,
+              sectionObsoleteItems: obsoleteTimelineItems,
+              sectionObsoleteDiffMap: obsoleteDiffMap,
             })
           )}
         </div>

@@ -60,9 +60,9 @@ export function VisibilitySelector({
       <div className="flex items-center gap-2">
         <Label>{resolvedLabel}</Label>
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {visibilityOptions.map(option => (
-          <div key={option.value} className="relative">
+          <div key={option.value} className="relative min-w-0">
             <Button
               type="button"
               variant={value === option.value ? 'default' : 'outline'}
@@ -70,12 +70,12 @@ export function VisibilitySelector({
               data-create-option={option.value}
               className={
                 showTooltip
-                  ? 'flex w-full items-center gap-2 pr-9'
-                  : 'flex w-full items-center gap-2'
+                  ? 'flex w-full min-w-0 items-center gap-2 pr-9'
+                  : 'flex w-full min-w-0 items-center gap-2'
               }
             >
               {value === option.value ? <Check className="h-4 w-4" /> : option.icon}
-              <span className="truncate">{option.label}</span>
+              <span className="min-w-0 truncate">{option.label}</span>
             </Button>
             {showTooltip && (
               <HoverCard openDelay={150}>

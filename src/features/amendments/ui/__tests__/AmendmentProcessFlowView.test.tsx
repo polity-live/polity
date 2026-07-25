@@ -82,10 +82,6 @@ vi.mock('@/features/network/ui/AmendmentPathVisualization', () => ({
   AmendmentPathVisualization: pathVisualizationMock,
 }));
 
-vi.mock('@/features/amendments/ui/AmendmentProcessDetailsPanel', () => ({
-  AmendmentProcessDetailsPanel: () => <div data-testid="process-details-panel" />,
-}));
-
 vi.mock('@/features/amendments/ui/TargetGroupEventSelector', () => ({
   TargetGroupEventDisplay: () => <div data-testid="target-group-event-display" />,
   TargetGroupEventSelector: () => <div data-testid="target-group-event-selector" />,
@@ -226,8 +222,8 @@ function baseProps(): AmendmentProcessFlowViewProps {
     amendment: {
       id: 'amendment-1',
       title: 'Amendment',
-      reason: null,
-      preamble: null,
+      reason: 'Unique amendment details reason',
+      preamble: 'Unique amendment details preamble',
       editing_mode: 'view',
       group: null,
     },
@@ -293,6 +289,8 @@ describe('AmendmentProcessFlowView branch redesign', () => {
     expect(screen.getByText('Antragsprozess')).toBeTruthy();
     expect(screen.getByTestId('branch-selector')).toBeTruthy();
     expect(screen.getAllByRole('link', { name: 'Open text variant' }).length).toBeGreaterThan(0);
+    expect(screen.queryByText('Unique amendment details reason')).toBeNull();
+    expect(screen.queryByText('Unique amendment details preamble')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Add additional path' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Edit events' })).toBeNull();
   });
@@ -325,6 +323,14 @@ describe('AmendmentProcessFlowView branch redesign', () => {
       }),
       undefined
     );
+  });
+
+  it('renders the branches section without a shared outer card', () => {
+    render(<AmendmentProcessFlowView {...baseProps()} />);
+
+    const heading = screen.getByRole('heading', { name: 'Branches' });
+    expect(heading.closest('[data-slot="card"]')).toBeNull();
+    expect(screen.getByText('Branch overview')).toBeTruthy();
   });
 
   it('shows only the selected branch steps in the steps tab', () => {

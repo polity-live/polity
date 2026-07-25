@@ -10,8 +10,12 @@ vi.mock('@/features/shared/ui/action-buttons/ShareButton.tsx', () => ({
 }));
 
 vi.mock('@/features/shared/ui/kit-platejs/plate-editor', () => ({
-  PlateEditor: ({ readOnly }: { readOnly: boolean }) => (
-    <div data-testid="plate-editor" data-read-only={String(readOnly)} />
+  PlateEditor: ({ editorClassName, readOnly }: { editorClassName?: string; readOnly: boolean }) => (
+    <div
+      data-testid="plate-editor"
+      data-editor-class-name={editorClassName}
+      data-read-only={String(readOnly)}
+    />
   ),
 }));
 
@@ -104,10 +108,27 @@ function model(showTopToolbar: boolean) {
 }
 
 describe('EditorViewShell action toolbar', () => {
-  it('renders public amendment text read-only without the top toolbar', () => {
-    render(<EditorViewShell model={model(false)} />);
+  it('relies on the shared entity frame instead of adding another horizontal inset', () => {
+    const { container } = render(<EditorViewShell model={model(false)} />);
+    const shell = container.firstElementChild;
 
-    expect(screen.getByTestId('plate-editor').dataset.readOnly).toBe('true');
+    expect(shell?.className).toContain('w-full');
+    expect(shell?.className).not.toContain('md:px-8');
+    expect(shell?.className).toContain('pt-7');
+  });
+
+  it('renders public amendment text read-only without the top toolbar', () => {
+    const { container } = render(<EditorViewShell model={model(false)} />);
+
+    const editor = screen.getByTestId('plate-editor');
+    const cardHeader = container.querySelector('[data-slot="card-header"]');
+    const cardContent = container.querySelector('[data-slot="card-content"]');
+
+    expect(editor.dataset.readOnly).toBe('true');
+    expect(editor.dataset.editorClassName).toContain('px-0');
+    expect(editor.dataset.editorClassName).toContain('md:px-[max(64px,calc(50%-350px))]');
+    expect(cardHeader?.className).toContain('p-6');
+    expect(cardContent?.className).toContain('p-6');
     expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
   });
 

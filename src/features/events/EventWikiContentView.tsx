@@ -21,7 +21,12 @@ import {
 import { getEntityGradientClasses, getMotionPreset } from '@/features/shared/theme';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
-import { ActionBar, EntityPageFrame, StatsBar } from '@/features/shared/ui/layout';
+import {
+  ActionBar,
+  ResponsiveActionLabel,
+  StatsBar,
+  compactActionButtonClassName,
+} from '@/features/shared/ui/layout';
 import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
 import type { MembershipStatus } from '@/features/shared/ui/action-buttons/MembershipButton';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
@@ -176,43 +181,54 @@ export function EventWikiContentView({
   const delegateRatioInfo = getDelegateMembersPerSeatInfo(event);
 
   return (
-    <EntityPageFrame>
+    <>
       {/* Header with centered title and subtitle */}
       <div className="mb-8 text-center">
-        <div className="mb-2 flex items-center justify-center gap-3">
-          <h1 className="text-4xl font-bold">{event.title}</h1>
-          {event.visibility === 'public' ? (
-            <BadgeControl variant="default">{t('components.badges.public')}</BadgeControl>
-          ) : (
-            <BadgeControl variant="secondary">{t('components.badges.private')}</BadgeControl>
-          )}
-          {event.event_type && (
-            <BadgeControl variant="outline">
-              {t(`pages.create.event.eventTypes.${getEventTypeTranslationKey(event.event_type)}`)}
-            </BadgeControl>
-          )}
-          {delegateRatioInfo ? (
-            <BadgeControl variant="outline">
-              {t(delegateRatioInfo.translationKey, { count: delegateRatioInfo.count })}
-            </BadgeControl>
-          ) : null}
-          {event.recurrence_pattern && (
-            <BadgeControl variant="outline">
-              <Repeat className="mr-1 h-3 w-3" />
-              {event.recurrence_pattern === 'daily'
-                ? translateText('generated.inline.0069_t_glich_3e286c33')
-                : event.recurrence_pattern === 'weekly'
-                  ? translateText('generated.inline.0070_w_chentlich_611d088a')
-                  : event.recurrence_pattern === 'monthly'
-                    ? translateText('generated.inline.0071_monatlich_33e0d042')
-                    : event.recurrence_pattern === 'yearly'
-                      ? translateText('generated.inline.0072_j_hrlich_6e7ef191')
-                      : event.recurrence_pattern === 'four-yearly'
-                        ? translateText('generated.inline.0073_4_j_hrig_44aa9820')
-                        : event.recurrence_pattern}
-            </BadgeControl>
-          )}
+        <div className="mb-2 flex min-w-0 flex-col items-center justify-center gap-2 md:flex-row md:gap-3">
+          <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{event.title}</h1>
+          <div className="flex max-w-full flex-wrap items-center justify-center gap-2 md:contents">
+            {event.visibility === 'public' ? (
+              <BadgeControl variant="default">{t('components.badges.public')}</BadgeControl>
+            ) : (
+              <BadgeControl variant="secondary">{t('components.badges.private')}</BadgeControl>
+            )}
+            {event.event_type && (
+              <BadgeControl variant="outline">
+                {t(`pages.create.event.eventTypes.${getEventTypeTranslationKey(event.event_type)}`)}
+              </BadgeControl>
+            )}
+            {delegateRatioInfo ? (
+              <BadgeControl variant="outline">
+                {t(delegateRatioInfo.translationKey, { count: delegateRatioInfo.count })}
+              </BadgeControl>
+            ) : null}
+            {event.recurrence_pattern && (
+              <BadgeControl variant="outline">
+                <Repeat className="mr-1 h-3 w-3" />
+                {event.recurrence_pattern === 'daily'
+                  ? translateText('generated.inline.0069_t_glich_3e286c33')
+                  : event.recurrence_pattern === 'weekly'
+                    ? translateText('generated.inline.0070_w_chentlich_611d088a')
+                    : event.recurrence_pattern === 'monthly'
+                      ? translateText('generated.inline.0071_monatlich_33e0d042')
+                      : event.recurrence_pattern === 'yearly'
+                        ? translateText('generated.inline.0072_j_hrlich_6e7ef191')
+                        : event.recurrence_pattern === 'four-yearly'
+                          ? translateText('generated.inline.0073_4_j_hrig_44aa9820')
+                          : event.recurrence_pattern}
+              </BadgeControl>
+            )}
+          </div>
         </div>
+        {event.event_hashtags && event.event_hashtags.length > 0 ? (
+          <div className="mt-3 md:hidden">
+            <HashtagDisplay
+              hashtags={extractHashtags(event.event_hashtags)}
+              centered
+              badgeClassName="max-w-full whitespace-normal break-all text-center"
+            />
+          </div>
+        ) : null}
 
         {/* Organizer Info */}
         <div className="mt-4 flex items-center justify-center gap-3">
@@ -309,6 +325,7 @@ export function EventWikiContentView({
               isSubscribed={isSubscribed}
               onToggleSubscribe={toggleSubscribe}
               isLoading={subscribeLoading}
+              compactOnMobile
             />
             <MembershipButton
               actionType="participate"
@@ -322,11 +339,20 @@ export function EventWikiContentView({
               isLoading={participation.isLoading}
               disabled={shouldDisableParticipationRequest}
               disabledReason={participationDisabledReason}
+              compactOnMobile
             />
             {elections.length > 0 ? (
-              <Button variant="outline" onClick={() => setElectionsDialogOpen(true)}>
-                <Trophy className="mr-2 h-4 w-4" />
-                {translateText('generated.inline.0428_kandidieren_b1de92a5')}
+              <Button
+                variant="outline"
+                onClick={() => setElectionsDialogOpen(true)}
+                className={compactActionButtonClassName}
+                aria-label={translateText('generated.inline.0428_kandidieren_b1de92a5')}
+              >
+                <Trophy className="mr-0 h-4 w-4 sm:mr-2" />
+                <ResponsiveActionLabel
+                  full={translateText('generated.inline.0428_kandidieren_b1de92a5')}
+                  compact={translateText('generated.inline.0428_kandidieren_b1de92a5')}
+                />
               </Button>
             ) : null}
           </>
@@ -351,12 +377,13 @@ export function EventWikiContentView({
             groupId: event.group?.id,
             groupName: event.group?.name,
           }}
+          compactOnMobile
         />
       </ActionBar>
 
       {/* Hashtags */}
       {event.event_hashtags && event.event_hashtags.length > 0 && (
-        <div className="mb-6">
+        <div className="mb-6 hidden md:block">
           <HashtagDisplay hashtags={extractHashtags(event.event_hashtags)} centered />
         </div>
       )}
@@ -546,6 +573,6 @@ export function EventWikiContentView({
         isSubmitting={isSubmitting}
         onSubmit={handleConfirmCandidacy}
       />
-    </EntityPageFrame>
+    </>
   );
 }

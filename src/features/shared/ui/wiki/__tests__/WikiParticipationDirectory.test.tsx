@@ -118,6 +118,10 @@ describe('WikiParticipationDirectory', () => {
     expect(screen.getByText('Linus No Role')).toBeTruthy();
     expect(container.querySelectorAll('.civic-load-card-reveal')).toHaveLength(3);
     expect(container.innerHTML).toContain('--entity-group-bg');
+    expect(screen.queryByText('Roles')).toBeNull();
+
+    const roleFilter = container.querySelector('[data-slot="participation-role-filter"]');
+    expect(roleFilter?.firstElementChild?.textContent).toBe('All roles');
 
     fireEvent.change(screen.getByPlaceholderText('Search members'), {
       target: { value: 'grace' },

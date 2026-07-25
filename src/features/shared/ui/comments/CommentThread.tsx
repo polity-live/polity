@@ -44,7 +44,6 @@ export function CommentThread({
     <CommentThreadView
       comments={comments}
       currentUserId={currentUserId}
-      onAddComment={onAddComment}
       onVote={onVote}
       onDelete={onDelete}
       hideHeader={hideHeader}

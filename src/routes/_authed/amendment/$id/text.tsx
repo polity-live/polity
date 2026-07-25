@@ -107,7 +107,7 @@ function AmendmentTextPage() {
     : undefined;
 
   return (
-    <div className="space-y-2 pt-5">
+    <div className="space-y-2">
       {branches.length > 0 ? (
         <AmendmentBranchSelectorSection
           branches={branches}

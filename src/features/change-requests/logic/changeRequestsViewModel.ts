@@ -113,11 +113,13 @@ export function mapChangeRequestsToSummaries(
     sourceId: cr.sourceId,
     sourceTitle: cr.sourceTitle,
     changeType: cr.changeType,
-    status: cr.resolution
-      ? cr.resolution === 'approved' || cr.resolution === 'accepted'
-        ? 'approved'
-        : 'declined'
-      : cr.status,
+    status: cr.isObsolete
+      ? 'obsolete'
+      : cr.resolution
+        ? cr.resolution === 'approved' || cr.resolution === 'accepted'
+          ? 'approved'
+          : 'declined'
+        : cr.status,
     type: cr.type,
     text: cr.text,
     newText: cr.newText,
@@ -145,6 +147,9 @@ export function mapChangeRequestsToSummaries(
     userVote: cr.userVote,
     confirmationStatus: cr.confirmationStatus,
     changeRequestStatus: cr.changeRequestStatus,
+    isObsolete: cr.isObsolete,
+    obsoleteReason: cr.obsoleteReason,
+    obsoleteAt: cr.obsoleteAt,
   }));
 }
 
@@ -290,7 +295,14 @@ function getChangeRequestCounts(changeRequests: readonly ChangeRequest[]) {
     totalCount: changeRequests.length,
     approvedCount,
     declinedCount,
-    openCount: Math.max(0, changeRequests.length - approvedCount - declinedCount),
+    openCount: changeRequests.filter(
+      request =>
+        !request.isObsolete &&
+        !isApprovedStatus(request.status) &&
+        !isApprovedStatus(request.resolution) &&
+        !isDeclinedStatus(request.status) &&
+        !isDeclinedStatus(request.resolution)
+    ).length,
   };
 }
 
@@ -514,6 +526,9 @@ function createDiscussionFallbackChangeRequest({
     proposedChange: suggestionContent.newText || suggestionContent.text,
     justification: (discussion as { justification?: string | null }).justification ?? '',
     isResolved,
+    isObsolete: false,
+    obsoleteReason: null,
+    obsoleteAt: null,
     status: isPendingSubmission ? 'pending_submission' : (resolvedStatus ?? 'open'),
     resolution: isResolved ? (resolvedStatus ?? null) : null,
     resolvedAt: null,

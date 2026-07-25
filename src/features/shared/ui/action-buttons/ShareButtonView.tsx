@@ -20,6 +20,7 @@ export interface ShareButtonViewProps {
   variant: any;
   size: any;
   className: any;
+  compactOnMobile?: boolean;
   t: any;
   copied: any;
   setCopied: any;
@@ -47,6 +48,7 @@ export function ShareButtonView({
   variant,
   size,
   className,
+  compactOnMobile = false,
   t,
   copied,
   isOpen,
@@ -64,7 +66,7 @@ export function ShareButtonView({
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant={variant} size={size} className={className}>
-            <Share2 className="mr-2 h-4 w-4" />
+            <Share2 className={compactOnMobile ? 'mr-0 h-4 w-4 sm:mr-2' : 'mr-2 h-4 w-4'} />
             {t('common.actions.share')}
           </Button>
         </DropdownMenuTrigger>

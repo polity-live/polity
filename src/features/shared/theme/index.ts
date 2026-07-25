@@ -294,7 +294,7 @@ export const FEATURE_THEME_CLASS_NAMES = {
   decisionterminalDecisionTableThemedText:
     'text-muted-foreground font-mono text-[10px] font-semibold tracking-[1px] uppercase',
   decisionterminalDecisionTerminalNeutralSurface:
-    'bg-card flex h-full min-h-[640px] flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700',
+    'flex h-full min-h-[640px] flex-col overflow-hidden',
   decisionterminalDecisionWidgetContentThemedText:
     'text-muted-foreground mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[11px]',
   decisionterminalDecisionWidgetContentThemedTextAlpha:
@@ -550,7 +550,7 @@ export const FEATURE_THEME_CLASS_NAMES = {
   networkNetworkControlPanelThemedBadge:
     'border-border bg-background/90 text-foreground hover:bg-accent hover:text-accent-foreground dark:bg-card/90 dark:text-foreground',
   networkNetworkControlPanelThemedSurfaceAlpha:
-    'border-border/80 bg-background/95 dark:bg-background/95 flex max-h-[calc(100%-1rem)] w-[calc(100%-1rem)] max-w-sm flex-col overflow-hidden rounded border p-4 shadow-lg supports-[backdrop-filter]:backdrop-blur-sm',
+    'border-border/80 bg-background/95 dark:bg-background/95 flex max-h-[calc(100%-1rem)] w-[calc(100%-30px)] max-w-sm flex-col overflow-hidden rounded border p-4 shadow-lg supports-[backdrop-filter]:backdrop-blur-sm',
   networkNetworkControlPanelNeutralText: 'mb-3 text-sm text-[var(--badge-neutral-fg)]',
   networkNetworkControlPanelInfoPanel:
     'mt-3 shrink-0 rounded-md bg-[var(--badge-info-bg)] p-2 text-sm',

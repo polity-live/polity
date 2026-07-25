@@ -2,25 +2,14 @@ export type AppShellPageFrame = 'bare' | 'contained' | 'fullWidth' | 'uncontaine
 
 const ENTITY_ROUTE_PATTERN = /^\/(?:group|user|event|amendment|blog)\/[^/]+(?:\/.*)?$/;
 
-const SELF_FRAMED_ENTITY_PAGE_PATTERNS = [
-  /^\/group\/[^/]+\/?$/,
-  /^\/user\/[^/]+\/?$/,
-  /^\/event\/[^/]+\/?$/,
-  /^\/amendment\/[^/]+\/?$/,
-  /^\/blog\/[^/]+\/?$/,
-  /^\/group\/[^/]+\/blog\/[^/]+\/?$/,
-  /^\/user\/[^/]+\/blog\/[^/]+\/?$/,
-];
-
 const UNCONTAINED_ENTITY_ROUTE_PATTERNS = [
   /^\/group\/[^/]+\/network$/,
   /^\/user\/[^/]+\/network$/,
   /^\/event\/[^/]+\/network$/,
-  /^\/amendment\/[^/]+\/process$/,
 ];
 
 export const APP_SHELL_PAGE_FRAME_CLASS: Record<Exclude<AppShellPageFrame, 'bare'>, string> = {
-  contained: 'mx-auto max-w-7xl px-4 py-6',
+  contained: 'mx-auto max-w-7xl px-4 py-6 md:px-8',
   fullWidth: 'mx-auto px-4 py-6',
   uncontained: 'p-2',
 };
@@ -35,7 +24,7 @@ export function isLandingPath(pathname: string): boolean {
 }
 
 export function getAuthenticatedPageFrame(pathname: string): AppShellPageFrame {
-  if (isSelfFramedEntityPage(pathname)) {
+  if (pathname.startsWith('/docs')) {
     return 'bare';
   }
 
@@ -51,10 +40,6 @@ export function getAuthenticatedPageFrame(pathname: string): AppShellPageFrame {
 }
 
 export function getUnauthenticatedPageFrame(pathname: string): AppShellPageFrame {
-  if (isSelfFramedEntityPage(pathname)) {
-    return 'bare';
-  }
-
   if (isUncontainedEntityRoute(pathname)) {
     return 'uncontained';
   }
@@ -68,8 +53,4 @@ export function getUnauthenticatedPageFrame(pathname: string): AppShellPageFrame
 
 function isUncontainedEntityRoute(pathname: string): boolean {
   return UNCONTAINED_ENTITY_ROUTE_PATTERNS.some(pattern => pattern.test(pathname));
-}
-
-function isSelfFramedEntityPage(pathname: string): boolean {
-  return SELF_FRAMED_ENTITY_PAGE_PATTERNS.some(pattern => pattern.test(pathname));
 }

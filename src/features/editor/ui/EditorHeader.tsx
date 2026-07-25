@@ -40,8 +40,8 @@ export function EditorHeader({
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="flex-1">
+    <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
+      <div className="min-w-0 flex-1">
         {isEditingTitle && canEditTitle ? (
           <FormControlInput
             value={title}
@@ -57,8 +57,10 @@ export function EditorHeader({
             }}
           />
         ) : (
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold">{title || t('features.editor.header.untitled')}</h2>
+          <div className="flex min-w-0 items-center gap-2">
+            <h2 className="min-w-0 text-2xl font-bold break-words">
+              {title || t('features.editor.header.untitled')}
+            </h2>
             {canEditTitle ? (
               <Button
                 variant="ghost"
@@ -79,7 +81,7 @@ export function EditorHeader({
       {statusBadge}
 
       {/* Save status */}
-      <div className="text-muted-foreground flex items-center gap-2 text-xs">
+      <div className="text-muted-foreground flex w-full min-w-0 items-center gap-2 text-xs md:w-auto md:shrink-0">
         {saveStatus === 'saving' || isSavingTitle ? (
           <>
             <Loader2 className="h-3 w-3 animate-spin" />

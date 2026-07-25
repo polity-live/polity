@@ -3,8 +3,8 @@ import { z } from 'zod';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import {
   AI_DOCS_LANGUAGES,
-  DOCS_TOPIC_SLUGS,
-  searchPolityDocs,
+  AI_DOCS_PAGE_SLUGS,
+  readPolityDocs,
 } from '@/features/docs/logic/aiDocsIndex';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import {
@@ -60,7 +60,7 @@ const CREATE_FLOW_TYPES = [
 const AGENDA_ITEM_TYPES = ['election', 'vote', 'speech', 'discussion', 'accreditation'] as const;
 
 const searchEntityTypeSchema = z.enum(SEARCH_ENTITY_TYPES);
-const docsTopicSlugSchema = z.enum(DOCS_TOPIC_SLUGS);
+const docsPageSlugSchema = z.enum(AI_DOCS_PAGE_SLUGS);
 const aiDocsLanguageSchema = z.enum(AI_DOCS_LANGUAGES);
 const groupResourceTypeSchema = z.enum(GROUP_RESOURCE_TYPES);
 const eventResourceTypeSchema = z.enum(EVENT_RESOURCE_TYPES);
@@ -1862,46 +1862,43 @@ export function buildAiTools(userId: string, timeZone = 'UTC') {
           .min(1)
           .optional()
           .describe('Optional search query across the docs text.'),
-        topic: docsTopicSlugSchema.optional().describe('Optional exact docs topic slug to read.'),
+        page: docsPageSlugSchema
+          .optional()
+          .describe('Optional exact docs page slug. Returns the complete page.'),
+        section: z
+          .string()
+          .trim()
+          .min(1)
+          .optional()
+          .describe('Optional section id to read from an exact page.'),
         language: aiDocsLanguageSchema.default('de'),
-        limit: z.number().int().min(1).max(12).default(6),
+        limit: z.number().int().min(1).max(20).default(8),
       }),
-      execute: async ({ query, topic, language, limit }) => {
-        const result = searchPolityDocs({ query, topic, language, limit });
-        const docs = result.items.map(item => ({
-          actions: item.actions,
-          audience: item.audience,
-          category: item.category,
-          concepts: item.concepts,
-          entry: item.entry,
-          navLabel: item.navLabel,
-          outcome: item.outcome,
-          process: item.process,
-          relatedTopics: item.relatedTopics,
-          route: item.route,
-          slug: item.slug,
-          states: item.states,
-          summary: item.summary,
-          title: item.title,
-          watchFor: item.watchFor,
-        }));
+      execute: async ({ query, page, section, language, limit }) => {
+        const result = readPolityDocs({ query, page, section, language, limit });
         const queryLabel = result.query ? ` fuer "${result.query}"` : '';
+        const returnedCount = result.pages.length + result.matches.length;
 
         return {
           summary:
-            result.items.length === 0
+            returnedCount === 0
               ? `Polity Docs${queryLabel}: keine Treffer.`
-              : `Polity Docs${queryLabel}: ${result.items.length} von ${result.total} Treffer(n).`,
-          language: result.language,
-          query: result.query,
-          topic: result.topic,
-          docs,
-          items: result.items.map(item => ({
-            entityType: 'docs_topic',
-            entityId: item.slug,
-            title: item.title,
-            subtitle: item.route,
-          })),
+              : `Polity Docs${queryLabel}: ${returnedCount} Treffer.`,
+          ...result,
+          items: [
+            ...result.pages.map(item => ({
+              entityType: 'docs_topic',
+              entityId: String(item.slug),
+              title: item.title,
+              subtitle: item.route,
+            })),
+            ...result.matches.map(item => ({
+              entityType: 'docs_topic',
+              entityId: `${item.pageSlug}:${item.sectionId ?? 'page'}`,
+              title: item.sectionTitle ?? item.pageTitle,
+              subtitle: item.route,
+            })),
+          ],
           attachments: [] as AiChatAttachment[],
         };
       },

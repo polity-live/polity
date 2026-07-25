@@ -9,6 +9,8 @@ interface FakeQuery {
   whereExists: (relation: string, fn: (q: FakeQuery) => unknown) => FakeQuery;
   related: (relation: string, fn?: (q: FakeQuery) => unknown) => FakeQuery;
   orderBy: (...args: unknown[]) => FakeQuery;
+  start: (...args: unknown[]) => FakeQuery;
+  limit: (...args: unknown[]) => FakeQuery;
   one: () => FakeQuery;
 }
 
@@ -48,6 +50,14 @@ vi.mock('../../schema', () => {
       },
       orderBy: (...args: unknown[]) => {
         query.calls.push(['orderBy', ...args]);
+        return query;
+      },
+      start: (...args: unknown[]) => {
+        query.calls.push(['start', ...args]);
+        return query;
+      },
+      limit: (...args: unknown[]) => {
+        query.calls.push(['limit', ...args]);
         return query;
       },
       one: () => {
@@ -245,5 +255,27 @@ describe('amendment query nested authorization', () => {
     expect(typeof threadVoteCalls[0][1]).toBe('function');
     expect(commentVoteCalls[0][0]).toBe('where');
     expect(typeof commentVoteCalls[0][1]).toBe('function');
+  });
+
+  it('uses null-aware equality for root comments and replies', () => {
+    amendmentQueries.discussionCommentPage.fn({
+      args: { threadId: 'thread-1', parentId: null, limit: 50, start: null, dir: 'forward' },
+      ctx,
+    });
+
+    expect(lastQuery('comment').calls).toContainEqual(['where', 'parent_id', 'IS', null]);
+
+    amendmentQueries.discussionCommentPage.fn({
+      args: {
+        threadId: 'thread-1',
+        parentId: 'comment-1',
+        limit: 50,
+        start: null,
+        dir: 'forward',
+      },
+      ctx,
+    });
+
+    expect(lastQuery('comment').calls).toContainEqual(['where', 'parent_id', 'IS', 'comment-1']);
   });
 });

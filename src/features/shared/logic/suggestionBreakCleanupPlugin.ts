@@ -1,5 +1,5 @@
 import { BaseSuggestionPlugin, getSuggestionKeys } from '@platejs/suggestion';
-import { KEYS, TextApi } from 'platejs';
+import { ElementApi, KEYS, TextApi } from 'platejs';
 import { createPlatePlugin } from 'platejs/react';
 
 export const SuggestionBreakCleanupPlugin = createPlatePlugin({
@@ -19,10 +19,23 @@ export const SuggestionBreakCleanupPlugin = createPlatePlugin({
       if (!TextApi.isText(leaf) || leaf.text !== '') return result;
 
       const suggestionKeys = getSuggestionKeys(leaf);
-      if (!leaf[KEYS.suggestion] && suggestionKeys.length === 0) return result;
+      const hasLeafSuggestion = Boolean(leaf[KEYS.suggestion]) || suggestionKeys.length > 0;
+      const blockEntry = editor.api.above({ at: editor.selection });
+      const hasInheritedLineBreakSuggestion =
+        blockEntry &&
+        ElementApi.isElement(blockEntry[0]) &&
+        editor.getApi(BaseSuggestionPlugin).suggestion.isBlockSuggestion(blockEntry[0]) &&
+        blockEntry[0].suggestion?.isLineBreak;
+
+      if (!hasLeafSuggestion && !hasInheritedLineBreakSuggestion) return result;
 
       editor.getApi(BaseSuggestionPlugin).suggestion.withoutSuggestions(() => {
-        editor.tf.unsetNodes([KEYS.suggestion, ...suggestionKeys], { at: path });
+        if (hasLeafSuggestion) {
+          editor.tf.unsetNodes([KEYS.suggestion, ...suggestionKeys], { at: path });
+        }
+        if (hasInheritedLineBreakSuggestion) {
+          editor.tf.unsetNodes([KEYS.suggestion], { at: blockEntry[1] });
+        }
       });
 
       return result;

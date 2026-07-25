@@ -31,37 +31,39 @@ export function GroupAmendmentsPageView({
   setShowFilters,
 }: GroupAmendmentsPageViewProps) {
   return (
-    <div className="space-y-6">
+    <>
       <h1 className="sr-only">{t('features.groups.amendments.title')}</h1>
 
-      <AmendmentSearchAndFilters
-        filters={filters}
-        showFilters={showFilters}
-        hasActiveFilters={hasActiveFilters}
-        onSearchChange={value => updateFilter('searchQuery', value)}
-        onStatusChange={value => updateFilter('statusFilter', value)}
-        onHashtagChange={value => updateFilter('hashtagFilter', value)}
-        onToggleFilters={() => setShowFilters(!showFilters)}
-        onClearStatusFilter={() => clearFilter('statusFilter')}
-        onClearHashtagFilter={() => clearFilter('hashtagFilter')}
-        actions={
-          canCreate('amendments') ? (
-            <Link to="/create/amendment" search={{ groupId }}>
-              <Button size="sm">
-                <Plus className="mr-1 h-4 w-4" />
-                {t('features.groups.amendments.createAmendment')}
-              </Button>
-            </Link>
-          ) : null
-        }
-      />
+      <div className="space-y-6">
+        <AmendmentSearchAndFilters
+          filters={filters}
+          showFilters={showFilters}
+          hasActiveFilters={hasActiveFilters}
+          onSearchChange={value => updateFilter('searchQuery', value)}
+          onStatusChange={value => updateFilter('statusFilter', value)}
+          onHashtagChange={value => updateFilter('hashtagFilter', value)}
+          onToggleFilters={() => setShowFilters(!showFilters)}
+          onClearStatusFilter={() => clearFilter('statusFilter')}
+          onClearHashtagFilter={() => clearFilter('hashtagFilter')}
+          actions={
+            canCreate('amendments') ? (
+              <Link to="/create/amendment" search={{ groupId }}>
+                <Button size="sm">
+                  <Plus className="mr-1 h-4 w-4" />
+                  {t('features.groups.amendments.createAmendment')}
+                </Button>
+              </Link>
+            ) : null
+          }
+        />
 
-      <AmendmentGroups
-        groupedAmendments={groupedAmendments}
-        groupName={groupName}
-        groupId={groupId}
-        filters={filters}
-      />
-    </div>
+        <AmendmentGroups
+          groupedAmendments={groupedAmendments}
+          groupName={groupName}
+          groupId={groupId}
+          filters={filters}
+        />
+      </div>
+    </>
   );
 }

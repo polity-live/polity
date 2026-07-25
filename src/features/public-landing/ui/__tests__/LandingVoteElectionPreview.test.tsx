@@ -3,7 +3,7 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { LandingVoteElectionPreview } from '../PublicLandingPage';
+import { LandingActivityStripPreview, LandingVoteElectionPreview } from '../PublicLandingPage';
 
 const translationArrays = vi.hoisted((): Record<string, string[]> => ({
   'pages.home.publicLanding.voteElectionPreview.voteChoices': [
@@ -31,8 +31,12 @@ const translationArrays = vi.hoisted((): Record<string, string[]> => ({
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string, fallback?: string) => fallback ?? key,
   useTranslation: () => ({
-    t: (key: string, fallback?: string) =>
-      key === 'features.events.agenda.winner' ? 'Winner' : (fallback ?? key),
+    t: (key: string, fallback?: string | { defaultValue?: string }) =>
+      key === 'features.events.agenda.winner'
+        ? 'Winner'
+        : typeof fallback === 'string'
+          ? fallback
+          : (fallback?.defaultValue ?? key),
     tArray: (key: string) => translationArrays[key] ?? [],
   }),
 }));
@@ -80,11 +84,11 @@ vi.mock('@/features/timeline/ui/cards/AgendaItemTimelineCard', () => ({
 }));
 
 vi.mock('@/features/timeline/ui/CivicTimelineMap', () => ({
-  CivicTimelineMap: () => null,
+  CivicTimelineMap: () => <div data-testid="mock-civic-timeline-map" />,
 }));
 
 vi.mock('@/features/timeline/ui/CivicTimelineRail', () => ({
-  CivicTimelineRail: () => null,
+  CivicTimelineRail: () => <div data-testid="mock-civic-timeline-rail" />,
 }));
 
 vi.mock('@/features/public-landing/hooks/useLandingNetworkPreviewState', () => ({
@@ -151,5 +155,29 @@ describe('LandingVoteElectionPreview', () => {
     expect(voteWinnerBar?.className).not.toContain('bg-brand');
     expect(candidateWinnerBar?.className).toContain('bg-[var(--badge-success-fg)]');
     expect(candidateWinnerBar?.className).not.toContain('bg-brand');
+  });
+});
+
+describe('LandingActivityStripPreview', () => {
+  it('uses shrinkable map and rail columns in a single-column mobile grid', () => {
+    const { container } = render(<LandingActivityStripPreview />);
+
+    const grid = container.querySelector<HTMLElement>('[data-slot="landing-activity-grid"]');
+    const mapColumn = container.querySelector<HTMLElement>(
+      '[data-slot="landing-activity-map-column"]'
+    );
+    const railColumn = container.querySelector<HTMLElement>(
+      '[data-slot="landing-activity-rail-column"]'
+    );
+
+    expect(grid?.className).toContain('min-w-0');
+    expect(grid?.className).toContain('grid-cols-1');
+    expect(grid?.className).toContain('lg:grid-cols-[minmax(280px,0.82fr)_minmax(0,1.18fr)]');
+    expect(mapColumn?.className).toContain('min-w-0');
+    expect(mapColumn?.className).toContain('max-w-full');
+    expect(railColumn?.className).toContain('min-w-0');
+    expect(railColumn?.className).toContain('max-w-full');
+    expect(screen.getByTestId('mock-civic-timeline-map')).toBeTruthy();
+    expect(screen.getByTestId('mock-civic-timeline-rail')).toBeTruthy();
   });
 });

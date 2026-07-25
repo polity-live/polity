@@ -55,7 +55,7 @@ export function DecisionTerminalView({
         activeCount={activeCount}
       />
 
-      <div className="bg-muted/20 flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto">
         <DecisionDashboardGrid
           config={dashboardConfig}
           decisions={decisions}

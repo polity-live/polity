@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { calculateScore } from '@/features/votes/utils/voting-utils';
 import type { Thread } from '../hooks/useDiscussions';
@@ -46,6 +46,9 @@ export function useThreadCardController({
   const [isCommenting, setIsCommenting] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdCommentId, setCreatedCommentId] = useState<string>();
+  const [isVoting, setIsVoting] = useState(false);
+  const votingRef = useRef(false);
 
   const score = calculateScore(thread.upvotes, thread.downvotes);
   const userVote = thread.votes?.find(v => v.user?.id === userId);
@@ -55,11 +58,14 @@ export function useThreadCardController({
   const sortedComments = thread.comments || [];
 
   const handleVote = async (voteValue: number) => {
+    if (votingRef.current) return;
     if (!userId) {
       toast.error(translateText('generated.inline.0138_please_log_in_to_vote_59574e84'));
       return;
     }
 
+    votingRef.current = true;
+    setIsVoting(true);
     try {
       await onVoteThread(
         thread.id,
@@ -72,6 +78,9 @@ export function useThreadCardController({
     } catch (error) {
       console.error('Error voting:', error);
       toast.error(translateText('generated.inline.0140_failed_to_vote_68d9f4e2'));
+    } finally {
+      votingRef.current = false;
+      setIsVoting(false);
     }
   };
 
@@ -80,7 +89,8 @@ export function useThreadCardController({
 
     setIsSubmitting(true);
     try {
-      await onCreateComment(thread.id, commentText, userId, undefined);
+      const commentId = await onCreateComment(thread.id, commentText, userId, undefined);
+      setCreatedCommentId(commentId);
       setCommentText('');
       setIsCommenting(false);
     } catch (error) {
@@ -104,6 +114,8 @@ export function useThreadCardController({
     setCommentText,
     isSubmitting,
     setIsSubmitting,
+    createdCommentId,
+    isVoting,
     score,
     userVote,
     hasUpvoted,

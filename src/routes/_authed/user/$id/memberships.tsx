@@ -11,12 +11,7 @@ import { TabsContent } from '@/features/shared/ui/ui/tabs';
 import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
 import { Users, Calendar, FileEdit, BookOpen } from 'lucide-react';
 import { z } from 'zod';
-import {
-  ManagementToolbar,
-  SettingsPage,
-  SettingsTabs,
-  type SettingsTab,
-} from '@/features/shared/ui/form';
+import { SettingsPage, SettingsTabs, type SettingsTab } from '@/features/shared/ui/form';
 import { CountBadge } from '@/features/shared/ui/status';
 
 export const membershipsSearchSchema = z.object({
@@ -196,7 +191,13 @@ function UserMembershipsPage() {
       description={translateText('pages.user.memberships.description')}
       size="wide"
       headingMode="sr-only"
+      contentClassName="space-y-6"
     >
+      <EntitySearchBar
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        placeholder={translateText('generated.inline.1270_search_memberships_e98729da')}
+      />
       <SettingsTabs
         tabs={tabs}
         value={activeTab}
@@ -204,14 +205,6 @@ function UserMembershipsPage() {
           navigate({ search: previous => ({ ...previous, tab: nextTab }), replace: true })
         }
       >
-        <ManagementToolbar>
-          <EntitySearchBar
-            searchQuery={searchQuery}
-            onSearchQueryChange={setSearchQuery}
-            placeholder={translateText('generated.inline.1270_search_memberships_e98729da')}
-            className="flex-1"
-          />
-        </ManagementToolbar>
         <TabsContent value="all">
           <div className="space-y-6">
             {renderGroupMembershipsTab()}

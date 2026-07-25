@@ -524,6 +524,9 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
                 mutators.documents.updateContent({
                   id: contentEntityId,
                   content: toMutableJSONValue(newContent),
+                  ...(entityType === 'amendment' && mode === 'edit'
+                    ? { reconcile_orphaned_change_requests: true }
+                    : {}),
                 })
               );
         trackServerFinalization(result, {
@@ -542,7 +545,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         setSaveStatus('error');
       }
     },
-    [entityType, contentEntityId, readOnly, zero]
+    [entityType, contentEntityId, mode, readOnly, zero]
   );
 
   // Content change handler - throttled with trailing edge

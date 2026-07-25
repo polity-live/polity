@@ -1,8 +1,3 @@
-import {
-  isMockCRTimelineItem,
-  isPendingSubmissionCRTimelineItem,
-} from './createMockCRTimelineItems';
-
 interface AgendaChangeRequestLogItem {
   id?: string | null;
   agenda_item_id?: string | null;
@@ -32,8 +27,8 @@ interface AgendaChangeRequestLogItem {
 }
 
 export function logAgendaChangeRequestItems(
-  scope: string,
-  payload: {
+  _scope: string,
+  _payload: {
     agendaItemId?: string | null;
     amendmentId?: string | null;
     editingMode?: string | null;
@@ -44,33 +39,4 @@ export function logAgendaChangeRequestItems(
   }
 ) {
   if (!import.meta.env.DEV) return;
-
-  const summarize = (item: AgendaChangeRequestLogItem) => ({
-    id: item.id ?? null,
-    agendaItemId: item.agenda_item_id ?? null,
-    changeRequestId: item.change_request_id ?? item.change_request?.id ?? null,
-    voteId: item.vote_id ?? item.vote?.id ?? null,
-    orderIndex: item.order_index ?? null,
-    status: item.status ?? null,
-    voteStatus: item.vote?.status ?? null,
-    votePurpose: item.vote?.purpose ?? null,
-    stepKind: item.step_kind ?? null,
-    syntheticStepKind: item._voteStepKind ?? null,
-    branchId: item.process_branch_id ?? item.change_request?.process_branch_id ?? null,
-    isFinalVote: Boolean(item.is_closing_vote),
-    isPlaceholder: Boolean(item._votePlaceholder),
-    isSynthetic: isMockCRTimelineItem(item),
-    isPendingSubmission: isPendingSubmissionCRTimelineItem(item),
-    choiceCount: item.vote?.choices?.length ?? 0,
-  });
-
-  console.debug(`[AgendaChangeRequests:${scope}]`, {
-    agendaItemId: payload.agendaItemId ?? null,
-    amendmentId: payload.amendmentId ?? null,
-    editingMode: payload.editingMode ?? null,
-    selectedBranchId: payload.selectedBranchId ?? null,
-    selectedItemId: payload.selectedItemId ?? null,
-    items: payload.items.map(summarize),
-    pendingDisplayItems: payload.pendingDisplayItems?.map(summarize) ?? [],
-  });
 }

@@ -39,6 +39,7 @@ import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthVerifyRouteImport } from './routes/auth/verify'
 import { Route as DocsIndexRouteImport } from './routes/docs/index'
 import { Route as DocsTopicRouteImport } from './routes/docs/$topic'
+import { Route as DocsSearchRouteImport } from './routes/docs/search'
 import { Route as AuthedAmendmentIdRouteImport } from './routes/_authed/amendment/$id'
 import { Route as AuthedBlogIdRouteImport } from './routes/_authed/blog/$id'
 import { Route as AuthedCreateIndexRouteImport } from './routes/_authed/create/index'
@@ -78,6 +79,8 @@ import { Route as ApiGovdataImportRouteImport } from './routes/api/govdata/impor
 import { Route as ApiNewsletterSyncRouteImport } from './routes/api/newsletter/sync'
 import { Route as ApiResendWebhookRouteImport } from './routes/api/resend/webhook'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
+import { Route as DocsGettingStartedSlugRouteImport } from './routes/docs/getting-started/$slug'
+import { Route as DocsGuidesSlugRouteImport } from './routes/docs/guides/$slug'
 import { Route as AuthedAmendmentIdIndexRouteImport } from './routes/_authed/amendment/$id/index'
 import { Route as AuthedAmendmentIdChangeRequestsRouteImport } from './routes/_authed/amendment/$id/change-requests'
 import { Route as AuthedAmendmentIdCollaboratorsRouteImport } from './routes/_authed/amendment/$id/collaborators'
@@ -289,6 +292,11 @@ const DocsTopicRoute = DocsTopicRouteImport.update({
   path: '/$topic',
   getParentRoute: () => DocsRoute,
 } as any)
+const DocsSearchRoute = DocsSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => DocsRoute,
+} as any)
 const AuthedAmendmentIdRoute = AuthedAmendmentIdRouteImport.update({
   id: '/amendment/$id',
   path: '/amendment/$id',
@@ -485,6 +493,16 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DocsGettingStartedSlugRoute = DocsGettingStartedSlugRouteImport.update({
+  id: '/getting-started/$slug',
+  path: '/getting-started/$slug',
+  getParentRoute: () => DocsRoute,
+} as any)
+const DocsGuidesSlugRoute = DocsGuidesSlugRouteImport.update({
+  id: '/guides/$slug',
+  path: '/guides/$slug',
+  getParentRoute: () => DocsRoute,
 } as any)
 const AuthedAmendmentIdIndexRoute = AuthedAmendmentIdIndexRouteImport.update({
   id: '/',
@@ -853,6 +871,7 @@ export interface FileRoutesByFullPath {
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify': typeof AuthVerifyRoute
   '/docs/$topic': typeof DocsTopicRoute
+  '/docs/search': typeof DocsSearchRoute
   '/auth/': typeof AuthIndexRoute
   '/docs/': typeof DocsIndexRoute
   '/amendment/$id': typeof AuthedAmendmentIdRouteWithChildren
@@ -893,6 +912,8 @@ export interface FileRoutesByFullPath {
   '/api/newsletter/sync': typeof ApiNewsletterSyncRoute
   '/api/resend/webhook': typeof ApiResendWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/docs/getting-started/$slug': typeof DocsGettingStartedSlugRoute
+  '/docs/guides/$slug': typeof DocsGuidesSlugRoute
   '/create/': typeof AuthedCreateIndexRoute
   '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
   '/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
@@ -982,6 +1003,7 @@ export interface FileRoutesByTo {
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify': typeof AuthVerifyRoute
   '/docs/$topic': typeof DocsTopicRoute
+  '/docs/search': typeof DocsSearchRoute
   '/auth': typeof AuthIndexRoute
   '/docs': typeof DocsIndexRoute
   '/create/agenda-item': typeof AuthedCreateAgendaItemRoute
@@ -1017,6 +1039,8 @@ export interface FileRoutesByTo {
   '/api/newsletter/sync': typeof ApiNewsletterSyncRoute
   '/api/resend/webhook': typeof ApiResendWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/docs/getting-started/$slug': typeof DocsGettingStartedSlugRoute
+  '/docs/guides/$slug': typeof DocsGuidesSlugRoute
   '/create': typeof AuthedCreateIndexRoute
   '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
   '/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
@@ -1105,6 +1129,7 @@ export interface FileRoutesById {
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify': typeof AuthVerifyRoute
   '/docs/$topic': typeof DocsTopicRoute
+  '/docs/search': typeof DocsSearchRoute
   '/auth/': typeof AuthIndexRoute
   '/docs/': typeof DocsIndexRoute
   '/_authed/amendment/$id': typeof AuthedAmendmentIdRouteWithChildren
@@ -1145,6 +1170,8 @@ export interface FileRoutesById {
   '/api/newsletter/sync': typeof ApiNewsletterSyncRoute
   '/api/resend/webhook': typeof ApiResendWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/docs/getting-started/$slug': typeof DocsGettingStartedSlugRoute
+  '/docs/guides/$slug': typeof DocsGuidesSlugRoute
   '/_authed/create/': typeof AuthedCreateIndexRoute
   '/_authed/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
   '/_authed/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
@@ -1238,6 +1265,7 @@ export interface FileRouteTypes {
     | '/auth/sign-up'
     | '/auth/verify'
     | '/docs/$topic'
+    | '/docs/search'
     | '/auth/'
     | '/docs/'
     | '/amendment/$id'
@@ -1278,6 +1306,8 @@ export interface FileRouteTypes {
     | '/api/newsletter/sync'
     | '/api/resend/webhook'
     | '/api/stripe/webhook'
+    | '/docs/getting-started/$slug'
+    | '/docs/guides/$slug'
     | '/create/'
     | '/amendment/$id/change-requests'
     | '/amendment/$id/collaborators'
@@ -1367,6 +1397,7 @@ export interface FileRouteTypes {
     | '/auth/sign-up'
     | '/auth/verify'
     | '/docs/$topic'
+    | '/docs/search'
     | '/auth'
     | '/docs'
     | '/create/agenda-item'
@@ -1402,6 +1433,8 @@ export interface FileRouteTypes {
     | '/api/newsletter/sync'
     | '/api/resend/webhook'
     | '/api/stripe/webhook'
+    | '/docs/getting-started/$slug'
+    | '/docs/guides/$slug'
     | '/create'
     | '/amendment/$id/change-requests'
     | '/amendment/$id/collaborators'
@@ -1489,6 +1522,7 @@ export interface FileRouteTypes {
     | '/auth/sign-up'
     | '/auth/verify'
     | '/docs/$topic'
+    | '/docs/search'
     | '/auth/'
     | '/docs/'
     | '/_authed/amendment/$id'
@@ -1529,6 +1563,8 @@ export interface FileRouteTypes {
     | '/api/newsletter/sync'
     | '/api/resend/webhook'
     | '/api/stripe/webhook'
+    | '/docs/getting-started/$slug'
+    | '/docs/guides/$slug'
     | '/_authed/create/'
     | '/_authed/amendment/$id/change-requests'
     | '/_authed/amendment/$id/collaborators'
@@ -1848,6 +1884,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsTopicRouteImport
       parentRoute: typeof DocsRoute
     }
+    '/docs/search': {
+      id: '/docs/search'
+      path: '/search'
+      fullPath: '/docs/search'
+      preLoaderRoute: typeof DocsSearchRouteImport
+      parentRoute: typeof DocsRoute
+    }
     '/_authed/amendment/$id': {
       id: '/_authed/amendment/$id'
       path: '/amendment/$id'
@@ -2120,6 +2163,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/stripe/webhook'
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/docs/getting-started/$slug': {
+      id: '/docs/getting-started/$slug'
+      path: '/getting-started/$slug'
+      fullPath: '/docs/getting-started/$slug'
+      preLoaderRoute: typeof DocsGettingStartedSlugRouteImport
+      parentRoute: typeof DocsRoute
+    }
+    '/docs/guides/$slug': {
+      id: '/docs/guides/$slug'
+      path: '/guides/$slug'
+      fullPath: '/docs/guides/$slug'
+      preLoaderRoute: typeof DocsGuidesSlugRouteImport
+      parentRoute: typeof DocsRoute
     }
     '/_authed/amendment/$id/': {
       id: '/_authed/amendment/$id/'
@@ -2876,12 +2933,18 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface DocsRouteChildren {
   DocsTopicRoute: typeof DocsTopicRoute
+  DocsSearchRoute: typeof DocsSearchRoute
   DocsIndexRoute: typeof DocsIndexRoute
+  DocsGettingStartedSlugRoute: typeof DocsGettingStartedSlugRoute
+  DocsGuidesSlugRoute: typeof DocsGuidesSlugRoute
 }
 
 const DocsRouteChildren: DocsRouteChildren = {
   DocsTopicRoute: DocsTopicRoute,
+  DocsSearchRoute: DocsSearchRoute,
   DocsIndexRoute: DocsIndexRoute,
+  DocsGettingStartedSlugRoute: DocsGettingStartedSlugRoute,
+  DocsGuidesSlugRoute: DocsGuidesSlugRoute,
 }
 
 const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)

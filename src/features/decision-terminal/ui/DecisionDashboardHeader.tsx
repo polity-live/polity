@@ -24,7 +24,7 @@ export function DecisionDashboardHeader({
   className,
 }: DecisionDashboardHeaderProps) {
   return (
-    <header className={cn('bg-card border-b', className)}>
+    <header className={cn('border-b', className)}>
       <div className="flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <div className="bg-background flex h-10 w-10 items-center justify-center rounded-md border">
@@ -47,8 +47,8 @@ export function DecisionDashboardHeader({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-56 flex-1 sm:flex-none">
+        <div className="flex flex-nowrap items-center gap-2">
+          <div className="relative min-w-0 flex-1 sm:min-w-56 sm:flex-none">
             <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
             <FormControlInput
               value={searchQuery}

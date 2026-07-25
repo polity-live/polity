@@ -1,8 +1,13 @@
 import type { ReactNode } from 'react';
 
 import { Button } from '@/features/shared/ui/ui/button.tsx';
+import {
+  ResponsiveActionLabel,
+  compactActionButtonClassName,
+} from '@/features/shared/ui/layout/ActionBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { Check, Clock, UserMinus, UserPlus, type LucideIcon } from 'lucide-react';
+import { cn } from '@/features/shared/utils/utils';
 
 interface MembershipButtonViewProps {
   isMember: boolean;
@@ -10,6 +15,7 @@ interface MembershipButtonViewProps {
   isInvited: boolean;
   isLoading: boolean;
   className?: string;
+  compactOnMobile?: boolean;
   disabled?: boolean;
   disabledReason?: string;
   conflictDetails?: ReactNode;
@@ -19,9 +25,16 @@ interface MembershipButtonViewProps {
     pending: string;
     accept: string;
   };
+  compactLabels: {
+    request: string;
+    leave: string;
+    pending: string;
+    accept: string;
+  };
   loadingLabel: string;
   buttonConfig: {
     label: string;
+    compactLabel: string;
     icon: LucideIcon;
     variant: 'default' | 'outline';
     onClick: () => void;
@@ -42,10 +55,12 @@ export function MembershipButtonView({
   isInvited,
   isLoading,
   className,
+  compactOnMobile = false,
   disabled,
   disabledReason,
   conflictDetails,
   labels,
+  compactLabels,
   loadingLabel,
   buttonConfig,
   showDisabledReason,
@@ -58,13 +73,22 @@ export function MembershipButtonView({
   onDisabledBlur,
 }: MembershipButtonViewProps) {
   const showDisabledReasonState = Boolean(disabled && (!isLoading || disabledReason));
+  const resolvedClassName = cn(compactOnMobile && compactActionButtonClassName, className);
+  const renderLabel = (full: string, compact: string) => (
+    <ResponsiveActionLabel full={full} compact={compactOnMobile ? compact : undefined} />
+  );
 
   if (showDisabledReasonState) {
     const Icon = buttonConfig.icon;
     const disabledButton = (
-      <Button disabled variant={buttonConfig.variant} className={className}>
-        <Icon className="mr-2 h-4 w-4" />
-        {buttonConfig.label}
+      <Button
+        disabled
+        variant={buttonConfig.variant}
+        className={resolvedClassName}
+        aria-label={buttonConfig.label}
+      >
+        <Icon className={cn('h-4 w-4', compactOnMobile ? 'mr-0 sm:mr-2' : 'mr-2')} />
+        {renderLabel(buttonConfig.label, buttonConfig.compactLabel)}
         {disabledReason ? (
           <span
             aria-hidden="true"
@@ -115,10 +139,11 @@ export function MembershipButtonView({
         loading={isLoading}
         loadingLabel={loadingLabel}
         variant="outline"
-        className={className}
+        className={resolvedClassName}
+        aria-label={labels.pending}
       >
-        <Clock className="mr-2 h-4 w-4" />
-        {labels.pending}
+        <Clock className={cn('h-4 w-4', compactOnMobile ? 'mr-0 sm:mr-2' : 'mr-2')} />
+        {renderLabel(labels.pending, compactLabels.pending)}
       </Button>
     );
   }
@@ -130,10 +155,11 @@ export function MembershipButtonView({
         loading={isLoading}
         loadingLabel={loadingLabel}
         variant="outline"
-        className={className}
+        className={resolvedClassName}
+        aria-label={labels.leave}
       >
-        <UserMinus className="mr-2 h-4 w-4" />
-        {labels.leave}
+        <UserMinus className={cn('h-4 w-4', compactOnMobile ? 'mr-0 sm:mr-2' : 'mr-2')} />
+        {renderLabel(labels.leave, compactLabels.leave)}
       </Button>
     );
   }
@@ -145,10 +171,11 @@ export function MembershipButtonView({
         loading={isLoading}
         loadingLabel={loadingLabel}
         variant="default"
-        className={className}
+        className={resolvedClassName}
+        aria-label={labels.accept}
       >
-        <Check className="mr-2 h-4 w-4" />
-        {labels.accept}
+        <Check className={cn('h-4 w-4', compactOnMobile ? 'mr-0 sm:mr-2' : 'mr-2')} />
+        {renderLabel(labels.accept, compactLabels.accept)}
       </Button>
     );
   }
@@ -158,10 +185,11 @@ export function MembershipButtonView({
       onClick={buttonConfig.onClick}
       loading={isLoading}
       loadingLabel={loadingLabel}
-      className={className}
+      className={resolvedClassName}
+      aria-label={labels.request}
     >
-      <UserPlus className="mr-2 h-4 w-4" />
-      {labels.request}
+      <UserPlus className={cn('h-4 w-4', compactOnMobile ? 'mr-0 sm:mr-2' : 'mr-2')} />
+      {renderLabel(labels.request, compactLabels.request)}
     </Button>
   );
 }

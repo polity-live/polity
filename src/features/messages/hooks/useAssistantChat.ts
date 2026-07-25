@@ -51,6 +51,7 @@ export interface AssistantToolOption {
   kind: 'search' | 'create' | 'update';
   description: string;
   enabled: boolean;
+  alwaysActive: boolean;
 }
 
 export interface CreateAssistantSkillInput {
@@ -173,7 +174,8 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
       label: tool.label,
       kind: tool.kind,
       description: tool.description,
-      enabled: overrideMap.get(tool.name)?.enabled ?? true,
+      enabled: tool.name === 'read_polity_docs' || (overrideMap.get(tool.name)?.enabled ?? true),
+      alwaysActive: tool.name === 'read_polity_docs',
     })).sort((left, right) => left.label.localeCompare(right.label));
   }, [tools]);
 
@@ -313,6 +315,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   }, []);
 
   const setToolSelection = useCallback((toolName: AiToolName, enabled: boolean) => {
+    if (toolName === 'read_polity_docs') return;
     setHasManualToolSelection(true);
     setSelectedToolNames(currentToolNames => {
       const hasTool = currentToolNames.includes(toolName);
@@ -327,6 +330,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   }, []);
 
   const toggleSelectedToolName = useCallback((toolName: AiToolName) => {
+    if (toolName === 'read_polity_docs') return;
     setHasManualToolSelection(true);
     setSelectedToolNames(currentToolNames =>
       currentToolNames.includes(toolName)
@@ -347,6 +351,10 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         const nextSelectedToolNameSet = new Set(currentToolNames);
 
         for (const toolName of toolNamesForKind) {
+          if (toolName === 'read_polity_docs') {
+            nextSelectedToolNameSet.add(toolName);
+            continue;
+          }
           if (enabled) {
             nextSelectedToolNameSet.add(toolName);
           } else {

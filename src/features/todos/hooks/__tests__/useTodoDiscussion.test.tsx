@@ -42,6 +42,8 @@ describe('useTodoDiscussion', () => {
             content: 'Top level',
             parent_id: null,
             created_at: 100,
+            upvotes: 8,
+            downvotes: 2,
             user: {
               id: 'user-author',
               first_name: 'Ada',
@@ -56,6 +58,8 @@ describe('useTodoDiscussion', () => {
                 content: 'Reply',
                 parent_id: 'comment-1',
                 created_at: 101,
+                upvotes: 3,
+                downvotes: 1,
                 user: null,
                 votes: [],
                 replies: [],
@@ -74,8 +78,10 @@ describe('useTodoDiscussion', () => {
     expect(result.current.comments[0]).toMatchObject({
       id: 'comment-1',
       text: 'Top level',
+      upvotes: 8,
+      downvotes: 2,
       creator: { id: 'user-author', name: 'Ada Lovelace', handle: 'ada' },
-      replies: [{ id: 'reply-1', text: 'Reply' }],
+      replies: [{ id: 'reply-1', text: 'Reply', upvotes: 3, downvotes: 1 }],
     });
   });
 

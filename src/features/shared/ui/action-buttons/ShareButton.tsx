@@ -1,6 +1,8 @@
 'use client';
 
 import { type ReactNode } from 'react';
+import { compactActionButtonClassName } from '@/features/shared/ui/layout/ActionBar';
+import { cn } from '@/features/shared/utils/utils';
 interface ShareButtonProps {
   url: string;
   title: string;
@@ -18,6 +20,7 @@ interface ShareButtonProps {
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
+  compactOnMobile?: boolean;
 }
 import { useShareButtonController } from './useShareButtonController';
 import { ShareButtonView } from './ShareButtonView';
@@ -32,6 +35,7 @@ export function ShareButton({
   variant = 'outline',
   size = 'default',
   className = '',
+  compactOnMobile = false,
 }: ShareButtonProps) {
   const viewProps = useShareButtonController({
     url,
@@ -42,8 +46,8 @@ export function ShareButton({
     internalShareLabel,
     variant,
     size,
-    className,
+    className: cn(compactOnMobile && compactActionButtonClassName, className),
   });
 
-  return <ShareButtonView {...viewProps} />;
+  return <ShareButtonView {...viewProps} compactOnMobile={compactOnMobile} />;
 }

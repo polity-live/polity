@@ -46,6 +46,9 @@ export interface CRSummary {
   userVote?: string | null;
   confirmationStatus?: 'pending' | 'confirmed' | null;
   changeRequestStatus?: string | null;
+  isObsolete?: boolean;
+  obsoleteReason?: string | null;
+  obsoleteAt?: number | null;
 }
 
 function isAcceptedStatus(status: string) {
@@ -57,7 +60,9 @@ function isRejectedStatus(status: string) {
 }
 
 function mapCRStatusToTimelineStatus(status: string): string {
-  if (isAcceptedStatus(status) || isRejectedStatus(status)) return 'completed';
+  if (status === 'obsolete' || isAcceptedStatus(status) || isRejectedStatus(status)) {
+    return 'completed';
+  }
   return 'pending';
 }
 
@@ -97,7 +102,8 @@ export function isMockCRTimelineItem(item: {
 }
 
 function createMockVote(itemId: string, cr: CRSummary) {
-  const isCompleted = isAcceptedStatus(cr.status) || isRejectedStatus(cr.status);
+  const isCompleted =
+    cr.status === 'obsolete' || isAcceptedStatus(cr.status) || isRejectedStatus(cr.status);
   const tallyPhase = isCompleted ? 'final' : 'indicative';
   const voteStatus = isCompleted ? 'closed' : 'indicative';
   const totalVotes = (cr.votesFor ?? 0) + (cr.votesAgainst ?? 0) + (cr.votesAbstain ?? 0);
@@ -223,6 +229,8 @@ export function createMockCRTimelineItems(crSummaries: CRSummary[]) {
         resolved_in_mode: cr.resolvedInMode ?? null,
         confirmation_status: cr.confirmationStatus ?? null,
         change_request_status: cr.changeRequestStatus ?? cr.status ?? null,
+        obsolete_reason: cr.obsoleteReason ?? null,
+        obsolete_at: cr.obsoleteAt ?? null,
         created_at: null,
         updated_at: null,
         user: null,

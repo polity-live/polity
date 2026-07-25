@@ -9,11 +9,16 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { LinkGroupDialog } from '@/features/network/ui/LinkGroupDialog';
-import { BookOpen, Network } from 'lucide-react';
+import { BookOpen, Link as LinkIcon, Network } from 'lucide-react';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
-import { ActionBar, EntityPageFrame, StatsBar } from '@/features/shared/ui/layout';
+import {
+  ActionBar,
+  ResponsiveActionLabel,
+  StatsBar,
+  compactActionButtonClassName,
+} from '@/features/shared/ui/layout';
 import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
 import { SocialBar } from '@/features/users/ui/SocialBar';
 import {
@@ -33,6 +38,7 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
+import { Button } from '@/features/shared/ui/ui/button';
 import { SiblingMembershipModeDescription } from '@/features/network/ui/GroupRelationshipFields';
 import { getCanonicalMembershipModeLabel } from '@/features/network/logic/groupConnectionDerived';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
@@ -222,32 +228,45 @@ export function GroupWikiContentView({
   ]);
 
   return (
-    <EntityPageFrame>
+    <>
       {/* Header with centered title and subtitle */}
       <div className="mb-8 text-center">
-        <div className="mb-2 flex items-center justify-center gap-3">
-          <h1 className="text-4xl font-bold">{group.name}</h1>
-          {group.visibility === 'public' && (
-            <BadgeControl variant="secondary" size="sm">
-              {t('components.badges.public')}
-            </BadgeControl>
-          )}
-          {isHierarchical ? (
-            <BadgeControl variant="outline" size="sm">
-              {t('components.badges.hierarchicalGroup')}
-            </BadgeControl>
-          ) : null}
-          {isSibling ? (
-            <BadgeControl variant="outline" size="sm">
-              {translateText('generated.inline.0080_geschwistergruppe_1053d99c')}
-            </BadgeControl>
-          ) : null}
-          {isBase ? (
-            <BadgeControl variant="outline" size="sm">
-              {t('components.badges.baseGroup')}
-            </BadgeControl>
+        <div className="mb-2 flex min-w-0 flex-col items-center justify-center gap-2 md:flex-row md:gap-3">
+          <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{group.name}</h1>
+          {group.visibility === 'public' || isHierarchical || isSibling || isBase ? (
+            <div className="flex max-w-full flex-wrap items-center justify-center gap-2 md:contents">
+              {group.visibility === 'public' && (
+                <BadgeControl variant="secondary" size="sm">
+                  {t('components.badges.public')}
+                </BadgeControl>
+              )}
+              {isHierarchical ? (
+                <BadgeControl variant="outline" size="sm">
+                  {t('components.badges.hierarchicalGroup')}
+                </BadgeControl>
+              ) : null}
+              {isSibling ? (
+                <BadgeControl variant="outline" size="sm">
+                  {translateText('generated.inline.0080_geschwistergruppe_1053d99c')}
+                </BadgeControl>
+              ) : null}
+              {isBase ? (
+                <BadgeControl variant="outline" size="sm">
+                  {t('components.badges.baseGroup')}
+                </BadgeControl>
+              ) : null}
+            </div>
           ) : null}
         </div>
+        {group.group_hashtags && group.group_hashtags.length > 0 ? (
+          <div className="mt-3 md:hidden">
+            <HashtagDisplay
+              hashtags={extractHashtags(group.group_hashtags)}
+              centered
+              badgeClassName="max-w-full whitespace-normal break-all text-center"
+            />
+          </div>
+        ) : null}
         {groupLocation && <p className="text-muted-foreground">{groupLocation}</p>}
       </div>
 
@@ -277,13 +296,29 @@ export function GroupWikiContentView({
       <ActionBar>
         {isAuthenticated ? (
           <>
-            <LinkGroupDialog currentGroupId={groupId} currentGroupName={group.name ?? ''} />
+            <LinkGroupDialog
+              currentGroupId={groupId}
+              currentGroupName={group.name ?? ''}
+              trigger={
+                <Button
+                  className={compactActionButtonClassName}
+                  aria-label={t('components.actionBar.linkGroup')}
+                >
+                  <LinkIcon className="mr-0 h-4 w-4 sm:mr-2" />
+                  <ResponsiveActionLabel
+                    full={t('components.actionBar.linkGroup')}
+                    compact={t('components.actionBar.compact.linkGroup')}
+                  />
+                </Button>
+              }
+            />
             <SubscribeButton
               entityType="group"
               entityId={groupId}
               isSubscribed={isSubscribed}
               onToggleSubscribe={toggleSubscribe}
               isLoading={subscribeLoading}
+              compactOnMobile
             />
             <MembershipButton
               actionType="join"
@@ -312,6 +347,7 @@ export function GroupWikiContentView({
                     ? requestJoinConflictResponse
                     : null
               }
+              compactOnMobile
             />
           </>
         ) : null}
@@ -332,12 +368,13 @@ export function GroupWikiContentView({
               members: memberCount,
             },
           }}
+          compactOnMobile
         />
       </ActionBar>
 
       {/* Hashtags */}
       {group.group_hashtags && group.group_hashtags.length > 0 && (
-        <div className="mb-6">
+        <div className="mb-6 hidden md:block">
           <HashtagDisplay hashtags={extractHashtags(group.group_hashtags)} centered />
         </div>
       )}
@@ -595,6 +632,6 @@ export function GroupWikiContentView({
           </CardContent>
         </Card>
       )}
-    </EntityPageFrame>
+    </>
   );
 }

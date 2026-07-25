@@ -3,6 +3,13 @@ import { useMemo, useState } from 'react';
 import type { CommentData } from '@/features/shared/ui/comments/CommentItem';
 import type { CommentSortBy } from '@/features/shared/ui/comments/CommentSortSelect';
 
+function commentScore(comment: CommentData) {
+  const upvotes = comment.upvotes ?? comment.votes?.filter(vote => vote.vote === 1).length ?? 0;
+  const downvotes =
+    comment.downvotes ?? comment.votes?.filter(vote => vote.vote === -1).length ?? 0;
+  return upvotes - downvotes;
+}
+
 interface UseCommentThreadControllerProps {
   comments: CommentData[];
   onAddComment: (text: string, parentId?: string) => Promise<void>;
@@ -17,6 +24,7 @@ export function useCommentThreadController({
   onSortChange,
 }: UseCommentThreadControllerProps) {
   const [internalSortBy, setInternalSortBy] = useState<CommentSortBy>('votes');
+  const [isCommenting, setIsCommenting] = useState(false);
   const sortBy = controlledSortBy ?? internalSortBy;
 
   const threadedComments = useMemo(() => {
@@ -26,15 +34,7 @@ export function useCommentThreadController({
       return [...topLevel].sort((a, b) => b.createdAt - a.createdAt);
     }
 
-    return [...topLevel].sort((a, b) => {
-      const aScore =
-        (a.votes?.filter(v => v.vote === 1).length || 0) -
-        (a.votes?.filter(v => v.vote === -1).length || 0);
-      const bScore =
-        (b.votes?.filter(v => v.vote === 1).length || 0) -
-        (b.votes?.filter(v => v.vote === -1).length || 0);
-      return bScore - aScore;
-    });
+    return [...topLevel].sort((a, b) => commentScore(b) - commentScore(a));
   }, [comments, sortBy]);
 
   const handleSortChange = (nextSortBy: CommentSortBy) => {
@@ -46,10 +46,18 @@ export function useCommentThreadController({
     await onAddComment(text, parentId);
   };
 
+  const handleAddRootComment = async (text: string) => {
+    await onAddComment(text);
+    setIsCommenting(false);
+  };
+
   return {
     sortBy,
     threadedComments,
     onSortChange: handleSortChange,
     onReply: handleReply,
+    isCommenting,
+    setIsCommenting,
+    onAddRootComment: handleAddRootComment,
   };
 }

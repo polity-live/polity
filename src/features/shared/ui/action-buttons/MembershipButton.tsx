@@ -21,6 +21,7 @@ interface MembershipButtonProps {
   isLoading: boolean;
   loadingLabel?: string;
   className?: string;
+  compactOnMobile?: boolean;
   disabled?: boolean;
   disabledReason?: string;
   conflictResponse?: unknown;
@@ -39,6 +40,7 @@ export function MembershipButton({
   isLoading,
   loadingLabel,
   className,
+  compactOnMobile = false,
   disabled,
   disabledReason,
   conflictResponse,
@@ -66,6 +68,7 @@ export function MembershipButton({
       isInvited={isInvited}
       isLoading={isLoading}
       className={className}
+      compactOnMobile={compactOnMobile}
       disabled={disabled}
       disabledReason={disabledReason}
       conflictDetails={conflictDetails}

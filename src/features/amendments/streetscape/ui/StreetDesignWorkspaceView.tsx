@@ -91,7 +91,7 @@ export function StreetDesignWorkspaceView({
       data-embedded={embedded || undefined}
     >
       {topBar}
-      <div className={cn(embedded ? 'p-3 sm:p-4' : 'container mx-auto px-8 pt-8 pb-8')}>
+      <div className={cn(embedded ? 'p-3 sm:p-4' : 'w-full pt-8 pb-8')}>
         {beforeCard}
         {workspaceCard}
       </div>

@@ -8,6 +8,7 @@ import {
   groupName,
   recomputeAmendmentCounters,
   recomputeBlogCounters,
+  recomputeEventCounters,
   userName,
 } from '../server-helpers';
 import {
@@ -15,6 +16,7 @@ import {
   createDocumentSchema,
   createDocumentCollaboratorSchema,
   createDocumentVersionSchema,
+  updateDocumentSchema,
 } from './schema';
 import { createCommentSchema } from '../discussions/schema';
 import {
@@ -52,6 +54,20 @@ async function recomputeCommentVoteCounters(
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const documentServerMutators = {
+  updateContent: defineMutator(updateDocumentSchema, async ({ tx, ctx, args }) => {
+    const document = await tx.run(zql.document.where('id', args.id).one());
+
+    await mutators.documents.updateContent.fn({ tx, ctx, args });
+
+    if (!args.reconcile_orphaned_change_requests || !document?.amendment_id) return;
+
+    await recomputeAmendmentCounters(tx, document.amendment_id);
+    const amendment = await tx.run(zql.amendment.where('id', document.amendment_id).one());
+    if (amendment?.event_id) {
+      await recomputeEventCounters(tx, amendment.event_id);
+    }
+  }),
+
   create: defineMutator(createDocumentSchema, async ({ tx, ctx, args }) => {
     await mutators.documents.create.fn({ tx, ctx, args });
 

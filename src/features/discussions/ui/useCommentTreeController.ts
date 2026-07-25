@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { calculateScore } from '@/features/votes/utils/voting-utils';
 import type { CommentWithReplies } from '../utils/comment-tree';
@@ -39,6 +39,10 @@ export function useCommentTreeController({
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdReplyId, setCreatedReplyId] = useState<string>();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isVoting, setIsVoting] = useState(false);
+  const votingRef = useRef(false);
 
   const score = calculateScore(comment.upvotes, comment.downvotes);
   const userVote = comment.votes?.find(v => v.user?.id === userId);
@@ -46,11 +50,14 @@ export function useCommentTreeController({
   const hasDownvoted = userVote?.vote === -1;
 
   const handleVote = async (voteValue: number) => {
+    if (votingRef.current) return;
     if (!userId) {
       toast.error(translateText('generated.inline.0138_please_log_in_to_vote_59574e84'));
       return;
     }
 
+    votingRef.current = true;
+    setIsVoting(true);
     try {
       await onVoteComment(
         comment.id,
@@ -63,6 +70,9 @@ export function useCommentTreeController({
     } catch (error) {
       console.error('Error voting:', error);
       toast.error(translateText('generated.inline.0140_failed_to_vote_68d9f4e2'));
+    } finally {
+      votingRef.current = false;
+      setIsVoting(false);
     }
   };
 
@@ -71,7 +81,8 @@ export function useCommentTreeController({
 
     setIsSubmitting(true);
     try {
-      await onCreateComment(threadId, replyText, userId, comment.id);
+      const replyId = await onCreateComment(threadId, replyText, userId, comment.id);
+      setCreatedReplyId(replyId);
       setReplyText('');
       setIsReplying(false);
     } catch (error) {
@@ -95,6 +106,10 @@ export function useCommentTreeController({
     setReplyText,
     isSubmitting,
     setIsSubmitting,
+    createdReplyId,
+    isCollapsed,
+    isVoting,
+    onToggleCollapsed: () => setIsCollapsed(collapsed => !collapsed),
     score,
     userVote,
     hasUpvoted,

@@ -8,6 +8,8 @@ export interface CommentData {
   id: string;
   text: string;
   createdAt: number;
+  upvotes?: number;
+  downvotes?: number;
   parent_id?: string | null;
   creator?: {
     id?: string;

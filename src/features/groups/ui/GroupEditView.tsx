@@ -69,6 +69,7 @@ export function GroupEditView({
       title={t('features.groups.editPage.title')}
       description={t('features.groups.editPage.subtitle')}
       headingMode="sr-only"
+      size="wide"
     >
       <GroupEditForm
         groupId={groupId}

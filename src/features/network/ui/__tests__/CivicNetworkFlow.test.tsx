@@ -23,8 +23,10 @@ vi.mock('@/features/network/ui/NetworkFlowBase', () => ({
       <div data-testid="network-flow-children">{children}</div>
     </div>
   ),
-  Panel: ({ children }: { children: ReactNode }) => (
-    <aside data-testid="network-panel">{children}</aside>
+  Panel: ({ children, className }: { children: ReactNode; className?: string }) => (
+    <aside data-testid="network-panel" className={className}>
+      {children}
+    </aside>
   ),
 }));
 
@@ -68,7 +70,9 @@ describe('CivicNetworkFlow', () => {
     );
 
     expect(screen.getByTestId('network-flow-base')).toBeTruthy();
-    expect(screen.getByTestId('network-panel')).toBeTruthy();
+    expect(screen.getByTestId('network-panel').classList.contains('w-[calc(100%-30px)]')).toBe(
+      true
+    );
     expect(screen.getByText('Group Network')).toBeTruthy();
     expect(screen.queryByText('Network description')).toBeNull();
     expect(screen.queryByText('Entities')).toBeNull();
@@ -78,10 +82,14 @@ describe('CivicNetworkFlow', () => {
     expect(screen.getByText('Dialog child')).toBeTruthy();
 
     const panelToggle = screen.getByRole('button', { name: 'Group Network' });
+    const panelHeader = screen.getByRole('heading', { name: 'Group Network' }).parentElement;
+
+    expect(panelHeader?.classList.contains('mb-2')).toBe(false);
     expect(panelToggle.getAttribute('aria-expanded')).toBe('false');
 
     fireEvent.click(panelToggle);
 
+    expect(panelHeader?.classList.contains('mb-2')).toBe(true);
     expect(panelToggle.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByText('Network description')).toBeTruthy();
     expect(onPanelCollapsedChange).toHaveBeenLastCalledWith(false);
@@ -106,6 +114,7 @@ describe('CivicNetworkFlow', () => {
 
     fireEvent.click(panelToggle);
 
+    expect(panelHeader?.classList.contains('mb-2')).toBe(false);
     expect(panelToggle.getAttribute('aria-expanded')).toBe('false');
     expect(screen.queryByText('Network description')).toBeNull();
     expect(onPanelCollapsedChange).toHaveBeenLastCalledWith(true);

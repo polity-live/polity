@@ -33,6 +33,11 @@ import {
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { getBadgeToneClasses } from '@/features/shared/theme';
+import {
+  DiscussionActionBar,
+  DiscussionCollapseToggle,
+} from '@/features/shared/ui/comments/DiscussionActions';
+import { DiscussionTimestamp } from '@/features/shared/ui/comments/DiscussionTimestamp';
 import type { EditorCollaborator } from '@/features/editor/types';
 import {
   formatStreetDesignChangeRequestIdentifier,
@@ -170,6 +175,7 @@ export function StreetDesignChangeRequestPanel({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState(formatStreetDesignChangeRequestTitle(changeRequest));
   const [commentValue, setCommentValue] = useState('');
+  const [isCommenting, setIsCommenting] = useState(false);
   const tone = getStreetDesignChangeRequestTone(changeRequest);
   const identifier = formatStreetDesignChangeRequestIdentifier(changeRequest);
   const author = getChangeRequestAuthor(changeRequest, collaborators);
@@ -203,6 +209,7 @@ export function StreetDesignChangeRequestPanel({
     if (!text) return;
     setCommentValue('');
     await onCommentSubmit?.(changeRequest.id, text);
+    setIsCommenting(false);
   };
 
   return (
@@ -216,9 +223,10 @@ export function StreetDesignChangeRequestPanel({
             </Avatar>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{author.name}</p>
-              <p className="text-muted-foreground text-xs">
-                {formatRelativeTime(changeRequest.created_at ?? changeRequest.updated_at)}
-              </p>
+              <DiscussionTimestamp
+                value={changeRequest.created_at ?? changeRequest.updated_at}
+                className="text-muted-foreground"
+              />
             </div>
           </div>
 
@@ -468,9 +476,52 @@ export function StreetDesignChangeRequestPanel({
           <MessageSquare className="text-muted-foreground size-4" />
           {t('features.amendments.streetscape.changeRequests.comments', 'Comments')}
         </div>
-        <div className="space-y-3">
+        <DiscussionActionBar>
+          {!isCommenting && currentUserId ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              presentation="mutedTiny"
+              className="h-7 px-2"
+              onClick={() => setIsCommenting(true)}
+            >
+              <MessageSquare className="size-3.5" />
+              {t('features.amendments.streetscape.changeRequests.reply', 'Reply')}
+            </Button>
+          ) : null}
+        </DiscussionActionBar>
+        {isCommenting ? (
+          <div className="flex items-end gap-2">
+            <Avatar className="size-7">
+              <AvatarImage
+                alt={currentUserDisplayName ?? ''}
+                src={currentUserAvatarUrl ?? undefined}
+              />
+              <AvatarFallback>{getInitial(currentUserDisplayName ?? 'U')}</AvatarFallback>
+            </Avatar>
+            <Textarea
+              value={commentValue}
+              placeholder={t('features.amendments.streetscape.changeRequests.reply', 'Reply...')}
+              className="min-h-10 flex-1 resize-none"
+              onChange={event => setCommentValue(event.target.value)}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-9"
+              aria-label={t('features.amendments.streetscape.changeRequests.submitComment', 'Send')}
+              disabled={!canSubmitComment}
+              onClick={() => void submitComment()}
+            >
+              <Send className="size-4" />
+            </Button>
+          </div>
+        ) : null}
+        <div data-slot="discussion-comment-list" className="space-y-1">
           {comments.length === 0 ? (
-            <div className="text-muted-foreground rounded-md border px-3 py-3 text-sm">
+            <div className="text-muted-foreground py-3 text-sm">
               {t('features.amendments.streetscape.changeRequests.noComments', 'No comments yet.')}
             </div>
           ) : (
@@ -485,32 +536,6 @@ export function StreetDesignChangeRequestPanel({
               />
             ))
           )}
-        </div>
-        <div className="flex items-end gap-2">
-          <Avatar className="size-8">
-            <AvatarImage
-              alt={currentUserDisplayName ?? ''}
-              src={currentUserAvatarUrl ?? undefined}
-            />
-            <AvatarFallback>{getInitial(currentUserDisplayName ?? 'U')}</AvatarFallback>
-          </Avatar>
-          <Textarea
-            value={commentValue}
-            placeholder={t('features.amendments.streetscape.changeRequests.reply', 'Reply...')}
-            className="min-h-10 flex-1 resize-none"
-            onChange={event => setCommentValue(event.target.value)}
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-9"
-            aria-label={t('features.amendments.streetscape.changeRequests.submitComment', 'Send')}
-            disabled={!canSubmitComment}
-            onClick={() => void submitComment()}
-          >
-            <Send className="size-4" />
-          </Button>
         </div>
       </section>
     </div>
@@ -580,9 +605,15 @@ function StreetDesignComment({
     currentUserDisplayName,
     currentUserAvatarUrl,
   });
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <div className="flex gap-2">
+    <div data-slot="discussion-comment" className="flex min-w-0 gap-1.5 py-1">
+      <DiscussionCollapseToggle
+        collapsed={isCollapsed}
+        onToggle={() => setIsCollapsed(collapsed => !collapsed)}
+        className="shrink-0"
+      />
       <Avatar className="size-7">
         <AvatarImage alt={author.name} src={author.avatarUrl ?? undefined} />
         <AvatarFallback>{getInitial(author.name)}</AvatarFallback>
@@ -590,9 +621,13 @@ function StreetDesignComment({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="truncate text-sm font-semibold">{author.name}</p>
-          <p className="text-muted-foreground text-xs">{formatRelativeTime(comment.createdAt)}</p>
+          <DiscussionTimestamp value={comment.createdAt} />
         </div>
-        <p className="text-sm leading-5">{extractPlainText(comment.contentRich)}</p>
+        {!isCollapsed ? (
+          <p className="text-sm leading-5 [overflow-wrap:anywhere] break-words">
+            {extractPlainText(comment.contentRich)}
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -890,19 +925,6 @@ function extractNodeText(value: unknown): string {
   if (typeof record.text === 'string') return record.text;
   if (Array.isArray(record.children)) return record.children.map(extractNodeText).join('');
   return '';
-}
-
-function formatRelativeTime(value: string | number | Date | null | undefined) {
-  if (!value) return '0m';
-  const date = value instanceof Date ? value : new Date(value);
-  const elapsedMs = Date.now() - date.getTime();
-  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return '0m';
-  const minutes = Math.floor(elapsedMs / 60_000);
-  if (minutes < 1) return '0m';
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}d`;
 }
 
 function getInitial(name: string | null | undefined) {

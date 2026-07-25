@@ -99,6 +99,25 @@ function filterTimelineItemsForBranch(
   });
 }
 
+function isObsoleteTimelineItem(item: ChangeRequestTimelineRow) {
+  const changeRequest = item.change_request as
+    | {
+        status?: string | null;
+        change_request_status?: string | null;
+        obsolete_at?: number | null;
+        obsolete_reason?: string | null;
+      }
+    | null
+    | undefined;
+
+  return Boolean(
+    changeRequest?.status === 'obsolete' ||
+    changeRequest?.change_request_status === 'obsolete' ||
+    changeRequest?.obsolete_at ||
+    changeRequest?.obsolete_reason
+  );
+}
+
 function getDialogPhaseForItem(item: ChangeRequestTimelineRow | null) {
   if (!item) return 'indication' as const;
   const phase = getVotePhase(item);
@@ -120,6 +139,7 @@ export function useChangeRequestsPageContainerController({
     openChangeRequests,
     approvedChangeRequests,
     declinedChangeRequests,
+    obsoleteChangeRequests = [],
     isLoading,
   } = useChangeRequests(amendmentId, userId);
   const { amendmentProcess } = useAmendmentState({
@@ -150,12 +170,14 @@ export function useChangeRequestsPageContainerController({
     if (!requestedBranchId) return null;
     if (branches.some(branch => branch.id === requestedBranchId)) return requestedBranchId;
     if (
-      allChangeRequests.some(changeRequest => changeRequest.processBranchId === requestedBranchId)
+      [...allChangeRequests, ...obsoleteChangeRequests].some(
+        changeRequest => changeRequest.processBranchId === requestedBranchId
+      )
     ) {
       return requestedBranchId;
     }
     return null;
-  }, [allChangeRequests, branches, requestedBranchId]);
+  }, [allChangeRequests, branches, obsoleteChangeRequests, requestedBranchId]);
   const selectedBranch = useMemo(
     () => branches.find(branch => branch.id === selectedBranchId) ?? null,
     [branches, selectedBranchId]
@@ -311,19 +333,23 @@ export function useChangeRequestsPageContainerController({
     [allChangeRequests]
   );
   const realAgendaTimelineItems = agendaCrVoting.crTimeline;
+  const activeAgendaTimelineItems = useMemo(
+    () => realAgendaTimelineItems.filter(item => !isObsoleteTimelineItem(item)),
+    [realAgendaTimelineItems]
+  );
   const timelineItems = useMemo(() => {
     const branchFilteredItems = selectedBranchId
-      ? filterTimelineItemsForBranch(realAgendaTimelineItems, selectedBranchId)
-      : realAgendaTimelineItems;
+      ? filterTimelineItemsForBranch(activeAgendaTimelineItems, selectedBranchId)
+      : activeAgendaTimelineItems;
 
     return branchFilteredItems.length > 0 ? branchFilteredItems : mockTimelineItems;
-  }, [mockTimelineItems, realAgendaTimelineItems, selectedBranchId]);
+  }, [activeAgendaTimelineItems, mockTimelineItems, selectedBranchId]);
   const selectedEventVoteItem = useMemo(
     () =>
-      realAgendaTimelineItems.find(item => item.id === selectedEventVoteItemId) ??
+      activeAgendaTimelineItems.find(item => item.id === selectedEventVoteItemId) ??
       timelineItems.find(item => item.id === selectedEventVoteItemId) ??
       null,
-    [realAgendaTimelineItems, selectedEventVoteItemId, timelineItems]
+    [activeAgendaTimelineItems, selectedEventVoteItemId, timelineItems]
   );
   const selectedEventVoteChoices = useMemo(
     () =>
@@ -402,7 +428,7 @@ export function useChangeRequestsPageContainerController({
         return section;
       }
 
-      const realItems = filterTimelineItemsForBranch(realAgendaTimelineItems, section.branchId);
+      const realItems = filterTimelineItemsForBranch(activeAgendaTimelineItems, section.branchId);
       if (realItems.length === 0) {
         return section;
       }
@@ -416,7 +442,34 @@ export function useChangeRequestsPageContainerController({
         timelineItems: realItems,
       };
     });
-  }, [allChangeRequests, branches, realAgendaTimelineItems]);
+  }, [activeAgendaTimelineItems, allChangeRequests, branches]);
+
+  const obsoleteBranchSections = useMemo(
+    () =>
+      buildChangeRequestBranchSections({
+        branches,
+        changeRequests: obsoleteChangeRequests,
+      }),
+    [branches, obsoleteChangeRequests]
+  );
+  const obsoleteTimelineItems = useMemo(() => {
+    if (selectedBranchId) {
+      return (
+        obsoleteBranchSections.find(section => section.branchId === selectedBranchId)
+          ?.timelineItems ?? []
+      );
+    }
+
+    if (obsoleteBranchSections.length > 0) {
+      return obsoleteBranchSections.flatMap(section => section.timelineItems);
+    }
+
+    return mapChangeRequestsToTimelineItems(obsoleteChangeRequests);
+  }, [obsoleteBranchSections, obsoleteChangeRequests, selectedBranchId]);
+  const obsoleteDiffMap = useMemo(
+    () => mapChangeRequestsToDiffMap(obsoleteChangeRequests),
+    [obsoleteChangeRequests]
+  );
 
   const branchDiffCandidates = useMemo(
     () =>
@@ -439,6 +492,7 @@ export function useChangeRequestsPageContainerController({
     openChangeRequests,
     approvedChangeRequests,
     declinedChangeRequests,
+    obsoleteChangeRequests,
     isLoading,
     agendaItemId,
     isInVotingStage,
@@ -447,6 +501,9 @@ export function useChangeRequestsPageContainerController({
     diffMap,
     discussions,
     branchSections,
+    obsoleteBranchSections,
+    obsoleteTimelineItems,
+    obsoleteDiffMap,
     branchSelectorBranches: branches,
     selectedBranchId,
     selectedBranchEditingMode,

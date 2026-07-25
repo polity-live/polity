@@ -1,4 +1,4 @@
-import { useCallback, useRef, type ReactNode, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, type ReactNode, type RefObject } from 'react';
 
 import { usePolityZeroList, usePolityZeroWindowList } from './usePolityZeroList';
 import { ZeroVirtualSpacer } from './ZeroVirtualSpacer';
@@ -22,6 +22,7 @@ export interface PolityZeroListViewProps<TRow, TStart, TContext> {
   renderRow: (row: TRow, index: number) => ReactNode;
   renderSkeleton: (index: number) => ReactNode;
   renderEmpty: () => ReactNode;
+  onTotalChange?: (total: number) => void;
   permalinkID?: string | null;
   overscan?: number;
   windowScroll?: boolean;
@@ -81,10 +82,11 @@ function PolityZeroWindowListContent<TRow, TStart, TContext>({
   overscan = 8,
   ...renderProps
 }: PolityZeroListViewProps<TRow, TStart, TContext>) {
+  const contentRef = useRef<HTMLDivElement>(null);
   const list = usePolityZeroWindowList<TContext, TRow, TStart>({
     scrollStateKey: historyKey,
     listContextParams: context,
-    getScrollElement: useCallback(() => null, []),
+    getScrollElement: useCallback(() => contentRef.current, []),
     estimateSize: useCallback(() => estimateSize, [estimateSize]),
     overscan,
     getPageQuery: getPageQuery as never,
@@ -93,13 +95,14 @@ function PolityZeroWindowListContent<TRow, TStart, TContext>({
     toStartRow,
     permalinkID: permalinkID ?? undefined,
   });
-  return <PolityZeroListBody {...renderProps} list={list} windowScroll />;
+  return <PolityZeroListBody {...renderProps} list={list} scrollRef={contentRef} windowScroll />;
 }
 
 function PolityZeroListBody<TRow>({
   renderRow,
   renderSkeleton,
   renderEmpty,
+  onTotalChange,
   className = 'h-[calc(100dvh-16rem)] min-h-80 overflow-auto',
   contentClassName = 'space-y-3',
   list,
@@ -107,16 +110,34 @@ function PolityZeroListBody<TRow>({
   windowScroll = false,
 }: Pick<
   PolityZeroListViewProps<TRow, unknown, unknown>,
-  'renderRow' | 'renderSkeleton' | 'renderEmpty' | 'className' | 'contentClassName'
+  | 'renderRow'
+  | 'renderSkeleton'
+  | 'renderEmpty'
+  | 'onTotalChange'
+  | 'className'
+  | 'contentClassName'
 > & {
   list: ZeroVirtualizerResult<TRow>;
   scrollRef?: RefObject<HTMLDivElement | null>;
   windowScroll?: boolean;
 }) {
-  if (list.rowsEmpty) return renderEmpty();
+  useEffect(() => {
+    if (list.total !== undefined) onTotalChange?.(list.total);
+  }, [list.total, onTotalChange]);
+
+  if (list.rowsEmpty) {
+    const emptyContent = renderEmpty();
+    return windowScroll ? (
+      <div ref={scrollRef}>{emptyContent}</div>
+    ) : (
+      <div ref={scrollRef} className={className}>
+        {emptyContent}
+      </div>
+    );
+  }
 
   const content = (
-    <div className={contentClassName}>
+    <div ref={windowScroll ? scrollRef : undefined} className={contentClassName}>
       <ZeroVirtualSpacer position="before" size={list.spaceBefore} />
       {list.items.map((item, itemPosition) => (
         <div

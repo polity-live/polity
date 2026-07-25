@@ -1,12 +1,11 @@
-import { featureThemeClassName } from '@/features/shared/theme';
-import { BadgeControl } from '@/features/shared/ui/status';
 import { FormControlTextarea } from '@/features/shared/ui/form';
-import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { UserIdentityLink } from '@/features/shared/ui/UserIdentityLink';
-import { ArrowUp, ArrowDown, Clock, MessageSquare } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { VirtualCommentChildren } from './CommentTreeView';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { useCallback, useState } from 'react';
+import { DiscussionActionBar, DiscussionTimestamp } from '@/features/shared/ui/comments';
 export interface ThreadCardViewProps {
   thread: any;
   userId: any;
@@ -22,6 +21,8 @@ export interface ThreadCardViewProps {
   setCommentText: any;
   isSubmitting: any;
   setIsSubmitting: any;
+  createdCommentId?: string;
+  isVoting?: boolean;
   score: any;
   userVote: any;
   hasUpvoted: any;
@@ -44,6 +45,8 @@ export function ThreadCardView({
   commentText,
   setCommentText,
   isSubmitting,
+  createdCommentId,
+  isVoting,
   score,
   hasUpvoted,
   hasDownvoted,
@@ -54,119 +57,114 @@ export function ThreadCardView({
   const authorName =
     [thread.user?.first_name, thread.user?.last_name].filter(Boolean).join(' ') ||
     translateText('generated.inline.0056_anonymous_9bed5104');
+  const [commentCount, setCommentCount] = useState(sortedComments.length);
+  const handleCommentCountChange = useCallback((total: number) => setCommentCount(total), []);
+  const [threadTitle = '', ...threadDescriptionParts] = String(thread.content ?? '').split('\n\n');
+  const threadDescription = threadDescriptionParts.join('\n\n').trim();
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex gap-4">
-          {/* Vote buttons */}
-          <div className="flex flex-col items-center gap-1">
-            {userId ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-8 w-8 p-0 ${hasUpvoted ? featureThemeClassName('discussionsCommentTreeWarningText') : ''}`}
-                onClick={() => handleVote(1)}
-              >
-                <ArrowUp className="h-4 w-4" />
-              </Button>
-            ) : null}
-            <span
-              className={`text-sm font-semibold ${score > 0 ? featureThemeClassName('discussionsCommentTreeWarningText') : score < 0 ? featureThemeClassName('discussionsCommentTreeInfoText') : ''}`}
-            >
-              {score}
-            </span>
-            {userId ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-8 w-8 p-0 ${hasDownvoted ? featureThemeClassName('discussionsCommentTreeInfoText') : ''}`}
-                onClick={() => handleVote(-1)}
-              >
-                <ArrowDown className="h-4 w-4" />
-              </Button>
-            ) : null}
-          </div>
-
-          {/* Thread content */}
-          <div className="flex flex-1 items-start justify-between">
-            <div className="flex-1">
-              <CardTitle className="mb-2">{thread.content}</CardTitle>
-              <div className="text-muted-foreground flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <UserIdentityLink
-                    userId={thread.user?.id ?? thread.user_id}
-                    avatarUrl={thread.user?.avatar}
-                    name={authorName}
-                    fallbackLabel={authorName}
-                    avatarClassName="h-6 w-6"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  <span>{new Date(thread.created_at).toLocaleDateString()}</span>
-                </div>
-                <BadgeControl variant="outline">
-                  {sortedComments.length}
-                  {translateText('generated.inline.0050_comment_118a9989')}
-                  {sortedComments.length !== 1 ? 's' : ''}
-                </BadgeControl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {/* Comments */}
-        <div className="space-y-4">
-          <VirtualCommentChildren
-            threadId={thread.id}
-            parentId={null}
-            userId={userId}
-            amendmentId={amendmentId}
-            amendmentTitle={amendmentTitle}
-            senderName={senderName}
-            onCreateComment={onCreateComment}
-            onVoteComment={onVoteComment}
-            emptyContent={
-              !isCommenting ? (
-                <p className="text-muted-foreground text-center text-sm">
-                  {translateText(
-                    'generated.inline.0395_no_comments_yet_be_the_first_to_comment_ba5c0dff'
-                  )}
-                </p>
-              ) : null
-            }
+    <section data-slot="discussion-thread" className="min-w-0 py-2">
+      <article className="min-w-0 rounded-lg bg-[var(--surface)] p-3 shadow-none sm:p-4">
+        <div className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+          <UserIdentityLink
+            userId={thread.user?.id ?? thread.user_id}
+            avatarUrl={thread.user?.avatar}
+            name={authorName}
+            fallbackLabel={authorName}
+            avatarClassName="size-6"
+            className="max-w-full"
+            textContainerClassName="break-words [overflow-wrap:anywhere]"
           />
+          <span className="hidden sm:inline">·</span>
+          <DiscussionTimestamp value={thread.created_at} />
+        </div>
 
-          {/* Add Comment */}
-          {userId && !isCommenting && (
-            <Button variant="outline" onClick={() => setIsCommenting(true)} className="w-full">
-              <MessageSquare className="mr-2 h-4 w-4" />
+        <h3 className="mt-2 text-xl font-semibold tracking-tight [overflow-wrap:anywhere] break-words">
+          {threadTitle}
+        </h3>
+        {threadDescription ? (
+          <p className="mt-2 max-w-4xl text-sm leading-6 [overflow-wrap:anywhere] break-words whitespace-pre-wrap sm:text-base">
+            {threadDescription}
+          </p>
+        ) : null}
+
+        <DiscussionActionBar
+          score={score}
+          showVoting={Boolean(userId)}
+          hasUpvoted={hasUpvoted}
+          hasDownvoted={hasDownvoted}
+          isVoting={isVoting}
+          onUpvote={() => handleVote(1)}
+          onDownvote={() => handleVote(-1)}
+          className="mt-3"
+        >
+          <span className="flex h-7 items-center gap-1 px-1 text-xs font-medium">
+            <MessageSquare className="size-3.5" />
+            {commentCount} {translateText('generated.inline.0050_comment_118a9989')}
+            {commentCount !== 1 ? 's' : ''}
+          </span>
+          {userId && !isCommenting ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              presentation="mutedTiny"
+              onClick={() => setIsCommenting(true)}
+              className="h-7 px-2"
+            >
+              <MessageSquare className="size-3.5" />
               {translateText('generated.inline.0396_add_comment_d89450c8')}
             </Button>
-          )}
+          ) : null}
+        </DiscussionActionBar>
 
-          {userId && isCommenting && (
-            <div className="space-y-2 rounded-lg border p-4">
-              <FormControlTextarea
-                placeholder={translateText('generated.inline.0397_write_your_comment_b1d820b5')}
-                value={commentText}
-                onChange={e => setCommentText(e.target.value)}
-                rows={3}
-              />
-              <div className="flex gap-2">
-                <Button onClick={handleAddComment} disabled={isSubmitting || !commentText.trim()}>
-                  {translateText('generated.inline.0398_post_comment_54cc0b90')}
-                </Button>
-                <Button variant="outline" onClick={() => setIsCommenting(false)}>
-                  {translateText('generated.inline.0065_cancel_77dfd213')}
-                </Button>
-              </div>
+        {userId && isCommenting ? (
+          <div className="mt-3 max-w-2xl space-y-2">
+            <FormControlTextarea
+              placeholder={translateText('generated.inline.0397_write_your_comment_b1d820b5')}
+              value={commentText}
+              onChange={e => setCommentText(e.target.value)}
+              rows={3}
+              className="min-h-20"
+            />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={handleAddComment}
+                disabled={isSubmitting || !commentText.trim()}
+              >
+                {translateText('generated.inline.0398_post_comment_54cc0b90')}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setIsCommenting(false)}>
+                {translateText('generated.inline.0065_cancel_77dfd213')}
+              </Button>
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        ) : null}
+      </article>
+
+      <div className="mt-3">
+        <VirtualCommentChildren
+          threadId={thread.id}
+          parentId={null}
+          userId={userId}
+          amendmentId={amendmentId}
+          amendmentTitle={amendmentTitle}
+          senderName={senderName}
+          onCreateComment={onCreateComment}
+          onVoteComment={onVoteComment}
+          permalinkID={createdCommentId}
+          onTotalChange={handleCommentCountChange}
+          emptyContent={
+            !isCommenting ? (
+              <p className="text-muted-foreground py-3 text-sm">
+                {translateText(
+                  'generated.inline.0395_no_comments_yet_be_the_first_to_comment_ba5c0dff'
+                )}
+              </p>
+            ) : null
+          }
+        />
+      </div>
+    </section>
   );
 }

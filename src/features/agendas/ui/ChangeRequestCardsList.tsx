@@ -11,8 +11,14 @@ import type { StreetDesignPreviewSource } from '@/features/amendments/streetscap
 import type { AmendmentForwardingPreviewModel } from '@/features/amendments/logic/amendmentForwardingPreview';
 interface ChangeRequestCardsListProps {
   items: ChangeRequestTimelineRow[];
+  /** Historical CRs shown exclusively in the read-only obsolete tab. */
+  obsoleteItems?: ChangeRequestTimelineRow[];
   editingMode: EditingMode;
   isVotingActive: boolean;
+  /** Virtualize only the CR card collection while keeping the shared list controls mounted once. */
+  virtualize?: boolean;
+  /** Visual container for the list. Amendment change-request pages use the frameless variant. */
+  containerVariant?: 'card' | 'frameless';
   userId?: string;
   canManage?: boolean;
   canVote?: boolean;
@@ -71,8 +77,11 @@ import { ChangeRequestCardsListView } from './ChangeRequestCardsListView';
 
 export function ChangeRequestCardsList({
   items,
+  obsoleteItems = [],
   editingMode,
   isVotingActive,
+  virtualize = false,
+  containerVariant = 'card',
   userId,
   canManage = false,
   canVote = false,
@@ -109,6 +118,7 @@ export function ChangeRequestCardsList({
 }: ChangeRequestCardsListProps) {
   const viewProps = useChangeRequestCardsListController({
     items,
+    obsoleteItems,
     editingMode,
     isVotingActive,
     userId,
@@ -146,5 +156,11 @@ export function ChangeRequestCardsList({
     sequenceInterstitial,
   });
 
-  return <ChangeRequestCardsListView {...viewProps} />;
+  return (
+    <ChangeRequestCardsListView
+      {...viewProps}
+      virtualize={virtualize}
+      containerVariant={containerVariant}
+    />
+  );
 }

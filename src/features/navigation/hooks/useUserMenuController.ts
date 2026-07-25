@@ -74,6 +74,7 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
   const displayEmail = authUser.email || '';
   const profileHref = `/user/${authUser.id}`;
   const settingsHref = `/user/${authUser.id}/settings`;
+  const docsHref = '/docs';
   const signInHref = '/auth/sign-in';
 
   const handleLogout = async () => {
@@ -102,6 +103,7 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
     userInitials,
     profileHref,
     settingsHref,
+    docsHref,
     groups: filteredGroups,
     events: filteredEvents,
     amendments: filteredAmendments,
@@ -117,6 +119,7 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
     labels: {
       profile: t('navigation.userMenu.profile'),
       settings: t('navigation.userMenu.settings'),
+      docs: t('navigation.userMenu.docs'),
       groups: t('common.labels.groups'),
       events: t('navigation.userMenu.events'),
       amendments: t('navigation.userMenu.amendments'),

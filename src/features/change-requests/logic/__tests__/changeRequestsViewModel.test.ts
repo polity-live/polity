@@ -28,6 +28,9 @@ function changeRequest(overrides: Partial<ChangeRequest>): ChangeRequest {
     proposedChange: 'After',
     justification: '',
     isResolved: false,
+    isObsolete: false,
+    obsoleteReason: null,
+    obsoleteAt: null,
     status: 'open',
     resolution: null,
     resolvedAt: null,
@@ -155,6 +158,57 @@ describe('change request view model helpers', () => {
     expect((item.change_request as { suggestion_id?: string | null })?.suggestion_id).toBe(
       'suggestion-1'
     );
+  });
+
+  it('keeps obsolete metadata, diffs, and votes while mapping the request as completed', () => {
+    const obsoleteAt = 1_700_000_100_000;
+    const obsolete = changeRequest({
+      id: 'obsolete-request',
+      changeRequestEntityId: 'obsolete-request',
+      isResolved: true,
+      isObsolete: true,
+      obsoleteReason: 'suggestion_removed_in_collaborative_editing',
+      obsoleteAt,
+      status: 'obsolete',
+      resolution: 'obsolete',
+      votingStatus: 'completed',
+      votesFor: 3,
+      votesAgainst: 2,
+      votesAbstain: 1,
+    });
+
+    const [summary] = mapChangeRequestsToSummaries([obsolete]);
+    const [item] = mapChangeRequestsToTimelineItems([obsolete]);
+
+    expect(summary).toMatchObject({
+      status: 'obsolete',
+      isObsolete: true,
+      obsoleteReason: 'suggestion_removed_in_collaborative_editing',
+      obsoleteAt,
+      votesFor: 3,
+      votesAgainst: 2,
+      votesAbstain: 1,
+    });
+    expect(item).toMatchObject({
+      status: 'completed',
+      _originalStatus: 'obsolete',
+      change_request: {
+        status: 'obsolete',
+        obsolete_reason: 'suggestion_removed_in_collaborative_editing',
+        obsolete_at: obsoleteAt,
+        votes_for: 3,
+        votes_against: 2,
+        votes_abstain: 1,
+      },
+      vote: {
+        status: 'closed',
+      },
+    });
+    expect(mapChangeRequestsToDiffMap([obsolete])['obsolete-request']).toMatchObject({
+      changeType: 'replace',
+      originalText: 'Before',
+      newText: 'After',
+    });
   });
 
   it('groups change requests into process branch sections and assigns legacy rows to the first branch', () => {

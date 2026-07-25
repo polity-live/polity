@@ -149,8 +149,15 @@ export function ModernTimelineView({
         ) : null}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]">
-        <div className="lg:sticky lg:top-4 lg:self-start" data-swipe-lock>
+      <div
+        className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]"
+        data-testid="timeline-map-rail-grid"
+      >
+        <div
+          className="max-w-full min-w-0 lg:sticky lg:top-4 lg:self-start"
+          data-swipe-lock
+          data-testid="timeline-map-column"
+        >
           <CivicTimelineMap
             items={civicTimeline.mapItems}
             activeItemId={activeItemId}
@@ -167,7 +174,7 @@ export function ModernTimelineView({
           ) : null}
         </div>
 
-        <div>
+        <div className="max-w-full min-w-0" data-testid="timeline-rail-column">
           <div
             className="bg-card rounded-lg border p-4 shadow-sm sm:p-5"
             data-testid="timeline-rail-surface"

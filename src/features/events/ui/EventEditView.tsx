@@ -228,6 +228,7 @@ export function EventEditView({
         isCreating ? t('pages.create.event.description') : t('features.events.editPage.subtitle')
       }
       headingMode={isCreating ? 'visible' : 'sr-only'}
+      size={isCreating ? 'default' : 'wide'}
     >
       <form ref={formRef} onSubmit={onFormSubmit} className="space-y-6">
         <SettingsTabs

@@ -207,7 +207,12 @@ export function NetworkControlPanel({
       position="top-left"
       className={featureThemeClassName('networkNetworkControlPanelThemedSurfaceAlpha')}
     >
-      <div className="mb-2 flex shrink-0 items-center justify-between">
+      <div
+        className={cn(
+          'flex shrink-0 items-center justify-between',
+          !renderedPanelCollapsed && 'mb-2'
+        )}
+      >
         <h2 className="text-lg font-bold">{title}</h2>
         <Button
           size="sm"

@@ -49,6 +49,7 @@ export interface QuickCommentViewProps {
 export function QuickCommentView({
   className,
   comment,
+  commentCount,
   defaultPlaceholder,
   handleBlur,
   handleCancel,
@@ -67,19 +68,22 @@ export function QuickCommentView({
     <div className={cn('relative', className)}>
       {/* Collapsed state - simple input */}
       {!isExpanded && (
-        <div
-          className={cn(
-            'flex items-center gap-2 rounded-lg px-3 py-2',
-            'bg-muted/50 hover:bg-muted cursor-text transition-colors'
-          )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          presentation="mutedTiny"
+          data-slot="discussion-action-bar"
+          className="h-7 px-2"
           onClick={() => {
             setIsExpanded(true);
             setTimeout(() => inputRef.current?.focus(), 0);
           }}
         >
-          <MessageCircle className="text-muted-foreground h-4 w-4" />
+          <MessageCircle className="size-3.5" />
           <span className="text-muted-foreground text-sm">{placeholder || defaultPlaceholder}</span>
-        </div>
+          {commentCount > 0 ? <span>{commentCount}</span> : null}
+        </Button>
       )}
 
       {/* Expanded state - full textarea */}

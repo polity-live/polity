@@ -416,7 +416,7 @@ export function StreetDesignPageView({
   }
 
   return (
-    <div className="space-y-2 pt-5">
+    <div className="space-y-2">
       {showActionBars ? (
         <StreetDesignTopBarView
           readOnly={readOnly}
@@ -496,7 +496,7 @@ export function StreetDesignPageView({
         </AlertDialog>
       ) : null}
 
-      <div className="container mx-auto px-8 pt-8 pb-8">
+      <div data-slot="street-design-page-content" className="w-full pt-8 pb-8">
         {showActionBars ? (
           <StreetDesignSecondaryActionBarView
             amendmentId={amendmentId}

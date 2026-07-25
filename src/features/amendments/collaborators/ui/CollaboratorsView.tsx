@@ -186,6 +186,7 @@ export function CollaboratorsView({
               roles={roles}
               selectedRoleIds={activeRoleFilterIds}
               onSelectedRoleIdsChange={setSelectedRoleIds}
+              className="sm:mb-0 sm:[&_[data-slot=filter-button]]:h-[var(--field-height)]"
             />
           ) : null}
         </ManagementToolbar>

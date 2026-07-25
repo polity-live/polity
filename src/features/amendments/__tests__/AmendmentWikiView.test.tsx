@@ -45,8 +45,16 @@ vi.mock('@/features/shared/ui/action-buttons/ShareButton.tsx', () => ({
   ShareButton: () => <button type="button">Share</button>,
 }));
 
+vi.mock('@/features/shared/ui/hashtags', () => ({
+  HashtagDisplay: ({ badgeClassName }: { badgeClassName?: string }) => (
+    <div data-testid="hashtags" data-badge-class-name={badgeClassName} />
+  ),
+}));
+
 vi.mock('@/features/shared/ui/voting', () => ({
-  VoteButtons: () => <div data-testid="vote-buttons" />,
+  VoteButtons: ({ presentation }: { presentation?: string }) => (
+    <div data-testid="vote-buttons" data-presentation={presentation} />
+  ),
 }));
 
 vi.mock('@/features/shared/ui/wiki', () => ({
@@ -166,6 +174,54 @@ function valueForStat(label: string) {
 }
 
 describe('AmendmentWikiView stats', () => {
+  it('stacks the editing mode below the title on mobile and restores the row on desktop', () => {
+    render(<AmendmentWikiView {...baseProps()} />);
+
+    const title = screen.getByRole('heading', { level: 1, name: 'A1' });
+    const titleGroup = title.parentElement;
+
+    expect(titleGroup?.className).toContain('flex-col');
+    expect(titleGroup?.className).toContain('md:flex-row');
+    expect(titleGroup?.className).toContain('gap-1');
+    expect(titleGroup?.className).toContain('md:gap-3');
+    expect(title.nextElementSibling).toBe(screen.getByTestId('editing-mode-badge'));
+
+    const header = titleGroup?.parentElement;
+    expect(header?.className).toContain('mb-4');
+    expect(header?.className).toContain('md:mb-8');
+  });
+
+  it('places mobile hashtags after the editing mode and keeps the desktop position', () => {
+    render(
+      <AmendmentWikiView
+        {...baseProps({
+          title: 'A very long amendment title',
+          amendment_hashtags: [
+            {
+              id: 'amendment-tag-1',
+              hashtag: { id: 'tag-1', tag: 'a-very-long-hashtag' },
+            },
+          ],
+        })}
+      />
+    );
+
+    const title = screen.getByRole('heading', {
+      level: 1,
+      name: 'A very long amendment title',
+    });
+    const titleGroup = title.parentElement;
+    const hashtagDisplays = screen.getAllByTestId('hashtags');
+
+    expect(title.className).toContain('min-w-0');
+    expect(title.className).toContain('break-words');
+    expect(titleGroup?.nextElementSibling).toBe(hashtagDisplays[0]?.parentElement);
+    expect(hashtagDisplays[0]?.parentElement?.className).toContain('md:hidden');
+    expect(hashtagDisplays[0]?.getAttribute('data-badge-class-name')).toContain('break-all');
+    expect(hashtagDisplays[1]?.parentElement?.className).toContain('hidden');
+    expect(hashtagDisplays[1]?.parentElement?.className).toContain('md:block');
+  });
+
   it('shows only share actions to unauthenticated visitors', () => {
     render(<AmendmentWikiView {...baseProps()} user={null} />);
 
@@ -183,7 +239,7 @@ describe('AmendmentWikiView stats', () => {
 
     expect(screen.getByRole('button', { name: 'Subscribe' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Membership' })).toBeTruthy();
-    expect(screen.getByTestId('vote-buttons')).toBeTruthy();
+    expect(screen.getByTestId('vote-buttons').getAttribute('data-presentation')).toBe('surface');
     expect(
       screen.getByRole('button', { name: 'generated.inline.0071_clone_d8cdb573' })
     ).toBeTruthy();

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export function useNetworkViewportPanelController(minHeight: number) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [height, setHeight] = useState<number | null>(null);
+  const [height, setHeight] = useState(minHeight);
 
   useEffect(() => {
     if (typeof window === 'undefined') {

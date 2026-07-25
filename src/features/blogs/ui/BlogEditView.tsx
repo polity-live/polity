@@ -86,6 +86,7 @@ export function BlogEditView({
     <SettingsPage
       title={t('features.blogs.editPage.title')}
       description={t('features.blogs.editPage.description')}
+      size="wide"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <SettingsTabs

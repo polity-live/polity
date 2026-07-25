@@ -305,6 +305,7 @@ export function WikiParticipationDirectory({
             roles={filterRoles}
             selectedRoleIds={selectedRoleIds}
             onSelectedRoleIdsChange={setSelectedRoleIds}
+            label={null}
             className="mb-0"
           />
         </div>

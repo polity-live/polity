@@ -34,4 +34,21 @@ describe('OverlayPortalBoundary', () => {
     expect(dialog.className).toContain('absolute');
     expect(overlay?.className).toContain('absolute');
   });
+
+  it('can render a non-modal centered dialog without an overlay', () => {
+    render(
+      <Dialog open modal={false}>
+        <DialogContent showCloseButton={false} showOverlay={false}>
+          <DialogTitle>Centered discussion</DialogTitle>
+        </DialogContent>
+      </Dialog>
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'Centered discussion' });
+
+    expect(dialog.className).toContain('top-[50%]');
+    expect(dialog.className).toContain('left-[50%]');
+    expect(document.querySelector('[data-slot="dialog-overlay"]')).toBeNull();
+    expect(document.querySelector('[data-slot="dialog-close"]')).toBeNull();
+  });
 });

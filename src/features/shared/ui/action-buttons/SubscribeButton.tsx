@@ -3,6 +3,8 @@
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Bell, BellOff } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import { compactActionButtonClassName } from '@/features/shared/ui/layout/ActionBar';
+import { cn } from '@/features/shared/utils/utils';
 
 export type EntityType = 'group' | 'blog' | 'amendment' | 'event' | 'user';
 
@@ -13,6 +15,7 @@ interface SubscribeButtonProps {
   isLoading?: boolean;
   onToggleSubscribe: () => void;
   className?: string;
+  compactOnMobile?: boolean;
 }
 
 /**
@@ -24,25 +27,30 @@ export function SubscribeButton({
   isLoading = false,
   onToggleSubscribe,
   className,
+  compactOnMobile = false,
 }: SubscribeButtonProps) {
   const { t } = useTranslation();
+  const label = isSubscribed
+    ? t('components.actionBar.unsubscribe')
+    : t('components.actionBar.subscribe');
 
   return (
     <Button
       variant={isSubscribed ? 'outline' : 'default'}
       onClick={onToggleSubscribe}
-      className={className}
+      className={cn(compactOnMobile && compactActionButtonClassName, className)}
       disabled={isLoading}
+      aria-label={label}
     >
       {isSubscribed ? (
         <>
-          <BellOff className="mr-2 h-4 w-4" />
-          {t('components.actionBar.unsubscribe')}
+          <BellOff className={cn('h-4 w-4', compactOnMobile ? 'mr-0 sm:mr-2' : 'mr-2')} />
+          {label}
         </>
       ) : (
         <>
-          <Bell className="mr-2 h-4 w-4" />
-          {t('components.actionBar.subscribe')}
+          <Bell className={cn('h-4 w-4', compactOnMobile ? 'mr-0 sm:mr-2' : 'mr-2')} />
+          {label}
         </>
       )}
     </Button>

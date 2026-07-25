@@ -12,6 +12,8 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 
 vi.mock('@/features/shared/ui/layout', () => ({
   ActionBar: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ResponsiveActionLabel: ({ full }: { full: string }) => <>{full}</>,
+  compactActionButtonClassName: 'compact-action-button',
 }));
 
 vi.mock('@/features/shared/ui/action-buttons/ShareButton.tsx', () => ({

@@ -20,6 +20,7 @@ import {
   Brain,
   Check,
   LoaderCircle,
+  Lock,
   Paperclip,
   Plus,
   Send,
@@ -657,15 +658,25 @@ export function AssistantMessageInputView({
                     <CommandEmpty>{t('features.messages.ai.noSettingsFound')}</CommandEmpty>
                     <CommandGroup heading={t('features.messages.ai.searchToolGroup')}>
                       {searchTools.map((tool: any) => {
-                        const selected = selectedToolKeySet.has(tool.name);
+                        const selected = tool.alwaysActive || selectedToolKeySet.has(tool.name);
                         return (
                           <CommandItem
                             key={tool.name}
                             value={`${tool.label} ${tool.name} ${tool.description}`}
+                            disabled={tool.alwaysActive}
                             onSelect={() => assistantChat.setToolSelection(tool.name, !selected)}
                           >
-                            <Check className={selected ? 'opacity-100' : 'opacity-0'} />
+                            {tool.alwaysActive ? (
+                              <Lock className="opacity-70" />
+                            ) : (
+                              <Check className={selected ? 'opacity-100' : 'opacity-0'} />
+                            )}
                             <span className="min-w-0 flex-1 truncate">{tool.label}</span>
+                            {tool.alwaysActive && (
+                              <span className="text-muted-foreground text-xs">
+                                {t('features.messages.ai.alwaysActive', 'Always active')}
+                              </span>
+                            )}
                           </CommandItem>
                         );
                       })}
@@ -811,20 +822,32 @@ export function AssistantMessageInputView({
                   </h4>
                   <div className="grid gap-1">
                     {tools.map((tool: any) => {
-                      const selected = selectedToolKeySet.has(tool.name);
+                      const selected = tool.alwaysActive || selectedToolKeySet.has(tool.name);
                       return (
                         <Button
                           key={tool.name}
                           type="button"
                           variant="ghost"
                           className="h-auto justify-start gap-3 px-2 py-2 text-left"
+                          disabled={tool.alwaysActive}
                           onClick={() => assistantChat.setToolSelection(tool.name, !selected)}
                         >
                           <span className="flex h-5 w-5 items-center justify-center rounded border">
-                            {selected ? <Check className="h-3.5 w-3.5" /> : null}
+                            {tool.alwaysActive ? (
+                              <Lock className="h-3.5 w-3.5" />
+                            ) : selected ? (
+                              <Check className="h-3.5 w-3.5" />
+                            ) : null}
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block text-sm font-medium">{tool.label}</span>
+                            <span className="block text-sm font-medium">
+                              {tool.label}
+                              {tool.alwaysActive && (
+                                <span className="text-muted-foreground ml-2 text-xs font-normal">
+                                  {t('features.messages.ai.alwaysActive', 'Always active')}
+                                </span>
+                              )}
+                            </span>
                             <span className="text-muted-foreground block truncate text-xs">
                               {tool.description}
                             </span>

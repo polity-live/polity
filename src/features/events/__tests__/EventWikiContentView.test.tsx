@@ -65,8 +65,9 @@ vi.mock('@/features/shared/ui/ui/dialog', () => ({
 
 vi.mock('@/features/shared/ui/layout', () => ({
   ActionBar: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  EntityPageFrame: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ResponsiveActionLabel: ({ full }: { full: ReactNode }) => <>{full}</>,
   StatsBar: statsBarMock,
+  compactActionButtonClassName: 'compact-action',
 }));
 
 vi.mock('@/features/shared/ui/action-buttons', () => ({
@@ -76,6 +77,12 @@ vi.mock('@/features/shared/ui/action-buttons', () => ({
 
 vi.mock('@/features/shared/ui/action-buttons/ShareButton.tsx', () => ({
   ShareButton: () => <button>share</button>,
+}));
+
+vi.mock('@/features/shared/ui/hashtags', () => ({
+  HashtagDisplay: ({ badgeClassName }: { badgeClassName?: string }) => (
+    <div data-testid="hashtags" data-badge-class-name={badgeClassName} />
+  ),
 }));
 
 vi.mock('@/features/shared/ui/wiki/InfoTabs.tsx', () => ({
@@ -204,6 +211,59 @@ describe('EventWikiContentView', () => {
       screen.getByRole('button', { name: 'generated.inline.0428_kandidieren_b1de92a5' })
     ).toBeTruthy();
     expect(screen.getByRole('button', { name: 'share' })).toBeTruthy();
+  });
+
+  it('stacks wrapping badges and mobile hashtags below a constrained title', () => {
+    renderEventWikiContent({
+      event: {
+        id: 'event-1',
+        title: 'A very long recurring assembly event title',
+        visibility: 'public',
+        event_type: 'delegate_assembly',
+        recurrence_pattern: 'weekly',
+        description: null,
+        participant_count: 0,
+        subscriber_count: 0,
+        election_count: 0,
+        amendment_count: 0,
+        open_change_request_count: 0,
+        creator: { first_name: 'Organizer' },
+        group: null,
+        roles: [],
+        participants: [],
+        event_hashtags: [
+          {
+            id: 'event-tag-1',
+            hashtag: { id: 'tag-1', tag: 'a-very-long-hashtag' },
+          },
+        ],
+        registration_deadline: null,
+        amendment_deadline: null,
+        candidacy_deadline: null,
+        start_date: null,
+        end_date: null,
+      },
+    });
+
+    const title = screen.getByRole('heading', {
+      level: 1,
+      name: 'A very long recurring assembly event title',
+    });
+    const titleGroup = title.parentElement;
+    const badgeGroup = title.nextElementSibling;
+    const hashtagDisplays = screen.getAllByTestId('hashtags');
+
+    expect(title.className).toContain('min-w-0');
+    expect(title.className).toContain('break-words');
+    expect(titleGroup?.className).toContain('flex-col');
+    expect(titleGroup?.className).toContain('md:flex-row');
+    expect(badgeGroup?.className).toContain('flex-wrap');
+    expect(badgeGroup?.className).toContain('md:contents');
+    expect(titleGroup?.nextElementSibling).toBe(hashtagDisplays[0]?.parentElement);
+    expect(hashtagDisplays[0]?.parentElement?.className).toContain('md:hidden');
+    expect(hashtagDisplays[0]?.getAttribute('data-badge-class-name')).toContain('break-all');
+    expect(hashtagDisplays[1]?.parentElement?.className).toContain('hidden');
+    expect(hashtagDisplays[1]?.parentElement?.className).toContain('md:block');
   });
 
   it('uses computed agenda counters instead of stale persisted event counters', () => {

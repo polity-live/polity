@@ -94,6 +94,14 @@ function getStatusBadge(
   let label = t('features.agendas.crTimeline.open');
   let tone: BadgeTone = 'info';
 
+  if (originalStatus === 'obsolete') {
+    return (
+      <StatusBadge status="obsolete" tone="neutral">
+        {t('features.changeRequests.obsolete.badge', 'Obsolete')}
+      </StatusBadge>
+    );
+  }
+
   // Determine accepted/rejected from vote result or original mock status
   if (status === 'completed') {
     if (voteResult === 'passed' || originalStatus === 'approved' || originalStatus === 'accepted') {
@@ -286,6 +294,23 @@ export function ChangeRequestTimelineCardView({
   isLocked,
 }: ChangeRequestTimelineCardViewProps) {
   const streetDesignChangeRequest = getStreetDesignChangeRequestFromCardItem(item, cr);
+  const isObsolete =
+    cr?.status === 'obsolete' ||
+    cr?.change_request_status === 'obsolete' ||
+    Boolean(cr?.obsolete_at || cr?.obsolete_reason);
+  const obsoleteReason =
+    cr?.obsolete_reason === 'suggestion_removed_in_collaborative_editing'
+      ? t(
+          'features.changeRequests.obsolete.reasons.suggestionRemovedInCollaborativeEditing',
+          'The final suggestion marker was removed during collaborative editing.'
+        )
+      : cr?.obsolete_reason;
+  const obsoleteAt =
+    typeof cr?.obsolete_at === 'number' || typeof cr?.obsolete_at === 'string'
+      ? new Date(cr.obsolete_at)
+      : null;
+  const obsoleteAtLabel =
+    obsoleteAt && Number.isFinite(obsoleteAt.getTime()) ? obsoleteAt.toLocaleString() : null;
   const summaryIdentifier =
     voteStepKind === 'merge_variant'
       ? t('features.agendas.crTimeline.variantVoteShort', 'Variant')
@@ -461,8 +486,11 @@ export function ChangeRequestTimelineCardView({
         )}
       >
         <CollapsibleTrigger className="w-full">
-          <CardHeader className="flex flex-row items-center justify-between py-3">
-            <div className="min-w-0 flex-1 pr-3">
+          <CardHeader className="flex flex-col items-stretch gap-3 space-y-0 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
+            <div
+              className="w-full min-w-0 flex-1 sm:w-auto sm:pr-3"
+              data-slot="change-request-summary"
+            >
               <ChangeRequestSummaryItem
                 identifier={summaryIdentifier}
                 title={title}
@@ -478,7 +506,10 @@ export function ChangeRequestTimelineCardView({
                 variant="trigger"
               />
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div
+              className="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:shrink-0 sm:flex-nowrap"
+              data-slot="change-request-statuses"
+            >
               {hasUserVoted && !isPendingSubmission && (
                 <BadgeControl variant="outline" size="xs">
                   {t('features.agendas.crTimeline.voted')}
@@ -550,6 +581,25 @@ export function ChangeRequestTimelineCardView({
 
             {/* CR description */}
             {cr?.description && <p className="text-muted-foreground text-sm">{cr.description}</p>}
+
+            {isObsolete ? (
+              <div
+                className="bg-muted/50 rounded-lg border p-3 text-sm"
+                data-testid="obsolete-change-request-details"
+              >
+                <p className="font-medium">
+                  {t('features.changeRequests.obsolete.badge', 'Obsolete')}
+                </p>
+                {obsoleteReason ? (
+                  <p className="text-muted-foreground mt-1">{obsoleteReason}</p>
+                ) : null}
+                {obsoleteAtLabel ? (
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    {t('features.changeRequests.obsolete.closedAt', 'Closed at')}: {obsoleteAtLabel}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             {/* Suggestion text changes (Add / Delete) */}
             {diff &&

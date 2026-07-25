@@ -9,7 +9,7 @@ vi.mock('../../rbac/can', () => ({
   can: (...args: unknown[]) => canMock(...args),
 }));
 
-import { documentSharedMutators } from '../shared-mutators';
+import { collectSuggestionIds, documentSharedMutators } from '../shared-mutators';
 
 type DocumentMutatorInput = Parameters<typeof documentSharedMutators.create.fn>[0];
 type DocumentMutatorTx = DocumentMutatorInput['tx'];
@@ -57,6 +57,9 @@ function createTx(location: DocumentMutatorTx['location'] = 'server') {
       amendment: {
         update: vi.fn(),
       },
+      change_request: {
+        update: vi.fn(),
+      },
     },
   };
 }
@@ -73,6 +76,31 @@ beforeEach(() => {
 });
 
 describe('documentSharedMutators group RBAC', () => {
+  it('collects inline and block suggestion ids from nested document content', () => {
+    expect(
+      collectSuggestionIds([
+        {
+          type: 'p',
+          suggestion: {
+            id: 'block-suggestion',
+            isLineBreak: true,
+            type: 'insert',
+          },
+          children: [
+            {
+              text: 'Changed',
+              suggestion: true,
+              suggestion_inline: {
+                id: 'inline-suggestion',
+                type: 'insert',
+              },
+            },
+          ],
+        },
+      ])
+    ).toEqual(new Set(['block-suggestion', 'inline-suggestion']));
+  });
+
   it('allows any authenticated viewer to create a thread on a public statement', async () => {
     const tx = createTx('server');
     tx.run.mockResolvedValueOnce({
@@ -458,6 +486,250 @@ describe('documentSharedMutators group RBAC', () => {
     expect(JSON.stringify(update.content)).not.toContain('remove me');
     expect(JSON.stringify(update.content)).toContain('keep me');
     expect(JSON.stringify(update.content)).not.toContain('suggestion-rejected-remove');
+  });
+
+  it('marks an open change request obsolete when its final suggestion marker is removed', async () => {
+    const tx = createTx('server');
+    const ctx = createCtx();
+    const changeRequest = {
+      id: 'cr-1',
+      process_branch_id: null,
+      suggestion_id: 'suggestion-1',
+      status: 'open',
+      voting_status: 'open',
+      votes_for: 2,
+      votes_against: 1,
+      votes_abstain: 1,
+      obsolete_at: null,
+      obsolete_reason: null,
+    };
+
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'doc-1',
+        amendment_id: 'amendment-1',
+        editing_mode: 'edit',
+      })
+      .mockResolvedValueOnce({ id: 'amendment-1', group_id: 'group-1' })
+      .mockResolvedValueOnce([changeRequest])
+      .mockResolvedValueOnce(null);
+    canMock.mockResolvedValueOnce(undefined);
+
+    await documentSharedMutators.updateContent.fn({
+      tx: tx as never,
+      ctx,
+      args: {
+        id: 'doc-1',
+        content: [{ type: 'p', children: [{ text: 'Updated' }] }],
+        reconcile_orphaned_change_requests: true,
+      },
+    });
+
+    expect(tx.mutate.change_request.update).toHaveBeenCalledWith({
+      id: 'cr-1',
+      voting_status: 'completed',
+      obsolete_reason: 'suggestion_removed_in_collaborative_editing',
+      obsolete_at: expect.any(Number),
+      obsolete_by_vote_id: null,
+      updated_at: expect.any(Number),
+    });
+    expect(tx.mutate.change_request.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: expect.anything(),
+        votes_for: expect.anything(),
+      })
+    );
+    expect(tx.mutate.document.update).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        reconcile_orphaned_change_requests: expect.anything(),
+      })
+    );
+  });
+
+  it('keeps an open change request active while one of its suggestion markers remains', async () => {
+    const tx = createTx('server');
+    const ctx = createCtx();
+
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'doc-1',
+        amendment_id: 'amendment-1',
+        editing_mode: 'edit',
+      })
+      .mockResolvedValueOnce({ id: 'amendment-1', group_id: 'group-1' })
+      .mockResolvedValueOnce([
+        {
+          id: 'cr-1',
+          process_branch_id: null,
+          suggestion_id: 'suggestion-1',
+          status: 'open',
+          voting_status: 'open',
+        },
+      ])
+      .mockResolvedValueOnce(null);
+    canMock.mockResolvedValueOnce(undefined);
+
+    await documentSharedMutators.updateContent.fn({
+      tx: tx as never,
+      ctx,
+      args: {
+        id: 'doc-1',
+        content: [
+          {
+            type: 'p',
+            children: [
+              {
+                text: 'Still suggested',
+                suggestion: true,
+                suggestion_remaining: {
+                  id: 'suggestion-1',
+                  type: 'insert',
+                },
+              },
+            ],
+          },
+        ],
+        reconcile_orphaned_change_requests: true,
+      },
+    });
+
+    expect(tx.mutate.change_request.update).not.toHaveBeenCalled();
+  });
+
+  it('does not reconcile orphaned change requests outside collaborative editing mode', async () => {
+    const tx = createTx('server');
+    const ctx = createCtx();
+
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'doc-1',
+        amendment_id: 'amendment-1',
+        editing_mode: 'suggest_internal',
+      })
+      .mockResolvedValueOnce({ id: 'amendment-1', group_id: 'group-1' })
+      .mockResolvedValueOnce([
+        {
+          id: 'cr-1',
+          process_branch_id: null,
+          suggestion_id: 'suggestion-1',
+          status: 'open',
+          voting_status: 'open',
+        },
+      ])
+      .mockResolvedValueOnce(null);
+    canMock.mockResolvedValueOnce(undefined);
+
+    await documentSharedMutators.updateContent.fn({
+      tx: tx as never,
+      ctx,
+      args: {
+        id: 'doc-1',
+        content: [{ type: 'p', children: [{ text: 'Updated' }] }],
+        reconcile_orphaned_change_requests: true,
+      },
+    });
+
+    expect(tx.mutate.change_request.update).not.toHaveBeenCalled();
+  });
+
+  it('only reconciles open non-obsolete change requests in the document branch scope', async () => {
+    const tx = createTx('server');
+    const ctx = createCtx();
+
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'doc-branch-1',
+        amendment_id: 'amendment-1',
+        editing_mode: 'suggest_internal',
+      })
+      .mockResolvedValueOnce({ id: 'amendment-1', group_id: 'group-1' })
+      .mockResolvedValueOnce([
+        {
+          id: 'same-branch-open',
+          process_branch_id: 'branch-1',
+          suggestion_id: 'suggestion-open',
+          status: 'open',
+          voting_status: 'open',
+        },
+        {
+          id: 'other-branch-open',
+          process_branch_id: 'branch-2',
+          suggestion_id: 'suggestion-other',
+          status: 'open',
+          voting_status: 'open',
+        },
+        {
+          id: 'same-branch-decided',
+          process_branch_id: 'branch-1',
+          suggestion_id: 'suggestion-decided',
+          status: 'accepted',
+          voting_status: 'completed',
+        },
+        {
+          id: 'same-branch-obsolete',
+          process_branch_id: 'branch-1',
+          suggestion_id: 'suggestion-obsolete',
+          status: 'open',
+          voting_status: 'completed',
+          obsolete_at: 123,
+          obsolete_reason: 'superseded',
+        },
+      ])
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        document_id: 'doc-branch-1',
+        editing_mode: 'edit',
+      });
+    canMock.mockResolvedValueOnce(undefined);
+
+    await documentSharedMutators.updateContent.fn({
+      tx: tx as never,
+      ctx,
+      args: {
+        id: 'doc-branch-1',
+        content: [{ type: 'p', children: [{ text: 'Updated branch' }] }],
+        reconcile_orphaned_change_requests: true,
+      },
+    });
+
+    expect(tx.mutate.change_request.update).toHaveBeenCalledTimes(1);
+    expect(tx.mutate.change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'same-branch-open' })
+    );
+  });
+
+  it('does not reconcile an orphaned request when the internal save flag is absent', async () => {
+    const tx = createTx('server');
+    const ctx = createCtx();
+
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'doc-1',
+        amendment_id: 'amendment-1',
+        editing_mode: 'edit',
+      })
+      .mockResolvedValueOnce({ id: 'amendment-1', group_id: 'group-1' })
+      .mockResolvedValueOnce([
+        {
+          id: 'cr-1',
+          process_branch_id: null,
+          suggestion_id: 'suggestion-1',
+          status: 'open',
+          voting_status: 'open',
+        },
+      ]);
+    canMock.mockResolvedValueOnce(undefined);
+
+    await documentSharedMutators.updateContent.fn({
+      tx: tx as never,
+      ctx,
+      args: {
+        id: 'doc-1',
+        content: [{ type: 'p', children: [{ text: 'Updated' }] }],
+      },
+    });
+
+    expect(tx.mutate.change_request.update).not.toHaveBeenCalled();
   });
 
   it('rejects standalone document content updates without an active collaborator', async () => {

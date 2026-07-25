@@ -30,10 +30,173 @@ import {
   deleteCommentVoteSchema,
 } from '../votes/schema';
 import { applyResolvedSuggestionsToContent } from '@/features/change-requests/logic/applySuggestionToContent';
+import { normalizeEditingMode } from '../amendments/editing-mode-policy';
 import { applyTodoQueryAccess } from '../rbac/query-access';
 import { assertCanViewAmendment } from '../rbac/amendment-access';
 import { assertCanViewStatement } from '../statements/shared-mutators';
 import { assertCanViewBlog } from '../blogs/shared-mutators';
+
+type DocumentMutatorTx = Parameters<typeof can>[0];
+
+export const COLLABORATIVE_EDITING_OBSOLETE_REASON = 'suggestion_removed_in_collaborative_editing';
+
+export function collectSuggestionIds(content: unknown): Set<string> {
+  const suggestionIds = new Set<string>();
+
+  const visit = (nodes: unknown) => {
+    if (!Array.isArray(nodes)) return;
+
+    for (const node of nodes) {
+      if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
+
+      const record = node as Record<string, unknown>;
+      const blockSuggestion = record.suggestion;
+      if (
+        blockSuggestion &&
+        typeof blockSuggestion === 'object' &&
+        !Array.isArray(blockSuggestion)
+      ) {
+        const id = (blockSuggestion as Record<string, unknown>).id;
+        if (typeof id === 'string' && id) suggestionIds.add(id);
+      }
+
+      for (const [key, value] of Object.entries(record)) {
+        if (
+          !key.startsWith('suggestion_') ||
+          !value ||
+          typeof value !== 'object' ||
+          Array.isArray(value)
+        ) {
+          continue;
+        }
+        const id = (value as Record<string, unknown>).id;
+        if (typeof id === 'string' && id) suggestionIds.add(id);
+      }
+
+      visit(record.children);
+    }
+  };
+
+  visit(content);
+  return suggestionIds;
+}
+
+function isOpenDocumentChangeRequest(changeRequest: {
+  status?: string | null;
+  voting_status?: string | null;
+  obsolete_at?: number | null;
+  obsolete_reason?: string | null;
+}) {
+  return (
+    (!changeRequest.status || changeRequest.status === 'open') &&
+    changeRequest.voting_status !== 'completed' &&
+    !changeRequest.obsolete_at &&
+    !changeRequest.obsolete_reason
+  );
+}
+
+async function reconcileOrphanedChangeRequests({
+  tx,
+  document,
+  content,
+  now,
+  changeRequests,
+}: {
+  tx: DocumentMutatorTx;
+  document: { id: string; amendment_id?: string | null; editing_mode?: string | null };
+  content: unknown;
+  now: number;
+  changeRequests?: readonly Record<string, any>[];
+}) {
+  if (!document.amendment_id) return;
+
+  const processBranch = await tx.run(
+    zql.amendment_process_branch.where('document_id', document.id).one()
+  );
+  if (normalizeEditingMode(processBranch?.editing_mode ?? document.editing_mode) !== 'edit') {
+    return;
+  }
+
+  const scopedChangeRequests =
+    changeRequests ??
+    (await tx.run(zql.change_request.where('amendment_id', document.amendment_id)));
+  const activeSuggestionIds = collectSuggestionIds(content);
+  const processBranchId = processBranch?.id ?? null;
+
+  for (const changeRequest of scopedChangeRequests) {
+    if (
+      (changeRequest.process_branch_id ?? null) !== processBranchId ||
+      !changeRequest.suggestion_id ||
+      !isOpenDocumentChangeRequest(changeRequest) ||
+      activeSuggestionIds.has(changeRequest.suggestion_id)
+    ) {
+      continue;
+    }
+
+    await tx.mutate.change_request.update({
+      id: changeRequest.id,
+      voting_status: 'completed',
+      obsolete_reason: COLLABORATIVE_EDITING_OBSOLETE_REASON,
+      obsolete_at: now,
+      obsolete_by_vote_id: null,
+      updated_at: now,
+    });
+  }
+}
+
+function applyVoteDelta(
+  counts: { upvotes: number; downvotes: number },
+  vote: number | null | undefined,
+  delta: 1 | -1
+) {
+  if (vote === 1) {
+    counts.upvotes = Math.max(0, counts.upvotes + delta);
+  } else if (vote === -1) {
+    counts.downvotes = Math.max(0, counts.downvotes + delta);
+  }
+}
+
+async function optimisticallyAdjustThreadVoteCounters(
+  tx: DocumentMutatorTx,
+  threadId: string,
+  previousVote?: number | null,
+  nextVote?: number | null
+) {
+  if (tx.location !== 'client') return;
+
+  const thread = await tx.run(zql.thread.where('id', threadId).one());
+  if (!thread) return;
+
+  const counts = {
+    upvotes: thread.upvotes ?? 0,
+    downvotes: thread.downvotes ?? 0,
+  };
+  applyVoteDelta(counts, previousVote, -1);
+  applyVoteDelta(counts, nextVote, 1);
+
+  await tx.mutate.thread.update({ id: threadId, ...counts });
+}
+
+async function optimisticallyAdjustCommentVoteCounters(
+  tx: DocumentMutatorTx,
+  commentId: string,
+  previousVote?: number | null,
+  nextVote?: number | null
+) {
+  if (tx.location !== 'client') return;
+
+  const comment = await tx.run(zql.comment.where('id', commentId).one());
+  if (!comment) return;
+
+  const counts = {
+    upvotes: comment.upvotes ?? 0,
+    downvotes: comment.downvotes ?? 0,
+  };
+  applyVoteDelta(counts, previousVote, -1);
+  applyVoteDelta(counts, nextVote, 1);
+
+  await tx.mutate.comment.update({ id: commentId, ...counts });
+}
 
 async function authorizeTodoThreadAccess(
   tx: Parameters<typeof can>[0],
@@ -326,23 +489,42 @@ export const documentSharedMutators = {
 
   // Update document content
   updateContent: defineMutator(updateDocumentSchema, async ({ tx, ctx, args }) => {
+    const { reconcile_orphaned_change_requests: shouldReconcileOrphans, ...documentArgs } = args;
+    const now = Date.now();
     let content = args.content;
+    let document:
+      { id: string; amendment_id?: string | null; editing_mode?: string | null } | undefined;
+    let amendmentChangeRequests: readonly Record<string, any>[] | undefined;
+
     if (tx.location !== 'client') {
       const scope = await authorizeDocumentGroupManage(tx, ctx, args.id);
+      document = scope.document;
       if (content && scope.document.amendment_id) {
-        const changeRequests = await tx.run(
+        amendmentChangeRequests = await tx.run(
           zql.change_request.where('amendment_id', scope.document.amendment_id)
         );
         content = toMutableJSONValue(
-          applyResolvedSuggestionsToContent(content as Value, changeRequests)
+          applyResolvedSuggestionsToContent(content as Value, amendmentChangeRequests)
         );
       }
+    } else if (shouldReconcileOrphans) {
+      document = await tx.run(zql.document.where('id', args.id).one());
+    }
+
+    if (shouldReconcileOrphans && document && content !== undefined && content !== null) {
+      await reconcileOrphanedChangeRequests({
+        tx,
+        document,
+        content,
+        now,
+        changeRequests: amendmentChangeRequests,
+      });
     }
 
     await tx.mutate.document.update({
-      ...args,
+      ...documentArgs,
       ...(args.content !== undefined ? { content } : {}),
-      updated_at: Date.now(),
+      updated_at: now,
     });
   }),
 
@@ -456,6 +638,7 @@ export const documentSharedMutators = {
       user_id: ctx.userID,
       created_at: now,
     });
+    await optimisticallyAdjustThreadVoteCounters(tx, args.thread_id, undefined, args.vote);
   }),
 
   voteComment: defineMutator(createCommentVoteSchema, async ({ tx, ctx, args }) => {
@@ -471,6 +654,7 @@ export const documentSharedMutators = {
       user_id: ctx.userID,
       created_at: now,
     });
+    await optimisticallyAdjustCommentVoteCounters(tx, args.comment_id, undefined, args.vote);
   }),
 
   // Delete a document
@@ -516,6 +700,11 @@ export const documentSharedMutators = {
 
   // Update a comment vote
   updateCommentVote: defineMutator(updateCommentVoteSchema, async ({ tx, ctx, args }) => {
+    const optimisticVote =
+      tx.location === 'client'
+        ? await tx.run(zql.comment_vote.where('id', args.id).one())
+        : undefined;
+
     if (tx.location !== 'client') {
       const commentVote = await tx.run(zql.comment_vote.where('id', args.id).one());
       if (!commentVote) {
@@ -529,10 +718,23 @@ export const documentSharedMutators = {
     }
 
     await tx.mutate.comment_vote.update(args);
+    if (optimisticVote) {
+      await optimisticallyAdjustCommentVoteCounters(
+        tx,
+        optimisticVote.comment_id,
+        optimisticVote.vote,
+        args.vote
+      );
+    }
   }),
 
   // Delete a comment vote
   deleteCommentVote: defineMutator(deleteCommentVoteSchema, async ({ tx, ctx, args }) => {
+    const optimisticVote =
+      tx.location === 'client'
+        ? await tx.run(zql.comment_vote.where('id', args.id).one())
+        : undefined;
+
     if (tx.location !== 'client') {
       const commentVote = await tx.run(zql.comment_vote.where('id', args.id).one());
       if (!commentVote) {
@@ -546,10 +748,22 @@ export const documentSharedMutators = {
     }
 
     await tx.mutate.comment_vote.delete({ id: args.id });
+    if (optimisticVote) {
+      await optimisticallyAdjustCommentVoteCounters(
+        tx,
+        optimisticVote.comment_id,
+        optimisticVote.vote
+      );
+    }
   }),
 
   // Update a thread vote
   updateThreadVote: defineMutator(updateThreadVoteSchema, async ({ tx, ctx, args }) => {
+    const optimisticVote =
+      tx.location === 'client'
+        ? await tx.run(zql.thread_vote.where('id', args.id).one())
+        : undefined;
+
     if (tx.location !== 'client') {
       const threadVote = await tx.run(zql.thread_vote.where('id', args.id).one());
       if (!threadVote) {
@@ -562,10 +776,23 @@ export const documentSharedMutators = {
     }
 
     await tx.mutate.thread_vote.update(args);
+    if (optimisticVote) {
+      await optimisticallyAdjustThreadVoteCounters(
+        tx,
+        optimisticVote.thread_id,
+        optimisticVote.vote,
+        args.vote
+      );
+    }
   }),
 
   // Delete a thread vote
   deleteThreadVote: defineMutator(deleteThreadVoteSchema, async ({ tx, ctx, args }) => {
+    const optimisticVote =
+      tx.location === 'client'
+        ? await tx.run(zql.thread_vote.where('id', args.id).one())
+        : undefined;
+
     if (tx.location !== 'client') {
       const threadVote = await tx.run(zql.thread_vote.where('id', args.id).one());
       if (!threadVote) {
@@ -578,6 +805,13 @@ export const documentSharedMutators = {
     }
 
     await tx.mutate.thread_vote.delete({ id: args.id });
+    if (optimisticVote) {
+      await optimisticallyAdjustThreadVoteCounters(
+        tx,
+        optimisticVote.thread_id,
+        optimisticVote.vote
+      );
+    }
   }),
 
   // Update a thread (vote counts)

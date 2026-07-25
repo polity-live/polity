@@ -1,35 +1,83 @@
 import { describe, expect, it } from 'vitest';
 
-import { getAuthenticatedPageFrame, getUnauthenticatedPageFrame } from '../app-shell-layout';
+import {
+  APP_SHELL_PAGE_FRAME_CLASS,
+  getAuthenticatedPageFrame,
+  getUnauthenticatedPageFrame,
+} from '../app-shell-layout';
 
 describe('app shell page frame routing', () => {
-  it('leaves self-framed entity wiki and detail pages bare', () => {
-    expect(getUnauthenticatedPageFrame('/group/group-1')).toBe('bare');
-    expect(getUnauthenticatedPageFrame('/user/user-1')).toBe('bare');
-    expect(getUnauthenticatedPageFrame('/event/event-1')).toBe('bare');
-    expect(getUnauthenticatedPageFrame('/amendment/amendment-1')).toBe('bare');
-    expect(getUnauthenticatedPageFrame('/blog/blog-1')).toBe('bare');
-    expect(getUnauthenticatedPageFrame('/user/user-1/blog/blog-1')).toBe('bare');
-    expect(getUnauthenticatedPageFrame('/group/group-1/blog/blog-1')).toBe('bare');
+  it('contains entity wiki and detail pages for every authentication state', () => {
+    const paths = [
+      '/group/group-1',
+      '/user/user-1',
+      '/event/event-1',
+      '/amendment/amendment-1',
+      '/blog/blog-1',
+      '/user/user-1/blog/blog-1',
+      '/group/group-1/blog/blog-1',
+    ];
+
+    for (const path of paths) {
+      expect(getUnauthenticatedPageFrame(path)).toBe('contained');
+      expect(getAuthenticatedPageFrame(path)).toBe('contained');
+    }
+
+    expect(APP_SHELL_PAGE_FRAME_CLASS.contained).toContain('max-w-7xl');
+    expect(APP_SHELL_PAGE_FRAME_CLASS.contained).toContain('px-4');
+    expect(APP_SHELL_PAGE_FRAME_CLASS.contained).toContain('md:px-8');
   });
 
-  it('contains signed-out entity subroutes that do not frame themselves', () => {
-    expect(getUnauthenticatedPageFrame('/group/group-1/memberships')).toBe('contained');
-    expect(getUnauthenticatedPageFrame('/user/user-1/memberships')).toBe('contained');
-    expect(getUnauthenticatedPageFrame('/event/event-1/participants')).toBe('contained');
-    expect(getUnauthenticatedPageFrame('/amendment/amendment-1/collaborators')).toBe('contained');
+  it('contains regular entity subroutes consistently for every authentication state', () => {
+    const paths = [
+      '/group/group-1/settings',
+      '/group/group-1/notifications',
+      '/group/group-1/memberships',
+      '/user/user-1/settings',
+      '/user/user-1/notifications',
+      '/user/user-1/memberships',
+      '/event/event-1/settings',
+      '/event/event-1/notifications',
+      '/event/event-1/participants',
+      '/blog/blog-1/edit',
+      '/blog/blog-1/notifications',
+      '/amendment/amendment-1/collaborators',
+    ];
+
+    for (const path of paths) {
+      expect(getUnauthenticatedPageFrame(path)).toBe('contained');
+      expect(getAuthenticatedPageFrame(path)).toBe('contained');
+    }
   });
 
   it('keeps intentionally uncontained entity tools uncontained', () => {
     expect(getUnauthenticatedPageFrame('/group/group-1/network')).toBe('uncontained');
     expect(getUnauthenticatedPageFrame('/user/user-1/network')).toBe('uncontained');
     expect(getUnauthenticatedPageFrame('/event/event-1/network')).toBe('uncontained');
-    expect(getUnauthenticatedPageFrame('/amendment/amendment-1/process')).toBe('uncontained');
   });
 
-  it('contains the streetscape editor like the full text amendment editor', () => {
-    expect(getUnauthenticatedPageFrame('/amendment/amendment-1/streetscape')).toBe('contained');
-    expect(getAuthenticatedPageFrame('/amendment/amendment-1/streetscape')).toBe('contained');
+  it('uses the same contained frame for all amendment entity sections', () => {
+    const paths = [
+      '/amendment/amendment-1',
+      '/amendment/amendment-1/settings',
+      '/amendment/amendment-1/notifications',
+      '/amendment/amendment-1/collaborators',
+      '/amendment/amendment-1/process',
+      '/amendment/amendment-1/discussions',
+      '/amendment/amendment-1/change-requests',
+    ];
+
+    for (const path of paths) {
+      expect(getUnauthenticatedPageFrame(path)).toBe('contained');
+      expect(getAuthenticatedPageFrame(path)).toBe('contained');
+    }
+  });
+
+  it('contains the full text and streetscape amendment editors', () => {
+    for (const path of ['/amendment/amendment-1/text', '/amendment/amendment-1/streetscape']) {
+      expect(getUnauthenticatedPageFrame(path)).toBe('contained');
+      expect(getAuthenticatedPageFrame(path)).toBe('contained');
+    }
   });
 
   it('leaves signed-out public non-entity pages bare', () => {
@@ -41,7 +89,8 @@ describe('app shell page frame routing', () => {
   });
 
   it('preserves authenticated shell frame variants', () => {
-    expect(getAuthenticatedPageFrame('/group/group-1')).toBe('bare');
+    expect(getAuthenticatedPageFrame('/docs')).toBe('bare');
+    expect(getAuthenticatedPageFrame('/docs/guides/groups')).toBe('bare');
     expect(getAuthenticatedPageFrame('/group/group-1/memberships')).toBe('contained');
     expect(getAuthenticatedPageFrame('/home')).toBe('fullWidth');
     expect(getAuthenticatedPageFrame('/search')).toBe('fullWidth');

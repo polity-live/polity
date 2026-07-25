@@ -138,6 +138,67 @@ afterEach(() => {
 });
 
 describe('useEditor', () => {
+  it('enables orphaned change-request reconciliation for normal collaborative amendment saves', async () => {
+    hookMocks.amendmentDocsCollabs = {
+      ...hookMocks.amendmentDocsCollabs,
+      document: {
+        ...hookMocks.amendmentDocsCollabs.document,
+        editing_mode: 'edit',
+      },
+    };
+    const { result } = renderHook(() =>
+      useEditor({
+        entityType: 'amendment',
+        entityId: 'amendment-1',
+        userId: 'user-1',
+      })
+    );
+    const updatedContent = [{ type: 'p', children: [{ text: 'Collaborative edit' }] }] as any;
+
+    await waitFor(() => expect(result.current.mode).toBe('edit'));
+    act(() => result.current.setContent(updatedContent));
+
+    await waitFor(() =>
+      expect(hookMocks.updateDocumentContent).toHaveBeenCalledWith({
+        id: 'document-1',
+        content: updatedContent,
+        reconcile_orphaned_change_requests: true,
+      })
+    );
+  });
+
+  it('does not enable orphan reconciliation when restoring a version in collaborative mode', async () => {
+    hookMocks.amendmentDocsCollabs = {
+      ...hookMocks.amendmentDocsCollabs,
+      document: {
+        ...hookMocks.amendmentDocsCollabs.document,
+        editing_mode: 'edit',
+      },
+    };
+    const { result } = renderHook(() =>
+      useEditor({
+        entityType: 'amendment',
+        entityId: 'amendment-1',
+        userId: 'user-1',
+      })
+    );
+    const restoredContent = [{ type: 'p', children: [{ text: 'Restored' }] }] as any;
+
+    await act(async () => {
+      await result.current.restoreVersion(restoredContent);
+    });
+
+    expect(hookMocks.updateDocumentContent).toHaveBeenCalledWith({
+      id: 'document-1',
+      content: restoredContent,
+    });
+    expect(hookMocks.updateDocumentContent).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        reconcile_orphaned_change_requests: expect.anything(),
+      })
+    );
+  });
+
   it('persists amendment mode changes to the document when no process branch exists', async () => {
     const { result } = renderHook(() =>
       useEditor({
