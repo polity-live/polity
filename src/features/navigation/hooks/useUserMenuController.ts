@@ -117,7 +117,7 @@ export function useUserMenuController({
     amendments: filteredAmendments,
     showGroupSearch: activeGroups.length > 5,
     showEventSearch: activeEvents.length > 5,
-    showAmendmentSearch: openAmendments.length > 0,
+    showAmendmentSearch: openAmendments.length > 5,
     groupSearchQuery,
     eventSearchQuery,
     amendmentSearchQuery,

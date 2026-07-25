@@ -130,6 +130,9 @@ describe('useUserMenuController', () => {
         code: 'B-1',
         targetGroupName: 'Working Group',
       }),
+      buildAmendment('amendment-gamma', 'Gamma Motion'),
+      buildAmendment('amendment-delta', 'Delta Motion'),
+      buildAmendment('amendment-omega', 'Omega Motion'),
     ];
 
     const { result } = renderHook(() => useUserMenuController({ user: null }));
@@ -138,6 +141,9 @@ describe('useUserMenuController', () => {
     expect(result.current?.amendments.map(amendment => amendment.title)).toEqual([
       'Alpha Motion',
       'Beta Motion',
+      'Delta Motion',
+      'Gamma Motion',
+      'Omega Motion',
       'Zeta Motion',
     ]);
 
@@ -152,6 +158,20 @@ describe('useUserMenuController', () => {
     });
 
     expect(result.current?.amendments.map(amendment => amendment.id)).toEqual(['amendment-zeta']);
+  });
+
+  it('hides amendment search for five open amendments', () => {
+    mocks.openNavigationAmendments = [
+      buildAmendment('amendment-alpha', 'Alpha Motion'),
+      buildAmendment('amendment-beta', 'Beta Motion'),
+      buildAmendment('amendment-gamma', 'Gamma Motion'),
+      buildAmendment('amendment-delta', 'Delta Motion'),
+      buildAmendment('amendment-omega', 'Omega Motion'),
+    ];
+
+    const { result } = renderHook(() => useUserMenuController({ user: null }));
+
+    expect(result.current?.showAmendmentSearch).toBe(false);
   });
 });
 
