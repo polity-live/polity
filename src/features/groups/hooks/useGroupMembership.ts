@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useZero } from '@rocicorp/zero/react';
-import { useQuery } from '@rocicorp/zero/react';
-import { useGroupState, useUserMembershipInGroup } from '@/zero/groups/useGroupState';
+import { useViewerMembershipOverview } from '@/zero/groups/useGroupState';
 import { mutators } from '@/zero/mutators';
 import { trackServerFinalization, waitForClientApply } from '@/zero/mutate-with-server-check';
 import { useAuth } from '@/providers/auth-provider';
@@ -11,7 +10,6 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { useGroupConflictPreflight } from './useGroupConflictPreflight';
 import { toast } from '@/features/shared/ui/ui/sonner';
-import { queries } from '@/zero/queries';
 import type { ProjectedGroupMembershipState } from '@/features/search/types/projected-card-state';
 
 export type MembershipStatus = 'invited' | 'requested' | 'member' | 'admin';
@@ -58,27 +56,16 @@ export function useGroupMembership(
   const zero = useZero();
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { group: queriedGroup, isLoading: queriedGroupLoading } = useGroupState(
-    projectedState ? {} : { groupId }
-  );
+  const viewerOverview = useViewerMembershipOverview(projectedState ? undefined : groupId);
+  const queriedGroup = viewerOverview.group;
+  const queriedGroupLoading = viewerOverview.isLoading;
   const group = projectedState?.group ?? queriedGroup;
   const groupLoading = projectedState ? false : queriedGroupLoading;
-  const [guestAccessesData] = useQuery(
-    user?.id && !projectedState ? queries.groups.currentUserGuestAccessesWithGroups({}) : undefined
-  );
-  const {
-    memberships: membershipsData,
-    allMemberships: allMembershipsData,
-    isLoading: queryLoading,
-  } = useUserMembershipInGroup(
-    projectedState ? undefined : user?.id,
-    projectedState ? undefined : groupId
-  );
-  const { memberships: connectedGroupMemberships, isLoading: connectedMembershipLoading } =
-    useUserMembershipInGroup(
-      projectedState ? undefined : user?.id,
-      projectedState ? undefined : (group?.connected_group_id ?? undefined)
-    );
+  const membershipsData = viewerOverview.memberships;
+  const guestAccessesData = viewerOverview.guestAccesses;
+  const connectedGroupMemberships = viewerOverview.connectedGroupMemberships;
+  const queryLoading = viewerOverview.isLoading;
+  const connectedMembershipLoading = viewerOverview.isLoading;
   const [isLoading, setIsLoading] = useState(false);
 
   const data = {
@@ -88,10 +75,7 @@ export function useGroupMembership(
   // Handle multiple memberships - prioritize admin, then member, then invited, then requested
   const memberships = data.groupMemberships || [];
   let membership = memberships[0];
-  const guestAccess =
-    projectedState?.guestAccesses[0] ??
-    (guestAccessesData || []).find(access => access.group?.id === groupId) ??
-    null;
+  const guestAccess = projectedState?.guestAccesses[0] ?? (guestAccessesData || [])[0] ?? null;
 
   if (memberships.length > 1) {
     const adminMembership = memberships.find(
@@ -123,15 +107,7 @@ export function useGroupMembership(
   }
 
   const memberCount =
-    projectedState?.memberCount ??
-    ((allMembershipsData || []).filter(
-      candidate =>
-        candidate.status === 'active' ||
-        candidate.status === 'member' ||
-        candidate.status === 'admin' ||
-        isMemberRole(candidate.role?.name)
-    ).length ||
-      0);
+    projectedState?.memberCount ?? viewerOverview.group?.signed_up_member_count ?? 0;
   const status = normalizeMembershipStatus(membership?.status, membership?.role?.name);
   const requiresGuestAccessFlow =
     group?.group_type === 'sibling' &&

@@ -309,4 +309,3 @@ grant execute on function public.claim_newsletter_sync_jobs(integer) to service_
 CREATE TRIGGER on_auth_user_newsletter_changed AFTER INSERT OR UPDATE OF email, email_confirmed_at ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_auth_user_newsletter_change();
 
 CREATE TRIGGER on_auth_user_newsletter_deleted BEFORE DELETE ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_auth_user_newsletter_delete();
-

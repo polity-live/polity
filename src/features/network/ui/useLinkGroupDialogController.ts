@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { useGroupRoles, useGroupState } from '@/zero/groups/useGroupState';
+import { useGroupRoleOptions, useGroupState } from '@/zero/groups/useGroupState';
 import { useGroupConnectionActions, useGroupConnectionState } from '@/zero/network';
 import { trackServerFinalization, waitForClientApply } from '@/zero/mutate-with-server-check';
 import { toast } from '@/features/shared/ui/ui/sonner';
@@ -131,8 +131,8 @@ export function useLinkGroupDialogController({
   const isEditMode = Boolean(initialTargetGroupId);
 
   const { searchResults: availableGroupsRaw, isLoading: groupStateLoading } = useGroupState({
-    groupId: currentGroupId,
-    includeSearch: true,
+    groupId: open ? currentGroupId : undefined,
+    includeSearch: open,
   });
 
   const availableGroups = (availableGroupsRaw || []).filter(group => group.id !== currentGroupId);
@@ -143,9 +143,11 @@ export function useLinkGroupDialogController({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { roles: selectedGroupRoles } = useGroupRoles(value.selectedGroupId || currentGroupId);
+  const { roles: selectedGroupRoles } = useGroupRoleOptions(
+    open ? value.selectedGroupId || currentGroupId : undefined
+  );
 
-  const { roles: currentGroupRoles } = useGroupRoles(currentGroupId);
+  const { roles: currentGroupRoles } = useGroupRoleOptions(open ? currentGroupId : undefined);
 
   const {
     pairConnections,
@@ -154,7 +156,8 @@ export function useLinkGroupDialogController({
     pairConnectionRequestsLoading,
   } = useGroupConnectionState({
     groupAId: currentGroupId,
-    groupBId: value.selectedGroupId || currentGroupId,
+    groupBId: value.selectedGroupId || undefined,
+    enabled: open && Boolean(value.selectedGroupId),
   });
 
   const relevantConnections = useMemo(

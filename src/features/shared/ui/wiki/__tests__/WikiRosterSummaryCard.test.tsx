@@ -50,6 +50,20 @@ describe('buildWikiRosterSummary', () => {
     expect(summary.signedUpCount).toBe(2);
     expect(summary.nonSignedUpCount).toBe(0);
   });
+
+  it('uses the persisted signed-up count without hydrating the full membership directory', () => {
+    const summary = buildWikiRosterSummary({
+      totalCount: 10,
+      signedUpCount: 7,
+      items: [],
+    });
+
+    expect(summary).toEqual({
+      totalCount: 10,
+      signedUpCount: 7,
+      nonSignedUpCount: 3,
+    });
+  });
 });
 
 describe('WikiRosterSummaryCard', () => {

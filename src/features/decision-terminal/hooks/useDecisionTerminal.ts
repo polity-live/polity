@@ -4,13 +4,23 @@ import { useMemo, useCallback } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { useAgendaTimingState } from '@/zero/agendas/useAgendaState';
 import { useAuth } from '@/providers/auth-provider';
-import type { ElectionWithDetailsRow } from '@/zero/elections';
+import type {
+  ElectionDecisionManagerRow,
+  ElectionDecisionOverviewRow,
+  ElectionViewerDecisionStateRow,
+  ElectionWithDetailsRow,
+} from '@/zero/elections/queries';
 import { queries } from '@/zero/queries';
 import {
   computeVoteResultSummary,
   type MajorityType,
 } from '@/features/vote-cast/logic/computeVoteResults';
-import type { VoteWithDetailsRow } from '@/zero/votes';
+import type {
+  VoteDecisionManagerRow,
+  VoteDecisionOverviewRow,
+  VoteViewerDecisionStateRow,
+  VoteWithDetailsRow,
+} from '@/zero/votes/queries';
 import type { DecisionItem } from '../ui/types';
 import type { Visibility } from '@/features/auth/logic/checkEntityAccess';
 import type { TrendData } from '../ui/TrendIndicator';
@@ -136,6 +146,15 @@ function mergeDecisionAgendaTimingSource(
   };
 }
 
+function dedupeRowsById<T extends { id: string }>(rows: readonly T[]): T[] {
+  const seen = new Set<string>();
+  return rows.filter(row => {
+    if (seen.has(row.id)) return false;
+    seen.add(row.id);
+    return true;
+  });
+}
+
 // Re-export DecisionItem for use in other hooks
 export type { DecisionItem } from '../ui/types';
 
@@ -163,10 +182,13 @@ export function useDecisionTerminal(
   options: UseDecisionTerminalOptions = {}
 ): UseDecisionTerminalReturn {
   const { user } = useAuth();
-  const groupIds = options.groupIds ?? [];
+  const groupIds = useMemo(
+    () => Array.from(new Set(options.groupIds ?? [])).sort(),
+    [options.groupIds]
+  );
 
-  const [electionRowsData, electionResult] = useQuery(
-    queries.elections.decisionPage({
+  const [electionOverviewData, electionOverviewResult] = useQuery(
+    queries.elections.decisionOverviewPage({
       status: undefined,
       statuses: [],
       groupIds,
@@ -176,8 +198,8 @@ export function useDecisionTerminal(
       dir: 'forward',
     })
   );
-  const [voteRowsData, voteResult] = useQuery(
-    queries.votes.decisionPage({
+  const [voteOverviewData, voteOverviewResult] = useQuery(
+    queries.votes.decisionOverviewPage({
       status: undefined,
       statuses: [],
       groupIds,
@@ -187,10 +209,92 @@ export function useDecisionTerminal(
       dir: 'forward',
     })
   );
-  const electionRows = (electionRowsData ?? []) as unknown as ElectionWithDetailsRow[];
-  const voteRows = (voteRowsData ?? []) as unknown as VoteWithDetailsRow[];
-  const electionsLoading = electionResult.type === 'unknown';
-  const votesLoading = voteResult.type === 'unknown';
+
+  const overviewsSettled =
+    electionOverviewResult.type !== 'unknown' && voteOverviewResult.type !== 'unknown';
+  const electionOverviewRows = (electionOverviewData ?? []) as ElectionDecisionOverviewRow[];
+  const voteOverviewRows = (voteOverviewData ?? []) as VoteDecisionOverviewRow[];
+  const electionIds = useMemo(
+    () => (overviewsSettled ? electionOverviewRows.map(row => row.id).sort() : []),
+    [electionOverviewRows, overviewsSettled]
+  );
+  const voteIds = useMemo(
+    () => (overviewsSettled ? voteOverviewRows.map(row => row.id).sort() : []),
+    [overviewsSettled, voteOverviewRows]
+  );
+
+  const shouldLoadElectionRestrictedState = Boolean(user?.id && electionIds.length > 0);
+  const shouldLoadVoteRestrictedState = Boolean(user?.id && voteIds.length > 0);
+  const [electionManagerData, electionManagerResult] = useQuery(
+    shouldLoadElectionRestrictedState
+      ? queries.elections.decisionManagerProjection({ ids: electionIds })
+      : undefined
+  );
+  const [electionViewerData, electionViewerResult] = useQuery(
+    shouldLoadElectionRestrictedState
+      ? queries.elections.viewerDecisionState({ ids: electionIds })
+      : undefined
+  );
+  const [voteManagerData, voteManagerResult] = useQuery(
+    shouldLoadVoteRestrictedState
+      ? queries.votes.decisionManagerProjection({ ids: voteIds })
+      : undefined
+  );
+  const [voteViewerData, voteViewerResult] = useQuery(
+    shouldLoadVoteRestrictedState ? queries.votes.viewerDecisionState({ ids: voteIds }) : undefined
+  );
+
+  const electionRows = useMemo(() => {
+    const managersById = new Map(
+      ((electionManagerData ?? []) as ElectionDecisionManagerRow[]).map(row => [row.id, row])
+    );
+    const viewerRowsByElectionId = new Map<string, ElectionViewerDecisionStateRow[]>();
+    for (const row of (electionViewerData ?? []) as ElectionViewerDecisionStateRow[]) {
+      const rows = viewerRowsByElectionId.get(row.election_id) ?? [];
+      rows.push(row);
+      viewerRowsByElectionId.set(row.election_id, rows);
+    }
+
+    return electionOverviewRows.map(overview => {
+      const manager = managersById.get(overview.id);
+      return {
+        ...overview,
+        offline_tallies: manager?.offline_tallies ?? [],
+        electors: dedupeRowsById([
+          ...(manager?.electors ?? []),
+          ...(viewerRowsByElectionId.get(overview.id) ?? []),
+        ]),
+        indicative_selections: manager?.indicative_selections ?? [],
+        final_selections: manager?.final_selections ?? [],
+      } as unknown as ElectionWithDetailsRow;
+    });
+  }, [electionManagerData, electionOverviewRows, electionViewerData]);
+
+  const voteRows = useMemo(() => {
+    const managersById = new Map(
+      ((voteManagerData ?? []) as VoteDecisionManagerRow[]).map(row => [row.id, row])
+    );
+    const viewerRowsByVoteId = new Map<string, VoteViewerDecisionStateRow[]>();
+    for (const row of (voteViewerData ?? []) as VoteViewerDecisionStateRow[]) {
+      const rows = viewerRowsByVoteId.get(row.vote_id) ?? [];
+      rows.push(row);
+      viewerRowsByVoteId.set(row.vote_id, rows);
+    }
+
+    return voteOverviewRows.map(overview => {
+      const manager = managersById.get(overview.id);
+      return {
+        ...overview,
+        offline_tallies: manager?.offline_tallies ?? [],
+        voters: dedupeRowsById([
+          ...(manager?.voters ?? []),
+          ...(viewerRowsByVoteId.get(overview.id) ?? []),
+        ]),
+        indicative_decisions: manager?.indicative_decisions ?? [],
+        final_decisions: manager?.final_decisions ?? [],
+      } as unknown as VoteWithDetailsRow;
+    });
+  }, [voteManagerData, voteOverviewRows, voteViewerData]);
 
   const agendaEventIds = useMemo(() => {
     const eventIds = new Set<string>();
@@ -209,7 +313,7 @@ export function useDecisionTerminal(
       }
     }
 
-    return Array.from(eventIds);
+    return Array.from(eventIds).sort();
   }, [electionRows, voteRows]);
 
   const { agendaItems, isLoading: agendaLoading } = useAgendaTimingState(
@@ -220,7 +324,17 @@ export function useDecisionTerminal(
     return new Map(agendaItems.map(item => [item.id, item]));
   }, [agendaItems]);
 
-  const isLoading = electionsLoading || votesLoading || agendaLoading;
+  const restrictedElectionStateLoading =
+    shouldLoadElectionRestrictedState &&
+    (electionManagerResult.type === 'unknown' || electionViewerResult.type === 'unknown');
+  const restrictedVoteStateLoading =
+    shouldLoadVoteRestrictedState &&
+    (voteManagerResult.type === 'unknown' || voteViewerResult.type === 'unknown');
+  const isLoading =
+    !overviewsSettled ||
+    restrictedElectionStateLoading ||
+    restrictedVoteStateLoading ||
+    agendaLoading;
 
   const decisions = useMemo(() => {
     const items: DecisionItem[] = [];

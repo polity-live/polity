@@ -52,6 +52,9 @@ export { electionQueries } from './queries';
 export type {
   ElectionByAgendaItemRow,
   ElectionByIdRow,
+  ElectionDecisionOverviewRow,
+  ElectionDecisionManagerRow,
+  ElectionViewerDecisionStateRow,
   CandidatesByElectionRow,
   ElectorsByElectionRow,
   IndicativeResultRow,

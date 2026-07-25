@@ -438,7 +438,11 @@ export function GroupWikiContentView({
           emptyLabel={translateText('features.groups.wiki.noMembers')}
           noResultsLabel={translateText('features.groups.wiki.noMembersMatch')}
           leadingCard={
-            <WikiRosterSummaryCard totalCount={memberCount} items={memberDirectoryItems} />
+            <WikiRosterSummaryCard
+              totalCount={memberCount}
+              signedUpCount={group.signed_up_member_count}
+              items={memberDirectoryItems}
+            />
           }
           virtualSource={
             virtualizeParticipationDirectory

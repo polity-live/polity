@@ -6,44 +6,55 @@ interface GroupConnectionStateOptions {
   groupAId?: string;
   groupBId?: string;
   connectionId?: string;
+  enabled?: boolean;
+  includeAll?: boolean;
 }
 
 export function useGroupConnectionState(options: GroupConnectionStateOptions = {}) {
-  const { groupId, groupAId, groupBId, connectionId } = options;
+  const { groupId, groupAId, groupBId, connectionId, enabled = true, includeAll } = options;
+  const hasSpecificScope = Boolean(groupId || (groupAId && groupBId) || connectionId);
+  const shouldLoadAll =
+    enabled && (includeAll === true || (!hasSpecificScope && includeAll !== false));
 
   const [groupConnections, groupConnectionsResult] = useQuery(
-    groupId ? queries.network.groupConnectionsByGroup({ groupId }) : undefined
+    enabled && groupId ? queries.network.groupConnectionsByGroup({ groupId }) : undefined
   );
   const [pairConnections, pairConnectionsResult] = useQuery(
-    groupAId && groupBId
+    enabled && groupAId && groupBId
       ? queries.network.groupConnectionsByPair({ groupAId, groupBId })
       : undefined
   );
   const [groupConnectionRequests, groupConnectionRequestsResult] = useQuery(
-    groupId ? queries.network.groupConnectionRequestsByGroup({ groupId }) : undefined
+    enabled && groupId ? queries.network.groupConnectionRequestsByGroup({ groupId }) : undefined
   );
   const [pairConnectionRequests, pairConnectionRequestsResult] = useQuery(
-    groupAId && groupBId
+    enabled && groupAId && groupBId
       ? queries.network.groupConnectionRequestsByPair({ groupAId, groupBId })
       : undefined
   );
   const [connection, connectionResult] = useQuery(
-    connectionId ? queries.network.groupConnectionById({ id: connectionId }) : undefined
+    enabled && connectionId ? queries.network.groupConnectionById({ id: connectionId }) : undefined
   );
-  const [allConnections, allConnectionsResult] = useQuery(queries.network.allGroupConnections({}));
+  const [allConnections, allConnectionsResult] = useQuery(
+    shouldLoadAll ? queries.network.allGroupConnections({}) : undefined
+  );
 
   return {
     groupConnections: groupConnections ?? [],
-    groupConnectionsLoading: groupConnectionsResult.type === 'unknown',
+    groupConnectionsLoading:
+      Boolean(enabled && groupId) && groupConnectionsResult.type === 'unknown',
     pairConnections: pairConnections ?? [],
-    pairConnectionsLoading: pairConnectionsResult.type === 'unknown',
+    pairConnectionsLoading:
+      Boolean(enabled && groupAId && groupBId) && pairConnectionsResult.type === 'unknown',
     groupConnectionRequests: groupConnectionRequests ?? [],
-    groupConnectionRequestsLoading: groupConnectionRequestsResult.type === 'unknown',
+    groupConnectionRequestsLoading:
+      Boolean(enabled && groupId) && groupConnectionRequestsResult.type === 'unknown',
     pairConnectionRequests: pairConnectionRequests ?? [],
-    pairConnectionRequestsLoading: pairConnectionRequestsResult.type === 'unknown',
+    pairConnectionRequestsLoading:
+      Boolean(enabled && groupAId && groupBId) && pairConnectionRequestsResult.type === 'unknown',
     connection,
-    connectionLoading: connectionResult.type === 'unknown',
+    connectionLoading: Boolean(enabled && connectionId) && connectionResult.type === 'unknown',
     allConnections: allConnections ?? [],
-    allConnectionsLoading: allConnectionsResult.type === 'unknown',
+    allConnectionsLoading: shouldLoadAll && allConnectionsResult.type === 'unknown',
   };
 }

@@ -61,6 +61,8 @@ function getRelationshipMemoKey(relationship: NormalizedGroupRelationship) {
 }
 
 export function useGroupNetwork(groupId: string) {
+  const [showIndirect, setShowIndirect] = useState(false);
+  const [selectedRights, setSelectedRights] = useState<Set<string>>(new Set(RIGHT_TYPES));
   const { group, isLoading: isGroupLoading } = useGroupState({ groupId });
   const {
     groupConnections,
@@ -69,9 +71,7 @@ export function useGroupNetwork(groupId: string) {
     groupConnectionRequestsLoading,
     allConnections,
     allConnectionsLoading,
-  } = useGroupConnectionState({ groupId });
-  const [showIndirect, setShowIndirect] = useState(false);
-  const [selectedRights, setSelectedRights] = useState<Set<string>>(new Set(RIGHT_TYPES));
+  } = useGroupConnectionState({ groupId, includeAll: showIndirect });
 
   const activeRelationshipsSource = allConnections.length > 0 ? allConnections : groupConnections;
 

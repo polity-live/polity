@@ -11,6 +11,9 @@ interface GroupStateOptions {
   groupId?: string;
   userId?: string;
   includeSearch?: boolean;
+  includeMemberships?: boolean;
+  includeRoles?: boolean;
+  includeScopedRoles?: boolean;
   includeAllRelationships?: boolean;
   includeByUser?: boolean;
   includeMembershipsWithUsers?: boolean;
@@ -372,6 +375,9 @@ export function useGroupState(options: GroupStateOptions = {}) {
     groupId,
     userId,
     includeSearch,
+    includeMemberships,
+    includeRoles,
+    includeScopedRoles,
     includeAllRelationships,
     includeByUser,
     includeMembershipsWithUsers,
@@ -382,17 +388,18 @@ export function useGroupState(options: GroupStateOptions = {}) {
   const [group, groupResult] = useQuery(groupId ? queries.groups.byId({ id: groupId }) : undefined);
 
   const [memberships, membershipsResult] = useQuery(
-    groupId ? queries.groups.memberships({ groupId }) : undefined
+    groupId && includeMemberships ? queries.groups.memberships({ groupId }) : undefined
   );
 
-  const [roles, rolesResult] = useQuery(groupId ? queries.groups.roles({ groupId }) : undefined);
+  const [roles, rolesResult] = useQuery(
+    groupId && includeRoles ? queries.groups.roles({ groupId }) : undefined
+  );
 
   const [scopedRoles, scopedRolesResult] = useQuery(
-    groupId ? queries.groups.scopedRoles({ groupId }) : undefined
+    groupId && includeScopedRoles ? queries.groups.scopedRoles({ groupId }) : undefined
   );
 
-  const shouldLoadGroupConnections =
-    Boolean(groupId) || includeAllRelationships || includeAllRelationshipsWithGroups;
+  const shouldLoadGroupConnections = includeAllRelationships || includeAllRelationshipsWithGroups;
   const [allGroupConnections, allGroupConnectionsResult] = useQuery(
     shouldLoadGroupConnections ? queries.network.allGroupConnections({}) : undefined
   );
@@ -505,9 +512,13 @@ export function useGroupState(options: GroupStateOptions = {}) {
 
   const isLoading =
     (groupId !== undefined && groupResult.type === 'unknown') ||
-    (groupId !== undefined && membershipsResult.type === 'unknown') ||
-    (groupId !== undefined && rolesResult.type === 'unknown') ||
-    (groupId !== undefined && scopedRolesResult.type === 'unknown') ||
+    (groupId !== undefined &&
+      includeMemberships === true &&
+      membershipsResult.type === 'unknown') ||
+    (groupId !== undefined && includeRoles === true && rolesResult.type === 'unknown') ||
+    (groupId !== undefined &&
+      includeScopedRoles === true &&
+      scopedRolesResult.type === 'unknown') ||
     (shouldLoadGroupConnections && allGroupConnectionsResult.type === 'unknown') ||
     (userId !== undefined && userMembershipsResult.type === 'unknown') ||
     (includeSearch === true && searchResult.type === 'unknown') ||
@@ -542,31 +553,63 @@ export function useGroupState(options: GroupStateOptions = {}) {
 // ── Group Wiki Data (deep relations for GroupWiki) ──────────────────
 
 export function useGroupWikiData(groupId: string) {
-  const [groupsData, groupsResult] = useQuery(queries.groups.wikiData({ id: groupId }));
-  const [allGroupConnections, allGroupConnectionsResult] = useQuery(
-    queries.network.allGroupConnections({})
+  const [overviewData, overviewResult] = useQuery(queries.groups.wikiOverview({ id: groupId }));
+  const [wikiNetworkData, wikiNetworkResult] = useQuery(queries.network.wikiNetwork({ groupId }));
+  const [roleProjectionData, roleProjectionResult] = useQuery(
+    queries.groups.wikiRoleProjection({ groupId })
   );
 
   const group = useMemo(() => {
-    const currentGroup = groupsData?.[0];
+    const currentGroup = overviewData?.[0];
     if (!currentGroup) return null;
+    const projectedRoles = roleProjectionData?.[0]?.roles ?? [];
 
     const augmentedGroup = augmentGroupWithDerivedNetworkMeta(
-      currentGroup,
-      allGroupConnections ?? [],
-      groupsData ?? []
+      {
+        ...currentGroup,
+        memberships: [],
+        roles: projectedRoles,
+      },
+      (wikiNetworkData ?? []) as unknown as GroupConnectionListRow[],
+      overviewData ?? []
     );
 
     return {
       ...augmentedGroup,
-      memberships: normalizeMemberships(augmentedGroup?.memberships),
+      memberships: [],
       roles: (augmentedGroup?.roles || []).map(mapRoleForDisplay),
     };
-  }, [allGroupConnections, groupsData]);
+  }, [overviewData, roleProjectionData, wikiNetworkData]);
 
   return {
     group,
-    isLoading: groupsResult.type === 'unknown' || allGroupConnectionsResult.type === 'unknown',
+    isLoading:
+      overviewResult.type === 'unknown' ||
+      wikiNetworkResult.type === 'unknown' ||
+      roleProjectionResult.type === 'unknown',
+  };
+}
+
+export function useViewerMembershipOverview(groupId: string | undefined) {
+  const [rows, result] = useQuery(
+    groupId ? queries.groups.viewerMembershipOverview({ groupId }) : undefined
+  );
+
+  const overview = useMemo(() => {
+    const group = rows?.[0] ?? null;
+    const connectedGroup = group?.connected_group ?? null;
+    return {
+      group,
+      memberships: normalizeMemberships(group?.memberships),
+      guestAccesses: group?.guest_accesses ?? [],
+      connectedGroupMemberships: normalizeMemberships(connectedGroup?.memberships),
+      connectedGroupGuestAccesses: connectedGroup?.guest_accesses ?? [],
+    };
+  }, [rows]);
+
+  return {
+    ...overview,
+    isLoading: Boolean(groupId) && result.type === 'unknown',
   };
 }
 
@@ -940,7 +983,8 @@ export function useGroupDocuments(groupId: string) {
 // ── Group Roles ─────────────────────────────────────────────────────
 
 export function useGroupRoles(groupId: string) {
-  const [rolesData, rolesResult] = useQuery(queries.groups.rolesFull({ groupId }));
+  const [groupsData, rolesResult] = useQuery(queries.groups.roleManagementProjection({ groupId }));
+  const rolesData = groupsData?.[0]?.roles;
 
   const roles = useMemo(
     () =>
@@ -978,6 +1022,17 @@ export function useGroupRoles(groupId: string) {
   return {
     roles,
     isLoading: rolesResult.type === 'unknown',
+  };
+}
+
+export function useGroupRoleOptions(groupId: string | undefined) {
+  const [groupsData, result] = useQuery(
+    groupId ? queries.groups.roleOptionProjection({ groupId }) : undefined
+  );
+
+  return {
+    roles: groupsData?.[0]?.roles ?? [],
+    isLoading: Boolean(groupId) && result.type === 'unknown',
   };
 }
 

@@ -50,6 +50,8 @@ CREATE TABLE IF NOT EXISTS public.election_candidate (
 
 CREATE INDEX idx_election_candidate_election ON public.election_candidate (election_id);
 CREATE INDEX idx_election_candidate_user ON public.election_candidate (user_id);
+CREATE INDEX idx_zero_election_candidate_election_order_id
+  ON public.election_candidate (election_id, order_index, id);
 
 ALTER TABLE public.election_candidate ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.election_candidate FOR ALL TO service_role USING (true);

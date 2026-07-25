@@ -7,6 +7,7 @@ import { zql, type Schema } from './schema';
 import {
   computeDistinctEventParticipantCount,
   computeDistinctGroupMemberCount,
+  computeDistinctSignedUpGroupMemberCount,
 } from './offline-roster-helpers';
 
 type ZeroTransaction = Transaction<Schema>;
@@ -341,8 +342,9 @@ export async function recomputeGroupCounters(
   tx: Transaction<Schema>,
   groupId: string
 ): Promise<void> {
-  const [memberCount, subscribers, events, amendments] = await Promise.all([
+  const [memberCount, signedUpMemberCount, subscribers, events, amendments] = await Promise.all([
     computeDistinctGroupMemberCount(tx, groupId),
+    computeDistinctSignedUpGroupMemberCount(tx, groupId),
     tx.run(zql.subscriber.where('group_id', groupId)),
     tx.run(zql.event.where('group_id', groupId)),
     tx.run(zql.amendment.where('group_id', groupId)),
@@ -352,6 +354,7 @@ export async function recomputeGroupCounters(
   await tx.mutate.group.update({
     id: groupId,
     member_count: memberCount,
+    signed_up_member_count: signedUpMemberCount,
     subscriber_count: subscribers.length,
     event_count: activeEvents,
     amendment_count: amendments.length,

@@ -42,8 +42,8 @@ export function useGroupWikiPage(groupId: string) {
   // ── Derived counts ────────────────────────────────────────────────
   const memberCount =
     group?.member_count ?? membershipCount ?? countAcceptedMemberships(group?.memberships);
-  const eventsCount = group?.event_count ?? group?.events?.length ?? 0;
-  const amendmentsCount = group?.amendment_count ?? group?.amendments?.length ?? 0;
+  const eventsCount = group?.event_count ?? 0;
+  const amendmentsCount = group?.amendment_count ?? 0;
 
   // Visibility access check
   const canAccess = checkEntityAccess(group?.visibility, !!user, isMember);

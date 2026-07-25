@@ -773,6 +773,7 @@ export const groupSharedMutators = {
       group_type: args.group_type ?? 'base',
       owner_id: userID,
       member_count: 1,
+      signed_up_member_count: 1,
       subscriber_count: 0,
       event_count: 0,
       amendment_count: 0,

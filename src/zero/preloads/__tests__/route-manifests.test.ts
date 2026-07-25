@@ -107,8 +107,18 @@ describe('prioritized preload route manifests', () => {
     const user = createUserPreloadTasks('user-1', false)[0];
     const blog = createBlogPreloadTasks('blog-1', '/blog/blog-1', 'viewer-1')[0];
 
-    expect(keys(group.entries)).toContain('queries.groups.subscribersByGroup');
-    expect(keys(group.entries)).toContain('queries.groups.userMembershipInGroup');
+    const groupKeys = keys(group.entries);
+    expect(groupKeys).toContain('queries.groups.wikiOverview');
+    expect(groupKeys).toContain('queries.network.wikiNetwork');
+    expect(groupKeys).toContain('queries.groups.wikiRoleProjection');
+    expect(groupKeys).toContain('queries.groups.viewerMembershipOverview');
+    expect(groupKeys).toContain('queries.groups.membershipPage');
+    expect(groupKeys).toContain('queries.groups.subscribersByGroup');
+    expect(groupKeys).not.toContain('queries.groups.wikiData');
+    expect(groupKeys).not.toContain('queries.network.allGroupConnections');
+    expect(groupKeys).not.toContain('queries.groups.userMembershipInGroup');
+    expect(groupKeys).not.toContain('queries.groups.allMembershipsInGroupWithRole');
+    expect(groupKeys).not.toContain('queries.groups.rolesFull');
     expect(keys(event.entries)).toContain('queries.events.participantsWithUserAndRole');
     expect(keys(event.entries)).toContain('queries.events.subscribersByEvent');
     expect(keys(amendment.entries)).toContain('queries.amendments.byIdWiki');

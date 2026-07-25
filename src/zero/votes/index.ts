@@ -85,6 +85,9 @@ export {
 export { voteQueries } from './queries';
 export type {
   VoteWithDetailsRow,
+  VoteDecisionOverviewRow,
+  VoteDecisionManagerRow,
+  VoteViewerDecisionStateRow,
   VoteByAgendaItemRow,
   VoteByIdRow,
   ChoicesByVoteRow,

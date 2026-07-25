@@ -13,6 +13,67 @@ import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
 
 export const electionQueries = {
+  decisionOverviewPage: defineQuery(
+    z.object({
+      status: z.string().optional(),
+      statuses: z.array(z.string()).default([]),
+      groupIds: z.array(z.string()).default([]),
+      query: z.string().default(''),
+      limit: virtualPageLimitSchema,
+      start: z.object({ id: z.string(), created_at: z.number() }).nullable().default(null),
+      dir: z.enum(['forward', 'backward']).default('forward'),
+    }),
+    ({ args: { status, statuses, groupIds, query, limit, start, dir }, ctx: { userID } }) => {
+      let q: any = applyElectionQueryAccess(zql.election, userID);
+      if (status) q = q.where('status', status);
+      if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
+      if ((groupIds?.length ?? 0) > 0) {
+        q = q.whereExists(
+          'agenda_item',
+          (item: any) =>
+            item.whereExists('event', (event: any) => event.where('group_id', 'IN', groupIds), {
+              flip: false,
+            }),
+          { flip: false }
+        );
+      }
+      if (query.trim()) q = q.where('title', 'ILIKE', `%${query.trim()}%`);
+      const direction = dir === 'backward' ? 'asc' : 'desc';
+      q = q.orderBy('created_at', direction).orderBy('id', direction);
+      if (start) q = q.start(start, { inclusive: false });
+      return q
+        .related('candidates', (candidate: any) =>
+          candidate.orderBy('order_index', 'asc').related('user')
+        )
+        .related('agenda_item', (item: any) =>
+          item.related('event', (event: any) =>
+            event.related('participants', (participant: any) =>
+              participant.where('user_id', userID ?? '__anon__').related('participant_roles')
+            )
+          )
+        )
+        .related('role')
+        .limit(limit);
+    }
+  ),
+
+  decisionManagerProjection: defineQuery(
+    z.object({ ids: z.array(z.string()).max(100) }),
+    ({ args: { ids }, ctx: { userID } }) =>
+      applyElectionManagerQueryAccess(zql.election, userID)
+        .where('id', 'IN', ids)
+        .related('offline_tallies', (tally: any) => tally.related('candidate'))
+        .related('electors')
+        .related('indicative_selections', (selection: any) => selection.related('candidate'))
+        .related('final_selections', (selection: any) => selection.related('candidate'))
+  ),
+
+  viewerDecisionState: defineQuery(
+    z.object({ ids: z.array(z.string()).max(100) }),
+    ({ args: { ids }, ctx: { userID } }) =>
+      zql.elector.where('user_id', userID ?? '__anon__').where('election_id', 'IN', ids)
+  ),
+
   decisionPage: defineQuery(
     z.object({
       status: z.string().optional(),
@@ -320,6 +381,13 @@ export const electionQueries = {
 // ── Query Row Types ─────────────────────────────────────────────────
 export type ElectionByAgendaItemRow = QueryRowType<typeof electionQueries.byAgendaItem>;
 export type ElectionByIdRow = QueryRowType<typeof electionQueries.byId>;
+export type ElectionDecisionOverviewRow = QueryRowType<typeof electionQueries.decisionOverviewPage>;
+export type ElectionDecisionManagerRow = QueryRowType<
+  typeof electionQueries.decisionManagerProjection
+>;
+export type ElectionViewerDecisionStateRow = QueryRowType<
+  typeof electionQueries.viewerDecisionState
+>;
 export type CandidatesByElectionRow = QueryRowType<typeof electionQueries.candidatesByElection>;
 export type ElectorsByElectionRow = QueryRowType<typeof electionQueries.electorsByElection>;
 export type IndicativeResultRow = QueryRowType<typeof electionQueries.indicativeResults>;

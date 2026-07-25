@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS public.agenda_item (
 
 CREATE INDEX idx_agenda_item_event ON public.agenda_item (event_id);
 CREATE INDEX idx_agenda_item_creator ON public.agenda_item (creator_id);
+CREATE INDEX idx_zero_agenda_item_event_order_id
+  ON public.agenda_item (event_id, order_index, id);
 
 ALTER TABLE public.agenda_item ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.agenda_item FOR ALL TO service_role USING (true);

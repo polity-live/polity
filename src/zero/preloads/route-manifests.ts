@@ -207,27 +207,27 @@ export function createGroupPreloadTasks(groupId: string, viewerId?: string): Pre
   const now = Date.now();
   const common = [
     createPreloadEntry(
-      'queries.groups.byIdFull',
+      'queries.groups.wikiOverview',
       { id: groupId },
-      queries.groups.byIdFull({ id: groupId })
-    ),
-    createPreloadEntry(
-      'queries.network.allGroupConnections',
-      {},
-      queries.network.allGroupConnections({})
+      queries.groups.wikiOverview({ id: groupId })
     ),
   ];
   return [
     task(`group:${groupId}:overview`, base, [
       createPreloadEntry(
-        'queries.groups.wikiData',
+        'queries.groups.wikiOverview',
         { id: groupId },
-        queries.groups.wikiData({ id: groupId })
+        queries.groups.wikiOverview({ id: groupId })
       ),
       createPreloadEntry(
-        'queries.network.allGroupConnections',
-        {},
-        queries.network.allGroupConnections({})
+        'queries.network.wikiNetwork',
+        { groupId },
+        queries.network.wikiNetwork({ groupId })
+      ),
+      createPreloadEntry(
+        'queries.groups.wikiRoleProjection',
+        { groupId },
+        queries.groups.wikiRoleProjection({ groupId })
       ),
       createPreloadEntry(
         'queries.groups.byIdBasic',
@@ -240,37 +240,32 @@ export function createGroupPreloadTasks(groupId: string, viewerId?: string): Pre
         queries.groups.subscribersByGroup({ groupId })
       ),
       createPreloadEntry(
-        'queries.groups.byId',
-        { id: groupId },
-        queries.groups.byId({ id: groupId })
-      ),
-      createPreloadEntry(
-        'queries.groups.memberships',
-        { groupId },
-        queries.groups.memberships({ groupId })
-      ),
-      createPreloadEntry('queries.groups.roles', { groupId }, queries.groups.roles({ groupId })),
-      createPreloadEntry(
-        'queries.groups.scopedRoles',
-        { groupId },
-        queries.groups.scopedRoles({ groupId })
-      ),
-      createPreloadEntry(
-        'queries.groups.allMembershipsInGroupWithRole',
-        { groupId },
-        queries.groups.allMembershipsInGroupWithRole({ groupId })
+        'queries.groups.membershipPage',
+        {
+          groupId,
+          statuses: ['active', 'admin', 'collaborator', 'confirmed', 'member', 'owner'],
+          roleIds: [],
+          query: '',
+          limit: 51,
+          start: null,
+          dir: 'forward',
+        },
+        queries.groups.membershipPage({
+          groupId,
+          statuses: ['active', 'admin', 'collaborator', 'confirmed', 'member', 'owner'],
+          roleIds: [],
+          query: '',
+          limit: 51,
+          start: null,
+          dir: 'forward',
+        })
       ),
       ...(viewerId
         ? [
             createPreloadEntry(
-              'queries.groups.currentUserGuestAccessesWithGroups',
-              {},
-              queries.groups.currentUserGuestAccessesWithGroups({})
-            ),
-            createPreloadEntry(
-              'queries.groups.userMembershipInGroup',
-              { userId: viewerId, groupId },
-              queries.groups.userMembershipInGroup({ userId: viewerId, groupId })
+              'queries.groups.viewerMembershipOverview',
+              { groupId },
+              queries.groups.viewerMembershipOverview({ groupId })
             ),
           ]
         : []),
@@ -350,6 +345,11 @@ export function createGroupPreloadTasks(groupId: string, viewerId?: string): Pre
     ]),
     task(`group:${groupId}:memberships`, `${base}/memberships`, [
       ...common,
+      createPreloadEntry(
+        'queries.groups.roleManagementProjection',
+        { groupId },
+        queries.groups.roleManagementProjection({ groupId })
+      ),
       createPreloadEntry(
         'queries.groups.membershipsWithRolesAndRights',
         { groupId },

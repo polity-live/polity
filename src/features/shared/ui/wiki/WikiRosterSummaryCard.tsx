@@ -17,6 +17,7 @@ export interface WikiRosterSummary {
 export interface WikiRosterSummaryCardProps {
   totalCount: number;
   items: readonly SignedUpRosterItem[];
+  signedUpCount?: number;
   className?: string;
 }
 
@@ -40,23 +41,28 @@ export function getDistinctSignedUpRosterCount(items: readonly SignedUpRosterIte
 export function buildWikiRosterSummary({
   totalCount,
   items,
+  signedUpCount,
 }: WikiRosterSummaryCardProps): WikiRosterSummary {
   const normalizedTotalCount = normalizeRosterCount(totalCount);
-  const signedUpCount = getDistinctSignedUpRosterCount(items);
+  const normalizedSignedUpCount =
+    signedUpCount == null
+      ? getDistinctSignedUpRosterCount(items)
+      : Math.min(normalizedTotalCount, normalizeRosterCount(signedUpCount));
 
   return {
     totalCount: normalizedTotalCount,
-    signedUpCount,
-    nonSignedUpCount: Math.max(0, normalizedTotalCount - signedUpCount),
+    signedUpCount: normalizedSignedUpCount,
+    nonSignedUpCount: Math.max(0, normalizedTotalCount - normalizedSignedUpCount),
   };
 }
 
 export function WikiRosterSummaryCard({
   totalCount,
   items,
+  signedUpCount,
   className,
 }: WikiRosterSummaryCardProps) {
-  const summary = buildWikiRosterSummary({ totalCount, items });
+  const summary = buildWikiRosterSummary({ totalCount, items, signedUpCount });
   const nonSignedUpLabel = translateText(
     'features.wiki.rosterSummary.nonSignedUp',
     'Non signed-up users'

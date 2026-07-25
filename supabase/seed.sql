@@ -1001,19 +1001,20 @@ BEGIN
     (g_stadtverwaltung, 'Stadtverwaltung', 'institution', 0, false, true, g_stadtparlament, NULL, NULL);
 
   INSERT INTO public."group" (
-    id, name, visibility, member_count, subscriber_count, event_count, amendment_count,
+    id, name, visibility, member_count, signed_up_member_count, subscriber_count, event_count, amendment_count,
     document_count, group_type, has_hierarchy_children, has_sibling_connections,
     connected_group_id, primary_sibling_membership_mode, sibling_membership_mode,
     owner_id, created_at, updated_at
   )
   SELECT
-    id, name, 'public', member_count, 0, 0, 0, 0, group_type, has_hierarchy_children,
+    id, name, 'public', member_count, member_count, 0, 0, 0, 0, group_type, has_hierarchy_children,
     has_sibling_connections, connected_group_id, primary_sibling_membership_mode,
     sibling_membership_mode, owner_id, seed_now, seed_now
   FROM acceptance_group_plan
   ON CONFLICT (id) DO UPDATE
   SET name = EXCLUDED.name,
       member_count = EXCLUDED.member_count,
+      signed_up_member_count = EXCLUDED.signed_up_member_count,
       group_type = EXCLUDED.group_type,
       has_hierarchy_children = EXCLUDED.has_hierarchy_children,
       has_sibling_connections = EXCLUDED.has_sibling_connections,
@@ -1750,6 +1751,7 @@ BEGIN
     description,
     visibility,
     member_count,
+    signed_up_member_count,
     subscriber_count,
     event_count,
     amendment_count,
@@ -1766,6 +1768,7 @@ BEGIN
     name,
     jsonb_build_object('plain', name || ' deterministic seed fixture group.'),
     'public',
+    member_count,
     member_count,
     0,
     1,
@@ -1784,6 +1787,7 @@ BEGIN
     description = EXCLUDED.description,
     visibility = EXCLUDED.visibility,
     member_count = EXCLUDED.member_count,
+    signed_up_member_count = EXCLUDED.signed_up_member_count,
     event_count = EXCLUDED.event_count,
     amendment_count = EXCLUDED.amendment_count,
     group_type = EXCLUDED.group_type,

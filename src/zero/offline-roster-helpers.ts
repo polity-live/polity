@@ -218,6 +218,18 @@ export async function computeDistinctGroupMemberCount(tx: ZeroTransaction, group
   }).size;
 }
 
+export async function computeDistinctSignedUpGroupMemberCount(
+  tx: ZeroTransaction,
+  groupId: string
+) {
+  const memberships = await tx.run(zql.group_membership.where('group_id', groupId));
+  return new Set(
+    memberships
+      .filter(membership => isActiveGroupStatus(membership.status))
+      .map(membership => membership.user_id)
+  ).size;
+}
+
 export async function computeDistinctEventParticipantCount(tx: ZeroTransaction, eventId: string) {
   const [participants, offlineParticipants] = await Promise.all([
     tx.run(zql.event_participant.where('event_id', eventId)),

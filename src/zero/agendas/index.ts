@@ -33,5 +33,10 @@ export { agendaQueries, type ChangeRequestTimelineRow } from './queries';
 export { agendaSharedMutators } from './shared-mutators';
 
 // Facade Hooks
-export { useAgendaState, useAgendaItemCRTimeline } from './useAgendaState';
+export {
+  useAgendaState,
+  useAgendaTimelineState,
+  useAgendaTimingState,
+  useAgendaItemCRTimeline,
+} from './useAgendaState';
 export { useAgendaActions } from './useAgendaActions';

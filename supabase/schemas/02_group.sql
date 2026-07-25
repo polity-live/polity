@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS public."group" (
   video_url TEXT,
   visibility TEXT NOT NULL DEFAULT 'public',
   member_count INTEGER NOT NULL DEFAULT 0,
+  signed_up_member_count INTEGER NOT NULL DEFAULT 0,
   subscriber_count INTEGER NOT NULL DEFAULT 0,
   event_count INTEGER NOT NULL DEFAULT 0,
   amendment_count INTEGER NOT NULL DEFAULT 0,
@@ -105,6 +106,7 @@ CREATE INDEX idx_role_scope ON public.role (scope);
 CREATE INDEX idx_role_assignee_kind ON public.role (assignee_kind);
 CREATE INDEX idx_zero_role_amendment_scope_id ON public.role (amendment_id, scope, id);
 CREATE INDEX idx_zero_role_blog_scope_id ON public.role (blog_id, scope, id);
+CREATE INDEX idx_zero_role_group_scope_order_id ON public.role (group_id, scope, sort_order, id);
 
 ALTER TABLE public.role ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.role FOR ALL TO service_role USING (true);
@@ -122,6 +124,8 @@ CREATE TABLE IF NOT EXISTS public.role_holder_history (
 
 CREATE INDEX idx_role_holder_history_role ON public.role_holder_history (role_id);
 CREATE INDEX idx_role_holder_history_user ON public.role_holder_history (user_id);
+CREATE INDEX idx_zero_role_holder_history_role_end_id
+  ON public.role_holder_history (role_id, end_date, id);
 
 ALTER TABLE public.role_holder_history ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.role_holder_history FOR ALL TO service_role USING (true);

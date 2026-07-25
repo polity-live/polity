@@ -418,6 +418,11 @@ export const followRelationships = relationships(follow, ({ one }) => ({
 // ============================================
 export const groupRelationships = relationships(group, ({ one, many }) => ({
   owner: one({ sourceField: ['owner_id'], destSchema: user, destField: ['id'] }),
+  connected_group: one({
+    sourceField: ['connected_group_id'],
+    destSchema: group,
+    destField: ['id'],
+  }),
   memberships: many({ sourceField: ['id'], destSchema: groupMembership, destField: ['group_id'] }),
   offline_members: many({
     sourceField: ['id'],

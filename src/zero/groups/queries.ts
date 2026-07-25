@@ -344,6 +344,113 @@ export const groupQueries = {
   // ── New queries (extracted from hooks.ts) ─────────────────────────
 
   /** Deep-relational query powering the GroupWiki page */
+  wikiOverview: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    applyGroupAccess(zql.group.where('id', id), userID)
+      .related('owner')
+      .related('group_hashtags', q => q.related('hashtag'))
+      .related('blogs', q =>
+        applyBlogQueryAccess(q, userID).related('blog_hashtags', hashtags =>
+          hashtags.related('hashtag')
+        )
+      )
+  ),
+
+  wikiRoleProjection: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      applyGroupManagerQueryAccess(zql.group, userID, 'manage_roles', ['groups', 'groupRoles'])
+        .where('id', groupId)
+        .related('roles', roles =>
+          roles
+            .orderBy('sort_order', 'asc')
+            .related('holder_history', history =>
+              history.where('end_date', 'IS', null).related('user')
+            )
+        )
+  ),
+
+  roleOptionProjection: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      applyGroupManagerQueryAccess(zql.group, userID, 'manage_roles', ['groups', 'groupRoles'])
+        .where('id', groupId)
+        .related('roles', roles => roles.where('scope', 'group').orderBy('sort_order', 'asc'))
+  ),
+
+  viewerMembershipOverview: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      applyGroupAccess(zql.group.where('id', groupId), userID)
+        .related('memberships', membership =>
+          membership
+            .where('user_id', userID ?? '__anon__')
+            .related('source_group')
+            .related('part_group')
+            .related('base_group')
+            .related('origins', origin =>
+              origin.related('source_group').related('part_group').related('base_group')
+            )
+            .related('membership_roles', link =>
+              link.related('role', role => role.related('action_rights'))
+            )
+        )
+        .related('guest_accesses', guest =>
+          guest
+            .where('user_id', userID ?? '__anon__')
+            .related('guest_roles', link =>
+              link.related('role', role => role.related('action_rights'))
+            )
+        )
+        .related('connected_group', connected =>
+          applyGroupAccess(connected, userID)
+            .related('memberships', membership =>
+              membership
+                .where('user_id', userID ?? '__anon__')
+                .related('source_group')
+                .related('part_group')
+                .related('base_group')
+                .related('origins', origin =>
+                  origin.related('source_group').related('part_group').related('base_group')
+                )
+                .related('membership_roles', link =>
+                  link.related('role', role => role.related('action_rights'))
+                )
+            )
+            .related('guest_accesses', guest =>
+              guest
+                .where('user_id', userID ?? '__anon__')
+                .related('guest_roles', link =>
+                  link.related('role', role => role.related('action_rights'))
+                )
+            )
+        )
+  ),
+
+  roleManagementProjection: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      applyGroupManagerQueryAccess(zql.group, userID, 'manage_roles', ['groups', 'groupRoles'])
+        .where('id', groupId)
+        .related('roles', roles =>
+          roles
+            .where('scope', 'group')
+            .orderBy('sort_order', 'asc')
+            .related('action_rights')
+            .related('group_membership_roles', link =>
+              link.related('group_membership', membership =>
+                membership.where('status', 'active').related('user').orderBy('created_at', 'asc')
+              )
+            )
+            .related('elections', election =>
+              election
+                .related('agenda_item', agendaItem => agendaItem.related('event'))
+                .related('candidates', candidate => candidate.related('user'))
+            )
+            .related('holder_history', history => history.related('user'))
+        )
+  ),
+
+  /** Legacy deep-relational query retained for old clients. */
   wikiData: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     applyGroupAccess(zql.group.where('id', id), userID)
       .related('owner')
@@ -845,6 +952,15 @@ export const groupQueries = {
 // ── Query Row Types ─────────────────────────────────────────────────
 export type GroupByIdFullRow = QueryRowType<typeof groupQueries.byIdFull>;
 export type GroupWikiRow = QueryRowType<typeof groupQueries.wikiData>;
+export type GroupWikiOverviewRow = QueryRowType<typeof groupQueries.wikiOverview>;
+export type GroupWikiRoleProjectionRow = QueryRowType<typeof groupQueries.wikiRoleProjection>;
+export type GroupRoleOptionProjectionRow = QueryRowType<typeof groupQueries.roleOptionProjection>;
+export type GroupViewerMembershipOverviewRow = QueryRowType<
+  typeof groupQueries.viewerMembershipOverview
+>;
+export type GroupRoleManagementProjectionRow = QueryRowType<
+  typeof groupQueries.roleManagementProjection
+>;
 export type GroupMembershipWithUserRow = QueryRowType<typeof groupQueries.membershipsWithUsers>;
 export type GroupMembershipWithRoleRow = QueryRowType<
   typeof groupQueries.allMembershipsInGroupWithRole

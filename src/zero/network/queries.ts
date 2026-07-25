@@ -12,12 +12,24 @@ const networkCursorSchema = z
 function applyGroupConnectionAccess<T>(q: T, userID: string | undefined | null): T {
   return (q as any).where(({ or, exists }: any) =>
     or(
-      exists('group_a', (group: any) => applyGroupQueryAccess(group, userID)),
-      exists('group_b', (group: any) => applyGroupQueryAccess(group, userID)),
-      exists('parent_group', (group: any) => applyGroupQueryAccess(group, userID)),
-      exists('child_group', (group: any) => applyGroupQueryAccess(group, userID)),
-      exists('from_group', (group: any) => applyGroupQueryAccess(group, userID)),
-      exists('to_group', (group: any) => applyGroupQueryAccess(group, userID))
+      exists('group_a', (group: any) => applyGroupQueryAccess(group, userID), {
+        flip: false,
+      }),
+      exists('group_b', (group: any) => applyGroupQueryAccess(group, userID), {
+        flip: false,
+      }),
+      exists('parent_group', (group: any) => applyGroupQueryAccess(group, userID), {
+        flip: false,
+      }),
+      exists('child_group', (group: any) => applyGroupQueryAccess(group, userID), {
+        flip: false,
+      }),
+      exists('from_group', (group: any) => applyGroupQueryAccess(group, userID), {
+        flip: false,
+      }),
+      exists('to_group', (group: any) => applyGroupQueryAccess(group, userID), {
+        flip: false,
+      })
     )
   ) as T;
 }
@@ -25,9 +37,15 @@ function applyGroupConnectionAccess<T>(q: T, userID: string | undefined | null):
 function applyGroupConnectionRequestAccess<T>(q: T, userID: string | undefined | null): T {
   return (q as any).where(({ or, exists }: any) =>
     or(
-      exists('group_a', (group: any) => applyGroupQueryAccess(group, userID)),
-      exists('group_b', (group: any) => applyGroupQueryAccess(group, userID)),
-      exists('initiator_group', (group: any) => applyGroupQueryAccess(group, userID))
+      exists('group_a', (group: any) => applyGroupQueryAccess(group, userID), {
+        flip: false,
+      }),
+      exists('group_b', (group: any) => applyGroupQueryAccess(group, userID), {
+        flip: false,
+      }),
+      exists('initiator_group', (group: any) => applyGroupQueryAccess(group, userID), {
+        flip: false,
+      })
     )
   ) as T;
 }
@@ -52,6 +70,33 @@ function applyWorkflowApprovalAccess<T>(q: T, userID: string | undefined | null)
 }
 
 export const networkQueries = {
+  wikiNetwork: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      applyGroupConnectionAccess(zql.group_connection, userID)
+        .where(({ cmp, or }) =>
+          or(
+            cmp('group_a_id', '=', groupId),
+            cmp('group_b_id', '=', groupId),
+            cmp('from_group_id', '=', groupId),
+            cmp('to_group_id', '=', groupId)
+          )
+        )
+        .related('group_a')
+        .related('group_b')
+        .related('parent_group')
+        .related('child_group')
+        .related('from_group')
+        .related('to_group')
+        .related('grants', grants => grants.related('initiator_group').orderBy('right_key', 'asc'))
+        .related('membership_rule', membershipRule =>
+          membershipRule
+            .related('required_source_role')
+            .related('origins', origin => origin.related('eligible_origin_group'))
+        )
+        .orderBy('updated_at', 'desc')
+  ),
+
   groupConnectionPage: defineQuery(
     z.object({
       groupId: z.string(),
@@ -529,6 +574,7 @@ export type GroupConnectionWithRelationsRow = NonNullable<
 >;
 export type GroupConnectionListRow = QueryRowType<typeof networkQueries.groupConnectionsByGroup>;
 export type GroupConnectionPairRow = QueryRowType<typeof networkQueries.groupConnectionsByPair>;
+export type WikiNetworkRow = QueryRowType<typeof networkQueries.wikiNetwork>;
 export type GroupHierarchyPathRow = QueryRowType<typeof networkQueries.hierarchyPathsByGroup>;
 export type GroupEffectiveRightRow = QueryRowType<typeof networkQueries.effectiveRightsByGroup>;
 export type GroupMembershipExclusivityLockRow = QueryRowType<

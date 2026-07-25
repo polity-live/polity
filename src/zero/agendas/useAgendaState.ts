@@ -4,6 +4,7 @@ import { queries } from '../queries';
 import type {
   AgendaItemByEventIdsRow,
   AgendaItemByEventRow,
+  AgendaTimelineByEventIdsRow,
   AgendaTimingByEventIdsRow,
   ChangeRequestTimelineRow,
 } from './queries';
@@ -19,6 +20,11 @@ export type AgendaStateItem = AgendaStateBaseItem & {
 };
 
 export type AgendaTimingStateItem = AgendaTimingByEventIdsRow & {
+  calculated_start_time?: number;
+  calculated_end_time?: number;
+};
+
+export type AgendaTimelineStateItem = AgendaTimelineByEventIdsRow & {
   calculated_start_time?: number;
   calculated_end_time?: number;
 };
@@ -152,6 +158,20 @@ export function useAgendaTimingState(eventIds?: string[]) {
   return {
     agendaItems,
     isLoading: Boolean(eventIds?.length) && result.type === 'unknown',
+  };
+}
+
+export function useAgendaTimelineState(eventIds?: string[], enabled = true) {
+  const [rows, result] = useQuery(
+    enabled && eventIds && eventIds.length > 0
+      ? queries.agendas.timelineByEventIds({ event_ids: eventIds })
+      : undefined
+  );
+  const agendaItems = useMemo(() => withCalculatedAgendaTimes(rows ?? []), [rows]);
+
+  return {
+    agendaItems,
+    isLoading: Boolean(enabled && eventIds?.length) && result.type === 'unknown',
   };
 }
 

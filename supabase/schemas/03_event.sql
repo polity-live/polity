@@ -153,6 +153,8 @@ CREATE INDEX idx_zero_event_participant_event_created_id
   ON public.event_participant (event_id, created_at DESC, id DESC);
 CREATE INDEX idx_zero_event_participant_user_created_id
   ON public.event_participant (user_id, created_at DESC, id DESC);
+CREATE INDEX idx_zero_event_participant_event_user_id
+  ON public.event_participant (event_id, user_id, id);
 CREATE UNIQUE INDEX idx_event_participant_unique_event_user
   ON public.event_participant (event_id, user_id)
   WHERE instance_date IS NULL;

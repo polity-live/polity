@@ -6,7 +6,11 @@ import { queries } from '@/zero/queries';
 import { useUserBasicState } from '@/zero/users/useUserBasicState';
 import { useUserHashtagsState } from '@/zero/common/useUserHashtagsState';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
-import { useAgendaState, type AgendaStateItem } from '@/zero/agendas/useAgendaState';
+import {
+  useAgendaTimelineState,
+  type AgendaStateItem,
+  type AgendaTimelineStateItem,
+} from '@/zero/agendas/useAgendaState';
 import { getAgendaDisplayTimes } from '@/features/agendas/logic/getAgendaDisplayTimes';
 import { getAgendaRuntimeStatus } from '@/features/agendas/logic/getAgendaRuntimeStatus';
 import { useSubscribedTimeline, type TimelineItem } from './useSubscribedTimeline';
@@ -372,7 +376,9 @@ export function mapTimelineEvent(
   };
 }
 
-export function mapAgendaItemToCivicTimelineItem(item: AgendaStateItem): CivicTimelineItem | null {
+export function mapAgendaItemToCivicTimelineItem(
+  item: AgendaStateItem | AgendaTimelineStateItem
+): CivicTimelineItem | null {
   const event = item.event;
   if (!event?.id) return null;
 
@@ -618,8 +624,10 @@ export function useCivicTimeline({
     sortBy: 'recent',
   });
   const subscriptionTimeline = useSubscriptionTimeline();
+  const agendaSourcesSettled = !subscribedTimeline.isLoading && !subscriptionTimeline.isLoading;
 
   const subscribedEventIds = useMemo(() => {
+    if (!agendaSourcesSettled) return [];
     const ids = new Set<string>();
     for (const item of subscribedTimeline.items) {
       if (item.eventId) ids.add(item.eventId);
@@ -627,12 +635,13 @@ export function useCivicTimeline({
     for (const event of subscriptionTimeline.events) {
       if (event.event?.id) ids.add(event.event.id);
     }
-    return Array.from(ids);
-  }, [subscribedTimeline.items, subscriptionTimeline.events]);
+    return Array.from(ids).sort();
+  }, [agendaSourcesSettled, subscribedTimeline.items, subscriptionTimeline.events]);
 
-  const { agendaItems, isLoading: agendaLoading } = useAgendaState({
-    eventIds: subscribedEventIds.length > 0 ? subscribedEventIds : undefined,
-  });
+  const { agendaItems, isLoading: agendaLoading } = useAgendaTimelineState(
+    subscribedEventIds.length > 0 ? subscribedEventIds : undefined,
+    agendaSourcesSettled
+  );
 
   const [discoverRows, discoverResult] = useQuery(
     queries.search.searchDocumentPage({

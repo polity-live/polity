@@ -78,6 +78,7 @@ export function useGroupEditFormController({
 
   const { roles: connectedGroupRoles } = useGroupState({
     groupId: formData.connected_group_id ?? undefined,
+    includeRoles: true,
   });
 
   const { groupConnections } = useGroupConnectionState({ groupId });

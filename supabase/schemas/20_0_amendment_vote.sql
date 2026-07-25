@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS public.vote_choice (
 
 CREATE INDEX idx_vote_choice_vote ON public.vote_choice (vote_id);
 CREATE INDEX idx_vote_choice_process_branch ON public.vote_choice (process_branch_id);
+CREATE INDEX idx_zero_vote_choice_vote_order_id
+  ON public.vote_choice (vote_id, order_index, id);
 
 ALTER TABLE public.vote_choice ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.vote_choice FOR ALL TO service_role USING (true);
