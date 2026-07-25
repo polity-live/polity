@@ -63,9 +63,34 @@ const copy = {
   amendments: 'Amendments',
   eventFallback: 'Event',
   amendmentFallback: 'Amendment',
+  loading: 'Loading...',
 };
 
 describe('NavigationCommandDialogView', () => {
+  it('does not create command-list content while closed', () => {
+    render(
+      <NavigationCommandDialogView
+        open={false}
+        onOpenChange={vi.fn()}
+        copy={copy}
+        primaryNavItems={primaryNavItems}
+        userNavItems={[]}
+        groupItems={[{ id: 'group-1', name: 'Working Circle', image_url: null }]}
+        eventItems={[]}
+        amendmentItems={[]}
+        navigationEntitiesLoading={false}
+        onSelectPrimaryItem={vi.fn()}
+        onSelectUserItem={vi.fn()}
+        onSelectGroupItem={vi.fn()}
+        onSelectEventItem={vi.fn()}
+        onSelectAmendmentItem={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText('Working Circle')).toBeNull();
+    expect(screen.queryByPlaceholderText(copy.placeholder)).toBeNull();
+  });
+
   it('renders user groups and events as command groups', () => {
     const onSelectGroupItem = vi.fn();
     const onSelectEventItem = vi.fn();
@@ -99,6 +124,7 @@ describe('NavigationCommandDialogView', () => {
             eventTitle: 'Future Assembly',
           },
         ]}
+        navigationEntitiesLoading={false}
         onSelectPrimaryItem={vi.fn()}
         onSelectUserItem={vi.fn()}
         onSelectGroupItem={onSelectGroupItem}
@@ -150,6 +176,7 @@ describe('NavigationCommandDialogView', () => {
         groupItems={[]}
         eventItems={[]}
         amendmentItems={[]}
+        navigationEntitiesLoading={false}
         onSelectPrimaryItem={vi.fn()}
         onSelectUserItem={vi.fn()}
         onSelectGroupItem={vi.fn()}
@@ -181,6 +208,7 @@ describe('NavigationCommandDialogView', () => {
             groupItems={[]}
             eventItems={[]}
             amendmentItems={[]}
+            navigationEntitiesLoading={false}
             onSelectPrimaryItem={vi.fn()}
             onSelectUserItem={vi.fn()}
             onSelectGroupItem={vi.fn()}

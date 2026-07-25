@@ -1,27 +1,13 @@
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
-import { applyStatementQueryAccess, isAuthenticatedUserId } from '../rbac/query-access';
+import { applyStatementQueryAccess } from '../rbac/query-access';
 import { virtualPageLimitSchema } from '../virtualization';
 
 const statementStartSchema = z.object({ created_at: z.number(), id: z.string() }).nullable();
 
-function applyStatementExpiryAccess<T>(q: T, userID: string | undefined, now = Date.now()): T {
-  const query = q as any;
-
-  if (isAuthenticatedUserId(userID)) {
-    return query.where(({ or, cmp }: any) =>
-      or(cmp('expires_at', 'IS', null), cmp('expires_at', '>', now), cmp('user_id', userID))
-    ) as T;
-  }
-
-  return query.where(({ or, cmp }: any) =>
-    or(cmp('expires_at', 'IS', null), cmp('expires_at', '>', now))
-  ) as T;
-}
-
-function applyStatementAccess<T>(q: T, userID: string | undefined, now = Date.now()): T {
-  return applyStatementExpiryAccess(applyStatementQueryAccess(q, userID), userID, now);
+function applyStatementAccess<T>(q: T, userID: string | undefined, now: number): T {
+  return applyStatementQueryAccess(q, userID, now);
 }
 
 export const statementQueries = {
@@ -76,9 +62,8 @@ export const statementQueries = {
   ),
 
   // Statements by the current user
-  byUser: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.statement
-      .where('user_id', userID)
+  byUser: defineQuery(z.object({ now: z.number() }), ({ args: { now }, ctx: { userID } }) =>
+    applyStatementAccess(zql.statement.where('user_id', userID), userID, now)
       .related('user')
       .related('statement_hashtags', q => q.related('hashtag'))
       .related('support_votes', q => q.where('user_id', userID ?? '__anon__'))
@@ -92,9 +77,9 @@ export const statementQueries = {
 
   // Statements belonging to a group
   byGroup: defineQuery(
-    z.object({ group_id: z.string() }),
-    ({ args: { group_id }, ctx: { userID } }) =>
-      applyStatementAccess(zql.statement.where('group_id', group_id), userID)
+    z.object({ group_id: z.string(), now: z.number() }),
+    ({ args: { group_id, now }, ctx: { userID } }) =>
+      applyStatementAccess(zql.statement.where('group_id', group_id), userID, now)
         .related('user')
         .related('statement_hashtags', q => q.related('hashtag'))
         .related('support_votes', q => q.where('user_id', userID ?? '__anon__'))
@@ -124,60 +109,68 @@ export const statementQueries = {
   ),
 
   // Single statement by ID
-  byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyStatementAccess(zql.statement.where('id', id), userID).related('user').one()
+  byId: defineQuery(
+    z.object({ id: z.string(), now: z.number() }),
+    ({ args: { id, now }, ctx: { userID } }) =>
+      applyStatementAccess(zql.statement.where('id', id), userID, now).related('user').one()
   ),
 
   // Statement with full detail relations
-  byIdWithDetails: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyStatementAccess(zql.statement.where('id', id), userID)
-      .related('user')
-      .related('group')
-      .related('statement_hashtags', q => q.related('hashtag'))
-      .related('support_votes', q => q.where('user_id', userID ?? '__anon__').related('user'))
-      .related('surveys', q =>
-        q.related('options', q2 =>
-          q2.related('votes', q3 => q3.where('user_id', userID ?? '__anon__'))
-        )
-      )
-      .related('threads', q =>
-        q
-          .related('user')
-          .related('comments', q2 =>
-            q2
-              .related('user')
-              .related('votes', q3 => q3.where('user_id', userID ?? '__anon__').related('user'))
-              .related('replies', q3 =>
-                q3
-                  .related('user')
-                  .related('votes', q4 => q4.where('user_id', userID ?? '__anon__').related('user'))
-                  .related('replies', q4 =>
-                    q4
-                      .related('user')
-                      .related('votes', q5 =>
-                        q5.where('user_id', userID ?? '__anon__').related('user')
-                      )
-                  )
-              )
+  byIdWithDetails: defineQuery(
+    z.object({ id: z.string(), now: z.number() }),
+    ({ args: { id, now }, ctx: { userID } }) =>
+      applyStatementAccess(zql.statement.where('id', id), userID, now)
+        .related('user')
+        .related('group')
+        .related('statement_hashtags', q => q.related('hashtag'))
+        .related('support_votes', q => q.where('user_id', userID ?? '__anon__').related('user'))
+        .related('surveys', q =>
+          q.related('options', q2 =>
+            q2.related('votes', q3 => q3.where('user_id', userID ?? '__anon__'))
           )
-          .related('votes', q2 => q2.where('user_id', userID ?? '__anon__').related('user'))
-      )
-      .related('timeline_events')
-      .one()
+        )
+        .related('threads', q =>
+          q
+            .related('user')
+            .related('comments', q2 =>
+              q2
+                .related('user')
+                .related('votes', q3 => q3.where('user_id', userID ?? '__anon__').related('user'))
+                .related('replies', q3 =>
+                  q3
+                    .related('user')
+                    .related('votes', q4 =>
+                      q4.where('user_id', userID ?? '__anon__').related('user')
+                    )
+                    .related('replies', q4 =>
+                      q4
+                        .related('user')
+                        .related('votes', q5 =>
+                          q5.where('user_id', userID ?? '__anon__').related('user')
+                        )
+                    )
+                )
+            )
+            .related('votes', q2 => q2.where('user_id', userID ?? '__anon__').related('user'))
+        )
+        .related('timeline_events')
+        .one()
   ),
 
   // Statement with hashtags
-  byIdWithHashtags: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyStatementAccess(zql.statement.where('id', id), userID)
-      .related('statement_hashtags', q => q.related('hashtag'))
-      .one()
+  byIdWithHashtags: defineQuery(
+    z.object({ id: z.string(), now: z.number() }),
+    ({ args: { id, now }, ctx: { userID } }) =>
+      applyStatementAccess(zql.statement.where('id', id), userID, now)
+        .related('statement_hashtags', q => q.related('hashtag'))
+        .one()
   ),
 
   // Statements by an arbitrary user ID
   byUserId: defineQuery(
-    z.object({ user_id: z.string() }),
-    ({ args: { user_id }, ctx: { userID } }) =>
-      applyStatementAccess(zql.statement.where('user_id', user_id), userID)
+    z.object({ user_id: z.string(), now: z.number() }),
+    ({ args: { user_id, now }, ctx: { userID } }) =>
+      applyStatementAccess(zql.statement.where('user_id', user_id), userID, now)
         .related('user')
         .related('statement_hashtags', q => q.related('hashtag'))
         .related('support_votes', q => q.where('user_id', userID ?? '__anon__'))
@@ -186,9 +179,9 @@ export const statementQueries = {
 
   // Statements filtered by visibility
   byVisibility: defineQuery(
-    z.object({ visibility: z.string() }),
-    ({ args: { visibility }, ctx: { userID } }) =>
-      applyStatementAccess(zql.statement.where('visibility', visibility), userID)
+    z.object({ visibility: z.string(), now: z.number() }),
+    ({ args: { visibility, now }, ctx: { userID } }) =>
+      applyStatementAccess(zql.statement.where('visibility', visibility), userID, now)
         .related('user')
         .related('statement_hashtags', q => q.related('hashtag'))
         .related('support_votes', q => q.where('user_id', userID ?? '__anon__'))

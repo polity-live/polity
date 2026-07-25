@@ -44,7 +44,6 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
 
   const renderAmendmentsTab = () => (
     <AmendmentListTab
-      collaborations={user.amendment_collaborations ?? []}
       userId={user.id}
       searchValue={searchTerms.amendments}
       onSearchChange={(value: string) => handleSearchChange('amendments', value)}
@@ -53,7 +52,6 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
 
   const renderBlogsTab = () => (
     <BlogListTab
-      bloggerRelations={user.blogger_relations ?? []}
       authorName={authorName}
       authorAvatar={authorAvatar}
       userId={user.id}
@@ -64,7 +62,6 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
 
   const renderGroupsTab = () => (
     <GroupsListTab
-      memberships={user.group_memberships ?? []}
       userId={user.id}
       searchValue={searchTerms.groups}
       onSearchChange={(value: string) => handleSearchChange('groups', value)}
@@ -73,7 +70,6 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
 
   const renderStatementsTab = () => (
     <StatementListTab
-      statements={user.statements ?? []}
       authorName={resolvedAuthorName}
       authorTitle={user.bio ?? undefined}
       authorAvatar={authorAvatar || undefined}

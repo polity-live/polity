@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 
 import type { NavigationView } from '@/features/navigation/types/navigation.types.tsx';
-import { useUserData } from '@/features/users/hooks/useUserData.ts';
+import { useUserBasicState } from '@/zero/users/useUserBasicState.ts';
 
 interface UseNavUserAvatarControllerProps {
   navigationView: NavigationView;
@@ -20,7 +20,7 @@ export function useNavUserAvatarController({
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const { user } = useUserData(authUser.id);
+  const { user } = useUserBasicState(authUser.id);
 
   const displayName =
     [user?.first_name, user?.last_name].filter(Boolean).join(' ') ||

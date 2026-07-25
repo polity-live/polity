@@ -977,13 +977,6 @@ export async function reconcileGroupGraph(tx: ReconcileTx, changeSet: GroupGraph
   const groupsById = new Map<string, any>(groups.map((group: any) => [group.id, group]));
   const hierarchyPaths = buildHierarchyPaths(connections);
 
-  console.info('Server validation started', {
-    flow: 'group-graph-reconcile',
-    reason: changeSet.reason ?? 'unspecified',
-    groupIds: uniqueStrings(changeSet.groupIds ?? []),
-    eventIds: uniqueStrings(changeSet.eventIds ?? []),
-  });
-
   await reconcileConnections(tx, connections, groupsById);
   await reconcileGroupMeta(tx, {
     groups,
@@ -1015,11 +1008,6 @@ export async function reconcileGroupGraph(tx: ReconcileTx, changeSet: GroupGraph
     delegateAllocations,
     existingScopes,
     existingAssignments,
-  });
-
-  console.info('Server successful', {
-    flow: 'group-graph-reconcile',
-    reason: changeSet.reason ?? 'unspecified',
   });
 
   return {

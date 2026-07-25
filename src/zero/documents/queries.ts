@@ -5,6 +5,14 @@ import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
 
 const documentStartSchema = z.object({ updated_at: z.number(), id: z.string() }).nullable();
+const DOCUMENT_ROOT_ACCESS_PROFILE = {
+  collaboratorFlip: false,
+  amendmentFlip: false,
+} as const;
+const DOCUMENT_CHILD_ACCESS_PROFILE = {
+  collaboratorFlip: true,
+  amendmentFlip: true,
+} as const;
 
 export const documentQueries = {
   pageByGroup: defineQuery(
@@ -19,23 +27,36 @@ export const documentQueries = {
     }),
     ({ args: { groupId, query, collaboratorId, status, limit, start, dir }, ctx: { userID } }) => {
       const direction = dir === 'forward' ? 'desc' : 'asc';
-      let q: any = applyDocumentQueryAccess(zql.document, userID)
-        .whereExists('amendment', (amendment: any) => amendment.where('group_id', groupId))
+      let q: any = applyDocumentQueryAccess(zql.document, userID, DOCUMENT_ROOT_ACCESS_PROFILE)
+        .whereExists('amendment', (amendment: any) => amendment.where('group_id', groupId), {
+          flip: true,
+        })
         .related('amendment')
         .related('collaborators', (collaborator: any) => collaborator.related('user'));
       const normalizedQuery = query.trim();
       if (normalizedQuery) {
-        q = q.whereExists('amendment', (amendment: any) =>
-          amendment.where('title', 'ILIKE', `%${normalizedQuery}%`)
+        q = q.whereExists(
+          'amendment',
+          (amendment: any) => amendment.where('title', 'ILIKE', `%${normalizedQuery}%`),
+          { flip: true }
         );
       }
       if (collaboratorId)
-        q = q.whereExists('collaborators', (collaborator: any) =>
-          collaborator.where('user_id', collaboratorId)
+        q = q.whereExists(
+          'collaborators',
+          (collaborator: any) => collaborator.where('user_id', collaboratorId),
+          { flip: true }
         );
       if (status)
-        q = q.whereExists('amendment', (amendment: any) =>
-          amendment.whereExists('current_process_run', (run: any) => run.where('status', status))
+        q = q.whereExists(
+          'amendment',
+          (amendment: any) =>
+            amendment.whereExists(
+              'current_process_run',
+              (run: any) => run.where('status', status),
+              { flip: false }
+            ),
+          { flip: true }
         );
       q = q.orderBy('updated_at', direction).orderBy('id', direction);
       if (start) q = q.start(start, { inclusive: false });
@@ -44,7 +65,9 @@ export const documentQueries = {
   ),
 
   byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyDocumentQueryAccess(zql.document.where('id', id), userID).related('amendment').one()
+    applyDocumentQueryAccess(zql.document.where('id', id), userID, DOCUMENT_ROOT_ACCESS_PROFILE)
+      .related('amendment')
+      .one()
   ),
 
   versions: defineQuery(
@@ -52,7 +75,11 @@ export const documentQueries = {
     ({ args: { document_id }, ctx: { userID } }) =>
       zql.document_version
         .where('document_id', document_id)
-        .whereExists('document', q => applyDocumentQueryAccess(q, userID))
+        .whereExists(
+          'document',
+          q => applyDocumentQueryAccess(q, userID, DOCUMENT_CHILD_ACCESS_PROFILE),
+          { flip: false }
+        )
         .related('author')
         .orderBy('version_number', 'desc')
   ),
@@ -62,7 +89,11 @@ export const documentQueries = {
     ({ args: { document_id }, ctx: { userID } }) =>
       zql.document_collaborator
         .where('document_id', document_id)
-        .whereExists('document', q => applyDocumentQueryAccess(q, userID))
+        .whereExists(
+          'document',
+          q => applyDocumentQueryAccess(q, userID, DOCUMENT_CHILD_ACCESS_PROFILE),
+          { flip: false }
+        )
         .related('user')
         .orderBy('created_at', 'desc')
   ),
@@ -72,7 +103,11 @@ export const documentQueries = {
     ({ args: { document_id }, ctx: { userID } }) =>
       zql.thread
         .where('document_id', document_id)
-        .whereExists('document', q => applyDocumentQueryAccess(q, userID))
+        .whereExists(
+          'document',
+          q => applyDocumentQueryAccess(q, userID, DOCUMENT_CHILD_ACCESS_PROFILE),
+          { flip: false }
+        )
         .orderBy('created_at', 'desc')
   ),
 
@@ -81,8 +116,15 @@ export const documentQueries = {
     ({ args: { thread_id }, ctx: { userID } }) =>
       zql.comment
         .where('thread_id', thread_id)
-        .whereExists('thread', thread =>
-          thread.whereExists('document', document => applyDocumentQueryAccess(document, userID))
+        .whereExists(
+          'thread',
+          thread =>
+            thread.whereExists(
+              'document',
+              document => applyDocumentQueryAccess(document, userID, DOCUMENT_CHILD_ACCESS_PROFILE),
+              { flip: false }
+            ),
+          { flip: false }
         )
         .orderBy('created_at', 'asc')
   ),

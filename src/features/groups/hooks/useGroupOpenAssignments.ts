@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@rocicorp/zero/react';
 import type { TFunction } from 'i18next';
@@ -257,38 +257,6 @@ export function useGroupOpenAssignments(groupId: string) {
         group_id: event.group_id ?? null,
       }));
   }, [groupEvents]);
-
-  useEffect(() => {
-    console.info('Open assignments event query result', {
-      flow: 'group-open-assignments-events',
-      queryName: 'queries.events.byGroupForCalendar',
-      queryArgs: {
-        groupId,
-        includeOngoing: true,
-      },
-      rawEventCount: groupEvents.length,
-      rawEvents: groupEvents.map(event => ({
-        id: event.id,
-        title: event.title ?? null,
-        status: event.status ?? null,
-        start_date: event.start_date ?? null,
-        end_date: event.end_date ?? null,
-        amendment_deadline: event.amendment_deadline ?? null,
-        group_id: event.group_id ?? null,
-      })),
-      availableEventCount: availableEvents.length,
-      availableEvents: availableEvents.map(event => ({
-        id: event.id,
-        title: event.title ?? null,
-        status: event.status ?? null,
-        start_date: event.start_date ?? null,
-        end_date: event.end_date ?? null,
-        amendment_deadline: event.amendment_deadline ?? null,
-        group_id: event.group_id ?? null,
-      })),
-      now: Date.now(),
-    });
-  }, [availableEvents, groupEvents, groupId]);
 
   const scheduleRoleRenewal = useCallback(
     async (assignment: GroupOpenAssignment, eventId: string) => {

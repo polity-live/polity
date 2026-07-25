@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { queries } from '../queries';
 
@@ -16,29 +17,32 @@ interface StatementStateOptions {
  */
 export function useStatementState(options: StatementStateOptions = {}) {
   const { id, groupId, userId, visibility, includeDetails, includeHashtags } = options;
+  const now = useMemo(() => Date.now(), [groupId, id, userId, visibility]);
 
-  const [statements, statementsResult] = useQuery(queries.statements.byUser({}));
+  const [statements, statementsResult] = useQuery(queries.statements.byUser({ now }));
 
   const [statementsByGroup, statementsByGroupResult] = useQuery(
-    groupId ? queries.statements.byGroup({ group_id: groupId }) : undefined
+    groupId ? queries.statements.byGroup({ group_id: groupId, now }) : undefined
   );
 
   const [statementsByUser, statementsByUserResult] = useQuery(
-    userId ? queries.statements.byUserId({ user_id: userId }) : undefined
+    userId ? queries.statements.byUserId({ user_id: userId, now }) : undefined
   );
 
-  const [statement, statementResult] = useQuery(id ? queries.statements.byId({ id }) : undefined);
+  const [statement, statementResult] = useQuery(
+    id ? queries.statements.byId({ id, now }) : undefined
+  );
 
   const [statementWithDetails, statementWithDetailsResult] = useQuery(
-    includeDetails && id ? queries.statements.byIdWithDetails({ id }) : undefined
+    includeDetails && id ? queries.statements.byIdWithDetails({ id, now }) : undefined
   );
 
   const [statementWithHashtags, statementWithHashtagsResult] = useQuery(
-    includeHashtags && id ? queries.statements.byIdWithHashtags({ id }) : undefined
+    includeHashtags && id ? queries.statements.byIdWithHashtags({ id, now }) : undefined
   );
 
   const [byVisibility, byVisibilityResult] = useQuery(
-    visibility ? queries.statements.byVisibility({ visibility }) : undefined
+    visibility ? queries.statements.byVisibility({ visibility, now }) : undefined
   );
 
   const isLoading =

@@ -5,6 +5,7 @@ import type {
   NavigationItem,
   NavigationType,
   NavigationView,
+  ScreenType,
 } from '@/features/navigation/types/navigation.types.tsx';
 
 interface DynamicNavigationViewProps {
@@ -12,6 +13,7 @@ interface DynamicNavigationViewProps {
   navigationType: NavigationType;
   navigationItems: NavigationItem[];
   isMobileDevice: boolean;
+  screenType: ScreenType;
 }
 
 export function DynamicNavigationView({
@@ -19,6 +21,7 @@ export function DynamicNavigationView({
   navigationType,
   navigationItems,
   isMobileDevice,
+  screenType,
 }: DynamicNavigationViewProps) {
   if (navigationView === 'asButton') {
     return (
@@ -27,6 +30,7 @@ export function DynamicNavigationView({
         navigationView={navigationView}
         navigationType={navigationType}
         isMobile={isMobileDevice}
+        screenType={screenType}
       />
     );
   }
@@ -38,6 +42,7 @@ export function DynamicNavigationView({
         navigationView={navigationView}
         navigationType={navigationType}
         isMobile={isMobileDevice}
+        screenType={screenType}
       />
     );
   }
@@ -49,6 +54,7 @@ export function DynamicNavigationView({
         navigationView={navigationView}
         navigationType={navigationType}
         isMobile={isMobileDevice}
+        screenType={screenType}
       />
     );
   }

@@ -1,4 +1,6 @@
-import { useUserState } from '@/zero/users/useUserState';
+import { useMemo } from 'react';
+import { useQuery } from '@rocicorp/zero/react';
+import { queries } from '@/zero/queries';
 import type { UserProfile } from '../types/user.types';
 
 /**
@@ -6,9 +8,21 @@ import type { UserProfile } from '../types/user.types';
  * Returns the raw FullProfileRow directly — no transformation layer.
  */
 export function useUserData(userId?: string) {
-  const { fullProfile, isLoading } = useUserState({ userId, includeFullProfile: true });
+  const [baseUser, userResult] = useQuery(userId ? queries.users.byId({ id: userId }) : undefined);
+  const [userHashtags, hashtagResult] = useQuery(
+    userId ? queries.common.userHashtags({ user_id: userId }) : undefined
+  );
 
-  const user: UserProfile | null = userId && fullProfile.length > 0 ? fullProfile[0] : null;
+  const isLoading =
+    userId !== undefined && (userResult.type === 'unknown' || hashtagResult.type === 'unknown');
+  const user = useMemo<UserProfile | null>(() => {
+    if (!userId || isLoading || !baseUser) return null;
+
+    return {
+      ...baseUser,
+      user_hashtags: userHashtags ?? [],
+    };
+  }, [baseUser, isLoading, userHashtags, userId]);
 
   return {
     user,

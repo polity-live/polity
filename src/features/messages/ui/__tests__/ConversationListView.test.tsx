@@ -91,6 +91,11 @@ describe('ConversationListView', () => {
     const startButton = screen.getByRole('button', { name: 'Start conversation' });
     const aiButton = screen.getByRole('button', { name: 'AI conversation' });
     const search = screen.getByPlaceholderText('Search conversations...');
+    const listCard = container.querySelector('[data-slot="card"]');
+    const listHeader = container.querySelector('[data-slot="card-header"]');
+    const listContent = container.querySelector(
+      '[data-slot="card-header"] + [data-slot="separator"]'
+    )?.nextElementSibling?.firstElementChild;
 
     expect(searchRow?.className).toContain('items-center');
     expect(searchRow?.children[0]?.contains(search)).toBe(true);
@@ -98,6 +103,18 @@ describe('ConversationListView', () => {
     expect(searchRow?.children[1]?.contains(aiButton)).toBe(true);
     expect(startButton.className).not.toContain('rounded-full');
     expect(aiButton.className).not.toContain('rounded-full');
+    expect(listCard?.className).toContain('rounded-none');
+    expect(listCard?.className).toContain('border-0');
+    expect(listCard?.className).toContain('bg-transparent');
+    expect(listCard?.className).toContain('shadow-none');
+    expect(listCard?.className).toContain('md:rounded-lg');
+    expect(listCard?.className).toContain('md:border');
+    expect(listCard?.className).toContain('md:bg-card');
+    expect(listCard?.className).toContain('md:shadow-[var(--shadow-panel)]');
+    expect(listHeader?.className).toContain('px-0');
+    expect(listHeader?.className).toContain('md:px-6');
+    expect(listContent?.className).toContain('py-4');
+    expect(listContent?.className).toContain('md:p-4');
   });
 
   it('renders zero-virtual extents as content spacers', () => {

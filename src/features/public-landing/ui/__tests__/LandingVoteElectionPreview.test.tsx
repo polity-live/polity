@@ -3,7 +3,8 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { LandingActivityStripPreview, LandingVoteElectionPreview } from '../PublicLandingPage';
+import { LandingActivityStripPreview } from '../LandingActivityStripPreview';
+import { LandingVoteElectionPreview } from '../LandingVoteElectionPreview';
 
 const translationArrays = vi.hoisted((): Record<string, string[]> => ({
   'pages.home.publicLanding.voteElectionPreview.voteChoices': [

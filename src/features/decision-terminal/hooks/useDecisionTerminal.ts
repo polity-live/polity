@@ -2,7 +2,7 @@
 
 import { useMemo, useCallback } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
-import { useAgendaState } from '@/zero/agendas/useAgendaState';
+import { useAgendaTimingState } from '@/zero/agendas/useAgendaState';
 import { useAuth } from '@/providers/auth-provider';
 import type { ElectionWithDetailsRow } from '@/zero/elections';
 import { queries } from '@/zero/queries';
@@ -212,9 +212,9 @@ export function useDecisionTerminal(
     return Array.from(eventIds);
   }, [electionRows, voteRows]);
 
-  const { agendaItems, isLoading: agendaLoading } = useAgendaState({
-    eventIds: agendaEventIds.length > 0 ? agendaEventIds : undefined,
-  });
+  const { agendaItems, isLoading: agendaLoading } = useAgendaTimingState(
+    agendaEventIds.length > 0 ? agendaEventIds : undefined
+  );
 
   const agendaItemsById = useMemo(() => {
     return new Map(agendaItems.map(item => [item.id, item]));

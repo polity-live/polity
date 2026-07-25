@@ -1,10 +1,9 @@
-import { createContext, useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 import { ZeroProvider } from '@rocicorp/zero/react';
 import { schema } from '@/zero/schema';
 import { mutators } from '@/zero/mutators';
 import { useAuth } from './auth-provider';
-
-const ZeroReadyContext = createContext(false);
+import { ZeroReadyContext } from './zero-ready-context';
 
 function getRequiredEnvVar(value: string | undefined, name: string) {
   if (!value) {
@@ -12,10 +11,6 @@ function getRequiredEnvVar(value: string | undefined, name: string) {
   }
 
   return value;
-}
-
-export function useZeroReady() {
-  return useContext(ZeroReadyContext);
 }
 
 export function ZeroAppProvider({ children }: { children: React.ReactNode }) {

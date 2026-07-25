@@ -9,7 +9,6 @@ import { queries } from '@/zero/queries';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 
 interface StatementListTabProps {
-  statements: readonly ProfileStatement[];
   authorName: string;
   authorTitle?: string;
   authorAvatar?: string;
@@ -19,7 +18,6 @@ interface StatementListTabProps {
 }
 
 export const StatementListTab: React.FC<StatementListTabProps> = ({
-  statements: _statements,
   authorName,
   authorTitle,
   authorAvatar,
@@ -27,7 +25,6 @@ export const StatementListTab: React.FC<StatementListTabProps> = ({
   searchValue,
   onSearchChange,
 }) => {
-  void _statements;
   const { t } = useTranslation();
 
   const now = useMemo(() => Date.now(), [userId]);
@@ -59,10 +56,10 @@ export const StatementListTab: React.FC<StatementListTabProps> = ({
         )}
         getSingleQuery={useCallback(
           ({ id, settled }) => ({
-            query: queries.statements.byIdWithDetails({ id }) as never,
+            query: queries.statements.byIdWithDetails({ id, now }) as never,
             options: { ttl: settled ? ('5m' as const) : ('none' as const) },
           }),
-          []
+          [now]
         )}
         getRowKey={statement => statement.id}
         toStartRow={statement => ({ created_at: statement.created_at, id: statement.id })}

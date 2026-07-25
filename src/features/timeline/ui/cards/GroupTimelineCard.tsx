@@ -6,6 +6,10 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
 import { useSubscribeGroup } from '@/features/groups/hooks/useSubscribeGroup';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
+import type {
+  ProjectedGroupMembershipState,
+  ProjectedSubscriptionState,
+} from '@/features/search/types/projected-card-state';
 
 export interface GroupTimelineCardProps {
   group: {
@@ -39,6 +43,8 @@ export interface GroupTimelineCardProps {
   isSubscriptionLoading?: boolean;
   href?: string;
   className?: string;
+  projectedMembershipState?: ProjectedGroupMembershipState;
+  projectedSubscriptionState?: ProjectedSubscriptionState;
 }
 import { GroupTimelineCardView } from './GroupTimelineCardView';
 export function GroupTimelineCard({
@@ -52,11 +58,13 @@ export function GroupTimelineCard({
   isSubscriptionLoading,
   href,
   className,
+  projectedMembershipState,
+  projectedSubscriptionState,
 }: GroupTimelineCardProps) {
   const { t } = useTranslation();
   const [membershipOpen, setMembershipOpen] = useState(false);
-  const membership = useGroupMembership(group.id);
-  const subscription = useSubscribeGroup(group.id);
+  const membership = useGroupMembership(group.id, projectedMembershipState);
+  const subscription = useSubscribeGroup(group.id, projectedSubscriptionState);
   const groupHashtags = group.hashtags ?? group.topics?.map(topic => ({ id: topic, tag: topic }));
   const groupDescription = normalizeTimelineText(group.description);
 

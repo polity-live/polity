@@ -1,9 +1,10 @@
 import { useHistoryScrollState } from '@rocicorp/zero-virtual/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { usePolityZeroGrid } from '@/features/shared/virtualization';
 import { queries } from '@/zero/queries';
+import { useSearchCardState } from '../SearchCardStateProvider';
 
 import type {
   SearchDocument,
@@ -16,6 +17,7 @@ import {
   type VirtualSearchGridCell,
 } from '../ui/VirtualSearchGridView';
 import { useStableSearchListContext } from './useStableSearchListContext';
+import { useProgressiveSearchCards } from './useProgressiveSearchCards';
 
 export function getSearchGridLanes(width: number) {
   if (width >= 1440) return 4;
@@ -50,8 +52,8 @@ export function useVirtualSearchGridController({
 }: UseVirtualSearchGridControllerOptions) {
   const parentRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
-  const [isAwayFromTop, setIsAwayFromTop] = useState(false);
   const [hasNewResults, setHasNewResults] = useState(false);
+  const isAwayFromTopRef = useRef(false);
   const previousHeadKeyRef = useRef<string | null>(null);
   const [scrollState, setScrollState] = useHistoryScrollState<SearchStart>('search-grid');
 
@@ -61,13 +63,45 @@ export function useVirtualSearchGridController({
 
     const resizeObserver = new ResizeObserver(entries => {
       const entry = entries[0];
-      setWidth(entry.contentRect.width);
+      if (!entry) return;
+      startTransition(() => setWidth(entry.contentRect.width));
     });
 
     resizeObserver.observe(element);
-    setWidth(element.clientWidth);
 
     return () => resizeObserver.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const element = parentRef.current;
+    const scrollWindow = element?.ownerDocument.defaultView;
+    if (!element || !scrollWindow) return;
+
+    let animationFrame: number | null = null;
+    const updateScrollPosition = () => {
+      animationFrame = null;
+      const nextIsAwayFromTop = element.scrollTop > SEARCH_CARD_HEIGHT;
+      if (isAwayFromTopRef.current === nextIsAwayFromTop) return;
+
+      isAwayFromTopRef.current = nextIsAwayFromTop;
+      if (!nextIsAwayFromTop) {
+        setHasNewResults(false);
+      }
+    };
+    const handleScroll = () => {
+      if (animationFrame !== null) return;
+      animationFrame = scrollWindow.requestAnimationFrame(updateScrollPosition);
+    };
+
+    updateScrollPosition();
+    element.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      element.removeEventListener('scroll', handleScroll);
+      if (animationFrame !== null) {
+        scrollWindow.cancelAnimationFrame(animationFrame);
+      }
+    };
   }, []);
 
   const lanes = getSearchGridLanes(width);
@@ -115,7 +149,10 @@ export function useVirtualSearchGridController({
     listContextParams,
     getScrollElement: useCallback(() => parentRef.current, []),
     estimateSize: useCallback(() => SEARCH_CARD_HEIGHT + SEARCH_GRID_GAP, []),
-    overscan: 12,
+    overscan: 2,
+    minPageSize: 18,
+    maxPageSize: 48,
+    useFlushSync: false,
     lanes,
     getPageQuery,
     getSingleQuery,
@@ -137,27 +174,24 @@ export function useVirtualSearchGridController({
   useEffect(() => {
     if (!headKey) return;
 
-    if (previousHeadKeyRef.current && previousHeadKeyRef.current !== headKey && isAwayFromTop) {
+    if (
+      previousHeadKeyRef.current &&
+      previousHeadKeyRef.current !== headKey &&
+      isAwayFromTopRef.current
+    ) {
       setHasNewResults(true);
     }
 
     previousHeadKeyRef.current = headKey;
-  }, [headKey, isAwayFromTop]);
-
-  const handleScroll = useCallback(() => {
-    const nextIsAwayFromTop = (parentRef.current?.scrollTop ?? 0) > SEARCH_CARD_HEIGHT;
-    setIsAwayFromTop(nextIsAwayFromTop);
-    if (!nextIsAwayFromTop) {
-      setHasNewResults(false);
-    }
-  }, []);
+  }, [headKey]);
 
   const jumpToTop = useCallback(() => {
+    isAwayFromTopRef.current = false;
     virtualizer.scrollToIndex(0, { align: 'start' });
     setHasNewResults(false);
   }, [virtualizer]);
 
-  const cells = useMemo<VirtualSearchGridCell[]>(
+  const baseCells = useMemo<Omit<VirtualSearchGridCell, 'mode'>[]>(
     () =>
       virtualItems.map(virtualItem => ({
         key: virtualItem.key,
@@ -168,6 +202,28 @@ export function useVirtualSearchGridController({
         document: rowAt(virtualItem.index),
       })),
     [columnWidth, rowAt, virtualItems]
+  );
+  const visibleDocumentIds = useMemo(
+    () => baseCells.flatMap(cell => (cell.document ? [cell.document.id] : [])),
+    [baseCells]
+  );
+  const progressiveContextKey = useMemo(
+    () => JSON.stringify(listContextParams),
+    [listContextParams]
+  );
+  const searchCardState = useSearchCardState();
+  const interactiveIds = useProgressiveSearchCards({
+    contextKey: progressiveContextKey,
+    documentIds: visibleDocumentIds,
+    stateReady: searchCardState?.isReady ?? false,
+  });
+  const cells = useMemo<VirtualSearchGridCell[]>(
+    () =>
+      baseCells.map(cell => ({
+        ...cell,
+        mode: cell.document && interactiveIds.has(cell.document.id) ? 'interactive' : 'preview',
+      })),
+    [baseCells, interactiveIds]
   );
 
   return {
@@ -180,8 +236,6 @@ export function useVirtualSearchGridController({
     newResultsLabel: translateText('generated.inline.1109_neue_ergebnisse_6eeff1f6'),
     emptyLabel: translateText('generated.inline.1110_keine_ergebnisse_2c33e7bb'),
     onJumpToTop: jumpToTop,
-    onScroll: handleScroll,
-    onMeasureElement: virtualizer.measureElement,
   };
 }
 

@@ -16,6 +16,8 @@ import {
   applyVoteManagerQueryAccess,
   applyVoteQueryAccess,
   applyVoteVoterOrManagerQueryAccess,
+  requireQueryUser,
+  requireRequestedViewer,
 } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
@@ -74,6 +76,10 @@ function applyEventDelegateSelfOrParticipantAccess<T>(q: T, userID: string | und
 }
 
 export const eventQueries = {
+  viewerDelegations: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    requireQueryUser(zql.event_delegate, userID)
+  ),
+
   // ── Existing queries ──────────────────────────────────────────────
 
   byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
@@ -174,7 +180,7 @@ export const eventQueries = {
       dir: eventPageDirectionSchema,
     }),
     ({ args: { userId, status, statuses, query, limit, start, dir }, ctx: { userID } }) => {
-      let q = zql.event_participant.where('user_id', userId).where('user_id', userID);
+      let q = requireRequestedViewer(zql.event_participant, userId, userID);
       if (status) q = q.where('status', status);
       if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
       const term = query.trim();

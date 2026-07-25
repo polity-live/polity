@@ -60,6 +60,12 @@ CREATE INDEX idx_amendment_created_by ON public.amendment (created_by_id);
 CREATE INDEX idx_amendment_group ON public.amendment (group_id);
 CREATE INDEX idx_amendment_event ON public.amendment (event_id);
 CREATE INDEX idx_amendment_origin ON public.amendment (origin_amendment_id);
+CREATE INDEX idx_zero_amendment_group_created_id
+  ON public.amendment (group_id, created_at DESC, id DESC);
+CREATE INDEX idx_zero_amendment_creator_created_id
+  ON public.amendment (created_by_id, created_at DESC, id DESC);
+CREATE INDEX idx_zero_amendment_clone_source_created_id
+  ON public.amendment (clone_source_id, created_at DESC, id DESC);
 
 ALTER TABLE public.amendment ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment FOR ALL TO service_role USING (true);
@@ -77,6 +83,12 @@ CREATE TABLE IF NOT EXISTS public.amendment_collaborator (
 
 CREATE INDEX idx_amendment_collaborator_amendment ON public.amendment_collaborator (amendment_id);
 CREATE INDEX idx_amendment_collaborator_user ON public.amendment_collaborator (user_id);
+CREATE INDEX idx_zero_amendment_collaborator_user_status_amendment
+  ON public.amendment_collaborator (user_id, status, amendment_id);
+CREATE INDEX idx_zero_amendment_collaborator_user_created_id
+  ON public.amendment_collaborator (user_id, created_at DESC, id DESC);
+CREATE INDEX idx_zero_amendment_collaborator_amendment_created_id
+  ON public.amendment_collaborator (amendment_id, created_at DESC, id DESC);
 
 ALTER TABLE public.amendment_collaborator ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment_collaborator FOR ALL TO service_role USING (true);

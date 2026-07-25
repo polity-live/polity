@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { queries } from '../queries';
 
@@ -30,6 +31,7 @@ export function useCommonState(
     loadOnboardingHashtagUsage?: boolean;
   } = {}
 ) {
+  const now = useMemo(() => Date.now(), []);
   // ── Entity-based queries ───────────────────────────────────────────
   const hasEntityFilter = !!(
     args.user_id ||
@@ -80,7 +82,7 @@ export function useCommonState(
   );
 
   const [onboardingHashtagUsage, onboardingHashtagUsageResult] = useQuery(
-    args.loadOnboardingHashtagUsage ? queries.common.onboardingHashtagUsage({}) : undefined
+    args.loadOnboardingHashtagUsage ? queries.common.onboardingHashtagUsage({ now }) : undefined
   );
 
   const hasLinkFilter = !!(args.group_id || args.user_id);
@@ -95,7 +97,7 @@ export function useCommonState(
 
   const timelineEntityFilter =
     args.entity_type && args.entity_id
-      ? { entity_type: args.entity_type, entity_id: args.entity_id }
+      ? { entity_type: args.entity_type, entity_id: args.entity_id, now }
       : undefined;
   const hasTimelineEntityFilter = !!timelineEntityFilter;
   const [timeline, timelineResult] = useQuery(
@@ -133,7 +135,7 @@ export function useCommonState(
   const hasTimelineEntityIds = !!timelineEntityIds;
   const [timelineByEntityIds, timelineByEntityIdsResult] = useQuery(
     timelineEntityIds
-      ? queries.common.timelineEventsByEntityIds({ entity_ids: timelineEntityIds })
+      ? queries.common.timelineEventsByEntityIds({ entity_ids: timelineEntityIds, now })
       : undefined
   );
 
@@ -147,6 +149,7 @@ export function useCommonState(
       ? queries.common.timelineEventsByContentTypes({
           content_types: timelineContentTypes,
           limit: args.timelineContentLimit ?? 50,
+          now,
         })
       : undefined
   );

@@ -66,12 +66,12 @@ export function ConversationListView({
       aria-hidden={isConcealedMobileList || undefined}
       inert={isConcealedMobileList}
       className={cn(
-        'flex h-full min-h-0 flex-col overflow-hidden md:col-span-1',
+        'md:bg-card flex h-full min-h-0 flex-col overflow-hidden rounded-none border-0 bg-transparent shadow-none md:col-span-1 md:rounded-lg md:border md:shadow-[var(--shadow-panel)]',
         isConcealedMobileList && 'pointer-events-none invisible absolute inset-0',
         className
       )}
     >
-      <CardHeader className="flex-shrink-0 space-y-4">
+      <CardHeader className="flex-shrink-0 space-y-4 px-0 md:px-6">
         <h1 className="sr-only">{t('features.messages.title')}</h1>
         <div className="space-y-2">
           <div data-slot="conversation-search-row" className="flex min-w-0 items-center gap-2">
@@ -123,13 +123,13 @@ export function ConversationListView({
       </CardHeader>
       <Separator />
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
-        <div className="p-4">
+        <div className="py-4 md:p-4">
           {showSkeletons ? (
             <div className="space-y-3" data-slot="conversation-list-skeleton">
               {Array.from({ length: 7 }, (_, index) => (
                 <div
                   key={index}
-                  className="civic-stagger-item flex items-center gap-3 rounded-lg border border-transparent p-3"
+                  className="civic-stagger-item flex items-center gap-3 rounded-lg border border-transparent px-0 py-3 md:p-3"
                   style={{ '--civic-stagger-index': index } as CSSProperties}
                 >
                   <Skeleton className="h-12 w-12 rounded-md" />
@@ -172,7 +172,7 @@ export function ConversationListView({
                         onDelete={onDeleteConversationClick}
                       />
                     ) : (
-                      <div className="flex items-center gap-3 p-3" aria-hidden="true">
+                      <div className="flex items-center gap-3 px-0 py-3 md:p-3" aria-hidden="true">
                         <Skeleton className="h-12 w-12 rounded-md" />
                         <div className="min-w-0 flex-1 space-y-2">
                           <Skeleton className="h-3 w-2/3" />

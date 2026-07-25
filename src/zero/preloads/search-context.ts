@@ -16,6 +16,8 @@ export interface SearchRoutePreloadParams {
   sort?: TimelineSortOption;
 }
 
+export const SEARCH_INITIAL_PAGE_LIMIT = 19;
+
 interface SearchDocumentPagePreloadArgs {
   query: string;
   types: string[];
@@ -52,7 +54,7 @@ export const DEFAULT_SEARCH_PAGE_ARGS: SearchDocumentPagePreloadArgs = {
   engagement: 'all',
   sort: 'recent',
   snapshotAt: null,
-  limit: 60,
+  limit: SEARCH_INITIAL_PAGE_LIMIT,
   start: null,
   dir: 'forward',
   bounds: null,
@@ -119,7 +121,7 @@ export function createSearchDocumentPageArgs(
     engagement: normalizeEngagement(search.engagement),
     sort: normalizeSort(search.sort),
     snapshotAt: null,
-    limit: 60,
+    limit: SEARCH_INITIAL_PAGE_LIMIT,
     start: null,
     dir: 'forward',
     bounds: null,

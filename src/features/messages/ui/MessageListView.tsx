@@ -184,7 +184,7 @@ export function MessageListView({
             </p>
           </div>
         ) : (
-          <div className="w-full">
+          <div className="w-full pt-3 md:pt-0">
             <div>
               <ZeroVirtualSpacer position="before" size={spaceBefore} />
               {virtualRows

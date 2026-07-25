@@ -1195,16 +1195,6 @@ export const electionServerMutators = {
   ),
 
   upsertOfflineTally: defineMutator(upsertElectionOfflineTallySchema, async ({ tx, ctx, args }) => {
-    console.info('Server validation started', {
-      flow: 'election-offline-tally-upsert',
-      correlationId: args.debug_correlation_id ?? null,
-      actorUserId: ctx.userID,
-      electionId: args.election_id,
-      phase: args.phase,
-      candidateId: args.candidate_id,
-      count: args.count,
-    });
-
     await requireRecentVotingPasswordVerification(tx, ctx.userID);
     await assertOfflineElectionTallyWithinCap(tx, {
       electionId: args.election_id,
@@ -1213,15 +1203,5 @@ export const electionServerMutators = {
       nextCount: args.count,
     });
     await mutators.elections.upsertOfflineTally.fn({ tx, ctx, args });
-
-    console.info('Server successful', {
-      flow: 'election-offline-tally-upsert',
-      correlationId: args.debug_correlation_id ?? null,
-      actorUserId: ctx.userID,
-      electionId: args.election_id,
-      phase: args.phase,
-      candidateId: args.candidate_id,
-      count: args.count,
-    });
   }),
 };

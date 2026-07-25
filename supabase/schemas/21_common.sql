@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS public.user_hashtag (
 
 CREATE INDEX idx_user_hashtag_user ON public.user_hashtag (user_id);
 CREATE INDEX idx_user_hashtag_hashtag ON public.user_hashtag (hashtag_id);
+CREATE INDEX idx_zero_user_hashtag_user_created_id
+ON public.user_hashtag (user_id, created_at DESC, id DESC);
 
 ALTER TABLE public.user_hashtag ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.user_hashtag FOR ALL TO service_role USING (true);

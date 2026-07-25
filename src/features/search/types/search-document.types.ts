@@ -26,6 +26,10 @@ export interface SearchDocumentCardPayload {
   metadata?: Record<string, unknown>;
   entity_type?: string | null;
   entity_id?: string | null;
+  group_type?: string | null;
+  connected_group_id?: string | null;
+  primary_sibling_membership_mode?: string | null;
+  event_type?: string | null;
 }
 
 export type SearchDocument = SearchDocumentRow & {

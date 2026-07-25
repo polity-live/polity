@@ -57,4 +57,5 @@ export { commonSharedMutators } from './shared-mutators';
 
 // Facade Hooks
 export { useCommonState } from './useCommonState';
+export { useUserHashtagsState } from './useUserHashtagsState';
 export { useCommonActions } from './useCommonActions';

@@ -79,7 +79,7 @@ export function MessageView({
   return (
     <Card
       className={cn(
-        'flex h-full min-h-0 flex-col overflow-hidden md:col-span-2',
+        'md:bg-card flex h-full min-h-0 flex-col overflow-hidden rounded-none border-0 bg-transparent shadow-none md:col-span-2 md:rounded-lg md:border md:shadow-[var(--shadow-panel)]',
         !conversation && 'hidden md:flex',
         className
       )}

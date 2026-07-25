@@ -420,6 +420,18 @@ CREATE TABLE IF NOT EXISTS public.subscriber (
 CREATE INDEX idx_subscriber_subscriber ON public.subscriber (subscriber_id);
 CREATE INDEX idx_subscriber_user ON public.subscriber (user_id);
 CREATE INDEX idx_subscriber_group ON public.subscriber (group_id);
+CREATE INDEX idx_zero_subscriber_subscriber_created_id
+  ON public.subscriber (subscriber_id, created_at DESC, id DESC);
+CREATE INDEX idx_zero_subscriber_user_created_id
+  ON public.subscriber (user_id, created_at DESC, id DESC);
+CREATE INDEX idx_zero_subscriber_group_created_id
+  ON public.subscriber (group_id, created_at DESC, id DESC);
+CREATE INDEX idx_zero_subscriber_amendment_created_id
+  ON public.subscriber (amendment_id, created_at DESC, id DESC);
+CREATE INDEX idx_zero_subscriber_event_created_id
+  ON public.subscriber (event_id, created_at DESC, id DESC);
+CREATE INDEX idx_zero_subscriber_blog_created_id
+  ON public.subscriber (blog_id, created_at DESC, id DESC);
 
 ALTER TABLE public.subscriber ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.subscriber FOR ALL TO service_role USING (true);

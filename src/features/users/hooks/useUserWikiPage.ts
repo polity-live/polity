@@ -114,13 +114,6 @@ export function useUserWikiPage({ userId }: UserWikiPageOptions): UserWikiPageSt
       ),
     [user?.user_hashtags]
   );
-  const amendmentCount = useMemo(
-    () =>
-      (user?.amendment_collaborations ?? []).filter(
-        collaboration => collaboration.status === 'admin' || collaboration.status === 'collaborator'
-      ).length,
-    [user?.amendment_collaborations]
-  );
   const supportTier = useMemo(() => {
     const activeSubscription = subscriptionStatus?.subscriptions?.find(
       subscription => subscription.status === 'active'
@@ -174,7 +167,7 @@ export function useUserWikiPage({ userId }: UserWikiPageOptions): UserWikiPageSt
   const aboutText = richTextToPlainText(user.about) || undefined;
   const shareDescription = bioText || aboutText;
   const resolvedFullName = fullName || 'User';
-  const resolvedAmendmentCount = user.amendment_count ?? amendmentCount;
+  const resolvedAmendmentCount = user.amendment_count;
 
   return {
     status: 'ready',
@@ -188,7 +181,7 @@ export function useUserWikiPage({ userId }: UserWikiPageOptions): UserWikiPageSt
     aboutText,
     supportTier,
     subscriberCount,
-    groupCount: user.group_count ?? user.group_memberships?.length ?? 0,
+    groupCount: user.group_count,
     amendmentCount: resolvedAmendmentCount,
     subscribed,
     subscribeLoading,
@@ -206,7 +199,7 @@ export function useUserWikiPage({ userId }: UserWikiPageOptions): UserWikiPageSt
       authorAvatar: user.avatar ?? undefined,
       handle: user.handle ?? undefined,
       location: userLocation,
-      groupCount: user.group_count ?? user.group_memberships?.length ?? undefined,
+      groupCount: user.group_count,
       amendmentCount: resolvedAmendmentCount,
       tags: hashtags.map(hashtag => hashtag.tag),
     },

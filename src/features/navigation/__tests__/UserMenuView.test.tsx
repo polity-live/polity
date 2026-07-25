@@ -30,6 +30,7 @@ describe('UserMenuView', () => {
         userInitials="AL"
         profileHref="/user/user-1"
         settingsHref="/user/user-1/settings"
+        navigationEntitiesLoading={false}
         groups={[{ id: 'group-1', name: 'Working Circle', image_url: null }]}
         events={[
           {
@@ -72,6 +73,7 @@ describe('UserMenuView', () => {
           searchEventsPlaceholder: 'Search events...',
           searchAmendmentsPlaceholder: 'Search amendments...',
           clear: 'Clear',
+          loading: 'Loading...',
           logout: 'Log out',
           logoutConfirm: 'Really log out?',
           cancel: 'Cancel',

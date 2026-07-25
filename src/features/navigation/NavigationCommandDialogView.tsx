@@ -36,12 +36,14 @@ interface NavigationCommandDialogViewProps {
     amendments: string;
     eventFallback: string;
     amendmentFallback: string;
+    loading: string;
   };
   primaryNavItems: NavigationItem[];
   userNavItems: NavigationItem[];
   groupItems: UserMenuGroup[];
   eventItems: UserMenuEvent[];
   amendmentItems: UserMenuAmendment[];
+  navigationEntitiesLoading: boolean;
   onSelectPrimaryItem: (item: NavigationItem) => void;
   onSelectUserItem: (item: NavigationItem) => void;
   onSelectGroupItem: (group: UserMenuGroup) => void;
@@ -209,17 +211,31 @@ export function NavigationCommandDialogView({
   groupItems,
   eventItems,
   amendmentItems,
+  navigationEntitiesLoading,
   onSelectPrimaryItem,
   onSelectUserItem,
   onSelectGroupItem,
   onSelectEventItem,
   onSelectAmendmentItem,
 }: NavigationCommandDialogViewProps) {
+  if (!open) {
+    return null;
+  }
+
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog open onOpenChange={onOpenChange}>
       <CommandInput placeholder={copy.placeholder} />
       <CommandList>
         <CommandEmpty>{copy.noResults}</CommandEmpty>
+        {navigationEntitiesLoading ? (
+          <div
+            role="status"
+            data-testid="navigation-command-entities-loading"
+            className="text-muted-foreground px-2 py-3 text-sm"
+          >
+            {copy.loading}
+          </div>
+        ) : null}
         <CommandGroup heading={copy.primaryNavigation}>
           {primaryNavItems.map((item: any) => (
             <NavigationCommandItem key={item.id} item={item} onSelect={onSelectPrimaryItem} />

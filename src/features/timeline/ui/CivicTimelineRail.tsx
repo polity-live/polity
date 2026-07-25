@@ -1,6 +1,6 @@
 'use client';
 
-import type { CSSProperties } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
@@ -286,13 +286,14 @@ export function CivicTimelineRail({
   queryContext,
 }: CivicTimelineRailProps) {
   const { t } = useTranslation();
+  const now = useMemo(() => Date.now(), []);
 
   if (queryContext) {
     const entityIds = queryContext.entityIds ?? [];
     return (
       <div data-testid="civic-timeline-rail">
         <PolityZeroListView<any, { created_at: number; id: string }, any>
-          context={{ entityIds, contentTypes: queryContext.contentTypes }}
+          context={{ entityIds, contentTypes: queryContext.contentTypes, now }}
           historyKey="home-civic-timeline"
           estimateSize={190}
           getRowKey={row => row.id}
@@ -301,6 +302,7 @@ export function CivicTimelineRail({
             query: queries.common.timelineFeedPage({
               entityIds,
               contentTypes: queryContext.contentTypes,
+              now,
               limit,
               start,
               dir,
@@ -308,7 +310,7 @@ export function CivicTimelineRail({
             options: { ttl: settled ? ('5m' as const) : ('none' as const) },
           })}
           getSingleQuery={({ id, settled }) => ({
-            query: queries.common.timelineFeedById({ id }) as never,
+            query: queries.common.timelineFeedById({ id, now }) as never,
             options: { ttl: settled ? ('5m' as const) : ('none' as const) },
           })}
           permalinkID={

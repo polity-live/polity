@@ -18,7 +18,7 @@ afterEach(() => {
 });
 
 describe('VirtualSearchGridView', () => {
-  it('reveals search cards sequentially without animating the virtual position wrapper', () => {
+  it('positions fixed-height search cards without entrance animations or measurements', () => {
     const document = {
       id: 'search-doc-1',
       entity_id: 'group-1',
@@ -60,6 +60,7 @@ describe('VirtualSearchGridView', () => {
             left: 40,
             width: 320,
             document,
+            mode: 'preview',
           },
         ]}
         totalHeight={400}
@@ -69,23 +70,23 @@ describe('VirtualSearchGridView', () => {
         newResultsLabel="New results"
         emptyLabel="No results"
         onJumpToTop={vi.fn()}
-        onScroll={vi.fn()}
-        onMeasureElement={vi.fn()}
       />
     );
 
     const positionWrapper = container.querySelector('[data-index="4"]') as HTMLElement | null;
-    const revealWrapper = container.querySelector('.civic-load-card-reveal') as HTMLElement | null;
     const scrollContainer = container.querySelector('.overflow-auto') as HTMLElement | null;
 
+    expect(scrollContainer?.dataset.testid).toBe('search-results-scroll');
     expect(scrollContainer?.className).toContain('scrollbar-hide');
     expect(scrollContainer?.className).toContain('h-full');
     expect(scrollContainer?.className).toContain('min-h-0');
     expect(scrollContainer?.className).not.toContain('100dvh');
     expect(positionWrapper).toBeTruthy();
     expect(positionWrapper?.style.transform).toBe('translate(40px, 20px)');
-    expect(positionWrapper?.className).not.toContain('civic-load-card-reveal');
-    expect(revealWrapper).toBeTruthy();
-    expect(revealWrapper?.style.getPropertyValue('--civic-load-index')).toBe('4');
+    expect(positionWrapper?.style.height).toBe('360px');
+    expect(positionWrapper?.dataset.searchDocumentId).toBe('search-doc-1');
+    expect(positionWrapper?.dataset.searchCardMode).toBe('preview');
+    expect(container.querySelector('.civic-load-card-reveal')).toBeNull();
+    expect(container.querySelector('.civic-page-reveal')).toBeNull();
   });
 });

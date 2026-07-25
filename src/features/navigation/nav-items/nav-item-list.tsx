@@ -1,13 +1,15 @@
 import type {
   NavigationItem,
+  ScreenType,
   NavigationView,
 } from '@/features/navigation/types/navigation.types.tsx';
 import React, { useState } from 'react';
-import { useLocation, useRouterState } from '@tanstack/react-router';
+import { useLocation } from '@tanstack/react-router';
 import { NavItemListView } from './NavItemListView';
 
 const LANDING_SECTION_FALLBACK_SCROLL_MARGIN_TOP = 96;
 const LANDING_PATHS = new Set(['/', '/features', '/solutions', '/imprint']);
+const NOOP = () => undefined;
 
 function normalizePathname(pathname?: string): string {
   if (!pathname) return '/';
@@ -163,14 +165,15 @@ export function NavItemList({
   isMobile,
   isPrimary,
   navigationView,
+  screenType,
 }: {
   navigationItems: NavigationItem[];
   isMobile: boolean;
   isPrimary: boolean;
   navigationView: NavigationView;
+  screenType: ScreenType;
 }) {
   const { pathname, hash } = useLocation();
-  const isRouterPending = useRouterState({ select: s => s.status === 'pending' });
   const normalizedHash = hash ? (hash.startsWith('#') ? hash : `#${hash}`) : '';
   const activeHashSectionRoute = useActiveHashSectionRoute({
     enabled: !isPrimary,
@@ -179,17 +182,7 @@ export function NavItemList({
     pathname,
   });
   const currentRoute = activeHashSectionRoute ?? `${pathname ?? '/'}${normalizedHash}`;
-  const [loadingItem, setLoadingItem] = useState<string | null>(null);
-
-  // Clear loading state when router finishes navigating
-  React.useEffect(() => {
-    if (!isRouterPending && loadingItem) {
-      setLoadingItem(null);
-    }
-  }, [isRouterPending, loadingItem]);
-
   const handleItemClick = (item: NavigationItem) => {
-    setLoadingItem(item.id);
     if (item.onClick) {
       item.onClick();
     }
@@ -200,13 +193,14 @@ export function NavItemList({
       isMobile={isMobile}
       isPrimary={isPrimary}
       navigationView={navigationView}
+      screenType={screenType}
       pathname={pathname}
       hash={hash}
-      isRouterPending={isRouterPending}
+      isRouterPending={false}
       normalizedHash={normalizedHash}
       currentRoute={currentRoute}
-      loadingItem={loadingItem}
-      setLoadingItem={setLoadingItem}
+      loadingItem={null}
+      setLoadingItem={NOOP}
       handleItemClick={handleItemClick}
     />
   );

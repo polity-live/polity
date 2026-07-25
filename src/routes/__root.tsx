@@ -1,7 +1,6 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
 import { AuthProvider } from '@/providers/auth-provider';
-import { OnlineUsersProvider } from '@/presence';
-import { ZeroAppProvider } from '@/providers/zero-provider';
+import { AppRuntime } from '@/runtime/app-runtime';
 import { AppShell } from '@/layout/app-shell';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
 import { MotionProvider } from '@/features/shared/motion';
@@ -84,13 +83,11 @@ function RootLayout() {
           <KeyboardPlatformProvider>
             <TooltipProvider delayDuration={250} skipDelayDuration={300}>
               <AuthProvider>
-                <OnlineUsersProvider>
-                  <ZeroAppProvider>
-                    <AppShell>
-                      <Outlet />
-                    </AppShell>
-                  </ZeroAppProvider>
-                </OnlineUsersProvider>
+                <AppRuntime>
+                  <AppShell>
+                    <Outlet />
+                  </AppShell>
+                </AppRuntime>
               </AuthProvider>
             </TooltipProvider>
           </KeyboardPlatformProvider>

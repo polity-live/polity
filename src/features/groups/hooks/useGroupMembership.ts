@@ -12,6 +12,7 @@ import {
 import { useGroupConflictPreflight } from './useGroupConflictPreflight';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { queries } from '@/zero/queries';
+import type { ProjectedGroupMembershipState } from '@/features/search/types/projected-card-state';
 
 export type MembershipStatus = 'invited' | 'requested' | 'member' | 'admin';
 
@@ -50,30 +51,47 @@ function normalizeMembershipStatus(
   return null;
 }
 
-export function useGroupMembership(groupId: string) {
+export function useGroupMembership(
+  groupId: string,
+  projectedState?: ProjectedGroupMembershipState
+) {
   const zero = useZero();
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { group, isLoading: groupLoading } = useGroupState({ groupId });
+  const { group: queriedGroup, isLoading: queriedGroupLoading } = useGroupState(
+    projectedState ? {} : { groupId }
+  );
+  const group = projectedState?.group ?? queriedGroup;
+  const groupLoading = projectedState ? false : queriedGroupLoading;
   const [guestAccessesData] = useQuery(
-    user?.id ? queries.groups.currentUserGuestAccessesWithGroups({}) : undefined
+    user?.id && !projectedState ? queries.groups.currentUserGuestAccessesWithGroups({}) : undefined
   );
   const {
     memberships: membershipsData,
     allMemberships: allMembershipsData,
     isLoading: queryLoading,
-  } = useUserMembershipInGroup(user?.id, groupId);
+  } = useUserMembershipInGroup(
+    projectedState ? undefined : user?.id,
+    projectedState ? undefined : groupId
+  );
   const { memberships: connectedGroupMemberships, isLoading: connectedMembershipLoading } =
-    useUserMembershipInGroup(user?.id, group?.connected_group_id ?? undefined);
+    useUserMembershipInGroup(
+      projectedState ? undefined : user?.id,
+      projectedState ? undefined : (group?.connected_group_id ?? undefined)
+    );
   const [isLoading, setIsLoading] = useState(false);
 
-  const data = { groupMemberships: membershipsData || [] };
+  const data = {
+    groupMemberships: projectedState?.memberships ?? membershipsData ?? [],
+  };
 
   // Handle multiple memberships - prioritize admin, then member, then invited, then requested
   const memberships = data.groupMemberships || [];
   let membership = memberships[0];
   const guestAccess =
-    (guestAccessesData || []).find(access => access.group?.id === groupId) ?? null;
+    projectedState?.guestAccesses[0] ??
+    (guestAccessesData || []).find(access => access.group?.id === groupId) ??
+    null;
 
   if (memberships.length > 1) {
     const adminMembership = memberships.find(
@@ -105,13 +123,15 @@ export function useGroupMembership(groupId: string) {
   }
 
   const memberCount =
-    (allMembershipsData || []).filter(
+    projectedState?.memberCount ??
+    ((allMembershipsData || []).filter(
       candidate =>
         candidate.status === 'active' ||
         candidate.status === 'member' ||
         candidate.status === 'admin' ||
         isMemberRole(candidate.role?.name)
-    ).length || 0;
+    ).length ||
+      0);
   const status = normalizeMembershipStatus(membership?.status, membership?.role?.name);
   const requiresGuestAccessFlow =
     group?.group_type === 'sibling' &&
@@ -129,9 +149,11 @@ export function useGroupMembership(groupId: string) {
   const isAdmin = effectiveStatus === 'admin';
   const hasRequested = effectiveStatus === 'requested';
   const isInvited = effectiveStatus === 'invited';
-  const isConnectedGroupMember = (connectedGroupMemberships || []).some(candidate =>
-    isActiveMembershipStatus(candidate.status)
-  );
+  const isConnectedGroupMember = (
+    projectedState?.connectedGroupMemberships ??
+    connectedGroupMemberships ??
+    []
+  ).some(candidate => isActiveMembershipStatus(candidate.status));
   const primarySiblingMembershipMode = group?.primary_sibling_membership_mode ?? null;
   const siblingJoinRequiresConnectedMembership =
     group?.group_type === 'sibling' &&
@@ -281,14 +303,6 @@ export function useGroupMembership(groupId: string) {
     if ((!membership?.id && !guestAccess?.id) || !canAcceptInvitation || !user?.id) return;
     const guestAccessId = guestAccess?.id;
 
-    console.info('Accept button clicked in useGroupMembership', {
-      flow: 'group-membership-invitation-accept',
-      membershipId: membership?.id ?? guestAccess?.id,
-      groupId,
-      actorUserId: user.id,
-      membershipStatus: membership?.status ?? guestAccess?.status,
-    });
-
     setIsLoading(true);
     try {
       console.info('Client mutation started', {
@@ -315,14 +329,6 @@ export function useGroupMembership(groupId: string) {
       if (!result) {
         return;
       }
-
-      console.info('Server finalization started', {
-        flow: 'group-membership-invitation-accept',
-        membershipId: membership?.id ?? guestAccess?.id,
-        groupId,
-        actorUserId: user.id,
-      });
-
       trackServerFinalization(result, {
         onSuccess: () =>
           console.info('Server successful', {
@@ -345,13 +351,6 @@ export function useGroupMembership(groupId: string) {
         },
       });
       await waitForClientApply(result);
-
-      console.info('Client successful', {
-        flow: 'group-membership-invitation-accept',
-        membershipId: membership?.id ?? guestAccess?.id,
-        groupId,
-        actorUserId: user.id,
-      });
       toast.success(t('features.groups.toasts.invitationAccepted'));
     } catch (error) {
       console.error('Client error', {
@@ -387,7 +386,7 @@ export function useGroupMembership(groupId: string) {
       : null,
     memberCount,
     isLoading:
-      queryLoading ||
+      (projectedState?.isLoading ?? queryLoading) ||
       joinEligibilityLoading ||
       (!requiresGuestAccessFlow && joinConflictPreflight.isLoading) ||
       (!requiresGuestAccessFlow && acceptConflictPreflight.isLoading) ||

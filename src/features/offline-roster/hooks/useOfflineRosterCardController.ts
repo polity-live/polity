@@ -24,14 +24,6 @@ function buildCorrelationId(flow: string) {
   return `${flow}:${crypto.randomUUID()}`;
 }
 
-function logRosterClient(flow: string, stage: string, payload: Record<string, unknown> = {}) {
-  console.info('[offline-roster]', {
-    flow,
-    stage,
-    ...payload,
-  });
-}
-
 function getUserDisplayName(user?: OfflineRosterConnectedUser | null) {
   if (!user) {
     return '';
@@ -195,11 +187,6 @@ export function useOfflineRosterCardController({
     }
 
     const correlationId = buildCorrelationId('offline-roster-single-add');
-    logRosterClient('offline-roster-single-add', 'submit-started', {
-      correlationId,
-      firstName: singleDraft.firstName,
-      lastName: singleDraft.lastName,
-    });
     setIsSubmitting(true);
     setManageSubmitStatus('submitting-single');
     try {
@@ -211,7 +198,6 @@ export function useOfflineRosterCardController({
         },
         correlationId
       );
-      logRosterClient('offline-roster-single-add', 'submit-confirmed', { correlationId });
       setManageSubmitStatus('success-single');
       await new Promise(resolve => globalThis.setTimeout(resolve, MANAGE_SUBMIT_SUCCESS_DELAY_MS));
       handleCloseManageDialog(false);
@@ -229,18 +215,10 @@ export function useOfflineRosterCardController({
     }
 
     const correlationId = buildCorrelationId('offline-roster-csv-import');
-    logRosterClient('offline-roster-csv-import', 'submit-started', {
-      correlationId,
-      rowCount: csvPreviewRows.length,
-    });
     setIsSubmitting(true);
     setManageSubmitStatus('submitting-csv');
     try {
       await onImport(csvPreviewRows, correlationId);
-      logRosterClient('offline-roster-csv-import', 'submit-confirmed', {
-        correlationId,
-        rowCount: csvPreviewRows.length,
-      });
       setManageSubmitStatus('success-csv');
       await new Promise(resolve => globalThis.setTimeout(resolve, MANAGE_SUBMIT_SUCCESS_DELAY_MS));
       handleCloseManageDialog(false);
@@ -258,15 +236,9 @@ export function useOfflineRosterCardController({
     }
 
     const correlationId = buildCorrelationId('offline-roster-connect');
-    logRosterClient('offline-roster-connect', 'submit-started', {
-      correlationId,
-      rowId: connectRow.id,
-      connectedUserId: selectedConnectedUser.id,
-    });
     setIsSubmitting(true);
     try {
       await onConnect(connectRow, selectedConnectedUser.id, correlationId);
-      logRosterClient('offline-roster-connect', 'submit-confirmed', { correlationId });
       setConnectRow(null);
       setSelectedConnectedUser(null);
     } finally {
@@ -280,10 +252,6 @@ export function useOfflineRosterCardController({
     }
 
     const correlationId = buildCorrelationId('offline-roster-edit');
-    logRosterClient('offline-roster-edit', 'submit-started', {
-      correlationId,
-      rowId: editRow.id,
-    });
     setIsSubmitting(true);
     try {
       await onEdit(
@@ -295,7 +263,6 @@ export function useOfflineRosterCardController({
         },
         correlationId
       );
-      logRosterClient('offline-roster-edit', 'submit-confirmed', { correlationId });
       setEditRow(null);
     } finally {
       setIsSubmitting(false);
@@ -308,15 +275,7 @@ export function useOfflineRosterCardController({
     }
 
     const correlationId = buildCorrelationId('offline-roster-delete');
-    logRosterClient('offline-roster-delete', 'submit-started', {
-      correlationId,
-      rowId: row.id,
-    });
     await onDelete(row, correlationId);
-    logRosterClient('offline-roster-delete', 'submit-confirmed', {
-      correlationId,
-      rowId: row.id,
-    });
   };
 
   const handleSetParticipationStatus = async (
@@ -332,17 +291,7 @@ export function useOfflineRosterCardController({
         ? 'offline-roster-confirm-participation'
         : 'offline-roster-withdraw-participation-confirmation';
     const correlationId = buildCorrelationId(flow);
-    logRosterClient(flow, 'submit-started', {
-      correlationId,
-      rowId: row.id,
-      nextStatus,
-    });
     await onSetParticipationStatus(row, nextStatus, correlationId);
-    logRosterClient(flow, 'submit-confirmed', {
-      correlationId,
-      rowId: row.id,
-      nextStatus,
-    });
   };
 
   const handleToggleChannel = async (row: OfflineRosterRow, nextChannel: 'online' | 'offline') => {
@@ -351,17 +300,7 @@ export function useOfflineRosterCardController({
     }
 
     const correlationId = buildCorrelationId('offline-roster-toggle-channel');
-    logRosterClient('offline-roster-toggle-channel', 'submit-started', {
-      correlationId,
-      rowId: row.id,
-      nextChannel,
-    });
     await onToggleChannel(row, nextChannel, correlationId);
-    logRosterClient('offline-roster-toggle-channel', 'submit-confirmed', {
-      correlationId,
-      rowId: row.id,
-      nextChannel,
-    });
   };
 
   const openEditRow = (row: OfflineRosterRow) => {

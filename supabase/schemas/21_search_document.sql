@@ -752,6 +752,9 @@ BEGIN
     NEW.image_url,
     jsonb_build_object(
       'type', 'group',
+      'group_type', NEW.group_type,
+      'connected_group_id', NEW.connected_group_id,
+      'primary_sibling_membership_mode', NEW.primary_sibling_membership_mode,
       'location', concat_ws(', ', nullif(NEW.city, ''), nullif(NEW.region, ''), nullif(NEW.country, '')),
       'stats', jsonb_build_object(
         'members', NEW.member_count,
@@ -899,7 +902,8 @@ BEGIN
       'stats', jsonb_build_object(
         'likes', NEW.like_count,
         'comments', NEW.comment_count,
-        'supporters', NEW.supporter_count
+        'supporters', NEW.supporter_count,
+        'subscribers', NEW.subscriber_count
       )
     ),
     NEW.created_at,
@@ -1052,7 +1056,9 @@ BEGIN
         'upvotes', amendment_row.upvotes,
         'downvotes', amendment_row.downvotes,
         'supporting_groups', supporting_group_count,
-        'comments', amendment_row.comment_count
+        'comments', amendment_row.comment_count,
+        'subscribers', amendment_row.subscriber_count,
+        'collaborators', amendment_row.collaborator_count
       )
     ),
     amendment_row.created_at,
@@ -1308,6 +1314,7 @@ BEGIN
     NEW.image_url,
     jsonb_build_object(
       'type', 'event',
+      'event_type', NEW.event_type,
       'location', concat_ws(', ', nullif(NEW.location_name, ''), nullif(NEW.city, ''), nullif(NEW.country, '')),
       'starts_at', public.search_document_epoch_ms(NEW.start_date),
       'ends_at', public.search_document_epoch_ms(NEW.end_date),

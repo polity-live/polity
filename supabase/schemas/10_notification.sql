@@ -79,6 +79,18 @@ CREATE INDEX idx_notification_recipient_read ON public.notification (recipient_i
 CREATE INDEX idx_notification_category ON public.notification (category);
 CREATE INDEX idx_notification_active_created ON public.notification (created_at DESC)
 WHERE deleted_at IS NULL;
+CREATE INDEX idx_zero_notification_recipient_created_id_deleted
+  ON public.notification (recipient_id, created_at DESC, id DESC, deleted_at);
+CREATE INDEX idx_zero_notification_entity_created_id_deleted
+  ON public.notification (
+    recipient_entity_type,
+    recipient_entity_id,
+    created_at DESC,
+    id DESC,
+    deleted_at
+  );
+CREATE INDEX idx_zero_notification_created_id_deleted
+  ON public.notification (created_at DESC, id DESC, deleted_at);
 
 ALTER TABLE public.notification ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.notification FOR ALL TO service_role USING (true);
@@ -136,6 +148,8 @@ CREATE TABLE IF NOT EXISTS public.notification_read (
 );
 
 CREATE INDEX idx_notification_read_entity ON public.notification_read (entity_type, entity_id);
+CREATE INDEX idx_zero_notification_read_notification_user_id
+  ON public.notification_read (notification_id, read_by_user_id, id);
 
 ALTER TABLE public.notification_read ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.notification_read FOR ALL TO service_role USING (true);

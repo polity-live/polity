@@ -76,6 +76,30 @@ function readDynamicCardProps() {
 }
 
 describe('SearchResultCard', () => {
+  it('renders an immediately navigable, fixed-cell preview without loading the dynamic card', () => {
+    const { container } = render(
+      <div style={{ height: 360 }}>
+        <SearchResultCard
+          mode="preview"
+          document={makeSearchDocument({
+            topics: [{ topic: 'democracy' }],
+            card_payload: { type: 'group', stats: { members: 12 } },
+          })}
+        />
+      </div>
+    );
+
+    const preview = container.querySelector('[data-search-card-mode="preview"]');
+    const link = screen.getByRole('link', { name: 'Civic Assembly' });
+
+    expect(preview).toBeTruthy();
+    expect(link.getAttribute('href')).toBe('/group/group-1');
+    expect(screen.getByText('A group for civic work.')).toBeTruthy();
+    expect(screen.getByText('#democracy')).toBeTruthy();
+    expect(screen.getByText('12')).toBeTruthy();
+    expect(screen.queryByTestId('dynamic-card')).toBeNull();
+  });
+
   it('passes compact search card classes without stretching cards to the virtual row height', () => {
     render(
       <SearchResultCard

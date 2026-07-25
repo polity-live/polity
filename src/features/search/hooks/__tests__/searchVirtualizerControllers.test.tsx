@@ -100,7 +100,6 @@ describe('search virtualizer controller contracts', () => {
       getVirtualItems: () => [],
       getTotalSize: () => 0,
       scrollToIndex: vi.fn(),
-      measureElement: vi.fn(),
     };
     mocks.usePolityZeroGrid.mockReturnValue({
       virtualizer,
@@ -112,9 +111,17 @@ describe('search virtualizer controller contracts', () => {
 
     const { result } = renderHook(() => useVirtualSearchGridController({ context }));
 
-    expect(mocks.usePolityZeroGrid).toHaveBeenCalledOnce();
+    expect(mocks.usePolityZeroGrid).toHaveBeenCalled();
+    const options = mocks.usePolityZeroGrid.mock.calls.at(-1)?.[0];
+    expect(options.overscan).toBe(2);
+    expect(options.minPageSize).toBe(18);
+    expect(options.maxPageSize).toBe(48);
+    expect(options.useFlushSync).toBe(false);
+    expect(options.estimateSize()).toBe(376);
     expect(result.current.cells).toEqual([]);
     expect(result.current.totalHeight).toBe(0);
+    expect(result.current).not.toHaveProperty('onScroll');
+    expect(result.current).not.toHaveProperty('onMeasureElement');
   });
 
   it('keeps the responsive one-to-four lane breakpoints', () => {

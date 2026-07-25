@@ -51,6 +51,14 @@ export const agendaQueries = {
         .related('votes', q => applyVoteQueryAccess(q, userID))
   ),
 
+  timingByEventIds: defineQuery(
+    z.object({ event_ids: z.array(z.string()) }),
+    ({ args: { event_ids }, ctx: { userID } }) =>
+      applyAgendaItemQueryAccess(zql.agenda_item, userID)
+        .where('event_id', 'IN', event_ids)
+        .related('event', event => applyEventQueryAccess(event, userID))
+  ),
+
   // Single agenda item by ID
   byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     applyAgendaItemQueryAccess(zql.agenda_item.where('id', id), userID).one()
@@ -178,6 +186,7 @@ export const agendaQueries = {
 // ── Query Row Types ─────────────────────────────────────────────────
 export type AgendaItemByEventRow = QueryRowType<typeof agendaQueries.byEvent>;
 export type AgendaItemByEventIdsRow = QueryRowType<typeof agendaQueries.byEventIds>;
+export type AgendaTimingByEventIdsRow = QueryRowType<typeof agendaQueries.timingByEventIds>;
 export type AgendaItemByIdRow = QueryRowType<typeof agendaQueries.byId>;
 export type AgendaItemByAmendmentRow = QueryRowType<typeof agendaQueries.byAmendmentId>;
 export type SpeakerListRow = QueryRowType<typeof agendaQueries.speakerList>;

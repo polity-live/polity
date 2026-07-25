@@ -130,3 +130,29 @@ describe('messageQueries conversation AI filter', () => {
     );
   });
 });
+
+describe('messageQueries unread summary projection', () => {
+  it('loads only the viewer participant and its scalar conversation row', () => {
+    messageQueries.unreadSummary.fn({
+      args: {},
+      ctx: { userID: 'user-1', email: 'user-1@example.com' },
+    });
+
+    expect(queryState.conversationQueries[0].calls).toEqual([
+      ['where', 'user_id', 'user-1'],
+      ['related', 'conversation', []],
+    ]);
+  });
+
+  it('denies anonymous access', () => {
+    messageQueries.unreadSummary.fn({
+      args: {},
+      ctx: { userID: 'anon', email: '' },
+    });
+
+    expect(queryState.conversationQueries[0].calls).toEqual([
+      ['where', 'id', '__unauthorized__'],
+      ['related', 'conversation', []],
+    ]);
+  });
+});

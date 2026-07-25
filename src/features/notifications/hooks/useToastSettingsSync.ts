@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNotificationState } from '@/zero/notifications/useNotificationState';
+import { useNotificationSettingsState } from '@/zero/notifications/useNotificationSettingsState';
 import { setInAppNotificationsEnabled } from '@/features/notifications/utils/gated-toast';
 
 /**
@@ -7,7 +7,7 @@ import { setInAppNotificationsEnabled } from '@/features/notifications/utils/gat
  * Should be called once in AuthenticatedShell so the cache stays up to date.
  */
 export function useToastSettingsSync() {
-  const { settings } = useNotificationState();
+  const { data: settings } = useNotificationSettingsState();
 
   useEffect(() => {
     if (!settings?.delivery_settings) {

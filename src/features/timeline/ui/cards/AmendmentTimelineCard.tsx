@@ -8,6 +8,10 @@ import { isEditingMode, type EditingMode } from '@/zero/amendments/editing-mode-
 import { useAmendmentCollaboration } from '@/features/amendments/hooks/useAmendmentCollaboration';
 import { useSubscribeAmendment } from '@/features/amendments/hooks/useSubscribeAmendment';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
+import type {
+  ProjectedAmendmentCollaborationState,
+  ProjectedSubscriptionState,
+} from '@/features/search/types/projected-card-state';
 
 type AmendmentTimelineStatus = EditingMode | 'accepted' | 'approved' | 'pending' | 'withdrawn';
 
@@ -63,6 +67,8 @@ export interface AmendmentTimelineCardProps {
   onOppose?: () => void;
   href?: string;
   className?: string;
+  projectedCollaborationState?: ProjectedAmendmentCollaborationState;
+  projectedSubscriptionState?: ProjectedSubscriptionState;
 }
 
 /**
@@ -118,11 +124,13 @@ export function AmendmentTimelineCard({
   isSubscriptionLoading,
   href,
   className,
+  projectedCollaborationState,
+  projectedSubscriptionState,
 }: AmendmentTimelineCardProps) {
   const { t } = useTranslation();
   const [collaborationOpen, setCollaborationOpen] = useState(false);
-  const collaboration = useAmendmentCollaboration(amendment.id);
-  const subscription = useSubscribeAmendment(amendment.id);
+  const collaboration = useAmendmentCollaboration(amendment.id, projectedCollaborationState);
+  const subscription = useSubscribeAmendment(amendment.id, projectedSubscriptionState);
   const amendmentDescription = normalizeTimelineText(amendment.description);
 
   const statusConfig = STATUS_CONFIG[amendment.status] || STATUS_CONFIG.view;

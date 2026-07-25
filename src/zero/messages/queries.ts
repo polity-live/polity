@@ -1,5 +1,6 @@
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
+import { requireQueryUser } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
 
@@ -48,6 +49,11 @@ export const messageQueries = {
   // Conversations for the current user (via participant join)
   conversations: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.conversation_participant.where('user_id', userID).orderBy('joined_at', 'desc')
+  ),
+
+  // Shell badge projection: persisted unread state plus pending-request timing only.
+  unreadSummary: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    requireQueryUser(zql.conversation_participant, userID).related('conversation')
   ),
 
   // Single conversation by ID

@@ -170,7 +170,6 @@ export interface AmendmentWikiViewProps {
   isCloning: any;
   handleClone: any;
   handleConfirmClone: any;
-  usersData: any;
   normalizedVoteValue: any;
   supporterDirectorySection: any;
 }
@@ -213,7 +212,6 @@ export function AmendmentWikiView({
   isCloning,
   handleClone,
   handleConfirmClone,
-  usersData,
   normalizedVoteValue,
   supporterDirectorySection,
 }: AmendmentWikiViewProps) {
@@ -747,12 +745,7 @@ export function AmendmentWikiView({
         open={cloneDialogOpen}
         onOpenChange={setCloneDialogOpen}
         currentUserId={user?.id || ''}
-        allUsers={(usersData?.$users || []).map((u: any) => ({
-          id: u.id,
-          name: u.handle || u.email || 'Unknown User',
-          email: u.email,
-          avatar: u.avatar ?? undefined,
-        }))}
+        allUsers={[]}
         onConfirm={handleConfirmClone}
         isSaving={isCloning}
         showCollaboratorSelection={false}

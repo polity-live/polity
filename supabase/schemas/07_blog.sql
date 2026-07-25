@@ -28,6 +28,10 @@ CREATE TABLE IF NOT EXISTS public.blog (
 );
 
 CREATE INDEX idx_blog_group ON public.blog (group_id);
+CREATE INDEX idx_zero_blog_group_created_id
+  ON public.blog (group_id, created_at DESC, id DESC);
+CREATE INDEX idx_zero_blog_created_id
+  ON public.blog (created_at DESC, id DESC);
 
 ALTER TABLE public.blog ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.blog FOR ALL TO service_role USING (true);
@@ -45,6 +49,10 @@ CREATE TABLE IF NOT EXISTS public.blog_blogger (
 
 CREATE INDEX idx_blog_blogger_blog ON public.blog_blogger (blog_id);
 CREATE INDEX idx_blog_blogger_user ON public.blog_blogger (user_id);
+CREATE INDEX idx_zero_blog_blogger_user_status_blog
+  ON public.blog_blogger (user_id, status, blog_id);
+CREATE INDEX idx_zero_blog_blogger_user_blog
+  ON public.blog_blogger (user_id, blog_id);
 
 ALTER TABLE public.blog_blogger ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.blog_blogger FOR ALL TO service_role USING (true);

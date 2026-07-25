@@ -5,40 +5,51 @@ import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventById, useEventParticipantsQuery } from '@/zero/events/useEventState';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import type { ProjectedEventParticipationState } from '@/features/search/types/projected-card-state';
 
 export type ParticipationStatus =
   'invited' | 'requested' | 'active' | 'member' | 'admin' | 'confirmed';
 
-export function useEventParticipation(eventId: string) {
+export function useEventParticipation(
+  eventId: string,
+  projectedState?: ProjectedEventParticipationState
+) {
   const { user } = useAuth();
   const { joinEvent, leaveEvent: doLeaveEvent, updateParticipant } = useEventActions();
   const [isLoading, setIsLoading] = useState(false);
 
   // Query event details including type and group
-  const { event, isLoading: eventLoading } = useEventById(eventId);
+  const { event: queriedEvent, isLoading: queriedEventLoading } = useEventById(
+    projectedState ? undefined : eventId
+  );
+  const event = projectedState?.event ?? queriedEvent;
+  const eventLoading = projectedState ? false : queriedEventLoading;
 
   const eventType = event?.event_type;
 
   // Check if user is a member of the event's group
   const isGroupMember = event?.group?.memberships?.some(
-    m => m.user?.id === user?.id && (m.status === 'active' || m.status === 'admin')
+    m =>
+      (m.user?.id === user?.id || m.user_id === user?.id) &&
+      (m.status === 'active' || m.status === 'member' || m.status === 'admin')
   );
 
   // Check if user is a confirmed delegate
   const isConfirmedDelegate = event?.delegates?.some(
-    d => d.user?.id === user?.id && d.status === 'confirmed'
+    d => (d.user?.id === user?.id || d.user_id === user?.id) && d.status === 'confirmed'
   );
 
   // Query participants
   const { participants: allParticipantsData, isLoading: participantsLoading } =
-    useEventParticipantsQuery(eventId);
+    useEventParticipantsQuery(projectedState ? undefined : eventId);
 
-  const queryLoading = eventLoading || participantsLoading;
+  const queryLoading = projectedState?.isLoading ?? (eventLoading || participantsLoading);
 
-  const participation = allParticipantsData?.find(p => p.user_id === user?.id);
+  const participantRows = projectedState?.participants ?? allParticipantsData ?? [];
+  const participation = participantRows.find(p => p.user_id === user?.id);
 
   // Filter to count only active participants (excluding invited and requested)
-  const allParticipants = allParticipantsData || [];
+  const allParticipants = participantRows;
   const filteredParticipants = allParticipants.filter(
     p =>
       p.status === 'active' ||
@@ -46,7 +57,7 @@ export function useEventParticipation(eventId: string) {
       p.status === 'admin' ||
       p.status === 'confirmed'
   );
-  const participantCount = filteredParticipants.length;
+  const participantCount = projectedState?.participantCount ?? filteredParticipants.length;
 
   const status: ParticipationStatus | null = (participation?.status as ParticipationStatus) || null;
   const isParticipant =

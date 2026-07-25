@@ -31,20 +31,26 @@ vi.mock('@/providers/auth-provider.tsx', () => ({
 }));
 
 vi.mock('@/zero/groups/useGroupState.ts', () => ({
-  useGroupState: () => ({
-    currentUserMembershipsWithGroups: mocks.currentUserMembershipsWithGroups,
+  useGroupState: ({
+    includeCurrentUserMembershipsWithGroups,
+  }: {
+    includeCurrentUserMembershipsWithGroups?: boolean;
+  }) => ({
+    currentUserMembershipsWithGroups: includeCurrentUserMembershipsWithGroups
+      ? mocks.currentUserMembershipsWithGroups
+      : [],
   }),
 }));
 
 vi.mock('@/zero/events/useEventState.ts', () => ({
-  useUserEventParticipations: () => ({
-    participations: mocks.userEventParticipations,
+  useUserEventParticipations: (userId?: string) => ({
+    participations: userId ? mocks.userEventParticipations : [],
   }),
 }));
 
 vi.mock('@/zero/amendments/useAmendmentState.ts', () => ({
-  useCurrentUserOpenNavigationAmendments: () => ({
-    amendments: mocks.openNavigationAmendments,
+  useCurrentUserOpenNavigationAmendments: (userId?: string) => ({
+    amendments: userId ? mocks.openNavigationAmendments : [],
   }),
 }));
 
@@ -57,6 +63,24 @@ beforeEach(() => {
 });
 
 describe('useUserMenuController', () => {
+  it('does not expose relationship entities until navigation loading is enabled', () => {
+    mocks.userEventParticipations = [buildParticipation('event-alpha', 'Alpha Assembly')];
+
+    const { result, rerender } = renderHook(
+      ({ enabled }) =>
+        useUserMenuController({
+          user: null,
+          navigationEnabled: enabled,
+        }),
+      { initialProps: { enabled: false } }
+    );
+
+    expect(result.current?.events).toEqual([]);
+
+    rerender({ enabled: true });
+    expect(result.current?.events.map(event => event.id)).toEqual(['event-alpha']);
+  });
+
   it('shows searchable events alphabetically and filters them by title', () => {
     mocks.userEventParticipations = [
       buildParticipation('event-zeta', 'Zeta Assembly'),

@@ -14,6 +14,8 @@ import {
 } from '@/zero/notifications/notificationReadState';
 import { usePermissionEvaluator } from '@/zero/rbac';
 import { canManageEntityNotification } from '../logic/notificationPermissions';
+import { useAuth } from '@/providers/auth-provider';
+import type { NotificationCountProjectionRow } from '@/zero/notifications/queries';
 
 export type NotificationTab = 'all' | 'unread' | 'read' | 'personal' | 'entity' | 'trash';
 const NOTIFICATION_TAB_ORDER: NotificationTab[] = [
@@ -45,8 +47,27 @@ export function calculateNotificationCounts(rows: NotificationCountRows) {
   };
 }
 
+const ENTITY_RECIPIENT_TYPES = new Set(['group', 'event', 'amendment', 'blog']);
+
+export function calculateNotificationCountsFromProjection(
+  rows: readonly NotificationCountProjectionRow[],
+  userID: string | undefined
+) {
+  const activeRows = rows.filter(isNotificationActive);
+  const unreadRows = activeRows.filter(row => !isNotificationRead(row));
+  return {
+    all: activeRows.length,
+    unread: unreadRows.length,
+    personal: unreadRows.filter(row => row.recipient_id === userID).length,
+    entity: unreadRows.filter(row => ENTITY_RECIPIENT_TYPES.has(row.recipient_entity_type ?? ''))
+      .length,
+    trash: rows.filter(row => isNotificationDismissed(row) && !isNotificationPurged(row)).length,
+  };
+}
+
 export function useNotificationsPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState<NotificationTab>('all');
   const permissionEvaluator = usePermissionEvaluator();
@@ -62,33 +83,27 @@ export function useNotificationsPage() {
     handleDeleteEntityNotificationGlobally,
   } = useNotificationActions();
 
-  const [allRows, allResult] = useQuery(
-    queries.notifications.countRows({ tab: 'all', query: searchQuery })
-  );
-  const [unreadRows, unreadResult] = useQuery(
-    queries.notifications.countRows({ tab: 'unread', query: searchQuery })
-  );
-  const [personalRows, personalResult] = useQuery(
-    queries.notifications.countRows({ tab: 'personal', query: searchQuery })
-  );
-  const [entityRows, entityResult] = useQuery(
-    queries.notifications.countRows({ tab: 'entity', query: searchQuery })
-  );
-  const [trashRows, trashResult] = useQuery(
-    queries.notifications.countRows({ tab: 'trash', query: searchQuery })
+  const normalizedSearchQuery = searchQuery.trim();
+  const [countRows, countResult] = useQuery(
+    queries.notifications.countProjection({
+      query: normalizedSearchQuery,
+      entityId: null,
+      entityType: null,
+    })
   );
   const [allUnreadRows, allUnreadResult] = useQuery(
-    queries.notifications.countRows({ tab: 'unread', query: '' })
+    normalizedSearchQuery
+      ? queries.notifications.countProjection({
+          query: '',
+          entityId: null,
+          entityType: null,
+        })
+      : undefined
   );
 
-  const counts = calculateNotificationCounts({
-    all: allRows ?? [],
-    unread: unreadRows ?? [],
-    personal: personalRows ?? [],
-    entity: entityRows ?? [],
-    trash: trashRows ?? [],
-  });
-  const unreadCount = (allUnreadRows ?? []).filter(
+  const counts = calculateNotificationCountsFromProjection(countRows ?? [], user?.id);
+  const unreadCountRows = normalizedSearchQuery ? (allUnreadRows ?? []) : (countRows ?? []);
+  const unreadCount = unreadCountRows.filter(
     row => isNotificationActive(row) && !isNotificationRead(row)
   ).length;
   const canDeleteForEveryone = useCallback(
@@ -105,14 +120,9 @@ export function useNotificationsPage() {
     setAllNotificationsRead({ scope: { kind: 'inbox' }, read: false });
   }, [setAllNotificationsRead]);
 
-  const isInitialLoading = [
-    allResult,
-    unreadResult,
-    personalResult,
-    entityResult,
-    trashResult,
-    allUnreadResult,
-  ].some(result => result.type === 'unknown');
+  const isInitialLoading =
+    countResult.type === 'unknown' ||
+    (normalizedSearchQuery.length > 0 && allUnreadResult.type === 'unknown');
   const selectedTabIndex = NOTIFICATION_TAB_ORDER.indexOf(selectedTab);
   const { handlers: tabSwipeHandlers } = useSwipeNavigation({
     canSwipePrev: selectedTabIndex > 0,

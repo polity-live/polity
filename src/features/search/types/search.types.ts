@@ -117,6 +117,12 @@ export interface SearchContentItem {
   groupCount?: number;
   amendmentCount?: number;
   collaboratorCount?: number;
+  subscriberCount?: number;
+  groupType?: string | null;
+  connectedGroupId?: string | null;
+  primarySiblingMembershipMode?: string | null;
+  eventType?: string | null;
+  visibility?: string | null;
   supportingGroupsCount?: number;
   changeRequestCount?: number;
   commentCount?: number | null;

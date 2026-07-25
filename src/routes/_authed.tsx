@@ -1,6 +1,6 @@
 import { createFileRoute, Navigate, Outlet, useRouterState } from '@tanstack/react-router';
 import { EnsureUser } from '@/features/auth/EnsureUser';
-import { useZeroReady } from '@/providers/zero-provider';
+import { useZeroReady } from '@/providers/zero-ready-context';
 import { useAuth } from '@/providers/auth-provider';
 import { AppBootLoadingState } from '@/features/shared/ui/feedback';
 import { isGuestAccessibleEntityPath } from '@/features/auth/logic/guestEntityRouteAccess';

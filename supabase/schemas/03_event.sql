@@ -147,6 +147,12 @@ CREATE TABLE IF NOT EXISTS public.event_participant (
 CREATE INDEX idx_event_participant_instance ON public.event_participant (event_id, instance_date);
 CREATE INDEX idx_event_participant_event ON public.event_participant (event_id);
 CREATE INDEX idx_event_participant_user ON public.event_participant (user_id);
+CREATE INDEX idx_zero_event_participant_user_status_event
+  ON public.event_participant (user_id, status, event_id);
+CREATE INDEX idx_zero_event_participant_event_created_id
+  ON public.event_participant (event_id, created_at DESC, id DESC);
+CREATE INDEX idx_zero_event_participant_user_created_id
+  ON public.event_participant (user_id, created_at DESC, id DESC);
 CREATE UNIQUE INDEX idx_event_participant_unique_event_user
   ON public.event_participant (event_id, user_id)
   WHERE instance_date IS NULL;

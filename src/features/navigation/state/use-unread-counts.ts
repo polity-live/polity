@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { useAuth } from '@/providers/auth-provider.tsx';
-import { getUnreadCount } from '@/features/messages/logic/messageUtils';
-import { useMessageState } from '@/zero/messages/useMessageState.ts';
 import { queries } from '@/zero/queries';
 import {
   isNotificationActive,
@@ -16,6 +14,39 @@ export function countUnreadNotifications(rows: readonly ReadableNotification[] |
   ).length;
 }
 
+interface UnreadMessageSummary {
+  user_id?: string | null;
+  unread_count?: number | null;
+  last_read_at?: number | null;
+  conversation?: {
+    type?: string | null;
+    status?: string | null;
+    requested_by_id?: string | null;
+    created_at?: number | null;
+  } | null;
+}
+
+export function countUnreadMessageSummaries(
+  rows: readonly UnreadMessageSummary[] | undefined,
+  userID?: string
+) {
+  if (!userID) return 0;
+
+  return (rows ?? []).reduce((total, participant) => {
+    const conversation = participant.conversation;
+    const createdAt = conversation?.created_at ?? 0;
+    const hasUnreadRequest =
+      conversation?.type !== 'group' &&
+      conversation?.type !== 'event' &&
+      conversation?.status === 'pending' &&
+      conversation?.requested_by_id !== userID &&
+      createdAt > 0 &&
+      (participant.last_read_at ?? 0) < createdAt;
+
+    return total + (participant.unread_count ?? 0) + (hasUnreadRequest ? 1 : 0);
+  }, 0);
+}
+
 /**
  * Hook to get unread notifications count for the current user
  * Uses the same server-side filtered query as NotificationsPage
@@ -23,7 +54,13 @@ export function countUnreadNotifications(rows: readonly ReadableNotification[] |
 export function useUnreadNotificationsCount() {
   const { user } = useAuth();
   const [rows, result] = useQuery(
-    user?.id ? queries.notifications.countRows({ tab: 'unread', query: '' }) : null
+    user?.id
+      ? queries.notifications.countProjection({
+          query: '',
+          entityId: null,
+          entityType: null,
+        })
+      : null
   );
   const count = useMemo(() => countUnreadNotifications(rows), [rows]);
   return { count, isLoading: !!user?.id && result.type === 'unknown' };
@@ -35,21 +72,7 @@ export function useUnreadNotificationsCount() {
  */
 export function useUnreadMessagesCount() {
   const { user } = useAuth();
-
-  const { conversationsForUnread: conversations, isLoading } = useMessageState({
-    includeForUnread: !!user?.id,
-  });
-
-  const count = useMemo(() => {
-    if (!user?.id || !conversations) {
-      return 0;
-    }
-
-    return conversations.reduce(
-      (totalUnread, conversation) => totalUnread + getUnreadCount(conversation, user.id),
-      0
-    );
-  }, [conversations, user?.id]);
-
-  return { count, isLoading };
+  const [rows, result] = useQuery(user?.id ? queries.messages.unreadSummary({}) : null);
+  const count = useMemo(() => countUnreadMessageSummaries(rows, user?.id), [rows, user?.id]);
+  return { count, isLoading: !!user?.id && result.type === 'unknown' };
 }

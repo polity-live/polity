@@ -38,7 +38,7 @@ export function ConversationItem({
         variant="ghost"
         onClick={() => onSelect(conversation.id)}
         className={cn(
-          'hover:bg-accent h-auto min-w-0 flex-1 items-start justify-start gap-3 rounded-lg p-3 text-left whitespace-normal transition-colors',
+          'hover:bg-accent h-auto min-w-0 flex-1 items-start justify-start gap-3 rounded-lg px-0 py-3 text-left whitespace-normal transition-colors md:p-3',
           isSelected && 'bg-accent'
         )}
       >

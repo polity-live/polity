@@ -70,6 +70,8 @@ function useZeroGridVirtualizerImplementation({
   overscan = 5, // Virtualizer defaults to 1.
   getScrollElement,
   getItemKey = defaultKeyExtractor,
+  minPageSize = MIN_PAGE_SIZE,
+  maxPageSize = MAX_PAGE_SIZE,
   // Zero specific params
   listContextParams,
   count,
@@ -161,7 +163,12 @@ function useZeroGridVirtualizerImplementation({
     }
     return permalinkID ? createPermalinkAnchor(permalinkID) : TOP_ANCHOR;
   }, [isListContextCurrent, queryAnchor.anchor, permalinkID]);
-  const [pageSize, setPageSize] = useState(MIN_PAGE_SIZE);
+  const normalizedMinPageSize = Math.max(2, makeEven(minPageSize));
+  const normalizedMaxPageSize = Math.max(
+    normalizedMinPageSize,
+    Math.min(MAX_PAGE_SIZE, makeEven(maxPageSize))
+  );
+  const [pageSize, setPageSize] = useState(normalizedMinPageSize);
   const {
     rowAt,
     rowsLength,
@@ -241,7 +248,7 @@ function useZeroGridVirtualizerImplementation({
     // 3 times.  Don't shrink page size.
     const newPageSize = virtualizer.scrollRect
       ? Math.max(
-          MIN_PAGE_SIZE,
+          normalizedMinPageSize,
           makeEven(
             Math.ceil(
               virtualizer.scrollRect?.height /
@@ -251,11 +258,11 @@ function useZeroGridVirtualizerImplementation({
           )
         )
       : MIN_PAGE_SIZE;
-    const boundedPageSize = Math.min(MAX_PAGE_SIZE, newPageSize);
+    const boundedPageSize = Math.min(normalizedMaxPageSize, newPageSize);
     if (boundedPageSize > pageSize) {
       setPageSize(boundedPageSize);
     }
-  }, [pageSize, virtualizer.scrollRect]);
+  }, [normalizedMaxPageSize, normalizedMinPageSize, pageSize, virtualizer.scrollRect]);
   useEffect(() => {
     if (!isListContextCurrent || !onScrollStateChange) {
       return;

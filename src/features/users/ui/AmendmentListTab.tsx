@@ -14,19 +14,16 @@ import { queries } from '@/zero/queries';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 
 interface AmendmentListTabProps {
-  collaborations: readonly ProfileAmendmentCollaboration[];
   userId: string;
   searchValue: string;
   onSearchChange: (value: string) => void;
 }
 
 export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
-  collaborations: _collaborations,
   userId,
   searchValue,
   onSearchChange,
 }) => {
-  void _collaborations;
   const { t } = useTranslation();
 
   const context = useMemo(() => ({ userId, query: searchValue.trim() }), [searchValue, userId]);

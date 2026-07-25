@@ -43,22 +43,28 @@ vi.mock('@/providers/auth-provider.tsx', () => ({
 }));
 
 vi.mock('@/zero/groups/useGroupState.ts', () => ({
-  useGroupState: () => ({
-    currentUserMembershipsWithGroups: mocks.currentUserMembershipsWithGroups,
+  useGroupState: ({
+    includeCurrentUserMembershipsWithGroups,
+  }: {
+    includeCurrentUserMembershipsWithGroups?: boolean;
+  }) => ({
+    currentUserMembershipsWithGroups: includeCurrentUserMembershipsWithGroups
+      ? mocks.currentUserMembershipsWithGroups
+      : [],
     isLoading: false,
   }),
 }));
 
 vi.mock('@/zero/events/useEventState.ts', () => ({
-  useUserEventParticipations: () => ({
-    participations: mocks.userEventParticipations,
+  useUserEventParticipations: (userId?: string) => ({
+    participations: userId ? mocks.userEventParticipations : [],
     isLoading: false,
   }),
 }));
 
 vi.mock('@/zero/amendments/useAmendmentState.ts', () => ({
-  useCurrentUserOpenNavigationAmendments: () => ({
-    amendments: mocks.openNavigationAmendments,
+  useCurrentUserOpenNavigationAmendments: (userId?: string) => ({
+    amendments: userId ? mocks.openNavigationAmendments : [],
     isLoading: false,
   }),
 }));
@@ -119,6 +125,11 @@ describe('useNavigationCommandDialogController', () => {
       })
     );
 
+    expect(result.current.groupItems).toEqual([]);
+    expect(result.current.eventItems).toEqual([]);
+
+    act(() => result.current.setOpen(true));
+
     expect(result.current.groupItems.map(group => group.id)).toEqual(['group-active']);
     expect(result.current.eventItems.map(event => event.id)).toEqual(['event-future']);
   });
@@ -149,6 +160,9 @@ describe('useNavigationCommandDialogController', () => {
         secondaryNavItems: null,
       })
     );
+
+    expect(result.current.amendmentItems).toEqual([]);
+    act(() => result.current.setOpen(true));
 
     expect(result.current.amendmentItems.map(amendment => amendment.id)).toEqual([
       'amendment-open',

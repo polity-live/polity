@@ -4,6 +4,7 @@ import { queries } from '../queries';
 import type {
   AgendaItemByEventIdsRow,
   AgendaItemByEventRow,
+  AgendaTimingByEventIdsRow,
   ChangeRequestTimelineRow,
 } from './queries';
 import { AGENDA_VOTE_STEP_KIND } from './vote-step-kind';
@@ -17,6 +18,21 @@ export type AgendaStateItem = AgendaStateBaseItem & {
   calculated_end_time?: number;
 };
 
+export type AgendaTimingStateItem = AgendaTimingByEventIdsRow & {
+  calculated_start_time?: number;
+  calculated_end_time?: number;
+};
+
+interface AgendaCalculableItem {
+  id: string;
+  event_id?: string | null;
+  order_index?: number | null;
+  duration?: number | null;
+  completed_at?: number | null;
+  end_time?: number | null;
+  event?: { start_date?: number | null } | null;
+}
+
 function getAgendaDurationMinutes(item: { duration?: number | null }) {
   return typeof item.duration === 'number' && item.duration > 0
     ? item.duration
@@ -27,7 +43,7 @@ function getValidTimestamp(value: number | null | undefined) {
   return typeof value === 'number' && value > 0 ? value : undefined;
 }
 
-function withCalculatedAgendaTimes<T extends AgendaStateBaseItem>(
+function withCalculatedAgendaTimes<T extends AgendaCalculableItem>(
   items: T[]
 ): (T & {
   calculated_start_time?: number;
@@ -122,6 +138,20 @@ export function useAgendaState(
   return {
     agendaItems,
     isLoading,
+  };
+}
+
+export function useAgendaTimingState(eventIds?: string[]) {
+  const [rows, result] = useQuery(
+    eventIds && eventIds.length > 0
+      ? queries.agendas.timingByEventIds({ event_ids: eventIds })
+      : undefined
+  );
+  const agendaItems = useMemo(() => withCalculatedAgendaTimes(rows ?? []), [rows]);
+
+  return {
+    agendaItems,
+    isLoading: Boolean(eventIds?.length) && result.type === 'unknown',
   };
 }
 

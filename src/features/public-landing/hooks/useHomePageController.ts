@@ -1,9 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-
-import { useLocation } from '@tanstack/react-router';
+import { useRef, useState } from 'react';
 
 import { useAuth } from '@/providers/auth-provider';
-import { useZeroReady } from '@/providers/zero-provider';
+import { useZeroReady } from '@/providers/zero-ready-context';
 import { useUserState } from '@/zero/users/useUserState';
 
 const ONBOARDING_KEY = 'polity_onboarding';
@@ -15,7 +13,6 @@ type HomePageViewState =
   | { kind: 'redirect' };
 
 export function useHomePageController(): HomePageViewState {
-  const { hash } = useLocation();
   const { user, refreshAuthState, signOut } = useAuth();
   const zeroReady = useZeroReady();
   const { currentUser } = useUserState();
@@ -31,28 +28,8 @@ export function useHomePageController(): HomePageViewState {
     return value;
   });
 
-  useEffect(() => {
-    if (!hash) {
-      return;
-    }
-
-    const sectionId = hash.startsWith('#') ? hash.slice(1) : hash;
-    if (!sectionId) {
-      return;
-    }
-
-    const frame = window.requestAnimationFrame(() => {
-      document.getElementById(sectionId)?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [hash]);
-
   if (!user || !zeroReady) {
-    return { kind: 'public' };
+    return { kind: 'loading', onRetry: refreshAuthState, onSignOut: signOut };
   }
 
   if (currentUser == null && !showOnboarding) {

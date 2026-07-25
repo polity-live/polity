@@ -1,7 +1,10 @@
 'use client';
 
 import { Fragment, useEffect } from 'react';
-import { useLanguageStore } from '@/features/shared/global-state/language.store.tsx';
+import {
+  hydrateLanguageStore,
+  useLanguageStore,
+} from '@/features/shared/global-state/language.store.tsx';
 import i18n from '@/i18n/i18n.ts';
 
 /**
@@ -13,11 +16,17 @@ export function I18nSyncProvider({ children }: { children: React.ReactNode }) {
   const language = useLanguageStore(state => state.language);
   const setLanguage = useLanguageStore(state => state.setLanguage);
 
+  // Defer persisted/browser language selection until after React hydration.
+  useEffect(() => {
+    void hydrateLanguageStore();
+  }, []);
+
   // Sync Zustand store changes to i18next
   useEffect(() => {
     if (i18n.language !== language) {
-      i18n.changeLanguage(language);
+      void i18n.changeLanguage(language);
     }
+    document.documentElement.lang = language;
   }, [language]);
 
   // Sync i18next changes back to Zustand store

@@ -21,6 +21,10 @@ export function useNotificationState(options?: {
 }) {
   const includeRelations = options?.includeRelations ?? false;
   const includeUserNotifications = options?.includeUserNotifications ?? false;
+  const entityFilter =
+    options?.entityFilter?.entityId && options.entityFilter.entityType
+      ? options.entityFilter
+      : undefined;
 
   // ── Basic notifications ────────────────────────────────────────────
   const [notifications, notificationsResult] = useQuery(queries.notifications.byUser({}));
@@ -34,10 +38,12 @@ export function useNotificationState(options?: {
   );
 
   const [entityNotifications, entityNotificationsResult] = useQuery(
-    queries.notifications.byEntity({
-      entityId: options?.entityFilter?.entityId ?? '',
-      entityType: options?.entityFilter?.entityType ?? '',
-    })
+    entityFilter
+      ? queries.notifications.byEntity({
+          entityId: entityFilter.entityId,
+          entityType: entityFilter.entityType,
+        })
+      : undefined
   );
 
   // ── By entity ID only (no type needed) ─────────────────────────────
@@ -177,7 +183,7 @@ export function useNotificationState(options?: {
     unreadResult.type === 'unknown' ||
     settingsResult.type === 'unknown' ||
     pushSubscriptionsResult.type === 'unknown' ||
-    entityNotificationsResult.type === 'unknown' ||
+    (entityFilter !== undefined && entityNotificationsResult.type === 'unknown') ||
     ((includeRelations || includeUserNotifications) &&
       notificationsWithRelationsResult.type === 'unknown') ||
     (includeUserNotifications &&

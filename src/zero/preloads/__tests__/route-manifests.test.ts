@@ -4,13 +4,24 @@ import {
   createEventPreloadTasks,
   createBlogPreloadTasks,
   createGroupPreloadTasks,
+  createHomePreloadTask,
   createIntentTaskForHref,
   createMessagesPreloadTask,
+  createNotificationsPreloadTask,
   createSearchPreloadTask,
   createUserPreloadTasks,
 } from '../route-manifests';
 
 describe('prioritized preload route manifests', () => {
+  it('preloads only the bounded first notification page', () => {
+    const entries = createNotificationsPreloadTask().entries;
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0]?.key).toContain('queries.notifications.page');
+    expect(entries[0]?.key).toContain('"limit":51');
+    expect(entries[0]?.key).not.toContain('byUserWithRelations');
+  });
+
   it('keeps dynamic search and conversation arguments in separate task identities', () => {
     const recent = createSearchPreloadTask('user-1', { q: 'budget', sort: 'recent' });
     const trending = createSearchPreloadTask('user-1', { q: 'budget', sort: 'trending' });
@@ -19,6 +30,24 @@ describe('prioritized preload route manifests', () => {
 
     expect(recent.key).not.toBe(trending.key);
     expect(firstConversation.key).not.toBe(secondConversation.key);
+  });
+
+  it('keeps home narrow and defers search viewer state until after paint', () => {
+    const homeKeys = createHomePreloadTask('user-1')
+      .entries.map(entry => entry.key)
+      .join('|');
+    const searchKeys = createSearchPreloadTask('user-1')
+      .entries.map(entry => entry.key)
+      .join('|');
+
+    expect(homeKeys).toContain('queries.common.userHashtags');
+    expect(homeKeys).not.toContain('userSubscriptionsForTimeline');
+    expect(homeKeys).not.toContain('votesWithDetails');
+    expect(homeKeys).not.toContain('electionsWithDetails');
+    expect(searchKeys).not.toContain('queries.common.viewerSubscriptions');
+    expect(searchKeys).not.toContain('queries.amendments.viewerCollaborations');
+    expect(searchKeys).not.toContain('queries.events.viewerDelegations');
+    expect(searchKeys).toContain('"limit":19');
   });
 
   it('assigns expensive amendment queries only to their consuming subpages', () => {
@@ -82,12 +111,19 @@ describe('prioritized preload route manifests', () => {
     expect(keys(group.entries)).toContain('queries.groups.userMembershipInGroup');
     expect(keys(event.entries)).toContain('queries.events.participantsWithUserAndRole');
     expect(keys(event.entries)).toContain('queries.events.subscribersByEvent');
-    expect(keys(amendment.entries)).toContain('queries.amendments.byIdWithRelations');
-    expect(keys(amendment.entries)).toContain('queries.amendments.allGroupRelationships');
+    expect(keys(amendment.entries)).toContain('queries.amendments.byIdWiki');
+    expect(keys(amendment.entries)).not.toContain('queries.amendments.byIdWithRelations');
+    expect(keys(amendment.entries)).not.toContain('queries.amendments.allGroupRelationships');
+    expect(keys(amendment.entries)).not.toContain('queries.amendments.allGroupMemberships');
+    expect(keys(amendment.entries)).not.toContain('queries.amendments.allEvents');
+    expect(keys(amendment.entries)).not.toContain('queries.amendments.allUsers');
+    expect(keys(user.entries)).toContain('queries.users.byId');
+    expect(keys(user.entries)).toContain('queries.common.userHashtags');
+    expect(keys(user.entries)).not.toContain('queries.users.wikiProfile');
     expect(keys(user.entries)).toContain('queries.payments.subscriptionStatusByUser');
     expect(keys(user.entries)).toContain('queries.common.userSubscribers');
     expect(keys(blog.entries)).toContain('queries.blogs.byId');
-    expect(keys(blog.entries)).toContain('queries.rbac.bloggerPermissions');
+    expect(keys(blog.entries)).toContain('queries.rbac.viewerBloggerRelations');
     expect(keys(blog.entries)).toContain('queries.blogs.byIdWithBloggers');
     expect(
       keys(createBlogPreloadTasks('blog-1', '/group/group-1/blog/blog-1', 'viewer-1')[0].entries)

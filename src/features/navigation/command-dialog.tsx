@@ -1,8 +1,9 @@
+import { memo } from 'react';
 import { useNavigationCommandDialogController } from '@/features/navigation/hooks/useNavigationCommandDialogController';
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
 import { NavigationCommandDialogView } from './NavigationCommandDialogView';
 
-export function NavigationCommandDialog({
+export const NavigationCommandDialog = memo(function NavigationCommandDialog({
   primaryNavItems,
   secondaryNavItems,
 }: {
@@ -17,4 +18,4 @@ export function NavigationCommandDialog({
       onOpenChange={viewProps.setOpen}
     />
   );
-}
+});

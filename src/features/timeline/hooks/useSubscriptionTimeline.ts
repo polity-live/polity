@@ -3,11 +3,11 @@
 import { useMemo } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { useAuth } from '@/providers/auth-provider';
-import { useAgendaState } from '@/zero/agendas/useAgendaState';
 import { queries } from '@/zero/queries';
 import type { SubscriptionPageRow, TimelineFeedPageRow } from '@/zero/common/queries';
 
 export function useSubscriptionTimeline() {
+  const now = useMemo(() => Date.now(), []);
   const { user: authUser } = useAuth();
   // Don't query if user is not authenticated
   const shouldQuery = !!authUser?.id;
@@ -26,13 +26,6 @@ export function useSubscriptionTimeline() {
   const subscriptionRows: readonly SubscriptionPageRow[] = subscriptionRowsData ?? [];
   const subscriptionsLoading = shouldQuery && subscriptionResult.type === 'unknown';
   const subscriptionsData = { subscribers: subscriptionRows };
-
-  const subscribedEventIds = useMemo(() => {
-    if (!subscriptionsData?.subscribers) return [] as string[];
-    return subscriptionsData.subscribers
-      .filter((sub): sub is typeof sub & { event: NonNullable<typeof sub.event> } => !!sub.event)
-      .map(sub => sub.event.id);
-  }, [subscriptionsData]);
 
   // Get all entity IDs we're subscribed to
   const subscribedEntityIds = useMemo(() => {
@@ -78,6 +71,7 @@ export function useSubscriptionTimeline() {
       ? queries.common.timelineFeedPage({
           entityIds: timelineEntityIds,
           contentTypes: [],
+          now,
           limit: 101,
           start: null,
           dir: 'forward',
@@ -87,38 +81,6 @@ export function useSubscriptionTimeline() {
   const timelineRows: readonly TimelineFeedPageRow[] = timelineRowsData ?? [];
   const timelineLoading = timelineEntityIds.length > 0 && timelineResult.type === 'unknown';
   const timelineData = { timelineEvents: timelineRows };
-
-  const timelineEventIds = useMemo(() => {
-    if (!timelineData?.timelineEvents) return [] as string[];
-    const ids = timelineData.timelineEvents
-      .map(te => te?.event?.id)
-      .filter((id): id is string => Boolean(id));
-    return Array.from(new Set(ids));
-  }, [timelineData?.timelineEvents]);
-
-  const agendaEventIds = useMemo(
-    () => Array.from(new Set([...subscribedEventIds, ...timelineEventIds])),
-    [subscribedEventIds, timelineEventIds]
-  );
-
-  const { agendaItems: agendaItemRows } = useAgendaState({
-    eventIds: agendaEventIds.length > 0 ? agendaEventIds : undefined,
-  });
-  const agendaItemsLoading = false;
-  const agendaItemsData = { agendaItems: agendaItemRows };
-
-  const agendaItemsByEventId = useMemo(() => {
-    const items = agendaItemsData?.agendaItems ?? [];
-    const map = new Map<string, (typeof items)[number][]>();
-    for (const item of items) {
-      const eventId = item.event_id;
-      if (!eventId) continue;
-      const list = map.get(eventId) ?? [];
-      list.push(item);
-      map.set(eventId, list);
-    }
-    return map;
-  }, [agendaItemsData]);
 
   // Sort timeline events by date (most recent first)
   const sortedEvents = useMemo(() => {
@@ -131,8 +93,7 @@ export function useSubscriptionTimeline() {
 
   return {
     events: sortedEvents,
-    isLoading: shouldQuery ? subscriptionsLoading || timelineLoading || agendaItemsLoading : false,
+    isLoading: shouldQuery ? subscriptionsLoading || timelineLoading : false,
     subscribedEntityIds,
-    agendaItemsByEventId,
   };
 }

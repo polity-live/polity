@@ -20,31 +20,23 @@ function dynamicTask(key: string, href: string, entries: readonly ZeroPreloadEnt
 function createPermissionPreloadEntries(userId?: string): ZeroPreloadEntry[] {
   if (!userId) return [];
   return [
+    createPreloadEntry('queries.rbac.viewerMemberships', {}, queries.rbac.viewerMemberships({})),
     createPreloadEntry(
-      'queries.rbac.membershipPermissions',
-      { userId },
-      queries.rbac.membershipPermissions({ userId })
+      'queries.rbac.viewerGuestAccesses',
+      {},
+      queries.rbac.viewerGuestAccesses({})
     ),
     createPreloadEntry(
-      'queries.rbac.guestPermissions',
-      { userId },
-      queries.rbac.guestPermissions({ userId })
+      'queries.rbac.viewerParticipations',
+      {},
+      queries.rbac.viewerParticipations({})
     ),
     createPreloadEntry(
-      'queries.rbac.participantPermissions',
-      { userId },
-      queries.rbac.participantPermissions({ userId })
+      'queries.rbac.viewerBloggerRelations',
+      {},
+      queries.rbac.viewerBloggerRelations({})
     ),
-    createPreloadEntry(
-      'queries.rbac.bloggerPermissions',
-      { userId },
-      queries.rbac.bloggerPermissions({ userId })
-    ),
-    createPreloadEntry(
-      'queries.rbac.ownedGroupPermissions',
-      { userId },
-      queries.rbac.ownedGroupPermissions({ userId })
-    ),
+    createPreloadEntry('queries.rbac.viewerOwnedGroups', {}, queries.rbac.viewerOwnedGroups({})),
   ];
 }
 
@@ -54,17 +46,6 @@ export function createHomePreloadTask(userId: string): PreloadTask {
       'queries.search.searchDocumentPage',
       HOME_DISCOVER_SEARCH_ARGS,
       queries.search.searchDocumentPage(HOME_DISCOVER_SEARCH_ARGS)
-    ),
-    createPreloadEntry(
-      'queries.common.userSubscriptionsForTimeline',
-      { subscriber_id: userId },
-      queries.common.userSubscriptionsForTimeline({ subscriber_id: userId })
-    ),
-    createPreloadEntry('queries.votes.votesWithDetails', {}, queries.votes.votesWithDetails({})),
-    createPreloadEntry(
-      'queries.elections.electionsWithDetails',
-      {},
-      queries.elections.electionsWithDetails({})
     ),
     createPreloadEntry(
       'queries.common.userHashtags',
@@ -147,9 +128,25 @@ export function createTodosPreloadTask(): PreloadTask {
 export function createNotificationsPreloadTask(): PreloadTask {
   return task('primary:notifications', '/notifications', [
     createPreloadEntry(
-      'queries.notifications.byUserWithRelations',
-      {},
-      queries.notifications.byUserWithRelations({})
+      'queries.notifications.page',
+      {
+        tab: 'all',
+        query: '',
+        entityId: null,
+        entityType: null,
+        limit: 51,
+        start: null,
+        dir: 'forward',
+      },
+      queries.notifications.page({
+        tab: 'all',
+        query: '',
+        entityId: null,
+        entityType: null,
+        limit: 51,
+        start: null,
+        dir: 'forward',
+      })
     ),
   ]);
 }
@@ -207,6 +204,7 @@ export function createPrimaryIdleTasks(userId: string): PreloadTask[] {
 
 export function createGroupPreloadTasks(groupId: string, viewerId?: string): PreloadTask[] {
   const base = `/group/${groupId}`;
+  const now = Date.now();
   const common = [
     createPreloadEntry(
       'queries.groups.byIdFull',
@@ -330,8 +328,8 @@ export function createGroupPreloadTasks(groupId: string, viewerId?: string): Pre
       ),
       createPreloadEntry(
         'queries.statements.byGroup',
-        { group_id: groupId },
-        queries.statements.byGroup({ group_id: groupId })
+        { group_id: groupId, now },
+        queries.statements.byGroup({ group_id: groupId, now })
       ),
     ]),
     task(`group:${groupId}:network`, `${base}/network`, [
@@ -529,9 +527,9 @@ export function createAmendmentPreloadTasks(amendmentId: string, viewerId?: stri
   return [
     task(`amendment:${amendmentId}:wiki`, base, [
       createPreloadEntry(
-        'queries.amendments.byIdWithRelations',
+        'queries.amendments.byIdWiki',
         { id: amendmentId },
-        queries.amendments.byIdWithRelations({ id: amendmentId })
+        queries.amendments.byIdWiki({ id: amendmentId })
       ),
       createPreloadEntry(
         'queries.amendments.collaborators',
@@ -544,11 +542,6 @@ export function createAmendmentPreloadTasks(amendmentId: string, viewerId?: stri
         queries.amendments.subscribers({ amendment_id: amendmentId })
       ),
       createPreloadEntry(
-        'queries.amendments.byIdFull',
-        { id: amendmentId },
-        queries.amendments.byIdFull({ id: amendmentId })
-      ),
-      createPreloadEntry(
         'queries.amendments.clonesBySource',
         { source_id: amendmentId },
         queries.amendments.clonesBySource({ source_id: amendmentId })
@@ -558,18 +551,6 @@ export function createAmendmentPreloadTasks(amendmentId: string, viewerId?: stri
         { amendment_id: amendmentId },
         queries.amendments.rolesByAmendment({ amendment_id: amendmentId })
       ),
-      createPreloadEntry('queries.amendments.allGroups', {}, queries.amendments.allGroups({})),
-      createPreloadEntry(
-        'queries.amendments.allGroupRelationships',
-        {},
-        queries.amendments.allGroupRelationships({})
-      ),
-      createPreloadEntry(
-        'queries.amendments.allGroupMemberships',
-        {},
-        queries.amendments.allGroupMemberships({})
-      ),
-      createPreloadEntry('queries.amendments.allEvents', {}, queries.amendments.allEvents({})),
       ...(viewerId
         ? [
             createPreloadEntry(
@@ -580,12 +561,6 @@ export function createAmendmentPreloadTasks(amendmentId: string, viewerId?: stri
                 user_id: viewerId,
               })
             ),
-            createPreloadEntry(
-              'queries.amendments.userGroupMemberships',
-              { user_id: viewerId },
-              queries.amendments.userGroupMemberships({ user_id: viewerId })
-            ),
-            createPreloadEntry('queries.amendments.allUsers', {}, queries.amendments.allUsers({})),
           ]
         : []),
     ]),
@@ -688,13 +663,13 @@ export function createAmendmentPreloadTasks(amendmentId: string, viewerId?: stri
 export function createUserPreloadTasks(userId: string, isOwnUser: boolean): PreloadTask[] {
   const base = `/user/${userId}`;
   const profile = [
-    createPreloadEntry(
-      'queries.users.fullProfile',
-      { id: userId },
-      queries.users.fullProfile({ id: userId })
-    ),
     createPreloadEntry('queries.users.current', {}, queries.users.current({})),
     createPreloadEntry('queries.users.byId', { id: userId }, queries.users.byId({ id: userId })),
+    createPreloadEntry(
+      'queries.common.userHashtags',
+      { user_id: userId },
+      queries.common.userHashtags({ user_id: userId })
+    ),
     createPreloadEntry('queries.users.followers', { userId }, queries.users.followers({ userId })),
     createPreloadEntry('queries.users.following', { userId }, queries.users.following({ userId })),
     createPreloadEntry(

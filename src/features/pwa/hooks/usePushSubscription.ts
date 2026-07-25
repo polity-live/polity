@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNotificationState } from '@/zero/notifications/useNotificationState.ts';
+import { usePushSubscriptionsState } from '@/zero/notifications/usePushSubscriptionsState.ts';
 import { useNotificationActions } from '@/zero/notifications/useNotificationActions.ts';
 import { useAuth } from '@/providers/auth-provider.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
@@ -42,7 +42,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
   const { user } = useAuth();
 
   // Reactive query for push subscriptions (used in unsubscribe callback)
-  const { pushSubscriptions: pushSubscriptionsData } = useNotificationState();
+  const { data: pushSubscriptionsData } = usePushSubscriptionsState();
 
   // Keep a stable ref for the translation function to avoid callback re-identity
   const tRef = useRef(t);

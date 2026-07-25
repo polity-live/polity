@@ -4,7 +4,11 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { NavigationItem, NavigationView } from '@/features/navigation/types/navigation.types';
+import type {
+  NavigationItem,
+  NavigationView,
+  ScreenType,
+} from '@/features/navigation/types/navigation.types';
 import { useLanguageStore } from '@/features/shared/global-state/language.store';
 import {
   KeyboardPlatformProvider,
@@ -59,7 +63,8 @@ function renderButtonList(
   isPrimary = true,
   items = navigationItems,
   navigationView: NavigationView = 'asButtonList',
-  platform: KeyboardPlatform = 'windows'
+  platform: KeyboardPlatform = 'windows',
+  screenType: ScreenType = isMobile ? 'mobile' : 'desktop'
 ) {
   return render(
     <KeyboardPlatformProvider platform={platform}>
@@ -68,6 +73,7 @@ function renderButtonList(
         isMobile={isMobile}
         isPrimary={isPrimary}
         navigationView={navigationView}
+        screenType={screenType}
         pathname="/home"
         hash=""
         isRouterPending={false}
@@ -183,6 +189,26 @@ describe('NavItemListView', () => {
     expect(screen.queryByRole('tooltip')).toBeNull();
     expect(consoleError).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['asButtonList', 'md:flex-col', 'md:gap-2'],
+    ['asLabeledButtonList', 'md:flex-col', 'md:w-full'],
+  ] as const)(
+    'includes mobile-first and desktop override classes for automatic %s',
+    (navigationView, listClass, itemClass) => {
+      const { container } = renderButtonList(
+        false,
+        true,
+        navigationItems,
+        navigationView,
+        'windows',
+        'automatic'
+      );
+
+      expect(container.innerHTML).toContain(listClass);
+      expect(container.innerHTML).toContain(itemClass);
+    }
+  );
 
   it('uses the shared tooltip for icon-only secondary desktop navigation', async () => {
     renderButtonList(false, false);
@@ -321,6 +347,7 @@ describe('NavItemListView', () => {
           isMobile={false}
           isPrimary
           navigationView="asButtonList"
+          screenType="desktop"
           pathname="/home"
           hash=""
           isRouterPending={false}

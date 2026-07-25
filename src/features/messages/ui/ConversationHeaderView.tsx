@@ -40,8 +40,11 @@ export function ConversationHeaderView({
   identityContent,
 }: ConversationHeaderViewProps) {
   return (
-    <CardHeader separator className="flex-shrink-0 flex-row items-center justify-between space-y-0">
-      <div className="flex items-center">
+    <CardHeader
+      separator
+      className="flex-shrink-0 flex-row items-center justify-between space-y-0 pt-2 pr-6 pb-3 pl-0 md:p-6"
+    >
+      <div className="flex min-w-0 flex-1 items-center">
         <Button
           variant="ghost"
           size="icon"
@@ -52,11 +55,11 @@ export function ConversationHeaderView({
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div className="flex items-center">{identityContent}</div>
+        <div className="flex min-w-0 flex-1 items-center">{identityContent}</div>
       </div>
 
       {/* Action Bar */}
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1">
         {/* Only show pin for accepted conversations */}
         {conversation.status === 'accepted' && (
           <Button

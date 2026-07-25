@@ -1,12 +1,12 @@
 'use client';
 
-import type { EntityType } from '@/features/notifications/utils/notification-helpers.ts';
+import type { NotificationEntityType } from '@/zero/notifications/useEntityNotificationCountRows';
 import { useEntityNotificationsController } from '../hooks/useEntityNotificationsController';
 import { EntityNotificationsView } from './EntityNotificationsView';
 
 interface EntityNotificationsProps {
   entityId: string;
-  entityType: EntityType;
+  entityType: NotificationEntityType;
   entityName: string;
 }
 

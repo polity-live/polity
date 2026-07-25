@@ -9,25 +9,33 @@ import { useCurrentUserOpenNavigationAmendments } from '@/zero/amendments/useAme
 import { useUserEventParticipations } from '@/zero/events/useEventState.ts';
 import { useGroupState } from '@/zero/groups/useGroupState.ts';
 
-export function useCurrentUserNavigationEntities(userId?: string) {
+export function useCurrentUserNavigationEntities(userId?: string, enabled = true) {
+  const enabledUserId = enabled ? userId : undefined;
   const { currentUserMembershipsWithGroups, isLoading: isLoadingGroups } = useGroupState({
-    includeCurrentUserMembershipsWithGroups: Boolean(userId),
+    includeCurrentUserMembershipsWithGroups: Boolean(enabledUserId),
   });
-  const { participations, isLoading: isLoadingEvents } = useUserEventParticipations(userId);
+  const { participations, isLoading: isLoadingEvents } = useUserEventParticipations(enabledUserId);
   const { amendments: openAmendments, isLoading: isLoadingAmendments } =
-    useCurrentUserOpenNavigationAmendments(userId);
+    useCurrentUserOpenNavigationAmendments(enabledUserId);
 
   const groups = useMemo(
-    () => buildUserMenuGroups(currentUserMembershipsWithGroups || []),
-    [currentUserMembershipsWithGroups]
+    () => (enabled ? buildUserMenuGroups(currentUserMembershipsWithGroups || []) : []),
+    [currentUserMembershipsWithGroups, enabled]
   );
-  const events = useMemo(() => buildUserMenuEvents(participations), [participations]);
-  const amendments = useMemo(() => buildUserMenuAmendments(openAmendments), [openAmendments]);
+  const events = useMemo(
+    () => (enabled ? buildUserMenuEvents(participations) : []),
+    [enabled, participations]
+  );
+  const amendments = useMemo(
+    () => (enabled ? buildUserMenuAmendments(openAmendments) : []),
+    [enabled, openAmendments]
+  );
 
   return {
     groups,
     events,
     amendments,
-    isLoading: Boolean(userId) && (isLoadingGroups || isLoadingEvents || isLoadingAmendments),
+    isLoading:
+      Boolean(enabledUserId) && (isLoadingGroups || isLoadingEvents || isLoadingAmendments),
   };
 }

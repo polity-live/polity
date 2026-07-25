@@ -1,17 +1,26 @@
 import { useState, useEffect, useRef } from 'react';
-import { useUserState } from '@/zero/users/useUserState';
+import { useQuery } from '@rocicorp/zero/react';
 import { useCommonActions } from '@/zero/common/useCommonActions';
-import { useCommonState } from '@/zero/common/useCommonState';
 import { useAuth } from '@/providers/auth-provider';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { queries } from '@/zero/queries';
+import type {
+  ProjectedSubscriptionState,
+  SubscriptionRowState,
+} from '@/features/search/types/projected-card-state';
 
 /**
  * Hook to handle user subscription functionality
  * @param targetUserId - The ID of the user to subscribe/unsubscribe
  */
-export function useSubscribeUser(targetUserId?: string) {
+export function useSubscribeUser(
+  targetUserId?: string,
+  projectedState?: ProjectedSubscriptionState
+) {
   const { user: authUser } = useAuth();
-  const { user: targetUser } = useUserState({ userId: targetUserId });
+  const [targetUser] = useQuery(
+    targetUserId && !projectedState ? queries.users.byId({ id: targetUserId }) : undefined
+  );
   const commonActions = useCommonActions();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
@@ -20,11 +29,20 @@ export function useSubscribeUser(targetUserId?: string) {
   const createdSubscriptionIdRef = useRef<string | null>(null);
 
   // Query to get all subscribers for the target user (we'll filter client-side)
-  const { userSubscribers: subscriptionRows } = useCommonState({
-    subscriberUserId: targetUserId,
-  });
-  const subscriptionLoading = false;
-  const persistedSubscriberCount = subscriptionRows?.length ?? targetUser?.subscriber_count ?? 0;
+  const [queriedSubscriptionRows] = useQuery(
+    targetUserId && !projectedState
+      ? queries.common.userSubscribers({ user_id: targetUserId })
+      : undefined
+  );
+  const subscriptionRows = (projectedState?.subscriptions ??
+    queriedSubscriptionRows ??
+    []) as readonly SubscriptionRowState[];
+  const subscriptionLoading = projectedState?.isLoading ?? false;
+  const persistedSubscriberCount =
+    projectedState?.subscriberCount ??
+    queriedSubscriptionRows?.length ??
+    targetUser?.subscriber_count ??
+    0;
 
   // Update subscription state when data changes
   useEffect(() => {
@@ -32,7 +50,9 @@ export function useSubscribeUser(targetUserId?: string) {
 
     // Check if the current user is subscribed by looking for their ID in the subscriber list
     const subscribed = authUser?.id
-      ? subscribers.some(sub => sub.subscriber_user?.id === authUser.id)
+      ? subscribers.some(
+          sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+        )
       : false;
 
     if (optimisticTargetRef.current !== null) {
@@ -56,7 +76,9 @@ export function useSubscribeUser(targetUserId?: string) {
     }
 
     // Prevent duplicate subscriptions
-    const existing = (subscriptionRows || []).find(sub => sub.subscriber_user?.id === authUser.id);
+    const existing = (subscriptionRows || []).find(
+      sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+    );
     if (existing) return;
 
     // Optimistic update
@@ -97,7 +119,9 @@ export function useSubscribeUser(targetUserId?: string) {
     }
 
     const subscribers = subscriptionRows || [];
-    let subsToDelete = subscribers.filter(sub => sub.subscriber_user?.id === authUser.id);
+    let subsToDelete = subscribers.filter(
+      sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+    );
 
     // Fallback: if reactive query hasn't caught up, use stored subscription ID
     if (subsToDelete.length === 0 && createdSubscriptionIdRef.current) {

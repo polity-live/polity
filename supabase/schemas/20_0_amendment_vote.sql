@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS public.vote (
 CREATE INDEX idx_vote_agenda_item ON public.vote (agenda_item_id);
 CREATE INDEX idx_vote_amendment ON public.vote (amendment_id);
 CREATE INDEX idx_vote_agenda_item_purpose ON public.vote (agenda_item_id, purpose);
+CREATE INDEX idx_zero_vote_created_id ON public.vote (created_at DESC, id DESC);
 
 ALTER TABLE public.vote ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.vote FOR ALL TO service_role USING (true);

@@ -7,6 +7,7 @@ export function AsButtonNavigation({
   navigationView,
   navigationType,
   isMobile,
+  screenType,
 }: NavigationProps) {
   return (
     <AsButtonNavigationView
@@ -14,6 +15,7 @@ export function AsButtonNavigation({
       navigationView={navigationView}
       navigationType={navigationType}
       isMobile={isMobile}
+      screenType={screenType}
       {...useAsButtonNavigationController()}
     />
   );

@@ -109,6 +109,7 @@ export interface SearchOptions {
 
 export function useSearchState(options: SearchOptions = {}) {
   const { userId, query = '', limits = {} } = options;
+  const now = useMemo(() => Date.now(), []);
   const usersLimit = limits.users ?? 20;
   const groupsLimit = limits.groups ?? 20;
   const statementsLimit = limits.statements ?? 20;
@@ -121,7 +122,7 @@ export function useSearchState(options: SearchOptions = {}) {
   const [users] = useQuery(queries.search.searchableUsers({ limit: usersLimit, query }));
   const [groups] = useQuery(queries.search.searchableGroups({ limit: groupsLimit, query }));
   const [statements] = useQuery(
-    queries.search.searchableStatements({ limit: statementsLimit, query })
+    queries.search.searchableStatements({ limit: statementsLimit, query, now })
   );
   const [blogs] = useQuery(queries.search.searchableBlogs({ limit: blogsLimit, query }));
   const [amendments] = useQuery(

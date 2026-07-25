@@ -1,4 +1,4 @@
-import type { CSSProperties, Key, RefCallback, RefObject, UIEventHandler } from 'react';
+import type { Key, RefObject } from 'react';
 
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card } from '@/features/shared/ui/ui/card';
@@ -15,6 +15,7 @@ export interface VirtualSearchGridCell {
   left: number;
   width: number;
   document?: SearchDocument | null;
+  mode: 'preview' | 'interactive';
 }
 
 interface VirtualSearchGridViewProps {
@@ -27,8 +28,6 @@ interface VirtualSearchGridViewProps {
   newResultsLabel: string;
   emptyLabel: string;
   onJumpToTop: () => void;
-  onScroll: UIEventHandler<HTMLDivElement>;
-  onMeasureElement: RefCallback<HTMLDivElement>;
 }
 
 function SearchCardSkeleton() {
@@ -64,8 +63,6 @@ export function VirtualSearchGridView({
   newResultsLabel,
   emptyLabel,
   onJumpToTop,
-  onScroll,
-  onMeasureElement,
 }: VirtualSearchGridViewProps) {
   return (
     <div className="relative h-full min-h-0">
@@ -84,7 +81,7 @@ export function VirtualSearchGridView({
 
       <div
         ref={parentRef}
-        onScroll={onScroll}
+        data-testid="search-results-scroll"
         className="scrollbar-hide h-full min-h-0 overflow-auto pr-1"
       >
         {rowsEmpty && isComplete ? (
@@ -97,7 +94,8 @@ export function VirtualSearchGridView({
               <div
                 key={cell.key}
                 data-index={cell.index}
-                ref={onMeasureElement}
+                data-search-document-id={cell.document?.id}
+                data-search-card-mode={cell.mode}
                 className="absolute"
                 style={{
                   height: SEARCH_CARD_HEIGHT,
@@ -105,16 +103,9 @@ export function VirtualSearchGridView({
                   transform: `translate(${cell.left}px, ${cell.top}px)`,
                 }}
               >
-                <div
-                  className="civic-load-card-reveal h-full"
-                  style={
-                    {
-                      '--civic-load-index': Math.min(cell.index, 11),
-                    } as CSSProperties
-                  }
-                >
+                <div className="h-full">
                   {cell.document ? (
-                    <SearchResultCard document={cell.document} />
+                    <SearchResultCard document={cell.document} mode={cell.mode} />
                   ) : (
                     <SearchCardSkeleton />
                   )}

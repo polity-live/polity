@@ -27,6 +27,8 @@ CREATE INDEX idx_thread_statement ON public.thread (statement_id);
 CREATE INDEX idx_thread_blog ON public.thread (blog_id);
 CREATE UNIQUE INDEX idx_thread_todo_unique ON public.thread (todo_id);
 CREATE INDEX idx_thread_user ON public.thread (user_id);
+CREATE INDEX idx_zero_thread_document_created_id
+  ON public.thread (document_id, created_at DESC, id DESC);
 
 ALTER TABLE public.thread ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.thread FOR ALL TO service_role USING (true);

@@ -57,9 +57,6 @@ export function useGroupMutations(groupId: string) {
         });
         return;
       }
-
-      const payload = await response.json();
-      console.info('General assembly event search results', payload);
     } catch (error) {
       console.error('General assembly event search failed', {
         flow: 'group-membership-request-approve',
@@ -211,49 +208,18 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      console.info('Client mutation started', {
-        flow: 'group-membership-request-approve',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-      });
-
       const result = updateMembership({
         id: membershipId,
         status: 'active',
-      });
-
-      console.info('Client apply started', {
-        flow: 'group-membership-request-approve',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
       });
 
       await waitForClientApply(result);
 
       await logGeneralAssemblyEventSearchResults(membershipId, userId);
 
-      console.info('Client successful', {
-        flow: 'group-membership-request-approve',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-      });
       toast.success(translateText('generated.inline.0561_membership_approved_d02f63d7'));
       return { success: true };
     } catch (error) {
-      console.error('Client error', {
-        flow: 'group-membership-request-approve',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-        error,
-      });
       toast.error(translateText('generated.inline.0562_failed_to_approve_membership_564b6dff'));
       return { success: false, error };
     } finally {
@@ -278,44 +244,13 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      console.info('Client mutation started', {
-        flow: 'group-membership-request-reject',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-      });
-
       const result = leaveGroupAction({ id: membershipId });
-
-      console.info('Client apply started', {
-        flow: 'group-membership-request-reject',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-      });
 
       await waitForClientApply(result);
 
-      console.info('Client successful', {
-        flow: 'group-membership-request-reject',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-      });
       toast.success(translateText('generated.inline.0563_membership_request_rejected_d887e10e'));
       return { success: true };
     } catch (error) {
-      console.error('Client error', {
-        flow: 'group-membership-request-reject',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-        error,
-      });
       toast.error(translateText('generated.inline.0564_failed_to_reject_membership_2c6cfce3'));
       return { success: false, error };
     } finally {
@@ -342,44 +277,13 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      console.info('Client mutation started', {
-        flow: 'group-member-remove',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-      });
-
       const result = leaveGroupAction({ id: membershipId });
-
-      console.info('Client apply started', {
-        flow: 'group-member-remove',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-      });
 
       await waitForClientApply(result);
 
-      console.info('Client successful', {
-        flow: 'group-member-remove',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-      });
       toast.success(translateText('generated.inline.0565_member_removed_successfully_cf2f4ee1'));
       return { success: true };
     } catch (error) {
-      console.error('Client error', {
-        flow: 'group-member-remove',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-        error,
-      });
       toast.error(translateText('generated.inline.0566_failed_to_remove_member_d02ff7dc'));
       return { success: false, error };
     } finally {

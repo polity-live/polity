@@ -167,10 +167,10 @@ function VirtualStatementGrid({
       )}
       getSingleQuery={useCallback(
         ({ id, settled }) => ({
-          query: queries.statements.byIdWithDetails({ id }) as any,
+          query: queries.statements.byIdWithDetails({ id, now }) as any,
           options: { ttl: settled ? ('5m' as const) : ('none' as const) },
         }),
-        []
+        [now]
       )}
       renderRow={statement => (
         <StatementTimelineCard
