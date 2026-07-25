@@ -2,7 +2,7 @@ import { useLanguageStore, type Language } from '@/features/shared/global-state/
 import enTranslation from '@/i18n/locales/en/enTranslation.ts';
 import deTranslation from '@/i18n/locales/de/deTranslation.ts';
 import i18n from '@/i18n/i18n.ts';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
 type TranslationValue = string | readonly string[] | TranslationTree;
 interface TranslationTree {
@@ -110,24 +110,31 @@ export function useTranslation() {
    * @param paramsOrFallback - Either interpolation params object or a fallback string
    * @param fallback - Optional fallback string when params are provided
    */
-  const t = (
-    key: string,
-    paramsOrFallback?: string | Record<string, string | number | undefined | null>,
-    fallback?: string
-  ): string => {
-    return translateWithLanguage(language, key, paramsOrFallback, fallback);
-  };
+  const t = useCallback(
+    (
+      key: string,
+      paramsOrFallback?: string | Record<string, string | number | undefined | null>,
+      fallback?: string
+    ): string => translateWithLanguage(language, key, paramsOrFallback, fallback),
+    [language]
+  );
 
-  const tArray = (key: string): string[] => {
-    const value = getNestedValue(translations[language], key);
-    return Array.isArray(value) ? value : [];
-  };
+  const tArray = useCallback(
+    (key: string): string[] => {
+      const value = getNestedValue(translations[language], key);
+      return Array.isArray(value) ? value : [];
+    },
+    [language]
+  );
 
-  const changeLanguage = async (newLanguage: Language) => {
-    setLanguage(newLanguage);
-    // Also change i18next language
-    await i18n.changeLanguage(newLanguage);
-  };
+  const changeLanguage = useCallback(
+    async (newLanguage: Language) => {
+      setLanguage(newLanguage);
+      // Also change i18next language
+      await i18n.changeLanguage(newLanguage);
+    },
+    [setLanguage]
+  );
 
   return {
     t,

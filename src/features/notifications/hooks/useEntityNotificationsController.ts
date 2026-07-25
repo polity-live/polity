@@ -1,24 +1,25 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useQuery } from '@rocicorp/zero/react';
 
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
-import {
-  getNotificationNavigationTarget,
-  isNotificationRead,
-} from '@/features/notifications/logic/notificationHelpers.ts';
+import { getNotificationNavigationTarget } from '@/features/notifications/logic/notificationHelpers.ts';
 import type { Notification } from '@/features/notifications/types/notification.types.ts';
-import type { EntityType } from '@/features/notifications/utils/notification-helpers.ts';
 import { useNotificationActions as useZeroNotificationActions } from '@/zero/notifications/useNotificationActions.ts';
-import { queries } from '@/zero/queries';
+import {
+  useEntityNotificationCountRows,
+  type NotificationEntityType,
+} from '@/zero/notifications/useEntityNotificationCountRows';
 import { useNotificationActions } from './useNotificationActions';
-import { isNotificationActive } from '@/zero/notifications/notificationReadState';
+import {
+  isNotificationActive,
+  isNotificationRead,
+} from '@/zero/notifications/notificationReadState';
 import { usePermissionEvaluator } from '@/zero/rbac';
 import { canManageEntityNotification } from '../logic/notificationPermissions';
 
 interface UseEntityNotificationsControllerOptions {
   entityId: string;
-  entityType: EntityType;
+  entityType: NotificationEntityType;
   entityName: string;
 }
 
@@ -39,44 +40,33 @@ export function useEntityNotificationsController({
   } = useNotificationActions();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const countArgs = { entityId, entityType };
-  const [allRows, allResult] = useQuery(
-    queries.notifications.countRows({
-      ...countArgs,
-      tab: 'all',
-      query: searchQuery,
-    })
-  );
-  const [unreadRows, unreadResult] = useQuery(
-    queries.notifications.countRows({
-      ...countArgs,
-      tab: 'unread',
-      query: searchQuery,
-    })
-  );
-  const [allUnreadRows, allUnreadResult] = useQuery(
-    queries.notifications.countRows({
-      ...countArgs,
-      tab: 'unread',
-      query: '',
-    })
-  );
+  const normalizedSearchQuery = searchQuery.trim();
+  const { rows: countRows, isLoading: countRowsLoading } = useEntityNotificationCountRows({
+    entityId,
+    entityType,
+    query: normalizedSearchQuery,
+  });
+  const { rows: allUnreadRows, isLoading: allUnreadRowsLoading } = useEntityNotificationCountRows({
+    entityId,
+    entityType,
+    query: '',
+    enabled: normalizedSearchQuery.length > 0,
+  });
   const counts = {
-    all: (allRows ?? []).filter(isNotificationActive).length,
-    unread: (unreadRows ?? []).filter(
+    all: countRows.filter(isNotificationActive).length,
+    unread: countRows.filter(
       notification => isNotificationActive(notification) && !isNotificationRead(notification)
     ).length,
   };
-  const unreadCount = (allUnreadRows ?? []).filter(
+  const unreadCountRows = normalizedSearchQuery ? allUnreadRows : countRows;
+  const unreadCount = unreadCountRows.filter(
     notification => isNotificationActive(notification) && !isNotificationRead(notification)
   ).length;
   const canDeleteForEveryone = useCallback(
     (notification: Notification) => canManageEntityNotification(notification, permissionEvaluator),
     [permissionEvaluator]
   );
-  const isLoading = [allResult, unreadResult, allUnreadResult].some(
-    result => result.type === 'unknown'
-  );
+  const isLoading = countRowsLoading || (normalizedSearchQuery.length > 0 && allUnreadRowsLoading);
 
   const handleNotificationClick = async (notification: Notification) => {
     if (!isNotificationRead(notification)) {
@@ -109,7 +99,7 @@ export function useEntityNotificationsController({
         scope: {
           kind: 'entity',
           entityId,
-          entityType: entityType as 'group' | 'event' | 'amendment' | 'blog',
+          entityType,
         },
         read: true,
       });

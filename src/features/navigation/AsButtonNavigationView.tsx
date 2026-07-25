@@ -18,6 +18,7 @@ export function AsButtonNavigationView({
   navigationView,
   navigationType,
   isMobile,
+  screenType,
   isExpanded,
   onExpand,
   onCollapse,
@@ -51,6 +52,7 @@ export function AsButtonNavigationView({
                 isMobile={isMobile}
                 isPrimary={isPrimary}
                 navigationView={navigationView}
+                screenType={screenType}
               />
               {isPrimary && (
                 <NavUserAvatar className="mt-8" navigationView="asButton" isMobile={isMobile} />

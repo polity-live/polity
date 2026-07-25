@@ -39,25 +39,12 @@ async function main() {
 
   const apiKey = options.dryRun ? 'dry-run' : requireEnv('RESEND_API_KEY');
   const resend = new Resend(apiKey);
-  const result = await deployPolityTemplate({
+  await deployPolityTemplate({
     client: resend.templates,
     definition,
     dryRun: options.dryRun,
     rendered,
   });
-
-  console.log(
-    JSON.stringify(
-      {
-        ...result,
-        environment: definition.environment,
-        name: definition.name,
-        previewText: definition.previewText,
-      },
-      null,
-      2
-    )
-  );
 }
 
 function parseOptions(args: string[]): CliOptions {

@@ -5,12 +5,19 @@ import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import type {
+  ProjectedSubscriptionState,
+  SubscriptionRowState,
+} from '@/features/search/types/projected-card-state';
 
 /**
  * Hook to handle group subscription functionality
  * @param targetGroupId - The ID of the group to subscribe/unsubscribe
  */
-export function useSubscribeGroup(targetGroupId?: string) {
+export function useSubscribeGroup(
+  targetGroupId?: string,
+  projectedState?: ProjectedSubscriptionState
+) {
   const { user: authUser } = useAuth();
   const { subscribe: subscribeAction, unsubscribe: unsubscribeAction } = useCommonActions();
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -23,10 +30,18 @@ export function useSubscribeGroup(targetGroupId?: string) {
   const {
     subscriberCount: persistedSubscriberCount,
     subscribers: subscribersData,
-    isLoading: subscriptionLoading,
-  } = useGroupSubscribers(targetGroupId);
+    isLoading: queriedSubscriptionLoading,
+  } = useGroupSubscribers(projectedState ? undefined : targetGroupId);
+  const subscriptionLoading = projectedState?.isLoading ?? queriedSubscriptionLoading;
 
-  const subscriptionData = { subscribers: subscribersData || [] };
+  const projectedSubscriptions = projectedState?.subscriptions ?? [];
+  const subscriptionData = {
+    subscribers: (projectedState
+      ? projectedSubscriptions
+      : subscribersData || []) as readonly SubscriptionRowState[],
+  };
+  const resolvedPersistedSubscriberCount =
+    projectedState?.subscriberCount ?? persistedSubscriberCount;
 
   // Update subscription state when data changes
   useEffect(() => {
@@ -34,7 +49,9 @@ export function useSubscribeGroup(targetGroupId?: string) {
 
     // Check if the current user is subscribed by looking for their ID in the subscriber list
     const subscribed = authUser?.id
-      ? subscribers.some(sub => sub.subscriber_user?.id === authUser.id)
+      ? subscribers.some(
+          sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+        )
       : false;
 
     if (optimisticTargetRef.current !== null) {
@@ -42,19 +59,19 @@ export function useSubscribeGroup(targetGroupId?: string) {
       if (subscribed === optimisticTargetRef.current) {
         optimisticTargetRef.current = null;
         createdSubscriptionIdRef.current = null;
-        setSubscriberCount(persistedSubscriberCount ?? subscribers.length);
+        setSubscriberCount(resolvedPersistedSubscriberCount ?? subscribers.length);
       }
       return;
     }
 
     setIsSubscribed(subscribed);
-    setSubscriberCount(persistedSubscriberCount ?? subscribers.length);
+    setSubscriberCount(resolvedPersistedSubscriberCount ?? subscribers.length);
   }, [
     subscriptionData,
     authUser?.id,
     targetGroupId,
     subscriptionLoading,
-    persistedSubscriberCount,
+    resolvedPersistedSubscriberCount,
   ]);
 
   // Subscribe to a group
@@ -65,7 +82,7 @@ export function useSubscribeGroup(targetGroupId?: string) {
 
     // Prevent duplicate subscriptions
     const existing = (subscriptionData?.subscribers || []).find(
-      sub => sub.subscriber_user?.id === authUser.id
+      sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
     );
     if (existing) return;
 
@@ -116,7 +133,9 @@ export function useSubscribeGroup(targetGroupId?: string) {
     }
 
     const subscribers = subscriptionData?.subscribers || [];
-    let subsToDelete = subscribers.filter(sub => sub.subscriber_user?.id === authUser.id);
+    let subsToDelete = subscribers.filter(
+      sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+    );
 
     // Fallback: if reactive query hasn't caught up, use stored subscription ID
     if (subsToDelete.length === 0 && createdSubscriptionIdRef.current) {

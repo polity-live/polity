@@ -3,8 +3,8 @@
 import { useMemo } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { queries } from '@/zero/queries';
-import { useUserState } from '@/zero/users/useUserState';
-import { useCommonState } from '@/zero/common';
+import { useUserBasicState } from '@/zero/users/useUserBasicState';
+import { useUserHashtagsState } from '@/zero/common/useUserHashtagsState';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { useAgendaState, type AgendaStateItem } from '@/zero/agendas/useAgendaState';
 import { getAgendaDisplayTimes } from '@/features/agendas/logic/getAgendaDisplayTimes';
@@ -609,8 +609,8 @@ export function useCivicTimeline({
   decisions,
   decisionsLoading = false,
 }: UseCivicTimelineOptions): UseCivicTimelineReturn {
-  const { user: dbUser, isLoading: userLoading } = useUserState({ userId });
-  const { userHashtags } = useCommonState({ user_id: userId });
+  const { user: dbUser, isLoading: userLoading } = useUserBasicState(userId);
+  const { userHashtags } = useUserHashtagsState(userId);
   const subscribedTimeline = useSubscribedTimeline({
     userId,
     userEmail,

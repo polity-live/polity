@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS public.election (
 
 CREATE INDEX idx_election_agenda_item ON public.election (agenda_item_id);
 CREATE INDEX idx_election_role_id ON public.election (role_id);
+CREATE INDEX idx_zero_election_created_id ON public.election (created_at DESC, id DESC);
 
 ALTER TABLE public.election ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.election FOR ALL TO service_role USING (true);

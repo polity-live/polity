@@ -55,7 +55,7 @@ const virtualizedPageQueries = [
     definition: agendaQueries.changeRequestPage,
     args: { agendaItemId: 'a' },
   },
-  { name: 'timeline feed', definition: commonQueries.timelineFeedPage, args: {} },
+  { name: 'timeline feed', definition: commonQueries.timelineFeedPage, args: { now: 1 } },
   {
     name: 'subscriptions',
     definition: commonQueries.subscriptionPage,

@@ -52,7 +52,6 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     isCloning,
     handleClone,
     handleConfirmClone,
-    usersData,
   } = useAmendmentWikiPage(amendmentId);
 
   if (!amendment && recoveryDraft) {
@@ -109,7 +108,6 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
       isCloning={isCloning}
       handleClone={handleClone}
       handleConfirmClone={handleConfirmClone}
-      usersData={usersData}
       normalizedVoteValue={normalizedVoteValue}
       supporterDirectorySection={supporterDirectorySection}
     />

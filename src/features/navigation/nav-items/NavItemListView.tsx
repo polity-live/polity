@@ -14,11 +14,14 @@ import React from 'react';
 import { Link } from '@tanstack/react-router';
 import { isItemActive } from './nav-helpers.ts';
 import { Loader2 } from 'lucide-react';
+import type { ScreenType } from '@/features/navigation/types/navigation.types';
+
 export interface NavItemListViewProps {
   navigationItems: any;
   isMobile: any;
   isPrimary: any;
   navigationView: any;
+  screenType: ScreenType;
   pathname: any;
   hash: any;
   isRouterPending: any;
@@ -81,6 +84,7 @@ export function NavItemListView({
   isMobile,
   isPrimary,
   navigationView,
+  screenType,
   currentRoute,
   loadingItem,
   handleItemClick,
@@ -193,150 +197,42 @@ export function NavItemListView({
     );
   }
 
-  // asButtonList variant - Mobile: Horizontal scrolling links with native labels
-  if (navigationView === 'asButtonList' && isMobile) {
+  if (navigationView === 'asButtonList') {
+    const scrollerClasses =
+      screenType === 'mobile'
+        ? 'scrollbar-hide overflow-x-auto'
+        : screenType === 'desktop'
+          ? 'overflow-visible'
+          : 'scrollbar-hide overflow-x-auto md:overflow-visible';
+    const listClasses =
+      screenType === 'mobile'
+        ? 'flex min-w-max items-center justify-center gap-1 px-2'
+        : screenType === 'desktop'
+          ? 'flex flex-col items-center gap-2'
+          : 'flex min-w-max items-center justify-center gap-1 px-2 md:min-w-0 md:flex-col md:gap-2 md:px-0';
+
     return (
-      <div className="scrollbar-hide flex-1 overflow-x-auto">
-        <div className="flex min-w-max items-center justify-center gap-1 px-2">
+      <div className={scrollerClasses}>
+        <div className={listClasses}>
           {navigationItems.map((item: any) => (
-            <Link
+            <NavigationItemTooltip
               key={item.id}
-              to={item.href || '#'}
-              preload="intent"
-              aria-label={item.label}
-              data-slot="button"
-              className={cn(
-                buttonVariants({ variant: 'ghost', size: 'icon' }),
-                getMotionPreset('colors'),
-                getMotionPreset('press'),
-                getMotionPreset('iconNudge'),
-                'relative h-12 w-12 flex-shrink-0',
-                isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
-              )}
-              onClick={e => {
-                if (item.onClick) {
-                  e.preventDefault();
-                  item.onClick();
-                }
-              }}
+              enabled={shouldShowNavigationTooltip(item, true)}
+              label={getItemTooltipLabel(item)}
+              shortcut={getItemShortcut(item)}
+              side="right"
             >
-              <NavigationItemIcon
-                item={item}
-                className={cn(
-                  'h-5 w-5',
-                  isItemActive(item, currentRoute, isPrimary) && 'text-primary'
-                )}
-              />
-            </Link>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // asButtonList variant - Desktop: Vertical sidebar with icon links and native labels
-  if (navigationView === 'asButtonList' && !isMobile) {
-    return (
-      <div className={cn('flex flex-col items-center gap-2')}>
-        {navigationItems.map((item: any) => (
-          <NavigationItemTooltip
-            key={item.id}
-            enabled={shouldShowNavigationTooltip(item, true)}
-            label={getItemTooltipLabel(item)}
-            shortcut={getItemShortcut(item)}
-            side="right"
-          >
-            <Link
-              to={item.href || '#'}
-              preload="intent"
-              aria-label={item.label}
-              data-slot="button"
-              className={cn(
-                buttonVariants({ variant: 'ghost', size: 'icon' }),
-                getMotionPreset('colors'),
-                getMotionPreset('press'),
-                getMotionPreset('iconNudge'),
-                'relative h-12 w-12 flex-shrink-0',
-                isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
-              )}
-              onClick={e => {
-                if (item.onClick) {
-                  e.preventDefault();
-                  item.onClick();
-                }
-              }}
-            >
-              <NavigationItemIcon
-                item={item}
-                className={cn(
-                  'h-5 w-5',
-                  isItemActive(item, currentRoute, isPrimary) && 'text-primary'
-                )}
-              />
-            </Link>
-          </NavigationItemTooltip>
-        ))}
-      </div>
-    );
-  }
-
-  // asLabeledButtonList variant - Mobile: Horizontal scrolling buttons with labels
-  if (navigationView === 'asLabeledButtonList' && isMobile) {
-    return (
-      <div className="scrollbar-hide flex-1 overflow-x-auto">
-        <div className="flex min-w-max items-center justify-center gap-1 px-2">
-          {navigationItems.map((item: any) => (
-            <Link key={item.id} to={item.href || '#'} preload="intent" className="inline-block">
-              <Button
+              <Link
+                to={item.href || '#'}
+                preload="intent"
                 aria-label={item.label}
-                variant="ghost"
+                data-slot="button"
                 className={cn(
-                  'hover:bg-accent flex h-16 min-w-16 flex-shrink-0 flex-col gap-1 px-2',
-                  isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
-                )}
-                onClick={e => {
-                  if (item.onClick) {
-                    e.preventDefault();
-                    item.onClick();
-                  }
-                }}
-              >
-                <NavigationItemIcon
-                  item={item}
-                  className={cn(
-                    'h-5 w-5 flex-shrink-0',
-                    isItemActive(item, currentRoute, isPrimary) && 'text-primary'
-                  )}
-                />
-                <span className="text-center text-xs leading-tight whitespace-nowrap">
-                  {item.label}
-                </span>
-              </Button>
-            </Link>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // asLabeledButtonList variant - Desktop: Full sidebar with icons and labels
-  if (navigationView === 'asLabeledButtonList' && !isMobile) {
-    return (
-      <div className="flex flex-col gap-2">
-        {navigationItems.map((item: any) => (
-          <NavigationItemTooltip
-            key={item.id}
-            enabled={shouldShowNavigationTooltip(item)}
-            label={getItemTooltipLabel(item)}
-            shortcut={getItemShortcut(item)}
-            side="right"
-          >
-            <Link to={item.href || '#'} preload="intent" className="inline-block">
-              <Button
-                aria-label={item.label}
-                variant="ghost"
-                className={cn(
-                  'h-12 w-full flex-shrink-0 justify-start gap-3 px-3',
+                  buttonVariants({ variant: 'ghost', size: 'icon' }),
+                  getMotionPreset('colors'),
+                  getMotionPreset('press'),
+                  getMotionPreset('iconNudge'),
+                  'relative h-12 w-12 flex-shrink-0',
                   isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
                 )}
                 onClick={e => {
@@ -353,11 +249,86 @@ export function NavItemListView({
                     isItemActive(item, currentRoute, isPrimary) && 'text-primary'
                   )}
                 />
-                <span>{item.label}</span>
-              </Button>
-            </Link>
-          </NavigationItemTooltip>
-        ))}
+              </Link>
+            </NavigationItemTooltip>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (navigationView === 'asLabeledButtonList') {
+    const scrollerClasses =
+      screenType === 'mobile'
+        ? 'scrollbar-hide overflow-x-auto'
+        : screenType === 'desktop'
+          ? 'overflow-visible'
+          : 'scrollbar-hide overflow-x-auto md:overflow-visible';
+    const listClasses =
+      screenType === 'mobile'
+        ? 'flex min-w-max items-center justify-center gap-1 px-2'
+        : screenType === 'desktop'
+          ? 'flex flex-col gap-2'
+          : 'flex min-w-max items-center justify-center gap-1 px-2 md:min-w-0 md:flex-col md:gap-2 md:px-0';
+    const linkClasses =
+      screenType === 'mobile'
+        ? 'inline-block'
+        : screenType === 'desktop'
+          ? 'inline-block w-full'
+          : 'inline-block md:w-full';
+    const buttonClasses =
+      screenType === 'mobile'
+        ? 'hover:bg-accent flex h-16 min-w-16 flex-shrink-0 flex-col gap-1 px-2'
+        : screenType === 'desktop'
+          ? 'h-12 w-full flex-shrink-0 justify-start gap-3 px-3'
+          : 'hover:bg-accent flex h-16 min-w-16 flex-shrink-0 flex-col gap-1 px-2 md:h-12 md:w-full md:flex-row md:justify-start md:gap-3 md:px-3';
+    const labelClasses =
+      screenType === 'mobile'
+        ? 'text-center text-xs leading-tight whitespace-nowrap'
+        : screenType === 'desktop'
+          ? 'truncate text-sm'
+          : 'text-center text-xs leading-tight whitespace-nowrap md:truncate md:text-left md:text-sm';
+
+    return (
+      <div className={scrollerClasses}>
+        <div className={listClasses}>
+          {navigationItems.map((item: any) => (
+            <NavigationItemTooltip
+              key={item.id}
+              enabled={shouldShowNavigationTooltip(item)}
+              label={getItemTooltipLabel(item)}
+              shortcut={getItemShortcut(item)}
+              side="right"
+            >
+              <Link to={item.href || '#'} preload="intent" className={linkClasses}>
+                <Button
+                  aria-label={item.label}
+                  variant="ghost"
+                  className={cn(
+                    buttonClasses,
+                    isItemActive(item, currentRoute, isPrimary) &&
+                      'bg-accent text-accent-foreground'
+                  )}
+                  onClick={e => {
+                    if (item.onClick) {
+                      e.preventDefault();
+                      item.onClick();
+                    }
+                  }}
+                >
+                  <NavigationItemIcon
+                    item={item}
+                    className={cn(
+                      'h-5 w-5 flex-shrink-0',
+                      isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                    )}
+                  />
+                  <span className={labelClasses}>{item.label}</span>
+                </Button>
+              </Link>
+            </NavigationItemTooltip>
+          ))}
+        </div>
       </div>
     );
   }

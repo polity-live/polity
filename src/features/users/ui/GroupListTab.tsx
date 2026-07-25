@@ -11,21 +11,18 @@ import { queries } from '@/zero/queries';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 
 interface GroupsListTabProps {
-  memberships: readonly ProfileGroupMembership[];
   userId: string;
   searchValue: string;
   onSearchChange: (value: string) => void;
 }
 
 export const GroupsListTab: React.FC<GroupsListTabProps> = ({
-  memberships,
   userId,
   searchValue,
   onSearchChange,
 }) => {
   const { t } = useTranslation();
 
-  void memberships;
   const context = useMemo(() => ({ userId, query: searchValue.trim() }), [searchValue, userId]);
 
   return (

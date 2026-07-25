@@ -1,11 +1,13 @@
-import { type CSSProperties } from 'react';
-import { useQuery } from '@rocicorp/zero/react';
+import { useCallback, useMemo, type CSSProperties } from 'react';
 
 import { FeedStatePanel } from '@/features/shared/ui/feed';
 import { SectionSkeleton } from '@/features/shared/ui/feedback';
+import { PolityZeroListView } from '@/features/shared/virtualization';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import type { Notification } from '../types/notification.types';
 import { NotificationItem } from './NotificationItem';
 import { queries } from '@/zero/queries';
+import type { NotificationPageRow } from '@/zero/notifications/queries';
 import {
   isNotificationActive,
   isNotificationDismissed,
@@ -61,55 +63,81 @@ function VirtualNotificationsList({
 }: Omit<NotificationsListProps, 'notifications' | 'isLoading' | 'virtualQuery'> & {
   queryConfig: NotificationVirtualQuery;
 }) {
-  const [rows, result] = useQuery(
-    queries.notifications.countRows({
+  const context = useMemo(
+    () => ({
       tab: queryConfig.tab,
       query: queryConfig.searchQuery.trim(),
       entityId: queryConfig.entityId ?? null,
       entityType: queryConfig.entityType ?? null,
-    })
+    }),
+    [queryConfig.entityId, queryConfig.entityType, queryConfig.searchQuery, queryConfig.tab]
   );
-  const visibleRows = (rows ?? []).filter(notification => {
-    if (queryConfig.tab === 'trash') {
-      return isNotificationDismissed(notification) && !isNotificationPurged(notification);
-    }
-    if (!isNotificationActive(notification)) return false;
-    if (queryConfig.tab === 'unread') return !isNotificationRead(notification);
-    if (queryConfig.tab === 'read') return isNotificationRead(notification);
-    return true;
-  });
-
-  if (result.type === 'unknown') return <SectionSkeleton rows={5} />;
-  if (visibleRows.length === 0) {
-    return <FeedStatePanel icon={EmptyIcon} title={emptyTitle} description={emptyDescription} />;
-  }
 
   return (
-    <div data-slot="feed-list" className="space-y-3">
-      {visibleRows.map((notification, index) => (
-        <div
-          key={notification.id}
-          data-slot="notification-list-item"
-          className="civic-load-card-reveal"
-          style={{ '--civic-load-index': Math.min(index, 11) } as CSSProperties}
-        >
-          <NotificationItem
-            notification={notification}
-            onNotificationClick={onNotificationClick}
-            onMarkAsRead={onMarkAsRead}
-            onToggleRead={onToggleRead}
-            onDeleteNotification={onDeleteNotification}
-            onRestoreNotification={onRestoreNotification}
-            onPurgeNotification={onPurgeNotification}
-            onDeleteForEveryone={onDeleteForEveryone}
-            canDeleteForEveryone={canDeleteForEveryone?.(notification) ?? false}
-            formatTime={formatTime}
-            mode={mode}
-            showRecipientBadge={showRecipientBadge}
-          />
-        </div>
-      ))}
-    </div>
+    <PolityZeroListView<NotificationPageRow, { created_at: number; id: string }, typeof context>
+      context={context}
+      historyKey={`notifications-${queryConfig.key}`}
+      estimateSize={176}
+      getRowKey={(notification: NotificationPageRow) => notification.id}
+      toStartRow={(notification: NotificationPageRow) => ({
+        created_at: notification.created_at,
+        id: notification.id,
+      })}
+      getPageQuery={useCallback(
+        ({ limit, start, dir, settled }) => ({
+          query: queries.notifications.page({ ...context, limit, start, dir }) as never,
+          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+        }),
+        [context]
+      )}
+      getSingleQuery={useCallback(
+        ({ id, settled }) => ({
+          query: queries.notifications.byId({ id }) as never,
+          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+        }),
+        []
+      )}
+      permalinkID={queryConfig.permalinkID}
+      renderRow={(row, index) => {
+        const notification = row as Notification;
+        const visible =
+          context.tab === 'trash'
+            ? isNotificationDismissed(notification) && !isNotificationPurged(notification)
+            : isNotificationActive(notification) &&
+              (context.tab === 'unread'
+                ? !isNotificationRead(notification)
+                : context.tab === 'read'
+                  ? isNotificationRead(notification)
+                  : true);
+        if (!visible) return null;
+        return (
+          <div
+            data-slot="notification-list-item"
+            className="civic-load-card-reveal"
+            style={{ '--civic-load-index': Math.min(index, 11) } as CSSProperties}
+          >
+            <NotificationItem
+              notification={notification}
+              onNotificationClick={onNotificationClick}
+              onMarkAsRead={onMarkAsRead}
+              onToggleRead={onToggleRead}
+              onDeleteNotification={onDeleteNotification}
+              onRestoreNotification={onRestoreNotification}
+              onPurgeNotification={onPurgeNotification}
+              onDeleteForEveryone={onDeleteForEveryone}
+              canDeleteForEveryone={canDeleteForEveryone?.(notification) ?? false}
+              formatTime={formatTime}
+              mode={mode}
+              showRecipientBadge={showRecipientBadge}
+            />
+          </div>
+        );
+      }}
+      renderSkeleton={index => <Skeleton key={index} className="h-40 w-full rounded-xl" />}
+      renderEmpty={() => (
+        <FeedStatePanel icon={EmptyIcon} title={emptyTitle} description={emptyDescription} />
+      )}
+    />
   );
 }
 

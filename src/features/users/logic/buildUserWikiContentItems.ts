@@ -4,7 +4,7 @@ import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { getStatementHeadline } from '@/zero/statements/content';
 import { getOrderedBranches } from '@/features/amendments/logic/amendmentBranchDisplay';
-import type { UserProfile } from '../types/user.types';
+import type { FullProfileRow } from '@/zero/users/useUserState';
 import { buildSearchText } from './userWikiSearch';
 
 export type UserWikiContentItem = SearchContentItem & {
@@ -12,7 +12,7 @@ export type UserWikiContentItem = SearchContentItem & {
 };
 
 interface BuildUserWikiContentItemsOptions {
-  user: UserProfile;
+  user: FullProfileRow;
   authorName: string;
   authorAvatar: string;
 }

@@ -40,5 +40,11 @@ export { notificationSharedMutators } from './shared-mutators';
 
 // Hooks
 export { useNotificationState } from './useNotificationState';
+export { useNotificationSettingsState } from './useNotificationSettingsState';
+export { usePushSubscriptionsState } from './usePushSubscriptionsState';
 export { useNotificationActions } from './useNotificationActions';
 export { useEntityUnreadCount } from './useEntityUnreadCount';
+export {
+  useEntityNotificationCountRows,
+  type NotificationEntityType,
+} from './useEntityNotificationCountRows';

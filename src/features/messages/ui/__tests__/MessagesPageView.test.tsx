@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
-import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MessagesPageView } from '../MessagesPageView';
 
@@ -86,6 +86,8 @@ const baseProps = {
   onRenameConversation: vi.fn(),
 };
 
+afterEach(cleanup);
+
 describe('MessagesPageView loading structure', () => {
   beforeEach(() => {
     captured.conversationListProps = undefined;
@@ -94,13 +96,16 @@ describe('MessagesPageView loading structure', () => {
   });
 
   it('keeps the split shell mounted while conversations load', () => {
-    render(<MessagesPageView {...baseProps} isLoading isThreadLoading />);
+    const { container } = render(<MessagesPageView {...baseProps} isLoading isThreadLoading />);
 
     expect(screen.getByTestId('conversation-list')).toBeTruthy();
     expect(screen.getByTestId('message-view')).toBeTruthy();
     expect(captured.conversationListProps.isLoading).toBe(true);
     expect(captured.messageViewProps.isThreadLoading).toBe(true);
     expect(screen.queryByText('features.messages.loading')).toBeNull();
+    expect(
+      container.querySelector('[data-slot="feed-split-layout"]')?.getAttribute('style')
+    ).toContain('var(--app-shell-page-frame-y, 3rem)');
   });
 
   it('forwards the UUID target to the new conversation dialog', () => {
@@ -108,10 +113,20 @@ describe('MessagesPageView loading structure', () => {
       <MessagesPageView
         {...baseProps}
         isLoading={false}
+        userSearchDialogOpen
         newConversationTargetUserId="target-user-id"
       />
     );
 
     expect(captured.newConversationDialogProps.initialUserId).toBe('target-user-id');
+  });
+
+  it('does not mount dialog contents while every dialog is closed', () => {
+    render(<MessagesPageView {...baseProps} isLoading={false} isThreadLoading={false} />);
+
+    expect(screen.queryByTestId('new-conversation-dialog')).toBeNull();
+    expect(screen.queryByTestId('group-members-dialog')).toBeNull();
+    expect(screen.queryByTestId('delete-conversation-dialog')).toBeNull();
+    expect(captured.newConversationDialogProps).toBeUndefined();
   });
 });

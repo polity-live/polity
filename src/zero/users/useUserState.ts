@@ -66,6 +66,7 @@ interface UserStateOptions {
   userId?: string;
   includePublicUsers?: boolean;
   includeAllUsers?: boolean;
+  includeWikiProfile?: boolean;
   includeFullProfile?: boolean;
   includeGroupMemberships?: boolean;
   includeSearchableUsers?: boolean;
@@ -80,6 +81,7 @@ export function useUserState(options: UserStateOptions = {}) {
     userId,
     includePublicUsers,
     includeAllUsers,
+    includeWikiProfile,
     includeFullProfile,
     includeGroupMemberships,
     includeSearchableUsers,
@@ -101,8 +103,17 @@ export function useUserState(options: UserStateOptions = {}) {
     includeAllUsers ? queries.users.allUsers({}) : undefined
   );
 
+  const wikiNow = useMemo(() => Date.now(), [userId]);
+  const [wikiProfile, wikiProfileResult] = useQuery(
+    includeWikiProfile && userId
+      ? queries.users.wikiProfile({ id: userId, now: wikiNow })
+      : undefined
+  );
+
   const [fullProfile, fullProfileResult] = useQuery(
-    includeFullProfile && userId ? queries.users.fullProfile({ id: userId }) : undefined
+    includeFullProfile && userId
+      ? queries.users.fullProfile({ id: userId, now: wikiNow })
+      : undefined
   );
 
   const [userWithGroupMemberships, userWithGroupMembershipsResult] = useQuery(
@@ -130,6 +141,7 @@ export function useUserState(options: UserStateOptions = {}) {
     (userId !== undefined && userResult.type === 'unknown') ||
     (includePublicUsers === true && publicUsersResult.type === 'unknown') ||
     (includeAllUsers === true && allUsersResult.type === 'unknown') ||
+    (includeWikiProfile === true && userId !== undefined && wikiProfileResult.type === 'unknown') ||
     (includeFullProfile === true && userId !== undefined && fullProfileResult.type === 'unknown') ||
     (includeGroupMemberships === true &&
       userId !== undefined &&
@@ -145,6 +157,7 @@ export function useUserState(options: UserStateOptions = {}) {
     followingCount: following?.length ?? 0,
     publicUsers: publicUsers ?? [],
     allUsers: allUsers ?? [],
+    wikiProfile,
     fullProfile: normalizedFullProfile,
     userWithGroupMemberships: normalizedUsersWithGroupMemberships,
     searchableUsers: searchableUsers ?? [],
@@ -154,3 +167,4 @@ export function useUserState(options: UserStateOptions = {}) {
 
 /** Type of a single element in the fullProfile query result */
 export type FullProfileRow = ReturnType<typeof useUserState>['fullProfile'][number];
+export type WikiProfileRow = NonNullable<ReturnType<typeof useUserState>['wikiProfile']>;

@@ -79,11 +79,15 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
 
   // ── Core amendment data ──────────────────────────────────────────
   const [amendment, amendmentResult] = useQuery(
-    amendmentId ? queries.amendments.byIdWithRelations({ id: amendmentId }) : undefined
+    amendmentId && !includeFullRelations
+      ? queries.amendments.byIdWithRelations({ id: amendmentId })
+      : undefined
   );
 
   const [allCollaborators, collabResult] = useQuery(
-    amendmentId ? queries.amendments.collaborators({ amendment_id: amendmentId }) : undefined
+    amendmentId && !includeFullRelations
+      ? queries.amendments.collaborators({ amendment_id: amendmentId })
+      : undefined
   );
 
   const [userCollabRows] = useQuery(
@@ -100,11 +104,12 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
   );
 
   // ── Detail view variants (opt-in) ───────────────────────────────
-  const [amendmentFull] = useQuery(
+  const [amendmentFull, amendmentFullResult] = useQuery(
     includeFullRelations && amendmentId
-      ? queries.amendments.byIdFull({ id: amendmentId })
+      ? queries.amendments.byIdWiki({ id: amendmentId })
       : undefined
   );
+  const resolvedAmendment = amendment ?? amendmentFull;
 
   const [amendmentProcess] = useQuery(
     includeProcessData && amendmentId
@@ -145,7 +150,7 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
 
   // Fallback: fetch document by amendment.document_id (forward relationship)
   // in case document.amendment_id is not populated
-  const amendmentDocumentId = amendment?.document_id as string | undefined;
+  const amendmentDocumentId = resolvedAmendment?.document_id as string | undefined;
   const [documentById] = useQuery(
     includeDocuments && amendmentDocumentId && (!documents || documents.length === 0)
       ? queries.amendments.documentById({ id: amendmentDocumentId })
@@ -257,11 +262,14 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
   const hasRequested = status === 'requested';
   const isInvited = status === 'invited';
 
-  const collaborators = useMemo(() => allCollaborators ?? [], [allCollaborators]);
+  const collaborators = useMemo(
+    () => allCollaborators ?? amendmentFull?.collaborators ?? [],
+    [allCollaborators, amendmentFull?.collaborators]
+  );
 
   const collaboratorCount = useMemo(
     () =>
-      amendment?.collaborator_count ??
+      resolvedAmendment?.collaborator_count ??
       collaborators.filter(
         c =>
           c.status === 'active' ||
@@ -269,7 +277,7 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
           c.status === 'member' ||
           c.status === 'admin'
       ).length,
-    [amendment?.collaborator_count, collaborators]
+    [resolvedAmendment?.collaborator_count, collaborators]
   );
 
   const collaboratorStats = useMemo(() => {
@@ -282,7 +290,10 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
     return stats;
   }, [collaborators]);
 
-  const changeRequests = useMemo(() => amendment?.change_requests ?? [], [amendment]);
+  const changeRequests = useMemo(
+    () => resolvedAmendment?.change_requests ?? [],
+    [resolvedAmendment]
+  );
 
   const discussions = useMemo(() => amendment?.threads ?? [], [amendment]);
 
@@ -293,16 +304,19 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
 
   const subscriberCount =
     subscriberResult.type === 'unknown'
-      ? (amendment?.subscriber_count ?? 0)
-      : (subscribers?.length ?? amendment?.subscriber_count ?? 0);
+      ? (resolvedAmendment?.subscriber_count ?? 0)
+      : (subscribers?.length ?? resolvedAmendment?.subscriber_count ?? 0);
 
   const isLoading =
-    (amendmentId !== undefined && amendmentResult.type === 'unknown') ||
-    (amendmentId !== undefined && collabResult.type === 'unknown');
+    (amendmentId !== undefined &&
+      (includeFullRelations
+        ? amendmentFullResult.type === 'unknown'
+        : amendmentResult.type === 'unknown')) ||
+    (amendmentId !== undefined && !includeFullRelations && collabResult.type === 'unknown');
 
   return {
     // Core data
-    amendment,
+    amendment: resolvedAmendment,
     collaborators,
     changeRequests,
     discussions,

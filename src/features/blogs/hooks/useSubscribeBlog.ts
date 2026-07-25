@@ -5,16 +5,23 @@ import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import type {
+  ProjectedSubscriptionState,
+  SubscriptionRowState,
+} from '@/features/search/types/projected-card-state';
 
 /**
  * Hook to handle blog subscription functionality
  * @param targetBlogId - The ID of the blog to subscribe/unsubscribe
  */
-export function useSubscribeBlog(targetBlogId?: string) {
+export function useSubscribeBlog(
+  targetBlogId?: string,
+  projectedState?: ProjectedSubscriptionState
+) {
   const { user: authUser } = useAuth();
   const { subscribers, subscriberCount: persistedSubscriberCount } = useBlogState({
-    blogId: targetBlogId,
-    includeSubscribers: true,
+    blogId: projectedState ? undefined : targetBlogId,
+    includeSubscribers: !projectedState,
   });
   const { subscribeToBlog, unsubscribeFromBlog } = useBlogActions();
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -23,8 +30,14 @@ export function useSubscribeBlog(targetBlogId?: string) {
   const optimisticTargetRef = useRef<boolean | null>(null);
   const createdSubscriptionIdRef = useRef<string | null>(null);
 
-  const subscriptionData = { subscribers: subscribers ?? [] };
-  const subscriptionLoading = false;
+  const subscriptionData = {
+    subscribers: (projectedState
+      ? projectedState.subscriptions
+      : (subscribers ?? [])) as readonly SubscriptionRowState[],
+  };
+  const resolvedPersistedSubscriberCount =
+    projectedState?.subscriberCount ?? persistedSubscriberCount;
+  const subscriptionLoading = projectedState?.isLoading ?? false;
 
   // Update subscription state when data changes
   useEffect(() => {
@@ -32,7 +45,9 @@ export function useSubscribeBlog(targetBlogId?: string) {
 
     // Check if the current user is subscribed
     const subscribed = authUser?.id
-      ? subs.some(sub => sub.subscriber_user?.id === authUser.id)
+      ? subs.some(
+          sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+        )
       : false;
 
     if (optimisticTargetRef.current !== null) {
@@ -40,14 +55,14 @@ export function useSubscribeBlog(targetBlogId?: string) {
       if (subscribed === optimisticTargetRef.current) {
         optimisticTargetRef.current = null;
         createdSubscriptionIdRef.current = null;
-        setSubscriberCount(persistedSubscriberCount);
+        setSubscriberCount(resolvedPersistedSubscriberCount);
       }
       return;
     }
 
     setIsSubscribed(subscribed);
-    setSubscriberCount(persistedSubscriberCount);
-  }, [subscriptionData, authUser?.id, subscriptionLoading, persistedSubscriberCount]);
+    setSubscriberCount(resolvedPersistedSubscriberCount);
+  }, [subscriptionData, authUser?.id, subscriptionLoading, resolvedPersistedSubscriberCount]);
 
   // Subscribe to a blog
   const subscribe = async () => {
@@ -57,7 +72,7 @@ export function useSubscribeBlog(targetBlogId?: string) {
 
     // Prevent duplicate subscriptions
     const existing = (subscriptionData?.subscribers || []).find(
-      sub => sub.subscriber_user?.id === authUser.id
+      sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
     );
     if (existing) return;
 
@@ -105,7 +120,9 @@ export function useSubscribeBlog(targetBlogId?: string) {
     }
 
     const subs = subscriptionData?.subscribers || [];
-    let subsToDelete = subs.filter(sub => sub.subscriber_user?.id === authUser.id);
+    let subsToDelete = subs.filter(
+      sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+    );
 
     // Fallback: if reactive query hasn't caught up, use stored subscription ID
     if (subsToDelete.length === 0 && createdSubscriptionIdRef.current) {

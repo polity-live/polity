@@ -4,6 +4,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useSubscribeUser } from '@/features/payments/hooks/useSubscribeUser';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
+import type { ProjectedSubscriptionState } from '@/features/search/types/projected-card-state';
 
 export interface UserTimelineCardProps {
   user: {
@@ -29,6 +30,7 @@ export interface UserTimelineCardProps {
   actions?: React.ReactNode;
   href?: string;
   className?: string;
+  projectedSubscriptionState?: ProjectedSubscriptionState;
 }
 import { UserTimelineCardView } from './UserTimelineCardView';
 export function UserTimelineCard({
@@ -38,9 +40,10 @@ export function UserTimelineCard({
   actions,
   href,
   className,
+  projectedSubscriptionState,
 }: UserTimelineCardProps) {
   const { t } = useTranslation();
-  const subscription = useSubscribeUser(user.id);
+  const subscription = useSubscribeUser(user.id, projectedSubscriptionState);
   const amendmentStyle = CONTENT_TYPE_CONFIG.amendment;
   const location = user.location || formatLocation(user);
 

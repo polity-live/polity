@@ -180,29 +180,31 @@ npm run zero:dev
 
 ## All npm Scripts
 
-| Command                   | Description                                  |
-| ------------------------- | -------------------------------------------- |
-| `npm run dev`             | Start the dev server on port 3000            |
-| `npm run build`           | Production build                             |
-| `npm run start`           | Start the production server                  |
-| `npm run lint`            | Lint with Oxlint                             |
-| `npm run lint:check`      | Check lint rules with Oxlint                 |
-| `npm run lint:fix`        | Lint and auto-fix                            |
-| `npm run stripe:listen`   | Forward supported Stripe test events locally |
-| `npm run test`            | Run unit tests with Vitest                   |
-| `npm run test:e2e`        | Run E2E tests with Playwright                |
-| `npm run test:e2e:ui`     | Run E2E tests with Playwright UI             |
-| `npm run test:e2e:headed` | Run E2E tests in headed browser              |
-| `npm run test:e2e:debug`  | Debug E2E tests with Playwright              |
-| `npm run format`          | Format code with Prettier                    |
-| `npm run format:check`    | Check formatting with Prettier               |
-| `npm run supabase:start`  | Start local Supabase                         |
-| `npm run supabase:stop`   | Stop local Supabase                          |
-| `npm run zero:cache`      | Start zero-cache-dev without preset env vars |
-| `npm run zero:dev`        | Start zero-cache-dev with local dev env vars |
-| `npm run deploy`          | Run the interactive deploy script            |
-| `npm run deploy:dry`      | Run the deploy script in dry-run mode        |
-| `npm run prepare`         | Install Husky git hooks                      |
+| Command                   | Description                                         |
+| ------------------------- | --------------------------------------------------- |
+| `npm run dev`             | Start the dev server on port 3000                   |
+| `npm run build`           | Production build                                    |
+| `npm run start`           | Start the production server                         |
+| `npm run lint`            | Lint with Oxlint                                    |
+| `npm run lint:check`      | Check lint rules with Oxlint                        |
+| `npm run lint:fix`        | Lint and auto-fix                                   |
+| `npm run stripe:listen`   | Forward supported Stripe test events locally        |
+| `npm run test`            | Run unit tests with Vitest                          |
+| `npm run test:e2e`        | Run E2E tests with Playwright                       |
+| `npm run test:e2e:ui`     | Run E2E tests with Playwright UI                    |
+| `npm run test:e2e:headed` | Run E2E tests in headed browser                     |
+| `npm run test:e2e:debug`  | Debug E2E tests with Playwright                     |
+| `npm run format`          | Format code with Prettier                           |
+| `npm run format:check`    | Check formatting with Prettier                      |
+| `npm run supabase:start`  | Start local Supabase                                |
+| `npm run supabase:stop`   | Stop local Supabase                                 |
+| `npm run zero:cache`      | Start zero-cache-dev with short local CVR retention |
+| `npm run zero:dev`        | Start zero-cache-dev with local DB/API settings     |
+| `npm run zero:stats`      | Summarize local Zero CVR and query statistics       |
+| `npm run zero:clean`      | Remove the stopped local Zero replica safely        |
+| `npm run deploy`          | Run the interactive deploy script                   |
+| `npm run deploy:dry`      | Run the deploy script in dry-run mode               |
+| `npm run prepare`         | Install Husky git hooks                             |
 
 ## Deployment
 

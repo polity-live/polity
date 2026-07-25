@@ -78,10 +78,20 @@ describe('pending conversation request UI', () => {
       identityContent: <span>Mina Bauer</span>,
     };
 
-    const { rerender } = render(
+    const { container, rerender } = render(
       <ConversationHeaderView {...(props as any)} currentUserId="user-recipient" />
     );
     expect(screen.queryByRole('button', { name: 'Cancel request' })).toBeNull();
+    expect(container.querySelector('[data-slot="card-header"]')?.className).toContain('pt-2');
+    expect(container.querySelector('[data-slot="card-header"]')?.className).toContain('pl-0');
+    expect(container.querySelector('[data-slot="card-header"]')?.className).toContain('pb-3');
+    expect(container.querySelector('[data-slot="card-header"]')?.className).toContain('md:p-6');
+    const header = container.querySelector('[data-slot="card-header"]') as HTMLElement;
+    expect(header.firstElementChild?.className).toContain('min-w-0');
+    expect(header.firstElementChild?.className).toContain('flex-1');
+    expect(header.firstElementChild?.children[1]?.className).toContain('min-w-0');
+    expect(header.firstElementChild?.children[1]?.className).toContain('flex-1');
+    expect(header.lastElementChild?.className).toContain('shrink-0');
 
     rerender(<ConversationHeaderView {...(props as any)} currentUserId="user-sender" />);
     expect(screen.getByRole('button', { name: 'Cancel request' })).toBeTruthy();
@@ -96,6 +106,8 @@ describe('pending conversation request UI', () => {
 
     const row = document.querySelector('[data-vrow-index="0"]') as HTMLElement;
     const content = row.parentElement as HTMLElement;
+    expect(content.parentElement?.className).toContain('pt-3');
+    expect(content.parentElement?.className).toContain('md:pt-0');
     expect(content.style.paddingTop).toBe('');
     expect(content.style.paddingBottom).toBe('');
     expect(

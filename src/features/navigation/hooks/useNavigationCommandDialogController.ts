@@ -31,7 +31,8 @@ export function useNavigationCommandDialogController({
     groups: groupItems,
     events: eventItems,
     amendments: amendmentItems,
-  } = useCurrentUserNavigationEntities(user?.id);
+    isLoading: navigationEntitiesLoading,
+  } = useCurrentUserNavigationEntities(user?.id, open);
 
   useCommandDialogShortcut(setOpen, open);
 
@@ -103,13 +104,16 @@ export function useNavigationCommandDialogController({
       amendments: t('navigation.userMenu.amendments'),
       eventFallback: t('navigation.userMenu.eventFallback'),
       amendmentFallback: t('navigation.userMenu.amendmentFallback'),
+      loading: t('common.loading.general'),
     },
+    navigationEntitiesLoading,
     groupItems,
     eventItems,
     amendmentItems,
-    userNavItems: user?.id
-      ? navItemsAuthenticated(navigate).getUserSecondaryNavItems(user.id, true)
-      : [],
+    userNavItems:
+      open && user?.id
+        ? navItemsAuthenticated(navigate).getUserSecondaryNavItems(user.id, true)
+        : [],
     onSelectPrimaryItem: selectNavigationItem,
     onSelectUserItem: selectNavigationItem,
     onSelectGroupItem: selectGroupItem,

@@ -526,6 +526,11 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
     destField: ['receiver_group_id'],
   }),
   conversations: many({ sourceField: ['id'], destSchema: conversation, destField: ['group_id'] }),
+  recipient_notifications: many({
+    sourceField: ['id'],
+    destSchema: notification,
+    destField: ['recipient_group_id'],
+  }),
 }));
 
 export const groupMembershipRelationships = relationships(groupMembership, ({ one, many }) => ({
@@ -1040,6 +1045,11 @@ export const eventRelationships = relationships(event, ({ one, many }) => ({
   }),
   conversations: many({ sourceField: ['id'], destSchema: conversation, destField: ['event_id'] }),
   accreditations: many({ sourceField: ['id'], destSchema: accreditation, destField: ['event_id'] }),
+  recipient_notifications: many({
+    sourceField: ['id'],
+    destSchema: notification,
+    destField: ['recipient_event_id'],
+  }),
 }));
 
 export const eventParticipantRelationships = relationships(eventParticipant, ({ one, many }) => ({
@@ -1205,6 +1215,11 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
     destField: ['amendment_id'],
   }),
   threads: many({ sourceField: ['id'], destSchema: thread, destField: ['amendment_id'] }),
+  recipient_notifications: many({
+    sourceField: ['id'],
+    destSchema: notification,
+    destField: ['recipient_amendment_id'],
+  }),
 }));
 
 export const amendmentSupportVoteRelationships = relationships(amendmentSupportVote, ({ one }) => ({
@@ -1993,6 +2008,11 @@ export const blogRelationships = relationships(blog, ({ one, many }) => ({
     destField: ['blog_id'],
   }),
   threads: many({ sourceField: ['id'], destSchema: thread, destField: ['blog_id'] }),
+  recipient_notifications: many({
+    sourceField: ['id'],
+    destSchema: notification,
+    destField: ['recipient_blog_id'],
+  }),
 }));
 
 export const blogBloggerRelationships = relationships(blogBlogger, ({ one }) => ({

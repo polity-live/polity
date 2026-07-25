@@ -7,15 +7,6 @@ import { getSession } from '@/lib/supabase/server';
 const STRIPE_API_VERSION = '2026-06-24.dahlia';
 const CUSTOM_AMOUNT_MIN_CENTS = 100;
 const CUSTOM_AMOUNT_MAX_CENTS = 99_900;
-const SUPPORTED_WEBHOOK_EVENTS = new Set<Stripe.Event.Type>([
-  'checkout.session.completed',
-  'customer.subscription.created',
-  'customer.subscription.updated',
-  'customer.subscription.deleted',
-  'invoice.payment_succeeded',
-  'invoice.payment_failed',
-]);
-
 export type StripeMode = 'test' | 'live';
 export type StripePlan = 'running' | 'development' | 'custom';
 
@@ -1046,16 +1037,6 @@ export async function handleStripeWebhook(data: StripeWebhookInput, deps: Stripe
       400
     );
   }
-
-  console.info(
-    JSON.stringify({
-      scope: 'stripe-webhook',
-      eventId: event.id,
-      eventType: event.type,
-      livemode: event.livemode,
-      supported: SUPPORTED_WEBHOOK_EVENTS.has(event.type),
-    })
-  );
 
   switch (event.type) {
     case 'checkout.session.completed':

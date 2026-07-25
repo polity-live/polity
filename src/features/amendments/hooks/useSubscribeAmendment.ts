@@ -5,12 +5,19 @@ import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import type {
+  ProjectedSubscriptionState,
+  SubscriptionRowState,
+} from '@/features/search/types/projected-card-state';
 
 /**
  * Hook to handle amendment subscription functionality
  * @param targetAmendmentId - The ID of the amendment to subscribe/unsubscribe
  */
-export function useSubscribeAmendment(targetAmendmentId?: string) {
+export function useSubscribeAmendment(
+  targetAmendmentId?: string,
+  projectedState?: ProjectedSubscriptionState
+) {
   const { user: authUser } = useAuth();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
@@ -23,19 +30,27 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
   const {
     subscriberCount: persistedSubscriberCount,
     subscribers: subscriptionData,
-    isLoading: subscriptionLoading,
+    isLoading: queriedSubscriptionLoading,
   } = useAmendmentState({
-    amendmentId: targetAmendmentId,
-    userId: authUser?.id,
+    amendmentId: projectedState ? undefined : targetAmendmentId,
+    userId: projectedState ? undefined : authUser?.id,
   });
+  const resolvedSubscriptionData = (projectedState?.subscriptions ??
+    subscriptionData ??
+    []) as readonly SubscriptionRowState[];
+  const resolvedPersistedSubscriberCount =
+    projectedState?.subscriberCount ?? persistedSubscriberCount;
+  const subscriptionLoading = projectedState?.isLoading ?? queriedSubscriptionLoading;
 
   // Update subscription state when data changes
   useEffect(() => {
-    const subscribers = subscriptionData || [];
+    const subscribers = resolvedSubscriptionData;
 
     // Check if the current user is subscribed
     const subscribed = authUser?.id
-      ? subscribers.some(sub => sub.subscriber_user?.id === authUser.id)
+      ? subscribers.some(
+          sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+        )
       : false;
 
     if (optimisticTargetRef.current !== null) {
@@ -43,14 +58,19 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
       if (subscribed === optimisticTargetRef.current) {
         optimisticTargetRef.current = null;
         createdSubscriptionIdRef.current = null;
-        setSubscriberCount(persistedSubscriberCount);
+        setSubscriberCount(resolvedPersistedSubscriberCount);
       }
       return;
     }
 
     setIsSubscribed(subscribed);
-    setSubscriberCount(persistedSubscriberCount);
-  }, [subscriptionData, authUser?.id, subscriptionLoading, persistedSubscriberCount]);
+    setSubscriberCount(resolvedPersistedSubscriberCount);
+  }, [
+    resolvedSubscriptionData,
+    authUser?.id,
+    subscriptionLoading,
+    resolvedPersistedSubscriberCount,
+  ]);
 
   // Subscribe to an amendment
   const subscribe = async () => {
@@ -59,7 +79,9 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
     }
 
     // Prevent duplicate subscriptions
-    const existing = (subscriptionData || []).find(sub => sub.subscriber_user?.id === authUser.id);
+    const existing = resolvedSubscriptionData.find(
+      sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+    );
     if (existing) return;
 
     // Optimistic update
@@ -103,8 +125,10 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
       return;
     }
 
-    const subscribers = subscriptionData || [];
-    let subsToDelete = subscribers.filter(sub => sub.subscriber_user?.id === authUser.id);
+    const subscribers = resolvedSubscriptionData;
+    let subsToDelete = subscribers.filter(
+      sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
+    );
 
     // Fallback: if reactive query hasn't caught up, use stored subscription ID
     if (subsToDelete.length === 0 && createdSubscriptionIdRef.current) {

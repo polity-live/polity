@@ -34,6 +34,10 @@ CREATE INDEX idx_statement_user ON public.statement (user_id);
 CREATE INDEX idx_statement_group ON public.statement (group_id);
 CREATE INDEX idx_statement_expires ON public.statement (expires_at) WHERE expires_at IS NOT NULL;
 CREATE INDEX idx_statement_story_created ON public.statement (is_story, created_at DESC);
+CREATE INDEX idx_zero_statement_user_created_id
+  ON public.statement (user_id, created_at DESC, id DESC);
+CREATE INDEX idx_zero_statement_group_created_id
+  ON public.statement (group_id, created_at DESC, id DESC);
 
 ALTER TABLE public.statement ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.statement FOR ALL TO service_role USING (true);

@@ -48,6 +48,7 @@ interface UserMenuViewLabels {
   searchEventsPlaceholder: string;
   searchAmendmentsPlaceholder: string;
   clear: string;
+  loading: string;
   logout: string;
   logoutConfirm: string;
   cancel: string;
@@ -65,6 +66,7 @@ interface UserMenuViewProps {
   profileHref: string;
   settingsHref: string;
   docsHref?: string;
+  navigationEntitiesLoading: boolean;
   groups: UserMenuGroup[];
   events: UserMenuEvent[];
   amendments: UserMenuAmendment[];
@@ -101,6 +103,7 @@ export function UserMenuView({
   profileHref,
   settingsHref,
   docsHref = '/docs',
+  navigationEntitiesLoading,
   groups,
   events,
   amendments,
@@ -182,7 +185,18 @@ export function UserMenuView({
             </Link>
           </DropdownMenuItem>
 
-          {hasGroups || hasEvents || hasAmendments ? (
+          {navigationEntitiesLoading ? (
+            <>
+              <DropdownMenuSeparator className="shrink-0" />
+              <DropdownMenuLabel
+                role="status"
+                data-testid="user-menu-navigation-loading"
+                className="text-muted-foreground text-xs font-normal"
+              >
+                {labels.loading}
+              </DropdownMenuLabel>
+            </>
+          ) : hasGroups || hasEvents || hasAmendments ? (
             <div
               data-testid="user-menu-navigation-sections"
               className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain"

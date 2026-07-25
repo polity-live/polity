@@ -15,6 +15,8 @@ import {
   applyStatementQueryAccess,
   applyUserQueryAccess,
   isAuthenticatedUserId,
+  requireQueryUser,
+  requireRequestedViewer,
 } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
@@ -49,7 +51,7 @@ function applyLinkQueryAccess<T>(q: T, userID: string | undefined | null): T {
   ) as T;
 }
 
-function applyTimelineEventAccess<T>(q: T, userID: string | undefined | null): T {
+function applyTimelineEventAccess<T>(q: T, userID: string | undefined | null, now: number): T {
   const query = q as any;
 
   return query.where(({ or, cmp, exists }: any) =>
@@ -62,13 +64,17 @@ function applyTimelineEventAccess<T>(q: T, userID: string | undefined | null): T
       exists('event', (event: any) => applyEventQueryAccess(event, userID)),
       exists('blog', (blog: any) => applyBlogQueryAccess(blog, userID)),
       exists('todo', (todo: any) => applyTodoQueryAccess(todo, userID)),
-      exists('statement', (statement: any) => applyStatementQueryAccess(statement, userID)),
+      exists('statement', (statement: any) => applyStatementQueryAccess(statement, userID, now)),
       exists('election', (election: any) => applyElectionQueryAccess(election, userID))
     )
   ) as T;
 }
 
 export const commonQueries = {
+  viewerSubscriptions: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    requireQueryUser(zql.subscriber, userID, 'subscriber_id')
+  ),
+
   // Subscribers for an entity
   subscribers: defineQuery(
     z.object({
@@ -105,27 +111,31 @@ export const commonQueries = {
   allHashtags: defineQuery(z.object({}), () => zql.hashtag.orderBy('tag', 'asc')),
 
   // Canonical hashtags with their accessible usages, used to rank onboarding suggestions.
-  onboardingHashtagUsage: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.hashtag
-      .related('user_hashtags', links =>
-        links.whereExists('user', user => applyUserQueryAccess(user, userID))
-      )
-      .related('group_hashtags', links =>
-        links.whereExists('group', group => applyGroupQueryAccess(group, userID))
-      )
-      .related('amendment_hashtags', links =>
-        links.whereExists('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
-      )
-      .related('event_hashtags', links =>
-        links.whereExists('event', event => applyEventQueryAccess(event, userID))
-      )
-      .related('blog_hashtags', links =>
-        links.whereExists('blog', blog => applyBlogQueryAccess(blog, userID))
-      )
-      .related('statement_hashtags', links =>
-        links.whereExists('statement', statement => applyStatementQueryAccess(statement, userID))
-      )
-      .orderBy('tag', 'asc')
+  onboardingHashtagUsage: defineQuery(
+    z.object({ now: z.number() }),
+    ({ args: { now }, ctx: { userID } }) =>
+      zql.hashtag
+        .related('user_hashtags', links =>
+          links.whereExists('user', user => applyUserQueryAccess(user, userID))
+        )
+        .related('group_hashtags', links =>
+          links.whereExists('group', group => applyGroupQueryAccess(group, userID))
+        )
+        .related('amendment_hashtags', links =>
+          links.whereExists('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
+        )
+        .related('event_hashtags', links =>
+          links.whereExists('event', event => applyEventQueryAccess(event, userID))
+        )
+        .related('blog_hashtags', links =>
+          links.whereExists('blog', blog => applyBlogQueryAccess(blog, userID))
+        )
+        .related('statement_hashtags', links =>
+          links.whereExists('statement', statement =>
+            applyStatementQueryAccess(statement, userID, now)
+          )
+        )
+        .orderBy('tag', 'asc')
   ),
 
   // Hashtags for a user (via junction)
@@ -185,11 +195,11 @@ export const commonQueries = {
 
   // Hashtags for a statement (via junction)
   statementHashtags: defineQuery(
-    z.object({ statement_id: z.string() }),
-    ({ args: { statement_id }, ctx: { userID } }) =>
+    z.object({ statement_id: z.string(), now: z.number() }),
+    ({ args: { statement_id, now }, ctx: { userID } }) =>
       zql.statement_hashtag
         .where('statement_id', statement_id)
-        .whereExists('statement', statement => applyStatementQueryAccess(statement, userID))
+        .whereExists('statement', statement => applyStatementQueryAccess(statement, userID, now))
         .related('hashtag')
         .orderBy('created_at', 'desc')
   ),
@@ -210,9 +220,9 @@ export const commonQueries = {
 
   // Timeline events for a specific entity
   timelineByEntity: defineQuery(
-    z.object({ entity_type: z.string(), entity_id: z.string() }),
-    ({ args: { entity_type, entity_id }, ctx: { userID } }) =>
-      applyTimelineEventAccess(zql.timeline_event, userID)
+    z.object({ entity_type: z.string(), entity_id: z.string(), now: z.number() }),
+    ({ args: { entity_type, entity_id, now }, ctx: { userID } }) =>
+      applyTimelineEventAccess(zql.timeline_event, userID, now)
         .where('entity_type', entity_type)
         .where('entity_id', entity_id)
         .orderBy('created_at', 'desc')
@@ -222,12 +232,13 @@ export const commonQueries = {
     z.object({
       entityIds: z.array(z.string()).default([]),
       contentTypes: z.array(z.string()).default([]),
+      now: z.number(),
       limit: virtualPageLimitSchema,
       start: z.object({ id: z.string(), created_at: z.number() }).nullable().default(null),
       dir: z.enum(['forward', 'backward']).default('forward'),
     }),
-    ({ args: { entityIds, contentTypes, limit, start, dir }, ctx: { userID } }) => {
-      let q = applyTimelineEventAccess(zql.timeline_event, userID);
+    ({ args: { entityIds, contentTypes, now, limit, start, dir }, ctx: { userID } }) => {
+      let q = applyTimelineEventAccess(zql.timeline_event, userID, now);
       if (entityIds.length > 0) q = q.where('entity_id', 'IN', entityIds);
       if (contentTypes.length > 0) q = q.where('content_type', 'IN', contentTypes);
       const direction = dir === 'backward' ? 'asc' : 'desc';
@@ -256,31 +267,33 @@ export const commonQueries = {
     }
   ),
 
-  timelineFeedById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyTimelineEventAccess(zql.timeline_event, userID)
-      .where('id', id)
-      .related('actor')
-      .related('user')
-      .related('group')
-      .related('event')
-      .related('amendment')
-      .related('blog')
-      .related('statement')
-      .related('election')
-      .one()
+  timelineFeedById: defineQuery(
+    z.object({ id: z.string(), now: z.number() }),
+    ({ args: { id, now }, ctx: { userID } }) =>
+      applyTimelineEventAccess(zql.timeline_event, userID, now)
+        .where('id', id)
+        .related('actor')
+        .related('user')
+        .related('group')
+        .related('event')
+        .related('amendment')
+        .related('blog')
+        .related('statement')
+        .related('election')
+        .one()
   ),
 
   // Reactions for an entity
   reactions: defineQuery(
-    z.object({ entity_id: z.string(), entity_type: z.string() }),
-    ({ args: { entity_id, entity_type }, ctx: { userID } }) =>
+    z.object({ entity_id: z.string(), entity_type: z.string(), now: z.number() }),
+    ({ args: { entity_id, entity_type, now }, ctx: { userID } }) =>
       zql.reaction
         .where('entity_id', entity_id)
         .where('entity_type', entity_type)
         .where(({ or, cmp, exists }: any) =>
           or(
             isAuthenticatedUserId(userID) ? cmp('user_id', userID) : cmp('user_id', '__anon__'),
-            exists('timeline_event', (event: any) => applyTimelineEventAccess(event, userID))
+            exists('timeline_event', (event: any) => applyTimelineEventAccess(event, userID, now))
           )
         )
         .orderBy('created_at', 'desc')
@@ -328,9 +341,7 @@ export const commonQueries = {
     }),
     ({ args: { subscriberId, limit, start, dir }, ctx: { userID } }) => {
       const direction = dir === 'backward' ? 'asc' : 'desc';
-      let q = zql.subscriber
-        .where('subscriber_id', subscriberId)
-        .where('subscriber_id', userID)
+      let q = requireRequestedViewer(zql.subscriber, subscriberId, userID, 'subscriber_id')
         .orderBy('created_at', direction)
         .orderBy('id', direction);
       if (start) q = q.start(start, { inclusive: false });
@@ -365,9 +376,9 @@ export const commonQueries = {
 
   // Timeline events by entity IDs with deep relations
   timelineEventsByEntityIds: defineQuery(
-    z.object({ entity_ids: z.array(z.string()) }),
-    ({ args: { entity_ids }, ctx: { userID } }) =>
-      applyTimelineEventAccess(zql.timeline_event, userID)
+    z.object({ entity_ids: z.array(z.string()), now: z.number() }),
+    ({ args: { entity_ids, now }, ctx: { userID } }) =>
+      applyTimelineEventAccess(zql.timeline_event, userID, now)
         .where('entity_id', 'IN', entity_ids)
         .related('actor')
         .related('user', q =>
@@ -421,9 +432,9 @@ export const commonQueries = {
 
   // Timeline events by content types with basic relations
   timelineEventsByContentTypes: defineQuery(
-    z.object({ content_types: z.array(z.string()), limit: z.number() }),
-    ({ args: { content_types, limit }, ctx: { userID } }) =>
-      applyTimelineEventAccess(zql.timeline_event, userID)
+    z.object({ content_types: z.array(z.string()), limit: z.number(), now: z.number() }),
+    ({ args: { content_types, limit, now }, ctx: { userID } }) =>
+      applyTimelineEventAccess(zql.timeline_event, userID, now)
         .where('content_type', 'IN', content_types)
         .related('actor')
         .related('group')
@@ -442,6 +453,7 @@ export type SubscriberRow = QueryRowType<typeof commonQueries.subscribers>;
 export type SubscriptionPageRow = QueryRowType<typeof commonQueries.subscriptionPage>;
 export type TimelineFeedPageRow = QueryRowType<typeof commonQueries.timelineFeedPage>;
 export type UserSubscriptionRow = QueryRowType<typeof commonQueries.userSubscriptions>;
+export type UserHashtagRow = QueryRowType<typeof commonQueries.userHashtags>;
 export type TimelineEventsByContentTypeRow = QueryRowType<
   typeof commonQueries.timelineEventsByContentTypes
 >;

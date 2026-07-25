@@ -500,14 +500,6 @@ export function GroupMembershipsContentView({
                 membership_id: membership.id,
               })}
               onApprove={(membershipId, userId) => {
-                console.info('Accept button clicked in memberships.tsx', {
-                  flow: 'group-membership-request-approve',
-                  membershipId,
-                  groupId,
-                  actorUserId: authUser?.id ?? null,
-                  membershipUserId: userId,
-                });
-
                 return approveMembership(
                   membershipId,
                   userId,
@@ -518,14 +510,6 @@ export function GroupMembershipsContentView({
                 );
               }}
               onReject={(membershipId, userId) => {
-                console.info('Delete button clicked', {
-                  flow: 'group-membership-request-reject',
-                  membershipId,
-                  groupId,
-                  actorUserId: authUser?.id ?? null,
-                  membershipUserId: userId,
-                });
-
                 return rejectMembership(
                   membershipId,
                   userId,
@@ -539,14 +523,6 @@ export function GroupMembershipsContentView({
               invitations={filteredPendingInvitations}
               virtualSource={membershipVirtualSources.invited}
               onWithdraw={(membershipId, userId) => {
-                console.info('Delete button clicked', {
-                  flow: 'group-membership-invitation-withdraw',
-                  membershipId,
-                  groupId,
-                  actorUserId: authUser?.id ?? null,
-                  membershipUserId: userId,
-                });
-
                 return rejectMembership(
                   membershipId,
                   userId,
@@ -565,14 +541,6 @@ export function GroupMembershipsContentView({
               onOpenChangeRoleDialog={handleOpenChangeRoleDialog}
               showProvenanceColumns={showComposition}
               onRemove={(membershipId, userId) => {
-                console.info('Delete button clicked', {
-                  flow: 'group-member-remove',
-                  membershipId,
-                  groupId,
-                  actorUserId: authUser?.id ?? null,
-                  membershipUserId: userId,
-                });
-
                 return removeMember(
                   membershipId,
                   userId,

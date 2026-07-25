@@ -115,23 +115,23 @@ function mapRolesFromLinks<T extends PermissionRoleLinkLike>(
 
 function usePermissionsData(userId: string | undefined): UsePermissionsData {
   const [membershipsRaw, membershipsResult] = useQuery(
-    userId ? queries.rbac.membershipPermissions({ userId }) : undefined
+    userId ? queries.rbac.viewerMemberships({}) : undefined
   );
 
   const [guestAccessesRaw, guestAccessesResult] = useQuery(
-    userId ? queries.rbac.guestPermissions({ userId }) : undefined
+    userId ? queries.rbac.viewerGuestAccesses({}) : undefined
   );
 
   const [participationsRaw, participationsResult] = useQuery(
-    userId ? queries.rbac.participantPermissions({ userId }) : undefined
+    userId ? queries.rbac.viewerParticipations({}) : undefined
   );
 
   const [bloggerRelationsRaw, bloggerResult] = useQuery(
-    userId ? queries.rbac.bloggerPermissions({ userId }) : undefined
+    userId ? queries.rbac.viewerBloggerRelations({}) : undefined
   );
 
   const [ownedGroupsRaw, ownedGroupsResult] = useQuery(
-    userId ? queries.rbac.ownedGroupPermissions({ userId }) : undefined
+    userId ? queries.rbac.viewerOwnedGroups({}) : undefined
   );
 
   const isLoading =
@@ -143,29 +143,39 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
 
   const memberships = useMemo(() => {
     if (!membershipsRaw) return undefined;
-    return membershipsRaw.map(m => ({
-      id: m.id,
-      group: m.group ? { id: m.group.id } : undefined,
-      roles: mapRolesFromLinks(m.membership_roles, 'group'),
-      status: m.status ?? undefined,
-    })) as Membership[];
+    return membershipsRaw
+      .filter(m => m.status === 'active' || m.status === 'member' || m.status === 'admin')
+      .map(m => ({
+        id: m.id,
+        group: { id: m.group_id },
+        roles: mapRolesFromLinks(m.membership_roles, 'group'),
+        status: m.status ?? undefined,
+      })) as Membership[];
   }, [membershipsRaw]);
 
   const participations = useMemo(() => {
     if (!participationsRaw) return undefined;
-    return participationsRaw.map(p => ({
-      id: p.id,
-      event: p.event ? { id: p.event.id } : undefined,
-      roles: mapRolesFromLinks(p.participant_roles, 'event'),
-      status: p.status ?? undefined,
-    })) as Participation[];
+    return participationsRaw
+      .filter(
+        p =>
+          p.status === 'active' ||
+          p.status === 'confirmed' ||
+          p.status === 'member' ||
+          p.status === 'admin'
+      )
+      .map(p => ({
+        id: p.id,
+        event: { id: p.event_id },
+        roles: mapRolesFromLinks(p.participant_roles, 'event'),
+        status: p.status ?? undefined,
+      })) as Participation[];
   }, [participationsRaw]);
 
   const bloggerRelations = useMemo(() => {
     if (!bloggerRelationsRaw) return undefined;
     return bloggerRelationsRaw.map(b => ({
       id: b.id,
-      blog: b.blog ? { id: b.blog.id } : undefined,
+      blog: { id: b.blog_id },
       role: b.role
         ? {
             id: b.role.id,
@@ -180,12 +190,14 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
 
   const guestAccesses = useMemo(() => {
     if (!guestAccessesRaw) return undefined;
-    return guestAccessesRaw.map(guestAccess => ({
-      id: guestAccess.id,
-      group: guestAccess.group ? { id: guestAccess.group.id } : undefined,
-      roles: mapRolesFromLinks(guestAccess.guest_roles, 'group'),
-      status: guestAccess.status ?? undefined,
-    })) as GuestAccess[];
+    return guestAccessesRaw
+      .filter(guestAccess => guestAccess.status === 'active')
+      .map(guestAccess => ({
+        id: guestAccess.id,
+        group: { id: guestAccess.group_id },
+        roles: mapRolesFromLinks(guestAccess.guest_roles, 'group'),
+        status: guestAccess.status ?? undefined,
+      })) as GuestAccess[];
   }, [guestAccessesRaw]);
 
   const ownedGroupIds = useMemo(

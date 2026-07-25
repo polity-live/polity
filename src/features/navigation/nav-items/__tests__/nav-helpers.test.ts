@@ -1,6 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
-import { isItemActive } from '../nav-helpers';
+import { getPrimaryRouteFromPathname, isItemActive } from '../nav-helpers';
+
+describe('getPrimaryRouteFromPathname', () => {
+  it.each([
+    ['/', 'home'],
+    ['/messages', 'messages'],
+    ['/search', 'search'],
+    ['/group/group-1', 'group'],
+    ['/event/event-1/agenda', 'event'],
+    ['/group/group-1/blog/blog-1', 'blog'],
+    ['/group/group-1/blog/blog-1/editor', 'blog'],
+    ['/user/user-1/blog/blog-1/comments', 'blog'],
+  ])('derives %s as %s', (pathname, expected) => {
+    expect(getPrimaryRouteFromPathname(pathname)).toBe(expected);
+  });
+});
 
 describe('isItemActive', () => {
   it('matches secondary landing navigation items by hash', () => {

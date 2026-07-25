@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { EntityVisibilityGuard } from '@/features/auth/EntityVisibilityGuard';
 import { useEntityRouteAccess } from '@/features/auth/hooks/useEntityRouteAccess';
-import { useZeroReady } from '@/providers/zero-provider';
+import { useZeroReady } from '@/providers/zero-ready-context';
 import { useEventRouteFamilyPreloads } from '@/zero/preloads';
 
 export const Route = createFileRoute('/_authed/event/$id')({

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import {
   ArrowLeft,
@@ -324,11 +324,19 @@ export function StatementStoryCarousel({
 }: StatementStoryCarouselProps) {
   const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const queryArgs = useMemo(
-    () => ({ user_id: userId ?? null, now: Date.now(), limit }),
-    [limit, userId]
-  );
+  const [now, setNow] = useState(() => Date.now());
+  const queryArgs = useMemo(() => ({ user_id: userId ?? null, now, limit }), [limit, now, userId]);
   const [rows] = useQuery(queries.statements.carousel(queryArgs));
+  useEffect(() => {
+    const nextExpiry = ((rows ?? []) as unknown as StatementCarouselRow[])
+      .map(statement => statement.expires_at)
+      .filter((expiry): expiry is number => typeof expiry === 'number' && expiry > now)
+      .sort((left, right) => left - right)[0];
+
+    if (nextExpiry == null) return;
+    const timer = window.setTimeout(() => setNow(Date.now()), Math.max(0, nextExpiry - now + 1));
+    return () => window.clearTimeout(timer);
+  }, [now, rows]);
   const statements = useMemo(
     () =>
       ((rows ?? []) as unknown as StatementCarouselRow[]).filter(

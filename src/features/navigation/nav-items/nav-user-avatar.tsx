@@ -1,8 +1,9 @@
-import { useNavUserAvatarController } from '@/features/navigation/hooks/useNavUserAvatarController';
+import { lazy, Suspense } from 'react';
 import type { NavigationView } from '@/features/navigation/types/navigation.types.tsx';
 import { useAuth } from '@/providers/auth-provider.tsx';
-import { useZeroReady } from '@/providers/zero-provider.tsx';
-import { NavUserAvatarView } from './NavUserAvatarView';
+import { useZeroReady } from '@/providers/zero-ready-context.ts';
+
+const ConnectedNavUserAvatar = lazy(() => import('./nav-user-avatar-connected'));
 
 export function NavUserAvatar(props: {
   navigationView: NavigationView;
@@ -16,26 +17,9 @@ export function NavUserAvatar(props: {
     return null;
   }
 
-  return <NavUserAvatarWithZero {...props} authUser={authUser} />;
-}
-
-function NavUserAvatarWithZero({
-  authUser,
-  ...viewProps
-}: {
-  navigationView: NavigationView;
-  isMobile: boolean;
-  className?: string;
-} & {
-  authUser: {
-    id: string;
-    email?: string | null;
-  };
-}) {
-  const controller = useNavUserAvatarController({
-    navigationView: viewProps.navigationView,
-    authUser,
-  });
-
-  return <NavUserAvatarView {...viewProps} {...controller} />;
+  return (
+    <Suspense fallback={null}>
+      <ConnectedNavUserAvatar {...props} authUser={authUser} />
+    </Suspense>
+  );
 }

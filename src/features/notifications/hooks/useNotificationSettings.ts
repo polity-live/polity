@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { useNotificationState } from '@/zero/notifications/useNotificationState';
+import { useNotificationSettingsState } from '@/zero/notifications/useNotificationSettingsState';
 import { useNotificationActions } from '@/zero/notifications/useNotificationActions';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import {
@@ -22,7 +22,7 @@ import {
 export function useNotificationSettings(_userId?: string) {
   void _userId;
 
-  const { settings: rawSettings, isLoading } = useNotificationState();
+  const { data: rawSettings, isLoading } = useNotificationSettingsState();
   const { updateSettings: facadeUpdateSettings, createSettings: facadeCreateSettings } =
     useNotificationActions();
   const [isUpdating, setIsUpdating] = useState(false);

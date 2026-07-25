@@ -314,20 +314,8 @@ async function reconcileMembershipDrivenEventsForGroups(
 ) {
   const uniqueGroupIds = [...new Set([...groupIds].filter(Boolean))];
   if (uniqueGroupIds.length === 0) {
-    console.info('Server successful', {
-      flow: 'group-membership-event-reconcile',
-      assignedById: assignedById ?? null,
-      groupIds: [],
-      reason: 'no-groups',
-    });
     return;
   }
-
-  console.info('Server validation started', {
-    flow: 'group-membership-event-reconcile',
-    assignedById: assignedById ?? null,
-    groupIds: uniqueGroupIds,
-  });
 
   await reconcileGeneralAssemblyParticipantsForGroups(tx, uniqueGroupIds, assignedById);
   await reconcileDelegateAllocationsForGroups(tx, uniqueGroupIds);
@@ -335,12 +323,6 @@ async function reconcileMembershipDrivenEventsForGroups(
     groupIds: uniqueGroupIds,
     assignedById,
     reason: 'group-membership-event-reconcile',
-  });
-
-  console.info('Server successful', {
-    flow: 'group-membership-event-reconcile',
-    assignedById: assignedById ?? null,
-    groupIds: uniqueGroupIds,
   });
 }
 
@@ -528,13 +510,6 @@ export const groupServerMutators = {
   }),
 
   createOfflineMember: defineMutator(groupOfflineMemberCreateSchema, async ({ tx, ctx, args }) => {
-    console.info('Server validation started', {
-      flow: 'group-offline-member-create',
-      correlationId: args.debug_correlation_id ?? null,
-      actorUserId: ctx.userID,
-      groupId: args.group_id,
-    });
-
     await mutators.groups.createOfflineMember.fn({ tx, ctx, args });
     const affectedMembershipGroupIds = new Set<string>([args.group_id]);
     const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
@@ -553,26 +528,10 @@ export const groupServerMutators = {
     );
     await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
     await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
-
-    console.info('Server successful', {
-      flow: 'group-offline-member-create',
-      correlationId: args.debug_correlation_id ?? null,
-      actorUserId: ctx.userID,
-      groupId: args.group_id,
-      offlineMemberId: args.id,
-    });
   }),
 
   updateOfflineMember: defineMutator(groupOfflineMemberUpdateSchema, async ({ tx, ctx, args }) => {
     const existingOfflineMember = await tx.run(zql.group_offline_member.where('id', args.id).one());
-
-    console.info('Server validation started', {
-      flow: 'group-offline-member-update',
-      correlationId: args.debug_correlation_id ?? null,
-      actorUserId: ctx.userID,
-      groupId: existingOfflineMember?.group_id ?? null,
-      offlineMemberId: args.id,
-    });
 
     await mutators.groups.updateOfflineMember.fn({ tx, ctx, args });
 
@@ -597,25 +556,10 @@ export const groupServerMutators = {
     );
     await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
     await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
-
-    console.info('Server successful', {
-      flow: 'group-offline-member-update',
-      correlationId: args.debug_correlation_id ?? null,
-      actorUserId: ctx.userID,
-      groupId: existingOfflineMember.group_id,
-      offlineMemberId: args.id,
-    });
   }),
 
   deleteOfflineMember: defineMutator(groupOfflineMemberDeleteSchema, async ({ tx, ctx, args }) => {
     const existingOfflineMember = await tx.run(zql.group_offline_member.where('id', args.id).one());
-
-    console.info('Server validation started', {
-      flow: 'group-offline-member-delete',
-      actorUserId: ctx.userID,
-      groupId: existingOfflineMember?.group_id ?? null,
-      offlineMemberId: args.id,
-    });
 
     await mutators.groups.deleteOfflineMember.fn({ tx, ctx, args });
 
@@ -640,26 +584,11 @@ export const groupServerMutators = {
     );
     await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
     await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
-
-    console.info('Server successful', {
-      flow: 'group-offline-member-delete',
-      actorUserId: ctx.userID,
-      groupId: existingOfflineMember.group_id,
-      offlineMemberId: args.id,
-    });
   }),
 
   importOfflineMembers: defineMutator(
     groupOfflineMemberBulkImportSchema,
     async ({ tx, ctx, args }) => {
-      console.info('Server validation started', {
-        flow: 'group-offline-member-import',
-        correlationId: args.debug_correlation_id ?? null,
-        actorUserId: ctx.userID,
-        groupId: args.group_id,
-        entryCount: args.entries.length,
-      });
-
       await mutators.groups.importOfflineMembers.fn({ tx, ctx, args });
       const affectedMembershipGroupIds = new Set<string>([args.group_id]);
       const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
@@ -678,14 +607,6 @@ export const groupServerMutators = {
       );
       await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
       await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
-
-      console.info('Server successful', {
-        flow: 'group-offline-member-import',
-        correlationId: args.debug_correlation_id ?? null,
-        actorUserId: ctx.userID,
-        groupId: args.group_id,
-        entryCount: args.entries.length,
-      });
     }
   ),
 
@@ -1099,16 +1020,6 @@ export const groupServerMutators = {
     const membership = await tx.run(zql.group_membership.where('id', args.id).one());
     const affectedMembershipGroupIds = new Set<string>();
 
-    console.info('Server validation started', {
-      flow: 'group-membership-invitation-accept',
-      membershipId: args.id,
-      actorUserId: ctx.userID,
-      membershipStatus: membership?.status ?? null,
-      membershipGroupId: membership?.group_id ?? null,
-      membershipUserId: membership?.user_id ?? null,
-      membershipSource: membership?.source ?? null,
-    });
-
     await assertNoBlockingGroupConflicts(tx, ctx, {
       kind: 'membership_activation',
       membership_id: args.id,
@@ -1148,14 +1059,6 @@ export const groupServerMutators = {
       );
       await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
       await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
-      console.info('Server successful', {
-        flow: 'group-membership-invitation-accept',
-        membershipId: args.id,
-        actorUserId: ctx.userID,
-        membershipGroupId: membership.group_id,
-        membershipUserId: membership.user_id,
-        affectedMembershipGroupIds: [...affectedMembershipGroupIds],
-      });
       return;
     }
 
@@ -1175,30 +1078,11 @@ export const groupServerMutators = {
     );
     await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
     await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
-
-    console.info('Server successful', {
-      flow: 'group-membership-invitation-accept',
-      membershipId: args.id,
-      actorUserId: ctx.userID,
-      membershipGroupId: membership.group_id,
-      membershipUserId: membership.user_id,
-      affectedMembershipGroupIds: [...affectedMembershipGroupIds],
-    });
   }),
 
   leaveGroup: defineMutator(groupMembershipDeleteSchema, async ({ tx, ctx, args }) => {
     const membership = await tx.run(zql.group_membership.where('id', args.id).one());
     const affectedMembershipGroupIds = new Set<string>();
-
-    console.info('Server validation started', {
-      flow: 'group-membership-delete',
-      membershipId: args.id,
-      actorUserId: ctx.userID,
-      membershipStatus: membership?.status ?? null,
-      membershipGroupId: membership?.group_id ?? null,
-      membershipUserId: membership?.user_id ?? null,
-      membershipSource: membership?.source ?? null,
-    });
 
     await mutators.groups.leaveGroup.fn({ tx, ctx, args });
 
@@ -1278,39 +1162,11 @@ export const groupServerMutators = {
     );
     await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
     await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
-
-    console.info('Server successful', {
-      flow: 'group-membership-delete',
-      membershipId: args.id,
-      actorUserId: ctx.userID,
-      membershipGroupId: membership.group_id,
-      membershipUserId: membership.user_id,
-      affectedMembershipGroupIds: [...affectedMembershipGroupIds],
-    });
   }),
 
   updateMembership: defineMutator(groupMembershipUpdateSchema, async ({ tx, ctx, args }) => {
     const oldMembership = await tx.run(zql.group_membership.where('id', args.id).one());
     const affectedMembershipGroupIds = new Set<string>();
-    const isActivationTrace =
-      oldMembership != null &&
-      args.status !== undefined &&
-      isActiveGroupStatus(args.status) &&
-      !isActiveGroupStatus(oldMembership.status);
-
-    if (isActivationTrace) {
-      console.info('Server validation started', {
-        flow: 'group-membership-request-approve',
-        membershipId: args.id,
-        actorUserId: ctx.userID,
-        membershipUserId: oldMembership.user_id,
-        groupId: oldMembership.group_id,
-        oldStatus: oldMembership.status,
-        newStatus: args.status,
-        source: oldMembership.source,
-      });
-    }
-
     if (
       oldMembership &&
       args.status !== undefined &&
@@ -1406,17 +1262,6 @@ export const groupServerMutators = {
       );
       await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
       await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
-    }
-
-    if (isActivationTrace) {
-      console.info('Server successful', {
-        flow: 'group-membership-request-approve',
-        membershipId: args.id,
-        actorUserId: ctx.userID,
-        membershipUserId: oldMembership.user_id,
-        groupId: oldMembership.group_id,
-        affectedMembershipGroupIds: [...affectedMembershipGroupIds],
-      });
     }
   }),
 

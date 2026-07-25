@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS public.document (
 );
 
 CREATE INDEX idx_document_amendment ON public.document (amendment_id);
+CREATE INDEX idx_zero_document_amendment_updated_id
+  ON public.document (amendment_id, updated_at DESC, id DESC);
 
 ALTER TABLE public.document ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.document FOR ALL TO service_role USING (true);
@@ -34,6 +36,8 @@ CREATE TABLE IF NOT EXISTS public.document_version (
 
 CREATE INDEX idx_document_version_document ON public.document_version (document_id);
 CREATE INDEX idx_document_version_author ON public.document_version (author_id);
+CREATE INDEX idx_zero_document_version_document_number_id
+  ON public.document_version (document_id, version_number DESC, id DESC);
 
 ALTER TABLE public.document_version ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.document_version FOR ALL TO service_role USING (true);
@@ -51,6 +55,10 @@ CREATE TABLE IF NOT EXISTS public.document_collaborator (
 
 CREATE INDEX idx_document_collaborator_document ON public.document_collaborator (document_id);
 CREATE INDEX idx_document_collaborator_user ON public.document_collaborator (user_id);
+CREATE INDEX idx_zero_document_collaborator_user_document
+  ON public.document_collaborator (user_id, document_id);
+CREATE INDEX idx_zero_document_collaborator_document_created_id
+  ON public.document_collaborator (document_id, created_at DESC, id DESC);
 
 ALTER TABLE public.document_collaborator ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.document_collaborator FOR ALL TO service_role USING (true);

@@ -616,23 +616,8 @@ export const eventServerMutators = {
   createOfflineParticipant: defineMutator(
     eventOfflineParticipantCreateSchema,
     async ({ tx, ctx, args }) => {
-      console.info('Server validation started', {
-        flow: 'event-offline-participant-create',
-        correlationId: args.debug_correlation_id ?? null,
-        actorUserId: ctx.userID,
-        eventId: args.event_id,
-      });
-
       await mutators.events.createOfflineParticipant.fn({ tx, ctx, args });
       await recomputeEventCounters(tx, args.event_id);
-
-      console.info('Server successful', {
-        flow: 'event-offline-participant-create',
-        correlationId: args.debug_correlation_id ?? null,
-        actorUserId: ctx.userID,
-        eventId: args.event_id,
-        offlineParticipantId: args.id,
-      });
     }
   ),
 
@@ -643,14 +628,6 @@ export const eventServerMutators = {
         zql.event_offline_participant.where('id', args.id).one()
       );
 
-      console.info('Server validation started', {
-        flow: 'event-offline-participant-update',
-        correlationId: args.debug_correlation_id ?? null,
-        actorUserId: ctx.userID,
-        eventId: existingOfflineParticipant?.event_id ?? null,
-        offlineParticipantId: args.id,
-      });
-
       await mutators.events.updateOfflineParticipant.fn({ tx, ctx, args });
 
       if (!existingOfflineParticipant) {
@@ -658,14 +635,6 @@ export const eventServerMutators = {
       }
 
       await recomputeEventCounters(tx, existingOfflineParticipant.event_id);
-
-      console.info('Server successful', {
-        flow: 'event-offline-participant-update',
-        correlationId: args.debug_correlation_id ?? null,
-        actorUserId: ctx.userID,
-        eventId: existingOfflineParticipant.event_id,
-        offlineParticipantId: args.id,
-      });
     }
   ),
 
@@ -676,13 +645,6 @@ export const eventServerMutators = {
         zql.event_offline_participant.where('id', args.id).one()
       );
 
-      console.info('Server validation started', {
-        flow: 'event-offline-participant-delete',
-        actorUserId: ctx.userID,
-        eventId: existingOfflineParticipant?.event_id ?? null,
-        offlineParticipantId: args.id,
-      });
-
       await mutators.events.deleteOfflineParticipant.fn({ tx, ctx, args });
 
       if (!existingOfflineParticipant) {
@@ -690,37 +652,14 @@ export const eventServerMutators = {
       }
 
       await recomputeEventCounters(tx, existingOfflineParticipant.event_id);
-
-      console.info('Server successful', {
-        flow: 'event-offline-participant-delete',
-        actorUserId: ctx.userID,
-        eventId: existingOfflineParticipant.event_id,
-        offlineParticipantId: args.id,
-      });
     }
   ),
 
   importOfflineParticipants: defineMutator(
     eventOfflineParticipantBulkImportSchema,
     async ({ tx, ctx, args }) => {
-      console.info('Server validation started', {
-        flow: 'event-offline-participant-import',
-        correlationId: args.debug_correlation_id ?? null,
-        actorUserId: ctx.userID,
-        eventId: args.event_id,
-        entryCount: args.entries.length,
-      });
-
       await mutators.events.importOfflineParticipants.fn({ tx, ctx, args });
       await recomputeEventCounters(tx, args.event_id);
-
-      console.info('Server successful', {
-        flow: 'event-offline-participant-import',
-        correlationId: args.debug_correlation_id ?? null,
-        actorUserId: ctx.userID,
-        eventId: args.event_id,
-        entryCount: args.entries.length,
-      });
     }
   ),
 

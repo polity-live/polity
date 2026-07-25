@@ -299,11 +299,6 @@ export function useAmendmentEditContentController({
 
       const nextWorkflowStatus = value as EditingMode;
       const previousWorkflowStatus = formData.workflowStatus;
-      console.info('[AmendmentEditContent] Changing workflow status from settings', {
-        amendmentId,
-        newMode: value,
-        previousMode: previousWorkflowStatus,
-      });
       setFormData(prev => ({ ...prev, workflowStatus: nextWorkflowStatus }));
 
       if (isCreating || !amendment) {
@@ -349,13 +344,6 @@ export function useAmendmentEditContentController({
             internal_cr_resolution_visibility: formData.internalCRResolutionVisibility,
           })
         );
-        console.info('[AmendmentEditContent] Workflow status persisted from settings', {
-          amendmentId,
-          processBranchId: selectedWorkflowBranchId,
-          documentId: selectedWorkflowBranchId ? undefined : amendmentDocumentId,
-          newMode: value,
-          previousMode: previousWorkflowStatus,
-        });
       } catch (error) {
         if (!modePersisted) {
           setPendingWorkflowMode(current =>

@@ -1,4 +1,3 @@
-import { Card } from '@/features/shared/ui/ui/card';
 import { cn } from '@/features/shared/utils/utils';
 import type { Conversation, Message } from '../types/message.types';
 import { ConversationHeader } from './ConversationHeader';
@@ -46,7 +45,7 @@ export function AssistantMessageContentView({
   streamingAssistantMessage,
 }: AssistantMessageContentViewProps) {
   return (
-    <Card
+    <div
       className={cn('flex h-full min-h-0 flex-col overflow-hidden md:col-span-2', className)}
       style={{ touchAction: 'pan-y' }}
       {...swipeHandlers}
@@ -78,6 +77,6 @@ export function AssistantMessageContentView({
 
         <AssistantMessageInput assistantChat={assistantChat} />
       </div>
-    </Card>
+    </div>
   );
 }

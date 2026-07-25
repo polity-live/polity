@@ -1,10 +1,10 @@
-import { useCallback, useMemo, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { useSearch } from '@tanstack/react-router';
 
 import { useAuth } from '@/providers/auth-provider';
 import { queries } from '@/zero/queries';
-import { useCommonState } from '@/zero/common';
+import { useUserHashtagsState } from '@/zero/common/useUserHashtagsState';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import {
   ALL_CONTENT_TYPES,
@@ -13,6 +13,45 @@ import {
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
 import type { SearchListContext } from '../types/search-document.types';
 import { useSearchURL } from './useSearchURL';
+
+type IdleWindow = Window &
+  typeof globalThis & {
+    requestIdleCallback?: (
+      callback: (deadline: IdleDeadline) => void,
+      options?: IdleRequestOptions
+    ) => number;
+    cancelIdleCallback?: (handle: number) => void;
+  };
+
+function useDeferredSearchAuxiliaryState() {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const idleWindow = window as IdleWindow;
+    let idleHandle: number | null = null;
+    let fallbackHandle: ReturnType<typeof setTimeout> | null = null;
+    const animationFrame = idleWindow.requestAnimationFrame(() => {
+      const enable = () => startTransition(() => setEnabled(true));
+      if (typeof idleWindow.requestIdleCallback === 'function') {
+        idleHandle = idleWindow.requestIdleCallback(enable, { timeout: 250 });
+      } else {
+        fallbackHandle = setTimeout(enable, 16);
+      }
+    });
+
+    return () => {
+      idleWindow.cancelAnimationFrame(animationFrame);
+      if (idleHandle !== null) {
+        idleWindow.cancelIdleCallback?.(idleHandle);
+      }
+      if (fallbackHandle !== null) {
+        clearTimeout(fallbackHandle);
+      }
+    };
+  }, []);
+
+  return enabled;
+}
 
 function createdAfterForRange(range: DateRangeFilter) {
   const now = new Date();
@@ -28,6 +67,7 @@ function createdAfterForRange(range: DateRangeFilter) {
 export function useSearchPage() {
   const { user } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
+  const auxiliaryStateEnabled = useDeferredSearchAuxiliaryState();
   const [totalResultsState, setTotalResultsState] = useState<{
     contextKey: string;
     total: number | null;
@@ -49,8 +89,10 @@ export function useSearchPage() {
     setView,
   } = useSearchURL();
 
-  const [topicRows] = useQuery(queries.search.searchDocumentTopics({ limit: 160 }));
-  const { userHashtags } = useCommonState({ user_id: user?.id });
+  const [topicRows] = useQuery(
+    auxiliaryStateEnabled ? queries.search.searchDocumentTopics({ limit: 160 }) : undefined
+  );
+  const { userHashtags } = useUserHashtagsState(auxiliaryStateEnabled ? user?.id : undefined);
   const personalTopics = useMemo(() => extractHashtagTags(userHashtags), [userHashtags]);
 
   const availableTopics = useMemo(() => {

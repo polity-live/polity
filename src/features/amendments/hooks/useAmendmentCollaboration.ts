@@ -5,10 +5,15 @@ import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import type { ProjectedAmendmentCollaborationState } from '@/features/search/types/projected-card-state';
 
-export type CollaborationStatus = 'invited' | 'requested' | 'member' | 'admin';
+export type CollaborationStatus =
+  'invited' | 'requested' | 'active' | 'collaborator' | 'member' | 'admin';
 
-export function useAmendmentCollaboration(amendmentId: string) {
+export function useAmendmentCollaboration(
+  amendmentId: string,
+  projectedState?: ProjectedAmendmentCollaborationState
+) {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const {
@@ -27,13 +32,23 @@ export function useAmendmentCollaboration(amendmentId: string) {
     collaboratorCount,
     isLoading: queryLoading,
   } = useAmendmentState({
-    amendmentId,
-    userId: user?.id,
+    amendmentId: projectedState ? undefined : amendmentId,
+    userId: projectedState ? undefined : user?.id,
   });
+  const projectedCollaboration = projectedState?.collaborations[0] ?? null;
+  const resolvedCollaboration = projectedState ? projectedCollaboration : collaboration;
+  const resolvedStatus = projectedState
+    ? ((projectedCollaboration?.status as CollaborationStatus | undefined) ?? null)
+    : status;
+  const resolvedIsCollaborator =
+    resolvedStatus === 'member' ||
+    resolvedStatus === 'admin' ||
+    resolvedStatus === 'active' ||
+    resolvedStatus === 'collaborator';
 
   // Request to collaborate on the amendment
   const requestCollaboration = async () => {
-    if (!user?.id || collaboration) return;
+    if (!user?.id || resolvedCollaboration) return;
 
     // Validate amendmentId is a valid UUID
     if (!amendmentId || typeof amendmentId !== 'string') {
@@ -73,11 +88,11 @@ export function useAmendmentCollaboration(amendmentId: string) {
 
   // Leave the amendment collaboration
   const leaveCollaboration = async () => {
-    if (!collaboration?.id) return;
+    if (!resolvedCollaboration?.id) return;
 
     setIsLoading(true);
     try {
-      await waitForClientApply(removeCollaboratorAction(collaboration.id));
+      await waitForClientApply(removeCollaboratorAction(resolvedCollaboration.id));
     } catch (error) {
       console.error('Failed to leave collaboration:', error);
       toast.error(
@@ -92,11 +107,11 @@ export function useAmendmentCollaboration(amendmentId: string) {
 
   // Accept invitation
   const acceptInvitation = async () => {
-    if (!collaboration?.id || status !== 'invited') return;
+    if (!resolvedCollaboration?.id || resolvedStatus !== 'invited') return;
 
     setIsLoading(true);
     try {
-      await waitForClientApply(acceptInvitationAction(collaboration.id));
+      await waitForClientApply(acceptInvitationAction(resolvedCollaboration.id));
     } catch (error) {
       console.error('Failed to accept invitation:', error);
       toast.error(
@@ -108,14 +123,14 @@ export function useAmendmentCollaboration(amendmentId: string) {
   };
 
   return {
-    collaboration,
-    status,
-    isCollaborator,
-    isAdmin,
-    hasRequested,
-    isInvited,
-    collaboratorCount,
-    isLoading: queryLoading || isLoading,
+    collaboration: resolvedCollaboration,
+    status: resolvedStatus,
+    isCollaborator: projectedState ? resolvedIsCollaborator : isCollaborator,
+    isAdmin: projectedState ? resolvedStatus === 'admin' : isAdmin,
+    hasRequested: projectedState ? resolvedStatus === 'requested' : hasRequested,
+    isInvited: projectedState ? resolvedStatus === 'invited' : isInvited,
+    collaboratorCount: projectedState?.collaboratorCount ?? collaboratorCount,
+    isLoading: (projectedState?.isLoading ?? queryLoading) || isLoading,
     requestCollaboration,
     leaveCollaboration,
     acceptInvitation,

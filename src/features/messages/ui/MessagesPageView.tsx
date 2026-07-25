@@ -90,7 +90,7 @@ export function MessagesPageView({
 }: MessagesPageViewProps) {
   const messagesLayoutStyle = {
     height:
-      'calc(100dvh - var(--app-shell-mobile-top-offset, 0rem) - var(--app-shell-mobile-bottom-offset, 0rem) - 3rem)',
+      'calc(100dvh - var(--app-shell-mobile-top-offset, 0rem) - var(--app-shell-mobile-bottom-offset, 0rem) - var(--app-shell-page-frame-y, 3rem))',
   };
 
   return (
@@ -135,28 +135,34 @@ export function MessagesPageView({
         />
       </FeedSplitLayout>
 
-      <NewConversationDialog
-        open={userSearchDialogOpen}
-        onOpenChange={onUserSearchDialogOpenChange}
-        currentUserId={currentUserId}
-        initialSearchQuery={newConversationSearch}
-        initialUserId={newConversationTargetUserId}
-        onUserSelect={onCreateConversationRequest}
-        existingConversationUserIds={existingConversationUserIds}
-      />
+      {userSearchDialogOpen ? (
+        <NewConversationDialog
+          open
+          onOpenChange={onUserSearchDialogOpenChange}
+          currentUserId={currentUserId}
+          initialSearchQuery={newConversationSearch}
+          initialUserId={newConversationTargetUserId}
+          onUserSelect={onCreateConversationRequest}
+          existingConversationUserIds={existingConversationUserIds}
+        />
+      ) : null}
 
-      <GroupMembersDialog
-        open={memberListDialogOpen}
-        onOpenChange={onMemberListDialogOpenChange}
-        conversation={selectedConversation}
-      />
+      {memberListDialogOpen ? (
+        <GroupMembersDialog
+          open
+          onOpenChange={onMemberListDialogOpenChange}
+          conversation={selectedConversation}
+        />
+      ) : null}
 
-      <DeleteConversationDialog
-        open={deleteDialogOpen}
-        onOpenChange={onDeleteDialogOpenChange}
-        onConfirm={onDeleteConversation}
-        isCancelRequest={isCancelRequest}
-      />
+      {deleteDialogOpen ? (
+        <DeleteConversationDialog
+          open
+          onOpenChange={onDeleteDialogOpenChange}
+          onConfirm={onDeleteConversation}
+          isCancelRequest={isCancelRequest}
+        />
+      ) : null}
     </>
   );
 }

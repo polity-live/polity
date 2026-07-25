@@ -9,7 +9,6 @@ import { queries } from '@/zero/queries';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 
 interface BlogListTabProps {
-  bloggerRelations: readonly ProfileBloggerRelation[];
   authorName: string;
   authorAvatar: string;
   userId: string;
@@ -18,14 +17,12 @@ interface BlogListTabProps {
 }
 
 export const BlogListTab: React.FC<BlogListTabProps> = ({
-  bloggerRelations: _bloggerRelations,
   authorName,
   authorAvatar,
   userId,
   searchValue,
   onSearchChange,
 }) => {
-  void _bloggerRelations;
   const { t } = useTranslation();
 
   const context = useMemo(() => ({ userId, query: searchValue.trim() }), [searchValue, userId]);

@@ -162,7 +162,6 @@ function baseProps(amendmentOverrides: Record<string, unknown> = {}): AmendmentW
     isCloning: false,
     handleClone: vi.fn(),
     handleConfirmClone: vi.fn(),
-    usersData: { $users: [] },
     normalizedVoteValue: 0,
     supporterDirectorySection: <div data-testid="supporter-directory-section" />,
   };

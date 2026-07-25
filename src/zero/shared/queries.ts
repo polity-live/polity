@@ -36,6 +36,7 @@ const searchArgsSchema = z.object({
   limit: z.number(),
   query: z.string().default(''),
 });
+const statementSearchArgsSchema = searchArgsSchema.extend({ now: z.number() });
 
 const searchSortSchema = z.enum(['recent', 'engagement', 'trending']);
 const searchDirectionSchema = z.enum(['forward', 'backward']);
@@ -262,17 +263,17 @@ export const searchQueries = {
   }),
 
   searchableStatements: defineQuery(
-    searchArgsSchema,
-    ({ args: { limit, query }, ctx: { userID } }) => {
+    statementSearchArgsSchema,
+    ({ args: { limit, query, now }, ctx: { userID } }) => {
       const normalizedQuery = query.trim();
       const statementsQuery = normalizedQuery
-        ? applyStatementQueryAccess(zql.statement, userID).where(({ or, cmp }) =>
+        ? applyStatementQueryAccess(zql.statement, userID, now).where(({ or, cmp }) =>
             or(
               cmp('title', 'ILIKE', `%${normalizedQuery}%`),
               cmp('text', 'ILIKE', `%${normalizedQuery}%`)
             )
           )
-        : applyStatementQueryAccess(zql.statement, userID);
+        : applyStatementQueryAccess(zql.statement, userID, now);
 
       return statementsQuery
         .related('user', user => applyUserQueryAccess(user, userID))

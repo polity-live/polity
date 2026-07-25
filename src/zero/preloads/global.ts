@@ -16,11 +16,7 @@ export function useCoreZeroPreloads() {
         {},
         queries.notifications.pushSubscriptions({})
       ),
-      createPreloadEntry(
-        'queries.messages.conversationsForUnread',
-        {},
-        queries.messages.conversationsForUnread({})
-      ),
+      createPreloadEntry('queries.messages.unreadSummary', {}, queries.messages.unreadSummary({})),
     ];
   }, [user?.id]);
   useZeroPreloads(entries);
@@ -54,5 +50,4 @@ export function useRelationshipEntityPreloads() {
 
 export function useGlobalZeroPreloads() {
   useCoreZeroPreloads();
-  useRelationshipEntityPreloads();
 }

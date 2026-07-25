@@ -1,7 +1,7 @@
 'use client';
 
-import type { UserProfile } from '@/features/users/types/user.types.ts';
-import { useUserMenuController } from './hooks/useUserMenuController';
+import { useState } from 'react';
+import { useUserMenuController, type UserMenuUser } from './hooks/useUserMenuController';
 import { UserMenuView } from './UserMenuView';
 
 interface UserMenuProps {
@@ -9,7 +9,7 @@ interface UserMenuProps {
   isMobile?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  user?: UserProfile | null;
+  user?: UserMenuUser | null;
 }
 
 export function UserMenu({
@@ -19,7 +19,16 @@ export function UserMenu({
   onOpenChange,
   user: userData,
 }: UserMenuProps) {
-  const viewProps = useUserMenuController({ user: userData });
+  const [internalOpen, setInternalOpen] = useState(false);
+  const resolvedOpen = open ?? internalOpen;
+  const handleOpenChange = (nextOpen: boolean) => {
+    setInternalOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  };
+  const viewProps = useUserMenuController({
+    user: userData,
+    navigationEnabled: resolvedOpen,
+  });
 
   if (!viewProps) return null;
 
@@ -27,8 +36,8 @@ export function UserMenu({
     <UserMenuView
       className={className}
       isMobile={isMobile}
-      open={open}
-      onOpenChange={onOpenChange}
+      open={resolvedOpen}
+      onOpenChange={handleOpenChange}
       {...viewProps}
     />
   );

@@ -48,41 +48,12 @@ export function useAmendmentWikiPage(amendmentId: string) {
     includeFullRelations: true,
     includeClones: true,
     includeRoles: true,
-    includeNetworkData: true,
-    includeUserMemberships: !!user?.id,
-    includeAllUsers: !!user?.id,
   });
 
   const amendment = facadeResult.amendmentFull;
 
-  const networkData = useMemo(
-    () => ({
-      groupMemberships: [
-        ...(facadeResult.userMemberships ?? []),
-        ...(facadeResult.allGroupMemberships ?? []),
-      ],
-      groups: facadeResult.allGroups ?? [],
-      groupRelationships: facadeResult.allGroupRelationships ?? [],
-      events: facadeResult.allEvents ?? [],
-    }),
-    [
-      facadeResult.userMemberships,
-      facadeResult.allGroupMemberships,
-      facadeResult.allGroups,
-      facadeResult.allGroupRelationships,
-      facadeResult.allEvents,
-    ]
-  );
-
-  // Clone hook (needs networkData + selectedTargetGroupId for event queries)
+  // The target dialog loads its network data only while it is mounted/open.
   const cloneData = useCloneAmendment(amendmentId, amendment, user?.id, user?.email);
-
-  const usersData = useMemo(
-    () => ({
-      $users: facadeResult.allUsers ?? [],
-    }),
-    [facadeResult.allUsers]
-  );
 
   // Derived data
   const collaborators = amendment?.collaborators || [];
@@ -250,8 +221,6 @@ export function useAmendmentWikiPage(amendmentId: string) {
 
     // Clone
     ...cloneData,
-    networkData,
-    usersData,
 
     // Helpers
     statusColors: AMENDMENT_STATUS_COLORS,

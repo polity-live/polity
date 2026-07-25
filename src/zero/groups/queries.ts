@@ -10,6 +10,7 @@ import {
   applyGroupManagerQueryAccess,
   applyGroupMembershipSelfOrManagerQueryAccess,
   applyTodoQueryAccess,
+  requireRequestedViewer,
 } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
@@ -175,7 +176,7 @@ export const groupQueries = {
       dir: pageDirectionSchema,
     }),
     ({ args: { userId, status, statuses, query, limit, start, dir }, ctx: { userID } }) => {
-      let q = zql.group_membership.where('user_id', userId).where('user_id', userID);
+      let q = requireRequestedViewer(zql.group_membership, userId, userID);
       if (status) q = q.where('status', status);
       if ((statuses?.length ?? 0) > 0) q = q.where('status', 'IN', statuses);
       const term = query.trim();

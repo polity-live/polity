@@ -91,7 +91,7 @@ export const createEntitySecondaryNavItemsUnauthenticated = (
   navigate: NavigateFn,
   t?: (key: string) => string
 ): NavigationItem[] | null => {
-  const navItems = navItemsAuthenticated(navigate, undefined, t);
+  const navItems = navItemsAuthenticated(navigate, t);
   const groupBlogMatch = pathname.match(/^\/group\/([^/]+)\/blog\/([^/]+)/);
   const userBlogMatch = pathname.match(/^\/user\/([^/]+)\/blog\/([^/]+)/);
   const directBlogMatch = pathname.match(/^\/blog\/([^/]+)/);

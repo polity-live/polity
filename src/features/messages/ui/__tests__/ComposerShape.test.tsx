@@ -104,7 +104,7 @@ describe('message composer control shapes', () => {
       isSending: false,
     };
 
-    render(
+    const { container } = render(
       <AssistantMessageInputView
         assistantChat={assistantChat}
         t={t}
@@ -166,5 +166,7 @@ describe('message composer control shapes', () => {
     expectRoundedControl(screen.getByRole('combobox', { name: 'Reasoning' }));
     expectRoundedControl(screen.getByRole('button', { name: 'Upload files' }));
     expectRoundedControl(screen.getByRole('button', { name: 'Send' }));
+    expect(container.querySelector('[data-swipe-lock]')?.className).toContain('px-0');
+    expect(container.querySelector('[data-swipe-lock]')?.className).toContain('md:px-4');
   });
 });

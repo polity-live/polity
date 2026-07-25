@@ -11,6 +11,16 @@ export function requireQueryUser<T>(q: T, userID: string | undefined | null, fie
   return (q as any).where(field, userID) as T;
 }
 
+export function requireRequestedViewer<T>(
+  q: T,
+  requestedUserID: string,
+  userID: string | undefined | null,
+  field = 'user_id'
+): T {
+  if (!isAuthenticatedUserId(userID) || requestedUserID !== userID) return denyAllRows(q);
+  return (q as any).where(field, userID) as T;
+}
+
 export function applySearchDocumentQueryAccess<T>(q: T, userID: string | undefined | null): T {
   const query = q as any;
 
@@ -302,34 +312,52 @@ export function applyAmendmentQueryAccess<T>(q: T, userID: string | undefined | 
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       cmp('created_by_id', userID),
-      exists('collaborators', (collaborator: any) =>
-        collaborator
-          .where('user_id', userID)
-          .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
-      ),
-      exists('group', (group: any) =>
-        group.where(({ or, cmp, exists }: any) =>
-          or(
-            cmp('owner_id', userID),
-            exists('memberships', (membership: any) =>
-              membership
-                .where('user_id', userID)
-                .where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
-            ),
-            exists('guest_accesses', (guestAccess: any) =>
-              guestAccess
-                .where('user_id', userID)
-                .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES)
-            )
-          )
-        )
-      ),
-      exists('event', (event: any) =>
-        event.whereExists('participants', (participant: any) =>
-          participant
+      exists(
+        'collaborators',
+        (collaborator: any) =>
+          collaborator
             .where('user_id', userID)
-            .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
-        )
+            .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES),
+        { flip: false }
+      ),
+      exists(
+        'group',
+        (group: any) =>
+          group.where(({ or, cmp, exists }: any) =>
+            or(
+              cmp('owner_id', userID),
+              exists(
+                'memberships',
+                (membership: any) =>
+                  membership
+                    .where('user_id', userID)
+                    .where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES),
+                { flip: false }
+              ),
+              exists(
+                'guest_accesses',
+                (guestAccess: any) =>
+                  guestAccess
+                    .where('user_id', userID)
+                    .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES),
+                { flip: false }
+              )
+            )
+          ),
+        { flip: false }
+      ),
+      exists(
+        'event',
+        (event: any) =>
+          event.whereExists(
+            'participants',
+            (participant: any) =>
+              participant
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES),
+            { flip: false }
+          ),
+        { flip: false }
       )
     )
   ) as T;
@@ -389,9 +417,12 @@ export function applyBlogQueryAccess<T>(q: T, userID: string | undefined | null)
   ) as T;
 }
 
-export function applyStatementQueryAccess<T>(q: T, userID: string | undefined | null): T {
+export function applyStatementQueryAccess<T>(
+  q: T,
+  userID: string | undefined | null,
+  now: number
+): T {
   const query = q as any;
-  const now = Date.now();
   const activeQuery = isAuthenticatedUserId(userID)
     ? query.where(({ or, cmp }: any) =>
         or(cmp('expires_at', 'IS', null), cmp('expires_at', '>', now), cmp('user_id', userID))
@@ -729,19 +760,42 @@ export function applyAccreditationQueryAccess<T>(q: T, userID: string | undefine
   ) as T;
 }
 
-export function applyDocumentQueryAccess<T>(q: T, userID: string | undefined | null): T {
+export interface DocumentQueryAccessProfile {
+  collaboratorFlip?: boolean;
+  amendmentFlip?: boolean;
+}
+
+function flipOption(flip: boolean | undefined) {
+  return flip === undefined ? undefined : { flip };
+}
+
+export function applyDocumentQueryAccess<T>(
+  q: T,
+  userID: string | undefined | null,
+  profile: DocumentQueryAccessProfile = {}
+): T {
   const query = q as any;
 
   if (!isAuthenticatedUserId(userID)) {
-    return query.whereExists('amendment', (amendment: any) =>
-      applyAmendmentQueryAccess(amendment, userID)
+    return query.whereExists(
+      'amendment',
+      (amendment: any) => applyAmendmentQueryAccess(amendment, userID),
+      flipOption(profile.amendmentFlip)
     ) as T;
   }
 
   return query.where(({ or, exists }: any) =>
     or(
-      exists('collaborators', (collaborator: any) => collaborator.where('user_id', userID)),
-      exists('amendment', (amendment: any) => applyAmendmentQueryAccess(amendment, userID))
+      exists(
+        'collaborators',
+        (collaborator: any) => collaborator.where('user_id', userID),
+        flipOption(profile.collaboratorFlip)
+      ),
+      exists(
+        'amendment',
+        (amendment: any) => applyAmendmentQueryAccess(amendment, userID),
+        flipOption(profile.amendmentFlip)
+      )
     )
   ) as T;
 }

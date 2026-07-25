@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useDynamicNavigationController } from '@/features/navigation/hooks/useDynamicNavigationController';
 import { DynamicNavigationView } from './DynamicNavigationView';
 import type {
@@ -7,7 +8,7 @@ import type {
   ScreenType,
 } from '@/features/navigation/types/navigation.types.tsx';
 
-export function DynamicNavigation({
+export const DynamicNavigation = memo(function DynamicNavigation({
   navigationView,
   navigationType,
   screenType,
@@ -26,6 +27,7 @@ export function DynamicNavigation({
       navigationType={navigationType}
       navigationView={navigationView}
       isMobileDevice={isMobileDevice}
+      screenType={screenType}
     />
   );
-}
+});

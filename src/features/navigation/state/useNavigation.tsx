@@ -1,7 +1,6 @@
-import { useState, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { navItemsAuthenticated } from '@/features/navigation/nav-items/nav-items-authenticated.tsx';
 import { createNavItemsUnauthenticated } from '@/features/navigation/nav-items/nav-items-unauthenticated.tsx';
-import { useInitialRoute } from '@/features/navigation/state/useInitialRoute.tsx';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import {
@@ -19,6 +18,7 @@ import {
   getEntityNotificationUnreadCount,
   withEntityNotificationBadge,
 } from '@/features/navigation/logic/entityNotificationBadge';
+import { getPrimaryRouteFromPathname } from '@/features/navigation/nav-items/nav-helpers';
 
 /**
  * Custom hook that manages navigation items for primary and secondary navigation
@@ -33,7 +33,7 @@ export function useNavigation() {
     typeof (location.search as Record<string, unknown> | undefined)?.branch === 'string'
       ? ((location.search as Record<string, unknown>).branch as string)
       : null;
-  const [currentPrimaryRoute, setCurrentPrimaryRoute] = useState<string | null>(null);
+  const currentPrimaryRoute = getPrimaryRouteFromPathname(pathname);
   const { t } = useTranslation();
 
   // Get unread counts for notifications and messages
@@ -46,20 +46,9 @@ export function useNavigation() {
     [navigate, t]
   );
 
-  // Stable reference for setCurrentPrimaryRoute to avoid recreating nav items
-  const setCurrentPrimaryRouteRef = useRef(setCurrentPrimaryRoute);
-  setCurrentPrimaryRouteRef.current = setCurrentPrimaryRoute;
-  const stableSetRoute = useMemo(
-    () => (route: string) => setCurrentPrimaryRouteRef.current(route),
-    []
-  );
-
   // Get navigation items from the navigation config
   const { primaryNavItems: basePrimaryNavItems, getSecondaryNavItems: baseGetSecondaryNavItems } =
-    useMemo(
-      () => navItemsAuthenticated(navigate, stableSetRoute, t),
-      [navigate, stableSetRoute, t]
-    );
+    useMemo(() => navItemsAuthenticated(navigate, t), [navigate, t]);
 
   // Override labels with translations and add dynamic badge counts
   const primaryNavItems: NavigationItem[] = useMemo(
@@ -274,9 +263,6 @@ export function useNavigation() {
   };
 
   const secondaryNavItems = getSecondaryNavItems(currentPrimaryRoute);
-
-  // Use custom hook for initial route
-  useInitialRoute(setCurrentPrimaryRoute);
 
   return {
     primaryNavItems,

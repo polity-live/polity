@@ -1,3 +1,5 @@
+import type { UserHashtagRow } from '@/zero/common/queries';
+import type { UserByIdRow } from '@/zero/users/queries';
 import type { FullProfileRow } from '@/zero/users/useUserState';
 
 /**
@@ -5,13 +7,15 @@ import type { FullProfileRow } from '@/zero/users/useUserState';
  * All consumers should use `UserProfile` (a.k.a. `FullProfileRow`) directly,
  * accessing snake_case fields from the Zero sync engine.
  */
-export type UserProfile = FullProfileRow;
+export type UserProfile = UserByIdRow & {
+  user_hashtags: UserHashtagRow[];
+};
 
 /** Derived sub-relation types from the fullProfile query */
-export type ProfileStatement = UserProfile['statements'][number];
-export type ProfileGroupMembership = UserProfile['group_memberships'][number];
-export type ProfileBloggerRelation = UserProfile['blogger_relations'][number];
-export type ProfileAmendmentCollaboration = UserProfile['amendment_collaborations'][number];
+export type ProfileStatement = FullProfileRow['statements'][number];
+export type ProfileGroupMembership = FullProfileRow['group_memberships'][number];
+export type ProfileBloggerRelation = FullProfileRow['blogger_relations'][number];
+export type ProfileAmendmentCollaboration = FullProfileRow['amendment_collaborations'][number];
 export type ProfileUserHashtag = UserProfile['user_hashtags'][number];
 
 export interface TabSearchState {

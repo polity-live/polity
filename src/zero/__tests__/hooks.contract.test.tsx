@@ -132,7 +132,10 @@ describe('Zero React hook contracts', () => {
 
     expect(hookMocks.userQueries.current).toHaveBeenCalledWith({});
     expect(hookMocks.userQueries.byId).toHaveBeenCalledWith({ id: 'user-2' });
-    expect(hookMocks.userQueries.fullProfile).toHaveBeenCalledWith({ id: 'user-2' });
+    expect(hookMocks.userQueries.fullProfile).toHaveBeenCalledWith({
+      id: 'user-2',
+      now: expect.any(Number),
+    });
     expect(hookMocks.userQueries.publicUsers).toHaveBeenCalledWith({});
     expect(hookMocks.userQueries.allUsers).not.toHaveBeenCalled();
     expect(hookMocks.userQueries.searchableUsers).not.toHaveBeenCalled();

@@ -4,6 +4,7 @@ import { Users, MessageSquare } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
 import { getContentTypeGradient } from '../../constants/content-type-config';
+import type { ProjectedSubscriptionState } from '@/features/search/types/projected-card-state';
 
 export interface BlogTimelineCardProps {
   blog: {
@@ -24,12 +25,18 @@ export interface BlogTimelineCardProps {
   onShare?: () => void;
   href?: string;
   className?: string;
+  projectedSubscriptionState?: ProjectedSubscriptionState;
 }
 import { BlogTimelineCardView } from './BlogTimelineCardView';
-export function BlogTimelineCard({ blog, href, className }: BlogTimelineCardProps) {
+export function BlogTimelineCard({
+  blog,
+  href,
+  className,
+  projectedSubscriptionState,
+}: BlogTimelineCardProps) {
   const { t } = useTranslation();
   const gradient = getContentTypeGradient('blog');
-  const subscription = useSubscribeBlog(blog.id);
+  const subscription = useSubscribeBlog(blog.id, projectedSubscriptionState);
 
   const blogUrl =
     href ??

@@ -125,13 +125,13 @@ export function ConversationHeader({
         </Button>
       </div>
     ) : (
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         {entityHref ? (
           <Link to={entityHref} className="min-w-0 hover:underline">
             <h3 className="truncate font-semibold">{display.name}</h3>
           </Link>
         ) : (
-          <h3 className="truncate font-semibold">{display.name}</h3>
+          <h3 className="min-w-0 truncate font-semibold">{display.name}</h3>
         )}
         {isAiConversation && (
           <>

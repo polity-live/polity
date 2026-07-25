@@ -1,5 +1,17 @@
 import type { NavigationItem } from '../types/navigation.types.tsx';
 
+export function getPrimaryRouteFromPathname(pathname: string): string {
+  if (pathname === '/') {
+    return 'home';
+  }
+
+  if (/^\/(?:group|user)\/[^/]+\/blog\/[^/]+(?:\/|$)/.test(pathname)) {
+    return 'blog';
+  }
+
+  return pathname.split('/').filter(Boolean)[0] ?? 'home';
+}
+
 interface RouteParts {
   path: string;
   hash: string;

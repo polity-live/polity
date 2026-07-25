@@ -103,6 +103,8 @@ CREATE INDEX idx_role_group ON public.role (group_id);
 CREATE INDEX idx_role_event ON public.role (event_id);
 CREATE INDEX idx_role_scope ON public.role (scope);
 CREATE INDEX idx_role_assignee_kind ON public.role (assignee_kind);
+CREATE INDEX idx_zero_role_amendment_scope_id ON public.role (amendment_id, scope, id);
+CREATE INDEX idx_zero_role_blog_scope_id ON public.role (blog_id, scope, id);
 
 ALTER TABLE public.role ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.role FOR ALL TO service_role USING (true);
@@ -163,6 +165,10 @@ CREATE INDEX idx_group_membership_connection ON public.group_membership (connect
 CREATE INDEX idx_group_membership_membership_rule ON public.group_membership (membership_rule_id);
 CREATE INDEX idx_group_membership_part_group ON public.group_membership (part_group_id);
 CREATE INDEX idx_group_membership_base_group ON public.group_membership (base_group_id);
+CREATE INDEX idx_zero_group_membership_user_created_id
+  ON public.group_membership (user_id, created_at DESC, id DESC);
+CREATE INDEX idx_zero_group_membership_group_created_id
+  ON public.group_membership (group_id, created_at DESC, id DESC);
 
 ALTER TABLE public.group_membership ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_membership FOR ALL TO service_role USING (true);
@@ -344,6 +350,8 @@ CREATE TABLE IF NOT EXISTS public.action_right (
 );
 
 CREATE INDEX idx_action_right_role ON public.action_right (role_id);
+CREATE INDEX idx_zero_action_right_role_resource_action
+  ON public.action_right (role_id, resource, action);
 
 ALTER TABLE public.action_right ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.action_right FOR ALL TO service_role USING (true);

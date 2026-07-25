@@ -22,6 +22,7 @@ export interface NavigationItem {
 export interface NavigationProps {
   navigationItems: NavigationItem[];
   isMobile: boolean;
+  screenType: ScreenType;
   navigationView: NavigationView;
   navigationType: NavigationType;
 }

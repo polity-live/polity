@@ -10,6 +10,7 @@ import {
   applyVoteManagerQueryAccess,
   applyVoteQueryAccess,
   applyVoteVoterOrManagerQueryAccess,
+  requireQueryUser,
 } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
@@ -225,7 +226,7 @@ function applyAmendmentCommentVotePrivateAccess<T>(q: T, userID: string | undefi
   ) as T;
 }
 
-export const amendmentQueries = {
+const amendmentQueriesBase = {
   byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     applyAmendmentAccess(zql.amendment.where('id', id), userID).one()
   ),
@@ -257,13 +258,21 @@ export const amendmentQueries = {
   // Full amendment for wiki view (all relations)
   byIdFull: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     applyAmendmentAccess(zql.amendment.where('id', id), userID)
+      .related('created_by')
       .related('collaborators', q =>
-        q.where('status', 'IN', WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES).related('user')
+        q
+          .where('status', 'IN', WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+          .related('user')
+          .related('role', role => role.related('action_rights'))
       )
       .related('amendment_hashtags', q => q.related('hashtag'))
       .related('support_votes', q => applyAmendmentUserPrivateAccess(q, userID).related('user'))
       .related('vote_entries', q => q.related('choices'))
-      .related('change_requests', q => applyChangeRequestVisibilityAccess(q, userID))
+      .related('change_requests', q =>
+        applyChangeRequestVisibilityAccess(q, userID)
+          .related('user')
+          .related('votes', vote => vote.where('user_id', userID ?? '__anon__'))
+      )
       .related('support_confirmations', q =>
         q.related('group').related('event').related('process_task')
       )
@@ -375,6 +384,7 @@ export const amendmentQueries = {
       .related('documents')
       .related('document', q => q.related('collaborators', cq => cq.related('user')))
       .related('clone_source')
+      .related('threads', q => q.related('user').related('comments'))
       .one()
   ),
 
@@ -1363,10 +1373,22 @@ export const amendmentQueries = {
   }),
 };
 
+export const amendmentQueries = {
+  viewerCollaborations: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    requireQueryUser(zql.amendment_collaborator, userID)
+  ),
+
+  ...amendmentQueriesBase,
+  // Keep byIdFull registered during the compatibility window while all new
+  // wiki consumers use the explicitly named route query.
+  byIdWiki: amendmentQueriesBase.byIdFull,
+};
+
 // ── Query Row Types ─────────────────────────────────────────────────
 export type AmendmentRow = QueryRowType<typeof amendmentQueries.byId>;
 export type AmendmentWithRelationsRow = QueryRowType<typeof amendmentQueries.byIdWithRelations>;
 export type AmendmentFullRow = QueryRowType<typeof amendmentQueries.byIdFull>;
+export type AmendmentWikiRow = QueryRowType<typeof amendmentQueries.byIdWiki>;
 export type AmendmentWithProcessDataRow = QueryRowType<typeof amendmentQueries.byIdWithProcessData>;
 export type AmendmentWithDocsAndCollabsRow = QueryRowType<
   typeof amendmentQueries.byIdWithDocsAndCollabs

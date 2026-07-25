@@ -6,11 +6,17 @@ import type { UserProfile } from '@/features/users/types/user.types.ts';
 import { useAuth } from '@/providers/auth-provider.tsx';
 import { useCurrentUserNavigationEntities } from './useCurrentUserNavigationEntities';
 
+export type UserMenuUser = Pick<UserProfile, 'first_name' | 'last_name' | 'avatar'>;
+
 interface UseUserMenuControllerOptions {
-  user?: UserProfile | null;
+  user?: UserMenuUser | null;
+  navigationEnabled?: boolean;
 }
 
-export function useUserMenuController({ user: userData }: UseUserMenuControllerOptions) {
+export function useUserMenuController({
+  user: userData,
+  navigationEnabled = true,
+}: UseUserMenuControllerOptions) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user: authUser, signOut } = useAuth();
@@ -25,7 +31,8 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
     groups: activeGroups,
     events: activeEvents,
     amendments: openAmendments,
-  } = useCurrentUserNavigationEntities(authUser?.id);
+    isLoading: navigationEntitiesLoading,
+  } = useCurrentUserNavigationEntities(authUser?.id, navigationEnabled);
 
   const filteredGroups = useMemo(() => {
     const normalizedQuery = groupSearchQuery.trim().toLowerCase();
@@ -104,6 +111,7 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
     profileHref,
     settingsHref,
     docsHref,
+    navigationEntitiesLoading,
     groups: filteredGroups,
     events: filteredEvents,
     amendments: filteredAmendments,
@@ -129,6 +137,7 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
       searchEventsPlaceholder: t('navigation.userMenu.searchEventsPlaceholder'),
       searchAmendmentsPlaceholder: t('navigation.userMenu.searchAmendmentsPlaceholder'),
       clear: t('common.actions.clear'),
+      loading: t('common.loading.general'),
       logout: t('auth.logout.button'),
       logoutConfirm: t('auth.logout.confirm'),
       cancel: t('common.actions.cancel'),

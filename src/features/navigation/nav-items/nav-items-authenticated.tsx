@@ -7,9 +7,16 @@ type NavigateFn = (opts: { to: string }) => void;
 // This function factory creates navigation items with router integration
 export const navItemsAuthenticated = (
   navigate: NavigateFn,
-  setCurrentPrimaryRoute?: (route: string) => void,
   t?: (key: string) => string // Optional translation function
 ) => {
+  const navigatePrimary = (to: string) => {
+    const performNavigation = () => navigate({ to });
+    if (typeof window === 'undefined') {
+      performNavigation();
+    } else {
+      window.setTimeout(performNavigation, 0);
+    }
+  };
   // Note: useTranslation() hook removed to fix hook order issues
   // Using static strings temporarily until i18n is properly configured
   // Translation function can be passed as parameter for i18n support
@@ -22,8 +29,7 @@ export const navItemsAuthenticated = (
       icon: 'Home',
       href: '/home',
       onClick: () => {
-        navigate({ to: '/home' });
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('home');
+        navigatePrimary('/home');
       },
     },
     {
@@ -32,8 +38,7 @@ export const navItemsAuthenticated = (
       icon: 'MessageSquare',
       href: '/messages',
       onClick: () => {
-        navigate({ to: '/messages' });
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('messages');
+        navigatePrimary('/messages');
       },
     },
     {
@@ -42,8 +47,7 @@ export const navItemsAuthenticated = (
       icon: 'Search',
       href: '/search',
       onClick: () => {
-        navigate({ to: '/search' });
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('search');
+        navigatePrimary('/search');
       },
     },
     {
@@ -52,8 +56,7 @@ export const navItemsAuthenticated = (
       icon: 'PlusCircle',
       href: '/create',
       onClick: () => {
-        navigate({ to: '/create' });
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('create');
+        navigatePrimary('/create');
       },
     },
 
@@ -63,8 +66,7 @@ export const navItemsAuthenticated = (
       icon: 'Calendar',
       href: '/calendar',
       onClick: () => {
-        navigate({ to: '/calendar' });
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('calendar');
+        navigatePrimary('/calendar');
       },
     },
     {
@@ -73,8 +75,7 @@ export const navItemsAuthenticated = (
       icon: 'CheckSquare',
       href: '/todos',
       onClick: () => {
-        navigate({ to: '/todos' });
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('todos');
+        navigatePrimary('/todos');
       },
     },
     {
@@ -83,8 +84,7 @@ export const navItemsAuthenticated = (
       icon: 'Bell',
       href: '/notifications',
       onClick: () => {
-        navigate({ to: '/notifications' });
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('notifications');
+        navigatePrimary('/notifications');
       },
     },
   ];

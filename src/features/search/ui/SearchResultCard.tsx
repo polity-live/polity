@@ -1,5 +1,7 @@
+import { memo } from 'react';
 import { Search } from 'lucide-react';
 import { getHashtagToneClasses } from '@/features/shared/theme';
+import { Card } from '@/features/shared/ui/ui/card';
 import { DynamicTimelineCard } from '@/features/timeline/ui/LazyCardComponents';
 import {
   TimelineCardBase,
@@ -16,8 +18,24 @@ import {
 } from '../logic/searchResultHref';
 import type { SearchContentItem } from '../types/search.types';
 import type { SearchDocument, SearchDocumentCardPayload } from '../types/search-document.types';
+import { useSearchCardState } from '../SearchCardStateProvider';
 
 type SearchResultType = SearchContentItem['type'];
+interface SearchTimelineCardDefinition {
+  item: SearchContentItem | null;
+  cardType: ReturnType<typeof buildTimelineCardProps>['cardType'];
+  cardProps: ReturnType<typeof buildTimelineCardProps>['cardProps'];
+}
+interface SearchCardModel {
+  payload: SearchDocumentCardPayload;
+  href: string;
+  type: string;
+  title: string;
+  subtitle?: string;
+  excerpt?: string;
+  tags: string[];
+  stats: { label: string; value: number | string }[];
+}
 
 const TIMELINE_SEARCH_TYPES = new Set<SearchResultType>([
   'amendment',
@@ -32,6 +50,8 @@ const TIMELINE_SEARCH_TYPES = new Set<SearchResultType>([
   'video',
   'vote',
 ]);
+const timelineCardDefinitionCache = new WeakMap<SearchDocument, SearchTimelineCardDefinition>();
+const searchCardModelCache = new WeakMap<SearchDocument, SearchCardModel>();
 
 const SEARCH_TIMELINE_CARD_CLASS = [
   'entity-search-card-no-spotlight',
@@ -133,8 +153,11 @@ function cleanSubtitle(value: string | null | undefined) {
   return value.startsWith('@') ? undefined : value;
 }
 
-function toContentItem(document: SearchDocument): SearchContentItem | null {
-  const payload = asPayload(document.card_payload);
+function toContentItem(
+  document: SearchDocument,
+  model = getSearchCardModel(document)
+): SearchContentItem | null {
+  const payload = model.payload;
   const type = getSearchType(document, payload);
   if (!type) return null;
 
@@ -142,7 +165,7 @@ function toContentItem(document: SearchDocument): SearchContentItem | null {
   const metadata = isRecord(payload.metadata) ? payload.metadata : {};
   const createdAt = asDate(document.created_at) ?? new Date();
   const updatedAt = asDate(document.updated_at);
-  const tags = collectTags(document, payload);
+  const tags = model.tags;
   const groupName = document.group?.name ?? undefined;
   const subtitle = document.subtitle ?? undefined;
   const description =
@@ -205,6 +228,12 @@ function toContentItem(document: SearchDocument): SearchContentItem | null {
     groupCount: getStat(payload, 'groups'),
     amendmentCount: getStat(payload, 'amendments'),
     collaboratorCount: getStat(payload, 'collaborators'),
+    subscriberCount: getStat(payload, 'subscribers'),
+    groupType: payload.group_type,
+    connectedGroupId: payload.connected_group_id,
+    primarySiblingMembershipMode: payload.primary_sibling_membership_mode,
+    eventType: payload.event_type,
+    visibility: document.visibility,
     supportingGroupsCount: getStat(payload, 'supporting_groups'),
     changeRequestCount: getStat(payload, 'change_requests'),
     commentCount: getStat(payload, 'comments'),
@@ -249,6 +278,102 @@ function toContentItem(document: SearchDocument): SearchContentItem | null {
   return item;
 }
 
+function getTimelineCardDefinition(document: SearchDocument): SearchTimelineCardDefinition {
+  const cached = timelineCardDefinitionCache.get(document);
+  if (cached) return cached;
+
+  const item = toContentItem(document);
+  const definition = item
+    ? { item, ...buildTimelineCardProps(item) }
+    : { item: null, cardType: null, cardProps: null };
+  timelineCardDefinitionCache.set(document, definition);
+  return definition;
+}
+
+function getSearchCardModel(document: SearchDocument): SearchCardModel {
+  const cached = searchCardModelCache.get(document);
+  if (cached) return cached;
+
+  const payload = asPayload(document.card_payload);
+  const stats = isRecord(payload.stats)
+    ? Object.entries(payload.stats)
+        .flatMap(([label, value]) =>
+          typeof value === 'number' || typeof value === 'string' ? [{ label, value }] : []
+        )
+        .slice(0, 3)
+    : [];
+  const model = {
+    payload,
+    href: getSearchDocumentHref(document),
+    type: String(payload.type || document.entity_type || 'Result'),
+    title: document.title || 'Result',
+    subtitle: document.subtitle || document.group?.name || undefined,
+    excerpt: document.summary || document.search_text || undefined,
+    tags: collectTags(document, payload),
+    stats,
+  };
+  searchCardModelCache.set(document, model);
+  return model;
+}
+
+function SearchPreviewCard({ document }: { document: SearchDocument }) {
+  const model = getSearchCardModel(document);
+  const hashtagTone = getHashtagToneClasses();
+
+  return (
+    <a
+      href={model.href}
+      aria-label={model.title}
+      data-search-card-mode="preview"
+      className="focus-visible:ring-ring block h-full rounded-2xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+    >
+      <Card
+        surface="search"
+        shape="xl"
+        className="hover:bg-accent/20 flex h-full flex-col overflow-hidden transition-colors"
+      >
+        <div className="border-border/70 bg-muted/35 border-b p-4">
+          <span className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+            {model.type}
+          </span>
+          <h2 className="mt-1 line-clamp-2 text-base font-semibold">{model.title}</h2>
+          {model.subtitle ? (
+            <p className="text-muted-foreground mt-1 truncate text-xs">{model.subtitle}</p>
+          ) : null}
+        </div>
+
+        <div className="flex min-h-0 flex-1 flex-col p-4">
+          {model.excerpt ? (
+            <p className="text-muted-foreground line-clamp-5 text-sm">{model.excerpt}</p>
+          ) : null}
+          {model.tags.length > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {model.tags.slice(0, 3).map(tag => (
+                <span
+                  key={tag}
+                  className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs ${hashtagTone.badge}`}
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {model.stats.length > 0 ? (
+            <dl className="text-muted-foreground mt-auto flex flex-wrap gap-x-4 gap-y-1 pt-4 text-xs">
+              {model.stats.map(stat => (
+                <div key={stat.label} className="flex gap-1">
+                  <dt>{stat.label}</dt>
+                  <dd className="text-foreground font-medium">{stat.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+        </div>
+      </Card>
+    </a>
+  );
+}
+
 function SearchFallbackCard({ document }: { document: SearchDocument }) {
   const payload = asPayload(document.card_payload);
   const tags = collectTags(document, payload).slice(0, 3);
@@ -291,32 +416,91 @@ function SearchFallbackCard({ document }: { document: SearchDocument }) {
   );
 }
 
-export function SearchResultCard({ document }: { document: SearchDocument }) {
-  const item = toContentItem(document);
+function InteractiveSearchResultCard({ document }: { document: SearchDocument }) {
+  const searchCardState = useSearchCardState();
+  const { item, cardType, cardProps } = getTimelineCardDefinition(document);
 
   if (!item) {
-    return (
-      <div className="civic-page-reveal rounded-xl">
-        <SearchFallbackCard document={document} />
-      </div>
-    );
+    return <SearchFallbackCard document={document} />;
   }
 
-  const { cardType, cardProps } = buildTimelineCardProps(item);
   if (!cardType || !cardProps) {
     return null;
   }
 
+  const entityId =
+    item.type === 'group'
+      ? (item.groupId ?? item.id)
+      : item.type === 'event'
+        ? (item.eventId ?? item.id)
+        : item.id;
+  const projectedCardProps: Record<string, unknown> = {};
+  if (
+    searchCardState &&
+    (item.type === 'user' ||
+      item.type === 'group' ||
+      item.type === 'amendment' ||
+      item.type === 'event' ||
+      item.type === 'blog')
+  ) {
+    projectedCardProps.projectedSubscriptionState = searchCardState.getSubscriptionState(
+      item.type,
+      entityId,
+      item.subscriberCount ?? 0
+    );
+  }
+  if (searchCardState && item.type === 'group') {
+    projectedCardProps.projectedMembershipState = searchCardState.getGroupState({
+      id: entityId,
+      memberCount: item.memberCount ?? 0,
+      groupType: item.groupType,
+      connectedGroupId: item.connectedGroupId,
+      primarySiblingMembershipMode: item.primarySiblingMembershipMode,
+    });
+  }
+  if (searchCardState && item.type === 'event') {
+    projectedCardProps.projectedParticipationState = searchCardState.getEventState({
+      id: entityId,
+      participantCount: item.attendeeCount ?? 0,
+      eventType: item.eventType,
+      visibility: item.visibility ?? 'public',
+      groupId: item.groupId,
+    });
+  }
+  if (searchCardState && item.type === 'amendment') {
+    projectedCardProps.projectedCollaborationState = searchCardState.getAmendmentState(
+      entityId,
+      item.collaboratorCount ?? 0
+    );
+  }
+
   return (
-    <div className="civic-page-reveal rounded-xl">
-      <DynamicTimelineCard
-        cardType={cardType}
-        cardProps={{
-          ...cardProps,
-          className: SEARCH_TIMELINE_CARD_CLASS,
-        }}
-        className={SEARCH_TIMELINE_CARD_CLASS}
-      />
-    </div>
+    <DynamicTimelineCard
+      cardType={cardType}
+      cardProps={{
+        ...cardProps,
+        ...projectedCardProps,
+        className: SEARCH_TIMELINE_CARD_CLASS,
+      }}
+      className={SEARCH_TIMELINE_CARD_CLASS}
+    />
   );
 }
+
+export const SearchResultCard = memo(function SearchResultCard({
+  document,
+  mode = 'interactive',
+}: {
+  document: SearchDocument;
+  mode?: 'preview' | 'interactive';
+}) {
+  return (
+    <div data-search-card-mode={mode} className="h-full rounded-xl">
+      {mode === 'preview' ? (
+        <SearchPreviewCard document={document} />
+      ) : (
+        <InteractiveSearchResultCard document={document} />
+      )}
+    </div>
+  );
+});

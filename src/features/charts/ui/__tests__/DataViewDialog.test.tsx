@@ -81,6 +81,10 @@ vi.mock('@/providers/auth-provider', () => ({
   useAuth: () => ({ session: { access_token: 'token', user: { id: 'user-id' } } }),
 }));
 
+vi.mock('@/providers/zero-ready-context', () => ({
+  useZeroReady: () => true,
+}));
+
 vi.mock('@/zero/groups/useGroupState', () => ({
   useCurrentUserActiveGroups: () => ({
     groups: [

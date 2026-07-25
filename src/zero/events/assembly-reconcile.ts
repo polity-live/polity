@@ -157,17 +157,10 @@ export async function reconcileGeneralAssemblyParticipantsForEvent(
     return;
   }
 
-  console.info('Server validation started', {
-    flow: 'general-assembly-reconcile',
-    eventId: event.id,
-    groupId: event.group_id,
-    assignedById: assignedById ?? null,
-  });
-
   const attendanceMode = resolveAttendanceMode(event);
   const shouldSeedOfflineParticipants = attendanceMode !== 'online';
   const [
-    { eligibleUserIds, descendantBaseGroupIds },
+    { eligibleUserIds },
     eligibleOfflineMemberships,
     eventRoles,
     participants,
@@ -408,30 +401,7 @@ export async function reconcileGeneralAssemblyParticipantsForEvent(
         eventTitle: resolvedEventTitle,
       });
     }
-
-    console.info('[general-assembly-reconcile]', {
-      eventId: event.id,
-      groupId: event.group_id,
-      attendanceMode,
-      shouldAutoInvite,
-      descendantBaseGroupIds,
-      eligibleUserCount: eligibleUserIds.size,
-      addedUserIds,
-      removedUserIds,
-      addedOfflineParticipantIds,
-      removedOfflineParticipantIds,
-    });
   }
-
-  console.info('Server successful', {
-    flow: 'general-assembly-reconcile',
-    eventId: event.id,
-    groupId: event.group_id,
-    addedUserIds,
-    removedUserIds,
-    addedOfflineParticipantIds,
-    removedOfflineParticipantIds,
-  });
 }
 
 export async function reconcileGeneralAssemblyParticipantsForGroups(
@@ -445,18 +415,6 @@ export async function reconcileGeneralAssemblyParticipantsForGroups(
       zql.event.where('group_id', groupId).where('event_type', 'general_assembly')
     );
     const events = allGeneralAssemblyEvents.filter(event => event.status !== 'cancelled');
-
-    console.info('[general-assembly-reconcile:group-events]', {
-      groupId,
-      assignedById: assignedById ?? null,
-      eventIds: events.map(event => event.id),
-      eventCount: events.length,
-      allEventIds: allGeneralAssemblyEvents.map(event => event.id),
-      allEventStatuses: allGeneralAssemblyEvents.map(event => ({
-        eventId: event.id,
-        status: event.status ?? null,
-      })),
-    });
 
     for (const event of events) {
       await reconcileGeneralAssemblyParticipantsForEvent(tx, event.id, assignedById);

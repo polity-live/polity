@@ -7,6 +7,10 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useEventParticipation } from '@/features/events/hooks/useEventParticipation';
 import { useSubscribeEvent } from '@/features/events/hooks/useSubscribeEvent';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
+import type {
+  ProjectedEventParticipationState,
+  ProjectedSubscriptionState,
+} from '@/features/search/types/projected-card-state';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';
 
 export interface EventTimelineCardProps {
@@ -59,6 +63,8 @@ export interface EventTimelineCardProps {
   /** Loading state for subscription action */
   isSubscriptionLoading?: boolean;
   className?: string;
+  projectedParticipationState?: ProjectedEventParticipationState;
+  projectedSubscriptionState?: ProjectedSubscriptionState;
 }
 
 /**
@@ -148,11 +154,13 @@ export function EventTimelineCard({
   isParticipationLoading,
   isSubscriptionLoading,
   className,
+  projectedParticipationState,
+  projectedSubscriptionState,
 }: EventTimelineCardProps) {
   const { t } = useTranslation();
   const [rsvpOpen, setRsvpOpen] = useState(false);
-  const participation = useEventParticipation(event.id);
-  const subscription = useSubscribeEvent(event.id);
+  const participation = useEventParticipation(event.id, projectedParticipationState);
+  const subscription = useSubscribeEvent(event.id, projectedSubscriptionState);
 
   const startDate = new Date(event.startDate);
   const { day, month, time, status: eventTimeStatus } = formatEventDate(startDate);

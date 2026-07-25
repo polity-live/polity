@@ -8,7 +8,8 @@
 #        ZERO_UPSTREAM_DB="postgresql://postgres:PASSWORD@db.PROJECT.supabase.co:5432/postgres?sslmode=require" \
 #        ZERO_CVR_DB="postgresql://postgres.PROJECT:PASSWORD@aws-1-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require" \
 #        ZERO_CHANGE_DB="postgresql://postgres.PROJECT:PASSWORD@aws-1-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require" \
-#        ZERO_ADMIN_PASSWORD="your-strong-password"
+#        ZERO_ADMIN_PASSWORD="your-strong-password" \
+#        OTEL_EXPORTER_OTLP_ENDPOINT="https://your-otel-collector.example"
 #   5. fly deploy
 
 app = "polity-zero"
@@ -38,6 +39,12 @@ primary_region = "fra"
   ZERO_NUM_SYNC_WORKERS = "1"
   ZERO_CVR_MAX_CONNS = "8"
   ZERO_CHANGE_MAX_CONNS = "3"
+
+  # Zero exports its native sync/query/hydration/CVR/replication metrics and
+  # traces when OTEL_EXPORTER_OTLP_ENDPOINT is configured as a Fly secret.
+  # HTTP instrumentation adds the custom-query API request duration.
+  OTEL_SERVICE_NAME = "polity-zero"
+  OTEL_NODE_ENABLED_INSTRUMENTATIONS = "http"
 
 [http_service]
   internal_port = 4848
