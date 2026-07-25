@@ -95,7 +95,7 @@ describe('SettingsLayout', () => {
     expect(screen.getByText('Workflow content')).toBeTruthy();
   });
 
-  it('keeps tab navigation horizontally scrollable and actions sticky', () => {
+  it('keeps tab navigation scrollable, actions sticky, and management controls chromeless', () => {
     const { container } = render(<TestSettings />);
     const tabList = screen.getByRole('tablist');
     const actionBar = container.querySelector('[data-slot="settings-action-bar"]');
@@ -104,7 +104,14 @@ describe('SettingsLayout', () => {
     expect(tabList.className).toContain('overflow-x-auto');
     expect(actionBar?.className).toContain('sticky');
     expect(actionBar?.className).toContain('bottom-3');
-    expect(toolbar?.className).toContain('rounded-lg');
+    expect(toolbar?.classList.contains('flex')).toBe(true);
+    expect(toolbar?.className).toContain('sm:flex-row');
+    expect(toolbar?.className).toContain('[&>*]:min-w-0');
+    expect(toolbar?.className).toContain('[&_[data-slot=participation-role-filter]]:mb-0');
+    expect(toolbar?.classList.contains('rounded-lg')).toBe(false);
+    expect(toolbar?.classList.contains('border')).toBe(false);
+    expect(toolbar?.classList.contains('bg-muted/20')).toBe(false);
+    expect(toolbar?.classList.contains('p-3')).toBe(false);
   });
 
   it('renders management headings on the page background above the table surface', () => {

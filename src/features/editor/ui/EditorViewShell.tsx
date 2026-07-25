@@ -186,10 +186,10 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
   }
 
   return (
-    <div className={cn('container mx-auto px-8 pb-8', compactToolbarSpacing ? 'pt-2' : 'pt-8')}>
+    <div className={cn('w-full pb-8', compactToolbarSpacing ? 'pt-7' : 'pt-8')}>
       {/* Top toolbar */}
       {showTopToolbar ? (
-        <div className="scrollbar-hide -mx-8 mb-6 overflow-x-auto px-8 sm:mx-0 sm:px-0">
+        <div className="scrollbar-hide mb-6 overflow-x-auto">
           <div className="flex w-max min-w-full items-center justify-end gap-4">
             {/* Share Button */}
             {capabilities.sharing && (
@@ -249,28 +249,30 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
       {/* Editor Card */}
       <Card className="mt-4">
         <CardHeader>
-          <div className="flex items-center gap-4">
-            <FileText className="h-8 w-8" />
-            <EditorHeader
-              title={title}
-              onTitleChange={setTitle}
-              isEditingTitle={isEditingTitle}
-              setIsEditingTitle={setIsEditingTitle}
-              canEditTitle={!readOnly}
-              isSavingTitle={isSavingTitle}
-              saveStatus={saveStatus}
-              hasUnsavedChanges={hasUnsavedChanges}
-              presenceSlot={
-                <OnlineCollaboratorAvatars
-                  collaborators={entity.collaborators}
-                  onlinePeerMap={onlinePeerMap}
-                  activeCursorUserIds={activeCursorUserIds}
-                  currentUserId={userId}
-                  presenceColorByUserId={presenceColorByUserId}
-                  enabled={capabilities.presence}
-                />
-              }
-            />
+          <div className="flex min-w-0 items-start gap-4">
+            <FileText className="h-8 w-8 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <EditorHeader
+                title={title}
+                onTitleChange={setTitle}
+                isEditingTitle={isEditingTitle}
+                setIsEditingTitle={setIsEditingTitle}
+                canEditTitle={!readOnly}
+                isSavingTitle={isSavingTitle}
+                saveStatus={saveStatus}
+                hasUnsavedChanges={hasUnsavedChanges}
+                presenceSlot={
+                  <OnlineCollaboratorAvatars
+                    collaborators={entity.collaborators}
+                    onlinePeerMap={onlinePeerMap}
+                    activeCursorUserIds={activeCursorUserIds}
+                    currentUserId={userId}
+                    presenceColorByUserId={presenceColorByUserId}
+                    enabled={capabilities.presence}
+                  />
+                }
+              />
+            </div>
           </div>
           <CardDescription>{t('features.editor.description')}</CardDescription>
 
@@ -304,6 +306,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
               key={contentEntityId}
               value={content}
               onChange={setContent}
+              editorClassName="px-0 md:px-[max(64px,calc(50%-350px))]"
               documentId={contentEntityId}
               documentTitle={title}
               currentMode={mode}

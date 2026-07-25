@@ -59,10 +59,17 @@ export function CommentInputView({
           <Send className="h-4 w-4" />
         </Button>
       </div>
-      <p className="text-muted-foreground text-xs">
-        {text.length}
-        {translateText('generated.inline.1113_characters_ctrl_enter_to_submit_ec3a274b')}
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-muted-foreground text-xs">
+          {text.length}{' '}
+          {translateText('generated.inline.1113_characters_ctrl_enter_to_submit_ec3a274b')}
+        </p>
+        {!replyTo && onCancelReply ? (
+          <Button variant="ghost" size="sm" onClick={onCancelReply} className="h-7">
+            {translateText('generated.inline.0065_cancel_77dfd213')}
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }

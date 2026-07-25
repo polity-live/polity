@@ -32,7 +32,7 @@ import type { AmendmentForwardingPreviewModel } from '@/features/amendments/logi
 
 export { resolvePreviewCrIdForTimelineItem } from '../logic/changeRequestDocumentPreview';
 
-type TabValue = 'all' | 'open' | 'accepted' | 'rejected';
+type TabValue = 'all' | 'open' | 'accepted' | 'rejected' | 'obsolete';
 export type ChangeRequestSortMode = ChangeRequestVoteOrder;
 
 function getVoteStepKind(item: ChangeRequestTimelineRow) {
@@ -63,6 +63,7 @@ export function sortChangeRequestTimelineItems(
 
 interface ChangeRequestCardsListProps {
   items: ChangeRequestTimelineRow[];
+  obsoleteItems?: ChangeRequestTimelineRow[];
   editingMode: EditingMode;
   isVotingActive: boolean;
   userId?: string;
@@ -119,6 +120,7 @@ interface ChangeRequestCardsListProps {
 }
 export function useChangeRequestCardsListController({
   items,
+  obsoleteItems = [],
   editingMode,
   isVotingActive,
   userId,
@@ -200,6 +202,14 @@ export function useChangeRequestCardsListController({
       }),
     [crIdToDiscussionId, sortMode, suggestionDocumentOrder, unsortedCrItems]
   );
+  const obsoleteCrItems = useMemo(
+    () =>
+      sortChangeRequestTimelineItems(obsoleteItems, sortMode, {
+        crIdToDiscussionId,
+        suggestionDocumentOrder,
+      }),
+    [crIdToDiscussionId, obsoleteItems, sortMode, suggestionDocumentOrder]
+  );
   const votableCrItems = useMemo(
     () => crItems.filter(item => !isPendingSubmissionCRTimelineItem(item)),
     [crItems]
@@ -212,7 +222,7 @@ export function useChangeRequestCardsListController({
     ],
     [changeRequestVotesPlaceholderItem, closingVoteItem, variantVoteItem, votableCrItems]
   );
-  const hasCRCategoryItems = crItems.length > 0;
+  const hasCRCategoryItems = crItems.length > 0 || obsoleteCrItems.length > 0;
 
   useEffect(() => {
     if (!hasCRCategoryItems && activeTab !== 'all') {
@@ -254,6 +264,16 @@ export function useChangeRequestCardsListController({
       return title.includes(query) || description.includes(query);
     });
   }, [crItems, searchQuery]);
+  const searchedObsoleteItems = useMemo(() => {
+    if (!searchQuery.trim()) return obsoleteCrItems;
+    const query = searchQuery.toLowerCase();
+    return obsoleteCrItems.filter(item => {
+      const cr = item.change_request;
+      const title = cr?.title?.toLowerCase() ?? '';
+      const description = cr?.description?.toLowerCase() ?? '';
+      return title.includes(query) || description.includes(query);
+    });
+  }, [obsoleteCrItems, searchQuery]);
 
   // Categorize CR items by status for tabs
   const categorized = useMemo(() => {
@@ -271,8 +291,8 @@ export function useChangeRequestCardsListController({
       else open.push(item);
     }
 
-    return { open, accepted, rejected };
-  }, [searchedItems, isVotingActive]);
+    return { open, accepted, rejected, obsolete: searchedObsoleteItems };
+  }, [searchedItems, isVotingActive, searchedObsoleteItems]);
 
   const getFilteredItems = (tab: TabValue): ChangeRequestTimelineRow[] => {
     if (!hasCRCategoryItems) {
@@ -286,6 +306,8 @@ export function useChangeRequestCardsListController({
         return categorized.accepted;
       case 'rejected':
         return categorized.rejected;
+      case 'obsolete':
+        return categorized.obsolete;
       case 'all':
       default:
         return [
@@ -421,6 +443,7 @@ export function useChangeRequestCardsListController({
     closingVoteItem,
     variantVoteItem,
     crItems,
+    obsoleteCrItems,
     sequenceItems,
     hasCRCategoryItems,
     sharedPreviewEnabled,
@@ -428,6 +451,7 @@ export function useChangeRequestCardsListController({
     selectedPreviewCrIds,
     setSelectedPreviewCrIds,
     searchedItems,
+    searchedObsoleteItems,
     categorized,
     getFilteredItems,
     filteredItems,

@@ -18,6 +18,9 @@ export interface ChangeRequestsPageContainerViewProps {
   diffMap: any;
   discussions: any;
   branchSections: any;
+  obsoleteBranchSections: any;
+  obsoleteTimelineItems: any;
+  obsoleteDiffMap: any;
   branchSelectorBranches: any;
   selectedBranchId: any;
   selectedBranchEditingMode: EditingMode;
@@ -61,6 +64,9 @@ export function ChangeRequestsPageContainerView({
   diffMap,
   discussions,
   branchSections,
+  obsoleteBranchSections,
+  obsoleteTimelineItems,
+  obsoleteDiffMap,
   branchSelectorBranches,
   selectedBranchId,
   selectedBranchEditingMode,
@@ -105,7 +111,10 @@ export function ChangeRequestsPageContainerView({
         isInVotingStage={isInVotingStage}
         isLoading={isLoading}
         timelineItems={timelineItems}
+        obsoleteTimelineItems={obsoleteTimelineItems}
+        obsoleteDiffMap={obsoleteDiffMap}
         branchSections={branchSections}
+        obsoleteBranchSections={obsoleteBranchSections}
         branchSelectorBranches={branchSelectorBranches}
         selectedBranchId={selectedBranchId}
         branchDiffCandidates={branchDiffCandidates}

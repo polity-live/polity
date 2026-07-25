@@ -73,6 +73,7 @@ export const agendasTranslations = {
     tabAll: 'All',
     tabOpen: 'Open',
     tabRejected: 'Rejected',
+    tabObsolete: 'Obsolete',
     variantVoteShort: 'Variant',
   },
   mergeComparison: {

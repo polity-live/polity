@@ -158,10 +158,13 @@ export async function handleAiChatRequest(request: Request): Promise<Response> {
       : historyMessages;
 
     const tools = buildAiTools(session.user.id, body.timeZone);
-    const activeToolNames: (keyof typeof tools)[] = [
-      ...(selectedToolNames.filter(toolName => toolName in tools) as (keyof typeof tools)[]),
-      'present_findings',
-    ];
+    const activeToolNames: (keyof typeof tools)[] = Array.from(
+      new Set<keyof typeof tools>([
+        ...(selectedToolNames.filter(toolName => toolName in tools) as (keyof typeof tools)[]),
+        'read_polity_docs',
+        'present_findings',
+      ])
+    );
     const toolAttachments: ReturnType<typeof dedupeAiChatAttachments> = [];
     const toolPresentations: AiPresentationBlock[] = [];
     const currentUserContext = await buildCurrentUserScopePrompt(session.user.id);

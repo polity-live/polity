@@ -647,7 +647,7 @@ export function StreetDesignSecondaryActionBarView({
   const colorModeIsTinted = changeRequestColorMode === 'tinted';
 
   return (
-    <div className="scrollbar-hide -mx-8 mb-6 overflow-x-auto px-8 sm:mx-0 sm:px-0">
+    <div className="scrollbar-hide mb-6 overflow-x-auto">
       <div className="flex w-max min-w-full items-center justify-end gap-4">
         <ShareButton
           url={`/amendment/${amendmentId}/streetscape`}

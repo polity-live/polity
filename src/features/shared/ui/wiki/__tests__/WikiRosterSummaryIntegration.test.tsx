@@ -33,7 +33,8 @@ vi.mock('@/features/shared/ui/layout', () => ({
     </div>
   ),
   ActionBar: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  EntityPageFrame: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ResponsiveActionLabel: ({ full }: { full: ReactNode }) => <>{full}</>,
+  compactActionButtonClassName: 'compact-action',
 }));
 
 vi.mock('@/features/shared/ui/action-buttons', () => ({

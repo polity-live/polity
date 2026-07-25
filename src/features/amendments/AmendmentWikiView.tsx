@@ -17,7 +17,12 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { CheckCircle2, Copy, FileText, Users, Vote, XCircle } from 'lucide-react';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
-import { ActionBar, EntityPageFrame, StatsBar } from '@/features/shared/ui/layout';
+import {
+  ActionBar,
+  ResponsiveActionLabel,
+  StatsBar,
+  compactActionButtonClassName,
+} from '@/features/shared/ui/layout';
 import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
 import {
   getWikiParticipationName,
@@ -261,15 +266,25 @@ export function AmendmentWikiView({
   const branchCount = orderedBranches.length;
   const changeRequestCount =
     amendment.change_requests?.length ?? amendment.change_request_count ?? 0;
+  const cloneLabel = translateText('generated.inline.0071_clone_d8cdb573');
 
   return (
-    <EntityPageFrame>
+    <>
       {/* Header with centered title and subtitle */}
-      <div className="mb-8 text-center">
-        <div className="mb-2 flex items-center justify-center gap-3">
-          <h1 className="text-4xl font-bold">{amendment.title}</h1>
+      <div className="mb-4 text-center md:mb-8">
+        <div className="mb-2 flex min-w-0 flex-col items-center justify-center gap-1 md:flex-row md:gap-3">
+          <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{amendment.title}</h1>
           <EditingModeBadge mode={primaryBranchMode} showIcon />
         </div>
+        {amendment.amendment_hashtags && amendment.amendment_hashtags.length > 0 ? (
+          <div className="mt-3 md:hidden">
+            <HashtagDisplay
+              hashtags={extractHashtags(amendment.amendment_hashtags)}
+              centered
+              badgeClassName="max-w-full whitespace-normal break-all text-center"
+            />
+          </div>
+        ) : null}
         {amendment.preamble && (
           <p className="text-muted-foreground text-xl">{amendment.preamble}</p>
         )}
@@ -391,6 +406,7 @@ export function AmendmentWikiView({
               isSubscribed={isSubscribed}
               onToggleSubscribe={toggleSubscribe}
               isLoading={subscribeLoading}
+              compactOnMobile
             />
             <MembershipButton
               actionType="collaborate"
@@ -402,6 +418,7 @@ export function AmendmentWikiView({
               onLeave={collaboration.leaveCollaboration}
               onAcceptInvitation={collaboration.acceptInvitation}
               isLoading={collaboration.isLoading}
+              compactOnMobile
             />
             <VoteButtons
               upvotes={upvotes}
@@ -409,10 +426,17 @@ export function AmendmentWikiView({
               userVote={normalizedVoteValue}
               onVote={handleVote}
               orientation="horizontal"
+              presentation="surface"
             />
-            <Button variant="outline" size="default" onClick={handleClone}>
-              <Copy className="mr-2 h-4 w-4" />
-              {translateText('generated.inline.0071_clone_d8cdb573')}
+            <Button
+              variant="outline"
+              size="default"
+              onClick={handleClone}
+              className={compactActionButtonClassName}
+              aria-label={cloneLabel}
+            >
+              <Copy className="mr-0 h-4 w-4 sm:mr-2" />
+              <ResponsiveActionLabel full={cloneLabel} compact={cloneLabel} />
             </Button>
           </>
         ) : null}
@@ -435,12 +459,13 @@ export function AmendmentWikiView({
                 ?.map((relation: any) => relation.hashtag?.tag)
                 .filter((tag: any): tag is string => Boolean(tag)) ?? [],
           }}
+          compactOnMobile
         />
       </ActionBar>
 
       {/* Hashtags */}
       {amendment.amendment_hashtags && amendment.amendment_hashtags.length > 0 && (
-        <div className="mb-6">
+        <div className="mb-6 hidden md:block">
           <HashtagDisplay hashtags={extractHashtags(amendment.amendment_hashtags)} centered />
         </div>
       )}
@@ -737,6 +762,6 @@ export function AmendmentWikiView({
         )}
         confirmButtonText={translateText('generated.inline.0009_clone_amendment_71d1877f')}
       />
-    </EntityPageFrame>
+    </>
   );
 }

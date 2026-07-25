@@ -63,8 +63,8 @@ export function CREditorPreviewView({
           </div>
         ) : (
           editor && (
-            <div className="bg-muted/30 mt-2 rounded-lg border p-4">
-              <EditorStatic editor={editor} variant="none" />
+            <div className="bg-muted/30 mt-2 rounded-lg border">
+              <EditorStatic editor={editor} variant="preview" />
             </div>
           )
         )}

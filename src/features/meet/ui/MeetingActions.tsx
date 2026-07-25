@@ -1,5 +1,9 @@
 import { Button } from '@/features/shared/ui/ui/button';
-import { ActionBar } from '@/features/shared/ui/layout';
+import {
+  ActionBar,
+  ResponsiveActionLabel,
+  compactActionButtonClassName,
+} from '@/features/shared/ui/layout';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { Calendar, Settings, UserPlus, UserMinus } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -40,22 +44,45 @@ export function MeetingActions({
       {isAuthenticated ? (
         <>
           {!isOwner && !hasBooked && isAvailable && onBook ? (
-            <Button onClick={onBook}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              {t('features.meet.page.bookMeeting')}
+            <Button
+              onClick={onBook}
+              className={compactActionButtonClassName}
+              aria-label={t('features.meet.page.bookMeeting')}
+            >
+              <UserPlus className="mr-0 h-4 w-4 sm:mr-2" />
+              <ResponsiveActionLabel
+                full={t('features.meet.page.bookMeeting')}
+                compact={t('features.meet.page.compactBookMeeting')}
+              />
             </Button>
           ) : null}
 
           {hasBooked && !isPast && onCancelBooking ? (
-            <Button variant="outline" onClick={onCancelBooking}>
-              <UserMinus className="mr-2 h-4 w-4" />
-              {t('features.meet.page.cancelBooking')}
+            <Button
+              variant="outline"
+              onClick={onCancelBooking}
+              className={compactActionButtonClassName}
+              aria-label={t('features.meet.page.cancelBooking')}
+            >
+              <UserMinus className="mr-0 h-4 w-4 sm:mr-2" />
+              <ResponsiveActionLabel
+                full={t('features.meet.page.cancelBooking')}
+                compact={t('features.meet.page.compactCancelBooking')}
+              />
             </Button>
           ) : null}
 
-          <Button variant="outline" onClick={onNavigateCalendar}>
-            <Calendar className="mr-2 h-4 w-4" />
-            {t('features.meet.page.viewInCalendar')}
+          <Button
+            variant="outline"
+            onClick={onNavigateCalendar}
+            className={compactActionButtonClassName}
+            aria-label={t('features.meet.page.viewInCalendar')}
+          >
+            <Calendar className="mr-0 h-4 w-4 sm:mr-2" />
+            <ResponsiveActionLabel
+              full={t('features.meet.page.viewInCalendar')}
+              compact={t('features.meet.page.compactViewInCalendar')}
+            />
           </Button>
 
           {isOwner ? (
@@ -66,7 +93,12 @@ export function MeetingActions({
         </>
       ) : null}
 
-      <ShareButton url={`/event/${meetingId}`} title={title} description={description} />
+      <ShareButton
+        url={`/event/${meetingId}`}
+        title={title}
+        description={description}
+        compactOnMobile
+      />
     </ActionBar>
   );
 }

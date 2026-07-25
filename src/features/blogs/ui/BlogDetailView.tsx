@@ -10,7 +10,6 @@ import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx
 import { SubscribeButton } from '@/features/shared/ui/action-buttons';
 import { ActionBar } from '@/features/shared/ui/layout';
 import { StatsBar } from '@/features/shared/ui/layout';
-import { EntityPageFrame } from '@/features/shared/ui/layout';
 import {
   Card,
   CardContent,
@@ -204,12 +203,21 @@ export function BlogDetailView({
 
   return (
     <PageWrapper>
-      <EntityPageFrame>
+      <>
         <div className="mb-8 text-center">
-          <div className="mb-2 flex items-center justify-center gap-3">
-            <BookOpen className="h-8 w-8" />
-            <h1 className="text-4xl font-bold">{title}</h1>
+          <div className="mb-2 flex min-w-0 items-center justify-center gap-3">
+            <BookOpen className="h-8 w-8 shrink-0" />
+            <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{title}</h1>
           </div>
+          {hashtags.length > 0 ? (
+            <div className="mt-3 md:hidden">
+              <HashtagDisplay
+                hashtags={hashtags}
+                centered
+                badgeClassName="max-w-full whitespace-normal break-all text-center"
+              />
+            </div>
+          ) : null}
 
           {author ? (
             <div className="mt-4 flex items-center justify-center gap-3">
@@ -267,6 +275,7 @@ export function BlogDetailView({
                 isSubscribed={isSubscribed}
                 onToggleSubscribe={onSubscribeToggle}
                 isLoading={subscribeLoading}
+                compactOnMobile
               />
               <VoteButtons
                 upvotes={upvotes}
@@ -282,11 +291,12 @@ export function BlogDetailView({
             title={title}
             description=""
             shareContextItem={shareContextItem}
+            compactOnMobile
           />
         </ActionBar>
 
         {hashtags.length > 0 ? (
-          <div className="mb-6">
+          <div className="mb-6 hidden md:block">
             <HashtagDisplay hashtags={hashtags} centered />
           </div>
         ) : null}
@@ -432,7 +442,7 @@ export function BlogDetailView({
             </AlertDialogFooter>
           </ScrollableAlertDialogContent>
         </AlertDialog>
-      </EntityPageFrame>
+      </>
     </PageWrapper>
   );
 }

@@ -1308,8 +1308,14 @@ function LandingActivityStripPreviewView({
         </BadgeControl>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(280px,0.82fr)_minmax(0,1.18fr)]">
-        <div className="[&_.leaflet-container]:!h-80">
+      <div
+        className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(280px,0.82fr)_minmax(0,1.18fr)]"
+        data-slot="landing-activity-grid"
+      >
+        <div
+          className="max-w-full min-w-0 [&_.leaflet-container]:!h-80"
+          data-slot="landing-activity-map-column"
+        >
           <CivicTimelineMap
             items={landingActivityTimelineItems}
             activeItemId={activeItemId}
@@ -1317,12 +1323,14 @@ function LandingActivityStripPreviewView({
             onItemSelect={item => onActiveItemChange(item.id)}
           />
         </div>
-        <CivicTimelineRail
-          sections={landingActivityTimelineSections}
-          activeItemId={activeItemId}
-          onActiveItemChange={onActiveItemChange}
-          onItemSelect={item => onActiveItemChange(item.id)}
-        />
+        <div className="max-w-full min-w-0" data-slot="landing-activity-rail-column">
+          <CivicTimelineRail
+            sections={landingActivityTimelineSections}
+            activeItemId={activeItemId}
+            onActiveItemChange={onActiveItemChange}
+            onItemSelect={item => onActiveItemChange(item.id)}
+          />
+        </div>
       </div>
     </div>
   );
@@ -1462,11 +1470,11 @@ function LandingSearchPreviewView({
           style={{ transform: `translateX(${caretOffset})` }}
         />
       </div>
-      <div className="mt-5 grid gap-4 md:grid-cols-3">
+      <div className="mt-5 grid min-w-0 grid-cols-1 gap-4 md:grid-cols-3">
         {documents.map((document, index) => (
           <div
             key={`${typingCycle}-${document.id}`}
-            className="landing-search-result-card min-h-[14rem]"
+            className="landing-search-result-card min-h-[14rem] max-w-full min-w-0"
             style={{ animationDelay: `${resultBaseDelayMs + index * 140}ms` }}
           >
             <SearchResultCard document={document} />

@@ -112,6 +112,23 @@ function baseProps() {
 }
 
 describe('ChangeRequestsView branch sections', () => {
+  it('uses the shell spacing without a hidden-heading gap or additional mobile inset', () => {
+    const { container } = render(<ChangeRequestsView {...baseProps()} />);
+    const content = container.querySelector('[data-slot="change-requests-page-content"]');
+    const heading = container.querySelector('h1.sr-only');
+    const visibleContent = heading?.nextElementSibling;
+
+    expect(content?.className).not.toContain('md:px-8');
+    expect(visibleContent?.className).toContain('space-y-6');
+    expect(visibleContent?.className).not.toContain('pt-5');
+    expect(visibleContent?.contains(heading ?? null)).toBe(false);
+    expect(changeRequestCardsListMock.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        containerVariant: 'frameless',
+      })
+    );
+  });
+
   it('keeps a signed-out viewer read-only while rendering the change requests', () => {
     render(
       <ChangeRequestsView
@@ -218,6 +235,7 @@ describe('ChangeRequestsView branch sections', () => {
         diffMap: branchOneDiffMap,
         discussions: branchOneDiscussions,
         documentContent: branchOneDocument,
+        containerVariant: 'frameless',
       })
     );
 
@@ -241,6 +259,7 @@ describe('ChangeRequestsView branch sections', () => {
         hideInlineVotingControls: true,
         showAgendaDetailsVoteActions: true,
         documentContent: branchTwoDocument,
+        containerVariant: 'frameless',
       })
     );
   });
@@ -275,7 +294,7 @@ describe('ChangeRequestsView branch sections', () => {
       },
     ];
 
-    render(<ChangeRequestsView {...baseProps()} branchSections={branchSections} />);
+    render(<ChangeRequestsView {...baseProps()} branchSections={branchSections} virtualize />);
 
     expect(screen.getAllByTestId('change-request-branch-section')).toHaveLength(2);
     expect(screen.getAllByTestId('change-request-cards-list')).toHaveLength(2);
@@ -284,6 +303,7 @@ describe('ChangeRequestsView branch sections', () => {
         items: branchSections[0].timelineItems,
         editingMode: 'vote_internal',
         isVotingActive: true,
+        virtualize: true,
       })
     );
     expect(changeRequestCardsListMock.mock.calls[1]?.[0]).toEqual(
@@ -291,6 +311,7 @@ describe('ChangeRequestsView branch sections', () => {
         items: branchSections[1].timelineItems,
         editingMode: 'suggest_event',
         isVotingActive: true,
+        virtualize: true,
         hideInlineVotingControls: true,
         showAgendaDetailsVoteActions: true,
       })
@@ -310,6 +331,28 @@ describe('ChangeRequestsView branch sections', () => {
         diffMap: props.diffMap,
         discussions: props.discussions,
         documentContent: props.documentContent,
+        containerVariant: 'frameless',
+      })
+    );
+  });
+
+  it('passes the complete list to one frameless virtualized list shell', () => {
+    const props = baseProps();
+    const secondItem = timelineItem('flat-cr-2');
+    render(
+      <ChangeRequestsView
+        {...props}
+        timelineItems={[...props.timelineItems, secondItem]}
+        virtualize
+      />
+    );
+
+    expect(screen.getAllByTestId('change-request-cards-list')).toHaveLength(1);
+    expect(changeRequestCardsListMock.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        containerVariant: 'frameless',
+        virtualize: true,
+        items: [...props.timelineItems, secondItem],
       })
     );
   });
@@ -324,6 +367,34 @@ describe('ChangeRequestsView branch sections', () => {
     expect(changeRequestCardsListMock.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({
         items: [],
+      })
+    );
+  });
+
+  it('passes obsolete change requests into the regular list for its dedicated tab', () => {
+    const obsoleteItem = timelineItem('obsolete-cr');
+    const obsoleteDiff = {
+      changeType: 'replace',
+      originalText: 'Before',
+      newText: 'After',
+    };
+
+    render(
+      <ChangeRequestsView
+        {...baseProps()}
+        obsoleteTimelineItems={[obsoleteItem]}
+        obsoleteDiffMap={{ 'obsolete-cr': obsoleteDiff }}
+      />
+    );
+
+    expect(screen.queryByTestId('obsolete-change-requests-section')).toBeNull();
+    expect(changeRequestCardsListMock.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        items: baseProps().timelineItems,
+        obsoleteItems: [obsoleteItem],
+        diffMap: {
+          'obsolete-cr': obsoleteDiff,
+        },
       })
     );
   });

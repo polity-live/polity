@@ -172,11 +172,11 @@ const DECISION_TERMINAL_GRID_MARGIN: Record<DecisionTerminalGridBreakpoint, [num
 };
 
 const DECISION_TERMINAL_GRID_PADDING: Record<DecisionTerminalGridBreakpoint, [number, number]> = {
-  lg: [10, 10],
-  md: [10, 10],
-  sm: [8, 8],
-  xs: [8, 8],
-  xxs: [8, 8],
+  lg: [0, 10],
+  md: [0, 10],
+  sm: [0, 8],
+  xs: [0, 8],
+  xxs: [0, 8],
 };
 
 const DECISION_TERMINAL_DRAG_CANCEL = [

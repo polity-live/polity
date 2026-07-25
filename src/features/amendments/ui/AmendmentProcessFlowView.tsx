@@ -54,7 +54,6 @@ import {
   Workflow,
   X,
 } from 'lucide-react';
-import { AmendmentProcessDetailsPanel } from '@/features/amendments/ui/AmendmentProcessDetailsPanel';
 import { normalizeGroupAmendmentDisplayStatus } from '@/features/groups/logic/groupAmendmentStatus';
 function formatDateTime(timestamp?: number | null) {
   if (!timestamp) {
@@ -600,28 +599,16 @@ export function AmendmentProcessFlowView({
             </TabsContent>
           </Tabs>
 
-          <AmendmentProcessDetailsPanel
-            amendment={{
-              id: amendment.id,
-              title: amendment.title,
-              reason: amendment.reason,
-              preamble: amendment.preamble,
-              current_process_run: amendment.current_process_run ?? null,
-              group: amendment.group ?? null,
-            }}
-            defaultOpen={false}
-          />
-
-          <Card>
-            <CardHeader>
+          <section className="space-y-4">
+            <div className="space-y-1.5">
               <CardTitle className="text-base">
                 {t('features.amendments.process.branches')}
               </CardTitle>
               <CardDescription>
                 {t('features.amendments.process.branchesDescription')}
               </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+            </div>
+            <div className="space-y-3">
               {branches.map((branch: any) => {
                 const branchStepRuns = [...(branch.step_runs ?? [])].sort(
                   (left, right) => left.order_index - right.order_index
@@ -800,8 +787,8 @@ export function AmendmentProcessFlowView({
                   </div>
                 );
               })}
-            </CardContent>
-          </Card>
+            </div>
+          </section>
         </>
       ) : null}
 

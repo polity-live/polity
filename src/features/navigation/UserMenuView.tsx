@@ -1,7 +1,7 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import type { RefObject } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Calendar, FileText, LogOut, Search, Settings, User, X } from 'lucide-react';
+import { BookOpen, Calendar, FileText, LogOut, Search, Settings, User, X } from 'lucide-react';
 
 import { FormControlInput } from '@/features/shared/ui/form';
 import { ScrollableAlertDialogContent } from '@/features/shared/ui/dialog';
@@ -38,6 +38,7 @@ export type { UserMenuAmendment, UserMenuEvent, UserMenuGroup } from './logic/us
 interface UserMenuViewLabels {
   profile: string;
   settings: string;
+  docs?: string;
   groups: string;
   events: string;
   amendments: string;
@@ -63,6 +64,7 @@ interface UserMenuViewProps {
   userInitials: string;
   profileHref: string;
   settingsHref: string;
+  docsHref?: string;
   groups: UserMenuGroup[];
   events: UserMenuEvent[];
   amendments: UserMenuAmendment[];
@@ -98,6 +100,7 @@ export function UserMenuView({
   userInitials,
   profileHref,
   settingsHref,
+  docsHref = '/docs',
   groups,
   events,
   amendments,
@@ -169,6 +172,13 @@ export function UserMenuView({
             <Link to={settingsHref} preload="intent" className="flex w-full items-center">
               <Settings className="mr-2 h-4 w-4" />
               {labels.settings}
+            </Link>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem asChild className="shrink-0">
+            <Link to={docsHref} preload="intent" className="flex w-full items-center">
+              <BookOpen className="mr-2 h-4 w-4" />
+              {labels.docs ?? 'Docs'}
             </Link>
           </DropdownMenuItem>
 

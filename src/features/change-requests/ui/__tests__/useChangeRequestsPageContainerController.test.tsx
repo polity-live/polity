@@ -176,6 +176,17 @@ describe('useChangeRequestsPageContainerController permissions', () => {
         choices: [{ id: 'choice-yes-2', label: 'yes' }],
       },
     };
+    const obsoleteBranchOneRow = {
+      ...branchOneRow,
+      id: 'agenda-cr-obsolete-branch-1',
+      change_request_id: 'cr-obsolete-branch-1',
+      change_request: {
+        id: 'cr-obsolete-branch-1',
+        title: 'Obsolete Branch 1 CR',
+        obsolete_reason: 'suggestion_removed_in_collaborative_editing',
+        obsolete_at: 123,
+      },
+    };
 
     mocks.usePermissions.mockReturnValue(permissions);
     mocks.useAgendaItemByAmendment.mockReturnValue({
@@ -183,7 +194,7 @@ describe('useChangeRequestsPageContainerController permissions', () => {
       agendaItemId: 'agenda-1',
     });
     mocks.useAgendaItemCRVoting.mockReturnValue({
-      crTimeline: [branchOneRow, branchTwoRow],
+      crTimeline: [branchOneRow, obsoleteBranchOneRow, branchTwoRow],
       hasUserVoted: mocks.hasUserVoted,
       getUserSelectedChoiceIds: mocks.getUserSelectedChoiceIds,
       castCRVote: mocks.castCRVote,

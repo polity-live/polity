@@ -56,7 +56,7 @@ describe('ParticipationRoleFilterBar', () => {
   it('toggles colored role filter buttons', () => {
     const onSelectedRoleIdsChange = vi.fn();
 
-    const { rerender } = render(
+    const { container, rerender } = render(
       <ParticipationRoleFilterBar
         roles={roles}
         selectedRoleIds={[]}
@@ -66,7 +66,10 @@ describe('ParticipationRoleFilterBar', () => {
 
     const allRolesButton = screen.getByRole('button', { name: 'All roles' });
     const adminButton = screen.getByRole('button', { name: 'Admin' });
+    const roleFilter = container.querySelector('[data-slot="participation-role-filter"]');
 
+    expect(screen.queryByText(/^Roles?$/)).toBeNull();
+    expect(roleFilter?.firstElementChild).toBe(allRolesButton);
     expect(allRolesButton.getAttribute('aria-pressed')).toBe('true');
     expect(allRolesButton.getAttribute('data-active')).toBe('true');
     expect(allRolesButton.className).toContain('bg-primary');

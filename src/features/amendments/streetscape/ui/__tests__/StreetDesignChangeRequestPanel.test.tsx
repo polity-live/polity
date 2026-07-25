@@ -77,12 +77,50 @@ describe('StreetDesignChangeRequestPanel', () => {
       />
     );
 
-    fireEvent.change(screen.getByPlaceholderText(/reply/i), {
+    fireEvent.click(screen.getByRole('button', { name: /reply/i }));
+    const list = document.querySelector('[data-slot="discussion-comment-list"]');
+    const composer = screen.getByPlaceholderText(/reply/i);
+
+    expect(
+      composer.compareDocumentPosition(list as Node) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    fireEvent.change(composer, {
       target: { value: 'Looks good to me' },
     });
     fireEvent.click(screen.getByRole('button', { name: /send/i }));
 
     expect(onCommentSubmit).toHaveBeenCalledWith('cr-panel-1', 'Looks good to me');
+  });
+
+  it('collapses a streetscape comment to its author and time summary', () => {
+    render(
+      <StreetDesignChangeRequestPanel
+        changeRequest={changeRequest()}
+        discussions={[
+          {
+            id: 'discussion-1',
+            changeRequestEntityId: 'cr-panel-1',
+            comments: [
+              {
+                id: 'comment-1',
+                userId: 'user-1',
+                createdAt: Date.now(),
+                contentRich: 'A visible streetscape comment',
+              },
+            ],
+          },
+        ]}
+        currentUserId="user-1"
+        currentUserDisplayName="Tobias"
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse' }));
+
+    expect(screen.queryByText('A visible streetscape comment')).toBeNull();
+    expect(screen.getByText('Tobias')).toBeTruthy();
+    expect(document.querySelectorAll('time').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Expand' })).toBeTruthy();
   });
 
   it('shows before and after changed properties in an accordion', () => {

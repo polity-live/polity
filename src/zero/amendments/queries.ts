@@ -1125,7 +1125,7 @@ export const amendmentQueries = {
       const direction = dir === 'backward' ? 'desc' : 'asc';
       let q: any = zql.comment
         .where('thread_id', threadId)
-        .where('parent_id', parentId as any)
+        .where('parent_id', 'IS', parentId as any)
         .whereExists('thread', (thread: any) =>
           thread.whereExists('amendment', (amendment: any) =>
             applyAmendmentAccess(amendment, userID)

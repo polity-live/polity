@@ -54,7 +54,7 @@ export function ParticipationRoleFilterBar<TRole extends ParticipationRoleLike>(
   selectedRoleIds,
   onSelectedRoleIdsChange,
   allLabel = translateText('common.allRoles', 'All roles'),
-  label = translateText('components.membershipTables.role', 'Roles'),
+  label = null,
   className,
 }: ParticipationRoleFilterBarProps<TRole>) {
   if (roles.length === 0) {

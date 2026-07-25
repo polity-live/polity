@@ -149,7 +149,7 @@ export function ManagementToolbar({ className, ...props }: React.ComponentProps<
     <div
       data-slot="management-toolbar"
       className={cn(
-        'border-border/60 bg-muted/20 flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center [&>*]:min-w-0',
+        'flex flex-col gap-3 sm:flex-row sm:items-center [&_[data-slot=participation-role-filter]]:mb-0 [&>*]:min-w-0',
         className
       )}
       {...props}

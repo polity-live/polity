@@ -89,7 +89,7 @@ describe('NavItemListView', () => {
     ['asButtonList desktop', 'asButtonList', false],
     ['asLabeledButtonList mobile', 'asLabeledButtonList', true],
     ['asLabeledButtonList desktop', 'asLabeledButtonList', false],
-  ] as const)('renders the exact badge count at the icon in %s', (_label, view, isMobile) => {
+  ] as const)('renders a compact capped badge at the icon in %s', (_label, view, isMobile) => {
     renderButtonList(
       isMobile,
       false,
@@ -111,12 +111,50 @@ describe('NavItemListView', () => {
 
     expect(icon).not.toBeNull();
     expect(icon?.contains(badge)).toBe(true);
-    expect(badge?.textContent).toBe('137');
-    expect(badge?.className).toContain('min-w-5');
+    expect(badge?.textContent).toBe('99+');
+    expect(badge?.className).toContain('h-4');
+    expect(badge?.className).toContain('min-w-4');
+    expect(badge?.className).toContain('text-[10px]');
+    expect(badge?.className).toContain('rounded-full');
+    expect(badge?.className).toContain('translate-x-[65%]');
+    expect(badge?.className).toContain('-translate-y-[55%]');
+    expect(badge?.className).toContain('ring-2');
+    expect(badge?.className).toContain('ring-background');
   });
 
-  it('does not render a badge for a zero count', () => {
-    renderButtonList(false, false, [
+  it.each([
+    ['primary', true, 31, '31'],
+    ['primary', true, 99, '99'],
+    ['primary', true, 137, '99+'],
+    ['secondary', false, 31, '31'],
+    ['secondary', false, 99, '99'],
+    ['secondary', false, 137, '99+'],
+  ] as const)('formats the %s badge count %s as %s', (_type, isPrimary, count, expected) => {
+    renderButtonList(
+      false,
+      isPrimary,
+      [
+        {
+          id: 'notifications',
+          icon: 'Bell',
+          label: 'Notifications',
+          href: '/notifications',
+          badge: count,
+        },
+      ],
+      'asButtonList'
+    );
+
+    expect(document.querySelector('[data-slot="navigation-item-badge"]')?.textContent).toBe(
+      expected
+    );
+  });
+
+  it.each([
+    ['primary', true],
+    ['secondary', false],
+  ] as const)('does not render a %s badge for a zero count', (_type, isPrimary) => {
+    renderButtonList(false, isPrimary, [
       {
         id: 'notifications',
         icon: 'Bell',

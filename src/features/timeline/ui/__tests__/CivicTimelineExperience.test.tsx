@@ -204,6 +204,38 @@ describe('CivicTimelineRail', () => {
     expect(onItemSelect).toHaveBeenCalledWith(item);
   });
 
+  it('uses the full card width for main content on mobile and restores the desktop column', () => {
+    render(<CivicTimelineRail sections={sections} />);
+
+    const timelineItem = document.querySelector('[data-timeline-item-id="event-1"]') as HTMLElement;
+    const layout = timelineItem.querySelector('[data-slot="timeline-item-layout"]') as HTMLElement;
+    const contentColumn = timelineItem.querySelector(
+      '[data-slot="timeline-item-content-column"]'
+    ) as HTMLElement;
+    const metadata = timelineItem.querySelector('[data-slot="timeline-item-meta"]') as HTMLElement;
+    const mainContent = timelineItem.querySelector(
+      '[data-slot="timeline-item-main-content"]'
+    ) as HTMLElement;
+
+    expect(layout.className).toContain('grid');
+    expect(layout.className).toContain('min-w-0');
+    expect(layout.className).toContain('grid-cols-[auto_minmax(0,1fr)_auto]');
+    expect(contentColumn.className).toContain('contents');
+    expect(contentColumn.className).toContain('sm:block');
+    expect(contentColumn.className).toContain('sm:col-start-2');
+    expect(metadata.className).toContain('col-start-2');
+    expect(metadata.className).toContain('row-start-1');
+    expect(mainContent.className).toContain('col-span-3');
+    expect(mainContent.className).toContain('row-start-2');
+    expect(mainContent.className).toContain('min-w-0');
+    expect(mainContent.className).toContain('max-w-full');
+    expect(mainContent.className).toContain('sm:col-auto');
+    expect(mainContent.className).toContain('sm:row-auto');
+    expect(screen.getByRole('heading', { name: 'Town hall vote' }).className).toContain(
+      'break-words'
+    );
+  });
+
   it('staggers load reveal indexes across timeline sections', () => {
     const secondItem: CivicTimelineItem = {
       ...item,
@@ -324,5 +356,21 @@ describe('ModernTimelineView', () => {
     expect(surface.className).toContain('border');
     expect(surface.className).toContain('shadow-sm');
     expect(screen.getByTestId('civic-timeline-rail')).toBeTruthy();
+  });
+
+  it('uses shrinkable map and rail columns in a single-column mobile grid', () => {
+    render(<ModernTimelineView {...createTimelineViewProps()} />);
+
+    const grid = screen.getByTestId('timeline-map-rail-grid');
+    const mapColumn = screen.getByTestId('timeline-map-column');
+    const railColumn = screen.getByTestId('timeline-rail-column');
+
+    expect(grid.className).toContain('min-w-0');
+    expect(grid.className).toContain('grid-cols-1');
+    expect(grid.className).toContain('lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]');
+    expect(mapColumn.className).toContain('min-w-0');
+    expect(mapColumn.className).toContain('max-w-full');
+    expect(railColumn.className).toContain('min-w-0');
+    expect(railColumn.className).toContain('max-w-full');
   });
 });

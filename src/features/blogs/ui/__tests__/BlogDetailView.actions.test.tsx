@@ -21,7 +21,6 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 
 vi.mock('@/features/shared/ui/layout', () => ({
   ActionBar: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  EntityPageFrame: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   StatsBar: () => <div data-testid="stats-bar" />,
 }));
 
@@ -31,6 +30,12 @@ vi.mock('@/features/shared/ui/action-buttons', () => ({
 
 vi.mock('@/features/shared/ui/action-buttons/ShareButton.tsx', () => ({
   ShareButton: () => <button type="button">share</button>,
+}));
+
+vi.mock('@/features/shared/ui/hashtags', () => ({
+  HashtagDisplay: ({ badgeClassName }: { badgeClassName?: string }) => (
+    <div data-testid="hashtags" data-badge-class-name={badgeClassName} />
+  ),
 }));
 
 vi.mock('@/features/shared/ui/voting', () => ({
@@ -51,7 +56,11 @@ vi.mock('@/features/shared/ui/wiki', () => ({
 
 afterEach(cleanup);
 
-function renderBlogDetail(currentUserId?: string) {
+function renderBlogDetail(
+  currentUserId?: string,
+  hashtags: { id: string; tag: string }[] = [],
+  title = 'Public blog'
+) {
   return render(
     <BlogDetailView
       author={{ id: 'author-1', name: 'Author' }}
@@ -67,7 +76,7 @@ function renderBlogDetail(currentUserId?: string) {
       deleteOpen={false}
       downvotes={0}
       editorUrl="/blog/blog-1/editor"
-      hashtags={[]}
+      hashtags={hashtags}
       isLoaded
       isSubscribed={false}
       onAddComment={vi.fn()}
@@ -86,7 +95,7 @@ function renderBlogDetail(currentUserId?: string) {
       subscriberCount={0}
       subscribeLoading={false}
       supporterCount={0}
-      title="Public blog"
+      title={title}
       upvotes={0}
       viewUrl="/blog/blog-1"
     />
@@ -108,5 +117,29 @@ describe('BlogDetailView actions', () => {
     expect(screen.getByRole('button', { name: 'subscribe' })).toBeTruthy();
     expect(screen.getByTestId('vote-buttons')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'share' })).toBeTruthy();
+  });
+
+  it('places mobile hashtags below a constrained title and keeps the desktop position', () => {
+    renderBlogDetail(
+      'user-1',
+      [{ id: 'tag-1', tag: 'a-very-long-hashtag' }],
+      'A very long public blog title'
+    );
+
+    const title = screen.getByRole('heading', {
+      level: 1,
+      name: 'A very long public blog title',
+    });
+    const titleGroup = title.parentElement;
+    const hashtagDisplays = screen.getAllByTestId('hashtags');
+
+    expect(title.className).toContain('min-w-0');
+    expect(title.className).toContain('break-words');
+    expect(titleGroup?.className).toContain('min-w-0');
+    expect(titleGroup?.nextElementSibling).toBe(hashtagDisplays[0]?.parentElement);
+    expect(hashtagDisplays[0]?.parentElement?.className).toContain('md:hidden');
+    expect(hashtagDisplays[0]?.getAttribute('data-badge-class-name')).toContain('break-all');
+    expect(hashtagDisplays[1]?.parentElement?.className).toContain('hidden');
+    expect(hashtagDisplays[1]?.parentElement?.className).toContain('md:block');
   });
 });

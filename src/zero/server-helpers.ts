@@ -423,8 +423,11 @@ export async function recomputeEventCounters(
       : Promise.resolve([]),
   ]);
 
-  const openChangeRequests = changeRequests.filter(changeRequest =>
-    isOpenChangeRequest(changeRequest.status)
+  const openChangeRequests = changeRequests.filter(
+    changeRequest =>
+      isOpenChangeRequest(changeRequest.status) &&
+      !changeRequest.obsolete_at &&
+      !changeRequest.obsolete_reason
   ).length;
 
   await tx.mutate.event.update({

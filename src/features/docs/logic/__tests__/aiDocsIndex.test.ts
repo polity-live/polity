@@ -1,76 +1,76 @@
 import { describe, expect, it } from 'vitest';
 
-import { getPolityDocsTopics, searchPolityDocs } from '../aiDocsIndex';
+import { DOCS_PAGE_SLUGS, getDocsPages } from '../docsRegistry';
+import { readPolityDocs } from '../aiDocsIndex';
 
-describe('aiDocsIndex', () => {
-  it('returns a specific topic by slug', () => {
-    const result = searchPolityDocs({
+describe('Polity docs reader', () => {
+  it('returns a complete exact page with table of contents and routes', () => {
+    const result = readPolityDocs({
       language: 'de',
-      topic: 'auth-and-onboarding',
+      page: 'auth-and-onboarding',
     });
 
-    expect(result.items).toHaveLength(1);
-    expect(result.items[0]?.slug).toBe('auth-and-onboarding');
-    expect(result.items[0]?.route).toBe('/docs/auth-and-onboarding');
-    expect(result.items[0]?.title).toContain('Anmeldung');
+    expect(result.pages).toHaveLength(1);
+    expect(result.pages[0]?.slug).toBe('auth-and-onboarding');
+    expect(result.pages[0]?.route).toBe('/docs/guides/auth-and-onboarding');
+    expect(result.pages[0]?.sections.length).toBeGreaterThanOrEqual(7);
+    expect(result.pages[0]?.toc[0]?.route).toContain('#overview');
   });
 
-  it('searches across German docs text', () => {
-    const result = searchPolityDocs({
+  it('returns one exact section when requested', () => {
+    const result = readPolityDocs({
+      language: 'en',
+      page: 'navigation-and-page-structure',
+      section: 'entity-kontexte',
+    });
+
+    expect(result.pages[0]?.sections).toHaveLength(1);
+    expect(result.pages[0]?.sections[0]?.plainText).toContain('Secondary items');
+  });
+
+  it('searches full German section content', () => {
+    const result = readPolityDocs({
       language: 'de',
       query: 'Mitgliedschaften',
-      limit: 5,
+      limit: 10,
     });
 
-    expect(result.total).toBeGreaterThan(0);
-    expect(result.items.some(item => item.searchText.includes('Mitgliedschaften'))).toBe(true);
+    expect(result.matches.length).toBeGreaterThan(0);
+    expect(result.matches.some(match => match.route.includes('#'))).toBe(true);
+    expect(result.matches.some(match => match.markdown.includes('Mitgliedschaften'))).toBe(true);
   });
 
-  it('searches across English docs text', () => {
-    const result = searchPolityDocs({
+  it('searches full English section content', () => {
+    const result = readPolityDocs({
       language: 'en',
       query: 'ballot',
-      limit: 5,
+      limit: 10,
     });
 
-    expect(result.total).toBeGreaterThan(0);
-    expect(result.items.some(item => item.searchText.toLowerCase().includes('ballot'))).toBe(true);
-  });
-
-  it('includes related topic and process route metadata', () => {
-    const result = searchPolityDocs({
-      language: 'en',
-      topic: 'groups',
-    });
-    const topic = result.items[0];
-
-    expect(topic?.route).toBe('/docs/groups');
-    expect(topic?.relatedTopics).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ slug: 'users', route: '/docs/users' }),
-        expect.objectContaining({ slug: 'events', route: '/docs/events' }),
-      ])
-    );
-    expect(topic?.process.steps.length).toBeGreaterThan(0);
-    expect(topic?.process.steps[0]).toEqual(
-      expect.objectContaining({
-        id: 'create-space',
-        title: 'Create the space',
-      })
+    expect(result.matches.length).toBeGreaterThan(0);
+    expect(result.matches.some(match => match.markdown.toLowerCase().includes('ballot'))).toBe(
+      true
     );
   });
 
-  it('clamps empty and no-match results safely', () => {
-    const allTopics = getPolityDocsTopics('de');
-    const cappedResult = searchPolityDocs({ language: 'de', limit: 999 });
-    const noMatchResult = searchPolityDocs({
+  it('can list every page slug available to the agent', () => {
+    const pages = getDocsPages('de');
+    expect(DOCS_PAGE_SLUGS).toHaveLength(pages.length);
+
+    for (const slug of DOCS_PAGE_SLUGS) {
+      const result = readPolityDocs({ language: 'de', page: slug });
+      expect(result.pages[0]?.slug).toBe(slug);
+      expect(result.pages[0]?.sections.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('returns no content for missing sections', () => {
+    const result = readPolityDocs({
       language: 'de',
-      query: 'zzzz-no-polity-doc-topic',
-      limit: 999,
+      page: 'groups',
+      section: 'does-not-exist',
     });
-
-    expect(cappedResult.items).toHaveLength(Math.min(12, allTopics.length));
-    expect(noMatchResult.total).toBe(0);
-    expect(noMatchResult.items).toEqual([]);
+    expect(result.total).toBe(0);
+    expect(result.pages).toEqual([]);
   });
 });

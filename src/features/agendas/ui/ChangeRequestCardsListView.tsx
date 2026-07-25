@@ -59,8 +59,9 @@ import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 import type { ChangeRequestSortMode } from './useChangeRequestCardsListController';
 import { DEFAULT_CHANGE_REQUEST_VOTE_ORDER } from '@/features/change-requests/logic/changeRequestVoteOrder';
 import type { AmendmentForwardingPreviewModel } from '@/features/amendments/logic/amendmentForwardingPreview';
+import { PolityLocalListView } from '@/features/shared/virtualization';
 
-type TabValue = 'all' | 'open' | 'accepted' | 'rejected';
+type TabValue = 'all' | 'open' | 'accepted' | 'rejected' | 'obsolete';
 
 function canFinalizeInternalChangeRequest(item: any) {
   const cr = item.change_request;
@@ -106,6 +107,8 @@ export interface ChangeRequestCardsListViewProps {
   items: any[];
   editingMode: EditingMode;
   isVotingActive: any;
+  virtualize?: boolean;
+  containerVariant?: 'card' | 'frameless';
   userId: any;
   canManage: any;
   canVote: any;
@@ -149,6 +152,7 @@ export interface ChangeRequestCardsListViewProps {
   closingVoteItem: any;
   variantVoteItem?: any;
   crItems: any[];
+  obsoleteCrItems?: any[];
   sequenceItems?: any[];
   hasCRCategoryItems?: boolean;
   sharedPreviewEnabled: any;
@@ -171,6 +175,8 @@ export interface ChangeRequestCardsListViewProps {
 export function ChangeRequestCardsListView({
   editingMode,
   isVotingActive,
+  virtualize = false,
+  containerVariant = 'card',
   userId,
   canManage,
   canVote,
@@ -213,6 +219,7 @@ export function ChangeRequestCardsListView({
   closingVoteItem,
   variantVoteItem,
   crItems,
+  obsoleteCrItems = [],
   sequenceItems = [],
   hasCRCategoryItems,
   sharedPreviewEnabled,
@@ -232,9 +239,11 @@ export function ChangeRequestCardsListView({
     ? t('features.agendas.crTimeline.activeInternalVoting', 'Internal voting mode active')
     : t('features.agendas.crTimeline.activeEventVoting', 'Event voting mode active');
   const effectiveSequenceItems = sequenceItems.length > 0 ? sequenceItems : crItems;
-  const shouldShowCRCategoryTabs = hasCRCategoryItems ?? crItems.length > 0;
+  const shouldShowCRCategoryTabs =
+    hasCRCategoryItems ?? (crItems.length > 0 || obsoleteCrItems.length > 0);
   const effectiveActiveTab = shouldShowCRCategoryTabs ? activeTab : 'all';
-  const shouldShowSortToggle = shouldShowCRCategoryTabs && crItems.length > 1;
+  const shouldShowSortToggle =
+    shouldShowCRCategoryTabs && crItems.length + obsoleteCrItems.length > 1;
   const displayItems =
     effectiveActiveTab === 'all' && filteredItems.length === 0 && effectiveSequenceItems.length > 0
       ? effectiveSequenceItems
@@ -300,10 +309,162 @@ export function ChangeRequestCardsListView({
           change_type: null,
         }
       : null);
+  const isFrameless = containerVariant === 'frameless';
+  const Container = isFrameless ? 'div' : Card;
+  const renderDisplayItem = (item: any, index: number) => {
+    const isObsolete =
+      item._originalStatus === 'obsolete' ||
+      item.change_request?.status === 'obsolete' ||
+      item.change_request?.change_request_status === 'obsolete' ||
+      Boolean(item.change_request?.obsolete_at || item.change_request?.obsolete_reason);
+    const crId = item.change_request_id ?? item.id;
+    const previewCrId = getPreviewCrId(item as ChangeRequestTimelineRow);
+    const diff =
+      diffMap?.[crId] ?? (previewCrId ? diffMap?.[previewCrId] : undefined) ?? diffMap?.[item.id];
+    const crTitle = item.change_request?.title;
+    const displayCrId =
+      item.change_request?.display_cr_id ??
+      item.change_request?.displayCrId ??
+      item.change_request?.cr_id ??
+      crTitle;
+    const suggestionId = previewCrId
+      ? crIdToDiscussionId.get(previewCrId)
+      : crTitle
+        ? crIdToDiscussionId.get(crTitle)
+        : undefined;
+    const showCloseInternalVote =
+      !isObsolete &&
+      editingMode === 'vote_internal' &&
+      canManage &&
+      Boolean(onFinalizeInternalVote) &&
+      canFinalizeInternalChangeRequest(item);
+    const canJumpToFinalVote =
+      isChangeRequestVotesPlaceholder(item) && crItems.length === 0 && Boolean(closingVoteItem);
+    const outcomeLabel =
+      (item.change_request?.votes_for ?? 0) > (item.change_request?.votes_against ?? 0)
+        ? t('features.amendments.voteControls.accept')
+        : t('features.amendments.voteControls.reject');
+    const votesFor = item.change_request?.votes_for ?? 0;
+    const votesAgainst = item.change_request?.votes_against ?? 0;
+    const votesAbstain = item.change_request?.votes_abstain ?? 0;
+    const closeInternalVoteLabel = t(
+      'features.agendas.crTimeline.closeInternalVote',
+      'Interne Abstimmung beenden'
+    );
+    const isCardCurrent = isObsolete
+      ? false
+      : isInternalVotingMode
+        ? isVotingActive && item.status !== 'completed'
+        : isVotingActive && nextSequenceItemId === item.id;
+    const isLocked =
+      !isObsolete &&
+      !isInternalVotingMode &&
+      isVotingActive &&
+      item.status !== 'completed' &&
+      (nextSequenceItemId !== item.id || (isVoteSequencePlaceholder(item) && !canJumpToFinalVote));
+    const renderInterstitialBefore =
+      shouldRenderSequenceInterstitial && !variantVoteItem && index === 0;
+    const renderInterstitialAfter =
+      shouldRenderSequenceInterstitial && item.id === variantVoteItem?.id;
+    const isSyntheticEventVoteRow = !isInternalVotingMode && isMockCRTimelineItem(item);
+    const itemCanVote = !isObsolete && isVotingActive && !isSyntheticEventVoteRow ? canVote : false;
+    const itemOpenVoteDialog =
+      !isObsolete && isVotingActive && !isSyntheticEventVoteRow ? onOpenVoteDialog : undefined;
+
+    return (
+      <Fragment key={item.id}>
+        {renderInterstitialBefore ? renderSequenceInterstitial() : null}
+        <div className="space-y-2">
+          <ChangeRequestTimelineCard
+            item={item as ChangeRequestTimelineRow}
+            index={index}
+            isCurrent={isCardCurrent}
+            hasUserVoted={hasUserVoted ? hasUserVoted(item as ChangeRequestTimelineRow) : false}
+            userSelectedChoiceIds={
+              getUserSelectedChoiceIds
+                ? getUserSelectedChoiceIds(item as ChangeRequestTimelineRow)
+                : []
+            }
+            canManage={!isObsolete && isVotingActive ? canManage : false}
+            canVote={itemCanVote}
+            eligibleFinalVoterCount={eligibleFinalVoterCount}
+            hideInlineVotingControls={isObsolete || hideInlineVotingControls}
+            allowInlineFinalVoteStart={!isObsolete && allowInlineFinalVoteStart}
+            showAgendaDetailsVoteActions={!isObsolete && showAgendaDetailsVoteActions}
+            voteDisabledTooltip={voteDisabledTooltip}
+            isVotingActive={!isObsolete && isVotingActive}
+            isFinalVoteLocked={isLocked}
+            diff={diff}
+            documentContent={documentContent}
+            streetDesigns={streetDesigns}
+            suggestionId={suggestionId}
+            suggestionResolutions={previewSuggestionResolutions}
+            agendaTitle={agendaTitle}
+            forwardingPreview={item.is_closing_vote ? forwardingPreview : null}
+            crId={displayCrId || crTitle || previewCrId || undefined}
+            displayCrId={displayCrId || undefined}
+            discussions={discussions}
+            editingMode={isObsolete ? 'view' : editingMode}
+            amendmentId={amendmentId}
+            userId={userId}
+            userRecord={userRecord}
+            agendaItemId={agendaItemId}
+            showEditorPreview={!isObsolete}
+            onCastVote={!isObsolete && isVotingActive ? onCastVote : undefined}
+            onOpenVoteDialog={itemOpenVoteDialog}
+            onStartIndicative={!isObsolete && isVotingActive ? onStartIndicative : undefined}
+            onStartFinal={!isObsolete && isVotingActive ? onStartFinal : undefined}
+            onCloseVoting={!isObsolete && isVotingActive ? onCloseVoting : undefined}
+          />
+          {showCloseInternalVote && (
+            <div className="flex justify-end">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="outline">
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    {closeInternalVoteLabel}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {t(
+                        'features.agendas.crTimeline.closeInternalVoteDialogTitle',
+                        'Interne Abstimmung beenden?'
+                      )}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t('features.agendas.crTimeline.closeInternalVoteDescription', {
+                        outcome: outcomeLabel,
+                        accept: votesFor,
+                        reject: votesAgainst,
+                        abstain: votesAbstain,
+                      })}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        void onFinalizeInternalVote(item.change_request_id ?? item.id);
+                      }}
+                    >
+                      {closeInternalVoteLabel}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
+        </div>
+        {renderInterstitialAfter ? renderSequenceInterstitial() : null}
+      </Fragment>
+    );
+  };
 
   return (
-    <Card>
-      <CardHeader className="space-y-3">
+    <Container className={cn(isFrameless && 'w-full')} data-container-variant={containerVariant}>
+      <CardHeader className={cn('space-y-3', isFrameless && 'p-0 pb-6')}>
         {/* Mode indicator banner */}
         {isVotingActive ? (
           <div
@@ -454,6 +615,12 @@ export function ChangeRequestCardsListView({
                       {categorized.rejected.length}
                     </BadgeControl>
                   </TabsTrigger>
+                  <TabsTrigger value="obsolete" className="gap-1.5">
+                    {t('features.agendas.crTimeline.tabObsolete', 'Obsolete')}
+                    <BadgeControl variant="secondary" size="xs" className="ml-0.5">
+                      {categorized.obsolete?.length ?? 0}
+                    </BadgeControl>
+                  </TabsTrigger>
                 </>
               )}
             </TabsList>
@@ -516,7 +683,7 @@ export function ChangeRequestCardsListView({
         </div>
 
         {/* Search */}
-        {crItems.length > 1 && (
+        {crItems.length + obsoleteCrItems.length > 1 && (
           <div className="relative">
             <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
             <FormControlInput
@@ -529,173 +696,33 @@ export function ChangeRequestCardsListView({
         )}
       </CardHeader>
 
-      <CardContent>
-        <div className="space-y-3">
-          {/* Filtered CR items */}
-          {displayItems.length === 0 ? (
-            <>
-              {renderSequenceInterstitial()}
-              <div className="rounded-lg border border-dashed p-8 text-center">
-                <FileEdit className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
-                <p className="text-muted-foreground text-sm">
-                  {effectiveActiveTab === 'all'
-                    ? t('features.agendas.crTimeline.noCRs')
-                    : t('features.agendas.crTimeline.noItemsInTab')}
-                </p>
-              </div>
-            </>
-          ) : (
-            displayItems.map((item: any, index: number) => {
-              const crId = item.change_request_id ?? item.id;
-              const previewCrId = getPreviewCrId(item as ChangeRequestTimelineRow);
-              const diff =
-                diffMap?.[crId] ??
-                (previewCrId ? diffMap?.[previewCrId] : undefined) ??
-                diffMap?.[item.id];
-              const crTitle = item.change_request?.title;
-              const displayCrId =
-                item.change_request?.display_cr_id ??
-                item.change_request?.displayCrId ??
-                item.change_request?.cr_id ??
-                crTitle;
-              const suggestionId = previewCrId
-                ? crIdToDiscussionId.get(previewCrId)
-                : crTitle
-                  ? crIdToDiscussionId.get(crTitle)
-                  : undefined;
-              const showCloseInternalVote =
-                editingMode === 'vote_internal' &&
-                canManage &&
-                Boolean(onFinalizeInternalVote) &&
-                canFinalizeInternalChangeRequest(item);
-              const canJumpToFinalVote =
-                isChangeRequestVotesPlaceholder(item) &&
-                crItems.length === 0 &&
-                Boolean(closingVoteItem);
-              const outcomeLabel =
-                (item.change_request?.votes_for ?? 0) > (item.change_request?.votes_against ?? 0)
-                  ? t('features.amendments.voteControls.accept')
-                  : t('features.amendments.voteControls.reject');
-              const votesFor = item.change_request?.votes_for ?? 0;
-              const votesAgainst = item.change_request?.votes_against ?? 0;
-              const votesAbstain = item.change_request?.votes_abstain ?? 0;
-              const closeInternalVoteLabel = t(
-                'features.agendas.crTimeline.closeInternalVote',
-                'Interne Abstimmung beenden'
-              );
-              const isCardCurrent = isInternalVotingMode
-                ? isVotingActive && item.status !== 'completed'
-                : isVotingActive && nextSequenceItemId === item.id;
-              const isLocked =
-                !isInternalVotingMode &&
-                isVotingActive &&
-                item.status !== 'completed' &&
-                (nextSequenceItemId !== item.id ||
-                  (isVoteSequencePlaceholder(item) && !canJumpToFinalVote));
-              const renderInterstitialBefore =
-                shouldRenderSequenceInterstitial && !variantVoteItem && index === 0;
-              const renderInterstitialAfter =
-                shouldRenderSequenceInterstitial && item.id === variantVoteItem?.id;
-              const isSyntheticEventVoteRow = !isInternalVotingMode && isMockCRTimelineItem(item);
-              const itemCanVote = isVotingActive && !isSyntheticEventVoteRow ? canVote : false;
-              const itemOpenVoteDialog =
-                isVotingActive && !isSyntheticEventVoteRow ? onOpenVoteDialog : undefined;
-
-              return (
-                <Fragment key={item.id}>
-                  {renderInterstitialBefore ? renderSequenceInterstitial() : null}
-                  <div className="space-y-2">
-                    <ChangeRequestTimelineCard
-                      item={item as ChangeRequestTimelineRow}
-                      index={index}
-                      isCurrent={isCardCurrent}
-                      hasUserVoted={
-                        hasUserVoted ? hasUserVoted(item as ChangeRequestTimelineRow) : false
-                      }
-                      userSelectedChoiceIds={
-                        getUserSelectedChoiceIds
-                          ? getUserSelectedChoiceIds(item as ChangeRequestTimelineRow)
-                          : []
-                      }
-                      canManage={isVotingActive ? canManage : false}
-                      canVote={itemCanVote}
-                      eligibleFinalVoterCount={eligibleFinalVoterCount}
-                      hideInlineVotingControls={hideInlineVotingControls}
-                      allowInlineFinalVoteStart={allowInlineFinalVoteStart}
-                      showAgendaDetailsVoteActions={showAgendaDetailsVoteActions}
-                      voteDisabledTooltip={voteDisabledTooltip}
-                      isVotingActive={isVotingActive}
-                      isFinalVoteLocked={isLocked}
-                      diff={diff}
-                      documentContent={documentContent}
-                      streetDesigns={streetDesigns}
-                      suggestionId={suggestionId}
-                      suggestionResolutions={previewSuggestionResolutions}
-                      agendaTitle={agendaTitle}
-                      forwardingPreview={item.is_closing_vote ? forwardingPreview : null}
-                      crId={displayCrId || crTitle || previewCrId || undefined}
-                      displayCrId={displayCrId || undefined}
-                      discussions={discussions}
-                      editingMode={editingMode}
-                      amendmentId={amendmentId}
-                      userId={userId}
-                      userRecord={userRecord}
-                      agendaItemId={agendaItemId}
-                      showEditorPreview
-                      onCastVote={isVotingActive ? onCastVote : undefined}
-                      onOpenVoteDialog={itemOpenVoteDialog}
-                      onStartIndicative={isVotingActive ? onStartIndicative : undefined}
-                      onStartFinal={isVotingActive ? onStartFinal : undefined}
-                      onCloseVoting={isVotingActive ? onCloseVoting : undefined}
-                    />
-                    {showCloseInternalVote && (
-                      <div className="flex justify-end">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="outline">
-                              <CheckCircle2 className="mr-2 h-4 w-4" />
-                              {closeInternalVoteLabel}
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                {t(
-                                  'features.agendas.crTimeline.closeInternalVoteDialogTitle',
-                                  'Interne Abstimmung beenden?'
-                                )}
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {t('features.agendas.crTimeline.closeInternalVoteDescription', {
-                                  outcome: outcomeLabel,
-                                  accept: votesFor,
-                                  reject: votesAgainst,
-                                  abstain: votesAbstain,
-                                })}
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => {
-                                  void onFinalizeInternalVote(item.change_request_id ?? item.id);
-                                }}
-                              >
-                                {closeInternalVoteLabel}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    )}
-                  </div>
-                  {renderInterstitialAfter ? renderSequenceInterstitial() : null}
-                </Fragment>
-              );
-            })
-          )}
-        </div>
+      <CardContent className={cn(isFrameless && 'p-0')}>
+        {/* Filtered CR items */}
+        {displayItems.length === 0 ? (
+          <div className="space-y-3">
+            {renderSequenceInterstitial()}
+            <div className="rounded-lg border border-dashed p-8 text-center">
+              <FileEdit className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
+              <p className="text-muted-foreground text-sm">
+                {effectiveActiveTab === 'all'
+                  ? t('features.agendas.crTimeline.noCRs')
+                  : t('features.agendas.crTimeline.noItemsInTab')}
+              </p>
+            </div>
+          </div>
+        ) : virtualize ? (
+          <PolityLocalListView
+            items={displayItems}
+            getItemKey={item => item.id}
+            renderItem={renderDisplayItem}
+            estimateSize={340}
+            gap={12}
+            className="max-h-[48rem] overflow-auto"
+          />
+        ) : (
+          <div className="space-y-3">{displayItems.map(renderDisplayItem)}</div>
+        )}
       </CardContent>
-    </Card>
+    </Container>
   );
 }

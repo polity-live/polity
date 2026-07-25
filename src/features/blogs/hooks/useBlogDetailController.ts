@@ -32,6 +32,8 @@ function mapBlogComments(commentsRows: NonNullable<ReturnType<typeof useBlogStat
     id: comment.id,
     text: comment.content ?? '',
     createdAt: comment.created_at ?? 0,
+    upvotes: comment.upvotes ?? 0,
+    downvotes: comment.downvotes ?? 0,
     creator: comment.user
       ? {
           id: comment.user.id,
@@ -51,6 +53,8 @@ function mapBlogComments(commentsRows: NonNullable<ReturnType<typeof useBlogStat
       id: reply.id,
       text: reply.content ?? '',
       createdAt: reply.created_at ?? 0,
+      upvotes: reply.upvotes ?? 0,
+      downvotes: reply.downvotes ?? 0,
       creator: reply.user
         ? {
             id: reply.user.id,

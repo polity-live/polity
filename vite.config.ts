@@ -26,6 +26,20 @@ export default defineConfig({
     alias: [
       { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
       {
+        find: /^buffer$/,
+        replacement: fileURLToPath(new URL('./node_modules/buffer/index.js', import.meta.url)),
+      },
+      {
+        find: /^events$/,
+        replacement: fileURLToPath(new URL('./node_modules/events/events.js', import.meta.url)),
+      },
+      {
+        find: /^path$/,
+        replacement: fileURLToPath(
+          new URL('./node_modules/path-browserify/index.js', import.meta.url)
+        ),
+      },
+      {
         find: /^konva$/,
         replacement: fileURLToPath(new URL('./node_modules/konva/lib/index.js', import.meta.url)),
       },

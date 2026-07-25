@@ -23,7 +23,10 @@ export const createDocumentSchema = baseDocumentSchema
 export const updateDocumentSchema = baseDocumentSchema
   .pick({ content: true, editing_mode: true })
   .partial()
-  .extend({ id: z.string() });
+  .extend({
+    id: z.string(),
+    reconcile_orphaned_change_requests: z.boolean().optional(),
+  });
 
 export const updateGroupDocumentTitleSchema = z.object({
   document_id: z.string(),

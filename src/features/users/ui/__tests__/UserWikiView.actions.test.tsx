@@ -18,6 +18,12 @@ vi.mock('@/features/shared/ui/action-buttons/ShareButton.tsx', () => ({
   ShareButton: () => <button type="button">share</button>,
 }));
 
+vi.mock('@/features/shared/ui/hashtags', () => ({
+  HashtagDisplay: ({ badgeClassName }: { badgeClassName?: string }) => (
+    <div data-testid="hashtags" data-badge-class-name={badgeClassName} />
+  ),
+}));
+
 vi.mock('@/features/shared/ui/wiki', () => ({
   EntityWikiMedia: () => <div data-testid="entity-wiki-media" />,
 }));
@@ -33,7 +39,7 @@ vi.mock('../UserWikiContentTabs', () => ({
 
 afterEach(cleanup);
 
-function renderUserWiki(isAuthenticated: boolean) {
+function renderUserWiki(isAuthenticated: boolean, overrides: Record<string, unknown> = {}) {
   return render(
     <UserWikiView
       page={
@@ -63,6 +69,7 @@ function renderUserWiki(isAuthenticated: boolean) {
           onSearchChange: vi.fn(),
           onToggleSubscribe: vi.fn(),
           onMessage: vi.fn(),
+          ...overrides,
         } as never
       }
     />
@@ -84,5 +91,35 @@ describe('UserWikiView actions', () => {
     expect(screen.getByRole('button', { name: 'subscribe' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'message' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'share' })).toBeTruthy();
+  });
+
+  it('stacks the pricing tier and mobile hashtags below a constrained title', () => {
+    renderUserWiki(true, {
+      fullName: 'A very long public user name',
+      supportTier: {
+        label: 'A very long development pricing tier',
+        description: 'Tier details',
+      },
+      hashtags: [{ id: 'tag-1', tag: 'a-very-long-hashtag' }],
+    });
+
+    const title = screen.getByRole('heading', {
+      level: 1,
+      name: 'A very long public user name',
+    });
+    const titleGroup = title.parentElement;
+    const pricingTier = title.nextElementSibling;
+    const hashtagDisplays = screen.getAllByTestId('hashtags');
+
+    expect(title.className).toContain('min-w-0');
+    expect(title.className).toContain('break-words');
+    expect(titleGroup?.className).toContain('flex-col');
+    expect(titleGroup?.className).toContain('md:flex-row');
+    expect(pricingTier?.className).toContain('max-w-full');
+    expect(titleGroup?.nextElementSibling).toBe(hashtagDisplays[0]?.parentElement);
+    expect(hashtagDisplays[0]?.parentElement?.className).toContain('md:hidden');
+    expect(hashtagDisplays[0]?.getAttribute('data-badge-class-name')).toContain('break-all');
+    expect(hashtagDisplays[1]?.parentElement?.className).toContain('hidden');
+    expect(hashtagDisplays[1]?.parentElement?.className).toContain('md:block');
   });
 });

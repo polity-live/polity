@@ -112,7 +112,12 @@ describe('UserMenuView', () => {
     const hrefs = screen.getAllByRole('menuitem').map(item => item.getAttribute('href'));
 
     expect(hrefs).toEqual(
-      expect.arrayContaining(['/group/group-1', '/event/event-1', '/amendment/amendment-1'])
+      expect.arrayContaining([
+        '/docs',
+        '/group/group-1',
+        '/event/event-1',
+        '/amendment/amendment-1',
+      ])
     );
 
     const groupsList = screen.getByTestId('user-menu-groups-list');

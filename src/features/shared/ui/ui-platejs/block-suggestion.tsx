@@ -9,7 +9,16 @@ import {
   rejectSuggestion,
 } from '@platejs/suggestion';
 import { SuggestionPlugin } from '@platejs/suggestion/react';
-import { CheckCircle2, CheckIcon, Clock, XIcon, Pencil, Check, X } from 'lucide-react';
+import {
+  CheckCircle2,
+  CheckIcon,
+  Clock,
+  XIcon,
+  Pencil,
+  Check,
+  X,
+  MessageSquare,
+} from 'lucide-react';
 import {
   type NodeEntry,
   type Path,
@@ -54,8 +63,10 @@ import { suggestionPlugin } from '@/features/shared/ui/kit-platejs/suggestion-ki
 import { useSuggestionCallbacks } from '@/features/shared/ui/kit-platejs/suggestion-callbacks-context.tsx';
 import { useModeContext } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
 
-import { type TComment, Comment, CommentCreateForm, formatCommentDate } from './comment.tsx';
+import { type TComment, Comment, CommentCreateForm } from './comment.tsx';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { DiscussionActionBar } from '@/features/shared/ui/comments/DiscussionActions';
+import { DiscussionTimestamp } from '@/features/shared/ui/comments/DiscussionTimestamp';
 
 // Import VoteControls interface to pass the required props
 export interface BlockSuggestionVoteProps {
@@ -305,6 +316,7 @@ export function BlockSuggestionCard({
 
   const [editingTitle, setEditingTitle] = React.useState(false);
   const [titleValue, setTitleValue] = React.useState(suggestion.title || '');
+  const [isCommenting, setIsCommenting] = React.useState(false);
 
   // Sync titleValue with suggestion.title when it changes
   React.useEffect(() => {
@@ -423,7 +435,7 @@ export function BlockSuggestionCard({
           </Avatar>
           <h4 className="mx-2 text-sm leading-none font-semibold">{userInfo?.name}</h4>
           <div className="text-muted-foreground/80 text-xs leading-none">
-            <span className="mr-1">{formatCommentDate(new Date(suggestion.createdAt))}</span>
+            <DiscussionTimestamp value={suggestion.createdAt} />
           </div>
         </div>
 
@@ -579,6 +591,29 @@ export function BlockSuggestionCard({
             )}
           </div>
         </div>
+
+        <DiscussionActionBar>
+          {!isCommenting ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              presentation="mutedTiny"
+              className="h-7 px-2"
+              onClick={() => setIsCommenting(true)}
+            >
+              <MessageSquare className="size-3.5" />
+              {translateText('generated.inline.0396_add_comment_d89450c8')}
+            </Button>
+          ) : null}
+        </DiscussionActionBar>
+        {isCommenting ? (
+          <CommentCreateForm
+            discussionId={suggestion.suggestionId}
+            focusOnMount
+            onSubmitted={() => setIsCommenting(false)}
+          />
+        ) : null}
 
         {suggestion.comments.map((comment, index) => (
           <Comment
@@ -846,11 +881,9 @@ export function BlockSuggestionCard({
             )}
           </div>
         )}
-
-        <CommentCreateForm discussionId={suggestion.suggestionId} />
       </div>
 
-      {!isLast && <div className="bg-muted h-px w-full" />}
+      {!isLast && <div className="h-2" />}
     </div>
   );
 }

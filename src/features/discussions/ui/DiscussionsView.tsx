@@ -6,7 +6,6 @@ import {
   FormControlSelectTrigger,
   FormControlSelectValue,
 } from '@/features/shared/ui/form';
-import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { PageWrapper } from '@/layout/page-wrapper';
 import { MessageSquare, Plus, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
@@ -90,7 +89,7 @@ function VirtualDiscussionThreadList({
     scrollStateKey: `amendment-${amendmentId}-discussions-${sortBy}`,
     listContextParams,
     getScrollElement: useCallback(() => contentRef.current, []),
-    estimateSize: useCallback(() => 320, []),
+    estimateSize: useCallback(() => 240, []),
     overscan: 4,
     getRowKey: thread => thread.id,
     toStartRow: thread =>
@@ -121,27 +120,25 @@ function VirtualDiscussionThreadList({
 
   if (virtualList.rowsEmpty) {
     return (
-      <Card>
-        <CardContent align="center" className="py-12">
-          <MessageSquare className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-          <p className="text-muted-foreground mb-4">
-            {translateText(
-              'generated.inline.0393_no_discussion_threads_yet_start_a_conversatio_e634e88d'
-            )}
-          </p>
-          {userId ? (
-            <Button onClick={() => onCreateDialogOpenChange(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              {translateText('generated.inline.0394_create_first_thread_e26d65a7')}
-            </Button>
-          ) : null}
-        </CardContent>
-      </Card>
+      <div className="py-10 text-center">
+        <MessageSquare className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+        <p className="text-muted-foreground mb-4">
+          {translateText(
+            'generated.inline.0393_no_discussion_threads_yet_start_a_conversatio_e634e88d'
+          )}
+        </p>
+        {userId ? (
+          <Button onClick={() => onCreateDialogOpenChange(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            {translateText('generated.inline.0394_create_first_thread_e26d65a7')}
+          </Button>
+        ) : null}
+      </div>
     );
   }
 
   return (
-    <div ref={contentRef} className="space-y-6">
+    <div ref={contentRef} className="space-y-3">
       <ZeroVirtualSpacer position="before" size={virtualList.spaceBefore} />
       {virtualList.items.map((item, itemPosition) => (
         <div
@@ -213,60 +210,56 @@ export function DiscussionsView({
 
   return (
     <PageWrapper>
-      <h1 className="sr-only">{translateText('generated.inline.0387_discussions_0474a6c6')}</h1>
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-muted-foreground text-sm">
-          {translateText('generated.inline.0388_discussion_thread_28eed8a6')}
-        </p>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-sm">
-              {translateText('generated.inline.0389_sort_by_9bb640e5')}
-            </span>
-            <FormControlSelect
-              value={sortBy}
-              onValueChange={value => onSortByChange(value as DiscussionSortMode)}
-            >
-              <FormControlSelectTrigger className="w-[180px]">
-                <FormControlSelectValue />
-              </FormControlSelectTrigger>
-              <FormControlSelectContent>
-                <FormControlSelectItem value="votes">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    <span>{translateText('generated.inline.0390_top_voted_3ecc2d00')}</span>
-                  </div>
-                </FormControlSelectItem>
-                <FormControlSelectItem value="time">
-                  <div className="flex items-center gap-2">
-                    <CalendarIcon className="h-4 w-4" />
-                    <span>{translateText('generated.inline.0391_newest_first_a40bb555')}</span>
-                  </div>
-                </FormControlSelectItem>
-              </FormControlSelectContent>
-            </FormControlSelect>
+      <div data-slot="discussions-page-content" className="w-full">
+        <div className="w-full">
+          <h1 className="sr-only">{translateText('generated.inline.0387_discussions_0474a6c6')}</h1>
+          <div className="mb-4 flex justify-end">
+            <div className="flex w-full min-w-0 flex-nowrap items-center gap-2 sm:w-auto sm:gap-3">
+              {userId ? (
+                <Button onClick={() => onCreateDialogOpenChange(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {translateText('generated.inline.0392_new_thread_66826f91')}
+                </Button>
+              ) : null}
+              <FormControlSelect
+                value={sortBy}
+                onValueChange={value => onSortByChange(value as DiscussionSortMode)}
+              >
+                <FormControlSelectTrigger className="ml-auto max-w-[180px] min-w-0 flex-1 sm:w-[180px] sm:flex-none">
+                  <FormControlSelectValue />
+                </FormControlSelectTrigger>
+                <FormControlSelectContent>
+                  <FormControlSelectItem value="votes">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      <span>{translateText('generated.inline.0390_top_voted_3ecc2d00')}</span>
+                    </div>
+                  </FormControlSelectItem>
+                  <FormControlSelectItem value="time">
+                    <div className="flex items-center gap-2">
+                      <CalendarIcon className="h-4 w-4" />
+                      <span>{translateText('generated.inline.0391_newest_first_a40bb555')}</span>
+                    </div>
+                  </FormControlSelectItem>
+                </FormControlSelectContent>
+              </FormControlSelect>
+            </div>
           </div>
-          {userId ? (
-            <Button onClick={() => onCreateDialogOpenChange(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              {translateText('generated.inline.0392_new_thread_66826f91')}
-            </Button>
-          ) : null}
-        </div>
-      </div>
 
-      <div className="space-y-6">
-        <VirtualDiscussionThreadList
-          amendmentId={amendmentId}
-          amendmentTitle={amendmentTitle}
-          authUserEmail={authUserEmail}
-          sortBy={sortBy}
-          userId={userId}
-          onCreateComment={onCreateComment}
-          onVoteThread={onVoteThread}
-          onVoteComment={onVoteComment}
-          onCreateDialogOpenChange={onCreateDialogOpenChange}
-        />
+          <div className="space-y-3">
+            <VirtualDiscussionThreadList
+              amendmentId={amendmentId}
+              amendmentTitle={amendmentTitle}
+              authUserEmail={authUserEmail}
+              sortBy={sortBy}
+              userId={userId}
+              onCreateComment={onCreateComment}
+              onVoteThread={onVoteThread}
+              onVoteComment={onVoteComment}
+              onCreateDialogOpenChange={onCreateDialogOpenChange}
+            />
+          </div>
+        </div>
       </div>
 
       {userId ? (

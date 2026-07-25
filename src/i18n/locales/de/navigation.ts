@@ -112,6 +112,7 @@ export const navigationTranslations = {
   userMenu: {
     profile: 'Profil',
     settings: 'Einstellungen',
+    docs: 'Dokumentation & Hilfe',
     events: 'Veranstaltungen',
     amendments: 'Anträge',
     eventFallback: 'Veranstaltung',

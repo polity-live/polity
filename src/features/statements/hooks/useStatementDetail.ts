@@ -167,6 +167,8 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
       id: c.id,
       text: c.content ?? '',
       createdAt: c.created_at,
+      upvotes: c.upvotes ?? 0,
+      downvotes: c.downvotes ?? 0,
       creator: c.user
         ? {
             id: c.user.id,

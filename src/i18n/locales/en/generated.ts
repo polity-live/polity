@@ -3321,6 +3321,7 @@ export const generatedTranslations = {
           },
           modelRequired:
             'Choose an AI model first. Free OpenRouter models appear automatically when configured.',
+          alwaysActive: 'Always active',
           moreTools: 'more tools',
           noModels:
             'No AI models are currently available. Add a BYOK provider key in Settings > AI or configure a free OpenRouter app key.',

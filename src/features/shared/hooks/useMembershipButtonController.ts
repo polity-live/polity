@@ -32,20 +32,31 @@ export function useMembershipButtonController(args: {
         };
       case 'participate':
         return {
-          request: 'Request to Participate',
-          leave: 'Leave Event',
-          pending: 'Request Pending',
-          accept: 'Accept Invitation',
+          request: t('components.actionBar.requestToParticipate'),
+          leave: t('components.actionBar.leaveEvent'),
+          pending: t('components.actionBar.requestPending'),
+          accept: t('components.actionBar.acceptInvitation'),
         };
       case 'collaborate':
         return {
-          request: 'Request Collaboration',
-          leave: 'Leave Collaboration',
-          pending: 'Request Pending',
-          accept: 'Accept Invitation',
+          request: t('components.actionBar.requestCollaboration'),
+          leave: t('components.actionBar.leaveCollaboration'),
+          pending: t('components.actionBar.requestPending'),
+          accept: t('components.actionBar.acceptInvitation'),
         };
     }
   })();
+  const compactLabels = {
+    request:
+      args.actionType === 'join'
+        ? t('components.actionBar.compact.requestToJoin')
+        : args.actionType === 'participate'
+          ? t('components.actionBar.compact.participate')
+          : t('components.actionBar.compact.collaborate'),
+    leave: t('components.actionBar.compact.leave'),
+    pending: t('components.actionBar.compact.pending'),
+    accept: t('components.actionBar.compact.accept'),
+  };
 
   const loadingLabel =
     args.loadingLabel ??
@@ -62,12 +73,14 @@ export function useMembershipButtonController(args: {
 
   const buttonConfig: {
     label: string;
+    compactLabel: string;
     icon: LucideIcon;
     variant: 'default' | 'outline';
     onClick: () => void;
   } = args.isInvited
     ? {
         label: labels.accept,
+        compactLabel: compactLabels.accept,
         icon: Check,
         variant: 'default',
         onClick: args.onAcceptInvitation,
@@ -75,6 +88,7 @@ export function useMembershipButtonController(args: {
     : args.hasRequested
       ? {
           label: labels.pending,
+          compactLabel: compactLabels.pending,
           icon: Clock,
           variant: 'outline',
           onClick: args.onLeave,
@@ -82,12 +96,14 @@ export function useMembershipButtonController(args: {
       : args.isMember
         ? {
             label: labels.leave,
+            compactLabel: compactLabels.leave,
             icon: UserMinus,
             variant: 'outline',
             onClick: args.onLeave,
           }
         : {
             label: labels.request,
+            compactLabel: compactLabels.request,
             icon: UserPlus,
             variant: 'default',
             onClick: args.onRequest,
@@ -124,6 +140,7 @@ export function useMembershipButtonController(args: {
 
   return {
     labels,
+    compactLabels,
     loadingLabel,
     buttonConfig,
     showDisabledReason,

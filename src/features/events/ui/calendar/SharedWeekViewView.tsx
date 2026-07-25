@@ -10,8 +10,6 @@ import {
   isSameWeekGridDay,
   WeekViewBlockButton,
   WeekViewDayHeaderButton,
-  WEEK_VIEW_GRID_MIN_WIDTH,
-  WEEK_VIEW_GRID_TEMPLATE_COLUMNS,
   WEEK_VIEW_HOUR_HEIGHT,
   WEEK_VIEW_SLOT_HEIGHT,
   WEEK_VIEW_SLOT_MINUTES,
@@ -56,6 +54,17 @@ function formatHourLabel(hour: number, locale: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function formatMobileHourLabel(hour: number, locale: string): { hour: string; dayPeriod?: string } {
+  const date = new Date();
+  date.setHours(hour, 0, 0, 0);
+
+  const parts = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).formatToParts(date);
+  const hourPart = parts.find(part => part.type === 'hour')?.value ?? String(hour);
+  const dayPeriod = parts.find(part => part.type === 'dayPeriod')?.value;
+
+  return { hour: hourPart, dayPeriod };
 }
 
 function formatTimeRange(start: Date, end: Date, locale: string): string {
@@ -116,13 +125,7 @@ export function SharedWeekViewView({
           style={{ touchAction: 'pan-x pan-y' }}
           data-swipe-lock
         >
-          <div
-            className="grid"
-            style={{
-              gridTemplateColumns: WEEK_VIEW_GRID_TEMPLATE_COLUMNS,
-              minWidth: WEEK_VIEW_GRID_MIN_WIDTH,
-            }}
-          >
+          <div className="grid min-w-[73rem] grid-cols-[3rem_repeat(7,minmax(10rem,1fr))] md:min-w-[74.5rem] md:grid-cols-[4.5rem_repeat(7,minmax(10rem,1fr))]">
             <div className="bg-background/95 sticky top-0 left-0 z-40 border-r border-b backdrop-blur" />
 
             {weekDays.map((day: any) => {
@@ -143,19 +146,36 @@ export function SharedWeekViewView({
 
             <div className="bg-background/95 sticky left-0 z-[25] border-r backdrop-blur">
               <div className="relative" style={{ height: `${TOTAL_DAY_HEIGHT}px` }}>
-                {hourMarkers.map((hour: any) => (
-                  <div
-                    key={`time-${hour}`}
-                    className="border-border/80 absolute inset-x-0 border-t"
-                    style={{ top: `${hour * WEEK_VIEW_HOUR_HEIGHT}px` }}
-                  >
-                    {hour < 24 && (
-                      <span className={featureThemeClassName('eventSharedWeekViewNeutralText')}>
-                        {formatHourLabel(hour, locale)}
-                      </span>
-                    )}
-                  </div>
-                ))}
+                {hourMarkers.map((hour: any) => {
+                  const mobileLabel = formatMobileHourLabel(hour, locale);
+
+                  return (
+                    <div
+                      key={`time-${hour}`}
+                      className="border-border/80 absolute inset-x-0 border-t"
+                      style={{ top: `${hour * WEEK_VIEW_HOUR_HEIGHT}px` }}
+                    >
+                      {hour < 24 && (
+                        <span
+                          className={cn(
+                            featureThemeClassName('eventSharedWeekViewNeutralText'),
+                            'right-0 flex w-full justify-center md:right-2 md:block md:w-auto'
+                          )}
+                        >
+                          <span className="hidden md:inline">{formatHourLabel(hour, locale)}</span>
+                          <span className="flex flex-col items-center leading-none md:hidden">
+                            <span className="text-xs">{mobileLabel.hour}</span>
+                            {mobileLabel.dayPeriod && (
+                              <span className="mt-0.5 text-[8px] uppercase">
+                                {mobileLabel.dayPeriod}
+                              </span>
+                            )}
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

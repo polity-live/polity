@@ -64,6 +64,9 @@ export const meetTranslations = {
     bookMeeting: 'Book Meeting',
     cancelBooking: 'Cancel Booking',
     viewInCalendar: 'View in Calendar',
+    compactBookMeeting: 'Book',
+    compactCancelBooking: 'Cancel',
+    compactViewInCalendar: 'Calendar',
   },
   toasts: {
     booked: 'Meeting booked successfully',

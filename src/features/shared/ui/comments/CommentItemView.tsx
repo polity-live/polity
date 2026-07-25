@@ -3,11 +3,13 @@ import type React from 'react';
 import { UserIdentityLink } from '@/features/shared/ui/UserIdentityLink';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
-import { ArrowUp, ArrowDown, Clock, Reply, Trash2 } from 'lucide-react';
+import { Reply, Trash2 } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { CommentInput } from './CommentInput';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { CommentData } from './CommentItem';
+import { DiscussionActionBar, DiscussionCollapseToggle } from './DiscussionActions';
+import { DiscussionTimestamp } from './DiscussionTimestamp';
 
 interface CommentItemViewProps {
   comment: CommentData;
@@ -22,15 +24,17 @@ interface CommentItemViewProps {
   hasDownvoted: boolean;
   score: number;
   isOwner: boolean;
+  isCollapsed: boolean;
+  isVoting?: boolean;
   onToggleReplyInput: () => void;
   onCancelReply: () => void;
+  onToggleCollapsed: () => void;
   linkAuthors?: boolean;
   renderReply: (reply: CommentData, depth: number) => React.ReactNode;
 }
 
 export function CommentItemView({
   comment,
-  currentUserId,
   onVote,
   onReply,
   onReplySubmit,
@@ -41,47 +45,34 @@ export function CommentItemView({
   hasDownvoted,
   score,
   isOwner,
+  isCollapsed,
+  isVoting,
   onToggleReplyInput,
   onCancelReply,
+  onToggleCollapsed,
   linkAuthors,
   renderReply,
 }: CommentItemViewProps) {
-  void currentUserId;
   void onReply;
   const creatorName =
     comment.creator?.name || translateText('generated.inline.0056_anonymous_9bed5104');
 
   return (
-    <div className={cn('flex gap-3', depth > 0 && 'border-l-2 pl-4')}>
-      <div className="flex flex-col items-center gap-0.5">
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn('h-7 w-7 p-0', hasUpvoted && 'text-orange-500')}
-          onClick={() => onVote(1)}
-        >
-          <ArrowUp className="h-3.5 w-3.5" />
-        </Button>
-        <span
-          className={cn(
-            'text-xs font-semibold',
-            score > 0 ? 'text-orange-500' : score < 0 ? 'text-blue-500' : 'text-muted-foreground'
-          )}
-        >
-          {score}
-        </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn('h-7 w-7 p-0', hasDownvoted && 'text-blue-500')}
-          onClick={() => onVote(-1)}
-        >
-          <ArrowDown className="h-3.5 w-3.5" />
-        </Button>
-      </div>
+    <div
+      data-slot="discussion-comment"
+      className={cn(
+        '-mx-2 flex min-w-0 gap-1.5 rounded-md px-2 py-1.5 transition-colors hover:bg-[var(--surface)]',
+        depth > 0 && 'border-border/40 border-l pl-3'
+      )}
+    >
+      <DiscussionCollapseToggle
+        collapsed={isCollapsed}
+        onToggle={onToggleCollapsed}
+        className="mt-0.5 shrink-0"
+      />
 
       <div className="min-w-0 flex-1">
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+        <div className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
           {linkAuthors ? (
             <UserIdentityLink
               userId={comment.creator?.id}
@@ -93,7 +84,7 @@ export function CommentItemView({
               avatarClassName="h-5 w-5"
               fallbackClassName="text-[10px]"
               nameClassName="text-foreground font-medium"
-              handleClassName="ml-2 text-xs"
+              handleClassName="ml-2 hidden text-xs sm:inline"
             />
           ) : (
             <>
@@ -105,55 +96,72 @@ export function CommentItemView({
               </Avatar>
               <span className="text-foreground font-medium">{creatorName}</span>
               {comment.creator?.handle ? (
-                <span className="text-xs">@{comment.creator.handle}</span>
+                <span className="hidden text-xs sm:inline">@{comment.creator.handle}</span>
               ) : null}
             </>
           )}
-          <span>·</span>
-          <span className="flex items-center gap-1 text-xs">
-            <Clock className="h-3 w-3" />
-            {new Date(comment.createdAt).toLocaleDateString()}
-          </span>
+          <span className="hidden sm:inline">·</span>
+          <DiscussionTimestamp value={comment.createdAt} />
         </div>
 
-        <p className="mt-1 text-sm whitespace-pre-wrap">{comment.text}</p>
+        {!isCollapsed ? (
+          <>
+            <p className="mt-1 text-sm leading-5 [overflow-wrap:anywhere] break-words whitespace-pre-wrap">
+              {comment.text}
+            </p>
 
-        <div className="mt-1 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onToggleReplyInput}
-            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs"
-          >
-            <Reply className="h-3 w-3" />
-            {translateText('generated.inline.0377_reply_6c2bb735')}
-          </button>
-          {isOwner && onDelete && (
-            <button
-              type="button"
-              onClick={() => onDelete(comment.id)}
-              className="text-muted-foreground hover:text-destructive flex items-center gap-1 text-xs"
+            <DiscussionActionBar
+              score={score}
+              hasUpvoted={hasUpvoted}
+              hasDownvoted={hasDownvoted}
+              isVoting={isVoting}
+              onUpvote={() => onVote(1)}
+              onDownvote={() => onVote(-1)}
+              className="mt-0.5"
             >
-              <Trash2 className="h-3 w-3" />
-              {translateText('generated.inline.0537_delete_f6fdbe48')}
-            </button>
-          )}
-        </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                presentation="mutedTiny"
+                onClick={onToggleReplyInput}
+                className="h-7 px-2"
+              >
+                <Reply className="size-3.5" />
+                {translateText('generated.inline.0377_reply_6c2bb735')}
+              </Button>
+              {isOwner && onDelete ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  presentation="mutedTiny"
+                  onClick={() => onDelete(comment.id)}
+                  className="hover:text-destructive h-7 px-2"
+                >
+                  <Trash2 className="size-3.5" />
+                  {translateText('generated.inline.0537_delete_f6fdbe48')}
+                </Button>
+              ) : null}
+            </DiscussionActionBar>
 
-        {showReplyInput && (
-          <CommentInput
-            onSubmit={onReplySubmit}
-            placeholder={translateText('generated.inline.1114_write_a_reply_126cd2cd')}
-            replyTo={comment.creator?.name || 'this comment'}
-            onCancelReply={onCancelReply}
-            className="mt-2"
-          />
-        )}
+            {showReplyInput ? (
+              <CommentInput
+                onSubmit={onReplySubmit}
+                placeholder={translateText('generated.inline.1114_write_a_reply_126cd2cd')}
+                replyTo={comment.creator?.name || 'this comment'}
+                onCancelReply={onCancelReply}
+                className="mt-2"
+              />
+            ) : null}
 
-        {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-3 space-y-3">
-            {comment.replies.map((reply: any) => renderReply(reply, depth + 1))}
-          </div>
-        )}
+            {comment.replies && comment.replies.length > 0 ? (
+              <div className="mt-1 space-y-1">
+                {comment.replies.map((reply: any) => renderReply(reply, depth + 1))}
+              </div>
+            ) : null}
+          </>
+        ) : null}
       </div>
     </div>
   );

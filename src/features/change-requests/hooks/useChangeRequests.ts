@@ -84,6 +84,9 @@ export interface ChangeRequest {
   proposedChange: string;
   justification: string;
   isResolved: boolean;
+  isObsolete: boolean;
+  obsoleteReason: string | null;
+  obsoleteAt: number | null;
   status: string;
   resolution: string | null;
   resolvedAt: number | null;
@@ -317,7 +320,9 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
       });
       const changedCharacterCount = resolveChangedCharacterCount(cr, suggestionContent);
       const resolvedStatus = cr?.status ?? discussion?.status;
-      const isResolved = isApprovedStatus(resolvedStatus) || isDeclinedStatus(resolvedStatus);
+      const isObsolete = Boolean(cr?.obsolete_at || cr?.obsolete_reason);
+      const isResolved =
+        isObsolete || isApprovedStatus(resolvedStatus) || isDeclinedStatus(resolvedStatus);
       const displayCrId = record.displayCrId ?? cr?.title ?? '';
 
       return {
@@ -325,7 +330,7 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
         processBranchId: cr?.process_branch_id ?? null,
         logicalKey: record.logicalKey,
         discussionId: discussion?.id ?? null,
-        suggestionId: discussion?.id ?? null,
+        suggestionId: cr?.suggestion_id ?? discussion?.id ?? null,
         crId: displayCrId,
         crNumber: parseInt(displayCrId?.replace('CR-', '') || '0'),
         branchSequenceNumber: cr?.branch_sequence_number ?? null,
@@ -349,9 +354,16 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
           getOptionalString((cr as { justification?: unknown } | null)?.justification) ??
           '',
         isResolved,
-        status: cr?.status ?? discussion?.status ?? 'open',
-        resolution: isResolved ? (resolvedStatus ?? null) : null,
-        resolvedAt: isResolved && cr ? getTimestamp(cr) : null,
+        isObsolete,
+        obsoleteReason: cr?.obsolete_reason ?? null,
+        obsoleteAt: cr?.obsolete_at ?? null,
+        status: isObsolete ? 'obsolete' : (cr?.status ?? discussion?.status ?? 'open'),
+        resolution: isObsolete ? 'obsolete' : isResolved ? (resolvedStatus ?? null) : null,
+        resolvedAt: isObsolete
+          ? (cr?.obsolete_at ?? null)
+          : isResolved && cr
+            ? getTimestamp(cr)
+            : null,
         resolvedBy: isResolved && cr ? getCreatorId(cr) : null,
         createdAt: discussion?.createdAt ?? (cr ? getCreatedAt(cr) : 0),
         userId: discussion?.userId ?? (cr ? getCreatorId(cr) : ''),
@@ -370,7 +382,9 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
         confirmationStatus:
           discussion?.confirmationStatus ??
           (cr?.status === 'pending_submission' ? 'pending' : cr ? 'confirmed' : null),
-        changeRequestStatus: cr?.status ?? discussion?.changeRequestStatus ?? null,
+        changeRequestStatus: isObsolete
+          ? 'obsolete'
+          : (cr?.status ?? discussion?.changeRequestStatus ?? null),
         userVote: getUserVote(cr ?? undefined),
         comments: discussion?.comments || [],
         votes: cr?.votes || [],
@@ -388,12 +402,17 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
 
   // Separate open and closed requests
   const openChangeRequests = useMemo(
-    () => changeRequests.filter(req => !req.isResolved),
+    () => changeRequests.filter(req => !req.isResolved && !req.isObsolete),
     [changeRequests]
   );
 
   const closedChangeRequests = useMemo(
-    () => changeRequests.filter(req => req.isResolved),
+    () => changeRequests.filter(req => req.isResolved && !req.isObsolete),
+    [changeRequests]
+  );
+
+  const obsoleteChangeRequests = useMemo(
+    () => changeRequests.filter(req => req.isObsolete),
     [changeRequests]
   );
 
@@ -452,6 +471,7 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
     closedChangeRequests,
     approvedChangeRequests,
     declinedChangeRequests,
+    obsoleteChangeRequests,
     users,
     collaborators,
     isLoading,

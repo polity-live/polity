@@ -81,7 +81,7 @@ export function AmendmentBranchSelectorSection({
       <div
         className={cn(
           'bg-background flex w-full flex-col gap-3 py-2 sm:flex-row sm:items-center sm:justify-between',
-          isInline ? 'rounded-md border px-4' : 'container mx-auto px-8'
+          isInline && 'rounded-md border px-4'
         )}
       >
         <div className="flex min-w-0 items-center gap-2">
@@ -189,7 +189,7 @@ export function AmendmentBranchSelectorSection({
         </div>
       </div>
       {showBranchDiff ? (
-        <CollapsibleContent className={cn('pt-3', isInline ? '' : 'container mx-auto px-8')}>
+        <CollapsibleContent className="pt-3">
           <VariantDiffPanel
             candidates={branchDiffCandidates}
             title={t('features.amendments.text.branchSelector.branchDiff')}

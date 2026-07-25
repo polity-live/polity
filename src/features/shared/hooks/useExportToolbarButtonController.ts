@@ -1,6 +1,5 @@
 import * as React from 'react';
 
-import { exportToDocx } from '@platejs/docx-io';
 import { MarkdownPlugin } from '@platejs/markdown';
 import type { SlatePlugin } from 'platejs';
 import { createSlateEditor } from 'platejs';
@@ -9,7 +8,6 @@ import { useEditorRef } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
 
 import { BaseEditorKit } from '@/features/shared/ui/kit-platejs/editor-base-kit.tsx';
-import { DocxExportKit } from '@/features/shared/ui/kit-platejs/docx-export-kit.tsx';
 import { EditorStatic } from '@/features/shared/ui/ui-platejs/editor-static.tsx';
 
 const siteUrl = 'https://platejs.org';
@@ -141,8 +139,11 @@ export function useExportToolbarButtonController() {
   };
 
   const exportToWord = async () => {
+    const { DocxExportPlugin, exportToDocx } = await import('@platejs/docx-io');
+    const docxExportKit = [DocxExportPlugin];
+
     const blob = await exportToDocx(editor.children, {
-      editorPlugins: [...BaseEditorKit, ...DocxExportKit] as SlatePlugin[],
+      editorPlugins: [...BaseEditorKit, ...docxExportKit] as SlatePlugin[],
     });
 
     const url = window.URL.createObjectURL(blob);

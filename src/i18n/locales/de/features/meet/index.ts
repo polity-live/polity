@@ -64,6 +64,9 @@ export const meetTranslations = {
     bookMeeting: 'Besprechung buchen',
     cancelBooking: 'Buchung stornieren',
     viewInCalendar: 'Im Kalender anzeigen',
+    compactBookMeeting: 'Buchen',
+    compactCancelBooking: 'Stornieren',
+    compactViewInCalendar: 'Kalender',
   },
   toasts: {
     booked: 'Besprechung erfolgreich gebucht',

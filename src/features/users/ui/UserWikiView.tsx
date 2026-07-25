@@ -6,7 +6,12 @@ import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { SubscribeButton } from '@/features/shared/ui/action-buttons';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { EmptyState, ErrorState, ProfilePageSkeleton } from '@/features/shared/ui/feedback';
-import { ActionBar, StatsBar } from '@/features/shared/ui/layout';
+import {
+  ActionBar,
+  ResponsiveActionLabel,
+  StatsBar,
+  compactActionButtonClassName,
+} from '@/features/shared/ui/layout';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -46,35 +51,42 @@ export function UserWikiView({ page }: UserWikiViewProps) {
   return (
     <div>
       <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold">
-          <span className="inline-flex items-center gap-3">
-            <span>{page.fullName}</span>
-            <span className="bg-background/80 inline-flex items-center gap-1 rounded-md border px-2 py-1 shadow-sm">
-              <BadgeControl
-                variant="secondary"
-                className="rounded-md px-3 py-1 text-xs font-medium"
-              >
-                {page.supportTier.label}
-              </BadgeControl>
-              <HoverCard openDelay={150}>
-                <HoverCardTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={page.supportTier.description}
-                    className="text-muted-foreground hover:text-foreground h-7 w-7 rounded-md"
-                  >
-                    <CircleHelp className="h-4 w-4" />
-                  </Button>
-                </HoverCardTrigger>
-                <HoverCardContent side="bottom" className="w-64 p-3 text-sm">
-                  <p>{page.supportTier.description}</p>
-                </HoverCardContent>
-              </HoverCard>
-            </span>
-          </span>
-        </h1>
+        <div className="mb-2 flex min-w-0 flex-col items-center justify-center gap-2 md:flex-row md:gap-3">
+          <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{page.fullName}</h1>
+          <div className="bg-background/80 inline-flex max-w-full min-w-0 items-center gap-1 rounded-md border px-2 py-1 shadow-sm">
+            <BadgeControl
+              variant="secondary"
+              className="max-w-full min-w-0 rounded-md px-3 py-1 text-xs font-medium break-words whitespace-normal"
+            >
+              {page.supportTier.label}
+            </BadgeControl>
+            <HoverCard openDelay={150}>
+              <HoverCardTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={page.supportTier.description}
+                  className="text-muted-foreground hover:text-foreground h-7 w-7 shrink-0 rounded-md"
+                >
+                  <CircleHelp className="h-4 w-4" />
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent side="bottom" className="w-64 p-3 text-sm">
+                <p>{page.supportTier.description}</p>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
+        </div>
+        {page.hashtags.length > 0 ? (
+          <div className="mt-3 md:hidden">
+            <HashtagDisplay
+              hashtags={page.hashtags}
+              centered
+              badgeClassName="max-w-full whitespace-normal break-all text-center"
+            />
+          </div>
+        ) : null}
         {page.bioText ? <p className="text-muted-foreground">{page.bioText}</p> : null}
       </div>
 
@@ -110,10 +122,16 @@ export function UserWikiView({ page }: UserWikiViewProps) {
               isSubscribed={page.subscribed}
               onToggleSubscribe={page.onToggleSubscribe}
               isLoading={page.subscribeLoading}
+              compactOnMobile
             />
-            <Button variant="outline" onClick={page.onMessage}>
+            <Button
+              variant="outline"
+              onClick={page.onMessage}
+              className={compactActionButtonClassName}
+              aria-label={page.copy.message}
+            >
               <Mail className="h-4 w-4" />
-              <span>{page.copy.message}</span>
+              <ResponsiveActionLabel full={page.copy.message} compact={page.copy.message} />
             </Button>
           </>
         ) : null}
@@ -122,11 +140,12 @@ export function UserWikiView({ page }: UserWikiViewProps) {
           title={page.fullName}
           description={page.aboutText}
           shareContextItem={page.shareContextItem}
+          compactOnMobile
         />
       </ActionBar>
 
       {page.hashtags.length > 0 ? (
-        <div className="mb-6">
+        <div className="mb-6 hidden md:block">
           <HashtagDisplay hashtags={page.hashtags} centered />
         </div>
       ) : null}

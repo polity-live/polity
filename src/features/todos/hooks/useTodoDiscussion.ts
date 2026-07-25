@@ -23,6 +23,8 @@ interface DiscussionComment {
   content?: string | null;
   parent_id?: string | null;
   created_at: number;
+  upvotes?: number | null;
+  downvotes?: number | null;
   user?: DiscussionUser | null;
   votes?: readonly DiscussionVote[];
   replies?: readonly DiscussionComment[];
@@ -60,6 +62,8 @@ function mapComment(comment: DiscussionComment): CommentData {
     text: comment.content ?? '',
     parent_id: comment.parent_id ?? null,
     createdAt: comment.created_at,
+    upvotes: comment.upvotes ?? 0,
+    downvotes: comment.downvotes ?? 0,
     creator: comment.user
       ? {
           id: comment.user.id,

@@ -55,6 +55,7 @@ function NavigationItemTooltip({
 function NavigationItemIcon({ item, className }: { item: any; className: string }) {
   const Icon = iconMap[item.icon as keyof typeof iconMap];
   const badge = typeof item.badge === 'number' && item.badge > 0 ? item.badge : undefined;
+  const badgeLabel = badge !== undefined && badge > 99 ? '99+' : badge;
 
   return (
     <span data-slot="navigation-item-icon" className="relative inline-flex shrink-0">
@@ -63,10 +64,12 @@ function NavigationItemIcon({ item, className }: { item: any; className: string 
         <BadgeControl
           aria-hidden="true"
           data-slot="navigation-item-badge"
-          className="pointer-events-none absolute -top-2 -right-3 flex h-5 min-w-5 items-center justify-center px-1 tabular-nums"
+          className="ring-background pointer-events-none absolute top-0 right-0 flex h-4 min-w-4 translate-x-[65%] -translate-y-[55%] items-center justify-center px-0.5 py-0 leading-none tabular-nums ring-2"
+          shape="pill"
+          size="tiny"
           variant="default"
         >
-          {badge}
+          {badgeLabel}
         </BadgeControl>
       )}
     </span>

@@ -41,11 +41,13 @@ const translations: Record<string, string> = {
   'features.agendas.crTimeline.changeRequest': 'Change Request',
   'features.agendas.crTimeline.noCRs': 'No change requests',
   'features.agendas.crTimeline.noItemsInTab': 'No change requests in this category',
+  'features.agendas.crTimeline.searchPlaceholder': 'Search change requests',
   'features.agendas.crTimeline.submittedVotePending': 'Submitted - vote pending',
   'features.agendas.crTimeline.tabAccepted': 'Accepted',
   'features.agendas.crTimeline.tabAll': 'All',
   'features.agendas.crTimeline.tabOpen': 'Open',
   'features.agendas.crTimeline.tabRejected': 'Rejected',
+  'features.agendas.crTimeline.tabObsolete': 'Obsolete',
   'features.agendas.crTimeline.title': 'Change Request Votes',
   'features.agendas.crTimeline.voteRecorded': 'Vote recorded',
   'features.agendas.crTimeline.voted': 'Voted',
@@ -203,6 +205,224 @@ describe('ChangeRequestCardsListView mode labels', () => {
     expect(screen.getByText('Event voting mode active')).toBeTruthy();
     expect(screen.getByText('Event Voting Mode')).toBeTruthy();
     expect(screen.queryByText('event_final_closing_vote')).toBeNull();
+  });
+
+  it('renders frameless on amendment pages while retaining the card container by default', () => {
+    const { rerender } = render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        editingMode="vote_internal"
+        containerVariant="frameless"
+      />
+    );
+
+    const framelessContainer = document.querySelector('[data-container-variant="frameless"]');
+    const framelessHeader = framelessContainer?.querySelector('[data-slot="card-header"]');
+    const framelessContent = framelessContainer?.querySelector('[data-slot="card-content"]');
+
+    expect(framelessContainer?.getAttribute('data-slot')).toBeNull();
+    expect(framelessHeader?.className).toContain('p-0');
+    expect(framelessContent?.className).toContain('p-0');
+
+    rerender(<ChangeRequestCardsListView {...baseProps} editingMode="vote_internal" />);
+
+    expect(
+      document.querySelector('[data-container-variant="card"]')?.getAttribute('data-slot')
+    ).toBe('card');
+  });
+
+  it('renders shared controls once and one card per item when the card collection is virtualized', () => {
+    const items = [1, 2, 3].map(number => ({
+      id: `virtualized-item-${number}`,
+      agenda_item_id: 'agenda-1',
+      change_request_id: `virtualized-cr-${number}`,
+      is_closing_vote: false,
+      status: 'pending',
+      change_request: {
+        id: `virtualized-cr-${number}`,
+        title: `Virtualized change request ${number}`,
+        cr_id: `CR-${number}`,
+      },
+      vote: null,
+    }));
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        editingMode="edit"
+        isVotingActive={false}
+        virtualize
+        items={items}
+        crItems={items}
+        sequenceItems={items}
+        searchedItems={items}
+        filteredItems={items}
+        categorized={{ accepted: [], open: items, rejected: [] }}
+      />
+    );
+
+    expect(screen.getAllByText('Change Request Votes')).toHaveLength(1);
+    expect(screen.getAllByRole('tab', { name: /^All 3$/ })).toHaveLength(1);
+    expect(document.querySelectorAll('[data-slot="change-request-summary"]')).toHaveLength(3);
+    for (const number of [1, 2, 3]) {
+      expect(screen.getByText(`Virtualized change request ${number}`)).toBeTruthy();
+    }
+  });
+
+  it('applies shared search and status filters to the virtualized card collection', () => {
+    const createItem = (id: string, title: string, status: string) => ({
+      id: `virtualized-filter-item-${id}`,
+      agenda_item_id: 'agenda-1',
+      change_request_id: `virtualized-filter-cr-${id}`,
+      is_closing_vote: false,
+      status,
+      change_request: {
+        id: `virtualized-filter-cr-${id}`,
+        title,
+        cr_id: `CR-${id}`,
+      },
+      vote: null,
+    });
+    const openItem = createItem('1', 'Alpha proposal', 'pending');
+    const acceptedItem = createItem('2', 'Beta proposal', 'completed');
+
+    render(
+      <ChangeRequestCardsList
+        items={[openItem, acceptedItem] as never}
+        editingMode="edit"
+        isVotingActive={false}
+        virtualize
+      />
+    );
+
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Beta' },
+    });
+
+    expect(screen.queryByText('Alpha proposal')).toBeNull();
+    expect(screen.getByText('Beta proposal')).toBeTruthy();
+
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: '' },
+    });
+    const acceptedTab = screen.getByRole('tab', { name: /^Accepted 1$/ });
+    fireEvent.mouseDown(acceptedTab, { button: 0, ctrlKey: false });
+
+    expect(screen.queryByText('Alpha proposal')).toBeNull();
+    expect(screen.getByText('Beta proposal')).toBeTruthy();
+    expect(screen.getAllByText('Change Request Votes')).toHaveLength(1);
+  });
+
+  it('shows obsolete requests exclusively in a read-only tab directly after rejected', () => {
+    const activeItem = {
+      id: 'active-item',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'active-cr',
+      is_closing_vote: false,
+      status: 'pending',
+      change_request: {
+        id: 'active-cr',
+        title: 'Active proposal',
+        cr_id: 'CR-1',
+        status: 'open',
+      },
+      vote: null,
+    };
+    const obsoleteItem = {
+      id: 'obsolete-item',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'obsolete-cr',
+      is_closing_vote: false,
+      status: 'completed',
+      _originalStatus: 'obsolete',
+      change_request: {
+        id: 'obsolete-cr',
+        title: 'Obsolete proposal',
+        cr_id: 'CR-2',
+        status: 'obsolete',
+        voting_status: 'completed',
+        obsolete_reason: 'suggestion_removed_in_collaborative_editing',
+        obsolete_at: 1_700_000_100_000,
+        votes_for: 2,
+        votes_against: 1,
+        votes_abstain: 1,
+      },
+      vote: {
+        id: 'obsolete-vote',
+        status: 'indicative',
+        choices: [
+          { id: 'obsolete-yes', label: 'Accept', order_index: 0 },
+          { id: 'obsolete-no', label: 'Reject', order_index: 1 },
+        ],
+        voters: [],
+        indicative_participations: [],
+        indicative_decisions: [],
+        final_participations: [],
+        final_decisions: [],
+        offline_tallies: [],
+      },
+    };
+
+    render(
+      <ChangeRequestCardsList
+        items={[activeItem] as never}
+        obsoleteItems={[obsoleteItem] as never}
+        editingMode="vote_internal"
+        isVotingActive
+        canManage
+        canVote
+        onCastVote={vi.fn()}
+        onFinalizeInternalVote={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Active proposal')).toBeTruthy();
+    expect(screen.queryByText('Obsolete proposal')).toBeNull();
+    const tabs = screen.getAllByRole('tab');
+    const rejectedIndex = tabs.findIndex(tab => tab.textContent?.includes('Rejected'));
+    const obsoleteIndex = tabs.findIndex(tab => tab.textContent?.includes('Obsolete'));
+    expect(obsoleteIndex).toBe(rejectedIndex + 1);
+
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /^Obsolete 1$/ }), {
+      button: 0,
+      ctrlKey: false,
+    });
+
+    expect(screen.queryByText('Active proposal')).toBeNull();
+    expect(screen.getByText('Obsolete proposal')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Accept$/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Reject$/ })).toBeNull();
+    expect(screen.queryByText('Interne Abstimmung beenden')).toBeNull();
+  });
+
+  it('places change request statuses on a wrapping mobile row', () => {
+    const item = {
+      id: 'mobile-layout-item',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'mobile-layout-cr',
+      is_closing_vote: false,
+      status: 'pending',
+      change_request: {
+        id: 'mobile-layout-cr',
+        title: 'Mobile layout change request',
+        cr_id: 'CR-1',
+      },
+      vote: null,
+    };
+
+    render(
+      <ChangeRequestCardsList items={[item] as never} editingMode="edit" isVotingActive={false} />
+    );
+
+    const header = document.querySelector('[data-slot="change-request-summary"]')?.parentElement;
+    const summary = document.querySelector('[data-slot="change-request-summary"]');
+    const statuses = document.querySelector('[data-slot="change-request-statuses"]');
+
+    expect(header?.className).toContain('flex-col');
+    expect(header?.className).toContain('sm:flex-row');
+    expect(summary?.className).toContain('w-full');
+    expect(statuses?.className).toContain('flex-wrap');
+    expect(statuses?.className).toContain('sm:flex-nowrap');
   });
 
   it('sorts change requests by text position by default and can toggle to numeric order', () => {

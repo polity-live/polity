@@ -34,10 +34,9 @@ vi.mock('@/features/network/ui/LinkGroupDialog', () => ({
 
 vi.mock('@/features/shared/ui/layout', () => ({
   ActionBar: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  EntityPageFrame: ({ children }: { children: ReactNode }) => (
-    <div className="mx-auto max-w-7xl px-4 py-6">{children}</div>
-  ),
+  ResponsiveActionLabel: ({ full }: { full: ReactNode }) => <>{full}</>,
   StatsBar: () => <div data-testid="stats-bar" />,
+  compactActionButtonClassName: 'compact-action',
 }));
 
 vi.mock('@/features/shared/ui/action-buttons', () => ({
@@ -54,7 +53,9 @@ vi.mock('@/features/users/ui/SocialBar', () => ({
 }));
 
 vi.mock('@/features/shared/ui/hashtags', () => ({
-  HashtagDisplay: () => <div data-testid="hashtags" />,
+  HashtagDisplay: ({ badgeClassName }: { badgeClassName?: string }) => (
+    <div data-testid="hashtags" data-badge-class-name={badgeClassName} />
+  ),
 }));
 
 vi.mock('@/features/shared/ui/wiki', () => ({
@@ -187,11 +188,45 @@ describe('GroupWikiContentView', () => {
     expect(screen.getByRole('button', { name: 'share' })).toBeTruthy();
   });
 
-  it('owns the entity page frame so public routes keep a gutter without shell wrapping', () => {
-    const { container } = renderGroupWikiContent();
+  it('stacks wrapping badges and mobile hashtags below a constrained title', () => {
+    renderGroupWikiContent({
+      isHierarchical: true,
+      isBase: true,
+      group: {
+        id: 'group-1',
+        name: 'A very long assembly group name',
+        visibility: 'public',
+        roles: [],
+        memberships: [],
+        group_hashtags: [
+          {
+            id: 'group-tag-1',
+            hashtag: { id: 'tag-1', tag: 'a-very-long-hashtag' },
+          },
+        ],
+        blogs: [],
+      },
+    });
 
-    expect(container.firstElementChild?.className).toContain('max-w-7xl');
-    expect(container.firstElementChild?.className).toContain('px-4');
+    const title = screen.getByRole('heading', {
+      level: 1,
+      name: 'A very long assembly group name',
+    });
+    const titleGroup = title.parentElement;
+    const badgeGroup = title.nextElementSibling;
+    const hashtagDisplays = screen.getAllByTestId('hashtags');
+
+    expect(title.className).toContain('min-w-0');
+    expect(title.className).toContain('break-words');
+    expect(titleGroup?.className).toContain('flex-col');
+    expect(titleGroup?.className).toContain('md:flex-row');
+    expect(badgeGroup?.className).toContain('flex-wrap');
+    expect(badgeGroup?.className).toContain('md:contents');
+    expect(titleGroup?.nextElementSibling).toBe(hashtagDisplays[0]?.parentElement);
+    expect(hashtagDisplays[0]?.parentElement?.className).toContain('md:hidden');
+    expect(hashtagDisplays[0]?.getAttribute('data-badge-class-name')).toContain('break-all');
+    expect(hashtagDisplays[1]?.parentElement?.className).toContain('hidden');
+    expect(hashtagDisplays[1]?.parentElement?.className).toContain('md:block');
   });
 
   it('passes current elected group-role holders as member roles and filter roles', () => {

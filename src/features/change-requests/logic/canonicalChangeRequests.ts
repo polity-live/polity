@@ -37,6 +37,9 @@ export interface CanonicalSavedChangeRequest {
   resolution_method?: string | null;
   visibility_scope?: string | null;
   resolved_in_mode?: string | null;
+  obsolete_reason?: string | null;
+  obsolete_at?: number | null;
+  obsolete_by_vote_id?: string | null;
   changed_character_count?: number | null;
   changedCharacterCount?: number | null;
   source_type?: string | null;

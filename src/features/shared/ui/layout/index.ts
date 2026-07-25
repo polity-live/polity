@@ -12,8 +12,13 @@ export {
   type ResolvedSurfaceMode,
   type SurfaceMode,
 } from './SurfaceDepthContext';
-export { ActionBar } from './ActionBar';
-export { EntityPageFrame } from './EntityPageFrame';
+export {
+  ActionBar,
+  ResponsiveActionLabel,
+  compactActionButtonClassName,
+  type ActionBarProps,
+  type ResponsiveActionLabelProps,
+} from './ActionBar';
 export {
   EntityPageShell,
   type EntityPageShellProps,

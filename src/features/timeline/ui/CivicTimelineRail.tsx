@@ -154,20 +154,30 @@ function TimelineArticle({
               : featureThemeClassName('timelineCivicTimelineRailSuccessBackground')
         )}
       />
-      <div className="flex gap-3">
+      <div
+        data-slot="timeline-item-layout"
+        className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3"
+      >
         <div
+          data-slot="timeline-item-icon"
           className={cn(
-            'bg-muted/40 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border',
+            'bg-muted/40 col-start-1 row-start-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border',
             CONTENT_TYPE_CONFIG[item.type]?.accentColor
           )}
         >
           <Icon className="h-5 w-5" />
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
+        <div
+          data-slot="timeline-item-content-column"
+          className="contents min-w-0 sm:col-start-2 sm:row-start-1 sm:block"
+        >
+          <div
+            data-slot="timeline-item-meta"
+            className="col-start-2 row-start-1 flex min-w-0 flex-wrap items-center gap-2"
+          >
             <BadgeControl
               variant={item.reason === 'urgent_decision' ? 'destructive' : 'secondary'}
-              className="rounded-md"
+              className="max-w-full rounded-md break-words whitespace-normal"
             >
               {reasonLabel}
             </BadgeControl>
@@ -182,55 +192,79 @@ function TimelineArticle({
               </span>
             ) : null}
           </div>
-          <h3 className="mt-2 text-base leading-snug font-semibold">
-            <SmartLink
-              href={item.href}
-              onClick={() => onItemSelect?.(item)}
-              className="hover:underline"
-            >
-              {item.title}
-            </SmartLink>
-          </h3>
-          {item.sourceName || item.locationLabel ? (
-            <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-              {item.sourceName ? (
-                <SmartLink
-                  href={item.sourceHref ?? item.href}
-                  className="hover:text-foreground hover:underline"
+          <div
+            data-slot="timeline-item-main-content"
+            className="col-span-3 row-start-2 max-w-full min-w-0 sm:col-auto sm:row-auto"
+          >
+            <h3 className="mt-2 text-base leading-snug font-semibold break-words">
+              <SmartLink
+                href={item.href}
+                onClick={() => onItemSelect?.(item)}
+                className="hover:underline"
+              >
+                {item.title}
+              </SmartLink>
+            </h3>
+            {item.sourceName || item.locationLabel ? (
+              <div className="text-muted-foreground mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                {item.sourceName ? (
+                  <SmartLink
+                    href={item.sourceHref ?? item.href}
+                    className="hover:text-foreground min-w-0 break-words hover:underline"
+                  >
+                    {item.sourceName}
+                  </SmartLink>
+                ) : null}
+                {item.locationLabel ? (
+                  <span className="inline-flex min-w-0 items-center gap-1 break-words">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" />
+                    {item.locationLabel}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+            {item.description ? (
+              <p className="text-muted-foreground mt-2 line-clamp-2 text-sm break-words">
+                {item.description}
+              </p>
+            ) : null}
+            <div className="mt-3 flex max-w-full min-w-0 flex-wrap items-center gap-2">
+              {item.status ? (
+                <BadgeControl
+                  variant="outline"
+                  shape="rounded"
+                  className="max-w-full break-words whitespace-normal"
                 >
-                  {item.sourceName}
-                </SmartLink>
+                  {item.status.replace(/[_-]/g, ' ')}
+                </BadgeControl>
               ) : null}
-              {item.locationLabel ? (
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {item.locationLabel}
-                </span>
+              {item.statsLabel ? (
+                <BadgeControl
+                  variant="outline"
+                  shape="rounded"
+                  className="max-w-full break-words whitespace-normal"
+                >
+                  {item.statsLabel}
+                </BadgeControl>
               ) : null}
+              {(item.tags ?? []).slice(0, 3).map(tag => (
+                <BadgeControl
+                  key={tag}
+                  variant="outline"
+                  className="max-w-full rounded-md font-normal break-words whitespace-normal"
+                >
+                  #{tag}
+                </BadgeControl>
+              ))}
             </div>
-          ) : null}
-          {item.description ? (
-            <p className="text-muted-foreground mt-2 line-clamp-2 text-sm">{item.description}</p>
-          ) : null}
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {item.status ? (
-              <BadgeControl variant="outline" shape="rounded">
-                {item.status.replace(/[_-]/g, ' ')}
-              </BadgeControl>
-            ) : null}
-            {item.statsLabel ? (
-              <BadgeControl variant="outline" shape="rounded">
-                {item.statsLabel}
-              </BadgeControl>
-            ) : null}
-            {(item.tags ?? []).slice(0, 3).map(tag => (
-              <BadgeControl key={tag} variant="outline" className="rounded-md font-normal">
-                #{tag}
-              </BadgeControl>
-            ))}
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="col-start-3 row-start-1 h-8 w-8 shrink-0"
+          asChild
+        >
           <SmartLink
             href={item.href}
             aria-label={item.primaryActionLabel ?? t('features.timeline.cards.viewDetails')}

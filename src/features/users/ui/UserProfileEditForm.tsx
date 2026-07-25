@@ -104,6 +104,7 @@ export function UserProfileEditForm({
     <SettingsPage
       title={t('pages.user.settings')}
       description={t('pages.user.settingsDescription')}
+      size="wide"
     >
       <SettingsTabs tabs={tabs} value={resolvedTab} onValueChange={onTabChange}>
         {/* Basic Information Tab */}

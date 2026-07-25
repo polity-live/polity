@@ -62,6 +62,16 @@ afterEach(() => {
 });
 
 describe('StreetDesignPageView', () => {
+  it('relies on the shared entity frame without another horizontal workspace inset', () => {
+    const { container } = render(<StreetDesignPageView {...createPageProps()} />);
+    const page = container.firstElementChild;
+    const workspace = container.querySelector('[data-slot="street-design-page-content"]');
+
+    expect(page?.className).not.toContain('pt-5');
+    expect(workspace?.className).toContain('w-full');
+    expect(workspace?.className).not.toContain('md:px-8');
+  });
+
   it('hides both action bars for a signed-out read-only viewer', () => {
     render(
       <StreetDesignPageView
