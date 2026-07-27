@@ -354,6 +354,7 @@ export function CityDesignTopBarView({
   return (
     <FixedToolbar
       positionMode={positionMode}
+      data-tutorial-horizontal-scroller="city-design-toolbar"
       className="gap-0 rounded-none border-x-0 border-t-0 px-1 py-1 shadow-none"
     >
       <ToolbarGroup>

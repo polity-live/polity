@@ -59,7 +59,11 @@ const CONFIRMED_NETWORK_RETRY_DELAY_MS = 10_000;
 const PROCESS_PATH_RETRY_DELAY_MS = 10_000;
 const PRIMARY_NAVIGATION_SCROLLER_SELECTOR =
   '[data-tutorial-horizontal-scroller="primary-navigation"]';
+const CITY_DESIGN_TOOLBAR_SCROLLER_SELECTOR =
+  '[data-tutorial-horizontal-scroller="city-design-toolbar"]';
 const MOBILE_PRIMARY_SEARCH_ANCHOR = 'primary-search';
+const MOBILE_CITY_DESIGN_TREES_ANCHOR = 'city-design-trees-menu';
+const MOBILE_CITY_DESIGN_SAVE_ANCHOR = 'city-design-save';
 const TUTORIAL_SEARCH_RESULT_ANCHOR = 'tutorial-search-result';
 const LINK_SURFACE_PRIMARY_SELECTOR = '[data-link-surface-primary]';
 const TUTORIAL_INPUT_VALUES_ATTRIBUTE = 'data-tutorial-input-values';
@@ -105,6 +109,7 @@ const tutorialLabelKeys = {
   waitingForMembership: 'features.appTutorial.orchestrator.waitingForMembership',
   waitingForNetwork: 'features.appTutorial.orchestrator.waitingForNetwork',
   loadingConfirmedNetwork: 'features.appTutorial.orchestrator.loadingConfirmedNetwork',
+  loadingAmendment: 'features.appTutorial.orchestrator.loadingAmendment',
   copy: 'features.appTutorial.orchestrator.copy',
   copied: 'features.appTutorial.orchestrator.copied',
   copyFailed: 'features.appTutorial.orchestrator.copyFailed',
@@ -180,7 +185,7 @@ function visibleTutorialDropdownsFor(element: HTMLElement | null, anchor: string
 }
 
 function SpotlightSurfaces({ rect }: { rect: NonNullable<SpotlightRect> }) {
-  const surface = 'fixed z-[2147483000] bg-black/60 backdrop-blur-[1px]';
+  const surface = 'fixed z-[2147483000] bg-black/40 backdrop-blur-[1px]';
   return (
     <>
       <div className={surface} style={{ inset: `0 0 auto 0`, height: rect.top }} />
@@ -436,10 +441,21 @@ function horizontalScrollerFor(target: HTMLElement) {
   );
 }
 
-function centerMobilePrimarySearch(target: HTMLElement, anchor: string, isMobile: boolean) {
-  if (!isMobile || anchor !== MOBILE_PRIMARY_SEARCH_ANCHOR) return false;
+function mobileHorizontalScrollerSelector(anchor: string) {
+  if (anchor === MOBILE_PRIMARY_SEARCH_ANCHOR) return PRIMARY_NAVIGATION_SCROLLER_SELECTOR;
+  if (anchor === MOBILE_CITY_DESIGN_TREES_ANCHOR || anchor === MOBILE_CITY_DESIGN_SAVE_ANCHOR) {
+    return CITY_DESIGN_TOOLBAR_SCROLLER_SELECTOR;
+  }
+  return null;
+}
 
-  const scroller = target.closest<HTMLElement>(PRIMARY_NAVIGATION_SCROLLER_SELECTOR);
+function centerMobileTutorialTarget(target: HTMLElement, anchor: string, isMobile: boolean) {
+  if (!isMobile) return false;
+
+  const scrollerSelector = mobileHorizontalScrollerSelector(anchor);
+  if (!scrollerSelector) return false;
+
+  const scroller = target.closest<HTMLElement>(scrollerSelector);
   if (!scroller) return false;
 
   const maximumScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
@@ -490,14 +506,21 @@ export function visibleTutorialTarget(anchor: string) {
 }
 
 function tutorialTargetIsLoading(anchor: string) {
-  if (anchor !== 'avatar-profile') return false;
-  return Array.from(
-    document.querySelectorAll<HTMLElement>(`[data-tutorial-anchor="${CSS.escape(anchor)}"]`)
-  ).some(element =>
-    Boolean(
-      element
-        .closest('[role="menu"]')
-        ?.querySelector('[data-testid="user-menu-navigation-loading"]')
+  const explicitLoadingTarget = document.querySelector(
+    `[data-tutorial-loading-anchor="${CSS.escape(anchor)}"]`
+  );
+  if (explicitLoadingTarget) return true;
+
+  return (
+    anchor === 'avatar-profile' &&
+    Array.from(
+      document.querySelectorAll<HTMLElement>(`[data-tutorial-anchor="${CSS.escape(anchor)}"]`)
+    ).some(element =>
+      Boolean(
+        element
+          .closest('[role="menu"]')
+          ?.querySelector('[data-testid="user-menu-navigation-loading"]')
+      )
     )
   );
 }
@@ -567,17 +590,19 @@ function useSpotlightTarget(
         block: 'center',
         inline: isMobile ? 'nearest' : 'center',
       });
-      const waitForMobilePrimarySearchLayout =
+      const mobileScrollerSelector = mobileHorizontalScrollerSelector(next.anchor);
+      const waitForMobileHorizontalLayout =
         isMobile &&
-        next.anchor === MOBILE_PRIMARY_SEARCH_ANCHOR &&
-        Boolean(next.element.closest(PRIMARY_NAVIGATION_SCROLLER_SELECTOR));
+        Boolean(
+          mobileScrollerSelector && next.element.closest<HTMLElement>(mobileScrollerSelector)
+        );
       publishFrameRef.current = window.requestAnimationFrame(() => {
         publishFrameRef.current = null;
-        if (!waitForMobilePrimarySearchLayout) {
+        if (!waitForMobileHorizontalLayout) {
           publishTarget(next.element, next.anchor);
           return;
         }
-        centerMobilePrimarySearch(next.element, next.anchor, isMobile);
+        centerMobileTutorialTarget(next.element, next.anchor, isMobile);
         publishFrameRef.current = window.requestAnimationFrame(() => {
           publishFrameRef.current = null;
           publishTarget(next.element, next.anchor);
@@ -680,7 +705,7 @@ function useSpotlightTarget(
   useEffect(() => {
     if (!target) return;
     const update = () => {
-      centerMobilePrimarySearch(target, targetAnchor, isMobile);
+      centerMobileTutorialTarget(target, targetAnchor, isMobile);
       setDropdownVisible(visibleTutorialDropdownsFor(target, targetAnchor).length > 0);
       const nextRect = tutorialSpotlightRectFor(target, targetAnchor);
       setRect(current => (spotlightRectsAreEqual(current, nextRect) ? current : nextRect));
@@ -695,14 +720,15 @@ function useSpotlightTarget(
       }
     };
     const observer = new ResizeObserver(update);
-    const primaryNavigationScroller =
-      isMobile && targetAnchor === MOBILE_PRIMARY_SEARCH_ANCHOR
-        ? target.closest<HTMLElement>(PRIMARY_NAVIGATION_SCROLLER_SELECTOR)
+    const mobileScrollerSelector = mobileHorizontalScrollerSelector(targetAnchor);
+    const mobileHorizontalScroller =
+      isMobile && mobileScrollerSelector
+        ? target.closest<HTMLElement>(mobileScrollerSelector)
         : null;
     const visualViewport = isMobile ? window.visualViewport : null;
     observer.observe(target);
-    if (primaryNavigationScroller && primaryNavigationScroller !== target) {
-      observer.observe(primaryNavigationScroller);
+    if (mobileHorizontalScroller && mobileHorizontalScroller !== target) {
+      observer.observe(mobileHorizontalScroller);
     }
     window.addEventListener('resize', update);
     window.addEventListener('scroll', update, true);
@@ -820,9 +846,14 @@ export function AppTutorialOrchestrator() {
   useEffect(() => {
     if (
       !isMobileScreen ||
-      checkpoint?.id !== 'link-climate-council' ||
-      targetAnchor !== 'network-group-search' ||
-      !dropdownVisible
+      !checkpoint ||
+      !(
+        (checkpoint.id === 'link-climate-council' &&
+          targetAnchor === 'network-group-search' &&
+          dropdownVisible) ||
+        (checkpoint.id === 'accept-change-request' &&
+          targetAnchor === 'tutorial-change-request-accept')
+      )
     ) {
       return;
     }
@@ -883,10 +914,13 @@ export function AppTutorialOrchestrator() {
             return 'advanced';
           }
           if (result.run) {
-            setRun(result.run);
             if (href !== result.route) {
               await navigate({ to: result.route as never, replace: true });
             }
+            // Keep the current checkpoint active until the destination route
+            // and its loaders have settled. Otherwise the next target's retry
+            // timer starts on the page we are leaving.
+            setRun(result.run);
           }
           return 'advanced';
         } catch (advanceError) {
@@ -1311,6 +1345,7 @@ export function AppTutorialOrchestrator() {
         ? text.waitingForNetwork
         : null;
   const loadingConfirmedNetwork = checkpoint.id === 'view-network-confirmed' && !rect && !missing;
+  const loadingAmendment = checkpoint.id === 'edit-amendment-text' && !rect && !missing;
   const mobileCollapsed =
     isMobileScreen && mobileCollapsedState?.checkpointId === checkpoint.id
       ? mobileCollapsedState.collapsed
@@ -1613,7 +1648,7 @@ export function AppTutorialOrchestrator() {
           </Card>
         </div>
       )}
-      {loadingConfirmedNetwork && (
+      {(loadingConfirmedNetwork || loadingAmendment) && (
         <div className="fixed inset-0 z-[2147483150] grid place-items-center bg-black/60 p-4">
           <Card className="w-full max-w-sm">
             <CardContent className="space-y-3 p-5">
@@ -1623,11 +1658,11 @@ export function AppTutorialOrchestrator() {
                 className="flex items-center gap-2 text-sm font-medium"
               >
                 <LoaderCircle className="text-primary h-4 w-4 shrink-0 animate-spin" />
-                <p>{text.loadingConfirmedNetwork}</p>
+                <p>{loadingAmendment ? text.loadingAmendment : text.loadingConfirmedNetwork}</p>
               </div>
               <div
                 role="progressbar"
-                aria-label={text.loadingConfirmedNetwork}
+                aria-label={loadingAmendment ? text.loadingAmendment : text.loadingConfirmedNetwork}
                 className="bg-secondary h-1.5 w-full overflow-hidden rounded-full"
               >
                 <div className="bg-primary h-full w-1/2 animate-pulse rounded-full" />

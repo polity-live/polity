@@ -116,7 +116,11 @@ export function AmendmentEditContentView({
   confirmCreate,
 }: AmendmentEditContentViewProps) {
   if (isLoading) {
-    return <PageSkeleton variant="settings" label={t('features.amendments.editContent.loading')} />;
+    return (
+      <div data-tutorial-loading-anchor="amendment-text-editor">
+        <PageSkeleton variant="settings" label={t('features.amendments.editContent.loading')} />
+      </div>
+    );
   }
 
   if (!isCreating && !amendment) {

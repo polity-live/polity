@@ -60,6 +60,8 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'features.appTutorial.orchestrator.waitingForNetwork':
           'Waiting for the other group to accept the request …',
         'features.appTutorial.orchestrator.loadingConfirmedNetwork': 'Loading the accepted link …',
+        'features.appTutorial.orchestrator.loadingAmendment':
+          'Loading the amendment for the next tutorial step …',
         'features.appTutorial.orchestrator.copy': 'Copy',
         'features.appTutorial.orchestrator.copied': 'Copied',
         'features.appTutorial.orchestrator.copyFailed':
@@ -456,10 +458,12 @@ describe('AppTutorialOrchestrator', () => {
     expect(card.hasAttribute('data-tutorial-overlay-allowed')).toBe(true);
     expect(card.className).toContain('fixed');
     expect(card.className).toContain('z-[2147483100]');
+    const overlaySurfaces = Array.from(root.querySelectorAll<HTMLElement>('*')).filter(element =>
+      element.getAttribute('class')?.includes('z-[2147483000]')
+    );
+    expect(overlaySurfaces).toHaveLength(4);
     expect(
-      Array.from(root.querySelectorAll<HTMLElement>('*')).some(element =>
-        element.className.includes('z-[2147483000]')
-      )
+      overlaySurfaces.every(element => element.getAttribute('class')?.includes('bg-black/40'))
     ).toBe(true);
     expect(linkTrigger.getAttribute('tabindex')).not.toBe('-1');
 
@@ -837,6 +841,132 @@ describe('AppTutorialOrchestrator', () => {
     expect(scrollTo).toHaveBeenLastCalledWith({ behavior: 'auto', left: 204 });
   });
 
+  it('keeps the current checkpoint active until navigation to the next route settles', async () => {
+    let resolveNavigation!: () => void;
+    const navigation = new Promise<void>(resolve => {
+      resolveNavigation = resolve;
+    });
+    mocks.navigate.mockReturnValueOnce(navigation);
+    mocks.loadTutorialRun.mockResolvedValueOnce({
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'open-create',
+        route: '/group/group-1/network?tab=manage-network',
+        revision: 1,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+    mocks.advanceTutorial.mockResolvedValueOnce({
+      completed: false,
+      route: '/create',
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'open-search',
+        route: '/create',
+        revision: 2,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+
+    render(
+      <>
+        <button data-tutorial-anchor="primary-create">Create navigation</button>
+        <button data-tutorial-anchor="primary-search">Search navigation</button>
+        <AppTutorialOrchestrator />
+      </>
+    );
+
+    await screen.findByRole('heading', { name: 'Start initiatives' });
+    fireEvent.click(screen.getByRole('button', { name: 'Create navigation' }));
+    await waitFor(() =>
+      expect(mocks.navigate).toHaveBeenCalledWith({ to: '/create', replace: true })
+    );
+
+    expect(screen.queryByRole('heading', { name: 'Global search' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Start initiatives' })).toBeTruthy();
+
+    await act(async () => {
+      resolveNavigation();
+      await navigation;
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Global search' })).toBeTruthy();
+  });
+
+  it.each([
+    ['open-city-design-trees', 'city-design-trees-menu', 'Trees', 'Open Trees'],
+    ['save-city-design', 'city-design-save', 'Save', 'Save the design'],
+  ] as const)(
+    'scrolls the %s target into the visible mobile city-design toolbar',
+    async (checkpointId, anchor, accessibleName, title) => {
+      useScreenStore.setState({ isMobileScreen: true });
+      mocks.loadTutorialRun.mockResolvedValueOnce({
+        run: {
+          runId: 'run-1',
+          status: 'active',
+          currentCheckpointId: checkpointId,
+          route: '/amendment/amendment-1/citydesign',
+          revision: 7,
+          expiresAt: '2026-08-25T00:00:00.000Z',
+        },
+      });
+
+      render(
+        <div
+          data-testid="mobile-city-design-toolbar"
+          data-tutorial-horizontal-scroller="city-design-toolbar"
+        >
+          <button data-tutorial-anchor={anchor}>{accessibleName}</button>
+          <AppTutorialOrchestrator />
+        </div>
+      );
+
+      const scroller = screen.getByTestId('mobile-city-design-toolbar');
+      const tutorialTarget = screen.getByRole('button', { name: accessibleName });
+      const scrollTo = vi.fn(({ left }: ScrollToOptions) => {
+        scroller.scrollLeft = left ?? scroller.scrollLeft;
+      });
+      Object.defineProperties(scroller, {
+        clientWidth: { configurable: true, value: 320 },
+        scrollLeft: { configurable: true, value: 0, writable: true },
+        scrollTo: { configurable: true, value: scrollTo },
+        scrollWidth: { configurable: true, value: 800 },
+      });
+      scroller.getBoundingClientRect = vi.fn().mockReturnValue({
+        bottom: 64,
+        height: 64,
+        left: 0,
+        right: 320,
+        top: 0,
+        width: 320,
+        x: 0,
+        y: 0,
+        toJSON: () => undefined,
+      });
+      tutorialTarget.getBoundingClientRect = vi.fn(() => {
+        const left = 456 - scroller.scrollLeft;
+        return {
+          bottom: 48,
+          height: 48,
+          left,
+          right: left + 48,
+          top: 0,
+          width: 48,
+          x: left,
+          y: 0,
+          toJSON: () => undefined,
+        };
+      });
+
+      expect(await screen.findByRole('heading', { name: title })).toBeTruthy();
+      expect(scrollTo).toHaveBeenCalledWith({ behavior: 'auto', left: 320 });
+      expect(tutorialTarget.getBoundingClientRect().left).toBe(136);
+      expect(tutorialTarget.getBoundingClientRect().right).toBe(184);
+    }
+  );
+
   it('clamps the centered mobile search position to the primary bar range', async () => {
     useScreenStore.setState({ isMobileScreen: true });
     mocks.loadTutorialRun.mockResolvedValueOnce({
@@ -953,6 +1083,34 @@ describe('AppTutorialOrchestrator', () => {
 
     expect(await screen.findByRole('heading', { name: 'Global search' })).toBeTruthy();
     expect(screen.getByTestId('app-tutorial-target-outline')).toBeTruthy();
+  });
+
+  it('collapses the mobile instruction while the change-request vote dialog is open', async () => {
+    useScreenStore.setState({ isMobileScreen: true });
+    mocks.loadTutorialRun.mockResolvedValueOnce({
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'accept-change-request',
+        route: '/amendment/amendment-1/text',
+        revision: 9,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+
+    render(
+      <>
+        <div role="dialog" aria-label="Change request">
+          <button data-tutorial-anchor="tutorial-change-request-accept">Accept</button>
+        </div>
+        <AppTutorialOrchestrator />
+      </>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Review a change' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Show instruction' })).toBeTruthy();
+    expect(document.getElementById('app-tutorial-expanded-instruction')?.hidden).toBe(true);
+    expect(screen.getByTestId('app-tutorial-coach-card').style.height).toBe('76px');
   });
 
   it('resets mobile details to the next checkpoint default', async () => {
@@ -2048,6 +2206,39 @@ describe('AppTutorialOrchestrator', () => {
     expect(recover).toHaveBeenCalledOnce();
     expect(recover.mock.calls[0]?.[0]).toMatchObject({ detail: { anchor } });
     window.removeEventListener(APP_TUTORIAL_RECOVER_TARGET_EVENT, recover);
+  });
+
+  it('does not abort the amendment step while its editor is still loading', async () => {
+    vi.useFakeTimers();
+    mocks.loadTutorialRun.mockResolvedValueOnce({
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'edit-amendment-text',
+        route: '/amendment/amendment-1/text',
+        revision: 7,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+
+    render(
+      <>
+        <div data-tutorial-loading-anchor="amendment-text-editor">Loading editor</div>
+        <AppTutorialOrchestrator />
+      </>
+    );
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText('Loading the amendment for the next tutorial step …')).toBeTruthy();
+    act(() => vi.advanceTimersByTime(8_000));
+
+    expect(
+      screen.queryByRole('heading', { name: 'This target is not available right now' })
+    ).toBeNull();
+    expect(screen.getByText('Loading the amendment for the next tutorial step …')).toBeTruthy();
   });
 
   it.each([

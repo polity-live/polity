@@ -55,6 +55,7 @@ import {
 import { Comment, CommentCreateForm } from './comment.tsx';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { useIsMobileScreen } from '@/features/shared/hooks/useIsMobileScreen';
+import { isAppTutorialActiveInDocument } from '@/features/app-tutorial/events';
 
 export const BlockDiscussion: RenderNodeWrapper<AnyPluginConfig> = props => {
   const { editor, element } = props;
@@ -137,6 +138,8 @@ export function ResponsiveDiscussionOverlay({
   trigger,
 }: ResponsiveDiscussionOverlayProps) {
   if (isMobileScreen) {
+    const tutorialActive = isAppTutorialActiveInDocument();
+
     return (
       <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
         <MobileDiscussionRow
@@ -151,6 +154,15 @@ export function ResponsiveDiscussionOverlay({
           showOverlay={false}
           onCloseAutoFocus={event => event.preventDefault()}
           onOpenAutoFocus={event => event.preventDefault()}
+          onInteractOutside={event => {
+            if (
+              tutorialActive &&
+              event.target instanceof Element &&
+              event.target.closest('[data-testid="app-tutorial-spotlight"]')
+            ) {
+              event.preventDefault();
+            }
+          }}
         >
           <DialogTitle className="sr-only">
             {translateText('components.changeRequests.openChangeRequests', 'Change requests')}

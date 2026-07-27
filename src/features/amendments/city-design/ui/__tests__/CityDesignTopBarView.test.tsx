@@ -191,9 +191,21 @@ describe('CityDesignTopBarView', () => {
     const props = renderTopBar();
     const mapSelection = screen.getByRole('radio', { name: 'Map section' });
     const trees = screen.getByRole('radio', { name: 'Trees' });
+    const save = screen.getByRole('button', { name: 'Save' });
 
     expect(mapSelection.getAttribute('data-tutorial-anchor')).toBe('city-design-map-selection');
     expect(trees.getAttribute('data-tutorial-anchor')).toBe('city-design-trees-menu');
+    expect(
+      trees
+        .closest('[data-tutorial-horizontal-scroller]')
+        ?.getAttribute('data-tutorial-horizontal-scroller')
+    ).toBe('city-design-toolbar');
+    expect(save.getAttribute('data-tutorial-anchor')).toBe('city-design-save');
+    expect(
+      save
+        .closest('[data-tutorial-horizontal-scroller]')
+        ?.getAttribute('data-tutorial-horizontal-scroller')
+    ).toBe('city-design-toolbar');
     expect(
       screen.getByRole('button', { name: 'Load OSM' }).getAttribute('data-tutorial-anchor')
     ).toBe('city-design-load-osm');

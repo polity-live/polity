@@ -11,6 +11,7 @@ export const appTutorialTranslations = {
     waitingForMembership: 'Waiting for the initiative to accept your membership request …',
     waitingForNetwork: 'Waiting for the other group to accept the request …',
     loadingConfirmedNetwork: 'Loading the accepted link …',
+    loadingAmendment: 'Loading the amendment for the next tutorial step …',
     copy: 'Copy',
     copied: 'Copied',
     copyFailed: 'The text could not be copied to the clipboard.',
