@@ -209,6 +209,28 @@ describe('GroupConnectionComposerView', () => {
     expect(selector?.querySelector('[data-testid="typeahead"]')).toBeTruthy();
   });
 
+  it('exposes selected rights and their direction using stable tutorial values', () => {
+    const value = {
+      ...createValue(),
+      rightDirections: {
+        ...createValue().rightDirections,
+        informationRight: 'partner_grants_right_to_current',
+        amendmentRight: 'partner_grants_right_to_current',
+      },
+    } as const;
+
+    const { container } = renderComposerView({
+      value,
+      selectedRights: new Set(['informationRight', 'amendmentRight']),
+    });
+
+    const selector = container.querySelector('[data-tutorial-anchor="network-rights-selector"]');
+    expect(JSON.parse(selector?.getAttribute('data-tutorial-input-values') ?? '[]')).toEqual([
+      'informationRight amendmentRight',
+      'informationRight amendmentRight current_has_right_in_partner',
+    ]);
+  });
+
   it('projects tutorial groups in English and reports the stable entity id only for fixtures', () => {
     const evidence: unknown[] = [];
     const listener = (event: Event) => {

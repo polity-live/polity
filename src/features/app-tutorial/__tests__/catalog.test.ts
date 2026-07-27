@@ -116,6 +116,17 @@ describe('app tutorial catalog', () => {
     expect(getNextAppTutorialCheckpoint('select-climate-council-rights')?.id).toBe(
       'request-climate-council-rights'
     );
+    expect(getAppTutorialCheckpoint('select-climate-council-rights')).toMatchObject({
+      completion: {
+        type: 'input',
+        expectedInputKey: 'networkRightsSelected',
+      },
+      copy: {
+        de: {
+          instruction: 'Wähle „Informationsrecht“ und „Antragsrecht“.',
+        },
+      },
+    });
     expect(getAppTutorialCheckpoint('request-climate-council-rights').completion).toEqual({
       type: 'input',
       expectedInputKey: 'networkRightsIncoming',

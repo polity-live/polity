@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AppTutorialOrchestrator,
   mobileDetailsOpenByDefault,
+  tutorialInputValuesFor,
   tutorialCardStyle,
   tutorialSpotlightRectFor,
   visibleTutorialTarget,
@@ -549,6 +550,42 @@ describe('AppTutorialOrchestrator', () => {
       screen.getByRole('checkbox', { name: 'Information Right' }).getAttribute('tabindex')
     ).not.toBe('-1');
     expect(screen.getByRole('button', { name: 'Link Group' }).getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('recognizes an already selected pair of rights from stable internal keys', async () => {
+    mocks.loadTutorialRun.mockResolvedValueOnce({
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'select-climate-council-rights',
+        route: '/group/group-1/network?tab=manage-network',
+        revision: 2,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+
+    render(
+      <>
+        <div
+          data-testid="rights-selector"
+          data-tutorial-anchor="network-rights-selector"
+          data-tutorial-input-values={JSON.stringify(['informationRight amendmentRight'])}
+        >
+          <input type="checkbox" aria-label="Informationsrecht" defaultChecked />
+          <input type="checkbox" aria-label="Antragsrecht" defaultChecked />
+        </div>
+        <AppTutorialOrchestrator />
+      </>
+    );
+
+    const selector = await screen.findByTestId('rights-selector');
+    expect(tutorialInputValuesFor(selector)).toEqual(['informationRight amendmentRight']);
+    await waitFor(() =>
+      expect(mocks.advanceTutorial).toHaveBeenCalledWith(2, 'select-climate-council-rights', {
+        type: 'input',
+        value: 'informationRight amendmentRight',
+      })
+    );
   });
 
   it('starts an interactive mobile step compact and exposes the same body as details', async () => {

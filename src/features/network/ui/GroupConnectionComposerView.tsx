@@ -636,6 +636,22 @@ export function GroupConnectionComposerView({
       {value.selectedGroupId ? (
         <GroupRelationshipRightsSelector
           tutorialAnchor="network-rights-selector"
+          tutorialInputValues={[
+            ...(value.rightDirections.informationRight !== 'none' &&
+            value.rightDirections.amendmentRight !== 'none'
+              ? [APP_TUTORIAL_EXPECTED_INPUTS.networkRightsSelected]
+              : []),
+            ...(value.rightDirections.informationRight ===
+              APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS.outgoing &&
+            value.rightDirections.amendmentRight === APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS.outgoing
+              ? [APP_TUTORIAL_EXPECTED_INPUTS.networkRightsOutgoing]
+              : []),
+            ...(value.rightDirections.informationRight ===
+              APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS.incoming &&
+            value.rightDirections.amendmentRight === APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS.incoming
+              ? [APP_TUTORIAL_EXPECTED_INPUTS.networkRightsIncoming]
+              : []),
+          ]}
           label={translateText('generated.inline.0787_rechte_11cf94d4')}
           helperText={t('common.network.existingRightsStatusHint')}
           selectedRights={selectedRights}
@@ -648,12 +664,12 @@ export function GroupConnectionComposerView({
             };
             updateRightDirection(right, direction);
             if (
-              nextDirections.informationRight === APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS.outgoing &&
-              nextDirections.amendmentRight === APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS.outgoing
+              nextDirections.informationRight !== 'none' &&
+              nextDirections.amendmentRight !== 'none'
             ) {
               reportAppTutorialAction({
                 type: 'input',
-                value: APP_TUTORIAL_EXPECTED_INPUTS.networkRightsOutgoing,
+                value: APP_TUTORIAL_EXPECTED_INPUTS.networkRightsSelected,
               });
             }
           }}

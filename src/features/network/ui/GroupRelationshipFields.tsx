@@ -847,6 +847,7 @@ export function GroupRelationshipTypeSummary({
 interface GroupRelationshipRightsSelectorProps {
   label: string;
   tutorialAnchor?: string;
+  tutorialInputValues?: readonly string[];
   selectedRights: Set<GroupRelationshipRight>;
   onToggleRight: (right: GroupRelationshipRight) => void;
   helperText?: string;
@@ -1211,6 +1212,7 @@ export function GroupRelationshipRightsSummary({
 export function GroupRelationshipRightsSelector({
   label,
   tutorialAnchor,
+  tutorialInputValues,
   selectedRights,
   onToggleRight,
   helperText,
@@ -1230,7 +1232,13 @@ export function GroupRelationshipRightsSelector({
   const sentenceSelectedGroupName = selectedGroupName ?? '';
 
   return (
-    <div className="grid gap-3" data-tutorial-anchor={tutorialAnchor}>
+    <div
+      className="grid gap-3"
+      data-tutorial-anchor={tutorialAnchor}
+      data-tutorial-input-values={
+        tutorialInputValues?.length ? JSON.stringify(tutorialInputValues) : undefined
+      }
+    >
       <div className="space-y-1">
         <FormControlLabel>{label}</FormControlLabel>
         {helperText ? <p className="text-muted-foreground text-sm">{helperText}</p> : null}

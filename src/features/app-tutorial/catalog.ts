@@ -15,6 +15,7 @@ export const APP_TUTORIAL_EXPECTED_INPUTS_BY_LANGUAGE = {
     networkGroupSearch: 'Münchner Klimarat',
     cityDesignStreet: 'Euckenstraße',
     cityDesignHouseNumber: '38',
+    networkRightsSelected: 'informationRight amendmentRight',
     networkRightsOutgoing: 'informationRight amendmentRight current_grants_right_to_partner',
     networkRightsIncoming: 'informationRight amendmentRight current_has_right_in_partner',
     amendmentAddition:
@@ -28,6 +29,7 @@ export const APP_TUTORIAL_EXPECTED_INPUTS_BY_LANGUAGE = {
     networkGroupSearch: 'Munich Climate Council',
     cityDesignStreet: 'Euckenstraße',
     cityDesignHouseNumber: '38',
+    networkRightsSelected: 'informationRight amendmentRight',
     networkRightsOutgoing: 'informationRight amendmentRight current_grants_right_to_partner',
     networkRightsIncoming: 'informationRight amendmentRight current_has_right_in_partner',
     amendmentAddition: 'Additional unsealed areas improve infiltration during heavy rainfall.',
@@ -570,7 +572,7 @@ export const APP_TUTORIAL_CHECKPOINTS = [
     copy: copy(
       'Als Untergruppe verknüpfen',
       'Die Initiative wird als Untergruppe des Münchner Klimarats eingeordnet. Dadurch entsteht ein nachvollziehbarer hierarchischer Prozessweg.',
-      'Wähle „This group is child“.',
+      'Wähle „Diese Gruppe ist untergeordnet“.',
       'Link as a child group',
       'The initiative becomes a child group of Münchner Klimarat, creating a clear hierarchical process path.',
       'Select “This group is child”.'
@@ -583,12 +585,12 @@ export const APP_TUTORIAL_CHECKPOINTS = [
     anchor: 'network-rights-selector',
     completion: {
       type: 'input',
-      expectedInputKey: 'networkRightsOutgoing',
+      expectedInputKey: 'networkRightsSelected',
     },
     copy: copy(
       'Rechte auswählen',
-      'Information Right ermöglicht Information und Zugriff. Amendment Right ist das Recht, Anträge einzureichen. Zunächst zeigt die Richtung, dass diese Gruppe die Rechte an den Münchner Klimarat gibt.',
-      'Wähle „Information Right“ und „Amendment Right“.',
+      'Das Informationsrecht ermöglicht Information und Einsicht. Das Antragsrecht erlaubt, Anträge einzureichen. Zunächst zeigt die Richtung, dass diese Gruppe die Rechte an den Münchner Klimarat gibt.',
+      'Wähle „Informationsrecht“ und „Antragsrecht“.',
       'Select rights',
       'Information Right provides information and access. Amendment Right is the right to submit motions. Initially, the direction shows this group giving the rights to Münchner Klimarat.',
       'Select “Information Right” and “Amendment Right”.'
@@ -605,8 +607,8 @@ export const APP_TUTORIAL_CHECKPOINTS = [
     },
     copy: copy(
       'Rechterichtung umstellen',
-      'Die Initiative soll beide Rechte im Münchner Klimarat haben. Öffne „Gruppe verknüpfen“ bei Bedarf erneut und stelle dann beide Richtungen von „gives … to“ auf „has … in“ um.',
-      'Stelle Information Right und Amendment Right jeweils auf „This group has … in Münchner Klimarat“.',
+      'Die Initiative soll beide Rechte im Münchner Klimarat haben. Öffne „Gruppe verknüpfen“ bei Bedarf erneut und stelle dann beide Richtungen von „Diese Gruppe gibt … an“ auf „Diese Gruppe hat … in“ um.',
+      'Stelle Informationsrecht und Antragsrecht jeweils auf „Diese Gruppe hat … im Münchner Klimarat“.',
       'Change right directions',
       'The initiative should have both rights in Münchner Klimarat. Open Link Group again if needed, then change both directions from “gives … to” to “has … in”.',
       'Set Information Right and Amendment Right to “This group has … in Münchner Klimarat”.'
@@ -621,7 +623,7 @@ export const APP_TUTORIAL_CHECKPOINTS = [
     copy: copy(
       'Verknüpfung erstellen',
       'Die Initiative ist jetzt als Untergruppe konfiguriert und hat Informations- sowie Antragsrecht im Münchner Klimarat.',
-      'Klicke „Create“.',
+      'Klicke „Link erstellen“.',
       'Create the link',
       'The initiative is now configured as a child group with information and amendment rights in Münchner Klimarat.',
       'Select “Create”.'

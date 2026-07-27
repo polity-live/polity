@@ -62,6 +62,7 @@ const PRIMARY_NAVIGATION_SCROLLER_SELECTOR =
 const MOBILE_PRIMARY_SEARCH_ANCHOR = 'primary-search';
 const TUTORIAL_SEARCH_RESULT_ANCHOR = 'tutorial-search-result';
 const LINK_SURFACE_PRIMARY_SELECTOR = '[data-link-surface-primary]';
+const TUTORIAL_INPUT_VALUES_ATTRIBUTE = 'data-tutorial-input-values';
 const SPOTLIGHT_DROPDOWN_ANCHORS = new Set([
   'network-group-search',
   'city-design-location-search',
@@ -247,6 +248,19 @@ function matchesCompletionActionValue(
     return matchesAppTutorialExpectedInput(actual, completion.expectedInputKey);
   }
   return completion.expected ? matchesTutorialInput(actual, completion.expected) : true;
+}
+
+export function tutorialInputValuesFor(target: HTMLElement): readonly string[] {
+  const serializedValues = target.getAttribute(TUTORIAL_INPUT_VALUES_ATTRIBUTE);
+  if (!serializedValues) return [];
+  try {
+    const values: unknown = JSON.parse(serializedValues);
+    return Array.isArray(values)
+      ? values.filter((value): value is string => typeof value === 'string')
+      : [];
+  } catch {
+    return [];
+  }
 }
 
 export function tutorialCardStyle(
@@ -1064,6 +1078,27 @@ export function AppTutorialOrchestrator() {
       target.removeEventListener('pointercancel', onPointerCancel);
     };
   }, [checkpoint, enabled, language, moveTo, target]);
+
+  useEffect(() => {
+    if (!checkpoint || !target || !enabled || checkpoint.completion.type !== 'input') return;
+    const completion = checkpoint.completion;
+    let lastSubmittedValue = '';
+    const submitMatchingValue = () => {
+      const matchingValue = tutorialInputValuesFor(target).find(value =>
+        matchesCompletionInput(value, completion)
+      );
+      if (!matchingValue || matchingValue === lastSubmittedValue) return;
+      lastSubmittedValue = matchingValue;
+      void moveTo(checkpoint.id, { type: 'input', value: matchingValue });
+    };
+    submitMatchingValue();
+    const observer = new MutationObserver(submitMatchingValue);
+    observer.observe(target, {
+      attributes: true,
+      attributeFilter: [TUTORIAL_INPUT_VALUES_ATTRIBUTE],
+    });
+    return () => observer.disconnect();
+  }, [checkpoint, enabled, moveTo, target]);
 
   useEffect(() => {
     if (!checkpoint || !enabled || !VOTING_SELECTION_RECOVERY_ANCHORS.has(checkpoint.anchor)) {
