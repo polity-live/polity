@@ -784,7 +784,7 @@ export function EventAgendaView({
               >
                 <div
                   className={cn(
-                    'relative',
+                    'relative min-w-0',
                     isSpotlightItem && isLiveItem ? 'animate-pulse-subtle' : '',
                     isCompleted ? 'opacity-70' : ''
                   )}
@@ -1490,14 +1490,16 @@ export function EventAgendaView({
             {confirmedAgendaItems.length > 0 ? renderAgendaItemsList(confirmedAgendaItems) : null}
 
             {scheduledButUnconfirmedAgendaItems.length > 0 ? (
-              <Card borderStyle="dashed">
-                <CardHeader>
-                  <CardTitle>{t('features.events.agenda.scheduledButUnconfirmedTitle')}</CardTitle>
-                  <CardDescription>
+              <Card borderStyle="dashed" className="min-w-0 overflow-hidden">
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="text-xl leading-tight sm:text-2xl">
+                    {t('features.events.agenda.scheduledButUnconfirmedTitle')}
+                  </CardTitle>
+                  <CardDescription className="leading-relaxed">
                     {t('features.events.agenda.scheduledButUnconfirmedDescription')}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
                   {renderAgendaItemsList(
                     scheduledButUnconfirmedAgendaItems,
                     confirmedAgendaItems.length

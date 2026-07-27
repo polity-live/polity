@@ -80,20 +80,20 @@ export function AgendaCard({
   const { t } = useTranslation();
   const visualStatus = isActive ? 'active' : status;
   const cardClassName = cn(
-    'border-border/70 bg-card/75 cursor-pointer overflow-hidden shadow-none transition-[border-color,background-color,box-shadow] hover:border-foreground/15 hover:bg-card hover:shadow-sm',
+    'border-border/70 bg-card/75 w-full min-w-0 cursor-pointer overflow-hidden shadow-none transition-[border-color,background-color,box-shadow] hover:border-foreground/15 hover:bg-card hover:shadow-sm',
     isActive && 'border-primary/35 bg-primary/[0.035] ring-primary/10 ring-1',
     className
   );
   const cardContent = (
     <div className="relative z-10">
       <CardHeader className="px-4 pt-4 pb-3 sm:px-5">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 space-y-1">
-            <CardTitle className="text-base leading-snug font-semibold sm:text-lg">
+        <div className="flex min-w-0 items-start justify-between gap-2">
+          <div className="min-w-0 flex-1 space-y-1">
+            <CardTitle className="text-base leading-snug font-semibold break-words sm:text-lg">
               {title}
             </CardTitle>
             {subtitle && <p className="text-muted-foreground text-sm">{subtitle}</p>}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
               <AgendaTypeBadge type={type} />
               <AgendaStatusBadge status={visualStatus} />
               {amendment?.title && (
@@ -122,7 +122,7 @@ export function AgendaCard({
               ) : null}
             </div>
           </div>
-          <div className="flex items-center gap-2" data-link-interactive="true">
+          <div className="flex shrink-0 items-center gap-2" data-link-interactive="true">
             {dragHandle}
             {showMoveButton && onMoveClick && (
               <Button
@@ -160,14 +160,14 @@ export function AgendaCard({
               )}
             >
               {creatorName ? (
-                <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                <div className="text-muted-foreground flex min-w-0 items-center gap-2 text-sm">
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={creatorAvatar} />
                     <AvatarFallback className="text-xs">
                       {creatorName?.[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <span>
+                  <span className="truncate">
                     {t('features.events.agenda.by', {
                       name: creatorName || t('features.events.agenda.unspecified'),
                     })}
