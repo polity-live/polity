@@ -107,7 +107,13 @@ function getAttachmentTone(entityType: AiChatAttachment['entityType']) {
     : getSemanticToneClasses('neutral');
 }
 
-function EntityResultCard({ attachment }: { attachment: AiChatAttachment }) {
+function EntityResultCard({
+  attachment,
+  tutorialAnchor,
+}: {
+  attachment: AiChatAttachment;
+  tutorialAnchor?: string;
+}) {
   const { t } = useTranslation();
   const Icon = getEntityIcon(attachment.entityType);
   const tone = getAttachmentTone(attachment.entityType);
@@ -157,6 +163,7 @@ function EntityResultCard({ attachment }: { attachment: AiChatAttachment }) {
   return attachment.href ? (
     <SmartLink
       href={attachment.href}
+      data-tutorial-anchor={tutorialAnchor}
       className="focus-visible:ring-ring block h-full rounded-xl focus-visible:ring-2 focus-visible:outline-none"
     >
       {body}
@@ -257,7 +264,15 @@ function ContextCardSection({
               cardPayload={card.cardPayload}
             />
           ) : (
-            <EntityResultCard key={card.key} attachment={card.attachment} />
+            <EntityResultCard
+              key={card.key}
+              attachment={card.attachment}
+              tutorialAnchor={
+                contextType === 'output' && card.attachment.entityType === 'todo'
+                  ? 'tutorial-assistant-todo-output'
+                  : undefined
+              }
+            />
           )
         )}
       </div>

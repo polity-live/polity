@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { groupConflictPreflightFn } from '@/server/group-conflict-preflight';
 import {
   buildGroupConflictResponse,
+  groupConflictResponseSchema,
   type GroupConflictResponse,
   toGroupConflictError,
 } from '@/features/groups/logic/groupConflict';
@@ -49,7 +50,7 @@ export function useGroupConflictPreflight(
         if (cancelled) {
           return;
         }
-        setResponse(nextResponse);
+        setResponse(groupConflictResponseSchema.parse(nextResponse));
       })
       .catch(caughtError => {
         if (cancelled) {

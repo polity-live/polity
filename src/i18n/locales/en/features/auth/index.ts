@@ -73,6 +73,7 @@ export const authTranslations = {
     hasAccount: 'Already have an account?',
     signInLink: 'Sign in',
     signUpFailed: 'Failed to create account',
+    emailAlreadyRegistered: 'An account already exists for this email address. Sign in instead.',
     confirmationPendingTitle: 'Check your email',
     confirmationPendingDescription: 'We sent a confirmation link to {{email}}.',
     confirmationPendingInstructions:
@@ -122,6 +123,7 @@ export const authTranslations = {
       title: 'Set up your civic workspace',
       subtitle:
         'A few focused choices help Polity connect you with people, groups, decisions, and support.',
+      compactReason: 'So Polity can show you relevant people, groups, decisions, and support.',
       contextTitle: 'Why this matters',
       contextDescription:
         'Polity works best when your profile, group context, and assistant are ready before you enter the timeline.',
@@ -258,26 +260,36 @@ export const authTranslations = {
           'You selected a group without sending a request. Open it now to understand its work.',
         timeline:
           'Your interests are saved. Open the timeline to see matching activity and discover new groups.',
-        assistant: 'Start with Aria & Kai if you want a guided tour before exploring on your own.',
+        assistant:
+          'Start with Assistent Aria & Kai if you want a guided tour before exploring on your own.',
       },
       nextStepLabel: 'Next step',
       goToProfile: 'Go to my profile',
       goToGroup: 'Go to group',
       goToTimeline: 'Open timeline',
       showAssistant: 'Open assistant',
+      explainApp: 'Explain the app to me',
+      recommended: 'Recommended',
+      exploreWithAssistant: 'Explore the app with Assistent Aria & Kai',
+      exploreAlone: 'I want to explore the app myself',
+      pathTitle: 'How would you like to start?',
+      pathDescription:
+        'Choose a guided introduction, explore Polity with Assistent Aria & Kai, or start directly with search.',
     },
     ariaKaiStep: {
       title: 'Welcome to Polity!',
-      subtitle: 'Meet Aria & Kai, your personal assistants',
-      intro:
-        "Hey! We're <1>Aria & Kai</1>, and we're here to help you navigate Polity and make the most of all its features.",
-      helpText:
-        "Whenever you need assistance, tips, or want to learn about groups, events, amendments, and more, just <1>find us in your message conversations</1>. We're always ready to help!",
+      introLead: 'We are ',
+      introEmphasis: 'Aria & Kai, your personal AI assistants',
+      introText:
+        ' – because every changemaker, whether volunteering or working professionally, deserves a personal assistant. We help you with your initiatives and goals, bring structure to your next steps, and keep your hands free for what matters – so good ideas can become real change.',
+      appHelp:
+        'In Polity, we support you in organizing groups, planning events, advancing amendments, and using the right features for your initiatives. You can always find us in your messages.',
       quickTip: 'Quick Tip:',
       tipText:
         "We've already started a conversation with you. Click below to see where you can always find us!",
-      dontShowAgain: "Don't show me this introduction again",
+      assistantName: 'Aria & Kai',
       assistantBadge: 'AI',
+      previewGreeting: 'Hey! We are Aria & Kai. What would you like to start with today?',
       previewPrompt: 'What should I do first?',
       continue: 'Continue',
     },
@@ -290,13 +302,14 @@ export const authTranslations = {
   },
   errors: {
     systemAssistantNotFound:
-      'System assistant (Aria & Kai) is not available. Please contact support or run the seed script to initialize system users.',
+      'Assistent Aria & Kai is not available. Please contact support or run the seed script to initialize system users.',
     systemAssistantCheckFailed: 'Failed to verify system assistant availability. Please try again.',
     verificationFailed: 'Verification failed',
     invalidOrExpiredCode: 'Invalid or expired code',
     authenticationFailed: 'Authentication failed',
     userInitializationFailed: 'Failed to initialize your account. Please contact support.',
     magicLinkFailed: 'Failed to send magic link',
+    googleSignInFailed: 'Google sign-in could not be started.',
     unexpectedError: 'An unexpected error occurred',
     fillBothFields: 'Please fill in both fields',
     nameTooShort: 'Name must be at least 2 characters long',

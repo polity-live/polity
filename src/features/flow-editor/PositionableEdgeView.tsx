@@ -6,6 +6,7 @@ import {
   GraphPositionHandle,
   GraphPositionHandleContainer,
 } from '@/features/shared/ui/graph';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 export interface PositionableEdgeViewProps {
   id: any;
   sourceX: any;
@@ -104,7 +105,7 @@ export function PositionableEdgeView({
           >
             <GraphPositionHandle
               active={active}
-              aria-label="Move edge bend point"
+              aria-label={translateText('common.accessibility.moveEdgeBendPoint')}
               aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Delete Backspace"
               onMouseDown={() => setPositionHandlerActive(handlerIndex, true)}
               onContextMenu={event => {

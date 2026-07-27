@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { currencyCodeSchema } from '@/features/shared/logic/currency';
 import { getExchangeRates, validateExchangeRateDate } from '@/server/currency/frankfurter';
+import { appErrorHttpBody, appErrorHttpBodyFrom } from '@/features/shared/errors/app-error';
 
 export const currencyRateRequestSchema = z.object({
   requests: z
@@ -25,7 +26,9 @@ export const Route = createFileRoute('/api/currency/rates')({
         } catch (error) {
           const isValidation = error instanceof z.ZodError;
           return Response.json(
-            { error: error instanceof Error ? error.message : 'Currency rates are unavailable' },
+            isValidation
+              ? appErrorHttpBody('validation_failed')
+              : appErrorHttpBodyFrom(error, 'external_service_failed'),
             { status: isValidation ? 400 : 502 }
           );
         }

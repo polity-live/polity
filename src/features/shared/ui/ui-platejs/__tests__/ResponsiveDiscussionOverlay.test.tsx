@@ -1,23 +1,27 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ResponsiveDiscussionOverlay } from '../block-discussion';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  document.body.removeAttribute('data-app-tutorial-active');
+});
 
-function renderOverlay(isMobileScreen: boolean, showTrigger = true) {
-  return render(
+function renderOverlay(isMobileScreen: boolean, showTrigger = true, onOpenChange = vi.fn()) {
+  const view = render(
     <ResponsiveDiscussionOverlay
       anchorElement={null}
       blockContent={<p>Amendment text</p>}
       isMobileScreen={isMobileScreen}
-      onOpenChange={vi.fn()}
+      onOpenChange={onOpenChange}
       open
       overlayContent={<p>Change request content</p>}
       trigger={showTrigger ? <button type="button">Open change request</button> : null}
     />
   );
+  return { ...view, onOpenChange };
 }
 
 describe('ResponsiveDiscussionOverlay', () => {
@@ -58,6 +62,24 @@ describe('ResponsiveDiscussionOverlay', () => {
     expect(triggerRail?.className).toContain('w-12');
     expect(triggerRail?.className).toContain('shrink-0');
     expect(triggerRail?.childElementCount).toBe(0);
+  });
+
+  it('stays open when the user interacts with the global tutorial instruction', () => {
+    document.body.setAttribute('data-app-tutorial-active', '');
+    render(
+      <div data-testid="app-tutorial-spotlight">
+        <button type="button">Tutorial instruction</button>
+      </div>
+    );
+    const { onOpenChange } = renderOverlay(true);
+
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Tutorial instruction' }), {
+      pointerId: 1,
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Tutorial instruction' }));
+
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    expect(screen.getByText('Change request content')).toBeTruthy();
   });
 
   it('keeps the anchored popover on desktop', () => {

@@ -8,7 +8,7 @@
 -- =============================================================================
 
 -- Event table
-CREATE TABLE IF NOT EXISTS public.event (
+CREATE TABLE public.event (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT,
   description JSONB,
@@ -104,7 +104,7 @@ CREATE POLICY "service_role_all" ON public.event FOR ALL TO service_role USING (
 
 -- Explicit participant scope for assemblies. Reconciliation reads this instead
 -- of interpreting the full group graph on every event operation.
-CREATE TABLE IF NOT EXISTS public.event_assembly_scope (
+CREATE TABLE public.event_assembly_scope (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
   host_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
@@ -133,7 +133,7 @@ CREATE POLICY "service_role_all" ON public.event_assembly_scope
 
 -- Event participant table
 -- Also stores meeting bookings. For recurring meetings, instance_date identifies the booked occurrence.
-CREATE TABLE IF NOT EXISTS public.event_participant (
+CREATE TABLE public.event_participant (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -166,7 +166,7 @@ ALTER TABLE public.event_participant ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.event_participant FOR ALL TO service_role USING (true);
 
 -- Offline / hybrid participants for real-world attendance tracking
-CREATE TABLE IF NOT EXISTS public.event_offline_participant (
+CREATE TABLE public.event_offline_participant (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
   group_offline_member_id UUID REFERENCES public.group_offline_member (id) ON DELETE SET NULL,
@@ -192,7 +192,7 @@ ALTER TABLE public.event_offline_participant ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.event_offline_participant FOR ALL TO service_role USING (true);
 
 -- Event participant roles table
-CREATE TABLE IF NOT EXISTS public.event_participant_role (
+CREATE TABLE public.event_participant_role (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_participant_id UUID NOT NULL REFERENCES public.event_participant (id) ON DELETE CASCADE,
   role_id UUID NOT NULL REFERENCES public.role (id) ON DELETE CASCADE,
@@ -210,7 +210,7 @@ ALTER TABLE public.event_participant_role ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.event_participant_role FOR ALL TO service_role USING (true);
 
 -- Participant table (generic event participant with name/email)
-CREATE TABLE IF NOT EXISTS public.participant (
+CREATE TABLE public.participant (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -228,7 +228,7 @@ ALTER TABLE public.participant ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.participant FOR ALL TO service_role USING (true);
 
 -- Event exception table (for recurring event modifications/cancellations)
-CREATE TABLE IF NOT EXISTS public.event_exception (
+CREATE TABLE public.event_exception (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   parent_event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
   original_date TIMESTAMPTZ NOT NULL,
@@ -255,7 +255,7 @@ ALTER TABLE public.event_exception ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.event_exception FOR ALL TO service_role USING (true);
 
 -- Calendar subscription table (subscribe to group/user calendars)
-CREATE TABLE IF NOT EXISTS public.calendar_subscription (
+CREATE TABLE public.calendar_subscription (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   target_type TEXT NOT NULL,

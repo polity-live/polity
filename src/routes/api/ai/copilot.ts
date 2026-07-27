@@ -5,6 +5,7 @@ import { getPreferredDefaultAiModel, toAiModelDescriptor } from '@/lib/ai/models
 import { getSession } from '@/lib/supabase/server';
 import { touchAiCredential } from '@/server/ai-db';
 import { getAiCatalog, resolveLanguageModelForUser } from '@/server/ai-models';
+import { appErrorHttpBody } from '@/features/shared/errors/app-error';
 
 const COPILOT_MAX_TOKENS = 48;
 const COPILOT_PROVIDER_COOLDOWN_MS = 30_000;
@@ -114,7 +115,7 @@ export async function handleCopilotRequest(request: Request): Promise<Response> 
   const session = await getSession(request);
 
   if (!session?.user) {
-    return new Response('Unauthorized', { status: 401 });
+    return Response.json(appErrorHttpBody('permission_denied'), { status: 401 });
   }
 
   let requestBody: unknown;
@@ -122,13 +123,13 @@ export async function handleCopilotRequest(request: Request): Promise<Response> 
   try {
     requestBody = await request.json();
   } catch {
-    return new Response('Invalid copilot request.', { status: 400 });
+    return Response.json(appErrorHttpBody('validation_failed'), { status: 400 });
   }
 
   const parsedBody = copilotRequestSchema.safeParse(requestBody);
 
   if (!parsedBody.success) {
-    return new Response('Invalid copilot request.', { status: 400 });
+    return Response.json(appErrorHttpBody('validation_failed'), { status: 400 });
   }
 
   const prompt = parsedBody.data.prompt.trim();

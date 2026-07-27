@@ -52,7 +52,7 @@ function interpolate(
   });
 }
 
-function translateWithLanguage(
+export function translateWithLanguage(
   language: Language,
   key: string,
   paramsOrFallback?: string | Record<string, string | number | undefined | null>,

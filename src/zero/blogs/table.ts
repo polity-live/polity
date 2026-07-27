@@ -20,6 +20,7 @@ export const blog = table('blog')
     editing_mode: string().optional(),
     discussions: json<MutableJSONValue>().optional(),
     group_id: string().optional(),
+    tutorial_run_id: string().optional(),
     updated_at: number(),
     created_at: number(),
   })

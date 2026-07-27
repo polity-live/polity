@@ -7,6 +7,7 @@ import { useSubscribeUser } from '@/features/payments/hooks/useSubscribeUser';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { resolveAssistantAvatar } from '@/features/assistant/logic/assistantHelpers';
 import { useSubscriptionStatusByUser } from '@/zero/payments/usePaymentState';
 import { useUserWikiContentSearch } from '../state/useUserWikiContentSearch';
 import type { TabSearchState, UserProfile } from '../types/user.types';
@@ -168,6 +169,7 @@ export function useUserWikiPage({ userId }: UserWikiPageOptions): UserWikiPageSt
   const shareDescription = bioText || aboutText;
   const resolvedFullName = fullName || 'User';
   const resolvedAmendmentCount = user.amendment_count;
+  const resolvedAvatar = resolveAssistantAvatar(user.id, user.avatar);
 
   return {
     status: 'ready',
@@ -196,7 +198,7 @@ export function useUserWikiPage({ userId }: UserWikiPageOptions): UserWikiPageSt
       createdAt: new Date(),
       authorId: userIdToFetch,
       authorName: resolvedFullName,
-      authorAvatar: user.avatar ?? undefined,
+      authorAvatar: resolvedAvatar ?? undefined,
       handle: user.handle ?? undefined,
       location: userLocation,
       groupCount: user.group_count,

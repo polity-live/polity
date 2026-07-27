@@ -2,6 +2,7 @@ import { relationships } from '@rocicorp/zero';
 
 // Users
 import { user, file } from './users/table';
+import { appearanceTheme, appearanceThemeRevision } from './appearance-themes/table';
 // Groups
 import {
   group,
@@ -31,7 +32,7 @@ import {
 import {
   amendment,
   amendmentCollaborator,
-  amendmentStreetDesign,
+  amendmentCityDesign,
   amendmentPath,
   amendmentPathSegment,
   supportConfirmation,
@@ -138,6 +139,11 @@ import { votingPassword } from './voting-password/table';
 // Accreditation
 import { accreditation } from './accreditation/table';
 import { dataset, datasetSnapshot } from './datasets/table';
+import {
+  appTutorialRun,
+  appTutorialCheckpointEffect,
+  appTutorialEntity,
+} from './app-tutorial/table';
 // Common
 import {
   hashtag,
@@ -155,7 +161,17 @@ import {
 // ============================================
 // User relationships
 // ============================================
-export const userRelationships = relationships(user, ({ many }) => ({
+export const userRelationships = relationships(user, ({ one, many }) => ({
+  tutorial_run: one({
+    sourceField: ['tutorial_run_id'],
+    destSchema: appTutorialRun,
+    destField: ['id'],
+  }),
+  app_tutorial_runs: many({
+    sourceField: ['id'],
+    destSchema: appTutorialRun,
+    destField: ['user_id'],
+  }),
   follows_as_follower: many({
     sourceField: ['id'],
     destSchema: follow,
@@ -395,7 +411,39 @@ export const fileRelationships = relationships(file, () => ({}));
 // ============================================
 export const userPreferenceRelationships = relationships(userPreference, ({ one }) => ({
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+  appearance_theme: one({
+    sourceField: ['appearance_theme_id'],
+    destSchema: appearanceTheme,
+    destField: ['id'],
+  }),
 }));
+
+export const appearanceThemeRelationships = relationships(appearanceTheme, ({ one, many }) => ({
+  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
+  current_revision: one({
+    sourceField: ['current_revision_id'],
+    destSchema: appearanceThemeRevision,
+    destField: ['id'],
+  }),
+  revisions: many({
+    sourceField: ['id'],
+    destSchema: appearanceThemeRevision,
+    destField: ['theme_id'],
+  }),
+}));
+
+export const appearanceThemeRevisionRelationships = relationships(
+  appearanceThemeRevision,
+  ({ one }) => ({
+    theme: one({
+      sourceField: ['theme_id'],
+      destSchema: appearanceTheme,
+      destField: ['id'],
+    }),
+    created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
+  })
+);
 
 export const aiSkillRelationships = relationships(aiSkill, ({ one }) => ({
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
@@ -417,6 +465,11 @@ export const followRelationships = relationships(follow, ({ one }) => ({
 // Group relationships
 // ============================================
 export const groupRelationships = relationships(group, ({ one, many }) => ({
+  tutorial_run: one({
+    sourceField: ['tutorial_run_id'],
+    destSchema: appTutorialRun,
+    destField: ['id'],
+  }),
   owner: one({ sourceField: ['owner_id'], destSchema: user, destField: ['id'] }),
   connected_group: one({
     sourceField: ['connected_group_id'],
@@ -990,6 +1043,11 @@ export const roleHolderHistoryRelationships = relationships(roleHolderHistory, (
 // Event relationships
 // ============================================
 export const eventRelationships = relationships(event, ({ one, many }) => ({
+  tutorial_run: one({
+    sourceField: ['tutorial_run_id'],
+    destSchema: appTutorialRun,
+    destField: ['id'],
+  }),
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   creator: one({ sourceField: ['creator_id'], destSchema: user, destField: ['id'] }),
   participants: many({
@@ -1153,6 +1211,11 @@ export const calendarSubscriptionRelationships = relationships(calendarSubscript
 // Amendment relationships
 // ============================================
 export const amendmentRelationships = relationships(amendment, ({ one, many }) => ({
+  tutorial_run: one({
+    sourceField: ['tutorial_run_id'],
+    destSchema: appTutorialRun,
+    destField: ['id'],
+  }),
   created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
@@ -1184,9 +1247,9 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
     destSchema: amendmentCollaborator,
     destField: ['amendment_id'],
   }),
-  street_designs: many({
+  city_designs: many({
     sourceField: ['id'],
-    destSchema: amendmentStreetDesign,
+    destSchema: amendmentCityDesign,
     destField: ['amendment_id'],
   }),
   paths: many({ sourceField: ['id'], destSchema: amendmentPath, destField: ['amendment_id'] }),
@@ -1270,13 +1333,10 @@ export const amendmentCollaboratorRelationships = relationships(
   })
 );
 
-export const amendmentStreetDesignRelationships = relationships(
-  amendmentStreetDesign,
-  ({ one }) => ({
-    amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
-    created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
-  })
-);
+export const amendmentCityDesignRelationships = relationships(amendmentCityDesign, ({ one }) => ({
+  amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
+  created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
+}));
 
 export const amendmentPathRelationships = relationships(amendmentPath, ({ one, many }) => ({
   amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
@@ -1819,6 +1879,11 @@ export const electionOfflineTallyRelationships = relationships(electionOfflineTa
 // Todo relationships
 // ============================================
 export const todoRelationships = relationships(todo, ({ one, many }) => ({
+  tutorial_run: one({
+    sourceField: ['tutorial_run_id'],
+    destSchema: appTutorialRun,
+    destField: ['id'],
+  }),
   creator: one({ sourceField: ['creator_id'], destSchema: user, destField: ['id'] }),
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
@@ -1837,6 +1902,11 @@ export const todoAssignmentRelationships = relationships(todoAssignment, ({ one 
 // Message relationships
 // ============================================
 export const conversationRelationships = relationships(conversation, ({ one, many }) => ({
+  tutorial_run: one({
+    sourceField: ['tutorial_run_id'],
+    destSchema: appTutorialRun,
+    destField: ['id'],
+  }),
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
   requested_by: one({ sourceField: ['requested_by_id'], destSchema: user, destField: ['id'] }),
@@ -1873,6 +1943,11 @@ export const messageRelationships = relationships(message, ({ one }) => ({
 // Search document relationships
 // ============================================
 export const searchDocumentRelationships = relationships(searchDocument, ({ one, many }) => ({
+  tutorial_run: one({
+    sourceField: ['tutorial_run_id'],
+    destSchema: appTutorialRun,
+    destField: ['id'],
+  }),
   owner: one({ sourceField: ['owner_user_id'], destSchema: user, destField: ['id'] }),
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   topics: many({
@@ -1908,6 +1983,11 @@ export const searchDocumentAclRelationships = relationships(searchDocumentAcl, (
 // Notification relationships
 // ============================================
 export const notificationRelationships = relationships(notification, ({ one, many }) => ({
+  tutorial_run: one({
+    sourceField: ['tutorial_run_id'],
+    destSchema: appTutorialRun,
+    destField: ['id'],
+  }),
   recipient: one({ sourceField: ['recipient_id'], destSchema: user, destField: ['id'] }),
   sender: one({ sourceField: ['sender_id'], destSchema: user, destField: ['id'] }),
   related_user: one({ sourceField: ['related_user_id'], destSchema: user, destField: ['id'] }),
@@ -2000,6 +2080,11 @@ export const notificationUserStateRelationships = relationships(
 // Blog relationships
 // ============================================
 export const blogRelationships = relationships(blog, ({ one, many }) => ({
+  tutorial_run: one({
+    sourceField: ['tutorial_run_id'],
+    destSchema: appTutorialRun,
+    destField: ['id'],
+  }),
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   bloggers: many({ sourceField: ['id'], destSchema: blogBlogger, destField: ['blog_id'] }),
   support_votes: many({ sourceField: ['id'], destSchema: blogSupportVote, destField: ['blog_id'] }),
@@ -2035,6 +2120,11 @@ export const blogSupportVoteRelationships = relationships(blogSupportVote, ({ on
 // Payment relationships
 // ============================================
 export const paymentRelationships = relationships(payment, ({ one }) => ({
+  tutorial_run: one({
+    sourceField: ['tutorial_run_id'],
+    destSchema: appTutorialRun,
+    destField: ['id'],
+  }),
   payer_user: one({ sourceField: ['payer_user_id'], destSchema: user, destField: ['id'] }),
   payer_group: one({ sourceField: ['payer_group_id'], destSchema: group, destField: ['id'] }),
   receiver_user: one({ sourceField: ['receiver_user_id'], destSchema: user, destField: ['id'] }),
@@ -2071,6 +2161,11 @@ export const stripePaymentRelationships = relationships(stripePayment, ({ one })
 // Statement relationships
 // ============================================
 export const statementRelationships = relationships(statement, ({ one, many }) => ({
+  tutorial_run: one({
+    sourceField: ['tutorial_run_id'],
+    destSchema: appTutorialRun,
+    destField: ['id'],
+  }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   support_votes: many({
@@ -2269,6 +2364,42 @@ export const reactionRelationships = relationships(reaction, ({ one }) => ({
 }));
 
 // ============================================
+// Live tutorial relationships
+// ============================================
+export const appTutorialRunRelationships = relationships(appTutorialRun, ({ one, many }) => ({
+  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+  effects: many({
+    sourceField: ['id'],
+    destSchema: appTutorialCheckpointEffect,
+    destField: ['run_id'],
+  }),
+  entities: many({
+    sourceField: ['id'],
+    destSchema: appTutorialEntity,
+    destField: ['run_id'],
+  }),
+}));
+
+export const appTutorialCheckpointEffectRelationships = relationships(
+  appTutorialCheckpointEffect,
+  ({ one }) => ({
+    run: one({
+      sourceField: ['run_id'],
+      destSchema: appTutorialRun,
+      destField: ['id'],
+    }),
+  })
+);
+
+export const appTutorialEntityRelationships = relationships(appTutorialEntity, ({ one }) => ({
+  run: one({
+    sourceField: ['run_id'],
+    destSchema: appTutorialRun,
+    destField: ['id'],
+  }),
+}));
+
+// ============================================
 // Vote relationships (new)
 // ============================================
 export const voteRelationships = relationships(vote, ({ one, many }) => ({
@@ -2430,6 +2561,8 @@ export const allRelationships = [
   userRelationships,
   fileRelationships,
   userPreferenceRelationships,
+  appearanceThemeRelationships,
+  appearanceThemeRevisionRelationships,
   aiSkillRelationships,
   aiToolRelationships,
   followRelationships,
@@ -2474,7 +2607,7 @@ export const allRelationships = [
   changeRequestRelationships,
   changeRequestVoteRelationships,
   amendmentCollaboratorRelationships,
-  amendmentStreetDesignRelationships,
+  amendmentCityDesignRelationships,
   amendmentPathRelationships,
   amendmentPathSegmentRelationships,
   supportConfirmationRelationships,
@@ -2571,4 +2704,8 @@ export const allRelationships = [
   groupWorkflowRelationships,
   groupWorkflowStepRelationships,
   groupWorkflowApprovalRelationships,
+  // Live tutorial
+  appTutorialRunRelationships,
+  appTutorialCheckpointEffectRelationships,
+  appTutorialEntityRelationships,
 ] as const;

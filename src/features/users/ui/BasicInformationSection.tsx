@@ -68,7 +68,7 @@ export function BasicInformationSection({
           label={t('pages.user.settingsForm.basicInfo.genderLabel', 'Gender')}
           description={t(
             'pages.user.settingsForm.basicInfo.genderDescription',
-            'Wird fuer genderquotierte Redelisten verwendet.'
+            'Wird für genderquotierte Redelisten verwendet.'
           )}
           value={gender}
           onValueChange={value => onGenderChange(value as UserGenderFormValue)}
@@ -83,7 +83,7 @@ export function BasicInformationSection({
             },
             {
               value: 'male',
-              label: t('pages.user.settingsForm.basicInfo.genderMale', 'Maennlich'),
+              label: t('pages.user.settingsForm.basicInfo.genderMale', 'Männlich'),
             },
             {
               value: 'diverse',

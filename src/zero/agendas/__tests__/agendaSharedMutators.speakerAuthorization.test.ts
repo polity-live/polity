@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PermissionError } from '../../rbac/errors';
+import { encodeAppError } from '@/features/shared/errors/app-error';
 
 const canMock = vi.fn();
 
@@ -247,7 +248,7 @@ describe('agendaSharedMutators.addSpeaker authorization', () => {
         ctx,
         args: createSpeakerArgs('user-2'),
       })
-    ).rejects.toThrow('The next speaker must be female.');
+    ).rejects.toThrow(encodeAppError('gender_quota_expected_female'));
 
     expect(tx.mutate.speaker_list.insert).not.toHaveBeenCalled();
   });
@@ -270,7 +271,7 @@ describe('agendaSharedMutators.addSpeaker authorization', () => {
         ctx,
         args: createSpeakerArgs(ctx.userID),
       })
-    ).rejects.toThrow('only accepts male and female');
+    ).rejects.toThrow(encodeAppError('gender_quota_unsupported_gender'));
 
     expect(tx.mutate.speaker_list.insert).not.toHaveBeenCalled();
   });

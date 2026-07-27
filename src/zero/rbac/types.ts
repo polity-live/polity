@@ -36,6 +36,7 @@ export type ResourceType =
   | 'groupRelationships'
   | 'groupAccessRoles'
   | 'groupDatasets'
+  | 'groupThemes'
   | 'groupTodos'
   | 'messages'
   | 'notifications'

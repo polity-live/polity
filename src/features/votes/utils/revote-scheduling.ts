@@ -60,8 +60,12 @@ export function getRoleRevoteStatus(
       isOverdue: scheduledRevote <= referenceTime,
       label:
         scheduledRevote <= referenceTime
-          ? `Overdue since ${formatDate(scheduledRevote)}`
-          : `Next revote ${formatDate(scheduledRevote)}`,
+          ? translateText('features.votes.scheduling.overdueSince', {
+              date: formatDate(scheduledRevote),
+            })
+          : translateText('features.votes.scheduling.nextRevote', {
+              date: formatDate(scheduledRevote),
+            }),
     };
   }
 
@@ -92,8 +96,12 @@ export function getRoleRevoteStatus(
     isOverdue: dueDate <= referenceTime,
     label:
       dueDate <= referenceTime
-        ? `Overdue since ${formatDate(dueDate)}`
-        : `Next revote ${formatDate(dueDate)}`,
+        ? translateText('features.votes.scheduling.overdueSince', {
+            date: formatDate(dueDate),
+          })
+        : translateText('features.votes.scheduling.nextRevote', {
+            date: formatDate(dueDate),
+          }),
   };
 }
 

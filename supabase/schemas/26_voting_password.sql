@@ -3,7 +3,7 @@
 -- Depends on: 01_user
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS public.voting_password (
+CREATE TABLE public.voting_password (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE UNIQUE,
   password_hash TEXT NOT NULL,

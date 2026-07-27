@@ -109,27 +109,27 @@ export function useAmendmentActions() {
     [zero, t]
   );
 
-  const createStreetDesign = useCallback(
-    (args: Parameters<typeof mutators.amendments.createStreetDesign>[0]) => {
-      const result = zero.mutate(mutators.amendments.createStreetDesign(args));
+  const createCityDesign = useCallback(
+    (args: Parameters<typeof mutators.amendments.createCityDesign>[0]) => {
+      const result = zero.mutate(mutators.amendments.createCityDesign(args));
       onServerError(result, () => toast.error(t('features.amendments.toasts.updateFailed')));
       return result;
     },
     [zero]
   );
 
-  const updateStreetDesign = useCallback(
-    (args: Parameters<typeof mutators.amendments.updateStreetDesign>[0]) => {
-      const result = zero.mutate(mutators.amendments.updateStreetDesign(args));
+  const updateCityDesign = useCallback(
+    (args: Parameters<typeof mutators.amendments.updateCityDesign>[0]) => {
+      const result = zero.mutate(mutators.amendments.updateCityDesign(args));
       onServerError(result, () => toast.error(t('features.amendments.toasts.updateFailed')));
       return result;
     },
     [zero]
   );
 
-  const deleteStreetDesign = useCallback(
+  const deleteCityDesign = useCallback(
     (id: string) => {
-      const result = zero.mutate(mutators.amendments.deleteStreetDesign({ id }));
+      const result = zero.mutate(mutators.amendments.deleteCityDesign({ id }));
       onServerError(result, () => toast.error(t('features.amendments.toasts.deleteFailed')));
       return result;
     },
@@ -205,9 +205,21 @@ export function useAmendmentActions() {
     [zero]
   );
 
-  const createStreetDesignChangeRequests = useCallback(
-    (args: Parameters<typeof mutators.amendments.createStreetDesignChangeRequests>[0]) => {
-      const result = zero.mutate(mutators.amendments.createStreetDesignChangeRequests(args));
+  const createDocumentChangeRequest = useCallback(
+    (
+      args: Parameters<typeof mutators.amendments.createDocumentChangeRequest>[0],
+      options?: CreationMutationOptions
+    ) => {
+      const result = zero.mutate(mutators.amendments.createDocumentChangeRequest(args));
+      trackCreationUnlessSilent(result, 'changeRequest', options, args.id);
+      return result;
+    },
+    [zero]
+  );
+
+  const createCityDesignChangeRequests = useCallback(
+    (args: Parameters<typeof mutators.amendments.createCityDesignChangeRequests>[0]) => {
+      const result = zero.mutate(mutators.amendments.createCityDesignChangeRequests(args));
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.changeRequestCreateFailed'))
       );
@@ -612,9 +624,9 @@ export function useAmendmentActions() {
     leaveCollaboration,
     acceptInvitation,
     updateCollaborator,
-    createStreetDesign,
-    updateStreetDesign,
-    deleteStreetDesign,
+    createCityDesign,
+    updateCityDesign,
+    deleteCityDesign,
 
     // Workflow
     updateEditingMode,
@@ -641,7 +653,8 @@ export function useAmendmentActions() {
 
     // Change requests
     createChangeRequest,
-    createStreetDesignChangeRequests,
+    createDocumentChangeRequest,
+    createCityDesignChangeRequests,
     deleteChangeRequest,
     updateChangeRequest,
     voteOnChangeRequest,

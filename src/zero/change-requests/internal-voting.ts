@@ -6,7 +6,7 @@ import {
   applyChangeRequestVoteResultToContent,
   findChangeRequestDiscussion,
   getChangeRequestResolutionStatus,
-  isStreetDesignSourceType,
+  isCityDesignSourceType,
   resolveChangeRequestByVoteResult,
   type DiscussionEntry,
   type VoteResult,
@@ -696,7 +696,7 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
       continue;
     }
 
-    if (isStreetDesignSourceType((changeRequest as { source_type?: string | null }).source_type)) {
+    if (isCityDesignSourceType((changeRequest as { source_type?: string | null }).source_type)) {
       if (!eligibleUserIds) {
         eligibleUserIds = new Set(await activeVotingCollaboratorUserIds(tx, amendmentId));
       }

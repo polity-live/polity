@@ -293,6 +293,7 @@ export interface EditorActions {
   setMode: (mode: EditorMode) => Promise<void>;
   setSelectedCrIds: (crIds: Set<string> | null) => void;
   restoreVersion: (content: Value) => Promise<void>;
+  getLatestContent: () => Value;
 }
 
 /**

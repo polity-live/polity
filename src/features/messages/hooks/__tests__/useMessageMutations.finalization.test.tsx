@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   rawToastSuccess: vi.fn(),
   translations: {
     'common.creationFinalization.entities.conversation': 'Conversation',
+    'common.appErrors.unknown': 'Something went wrong. Please try again.',
     'features.messages.toasts.conversationDeleting': 'Deleting conversation…',
     'features.messages.toasts.conversationDeleted': 'Conversation deleted',
     'features.messages.toasts.conversationDeleteFailed': 'Failed to delete conversation',
@@ -139,7 +140,7 @@ describe('useMessageMutations conversation finalization', () => {
       'Failed to delete conversation',
       expect.objectContaining({
         id: 'creation:conversation:delete:conversation-1',
-        description: 'Denied',
+        description: 'Something went wrong. Please try again.',
       })
     );
     expect(mocks.finalizationSuccess).not.toHaveBeenCalled();

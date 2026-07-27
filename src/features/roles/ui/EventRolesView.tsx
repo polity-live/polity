@@ -112,7 +112,9 @@ export function EventRolesView({
         onSubmit={() => void saveEditedRole()}
         scope="event"
         eventType={event?.event_type ?? null}
-        title={editingRole?.name ? `Edit ${editingRole.name}` : 'Edit Event Role'}
+        title={translateText('common.accessibility.edit', {
+          entity: editingRole?.name || translateText('common.entities.role'),
+        })}
         description={translateText(
           'generated.inline.1106_adjust_assignment_mode_visibility_defaults_an_5b1c8b7d'
         )}

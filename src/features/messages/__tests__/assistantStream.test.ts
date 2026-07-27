@@ -27,8 +27,13 @@ describe('assistant stream decoding', () => {
       { type: 'text-delta', text: 'Hello' },
       { type: 'tool-call', toolName: 'find_event', args: { id: '1' } },
     ]);
-    expect(decoder.push(',"message":"Stopped"}')).toEqual([]);
-    expect(decoder.finish()).toEqual([{ type: 'error', message: 'Stopped' }]);
+    expect(decoder.push(',"error":{"version":1,"code":"ai_operation_failed"}}')).toEqual([]);
+    expect(decoder.finish()).toEqual([
+      {
+        type: 'error',
+        error: { version: 1, code: 'ai_operation_failed' },
+      },
+    ]);
   });
 
   it('builds a compact and bounded tool argument preview', () => {

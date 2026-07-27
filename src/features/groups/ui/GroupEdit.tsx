@@ -7,15 +7,23 @@
 
 interface GroupEditProps {
   groupId: string;
-  activeTab?: 'general' | 'relationships' | 'contact';
-  onTabChange?: (tab: 'general' | 'relationships' | 'contact') => void;
+  activeTab?: 'general' | 'relationships' | 'contact' | 'themes';
+  onTabChange?: (tab: 'general' | 'relationships' | 'contact' | 'themes') => void;
+  canManageGroup?: boolean;
 }
 
 import { useGroupEditController } from './useGroupEditController';
 import { GroupEditView } from './GroupEditView';
 
-export function GroupEdit({ groupId, activeTab, onTabChange }: GroupEditProps) {
+export function GroupEdit({ groupId, activeTab, onTabChange, canManageGroup }: GroupEditProps) {
   const viewProps = useGroupEditController({ groupId });
 
-  return <GroupEditView {...viewProps} activeTab={activeTab} onTabChange={onTabChange} />;
+  return (
+    <GroupEditView
+      {...viewProps}
+      activeTab={activeTab}
+      onTabChange={onTabChange}
+      canManageGroup={canManageGroup}
+    />
+  );
 }

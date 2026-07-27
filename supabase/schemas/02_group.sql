@@ -5,7 +5,7 @@
 -- =============================================================================
 
 -- Group table (quoted because "group" is a reserved word)
-CREATE TABLE IF NOT EXISTS public."group" (
+CREATE TABLE public."group" (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT,
   description JSONB,
@@ -74,7 +74,7 @@ ALTER TABLE public."group" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public."group" FOR ALL TO service_role USING (true);
 
 -- Role table
-CREATE TABLE IF NOT EXISTS public.role (
+CREATE TABLE public.role (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT,
   description TEXT,
@@ -112,7 +112,7 @@ ALTER TABLE public.role ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.role FOR ALL TO service_role USING (true);
 
 -- Role holder history table
-CREATE TABLE IF NOT EXISTS public.role_holder_history (
+CREATE TABLE public.role_holder_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   role_id UUID NOT NULL REFERENCES public.role (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -131,7 +131,7 @@ ALTER TABLE public.role_holder_history ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.role_holder_history FOR ALL TO service_role USING (true);
 
 -- Group membership table
-CREATE TABLE IF NOT EXISTS public.group_membership (
+CREATE TABLE public.group_membership (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -179,7 +179,7 @@ CREATE POLICY "service_role_all" ON public.group_membership FOR ALL TO service_r
 
 -- Explicit provenance for projected memberships. One membership row stays the
 -- read-compatible canonical membership; this table explains why it exists.
-CREATE TABLE IF NOT EXISTS public.group_membership_origin (
+CREATE TABLE public.group_membership_origin (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_membership_id UUID NOT NULL REFERENCES public.group_membership (id) ON DELETE CASCADE,
   origin_kind TEXT NOT NULL
@@ -226,7 +226,7 @@ CREATE POLICY "service_role_all" ON public.group_membership_origin
   FOR ALL TO service_role USING (true);
 
 -- Offline group members (real-world members without platform signup)
-CREATE TABLE IF NOT EXISTS public.group_offline_member (
+CREATE TABLE public.group_offline_member (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   first_name TEXT NOT NULL,
@@ -248,7 +248,7 @@ ALTER TABLE public.group_offline_member ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_offline_member FOR ALL TO service_role USING (true);
 
 -- Offline group memberships
-CREATE TABLE IF NOT EXISTS public.group_offline_membership (
+CREATE TABLE public.group_offline_membership (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_offline_member_id UUID NOT NULL REFERENCES public.group_offline_member (id) ON DELETE CASCADE,
   group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
@@ -268,7 +268,7 @@ ALTER TABLE public.group_offline_membership ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_offline_membership FOR ALL TO service_role USING (true);
 
 -- Offline group membership roles
-CREATE TABLE IF NOT EXISTS public.group_offline_membership_role (
+CREATE TABLE public.group_offline_membership_role (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_offline_membership_id UUID NOT NULL REFERENCES public.group_offline_membership (id) ON DELETE CASCADE,
   role_id UUID NOT NULL REFERENCES public.role (id) ON DELETE CASCADE,
@@ -286,7 +286,7 @@ ALTER TABLE public.group_offline_membership_role ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_offline_membership_role FOR ALL TO service_role USING (true);
 
 -- Group membership roles table
-CREATE TABLE IF NOT EXISTS public.group_membership_role (
+CREATE TABLE public.group_membership_role (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_membership_id UUID NOT NULL REFERENCES public.group_membership (id) ON DELETE CASCADE,
   role_id UUID NOT NULL REFERENCES public.role (id) ON DELETE CASCADE,
@@ -304,7 +304,7 @@ ALTER TABLE public.group_membership_role ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_membership_role FOR ALL TO service_role USING (true);
 
 -- Group guest access table
-CREATE TABLE IF NOT EXISTS public.group_guest_access (
+CREATE TABLE public.group_guest_access (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -323,7 +323,7 @@ ALTER TABLE public.group_guest_access ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_guest_access FOR ALL TO service_role USING (true);
 
 -- Group guest access roles table
-CREATE TABLE IF NOT EXISTS public.group_guest_role (
+CREATE TABLE public.group_guest_role (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_guest_access_id UUID NOT NULL REFERENCES public.group_guest_access (id) ON DELETE CASCADE,
   role_id UUID NOT NULL REFERENCES public.role (id) ON DELETE CASCADE,
@@ -341,7 +341,7 @@ ALTER TABLE public.group_guest_role ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_guest_role FOR ALL TO service_role USING (true);
 
 -- Action right table
-CREATE TABLE IF NOT EXISTS public.action_right (
+CREATE TABLE public.action_right (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   resource TEXT,
   action TEXT,

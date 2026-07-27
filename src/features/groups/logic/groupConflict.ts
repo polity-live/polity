@@ -8,6 +8,21 @@ export const groupConflictKindSchema = z.enum([
   'permission_blocked_resolution',
 ]);
 
+export const groupConflictResolutionCodeSchema = z.enum([
+  'align_membership_before_activation',
+  'leave_other_subgroup',
+  'choose_other_group',
+  'contact_admin',
+  'leave_other_source_group',
+  'contact_source_admins',
+  'clarify_source_memberships',
+  'align_memberships',
+  'contact_other_group',
+  'remove_duplicate_path',
+  'contact_responsible_group',
+  'clean_source_groups',
+]);
+
 export const groupConflictUserSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -29,6 +44,8 @@ export const groupConflictPathSchema = z.object({
 });
 
 export const groupConflictResolutionSchema = z.object({
+  // Optional for payloads created by older clients and persisted retry queues.
+  code: groupConflictResolutionCodeSchema.optional(),
   label: z.string(),
   description: z.string(),
   self_service: z.boolean(),
@@ -61,6 +78,7 @@ export const groupConflictResponseSchema = z.object({
 });
 
 export type GroupConflictKind = z.infer<typeof groupConflictKindSchema>;
+export type GroupConflictResolutionCode = z.infer<typeof groupConflictResolutionCodeSchema>;
 export type GroupConflictUser = z.infer<typeof groupConflictUserSchema>;
 export type GroupConflictGroup = z.infer<typeof groupConflictGroupSchema>;
 export type GroupConflictPath = z.infer<typeof groupConflictPathSchema>;

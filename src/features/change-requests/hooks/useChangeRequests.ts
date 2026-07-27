@@ -264,13 +264,13 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
     changeRequests: amendmentChangeRequests,
     changeRequestsWithVotes,
     collaborators,
-    streetDesigns,
-    primaryStreetDesign,
+    cityDesigns,
+    primaryCityDesign,
     isLoading: amendmentLoading,
   } = useAmendmentState({
     amendmentId,
     includeChangeRequestsWithVotes: true,
-    includeStreetDesign: true,
+    includeCityDesign: true,
   });
 
   // Fetch document and users via facade
@@ -464,8 +464,8 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
   return {
     amendment,
     document,
-    streetDesigns,
-    primaryStreetDesign,
+    cityDesigns,
+    primaryCityDesign,
     changeRequests,
     openChangeRequests,
     closedChangeRequests,

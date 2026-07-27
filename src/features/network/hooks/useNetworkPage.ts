@@ -24,6 +24,7 @@ import type {
   NetworkTab,
   NormalizedGroupRelationship,
 } from '../types/network.types';
+import { localizeAppError, toAppError } from '@/features/shared/errors/app-error';
 
 function isRequestRightRelationship(rel: NormalizedGroupRelationship) {
   return rel.request_item_kind === 'right' || Boolean(rel.grant_id && rel.with_right);
@@ -125,9 +126,7 @@ function countGroupedRequestHeaders(entries: readonly GroupedRelationshipRequest
 }
 
 function toServerFinalizationError(error: unknown) {
-  if (error instanceof Error) return error;
-  if (typeof error === 'string' && error.trim()) return new Error(error);
-  return new Error('Die Synchronisierung konnte nicht abgeschlossen werden.');
+  return toAppError(error, 'mutation_server_failed');
 }
 
 function trackSubmissionServerFinalization(
@@ -317,10 +316,10 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
       submissionContext?.reportProgress({
         key: 'sync',
         status: 'active',
-        label: 'Netzwerkfolgen synchronisieren',
+        copy: { key: 'common.actionSubmission.steps.link.syncConsequences' },
       });
       trackSubmissionServerFinalization(results, error => {
-        toast.error(error.message);
+        toast.error(localizeAppError(error));
       });
     },
     [approveGroupConnectionRequest, canActivateLink, t]
@@ -394,7 +393,7 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
       submissionContext?.reportProgress({ key: 'sync', status: 'active' });
       if (submissionContext) {
         trackServerFinalization(result, {
-          onError: error => toast.error(error.message),
+          onError: error => toast.error(localizeAppError(error)),
         });
       }
     },
@@ -409,7 +408,7 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
       submissionContext?.reportProgress({ key: 'sync', status: 'active' });
       if (submissionContext) {
         trackServerFinalization(result, {
-          onError: error => toast.error(error.message),
+          onError: error => toast.error(localizeAppError(error)),
         });
       }
     },

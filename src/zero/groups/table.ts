@@ -47,6 +47,7 @@ export const group = table('group')
     tiktok: string().optional(),
     visibility: string(),
     owner_id: string().optional(),
+    tutorial_run_id: string().optional(),
     created_at: number(),
     updated_at: number(),
   })

@@ -3,6 +3,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import { z } from 'zod';
+import { localizeNotificationCopy } from '@/features/notifications/logic/localizeNotificationCopy';
 
 function getSupabase() {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -63,6 +64,12 @@ export async function sendPushNotificationToUser(
     }
 
     const supabase = getSupabase();
+    const { data: preference } = await supabase
+      .from('user_preference')
+      .select('language')
+      .eq('user_id', userId)
+      .maybeSingle();
+    const language = preference?.language === 'de' ? 'de' : 'en';
 
     // Query all push subscriptions for this user
     const { data: subscriptions } = await supabase
@@ -80,24 +87,29 @@ export async function sendPushNotificationToUser(
 
     if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
       console.warn('[Push API] VAPID keys not configured');
-      return { message: 'Push notifications not configured', sent: 0, failed: 0 };
+      return { message: 'push_not_configured', sent: 0, failed: 0 };
     }
 
     initVapid();
 
     // Prepare notification payload
+    const localizedTitle =
+      localizeNotificationCopy(notification.title, language) ?? notification.title;
+    const localizedMessage =
+      localizeNotificationCopy(notification.message, language) ?? notification.message;
     const payload = JSON.stringify({
-      title: notification.title,
-      message: notification.message,
-      body: notification.message,
+      title: localizedTitle,
+      message: localizedMessage,
+      body: localizedMessage,
       actionUrl: notification.actionUrl,
       notificationId: notification.notificationId,
       type: notification.type,
-      icon: notification.icon || '/icons/icon-192x192.png',
-      badge: notification.badge || '/icons/icon-192x192.png',
+      icon: notification.icon || '/android-chrome-192x192.png',
+      badge: notification.badge || '/favicon-32x32.png',
       tag: notification.tag || notification.type || 'notification',
       requireInteraction: notification.requireInteraction || false,
       actions: notification.actions || [],
+      language,
     });
 
     // Send push notification to all subscriptions

@@ -5,6 +5,8 @@ import { cn } from '@/features/shared/utils/utils';
 import { Pin, Trash2 } from 'lucide-react';
 import { Conversation } from '../types/message.types';
 import { getConversationDisplay, getUnreadCount, formatTime } from '../logic/messageUtils';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
 
 interface ConversationItemProps {
   conversation: Conversation;
@@ -23,8 +25,13 @@ export function ConversationItem({
   onSelect,
   onDelete,
 }: ConversationItemProps) {
-  const display = getConversationDisplay(conversation, currentUserId);
-  const lastMessage = conversation.messages[conversation.messages.length - 1];
+  const { language } = useTranslation();
+  const displayConversation = resolveAppTutorialFixtureValue(conversation, {
+    tutorialRunId: conversation.tutorial_run_id,
+    language,
+  });
+  const display = getConversationDisplay(displayConversation, currentUserId);
+  const lastMessage = displayConversation.messages[displayConversation.messages.length - 1];
   const unreadCount = getUnreadCount(conversation, currentUserId);
   const canDelete =
     conversation.type !== 'group' &&
@@ -34,6 +41,9 @@ export function ConversationItem({
   return (
     <div className="group flex items-start gap-2">
       <Button
+        data-tutorial-anchor={
+          conversation.tutorial_run_id ? 'tutorial-assistant-conversation' : undefined
+        }
         type="button"
         variant="ghost"
         onClick={() => onSelect(conversation.id)}

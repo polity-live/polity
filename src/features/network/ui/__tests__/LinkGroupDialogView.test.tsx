@@ -1,29 +1,53 @@
 /* @vitest-environment jsdom */
 
 import { cleanup, render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { LinkGroupDialogView } from '../LinkGroupDialogView';
 
+const dialogMocks = vi.hoisted(() => ({
+  modal: vi.fn(),
+}));
+
 vi.mock('@/features/shared/ui/dialog', () => ({
-  ManagementDialogContent: ({ children }: { children: ReactNode }) => (
-    <div data-slot="management-dialog-content">{children}</div>
+  ManagementDialogContent: ({
+    children,
+    onInteractOutside: _onInteractOutside,
+    showCloseButton: _showCloseButton,
+    ...props
+  }: {
+    children: ReactNode;
+    onInteractOutside?: unknown;
+    showCloseButton?: boolean;
+  }) => (
+    <div data-slot="management-dialog-content" {...props}>
+      {children}
+    </div>
   ),
-  ManagementDialogHeader: ({ children }: { children: ReactNode }) => (
-    <header data-slot="management-dialog-header">{children}</header>
+  ManagementDialogHeader: ({ children, ...props }: ComponentProps<'header'>) => (
+    <header data-slot="management-dialog-header" {...props}>
+      {children}
+    </header>
   ),
-  ManagementDialogBody: ({ children }: { children: ReactNode }) => (
-    <div data-slot="management-dialog-body">{children}</div>
+  ManagementDialogBody: ({ children, ...props }: ComponentProps<'div'>) => (
+    <div data-slot="management-dialog-body" {...props}>
+      {children}
+    </div>
   ),
-  ManagementDialogFooter: ({ children }: { children: ReactNode }) => (
-    <footer data-slot="management-dialog-footer">{children}</footer>
+  ManagementDialogFooter: ({ children, ...props }: ComponentProps<'footer'>) => (
+    <footer data-slot="management-dialog-footer" {...props}>
+      {children}
+    </footer>
   ),
 }));
 
 vi.mock('@/features/shared/ui/ui/dialog', () => ({
-  Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
+  Dialog: ({ children, modal }: { children: ReactNode; modal?: boolean }) => {
+    dialogMocks.modal(modal);
+    return <div>{children}</div>;
+  },
+  DialogDescription: ({ children, ...props }: ComponentProps<'p'>) => <p {...props}>{children}</p>,
   DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
   DialogTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
@@ -38,15 +62,18 @@ vi.mock('../GroupConnectionComposer', () => ({
 
 afterEach(() => {
   cleanup();
+  document.body.removeAttribute('data-app-tutorial-active');
   vi.clearAllMocks();
 });
 
 function renderDialog({
+  open = true,
   roleId = '',
   pairConnectionsLoading = false,
   pairConnectionRequestsLoading = false,
   preflight = { blocking: false, isLoading: false, response: { blocking: false } },
 }: {
+  open?: boolean;
   roleId?: string;
   pairConnectionsLoading?: boolean;
   pairConnectionRequestsLoading?: boolean;
@@ -98,7 +125,7 @@ function renderDialog({
             'common.network.selectGroup': 'Select group',
             'components.actionBar.linkGroup': 'Link group',
           })[key] ?? (typeof paramsOrFallback === 'string' ? paramsOrFallback : key),
-        open: true,
+        open,
         setOpen: vi.fn(),
         actionSubmission: {
           isActive: false,
@@ -128,6 +155,36 @@ function renderDialog({
 }
 
 describe('LinkGroupDialogView', () => {
+  it('keeps the tutorial controls interactive while the link dialog is open', () => {
+    document.body.setAttribute('data-app-tutorial-active', '');
+
+    renderDialog({ roleId: 'role-1' });
+
+    expect(dialogMocks.modal).toHaveBeenLastCalledWith(false);
+  });
+
+  it('does not embed tutorial UI or tutorial-specific layout in the link dialog', () => {
+    document.body.setAttribute('data-app-tutorial-active', '');
+
+    const { container } = renderDialog({ roleId: 'role-1' });
+
+    const content = container.querySelector<HTMLElement>('[data-slot="management-dialog-content"]');
+    const header = container.querySelector('[data-slot="management-dialog-header"]');
+    const body = container.querySelector('[data-slot="management-dialog-body"]');
+    const footer = container.querySelector('[data-slot="management-dialog-footer"]');
+
+    expect(screen.queryByTestId('link-group-tutorial-companion')).toBeNull();
+    expect(content?.hasAttribute('data-tutorial-dialog')).toBe(false);
+    expect(content?.className).toContain('h-[min(90dvh,46rem)]');
+    expect(content?.className).not.toContain('100dvh');
+    expect(header?.className).not.toContain('max-md:');
+    expect(body?.hasAttribute('data-tutorial-scroll-container')).toBe(false);
+    expect(body?.className).toBe('grid content-start gap-4');
+    expect(footer?.className).not.toContain('max-md:');
+    expect(screen.getByRole('button', { name: 'Cancel' }).className).not.toContain('max-md:');
+    expect(screen.getByRole('button', { name: 'Create' }).className).not.toContain('max-md:');
+  });
+
   it('uses the shared management dialog structure', () => {
     const { container } = renderDialog({ roleId: 'role-1' });
 

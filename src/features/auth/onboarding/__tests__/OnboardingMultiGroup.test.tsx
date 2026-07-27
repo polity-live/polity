@@ -68,6 +68,10 @@ const i18n = vi.hoisted(() => {
     'onboarding.summaryStep.goToGroup': 'Go to group',
     'onboarding.summaryStep.goToTimeline': 'Open timeline',
     'onboarding.summaryStep.showAssistant': 'Open assistant',
+    'onboarding.summaryStep.explainApp': 'Explain the app to me',
+    'onboarding.summaryStep.exploreWithAssistant': 'Explore the app with Assistent Aria & Kai',
+    'onboarding.summaryStep.exploreAlone': 'Explore the app myself',
+    'onboarding.summaryStep.recommended': 'Recommended',
     'onboarding.appInstallStep.title': 'Install Polity on this device',
     'onboarding.appInstallStep.description': 'Use Polity from your home screen.',
     'onboarding.appInstallStep.continue': 'Continue to start',
@@ -410,16 +414,18 @@ describe('onboarding multi-group flow', () => {
     expect(screen.getByText('Interests selected')).toBeTruthy();
     expect(screen.getByText('#climate')).toBeTruthy();
     expect(screen.getByText('Beta Offline Group')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Open assistant' }).getAttribute('href')).toBe(
-      '/messages?openAriaKai=true'
+    expect(screen.getByRole('link', { name: /Explain the app to me/ }).getAttribute('href')).toBe(
+      '/onboarding'
     );
-    expect(screen.getByRole('link', { name: 'Open timeline' }).getAttribute('href')).toBe('/home');
-    expect(screen.getByRole('link', { name: 'Go to my profile' }).getAttribute('href')).toBe(
-      '/user/user-1'
+    expect(
+      screen
+        .getByRole('link', { name: 'Explore the app with Assistent Aria & Kai' })
+        .getAttribute('href')
+    ).toBe('/messages?openAriaKai=true');
+    expect(screen.getByRole('link', { name: 'Explore the app myself' }).getAttribute('href')).toBe(
+      '/search'
     );
-    expect(screen.getByRole('link', { name: 'Go to group' }).getAttribute('href')).toBe(
-      '/group/group-beta'
-    );
+    expect(screen.getAllByRole('link')).toHaveLength(3);
     expect(screen.queryByText('Want to use Polity like an app?')).toBeNull();
   });
 
@@ -438,12 +444,14 @@ describe('onboarding multi-group flow', () => {
       />
     );
 
-    const profileLink = screen.getByRole('link', { name: 'Go to my profile' });
-    const assistantLink = screen.getByRole('link', { name: 'Open assistant' });
-    profileLink.addEventListener('click', event => event.preventDefault());
+    const guidedLink = screen.getByRole('link', { name: /Explain the app to me/ });
+    const assistantLink = screen.getByRole('link', {
+      name: 'Explore the app with Assistent Aria & Kai',
+    });
+    guidedLink.addEventListener('click', event => event.preventDefault());
     assistantLink.addEventListener('click', event => event.preventDefault());
 
-    fireEvent.click(profileLink);
+    fireEvent.click(guidedLink);
     expect(onComplete).toHaveBeenCalledTimes(1);
 
     fireEvent.click(assistantLink, { ctrlKey: true });

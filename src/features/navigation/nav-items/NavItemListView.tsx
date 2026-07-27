@@ -79,6 +79,22 @@ function NavigationItemIcon({ item, className }: { item: any; className: string 
   );
 }
 
+function tutorialAnchor(item: any, isPrimary: boolean): string {
+  if (isPrimary) return `primary-${item.id}`;
+  const aliases: Record<string, string> = {
+    memberships: 'memberships',
+    amendments: 'amendments',
+    events: 'events',
+    'blogs-and-statements': 'publications',
+    operation: 'operation',
+    network: 'network',
+    text: 'amendment-text',
+    changeRequests: 'change-requests',
+    process: 'process',
+  };
+  return `secondary-${aliases[item.id] ?? item.id}`;
+}
+
 export function NavItemListView({
   navigationItems,
   isMobile,
@@ -114,7 +130,12 @@ export function NavItemListView({
                   shortcut={getItemShortcut(item)}
                   side="top"
                 >
-                  <Link to={item.href || '#'} preload="intent" className="inline-block">
+                  <Link
+                    to={item.href || '#'}
+                    preload="intent"
+                    className="inline-block"
+                    data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
+                  >
                     <Button
                       aria-label={item.label}
                       variant="ghost"
@@ -158,7 +179,12 @@ export function NavItemListView({
                 shortcut={getItemShortcut(item)}
                 side="top"
               >
-                <Link to={item.href || '#'} preload="intent" className="inline-block">
+                <Link
+                  to={item.href || '#'}
+                  preload="intent"
+                  className="inline-block"
+                  data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
+                >
                   <Button
                     aria-label={item.label}
                     variant="ghost"
@@ -212,7 +238,12 @@ export function NavItemListView({
           : 'flex min-w-max items-center justify-center gap-1 px-2 md:min-w-0 md:flex-col md:gap-2 md:px-0';
 
     return (
-      <div className={scrollerClasses}>
+      <div
+        className={scrollerClasses}
+        data-tutorial-horizontal-scroller={
+          isPrimary && screenType !== 'desktop' ? 'primary-navigation' : undefined
+        }
+      >
         <div className={listClasses}>
           {navigationItems.map((item: any) => (
             <NavigationItemTooltip
@@ -227,6 +258,7 @@ export function NavItemListView({
                 preload="intent"
                 aria-label={item.label}
                 data-slot="button"
+                data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
                 className={cn(
                   buttonVariants({ variant: 'ghost', size: 'icon' }),
                   getMotionPreset('colors'),
@@ -290,7 +322,12 @@ export function NavItemListView({
           : 'text-center text-xs leading-tight whitespace-nowrap md:truncate md:text-left md:text-sm';
 
     return (
-      <div className={scrollerClasses}>
+      <div
+        className={scrollerClasses}
+        data-tutorial-horizontal-scroller={
+          isPrimary && screenType !== 'desktop' ? 'primary-navigation' : undefined
+        }
+      >
         <div className={listClasses}>
           {navigationItems.map((item: any) => (
             <NavigationItemTooltip
@@ -300,7 +337,12 @@ export function NavItemListView({
               shortcut={getItemShortcut(item)}
               side="right"
             >
-              <Link to={item.href || '#'} preload="intent" className={linkClasses}>
+              <Link
+                to={item.href || '#'}
+                preload="intent"
+                className={linkClasses}
+                data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
+              >
                 <Button
                   aria-label={item.label}
                   variant="ghost"

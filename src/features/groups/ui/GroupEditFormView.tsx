@@ -34,6 +34,7 @@ import { RIGHT_TYPES, type RightType } from '@/features/shared/ui/status';
 import { GroupConflictDialog, GroupConflictPanel } from './GroupConflictPanel';
 import { getCanonicalMembershipModeLabel } from '@/features/network/logic/groupConnectionDerived';
 import { GROUP_EDIT_MEMBERSHIP_MODE_OPTIONS } from './groupEditMembershipModes';
+import { GroupThemeSettings } from './GroupThemeSettings';
 export interface GroupEditFormViewProps {
   groupId: any;
   initialData: any;
@@ -44,8 +45,9 @@ export interface GroupEditFormViewProps {
   hasHierarchyChildren?: boolean | null;
   hasSiblingConnections?: boolean | null;
   showSiblingRelationshipEditor: boolean;
-  activeTab: 'general' | 'relationships' | 'contact';
-  onTabChange: (tab: 'general' | 'relationships' | 'contact') => void;
+  activeTab: 'general' | 'relationships' | 'contact' | 'themes';
+  onTabChange: (tab: 'general' | 'relationships' | 'contact' | 'themes') => void;
+  canManageGroup?: boolean;
   t: any;
   isCreating: any;
   showReview: any;
@@ -102,6 +104,7 @@ export function GroupEditFormView({
   siblingConfigurationPreflight,
   onFormSubmit,
   confirmCreate,
+  canManageGroup = true,
 }: GroupEditFormViewProps) {
   const siblingConfigurationChecking = Boolean(siblingConfigurationPreflight.isLoading);
   const siblingConfigurationCheckingLabel = t('common.checks.siblingConfiguration');
@@ -166,8 +169,10 @@ export function GroupEditFormView({
         value={activeTab}
         onValueChange={onTabChange}
         tabs={[
-          { value: 'general', label: t('pages.group.settingsTabs.general') },
-          ...(showSiblingRelationshipEditor
+          ...(canManageGroup
+            ? [{ value: 'general' as const, label: t('pages.group.settingsTabs.general') }]
+            : []),
+          ...(canManageGroup && showSiblingRelationshipEditor
             ? [
                 {
                   value: 'relationships' as const,
@@ -175,7 +180,12 @@ export function GroupEditFormView({
                 },
               ]
             : []),
-          { value: 'contact', label: t('pages.group.settingsTabs.contact') },
+          ...(canManageGroup
+            ? [{ value: 'contact' as const, label: t('pages.group.settingsTabs.contact') }]
+            : []),
+          ...(!isCreating
+            ? [{ value: 'themes' as const, label: t('pages.group.settingsTabs.themes') }]
+            : []),
         ]}
       >
         <TabsContent value="general" className="space-y-6">
@@ -427,26 +437,33 @@ export function GroupEditFormView({
           <LocationInfoSection formData={formData} onChange={updateField} />
           <SocialMediaSection formData={formData} onChange={updateField} />
         </TabsContent>
+        {!isCreating && (
+          <TabsContent value="themes" className="space-y-6">
+            <GroupThemeSettings groupId={groupId} />
+          </TabsContent>
+        )}
       </SettingsTabs>
 
       {/* Action Buttons */}
-      <SettingsActionBar className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-            {translateText('generated.inline.0065_cancel_77dfd213')}
+      {canManageGroup && activeTab !== 'themes' && (
+        <SettingsActionBar className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+              {translateText('generated.inline.0065_cancel_77dfd213')}
+            </Button>
+          )}
+          <Button
+            type="submit"
+            disabled={siblingConfigurationPreflight.blocking}
+            loading={isSubmitting || siblingConfigurationChecking}
+            loadingLabel={submitLoadingLabel}
+          >
+            {isCreating
+              ? t('pages.create.next')
+              : translateText('generated.inline.0097_save_changes_fa2984b3')}
           </Button>
-        )}
-        <Button
-          type="submit"
-          disabled={siblingConfigurationPreflight.blocking}
-          loading={isSubmitting || siblingConfigurationChecking}
-          loadingLabel={submitLoadingLabel}
-        >
-          {isCreating
-            ? t('pages.create.next')
-            : translateText('generated.inline.0097_save_changes_fa2984b3')}
-        </Button>
-      </SettingsActionBar>
+        </SettingsActionBar>
+      )}
     </form>
   );
 }

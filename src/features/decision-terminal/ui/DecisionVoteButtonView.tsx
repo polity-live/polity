@@ -58,7 +58,7 @@ export function DecisionVoteButtonView({
       size={compact ? 'sm' : 'default'}
       className="border-primary/30 bg-background text-primary hover:bg-primary/10 gap-2 rounded-md border font-semibold shadow-sm"
       variant="outline"
-      aria-label={compact ? 'Vote' : undefined}
+      aria-label={compact ? translateText('common.entities.vote') : undefined}
       onClick={event => {
         event.stopPropagation();
         onVote(decision);

@@ -1,9 +1,16 @@
 import { useEffect } from 'react';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
+import {
+  applyAppearanceTheme,
+  applyThemeMetadata,
+  POLITY_THEME,
+  type AppearanceThemeDefinition,
+  type ColorMode,
+} from '@/features/shared/appearance-theme';
 
 // Define our theme types for better type safety
-export type ThemeType = 'dark' | 'light' | 'system';
+export type ThemeType = ColorMode;
 export type SystemThemeType = 'dark' | 'light';
 
 // Define the store state interface
@@ -12,6 +19,7 @@ interface ThemeState {
   systemTheme: SystemThemeType;
   isMounted: boolean;
   isDark: boolean;
+  appearanceTheme: AppearanceThemeDefinition;
 }
 
 // Define the store actions interface
@@ -21,6 +29,7 @@ interface ThemeActions {
   setMounted: (mounted: boolean) => void;
   initializeTheme: (defaultTheme: ThemeType, storageKey: string) => void;
   applyTheme: (storageKey: string) => void;
+  setAppearanceTheme: (theme: AppearanceThemeDefinition) => void;
 }
 
 // Default storage key
@@ -34,6 +43,7 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
     systemTheme: 'light',
     isMounted: false,
     isDark: false,
+    appearanceTheme: POLITY_THEME,
 
     // Actions
     setTheme: newTheme => {
@@ -67,6 +77,14 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
       set(state => {
         state.isMounted = mounted;
       });
+    },
+
+    setAppearanceTheme: appearanceTheme => {
+      set(state => {
+        state.appearanceTheme = appearanceTheme;
+      });
+      applyAppearanceTheme(appearanceTheme);
+      applyThemeMetadata(get().isDark, appearanceTheme);
     },
 
     // Initialize theme from localStorage
@@ -103,7 +121,7 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
 
     // Apply theme to document and update localStorage
     applyTheme: storageKey => {
-      const { theme, systemTheme, isMounted } = get();
+      const { theme, systemTheme, isMounted, appearanceTheme } = get();
 
       if (!isMounted) return;
 
@@ -120,6 +138,8 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
 
       const resolvedTheme = theme === 'system' ? systemTheme : theme;
       root.classList.add(resolvedTheme);
+      applyAppearanceTheme(appearanceTheme);
+      applyThemeMetadata(resolvedTheme === 'dark', appearanceTheme);
     },
   }))
 );

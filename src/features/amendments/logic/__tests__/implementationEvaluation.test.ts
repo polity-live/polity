@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 import {
   deriveImplementationDisplayStatus,
   formatImplementationEvaluationSummary,
@@ -7,6 +8,10 @@ import {
 } from '../implementationEvaluation';
 
 describe('implementationEvaluation helpers', () => {
+  beforeEach(() => {
+    useLanguageStore.setState({ language: 'de' });
+  });
+
   it('formats fixed and relative evaluation summaries for review/wiki displays', () => {
     expect(
       formatImplementationEvaluationSummary({
@@ -36,7 +41,7 @@ describe('implementationEvaluation helpers', () => {
         processStatus: 'completed',
         implementationStatus: 'awaiting_evaluation',
       })
-    ).toBe('Angenommen und Umsetzung');
+    ).toBe('Angenommen und in Umsetzung');
     expect(
       deriveImplementationDisplayStatus({
         processStatus: 'completed',
@@ -88,5 +93,24 @@ describe('implementationEvaluation helpers', () => {
       })
     ).toBe('tie');
     expect(getImplementationReviewOutcomeLabel('tie')).toBe('Stimmengleichstand');
+  });
+
+  it('uses English implementation copy when English is active', () => {
+    useLanguageStore.setState({ language: 'en' });
+
+    expect(
+      formatImplementationEvaluationSummary({
+        mode: 'relative_to_vote',
+        offsetYears: 1,
+        offsetMonths: 2,
+      })
+    ).toBe('1 year, 2 months after adoption');
+    expect(
+      deriveImplementationDisplayStatus({
+        processStatus: 'pending_event',
+        implementationStatus: null,
+      })
+    ).toBe('In progress');
+    expect(getImplementationReviewOutcomeLabel('tie')).toBe('Tie');
   });
 });

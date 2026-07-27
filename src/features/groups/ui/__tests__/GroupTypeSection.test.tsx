@@ -1,9 +1,14 @@
 /* @vitest-environment jsdom */
 
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { GroupTypeSection } from '../GroupTypeSection';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
+
+beforeEach(() => {
+  useLanguageStore.setState({ language: 'en' });
+});
 
 afterEach(() => {
   cleanup();
@@ -29,7 +34,7 @@ describe('GroupTypeSection', () => {
     );
 
     expect(screen.getByText('Hierarchical Group')).toBeTruthy();
-    expect(screen.getByText('Geschwistergruppe')).toBeTruthy();
+    expect(screen.getByText('Sibling group')).toBeTruthy();
     expect(screen.queryByText('Base Group')).toBeNull();
   });
 
@@ -37,6 +42,6 @@ describe('GroupTypeSection', () => {
     render(<GroupTypeSection groupType="base" hasSiblingConnections />);
 
     expect(screen.getByText('Base Group')).toBeTruthy();
-    expect(screen.getByText('Geschwistergruppe')).toBeTruthy();
+    expect(screen.getByText('Sibling group')).toBeTruthy();
   });
 });

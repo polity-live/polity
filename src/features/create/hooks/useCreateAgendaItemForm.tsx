@@ -517,7 +517,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       !delegateAssignment.targetEvent.group?.id ||
       !sourceGroupId
     ) {
-      throw new Error('Der Delegiertenauftrag konnte nicht eindeutig aufgeloest werden.');
+      throw new Error('Der Delegiertenauftrag konnte nicht eindeutig aufgelöst werden.');
     }
 
     const totalSeatCount = delegateAssignment.seatCount ?? delegateSeatCount;

@@ -16,9 +16,14 @@ import { TodoDeadlineInput } from '@/features/create/ui/inputs/TodoDeadlineInput
 interface TodoDetailEditProps {
   formData: TodoFormData;
   onUpdate: (updates: Partial<TodoFormData>) => void;
+  isTutorialTodo?: boolean;
 }
 
-export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
+export function TodoDetailEdit({
+  formData,
+  onUpdate,
+  isTutorialTodo = false,
+}: TodoDetailEditProps) {
   return (
     <div className="space-y-6">
       {/* Status and Priority */}
@@ -27,40 +32,42 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
           <FormControlLabel className="mb-2 block text-sm font-medium">
             {translateText('generated.inline.0688_status_bae7d5be')}
           </FormControlLabel>
-          <FormControlSelect
-            value={formData.status}
-            onValueChange={(v: TodoStatus) => onUpdate({ status: v })}
-          >
-            <FormControlSelectTrigger>
-              <FormControlSelectValue />
-            </FormControlSelectTrigger>
-            <FormControlSelectContent>
-              <FormControlSelectItem value="pending">
-                <div className="flex items-center gap-2">
-                  <Circle className="h-4 w-4" />
-                  {translateText('generated.inline.0370_pending_96f608c1')}
-                </div>
-              </FormControlSelectItem>
-              <FormControlSelectItem value="in_progress">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  {translateText('generated.inline.1168_in_progress_f61eadaf')}
-                </div>
-              </FormControlSelectItem>
-              <FormControlSelectItem value="completed">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  {translateText('generated.inline.0057_completed_1798b3ba')}
-                </div>
-              </FormControlSelectItem>
-              <FormControlSelectItem value="cancelled">
-                <div className="flex items-center gap-2">
-                  <XCircle className="h-4 w-4" />
-                  {translateText('generated.inline.1169_cancelled_a1bf92ef')}
-                </div>
-              </FormControlSelectItem>
-            </FormControlSelectContent>
-          </FormControlSelect>
+          <div data-tutorial-anchor={isTutorialTodo ? 'todo-status-in-progress' : undefined}>
+            <FormControlSelect
+              value={formData.status}
+              onValueChange={(v: TodoStatus) => onUpdate({ status: v })}
+            >
+              <FormControlSelectTrigger>
+                <FormControlSelectValue />
+              </FormControlSelectTrigger>
+              <FormControlSelectContent>
+                <FormControlSelectItem value="pending">
+                  <div className="flex items-center gap-2">
+                    <Circle className="h-4 w-4" />
+                    {translateText('generated.inline.0370_pending_96f608c1')}
+                  </div>
+                </FormControlSelectItem>
+                <FormControlSelectItem value="in_progress">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    {translateText('generated.inline.1168_in_progress_f61eadaf')}
+                  </div>
+                </FormControlSelectItem>
+                <FormControlSelectItem value="completed">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    {translateText('generated.inline.0057_completed_1798b3ba')}
+                  </div>
+                </FormControlSelectItem>
+                <FormControlSelectItem value="cancelled">
+                  <div className="flex items-center gap-2">
+                    <XCircle className="h-4 w-4" />
+                    {translateText('generated.inline.1169_cancelled_a1bf92ef')}
+                  </div>
+                </FormControlSelectItem>
+              </FormControlSelectContent>
+            </FormControlSelect>
+          </div>
         </div>
 
         <div>

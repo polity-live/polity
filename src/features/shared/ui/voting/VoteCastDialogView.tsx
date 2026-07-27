@@ -29,6 +29,7 @@ export interface VoteCastCandidate {
 export interface VoteCastChoice {
   id: string;
   label: string;
+  semanticKey?: string | null;
 }
 
 export type VoteCastDialogStep = 'choice' | 'confirm' | 'password';
@@ -67,6 +68,7 @@ export interface VoteCastDialogViewProps {
   forwardingPreviewContent?: ReactNode;
   documentPreviewContent?: ReactNode;
   submissionOverlay?: ReactNode;
+  tutorialAnchor?: string;
   labels: VoteCastDialogViewLabels;
   onToggleCandidate: (candidateId: string) => void;
   onSelectChoice: (choiceId: string) => void;
@@ -96,6 +98,7 @@ export function VoteCastDialogView({
   forwardingPreviewContent,
   documentPreviewContent,
   submissionOverlay,
+  tutorialAnchor,
   labels,
   onToggleCandidate,
   onSelectChoice,
@@ -121,10 +124,16 @@ export function VoteCastDialogView({
     : '!z-[140] h-dvh max-h-none !max-h-none w-screen max-w-none overflow-y-auto rounded-none border-0 bg-background p-0 shadow-none sm:max-w-none';
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={!tutorialAnchor}>
       <ScrollableDialogContent
         className={dialogContentClassName}
         showCloseButton={!submissionActive}
+        onInteractOutside={event => {
+          if (tutorialAnchor) event.preventDefault();
+        }}
+        onEscapeKeyDown={event => {
+          if (tutorialAnchor) event.preventDefault();
+        }}
       >
         {!submissionActive ? (
           <div className="min-h-dvh bg-[linear-gradient(180deg,var(--surface-raised)_0%,var(--background)_42%,var(--background)_100%)]">
@@ -241,6 +250,11 @@ export function VoteCastDialogView({
                     >
                       <motion.div
                         className="grid gap-3"
+                        data-tutorial-anchor={
+                          tutorialAnchor === 'agenda-election-vote'
+                            ? 'agenda-election-option'
+                            : undefined
+                        }
                         variants={staggerContainer}
                         initial={reducedMotion ? false : 'initial'}
                         animate="animate"
@@ -311,6 +325,13 @@ export function VoteCastDialogView({
                                       type="button"
                                       variant="outline"
                                       aria-pressed={isSelected}
+                                      data-tutorial-anchor={
+                                        tutorialAnchor === 'agenda-amendment-vote' &&
+                                        (choice.semanticKey === 'accept' ||
+                                          /^(ja|yes)$/i.test(choice.label.trim()))
+                                          ? 'agenda-amendment-yes'
+                                          : undefined
+                                      }
                                       onClick={() => onSelectChoice(choice.id)}
                                       className={cn(
                                         'flex h-auto w-full cursor-pointer items-center justify-start gap-3 rounded-lg border px-5 py-4 text-left font-medium whitespace-normal transition-all duration-200',
@@ -398,6 +419,13 @@ export function VoteCastDialogView({
                     >
                       <motion.div
                         className="border-border/70 bg-card/90 w-full rounded-lg border p-5 shadow-[var(--shadow-panel)] sm:p-6"
+                        data-tutorial-anchor={
+                          tutorialAnchor === 'agenda-election-vote'
+                            ? 'agenda-election-password'
+                            : tutorialAnchor === 'agenda-amendment-vote'
+                              ? 'agenda-amendment-password'
+                              : undefined
+                        }
                         initial={reducedMotion ? false : { opacity: 0, y: 8, scale: 0.99 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
@@ -424,6 +452,13 @@ export function VoteCastDialogView({
                     {step === 'choice' ? (
                       <Button
                         className="w-full sm:w-auto sm:min-w-32"
+                        data-tutorial-anchor={
+                          tutorialAnchor === 'agenda-election-vote'
+                            ? 'agenda-election-submit'
+                            : tutorialAnchor === 'agenda-amendment-vote'
+                              ? 'agenda-amendment-submit'
+                              : undefined
+                        }
                         onClick={onConfirm}
                         disabled={isLoading || !hasSelection}
                       >

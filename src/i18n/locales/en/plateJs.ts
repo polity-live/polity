@@ -352,6 +352,8 @@ export const plateJsTranslations = {
     uploadGroupRequired: 'Select one of your groups.',
     manualDataRequired: 'Enter at least one data row.',
     manualTitleRequired: 'Give the manual dataset a title.',
+    manualCategoryColumn: 'Category',
+    manualValueColumn: 'Value',
     fileRequired: 'Choose a CSV or TSV file.',
     elementMissing: 'The data view is no longer in the document.',
     loading: 'Loading data',
@@ -509,6 +511,13 @@ export const plateJsTranslations = {
     with: 'with:',
     replace: 'Replace:',
     un: 'Un',
+    finalizeInternalVote: 'End internal vote',
+    finalizeInternalVoteTitle: 'End internal vote?',
+    finalizeInternalVoteSummary:
+      'Result: {{outcome}}. Accept: {{accept}}, reject: {{reject}}, abstain: {{abstain}}.',
+    outcomeAccepted: 'Accepted',
+    outcomeRejected: 'Rejected',
+    cancel: 'Cancel',
   },
   blockContextMenu: {
     askAI: 'Ask AI',

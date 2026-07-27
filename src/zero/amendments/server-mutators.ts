@@ -2,6 +2,8 @@ import { defineMutator } from '@rocicorp/zero';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { throwAppError } from '@/features/shared/errors/app-error';
 import { documentServerMutators } from '../documents/server-mutators';
 import { syncEntityHashtagsForCreate } from '../common/server-hashtags';
 import {
@@ -20,9 +22,9 @@ import {
   createAmendmentCollaboratorSchema,
   deleteAmendmentCollaboratorSchema,
   updateAmendmentCollaboratorSchema,
-  createAmendmentStreetDesignSchema,
-  updateAmendmentStreetDesignSchema,
-  deleteAmendmentStreetDesignSchema,
+  createAmendmentCityDesignSchema,
+  updateAmendmentCityDesignSchema,
+  deleteAmendmentCityDesignSchema,
   createAmendmentSchema,
   deleteAmendmentSchema,
   createSupportConfirmationSchema,
@@ -37,13 +39,19 @@ import {
 } from './schema';
 import {
   createChangeRequestSchema,
-  createStreetDesignChangeRequestsSchema,
+  createDocumentChangeRequestSchema,
+  createCityDesignChangeRequestsSchema,
   deleteChangeRequestSchema,
   finalizeExpiredInternalChangeRequestVotesSchema,
   finalizeInternalChangeRequestVoteSchema,
   repairInternalChangeRequestResolutionSchema,
   updateChangeRequestSchema,
 } from '../change-requests/schema';
+import {
+  assertDocumentSuggestionIntegrity,
+  assertPersistedDocumentChangeRequestIntegrity,
+  isCityDesignChangeRequestSource,
+} from '../change-requests/document-integrity';
 import {
   createAmendmentSupportVoteSchema,
   updateAmendmentSupportVoteSchema,
@@ -68,7 +76,6 @@ import {
 } from './editing-mode-policy';
 import {
   finalizeExpiredInternalChangeRequestVotesForAmendment,
-  finalizeInternalChangeRequestsForEventPhaseTransition,
   initializeInternalChangeRequestVotingForAmendment,
   maybeFinalizeInternalChangeRequestVote,
   repairInternalChangeRequestResolution,
@@ -83,9 +90,11 @@ import {
   normalizeVotePhase,
 } from '../votes/vote-workflow';
 import { AGENDA_VOTE_STEP_KIND } from '../agendas/vote-step-kind';
+import { materializeCurrentForwardConfirmedEventVoting } from '../agendas/server-mutators';
 import { normalizeChangeRequestVoteOrder } from '@/features/change-requests/logic/changeRequestVoteOrder';
 import { reorderOpenChangeRequestVoteStepsForAgendaItem } from '../agendas/change-request-vote-ordering';
 import { isBranchEditable } from '@/features/amendments/logic/amendmentBranchDisplay';
+import { transitionProcessBranchToEventMode } from './event-mode-transition';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 const PENDING_SUBMISSION_STATUS = 'pending_submission';
@@ -101,6 +110,7 @@ const TERMINAL_PROCESS_STEP_STATUSES = new Set([
 
 type AmendmentServerTx = Parameters<typeof mutators.amendments.create.fn>[0]['tx'];
 type AmendmentServerCtx = Parameters<typeof mutators.amendments.create.fn>[0]['ctx'];
+
 function getProcessTaskNotificationTitle(
   taskType: string | null | undefined,
   title?: string | null
@@ -112,11 +122,11 @@ function getProcessTaskNotificationTitle(
 
   switch (taskType) {
     case 'implementation_evaluation':
-      return 'Umsetzung evaluieren';
+      return translateText('features.amendments.processTasks.implementationEvaluation');
     case 'support_confirmation':
-      return 'Unterstützung bestätigen';
+      return translateText('features.amendments.processTasks.supportConfirmation');
     default:
-      return 'Event planen';
+      return translateText('features.amendments.processTasks.scheduleEvent');
   }
 }
 
@@ -183,7 +193,7 @@ async function resolveChangeRequestMutationEditingMode({
   };
 }
 
-async function assertStreetDesignDirectEditMode(
+async function assertCityDesignDirectEditMode(
   tx: AmendmentServerTx,
   amendmentId: string,
   processBranchId?: string | null
@@ -204,12 +214,12 @@ async function assertStreetDesignDirectEditMode(
       throw new Error('Process branch does not belong to this amendment.');
     }
     if (!isBranchEditable(branch)) {
-      throw new PermissionError('update', 'amendments', 'street_design:branch_readonly');
+      throw new PermissionError('update', 'amendments', 'city_design:branch_readonly');
     }
   }
 
   if (mode !== 'edit') {
-    throw new PermissionError('update', 'amendments', `street_design:editing_mode:${mode}`);
+    throw new PermissionError('update', 'amendments', `city_design:editing_mode:${mode}`);
   }
 }
 
@@ -498,12 +508,12 @@ async function loadCollaboratorForMutation(tx: AmendmentServerTx, collaboratorId
   return collaborator;
 }
 
-async function loadStreetDesignForMutation(tx: AmendmentServerTx, streetDesignId: string) {
-  const streetDesign = await tx.run(zql.amendment_street_design.where('id', streetDesignId).one());
-  if (!streetDesign) {
-    throw new Error('Amendment street design not found');
+async function loadCityDesignForMutation(tx: AmendmentServerTx, cityDesignId: string) {
+  const cityDesign = await tx.run(zql.amendment_city_design.where('id', cityDesignId).one());
+  if (!cityDesign) {
+    throw new Error('Amendment city design not found');
   }
-  return streetDesign;
+  return cityDesign;
 }
 
 async function loadChangeRequestForMutation(tx: AmendmentServerTx, changeRequestId: string) {
@@ -722,7 +732,11 @@ async function appendEventChangeRequestVoteStepIfNeeded({
     id: voteId,
     agenda_item_id: target.agendaItem.id,
     amendment_id: amendment.id,
-    title: changeRequest.title ?? `Change Request ${target.linksForAgendaItem.length + 1}`,
+    title:
+      changeRequest.title ??
+      translateText('common.formats.numberedChangeRequest', {
+        number: target.linksForAgendaItem.length + 1,
+      }),
     description: null,
     status: VOTE_PHASE.indicative,
     purpose: VOTE_PURPOSE.changeRequest,
@@ -928,6 +942,98 @@ async function notifyAmendmentCollaboratorRoleChange(
     amendmentTitle: aTitle,
     newRole: nextRole?.name ?? 'Collaborator',
   });
+}
+
+async function completeChangeRequestCreation(
+  tx: AmendmentServerTx,
+  ctx: AmendmentServerCtx,
+  args: Parameters<typeof mutators.amendments.createChangeRequest>[0]
+) {
+  if (args.status === PENDING_SUBMISSION_STATUS) {
+    const amendment = await tx.run(zql.amendment.where('id', args.amendment_id).one());
+    await recomputeAmendmentCounters(tx, args.amendment_id);
+    if (amendment?.event_id) {
+      await recomputeEventCounters(tx, amendment.event_id);
+    }
+    return;
+  }
+
+  const now = Date.now();
+  const [aTitle, senderName, amendment] = await Promise.all([
+    amendmentTitle(tx, args.amendment_id),
+    userName(tx, ctx.userID),
+    tx.run(zql.amendment.where('id', args.amendment_id).one()),
+  ]);
+
+  const appendedEventId = amendment
+    ? await appendEventChangeRequestVoteStepIfNeeded({
+        tx,
+        amendment,
+        changeRequest: {
+          id: args.id,
+          title: args.title,
+          status: args.status,
+          process_branch_id: args.process_branch_id ?? null,
+        },
+        now,
+      })
+    : null;
+
+  await recomputeAmendmentCounters(tx, args.amendment_id);
+
+  fireNotification('notifyChangeRequestCreated', {
+    senderId: ctx.userID,
+    senderName,
+    amendmentId: args.amendment_id,
+    amendmentTitle: aTitle,
+  });
+
+  const notificationEventId = appendedEventId ?? amendment?.event_id ?? null;
+  if (notificationEventId) {
+    fireNotification('notifyEventChangeRequestCreated', {
+      senderId: ctx.userID,
+      senderName,
+      eventId: notificationEventId,
+      eventTitle: await eventTitle(tx, notificationEventId),
+      amendmentId: args.amendment_id,
+      amendmentTitle: aTitle,
+    });
+
+    await recomputeEventCounters(tx, notificationEventId);
+  }
+}
+
+async function assertOpenDocumentChangeRequestsArePersisted(
+  tx: AmendmentServerTx,
+  amendmentId: string
+) {
+  const changeRequests = await tx.run(zql.change_request.where('amendment_id', amendmentId));
+  const openDocumentChangeRequests = (Array.isArray(changeRequests) ? changeRequests : []).filter(
+    changeRequest =>
+      !isFinalChangeRequestStatus(changeRequest.status) &&
+      changeRequest.voting_status !== 'completed' &&
+      !changeRequest.obsolete_at &&
+      !changeRequest.obsolete_reason &&
+      !isCityDesignChangeRequestSource(changeRequest.source_type)
+  );
+
+  for (const changeRequest of openDocumentChangeRequests) {
+    try {
+      await assertPersistedDocumentChangeRequestIntegrity({
+        tx,
+        amendmentId,
+        processBranchId: changeRequest.process_branch_id ?? null,
+        changeRequestId: changeRequest.id,
+        discussionId: changeRequest.suggestion_id,
+      });
+    } catch (error) {
+      console.error('Cannot start amendment process with an incomplete change request', {
+        changeRequestId: changeRequest.id,
+        error,
+      });
+      throwAppError('validation_failed');
+    }
+  }
 }
 
 export const amendmentServerMutators = {
@@ -1383,43 +1489,43 @@ export const amendmentServerMutators = {
     }
   ),
 
-  createStreetDesign: defineMutator(
-    createAmendmentStreetDesignSchema,
-    async ({ tx, ctx, args }) => {
-      await assertCanMutateAmendment(tx, ctx, args.amendment_id, 'update');
-      await assertStreetDesignDirectEditMode(tx, args.amendment_id, args.process_branch_id ?? null);
-      await mutators.amendments.createStreetDesign.fn({ tx, ctx, args });
-    }
-  ),
+  createCityDesign: defineMutator(createAmendmentCityDesignSchema, async ({ tx, ctx, args }) => {
+    await assertCanMutateAmendment(tx, ctx, args.amendment_id, 'update');
+    await assertCityDesignDirectEditMode(tx, args.amendment_id, args.process_branch_id ?? null);
+    await mutators.amendments.createCityDesign.fn({ tx, ctx, args });
+  }),
 
-  updateStreetDesign: defineMutator(
-    updateAmendmentStreetDesignSchema,
-    async ({ tx, ctx, args }) => {
-      const streetDesign = await loadStreetDesignForMutation(tx, args.id);
-      await assertCanMutateAmendment(tx, ctx, streetDesign.amendment_id, 'update');
-      await assertStreetDesignDirectEditMode(
-        tx,
-        streetDesign.amendment_id,
-        args.process_branch_id ?? null
-      );
-      await mutators.amendments.updateStreetDesign.fn({ tx, ctx, args });
-    }
-  ),
+  updateCityDesign: defineMutator(updateAmendmentCityDesignSchema, async ({ tx, ctx, args }) => {
+    const cityDesign = await loadCityDesignForMutation(tx, args.id);
+    await assertCanMutateAmendment(tx, ctx, cityDesign.amendment_id, 'update');
+    await assertCityDesignDirectEditMode(
+      tx,
+      cityDesign.amendment_id,
+      args.process_branch_id ?? null
+    );
+    await mutators.amendments.updateCityDesign.fn({ tx, ctx, args });
+  }),
 
-  deleteStreetDesign: defineMutator(
-    deleteAmendmentStreetDesignSchema,
-    async ({ tx, ctx, args }) => {
-      const streetDesign = await loadStreetDesignForMutation(tx, args.id);
-      await assertCanMutateAmendment(tx, ctx, streetDesign.amendment_id, 'update');
-      await mutators.amendments.deleteStreetDesign.fn({ tx, ctx, args });
-    }
-  ),
+  deleteCityDesign: defineMutator(deleteAmendmentCityDesignSchema, async ({ tx, ctx, args }) => {
+    const cityDesign = await loadCityDesignForMutation(tx, args.id);
+    await assertCanMutateAmendment(tx, ctx, cityDesign.amendment_id, 'update');
+    await mutators.amendments.deleteCityDesign.fn({ tx, ctx, args });
+  }),
 
   createChangeRequest: defineMutator(createChangeRequestSchema, async ({ tx, ctx, args }) => {
-    if (args.source_type?.trim().toLowerCase() === 'street_design_scene') {
-      throw new Error('Street design scene change requests are no longer supported.');
+    if (args.source_type?.trim().toLowerCase() === 'city_design_scene') {
+      throw new Error('City Design scene change requests are no longer supported.');
     }
     await assertCanCreateChangeRequest(tx, ctx, args.amendment_id, args.process_branch_id ?? null);
+    if (!isCityDesignChangeRequestSource(args.source_type)) {
+      await assertPersistedDocumentChangeRequestIntegrity({
+        tx,
+        amendmentId: args.amendment_id,
+        processBranchId: args.process_branch_id ?? null,
+        changeRequestId: args.id,
+        discussionId: args.discussion_id,
+      });
+    }
 
     const wasCreated = (await mutators.amendments.createChangeRequest.fn({
       tx,
@@ -1430,73 +1536,58 @@ export const amendmentServerMutators = {
       return;
     }
 
-    if (args.status === PENDING_SUBMISSION_STATUS) {
-      const amendment = await tx.run(zql.amendment.where('id', args.amendment_id).one());
-      await recomputeAmendmentCounters(tx, args.amendment_id);
-      if (amendment?.event_id) {
-        await recomputeEventCounters(tx, amendment.event_id);
-      }
-      return;
-    }
-
-    const now = Date.now();
-    const [aTitle, senderName, amendment] = await Promise.all([
-      amendmentTitle(tx, args.amendment_id),
-      userName(tx, ctx.userID),
-      tx.run(zql.amendment.where('id', args.amendment_id).one()),
-    ]);
-
-    const appendedEventId = amendment
-      ? await appendEventChangeRequestVoteStepIfNeeded({
-          tx,
-          amendment,
-          changeRequest: {
-            id: args.id,
-            title: args.title,
-            status: args.status,
-            process_branch_id: args.process_branch_id ?? null,
-          },
-          now,
-        })
-      : null;
-
-    await recomputeAmendmentCounters(tx, args.amendment_id);
-
-    fireNotification('notifyChangeRequestCreated', {
-      senderId: ctx.userID,
-      senderName,
-      amendmentId: args.amendment_id,
-      amendmentTitle: aTitle,
-    });
-
-    const notificationEventId = appendedEventId ?? amendment?.event_id ?? null;
-    if (notificationEventId) {
-      fireNotification('notifyEventChangeRequestCreated', {
-        senderId: ctx.userID,
-        senderName,
-        eventId: notificationEventId,
-        eventTitle: await eventTitle(tx, notificationEventId),
-        amendmentId: args.amendment_id,
-        amendmentTitle: aTitle,
-      });
-
-      await recomputeEventCounters(tx, notificationEventId);
-    }
+    await completeChangeRequestCreation(tx, ctx, args);
   }),
 
-  createStreetDesignChangeRequests: defineMutator(
-    createStreetDesignChangeRequestsSchema,
+  createDocumentChangeRequest: defineMutator(
+    createDocumentChangeRequestSchema,
+    async ({ tx, ctx, args }) => {
+      await assertCanCreateChangeRequest(
+        tx,
+        ctx,
+        args.amendment_id,
+        args.process_branch_id ?? null
+      );
+      assertDocumentSuggestionIntegrity({
+        changeRequestId: args.id,
+        discussionId: args.discussion_id,
+        discussions: args.discussions,
+        content: args.document_content,
+      });
+
+      const wasCreated = (await mutators.amendments.createDocumentChangeRequest.fn({
+        tx,
+        ctx,
+        args,
+      })) as unknown as boolean | undefined;
+      if (wasCreated === false) {
+        return;
+      }
+
+      const {
+        document_content: _documentContent,
+        discussions: _discussions,
+        ...changeRequestArgs
+      } = args;
+      void _documentContent;
+      void _discussions;
+      await completeChangeRequestCreation(tx, ctx, changeRequestArgs);
+    }
+  ),
+
+  createCityDesignChangeRequests: defineMutator(
+    createCityDesignChangeRequestsSchema,
     async ({ tx, ctx, args }) => {
       for (const request of args.requests) {
         const sourceType = request.source_type?.trim().toLowerCase() ?? '';
-        if (sourceType !== 'street_design_object') {
-          throw new Error('Street design batches only support object change requests.');
+        if (sourceType !== 'city_design_object') {
+          throw new Error('City Design batches only support object change requests.');
         }
         if (
           request.amendment_id !== args.amendment_id ||
           (request.process_branch_id ?? null) !== args.process_branch_id
         ) {
-          throw new Error('Street design batch request scope does not match the batch scope.');
+          throw new Error('City Design batch request scope does not match the batch scope.');
         }
       }
 
@@ -1901,26 +1992,36 @@ export const amendmentServerMutators = {
         }
 
         await assertManualBranchEditingModeChangeAllowed(tx, previousBranch, nextMode);
-
-        if (
-          previousMode === 'vote_internal' &&
-          (nextMode === 'suggest_event' || nextMode === 'event_final_closing_vote')
-        ) {
-          await finalizeInternalChangeRequestsForEventPhaseTransition({
-            tx,
-            ctx,
-            amendmentId: processRun.amendment_id,
-            processBranchId: previousBranch.id,
-            now,
-          });
-        }
       }
 
-      await tx.mutate.amendment_process_branch.update({
-        ...args,
-        ...(args.editing_mode !== undefined ? { editing_mode: nextMode } : {}),
-        updated_at: now,
-      });
+      const transitionsToEventMode =
+        editingModeChanged &&
+        (nextMode === 'suggest_event' || nextMode === 'event_final_closing_vote');
+      if (transitionsToEventMode) {
+        await transitionProcessBranchToEventMode({
+          tx,
+          ctx,
+          amendmentId: processRun.amendment_id,
+          processBranchId: previousBranch.id,
+          editingMode: nextMode,
+          branch: previousBranch,
+          now,
+        });
+        const { editing_mode: _editingMode, ...remainingArgs } = args;
+        void _editingMode;
+        if (Object.keys(remainingArgs).length > 1) {
+          await tx.mutate.amendment_process_branch.update({
+            ...remainingArgs,
+            updated_at: now,
+          });
+        }
+      } else {
+        await tx.mutate.amendment_process_branch.update({
+          ...args,
+          ...(args.editing_mode !== undefined ? { editing_mode: nextMode } : {}),
+          updated_at: now,
+        });
+      }
 
       if (editingModeChanged && nextMode === 'vote_internal') {
         const amendment = await loadAmendmentForMutation(tx, processRun.amendment_id);
@@ -1963,7 +2064,11 @@ export const amendmentServerMutators = {
     async ({ tx, ctx, args }) => {
       await assertCanUseAmendmentPathSourceGroup(tx, ctx, args.source_group_id);
       await assertCanMutateAmendment(tx, ctx, args.amendment_id, 'manage');
-      await initializeAmendmentProcessPath(tx, ctx.userID, args);
+      await assertOpenDocumentChangeRequestsArePersisted(tx, args.amendment_id);
+      const result = await initializeAmendmentProcessPath(tx, ctx.userID, args);
+      if (result.handled) {
+        await materializeCurrentForwardConfirmedEventVoting(tx, ctx, result.branchId);
+      }
     }
   ),
 
@@ -1972,6 +2077,9 @@ export const amendmentServerMutators = {
     async ({ tx, ctx, args }) => {
       await assertCanResolveProcessVote(tx, ctx, args.agenda_item_id);
       const resolution = await resolveAmendmentProcessVote(tx, args, ctx.userID);
+      if (resolution.handled && 'branchId' in resolution) {
+        await materializeCurrentForwardConfirmedEventVoting(tx, ctx, resolution.branchId);
+      }
       await notifyProcessVoteResolution(tx, ctx.userID, args.agenda_item_id, resolution);
     }
   ),
@@ -1980,7 +2088,10 @@ export const amendmentServerMutators = {
     completeProcessTaskWithEventSchema,
     async ({ tx, ctx, args }) => {
       await assertCanCompleteProcessTaskWithEvent(tx, ctx, args.process_task_id, args.event_id);
-      await completeProcessTaskWithEvent(tx, ctx.userID, args);
+      const result = await completeProcessTaskWithEvent(tx, ctx.userID, args);
+      if (result.handled) {
+        await materializeCurrentForwardConfirmedEventVoting(tx, ctx, result.branchId);
+      }
     }
   ),
 
@@ -1988,7 +2099,10 @@ export const amendmentServerMutators = {
     replanProcessBranchEventsSchema,
     async ({ tx, ctx, args }) => {
       await assertCanReplanProcessBranchEvents(tx, ctx, args.branch_id);
-      await replanProcessBranchEvents(tx, ctx.userID, args);
+      const result = await replanProcessBranchEvents(tx, ctx.userID, args);
+      if (result.handled) {
+        await materializeCurrentForwardConfirmedEventVoting(tx, ctx, result.branchId);
+      }
     }
   ),
 

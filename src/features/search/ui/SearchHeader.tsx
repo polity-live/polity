@@ -45,6 +45,7 @@ export function SearchHeader({
       <div className="bg-background sticky top-0 z-10 mb-2 space-y-3 pt-2 pb-2">
         <div className="flex gap-2">
           <SearchField
+            data-tutorial-anchor="search-input"
             value={searchQuery}
             onValueChange={setSearchQuery}
             placeholder={t('features.search.placeholderDetailed')}

@@ -39,6 +39,7 @@ export function LinkSurface({
       <SmartLink
         href={href}
         resetScroll={resetScroll}
+        data-link-surface-primary
         aria-label={props['aria-label'] ?? label}
         className={cn(
           'focus-visible:ring-ring focus-visible:ring-offset-background absolute inset-0 z-0 rounded-[inherit] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',

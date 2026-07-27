@@ -331,8 +331,12 @@ export const voteQueries = {
 
 // ── Query Row Types ─────────────────────────────────────────────────
 export type VoteWithDetailsRow = QueryRowType<typeof voteQueries.votesWithDetails>;
-export type VoteDecisionOverviewRow = QueryRowType<typeof voteQueries.decisionOverviewPage>;
-export type VoteDecisionManagerRow = QueryRowType<typeof voteQueries.decisionManagerProjection>;
+export type VoteDecisionOverviewRow = QueryRowType<typeof voteQueries.decisionOverviewPage> & {
+  readonly id: string;
+};
+export type VoteDecisionManagerRow = QueryRowType<typeof voteQueries.decisionManagerProjection> & {
+  readonly id: string;
+};
 export type VoteViewerDecisionStateRow = QueryRowType<typeof voteQueries.viewerDecisionState>;
 export type VotesByAgendaItemsRow = QueryRowType<typeof voteQueries.byAgendaItems>;
 export type VoteByAgendaItemRow = QueryRowType<typeof voteQueries.byAgendaItem>;

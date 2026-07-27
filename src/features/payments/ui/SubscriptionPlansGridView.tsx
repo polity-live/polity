@@ -106,7 +106,9 @@ export function SubscriptionPlansGridView({
                 ) : null}
               </div>
               <p className="text-2xl font-bold">{formatMajor(0, 'EUR')}</p>
-              <p className="text-muted-foreground text-xs">/month</p>
+              <p className="text-muted-foreground text-xs">
+                {translateText('features.payments.plans.period')}
+              </p>
             </div>
             <p className="text-muted-foreground mb-4 text-sm">
               {translateText('generated.inline.0987_full_access_to_all_features_8315d07d')}
@@ -158,7 +160,9 @@ export function SubscriptionPlansGridView({
               <p className="text-2xl font-bold">
                 <ConvertedCurrencyAmount amount={2} currency="EUR" />
               </p>
-              <p className="text-muted-foreground text-xs">/month</p>
+              <p className="text-muted-foreground text-xs">
+                {translateText('features.payments.plans.period')}
+              </p>
             </div>
             <p className="text-muted-foreground mb-4 text-sm">
               {translateText(
@@ -210,7 +214,9 @@ export function SubscriptionPlansGridView({
               <p className="text-2xl font-bold">
                 <ConvertedCurrencyAmount amount={10} currency="EUR" />
               </p>
-              <p className="text-muted-foreground text-xs">/month</p>
+              <p className="text-muted-foreground text-xs">
+                {translateText('features.payments.plans.period')}
+              </p>
             </div>
             <p className="text-muted-foreground mb-4 text-sm">
               {translateText('generated.inline.0993_fund_new_features_and_improvements_d23cf557')}
@@ -280,7 +286,9 @@ export function SubscriptionPlansGridView({
                   </>
                 )}
               </div>
-              <p className="text-muted-foreground text-xs">/month</p>
+              <p className="text-muted-foreground text-xs">
+                {translateText('features.payments.plans.period')}
+              </p>
             </div>
             <p className="text-muted-foreground mb-4 text-sm">
               {translateText(
@@ -316,20 +324,14 @@ export function SubscriptionPlansGridView({
               'generated.inline.0996_all_features_remain_free_your_contribution_he_4b402e38'
             )}
           </p>
-          <p className="text-muted-foreground mt-1 text-xs">
-            {language === 'de'
-              ? 'Der Checkout wird in EUR abgerechnet. Umgerechnete Werte sind Schätzungen mit '
-              : 'Checkout is charged in EUR. Converted values are estimates using '}
-            <a
-              href="https://frankfurter.dev/"
-              target="_blank"
-              rel="noreferrer"
-              className="underline"
-            >
-              {language === 'de' ? 'Kursen von Frankfurter' : 'Frankfurter rates'}
-            </a>
-            .
-          </p>
+          <a
+            href="https://frankfurter.dev/"
+            target="_blank"
+            rel="noreferrer"
+            className="text-muted-foreground mt-1 block text-xs underline"
+          >
+            {translateText('features.payments.plans.exchangeRateNotice')}
+          </a>
         </div>
       </CardContent>
     </Card>

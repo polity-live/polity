@@ -68,7 +68,10 @@ describe('trackMutationFinalization', () => {
     await vi.waitFor(() => expect(gatedToast.finalizationError).toHaveBeenCalledOnce());
     expect(gatedToast.finalizationError).toHaveBeenCalledWith(
       'Payment could not be created.',
-      expect.objectContaining({ id: 'creation:payment:payment-1', description: 'Denied' })
+      expect.objectContaining({
+        id: 'creation:payment:payment-1',
+        description: 'Something went wrong. Please try again.',
+      })
     );
     expect(gatedToast.finalizationSuccess).not.toHaveBeenCalled();
     client.resolve(undefined);

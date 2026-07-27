@@ -64,14 +64,12 @@ export function VotePasswordInputView({
           {showNoVotingPasswordLink ? (
             <>
               {' '}
-              Set one in your{' '}
               <Link
                 to={noVotingPasswordSettingsHref}
                 className="font-medium underline underline-offset-4"
               >
-                password settings
-              </Link>{' '}
-              to continue.
+                {t('common.votingPassword.openSettingsToContinue')}
+              </Link>
             </>
           ) : null}
         </p>

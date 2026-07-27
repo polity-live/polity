@@ -1,6 +1,7 @@
 import { parseDelegateElectionMetadata } from '@/features/elections/logic/electionAssignmentMetadata';
 import { computeRoleScheduledRevoteDate } from '@/features/votes/utils/revote-scheduling';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
 export interface AssignmentEventSummary {
   id: string;
@@ -314,11 +315,20 @@ export function buildRoleRenewalAssignments(args: {
         kind: 'role_renewal',
         status,
         title: translateText('generated.inline.0151_neuwahl_fuer_value435d_6ab2e4a2', {
-          value435d: role.title || role.name || 'Rolle',
+          value435d:
+            role.title ||
+            role.name ||
+            translateText('features.groups.memberships.openAssignments.generated.roleFallback'),
         }),
         description: dueDate
-          ? `Die naechste turnusmaessige Wahl ist fuer ${new Date(dueDate).toLocaleDateString('de-DE')} vorgesehen.`
-          : 'Diese Rolle braucht eine neue Wahl, sobald ein passendes Event geplant ist.',
+          ? translateText('features.groups.memberships.openAssignments.generated.roleRenewalDue', {
+              date: new Date(dueDate).toLocaleDateString(
+                useLanguageStore.getState().language === 'de' ? 'de-DE' : 'en-US'
+              ),
+            })
+          : translateText(
+              'features.groups.memberships.openAssignments.generated.roleRenewalNeedsEvent'
+            ),
         roleId: role.id,
         linkedEvent,
       };
@@ -373,7 +383,7 @@ function buildProcessTaskAssignments(processTasks: readonly ProcessTaskAssignmen
   return processTasks
     .map<GroupOpenAssignment>(task => {
       const amendment = task.process_run?.amendment ?? task.support_confirmation?.amendment ?? null;
-      const amendmentTitle = amendment?.title || 'Aenderungsantrag';
+      const amendmentTitle = amendment?.title || 'Änderungsantrag';
       const linkedEvent = task.event ?? task.step_run?.event ?? null;
       const status: OpenAssignmentStatus =
         task.status === 'completed'
@@ -391,7 +401,7 @@ function buildProcessTaskAssignments(processTasks: readonly ProcessTaskAssignmen
             title = `Umsetzung evaluieren: ${amendmentTitle}`;
             break;
           case 'support_confirmation':
-            title = `Unterstuetzung bestaetigen: ${amendmentTitle}`;
+            title = `Unterstützung bestätigen: ${amendmentTitle}`;
             break;
           default:
             title = `Event planen: ${amendmentTitle}`;
@@ -403,13 +413,13 @@ function buildProcessTaskAssignments(processTasks: readonly ProcessTaskAssignmen
         const targetGroupName = task.target_group?.name || 'die zustandige Gruppe';
         switch (task.task_type) {
           case 'implementation_evaluation':
-            description = `Plane die Umsetzungspruefung fuer ${amendmentTitle} in ${targetGroupName}.`;
+            description = `Plane die Umsetzungsprüfung für ${amendmentTitle} in ${targetGroupName}.`;
             break;
           case 'support_confirmation':
-            description = `Diese Gruppe muss ihre Unterstuetzung fuer ${amendmentTitle} erneut bestaetigen.`;
+            description = `Diese Gruppe muss ihre Unterstützung für ${amendmentTitle} erneut bestätigen.`;
             break;
           default:
-            description = `Fuer ${amendmentTitle} fehlt noch ein passendes Event in ${targetGroupName}.`;
+            description = `Für ${amendmentTitle} fehlt noch ein passendes Event in ${targetGroupName}.`;
             break;
         }
       }

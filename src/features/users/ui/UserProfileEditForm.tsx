@@ -21,6 +21,7 @@ import { FormStyleSelector } from '@/features/create/ui/FormStyleSelector';
 import { ThemeToggle } from '@/features/navigation/toggles/theme-toggle';
 import { LanguageToggle } from '@/features/navigation/toggles/language-toggle';
 import { CurrencyPreferenceControl } from './CurrencyPreferenceControl';
+import { AppearanceThemeSelector } from './AppearanceThemeSelector';
 import { NavigationViewStateToggle } from '@/features/navigation/toggles/NavigationViewStateToggle';
 import { PwaInstallPanel } from '@/features/pwa/ui';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -30,6 +31,7 @@ import { AccountEmailSection } from './AccountEmailSection';
 import { NotificationSettingsContent } from '@/features/notifications/ui/NotificationSettingsContent';
 import { AiSettingsTab } from './AiSettingsTab';
 import { Button } from '@/features/shared/ui/ui/button';
+import { AppTutorialSettingsPanel } from '@/features/app-tutorial/AppTutorialSettingsPanel';
 import {
   geoLocationFieldsFromShape,
   geoLocationShapeFromFields,
@@ -227,10 +229,16 @@ export function UserProfileEditForm({
 
         {/* Preferences Tab */}
         <TabsContent value="preferences">
-          <div className="space-y-6">
+          <div className="space-y-6" data-tutorial-anchor="settings-appearance">
             <SettingsPanel
               title={t('pages.user.preferences.theme')}
               description={t('pages.user.preferences.themeDescription')}
+            >
+              <AppearanceThemeSelector />
+            </SettingsPanel>
+            <SettingsPanel
+              title={t('pages.user.preferences.colorMode')}
+              description={t('pages.user.preferences.colorModeDescription')}
             >
               <ThemeToggle />
             </SettingsPanel>
@@ -246,6 +254,7 @@ export function UserProfileEditForm({
             >
               <CurrencyPreferenceControl />
             </SettingsPanel>
+            <AppTutorialSettingsPanel />
             <SettingsPanel
               title={t('pages.user.preferences.navigationStyle')}
               description={t('pages.user.preferences.navigationStyleDescription')}

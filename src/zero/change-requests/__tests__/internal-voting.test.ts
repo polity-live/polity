@@ -4,7 +4,7 @@ const {
   applyChangeRequestVoteResultToContentMock,
   findChangeRequestDiscussionMock,
   getChangeRequestResolutionStatusMock,
-  isStreetDesignSourceTypeMock,
+  isCityDesignSourceTypeMock,
   resolveChangeRequestByVoteResultMock,
 } = vi.hoisted(() => ({
   applyChangeRequestVoteResultToContentMock: vi.fn((content, suggestionId, voteResult) => [
@@ -24,7 +24,7 @@ const {
   getChangeRequestResolutionStatusMock: vi.fn(voteResult =>
     voteResult === 'passed' ? 'accepted' : 'rejected'
   ),
-  isStreetDesignSourceTypeMock: vi.fn<(sourceType?: string | null) => boolean>(() => false),
+  isCityDesignSourceTypeMock: vi.fn<(sourceType?: string | null) => boolean>(() => false),
   resolveChangeRequestByVoteResultMock: vi.fn(),
 }));
 
@@ -32,7 +32,7 @@ vi.mock('../server-resolution', () => ({
   applyChangeRequestVoteResultToContent: applyChangeRequestVoteResultToContentMock,
   findChangeRequestDiscussion: findChangeRequestDiscussionMock,
   getChangeRequestResolutionStatus: getChangeRequestResolutionStatusMock,
-  isStreetDesignSourceType: isStreetDesignSourceTypeMock,
+  isCityDesignSourceType: isCityDesignSourceTypeMock,
   resolveChangeRequestByVoteResult: resolveChangeRequestByVoteResultMock,
 }));
 
@@ -102,8 +102,8 @@ describe('internal change request voting close rules', () => {
     applyChangeRequestVoteResultToContentMock.mockClear();
     findChangeRequestDiscussionMock.mockClear();
     getChangeRequestResolutionStatusMock.mockClear();
-    isStreetDesignSourceTypeMock.mockReset();
-    isStreetDesignSourceTypeMock.mockReturnValue(false);
+    isCityDesignSourceTypeMock.mockReset();
+    isCityDesignSourceTypeMock.mockReturnValue(false);
     resolveChangeRequestByVoteResultMock.mockReset();
   });
 
@@ -342,9 +342,9 @@ describe('internal change request voting close rules', () => {
     );
   });
 
-  it('finalizes street design internal CRs on event transition through the generic resolver', async () => {
-    isStreetDesignSourceTypeMock.mockImplementation(
-      sourceType => sourceType === 'street_design_object'
+  it('finalizes city design internal CRs on event transition through the generic resolver', async () => {
+    isCityDesignSourceTypeMock.mockImplementation(
+      sourceType => sourceType === 'city_design_object'
     );
     resolveChangeRequestByVoteResultMock.mockResolvedValue({
       changeRequest: { id: 'cr-street' },
@@ -362,7 +362,7 @@ describe('internal change request voting close rules', () => {
           ...openChangeRequest,
           id: 'cr-street',
           title: 'CR-1',
-          source_type: 'street_design_object',
+          source_type: 'city_design_object',
           created_in_mode: 'suggest_internal',
         },
       ],

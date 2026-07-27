@@ -23,11 +23,13 @@ import {
   type GroupRelationshipRight,
 } from './GroupRelationshipFields';
 import type { GroupRelationshipRightDisplayStatus } from '../logic/networkRelationshipHelpers';
+import { resolveAppTutorialFixtureText } from '@/features/app-tutorial/fixture-copy';
 
 interface SelectableGroup {
   id: string;
   name: string | null;
   description?: unknown;
+  tutorial_run_id?: string | null;
 }
 
 interface SelectableRole {
@@ -78,10 +80,14 @@ export function GroupConnectionComposer({
   disableGroupSelection = false,
   groupSelectorLabel = 'Partnergruppe',
 }: GroupConnectionComposerProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
+  const selectedGroup = availableGroups.find(group => group.id === value.selectedGroupId);
   const selectedGroupName =
-    availableGroups.find(group => group.id === value.selectedGroupId)?.name ?? '';
+    resolveAppTutorialFixtureText(selectedGroup?.name, {
+      tutorialRunId: selectedGroup?.tutorial_run_id,
+      language,
+    }) ?? '';
   const directionOptions = useMemo(() => getGroupRelationshipDirectionOptions(t), [t]);
   const selectedRights = useMemo(
     () =>
@@ -232,6 +238,7 @@ export function GroupConnectionComposer({
       disableGroupSelection={disableGroupSelection}
       groupSelectorLabel={groupSelectorLabel}
       t={t}
+      language={language}
       selectedGroupName={selectedGroupName}
       directionOptions={directionOptions}
       selectedRights={selectedRights}

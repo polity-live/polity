@@ -30,6 +30,8 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'features.events.candidacy.stepSyncElection': 'Sync election',
         'features.events.candidacy.cancel': 'Cancel',
         'features.events.voting.enterPin': 'Enter your 4-digit voting PIN',
+        'common.votingPassword.openSettingsToContinue':
+          'Set a voting PIN in password settings to continue.',
       })[key] ?? key,
   }),
 }));
@@ -153,8 +155,9 @@ describe('CandidacyPasswordDialog', () => {
     );
 
     expect(screen.getByText(/No voting password set/)).toBeTruthy();
-    expect(screen.getByText(/Set one in your/)).toBeTruthy();
-    const link = screen.getByRole('link', { name: 'password settings' });
+    const link = screen.getByRole('link', {
+      name: 'Set a voting PIN in password settings to continue.',
+    });
     expect(link.getAttribute('href')).toBe('/user/user-1/settings?tab=passwords');
   });
 

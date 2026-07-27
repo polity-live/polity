@@ -1,4 +1,10 @@
 export const componentsTranslations = {
+  changeRequests: {
+    openChangeRequests: 'Offene Änderungsanträge',
+  },
+  empty: {
+    noResults: 'Keine Ergebnisse gefunden',
+  },
   infoTabs: {
     about: 'Über',
     contact: 'Kontakt',
@@ -158,12 +164,12 @@ export const componentsTranslations = {
     memberDescriptionFallback: 'Mitglieder, die aktuell dieser Rolle zugeordnet sind.',
     memberFallback: 'Mitglied',
     roleFallback: 'Rolle',
-    defaultRequest: 'Standard fuer Anfrage',
-    defaultInvite: 'Standard fuer Einladung',
+    defaultRequest: 'Standard für Anfrage',
+    defaultInvite: 'Standard für Einladung',
     noOtherRoles: 'Keine weiteren Rollen',
     noUserRole: 'Keine Benutzerrolle',
     noUserRoleDescription: 'Mitglieder aktuell ohne zugewiesene Gruppenrolle.',
-    emptyStateByRole: 'Aktuell traegt kein Mitglied diese Rolle.',
+    emptyStateByRole: 'Aktuell trägt kein Mitglied diese Rolle.',
     manageRoles: 'Rollen verwalten',
     manage: 'Verwalten',
     remove: 'Entfernen',
@@ -178,7 +184,7 @@ export const componentsTranslations = {
     actions: 'Aktionen',
     notAvailable: 'k. A.',
     noDelegateRepresentation: '-',
-    derivedRemoveTooltip: 'Abgeleitete Mitgliedschaften koennen nicht direkt bearbeitet werden.',
+    derivedRemoveTooltip: 'Abgeleitete Mitgliedschaften können nicht direkt bearbeitet werden.',
   },
   memberRightsDialog: {
     context: {
@@ -186,22 +192,22 @@ export const componentsTranslations = {
     },
     memberFallback: 'Mitglied',
     roleFallback: 'Rolle',
-    openProfile: 'Profil oeffnen',
-    close: 'Schliessen',
+    openProfile: 'Profil öffnen',
+    close: 'Schließen',
     unknownUser: 'Unbekannter Benutzer',
     description:
-      'Effektive {{contextLabel}}-Rechte werden ueber alle zugewiesenen Rollen zusammengefuehrt. Diese Ansicht zeigt sowohl die finale Rechte-Menge als auch, welche Rolle jedes Recht gewaehrt.',
+      'Effektive {{contextLabel}}-Rechte werden über alle zugewiesenen Rollen zusammengeführt. Diese Ansicht zeigt sowohl die finale Rechte-Menge als auch, welche Rolle jedes Recht gewährt.',
     assignedRoles: 'Zugewiesene Rollen',
     effectiveRightsSummary: '{{count}} effektive Rechte aus {{role}}.',
     effectiveRightsSummary_one: '{{count}} effektives Recht aus {{role}}.',
     effectiveRightsSummary_other: '{{count}} effektive Rechte aus {{role}}.',
     effectiveRight: 'Effektives Recht',
-    grantedBy: 'Gewaehrt durch',
-    via: 'ueber {{label}}',
+    grantedBy: 'Gewährt durch',
+    via: 'über {{label}}',
     direct: 'direkt',
     implied: 'abgeleitet',
     emptyRights:
-      'Aktuell sind ueber die Rollen dieses Mitglieds keine expliziten Aktionsrechte zugewiesen.',
+      'Aktuell sind über die Rollen dieses Mitglieds keine expliziten Aktionsrechte zugewiesen.',
   },
   pushNotifications: {
     title: 'Push-Benachrichtigungen',
@@ -222,6 +228,47 @@ export const componentsTranslations = {
     blocked: 'Benachrichtigungen blockiert. Bitte in den Browser-Einstellungen aktivieren.',
     blockedLong:
       'Push-Benachrichtigungen wurden blockiert. Bitte aktivieren Sie diese in Ihren Browser-Einstellungen.',
+    iosInstallRequired:
+      'Auf iPhone und iPad funktionieren Push-Benachrichtigungen nur in der installierten Home-Screen-App. Fügen Sie Polity zuerst über das Teilen-Menü zum Home-Bildschirm hinzu und öffnen Sie die App von dort.',
+    diagnostics: {
+      browser: 'Browser-Unterstützung',
+      permission: 'Berechtigung',
+      serviceWorker: 'Service Worker',
+      server: 'Server-Synchronisierung',
+      ready: 'Bereit',
+      missing: 'Nicht bereit',
+      synchronized: 'Synchronisiert',
+      notSynchronized: 'Nicht synchronisiert',
+      permissionValues: {
+        default: 'Noch nicht erteilt',
+        granted: 'Erteilt',
+        denied: 'Blockiert',
+      },
+    },
+    foreground: {
+      open: 'Öffnen',
+    },
+    test: {
+      title: 'Polity-Testbenachrichtigung',
+      message: 'Web Push funktioniert auf diesem Gerät.',
+      action: 'Test senden',
+      description: 'Prüft die komplette Push-Kette auf diesem Gerät.',
+      backgroundInstruction:
+        'Wechseln Sie jetzt in den Hintergrund. Der Test wird in fünf Sekunden gesendet.',
+      failed: 'Testbenachrichtigung fehlgeschlagen',
+      status: {
+        pending: 'Test wartet auf Versand',
+        processing: 'Test wird verarbeitet',
+        sent: 'Test erfolgreich versendet',
+        skipped: 'Test wurde übersprungen',
+        failed: 'Test fehlgeschlagen',
+      },
+      skipReasons: {
+        disabled_by_settings: 'Push ist in Ihren Einstellungen deaktiviert',
+        subscription_missing: 'Die Geräte-Subscription fehlt',
+        subscription_expired: 'Die Geräte-Subscription ist abgelaufen',
+      },
+    },
     success: {
       enabled: 'Push-Benachrichtigungen aktiviert',
       disabled: 'Push-Benachrichtigungen deaktiviert',
@@ -242,21 +289,9 @@ export const componentsTranslations = {
       invalidKeys: 'Ungültige Abonnement-Schlüssel',
       subscribeFailed: 'Fehler beim Aktivieren der Push-Benachrichtigungen',
       unsubscribeFailed: 'Fehler beim Deaktivieren der Push-Benachrichtigungen',
+      iosInstallRequired:
+        'Installieren Sie Polity zuerst als Home-Screen-App und öffnen Sie es von dort.',
     },
-  },
-  ariaKaiWelcome: {
-    title: 'Willkommen bei Polity!',
-    subtitle: 'Lerne Aria & Kai kennen, deine persönlichen Assistenten',
-    intro:
-      'Hey! Wir sind Aria & Kai und wir sind hier, um dir bei der Navigation durch Polity zu helfen und das Beste aus allen Funktionen herauszuholen.',
-    helpText:
-      'Wann immer du Hilfe, Tipps oder Informationen zu Gruppen, Veranstaltungen, Anträgen und mehr benötigst, findest du uns in deinen Nachrichtenkonversationen. Wir sind immer bereit zu helfen!',
-    quickTip: 'Kurzer Tipp:',
-    quickTipText:
-      'Wir haben bereits eine Unterhaltung mit dir gestartet. Klicke unten, um zu sehen, wo du uns immer finden kannst!',
-    dontShowAgain: 'Diese Nachricht nicht mehr anzeigen',
-    findLater: 'Ich finde euch später',
-    showLocation: 'Zeig mir meinen Assistenten-Standort',
   },
   ariaKaiActions: {
     showMe: 'Zeig mir mehr',

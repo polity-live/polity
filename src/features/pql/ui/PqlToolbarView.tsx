@@ -26,6 +26,7 @@ import {
 } from '../logic/applyPqlFilter';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { PqlFilterBuilderDialog } from './PqlFilterBuilderDialog';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { ReactNode } from 'react';
 
@@ -109,6 +110,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
   surface = 'auto',
   actions,
 }: PqlToolbarViewProps<TItem, TFieldKey>) {
+  const { t } = useTranslation();
   const getField = (fieldKey: TFieldKey) => fields.find((field: any) => field.key === fieldKey);
   const resolvedSurface = useResolvedSurfaceMode(surface);
   const toolbarContent = (
@@ -142,7 +144,9 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                 size="icon"
                 className="hover:bg-primary-foreground/20 h-5 w-5 text-current hover:text-current"
                 onClick={badge.onClear}
-                aria-label={`Remove ${badge.label}`}
+                aria-label={translateText('common.accessibility.removeNamed', {
+                  name: badge.label,
+                })}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -207,7 +211,9 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                             }
                             placeholder={
                               quickFilter.placeholder ??
-                              `Search ${quickFilter.label ?? field?.label ?? ''}...`
+                              t('common.accessibility.search', {
+                                entity: quickFilter.label ?? field?.label ?? '',
+                              })
                             }
                           />
                         ) : (
@@ -219,7 +225,9 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                             }
                             placeholder={
                               quickFilter.placeholder ??
-                              `Search ${quickFilter.label ?? field?.label ?? ''}...`
+                              t('common.accessibility.search', {
+                                entity: quickFilter.label ?? field?.label ?? '',
+                              })
                             }
                           />
                         )
@@ -230,7 +238,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                             onQuickFilterValuesChange(quickFilter.fieldKey, nextValues)
                           }
                           showLabel={false}
-                          placeholder={quickFilter.placeholder ?? 'Add a tag'}
+                          placeholder={quickFilter.placeholder ?? t('common.accessibility.addTag')}
                           suggestions={options.map((option: any) => option.value)}
                         />
                       ) : quickFilter.inputKind === 'date' ? (

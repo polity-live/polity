@@ -1,6 +1,6 @@
 -- Agenda item change request junction table
 -- Links change requests to agenda items with ordering and per-CR vote tracking
-CREATE TABLE IF NOT EXISTS public.agenda_item_change_request (
+CREATE TABLE public.agenda_item_change_request (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   agenda_item_id UUID NOT NULL REFERENCES public.agenda_item (id) ON DELETE CASCADE,
   change_request_id UUID REFERENCES public.change_request (id) ON DELETE CASCADE,

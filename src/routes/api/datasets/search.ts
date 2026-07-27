@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { getSession } from '@/lib/supabase/server';
 import { searchDatasetProviders } from '@/server/datasets/providers';
+import { appErrorHttpBodyFrom } from '@/features/shared/errors/app-error';
 
 export const Route = createFileRoute('/api/datasets/search')({
   server: {
@@ -29,10 +30,9 @@ export const Route = createFileRoute('/api/datasets/search')({
           });
           return Response.json(withStatus ? result : result.results);
         } catch (error) {
-          return Response.json(
-            { error: error instanceof Error ? error.message : 'Dataset search failed' },
-            { status: 502 }
-          );
+          return Response.json(appErrorHttpBodyFrom(error, 'dataset_operation_failed'), {
+            status: 502,
+          });
         }
       },
     },

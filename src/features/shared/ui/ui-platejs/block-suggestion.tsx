@@ -31,7 +31,6 @@ import {
   TextApi,
 } from 'platejs';
 import { useEditorPlugin, usePluginOption } from 'platejs/react';
-import { useTranslation } from 'react-i18next';
 
 import { DATA_VIEW_NODE_TYPE, type TDataViewElement } from '@/features/charts/types';
 import { BLOCK_SUGGESTION_MARKER } from '@/features/change-requests/logic/suggestionBlockLabels';
@@ -64,7 +63,10 @@ import { useSuggestionCallbacks } from '@/features/shared/ui/kit-platejs/suggest
 import { useModeContext } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
 
 import { type TComment, Comment, CommentCreateForm } from './comment.tsx';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  translate as translateText,
+  useTranslation,
+} from '@/features/shared/hooks/use-translation';
 import { DiscussionActionBar } from '@/features/shared/ui/comments/DiscussionActions';
 import { DiscussionTimestamp } from '@/features/shared/ui/comments/DiscussionTimestamp';
 
@@ -209,16 +211,25 @@ export function BlockSuggestion({ element }: { element: TSuggestionElement }) {
   const isRemove = suggestionData?.type === 'remove';
   const insertTone = getSemanticToneClasses('success');
   const removeTone = getSemanticToneClasses('danger');
+  const tone = isRemove ? removeTone : insertTone;
 
   return (
     <div
       className={cn(
         'pointer-events-none absolute inset-0 z-1 border-2 transition-opacity',
         getMotionPreset('colors'),
-        isRemove ? removeTone.surface : insertTone.surface
+        tone.border
       )}
       contentEditable={false}
-    />
+    >
+      <div
+        aria-hidden
+        className={cn(
+          'absolute inset-0 opacity-40',
+          isRemove ? 'bg-[var(--badge-danger-bg)]' : 'bg-[var(--badge-success-bg)]'
+        )}
+      />
+    </div>
   );
 }
 
@@ -297,7 +308,11 @@ export function BlockSuggestionCard({
     ['accepted', 'approved', 'rejected', 'declined'].includes(suggestion.changeRequestStatus ?? '');
   const canVoteOnSuggestion =
     !isCompletedSuggestion && Boolean(onVoteAccept && onVoteReject && onVoteAbstain);
-  const projectedOutcome = acceptVotes > rejectVotes ? 'Accepted' : 'Rejected';
+  const projectedOutcome = t(
+    acceptVotes > rejectVotes
+      ? 'plateJs.blockSuggestion.outcomeAccepted'
+      : 'plateJs.blockSuggestion.outcomeRejected'
+  );
   const isEventSuggestionMode = currentMode === 'suggest_event';
   const isConfirmedEventSuggestion =
     suggestion.confirmationStatus === 'confirmed' || suggestion.changeRequestStatus === 'open';
@@ -816,6 +831,7 @@ export function BlockSuggestionCard({
                   size="sm"
                   variant="default"
                   presentation="success"
+                  data-tutorial-anchor="tutorial-change-request-accept"
                   className={cn(
                     'flex-1',
                     currentUserVote?.vote === 'accept' && 'ring-ring ring-2 ring-offset-1'
@@ -855,25 +871,31 @@ export function BlockSuggestionCard({
                 <AlertDialogTrigger asChild>
                   <Button size="sm" variant="outline" className="w-full">
                     <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Interne Abstimmung beenden
+                    {t('plateJs.blockSuggestion.finalizeInternalVote')}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Interne Abstimmung beenden?</AlertDialogTitle>
+                    <AlertDialogTitle>
+                      {t('plateJs.blockSuggestion.finalizeInternalVoteTitle')}
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Ergebnis: {projectedOutcome}. Accept {acceptVotes}, Reject {rejectVotes},
-                      Abstain {abstainVotes}.
+                      {t('plateJs.blockSuggestion.finalizeInternalVoteSummary', {
+                        outcome: projectedOutcome,
+                        accept: acceptVotes,
+                        reject: rejectVotes,
+                        abstain: abstainVotes,
+                      })}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                    <AlertDialogCancel>{t('plateJs.blockSuggestion.cancel')}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => {
                         onFinalizeInternalVote?.(suggestion);
                       }}
                     >
-                      Interne Abstimmung beenden
+                      {t('plateJs.blockSuggestion.finalizeInternalVote')}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { MessageSquare, Sparkles } from 'lucide-react';
-import { ARIA_KAI_USER_ID } from '@/features/assistant/constants';
+import { ARIA_KAI_AVATAR_URL, ARIA_KAI_USER_ID } from '@/features/assistant/constants';
 import {
   translate as translateText,
   useTranslation,
@@ -55,7 +55,7 @@ export function LandingSocialAiPreview() {
               first_name: 'Aria',
               last_name: 'Kai',
               handle: 'aria-kai',
-              avatar: null,
+              avatar: ARIA_KAI_AVATAR_URL,
             },
           },
         ],
@@ -95,7 +95,7 @@ export function LandingSocialAiPreview() {
             first_name: 'Aria',
             last_name: 'Kai',
             handle: 'aria-kai',
-            avatar: null,
+            avatar: ARIA_KAI_AVATAR_URL,
           },
         },
         {

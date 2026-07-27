@@ -51,6 +51,9 @@ export const eventsTranslations = {
     locationCapacity: {
       title: 'Location & Capacity',
       description: 'Where is this event and how many can attend?',
+      attendanceModeLockedLabel: 'Why is the attendance mode locked?',
+      attendanceModeLockedDescription:
+        'The attendance mode cannot be changed because a final vote or election has already started. Close it first.',
       location: 'Location',
       locationPlaceholder: 'Event location or venue',
       capacity: 'Capacity (optional)',
@@ -251,6 +254,8 @@ export const eventsTranslations = {
       unnamedSourceGroup: 'Unnamed source group',
       electionDescription: 'Named results for the current election.',
       voteDescription: 'Named results for the current vote.',
+      electionFallbackTitle: 'Named election',
+      voteFallbackTitle: 'Named vote',
     },
     forwarding: {
       pendingPrefix: 'The amendment will be forwarded to',
@@ -697,6 +702,7 @@ export const eventsTranslations = {
     phases: {
       setup: 'Setup',
       introduction: 'Introduction',
+      internal: 'Internal vote',
       voting: 'Voting',
       indication: 'Indication',
       finalVote: 'Final Vote',

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { stripeSubscriptionStatusFn } from '@/server/stripe-subscription-status';
 import { useAuth } from '@/providers/auth-provider';
 import type { SubscriptionData } from '../ui/SubscriptionStatusView';
+import { localizeAppError } from '@/features/shared/errors/app-error';
 
 interface UseSubscriptionStatusControllerOptions {
   userId: string;
@@ -36,7 +37,7 @@ export function useSubscriptionStatusController({
         setData(result);
       } catch (err) {
         console.error('[SubscriptionStatus] Fetch error:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(localizeAppError(err, { logUnknown: false }));
       } finally {
         setIsLoading(false);
       }

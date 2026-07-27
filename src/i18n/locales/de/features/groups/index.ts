@@ -1,17 +1,63 @@
 export const groupsTranslations = {
+  actionRights: {
+    manageTodos: 'Aufgaben verwalten',
+    viewTodos: 'Aufgaben anzeigen',
+  },
   title: 'Gruppen',
   description: 'Gruppen verwalten und teilnehmen',
   headerDescription: 'Entdecke und tritt Gemeinschaften bei, die an wichtigen Anliegen arbeiten',
   hierarchicalMembershipDisabled: 'Mitglieder treten hierarchischen Gruppen über Untergruppen bei',
   automaticSiblingMembershipDisabled: 'Diese Geschwistergruppe hat automatische Mitgliedschaften',
   openSiblingMembershipRequiresConnectedGroupMember:
-    'Nur aktive Mitglieder der verbundenen Gruppe koennen dieser Geschwistergruppe beitreten',
+    'Nur aktive Mitglieder der verbundenen Gruppe können dieser Geschwistergruppe beitreten',
   create: 'Gruppe erstellen',
   edit: 'Gruppe bearbeiten',
   delete: 'Gruppe löschen',
   join: 'Beitreten',
   leave: 'Verlassen',
   backToGroups: 'Zurück zu Gruppen',
+  datasets: {
+    archive: 'Datensatz archivieren',
+    archiveFailed: 'Der Datensatz konnte nicht archiviert werden',
+    empty: 'Keine Datensätze gefunden',
+    loadFailed: 'Die Datensätze konnten nicht geladen werden',
+    loading: 'Datensätze werden geladen',
+    manageDatasets: 'Datensätze verwalten',
+    search: 'Datensätze suchen',
+    searchPlaceholder: 'Nach Name oder Beschreibung suchen...',
+    title: 'Datensätze',
+    tooLarge: 'Der Datensatz ist zu groß. Die maximale Dateigröße beträgt {{maxSize}}.',
+    upload: 'CSV/TSV hochladen',
+    uploadFailed: 'Der Datensatz konnte nicht hochgeladen werden',
+    uploadProvider: 'Hochladen',
+    uploaded: 'Datensatz hochgeladen',
+    viewDatasets: 'Datensätze anzeigen',
+  },
+  roleConfiguration: {
+    actionRightsTab: 'Aktionsrechte',
+    rolesTab: 'Rollen',
+  },
+  paymentDialog: {
+    noGroupsFound: 'Keine Gruppen gefunden.',
+    noUsersFound: 'Keine Nutzer gefunden.',
+    searchGroups: 'Gruppen suchen...',
+    searchUsers: 'Nutzer suchen...',
+    unknownPayer: 'Unbekannter Zahler',
+    unknownReceiver: 'Unbekannter Empfänger',
+  },
+  themes: {
+    manageThemes: 'Gruppenthemes verwalten',
+    viewThemes: 'Gruppenthemes ansehen',
+    previewHeadline: 'Öffentliche Entscheidungen, klar organisiert.',
+    previewDescription: 'Eine kompakte Vorschau von Karten und Aktionen.',
+    previewPrimary: 'Primär',
+    previewAccent: 'Akzent',
+    previewLight: 'Hell',
+    previewDark: 'Dunkel',
+    chartLabel: 'Diagramm {{number}}',
+    chartColorLabel: 'Farbe für {{title}}, Diagramm {{number}}',
+    colorLabel: 'Farbe für {{title}}, {{field}}',
+  },
   editPage: {
     title: 'Gruppe bearbeiten',
     subtitle: 'Gruppeninformationen aktualisieren',
@@ -86,17 +132,17 @@ export const groupsTranslations = {
     inviteMembers: 'Mitglieder einladen',
     inviteMember: 'Mitglied einladen',
     inviteGuest: 'Gast einladen',
-    inviteGuests: 'Gaeste einladen',
+    inviteGuests: 'Gäste einladen',
     inviteMembersDescription:
-      'Suche und waehle Nutzer aus, die eingeladen werden sollen, und lege fest, mit welchen Rollen sie starten.',
+      'Suche und wähle Nutzer aus, die eingeladen werden sollen, und lege fest, mit welchen Rollen sie starten.',
     inviteRoleDescription:
-      'Waehle eine oder mehrere Rollen fuer eingeladene Personen. Die Standard-Einladungsrolle ist vorausgewaehlt.',
-    inviteMembersEmptyRoles: 'Erstelle zuerst eine Rolle, bevor du Mitglieder einlaedst.',
+      'Wähle eine oder mehrere Rollen für eingeladene Personen. Die Standard-Einladungsrolle ist vorausgewählt.',
+    inviteMembersEmptyRoles: 'Erstelle zuerst eine Rolle, bevor du Mitglieder einlädst.',
     inviteGuestsDescription:
-      'Lade Nutzer als Gaeste mit Gastrollen ein. Gaeste erhalten Zugriffsrechte, sind aber keine offiziellen Mitglieder.',
+      'Lade Nutzer als Gäste mit Gastrollen ein. Gäste erhalten Zugriffsrechte, sind aber keine offiziellen Mitglieder.',
     inviteGuestsRoleDescription:
-      'Gast-Einladungen muessen immer mindestens eine Gastrolle enthalten.',
-    inviteGuestsEmptyRoles: 'Erstelle zuerst eine Gastrolle, bevor du Gaeste einlaedst.',
+      'Gast-Einladungen müssen immer mindestens eine Gastrolle enthalten.',
+    inviteGuestsEmptyRoles: 'Erstelle zuerst eine Gastrolle, bevor du Gäste einlädst.',
     inviteSuccess: '{{count}} Nutzer erfolgreich eingeladen.',
     inviteSuccess_one: '{{count}} Nutzer erfolgreich eingeladen.',
     inviteSuccess_other: '{{count}} Nutzer erfolgreich eingeladen.',
@@ -108,11 +154,11 @@ export const groupsTranslations = {
     selectedUsersTitle_one: '{{count}} Nutzer',
     selectedUsersTitle_other: '{{count}} Nutzer',
     guestOnlyInviteDescription:
-      'Diese Geschwistergruppe erlaubt nur Gast-Einladungen. Offizielle Mitgliedsrollen sind hier nicht verfuegbar.',
+      'Diese Geschwistergruppe erlaubt nur Gast-Einladungen. Offizielle Mitgliedsrollen sind hier nicht verfügbar.',
     guestOnlyRoleDescription:
-      'Fuer diese Gruppe koennen nur Gastrollen als Einladungs-Standard verwendet werden.',
+      'Für diese Gruppe können nur Gastrollen als Einladungs-Standard verwendet werden.',
     guestOnlyEmptyRoles:
-      'Erstelle zuerst eine Gastrolle, bevor du Personen in diese Gruppe einlaedst.',
+      'Erstelle zuerst eine Gastrolle, bevor du Personen in diese Gruppe einlädst.',
     manage: 'Mitgliedschaften verwalten',
     tabs: {
       membershipsByUser: 'Mitgliedschaften nach Benutzer',
@@ -120,16 +166,16 @@ export const groupsTranslations = {
       composition: 'Zusammensetzung',
       rightsAlignment: 'Rechteabgleich',
       openAssignments: 'Offene Aufträge',
-      guests: 'Gaeste',
+      guests: 'Gäste',
       roles: 'Rollen',
     },
     offlineRoster: {
       title: 'Alle Nutzer (inkl. Offline-Nutzer ohne Registrierung)',
       description:
-        'Einige reale Gruppenmitglieder melden sich nie auf der Plattform an. Mit dieser Liste kannst du diese Offline-Nutzer erfassen, bei Bedarf aktiven Plattformnutzern zuordnen und Zaehler sowie Delegiertenberechnungen an der realen Gesamtmitgliedschaft ausrichten.',
+        'Einige reale Gruppenmitglieder melden sich nie auf der Plattform an. Mit dieser Liste kannst du diese Offline-Nutzer erfassen, bei Bedarf aktiven Plattformnutzern zuordnen und Zähler sowie Delegiertenberechnungen an der realen Gesamtmitgliedschaft ausrichten.',
       manageDialogTitle: 'Offline-Nutzer verwalten',
       manageDialogDescription:
-        'Fuege einzelne Offline-Nutzer hinzu oder importiere sie per CSV, damit die vollstaendige Gruppenliste erhalten bleibt.',
+        'Füge einzelne Offline-Nutzer hinzu oder importiere sie per CSV, damit die vollständige Gruppenliste erhalten bleibt.',
     },
     openAssignments: {
       title: 'Offene Aufträge',
@@ -156,7 +202,7 @@ export const groupsTranslations = {
       type: {
         delegateElection: 'Delegiertenwahl',
         roleRenewal: 'Rollenneuwahl',
-        implementationEvaluation: 'Umsetzungspruefung',
+        implementationEvaluation: 'Umsetzungsprüfung',
         supportConfirmation: 'Unterstützung',
         processTask: 'Antragsprozess',
         assignment: 'Auftrag',
@@ -164,10 +210,10 @@ export const groupsTranslations = {
       seatCount: 'Sitze',
       seatCount_one: 'Sitz',
       seatCount_other: 'Sitze',
-      completedSeatCount: 'gewaehlt',
+      completedSeatCount: 'gewählt',
       scheduledSeatCount: 'geplant',
       openSeatCount: 'offen',
-      dueAt: 'Faellig',
+      dueAt: 'Fällig',
       noAmendment: 'Kein Antrag',
       targetEventLabel: 'Ziel',
       linkedEventLabel: 'Angehängt',
@@ -227,6 +273,11 @@ export const groupsTranslations = {
         scheduleAmendmentVoteTitle: 'Abstimmung über Änderungsantrag für {{groupName}} planen',
         scheduleAmendmentVoteDescription:
           'Für {{groupName}} ist noch kein geeignetes Event ausgewählt.',
+        eventRequest: 'Event-Anfrage für {{amendmentTitle}}',
+        roleFallback: 'Rolle',
+        roleRenewalDue: 'Die nächste turnusmäßige Wahl ist für {{date}} vorgesehen.',
+        roleRenewalNeedsEvent:
+          'Diese Rolle braucht eine neue Wahl, sobald ein passendes Event geplant ist.',
       },
       delegateDialog: {
         title: 'Wahl-Event für Delegiertenauftrag suchen',
@@ -258,16 +309,16 @@ export const groupsTranslations = {
     composition: {
       title: 'Zusammensetzung',
       description:
-        'Herkunft nach Teilgruppen. Fuehrungskraefte zaehlen Nicht-Member-Rollen-Zuweisungen.',
+        'Herkunft nach Teilgruppen. Führungskräfte zählen Nicht-Member-Rollen-Zuweisungen.',
       modePercent: '%',
       modeAbsolute: 'Absolut',
       membersTitle: 'Mitglieder',
       membersDescription: 'Anteil der Teilgruppen an allen aktiven Mitgliedschaften.',
       membersEmpty: 'Keine aktiven Mitglieder vorhanden.',
-      leadershipTitle: 'Fuehrungskraefte',
+      leadershipTitle: 'Führungskräfte',
       leadershipDescription: 'Anteil der Teilgruppen an allen Nicht-Member-Rollen-Zuweisungen.',
       leadershipEmpty: 'Keine Nicht-Member-Rollen-Zuweisungen vorhanden.',
-      leadershipFootnote: 'Jede Nicht-Member-Rolle wird einzeln gezaehlt.',
+      leadershipFootnote: 'Jede Nicht-Member-Rolle wird einzeln gezählt.',
       loading: 'Zusammensetzung wird geladen...',
       total: 'Gesamt: {{count}}',
       directWithoutPath: 'Direkt / ohne Pfad',
@@ -340,55 +391,128 @@ export const groupsTranslations = {
       collidingPathsTitle: 'Welche Pfade kollidieren?',
       baseGroupFallback: 'Basisgruppe',
       targetGroupFallback: 'Zielgruppe',
-      resolutionTitle: 'Wie kann man es loesen?',
-      selfService: 'Du kannst diesen Konflikt selbst loesen.',
-      notSelfService: 'Du kannst diesen Konflikt nicht selbst loesen.',
-      requiredRole: 'Zustaendig: {{role}}.',
+      resolutionTitle: 'Wie kann man es lösen?',
+      selfService: 'Du kannst diesen Konflikt selbst lösen.',
+      notSelfService: 'Du kannst diesen Konflikt nicht selbst lösen.',
+      requiredRole: 'Zuständig: {{role}}.',
     },
     dialog: {
       triggerLabel: 'Details',
       title: 'Konfliktdetails',
       description:
-        'Hier siehst du, warum die Aktion blockiert ist und wie der Konflikt aufgeloest werden kann.',
-      blockedSummaryFallback: 'Die Verknuepfung ist in dieser Konstellation blockiert.',
-      blockedDescription: 'Loese den Konflikt, bevor du die Verknuepfung speicherst.',
-      blockedReasonTitle: 'Warum ist diese Verknuepfung blockiert?',
+        'Hier siehst du, warum die Aktion blockiert ist und wie der Konflikt aufgelöst werden kann.',
+      blockedSummaryFallback: 'Die Verknüpfung ist in dieser Konstellation blockiert.',
+      blockedDescription: 'Löse den Konflikt, bevor du die Verknüpfung speicherst.',
+      blockedReasonTitle: 'Warum ist diese Verknüpfung blockiert?',
+    },
+    resolutions: {
+      generic: {
+        label: 'Konflikt lösen',
+        description: 'Prüfe die betroffene Konfiguration, bevor du es erneut versuchst.',
+      },
+      alignMembershipBeforeActivation: {
+        label: 'Mitgliedschaft zuerst klären',
+        description:
+          'Die Person braucht vor der Aktivierung genau eine aktive speisende Mitgliedschaft.',
+      },
+      leaveOtherSubgroup: {
+        label: 'Andere Untergruppe verlassen',
+        description: 'Beende zuerst die aktive Mitgliedschaft in der konkurrierenden Untergruppe.',
+      },
+      chooseOtherGroup: {
+        label: 'Andere Gruppe wählen',
+        description: 'Nutze für diese Hierarchie nur eine speisende Gruppe.',
+      },
+      contactAdmin: {
+        label: 'Admin kontaktieren',
+        description: 'Bitte die zuständige Gruppenadministration, die Mitgliedschaft zu klären.',
+      },
+      leaveOtherSourceGroup: {
+        label: 'Andere Quellgruppe verlassen',
+        description: 'Beende zuerst eine der konkurrierenden aktiven Quellmitgliedschaften.',
+      },
+      contactSourceAdmins: {
+        label: 'Zuständige Admins kontaktieren',
+        description: 'Bitte die Administration einer Quellgruppe, die Mitgliedschaft zu klären.',
+      },
+      clarifySourceMemberships: {
+        label: 'Quellmitgliedschaften klären',
+        description: 'Die Person darf in genau einer speisenden Quellgruppe aktiv sein.',
+      },
+      alignMemberships: {
+        label: 'Mitgliedschaften angleichen',
+        description:
+          'Entferne oder deaktiviere überlappende Mitgliedschaften in einer konkurrierenden Untergruppe.',
+      },
+      contactOtherGroup: {
+        label: 'Andere Gruppe kontaktieren',
+        description: 'Bitte deren zuständige Administration, die Überschneidung zu klären.',
+      },
+      removeDuplicatePath: {
+        label: 'Einen Pfad entfernen oder deaktivieren',
+        description:
+          'Zwischen Basisgruppe und Zielhierarchie darf nur ein aktiver Pfad verbleiben.',
+      },
+      contactResponsibleGroup: {
+        label: 'Zuständige Gruppe kontaktieren',
+        description: 'Bitte deren Hierarchie-Admins, den konkurrierenden Pfad zu klären.',
+      },
+      cleanSourceGroups: {
+        label: 'Quellgruppen bereinigen',
+        description:
+          'Entferne überlappende Quellgruppen oder Mitgliedschaften aus der Konfiguration.',
+      },
     },
     kinds: {
       hierarchyMemberOverlap: {
         summary:
-          'Die Verknuepfung wuerde Mitglieder aus mehreren Untergruppen derselben Hierarchie zusammenfuehren.',
+          'Die Verknüpfung würde Mitglieder aus mehreren Untergruppen derselben Hierarchie zusammenführen.',
         explanation:
-          'Mindestens eine Person waere danach gleichzeitig in mehreren speisenden Untergruppen derselben Ziel-Hierarchie aktiv.',
+          'Mindestens eine Person wäre danach gleichzeitig in mehreren speisenden Untergruppen derselben Ziel-Hierarchie aktiv.',
         resolutions: {
           alignMemberships: {
             label: 'Mitgliedschaften angleichen',
             description:
-              'Entferne oder deaktiviere ueberlappende Mitgliedschaften in einer der konkurrierenden Untergruppen.',
+              'Entferne oder deaktiviere überlappende Mitgliedschaften in einer der konkurrierenden Untergruppen.',
           },
           contactOtherGroup: {
             label: 'Andere Gruppe kontaktieren',
             description:
-              'Falls du die konkurrierende Untergruppe nicht selbst verwalten kannst, braucht es die zustaendige Admin-Seite.',
+              'Falls du die konkurrierende Untergruppe nicht selbst verwalten kannst, braucht es die zuständige Admin-Seite.',
           },
         },
       },
       hierarchyDuplicatePath: {
-        summary: 'Verknuepfung wuerde denselben Unterbau doppelt anbinden.',
+        summary: 'Verknüpfung würde denselben Unterbau doppelt anbinden.',
         explanation:
-          'Dieselbe Leaf-Basisgruppe wuerde die Ziel-Hierarchie nach der Aktivierung ueber zwei aktive Pfade erreichen.',
+          'Dieselbe Leaf-Basisgruppe würde die Ziel-Hierarchie nach der Aktivierung über zwei aktive Pfade erreichen.',
         resolutions: {
           removePath: {
             label: 'Einen Pfad entfernen oder deaktivieren',
             description:
-              'Die Verknuepfung ist erst moeglich, wenn nur noch ein aktiver Pfad zwischen Basisgruppe und Ziel-Hierarchie uebrig bleibt.',
+              'Die Verknüpfung ist erst möglich, wenn nur noch ein aktiver Pfad zwischen Basisgruppe und Ziel-Hierarchie übrig bleibt.',
           },
           contactResponsibleGroup: {
-            label: 'Zustaendige Gruppe kontaktieren',
+            label: 'Zuständige Gruppe kontaktieren',
             description:
               'Wenn du den konkurrierenden Pfad nicht selbst verwalten kannst, braucht es die Admin-Seite der betroffenen Hierarchie.',
           },
         },
+      },
+      siblingSourceOverlap: {
+        summary: 'Die Parlamentskonfiguration enthält überlappende Quellgruppen.',
+        explanation:
+          'Mindestens eine Person ist in mehreren speisenden Quellgruppen dieser Parlamentsgruppe aktiv.',
+      },
+      siblingConnectedMembershipMissing: {
+        summary: 'Eine Mitgliedschaft in der verbundenen Gruppe ist erforderlich.',
+        explanation:
+          'Nur aktive Mitglieder der verbundenen Gruppe können diese Geschwistermitgliedschaft erhalten.',
+      },
+      permissionBlockedResolution: {
+        summary: 'Zum Lösen des Konflikts fehlt eine Berechtigung.',
+        explanation:
+          'Eine zuständige Gruppenadministration muss die erforderliche Konfigurationsänderung vornehmen.',
       },
     },
   },
@@ -472,6 +596,8 @@ export const groupsTranslations = {
   },
   // Toast-Nachrichten für Action-Hooks
   toasts: {
+    selectPayer: 'Bitte wähle eine zahlende Person oder Gruppe aus',
+    selectReceiver: 'Bitte wähle eine empfangende Person oder Gruppe aus',
     created: 'Gruppe erstellt',
     updated: 'Gruppe aktualisiert',
     deleted: 'Gruppe gelöscht',
@@ -524,5 +650,35 @@ export const groupsTranslations = {
       activeFilters: 'Aktive Filter:',
       searchLabel: 'Suche: "{{query}}"',
     },
+  },
+  paymentTypes: {
+    membership_fee: 'Mitgliedsbeitrag',
+    donation: 'Spende',
+    subsidies: 'Zuschüsse',
+    campaign: 'Kampagne',
+    material: 'Material',
+    events: 'Veranstaltungen',
+    others: 'Sonstiges',
+    unknown: 'Unbekannter Typ',
+  },
+  processAgendaPreview: {
+    supportConfirmationTitle: 'Unterstützung bestätigen: {{amendment}}',
+    mergeConfirmationTitle: 'Zusammenführung bestätigen: {{amendment}}',
+    amendmentTitle: 'Antrag: {{amendment}}',
+    predicted:
+      'Dieser Agendapunkt wird automatisch erstellt, sobald für {{group}} eine passende Veranstaltung angelegt oder verknüpft wird.',
+    pendingVote:
+      'Die zugrunde liegende Abstimmung ist noch ausstehend. Dieser Agendapunkt bleibt deshalb vorerst nur vorgeplant.',
+    confirmedVote:
+      'Die zugrunde liegende Abstimmung wurde bereits angenommen. Dieser Agendapunkt ist damit jetzt aktiv eingeplant.',
+    eventNotLinked: 'Event noch nicht verknüpft · {{group}}',
+  },
+  roleTerms: {
+    revote: 'Neuwahl am {{date}}',
+    open: 'Unbefristet',
+    everyYears: 'Alle {{count}} Jahre',
+    everyYears_one: 'Jährlich',
+    everyYears_other: 'Alle {{count}} Jahre',
+    recurring: 'Wiederkehrende Amtszeit',
   },
 } as const;

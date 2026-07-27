@@ -228,7 +228,7 @@ describe('amendmentSharedMutators.createChangeRequest numbering', () => {
     expect(tx.mutate.change_request.insert).not.toHaveBeenCalled();
   });
 
-  it('allows a street design change request without a document suggestion link', async () => {
+  it('allows a city design change request without a document suggestion link', async () => {
     const tx = createTx();
     tx.run
       .mockResolvedValueOnce({ id: 'amendment-1', discussions: [] })
@@ -249,14 +249,14 @@ describe('amendmentSharedMutators.createChangeRequest numbering', () => {
       args: createArgs({
         process_branch_id: 'branch-1',
         discussion_id: null,
-        source_type: 'street_design_object',
+        source_type: 'city_design_object',
       }),
     });
 
     expect(tx.mutate.change_request.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'cr-new',
-        source_type: 'street_design_object',
+        source_type: 'city_design_object',
         suggestion_id: null,
       })
     );

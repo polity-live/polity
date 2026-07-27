@@ -1034,6 +1034,12 @@ export const groupSharedMutators = {
 
   leaveGroup: defineMutator(groupMembershipDeleteSchema, async ({ tx, ctx, args }) => {
     const membership = await tx.run(zql.group_membership.where('id', args.id).one());
+    if (membership?.status === 'requested' && membership.user_id === ctx.userID) {
+      const group = await tx.run(zql.group.where('id', membership.group_id).one());
+      if (group?.tutorial_run_id) {
+        return;
+      }
+    }
     if (membership && !isManualGroupMembershipSource(membership.source)) {
       throw new Error('Only direct memberships can be changed manually.');
     }

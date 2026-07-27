@@ -16,7 +16,8 @@ import {
   getProcessStatusVisualTokens,
   type GroupNodeVisualVariant,
 } from '@/features/network/ui/networkVisualHelpers';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { useTranslation, translate } from '@/features/shared/hooks/use-translation';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
 type ProcessNodeState = 'approved' | 'active-next' | 'rejected' | 'pending';
 
@@ -93,21 +94,29 @@ function formatNodeDate(value: number | null) {
     return null;
   }
 
-  return new Date(value).toLocaleString('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return new Date(value).toLocaleString(
+    useLanguageStore.getState().language === 'de' ? 'de-DE' : 'en-US',
+    {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }
+  );
 }
 
 function getEventCaption(segment: AmendmentPathVisualizationSegment) {
   if (segment.eventId) {
-    return formatNodeDate(segment.eventStartDate) ?? 'Event scheduled';
+    return (
+      formatNodeDate(segment.eventStartDate) ??
+      translate('features.network.amendmentPath.eventScheduled')
+    );
   }
 
-  return segment.eventRequestPending ? 'Event requested, pending' : 'Event pending';
+  return segment.eventRequestPending
+    ? translate('features.network.amendmentPath.eventRequestedPending')
+    : translate('features.network.amendmentPath.eventPending');
 }
 
 function getGroupVisualVariantForSegment({

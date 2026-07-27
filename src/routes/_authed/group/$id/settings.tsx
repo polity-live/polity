@@ -6,7 +6,7 @@ import { usePermissions } from '@/zero/rbac/usePermissions';
 import { z } from 'zod';
 
 const settingsSearchSchema = z.object({
-  tab: z.enum(['general', 'relationships', 'contact']).catch('general').optional(),
+  tab: z.enum(['general', 'relationships', 'contact', 'themes']).catch('general').optional(),
 });
 
 export const Route = createFileRoute('/_authed/group/$id/settings')({
@@ -25,14 +25,18 @@ function GroupSettingsPage() {
     return <PageSkeleton />;
   }
 
-  if (!isMember() || !can('manage', 'groups')) {
+  const canManageGroup = can('manage', 'groups');
+  const canManageThemes = can('manage', 'groupThemes');
+
+  if (!isMember() || (!canManageGroup && !canManageThemes)) {
     return <AccessDenied />;
   }
 
   return (
     <GroupEdit
       groupId={id}
-      activeTab={tab ?? 'general'}
+      activeTab={canManageGroup ? (tab ?? 'general') : 'themes'}
+      canManageGroup={canManageGroup}
       onTabChange={nextTab =>
         navigate({ search: previous => ({ ...previous, tab: nextTab }), replace: true })
       }

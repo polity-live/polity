@@ -22,13 +22,13 @@ export function translateVoteChoiceLabel(choice: VoteChoice, index: number): str
 
     // Common semantic keys for votes
     if (semanticKey === 'support' || semanticKey === 'accept') {
-      return translateText('features.timeline.terminal.support', 'Support');
+      return translateText('features.timeline.terminal.support');
     }
     if (semanticKey === 'oppose' || semanticKey === 'reject') {
-      return translateText('features.timeline.terminal.oppose', 'Oppose');
+      return translateText('features.timeline.terminal.oppose');
     }
     if (semanticKey === 'abstain') {
-      return translateText('features.timeline.terminal.abstain', 'Abstain');
+      return translateText('features.timeline.terminal.abstain');
     }
   }
 
@@ -38,13 +38,13 @@ export function translateVoteChoiceLabel(choice: VoteChoice, index: number): str
 
     // Handle common English labels
     if (labelLower === 'support' || labelLower === 'accept' || labelLower === 'in favor') {
-      return translateText('features.timeline.terminal.support', 'Support');
+      return translateText('features.timeline.terminal.support');
     }
     if (labelLower === 'oppose' || labelLower === 'reject' || labelLower === 'against') {
-      return translateText('features.timeline.terminal.oppose', 'Oppose');
+      return translateText('features.timeline.terminal.oppose');
     }
     if (labelLower === 'abstain' || labelLower === 'abstention') {
-      return translateText('features.timeline.terminal.abstain', 'Abstain');
+      return translateText('features.timeline.terminal.abstain');
     }
 
     // If no match, return the label as is
@@ -52,5 +52,5 @@ export function translateVoteChoiceLabel(choice: VoteChoice, index: number): str
   }
 
   // Fallback to choice position
-  return `Choice ${index + 1}`;
+  return translateText('features.timeline.terminal.choiceFallback', { number: index + 1 });
 }

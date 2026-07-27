@@ -147,7 +147,9 @@ export function PositionsTable({
                     disabled={isElectedRole}
                     onClick={() => onAssignHolder(position)}
                     title={
-                      isElectedRole ? 'Use an election to fill elected roles' : 'Assign Holder'
+                      isElectedRole
+                        ? translateText('common.accessibility.useElectionForElectedRoles')
+                        : translateText('common.accessibility.assignHolder')
                     }
                   >
                     <UserPlus className="h-4 w-4" />

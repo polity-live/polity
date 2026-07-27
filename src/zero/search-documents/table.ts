@@ -28,6 +28,7 @@ export const searchDocument = table('search_document')
     updated_at: number(),
     engagement_score: number(),
     trending_score: number(),
+    tutorial_run_id: string().optional(),
   })
   .primaryKey('id');
 

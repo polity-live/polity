@@ -36,7 +36,8 @@ export function useResetPasswordFormController() {
       await supabase.auth.signOut();
       navigate({ to: '/auth/sign-in', replace: true });
     } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : t('auth.resetPassword.failed'));
+      console.error('Password update failed:', updateError);
+      setError(t('auth.resetPassword.failed'));
     } finally {
       setIsSubmitting(false);
     }

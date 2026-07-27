@@ -297,7 +297,9 @@ export function CreateAgendaItemFormView({ controller }: CreateAgendaItemFormVie
                   'h-2 w-2 rounded-full p-0 transition-colors',
                   currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
                 )}
-                aria-label={`Go to step ${index + 1}`}
+                aria-label={translateText('common.accessibility.goToStep', {
+                  step: index + 1,
+                })}
               />
             ))}
           </div>

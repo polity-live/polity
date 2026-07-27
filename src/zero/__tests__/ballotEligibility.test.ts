@@ -87,6 +87,32 @@ describe('ballot electorate snapshots', () => {
     );
   });
 
+  it('ignores stale offline assignments when snapshotting an online event', async () => {
+    const tx = txWithRows([
+      { id: 'vote-1', agenda_item_id: 'agenda-1', electorate_snapshotted_at: null },
+      [],
+      { id: 'agenda-1', event_id: 'event-1' },
+      { id: 'event-1', attendance_mode: 'online', accreditation_required: false },
+      [{ user_id: 'eligible', ...activeRight() }],
+      [
+        {
+          connected_user_id: 'eligible',
+          participation_channel: 'offline',
+          attendance_status: 'confirmed',
+        },
+      ],
+    ]);
+
+    await snapshotVoteElectorate(tx as never, 'vote-1');
+
+    expect(tx.mutate.voter.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: 'eligible', participation_channel: 'online' })
+    );
+    expect(tx.mutate.vote.update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'vote-1', offline_electorate_size: 0 })
+    );
+  });
+
   it('never recomputes an existing snapshot', async () => {
     const tx = txWithRows([
       { id: 'vote-1', agenda_item_id: 'agenda-1', electorate_snapshotted_at: 123 },

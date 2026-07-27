@@ -61,13 +61,16 @@ export function SharedListView({
   const { t } = useTranslation();
 
   const renderCalendarEvent = (event: CalendarEvent) => {
-    if (event.isMeeting) {
-      return (
-        <MeetupTimelineCard meetup={toMeetupEvent(event)} onSelect={() => onEventSelect(event)} />
-      );
-    }
-    return (
+    const content = event.isMeeting ? (
+      <MeetupTimelineCard meetup={toMeetupEvent(event)} onSelect={() => onEventSelect(event)} />
+    ) : (
       <EventTimelineCard event={toTimelineEvent(event)} onSelect={() => onEventSelect(event)} />
+    );
+
+    return event.tutorial_run_id ? (
+      <div data-tutorial-anchor="tutorial-first-event">{content}</div>
+    ) : (
+      content
     );
   };
 

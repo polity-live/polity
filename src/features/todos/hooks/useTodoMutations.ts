@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { useCommonActions } from '@/zero/common';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { serverConfirmed, waitForClientApply } from '@/zero/mutate-with-server-check';
 import type { TodoUpdateInput } from '@/zero/todos/schema';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { CreationMutationOptions } from '@/features/notifications/utils/mutation-finalization';
@@ -120,7 +120,9 @@ export function useTodoMutations() {
   ) => {
     setIsLoading(true);
     try {
-      await waitForClientApply(todoActions.updateTodo({ id: todoId, ...updates }));
+      const updateResult = todoActions.updateTodo({ id: todoId, ...updates });
+      await waitForClientApply(updateResult);
+      await serverConfirmed(updateResult);
 
       if (updates.status === 'completed' && options?.visibility === 'public' && options?.senderId) {
         await waitForClientApply(

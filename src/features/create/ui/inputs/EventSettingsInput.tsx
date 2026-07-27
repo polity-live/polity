@@ -44,7 +44,7 @@ export function EventSettingsInput({
           label={t('features.events.agenda.genderQuota.settingsLabel', 'Genderquotierte Redeliste')}
           description={t(
             'features.events.agenda.genderQuota.settingsDescription',
-            'Wenn aktiv, muessen sich maennliche und weibliche Redebeitraege abwechseln.'
+            'Wenn aktiv, müssen sich männliche und weibliche Redebeiträge abwechseln.'
           )}
           checked={genderQuotaEnabled}
           onCheckedChange={onGenderQuotaEnabledChange}

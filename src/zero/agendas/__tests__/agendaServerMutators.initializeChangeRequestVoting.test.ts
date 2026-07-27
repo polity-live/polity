@@ -35,7 +35,10 @@ vi.mock('../../change-requests/server-resolution', () => ({
   resolveChangeRequestByVoteResult: resolveChangeRequestByVoteResultMock,
 }));
 
-import { agendaServerMutators } from '../server-mutators';
+import {
+  agendaServerMutators,
+  materializeCurrentForwardConfirmedEventVoting,
+} from '../server-mutators';
 
 function createCtx() {
   return {
@@ -116,6 +119,96 @@ beforeEach(() => {
 });
 
 describe('agendaServerMutators.initializeChangeRequestVoting', () => {
+  it('materializes only the current forward-confirmed non-merge step', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce([
+        {
+          id: 'step-current',
+          branch_id: 'branch-1',
+          agenda_item_id: 'agenda-1',
+          event_id: 'event-1',
+          step_kind: 'group_vote',
+          status: 'scheduled',
+          decision_status: 'forward_confirmed',
+          order_index: 0,
+        },
+        {
+          id: 'step-future',
+          branch_id: 'branch-1',
+          agenda_item_id: 'agenda-future',
+          event_id: 'event-future',
+          step_kind: 'group_vote',
+          status: 'scheduled',
+          decision_status: 'previous_decision_outstanding',
+          order_index: 1,
+        },
+      ])
+      .mockResolvedValueOnce(agendaItem())
+      .mockResolvedValueOnce(agendaItem())
+      .mockResolvedValueOnce([
+        {
+          id: 'step-current',
+          branch_id: 'branch-1',
+          step_kind: 'group_vote',
+          status: 'scheduled',
+        },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(amendment())
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'vote-final-1',
+          purpose: 'closing',
+          status: 'indicative',
+        },
+      ]);
+
+    await materializeCurrentForwardConfirmedEventVoting(
+      tx as never,
+      createCtx() as never,
+      'branch-1'
+    );
+
+    expect(canMock).not.toHaveBeenCalled();
+    expect(tx.mutate.vote.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenCalledTimes(1);
+    expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agenda_item_id: 'agenda-1',
+        vote_id: 'vote-final-1',
+        step_kind: 'closing',
+      })
+    );
+  });
+
+  it('does not materialize a merge-based active step', async () => {
+    const tx = createTx();
+    tx.run.mockResolvedValueOnce([
+      {
+        id: 'step-merge',
+        branch_id: 'branch-1',
+        agenda_item_id: 'agenda-merge',
+        event_id: 'event-1',
+        step_kind: 'merge_vote',
+        status: 'scheduled',
+        decision_status: 'forward_confirmed',
+        order_index: 0,
+      },
+    ]);
+
+    await materializeCurrentForwardConfirmedEventVoting(
+      tx as never,
+      createCtx() as never,
+      'branch-1'
+    );
+
+    expect(tx.run).toHaveBeenCalledTimes(1);
+    expect(tx.mutate.vote.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.agenda_item_change_request.insert).not.toHaveBeenCalled();
+  });
+
   it('creates a real final amendment vote without change requests', async () => {
     const tx = createTx();
     tx.run
@@ -195,15 +288,66 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
     await initialize(tx, { start_final_vote_if_no_change_requests: true });
 
     expect(tx.mutate.vote.insert).toHaveBeenCalledTimes(2);
+    expect(tx.mutate.vote_choice.insert).toHaveBeenCalledTimes(6);
+    expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenCalledTimes(2);
     expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         agenda_item_id: 'agenda-1',
         change_request_id: 'cr-1',
+        order_index: 0,
         is_closing_vote: false,
         status: 'voting',
       })
     );
+    expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agenda_item_id: 'agenda-1',
+        change_request_id: null,
+        order_index: 1,
+        is_closing_vote: true,
+        status: 'pending',
+      })
+    );
     expect(tx.mutate.vote.update).not.toHaveBeenCalled();
+  });
+
+  it('reloads open change requests after leaving vote_internal', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce(agendaItem())
+      .mockResolvedValueOnce(agendaItem())
+      .mockResolvedValueOnce([
+        {
+          id: 'step-1',
+          branch_id: 'branch-1',
+          step_kind: 'group_vote',
+          status: 'scheduled',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'cr-finalized',
+          title: 'CR 1',
+          status: 'open',
+          process_branch_id: 'branch-1',
+        },
+      ])
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        editing_mode: 'vote_internal',
+      })
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(amendment())
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+
+    await initialize(tx);
+
+    expect(finalizeInternalChangeRequestsForEventPhaseTransitionMock).toHaveBeenCalledOnce();
+    expect(tx.mutate.vote.insert).toHaveBeenCalledTimes(1);
+    expect(tx.mutate.agenda_item_change_request.insert).not.toHaveBeenCalledWith(
+      expect.objectContaining({ change_request_id: 'cr-finalized' })
+    );
   });
 
   it('materializes only change requests for the agenda item branch', async () => {
@@ -389,6 +533,67 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
       })
     );
     expect(snapshotVoteElectorateMock).toHaveBeenCalledWith(tx, 'vote-final-1');
+  });
+
+  it('does not create duplicates when voting is materialized again', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce(agendaItem())
+      .mockResolvedValueOnce(agendaItem())
+      .mockResolvedValueOnce([
+        {
+          id: 'step-branch',
+          branch_id: 'branch-1',
+          step_kind: 'group_vote',
+          status: 'scheduled',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'cr-1',
+          title: 'CR 1',
+          process_branch_id: 'branch-1',
+        },
+      ])
+      .mockResolvedValueOnce(amendment())
+      .mockResolvedValueOnce([
+        {
+          id: 'link-cr-1',
+          agenda_item_id: 'agenda-1',
+          change_request_id: 'cr-1',
+          vote_id: 'vote-cr-1',
+          order_index: 0,
+          step_kind: 'change_request',
+          is_closing_vote: false,
+        },
+        {
+          id: 'link-final-1',
+          agenda_item_id: 'agenda-1',
+          change_request_id: null,
+          vote_id: 'vote-final-1',
+          order_index: 1,
+          step_kind: 'closing',
+          is_closing_vote: true,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'vote-cr-1',
+          purpose: 'change_request',
+          status: 'indicative',
+        },
+        {
+          id: 'vote-final-1',
+          purpose: 'closing',
+          status: 'indicative',
+        },
+      ]);
+
+    await initialize(tx);
+
+    expect(tx.mutate.vote.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.vote_choice.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.agenda_item_change_request.insert).not.toHaveBeenCalled();
   });
 
   it('creates a merge-variant step with branch-titled agenda and vote titles', async () => {

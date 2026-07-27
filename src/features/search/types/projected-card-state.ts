@@ -19,6 +19,7 @@ export interface ProjectedGroupMembershipState {
     group_type?: string | null;
     connected_group_id?: string | null;
     primary_sibling_membership_mode?: string | null;
+    tutorial_run_id?: string | null;
   };
   memberships: readonly ProjectedMembershipRow[];
   connectedGroupMemberships: readonly ProjectedMembershipRow[];

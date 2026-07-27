@@ -51,16 +51,25 @@ export function BlockSuggestionStatic({ element }: { element: TElement }) {
   const isRemove = suggestionData?.type === 'remove';
   const insertTone = getSemanticToneClasses('success');
   const removeTone = getSemanticToneClasses('danger');
+  const tone = isRemove ? removeTone : insertTone;
 
   return (
     <div
       className={cn(
         'pointer-events-none absolute inset-0 z-1 border-2 transition-opacity',
         getMotionPreset('colors'),
-        isRemove ? removeTone.surface : insertTone.surface
+        tone.border
       )}
       contentEditable={false}
-    />
+    >
+      <div
+        aria-hidden
+        className={cn(
+          'absolute inset-0 opacity-40',
+          isRemove ? 'bg-[var(--badge-danger-bg)]' : 'bg-[var(--badge-success-bg)]'
+        )}
+      />
+    </div>
   );
 }
 

@@ -3,7 +3,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { AlertCircle } from 'lucide-react';
 import { MessageContent } from '@/features/messages/ui/MessageContent.tsx';
 import { cn } from '@/features/shared/utils/utils';
-import { isAssistantUser } from '@/features/assistant/logic/assistantHelpers';
+import {
+  isAssistantUser,
+  resolveAssistantAvatar,
+} from '@/features/assistant/logic/assistantHelpers';
 import { Message } from '../types/message.types';
 import { formatTime } from '../logic/messageUtils';
 import { isAssistantErrorContext } from '../logic/contextAttachments';
@@ -37,7 +40,9 @@ export function MessageBubble({
       )}
     >
       <Avatar className="h-8 w-8 flex-shrink-0">
-        <AvatarImage src={message.sender?.avatar ?? undefined} />
+        <AvatarImage
+          src={resolveAssistantAvatar(message.sender?.id, message.sender?.avatar) ?? undefined}
+        />
         <AvatarFallback>{message.sender?.first_name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
       </Avatar>
       <div

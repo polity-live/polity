@@ -50,7 +50,7 @@ vi.mock('@/features/timeline/ui/LazyCardComponents', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, fallback?: string) => fallback ?? key,
+  translate: (key: string, fallback?: unknown) => (typeof fallback === 'string' ? fallback : key),
 }));
 
 vi.mock('react-i18next', () => {
@@ -164,8 +164,8 @@ describe('OpenAssignmentsPanel', () => {
       id: 'delegate:allocation-1',
       kind: 'delegate_election',
       status: 'scheduled',
-      title: 'Delegiertenwahl fuer Delegate assembly',
-      description: 'B1 hat aktuell 3 Delegiertensitze fuer H2.',
+      title: 'Delegiertenwahl für Delegate assembly',
+      description: 'B1 hat aktuell 3 Delegiertensitze für H2.',
       seatCount: 3,
       scheduledSeatCount: 3,
       completedSeatCount: 0,

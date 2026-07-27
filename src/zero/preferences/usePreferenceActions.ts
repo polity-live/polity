@@ -33,6 +33,7 @@ export function usePreferenceActions() {
     (fields: {
       create_form_style?: CreateFormStyle;
       theme?: Theme;
+      appearance_theme_id?: string | null;
       language?: PreferenceLanguage;
       display_currency?: PreferenceCurrency;
       navigation_view?: PreferenceNavigationView;
@@ -59,6 +60,7 @@ export function usePreferenceActions() {
             id: crypto.randomUUID(),
             create_form_style: fields.create_form_style ?? 'carousel',
             theme: fields.theme ?? 'system',
+            appearance_theme_id: fields.appearance_theme_id ?? null,
             language: fields.language ?? 'en',
             display_currency: fields.display_currency ?? 'EUR',
             navigation_view: fields.navigation_view ?? 'asButtonList',
@@ -85,6 +87,13 @@ export function usePreferenceActions() {
   const updateTheme = useCallback(
     (theme: Theme) => {
       return upsertPreference({ theme });
+    },
+    [upsertPreference]
+  );
+
+  const updateAppearanceTheme = useCallback(
+    (appearanceThemeId: string | null) => {
+      return upsertPreference({ appearance_theme_id: appearanceThemeId });
     },
     [upsertPreference]
   );
@@ -160,6 +169,7 @@ export function usePreferenceActions() {
   return {
     updateFormStyle,
     updateTheme,
+    updateAppearanceTheme,
     updateLanguage,
     updateDisplayCurrency,
     updateNavigationView,

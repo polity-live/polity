@@ -22,25 +22,27 @@ export function DecisionTerminal({
   const controller = useDecisionTerminalDashboardController({ decisions });
 
   return (
-    <DecisionTerminalView
-      decisions={decisions}
-      dashboardConfig={controller.dashboardConfig}
-      searchQuery={controller.searchQuery}
-      urgentCount={controller.urgentCount}
-      activeCount={controller.activeCount}
-      isLoading={isLoading || controller.preferencesLoading}
-      className={className}
-      onSearchChange={controller.setSearchQuery}
-      onResetLayout={controller.handleResetLayout}
-      onConfigChange={controller.persistConfig}
-      onVoteDecision={controller.handleVoteDecision}
-      voteDialog={
-        <DecisionVoteDialogController
-          decision={controller.voteTarget}
-          open={controller.voteDialogOpen}
-          onOpenChange={controller.handleVoteDialogOpenChange}
-        />
-      }
-    />
+    <div data-tutorial-anchor="tutorial-decision-terminal-item">
+      <DecisionTerminalView
+        decisions={decisions}
+        dashboardConfig={controller.dashboardConfig}
+        searchQuery={controller.searchQuery}
+        urgentCount={controller.urgentCount}
+        activeCount={controller.activeCount}
+        isLoading={isLoading || controller.preferencesLoading}
+        className={className}
+        onSearchChange={controller.setSearchQuery}
+        onResetLayout={controller.handleResetLayout}
+        onConfigChange={controller.persistConfig}
+        onVoteDecision={controller.handleVoteDecision}
+        voteDialog={
+          <DecisionVoteDialogController
+            decision={controller.voteTarget}
+            open={controller.voteDialogOpen}
+            onOpenChange={controller.handleVoteDialogOpenChange}
+          />
+        }
+      />
+    </div>
   );
 }

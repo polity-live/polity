@@ -87,8 +87,12 @@ export function buildDelegateSeatRoleName(
   eventTitle: string | null | undefined,
   seatNumber: number
 ) {
-  const resolvedEventTitle = eventTitle?.trim() || 'Delegiertenversammlung';
-  return `Delegierte:r fuer ${resolvedEventTitle} - Sitz ${seatNumber}`;
+  const resolvedEventTitle =
+    eventTitle?.trim() || translateText('features.elections.delegate.assemblyFallback');
+  return translateText('features.elections.delegate.seatRoleName', {
+    event: resolvedEventTitle,
+    seat: seatNumber,
+  });
 }
 
 export function buildDelegateSeatRoleDescription(args: {
@@ -101,7 +105,17 @@ export function buildDelegateSeatRoleDescription(args: {
   const eventTitle =
     args.eventTitle?.trim() ||
     translateText('generated.inline.0055_die_delegiertenversammlung_9744e078');
-  const sourceGroupName = args.sourceGroupName?.trim() || 'diese Gruppe';
-  const targetGroupName = args.targetGroupName?.trim() || 'die Zielgruppe';
-  return `Temporaires Delegiertenmandat von ${sourceGroupName} fuer ${targetGroupName} auf ${eventTitle} (Sitz ${args.seatNumber} von ${args.totalSeats}).`;
+  const sourceGroupName =
+    args.sourceGroupName?.trim() ||
+    translateText('features.elections.delegate.sourceGroupFallback');
+  const targetGroupName =
+    args.targetGroupName?.trim() ||
+    translateText('features.elections.delegate.targetGroupFallback');
+  return translateText('features.elections.delegate.seatRoleDescription', {
+    sourceGroup: sourceGroupName,
+    targetGroup: targetGroupName,
+    event: eventTitle,
+    seat: args.seatNumber,
+    total: args.totalSeats,
+  });
 }

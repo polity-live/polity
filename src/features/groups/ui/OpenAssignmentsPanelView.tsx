@@ -33,6 +33,7 @@ import {
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { cn } from '@/features/shared/utils/utils';
 import { ProcessAgendaPreviewDialog } from '@/features/groups/ui/ProcessAgendaPreviewDialog';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 interface AvailableEventLike {
   id: string;
   title?: string | null;
@@ -52,7 +53,8 @@ function buildEventCard(
     id: event.id,
     type: 'event',
     eventId: event.id,
-    title: event.title || 'Veranstaltung',
+    title:
+      event.title || translateText('features.groups.memberships.openAssignments.eventFallback'),
     description: undefined,
     createdAt: new Date(event.start_date ?? Date.now()),
     startDate: event.start_date ? new Date(event.start_date) : new Date(),

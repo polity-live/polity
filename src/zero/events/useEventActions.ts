@@ -41,9 +41,14 @@ export function useEventActions() {
   );
 
   const updateEvent = useCallback(
-    (args: Parameters<typeof mutators.events.update>[0]) => {
+    (
+      args: Parameters<typeof mutators.events.update>[0],
+      options?: { monitorServerError?: boolean }
+    ) => {
       const result = zero.mutate(mutators.events.update(args));
-      onServerError(result, () => toast.error(t('features.events.toasts.updateFailed')));
+      if (options?.monitorServerError !== false) {
+        onServerError(result, () => toast.error(t('features.events.toasts.updateFailed')));
+      }
       return result;
     },
     [zero, t]

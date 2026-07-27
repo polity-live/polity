@@ -16,8 +16,10 @@ vi.mock('sonner', () => ({
   },
 }));
 
-const ALPHA_WARNING_SESSION_KEY = 'polity.alphaWarning.0.9.1.acknowledged';
+const ALPHA_WARNING_SESSION_KEY = 'polity.alphaWarning.0.10.1.acknowledged';
 const ALPHA_WARNING_TOAST_ID = 'alpha-warning';
+const APP_TUTORIAL_SESSION_CHANGE_EVENT = 'polity:app-tutorial-session-change';
+const APP_TUTORIAL_SESSION_STORAGE_KEY = 'polity:app-tutorial-session-active';
 
 interface AlphaWarningToastOptions {
   id?: string;
@@ -39,6 +41,15 @@ async function renderAlphaWarningController() {
 
 function latestToastOptions() {
   return warningMock.mock.calls.at(-1)?.[1] as AlphaWarningToastOptions | undefined;
+}
+
+function setTutorialSessionActive(active: boolean) {
+  if (active) {
+    window.sessionStorage.setItem(APP_TUTORIAL_SESSION_STORAGE_KEY, '1');
+  } else {
+    window.sessionStorage.removeItem(APP_TUTORIAL_SESSION_STORAGE_KEY);
+  }
+  window.dispatchEvent(new Event(APP_TUTORIAL_SESSION_CHANGE_EVENT));
 }
 
 beforeEach(() => {
@@ -88,5 +99,29 @@ describe('useAlphaWarningDialogController', () => {
     await renderAlphaWarningController();
 
     expect(warningMock).not.toHaveBeenCalled();
+  });
+
+  it('suppresses the alpha warning during a tutorial without acknowledging it', async () => {
+    setTutorialSessionActive(true);
+
+    await renderAlphaWarningController();
+
+    expect(warningMock).not.toHaveBeenCalled();
+    expect(dismissMock).toHaveBeenCalledWith(ALPHA_WARNING_TOAST_ID);
+    expect(window.sessionStorage.getItem(ALPHA_WARNING_SESSION_KEY)).toBeNull();
+  });
+
+  it('dismisses an existing warning when the tutorial starts and restores it afterwards', async () => {
+    await renderAlphaWarningController();
+    await waitFor(() => expect(warningMock).toHaveBeenCalledTimes(1));
+
+    act(() => setTutorialSessionActive(true));
+
+    expect(dismissMock).toHaveBeenCalledWith(ALPHA_WARNING_TOAST_ID);
+    expect(window.sessionStorage.getItem(ALPHA_WARNING_SESSION_KEY)).toBeNull();
+
+    act(() => setTutorialSessionActive(false));
+
+    await waitFor(() => expect(warningMock).toHaveBeenCalledTimes(2));
   });
 });

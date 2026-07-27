@@ -119,8 +119,8 @@ describe('app shell page frame routing', () => {
     }
   });
 
-  it('contains the full text and streetscape amendment editors', () => {
-    for (const path of ['/amendment/amendment-1/text', '/amendment/amendment-1/streetscape']) {
+  it('contains the full text and City Design amendment editors', () => {
+    for (const path of ['/amendment/amendment-1/text', '/amendment/amendment-1/citydesign']) {
       expect(getUnauthenticatedPageFrame(path)).toBe('contained');
       expect(getAuthenticatedPageFrame(path)).toBe('contained');
     }

@@ -16,6 +16,7 @@ export const statement = table('statement')
     upvotes: number(),
     downvotes: number(),
     comment_count: number(),
+    tutorial_run_id: string().optional(),
     created_at: number(),
     updated_at: number(),
   })

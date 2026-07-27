@@ -51,6 +51,9 @@ export const eventsTranslations = {
     locationCapacity: {
       title: 'Ort & Kapazität',
       description: 'Wo findet die Veranstaltung statt und wie viele können teilnehmen?',
+      attendanceModeLockedLabel: 'Warum ist der Teilnahmemodus gesperrt?',
+      attendanceModeLockedDescription:
+        'Der Teilnahmemodus kann nicht geändert werden, weil eine finale Abstimmung oder Wahl bereits gestartet wurde. Schließe sie zuerst ab.',
       location: 'Ort',
       locationPlaceholder: 'Veranstaltungsort oder Venue',
       capacity: 'Kapazität (optional)',
@@ -254,6 +257,8 @@ export const eventsTranslations = {
       unnamedSourceGroup: 'Unbenannte Herkunftsgruppe',
       electionDescription: 'Namentliche Ergebnisse der aktuellen Wahl.',
       voteDescription: 'Namentliche Ergebnisse der aktuellen Abstimmung.',
+      electionFallbackTitle: 'Namentliche Wahl',
+      voteFallbackTitle: 'Namentliche Abstimmung',
     },
     forwarding: {
       pendingPrefix: 'Der Antrag wird nach der Abstimmung an',
@@ -386,9 +391,9 @@ export const eventsTranslations = {
     },
     composition: {
       title: 'Delegierten-Zusammensetzung',
-      description: 'Sitzverteilung der Untergruppen fuer diese Delegiertenversammlung.',
+      description: 'Sitzverteilung der Untergruppen für diese Delegiertenversammlung.',
       loading: 'Zusammensetzung wird geladen...',
-      empty: 'Noch keine Delegiertensitze fuer Untergruppen gefunden.',
+      empty: 'Noch keine Delegiertensitze für Untergruppen gefunden.',
       total: '{{count}} Sitze gesamt',
       total_one: '{{count}} Sitz gesamt',
       total_other: '{{count}} Sitze gesamt',
@@ -404,7 +409,7 @@ export const eventsTranslations = {
       },
       metricDescriptions: {
         planned: 'Sitze aus der aktuellen Delegiertenverteilung der Untergruppen.',
-        scheduled: 'Sitze, fuer die bereits Untergruppen-Wahlen geplant sind.',
+        scheduled: 'Sitze, für die bereits Untergruppen-Wahlen geplant sind.',
         elected: 'Bestätigte Delegierte auf dieser Delegiertenversammlung.',
       },
       sectionTitles: {
@@ -710,6 +715,7 @@ export const eventsTranslations = {
     phases: {
       setup: 'Einrichtung',
       introduction: 'Einführung',
+      internal: 'Interne Abstimmung',
       voting: 'Abstimmung',
       indication: 'Stimmungsbild',
       finalVote: 'Endabstimmung',

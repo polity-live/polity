@@ -1,4 +1,5 @@
 import type { SearchDocument, SearchDocumentCardPayload } from '../types/search-document.types';
+import { translate } from '@/features/shared/hooks/use-translation';
 
 export interface SearchBounds {
   north: number;
@@ -121,7 +122,7 @@ export function mapSearchDocumentToSpatialItem(document: SearchDocument): Search
     id: document.id,
     document,
     type: getSearchSpatialType(document),
-    title: document.title || 'Result',
+    title: document.title || translate('common.entities.result'),
     locationLabel: location.label,
     locationSource: location.source,
     coordinates: location.coordinates,

@@ -5,7 +5,7 @@
 -- =============================================================================
 
 -- Document table
-CREATE TABLE IF NOT EXISTS public.document (
+CREATE TABLE public.document (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID,
   content JSONB,
@@ -22,7 +22,7 @@ ALTER TABLE public.document ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.document FOR ALL TO service_role USING (true);
 
 -- Document version table
-CREATE TABLE IF NOT EXISTS public.document_version (
+CREATE TABLE public.document_version (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   document_id UUID NOT NULL REFERENCES public.document (id) ON DELETE CASCADE,
   amendment_id UUID,
@@ -43,7 +43,7 @@ ALTER TABLE public.document_version ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.document_version FOR ALL TO service_role USING (true);
 
 -- Document collaborator table
-CREATE TABLE IF NOT EXISTS public.document_collaborator (
+CREATE TABLE public.document_collaborator (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   document_id UUID NOT NULL REFERENCES public.document (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -64,7 +64,7 @@ ALTER TABLE public.document_collaborator ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.document_collaborator FOR ALL TO service_role USING (true);
 
 -- Document cursor table
-CREATE TABLE IF NOT EXISTS public.document_cursor (
+CREATE TABLE public.document_cursor (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   document_id UUID NOT NULL REFERENCES public.document (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,

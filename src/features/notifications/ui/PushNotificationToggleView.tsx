@@ -1,43 +1,212 @@
 'use client';
 
-import { Bell, BellOff, Loader2 } from 'lucide-react';
-import { Button } from '@/features/shared/ui/ui/button.tsx';
+import { Bell, BellOff, CheckCircle2, CircleAlert, Loader2, Send } from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/features/shared/ui/ui/alert';
+import { Button } from '@/features/shared/ui/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/features/shared/ui/ui/card.tsx';
-import { Alert, AlertDescription } from '@/features/shared/ui/ui/alert.tsx';
-export interface PushNotificationToggleViewProps {
-  variant: any;
-  showDescription: any;
-  t: any;
-  isSupported: any;
-  isSubscribed: any;
-  isLoading: any;
-  permission: any;
-  error: any;
-  subscribe: any;
-  unsubscribe: any;
-  handleToggle: any;
+} from '@/features/shared/ui/ui/card';
+
+type Translate = (
+  key: string,
+  paramsOrFallback?: string | Record<string, string | number | null | undefined>,
+  fallback?: string
+) => string;
+
+interface PushTestState {
+  status: 'pending' | 'processing' | 'sent' | 'skipped' | 'failed';
+  skipReason?: string | null;
+  error?: string | null;
 }
 
-export function PushNotificationToggleView({
-  variant,
-  showDescription,
+export interface PushNotificationToggleViewProps {
+  variant: 'default' | 'card' | 'minimal' | 'settings';
+  showDescription: boolean;
+  showDiagnostics: boolean;
+  t: Translate;
+  isSupported: boolean;
+  isSubscribed: boolean;
+  isLoading: boolean;
+  permission: NotificationPermission;
+  error: string | null;
+  serviceWorkerReady: boolean;
+  serverSynchronized: boolean;
+  requiresIosInstall: boolean;
+  testState: PushTestState | null;
+  testLoading: boolean;
+  handleToggle: () => Promise<void>;
+  handleTest: () => Promise<void>;
+}
+
+function StatusRow({ ok, label, value }: { ok: boolean; label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-xs">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="flex items-center gap-1.5 text-right">
+        {ok ? (
+          <CheckCircle2 className="size-3.5 text-emerald-600" />
+        ) : (
+          <CircleAlert className="text-muted-foreground size-3.5" />
+        )}
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function Diagnostics({
   t,
   isSupported,
   isSubscribed,
-  isLoading,
   permission,
-  error,
+  serviceWorkerReady,
+  serverSynchronized,
+  testState,
+  testLoading,
+  handleTest,
+}: Pick<
+  PushNotificationToggleViewProps,
+  | 't'
+  | 'isSupported'
+  | 'isSubscribed'
+  | 'permission'
+  | 'serviceWorkerReady'
+  | 'serverSynchronized'
+  | 'testState'
+  | 'testLoading'
+  | 'handleTest'
+>) {
+  const testStatus =
+    testState?.status === 'skipped' && testState.skipReason
+      ? t(`components.pushNotifications.test.skipReasons.${testState.skipReason}`)
+      : testState
+        ? t(`components.pushNotifications.test.status.${testState.status}`)
+        : null;
+
+  return (
+    <div className="bg-muted/40 space-y-3 rounded-md border p-3">
+      <div className="space-y-2">
+        <StatusRow
+          ok={isSupported}
+          label={t('components.pushNotifications.diagnostics.browser')}
+          value={t(
+            isSupported
+              ? 'components.pushNotifications.diagnostics.ready'
+              : 'components.pushNotifications.diagnostics.missing'
+          )}
+        />
+        <StatusRow
+          ok={permission === 'granted'}
+          label={t('components.pushNotifications.diagnostics.permission')}
+          value={t(`components.pushNotifications.diagnostics.permissionValues.${permission}`)}
+        />
+        <StatusRow
+          ok={serviceWorkerReady}
+          label={t('components.pushNotifications.diagnostics.serviceWorker')}
+          value={t(
+            serviceWorkerReady
+              ? 'components.pushNotifications.diagnostics.ready'
+              : 'components.pushNotifications.diagnostics.missing'
+          )}
+        />
+        <StatusRow
+          ok={serverSynchronized}
+          label={t('components.pushNotifications.diagnostics.server')}
+          value={t(
+            serverSynchronized
+              ? 'components.pushNotifications.diagnostics.synchronized'
+              : 'components.pushNotifications.diagnostics.notSynchronized'
+          )}
+        />
+      </div>
+      <div className="flex flex-col items-start gap-2 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-muted-foreground text-xs">
+          {testStatus ?? t('components.pushNotifications.test.description')}
+          {testState?.error ? `: ${t('common.appErrors.push_operation_failed')}` : null}
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={!isSubscribed || testLoading}
+          onClick={() => void handleTest()}
+        >
+          {testLoading ? (
+            <Loader2 className="mr-2 size-3.5 animate-spin" />
+          ) : (
+            <Send className="mr-2 size-3.5" />
+          )}
+          {t('components.pushNotifications.test.action')}
+        </Button>
+      </div>
+      {testState?.status === 'pending' ? (
+        <p className="text-xs font-medium">
+          {t('components.pushNotifications.test.backgroundInstruction')}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function ToggleButton({
+  t,
+  isSubscribed,
+  isLoading,
   handleToggle,
-}: PushNotificationToggleViewProps) {
-  // Browser doesn't support push notifications
+}: Pick<PushNotificationToggleViewProps, 't' | 'isSubscribed' | 'isLoading' | 'handleToggle'>) {
+  return (
+    <Button
+      onClick={() => void handleToggle()}
+      disabled={isLoading}
+      variant={isSubscribed ? 'outline' : 'default'}
+      size="sm"
+    >
+      {isLoading ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : isSubscribed ? (
+        <>
+          <Bell className="mr-2 size-4" />
+          {t('components.pushNotifications.active')}
+        </>
+      ) : (
+        <>
+          <BellOff className="mr-2 size-4" />
+          {t('components.pushNotifications.activate')}
+        </>
+      )}
+    </Button>
+  );
+}
+
+export function PushNotificationToggleView(props: PushNotificationToggleViewProps) {
+  const {
+    variant,
+    showDescription,
+    showDiagnostics,
+    t,
+    isSupported,
+    isSubscribed,
+    permission,
+    error,
+    requiresIosInstall,
+  } = props;
+
+  if (requiresIosInstall) {
+    return (
+      <Alert>
+        <BellOff className="size-4" />
+        <AlertDescription>{t('components.pushNotifications.iosInstallRequired')}</AlertDescription>
+      </Alert>
+    );
+  }
+
   if (!isSupported) {
-    if (variant === 'minimal') {
+    if (variant === 'minimal' && !showDiagnostics) {
       return (
         <Button
           variant="outline"
@@ -45,22 +214,20 @@ export function PushNotificationToggleView({
           disabled
           title={t('components.pushNotifications.notSupported')}
         >
-          <BellOff className="h-4 w-4" />
+          <BellOff className="size-4" />
         </Button>
       );
     }
-
     return (
       <Alert>
-        <BellOff className="h-4 w-4" />
+        <BellOff className="size-4" />
         <AlertDescription>{t('components.pushNotifications.notSupported')}</AlertDescription>
       </Alert>
     );
   }
 
-  // Permission denied
   if (permission === 'denied') {
-    if (variant === 'minimal') {
+    if (variant === 'minimal' && !showDiagnostics) {
       return (
         <Button
           variant="outline"
@@ -68,138 +235,103 @@ export function PushNotificationToggleView({
           disabled
           title={t('components.pushNotifications.blocked')}
         >
-          <BellOff className="h-4 w-4" />
+          <BellOff className="size-4" />
         </Button>
       );
     }
-
     return (
       <Alert variant="destructive">
-        <BellOff className="h-4 w-4" />
+        <BellOff className="size-4" />
         <AlertDescription>{t('components.pushNotifications.blockedLong')}</AlertDescription>
       </Alert>
     );
   }
 
-  // Minimal variant - just a button
-  if (variant === 'minimal') {
-    return (
-      <div className="flex items-center gap-2">
-        <Button
-          variant={isSubscribed ? 'default' : 'outline'}
-          size="sm"
-          onClick={handleToggle}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : isSubscribed ? (
-            <>
-              <Bell className="mr-2 h-4 w-4" />
-              {t('components.pushNotifications.active')}
-            </>
-          ) : (
-            <>
-              <BellOff className="mr-2 h-4 w-4" />
-              {t('components.pushNotifications.activate')}
-            </>
-          )}
-        </Button>
-        {error && <span className="text-destructive text-xs">{error}</span>}
-      </div>
-    );
-  }
-
-  // Card variant
   if (variant === 'card') {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {isSubscribed ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
+            {isSubscribed ? <Bell className="size-5" /> : <BellOff className="size-5" />}
             {t('components.pushNotifications.title')}
           </CardTitle>
-          {showDescription && (
+          {showDescription ? (
             <CardDescription>{t('components.pushNotifications.description')}</CardDescription>
-          )}
+          ) : null}
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && (
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <div className="text-sm font-medium">
+                {t(
+                  isSubscribed
+                    ? 'components.pushNotifications.enabled'
+                    : 'components.pushNotifications.disabled'
+                )}
+              </div>
+              <div className="text-muted-foreground text-sm">
+                {t(
+                  isSubscribed
+                    ? 'components.pushNotifications.enabledDescription'
+                    : 'components.pushNotifications.disabledDescription'
+                )}
+              </div>
+            </div>
+            <ToggleButton {...props} />
+          </div>
+          {showDiagnostics ? <Diagnostics {...props} /> : null}
+          {error ? (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
-          )}
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <div className="text-sm font-medium">
-                {isSubscribed
-                  ? t('components.pushNotifications.enabled')
-                  : t('components.pushNotifications.disabled')}
-              </div>
-              <div className="text-muted-foreground text-sm">
-                {isSubscribed
-                  ? t('components.pushNotifications.enabledDescription')
-                  : t('components.pushNotifications.disabledDescription')}
-              </div>
-            </div>
-            <Button
-              onClick={handleToggle}
-              disabled={isLoading}
-              variant={isSubscribed ? 'outline' : 'default'}
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : isSubscribed ? (
-                t('components.pushNotifications.deactivate')
-              ) : (
-                t('components.pushNotifications.activate')
-              )}
-            </Button>
-          </div>
+          ) : null}
         </CardContent>
       </Card>
     );
   }
 
-  // Default variant
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            {isSubscribed ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-            {t('components.pushNotifications.title')}
+  if (variant === 'settings') {
+    return (
+      <div className="space-y-3 py-3">
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-0.5">
+            <div className="text-sm font-medium">{t('components.pushNotifications.title')}</div>
+            <p className="text-muted-foreground text-xs">
+              {t('components.pushNotifications.description')}
+            </p>
           </div>
-          {showDescription && (
-            <div className="text-muted-foreground text-sm">
-              {isSubscribed
-                ? t('components.pushNotifications.enabledDescriptionShort')
-                : t('components.pushNotifications.disabledDescriptionShort')}
-            </div>
-          )}
+          <ToggleButton {...props} />
         </div>
-        <Button
-          onClick={handleToggle}
-          disabled={isLoading}
-          variant={isSubscribed ? 'outline' : 'default'}
-          size="sm"
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : isSubscribed ? (
-            t('components.pushNotifications.deactivate')
-          ) : (
-            t('components.pushNotifications.activate')
-          )}
-        </Button>
+        {showDiagnostics ? <Diagnostics {...props} /> : null}
+        {error ? <p className="text-destructive text-xs">{error}</p> : null}
       </div>
+    );
+  }
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-4">
+        {variant === 'default' ? (
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              {isSubscribed ? <Bell className="size-4" /> : <BellOff className="size-4" />}
+              {t('components.pushNotifications.title')}
+            </div>
+            {showDescription ? (
+              <div className="text-muted-foreground text-sm">
+                {t(
+                  isSubscribed
+                    ? 'components.pushNotifications.enabledDescriptionShort'
+                    : 'components.pushNotifications.disabledDescriptionShort'
+                )}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        <ToggleButton {...props} />
+      </div>
+      {showDiagnostics ? <Diagnostics {...props} /> : null}
+      {error ? <p className="text-destructive text-xs">{error}</p> : null}
     </div>
   );
 }

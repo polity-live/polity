@@ -41,7 +41,11 @@ export function VirtualAgendaChangeRequestCardsList({
         return <ChangeRequestCardsList {...props} agendaItemId={agendaItemId} items={[item]} />;
       }}
       renderSkeleton={() => <Skeleton className="h-80 w-full rounded-xl" />}
-      renderEmpty={() => null}
+      renderEmpty={() =>
+        items.length > 0 ? (
+          <ChangeRequestCardsList {...props} agendaItemId={agendaItemId} items={items} />
+        ) : null
+      }
       className="max-h-[52rem] overflow-auto"
     />
   );

@@ -2,7 +2,7 @@
 -- 29_pql_filter.sql — Persisted personal and group-scoped PQL filters
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS public.pql_filter (
+CREATE TABLE public.pql_filter (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,

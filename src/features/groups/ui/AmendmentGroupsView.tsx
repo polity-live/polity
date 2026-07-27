@@ -13,6 +13,7 @@ import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { queries } from '@/zero/queries';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { mapAmendmentBranchStatusChips } from '@/features/amendments/logic/amendmentBranchDisplay';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 import type { GroupAmendmentDisplayStatus } from '../logic/groupAmendmentStatus';
 
@@ -137,7 +138,9 @@ export function AmendmentGroupsView({
                       )}
                       renderSkeleton={() => <Skeleton className="h-80 w-full rounded-xl" />}
                       renderEmpty={() => (
-                        <p className="text-muted-foreground py-8 text-center">No amendments</p>
+                        <p className="text-muted-foreground py-8 text-center">
+                          {translateText('features.groups.amendments.noAmendments')}
+                        </p>
                       )}
                     />
                   ) : (

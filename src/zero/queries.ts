@@ -25,6 +25,7 @@ import { accreditationQueries } from './accreditation/queries';
 import { networkQueries } from './network/queries';
 import { pqlQueries } from './pql/queries';
 import { datasetQueries } from './datasets/queries';
+import { appearanceThemeQueries } from './appearance-themes/queries';
 
 export const queries = defineQueries({
   users: userQueries,
@@ -52,4 +53,5 @@ export const queries = defineQueries({
   network: networkQueries,
   pql: pqlQueries,
   datasets: datasetQueries,
+  appearanceThemes: appearanceThemeQueries,
 });

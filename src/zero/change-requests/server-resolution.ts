@@ -4,11 +4,11 @@ import { zql } from '../schema';
 import { applySuggestionToContent } from '@/features/change-requests/logic/applySuggestionToContent';
 import { createChangeRequestDiffSnapshot } from '@/features/change-requests/utils/suggestion-extraction';
 import {
-  applyStreetDesignChangeRequestToDesign,
-  createStreetDesignPersistenceSnapshot,
-  getStreetDesignDesignContext,
-  resolveStreetDesignBaseState,
-} from '@/features/amendments/streetscape/logic/streetDesignChangeRequestDiff';
+  applyCityDesignChangeRequestToDesign,
+  createCityDesignPersistenceSnapshot,
+  getCityDesignDesignContext,
+  resolveCityDesignBaseState,
+} from '@/features/amendments/city-design/logic/cityDesignChangeRequestDiff';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { ChangeRequestVisibilityScope } from './visibility';
 
@@ -85,29 +85,24 @@ export function applyChangeRequestVoteResultToContent(
   return applySuggestionToContent(content, suggestionId, action);
 }
 
-export function isStreetDesignSourceType(sourceType: string | null | undefined) {
+export function isCityDesignSourceType(sourceType: string | null | undefined) {
   const normalized = sourceType?.trim().toLowerCase();
   return (
-    normalized === 'street_design' ||
-    normalized === 'street_design_object' ||
-    normalized === 'street_design_scene' ||
-    normalized === 'street_design_area' ||
-    normalized === 'street_design_layer' ||
-    normalized === 'streetscape' ||
-    normalized === 'streetscape_object' ||
-    normalized === 'streetscape_area' ||
-    normalized === 'streetscape_layer' ||
-    Boolean(normalized?.startsWith('street_design_'))
+    normalized === 'city_design_object' ||
+    normalized === 'city_design_scene' ||
+    normalized === 'city_design_area' ||
+    normalized === 'city_design_layer' ||
+    Boolean(normalized?.startsWith('city_design_'))
   );
 }
 
-function getStreetDesignIdFromSnapshot(value: unknown) {
+function getCityDesignIdFromSnapshot(value: unknown) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const streetDesignId = (value as { streetDesignId?: unknown }).streetDesignId;
-  return typeof streetDesignId === 'string' && streetDesignId.length > 0 ? streetDesignId : null;
+  const cityDesignId = (value as { cityDesignId?: unknown }).cityDesignId;
+  return typeof cityDesignId === 'string' && cityDesignId.length > 0 ? cityDesignId : null;
 }
 
-async function loadStreetDesignResolutionTarget(
+async function loadCityDesignResolutionTarget(
   tx: ChangeRequestResolutionTx,
   changeRequest: {
     amendment_id: string;
@@ -116,23 +111,21 @@ async function loadStreetDesignResolutionTarget(
     new_properties?: unknown;
   }
 ) {
-  const snapshotStreetDesignId =
-    getStreetDesignIdFromSnapshot(changeRequest.new_properties) ??
-    getStreetDesignIdFromSnapshot(changeRequest.original_properties);
+  const snapshotCityDesignId =
+    getCityDesignIdFromSnapshot(changeRequest.new_properties) ??
+    getCityDesignIdFromSnapshot(changeRequest.original_properties);
 
-  if (snapshotStreetDesignId) {
+  if (snapshotCityDesignId) {
     const bySnapshotId = await tx.run(
-      zql.amendment_street_design.where('id', snapshotStreetDesignId).one()
+      zql.amendment_city_design.where('id', snapshotCityDesignId).one()
     );
     if (bySnapshotId) return bySnapshotId;
   }
 
-  return tx.run(
-    zql.amendment_street_design.where('amendment_id', changeRequest.amendment_id).one()
-  );
+  return tx.run(zql.amendment_city_design.where('amendment_id', changeRequest.amendment_id).one());
 }
 
-async function resolveStreetDesignChangeRequestByVoteResult({
+async function resolveCityDesignChangeRequestByVoteResult({
   tx,
   ctx,
   cr,
@@ -152,15 +145,15 @@ async function resolveStreetDesignChangeRequestByVoteResult({
   visibilityScope: ChangeRequestVisibilityScope;
 }) {
   const crStatus = getChangeRequestResolutionStatus(voteResult);
-  const streetDesign = await loadStreetDesignResolutionTarget(tx, cr);
+  const cityDesign = await loadCityDesignResolutionTarget(tx, cr);
 
   if (voteResult === 'passed') {
     const context =
-      getStreetDesignDesignContext(cr.new_properties) ??
-      getStreetDesignDesignContext(cr.original_properties) ??
+      getCityDesignDesignContext(cr.new_properties) ??
+      getCityDesignDesignContext(cr.original_properties) ??
       undefined;
-    const baseDesign = resolveStreetDesignBaseState(
-      streetDesign?.design_state,
+    const baseDesign = resolveCityDesignBaseState(
+      cityDesign?.design_state,
       context
         ? {
             schemaVersion: 1,
@@ -169,12 +162,12 @@ async function resolveStreetDesignChangeRequestByVoteResult({
           }
         : undefined
     );
-    const nextDesign = applyStreetDesignChangeRequestToDesign(baseDesign, cr);
-    const persistence = createStreetDesignPersistenceSnapshot(nextDesign);
+    const nextDesign = applyCityDesignChangeRequestToDesign(baseDesign, cr);
+    const persistence = createCityDesignPersistenceSnapshot(nextDesign);
 
-    if (streetDesign?.id) {
-      await tx.mutate.amendment_street_design.update({
-        id: streetDesign.id,
+    if (cityDesign?.id) {
+      await tx.mutate.amendment_city_design.update({
+        id: cityDesign.id,
         bbox: persistence.bbox,
         center_lat: persistence.center_lat,
         center_lon: persistence.center_lon,
@@ -187,11 +180,11 @@ async function resolveStreetDesignChangeRequestByVoteResult({
         updated_at: now,
       });
     } else {
-      await tx.mutate.amendment_street_design.insert({
+      await tx.mutate.amendment_city_design.insert({
         id: crypto.randomUUID(),
         amendment_id: cr.amendment_id,
         created_by_id: ctx.userID,
-        title: cr.source_title ?? cr.title ?? 'Streetscape design',
+        title: cr.source_title ?? cr.title ?? translateText('common.entities.cityDesign'),
         bbox: persistence.bbox,
         center_lat: persistence.center_lat,
         center_lon: persistence.center_lon,
@@ -292,8 +285,8 @@ export async function resolveChangeRequestByVoteResult({
     return null;
   }
 
-  if (isStreetDesignSourceType(cr.source_type)) {
-    return resolveStreetDesignChangeRequestByVoteResult({
+  if (isCityDesignSourceType(cr.source_type)) {
+    return resolveCityDesignChangeRequestByVoteResult({
       tx,
       ctx,
       cr,

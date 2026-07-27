@@ -6,11 +6,12 @@ import type {
   DatasetSearchResult,
   DatasetSnapshotImportResult,
 } from '../types';
+import { toAppError } from '@/features/shared/errors/app-error';
 
 async function readJson<T>(response: Response): Promise<T> {
-  const body = (await response.json()) as T & { error?: string };
+  const body = (await response.json()) as T & { error?: unknown };
   if (!response.ok) {
-    throw new Error(body.error || `Request failed with ${response.status}`);
+    throw toAppError(body, 'dataset_operation_failed');
   }
   return body;
 }

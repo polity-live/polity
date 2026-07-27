@@ -210,6 +210,43 @@ describe('NavItemListView', () => {
     }
   );
 
+  it.each(['asButtonList', 'asLabeledButtonList'] as const)(
+    'marks the mobile primary %s scroller for the tutorial',
+    navigationView => {
+      const { container } = renderButtonList(
+        true,
+        true,
+        navigationItems,
+        navigationView,
+        'windows',
+        'mobile'
+      );
+
+      expect(
+        container.querySelector('[data-tutorial-horizontal-scroller="primary-navigation"]')
+      ).not.toBeNull();
+    }
+  );
+
+  it.each([
+    ['desktop primary', false, true, 'desktop'],
+    ['mobile secondary', true, false, 'mobile'],
+  ] as const)(
+    'does not mark the %s navigation as the tutorial horizontal scroller',
+    (_label, isMobile, isPrimary, screenType) => {
+      const { container } = renderButtonList(
+        isMobile,
+        isPrimary,
+        navigationItems,
+        'asButtonList',
+        'windows',
+        screenType
+      );
+
+      expect(container.querySelector('[data-tutorial-horizontal-scroller]')).toBeNull();
+    }
+  );
+
   it('uses the shared tooltip for icon-only secondary desktop navigation', async () => {
     renderButtonList(false, false);
 

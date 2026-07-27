@@ -5,6 +5,7 @@ import { getPreferredDefaultAiModel, toAiModelDescriptor } from '@/lib/ai/models
 import { getSession } from '@/lib/supabase/server';
 import { touchAiCredential } from '@/server/ai-db';
 import { getAiCatalog, resolveLanguageModelForUser } from '@/server/ai-models';
+import { appErrorHttpBody, encodeAppError } from '@/features/shared/errors/app-error';
 
 const aiCommandMessageSchema = z.object({
   role: z.enum(['assistant', 'system', 'user']),
@@ -16,15 +17,8 @@ const aiCommandRequestSchema = z.object({
 });
 
 function getStreamErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
-  }
-
-  if (typeof error === 'string' && error.trim()) {
-    return error;
-  }
-
-  return 'AI editor command failed.';
+  console.error('AI editor command stream failed:', error);
+  return encodeAppError('ai_operation_failed');
 }
 
 export const Route = createFileRoute('/api/ai/command')({
@@ -34,15 +28,19 @@ export const Route = createFileRoute('/api/ai/command')({
         const session = await getSession(request);
 
         if (!session?.user) {
-          return new Response('Unauthorized', { status: 401 });
+          return Response.json(appErrorHttpBody('permission_denied'), { status: 401 });
         }
 
-        const body = aiCommandRequestSchema.parse(await request.json());
+        const parsedBody = aiCommandRequestSchema.safeParse(await request.json().catch(() => null));
+        if (!parsedBody.success) {
+          return Response.json(appErrorHttpBody('validation_failed'), { status: 400 });
+        }
+        const body = parsedBody.data;
         const catalog = await getAiCatalog(session.user.id);
         const preferredModel = getPreferredDefaultAiModel(catalog.models);
 
         if (!preferredModel) {
-          return new Response('No AI models are available for this user.', { status: 400 });
+          return Response.json(appErrorHttpBody('ai_model_unavailable'), { status: 400 });
         }
 
         const { model, providerOptions, credentialProvider } = await resolveLanguageModelForUser(

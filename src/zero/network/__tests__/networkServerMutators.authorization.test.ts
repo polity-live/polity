@@ -259,6 +259,7 @@ describe('networkServerMutators authorization', () => {
     const ctx = createCtx();
     const error = new PermissionError('manage', 'groupRelationships', 'group:group-a');
 
+    tx.run.mockResolvedValueOnce([{ id: 'group-a' }, { id: 'group-b' }]);
     canMock.mockRejectedValueOnce(error);
 
     await expect(
@@ -316,7 +317,7 @@ describe('networkServerMutators authorization', () => {
       membership_rule: null,
     };
 
-    tx.run.mockResolvedValueOnce([]);
+    tx.run.mockResolvedValueOnce([{ id: 'group-a' }, { id: 'group-b' }]).mockResolvedValueOnce([]);
 
     await networkServerMutators.proposeGroupConnectionChange.fn({
       tx: tx as never,
@@ -344,6 +345,35 @@ describe('networkServerMutators authorization', () => {
       relationshipType: 'peer',
       recipientGroupId: 'group-a',
     });
+  });
+
+  it('ignores a delayed proposal after a tutorial endpoint was cleaned up', async () => {
+    const tx = createTx('server');
+    const ctx = createCtx();
+
+    tx.run.mockResolvedValueOnce([{ id: 'group-a' }]);
+
+    await networkServerMutators.proposeGroupConnectionChange.fn({
+      tx: tx as never,
+      ctx,
+      args: {
+        id: 'stale-request',
+        active_connection_id: null,
+        proposed_connection_id: 'stale-connection',
+        group_a_id: 'group-a',
+        group_b_id: 'deleted-group',
+        desired_connection_type: 'hierarchy',
+        desired_parent_group_id: 'deleted-group',
+        desired_child_group_id: 'group-a',
+        initiator_group_id: 'group-a',
+        grants: [],
+        membership_rule: null,
+      },
+    });
+
+    expect(canMock).not.toHaveBeenCalled();
+    expect(helperMocks.proposeGroupConnectionChange).not.toHaveBeenCalled();
+    expect(serverNotifyMocks.fireNotification).not.toHaveBeenCalled();
   });
 
   it('allows approving a connection request with counterparty relationship rights', async () => {
@@ -400,6 +430,41 @@ describe('networkServerMutators authorization', () => {
     expect(
       assemblyReconcileMocks.reconcileGeneralAssemblyParticipantsForGroups
     ).toHaveBeenCalledWith(tx, ['group-a', 'group-b'], 'user-1');
+  });
+
+  it('allows the owner to simulate counterparty approval within one tutorial run', async () => {
+    const tx = createTx('server');
+    const ctx = createCtx();
+    const permissionError = new PermissionError('manage', 'groupRelationships', 'group:group-b');
+
+    canMock.mockRejectedValueOnce(permissionError);
+    tx.run
+      .mockResolvedValueOnce(connectionRequest())
+      .mockResolvedValueOnce([
+        { id: 'group-a', tutorial_run_id: 'tutorial-run-1' },
+        { id: 'group-b', tutorial_run_id: 'tutorial-run-1' },
+      ])
+      .mockResolvedValueOnce({
+        id: 'tutorial-run-1',
+        user_id: 'user-1',
+        status: 'active',
+      })
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+
+    await networkServerMutators.approveGroupConnectionRequest.fn({
+      tx: tx as never,
+      ctx,
+      args: { id: 'request-1', grant_request_ids: [], approve_membership: false },
+    });
+
+    expect(helperMocks.approveGroupConnectionRequest).toHaveBeenCalledWith(
+      tx,
+      'request-1',
+      [],
+      false
+    );
   });
 
   it('reconciles offline hierarchy memberships after approving a hierarchy connection', async () => {

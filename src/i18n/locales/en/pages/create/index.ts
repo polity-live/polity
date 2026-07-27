@@ -1,6 +1,17 @@
 export const createPageTranslations = {
   title: 'Create',
   loading: 'Loading...',
+  recovery: {
+    discard: 'Discard',
+    failedDescription:
+      'Polity could not finish the last step. You can retry, restore the draft, or discard it.',
+    failedTitle: 'Creation needs attention',
+    pendingDescription:
+      'The item was created and Polity is finishing the remaining synchronization.',
+    pendingTitle: 'Finalizing creation',
+    restore: 'Restore',
+    retry: 'Retry',
+  },
   previous: 'Previous',
   next: 'Next',
   creating: 'Creating...',

@@ -3,6 +3,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
 import type { MutationResultLike } from '@/zero/mutate-with-server-check';
 import { toMutationError } from '@/zero/mutate-with-server-check';
+import { toAppError } from '@/features/shared/errors';
 import {
   trackMutationFinalization,
   type CreationEntityKind,
@@ -208,10 +209,11 @@ export function markCreateRecoveryDraftFailed(id: string, error: unknown) {
 
   const mutationError =
     error instanceof Error ? error : toMutationError(typeof error === 'string' ? error : null);
+  const appError = toAppError(mutationError, 'mutation_server_failed');
   saveCreateRecoveryDraft({
     ...draft,
     status: 'failed',
-    errorMessage: mutationError.message,
+    errorMessage: appError.message,
   });
 }
 

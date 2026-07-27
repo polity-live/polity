@@ -540,7 +540,7 @@ export function buildVoteSearchItem(vote: VoteWithDetailsRow): SearchContentItem
   return {
     id: vote.id,
     type: 'vote',
-    title: vote.title || vote.amendment?.title || 'Vote',
+    title: vote.title || vote.amendment?.title || translateText('common.entities.vote'),
     description: vote.description || vote.amendment?.reason || vote.amendment?.preamble,
     createdAt: toDate(vote.created_at),
     updatedAt: vote.updated_at ? toDate(vote.updated_at) : undefined,

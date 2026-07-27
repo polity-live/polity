@@ -48,7 +48,7 @@ export function useVerifyFormController() {
       }
       navigate({ to: '/' });
     } else {
-      setVerificationError(result.error || 'Verification failed');
+      setVerificationError(result.error || t('features.auth.errors.verificationFailed'));
     }
   };
 

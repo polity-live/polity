@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { getSession } from '@/lib/supabase/server';
 import { loadDatasetDetails } from '@/server/datasets/service';
+import { appErrorHttpBody, appErrorHttpBodyFrom } from '@/features/shared/errors/app-error';
 
 const requestSchema = z.object({
   datasetId: z.string().uuid(),
@@ -13,7 +14,7 @@ export const Route = createFileRoute('/api/eurostat/import-step')({
       POST: async ({ request }) => {
         const session = await getSession(request);
         if (!session?.user) {
-          return Response.json({ error: 'Unauthorized' }, { status: 401 });
+          return Response.json(appErrorHttpBody('permission_denied'), { status: 401 });
         }
 
         try {
@@ -28,12 +29,16 @@ export const Route = createFileRoute('/api/eurostat/import-step')({
             observationCount: latest?.rowCount ?? 0,
             estimatedBytes: latest?.byteSize ?? 0,
             actualBytes: latest?.byteSize ?? 0,
-            error: latest?.error ?? null,
+            error: latest?.error
+              ? appErrorHttpBodyFrom(latest.error, 'dataset_operation_failed').error
+              : null,
           });
         } catch (error) {
           const status = error instanceof z.ZodError ? 400 : 500;
           return Response.json(
-            { error: error instanceof Error ? error.message : 'Eurostat import step failed' },
+            error instanceof z.ZodError
+              ? appErrorHttpBody('validation_failed')
+              : appErrorHttpBodyFrom(error, 'dataset_operation_failed'),
             { status }
           );
         }

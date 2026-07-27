@@ -34,7 +34,7 @@ export function NetworkTabs({
           {t('features.network.tabs.currentNetwork')}
         </TabsTrigger>
         {showManageNetworkTab ? (
-          <TabsTrigger value="manage-network">
+          <TabsTrigger value="manage-network" data-tutorial-anchor="manage-network">
             {t('features.network.tabs.manageNetwork')}
           </TabsTrigger>
         ) : null}

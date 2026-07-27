@@ -233,7 +233,7 @@ describe('OfflineRosterCard', () => {
     expect(screen.getByLabelText('Lastname')).toBeTruthy();
     expect(screen.getByLabelText('Reason why not signed up')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Hinzufuegen' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Add' })).toBeTruthy();
   });
 
   it('shows submit and success status before closing after a single offline user is added', async () => {
@@ -253,7 +253,7 @@ describe('OfflineRosterCard', () => {
     fireEvent.change(screen.getByLabelText('Reason why not signed up'), {
       target: { value: ' No account yet ' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Hinzufuegen' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
 
     expect(onCreate).toHaveBeenCalledWith(
       {

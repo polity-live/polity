@@ -69,8 +69,8 @@ export function useAuthSignIn(): UseAuthSignInReturn {
 
         return { success: true, isNewUser };
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+        console.error('Password sign-in failed:', error);
+        const errorMessage = t('features.auth.errors.unexpectedError');
         toast.error(errorMessage);
         return { success: false, isNewUser: false, error: errorMessage };
       } finally {
@@ -90,8 +90,8 @@ export function useAuthSignIn(): UseAuthSignInReturn {
         }
         return { success: true };
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+        console.error('Magic-link sign-in failed:', error);
+        const errorMessage = t('features.auth.errors.unexpectedError');
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       } finally {
@@ -111,8 +111,8 @@ export function useAuthSignIn(): UseAuthSignInReturn {
         }
         return { success: true };
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+        console.error('Password reset request failed:', error);
+        const errorMessage = t('features.auth.errors.unexpectedError');
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       } finally {

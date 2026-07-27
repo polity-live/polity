@@ -2,6 +2,7 @@ import { AlertTriangle, FilePenLine, RotateCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { localizeAppError } from '@/features/shared/errors';
 import type { CreateRecoveryDraft } from '../logic/createFinalization';
 import { useCreateRecoveryActions } from '../hooks/useCreateRecoveryActions';
 
@@ -48,7 +49,7 @@ export function CreateRecoveryState({ draft }: CreateRecoveryStateProps) {
           {translateText('pages.create.recovery.failedTitle', 'Creation needs attention')}
         </h1>
         <p className="text-muted-foreground text-sm">
-          {draft.errorMessage ||
+          {(draft.errorMessage && localizeAppError(draft.errorMessage)) ||
             translateText(
               'pages.create.recovery.failedDescription',
               'The server rejected this creation. You can retry it or restore the form.'

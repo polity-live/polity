@@ -11,6 +11,7 @@ export const payment = table('payment')
     payer_group_id: string().optional(),
     receiver_user_id: string().optional(),
     receiver_group_id: string().optional(),
+    tutorial_run_id: string().optional(),
     created_at: number(),
   })
   .primaryKey('id');

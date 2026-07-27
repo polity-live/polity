@@ -1,4 +1,11 @@
+import { beforeEach } from 'vitest';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
+
 process.env.ZERO_UPSTREAM_DB ??= 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
+
+beforeEach(() => {
+  useLanguageStore.setState({ language: 'en' });
+});
 
 if (!('navigation' in globalThis)) {
   let state: unknown = null;

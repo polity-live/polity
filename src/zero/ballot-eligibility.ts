@@ -1,5 +1,6 @@
 import type { Transaction } from '@rocicorp/zero';
 import { zql, type Schema } from './schema';
+import { resolveEventAttendanceMode, resolveParticipationChannel } from './events/attendance-mode';
 
 const ACTIVE_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
 
@@ -42,7 +43,12 @@ async function loadBallotEvent(tx: BallotTx, agendaItemId: string | null | undef
 
 async function eligibleEventUsers(
   tx: BallotTx,
-  event: { id: string; attendance_mode?: string | null; accreditation_required: boolean }
+  event: {
+    id: string;
+    attendance_mode?: string | null;
+    location_type?: string | null;
+    accreditation_required: boolean;
+  }
 ) {
   const [participants, accreditations, offlineRows] = await Promise.all([
     tx.run(
@@ -60,11 +66,14 @@ async function eligibleEventUsers(
         .where('attendance_status', 'confirmed')
     ),
   ]);
+  const attendanceMode = resolveEventAttendanceMode(event);
   const approvedUserIds = new Set(accreditations.map(row => row.user_id));
   const forcedOfflineUserIds = new Set(
-    offlineRows
-      .filter(row => row.participation_channel === 'offline' && row.connected_user_id)
-      .map(row => row.connected_user_id as string)
+    attendanceMode === 'hybrid'
+      ? offlineRows
+          .filter(row => row.participation_channel === 'offline' && row.connected_user_id)
+          .map(row => row.connected_user_id as string)
+      : []
   );
 
   const users = participants
@@ -74,13 +83,13 @@ async function eligibleEventUsers(
     )
     .map(participant => ({
       userId: participant.user_id,
-      participationChannel:
-        event.attendance_mode === 'offline' || forcedOfflineUserIds.has(participant.user_id)
-          ? ('offline' as const)
-          : ('online' as const),
+      participationChannel: resolveParticipationChannel({
+        attendanceMode,
+        hasConfirmedOfflineAssignment: forcedOfflineUserIds.has(participant.user_id),
+      }),
     }));
   const unconnectedOfflineCount =
-    event.attendance_mode === 'hybrid' || event.attendance_mode === 'offline'
+    attendanceMode === 'hybrid' || attendanceMode === 'offline'
       ? offlineRows.filter(row => !row.connected_user_id).length
       : 0;
   return {

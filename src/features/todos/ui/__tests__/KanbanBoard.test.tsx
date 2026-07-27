@@ -61,4 +61,42 @@ describe('KanbanBoard', () => {
     const draggableWrapper = screen.getByTestId('todo-card').parentElement;
     expect(draggableWrapper?.getAttribute('draggable')).toBe('false');
   });
+
+  it('exposes the tutorial task as a spotlight target in kanban view', () => {
+    render(
+      <KanbanBoard
+        canManageTodos={false}
+        todos={[{ ...todos[0], tutorial_run_id: 'tutorial-run-1' }] as never}
+      />
+    );
+
+    const cardWrapper = screen.getByTestId('todo-card').parentElement;
+    expect(cardWrapper?.getAttribute('data-tutorial-anchor')).toBe('tutorial-network-todo');
+    expect(
+      document.querySelector('[data-tutorial-anchor="tutorial-network-todo-board"]')
+    ).toBeTruthy();
+    expect(document.querySelector('[data-todo-status="completed"]')).toBeTruthy();
+  });
+
+  it('exposes the assistant-created tutorial task and all drop columns as one target', () => {
+    render(
+      <KanbanBoard
+        canManageTodos
+        todos={
+          [
+            {
+              ...todos[0],
+              title: 'Die Welt zu einem besseren Ort machen',
+              tutorial_run_id: 'tutorial-run-1',
+            },
+          ] as never
+        }
+      />
+    );
+
+    const board = document.querySelector('[data-tutorial-anchor="tutorial-assistant-todo-board"]');
+    expect(board).toBeTruthy();
+    expect(board?.contains(document.querySelector('[data-todo-status="in_progress"]'))).toBe(true);
+    expect(board?.contains(screen.getByTestId('todo-card'))).toBe(true);
+  });
 });

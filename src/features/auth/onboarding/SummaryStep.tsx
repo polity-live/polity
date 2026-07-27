@@ -1,6 +1,16 @@
 'use client';
 
-import { ArrowRight, Check, Hash, Mail, MessageCircle, Sparkles, User, Users } from 'lucide-react';
+import {
+  Check,
+  Compass,
+  GraduationCap,
+  Hash,
+  Mail,
+  MessageCircle,
+  Sparkles,
+  User,
+  Users,
+} from 'lucide-react';
 import type { MouseEvent } from 'react';
 
 import { featureThemeClassName } from '@/features/shared/theme';
@@ -8,6 +18,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
+import { cn } from '@/features/shared/utils/utils.ts';
 import type { Group } from '../hooks/useOnboarding.ts';
 import { OnboardingStepShell } from './OnboardingStepShell';
 
@@ -30,7 +41,6 @@ export function SummaryStep({
   selectedInterestTags,
   activeGroupId,
   membershipRequestSentGroupIds,
-  userId,
   onComplete,
   isLoading,
 }: SummaryStepProps) {
@@ -42,19 +52,13 @@ export function SummaryStep({
   const requestedCount = requestedGroups.length;
   const primarySelectedGroup =
     selectedGroups.find(group => group.id === activeGroupId) ?? selectedGroups[0] ?? null;
-  const recommendedAction =
-    requestedCount > 0
-      ? 'profile'
-      : selectedCount > 0
-        ? 'group'
-        : selectedInterestTags.length > 0
-          ? 'timeline'
-          : 'assistant';
   const destinationLinkClassName = isLoading ? 'pointer-events-none opacity-50' : undefined;
-  const profileHref = `/user/${encodeURIComponent(userId)}`;
-  const groupHref = primarySelectedGroup
-    ? `/group/${encodeURIComponent(primarySelectedGroup.id)}`
-    : undefined;
+  const destinationButtonClassName = cn(
+    'h-full min-h-16 w-full min-w-0 justify-start whitespace-normal px-3 py-3 text-left',
+    destinationLinkClassName
+  );
+  const destinationLabelClassName =
+    'min-w-0 flex-1 whitespace-normal break-words text-left leading-5';
 
   const handleDestinationClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (isLoading) {
@@ -76,79 +80,58 @@ export function SummaryStep({
   return (
     <OnboardingStepShell
       actions={
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <Button
-            asChild
-            className={destinationLinkClassName}
-            variant={recommendedAction === 'assistant' ? 'default' : 'outline'}
-            size="lg"
-          >
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-[repeat(3,minmax(0,1fr))]">
+          <Button asChild className={destinationButtonClassName}>
+            <a
+              href="/onboarding"
+              onClick={handleDestinationClick}
+              aria-disabled={isLoading || undefined}
+              tabIndex={isLoading ? -1 : undefined}
+            >
+              <GraduationCap className="h-4 w-4 shrink-0" />
+              <span className="flex min-w-0 flex-1 flex-col items-start gap-1">
+                <BadgeControl
+                  className="shrink-0"
+                  tone="mutedContrast"
+                  size="tiny"
+                  textTransform="uppercase"
+                >
+                  {t('onboarding.summaryStep.recommended')}
+                </BadgeControl>
+                <span className={destinationLabelClassName}>
+                  {t('onboarding.summaryStep.explainApp')}
+                </span>
+              </span>
+            </a>
+          </Button>
+
+          <Button asChild className={destinationButtonClassName} variant="outline">
             <a
               href="/messages?openAriaKai=true"
               onClick={handleDestinationClick}
               aria-disabled={isLoading || undefined}
               tabIndex={isLoading ? -1 : undefined}
             >
-              <MessageCircle className="h-4 w-4" />
-              {t('onboarding.summaryStep.showAssistant')}
+              <MessageCircle className="h-4 w-4 shrink-0" />
+              <span className={destinationLabelClassName}>
+                {t('onboarding.summaryStep.exploreWithAssistant')}
+              </span>
             </a>
           </Button>
 
-          <Button
-            asChild
-            className={destinationLinkClassName}
-            variant={recommendedAction === 'timeline' ? 'default' : 'outline'}
-            size="lg"
-          >
+          <Button asChild className={destinationButtonClassName} variant="outline">
             <a
-              href="/home"
+              href="/search"
               onClick={handleDestinationClick}
               aria-disabled={isLoading || undefined}
               tabIndex={isLoading ? -1 : undefined}
             >
-              <Hash className="h-4 w-4" />
-              {t('onboarding.summaryStep.goToTimeline')}
-              <ArrowRight className="h-4 w-4" />
+              <Compass className="h-4 w-4 shrink-0" />
+              <span className={destinationLabelClassName}>
+                {t('onboarding.summaryStep.exploreAlone')}
+              </span>
             </a>
           </Button>
-
-          <Button
-            asChild
-            className={destinationLinkClassName}
-            variant={recommendedAction === 'profile' ? 'default' : 'outline'}
-            size="lg"
-          >
-            <a
-              href={profileHref}
-              onClick={handleDestinationClick}
-              aria-disabled={isLoading || undefined}
-              tabIndex={isLoading ? -1 : undefined}
-            >
-              <User className="h-4 w-4" />
-              {t('onboarding.summaryStep.goToProfile')}
-              <ArrowRight className="h-4 w-4" />
-            </a>
-          </Button>
-
-          {primarySelectedGroup && groupHref && (
-            <Button
-              asChild
-              className={destinationLinkClassName}
-              variant={recommendedAction === 'group' ? 'default' : 'outline'}
-              size="lg"
-            >
-              <a
-                href={groupHref}
-                onClick={handleDestinationClick}
-                aria-disabled={isLoading || undefined}
-                tabIndex={isLoading ? -1 : undefined}
-              >
-                <Users className="h-4 w-4" />
-                {t('onboarding.summaryStep.goToGroup')}
-                <ArrowRight className="h-4 w-4" />
-              </a>
-            </Button>
-          )}
         </div>
       }
     >
@@ -282,22 +265,15 @@ export function SummaryStep({
           </div>
 
           <aside className="bg-card rounded-lg border p-5 shadow-sm">
-            <p className="text-sm font-semibold">
-              {t('onboarding.summaryStep.recommendationTitle')}
-            </p>
+            <p className="text-sm font-semibold">{t('onboarding.summaryStep.pathTitle')}</p>
             <p className="text-muted-foreground mt-3 text-sm leading-6">
-              {t(`onboarding.summaryStep.recommendations.${recommendedAction}`)}
+              {t('onboarding.summaryStep.pathDescription')}
             </p>
-            <div className="bg-muted/60 mt-5 rounded-lg p-4">
+            <div className="border-primary/20 bg-primary/5 mt-5 rounded-lg border p-4">
               <p className="text-muted-foreground text-xs font-medium uppercase">
-                {t('onboarding.summaryStep.nextStepLabel')}
+                {t('onboarding.summaryStep.recommended')}
               </p>
-              <p className="mt-2 text-sm font-semibold">
-                {recommendedAction === 'profile' && t('onboarding.summaryStep.goToProfile')}
-                {recommendedAction === 'group' && t('onboarding.summaryStep.goToGroup')}
-                {recommendedAction === 'timeline' && t('onboarding.summaryStep.goToTimeline')}
-                {recommendedAction === 'assistant' && t('onboarding.summaryStep.showAssistant')}
-              </p>
+              <p className="mt-2 text-sm font-semibold">{t('onboarding.summaryStep.explainApp')}</p>
             </div>
           </aside>
         </div>

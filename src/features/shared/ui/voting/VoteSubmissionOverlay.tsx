@@ -9,6 +9,12 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { LoadingProgressBar } from '@/features/shared/ui/feedback';
 import { getContentTypeToneClasses, getSemanticToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
+import {
+  translate as translateText,
+  useTranslation,
+} from '@/features/shared/hooks/use-translation';
+import type { LocalizedCopyRef } from '@/features/shared/i18n/localized-copy';
+import { localizeAppError, parseAppError } from '@/features/shared/errors';
 import type { MutationResultLike } from '@/zero/mutate-with-server-check';
 import type { VotingPhaseValue } from './VotingControls';
 
@@ -19,7 +25,7 @@ export type VoteSubmissionStatus =
 
 export interface VoteSubmissionProgressStep {
   key: VoteSubmissionStepKey;
-  label: ReactNode;
+  copy: LocalizedCopyRef;
   status: VoteSubmissionProgressStatus;
 }
 
@@ -52,65 +58,36 @@ interface VoteSubmissionOverlayProps {
   onRetry: () => void;
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return 'Die Stimmabgabe konnte nicht abgeschlossen werden.';
-}
-
 function getErrorDetails(error: unknown) {
-  const message = getErrorMessage(error);
-  const normalized = message.toLowerCase();
+  const payload = parseAppError(error);
 
-  if (
-    normalized.includes('duplicate key') ||
-    normalized.includes('unique constraint') ||
-    normalized.includes('already voted') ||
-    normalized.includes('already exists') ||
-    normalized.includes('bereits abgegeben') ||
-    normalized.includes('schon vorhanden')
-  ) {
+  if (payload?.code === 'vote_already_submitted' || payload?.code === 'already_exists') {
     return {
-      title: 'Stimme bereits vorhanden',
-      description:
-        'Für diese Abstimmung liegt bereits eine Stimme von dir vor. Polity zählt keine doppelte Abgabe.',
-      backLabel: 'Zurück zur Abstimmung',
+      title: translateText('common.voteSubmission.errors.duplicateTitle'),
+      description: translateText('common.voteSubmission.errors.duplicateDescription'),
+      backLabel: translateText('common.voteSubmission.backToVote'),
       retryLabel: null,
       tone: 'warning' as const,
       technicalDetail: null,
     };
   }
 
-  if (
-    normalized.includes('permission') ||
-    normalized.includes('not allowed') ||
-    normalized.includes('not eligible') ||
-    normalized.includes('stimmrecht') ||
-    normalized.includes('active_voting')
-  ) {
+  if (payload?.code === 'permission_denied' || payload?.code === 'vote_not_eligible') {
     return {
-      title: 'Stimmrecht nicht bestätigt',
-      description:
-        'Deine Stimme wurde nicht gezählt, weil dein Stimmrecht für diese Abstimmung nicht bestätigt werden konnte.',
-      backLabel: 'Zurück zur Abstimmung',
+      title: translateText('common.voteSubmission.errors.eligibilityTitle'),
+      description: translateText('common.voteSubmission.errors.eligibilityDescription'),
+      backLabel: translateText('common.voteSubmission.backToVote'),
       retryLabel: null,
       tone: 'danger' as const,
       technicalDetail: null,
     };
   }
 
-  if (
-    normalized.includes('password') ||
-    normalized.includes('pin') ||
-    normalized.includes('verify') ||
-    normalized.includes('verification')
-  ) {
+  if (payload?.code === 'voting_password_missing' || payload?.code === 'voting_password_invalid') {
     return {
-      title: 'PIN nicht bestätigt',
-      description: 'Die Stimmabgabe wurde nicht ausgeführt. Gib deine Voting-PIN erneut ein.',
-      backLabel: 'PIN erneut eingeben',
+      title: translateText('common.voteSubmission.errors.pinTitle'),
+      description: translateText('common.voteSubmission.errors.pinDescription'),
+      backLabel: translateText('common.voteSubmission.enterPinAgain'),
       retryLabel: null,
       tone: 'danger' as const,
       technicalDetail: null,
@@ -118,13 +95,12 @@ function getErrorDetails(error: unknown) {
   }
 
   return {
-    title: 'Prüfung unterbrochen',
-    description:
-      'Die Stimmabgabe wurde nicht bestätigt. Du kannst zur Eingabe zurück oder es erneut versuchen.',
-    backLabel: 'Zurück zur Eingabe',
-    retryLabel: 'Erneut versuchen',
+    title: translateText('common.voteSubmission.errors.interruptedTitle'),
+    description: localizeAppError(error),
+    backLabel: translateText('common.voteSubmission.backToInput'),
+    retryLabel: translateText('common.submissionOverlay.retry'),
     tone: 'danger' as const,
-    technicalDetail: message,
+    technicalDetail: null,
   };
 }
 
@@ -132,9 +108,9 @@ function getStatusText(
   status: VoteSubmissionStatus,
   errorDetails: ReturnType<typeof getErrorDetails>
 ) {
-  if (status === 'success') return 'Stimme abgegeben';
+  if (status === 'success') return translateText('common.voteSubmission.successTitle');
   if (status === 'error') return errorDetails.title;
-  return 'Stimmabgabe läuft';
+  return translateText('common.voteSubmission.runningTitle');
 }
 
 function getDescription(
@@ -142,12 +118,12 @@ function getDescription(
   selection: VoteSubmissionSelection,
   errorDetails: ReturnType<typeof getErrorDetails>
 ) {
-  if (status === 'success') return 'Deine Auswahl wurde gezählt und synchronisiert.';
+  if (status === 'success') return translateText('common.voteSubmission.successDescription');
   if (status === 'error') return errorDetails.description;
 
   return selection.type === 'election'
-    ? 'Deine Kandidatenauswahl wird geprüft, versiegelt und synchronisiert.'
-    : 'Deine Auswahl wird geprüft, versiegelt und synchronisiert.';
+    ? translateText('common.voteSubmission.electionDescription')
+    : translateText('common.voteSubmission.voteDescription');
 }
 
 export function VoteSubmissionOverlay({
@@ -158,6 +134,7 @@ export function VoteSubmissionOverlay({
   onBack,
   onRetry,
 }: VoteSubmissionOverlayProps) {
+  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const titleId = useId();
   const descriptionId = useId();
@@ -170,6 +147,7 @@ export function VoteSubmissionOverlay({
   const selectedCandidates = selection.candidates ?? [];
   const displayProgressSteps = progressSteps.map(step => ({
     ...step,
+    label: t(step.copy.key, step.copy.params),
     status:
       status === 'success'
         ? 'complete'
@@ -205,7 +183,7 @@ export function VoteSubmissionOverlay({
                 {getStatusText(status, errorDetails)}
               </p>
               <h2 id={titleId} className="mt-2 text-2xl leading-tight font-semibold sm:text-3xl">
-                POLITY zählt.
+                {translateText('common.voteSubmission.headline')}
               </h2>
               <p id={descriptionId} className="text-muted-foreground mt-2 text-sm leading-relaxed">
                 {getDescription(status, selection, errorDetails)}
@@ -252,7 +230,7 @@ export function VoteSubmissionOverlay({
                 </motion.div>
 
                 <p className="text-muted-foreground text-xs font-semibold tracking-[0.18em] uppercase">
-                  Auswahl
+                  {translateText('common.voteSubmission.selection')}
                 </p>
                 {selection.title ? (
                   <h3 className="mt-2 text-xl leading-tight font-semibold tracking-normal">
@@ -281,7 +259,10 @@ export function VoteSubmissionOverlay({
                       ))}
                       {selection.maxVotes ? (
                         <p className="text-muted-foreground text-xs">
-                          {selectedCandidates.length}/{selection.maxVotes} Stimmen ausgewählt
+                          {translateText('common.voteSubmission.selectedVotes', {
+                            selected: selectedCandidates.length,
+                            maximum: selection.maxVotes,
+                          })}
                         </p>
                       ) : null}
                     </div>
@@ -297,7 +278,7 @@ export function VoteSubmissionOverlay({
             <div
               className="grid w-full gap-2 sm:grid-cols-3"
               data-slot="vote-submit-steps"
-              aria-label="Stimmabgabefortschritt"
+              aria-label={translateText('common.accessibility.voteProgress')}
             >
               {displayProgressSteps.map((step, index) => {
                 const isComplete = step.status === 'complete';
@@ -349,12 +330,12 @@ export function VoteSubmissionOverlay({
                         <p className="truncate text-sm font-medium">{step.label}</p>
                         <p className="text-muted-foreground text-xs">
                           {isError
-                            ? 'Prüfung nötig'
+                            ? translateText('common.submissionOverlay.status.attentionRequired')
                             : isComplete
-                              ? 'Abgeschlossen'
+                              ? translateText('common.submissionOverlay.status.completed')
                               : isActive
-                                ? 'Läuft'
-                                : 'Wartet'}
+                                ? translateText('common.submissionOverlay.status.running')
+                                : translateText('common.submissionOverlay.status.waiting')}
                         </p>
                       </div>
                     </div>
@@ -363,7 +344,7 @@ export function VoteSubmissionOverlay({
               })}
             </div>
             <LoadingProgressBar
-              ariaLabel="Stimmabgabefortschritt"
+              ariaLabel={translateText('common.accessibility.voteProgress')}
               steps={displayProgressSteps}
               indicatorClassName={cn(tone.text, 'bg-current')}
             />
@@ -373,7 +354,7 @@ export function VoteSubmissionOverlay({
                 {errorDetails.technicalDetail ? (
                   <details className="text-muted-foreground mx-auto max-w-xl text-xs">
                     <summary className="cursor-pointer text-center font-medium">
-                      Technische Details
+                      {translateText('common.submissionOverlay.technicalDetails')}
                     </summary>
                     <p className="bg-card mt-2 rounded-md border px-3 py-2">
                       {errorDetails.technicalDetail}

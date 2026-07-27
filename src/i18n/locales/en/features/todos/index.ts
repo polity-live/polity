@@ -1,5 +1,10 @@
 export const todosTranslations = {
   title: 'My Todos',
+  helpLinks: {
+    assistant: 'Assistant Aria & Kai',
+    tutorial: 'Tutorial',
+    docs: 'Docs',
+  },
   description: 'Manage your tasks and track your progress',
   loading: 'Loading...',
   loadingTodos: 'Loading todos...',

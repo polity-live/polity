@@ -85,6 +85,7 @@ export function InlineAmendmentEditor({
     setContent,
     setDiscussions,
     setSelectedCrIds,
+    getLatestContent,
   } = useEditor({
     entityType: 'amendment',
     entityId: amendmentId,
@@ -132,15 +133,18 @@ export function InlineAmendmentEditor({
       changeRequestEntityId,
       status,
       votingStatus,
+      discussions: nextDiscussions,
     }: {
       crId: string;
       discussionId: string;
       changeRequestEntityId: string;
       status?: string;
       votingStatus?: string;
+      discussions: typeof discussions;
     }) => {
       if (!amendmentIdFromEntity) return;
-      const snapshot = createChangeRequestDiffSnapshot(discussionId, content);
+      const documentContent = getLatestContent();
+      const snapshot = createChangeRequestDiffSnapshot(discussionId, documentContent);
       return editorOps.handleSuggestionCreated({
         id: changeRequestEntityId,
         crId,
@@ -155,9 +159,11 @@ export function InlineAmendmentEditor({
         new_properties: snapshot.new_properties,
         status,
         votingStatus,
+        documentContent,
+        discussions: nextDiscussions,
       });
     },
-    [amendmentIdFromEntity, content, effectiveProcessBranchId, editorOps]
+    [amendmentIdFromEntity, effectiveProcessBranchId, editorOps, getLatestContent]
   );
 
   useSuggestionIdAssignment({
@@ -276,6 +282,8 @@ export function InlineAmendmentEditor({
             new_properties: snapshot.new_properties,
             status: 'open',
             votingStatus: 'open',
+            documentContent: getLatestContent(),
+            discussions,
           });
 
       if (!submitted) {
@@ -311,6 +319,7 @@ export function InlineAmendmentEditor({
       discussions,
       effectiveProcessBranchId,
       editorOps,
+      getLatestContent,
       resolvedMode,
       setDiscussions,
     ]

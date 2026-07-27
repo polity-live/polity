@@ -1,6 +1,10 @@
 import { ARIA_KAI_USER_ID } from '@/features/assistant/constants';
 import { isAssistantErrorContext } from '@/features/messages/logic/contextAttachments';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
+import {
+  DEFAULT_ASSISTANT_CONVERSATION_NAME,
+  normalizeAssistantConversationTitle,
+} from '@/lib/ai/chatTitle';
 import { type AiChatAttachment, type AiProvider, type AiToolName } from '@/lib/ai/schemas';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -32,6 +36,8 @@ interface AiCredentialRow {
 interface AiConversationRow {
   id: string;
   assistant_for_user_id: string | null;
+  name: string | null;
+  tutorial_run_id: string | null;
 }
 
 interface AiMessageHistoryRow {
@@ -477,7 +483,7 @@ export async function getAssistantConversationForUser(
   const supabase = createClient();
   const { data, error } = await supabase
     .from('conversation')
-    .select('id, assistant_for_user_id')
+    .select('id, assistant_for_user_id, name, tutorial_run_id')
     .eq('id', conversationId)
     .eq('assistant_for_user_id', userId)
     .maybeSingle();
@@ -487,6 +493,34 @@ export async function getAssistantConversationForUser(
   }
 
   return (data as AiConversationRow | null) ?? null;
+}
+
+export async function setAssistantConversationTitle(
+  userId: string,
+  conversationId: string,
+  title: string
+): Promise<boolean> {
+  const normalizedTitle = normalizeAssistantConversationTitle(title);
+
+  if (!normalizedTitle) {
+    return false;
+  }
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('conversation')
+    .update({ name: normalizedTitle })
+    .eq('id', conversationId)
+    .eq('assistant_for_user_id', userId)
+    .eq('name', DEFAULT_ASSISTANT_CONVERSATION_NAME)
+    .select('id')
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to set assistant conversation title: ${error.message}`);
+  }
+
+  return Boolean(data);
 }
 
 export async function getConversationMessagesForAi(

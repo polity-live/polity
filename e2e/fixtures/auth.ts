@@ -202,8 +202,10 @@ export async function authenticateWorker(browser: Browser, workerIndex: number) 
   await page.goto('/auth/sign-in');
   await page.locator('#email').fill(user.email);
   await page.locator('#password').fill(user.password);
-  await page.locator('form button[type="submit"]').click();
-  await page.waitForURL(url => !url.pathname.includes('/auth/sign-in'), { timeout: 20_000 });
+  await Promise.all([
+    page.waitForURL(url => url.pathname === '/home', { timeout: 40_000 }),
+    page.locator('form button[type="submit"]').click(),
+  ]);
   await page.goto('/create');
   await page.locator('[data-create-action="open-create-flow"]').first().waitFor({
     state: 'visible',

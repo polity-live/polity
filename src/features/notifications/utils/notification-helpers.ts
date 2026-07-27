@@ -309,21 +309,40 @@ async function deliverServerNotification(config: NotificationConfig, notificatio
 
   if (!typeEnabled) return false;
 
+  const inAppEnabled =
+    !config.recipientUserId || settings?.deliverySettings?.inAppNotifications !== false;
   let inserted = false;
-  if (!config.recipientUserId || settings?.deliverySettings?.inAppNotifications !== false) {
+  if (inAppEnabled) {
     inserted = await insertServerNotification(config, notificationId);
   }
 
-  if (config.recipientUserId && config.recipientUserId !== config.senderId) {
-    await sendPushNotification(config.recipientUserId, {
-      title: config.title,
-      message: config.message,
-      actionUrl: config.actionUrl,
-      notificationId,
-      type: config.type,
-    }).catch(error => {
-      console.error('[Notification] Failed to send push notification:', error);
-    });
+  if (inserted) {
+    try {
+      const { executePushDelivery } = await import('@/server/push-delivery-service');
+      await executePushDelivery({ notificationId });
+    } catch (error) {
+      // The durable outbox and scheduler retain the job. Push delivery must
+      // never make the domain mutation fail.
+      console.error('[Notification] Immediate push delivery failed:', error);
+    }
+  } else if (
+    config.recipientUserId &&
+    config.recipientUserId !== config.senderId &&
+    settings?.deliverySettings?.pushNotifications !== false
+  ) {
+    try {
+      const { enqueueDirectPushDelivery, executePushDelivery } =
+        await import('@/server/push-delivery-service');
+      await enqueueDirectPushDelivery(config.recipientUserId, notificationId, {
+        title: config.title,
+        message: config.message,
+        actionUrl: config.actionUrl,
+        type: config.type,
+      });
+      await executePushDelivery();
+    } catch (error) {
+      console.error('[Notification] Direct push-only delivery failed:', error);
+    }
   }
 
   return inserted;
@@ -1683,19 +1702,6 @@ export async function createNotification(config: NotificationConfig): Promise<st
     } catch (err) {
       console.error('[Notification] Failed to create notification:', err);
     }
-
-    // Trigger push notification (client-side only, fire-and-forget)
-    if (config.recipientUserId && config.recipientUserId !== config.senderId) {
-      sendPushNotification(config.recipientUserId, {
-        title: config.title,
-        message: config.message,
-        actionUrl: config.actionUrl,
-        notificationId,
-        type: config.type,
-      }).catch(error => {
-        console.error('[Notification] Failed to send push notification:', error);
-      });
-    }
   } else {
     // ── Server-side: insert via Supabase service_role ─────────────────
     await deliverServerNotification(config, notificationId);
@@ -1720,28 +1726,6 @@ export async function createNotification(config: NotificationConfig): Promise<st
   }
 
   return notificationId;
-}
-
-/**
- * Send push notification via TanStack server function
- */
-async function sendPushNotification(
-  userId: string,
-  notification: {
-    title: string;
-    message: string;
-    actionUrl?: string;
-    notificationId?: string;
-    type?: string;
-  }
-): Promise<void> {
-  try {
-    const { sendPushNotificationToUser } = await import('@/server/push-send');
-    await sendPushNotificationToUser(userId, notification);
-  } catch (error) {
-    console.error('[Notification] Error sending push notification:', error);
-    throw error;
-  }
 }
 
 /**

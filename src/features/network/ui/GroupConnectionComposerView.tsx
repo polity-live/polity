@@ -6,7 +6,8 @@ import {
   FormControlRadioGroup,
   FormControlRadioGroupItem,
 } from '@/features/shared/ui/form';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { ScrollableTabsList } from '@/features/shared/ui/navigation';
+import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
@@ -39,19 +40,38 @@ import {
   GroupRelationshipRightsSelector,
   GroupRelationshipTypeSelect,
 } from './GroupRelationshipFields';
+import {
+  APP_TUTORIAL_EXPECTED_INPUTS,
+  APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS,
+} from '@/features/app-tutorial/catalog';
+import { reportAppTutorialAction } from '@/features/app-tutorial/events';
+import {
+  collectAppTutorialFixtureTextAliases,
+  getAppTutorialFixtureTextVariants,
+  resolveAppTutorialFixtureText,
+  resolveAppTutorialFixtureValue,
+} from '@/features/app-tutorial/fixture-copy';
+import type { AppTutorialLanguage } from '@/features/app-tutorial/catalog';
+
 const MEMBERSHIP_MODE_OPTIONS = [...SELECTABLE_MEMBERSHIP_MODES];
 const PRESET_OPTIONS = [...GROUP_CONNECTION_PRESET_OPTIONS];
 
-function getMembershipDirectionLabel(direction: RelativeMembershipDirection) {
+function getMembershipDirectionLabel(
+  direction: RelativeMembershipDirection,
+  t: ReturnType<typeof useTranslation>['t']
+) {
   return direction === 'partner_members_to_current'
-    ? 'This group receives members'
-    : 'This group sends members';
+    ? t('common.network.membershipDirectionReceivesLabel')
+    : t('common.network.membershipDirectionSendsLabel');
 }
 
-function getMembershipDirectionDescription(direction: RelativeMembershipDirection) {
+function getMembershipDirectionDescription(
+  direction: RelativeMembershipDirection,
+  t: ReturnType<typeof useTranslation>['t']
+) {
   return direction === 'partner_members_to_current'
-    ? 'Members flow from the selected group into this group.'
-    : 'Members flow from this group into the selected group.';
+    ? t('common.network.membershipDirectionReceivesDescription')
+    : t('common.network.membershipDirectionSendsDescription');
 }
 
 function getSafeGroupDisplayName(name: string | null | undefined, fallback: string) {
@@ -59,26 +79,29 @@ function getSafeGroupDisplayName(name: string | null | undefined, fallback: stri
   return trimmedName ? trimmedName : fallback;
 }
 
-function getPresetLabel(preset: GroupConnectionPreset) {
+function getPresetLabel(preset: GroupConnectionPreset, t: ReturnType<typeof useTranslation>['t']) {
   if (preset === 'parent') {
-    return 'This group is child';
+    return t('common.network.presetChildLabel');
   }
 
   if (preset === 'child') {
-    return 'This group is parent';
+    return t('common.network.presetParentLabel');
   }
 
   if (preset === 'role_members_to_partner') {
-    return 'This group sends role members';
+    return t('common.network.presetSendsRoleMembersLabel');
   }
 
-  return 'This group receives role members';
+  return t('common.network.presetReceivesRoleMembersLabel');
 }
 
-function getRoleSelectorLabel(direction: RelativeMembershipDirection) {
+function getRoleSelectorLabel(
+  direction: RelativeMembershipDirection,
+  t: ReturnType<typeof useTranslation>['t']
+) {
   return direction === 'partner_members_to_current'
-    ? 'Role in selected group'
-    : 'Role in this group';
+    ? t('common.network.roleInSelectedGroup')
+    : t('common.network.roleInThisGroup');
 }
 
 function RequiredRoleSelectorLabel({ label }: { label: string }) {
@@ -134,7 +157,7 @@ function PresetDescription({
     return (
       <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs leading-relaxed">
         {currentTag}
-        <span>is the child group of</span>
+        <span>{t('common.network.isChildGroupOf')}</span>
         {selectedTag}
       </div>
     );
@@ -144,7 +167,7 @@ function PresetDescription({
     return (
       <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs leading-relaxed">
         {currentTag}
-        <span>is the parent group of</span>
+        <span>{t('common.network.isParentGroupOf')}</span>
         {selectedTag}
       </div>
     );
@@ -154,7 +177,7 @@ function PresetDescription({
     return (
       <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs leading-relaxed">
         {currentTag}
-        <span>sends members with the selected role to</span>
+        <span>{t('common.network.sendsRoleMembersTo')}</span>
         {selectedTag}
       </div>
     );
@@ -163,7 +186,7 @@ function PresetDescription({
   return (
     <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs leading-relaxed">
       {currentTag}
-      <span>receives members with the selected role from</span>
+      <span>{t('common.network.receivesRoleMembersFrom')}</span>
       {selectedTag}
     </div>
   );
@@ -183,6 +206,7 @@ export interface GroupConnectionComposerViewProps {
   disableGroupSelection: any;
   groupSelectorLabel: any;
   t: any;
+  language: AppTutorialLanguage;
   selectedGroupName: any;
   directionOptions: any;
   selectedRights: any;
@@ -197,6 +221,43 @@ export interface GroupConnectionComposerViewProps {
   updateMembershipRule: any;
   setActiveMembershipDirection: any;
   updateRightDirection: any;
+}
+
+function toLocalizedGroupTypeaheadItems(
+  groups: any[],
+  language: AppTutorialLanguage
+): TypeaheadItem[] {
+  return toTypeaheadItems(
+    groups,
+    'group',
+    (group: any) =>
+      resolveAppTutorialFixtureText(group.name, {
+        tutorialRunId: group.tutorial_run_id,
+        language,
+      }) || 'Group',
+    (group: any) => {
+      const description = richTextToPlainText(
+        resolveAppTutorialFixtureValue(group.description, {
+          tutorialRunId: group.tutorial_run_id,
+          language,
+        })
+      );
+      return description ? description.substring(0, 60) : undefined;
+    },
+    undefined,
+    (group: any) => `/group/${group.id}`
+  ).map((item, index) => ({
+    ...item,
+    keywords: [
+      ...(item.keywords ?? []),
+      ...getAppTutorialFixtureTextVariants(groups[index]?.name, {
+        tutorialRunId: groups[index]?.tutorial_run_id,
+      }),
+      ...(groups[index]?.tutorial_run_id
+        ? collectAppTutorialFixtureTextAliases(richTextToPlainText(groups[index]?.description))
+        : []),
+    ],
+  }));
 }
 
 export function GroupConnectionComposerView({
@@ -214,6 +275,7 @@ export function GroupConnectionComposerView({
   disableGroupSelection,
   groupSelectorLabel,
   t,
+  language,
   selectedGroupName,
   directionOptions,
   selectedRights,
@@ -236,16 +298,16 @@ export function GroupConnectionComposerView({
         onValueChange={nextValue => onActiveTabChange(nextValue as GroupConnectionComposerTab)}
         className="space-y-4"
       >
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="preset">
+        <ScrollableTabsList>
+          <TabsTrigger value="preset" className="min-w-max flex-1">
             {translateText('generated.inline.0777_vorkonfiguriert_895eea86')}
           </TabsTrigger>
-          <TabsTrigger value="advanced">
+          <TabsTrigger value="advanced" className="min-w-max flex-1">
             {translateText('generated.inline.0778_link_selbst_konfigurieren_7eab7242')}
           </TabsTrigger>
-        </TabsList>
+        </ScrollableTabsList>
 
-        <div className="grid gap-2">
+        <div className="grid gap-2" data-tutorial-anchor="network-group-search">
           <FormControlLabel htmlFor="group-connection-composer-group">
             {groupSelectorLabel}
           </FormControlLabel>
@@ -255,30 +317,21 @@ export function GroupConnectionComposerView({
             </div>
           ) : (
             <TypeaheadSearch
-              items={toTypeaheadItems(
-                availableGroups,
-                'group',
-                (group: any) => group.name || 'Group',
-                (group: any) => {
-                  const description =
-                    typeof group.description ===
-                    translateText('generated.inline.0056_string_ecb25204')
-                      ? group.description
-                      : null;
-                  return description
-                    ? richTextToPlainText(description).substring(0, 60)
-                    : undefined;
-                },
-                undefined,
-                (group: any) => `/group/${group.id}`
-              )}
+              items={toLocalizedGroupTypeaheadItems(availableGroups, language)}
               value={value.selectedGroupId}
-              onChange={(item: TypeaheadItem | null) =>
+              onChange={(item: TypeaheadItem | null) => {
                 onValueChange({
                   ...value,
                   selectedGroupId: item?.id ?? '',
-                })
-              }
+                });
+                const selectedGroup = availableGroups.find((group: any) => group.id === item?.id);
+                if (item && selectedGroup?.tutorial_run_id) {
+                  reportAppTutorialAction({
+                    type: 'entity-selection',
+                    entityId: item.id,
+                  });
+                }
+              }}
               placeholder={translateText('generated.inline.0779_gruppe_ausw_hlen_e7c82c9a')}
               disablePortal
               showAllOnFocus
@@ -313,6 +366,9 @@ export function GroupConnectionComposerView({
                         <FormControlLabel
                           key={option.value}
                           htmlFor={`preset-${option.value}`}
+                          data-tutorial-anchor={
+                            option.value === 'parent' ? 'network-child-preset' : undefined
+                          }
                           className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
                             isSelected ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
                           } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
@@ -325,7 +381,7 @@ export function GroupConnectionComposerView({
                           />
                           <div className="min-w-0 flex-1 space-y-3">
                             <div className="text-sm font-medium">
-                              {getPresetLabel(option.value)}
+                              {getPresetLabel(option.value, t)}
                             </div>
                             {disabledReason ? (
                               <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
@@ -334,7 +390,7 @@ export function GroupConnectionComposerView({
                             ) : null}
                             <div className="bg-muted/30 rounded-md px-3 py-2">
                               <div className="text-muted-foreground mb-1 text-[11px] font-semibold uppercase">
-                                Relationship
+                                {t('common.network.relationship')}
                               </div>
                               <PresetDescription
                                 preset={option.value}
@@ -375,7 +431,7 @@ export function GroupConnectionComposerView({
                 <div className="grid gap-2">
                   <FormControlLabel>
                     <RequiredRoleSelectorLabel
-                      label={getRoleSelectorLabel(selectedPresetMembershipDirection)}
+                      label={getRoleSelectorLabel(selectedPresetMembershipDirection, t)}
                     />
                   </FormControlLabel>
                   <TypeaheadSearch
@@ -393,7 +449,7 @@ export function GroupConnectionComposerView({
                         sourceGroupIds: [],
                       })
                     }
-                    placeholder={getRoleSelectorLabel(selectedPresetMembershipDirection)}
+                    placeholder={getRoleSelectorLabel(selectedPresetMembershipDirection, t)}
                     ariaRequired
                     disablePortal
                     showAllOnFocus
@@ -462,10 +518,10 @@ export function GroupConnectionComposerView({
                           />
                           <div className="space-y-1">
                             <div className="text-sm font-medium">
-                              {getMembershipDirectionLabel(direction)}
+                              {getMembershipDirectionLabel(direction, t)}
                             </div>
                             <div className="text-muted-foreground text-xs">
-                              {getMembershipDirectionDescription(direction)}
+                              {getMembershipDirectionDescription(direction, t)}
                             </div>
                           </div>
                         </FormControlLabel>
@@ -547,7 +603,7 @@ export function GroupConnectionComposerView({
                     <div className="grid gap-2">
                       <FormControlLabel>
                         <RequiredRoleSelectorLabel
-                          label={getRoleSelectorLabel(membershipDirection)}
+                          label={getRoleSelectorLabel(membershipDirection, t)}
                         />
                       </FormControlLabel>
                       <TypeaheadSearch
@@ -563,7 +619,7 @@ export function GroupConnectionComposerView({
                             roleId: item?.id ?? '',
                           })
                         }
-                        placeholder={getRoleSelectorLabel(membershipDirection)}
+                        placeholder={getRoleSelectorLabel(membershipDirection, t)}
                         ariaRequired
                         disablePortal
                         showAllOnFocus
@@ -579,18 +635,62 @@ export function GroupConnectionComposerView({
 
       {value.selectedGroupId ? (
         <GroupRelationshipRightsSelector
+          tutorialAnchor="network-rights-selector"
+          tutorialInputValues={[
+            ...(value.rightDirections.informationRight !== 'none' &&
+            value.rightDirections.amendmentRight !== 'none'
+              ? [APP_TUTORIAL_EXPECTED_INPUTS.networkRightsSelected]
+              : []),
+            ...(value.rightDirections.informationRight ===
+              APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS.outgoing &&
+            value.rightDirections.amendmentRight === APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS.outgoing
+              ? [APP_TUTORIAL_EXPECTED_INPUTS.networkRightsOutgoing]
+              : []),
+            ...(value.rightDirections.informationRight ===
+              APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS.incoming &&
+            value.rightDirections.amendmentRight === APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS.incoming
+              ? [APP_TUTORIAL_EXPECTED_INPUTS.networkRightsIncoming]
+              : []),
+          ]}
           label={translateText('generated.inline.0787_rechte_11cf94d4')}
           helperText={t('common.network.existingRightsStatusHint')}
           selectedRights={selectedRights}
-          onToggleRight={right =>
-            updateRightDirection(
-              right,
-              value.rightDirections[right] === 'none' ? 'current_grants_right_to_partner' : 'none'
-            )
-          }
+          onToggleRight={right => {
+            const direction =
+              value.rightDirections[right] === 'none' ? 'current_grants_right_to_partner' : 'none';
+            const nextDirections = {
+              ...value.rightDirections,
+              [right]: direction,
+            };
+            updateRightDirection(right, direction);
+            if (
+              nextDirections.informationRight !== 'none' &&
+              nextDirections.amendmentRight !== 'none'
+            ) {
+              reportAppTutorialAction({
+                type: 'input',
+                value: APP_TUTORIAL_EXPECTED_INPUTS.networkRightsSelected,
+              });
+            }
+          }}
           existingRightStatuses={existingRightStatuses}
           rightDirections={value.rightDirections}
-          onDirectionChange={updateRightDirection}
+          onDirectionChange={(right, direction) => {
+            const nextDirections = {
+              ...value.rightDirections,
+              [right]: direction,
+            };
+            updateRightDirection(right, direction);
+            if (
+              nextDirections.informationRight === APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS.incoming &&
+              nextDirections.amendmentRight === APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS.incoming
+            ) {
+              reportAppTutorialAction({
+                type: 'input',
+                value: APP_TUTORIAL_EXPECTED_INPUTS.networkRightsIncoming,
+              });
+            }
+          }}
           directionOptions={directionOptions}
           currentGroupName={currentGroupName}
           selectedGroupName={selectedGroupName}

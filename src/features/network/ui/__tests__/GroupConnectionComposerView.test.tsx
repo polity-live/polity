@@ -1,11 +1,34 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { GROUP_CONNECTION_PRESET_OPTIONS } from '../../logic/groupConnectionComposer';
 import { GroupConnectionComposerView } from '../GroupConnectionComposerView';
+import { APP_TUTORIAL_ACTION_EVENT } from '@/features/app-tutorial/events';
+
+const TEST_NETWORK_TRANSLATIONS: Record<string, string> = {
+  'common.network.relationship': 'Relationship',
+  'common.network.presetChildLabel': 'This group is child',
+  'common.network.presetParentLabel': 'This group is parent',
+  'common.network.presetSendsRoleMembersLabel': 'This group sends role members',
+  'common.network.presetReceivesRoleMembersLabel': 'This group receives role members',
+  'common.network.roleInSelectedGroup': 'Role in selected group',
+  'common.network.roleInThisGroup': 'Role in this group',
+};
+
+function testTranslate(
+  key: string,
+  paramsOrFallback?: string | Record<string, unknown>,
+  fallback?: string
+) {
+  return (
+    TEST_NETWORK_TRANSLATIONS[key] ??
+    (typeof paramsOrFallback === 'string' ? paramsOrFallback : fallback) ??
+    key
+  );
+}
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) => (
@@ -14,8 +37,15 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (_key: string, fallback?: string | Record<string, unknown>) =>
-    typeof fallback === 'string' ? fallback : _key,
+  translate: (_key: string, fallback?: string | Record<string, unknown>) => {
+    const labels: Record<string, string> = {
+      'features.network.membershipModes.all_members': 'All active members',
+      'features.network.membershipModes.role_members': 'Members with selected role',
+      'features.network.membershipModes.selected_source_groups': 'Parliament membership',
+      'features.network.membershipModes.none': 'No automatic membership',
+    };
+    return labels[_key] ?? (typeof fallback === 'string' ? fallback : _key);
+  },
   useTranslation: () => ({
     t: (key: string, paramsOrFallback?: string | Record<string, unknown>, fallback?: string) => {
       const templates: Record<string, string> = {
@@ -23,6 +53,11 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'common.network.thisGroup': 'This group',
         'common.network.thisGroupEmbedded': 'this group',
         'common.network.membershipLabel': 'Membership',
+        'common.network.relationship': 'Relationship',
+        'common.network.isChildGroupOf': 'is the child group of',
+        'common.network.isParentGroupOf': 'is the parent group of',
+        'common.network.sendsRoleMembersTo': 'sends members with the selected role to',
+        'common.network.receivesRoleMembersFrom': 'receives members with the selected role from',
         'common.network.existingRightsStatusHint': 'Existing rights are shown inline.',
         'common.network.rightInfo': 'Information Right',
         'common.network.rightInfoDesc': 'Right to information and access',
@@ -53,15 +88,43 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 vi.mock('@/features/shared/ui/typeahead/TypeaheadSearch', () => ({
   TypeaheadSearch: ({
     ariaRequired,
+    items = [],
+    onChange,
     placeholder,
     value,
   }: {
     ariaRequired?: boolean;
+    items?: {
+      id: string;
+      label: string;
+      description?: string;
+      secondaryLabel?: string;
+      keywords?: string[];
+    }[];
+    onChange?: (item: {
+      id: string;
+      label: string;
+      description?: string;
+      secondaryLabel?: string;
+      keywords?: string[];
+    }) => void;
     placeholder?: string;
     value?: string;
   }) => (
     <div data-testid="typeahead" aria-required={ariaRequired || undefined}>
       {placeholder}:{value}
+      {items.map(item => (
+        <button
+          key={item.id}
+          type="button"
+          data-testid={`typeahead-item-${item.id}`}
+          data-description={item.description ?? item.secondaryLabel}
+          data-keywords={item.keywords?.join('|')}
+          onClick={() => onChange?.(item)}
+        >
+          {item.label}
+        </button>
+      ))}
     </div>
   ),
 }));
@@ -116,9 +179,8 @@ function renderComposerView(
       disabledRelationshipOptions={{}}
       disableGroupSelection={false}
       groupSelectorLabel="Partner group"
-      t={(key: string, paramsOrFallback?: string | Record<string, unknown>, fallback?: string) =>
-        (typeof paramsOrFallback === 'string' ? paramsOrFallback : fallback) ?? key
-      }
+      language="en"
+      t={testTranslate}
       selectedGroupName="H1"
       directionOptions={[]}
       selectedRights={new Set()}
@@ -139,6 +201,127 @@ function renderComposerView(
 }
 
 describe('GroupConnectionComposerView', () => {
+  it('exposes only the group selector as the opened-dialog spotlight target', () => {
+    const { container } = renderComposerView();
+
+    const selector = container.querySelector('[data-tutorial-anchor="network-group-search"]');
+    expect(selector).toBeTruthy();
+    expect(selector?.querySelector('[data-testid="typeahead"]')).toBeTruthy();
+  });
+
+  it('exposes selected rights and their direction using stable tutorial values', () => {
+    const value = {
+      ...createValue(),
+      rightDirections: {
+        ...createValue().rightDirections,
+        informationRight: 'partner_grants_right_to_current',
+        amendmentRight: 'partner_grants_right_to_current',
+      },
+    } as const;
+
+    const { container } = renderComposerView({
+      value,
+      selectedRights: new Set(['informationRight', 'amendmentRight']),
+    });
+
+    const selector = container.querySelector('[data-tutorial-anchor="network-rights-selector"]');
+    expect(JSON.parse(selector?.getAttribute('data-tutorial-input-values') ?? '[]')).toEqual([
+      'informationRight amendmentRight',
+      'informationRight amendmentRight current_has_right_in_partner',
+    ]);
+  });
+
+  it('projects tutorial groups in English and reports the stable entity id only for fixtures', () => {
+    const evidence: unknown[] = [];
+    const listener = (event: Event) => {
+      evidence.push((event as CustomEvent).detail);
+    };
+    window.addEventListener(APP_TUTORIAL_ACTION_EVENT, listener);
+
+    try {
+      renderComposerView({
+        availableGroups: [
+          {
+            id: 'climate-council-id',
+            name: 'Münchner Klimarat',
+            description: 'Transparente, vernetzte Klimapolitik für München.',
+            tutorial_run_id: 'tutorial-run',
+          },
+        ],
+        language: 'en',
+      });
+
+      const tutorialItem = screen.getByTestId('typeahead-item-climate-council-id');
+      expect(tutorialItem.textContent).toBe('Munich Climate Council');
+      expect(tutorialItem.getAttribute('data-description')).toBe(
+        'Transparent, connected climate policy for Munich.'
+      );
+      expect(tutorialItem.getAttribute('data-keywords')).toContain('Münchner Klimarat');
+      expect(tutorialItem.getAttribute('data-keywords')).toContain('Munich Climate Council');
+      expect(tutorialItem.getAttribute('data-keywords')).toContain(
+        'Transparent, connected climate policy for Munich.'
+      );
+
+      fireEvent.click(tutorialItem);
+      expect(evidence).toEqual([
+        {
+          type: 'entity-selection',
+          entityId: 'climate-council-id',
+        },
+      ]);
+
+      cleanup();
+      renderComposerView({
+        availableGroups: [
+          {
+            id: 'normal-group-id',
+            name: 'Münchner Klimarat',
+            description: 'Nutzerdaten',
+          },
+        ],
+        language: 'en',
+      });
+
+      const normalItem = screen.getByTestId('typeahead-item-normal-group-id');
+      expect(normalItem.textContent).toBe('Münchner Klimarat');
+      fireEvent.click(normalItem);
+      expect(evidence).toHaveLength(1);
+    } finally {
+      window.removeEventListener(APP_TUTORIAL_ACTION_EVENT, listener);
+    }
+  });
+
+  it('keeps both composer tabs within their content width on narrow screens', () => {
+    renderComposerView();
+    const tabsList = screen.getByRole('tablist');
+    const tabs = screen.getAllByRole('tab');
+
+    expect(tabsList.className).toContain('w-full');
+    expect(tabsList.className).toContain('overflow-x-auto');
+    expect(tabsList.className).not.toContain('grid-cols-2');
+    expect(tabs).toHaveLength(2);
+    tabs.forEach(tab => {
+      expect(tab.className).toContain('min-w-max');
+      expect(tab.className).toContain('flex-1');
+      expect(tab.className).toContain('whitespace-nowrap');
+    });
+    expect(tabsList.getAttribute('data-orientation')).toBe('horizontal');
+  });
+
+  it('preserves pointer and keyboard navigation between composer tabs', async () => {
+    const onActiveTabChange = vi.fn();
+
+    renderComposerView({ onActiveTabChange });
+    const [presetTab, advancedTab] = screen.getAllByRole('tab');
+
+    fireEvent.mouseDown(advancedTab, { button: 0, ctrlKey: false });
+    expect(onActiveTabChange).toHaveBeenCalledWith('advanced');
+
+    presetTab.focus();
+    fireEvent.keyDown(presetTab, { key: 'ArrowRight' });
+    await waitFor(() => expect(document.activeElement).toBe(advancedTab));
+  });
+
   it('renders four this-group presets without parliament or source-group wording', () => {
     const value = createValue();
 
@@ -160,9 +343,8 @@ describe('GroupConnectionComposerView', () => {
         disabledRelationshipOptions={{}}
         disableGroupSelection={false}
         groupSelectorLabel="Partner group"
-        t={(key: string, paramsOrFallback?: string | Record<string, unknown>, fallback?: string) =>
-          (typeof paramsOrFallback === 'string' ? paramsOrFallback : fallback) ?? key
-        }
+        language="en"
+        t={testTranslate}
         selectedGroupName="H1"
         directionOptions={[]}
         selectedRights={new Set()}
@@ -187,6 +369,8 @@ describe('GroupConnectionComposerView', () => {
     expect(screen.getAllByText('This group', { exact: false }).length).toBeGreaterThan(0);
     expect(screen.getByText('is the child group of')).toBeTruthy();
     expect(screen.getByText('is the parent group of')).toBeTruthy();
+    expect(document.querySelector('[data-tutorial-anchor="network-child-preset"]')).toBeTruthy();
+    expect(document.querySelector('[data-tutorial-anchor="network-rights-selector"]')).toBeTruthy();
     expect(screen.queryByText(['Parliament', 'group'].join(' '))).toBeNull();
     expect(screen.queryByText(['Selected', 'source', 'groups'].join(' '))).toBeNull();
     expect(
@@ -318,9 +502,8 @@ describe('GroupConnectionComposerView', () => {
         disabledRelationshipOptions={{}}
         disableGroupSelection={false}
         groupSelectorLabel="Partner group"
-        t={(key: string, paramsOrFallback?: string | Record<string, unknown>, fallback?: string) =>
-          (typeof paramsOrFallback === 'string' ? paramsOrFallback : fallback) ?? key
-        }
+        language="en"
+        t={testTranslate}
         selectedGroupName="H1"
         directionOptions={[]}
         selectedRights={new Set()}

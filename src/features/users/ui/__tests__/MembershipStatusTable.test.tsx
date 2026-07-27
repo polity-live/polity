@@ -186,4 +186,31 @@ describe('MembershipStatusTable', () => {
     fireEvent.click(screen.getByText('pages.user.memberships.confirmations.withdrawConfirm'));
     expect(onWithdraw).toHaveBeenCalledWith('request-1');
   });
+
+  it('exposes pending group requests as a stable tutorial target', () => {
+    const { container } = render(
+      <MembershipStatusTable
+        title="Requested"
+        description="Requested rows"
+        icon={Users}
+        items={
+          [
+            {
+              id: 'request-1',
+              status: 'requested',
+              group: { id: 'group-1', name: 'Climate Initiative' },
+              created_at: Date.now(),
+            },
+          ] as never
+        }
+        statusType="requested"
+        entityKey="group"
+        fallbackIcon={Users}
+      />
+    );
+
+    expect(
+      container.querySelector('[data-tutorial-anchor="tutorial-membership-request"]')
+    ).toBeTruthy();
+  });
 });

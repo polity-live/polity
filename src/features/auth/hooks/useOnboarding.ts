@@ -32,7 +32,6 @@ export interface OnboardingData {
   selectedGroups: Group[];
   activeGroupId: string | null;
   membershipRequestSentGroupIds: string[];
-  dontShowAriaKaiAgain: boolean;
 }
 
 interface UseOnboardingReturn {
@@ -48,7 +47,6 @@ interface UseOnboardingReturn {
   toggleSelectedGroup: (group: Group) => void;
   setActiveGroupId: (groupId: string | null) => void;
   clearSelectedGroups: () => void;
-  setDontShowAriaKaiAgain: (value: boolean) => void;
   goToStep: (step: OnboardingStep) => void;
   nextStep: () => void;
   previousStep: () => void;
@@ -113,7 +111,6 @@ export function useOnboarding(): UseOnboardingReturn {
     selectedGroups: [],
     activeGroupId: null,
     membershipRequestSentGroupIds: [],
-    dontShowAriaKaiAgain: false,
   });
 
   const setFirstName = useCallback((value: string) => {
@@ -183,9 +180,6 @@ export function useOnboarding(): UseOnboardingReturn {
     }));
   }, []);
 
-  const setDontShowAriaKaiAgain = useCallback((value: boolean) => {
-    setData(prev => ({ ...prev, dontShowAriaKaiAgain: value }));
-  }, []);
   const goToStep = useCallback((newStep: OnboardingStep) => {
     setStep(newStep);
     setError(null);
@@ -374,7 +368,6 @@ export function useOnboarding(): UseOnboardingReturn {
     toggleSelectedGroup,
     setActiveGroupId,
     clearSelectedGroups,
-    setDontShowAriaKaiAgain,
     goToStep,
     nextStep,
     previousStep,

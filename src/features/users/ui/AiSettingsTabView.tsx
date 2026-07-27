@@ -124,7 +124,7 @@ export function AiSettingsTabView({
     <div className="space-y-6">
       {aiSettingsOverviewCard}
 
-      <Card>
+      <Card data-tutorial-anchor="settings-ai-tools">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Wrench className="h-5 w-5" />
@@ -142,7 +142,7 @@ export function AiSettingsTabView({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card data-tutorial-anchor="settings-ai-skills">
         <CardHeader>
           <CardTitle className="text-lg">{t('pages.user.ai.skillsBuiltIn')}</CardTitle>
           <CardDescription>{t('pages.user.ai.skillsBuiltInDescription')}</CardDescription>
@@ -182,7 +182,7 @@ export function AiSettingsTabView({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card data-tutorial-anchor="settings-byoc">
         <CardHeader>
           <CardTitle className="text-lg">{t('pages.user.ai.credentialsTitle')}</CardTitle>
           <CardDescription>{t('pages.user.ai.credentialsDescription')}</CardDescription>

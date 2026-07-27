@@ -254,17 +254,21 @@ export function AddPaymentDialogView({
                 <PopoverContent className="w-full p-0" align="start">
                   <Command>
                     <CommandInput
-                      placeholder={`Search ${entityType === 'user' ? 'users' : 'groups'}...`}
+                      placeholder={translateText(
+                        entityType === 'user'
+                          ? 'features.groups.paymentDialog.searchUsers'
+                          : 'features.groups.paymentDialog.searchGroups'
+                      )}
                       value={searchQuery}
                       onValueChange={setSearchQuery}
                     />
                     <CommandList>
                       <CommandEmpty>
-                        {translateText('generated.inline.0609_no_816c52fd')}
-                        {entityType === 'user'
-                          ? translateText('generated.inline.0027_users_5b7dcd14')
-                          : translateText('generated.inline.0064_groups_0a894db7')}{' '}
-                        found.
+                        {translateText(
+                          entityType === 'user'
+                            ? 'features.groups.paymentDialog.noUsersFound'
+                            : 'features.groups.paymentDialog.noGroupsFound'
+                        )}
                       </CommandEmpty>
                       {filteredUsers && filteredUsers.length > 0 && (
                         <CommandGroup

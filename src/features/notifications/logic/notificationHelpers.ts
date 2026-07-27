@@ -1,5 +1,7 @@
 import type { Notification } from '../types/notification.types';
 import { isNotificationRead as isNotificationReadState } from '@/zero/notifications/notificationReadState';
+import { translate } from '@/features/shared/hooks/use-translation';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
 export interface MessageNavigationSearch {
   conversationId?: string;
@@ -366,18 +368,25 @@ export function formatTime(date: string | number): string {
   const diffInHours = (now.getTime() - notifDate.getTime()) / (1000 * 60 * 60);
 
   if (diffInHours < 1) {
-    const diffInMinutes = Math.floor(diffInHours * 60);
-    return `${diffInMinutes}m ago`;
+    const diffInMinutes = Math.max(0, Math.floor(diffInHours * 60));
+    return diffInMinutes === 0
+      ? translate('features.notifications.time.justNow')
+      : translate('features.notifications.time.minutesAgo', { count: diffInMinutes });
   } else if (diffInHours < 24) {
-    return `${Math.floor(diffInHours)}h ago`;
+    return translate('features.notifications.time.hoursAgo', {
+      count: Math.floor(diffInHours),
+    });
   } else if (diffInHours < 168) {
     // 7 days
     const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays}d ago`;
+    return translate('features.notifications.time.daysAgo', { count: diffInDays });
   } else {
-    return notifDate.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
+    return notifDate.toLocaleDateString(
+      useLanguageStore.getState().language === 'de' ? 'de-DE' : 'en-US',
+      {
+        month: 'short',
+        day: 'numeric',
+      }
+    );
   }
 }

@@ -21,8 +21,27 @@ export function requireRequestedViewer<T>(
   return (q as any).where(field, userID) as T;
 }
 
-export function applySearchDocumentQueryAccess<T>(q: T, userID: string | undefined | null): T {
+/**
+ * Tutorial roots look like normal public/authenticated data to the rest of the
+ * product, but may only be replicated to the owner of their still-open run.
+ */
+export function applyTutorialRunOwnerQueryAccess<T>(q: T, userID: string | undefined | null): T {
   const query = q as any;
+  if (!isAuthenticatedUserId(userID)) {
+    return query.where('tutorial_run_id', 'IS', null) as T;
+  }
+  return query.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('tutorial_run_id', 'IS', null),
+      exists('tutorial_run', (run: any) =>
+        run.where('user_id', userID).where('status', 'IN', ['active', 'paused'])
+      )
+    )
+  ) as T;
+}
+
+export function applySearchDocumentQueryAccess<T>(q: T, userID: string | undefined | null): T {
+  const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
 
   if (!isAuthenticatedUserId(userID)) {
     return query.where('visibility', 'public') as T;
@@ -43,7 +62,7 @@ const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['active', 'collaborator', 'membe
 const ACTIVE_BLOGGER_STATUSES = ['owner', 'admin', 'member', 'writer'];
 
 function applyGroupPrivateRelationshipQueryAccess<T>(q: T, userID: string): T {
-  const query = q as any;
+  const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('owner_id', userID),
@@ -68,7 +87,7 @@ function applyGroupPrivateRelationshipQueryAccess<T>(q: T, userID: string): T {
 }
 
 function applyEventPrivateRelationshipQueryAccess<T>(q: T, userID: string): T {
-  const query = q as any;
+  const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('creator_id', userID),
@@ -83,7 +102,7 @@ function applyEventPrivateRelationshipQueryAccess<T>(q: T, userID: string): T {
 }
 
 function applyAmendmentPrivateRelationshipQueryAccess<T>(q: T, userID: string): T {
-  const query = q as any;
+  const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('created_by_id', userID),
@@ -105,7 +124,7 @@ function applyAmendmentPrivateRelationshipQueryAccess<T>(q: T, userID: string): 
 }
 
 export function applyUserQueryAccess<T>(q: T, userID: string | undefined | null): T {
-  const query = q as any;
+  const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
 
   if (!isAuthenticatedUserId(userID)) {
     return query.where('visibility', 'public') as T;
@@ -117,7 +136,7 @@ export function applyUserQueryAccess<T>(q: T, userID: string | undefined | null)
 }
 
 export function applyGroupQueryAccess<T>(q: T, userID: string | undefined | null): T {
-  const query = q as any;
+  const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
 
   if (!isAuthenticatedUserId(userID)) {
     return query.where('visibility', 'public') as T;
@@ -244,7 +263,7 @@ export function applyGroupMembershipSelfOrManagerQueryAccess<T>(
 }
 
 export function applyEventQueryAccess<T>(q: T, userID: string | undefined | null): T {
-  const query = q as any;
+  const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
 
   if (!isAuthenticatedUserId(userID)) {
     return query.where('visibility', 'public') as T;
@@ -363,7 +382,7 @@ export function applyEventParticipantOrManagerQueryAccess<T>(
 }
 
 export function applyAmendmentQueryAccess<T>(q: T, userID: string | undefined | null): T {
-  const query = q as any;
+  const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
 
   if (!isAuthenticatedUserId(userID)) {
     return query.where('visibility', 'public') as T;
@@ -445,7 +464,7 @@ export function applyChangeRequestVisibilityAccess<T>(q: T, userID: string | und
 }
 
 export function applyBlogQueryAccess<T>(q: T, userID: string | undefined | null): T {
-  const query = q as any;
+  const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
 
   if (!isAuthenticatedUserId(userID)) {
     return query.where('visibility', 'public') as T;
@@ -483,7 +502,7 @@ export function applyStatementQueryAccess<T>(
   userID: string | undefined | null,
   now: number
 ): T {
-  const query = q as any;
+  const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
   const activeQuery = isAuthenticatedUserId(userID)
     ? query.where(({ or, cmp }: any) =>
         or(cmp('expires_at', 'IS', null), cmp('expires_at', '>', now), cmp('user_id', userID))
@@ -522,7 +541,7 @@ export function applyStatementQueryAccess<T>(
 }
 
 export function applyTodoQueryAccess<T>(q: T, userID: string | undefined | null): T {
-  const query = q as any;
+  const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
 
   if (!isAuthenticatedUserId(userID)) {
     return query.where('visibility', 'public') as T;
@@ -576,12 +595,40 @@ export function applyAgendaItemQueryAccess<T>(q: T, userID: string | undefined |
 
 export function applyElectionQueryAccess<T>(q: T, userID: string | undefined | null): T {
   const query = q as any;
+  const scopedQuery = query.where(({ or, exists }: any) =>
+    or(
+      exists('agenda_item', (agendaItem: any) => applyAgendaItemQueryAccess(agendaItem, userID), {
+        flip: false,
+      }),
+      exists(
+        'role',
+        (role: any) =>
+          role.where(({ or: roleOr, exists: roleExists }: any) =>
+            roleOr(
+              roleExists('group', (group: any) => applyGroupQueryAccess(group, userID), {
+                flip: false,
+              }),
+              roleExists('event', (event: any) => applyEventQueryAccess(event, userID), {
+                flip: false,
+              }),
+              roleExists(
+                'amendment',
+                (amendment: any) => applyAmendmentQueryAccess(amendment, userID),
+                { flip: false }
+              ),
+              roleExists('blog', (blog: any) => applyBlogQueryAccess(blog, userID), { flip: false })
+            )
+          ),
+        { flip: false }
+      )
+    )
+  );
 
   if (!isAuthenticatedUserId(userID)) {
-    return query.where('visibility', 'public') as T;
+    return scopedQuery.where('visibility', 'public') as T;
   }
 
-  return query.where(({ or, cmp, exists }: any) =>
+  return scopedQuery.where(({ or, cmp, exists }: any) =>
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       exists('electors', (elector: any) => elector.where('user_id', userID), {
@@ -738,12 +785,22 @@ export function applyElectionElectorOrManagerQueryAccess<T>(
 
 export function applyVoteQueryAccess<T>(q: T, userID: string | undefined | null): T {
   const query = q as any;
+  const scopedQuery = query.where(({ or, exists }: any) =>
+    or(
+      exists('agenda_item', (agendaItem: any) => applyAgendaItemQueryAccess(agendaItem, userID), {
+        flip: false,
+      }),
+      exists('amendment', (amendment: any) => applyAmendmentQueryAccess(amendment, userID), {
+        flip: false,
+      })
+    )
+  );
 
   if (!isAuthenticatedUserId(userID)) {
-    return query.where('visibility', 'public') as T;
+    return scopedQuery.where('visibility', 'public') as T;
   }
 
-  return query.where(({ or, cmp, exists }: any) =>
+  return scopedQuery.where(({ or, cmp, exists }: any) =>
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       exists('voters', (voter: any) => voter.where('user_id', userID), { flip: false }),

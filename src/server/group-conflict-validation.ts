@@ -353,7 +353,7 @@ async function buildMembershipActivationConflicts(
         blocking: true,
         summary: 'Nur eine speisende Untergruppe pro Hierarchie ist erlaubt.',
         explanation:
-          'Die Aktivierung wuerde diese Person in zwei Untergruppen derselben Hierarchie gleichzeitig aktiv machen.',
+          'Die Aktivierung würde diese Person in zwei Untergruppen derselben Hierarchie gleichzeitig aktiv machen.',
         details: {
           users: [await buildConflictUser(tx, targetUserId)],
           groups: [
@@ -370,6 +370,7 @@ async function buildMembershipActivationConflicts(
         },
         resolutions: [
           {
+            code: 'align_membership_before_activation',
             label: translateText('generated.inline.0661_mitgliedschaft_zuerst_klaeren_d4f1a8e1'),
             description: translateText(
               'generated.inline.0662_die_person_braucht_vor_der_aktivierung_genau__e776cbaa'
@@ -418,7 +419,7 @@ async function buildMembershipActivationConflicts(
         blocking: true,
         summary: 'Nur eine speisende Untergruppe pro Hierarchie ist erlaubt.',
         explanation:
-          'Die Aktivierung wuerde diese Person in zwei Untergruppen derselben Hierarchie gleichzeitig aktiv machen.',
+          'Die Aktivierung würde diese Person in zwei Untergruppen derselben Hierarchie gleichzeitig aktiv machen.',
         details: {
           users: [await buildConflictUser(tx, targetUserId)],
           groups: [
@@ -436,6 +437,7 @@ async function buildMembershipActivationConflicts(
         resolutions: selfService
           ? [
               {
+                code: 'leave_other_subgroup',
                 label: translateText('generated.inline.0655_andere_untergruppe_verlassen_8424bbb5'),
                 description: translateText(
                   'generated.inline.0656_beende_zuerst_die_aktive_mitgliedschaft_in_de_563d3245'
@@ -444,6 +446,7 @@ async function buildMembershipActivationConflicts(
                 group_id: conflictingGroupId,
               },
               {
+                code: 'choose_other_group',
                 label: translateText('generated.inline.0657_andere_gruppe_waehlen_886e4e05'),
                 description: translateText(
                   'generated.inline.0658_ziehe_die_aktuelle_anfrage_oder_einladung_zur_f209d59b'
@@ -452,6 +455,7 @@ async function buildMembershipActivationConflicts(
                 group_id: targetGroupId,
               },
               {
+                code: 'contact_admin',
                 label: translateText('generated.inline.0659_admin_kontaktieren_7e504533'),
                 description: translateText(
                   'generated.inline.0660_wenn_du_die_andere_mitgliedschaft_nicht_selbs_3df3a2f3'
@@ -463,6 +467,7 @@ async function buildMembershipActivationConflicts(
             ]
           : [
               {
+                code: 'align_membership_before_activation',
                 label: translateText(
                   'generated.inline.0661_mitgliedschaft_zuerst_klaeren_d4f1a8e1'
                 ),
@@ -509,7 +514,7 @@ async function buildMembershipActivationConflicts(
       blocking: true,
       summary: 'Eine Parlamentsgruppe darf pro Person nur eine speisende Source-Gruppe haben.',
       explanation:
-        'Die Aktivierung wuerde diese Person gleichzeitig in mehreren Source-Gruppen derselben Parlamentsgruppe aktiv machen.',
+        'Die Aktivierung würde diese Person gleichzeitig in mehreren Source-Gruppen derselben Parlamentsgruppe aktiv machen.',
       details: {
         users: [await buildConflictUser(tx, targetUserId)],
         groups: [toConflictGroup(siblingGroup.id, snapshot.groupsById)],
@@ -522,6 +527,7 @@ async function buildMembershipActivationConflicts(
       resolutions: selfService
         ? [
             {
+              code: 'leave_other_source_group',
               label: translateText('generated.inline.0663_andere_source_gruppe_verlassen_1b7590bc'),
               description: translateText(
                 'generated.inline.0664_beende_zuerst_die_aktive_mitgliedschaft_in_ei_d743c119'
@@ -530,6 +536,7 @@ async function buildMembershipActivationConflicts(
               group_id: matchingSourceGroupIds[1] ?? matchingSourceGroupIds[0],
             },
             {
+              code: 'choose_other_group',
               label: translateText('generated.inline.0657_andere_gruppe_waehlen_886e4e05'),
               description: translateText(
                 'generated.inline.0665_nutze_fuer_diese_parlamentsstruktur_nur_eine__06c7aa89'
@@ -538,6 +545,7 @@ async function buildMembershipActivationConflicts(
               group_id: targetGroupId,
             },
             {
+              code: 'contact_source_admins',
               label: translateText(
                 'generated.inline.0666_zustaendige_admins_kontaktieren_1f3c2d84'
               ),
@@ -551,6 +559,7 @@ async function buildMembershipActivationConflicts(
           ]
         : [
             {
+              code: 'clarify_source_memberships',
               label: translateText(
                 'generated.inline.0668_source_mitgliedschaften_klaeren_9e94c7b6'
               ),
@@ -701,9 +710,9 @@ async function buildGroupConnectionUpsertConflicts(
           kind: 'hierarchy_member_overlap',
           blocking: true,
           summary:
-            'Die Verknuepfung wuerde Mitglieder aus mehreren Untergruppen derselben Hierarchie zusammenfuehren.',
+            'Die Verknüpfung würde Mitglieder aus mehreren Untergruppen derselben Hierarchie zusammenführen.',
           explanation:
-            'Mindestens eine Person waere danach gleichzeitig in mehreren speisenden Untergruppen derselben Ziel-Hierarchie aktiv.',
+            'Mindestens eine Person wäre danach gleichzeitig in mehreren speisenden Untergruppen derselben Ziel-Hierarchie aktiv.',
           details: {
             users,
             groups: [
@@ -718,6 +727,7 @@ async function buildGroupConnectionUpsertConflicts(
           },
           resolutions: [
             {
+              code: 'align_memberships',
               label: translateText('generated.inline.0670_mitgliedschaften_angleichen_138832b6'),
               description: translateText(
                 'generated.inline.0671_entferne_oder_deaktiviere_ueberlappende_mitgl_4fe5c235'
@@ -731,6 +741,7 @@ async function buildGroupConnectionUpsertConflicts(
               group_id: pair.parentGroupId,
             },
             {
+              code: 'contact_other_group',
               label: translateText('generated.inline.0672_andere_gruppe_kontaktieren_b2abb8ae'),
               description: translateText(
                 'generated.inline.0673_falls_du_die_konkurrierende_untergruppe_nicht_3f8b37a2'
@@ -774,9 +785,9 @@ async function buildGroupConnectionUpsertConflicts(
         conflicts.push({
           kind: 'hierarchy_duplicate_path',
           blocking: true,
-          summary: 'Verknuepfung wuerde denselben Unterbau doppelt anbinden.',
+          summary: 'Verknüpfung würde denselben Unterbau doppelt anbinden.',
           explanation:
-            'Dieselbe Leaf-Basisgruppe wuerde die Ziel-Hierarchie nach der Aktivierung ueber zwei aktive Pfade erreichen.',
+            'Dieselbe Leaf-Basisgruppe würde die Ziel-Hierarchie nach der Aktivierung über zwei aktive Pfade erreichen.',
           details: {
             users: [],
             groups: [
@@ -798,6 +809,7 @@ async function buildGroupConnectionUpsertConflicts(
           },
           resolutions: [
             {
+              code: 'remove_duplicate_path',
               label: translateText(
                 'generated.inline.0674_einen_pfad_entfernen_oder_deaktivieren_1a612b63'
               ),
@@ -813,6 +825,7 @@ async function buildGroupConnectionUpsertConflicts(
               group_id: duplicatePathConflict.targetGroupId,
             },
             {
+              code: 'contact_responsible_group',
               label: translateText(
                 'generated.inline.0676_zustaendige_gruppe_kontaktieren_5200317b'
               ),
@@ -883,7 +896,7 @@ async function buildGroupConnectionUpsertConflicts(
       conflicts.push({
         kind: 'sibling_source_overlap',
         blocking: true,
-        summary: 'Die Parlaments-Konfiguration enthaelt ueberschneidende Source-Gruppen.',
+        summary: 'Die Parlaments-Konfiguration enthält überschneidende Source-Gruppen.',
         explanation:
           'Mindestens eine Person ist in mehr als einer speisenden Source-Gruppe dieser Parlamentsgruppe aktiv.',
         details: {
@@ -897,6 +910,7 @@ async function buildGroupConnectionUpsertConflicts(
         },
         resolutions: [
           {
+            code: 'clean_source_groups',
             label: translateText('generated.inline.0678_source_gruppen_bereinigen_010e44a9'),
             description: translateText(
               'generated.inline.0679_entferne_ueberschneidende_source_gruppen_oder_4948994c'

@@ -22,6 +22,7 @@ import { votingPasswordSharedMutators } from './voting-password/shared-mutators'
 import { accreditationSharedMutators } from './accreditation/shared-mutators';
 import { networkSharedMutators } from './network/shared-mutators';
 import { pqlSharedMutators } from './pql/shared-mutators';
+import { appearanceThemeSharedMutators } from './appearance-themes/shared-mutators';
 
 export const mutators = defineMutators({
   users: userSharedMutators,
@@ -46,4 +47,5 @@ export const mutators = defineMutators({
   accreditation: accreditationSharedMutators,
   network: networkSharedMutators,
   pql: pqlSharedMutators,
+  appearanceThemes: appearanceThemeSharedMutators,
 });

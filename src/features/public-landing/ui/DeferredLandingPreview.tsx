@@ -7,6 +7,7 @@ import {
   type CSSProperties,
 } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface DeferredLandingPreviewProps {
   load: () => Promise<{ default: ComponentType }>;
@@ -70,7 +71,7 @@ export function DeferredLandingPreview({ load, minHeight, label }: DeferredLandi
           <div className="space-y-3 p-6 text-center">
             <p className="text-muted-foreground text-sm">{label}</p>
             <Button type="button" variant="outline" size="sm" onClick={requestComponent}>
-              Retry
+              {translateText('common.loading.appBoot.retry')}
             </Button>
           </div>
         </div>

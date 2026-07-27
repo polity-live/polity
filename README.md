@@ -86,10 +86,10 @@ in the customer portal are reconciled after the browser returns to the app.
 
 #### Maps and location
 
-| Service                      | Used for                                               | Environment variables                         | Required                    |
-| ---------------------------- | ------------------------------------------------------ | --------------------------------------------- | --------------------------- |
-| **Geoapify**                 | Address autocomplete and reverse geocoding             | `GEOAPIFY_API_KEY` or `VITE_GEOAPIFY_API_KEY` | Required for address lookup |
-| **Overpass / OpenStreetMap** | Street-scene snapshots for streetscape design features | None                                          | No project API key required |
+| Service                      | Used for                                        | Environment variables                         | Required                    |
+| ---------------------------- | ----------------------------------------------- | --------------------------------------------- | --------------------------- |
+| **Geoapify**                 | Address autocomplete and reverse geocoding      | `GEOAPIFY_API_KEY` or `VITE_GEOAPIFY_API_KEY` | Required for address lookup |
+| **Overpass / OpenStreetMap** | Street-scene snapshots for City Design features | None                                          | No project API key required |
 
 #### Open data
 
@@ -100,9 +100,9 @@ in the customer portal are reconciled after the browser returns to the app.
 
 #### Notifications
 
-| Service      | Used for                                | Environment variables                                                           | Required                        |
-| ------------ | --------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------- |
-| **Web Push** | Browser push subscriptions and delivery | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_EMAIL`, `VITE_VAPID_PUBLIC_KEY` | Required for push notifications |
+| Service      | Used for                                                   | Environment variables                                                                                                            | Required                        |
+| ------------ | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| **Web Push** | Browser push subscriptions and durable background delivery | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_EMAIL`, `VITE_VAPID_PUBLIC_KEY`, `PUSH_DELIVERY_SECRET`, `PUSH_DELIVERY_ENABLED` | Required for push notifications |
 
 ### Local development mode
 
@@ -140,7 +140,9 @@ This boots up a local Supabase stack (Postgres, Auth, Studio, Inbucket, etc.) vi
 supabase migration up
 ```
 
-This creates all tables, indexes, RLS policies, storage policies, and functions from `supabase/schemas/`.
+This applies the versioned SQL files in `supabase/migrations/`. Those migrations
+are generated and reviewed from the declarative source of truth in
+`supabase/schemas/`.
 
 ### 4. Create storage buckets
 

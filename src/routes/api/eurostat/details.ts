@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { getEurostatDatasetDetails } from '@/server/eurostat/metadata';
+import { appErrorHttpBody, appErrorHttpBodyFrom } from '@/features/shared/errors/app-error';
 
 export const Route = createFileRoute('/api/eurostat/details')({
   server: {
@@ -10,16 +11,15 @@ export const Route = createFileRoute('/api/eurostat/details')({
         const language = url.searchParams.get('lang') ?? 'en';
 
         if (!code) {
-          return Response.json({ error: 'Dataset code is required' }, { status: 400 });
+          return Response.json(appErrorHttpBody('validation_failed'), { status: 400 });
         }
 
         try {
           return Response.json(await getEurostatDatasetDetails(code, language));
         } catch (error) {
-          return Response.json(
-            { error: error instanceof Error ? error.message : 'Eurostat metadata is unavailable' },
-            { status: 502 }
-          );
+          return Response.json(appErrorHttpBodyFrom(error, 'external_service_failed'), {
+            status: 502,
+          });
         }
       },
     },

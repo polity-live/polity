@@ -2,7 +2,7 @@
 -- 30_datasets.sql - Dataset metadata and external snapshot storage references
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS public.dataset (
+CREATE TABLE public.dataset (
   id UUID PRIMARY KEY,
   provider TEXT NOT NULL
     CHECK (provider IN ('EUROSTAT', 'GENESIS_DESTATIS', 'GOVDATA', 'UPLOAD')),
@@ -33,22 +33,22 @@ CREATE TABLE IF NOT EXISTS public.dataset (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_dataset_provider_code
+CREATE INDEX idx_dataset_provider_code
   ON public.dataset (provider, provider_dataset_id);
-CREATE INDEX IF NOT EXISTS idx_dataset_group
+CREATE INDEX idx_dataset_group
   ON public.dataset (group_id, updated_at DESC);
-CREATE INDEX IF NOT EXISTS idx_dataset_owner
+CREATE INDEX idx_dataset_owner
   ON public.dataset (owner_user_id, updated_at DESC);
-CREATE INDEX IF NOT EXISTS idx_dataset_status
+CREATE INDEX idx_dataset_status
   ON public.dataset (status);
-CREATE INDEX IF NOT EXISTS idx_dataset_title_trgm
+CREATE INDEX idx_dataset_title_trgm
   ON public.dataset USING GIN (title gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS idx_dataset_description_trgm
+CREATE INDEX idx_dataset_description_trgm
   ON public.dataset USING GIN (description gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS idx_dataset_metadata_gin
+CREATE INDEX idx_dataset_metadata_gin
   ON public.dataset USING GIN (metadata jsonb_path_ops);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_dataset_provider_identity
+CREATE UNIQUE INDEX idx_dataset_provider_identity
   ON public.dataset (
     provider,
     coalesce(provider_dataset_id, ''),
@@ -56,7 +56,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_dataset_provider_identity
     coalesce(group_id::text, '')
   );
 
-CREATE TABLE IF NOT EXISTS public.dataset_snapshot (
+CREATE TABLE public.dataset_snapshot (
   id UUID PRIMARY KEY,
   dataset_id UUID NOT NULL REFERENCES public.dataset (id) ON DELETE CASCADE,
   snapshot_key TEXT NOT NULL UNIQUE,
@@ -80,14 +80,14 @@ CREATE TABLE IF NOT EXISTS public.dataset_snapshot (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_dataset_snapshot_dataset_created
+CREATE INDEX idx_dataset_snapshot_dataset_created
   ON public.dataset_snapshot (dataset_id, snapshot_taken_at DESC);
-CREATE INDEX IF NOT EXISTS idx_dataset_snapshot_status
+CREATE INDEX idx_dataset_snapshot_status
   ON public.dataset_snapshot (status);
-CREATE INDEX IF NOT EXISTS idx_dataset_snapshot_hash
+CREATE INDEX idx_dataset_snapshot_hash
   ON public.dataset_snapshot (content_hash);
 
-CREATE TABLE IF NOT EXISTS public.dataset_import_job (
+CREATE TABLE public.dataset_import_job (
   id UUID PRIMARY KEY,
   dataset_id UUID REFERENCES public.dataset (id) ON DELETE CASCADE,
   provider TEXT NOT NULL
@@ -102,9 +102,9 @@ CREATE TABLE IF NOT EXISTS public.dataset_import_job (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_dataset_import_job_dataset
+CREATE INDEX idx_dataset_import_job_dataset
   ON public.dataset_import_job (dataset_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_dataset_import_job_status
+CREATE INDEX idx_dataset_import_job_status
   ON public.dataset_import_job (status, created_at DESC);
 
 CREATE OR REPLACE FUNCTION public.touch_dataset_from_snapshot()
@@ -138,13 +138,17 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE TRIGGER trg_dataset_snapshot_touch_dataset
+CREATE TRIGGER trg_dataset_snapshot_touch_dataset
 AFTER INSERT OR UPDATE OR DELETE ON public.dataset_snapshot
 FOR EACH ROW EXECUTE FUNCTION public.touch_dataset_from_snapshot();
 
-CREATE OR REPLACE TRIGGER trg_search_document_dataset
+CREATE TRIGGER trg_search_document_dataset
 AFTER INSERT OR UPDATE OR DELETE ON public.dataset
 FOR EACH ROW EXECUTE FUNCTION public.upsert_dataset_search_document();
+
+CREATE TRIGGER trg_zz_search_document_acl_dataset
+AFTER INSERT OR UPDATE ON public.dataset
+FOR EACH ROW EXECUTE FUNCTION public.sync_search_document_acl_entity_trigger();
 
 ALTER TABLE public.dataset ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.dataset_snapshot ENABLE ROW LEVEL SECURITY;

@@ -219,8 +219,10 @@ export function useUserMutations() {
           entityId: userId,
           actorId: userId,
           title: profileData.first_name
-            ? `${profileData.first_name}${profileData.last_name ? ' ' + profileData.last_name : ''} updated their profile`
-            : 'Profile updated',
+            ? translateText('features.user.timeline.profileUpdatedBy', {
+                name: [profileData.first_name, profileData.last_name].filter(Boolean).join(' '),
+              })
+            : translateText('features.user.timeline.profileUpdated'),
           description: profileData.aboutPlainText?.substring(0, 100) || undefined,
         },
       });

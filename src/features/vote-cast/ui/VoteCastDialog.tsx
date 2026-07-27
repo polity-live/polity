@@ -26,7 +26,9 @@ import {
   type VoteSubmissionStatus,
   type VoteSubmissionStepKey,
 } from '@/features/shared/ui/voting';
+import { localizeAppError } from '@/features/shared/errors';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
+import { APP_TUTORIAL_RECOVER_TARGET_EVENT } from '@/features/app-tutorial/events';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { VOTE_CAST_SUCCESS_TOAST_ID } from '../logic/voteCastToast';
 import type { VotingPhase } from '../logic/votePhaseHelpers';
@@ -43,6 +45,7 @@ interface VoteCastDialogProps {
   title?: string;
   forwardingPreview?: AmendmentForwardingPreviewModel | null;
   documentPreviewContent?: ReactNode;
+  tutorialAnchor?: string;
   requirePassword?: boolean;
   passwordError?: string | null;
   noVotingPasswordSettingsHref?: string;
@@ -54,12 +57,42 @@ interface VoteCastDialogProps {
 }
 
 const SUBMISSION_SUCCESS_CLOSE_DELAY_MS = 780;
+const AMENDMENT_TUTORIAL_ANCHOR = 'agenda-amendment-vote';
+const ELECTION_TUTORIAL_ANCHOR = 'agenda-election-vote';
+
+function tutorialAnchorMatchesDialog(recoveryAnchor: string, tutorialAnchor: string) {
+  if (tutorialAnchor === AMENDMENT_TUTORIAL_ANCHOR) {
+    return recoveryAnchor.startsWith('agenda-amendment-');
+  }
+  if (tutorialAnchor === ELECTION_TUTORIAL_ANCHOR) {
+    return recoveryAnchor.startsWith('agenda-election-');
+  }
+  return false;
+}
+
+function tutorialAmendmentChoiceId(choices: VoteCastChoice[] | undefined) {
+  return choices?.find(
+    choice => choice.semanticKey === 'accept' || /^(ja|yes)$/i.test(choice.label.trim())
+  )?.id;
+}
 
 function createInitialProgressSteps(): VoteSubmissionProgressStep[] {
   return [
-    { key: 'verify', label: 'Stimmrecht prüfen', status: 'pending' },
-    { key: 'cast', label: 'Stimme versiegeln', status: 'pending' },
-    { key: 'sync', label: 'Ergebnis synchronisieren', status: 'pending' },
+    {
+      key: 'verify',
+      copy: { key: 'common.voteSubmission.steps.verify' },
+      status: 'pending',
+    },
+    {
+      key: 'cast',
+      copy: { key: 'common.voteSubmission.steps.cast' },
+      status: 'pending',
+    },
+    {
+      key: 'sync',
+      copy: { key: 'common.voteSubmission.steps.sync' },
+      status: 'pending',
+    },
   ];
 }
 
@@ -87,6 +120,7 @@ export function VoteCastDialog({
   title,
   forwardingPreview,
   documentPreviewContent,
+  tutorialAnchor,
   requirePassword,
   passwordError,
   noVotingPasswordSettingsHref,
@@ -135,9 +169,47 @@ export function VoteCastDialog({
   }, []);
 
   const handleOpenChange = (value: boolean) => {
-    if (!value) handleReset();
+    if (!value && !tutorialAnchor) handleReset();
     onOpenChange(value);
   };
+
+  useEffect(() => {
+    if (!tutorialAnchor) return;
+
+    const recoverTarget = (event: WindowEventMap[typeof APP_TUTORIAL_RECOVER_TARGET_EVENT]) => {
+      const recoveryAnchor = event.detail.anchor;
+      if (!tutorialAnchorMatchesDialog(recoveryAnchor, tutorialAnchor)) return;
+
+      setSubmissionStatus('idle');
+      setSubmissionError(null);
+      setSubmissionSteps(createInitialProgressSteps());
+      serverRejectedRef.current = false;
+      submissionInFlightRef.current = false;
+
+      if (tutorialAnchor === AMENDMENT_TUTORIAL_ANCHOR) {
+        setSelectedChoiceId(currentChoiceId => {
+          if (currentChoiceId && choices?.some(choice => choice.id === currentChoiceId)) {
+            return currentChoiceId;
+          }
+          return tutorialAmendmentChoiceId(choices) ?? choices?.[0]?.id ?? null;
+        });
+      } else {
+        setSelectedCandidateIds(currentCandidateIds => {
+          const validCandidateIds = currentCandidateIds.filter(candidateId =>
+            candidates?.some(candidate => candidate.id === candidateId)
+          );
+          if (validCandidateIds.length > 0) return validCandidateIds;
+          return candidates?.[0] ? [candidates[0].id] : [];
+        });
+      }
+
+      setStep(recoveryAnchor.endsWith('-password') ? 'password' : 'choice');
+      onOpenChange(true);
+    };
+
+    window.addEventListener(APP_TUTORIAL_RECOVER_TARGET_EVENT, recoverTarget);
+    return () => window.removeEventListener(APP_TUTORIAL_RECOVER_TARGET_EVENT, recoverTarget);
+  }, [candidates, choices, onOpenChange, tutorialAnchor]);
 
   const reportProgress = useCallback(
     (stepKey: VoteSubmissionStepKey, stepStatus: VoteSubmissionProgressStatus) => {
@@ -175,9 +247,11 @@ export function VoteCastDialog({
         )
       );
       onOpenChange(true);
-      toast.error(error.message, {
+      toast.error(localizeAppError(error), {
         action: {
-          label: requirePassword ? 'PIN erneut eingeben' : 'Auswahl öffnen',
+          label: requirePassword
+            ? t('common.voteSubmission.enterPinAgain')
+            : t('common.voteSubmission.openSelection'),
           onClick: () => {
             setSubmissionStatus('idle');
             setSubmissionError(null);
@@ -189,7 +263,7 @@ export function VoteCastDialog({
         },
       });
     },
-    [onOpenChange, requirePassword]
+    [onOpenChange, requirePassword, t]
   );
 
   const trackServerResult = useCallback(
@@ -364,6 +438,7 @@ export function VoteCastDialog({
       submissionActive={submissionStatus !== 'idle'}
       forwardingPreviewContent={forwardingPreviewContent}
       documentPreviewContent={documentPreviewContent}
+      tutorialAnchor={tutorialAnchor}
       submissionOverlay={
         <VoteSubmissionOverlay
           status={submissionStatus}

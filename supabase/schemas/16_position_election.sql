@@ -6,7 +6,7 @@
 -- Election table (modified: removed amendment_id, is_multiple_choice, max_selections,
 -- voting_start_time, voting_end_time; added closing_type, closing_duration_seconds,
 -- closing_end_time, max_votes)
-CREATE TABLE IF NOT EXISTS public.election (
+CREATE TABLE public.election (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   agenda_item_id UUID,
   role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
@@ -36,7 +36,7 @@ ALTER TABLE public.election ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.election FOR ALL TO service_role USING (true);
 
 -- Election candidate table (unchanged)
-CREATE TABLE IF NOT EXISTS public.election_candidate (
+CREATE TABLE public.election_candidate (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -57,7 +57,7 @@ ALTER TABLE public.election_candidate ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.election_candidate FOR ALL TO service_role USING (true);
 
 -- Elector table (new: auto-populated from accredited participants)
-CREATE TABLE IF NOT EXISTS public.elector (
+CREATE TABLE public.elector (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -74,7 +74,7 @@ ALTER TABLE public.elector ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.elector FOR ALL TO service_role USING (true);
 
 -- Indicative elector participation (new: tracks that an elector voted in indicative phase)
-CREATE TABLE IF NOT EXISTS public.indicative_elector_participation (
+CREATE TABLE public.indicative_elector_participation (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -91,7 +91,7 @@ ALTER TABLE public.indicative_elector_participation ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.indicative_elector_participation FOR ALL TO service_role USING (true);
 
 -- Indicative candidate selection (new: the actual vote — links participation to candidate)
-CREATE TABLE IF NOT EXISTS public.indicative_candidate_selection (
+CREATE TABLE public.indicative_candidate_selection (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
   candidate_id UUID NOT NULL REFERENCES public.election_candidate (id) ON DELETE CASCADE,
@@ -107,7 +107,7 @@ ALTER TABLE public.indicative_candidate_selection ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.indicative_candidate_selection FOR ALL TO service_role USING (true);
 
 -- Final elector participation (new: tracks that an elector voted in final phase)
-CREATE TABLE IF NOT EXISTS public.final_elector_participation (
+CREATE TABLE public.final_elector_participation (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
   elector_id UUID NOT NULL REFERENCES public.elector (id) ON DELETE CASCADE,
@@ -122,7 +122,7 @@ ALTER TABLE public.final_elector_participation ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.final_elector_participation FOR ALL TO service_role USING (true);
 
 -- Final candidate selection (new: the actual vote — links participation to candidate)
-CREATE TABLE IF NOT EXISTS public.final_candidate_selection (
+CREATE TABLE public.final_candidate_selection (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
   candidate_id UUID NOT NULL REFERENCES public.election_candidate (id) ON DELETE CASCADE,
@@ -138,7 +138,7 @@ ALTER TABLE public.final_candidate_selection ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.final_candidate_selection FOR ALL TO service_role USING (true);
 
 -- Aggregated offline tallies per election phase and candidate
-CREATE TABLE IF NOT EXISTS public.election_offline_tally (
+CREATE TABLE public.election_offline_tally (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
   phase TEXT NOT NULL CHECK (phase IN ('indicative', 'final')),

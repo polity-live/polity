@@ -2,6 +2,7 @@ import { defineMutator } from '@rocicorp/zero';
 import { requireAuthenticated } from '../rbac/authorize';
 import { zql } from '../schema';
 import { setVotingPasswordSchema, verifyVotingPasswordSchema } from './schema';
+import { throwAppError } from '@/features/shared/errors';
 
 // ── Hashing helpers (Web Crypto PBKDF2 — no external dependency) ───
 
@@ -90,11 +91,11 @@ export const votingPasswordServerMutators = {
     const { userID } = ctx;
     const record = await tx.run(zql.voting_password.where('user_id', userID).one());
     if (!record) {
-      throw new Error('No voting password set. Please set your voting PIN first.');
+      throwAppError('voting_password_missing');
     }
     const isValid = await verifyPassword(args.password, record.password_hash);
     if (!isValid) {
-      throw new Error('Invalid voting password.');
+      throwAppError('voting_password_invalid');
     }
     // Stamp the time so cast server-mutators can enforce recency.
     await tx.mutate.voting_password.update({

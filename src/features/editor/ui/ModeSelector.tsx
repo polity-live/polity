@@ -29,12 +29,19 @@ interface ModeSelectorProps {
 }
 
 export function ModeSelector({
+  entityType,
   currentMode,
   isOwnerOrCollaborator,
   onModeChange,
 }: ModeSelectorProps) {
   const { t } = useTranslation();
   const currentModeConfig = getEditingModeOption(currentMode, t);
+  const tutorialAnchor =
+    entityType === 'amendment'
+      ? currentMode === 'suggest_internal'
+        ? 'amendment-mode-vote-internal'
+        : 'amendment-mode-suggest-internal'
+      : undefined;
 
   const handleModeChange = async (newMode: EditorMode) => {
     if (newMode === currentMode) return;
@@ -57,14 +64,14 @@ export function ModeSelector({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button variant="outline" size="sm" className="gap-2" data-tutorial-anchor={tutorialAnchor}>
           <div className={`h-2 w-2 rounded-full ${currentModeConfig.colorClass}`} />
           <currentModeConfig.Icon className="h-4 w-4" />
           <span>{currentModeConfig.label}</span>
           <ChevronDown className="h-3 w-3" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-80" data-tutorial-anchor={tutorialAnchor}>
         <DropdownMenuLabel>{t('features.editor.modeSelector.selectMode')}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <EditingModeMenuItems value={currentMode} onValueChange={handleModeChange} />

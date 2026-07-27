@@ -48,6 +48,7 @@ export const amendment = table('amendment')
     linkedin: string().optional(),
     website: string().optional(),
     current_process_run_id: string().optional(),
+    tutorial_run_id: string().optional(),
     created_at: number(),
     updated_at: number(),
   })
@@ -65,7 +66,7 @@ export const amendmentCollaborator = table('amendment_collaborator')
   })
   .primaryKey('id');
 
-export const amendmentStreetDesign = table('amendment_street_design')
+export const amendmentCityDesign = table('amendment_city_design')
   .columns({
     id: string(),
     amendment_id: string(),

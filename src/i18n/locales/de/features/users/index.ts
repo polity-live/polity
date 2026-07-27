@@ -63,6 +63,10 @@ export const userTranslations = {
     unfollowFailed: 'Entfolgen fehlgeschlagen',
     statsUpdateFailed: 'Benutzerstatistiken konnten nicht aktualisiert werden',
   },
+  timeline: {
+    profileUpdatedBy: '{{name}} hat das Profil aktualisiert',
+    profileUpdated: 'Profil aktualisiert',
+  },
   activity: {
     title: 'Aktivität',
     groups: 'Gruppen',

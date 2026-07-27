@@ -99,19 +99,7 @@ export function NotificationSettingsContentView({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col items-start gap-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <div className="min-w-0 flex-1 space-y-0.5">
-              <FormControlLabel className="text-sm font-medium">
-                {t('pages.notifications.settingsPage.delivery.push')}
-              </FormControlLabel>
-              <p className="text-muted-foreground text-xs">
-                {t('pages.notifications.settingsPage.delivery.pushDescription')}
-              </p>
-            </div>
-            <div className="max-w-full">
-              <PushNotificationToggle variant="minimal" />
-            </div>
-          </div>
+          <PushNotificationToggle variant="settings" showDiagnostics />
           <Separator />
           <SettingItem
             label={t('pages.notifications.settingsPage.delivery.inApp')}

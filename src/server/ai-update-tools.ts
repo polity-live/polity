@@ -257,10 +257,7 @@ export function buildAiUpdateTools(userId: string, timeZone = 'UTC') {
 
   return {
     update_group: tool({
-      description: translateText(
-        'generated.inline.ai_update_group_description',
-        'Aktualisiert eine bestehende Gruppe, wenn der Nutzer die Gruppe verwalten darf.'
-      ),
+      description: translateText('generated.inline.ai_update_group_description'),
       inputSchema: updateGroupSchema,
       execute: async args => {
         const result = await executeZeroTransaction(zeroContext, async (tx, ctx) => {
@@ -322,10 +319,7 @@ export function buildAiUpdateTools(userId: string, timeZone = 'UTC') {
     }),
 
     update_event: tool({
-      description: translateText(
-        'generated.inline.ai_update_event_description',
-        'Aktualisiert die direkten Felder eines bestehenden Events.'
-      ),
+      description: translateText('generated.inline.ai_update_event_description'),
       inputSchema: updateEventSchema,
       execute: async args => {
         const result = await executeZeroTransaction(zeroContext, async (tx, ctx) => {
@@ -438,10 +432,7 @@ export function buildAiUpdateTools(userId: string, timeZone = 'UTC') {
     }),
 
     update_amendment: tool({
-      description: translateText(
-        'generated.inline.ai_update_amendment_description',
-        'Aktualisiert einen bestehenden Änderungsantrag.'
-      ),
+      description: translateText('generated.inline.ai_update_amendment_description'),
       inputSchema: updateAmendmentSchema,
       execute: async args => {
         const result = await executeZeroTransaction(zeroContext, async (tx, ctx) => {
@@ -508,10 +499,7 @@ export function buildAiUpdateTools(userId: string, timeZone = 'UTC') {
     }),
 
     update_blog_entry: tool({
-      description: translateText(
-        'generated.inline.ai_update_blog_description',
-        'Aktualisiert einen bestehenden Blogeintrag.'
-      ),
+      description: translateText('generated.inline.ai_update_blog_description'),
       inputSchema: updateBlogSchema,
       execute: async args => {
         const result = await executeZeroTransaction(zeroContext, async (tx, ctx) => {
@@ -568,10 +556,7 @@ export function buildAiUpdateTools(userId: string, timeZone = 'UTC') {
     }),
 
     update_todo: tool({
-      description: translateText(
-        'generated.inline.ai_update_todo_description',
-        'Aktualisiert ein eigenes oder verwaltbares Todo.'
-      ),
+      description: translateText('generated.inline.ai_update_todo_description'),
       inputSchema: updateTodoSchema,
       execute: async args => {
         const result = await executeZeroTransaction(zeroContext, async (tx, ctx) => {
@@ -640,10 +625,7 @@ export function buildAiUpdateTools(userId: string, timeZone = 'UTC') {
     }),
 
     update_statement: tool({
-      description: translateText(
-        'generated.inline.ai_update_statement_description',
-        'Aktualisiert ein eigenes Statement.'
-      ),
+      description: translateText('generated.inline.ai_update_statement_description'),
       inputSchema: updateStatementSchema,
       execute: async args => {
         const result = await executeZeroTransaction(zeroContext, async (tx, ctx) => {
@@ -711,10 +693,7 @@ export function buildAiUpdateTools(userId: string, timeZone = 'UTC') {
     }),
 
     update_payment: tool({
-      description: translateText(
-        'generated.inline.ai_update_payment_description',
-        'Aktualisiert die direkten Felder einer verwaltbaren Zahlung.'
-      ),
+      description: translateText('generated.inline.ai_update_payment_description'),
       inputSchema: updatePaymentSchema,
       execute: async args => {
         const payment = await executeZeroTransaction(zeroContext, async (tx, ctx) => {
@@ -772,10 +751,7 @@ export function buildAiUpdateTools(userId: string, timeZone = 'UTC') {
     }),
 
     update_agenda_item: tool({
-      description: translateText(
-        'generated.inline.ai_update_agenda_item_description',
-        'Aktualisiert Inhalt, Reihenfolge oder Dauer eines Agenda-Punkts.'
-      ),
+      description: translateText('generated.inline.ai_update_agenda_item_description'),
       inputSchema: updateAgendaItemSchema,
       execute: async args => {
         const result = await executeZeroTransaction(zeroContext, async (tx, ctx) => {
@@ -829,10 +805,7 @@ export function buildAiUpdateTools(userId: string, timeZone = 'UTC') {
     }),
 
     update_election_candidate: tool({
-      description: translateText(
-        'generated.inline.ai_update_election_candidate_description',
-        'Aktualisiert Name, Statement oder Bild einer eigenen oder verwaltbaren Kandidatur.'
-      ),
+      description: translateText('generated.inline.ai_update_election_candidate_description'),
       inputSchema: updateElectionCandidateSchema,
       execute: async args => {
         const result = await executeZeroTransaction(zeroContext, async (tx, ctx) => {

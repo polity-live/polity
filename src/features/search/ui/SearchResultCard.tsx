@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import { getHashtagToneClasses } from '@/features/shared/theme';
 import { Card } from '@/features/shared/ui/ui/card';
@@ -19,6 +19,8 @@ import {
 import type { SearchContentItem } from '../types/search.types';
 import type { SearchDocument, SearchDocumentCardPayload } from '../types/search-document.types';
 import { useSearchCardState } from '../SearchCardStateProvider';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
 
 type SearchResultType = SearchContentItem['type'];
 interface SearchTimelineCardDefinition {
@@ -305,8 +307,8 @@ function getSearchCardModel(document: SearchDocument): SearchCardModel {
   const model = {
     payload,
     href: getSearchDocumentHref(document),
-    type: String(payload.type || document.entity_type || 'Result'),
-    title: document.title || 'Result',
+    type: String(payload.type || document.entity_type || ''),
+    title: document.title || '',
     subtitle: document.subtitle || document.group?.name || undefined,
     excerpt: document.summary || document.search_text || undefined,
     tags: collectTags(document, payload),
@@ -317,13 +319,15 @@ function getSearchCardModel(document: SearchDocument): SearchCardModel {
 }
 
 function SearchPreviewCard({ document }: { document: SearchDocument }) {
+  const { t } = useTranslation();
   const model = getSearchCardModel(document);
+  const fallback = t('common.entities.result');
   const hashtagTone = getHashtagToneClasses();
 
   return (
     <a
       href={model.href}
-      aria-label={model.title}
+      aria-label={model.title || fallback}
       data-search-card-mode="preview"
       className="focus-visible:ring-ring block h-full rounded-2xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
     >
@@ -334,9 +338,9 @@ function SearchPreviewCard({ document }: { document: SearchDocument }) {
       >
         <div className="border-border/70 bg-muted/35 border-b p-4">
           <span className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-            {model.type}
+            {model.type || fallback}
           </span>
-          <h2 className="mt-1 line-clamp-2 text-base font-semibold">{model.title}</h2>
+          <h2 className="mt-1 line-clamp-2 text-base font-semibold">{model.title || fallback}</h2>
           {model.subtitle ? (
             <p className="text-muted-foreground mt-1 truncate text-xs">{model.subtitle}</p>
           ) : null}
@@ -375,6 +379,8 @@ function SearchPreviewCard({ document }: { document: SearchDocument }) {
 }
 
 function SearchFallbackCard({ document }: { document: SearchDocument }) {
+  const { t } = useTranslation();
+  const fallback = t('common.entities.result');
   const payload = asPayload(document.card_payload);
   const tags = collectTags(document, payload).slice(0, 3);
   const hashtagTone = getHashtagToneClasses();
@@ -387,10 +393,10 @@ function SearchFallbackCard({ document }: { document: SearchDocument }) {
     >
       <TimelineCardHeader
         contentType="action"
-        title={document.title || 'Result'}
+        title={document.title || fallback}
         href={getSearchDocumentHref(document)}
         subtitle={document.subtitle || document.group?.name || undefined}
-        badge={<TimelineCardBadge label={document.entity_type || 'Result'} icon={Search} />}
+        badge={<TimelineCardBadge label={document.entity_type || fallback} icon={Search} />}
       />
 
       <TimelineCardContent>
@@ -494,12 +500,25 @@ export const SearchResultCard = memo(function SearchResultCard({
   document: SearchDocument;
   mode?: 'preview' | 'interactive';
 }) {
+  const { language } = useTranslation();
+  const displayDocument = useMemo(
+    () =>
+      resolveAppTutorialFixtureValue(document, {
+        tutorialRunId: document.tutorial_run_id,
+        language,
+      }),
+    [document, language]
+  );
   return (
-    <div data-search-card-mode={mode} className="h-full rounded-xl">
+    <div
+      data-search-card-mode={mode}
+      data-tutorial-anchor={document.tutorial_run_id ? 'tutorial-search-result' : undefined}
+      className="h-full rounded-xl"
+    >
       {mode === 'preview' ? (
-        <SearchPreviewCard document={document} />
+        <SearchPreviewCard document={displayDocument} />
       ) : (
-        <InteractiveSearchResultCard document={document} />
+        <InteractiveSearchResultCard document={displayDocument} />
       )}
     </div>
   );

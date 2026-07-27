@@ -21,6 +21,7 @@ import {
 } from '../logic/assistantStream';
 import { useMessageMutations } from './useMessageMutations';
 import { useMessageAttachments } from './useMessageAttachments';
+import { localizeAppError } from '@/features/shared/errors/app-error';
 
 export interface AiCatalogModel {
   provider: AiProvider;
@@ -99,6 +100,7 @@ function sameToolNames(left: readonly AiToolName[], right: readonly AiToolName[]
 }
 
 export function useAssistantChat(conversation: Conversation, currentUserId?: string) {
+  const isTutorialConversation = Boolean(conversation.tutorial_run_id);
   const { session } = useAuth();
   const { t } = useTranslation();
   const { skills, tools } = useAiState();
@@ -480,13 +482,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
 
         if (!response.ok) {
           const errorPayload = await readAiChatErrorResponse(response);
-          const errorMessage =
-            errorPayload.code === 'MODEL_UNAVAILABLE'
-              ? t('features.messages.ai.modelRequired')
-              : errorPayload.code === 'UNAUTHORIZED'
-                ? t('features.messages.ai.sessionMissing')
-                : t('features.messages.ai.sendFailed');
-          throw new Error(errorMessage);
+          throw new Error(localizeAppError(errorPayload));
         }
 
         if (!response.body) {
@@ -560,7 +556,9 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
               break;
             }
             case 'error': {
-              streamErrorMessage = streamEvent.message ?? t('features.messages.ai.sendFailed');
+              streamErrorMessage = localizeAppError(streamEvent.error, {
+                logUnknown: false,
+              });
               setIsCompressing(false);
               setIsThinking(false);
               setIsToolCalling(false);
@@ -660,6 +658,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   }, [isSending, lastFailedRequest, sendAssistantMessage]);
 
   return {
+    isTutorialConversation,
     models,
     isCatalogLoading,
     refreshCatalog,

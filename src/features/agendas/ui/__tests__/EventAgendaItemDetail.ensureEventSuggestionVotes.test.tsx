@@ -87,7 +87,7 @@ vi.mock('@/zero/users/useUserState', () => ({
 }));
 
 vi.mock('@/zero/amendments/useAmendmentState', () => ({
-  useAmendmentState: () => ({ streetDesigns: [] }),
+  useAmendmentState: () => ({ cityDesigns: [] }),
 }));
 
 vi.mock('@/zero/events', () => ({

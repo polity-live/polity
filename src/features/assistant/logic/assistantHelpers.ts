@@ -1,10 +1,21 @@
-import { ARIA_KAI_USER_ID } from '../constants';
+import { ARIA_KAI_AVATAR_URL, ARIA_KAI_USER_ID } from '../constants';
 
 /**
  * Check if a user ID belongs to the Aria & Kai system assistant.
  */
-export function isAssistantUser(userId: string): boolean {
+export function isAssistantUser(userId: string | null | undefined): boolean {
   return userId === ARIA_KAI_USER_ID;
+}
+
+/**
+ * Keep the Aria & Kai system avatar consistent even when an older user row has
+ * no avatar yet. Other users retain the avatar value supplied by their profile.
+ */
+export function resolveAssistantAvatar<T extends string | null | undefined>(
+  userId: string | null | undefined,
+  avatar: T
+): T | typeof ARIA_KAI_AVATAR_URL {
+  return isAssistantUser(userId) ? ARIA_KAI_AVATAR_URL : avatar;
 }
 
 /**

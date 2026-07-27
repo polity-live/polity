@@ -595,9 +595,9 @@ export function createAmendmentPreloadTasks(amendmentId: string, viewerId?: stri
         queries.amendments.changeRequestsWithVotes({ amendment_id: amendmentId })
       ),
       createPreloadEntry(
-        'queries.amendments.streetDesigns',
+        'queries.amendments.cityDesigns',
         { amendment_id: amendmentId },
-        queries.amendments.streetDesigns({ amendment_id: amendmentId })
+        queries.amendments.cityDesigns({ amendment_id: amendmentId })
       ),
     ]),
     task(`amendment:${amendmentId}:discussions`, `${base}/discussions`, [
@@ -609,12 +609,12 @@ export function createAmendmentPreloadTasks(amendmentId: string, viewerId?: stri
         queries.amendments.threads({ amendment_id: amendmentId })
       ),
     ]),
-    task(`amendment:${amendmentId}:streetscape`, `${base}/streetscape`, [
+    task(`amendment:${amendmentId}:city-design`, `${base}/citydesign`, [
       ...basic,
       createPreloadEntry(
-        'queries.amendments.streetDesigns',
+        'queries.amendments.cityDesigns',
         { amendment_id: amendmentId },
-        queries.amendments.streetDesigns({ amendment_id: amendmentId })
+        queries.amendments.cityDesigns({ amendment_id: amendmentId })
       ),
       createPreloadEntry(
         'queries.amendments.changeRequestsWithVotes',

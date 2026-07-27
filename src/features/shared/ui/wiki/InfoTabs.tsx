@@ -225,12 +225,12 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
   const renderContactCard = (item: ContactCardItem) => {
     const cardContent = (
       <>
-        <div className={`rounded-lg p-2 ${item.accentClass}`}>{item.icon}</div>
+        <div className={`shrink-0 rounded-lg p-2 ${item.accentClass}`}>{item.icon}</div>
         <div className="min-w-0 flex-1">
           <p className="text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
             {item.label}
           </p>
-          <p className="mt-1 text-sm font-medium break-words">{item.value}</p>
+          <p className="mt-1 text-sm font-medium [overflow-wrap:anywhere]">{item.value}</p>
         </div>
       </>
     );
@@ -242,7 +242,7 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
           href={item.href}
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-background/70 hover:bg-muted/30 flex items-start gap-3 rounded-xl border p-4 transition-colors"
+          className="bg-background/70 hover:bg-muted/30 flex w-full min-w-0 items-start gap-3 rounded-xl border p-4 transition-colors"
         >
           {cardContent}
         </a>
@@ -250,7 +250,10 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
     }
 
     return (
-      <div key={item.key} className="bg-background/70 flex items-start gap-3 rounded-xl border p-4">
+      <div
+        key={item.key}
+        className="bg-background/70 flex w-full min-w-0 items-start gap-3 rounded-xl border p-4"
+      >
         {cardContent}
       </div>
     );

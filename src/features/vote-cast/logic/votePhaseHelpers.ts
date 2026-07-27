@@ -3,6 +3,7 @@
  */
 
 import type { ActionType, ResourceType } from '@/zero/rbac/types';
+import { translate } from '@/features/shared/hooks/use-translation';
 
 export type VotingPhase = 'internal' | 'indication' | 'final' | 'closed';
 
@@ -55,26 +56,48 @@ export function formatVoteResultSentence(
   if (type === 'election') {
     if (result === 'tie') {
       return roleName
-        ? `The election for ${roleName} ended in a tie.`
-        : 'The election ended in a tie.';
+        ? translate('features.votes.resultSentence.electionTieForRole', { role: roleName })
+        : translate('features.votes.resultSentence.electionTie');
     }
     if (!winnerName) {
       return roleName
-        ? `The election for ${roleName} did not produce a winner.`
-        : 'The election did not produce a winner.';
+        ? translate('features.votes.resultSentence.noWinnerForRole', { role: roleName })
+        : translate('features.votes.resultSentence.noWinner');
     }
-    const share = voteSharePercent !== undefined ? ` with ${voteSharePercent}% of votes` : '';
-    return roleName
-      ? `For the election of ${roleName}, ${winnerName} won${share}.`
-      : `${winnerName} won the election${share}.`;
+    if (roleName) {
+      return voteSharePercent !== undefined
+        ? translate('features.votes.resultSentence.winnerForRoleWithShare', {
+            role: roleName,
+            winner: winnerName,
+            share: voteSharePercent,
+          })
+        : translate('features.votes.resultSentence.winnerForRole', {
+            role: roleName,
+            winner: winnerName,
+          });
+    }
+    return voteSharePercent !== undefined
+      ? translate('features.votes.resultSentence.winnerWithShare', {
+          winner: winnerName,
+          share: voteSharePercent,
+        })
+      : translate('features.votes.resultSentence.winner', { winner: winnerName });
   }
 
   // vote type
-  if (result === 'tie') return 'The vote ended in a tie.';
-  const shareStr = voteSharePercent !== undefined ? ` with ${voteSharePercent}% of votes` : '';
-  return result === 'passed'
-    ? `The motion was accepted${shareStr}.`
-    : `The motion was rejected${shareStr}.`;
+  if (result === 'tie') return translate('features.votes.resultSentence.voteTie');
+  if (result === 'passed') {
+    return voteSharePercent !== undefined
+      ? translate('features.votes.resultSentence.motionAcceptedWithShare', {
+          share: voteSharePercent,
+        })
+      : translate('features.votes.resultSentence.motionAccepted');
+  }
+  return voteSharePercent !== undefined
+    ? translate('features.votes.resultSentence.motionRejectedWithShare', {
+        share: voteSharePercent,
+      })
+    : translate('features.votes.resultSentence.motionRejected');
 }
 
 /**

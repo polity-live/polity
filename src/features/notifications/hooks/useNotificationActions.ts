@@ -6,6 +6,7 @@ import { useNotificationActions as useZeroNotificationActions } from '@/zero/not
 import { serverConfirmed, waitForClientApply } from '@/zero/mutate-with-server-check';
 import { gatedToast as toast } from '../utils/gated-toast';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { reportAppTutorialAction } from '@/features/app-tutorial/events';
 
 export function useNotificationActions() {
   const navigate = useNavigate();
@@ -24,9 +25,17 @@ export function useNotificationActions() {
         return;
       }
 
-      await waitForClientApply(
-        setNotificationRead({ notificationId: notification.id, read: true })
-      );
+      const result = setNotificationRead({ notificationId: notification.id, read: true });
+      await waitForClientApply(result);
+      try {
+        await serverConfirmed(result);
+        reportAppTutorialAction({
+          type: 'mutation',
+          event: 'notification.read',
+        });
+      } catch {
+        // Zero rolls the optimistic state back and the notification remains unread.
+      }
     },
     [setNotificationRead]
   );
@@ -109,12 +118,23 @@ export function useNotificationActions() {
     async (notification: Notification, e?: React.MouseEvent) => {
       e?.preventDefault();
       e?.stopPropagation();
-      await waitForClientApply(
-        setNotificationRead({
-          notificationId: notification.id,
-          read: !isNotificationRead(notification),
-        })
-      );
+      const wasRead = isNotificationRead(notification);
+      const result = setNotificationRead({
+        notificationId: notification.id,
+        read: !wasRead,
+      });
+      await waitForClientApply(result);
+      try {
+        await serverConfirmed(result);
+        if (!wasRead) {
+          reportAppTutorialAction({
+            type: 'mutation',
+            event: 'notification.read',
+          });
+        }
+      } catch {
+        // Zero rolls the optimistic state back and the checkpoint stays active.
+      }
     },
     [setNotificationRead]
   );

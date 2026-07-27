@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getDocsNavigation, getDocsPages } from '../docsRegistry';
+import { getDocsNavigation, getDocsPage, getDocsPages } from '../docsRegistry';
 import { searchDocs } from '../docsSearch';
 
 describe('docs registry', () => {
@@ -48,5 +48,20 @@ describe('docs registry', () => {
     expect(umlaut.length).toBeGreaterThan(0);
     expect(ascii.map(match => match.route)).toEqual(umlaut.map(match => match.route));
     expect(searchDocs({ language: 'de', query: 'Gruppe zzzz-no-match' })).toEqual([]);
+  });
+
+  it('publishes the short live tutorial guide and authenticated CTA', () => {
+    const page = getDocsPage('app-onboarding', 'de', 'guide');
+
+    expect(page?.featured).toBe(true);
+    expect(page?.title).toBe('Interaktives Live-Tutorial');
+    expect(page?.sections.map(section => section.id)).toEqual([
+      'how-it-works',
+      'sandbox',
+      'journey',
+      'pause-restart-finish',
+    ]);
+    expect(page?.primaryAction?.route).toBe('/onboarding');
+    expect(page?.primaryAction?.requiresAuth).toBe(true);
   });
 });

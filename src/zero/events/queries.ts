@@ -315,7 +315,7 @@ export const eventQueries = {
 
   // ── New queries (extracted from hooks.ts) ─────────────────────────
 
-  /** Deep event by ID with creator, group→memberships→user, participants→user+role→action_rights, delegates→user, agenda_items→election, roles */
+  /** Deep event by ID with creator, group→memberships→user, participants→user+role→action_rights, delegates→user, agenda_items→votes+election, roles */
   byIdFull: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     applyEventAccess(zql.event.where('id', id), userID)
       .related('creator')
@@ -357,7 +357,9 @@ export const eventQueries = {
           .related('user')
           .related('group')
       )
-      .related('agenda_items', agendaItemQuery => agendaItemQuery.related('election'))
+      .related('agenda_items', agendaItemQuery =>
+        agendaItemQuery.related('votes').related('election')
+      )
       .related('roles', roleQuery =>
         roleQuery.whereExists('event', event =>
           applyEventManagerQueryAccess(event, userID, 'manage_participants')

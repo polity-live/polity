@@ -18,6 +18,7 @@ import {
 import { fireNotification } from '../server-notify';
 import {
   eventTitle,
+  isOwnedAppTutorialAgendaItem,
   requireConfiguredRecentVotingPasswordVerification,
   recomputeEventCounters,
   requireRecentVotingPasswordVerification,
@@ -906,8 +907,10 @@ export const electionServerMutators = {
   }),
 
   submitElectionVote: defineMutator(submitElectionVoteSchema, async ({ tx, ctx, args }) => {
-    await requireRecentVotingPasswordVerification(tx, ctx.userID);
     const election = await tx.run(zql.election.where('id', args.election_id).one());
+    if (!(await isOwnedAppTutorialAgendaItem(tx, election?.agenda_item_id, ctx.userID))) {
+      await requireRecentVotingPasswordVerification(tx, ctx.userID);
+    }
     const currentPhase = election?.status === 'indication' ? 'indicative' : election?.status;
     if (!election || currentPhase !== args.phase) {
       throw new Error(`The ${args.phase} election is not open.`);

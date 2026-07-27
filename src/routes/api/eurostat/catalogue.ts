@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { searchEurostatCatalogue } from '@/server/eurostat/catalogue';
+import { appErrorHttpBodyFrom } from '@/features/shared/errors/app-error';
 
 export const Route = createFileRoute('/api/eurostat/catalogue')({
   server: {
@@ -12,10 +13,9 @@ export const Route = createFileRoute('/api/eurostat/catalogue')({
         try {
           return Response.json(await searchEurostatCatalogue(query, language, 20));
         } catch (error) {
-          return Response.json(
-            { error: error instanceof Error ? error.message : 'Eurostat catalogue is unavailable' },
-            { status: 502 }
-          );
+          return Response.json(appErrorHttpBodyFrom(error, 'external_service_failed'), {
+            status: 502,
+          });
         }
       },
     },

@@ -7,6 +7,7 @@ import type { OfflineTallyPhase } from '@/features/agendas/logic/offlineTallyToo
 import { useOfflineTallyDialogController } from '@/features/agendas/hooks/useOfflineTallyDialogController';
 import { useOfflineTallySubmissionProgress } from '@/features/agendas/hooks/useOfflineTallySubmissionProgress';
 import { ActionSubmissionOverlay } from '@/features/shared/ui/action-submission';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 import { OfflineTallyDialogView } from './OfflineTallyDialogView';
 
@@ -68,6 +69,7 @@ export function OfflineTallyDialog({
   onSubmit,
 }: OfflineTallyDialogProps) {
   const [step, setStep] = useState<'counts' | 'password'>('counts');
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!open) {
@@ -88,7 +90,11 @@ export function OfflineTallyDialog({
   const submissionSteps = useOfflineTallySubmissionProgress(isSubmitting);
   const tallyLimitFormula =
     participantCount != null && votesPerParticipant != null && maxTotalVotes != null
-      ? `${participantCount} Participants x ${votesPerParticipant} Stimmen = ${maxTotalVotes}`
+      ? t('features.agendas.offlineTally.totalLimitFormula', {
+          participants: participantCount,
+          votes: votesPerParticipant,
+          total: maxTotalVotes,
+        })
       : null;
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -133,10 +139,13 @@ export function OfflineTallyDialog({
         preview={{
           title,
           description,
-          entityLabel: phase === 'final' ? 'Final offline tally' : 'Indicative offline tally',
-          badges: [`${controller.totalVotes} offline selections`, tallyLimitFormula].filter(
-            (badge): badge is string => Boolean(badge)
-          ),
+          entityLabel: t(`features.agendas.offlineTally.entities.${phase}`),
+          badges: [
+            t('features.agendas.offlineTally.selectionCount', {
+              count: controller.totalVotes,
+            }),
+            tallyLimitFormula,
+          ].filter((badge): badge is string => Boolean(badge)),
         }}
         onBack={() => undefined}
         onRetry={() => undefined}

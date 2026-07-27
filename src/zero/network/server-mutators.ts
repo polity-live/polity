@@ -279,6 +279,29 @@ async function assertCanManageGroupRelationship(
   });
 }
 
+async function connectionEndpointsExist(
+  tx: Parameters<typeof can>[0],
+  args: {
+    group_a_id: string;
+    group_b_id: string;
+    desired_parent_group_id?: string | null;
+    desired_child_group_id?: string | null;
+  }
+) {
+  const endpointIds = [
+    ...new Set(
+      [
+        args.group_a_id,
+        args.group_b_id,
+        args.desired_parent_group_id,
+        args.desired_child_group_id,
+      ].filter((id): id is string => Boolean(id))
+    ),
+  ];
+  const groups = await tx.run(zql.group.where('id', 'IN', endpointIds));
+  return groups.length === endpointIds.length;
+}
+
 function assertGroupBelongsToConnection(
   connection: {
     group_a_id?: string | null;
@@ -332,9 +355,35 @@ async function assertCanManageConnectionRequestCounterparty(
   const counterpartyGroupIds = endpointGroupIds.filter(id => id !== request.initiator_group_id);
   const groupIdsToCheck = counterpartyGroupIds.length > 0 ? counterpartyGroupIds : endpointGroupIds;
 
-  for (const groupId of groupIdsToCheck) {
-    await assertCanManageGroupRelationship(tx, ctx, groupId);
+  let permissionError: unknown;
+  try {
+    for (const groupId of groupIdsToCheck) {
+      await assertCanManageGroupRelationship(tx, ctx, groupId);
+    }
+    return;
+  } catch (error) {
+    permissionError = error;
   }
+
+  const endpointGroups =
+    (endpointGroupIds.length > 0
+      ? await tx.run(zql.group.where('id', 'IN', endpointGroupIds))
+      : []) ?? [];
+  const tutorialRunIds = [
+    ...new Set(
+      endpointGroups.map(group => group.tutorial_run_id).filter((id): id is string => Boolean(id))
+    ),
+  ];
+  if (endpointGroups.length === endpointGroupIds.length && tutorialRunIds.length === 1) {
+    const ownedRun = await tx.run(
+      zql.app_tutorial_run.where('id', tutorialRunIds[0]).where('user_id', ctx.userID).one()
+    );
+    if (ownedRun && (ownedRun.status === 'active' || ownedRun.status === 'paused')) {
+      return;
+    }
+  }
+
+  throw permissionError;
 }
 
 function getPendingGrantRequestsForApproval(
@@ -509,6 +558,9 @@ export const networkServerMutators = {
   proposeGroupConnectionChange: defineMutator(
     proposeGroupConnectionChangeSchema,
     async ({ tx, ctx, args }) => {
+      if (!(await connectionEndpointsExist(tx, args))) {
+        return;
+      }
       await assertCanManageGroupRelationship(tx, ctx, args.initiator_group_id);
 
       await assertPayload(tx, {

@@ -4,7 +4,7 @@
 -- =============================================================================
 
 -- Event delegate table
-CREATE TABLE IF NOT EXISTS public.event_delegate (
+CREATE TABLE public.event_delegate (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -21,7 +21,7 @@ ALTER TABLE public.event_delegate ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.event_delegate FOR ALL TO service_role USING (true);
 
 -- Group delegate allocation table
-CREATE TABLE IF NOT EXISTS public.group_delegate_allocation (
+CREATE TABLE public.group_delegate_allocation (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
   group_id UUID,
@@ -36,7 +36,7 @@ CREATE POLICY "service_role_all" ON public.group_delegate_allocation FOR ALL TO 
 
 -- Open delegate-election work that a source group must satisfy for a target
 -- delegate assembly.
-CREATE TABLE IF NOT EXISTS public.delegate_election_assignment (
+CREATE TABLE public.delegate_election_assignment (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   target_event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
   source_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,

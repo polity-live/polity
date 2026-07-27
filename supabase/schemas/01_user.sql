@@ -4,7 +4,7 @@
 -- =============================================================================
 
 -- User table (main user profile)
-CREATE TABLE IF NOT EXISTS public."user" (
+CREATE TABLE public."user" (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT,
   handle TEXT,
@@ -56,7 +56,7 @@ ALTER TABLE public."user" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public."user" FOR ALL TO service_role USING (true);
 
 -- File table
-CREATE TABLE IF NOT EXISTS public.file (
+CREATE TABLE public.file (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   path TEXT,
   url TEXT,

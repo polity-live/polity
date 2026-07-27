@@ -136,8 +136,7 @@ export function useAccountActions(): UseAccountActionsReturn {
         return { success: true };
       } catch (error) {
         console.error('Failed to update password:', error);
-        const errorMessage =
-          error instanceof Error ? error.message : t('pages.user.accountPassword.failed');
+        const errorMessage = t('pages.user.accountPassword.failed');
         toast.error(errorMessage);
         return {
           success: false,
@@ -189,8 +188,7 @@ export function useAccountActions(): UseAccountActionsReturn {
         return { success: true };
       } catch (error) {
         console.error('Failed to update email:', error);
-        const errorMessage =
-          error instanceof Error ? error.message : t('pages.user.accountEmail.failed');
+        const errorMessage = t('pages.user.accountEmail.failed');
         toast.error(errorMessage);
         return {
           success: false,

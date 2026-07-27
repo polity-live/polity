@@ -11,6 +11,7 @@ import {
 } from '@/features/shared/virtualization';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { queries } from '@/zero/queries';
+import { getTodoTutorialAnchor } from '../logic/tutorialTodoAnchor';
 
 interface KanbanColumn {
   id: TodoStatus;
@@ -111,11 +112,30 @@ export function KanbanBoardView({
   onToggleComplete,
   virtualQuery,
 }: KanbanBoardViewProps) {
+  const containsTutorialNetworkTodo = columns.some(column =>
+    column.todos.some(todo => getTodoTutorialAnchor(todo) === 'tutorial-network-todo')
+  );
+  const containsTutorialAssistantTodo = columns.some(column =>
+    column.todos.some(todo => getTodoTutorialAnchor(todo) === 'tutorial-assistant-todo')
+  );
+
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div
+      className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
+      data-tutorial-anchor={
+        containsTutorialAssistantTodo
+          ? 'tutorial-assistant-todo-board'
+          : containsTutorialNetworkTodo
+            ? 'tutorial-network-todo-board'
+            : undefined
+      }
+    >
       {columns.map(column => (
         <div
           key={column.id}
+          role="region"
+          aria-label={column.title}
+          data-todo-status={column.id}
           className={cn('min-h-125 rounded-lg p-4', column.className)}
           onDragOver={onColumnDragOver}
           onDrop={() => onColumnDrop(column.id)}
@@ -201,6 +221,7 @@ export function TodoKanbanCardView({
       onDragEnd={() => onDragEnd(todo)}
       className={isDragging ? 'opacity-50' : undefined}
       data-swipe-lock
+      data-tutorial-anchor={getTodoTutorialAnchor(todo)}
     >
       <TodoTimelineCard
         todo={{

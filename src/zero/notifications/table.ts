@@ -29,6 +29,7 @@ export const notification = table('notification')
     recipient_amendment_id: string().optional(),
     recipient_blog_id: string().optional(),
     category: string().optional(),
+    tutorial_run_id: string().optional(),
     created_at: number(),
     updated_at: number(),
     deleted_at: number().optional(),
@@ -40,6 +41,7 @@ export const pushSubscription = table('push_subscription')
   .columns({
     id: string(),
     user_id: string(),
+    device_id: string().optional(),
     endpoint: string(),
     auth: string().optional(),
     p256dh: string().optional(),

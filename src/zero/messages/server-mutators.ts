@@ -99,7 +99,9 @@ export const messageServerMutators = {
     const conversation = await tx.run(zql.conversation.where('id', args.conversation_id).one());
 
     if (!conversation || conversation.assistant_for_user_id !== ctx.userID) {
-      throw new Error('Assistant replies are only allowed in your Aria & Kai conversation.');
+      throw new Error(
+        'Assistant replies are only allowed in your Assistent Aria & Kai conversation.'
+      );
     }
 
     await mutators.messages.sendAssistantMessage.fn({ tx, ctx, args });

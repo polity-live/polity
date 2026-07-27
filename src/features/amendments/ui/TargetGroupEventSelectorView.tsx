@@ -20,14 +20,25 @@ import type {
 import { CalendarClock, GitBranch, Target, User, Workflow } from 'lucide-react';
 import { UserNetworkFlow } from '@/features/network/ui/UserNetworkFlow';
 import { GroupNetworkFlow } from '@/features/network/ui/GroupNetworkFlow';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  translate as translateText,
+  useTranslation,
+} from '@/features/shared/hooks/use-translation';
+import {
+  collectAppTutorialFixtureTextAliases,
+  getAppTutorialFixtureTextVariants,
+  resolveAppTutorialFixtureText,
+  resolveAppTutorialFixtureValue,
+} from '@/features/app-tutorial/fixture-copy';
+import type { AppTutorialLanguage } from '@/features/app-tutorial/catalog';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 
-function formatEventWindowLabel(timestamp?: number | null) {
+function formatEventWindowLabel(timestamp: number | null | undefined, language: string) {
   if (!timestamp) {
     return null;
   }
 
-  return new Date(timestamp).toLocaleString('de-DE', {
+  return new Date(timestamp).toLocaleString(language === 'de' ? 'de-DE' : 'en-US', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -42,6 +53,53 @@ function formatPathOptionLabel(
 ) {
   const groupsById = new Map(groups.map(group => [group.id, group]));
   return pathOption.groupIds.map(groupId => groupsById.get(groupId)?.name ?? groupId).join(' -> ');
+}
+
+function tutorialGroupDisplayName(
+  group: AmendmentNetworkGroup | null | undefined,
+  language: AppTutorialLanguage
+): string | null {
+  if (!group) return null;
+  return (
+    resolveAppTutorialFixtureText(group.name, {
+      tutorialRunId: group.tutorial_run_id,
+      language,
+    }) ?? null
+  );
+}
+
+function toLocalizedGroupTypeaheadItems(
+  groups: AmendmentNetworkGroup[],
+  language: AppTutorialLanguage,
+  groupFallback: string
+): TypeaheadItem[] {
+  return toTypeaheadItems(
+    groups,
+    'group',
+    group => tutorialGroupDisplayName(group, language) || groupFallback,
+    group => {
+      const description = richTextToPlainText(
+        resolveAppTutorialFixtureValue(group.description, {
+          tutorialRunId: group.tutorial_run_id,
+          language,
+        })
+      );
+      return description ? description.substring(0, 60) : undefined;
+    },
+    undefined,
+    group => `/group/${group.id}`
+  ).map((item, index) => ({
+    ...item,
+    keywords: [
+      ...(item.keywords ?? []),
+      ...getAppTutorialFixtureTextVariants(groups[index]?.name, {
+        tutorialRunId: groups[index]?.tutorial_run_id,
+      }),
+      ...(groups[index]?.tutorial_run_id
+        ? collectAppTutorialFixtureTextAliases(richTextToPlainText(groups[index]?.description))
+        : []),
+    ],
+  }));
 }
 
 export interface TargetGroupEventSelectorViewProps {
@@ -128,6 +186,22 @@ export function TargetGroupEventSelectorView({
   targetPathSegment,
   upcomingEvents,
 }: TargetGroupEventSelectorViewProps) {
+  const { language, t } = useTranslation();
+  const isInitialAmendmentProcess = layoutScope === 'amendment-process-start';
+  const displayNetworkGroups = networkGroups.map(group =>
+    resolveAppTutorialFixtureValue(group, {
+      tutorialRunId: group.tutorial_run_id,
+      language,
+    })
+  );
+  const displayPathWithEvents = pathWithEvents.map(segment => {
+    const owningGroup = networkGroups.find(group => group.id === segment.groupId);
+    return resolveAppTutorialFixtureValue(segment, {
+      tutorialRunId: owningGroup?.tutorial_run_id,
+      language,
+    });
+  });
+
   return (
     <div className="space-y-4">
       {collaborators.length > 0 && (
@@ -155,7 +229,12 @@ export function TargetGroupEventSelectorView({
         </div>
       )}
 
-      <div className="space-y-2">
+      <div
+        className="space-y-2"
+        data-tutorial-anchor={
+          isInitialAmendmentProcess ? 'tutorial-process-start-group' : undefined
+        }
+      >
         <FormControlLabel>
           {translateText('generated.inline.0178_startgruppe_27591dc9')}
         </FormControlLabel>
@@ -167,16 +246,10 @@ export function TargetGroupEventSelectorView({
           </p>
         ) : (
           <TypeaheadSearch
-            items={toTypeaheadItems(
+            items={toLocalizedGroupTypeaheadItems(
               activeSourceGroups,
-              'group',
-              group => group.name || 'Group',
-              group =>
-                typeof group.description === 'string'
-                  ? group.description.substring(0, 60)
-                  : undefined,
-              undefined,
-              group => `/group/${group.id}`
+              language,
+              t('features.amendments.process.groupFallback')
             )}
             value={selectedSourceGroup?.id || ''}
             onChange={handleSourceGroupSelection}
@@ -196,10 +269,10 @@ export function TargetGroupEventSelectorView({
           <p className="text-muted-foreground mt-1">
             {pathMode === 'workflow'
               ? (selectedWorkflow?.name ??
-                selectedWorkflowFinalGroup?.name ??
+                tutorialGroupDisplayName(selectedWorkflowFinalGroup, language) ??
                 translateText('generated.inline.0028_unbekannt_d0b00a9f'))
-              : (selectedGroup?.data.name ??
-                selectedWorkflowFinalGroup?.name ??
+              : (tutorialGroupDisplayName(selectedGroup?.data, language) ??
+                tutorialGroupDisplayName(selectedWorkflowFinalGroup, language) ??
                 translateText('generated.inline.0028_unbekannt_d0b00a9f'))}
           </p>
         </div>
@@ -217,7 +290,12 @@ export function TargetGroupEventSelectorView({
           </TabsList>
 
           <TabsContent value="hierarchy" className="space-y-4">
-            <div className="space-y-2">
+            <div
+              className="space-y-2"
+              data-tutorial-anchor={
+                isInitialAmendmentProcess ? 'tutorial-process-target-group' : undefined
+              }
+            >
               <FormControlLabel>
                 {translateText('generated.inline.0183_zielgruppe_10f54053')}
               </FormControlLabel>
@@ -229,16 +307,10 @@ export function TargetGroupEventSelectorView({
                 </p>
               ) : (
                 <TypeaheadSearch
-                  items={toTypeaheadItems(
+                  items={toLocalizedGroupTypeaheadItems(
                     availableTargetGroups,
-                    'group',
-                    group => group.name || 'Group',
-                    group =>
-                      typeof group.description === 'string'
-                        ? group.description.substring(0, 60)
-                        : undefined,
-                    undefined,
-                    group => `/group/${group.id}`
+                    language,
+                    t('features.amendments.process.groupFallback')
                   )}
                   value={selectedGroup?.id || ''}
                   onChange={onTargetGroupChange}
@@ -265,7 +337,7 @@ export function TargetGroupEventSelectorView({
                   <FormControlSelectContent>
                     {availableHierarchyPaths.map(pathOption => (
                       <FormControlSelectItem key={pathOption.id} value={pathOption.id}>
-                        {formatPathOptionLabel(pathOption, networkGroups)}
+                        {formatPathOptionLabel(pathOption, displayNetworkGroups)}
                       </FormControlSelectItem>
                     ))}
                   </FormControlSelectContent>
@@ -307,7 +379,7 @@ export function TargetGroupEventSelectorView({
                     {translateText('generated.inline.0191_workflow_start_24e8baa4')}
                   </FormControlLabel>
                   <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
-                    {selectedWorkflowStartGroup?.name ??
+                    {tutorialGroupDisplayName(selectedWorkflowStartGroup, language) ??
                       translateText('generated.inline.0028_unbekannt_d0b00a9f')}
                   </div>
                   <p className="text-muted-foreground text-xs">
@@ -322,7 +394,7 @@ export function TargetGroupEventSelectorView({
                     {translateText('generated.inline.0193_abgeleitete_zielgruppe_28e1d067')}
                   </FormControlLabel>
                   <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
-                    {selectedWorkflowFinalGroup?.name ??
+                    {tutorialGroupDisplayName(selectedWorkflowFinalGroup, language) ??
                       translateText('generated.inline.0028_unbekannt_d0b00a9f')}
                   </div>
                   <p className="text-muted-foreground text-xs">
@@ -336,7 +408,12 @@ export function TargetGroupEventSelectorView({
           </TabsContent>
         </Tabs>
       ) : (
-        <div className="space-y-2">
+        <div
+          className="space-y-2"
+          data-tutorial-anchor={
+            isInitialAmendmentProcess ? 'tutorial-process-target-group' : undefined
+          }
+        >
           <FormControlLabel>
             {translateText('generated.inline.0183_zielgruppe_10f54053')}
           </FormControlLabel>
@@ -348,16 +425,10 @@ export function TargetGroupEventSelectorView({
             </p>
           ) : (
             <TypeaheadSearch
-              items={toTypeaheadItems(
+              items={toLocalizedGroupTypeaheadItems(
                 availableTargetGroups,
-                'group',
-                group => group.name || 'Group',
-                group =>
-                  typeof group.description === 'string'
-                    ? group.description.substring(0, 60)
-                    : undefined,
-                undefined,
-                group => `/group/${group.id}`
+                language,
+                t('features.amendments.process.groupFallback')
               )}
               value={selectedGroup?.id || ''}
               onChange={onTargetGroupChange}
@@ -380,7 +451,11 @@ export function TargetGroupEventSelectorView({
               groupId={selectedSourceGroup.id}
               filterRight="amendmentRight"
               title={translateText('generated.inline.0195_zielgruppen_netzwerk_d91c9750')}
-              description={`Waehle eine erreichbare Zielgruppe ausgehend von ${selectedSourceGroup.data.name ?? 'der Startgruppe'}.`}
+              description={t('features.amendments.process.networkTargetDescription', {
+                group:
+                  tutorialGroupDisplayName(selectedSourceGroup.data, language) ??
+                  t('features.amendments.process.startGroupFallback'),
+              })}
               onGroupClick={groupId => handleTargetGraphGroupClick(groupId)}
               showGroupDialogOnClick={false}
               showWorkflowView={false}
@@ -426,7 +501,12 @@ export function TargetGroupEventSelectorView({
       )}
 
       {pathWithEvents.length > 0 && (
-        <div className="border-border bg-muted/30 space-y-3 rounded-md border p-3">
+        <div
+          className="border-border bg-muted/30 space-y-3 rounded-md border p-3"
+          data-tutorial-anchor={
+            isInitialAmendmentProcess ? 'tutorial-process-path-review' : undefined
+          }
+        >
           <div className="flex items-center gap-2">
             <Target className="text-muted-foreground h-4 w-4" />
             <FormControlLabel className="text-sm">
@@ -435,7 +515,7 @@ export function TargetGroupEventSelectorView({
           </div>
 
           <div className="space-y-3">
-            {pathWithEvents.map((segment, index) => {
+            {displayPathWithEvents.map((segment, index) => {
               const segmentEvents =
                 segment.segmentKey === targetPathSegment?.segmentKey
                   ? upcomingEvents
@@ -457,14 +537,14 @@ export function TargetGroupEventSelectorView({
                           <span className="inline-flex items-center gap-1">
                             <CalendarClock className="h-3 w-3" />
                             {translateText('generated.inline.0202_nicht_vor_96c35f3c')}
-                            {formatEventWindowLabel(segment.requiredAfter)}
+                            {formatEventWindowLabel(segment.requiredAfter, language)}
                           </span>
                         ) : null}
                         {segment.requiredBefore ? (
                           <span className="inline-flex items-center gap-1">
                             <CalendarClock className="h-3 w-3" />
                             {translateText('generated.inline.0203_nicht_nach_e88cbaab')}
-                            {formatEventWindowLabel(segment.requiredBefore)}
+                            {formatEventWindowLabel(segment.requiredBefore, language)}
                           </span>
                         ) : null}
                       </div>
@@ -484,7 +564,9 @@ export function TargetGroupEventSelectorView({
                         segmentEvents,
                         'event',
                         event => event.title || 'Event',
-                        event => formatEventWindowLabel(event.start_date) ?? 'Kein Datum',
+                        event =>
+                          formatEventWindowLabel(event.start_date, language) ??
+                          t('features.amendments.process.noDate'),
                         undefined,
                         event => `/event/${event.id}`
                       )}

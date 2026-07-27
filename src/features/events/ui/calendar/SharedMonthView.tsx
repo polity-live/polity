@@ -137,6 +137,9 @@ export function SharedMonthView({
                       {dayEvents.map((event: any) => (
                         <div
                           key={event.id}
+                          data-tutorial-anchor={
+                            event.tutorial_run_id ? 'tutorial-first-event' : undefined
+                          }
                           className={cn(
                             featureThemeClassName('eventSharedMonthThemedText'),
                             getCompactCalendarEventClassName(event)

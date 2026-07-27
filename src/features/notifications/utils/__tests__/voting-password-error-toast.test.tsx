@@ -23,7 +23,7 @@ describe('showVotingPasswordErrorToast', () => {
 
     expect(toastError).toHaveBeenCalledTimes(2);
     const [message, options] = toastError.mock.calls[1];
-    expect(message).toBe(NO_VOTING_PASSWORD_ERROR);
+    expect(message).toBe('Set a voting PIN before continuing.');
     expect(options.id).toBe('missing-voting-password');
     expect(isValidElement(options.description)).toBe(true);
     expect((options.description as ReactElement<{ to: string }>).props.to).toBe(

@@ -1,4 +1,5 @@
 import { defineMutator } from '@rocicorp/zero';
+import type { z } from 'zod';
 import {
   createAmendmentSchema,
   createAmendmentFullMutatorSchema,
@@ -7,9 +8,9 @@ import {
   createAmendmentCollaboratorSchema,
   updateAmendmentCollaboratorSchema,
   deleteAmendmentCollaboratorSchema,
-  createAmendmentStreetDesignSchema,
-  updateAmendmentStreetDesignSchema,
-  deleteAmendmentStreetDesignSchema,
+  createAmendmentCityDesignSchema,
+  updateAmendmentCityDesignSchema,
+  deleteAmendmentCityDesignSchema,
   createAmendmentPathSchema,
   deleteAmendmentPathSchema,
   createAmendmentPathSegmentSchema,
@@ -34,13 +35,18 @@ import {
 } from './schema';
 import {
   createChangeRequestSchema,
-  createStreetDesignChangeRequestsSchema,
+  createDocumentChangeRequestSchema,
+  createCityDesignChangeRequestsSchema,
   deleteChangeRequestSchema,
   finalizeExpiredInternalChangeRequestVotesSchema,
   finalizeInternalChangeRequestVoteSchema,
   repairInternalChangeRequestResolutionSchema,
   updateChangeRequestSchema,
 } from '../change-requests/schema';
+import {
+  assertDocumentSuggestionIntegrity,
+  isCityDesignChangeRequestSource,
+} from '../change-requests/document-integrity';
 import {
   createChangeRequestVoteSchema,
   createAmendmentSupportVoteSchema,
@@ -66,6 +72,14 @@ function denyPublicAmendmentProcessMutation(
   scope: string
 ) {
   denyPublicApiMutation(tx, { action, resource: 'amendments', scope });
+}
+
+async function invokeCreateChangeRequest(input: {
+  tx: unknown;
+  ctx: { readonly userID: string };
+  args: z.infer<typeof createChangeRequestSchema>;
+}): Promise<void> {
+  await amendmentSharedMutators.createChangeRequest.fn(input as never);
 }
 
 interface ChangeRequestVoteRow {
@@ -490,14 +504,14 @@ export const amendmentSharedMutators = {
     await tx.mutate.amendment_collaborator.delete({ id: args.id });
   }),
 
-  createStreetDesign: defineMutator(
-    createAmendmentStreetDesignSchema,
+  createCityDesign: defineMutator(
+    createAmendmentCityDesignSchema,
     async ({ tx, ctx: { userID }, args }) => {
       const now = Date.now();
-      const { process_branch_id: _processBranchId, ...streetDesign } = args;
+      const { process_branch_id: _processBranchId, ...cityDesign } = args;
       void _processBranchId;
-      await tx.mutate.amendment_street_design.insert({
-        ...streetDesign,
+      await tx.mutate.amendment_city_design.insert({
+        ...cityDesign,
         title: args.title ?? null,
         bbox: args.bbox ?? null,
         center_lat: args.center_lat ?? null,
@@ -513,17 +527,17 @@ export const amendmentSharedMutators = {
     }
   ),
 
-  updateStreetDesign: defineMutator(updateAmendmentStreetDesignSchema, async ({ tx, args }) => {
-    const { process_branch_id: _processBranchId, ...streetDesign } = args;
+  updateCityDesign: defineMutator(updateAmendmentCityDesignSchema, async ({ tx, args }) => {
+    const { process_branch_id: _processBranchId, ...cityDesign } = args;
     void _processBranchId;
-    await tx.mutate.amendment_street_design.update({
-      ...streetDesign,
+    await tx.mutate.amendment_city_design.update({
+      ...cityDesign,
       updated_at: Date.now(),
     });
   }),
 
-  deleteStreetDesign: defineMutator(deleteAmendmentStreetDesignSchema, async ({ tx, args }) => {
-    await tx.mutate.amendment_street_design.delete({ id: args.id });
+  deleteCityDesign: defineMutator(deleteAmendmentCityDesignSchema, async ({ tx, args }) => {
+    await tx.mutate.amendment_city_design.delete({ id: args.id });
   }),
 
   createChangeRequest: defineMutator(
@@ -541,19 +555,14 @@ export const amendmentSharedMutators = {
         args.process_branch_id ?? null
       );
       const discussionId = args.discussion_id ?? null;
-      const sourceType = args.source_type?.trim().toLowerCase() ?? '';
-      const isStreetDesignChangeRequest =
-        sourceType === 'street_design' ||
-        sourceType === 'streetscape' ||
-        sourceType.startsWith('street_design_') ||
-        sourceType.startsWith('streetscape_');
+      const isCityDesignChangeRequest = isCityDesignChangeRequestSource(args.source_type);
       const targetDiscussions = normalizeDiscussions(
         processBranch ? processBranch.discussions : amendment.discussions
       );
       const targetDiscussion = discussionId
         ? targetDiscussions.find(discussion => discussion.id === discussionId)
         : null;
-      if (!isStreetDesignChangeRequest && (!discussionId || !targetDiscussion)) {
+      if (!isCityDesignChangeRequest && (!discussionId || !targetDiscussion)) {
         throw new Error(
           'Cannot create document change request: linked document suggestion not found.'
         );
@@ -684,8 +693,75 @@ export const amendmentSharedMutators = {
     }
   ),
 
-  createStreetDesignChangeRequests: defineMutator(
-    createStreetDesignChangeRequestsSchema,
+  createDocumentChangeRequest: defineMutator(
+    createDocumentChangeRequestSchema,
+    async ({ tx, ctx, args }) => {
+      if (isCityDesignChangeRequestSource(args.source_type)) {
+        throw new Error(
+          'Document change request mutation cannot be used for city design change requests.'
+        );
+      }
+
+      const amendment = await tx.run(zql.amendment.where('id', args.amendment_id).one());
+      if (!amendment) {
+        throw new Error('Amendment not found');
+      }
+
+      const processBranch = await assertChangeRequestProcessBranch(
+        tx,
+        amendment,
+        args.process_branch_id ?? null
+      );
+      const documentId = processBranch?.document_id ?? amendment.document_id;
+      if (!documentId) {
+        throw new Error('Cannot create document change request: document not found.');
+      }
+
+      assertDocumentSuggestionIntegrity({
+        changeRequestId: args.id,
+        discussionId: args.discussion_id,
+        discussions: args.discussions,
+        content: args.document_content,
+      });
+
+      const now = Date.now();
+      await tx.mutate.document.update({
+        id: documentId,
+        content: args.document_content,
+        updated_at: now,
+      });
+
+      if (processBranch) {
+        await tx.mutate.amendment_process_branch.update({
+          id: processBranch.id,
+          discussions: args.discussions,
+          updated_at: now,
+        });
+      } else {
+        await tx.mutate.amendment.update({
+          id: amendment.id,
+          discussions: args.discussions,
+          updated_at: now,
+        });
+      }
+
+      const {
+        document_content: _documentContent,
+        discussions: _discussions,
+        ...changeRequestArgs
+      } = args;
+      void _documentContent;
+      void _discussions;
+      await invokeCreateChangeRequest({
+        tx,
+        ctx,
+        args: changeRequestArgs,
+      });
+    }
+  ),
+
+  createCityDesignChangeRequests: defineMutator(
+    createCityDesignChangeRequestsSchema,
     async ({ tx, ctx, args }) => {
       for (const request of args.requests) {
         await amendmentSharedMutators.createChangeRequest.fn({ tx, ctx, args: request });

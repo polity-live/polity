@@ -97,9 +97,21 @@ export interface ManageNetworkTabContentViewProps extends ManageNetworkTabProps 
 }
 
 const GROUP_LINK_APPROVAL_STEPS: ActionSubmissionStep[] = [
-  { key: 'prepare', label: 'Verbindung prüfen', status: 'pending' },
-  { key: 'commit', label: 'Link aktivieren', status: 'pending' },
-  { key: 'sync', label: 'Netzwerkfolgen synchronisieren', status: 'pending' },
+  {
+    key: 'prepare',
+    copy: { key: 'common.actionSubmission.steps.link.prepare' },
+    status: 'pending',
+  },
+  {
+    key: 'commit',
+    copy: { key: 'common.actionSubmission.steps.link.commit' },
+    status: 'pending',
+  },
+  {
+    key: 'sync',
+    copy: { key: 'common.actionSubmission.steps.link.syncConsequences' },
+    status: 'pending',
+  },
 ];
 
 export function ManageNetworkTabContentView({
@@ -968,79 +980,87 @@ export function ManageNetworkTabContentView({
       )}
 
       {outgoingRequests.length > 0 && (
+        <div data-tutorial-anchor="tutorial-network-pending">
+          <ManagementSection
+            title={
+              <span className="flex flex-wrap items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>{t('common.network.outgoingRequests')}</span>
+                <StatusBadge status="outgoing" tone="outline">
+                  {outgoingRequestCount}
+                </StatusBadge>
+              </span>
+            }
+            description={t('common.network.outgoingRequestsDescription')}
+          >
+            {virtualize ? (
+              requestList('outgoing', outgoingRequests, outgoingRequestColumns)
+            ) : (
+              <div className="space-y-5">
+                {outgoingRequests.map(request => (
+                  <div key={request.requestId ?? request.group.id} className="space-y-3">
+                    <div className="space-y-1 px-3 sm:px-4">
+                      <h3 className="text-sm font-semibold">{request.group.name}</h3>
+                      <div className="text-muted-foreground text-sm">
+                        {renderRequestDescription(
+                          request.group,
+                          request.type,
+                          request.membershipMode,
+                          request.rels.length > 0
+                        )}
+                      </div>
+                    </div>
+                    <DataTable
+                      columns={outgoingRequestColumns}
+                      data={getRequestRows(request)}
+                      getRowId={row => row.id}
+                      enablePagination={false}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </ManagementSection>
+        </div>
+      )}
+
+      <div
+        data-tutorial-anchor={
+          filteredRelationships.length > 0 ? 'tutorial-network-confirmed' : undefined
+        }
+      >
         <ManagementSection
           title={
             <span className="flex flex-wrap items-center gap-2">
-              <Clock className="h-4 w-4" />
-              <span>{t('common.network.outgoingRequests')}</span>
-              <StatusBadge status="outgoing" tone="outline">
-                {outgoingRequestCount}
+              <Network className="h-4 w-4" />
+              <span>{t('common.network.activeRelationships')}</span>
+              <StatusBadge status="active" tone="outline">
+                {filteredRelationships.length}
               </StatusBadge>
             </span>
           }
-          description={t('common.network.outgoingRequestsDescription')}
+          description={t('common.network.activeRelationshipsDescription')}
         >
           {virtualize ? (
-            requestList('outgoing', outgoingRequests, outgoingRequestColumns)
+            <VirtualDataTable
+              columns={activeRelationshipColumns as ColumnDef<any>[]}
+              source={activeRelationshipSource}
+              emptyTitle={t('common.network.activeRelationships')}
+            />
           ) : (
-            <div className="space-y-5">
-              {outgoingRequests.map(request => (
-                <div key={request.requestId ?? request.group.id} className="space-y-3">
-                  <div className="space-y-1 px-3 sm:px-4">
-                    <h3 className="text-sm font-semibold">{request.group.name}</h3>
-                    <div className="text-muted-foreground text-sm">
-                      {renderRequestDescription(
-                        request.group,
-                        request.type,
-                        request.membershipMode,
-                        request.rels.length > 0
-                      )}
-                    </div>
-                  </div>
-                  <DataTable
-                    columns={outgoingRequestColumns}
-                    data={getRequestRows(request)}
-                    getRowId={row => row.id}
-                    enablePagination={false}
-                  />
-                </div>
-              ))}
-            </div>
+            <DataTable
+              columns={activeRelationshipColumns}
+              data={filteredRelationships}
+              getRowId={(relationship, index) =>
+                `${relationship.group.id}-${relationship.type}-${index}`
+              }
+              enablePagination={false}
+              emptyTitle={t('common.network.activeRelationships')}
+              emptyDescription={t('common.network.noRelationshipsFound')}
+            />
           )}
         </ManagementSection>
-      )}
-
-      <ManagementSection
-        title={
-          <span className="flex flex-wrap items-center gap-2">
-            <Network className="h-4 w-4" />
-            <span>{t('common.network.activeRelationships')}</span>
-            <StatusBadge status="active" tone="outline">
-              {filteredRelationships.length}
-            </StatusBadge>
-          </span>
-        }
-        description={t('common.network.activeRelationshipsDescription')}
-      >
-        {virtualize ? (
-          <VirtualDataTable
-            columns={activeRelationshipColumns as ColumnDef<any>[]}
-            source={activeRelationshipSource}
-            emptyTitle={t('common.network.activeRelationships')}
-          />
-        ) : (
-          <DataTable
-            columns={activeRelationshipColumns}
-            data={filteredRelationships}
-            getRowId={(relationship, index) =>
-              `${relationship.group.id}-${relationship.type}-${index}`
-            }
-            enablePagination={false}
-            emptyTitle={t('common.network.activeRelationships')}
-            emptyDescription={t('common.network.noRelationshipsFound')}
-          />
-        )}
-      </ManagementSection>
+      </div>
 
       {canManageRelationships && manageDialog ? (
         <HierarchyConflictDialog

@@ -177,43 +177,29 @@ function getReasonForItem(item: {
 }
 
 function getPrimaryActionLabel(type: CivicTimelineType) {
-  switch (type) {
-    case 'vote':
-      return 'Vote';
-    case 'election':
-      return 'View candidates';
-    case 'event':
-      return 'Open event';
-    case 'agenda_item':
-      return 'Open agenda';
-    case 'amendment':
-      return 'Read amendment';
-    case 'blog':
-      return 'Read';
-    case 'statement':
-      return 'Discuss';
-    case 'group':
-      return 'Open group';
-    case 'user':
-      return 'View profile';
-    case 'workflow':
-    default:
-      return 'View';
-  }
+  return translateText(`features.timeline.primaryActions.${type}`);
 }
 
 function getStatsLabel(item: Pick<CivicTimelineItem, 'stats' | 'type'>) {
   if (typeof item.stats?.participants === 'number' && item.stats.participants > 0) {
-    return `${item.stats.participants} attending`;
+    return translateText('features.timeline.stats.attending', {
+      count: item.stats.participants,
+    });
   }
   if (typeof item.stats?.candidates === 'number' && item.stats.candidates > 0) {
-    return `${item.stats.candidates} candidates`;
+    return translateText('features.timeline.stats.candidates', {
+      count: item.stats.candidates,
+    });
   }
   if (typeof item.stats?.comments === 'number' && item.stats.comments > 0) {
-    return `${item.stats.comments} comments`;
+    return translateText('features.timeline.stats.comments', {
+      count: item.stats.comments,
+    });
   }
   if (typeof item.stats?.members === 'number' && item.stats.members > 0) {
-    return `${item.stats.members} members`;
+    return translateText('features.timeline.stats.members', {
+      count: item.stats.members,
+    });
   }
   return null;
 }
@@ -409,7 +395,7 @@ export function mapAgendaItemToCivicTimelineItem(
     id: `agenda:${item.id}`,
     entityId: item.id,
     type: 'agenda_item',
-    title: item.title || item.amendment?.title || 'Agenda item',
+    title: item.title || item.amendment?.title || translateText('common.entities.agendaItem'),
     description: item.description,
     href,
     sourceName: event.title,

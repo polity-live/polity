@@ -1,6 +1,9 @@
 /**
  * Date helper functions for calendar views
  */
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
+
+const currentLocale = () => (useLanguageStore.getState().language === 'de' ? 'de-DE' : 'en-US');
 
 export const startOfWeek = (date: Date): Date => {
   const d = new Date(date);
@@ -38,7 +41,7 @@ export const isDateInRange = (date: Date | string | number, start: Date, end: Da
 };
 
 export const formatDate = (date: Date): string => {
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(currentLocale(), {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -49,18 +52,18 @@ export const formatDate = (date: Date): string => {
 export const formatWeekRange = (date: Date): string => {
   const start = startOfWeek(date);
   const end = endOfWeek(date);
-  return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  return `${start.toLocaleDateString(currentLocale(), { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString(currentLocale(), { month: 'short', day: 'numeric', year: 'numeric' })}`;
 };
 
 export const formatMonth = (date: Date): string => {
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(currentLocale(), {
     month: 'long',
     year: 'numeric',
   });
 };
 
 export const formatTime = (date: string | number | Date): string => {
-  return new Date(date).toLocaleTimeString('en-US', {
+  return new Date(date).toLocaleTimeString(currentLocale(), {
     hour: 'numeric',
     minute: '2-digit',
   });

@@ -27,4 +27,14 @@ describe('normalizeTimelineText', () => {
       ])
     ).toBeUndefined();
   });
+
+  it('reads plain text from legacy JSON descriptions', () => {
+    expect(
+      normalizeTimelineText({
+        city: 'Berlin',
+        plain: '  Neighborhood planning meetup  ',
+        venue: 'City Hall',
+      })
+    ).toBe('Neighborhood planning meetup');
+  });
 });

@@ -16,22 +16,19 @@ import type { CurrencyCode } from '@/features/shared/logic/currency';
 type PaymentFieldKey =
   'label' | 'type' | 'amount' | 'currency' | 'direction' | 'counterparty_keys' | 'created_at';
 
-const PAYMENT_TYPE_LABELS: Record<string, string> = {
-  membership_fee: 'Membership fee',
-  donation: 'Donation',
-  subsidies: 'Subsidies',
-  campaign: 'Campaign',
-  material: 'Material',
-  events: 'Events',
-  others: 'Other',
-};
+const PAYMENT_TYPES = [
+  'membership_fee',
+  'donation',
+  'subsidies',
+  'campaign',
+  'material',
+  'events',
+  'others',
+] as const;
 
 function getPaymentTypeLabel(type: string | null | undefined): string {
-  if (!type) {
-    return 'Unknown type';
-  }
-
-  return PAYMENT_TYPE_LABELS[type] ?? type;
+  const knownType = PAYMENT_TYPES.find(candidate => candidate === type);
+  return translateText(`features.groups.paymentTypes.${knownType ?? 'unknown'}`);
 }
 
 function getPaymentDirection(payment: GroupPaymentRow, groupId: string): 'income' | 'expense' {
@@ -90,14 +87,16 @@ function getCounterpartyKey(payment: GroupPaymentRow, groupId: string): string |
 function getCounterpartyLabel(payment: GroupPaymentRow, groupId: string): string {
   if (getPaymentDirection(payment, groupId) === 'income') {
     return (
-      getUserLabel(payment.payer_user) || getGroupLabel(payment.payer_group) || 'Unknown payer'
+      getUserLabel(payment.payer_user) ||
+      getGroupLabel(payment.payer_group) ||
+      translateText('common.unknown')
     );
   }
 
   return (
     getUserLabel(payment.receiver_user) ||
     getGroupLabel(payment.receiver_group) ||
-    'Unknown receiver'
+    translateText('common.unknown')
   );
 }
 
@@ -179,7 +178,7 @@ export function PaymentsSection({
         label: translateText('generated.inline.0168_type_3deb7456'),
         kind: 'enum',
         operators: ['eq', 'in'],
-        options: Object.entries(PAYMENT_TYPE_LABELS).map(([value, label]) => ({ value, label })),
+        options: PAYMENT_TYPES.map(value => ({ value, label: getPaymentTypeLabel(value) })),
         getValue: payment => payment.type,
       },
       {

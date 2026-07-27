@@ -20,22 +20,19 @@ import { CurrencySelect } from '@/features/shared/ui/form/CurrencySelect';
 import { formatCurrencyMajor, type CurrencyCode } from '@/features/shared/logic/currency';
 import type { CurrencyConversionResult } from '@/features/shared/logic/currency';
 import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
-const PAYMENT_TYPE_LABELS: Record<string, string> = {
-  membership_fee: 'Membership fee',
-  donation: 'Donation',
-  subsidies: 'Subsidies',
-  campaign: 'Campaign',
-  material: 'Material',
-  events: 'Events',
-  others: 'Other',
-};
+const PAYMENT_TYPES = [
+  'membership_fee',
+  'donation',
+  'subsidies',
+  'campaign',
+  'material',
+  'events',
+  'others',
+] as const;
 
 function getPaymentTypeLabel(type: string | null | undefined): string {
-  if (!type) {
-    return 'Unknown type';
-  }
-
-  return PAYMENT_TYPE_LABELS[type] ?? type;
+  const knownType = PAYMENT_TYPES.find(candidate => candidate === type);
+  return translateText(`features.groups.paymentTypes.${knownType ?? 'unknown'}`);
 }
 
 function getPaymentDirection(payment: GroupPaymentRow, groupId: string): 'income' | 'expense' {
@@ -69,14 +66,16 @@ function getGroupLabel(
 function getCounterpartyLabel(payment: GroupPaymentRow, groupId: string): string {
   if (getPaymentDirection(payment, groupId) === 'income') {
     return (
-      getUserLabel(payment.payer_user) || getGroupLabel(payment.payer_group) || 'Unknown payer'
+      getUserLabel(payment.payer_user) ||
+      getGroupLabel(payment.payer_group) ||
+      translateText('features.groups.paymentDialog.unknownPayer')
     );
   }
 
   return (
     getUserLabel(payment.receiver_user) ||
     getGroupLabel(payment.receiver_group) ||
-    'Unknown receiver'
+    translateText('features.groups.paymentDialog.unknownReceiver')
   );
 }
 export interface PaymentsSectionViewProps {

@@ -10,8 +10,6 @@ import { getAuthRedirectUrl } from '@/features/auth/logic/authRedirects';
 import { storePendingGoogleLanguage } from '@/features/auth/logic/authLanguage';
 import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
-const AUTH_SERVICE_UNAVAILABLE_MESSAGE =
-  'Authentication service is temporarily unavailable. Please try again in a moment.';
 const AUTH_RETRY_DELAY_MS = 750;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -38,6 +36,10 @@ function getErrorStatus(error: unknown): number | null {
   return null;
 }
 
+function isAlreadyRegisteredAuthError(error: unknown): boolean {
+  return isRecord(error) && error.code === 'user_already_exists';
+}
+
 function isTransientAuthInfrastructureError(error: unknown): boolean {
   const message = getErrorMessage(error)?.toLowerCase() ?? '';
   const status = getErrorStatus(error);
@@ -55,10 +57,22 @@ function isTransientAuthInfrastructureError(error: unknown): boolean {
 
 function normalizeAuthErrorMessage(error: unknown, fallback: string): string {
   if (isTransientAuthInfrastructureError(error)) {
-    return AUTH_SERVICE_UNAVAILABLE_MESSAGE;
+    return translateText('common.appErrors.auth_service_unavailable');
   }
 
-  return getErrorMessage(error) ?? fallback;
+  if (isRecord(error)) {
+    if (error.code === 'invalid_credentials') {
+      return translateText('auth.signIn.invalidCredentials');
+    }
+    if (error.code === 'otp_expired' || error.code === 'otp_disabled') {
+      return translateText('features.auth.errors.invalidOrExpiredCode');
+    }
+    if (error.code === 'weak_password') {
+      return translateText('auth.signUp.passwordTooShort');
+    }
+  }
+
+  return fallback;
 }
 
 async function retryTransientAuthFailure<T extends { error: unknown | null }>(
@@ -148,20 +162,30 @@ export const useAuthStore = create<AuthState>()(
           return { status: 'authenticated' };
         }
 
+        if (data.user?.identities?.length === 0) {
+          const errorMessage = translateText('auth.signUp.emailAlreadyRegistered');
+          set(state => {
+            state.error = errorMessage;
+          });
+          return {
+            status: 'error',
+            error: errorMessage,
+          };
+        }
+
         if (data.user?.id) {
           return { status: 'confirmation_required' };
         }
 
         return {
           status: 'error',
-          error: 'Failed to create account',
+          error: translateText('auth.signUp.signUpFailed'),
         };
       } catch (error) {
         console.error('Failed to sign up:', error);
-        const errorMessage = normalizeAuthErrorMessage(
-          error,
-          translateText('generated.inline.0023_failed_to_sign_up_c8c619af')
-        );
+        const errorMessage = isAlreadyRegisteredAuthError(error)
+          ? translateText('auth.signUp.emailAlreadyRegistered')
+          : normalizeAuthErrorMessage(error, translateText('auth.signUp.signUpFailed'));
         set(state => {
           state.isLoading = false;
           state.error = errorMessage;
@@ -199,7 +223,10 @@ export const useAuthStore = create<AuthState>()(
         console.error('Failed to sign in:', error);
         set(state => {
           state.isLoading = false;
-          state.error = normalizeAuthErrorMessage(error, 'Invalid email or password');
+          state.error = normalizeAuthErrorMessage(
+            error,
+            translateText('auth.signIn.invalidCredentials')
+          );
         });
         return false;
       }
@@ -235,7 +262,10 @@ export const useAuthStore = create<AuthState>()(
         console.error('Failed to start Google sign in:', error);
         set(state => {
           state.isLoading = false;
-          state.error = normalizeAuthErrorMessage(error, 'Failed to start Google sign in');
+          state.error = normalizeAuthErrorMessage(
+            error,
+            translateText('features.auth.errors.googleSignInFailed')
+          );
         });
         return false;
       }
@@ -270,7 +300,10 @@ export const useAuthStore = create<AuthState>()(
         console.error('Failed to send reset email:', error);
         set(state => {
           state.isLoading = false;
-          state.error = normalizeAuthErrorMessage(error, 'Failed to send reset email');
+          state.error = normalizeAuthErrorMessage(
+            error,
+            translateText('auth.forgotPassword.sendFailed')
+          );
         });
         return false;
       }
@@ -310,7 +343,10 @@ export const useAuthStore = create<AuthState>()(
         console.error('Failed to send magic link:', error);
         set(state => {
           state.isLoading = false;
-          state.error = normalizeAuthErrorMessage(error, 'Failed to send magic link');
+          state.error = normalizeAuthErrorMessage(
+            error,
+            translateText('features.auth.errors.magicLinkFailed')
+          );
         });
         return false;
       }
@@ -344,13 +380,16 @@ export const useAuthStore = create<AuthState>()(
 
           return true;
         } else {
-          throw new Error('Authentication failed');
+          throw new Error(translateText('features.auth.errors.authenticationFailed'));
         }
       } catch (error) {
         console.error('Failed to verify magic code:', error);
         set(state => {
           state.isLoading = false;
-          state.error = normalizeAuthErrorMessage(error, 'Invalid or expired code');
+          state.error = normalizeAuthErrorMessage(
+            error,
+            translateText('features.auth.errors.invalidOrExpiredCode')
+          );
         });
         return false;
       }

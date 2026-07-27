@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { serverConfirmed, waitForClientApply } from '@/zero/mutate-with-server-check';
 import type { EventUpdateInput } from '@/zero/events/schema';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { ATTENDANCE_MODE_CHANGE_LOCKED_MESSAGE } from '@/zero/events/attendance-mode';
 
 /**
  * Hook for event mutations
@@ -243,18 +244,27 @@ export function useEventMutations(eventId: string) {
 
     setIsLoading(true);
     try {
-      await waitForClientApply(
-        doUpdateEvent({
+      const result = doUpdateEvent(
+        {
           id: eventId,
           ...updates,
-        })
+        },
+        { monitorServerError: false }
       );
+      await waitForClientApply(result);
+      await serverConfirmed(result);
 
       toast.success(translateText('generated.inline.0461_event_updated_successfully_bc659249'));
       return { success: true };
     } catch (error) {
       console.error('Failed to update event:', error);
-      toast.error(translateText('generated.inline.0462_failed_to_update_event_db303d38'));
+      toast.error(
+        error instanceof Error && error.message === ATTENDANCE_MODE_CHANGE_LOCKED_MESSAGE
+          ? translateText(
+              'features.events.editPage.locationCapacity.attendanceModeLockedDescription'
+            )
+          : translateText('generated.inline.0462_failed_to_update_event_db303d38')
+      );
       return { success: false, error };
     } finally {
       setIsLoading(false);

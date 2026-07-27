@@ -3,7 +3,10 @@ import { Archive, ArchiveRestore, LayoutGrid, List, Plus } from 'lucide-react';
 
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  translate as translateText,
+  useTranslation,
+} from '@/features/shared/hooks/use-translation';
 import { KanbanBoard } from '@/features/todos/ui/kanban-board.tsx';
 import { TodoDetailDialog } from '@/features/todos/ui/todo-detail-dialog.tsx';
 import { TodoList } from '@/features/todos/ui/todo-list.tsx';
@@ -12,6 +15,7 @@ import type { Todo } from '@/features/todos/types/todo.types';
 
 import type { TodoViewMode } from '../types/group.types';
 import type { useTodosSectionController } from '../hooks/useTodosSectionController';
+import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
 
 interface TodosSectionViewProps extends ReturnType<typeof useTodosSectionController> {
   canManageTodos: boolean;
@@ -50,6 +54,16 @@ export function TodosSectionView({
   setArchiveMode,
   archivedCount,
 }: TodosSectionViewProps) {
+  const { language } = useTranslation();
+  const displayTodos = filteredTodos.map(todo =>
+    resolveAppTutorialFixtureValue(todo, {
+      tutorialRunId: todo.tutorial_run_id,
+      language,
+    })
+  );
+  const rawTodoFor = (todo: Todo) =>
+    filteredTodos.find(candidate => candidate.id === todo.id) ?? todo;
+
   return (
     <>
       <Card>
@@ -125,7 +139,7 @@ export function TodosSectionView({
             onCustomFilterSave={saveCustomFilter}
           />
 
-          {filteredTodos.length === 0 ? (
+          {displayTodos.length === 0 ? (
             <p className="text-muted-foreground py-8 text-center">
               {archiveMode === 'archived' && !hasActiveFilters
                 ? translateText('features.todos.archive.empty')
@@ -138,13 +152,13 @@ export function TodosSectionView({
                     )}
             </p>
           ) : viewMode === 'kanban' && archiveMode === 'active' ? (
-            <KanbanBoard canManageTodos={canManageTodos} todos={filteredTodos} />
+            <KanbanBoard canManageTodos={canManageTodos} todos={displayTodos} />
           ) : (
             <TodoList
               canManageTodos={canManageTodos}
-              todos={filteredTodos}
-              onToggleComplete={onToggleComplete}
-              onTodoClick={onTodoClick}
+              todos={displayTodos}
+              onToggleComplete={todo => onToggleComplete(rawTodoFor(todo))}
+              onTodoClick={todo => onTodoClick(rawTodoFor(todo))}
             />
           )}
         </CardContent>

@@ -242,7 +242,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
             entityId: amendmentSnapshot.id,
             actorId: userId,
             title: safeSenderName,
-            description: amendmentSnapshot.title || 'Amendment',
+            description: amendmentSnapshot.title || translateText('common.entities.amendment'),
             contentType: 'amendment',
           },
         });

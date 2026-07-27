@@ -72,8 +72,8 @@ const loadVotePreview = () =>
     default: module.LandingVoteElectionPreview,
   }));
 const loadStreetPreview = () =>
-  import('./LandingStreetDesignPreview').then(module => ({
-    default: module.LandingStreetDesignPreview,
+  import('./LandingCityDesignPreview').then(module => ({
+    default: module.LandingCityDesignPreview,
   }));
 const loadSocialPreview = () =>
   import('./LandingSocialAiPreview').then(module => ({
@@ -247,18 +247,18 @@ export function PublicLandingPage() {
 
       <StorySection
         muted
-        eyebrow={t('pages.home.publicLanding.sections.streetDesign.eyebrow')}
-        title={t('pages.home.publicLanding.sections.streetDesign.title')}
-        description={t('pages.home.publicLanding.sections.streetDesign.description')}
+        eyebrow={t('pages.home.publicLanding.sections.cityDesign.eyebrow')}
+        title={t('pages.home.publicLanding.sections.cityDesign.title')}
+        description={t('pages.home.publicLanding.sections.cityDesign.description')}
       >
         <StoryPoints
-          points={tArray('pages.home.publicLanding.sections.streetDesign.points')}
+          points={tArray('pages.home.publicLanding.sections.cityDesign.points')}
           icons={[MapPinned, Route, Calculator]}
         />
         <DeferredLandingPreview
           load={loadStreetPreview}
           minHeight={760}
-          label={t('pages.home.publicLanding.sections.streetDesign.title')}
+          label={t('pages.home.publicLanding.sections.cityDesign.title')}
         />
       </StorySection>
 

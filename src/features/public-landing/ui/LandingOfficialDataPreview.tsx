@@ -12,7 +12,10 @@ import {
   Table2,
   Upload,
 } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  translate as translateText,
+  useTranslation,
+} from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { cn } from '@/features/shared/utils/utils';
@@ -520,7 +523,12 @@ function DemoChart({
     const points = values.map((value, index) => `${8 + index * 23},${92 - value}`).join(' ');
     return (
       <div className="min-h-64">
-        <svg viewBox="0 0 110 100" className="h-56 w-full" role="img" aria-label="line chart">
+        <svg
+          viewBox="0 0 110 100"
+          className="h-56 w-full"
+          role="img"
+          aria-label={translateText('common.accessibility.lineChart')}
+        >
           <polyline
             points={points}
             fill="none"

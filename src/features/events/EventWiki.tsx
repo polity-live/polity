@@ -12,6 +12,7 @@ import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
 import { MeetingPage as MeetingPageView } from '@/features/meet/MeetingPage';
 import { EventWikiContentView } from './EventWikiContentView';
+import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
 
 interface EventWikiProps {
   eventId: string;
@@ -35,7 +36,7 @@ function EventWikiNotFoundView() {
 }
 
 export function EventWiki({ eventId }: EventWikiProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const recoveryDraft = useCreateRecoveryDraft('event', eventId);
   const {
     user,
@@ -81,8 +82,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
     return <MeetingPageView meetingId={eventId} />;
   }
 
+  const displayEvent = resolveAppTutorialFixtureValue(event, {
+    tutorialRunId: event.tutorial_run_id,
+    language,
+  });
   const { electionsCount, amendmentsCount, openChangeRequestsCount } = agendaStats;
-  const formattedLocation = formatNamedLocation(event.location_name, event);
+  const formattedLocation = formatNamedLocation(displayEvent.location_name, displayEvent);
   const isAssemblyEventType =
     event.event_type === 'delegate_assembly' || event.event_type === 'general_assembly';
   const isInviteOnlyEvent = event.event_type === 'on_invite';
@@ -96,7 +101,8 @@ export function EventWiki({ eventId }: EventWikiProps) {
       : canStartParticipationRequest && isAssemblyEventType
         ? 'Only members of the associated group can participate in this general assembly'
         : undefined;
-  const eventDescription = typeof event.description === 'string' ? event.description : undefined;
+  const eventDescription =
+    typeof displayEvent.description === 'string' ? displayEvent.description : undefined;
   return (
     <EventWikiContentView
       virtualizeParticipationDirectory
@@ -104,10 +110,13 @@ export function EventWiki({ eventId }: EventWikiProps) {
       amendmentsCount={amendmentsCount}
       canAccess={canAccess}
       confirmDialogOpen={confirmDialogOpen}
-      elections={elections}
+      elections={resolveAppTutorialFixtureValue(elections, {
+        tutorialRunId: event.tutorial_run_id,
+        language,
+      })}
       electionsCount={electionsCount}
       electionsDialogOpen={electionsDialogOpen}
-      event={event}
+      event={displayEvent}
       eventDescription={eventDescription}
       eventId={eventId}
       formattedLocation={formattedLocation}
@@ -120,7 +129,10 @@ export function EventWiki({ eventId }: EventWikiProps) {
       openChangeRequestsCount={openChangeRequestsCount}
       participation={participation}
       participationDisabledReason={participationDisabledReason}
-      selectedElection={selectedElection}
+      selectedElection={resolveAppTutorialFixtureValue(selectedElection, {
+        tutorialRunId: event.tutorial_run_id,
+        language,
+      })}
       candidacyPasswordError={candidacyPasswordError}
       setConfirmDialogOpen={setConfirmDialogOpen}
       setElectionsDialogOpen={setElectionsDialogOpen}

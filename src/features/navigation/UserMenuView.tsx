@@ -1,10 +1,22 @@
 import { featureThemeClassName } from '@/features/shared/theme';
-import type { RefObject } from 'react';
+import { useState, type RefObject } from 'react';
 import { Link } from '@tanstack/react-router';
-import { BookOpen, Calendar, FileText, LogOut, Search, Settings, User, X } from 'lucide-react';
+import {
+  BookOpen,
+  Bot,
+  Calendar,
+  FileText,
+  GraduationCap,
+  LogOut,
+  MessageSquareText,
+  Search,
+  Settings,
+  User,
+  X,
+} from 'lucide-react';
 
 import { FormControlInput } from '@/features/shared/ui/form';
-import { ScrollableAlertDialogContent } from '@/features/shared/ui/dialog';
+import { ScrollableAlertDialogContent, ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
 import {
   AlertDialog,
@@ -30,6 +42,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
+import {
+  Dialog,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/features/shared/ui/ui/dialog.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
 import type { UserMenuAmendment, UserMenuEvent, UserMenuGroup } from './logic/userMenuItems';
 
@@ -38,7 +56,12 @@ export type { UserMenuAmendment, UserMenuEvent, UserMenuGroup } from './logic/us
 interface UserMenuViewLabels {
   profile: string;
   settings: string;
-  docs?: string;
+  docs: string;
+  docsDialogDescription: string;
+  tutorial: string;
+  aiAssistant: string;
+  documentation: string;
+  feedback: string;
   groups: string;
   events: string;
   amendments: string;
@@ -127,6 +150,7 @@ export function UserMenuView({
   onClearAmendmentSearch,
   onLogout,
 }: UserMenuViewProps) {
+  const [documentationDialogOpen, setDocumentationDialogOpen] = useState(false);
   const hasGroups = groups.length > 0 || showGroupSearch;
   const hasEvents = events.length > 0 || showEventSearch;
   const hasAmendments = amendments.length > 0 || showAmendmentSearch;
@@ -165,24 +189,38 @@ export function UserMenuView({
           <DropdownMenuSeparator className="shrink-0" />
 
           <DropdownMenuItem asChild className="shrink-0">
-            <Link to={profileHref} preload="intent" className="flex w-full items-center">
+            <Link
+              to={profileHref}
+              preload="intent"
+              className="flex w-full items-center"
+              data-tutorial-anchor="avatar-profile"
+            >
               <User className="mr-2 h-4 w-4" />
               {labels.profile}
             </Link>
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild className="shrink-0">
-            <Link to={settingsHref} preload="intent" className="flex w-full items-center">
+            <Link
+              to={settingsHref}
+              preload="intent"
+              className="flex w-full items-center"
+              data-tutorial-anchor="avatar-settings"
+            >
               <Settings className="mr-2 h-4 w-4" />
               {labels.settings}
             </Link>
           </DropdownMenuItem>
 
-          <DropdownMenuItem asChild className="shrink-0">
-            <Link to={docsHref} preload="intent" className="flex w-full items-center">
-              <BookOpen className="mr-2 h-4 w-4" />
-              {labels.docs ?? 'Docs'}
-            </Link>
+          <DropdownMenuItem
+            className="shrink-0"
+            onSelect={() => {
+              onOpenChange?.(false);
+              setDocumentationDialogOpen(true);
+            }}
+          >
+            <BookOpen className="mr-2 h-4 w-4" />
+            {labels.docs}
           </DropdownMenuItem>
 
           {navigationEntitiesLoading ? (
@@ -435,6 +473,56 @@ export function UserMenuView({
         </DropdownMenuContent>
       </DropdownMenu>
 
+      <Dialog open={documentationDialogOpen} onOpenChange={setDocumentationDialogOpen}>
+        <ScrollableDialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{labels.docs}</DialogTitle>
+            <DialogDescription>{labels.docsDialogDescription}</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Link
+              to="/onboarding"
+              search={{ restart: false }}
+              preload="intent"
+              className={documentationCardClassName}
+              onClick={() => setDocumentationDialogOpen(false)}
+            >
+              <GraduationCap className="h-6 w-6" />
+              <span className="font-medium">{labels.tutorial}</span>
+            </Link>
+            <Link
+              to="/messages"
+              search={{ new: 'ai' }}
+              preload="intent"
+              className={documentationCardClassName}
+              onClick={() => setDocumentationDialogOpen(false)}
+            >
+              <Bot className="h-6 w-6" />
+              <span className="font-medium">{labels.aiAssistant}</span>
+            </Link>
+            <Link
+              to={docsHref}
+              preload="intent"
+              className={documentationCardClassName}
+              onClick={() => setDocumentationDialogOpen(false)}
+            >
+              <BookOpen className="h-6 w-6" />
+              <span className="font-medium">{labels.documentation}</span>
+            </Link>
+            <a
+              href="https://github.com/polity-live/polity/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={documentationCardClassName}
+              onClick={() => setDocumentationDialogOpen(false)}
+            >
+              <MessageSquareText className="h-6 w-6" />
+              <span className="font-medium">{labels.feedback}</span>
+            </a>
+          </div>
+        </ScrollableDialogContent>
+      </Dialog>
+
       <AlertDialog open={logoutDialogOpen} onOpenChange={onLogoutDialogOpenChange}>
         <ScrollableAlertDialogContent>
           <AlertDialogHeader>
@@ -450,6 +538,9 @@ export function UserMenuView({
     </>
   );
 }
+
+const documentationCardClassName =
+  'border-border bg-card text-card-foreground hover:bg-accent focus-visible:ring-ring flex min-h-28 flex-col items-start justify-between gap-4 rounded-lg border p-4 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2';
 
 function formatEventMeta(event: UserMenuEvent) {
   return [formatEventDate(event.start_date), event.groupName, event.locationName]

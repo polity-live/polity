@@ -4,7 +4,7 @@
 -- =============================================================================
 
 -- Vote table (one vote per amendment agenda item)
-CREATE TABLE IF NOT EXISTS public.vote (
+CREATE TABLE public.vote (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   agenda_item_id UUID,
   amendment_id UUID,
@@ -41,7 +41,7 @@ ALTER TABLE public.amendment_process_step_run
   ON DELETE SET NULL;
 
 -- Vote choice table (e.g. Yes, No, Abstain — or custom choices)
-CREATE TABLE IF NOT EXISTS public.vote_choice (
+CREATE TABLE public.vote_choice (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vote_id UUID NOT NULL REFERENCES public.vote (id) ON DELETE CASCADE,
   label TEXT NOT NULL,
@@ -60,7 +60,7 @@ ALTER TABLE public.vote_choice ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.vote_choice FOR ALL TO service_role USING (true);
 
 -- Voter table (eligible voters for a vote, auto-populated from accredited participants)
-CREATE TABLE IF NOT EXISTS public.voter (
+CREATE TABLE public.voter (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vote_id UUID NOT NULL REFERENCES public.vote (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -77,7 +77,7 @@ ALTER TABLE public.voter ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.voter FOR ALL TO service_role USING (true);
 
 -- Indicative voter participation (records that a voter participated in the indicative round)
-CREATE TABLE IF NOT EXISTS public.indicative_voter_participation (
+CREATE TABLE public.indicative_voter_participation (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vote_id UUID NOT NULL REFERENCES public.vote (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -95,7 +95,7 @@ CREATE POLICY "service_role_all" ON public.indicative_voter_participation FOR AL
 
 -- Indicative choice decision (the actual choice in indicative round)
 -- voter_participation_id is nullable for secret ballots (no link to who voted)
-CREATE TABLE IF NOT EXISTS public.indicative_choice_decision (
+CREATE TABLE public.indicative_choice_decision (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vote_id UUID NOT NULL REFERENCES public.vote (id) ON DELETE CASCADE,
   choice_id UUID NOT NULL REFERENCES public.vote_choice (id) ON DELETE CASCADE,
@@ -111,7 +111,7 @@ ALTER TABLE public.indicative_choice_decision ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.indicative_choice_decision FOR ALL TO service_role USING (true);
 
 -- Final voter participation (records that a voter participated in the final round)
-CREATE TABLE IF NOT EXISTS public.final_voter_participation (
+CREATE TABLE public.final_voter_participation (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vote_id UUID NOT NULL REFERENCES public.vote (id) ON DELETE CASCADE,
   voter_id UUID NOT NULL REFERENCES public.voter (id) ON DELETE CASCADE,
@@ -127,7 +127,7 @@ CREATE POLICY "service_role_all" ON public.final_voter_participation FOR ALL TO 
 
 -- Final choice decision (the actual choice in final round)
 -- voter_participation_id is nullable for secret ballots (no link to who voted)
-CREATE TABLE IF NOT EXISTS public.final_choice_decision (
+CREATE TABLE public.final_choice_decision (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vote_id UUID NOT NULL REFERENCES public.vote (id) ON DELETE CASCADE,
   choice_id UUID NOT NULL REFERENCES public.vote_choice (id) ON DELETE CASCADE,
@@ -143,7 +143,7 @@ ALTER TABLE public.final_choice_decision ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.final_choice_decision FOR ALL TO service_role USING (true);
 
 -- Aggregated offline tallies per vote phase and choice
-CREATE TABLE IF NOT EXISTS public.vote_offline_tally (
+CREATE TABLE public.vote_offline_tally (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vote_id UUID NOT NULL REFERENCES public.vote (id) ON DELETE CASCADE,
   phase TEXT NOT NULL CHECK (phase IN ('indicative', 'final')),

@@ -96,11 +96,11 @@ import { getFinalVoteActionLabels } from '../logic/finalVoteActionLabels';
 import { buildVoteDialogDocumentPreviewModel } from '../logic/changeRequestDocumentPreview';
 import { resolveClosingVoteForAgendaItem } from '../logic/resolveClosingVoteForAgendaItem';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
-import { StreetDesignChangeRequestPreview } from '@/features/amendments/streetscape/ui/StreetDesignChangeRequestPreview';
+import { CityDesignChangeRequestPreview } from '@/features/amendments/city-design/ui/CityDesignChangeRequestPreview';
 import {
-  isStreetDesignChangeRequest,
-  type StreetDesignChangeRequest,
-} from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
+  isCityDesignChangeRequest,
+  type CityDesignChangeRequest,
+} from '@/features/amendments/city-design/logic/cityDesignChangeRequests';
 import { computeEligibleFinalVoterCount } from '@/features/votes/logic/computeEligibleVoters';
 import { useAgendaArrowNavigation } from '../hooks/useAgendaArrowNavigation';
 import { buildOfflineTallyErrorToast, isOfflineTallyPasswordError } from './offlineTallyErrorToast';
@@ -207,7 +207,7 @@ export function EventAgendaItemDetail({
   eventId: string;
   agendaItemId: string;
 }) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const navigate = useNavigate();
   const { updateSpeaker, initializeChangeRequestVoting, ensureEventSuggestionChangeRequestVotes } =
     useAgendaActions();
@@ -231,9 +231,9 @@ export function EventAgendaItemDetail({
     handleAddToSpeakerList,
     canJoinSpeakerList,
   } = useEventAgendaItem(eventId, agendaItemId);
-  const { streetDesigns: amendmentStreetDesigns } = useAmendmentState({
+  const { cityDesigns: amendmentCityDesigns } = useAmendmentState({
     amendmentId: agendaItem?.amendment_id ?? undefined,
-    includeStreetDesign: true,
+    includeCityDesign: true,
   });
   const { user: userRecord } = useUserState({ userId: user?.id });
   const mappedUserRecord = useMemo(
@@ -1039,12 +1039,7 @@ export function EventAgendaItemDetail({
           }
         } catch (error) {
           console.error('Failed to jump to final vote:', error);
-          toast.error(
-            t(
-              'features.agendas.crTimeline.jumpToFinalVoteFailed',
-              'Could not start the final vote.'
-            )
-          );
+          toast.error(t('features.agendas.crTimeline.jumpToFinalVoteFailed'));
         } finally {
           setSequenceVotingLoading(null);
         }
@@ -1074,7 +1069,11 @@ export function EventAgendaItemDetail({
         if (finalStartableSequenceItem?.id) {
           setSelectedCRToolbarItemId(finalStartableSequenceItem.id);
         }
-        toast.error(error instanceof Error ? error.message : 'Could not start the final vote.');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : t('features.agendas.crTimeline.jumpToFinalVoteFailed')
+        );
       } finally {
         setSequenceVotingLoading(null);
       }
@@ -1171,7 +1170,7 @@ export function EventAgendaItemDetail({
       ._placeholderTitle;
     if (placeholderTitle) return placeholderTitle;
     if ((selectedCRToolbarItem as { _voteStepKind?: string })._voteStepKind === 'merge_variant') {
-      return selectedCRToolbarItem.vote?.title ?? 'Variant final vote';
+      return selectedCRToolbarItem.vote?.title ?? t('features.agendas.fallbacks.variantFinalVote');
     }
     if (selectedCRToolbarItem.is_closing_vote) {
       return t('features.agendas.crTimeline.acceptAmendment');
@@ -1199,9 +1198,9 @@ export function EventAgendaItemDetail({
     () =>
       (selectedCRToolbarItem?.vote?.choices ?? []).map(choice => ({
         id: choice.id,
-        label: choice.label || 'Choice',
+        label: choice.label || t('features.agendas.fallbacks.choice'),
       })),
-    [selectedCRToolbarItem?.vote?.choices]
+    [selectedCRToolbarItem?.vote?.choices, t]
   );
 
   const selectedCRDialogPhase = useMemo(() => {
@@ -1223,21 +1222,21 @@ export function EventAgendaItemDetail({
   const voteDialogDocumentPreviewContent = useMemo(() => {
     const selectedStreetChangeRequest =
       selectedCRToolbarItem?.change_request &&
-      isStreetDesignChangeRequest(selectedCRToolbarItem.change_request)
+      isCityDesignChangeRequest(selectedCRToolbarItem.change_request)
         ? ({
             ...selectedCRToolbarItem.change_request,
             id:
               selectedCRToolbarItem.change_request.id ??
               selectedCRToolbarItem.change_request_id ??
               selectedCRToolbarItem.id,
-          } as StreetDesignChangeRequest)
+          } as CityDesignChangeRequest)
         : null;
 
     if (selectedStreetChangeRequest) {
       return (
-        <StreetDesignChangeRequestPreview
+        <CityDesignChangeRequestPreview
           changeRequest={selectedStreetChangeRequest}
-          streetDesigns={amendmentStreetDesigns}
+          cityDesigns={amendmentCityDesigns}
         />
       );
     }
@@ -1262,7 +1261,7 @@ export function EventAgendaItemDetail({
     agendaBranchEditingMode,
     agendaItem?.amendment_id,
     agendaItem?.id,
-    amendmentStreetDesigns,
+    amendmentCityDesigns,
     documentContent,
     mappedUserRecord,
     selectedCRToolbarItem,
@@ -1661,7 +1660,10 @@ export function EventAgendaItemDetail({
   const namedResultsDialogConfig = useMemo(() => {
     if (namedResultsTarget === 'election' && election && namedElectionResults) {
       return {
-        title: election.title ?? agendaItem?.title ?? 'Namentliche Wahl',
+        title:
+          election.title ??
+          agendaItem?.title ??
+          translateText('features.events.agenda.namedResults.electionFallbackTitle'),
         description: translateText(
           'generated.inline.0007_live_einzelansicht_der_aktuellen_wahlentschei_a187c0ee'
         ),
@@ -1671,7 +1673,10 @@ export function EventAgendaItemDetail({
 
     if (namedResultsTarget === 'vote' && vote && namedVoteResults) {
       return {
-        title: vote.title ?? agendaItem?.title ?? 'Namentliche Abstimmung',
+        title:
+          vote.title ??
+          agendaItem?.title ??
+          translateText('features.events.agenda.namedResults.voteFallbackTitle'),
         description: translateText(
           'generated.inline.0008_live_einzelansicht_der_aktuellen_abstimmungse_5779107f'
         ),
@@ -1856,6 +1861,7 @@ export function EventAgendaItemDetail({
       eventId={eventId}
       agendaItemId={agendaItemId}
       t={t}
+      language={language}
       navigate={navigate}
       updateSpeaker={updateSpeaker}
       agendaItem={agendaItem}
@@ -1943,7 +1949,7 @@ export function EventAgendaItemDetail({
       setSelectedCRToolbarItemId={setSelectedCRToolbarItemId}
       mockCRItems={mockCRItems}
       documentContent={documentContent}
-      streetDesigns={amendmentStreetDesigns}
+      cityDesigns={amendmentCityDesigns}
       amendmentDiscussions={amendmentDiscussions}
       crDiffMap={crDiffMap}
       hasAmendmentCRs={hasAmendmentCRs}

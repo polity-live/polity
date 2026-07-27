@@ -4,9 +4,21 @@ import type { ActionSubmissionStep } from '@/features/shared/ui/action-submissio
 
 function createSteps(activeIndex: number | null): ActionSubmissionStep[] {
   const baseSteps: ActionSubmissionStep[] = [
-    { key: 'prepare', label: 'PIN prüfen', status: 'pending' },
-    { key: 'commit', label: 'Tally speichern', status: 'pending' },
-    { key: 'sync', label: 'Ansicht synchronisieren', status: 'pending' },
+    {
+      key: 'prepare',
+      copy: { key: 'common.actionSubmission.steps.tally.prepare' },
+      status: 'pending',
+    },
+    {
+      key: 'commit',
+      copy: { key: 'common.actionSubmission.steps.tally.commit' },
+      status: 'pending',
+    },
+    {
+      key: 'sync',
+      copy: { key: 'common.actionSubmission.steps.tally.sync' },
+      status: 'pending',
+    },
   ];
 
   return baseSteps.map((step, index) => ({

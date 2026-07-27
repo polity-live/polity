@@ -1,4 +1,5 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
+import '@/font-faces.css';
 import { AuthProvider } from '@/providers/auth-provider';
 import { AppRuntime } from '@/runtime/app-runtime';
 import { AppShell } from '@/layout/app-shell';
@@ -8,6 +9,11 @@ import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
 import { KeyboardPlatformProvider } from '@/features/shared/keyboard/keyboard-shortcut';
 import stylesAssetHref from '../styles.css?url';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  APPEARANCE_THEME_CACHE_KEY,
+  APPEARANCE_THEME_CSS_CACHE_KEY,
+  APPEARANCE_THEME_STYLE_ID,
+} from '@/features/shared/appearance-theme';
 
 const stylesHref = import.meta.env.DEV ? '/src/styles.css?direct' : stylesAssetHref;
 export const earlyPwaInstallPromptCaptureScript = `(function(){try{if(window.__polityPwaInstallPromptCaptureReady)return;window.__polityPwaInstallPromptCaptureReady=true;window.addEventListener('beforeinstallprompt',function(event){event.preventDefault();window.__polityPwaInstallPromptEvent=event;window.__polityPwaInstallPromptCapturedAt=Date.now();window.dispatchEvent(new CustomEvent('polity:pwa-install-prompt-captured',{detail:{promptEvent:event,capturedAt:window.__polityPwaInstallPromptCapturedAt}}));});}catch(error){console.warn('Failed to initialize PWA install prompt capture:',error);}})()`;
@@ -30,14 +36,8 @@ export const Route = createRootRoute({
       { title: translateText('generated.inline.0614_polity_f147ffe2') },
     ],
     links: [
-      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
-      {
-        rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&display=swap',
-      },
       { rel: 'stylesheet', href: stylesHref },
-      { rel: 'manifest', href: '/manifest.json' },
+      { rel: 'manifest', href: '/manifest.en.json' },
       { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
       {
         rel: 'icon',
@@ -71,7 +71,7 @@ function RootLayout() {
         {/* Blocking script to apply dark class before first paint — prevents flash */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches);if(d)document.documentElement.classList.add('dark')}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches);var m=d?'dark':'light';document.documentElement.classList.add(m);document.documentElement.style.colorScheme=m;var c=localStorage.getItem('${APPEARANCE_THEME_CSS_CACHE_KEY}');if(c){var s=document.createElement('style');s.id='${APPEARANCE_THEME_STYLE_ID}';s.textContent=c;document.head.appendChild(s)}var a=JSON.parse(localStorage.getItem('${APPEARANCE_THEME_CACHE_KEY}')||'null');if(a&&a.slug){document.documentElement.dataset.appearanceTheme=a.slug;var p=d?a.dark:a.light;var tc=document.querySelector('meta[name="theme-color"]');if(tc&&p&&p.background)tc.content=p.background}var cs=document.querySelector('meta[name="color-scheme"]');if(!cs){cs=document.createElement('meta');cs.name='color-scheme';document.head.appendChild(cs)}cs.content=m}catch(e){}})()`,
           }}
         />
         <script

@@ -1,4 +1,5 @@
 import type { VariantDiffCandidate } from '@/features/agendas/ui/MergeVariantComparisonPanel';
+import { translate } from '@/features/shared/hooks/use-translation';
 import {
   AMENDMENT_EDITING_MODE_ORDER,
   getAmendmentEditingModePolicy,
@@ -93,7 +94,7 @@ export function mapAmendmentBranchStatusChips(
 }
 
 export function getBranchPathLabel(branch: AmendmentProcessBranchSource | null | undefined) {
-  if (!branch) return 'Branch';
+  if (!branch) return translate('features.amendments.branches.branch');
 
   const stepLabels = getOrderedBranchSteps(branch)
     .map(
@@ -101,11 +102,17 @@ export function getBranchPathLabel(branch: AmendmentProcessBranchSource | null |
         step.target_group?.name ??
         step.source_group?.name ??
         step.workflow_step?.label ??
-        (typeof step.order_index === 'number' ? `Step ${step.order_index + 1}` : null)
+        (typeof step.order_index === 'number'
+          ? translate('features.amendments.branches.step', {
+              number: step.order_index + 1,
+            })
+          : null)
     )
     .filter(Boolean);
 
-  return stepLabels.length > 0 ? stepLabels.join(' -> ') : (branch.title ?? 'Branch');
+  return stepLabels.length > 0
+    ? stepLabels.join(' -> ')
+    : (branch.title ?? translate('features.amendments.branches.branch'));
 }
 
 export function getBranchDisplayEvent(branch: AmendmentProcessBranchSource | null | undefined) {
@@ -286,7 +293,7 @@ export function buildBranchDiffCandidates({
     originalContent
       ? {
           id: 'original-document',
-          label: 'Ursprungsdokument',
+          label: translate('features.amendments.branches.originalDocument'),
           content: originalContent,
           isOriginal: true,
         }

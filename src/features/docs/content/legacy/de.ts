@@ -41,6 +41,7 @@ export const docsPageTranslations = {
     overview: 'Überblick',
     related: 'Als Nächstes',
     readGuide: 'Guide öffnen',
+    resultCount: '{{count}} Treffer',
     resultCount_one: '{{count}} Treffer',
     resultCount_other: '{{count}} Treffer',
     searchTitle: 'Dokumentation durchsuchen',
@@ -1301,7 +1302,7 @@ export const docsPageTranslations = {
       ],
       concepts: [
         'KI-Ausgaben sind Vorschläge und brauchen menschliche Prüfung, besonders bei Governance-Texten.',
-        'Aria und Kai erklären Funktionen, während Editor- und Chat-Flows konkrete Arbeit unterstützen können.',
+        'Assistent Aria & Kai erklärt Funktionen, während Editor- und Chat-Flows konkrete Arbeit unterstützen können.',
         'Bring-your-own-key und gemeinsame Modelle beeinflussen, welche KI-Funktionen verfügbar sind.',
       ],
       watchFor: [

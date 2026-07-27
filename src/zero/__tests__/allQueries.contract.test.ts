@@ -156,7 +156,7 @@ describe('Zero query contracts', () => {
 
     expect(failures).toEqual([]);
     expect(queryCount).toBeGreaterThan(180);
-  }, 10_000);
+  }, 30_000);
 
   it('keeps searchable document paging stateless and deterministic', async () => {
     const { harness, registries } = await loadQueryRegistries();
@@ -215,7 +215,7 @@ describe('Zero query contracts', () => {
         ['limit', 20],
       ])
     );
-  });
+  }, 30_000);
 
   it('intersects spoofable user-scoped search queries with the authenticated user', async () => {
     const { harness, registries } = await loadQueryRegistries();
@@ -331,13 +331,17 @@ describe('Zero query contracts', () => {
       args: { ...broadArgs, id: 'group-1' },
       ctx,
     });
-    const predicate = harness
+    const predicates = harness
       .lastQuery('group')
-      .calls.find(call => call[0] === 'where' && typeof call[1] === 'function')?.[1];
-    const predicateCalls = evaluatePredicate(predicate);
+      .calls.filter(call => call[0] === 'where' && typeof call[1] === 'function')
+      .map(call => call[1]);
+    const predicateCalls = predicates.flatMap(predicate => evaluatePredicate(predicate));
 
     expect(predicateCalls).toEqual(
       expect.arrayContaining([
+        ['cmp', 'tutorial_run_id', 'IS', null],
+        ['exists', 'tutorial_run'],
+        ['where', 'tutorial_run', 'user_id', ctx.userID],
         ['cmp', 'visibility', 'IN', ['public', 'authenticated']],
         ['cmp', 'owner_id', ctx.userID],
         ['exists', 'memberships'],

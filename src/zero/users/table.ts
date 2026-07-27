@@ -42,6 +42,7 @@ export const user = table('user')
     group_count: number(),
     tutorial_step: number().optional(),
     assistant_introduction: boolean().optional(),
+    tutorial_run_id: string().optional(),
     created_at: number(),
     updated_at: number(),
   })

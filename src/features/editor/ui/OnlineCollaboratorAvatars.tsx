@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { Button } from '@/features/shared/ui/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
 import { cn } from '@/features/shared/utils/utils';
+import { translate } from '@/features/shared/hooks/use-translation';
 
 import { generateUserColor } from '../logic/editor-helpers';
 import type { EditorCollaborator, EditorPresencePeer, EditorUser } from '../types';
@@ -24,7 +25,11 @@ interface OnlineCollaboratorAvatarsProps {
 }
 
 function getDisplayName(user: EditorUser) {
-  return user.name || [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Unknown User';
+  return (
+    user.name ||
+    [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+    translate('common.unknownUser')
+  );
 }
 
 function getInitials(user: EditorUser) {

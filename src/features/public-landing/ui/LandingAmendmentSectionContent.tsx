@@ -123,8 +123,12 @@ function LandingAmendmentEditorPreview({
           <BadgeControl variant="secondary">
             {t('pages.home.publicLanding.amendmentText.status')}
           </BadgeControl>
-          <BadgeControl variant="outline">#climate</BadgeControl>
-          <BadgeControl variant="outline">#budget</BadgeControl>
+          <BadgeControl variant="outline">
+            {t('pages.home.publicLanding.amendmentText.tagClimate')}
+          </BadgeControl>
+          <BadgeControl variant="outline">
+            {t('pages.home.publicLanding.amendmentText.tagBudget')}
+          </BadgeControl>
         </div>
         <div
           ref={motionScopeRef}

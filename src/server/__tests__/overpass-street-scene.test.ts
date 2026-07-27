@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest';
-import { buildOverpassQuery, normalizeOverpassPayload } from '../overpass-street-scene';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  buildOverpassQuery,
+  fetchOverpassSnapshot,
+  normalizeOverpassPayload,
+} from '../overpass-street-scene';
 
 const bbox = { south: 0, west: 0, north: 1, east: 1 };
 
@@ -7,6 +11,7 @@ describe('overpass street scene normalization', () => {
   it('requests full way geometry instead of center-only output', () => {
     const query = buildOverpassQuery(bbox);
 
+    expect(query).toContain('[timeout:8]');
     expect(query).toContain('out tags geom;');
     expect(query).not.toContain('out tags geom center');
     expect(query).toContain('node["amenity"~"bench|bicycle_parking');
@@ -22,20 +27,14 @@ describe('overpass street scene normalization', () => {
     expect(query).toContain('way["waterway"~"riverbank|river|canal|stream|ditch|drain"]');
     expect(query).toContain('relation["natural"~"water|wetland"]');
     expect(query).toContain('relation["waterway"~"riverbank|river|canal"]');
-    expect(query).toContain('way["bridge"]');
-    expect(query).toContain('way["bridge:structure"]');
-    expect(query).toContain('way["bridge:support"]');
-    expect(query).toContain('way["tunnel"]');
-    expect(query).toContain('way["layer"]');
-    expect(query).toContain('way["embankment"]');
-    expect(query).toContain('way["cutting"]');
-    expect(query).toContain('way["incline"]');
-    expect(query).toContain('way["step_count"]');
-    expect(query).toContain('way["ele"]');
-    expect(query).toContain('way["height"]');
+    expect(query).not.toContain('way["bridge"]');
+    expect(query).not.toContain('way["shop"]');
+    expect(query).not.toContain('way["office"]');
+    expect(query).not.toContain('way["height"]');
+    expect(query).not.toContain('way["layer"]');
     expect(query).toContain('way["man_made"="bridge"]');
-    expect(query).toContain('way["area:highway"="steps"]');
-    expect(query).toContain('relation["bridge:structure"]');
+    expect(query).not.toContain('way["area:highway"="steps"]');
+    expect(query).not.toContain('relation["bridge:structure"]');
   });
 
   it('classifies footways as sidewalks instead of roads', () => {
@@ -596,5 +595,72 @@ describe('overpass street scene normalization', () => {
       subkind: 'loading_zone',
       side: 'left',
     });
+  });
+});
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+describe('overpass street scene fetching', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+
+  it('retries a server failure once through the other endpoint', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(jsonResponse({}, 504))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          elements: [{ type: 'node', id: 1, lat: 0.5, lon: 0.5, tags: { natural: 'tree' } }],
+        })
+      );
+
+    const snapshot = await fetchOverpassSnapshot(bbox);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(new Set(fetchMock.mock.calls.map(call => String(call[0]))).size).toBe(2);
+    expect(snapshot.features?.[0]).toMatchObject({ kind: 'tree', source: 'osm' });
+    expect(snapshot.ways).toBeUndefined();
+  });
+
+  it('retries a timeout once through the other endpoint', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValueOnce(new DOMException('The operation timed out', 'TimeoutError'))
+      .mockResolvedValueOnce(jsonResponse({ elements: [] }));
+
+    const snapshot = await fetchOverpassSnapshot(bbox);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(snapshot.features).toEqual([]);
+  });
+
+  it('does not retry non-transient client errors', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({}, 400));
+
+    const snapshot = await fetchOverpassSnapshot(bbox);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(snapshot.features?.every(feature => feature.source === 'fallback')).toBe(true);
+  });
+
+  it('returns a fallback after both transient attempts fail', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(jsonResponse({}, 429))
+      .mockResolvedValueOnce(jsonResponse({}, 503));
+
+    const snapshot = await fetchOverpassSnapshot(bbox);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(snapshot.features?.every(feature => feature.source === 'fallback')).toBe(true);
+    expect(snapshot.ways).toBeUndefined();
   });
 });

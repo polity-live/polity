@@ -20,6 +20,7 @@ const {
   resolveChangeRequestByVoteResultMock,
   assertCurrentOnlineBallotEligibilityMock,
   snapshotVoteElectorateMock,
+  materializeCurrentForwardConfirmedEventVotingMock,
 } = vi.hoisted(() => ({
   updateVoteFn: vi.fn(),
   createVoteFn: vi.fn(),
@@ -40,6 +41,7 @@ const {
   resolveChangeRequestByVoteResultMock: vi.fn(),
   assertCurrentOnlineBallotEligibilityMock: vi.fn(),
   snapshotVoteElectorateMock: vi.fn(),
+  materializeCurrentForwardConfirmedEventVotingMock: vi.fn(),
 }));
 
 vi.mock('../../ballot-eligibility', () => ({
@@ -64,6 +66,7 @@ vi.mock('../../mutators', () => ({
 
 vi.mock('../../server-helpers', () => ({
   eventTitle: eventTitleMock,
+  isOwnedAppTutorialAgendaItem: vi.fn().mockResolvedValue(false),
   recomputeEventCounters: recomputeEventCountersMock,
   requireRecentVotingPasswordVerification: requireRecentVotingPasswordVerificationMock,
 }));
@@ -91,6 +94,10 @@ vi.mock('../../change-requests/internal-voting', () => ({
 
 vi.mock('../../change-requests/server-resolution', () => ({
   resolveChangeRequestByVoteResult: resolveChangeRequestByVoteResultMock,
+}));
+
+vi.mock('../../agendas/server-mutators', () => ({
+  materializeCurrentForwardConfirmedEventVoting: materializeCurrentForwardConfirmedEventVotingMock,
 }));
 
 import { voteServerMutators } from '../server-mutators';
@@ -152,6 +159,7 @@ beforeEach(() => {
   resolveChangeRequestByVoteResultMock.mockReset();
   assertCurrentOnlineBallotEligibilityMock.mockReset();
   snapshotVoteElectorateMock.mockReset();
+  materializeCurrentForwardConfirmedEventVotingMock.mockReset();
 });
 
 function activeVotingParticipant(userId: string) {
@@ -613,6 +621,7 @@ describe('voteServerMutators.updateVote', () => {
     const resolution = {
       handled: true,
       amendmentId: 'amendment-1',
+      branchId: 'branch-1',
       terminalDecision: 'accepted',
     } as const;
     eventTitleMock.mockResolvedValueOnce('Event One');
@@ -660,6 +669,11 @@ describe('voteServerMutators.updateVote', () => {
       'user-1',
       'agenda-1',
       resolution
+    );
+    expect(materializeCurrentForwardConfirmedEventVotingMock).toHaveBeenCalledWith(
+      tx,
+      createCtx(),
+      'branch-1'
     );
     expect(fireNotificationMock).toHaveBeenCalledWith('notifyVotingCompleted', {
       senderId: 'user-1',

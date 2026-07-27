@@ -1,4 +1,10 @@
 export const componentsTranslations = {
+  changeRequests: {
+    openChangeRequests: 'Open change requests',
+  },
+  empty: {
+    noResults: 'No results found',
+  },
   infoTabs: {
     about: 'About',
     contact: 'Contact',
@@ -221,6 +227,46 @@ export const componentsTranslations = {
     blocked: 'Notifications blocked. Please enable them in your browser settings.',
     blockedLong:
       'Push notifications have been blocked. Please enable them in your browser settings.',
+    iosInstallRequired:
+      'On iPhone and iPad, push notifications only work in the installed Home Screen app. First add Polity to your Home Screen from the Share menu, then open the app from there.',
+    diagnostics: {
+      browser: 'Browser support',
+      permission: 'Permission',
+      serviceWorker: 'Service worker',
+      server: 'Server synchronization',
+      ready: 'Ready',
+      missing: 'Not ready',
+      synchronized: 'Synchronized',
+      notSynchronized: 'Not synchronized',
+      permissionValues: {
+        default: 'Not granted yet',
+        granted: 'Granted',
+        denied: 'Blocked',
+      },
+    },
+    foreground: {
+      open: 'Open',
+    },
+    test: {
+      title: 'Polity test notification',
+      message: 'Web Push is working on this device.',
+      action: 'Send test',
+      description: 'Checks the complete push delivery chain on this device.',
+      backgroundInstruction: 'Switch to the background now. The test will be sent in five seconds.',
+      failed: 'Test notification failed',
+      status: {
+        pending: 'Test is waiting to be sent',
+        processing: 'Test is being processed',
+        sent: 'Test sent successfully',
+        skipped: 'Test was skipped',
+        failed: 'Test failed',
+      },
+      skipReasons: {
+        disabled_by_settings: 'Push is disabled in your settings',
+        subscription_missing: 'The device subscription is missing',
+        subscription_expired: 'The device subscription has expired',
+      },
+    },
     success: {
       enabled: 'Push notifications enabled',
       disabled: 'Push notifications disabled',
@@ -240,21 +286,8 @@ export const componentsTranslations = {
       invalidKeys: 'Invalid subscription keys',
       subscribeFailed: 'Error enabling push notifications',
       unsubscribeFailed: 'Failed to disable push notifications',
+      iosInstallRequired: 'Install Polity as a Home Screen app and open it from there first.',
     },
-  },
-  ariaKaiWelcome: {
-    title: 'Welcome to Polity!',
-    subtitle: 'Meet Aria & Kai, your personal assistants',
-    intro:
-      "Hey! We're Aria & Kai, and we're here to help you navigate Polity and make the most of all its features.",
-    helpText:
-      "Whenever you need assistance, tips, or want to learn about groups, events, amendments, and more, just find us in your message conversations. We're always ready to help!",
-    quickTip: 'Quick Tip:',
-    quickTipText:
-      "We've already started a conversation with you. Click below to see where you can always find us!",
-    dontShowAgain: "Don't show this message again",
-    findLater: "I'll find you later",
-    showLocation: 'Show me my assistant location',
   },
   ariaKaiActions: {
     showMe: 'Show me more',

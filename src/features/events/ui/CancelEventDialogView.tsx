@@ -220,7 +220,7 @@ export function CancelEventDialogView({
             onClick={handleCancel}
             disabled={isLoading || !reason.trim()}
           >
-            {isLoading ? t('common.loading') : t('features.events.cancel.confirm')}
+            {isLoading ? t('common.loading.general') : t('features.events.cancel.confirm')}
           </Button>
         </DialogFooter>
       </ScrollableDialogContent>

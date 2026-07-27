@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PermissionError } from '../../rbac/errors';
+import { encodeAppError } from '@/features/shared/errors/app-error';
 
 const canMock = vi.fn();
 const amendmentUpdateMock = vi.fn();
@@ -16,11 +17,16 @@ const amendmentTitleMock = vi.fn();
 const eventTitleMock = vi.fn();
 const groupNameMock = vi.fn();
 const userNameMock = vi.fn();
+const initializeChangeRequestVotingMock = vi.fn();
 const processEngineMocks = vi.hoisted(() => ({
   completeProcessTaskWithEvent: vi.fn(),
   initializeAmendmentProcessPath: vi.fn(),
   replanProcessBranchEvents: vi.fn(),
   resolveAmendmentProcessVote: vi.fn(),
+}));
+const documentIntegrityMocks = vi.hoisted(() => ({
+  assertDocumentSuggestionIntegrity: vi.fn(),
+  assertPersistedDocumentChangeRequestIntegrity: vi.fn(),
 }));
 
 vi.mock('../../rbac/can', () => ({
@@ -37,6 +43,7 @@ vi.mock('../../mutators', () => ({
       removeCollaborator: { fn: vi.fn() },
       updateCollaborator: { fn: vi.fn() },
       createChangeRequest: { fn: vi.fn() },
+      createDocumentChangeRequest: { fn: vi.fn() },
       voteOnChangeRequest: { fn: (...args: unknown[]) => voteOnChangeRequestMock(...args) },
       updateChangeRequest: { fn: vi.fn() },
       deleteChangeRequest: { fn: (...args: unknown[]) => changeRequestDeleteMock(...args) },
@@ -79,6 +86,21 @@ vi.mock('../process-engine', () => ({
 
 vi.mock('../process-notifications', () => ({
   notifyProcessVoteResolution: vi.fn(),
+}));
+
+vi.mock('../../agendas/server-mutators', () => ({
+  materializeCurrentForwardConfirmedEventVoting: (...args: unknown[]) =>
+    initializeChangeRequestVotingMock(...args),
+}));
+
+vi.mock('../../change-requests/document-integrity', () => ({
+  assertDocumentSuggestionIntegrity: documentIntegrityMocks.assertDocumentSuggestionIntegrity,
+  assertPersistedDocumentChangeRequestIntegrity:
+    documentIntegrityMocks.assertPersistedDocumentChangeRequestIntegrity,
+  isCityDesignChangeRequestSource: (sourceType: string | null | undefined) => {
+    const normalized = sourceType?.trim().toLowerCase() ?? '';
+    return normalized.startsWith('city_design_');
+  },
 }));
 
 import { amendmentServerMutators } from '../server-mutators';
@@ -327,7 +349,14 @@ describe('amendmentServerMutators authorization', () => {
     eventTitleMock.mockReset();
     groupNameMock.mockReset();
     userNameMock.mockReset();
+    initializeChangeRequestVotingMock.mockReset();
+    documentIntegrityMocks.assertDocumentSuggestionIntegrity.mockReset();
+    documentIntegrityMocks.assertPersistedDocumentChangeRequestIntegrity.mockReset();
     Object.values(processEngineMocks).forEach(mock => mock.mockReset());
+    processEngineMocks.completeProcessTaskWithEvent.mockResolvedValue({ handled: false });
+    processEngineMocks.initializeAmendmentProcessPath.mockResolvedValue({ handled: false });
+    processEngineMocks.replanProcessBranchEvents.mockResolvedValue({ handled: false });
+    processEngineMocks.resolveAmendmentProcessVote.mockResolvedValue({ handled: false });
   });
 
   it('creates amendments without checking target group or event permissions', async () => {
@@ -452,7 +481,7 @@ describe('amendmentServerMutators authorization', () => {
           event_id: 'event-closed',
         },
       })
-    ).rejects.toThrow('Antragsfrist');
+    ).rejects.toThrow(encodeAppError('event_deadline_expired'));
 
     expect(amendmentUpdateMock).not.toHaveBeenCalled();
   });
@@ -620,6 +649,67 @@ describe('amendmentServerMutators authorization', () => {
       'user-1',
       args
     );
+  });
+
+  it('requests vote materialization for the newly active process branch', async () => {
+    const tx = createTx('server');
+    const args = initializeProcessPathArgs();
+    tx.run.mockResolvedValueOnce(null).mockResolvedValueOnce([
+      {
+        id: 'membership-1',
+        membership_roles: [{ role_id: 'role-1' }],
+      },
+    ]);
+    processEngineMocks.initializeAmendmentProcessPath.mockResolvedValueOnce({
+      handled: true,
+      branchId: 'branch-1',
+    });
+
+    await amendmentServerMutators.initializeProcessPath.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args,
+    });
+
+    expect(initializeChangeRequestVotingMock).toHaveBeenCalledTimes(1);
+    expect(initializeChangeRequestVotingMock).toHaveBeenCalledWith(tx, createCtx(), 'branch-1');
+  });
+
+  it('rejects an inconsistent open document change request before process writes', async () => {
+    const tx = createTx('server');
+    const args = initializeProcessPathArgs();
+    tx.run
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce([
+        {
+          id: 'membership-1',
+          membership_roles: [{ role_id: 'role-1' }],
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'change-request-1',
+          status: 'open',
+          voting_status: 'open',
+          suggestion_id: 'suggestion-1',
+          process_branch_id: null,
+          source_type: null,
+        },
+      ]);
+    documentIntegrityMocks.assertPersistedDocumentChangeRequestIntegrity.mockRejectedValueOnce(
+      new Error('linked suggestion is not present in the document')
+    );
+
+    await expect(
+      amendmentServerMutators.initializeProcessPath.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args,
+      })
+    ).rejects.toThrow(encodeAppError('validation_failed'));
+
+    expect(processEngineMocks.initializeAmendmentProcessPath).not.toHaveBeenCalled();
+    expect(initializeChangeRequestVotingMock).not.toHaveBeenCalled();
   });
 
   it('rejects process path initialization without amendment manage rights', async () => {
@@ -1671,10 +1761,10 @@ describe('amendmentServerMutators authorization', () => {
     expect(sharedUpdateProcessBranchMock).not.toHaveBeenCalled();
   });
 
-  it('rejects direct street-design updates outside collaborative edit mode', async () => {
+  it('rejects direct city-design updates outside collaborative edit mode', async () => {
     const tx = createTx('server');
     tx.run
-      .mockResolvedValueOnce({ id: 'street-design-1', amendment_id: 'amendment-1' })
+      .mockResolvedValueOnce({ id: 'city-design-1', amendment_id: 'amendment-1' })
       .mockResolvedValueOnce({
         id: 'amendment-1',
         origin_amendment_id: null,
@@ -1691,11 +1781,11 @@ describe('amendmentServerMutators authorization', () => {
     canMock.mockResolvedValueOnce(undefined);
 
     await expect(
-      amendmentServerMutators.updateStreetDesign.fn({
+      amendmentServerMutators.updateCityDesign.fn({
         tx: tx as never,
         ctx: createCtx(),
         args: {
-          id: 'street-design-1',
+          id: 'city-design-1',
           process_branch_id: 'branch-1',
           title: 'Not allowed',
         },
@@ -1831,7 +1921,7 @@ describe('amendmentServerMutators authorization', () => {
           description: null,
         },
       })
-    ).rejects.toThrow('Antragsfrist');
+    ).rejects.toThrow(encodeAppError('event_deadline_expired'));
 
     expect(processEngineMocks.completeProcessTaskWithEvent).not.toHaveBeenCalled();
   });

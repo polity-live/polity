@@ -83,6 +83,7 @@ export const event = table('event')
     delegates_nomination_deadline: number().optional(),
     group_id: string().optional(),
     creator_id: string(),
+    tutorial_run_id: string().optional(),
     created_at: number(),
     updated_at: number(),
   })

@@ -1,19 +1,19 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import type {
-  StreetDesignBoundingBox,
-  StreetDesignOsmElevationSource,
-  StreetDesignGeoPoint,
-  StreetDesignOsmFeature,
-  StreetDesignOsmFeatureKind,
-  StreetDesignOsmSnapshot,
-  StreetDesignOsmStructureKind,
-} from '@/features/amendments/streetscape/types';
+  CityDesignBoundingBox,
+  CityDesignOsmElevationSource,
+  CityDesignGeoPoint,
+  CityDesignOsmFeature,
+  CityDesignOsmFeatureKind,
+  CityDesignOsmSnapshot,
+  CityDesignOsmStructureKind,
+} from '@/features/amendments/city-design/types';
 import {
-  applyStreetDesignOsmSemanticMapping,
-  getStreetDesignOsmRoadWidthMeters,
-  getStreetDesignOsmSideWidthMeters,
-} from '@/features/amendments/streetscape/logic/streetDesignOsmMapping';
+  applyCityDesignOsmSemanticMapping,
+  getCityDesignOsmRoadWidthMeters,
+  getCityDesignOsmSideWidthMeters,
+} from '@/features/amendments/city-design/logic/cityDesignOsmMapping';
 
 const streetSceneSchema = z.object({
   bbox: z.object({
@@ -45,11 +45,11 @@ interface OverpassPayload {
 }
 
 const OVERPASS_ENDPOINTS = [
-  'https://overpass-api.de/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
-  'https://overpass.openstreetmap.ru/api/interpreter',
+  'https://gall.openstreetmap.de/api/interpreter',
+  'https://lambert.openstreetmap.de/api/interpreter',
 ] as const;
-const OVERPASS_REQUEST_TIMEOUT_MS = 12_000;
+const OVERPASS_REQUEST_TIMEOUT_MS = 10_000;
+let nextOverpassEndpointIndex = Math.floor(Math.random() * OVERPASS_ENDPOINTS.length);
 
 const ROAD_HIGHWAY_VALUES = new Set([
   'motorway',
@@ -143,7 +143,7 @@ const CONTEXT_LANDUSE_VALUES = new Set([
   'institutional',
 ]);
 
-function assertSmallBoundingBox(bbox: StreetDesignBoundingBox) {
+function assertSmallBoundingBox(bbox: CityDesignBoundingBox) {
   const latSpan = bbox.north - bbox.south;
   const lonSpan = bbox.east - bbox.west;
 
@@ -156,11 +156,11 @@ function assertSmallBoundingBox(bbox: StreetDesignBoundingBox) {
   }
 }
 
-export function buildOverpassQuery(bbox: StreetDesignBoundingBox) {
+export function buildOverpassQuery(bbox: CityDesignBoundingBox) {
   const bounds = `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`;
 
   return `
-    [out:json][timeout:20];
+    [out:json][timeout:8];
     (
       node["natural"="tree"](${bounds});
       node["amenity"~"bench|bicycle_parking|waste_basket|recycling|post_box|fountain|drinking_water|charging_station|toilets|taxi|bus_station"](${bounds});
@@ -187,40 +187,21 @@ export function buildOverpassQuery(bbox: StreetDesignBoundingBox) {
       way["amenity"~"bicycle_parking|recycling|fountain|drinking_water|school|university|hospital|kindergarten|charging_station|toilets|taxi|bus_station"](${bounds});
       way["barrier"~"hedge|fence|wall|gate|kerb|cycle_barrier|block|lift_gate"](${bounds});
       way["traffic_calming"](${bounds});
-      way["historic"](${bounds});
-      way["tourism"~"attraction|hotel"](${bounds});
-      way["shop"](${bounds});
-      way["office"](${bounds});
       way["parking"](${bounds});
-      way["bridge"](${bounds});
-      way["bridge:structure"](${bounds});
-      way["bridge:support"](${bounds});
-      way["tunnel"](${bounds});
-      way["layer"](${bounds});
-      way["embankment"](${bounds});
-      way["cutting"](${bounds});
-      way["incline"](${bounds});
-      way["step_count"](${bounds});
-      way["ele"](${bounds});
-      way["height"](${bounds});
       way["man_made"="bridge"](${bounds});
-      way["area:highway"="steps"](${bounds});
       way["area:highway"="traffic_island"](${bounds});
       relation["natural"~"water|wetland"](${bounds});
       relation["building"](${bounds});
       relation["place"="square"](${bounds});
       relation["water"~"river|canal|lake|reservoir|pond|basin|stream_pool"](${bounds});
       relation["waterway"~"riverbank|river|canal"](${bounds});
-      relation["bridge"](${bounds});
-      relation["bridge:structure"](${bounds});
-      relation["layer"](${bounds});
       relation["man_made"="bridge"](${bounds});
     );
     out tags geom;
   `;
 }
 
-function isClosedRing(points: StreetDesignGeoPoint[]) {
+function isClosedRing(points: CityDesignGeoPoint[]) {
   const first = points[0];
   const last = points[points.length - 1];
   return (
@@ -228,7 +209,7 @@ function isClosedRing(points: StreetDesignGeoPoint[]) {
   );
 }
 
-function classifyWay(tags: Record<string, string> | undefined): StreetDesignOsmFeatureKind | null {
+function classifyWay(tags: Record<string, string> | undefined): CityDesignOsmFeatureKind | null {
   if (!tags) return null;
 
   if (tags.building) return 'building';
@@ -321,8 +302,8 @@ function toGeoPoints(geometry: { lat: number; lon: number }[]) {
 }
 
 function isSameGeoPoint(
-  first: StreetDesignGeoPoint | undefined,
-  second: StreetDesignGeoPoint | undefined
+  first: CityDesignGeoPoint | undefined,
+  second: CityDesignGeoPoint | undefined
 ) {
   return Boolean(
     first &&
@@ -332,9 +313,9 @@ function isSameGeoPoint(
   );
 }
 
-function stitchRelationSegments(segments: StreetDesignGeoPoint[][]) {
+function stitchRelationSegments(segments: CityDesignGeoPoint[][]) {
   const remaining = segments.filter(segment => segment.length >= 2).map(segment => [...segment]);
-  const rings: StreetDesignGeoPoint[][] = [];
+  const rings: CityDesignGeoPoint[][] = [];
 
   while (remaining.length > 0) {
     let ring = remaining.shift() ?? [];
@@ -404,7 +385,7 @@ function getElementGeometryPoints(element: OverpassElement) {
   return stitchRelationSegments(outerSegments);
 }
 
-function classifyPoint(tags: Record<string, string>): StreetDesignOsmFeatureKind | null {
+function classifyPoint(tags: Record<string, string>): CityDesignOsmFeatureKind | null {
   if (tags.natural === 'tree') return 'tree';
   if (tags.highway === 'street_lamp') return 'street_furniture';
   if (
@@ -433,7 +414,7 @@ function classifyPoint(tags: Record<string, string>): StreetDesignOsmFeatureKind
   return null;
 }
 
-function getFeatureGeometryKind(kind: StreetDesignOsmFeatureKind, points: StreetDesignGeoPoint[]) {
+function getFeatureGeometryKind(kind: CityDesignOsmFeatureKind, points: CityDesignGeoPoint[]) {
   if (
     kind === 'road' ||
     kind === 'sidewalk' ||
@@ -462,7 +443,7 @@ function getFeatureGeometryKind(kind: StreetDesignOsmFeatureKind, points: Street
   return 'polygon' as const;
 }
 
-function getFeatureWidthMeters(kind: StreetDesignOsmFeatureKind, tags: Record<string, string>) {
+function getFeatureWidthMeters(kind: CityDesignOsmFeatureKind, tags: Record<string, string>) {
   const explicitWidth = Number.parseFloat(tags.width ?? '');
   if (Number.isFinite(explicitWidth) && explicitWidth > 0) return explicitWidth;
 
@@ -480,11 +461,11 @@ function getFeatureWidthMeters(kind: StreetDesignOsmFeatureKind, tags: Record<st
     return tags.barrier === 'wall' ? 0.5 : tags.barrier === 'hedge' ? 0.8 : 0.3;
   if (kind === 'traffic') return tags.highway === 'crossing' ? 3 : 1.2;
   if (kind === 'transit') return 2.8;
-  if (kind === 'road') return getStreetDesignOsmRoadWidthMeters(tags);
+  if (kind === 'road') return getCityDesignOsmRoadWidthMeters(tags);
   return undefined;
 }
 
-function getFeatureLabel(tags: Record<string, string>, kind: StreetDesignOsmFeatureKind) {
+function getFeatureLabel(tags: Record<string, string>, kind: CityDesignOsmFeatureKind) {
   return (
     tags.name ??
     tags.highway ??
@@ -530,9 +511,9 @@ function getFeatureLayerIndex(tags: Record<string, string>) {
 }
 
 function getFeatureStructureKind(
-  kind: StreetDesignOsmFeatureKind,
+  kind: CityDesignOsmFeatureKind,
   tags: Record<string, string>
-): StreetDesignOsmStructureKind | undefined {
+): CityDesignOsmStructureKind | undefined {
   if (tags.highway === 'steps' || tags['area:highway'] === 'steps') return 'steps';
   if (tags.railway === 'subway' || isTruthyOsmTag(tags.tunnel)) return 'tunnel';
   if (isTruthyOsmTag(tags.cutting)) return 'cutting';
@@ -567,10 +548,10 @@ function getFeatureStepCount(tags: Record<string, string>) {
 }
 
 function getFeatureDeckElevationMeters(args: {
-  kind: StreetDesignOsmFeatureKind;
+  kind: CityDesignOsmFeatureKind;
   tags: Record<string, string>;
   layerIndex: number;
-  structureKind?: StreetDesignOsmStructureKind;
+  structureKind?: CityDesignOsmStructureKind;
   clearanceMeters?: number;
   stepCount?: number;
 }) {
@@ -599,7 +580,7 @@ function getFeatureDeckElevationMeters(args: {
   return 0;
 }
 
-function getFeatureBaseElevationMeters(structureKind: StreetDesignOsmStructureKind | undefined) {
+function getFeatureBaseElevationMeters(structureKind: CityDesignOsmStructureKind | undefined) {
   if (structureKind === 'tunnel') return -2.4;
   if (structureKind === 'cutting') return -1.4;
   return 0;
@@ -608,8 +589,8 @@ function getFeatureBaseElevationMeters(structureKind: StreetDesignOsmStructureKi
 function getFeatureElevationSource(args: {
   tags: Record<string, string>;
   deckElevationMeters: number;
-  structureKind?: StreetDesignOsmStructureKind;
-}): StreetDesignOsmElevationSource {
+  structureKind?: CityDesignOsmStructureKind;
+}): CityDesignOsmElevationSource {
   if (args.tags.ele || args.tags.height || args.tags.min_height || args.tags.clearance) {
     return 'osm';
   }
@@ -678,7 +659,7 @@ function getBuildingRenderColor(semanticUse: string | undefined) {
   }
 }
 
-function getFeatureRenderColor(kind: StreetDesignOsmFeatureKind, tags: Record<string, string>) {
+function getFeatureRenderColor(kind: CityDesignOsmFeatureKind, tags: Record<string, string>) {
   if (kind === 'road' && tags.highway === 'construction') return '#b7791f';
   if (kind === 'road' && tags.highway === 'track') return '#8a6a42';
   if (kind === 'rail') return '#475569';
@@ -699,7 +680,7 @@ function getFeatureRenderColor(kind: StreetDesignOsmFeatureKind, tags: Record<st
   return undefined;
 }
 
-function getFeatureSubkind(kind: StreetDesignOsmFeatureKind, tags: Record<string, string>) {
+function getFeatureSubkind(kind: CityDesignOsmFeatureKind, tags: Record<string, string>) {
   if (kind === 'road') {
     if (tags.highway === 'construction') return 'construction';
     if (tags.highway === 'track') return 'track';
@@ -827,7 +808,7 @@ function collectLoadingZoneSides(tags: Record<string, string>): ('left' | 'right
 }
 
 function createDerivedStreetSideFeature(args: {
-  feature: StreetDesignOsmFeature;
+  feature: CityDesignOsmFeature;
   kind: 'sidewalk' | 'bike_lane' | 'parking';
   side: 'left' | 'right';
   widthMeters: number;
@@ -862,10 +843,10 @@ function createDerivedStreetSideFeature(args: {
       'polity:derived_from': feature.id,
     },
     source: 'derived' as const,
-  } satisfies StreetDesignOsmFeature;
+  } satisfies CityDesignOsmFeature;
 }
 
-function createDerivedStreetSideFeatures(feature: StreetDesignOsmFeature) {
+function createDerivedStreetSideFeatures(feature: CityDesignOsmFeature) {
   if (feature.kind !== 'road' || !feature.tags || !feature.points) return [];
 
   const tags = feature.tags;
@@ -884,9 +865,9 @@ function createDerivedStreetSideFeatures(feature: StreetDesignOsmFeature) {
     }
     if (sidewalkSides.includes(side)) bands.push({ kind: 'sidewalk' });
 
-    let outerEdge = (feature.widthMeters ?? getStreetDesignOsmRoadWidthMeters(tags)) / 2;
+    let outerEdge = (feature.widthMeters ?? getCityDesignOsmRoadWidthMeters(tags)) / 2;
     return bands.map(band => {
-      const widthMeters = getStreetDesignOsmSideWidthMeters({ tags, kind: band.kind, side });
+      const widthMeters = getCityDesignOsmSideWidthMeters({ tags, kind: band.kind, side });
       const offsetMeters = Math.round((outerEdge + 0.15 + widthMeters / 2) * 100) / 100;
       outerEdge = offsetMeters + widthMeters / 2;
       return createDerivedStreetSideFeature({
@@ -902,10 +883,10 @@ function createDerivedStreetSideFeatures(feature: StreetDesignOsmFeature) {
 }
 
 export function normalizeOverpassPayload(
-  bbox: StreetDesignBoundingBox,
+  bbox: CityDesignBoundingBox,
   payload: OverpassPayload
-): StreetDesignOsmSnapshot {
-  const features: StreetDesignOsmFeature[] = [];
+): CityDesignOsmSnapshot {
+  const features: CityDesignOsmFeature[] = [];
 
   (payload.elements ?? []).forEach(element => {
     const tags = element.tags ?? {};
@@ -927,7 +908,7 @@ export function normalizeOverpassPayload(
         stepCount,
       });
       features.push(
-        applyStreetDesignOsmSemanticMapping({
+        applyCityDesignOsmSemanticMapping({
           id: String(element.id),
           kind,
           geometryKind: 'point',
@@ -983,7 +964,7 @@ export function normalizeOverpassPayload(
         : tags.building
           ? 9
           : undefined;
-    const feature: StreetDesignOsmFeature = {
+    const feature: CityDesignOsmFeature = {
       id: element.type === 'relation' ? `relation/${element.id}` : String(element.id),
       kind,
       geometryKind: getFeatureGeometryKind(kind, points),
@@ -1013,10 +994,10 @@ export function normalizeOverpassPayload(
       source: 'osm',
     };
 
-    const mappedFeature = applyStreetDesignOsmSemanticMapping(feature);
+    const mappedFeature = applyCityDesignOsmSemanticMapping(feature);
     features.push(mappedFeature);
     features.push(
-      ...createDerivedStreetSideFeatures(mappedFeature).map(applyStreetDesignOsmSemanticMapping)
+      ...createDerivedStreetSideFeatures(mappedFeature).map(applyCityDesignOsmSemanticMapping)
     );
   });
 
@@ -1024,21 +1005,19 @@ export function normalizeOverpassPayload(
     fetchedAt: Date.now(),
     bbox,
     features,
-    ways: features,
   };
 }
 
-function createFallbackSnapshot(bbox: StreetDesignBoundingBox): StreetDesignOsmSnapshot {
+function createFallbackSnapshot(bbox: CityDesignBoundingBox): CityDesignOsmSnapshot {
   const centerLat = (bbox.south + bbox.north) / 2;
   const centerLon = (bbox.west + bbox.east) / 2;
   const latSpan = bbox.north - bbox.south;
   const lonSpan = bbox.east - bbox.west;
-  const features: StreetDesignOsmFeature[] = [
+  const features: CityDesignOsmFeature[] = [
     {
       id: 'fallback-road-main',
       kind: 'road',
       geometryKind: 'line',
-      label: 'Strassenachse',
       widthMeters: 4.8,
       points: [
         { lat: centerLat - latSpan * 0.42, lon: centerLon - lonSpan * 0.42 },
@@ -1051,7 +1030,6 @@ function createFallbackSnapshot(bbox: StreetDesignBoundingBox): StreetDesignOsmS
       id: 'fallback-green',
       kind: 'green',
       geometryKind: 'polygon',
-      label: 'Gruenflaeche',
       points: [
         { lat: centerLat + latSpan * 0.12, lon: centerLon - lonSpan * 0.42 },
         { lat: centerLat + latSpan * 0.34, lon: centerLon - lonSpan * 0.22 },
@@ -1066,7 +1044,6 @@ function createFallbackSnapshot(bbox: StreetDesignBoundingBox): StreetDesignOsmS
       id: 'fallback-building',
       kind: 'building',
       geometryKind: 'polygon',
-      label: 'Gebaeude',
       height: 12,
       points: [
         { lat: centerLat - latSpan * 0.28, lon: centerLon + lonSpan * 0.18 },
@@ -1084,14 +1061,40 @@ function createFallbackSnapshot(bbox: StreetDesignBoundingBox): StreetDesignOsmS
     fetchedAt: Date.now(),
     bbox,
     features,
-    ways: features,
   };
 }
 
-async function fetchOverpassSnapshot(bbox: StreetDesignBoundingBox) {
-  const body = new URLSearchParams({ data: buildOverpassQuery(bbox) }).toString();
+function getOverpassEndpointsForRequest() {
+  const startIndex = nextOverpassEndpointIndex;
+  nextOverpassEndpointIndex = (nextOverpassEndpointIndex + 1) % OVERPASS_ENDPOINTS.length;
 
-  for (const endpoint of OVERPASS_ENDPOINTS) {
+  return [
+    OVERPASS_ENDPOINTS[startIndex],
+    OVERPASS_ENDPOINTS[(startIndex + 1) % OVERPASS_ENDPOINTS.length],
+  ];
+}
+
+function shouldRetryOverpassStatus(status: number) {
+  return status === 429 || status >= 500;
+}
+
+function logOverpassAttempt(details: {
+  endpoint: string;
+  attempt: number;
+  durationMs: number;
+  status?: number;
+  errorType?: string;
+}) {
+  const level = details.status && details.status >= 200 && details.status < 300 ? 'info' : 'warn';
+  console[level]('[overpass-street-scene]', details);
+}
+
+export async function fetchOverpassSnapshot(bbox: CityDesignBoundingBox) {
+  const body = new URLSearchParams({ data: buildOverpassQuery(bbox) }).toString();
+  const endpoints = getOverpassEndpointsForRequest();
+
+  for (const [index, endpoint] of endpoints.entries()) {
+    const startedAt = Date.now();
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -1100,18 +1103,37 @@ async function fetchOverpassSnapshot(bbox: StreetDesignBoundingBox) {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-          'User-Agent': 'polity-street-design/1.0',
+          'User-Agent': 'polity-city-design/1.0',
         },
         body,
       });
 
       if (!response.ok) {
+        logOverpassAttempt({
+          endpoint,
+          attempt: index + 1,
+          durationMs: Date.now() - startedAt,
+          status: response.status,
+        });
+        if (!shouldRetryOverpassStatus(response.status)) break;
         continue;
       }
 
       const payload = (await response.json()) as OverpassPayload;
+      logOverpassAttempt({
+        endpoint,
+        attempt: index + 1,
+        durationMs: Date.now() - startedAt,
+        status: response.status,
+      });
       return normalizeOverpassPayload(bbox, payload);
-    } catch {
+    } catch (error) {
+      logOverpassAttempt({
+        endpoint,
+        attempt: index + 1,
+        durationMs: Date.now() - startedAt,
+        errorType: error instanceof Error ? error.name : 'UnknownError',
+      });
       continue;
     }
   }

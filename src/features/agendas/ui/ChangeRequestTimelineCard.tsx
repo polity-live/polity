@@ -4,7 +4,7 @@ import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import type { TDiscussion } from '@/features/editor/types';
 import type { SuggestionPreviewResolutionMap } from '@/features/change-requests/logic/filterDocumentToSingleSuggestion';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
-import type { StreetDesignPreviewSource } from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
+import type { CityDesignPreviewSource } from '@/features/amendments/city-design/logic/cityDesignChangeRequests';
 import type { AmendmentForwardingPreviewModel } from '@/features/amendments/logic/amendmentForwardingPreview';
 /** Optional text diff data to render inside the card. */
 export interface ChangeRequestDiffData {
@@ -28,7 +28,7 @@ interface ChangeRequestTimelineCardProps {
   isFinalVoteLocked?: boolean;
   diff?: ChangeRequestDiffData;
   documentContent?: Value;
-  streetDesigns?: readonly StreetDesignPreviewSource[];
+  cityDesigns?: readonly CityDesignPreviewSource[];
   suggestionId?: string;
   suggestionResolutions?: SuggestionPreviewResolutionMap;
   /** Agenda or amendment title used for final closing vote labels. */
@@ -89,7 +89,7 @@ export function ChangeRequestTimelineCard({
   isFinalVoteLocked,
   diff,
   documentContent,
-  streetDesigns,
+  cityDesigns,
   suggestionId,
   suggestionResolutions,
   agendaTitle,
@@ -126,7 +126,7 @@ export function ChangeRequestTimelineCard({
     isFinalVoteLocked,
     diff,
     documentContent,
-    streetDesigns,
+    cityDesigns,
     suggestionId,
     suggestionResolutions,
     agendaTitle,

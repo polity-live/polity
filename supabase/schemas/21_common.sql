@@ -6,7 +6,7 @@
 -- =============================================================================
 
 -- Hashtag table (canonical tag dictionary)
-CREATE TABLE IF NOT EXISTS public.hashtag (
+CREATE TABLE public.hashtag (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tag TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -18,7 +18,7 @@ ALTER TABLE public.hashtag ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.hashtag FOR ALL TO service_role USING (true);
 
 -- User ↔ Hashtag junction table
-CREATE TABLE IF NOT EXISTS public.user_hashtag (
+CREATE TABLE public.user_hashtag (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   hashtag_id UUID NOT NULL REFERENCES public.hashtag (id) ON DELETE CASCADE,
@@ -35,7 +35,7 @@ ALTER TABLE public.user_hashtag ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.user_hashtag FOR ALL TO service_role USING (true);
 
 -- Group ↔ Hashtag junction table
-CREATE TABLE IF NOT EXISTS public.group_hashtag (
+CREATE TABLE public.group_hashtag (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   hashtag_id UUID NOT NULL REFERENCES public.hashtag (id) ON DELETE CASCADE,
@@ -50,7 +50,7 @@ ALTER TABLE public.group_hashtag ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_hashtag FOR ALL TO service_role USING (true);
 
 -- Amendment ↔ Hashtag junction table
-CREATE TABLE IF NOT EXISTS public.amendment_hashtag (
+CREATE TABLE public.amendment_hashtag (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
   hashtag_id UUID NOT NULL REFERENCES public.hashtag (id) ON DELETE CASCADE,
@@ -65,7 +65,7 @@ ALTER TABLE public.amendment_hashtag ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment_hashtag FOR ALL TO service_role USING (true);
 
 -- Event ↔ Hashtag junction table
-CREATE TABLE IF NOT EXISTS public.event_hashtag (
+CREATE TABLE public.event_hashtag (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
   hashtag_id UUID NOT NULL REFERENCES public.hashtag (id) ON DELETE CASCADE,
@@ -80,7 +80,7 @@ ALTER TABLE public.event_hashtag ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.event_hashtag FOR ALL TO service_role USING (true);
 
 -- Blog ↔ Hashtag junction table
-CREATE TABLE IF NOT EXISTS public.blog_hashtag (
+CREATE TABLE public.blog_hashtag (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   blog_id UUID NOT NULL REFERENCES public.blog (id) ON DELETE CASCADE,
   hashtag_id UUID NOT NULL REFERENCES public.hashtag (id) ON DELETE CASCADE,
@@ -95,7 +95,7 @@ ALTER TABLE public.blog_hashtag ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.blog_hashtag FOR ALL TO service_role USING (true);
 
 -- Statement ↔ Hashtag junction table
-CREATE TABLE IF NOT EXISTS public.statement_hashtag (
+CREATE TABLE public.statement_hashtag (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   statement_id UUID NOT NULL REFERENCES public.statement (id) ON DELETE CASCADE,
   hashtag_id UUID NOT NULL REFERENCES public.hashtag (id) ON DELETE CASCADE,
@@ -110,7 +110,7 @@ ALTER TABLE public.statement_hashtag ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.statement_hashtag FOR ALL TO service_role USING (true);
 
 -- Link table
-CREATE TABLE IF NOT EXISTS public.link (
+CREATE TABLE public.link (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   label TEXT,
   url TEXT,
@@ -128,7 +128,7 @@ ALTER TABLE public.link ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.link FOR ALL TO service_role USING (true);
 
 -- Timeline event table
-CREATE TABLE IF NOT EXISTS public.timeline_event (
+CREATE TABLE public.timeline_event (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_type TEXT,
   entity_type TEXT,
@@ -167,7 +167,7 @@ ALTER TABLE public.timeline_event ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.timeline_event FOR ALL TO service_role USING (true);
 
 -- Reaction table
-CREATE TABLE IF NOT EXISTS public.reaction (
+CREATE TABLE public.reaction (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   entity_id UUID,
   entity_type TEXT,

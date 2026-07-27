@@ -4,7 +4,7 @@
 -- =============================================================================
 
 -- Blog table
-CREATE TABLE IF NOT EXISTS public.blog (
+CREATE TABLE public.blog (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT,
   description TEXT,
@@ -37,7 +37,7 @@ ALTER TABLE public.blog ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.blog FOR ALL TO service_role USING (true);
 
 -- Blog blogger table
-CREATE TABLE IF NOT EXISTS public.blog_blogger (
+CREATE TABLE public.blog_blogger (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   blog_id UUID NOT NULL REFERENCES public.blog (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -58,7 +58,7 @@ ALTER TABLE public.blog_blogger ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.blog_blogger FOR ALL TO service_role USING (true);
 
 -- Blog support vote table
-CREATE TABLE IF NOT EXISTS public.blog_support_vote (
+CREATE TABLE public.blog_support_vote (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   blog_id UUID NOT NULL REFERENCES public.blog (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,

@@ -25,6 +25,12 @@ interface ModeToolbarButtonViewProps {
   onModeChange: (mode: SelectableEditingMode) => void | Promise<void>;
 }
 
+function getTutorialAnchor(mode: SelectableEditingMode) {
+  return mode === 'suggest_internal'
+    ? 'amendment-mode-vote-internal'
+    : 'amendment-mode-suggest-internal';
+}
+
 export function ModeToolbarButtonView({
   dropdownProps,
   disabledModeReasons,
@@ -37,6 +43,8 @@ export function ModeToolbarButtonView({
   isOwnerOrCollaborator,
   onModeChange,
 }: ModeToolbarButtonViewProps) {
+  const tutorialAnchor = getTutorialAnchor(mode);
+
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange} modal={false} {...dropdownProps}>
       <DropdownMenuTrigger asChild>
@@ -46,13 +54,14 @@ export function ModeToolbarButtonView({
           pressed={open}
           tooltip={labels.editingMode}
           isDropdown={!iconOnly}
+          data-tutorial-anchor={tutorialAnchor}
         >
           <currentOption.Icon />
           <span className={iconOnly ? 'sr-only' : 'hidden lg:inline'}>{currentOption.label}</span>
         </ToolbarButton>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="w-80" align="start">
+      <DropdownMenuContent className="w-80" align="start" data-tutorial-anchor={tutorialAnchor}>
         {!isOwnerOrCollaborator && (
           <div className="text-muted-foreground px-2 py-1.5 text-xs">{labels.viewOnly}</div>
         )}

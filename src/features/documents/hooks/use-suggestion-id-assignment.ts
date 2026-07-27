@@ -23,7 +23,8 @@ interface UseSuggestionIdAssignmentProps {
     changeRequestEntityId: string;
     status?: string;
     votingStatus?: string;
-  }) => unknown | Promise<unknown>;
+    discussions: TDiscussion[];
+  }) => boolean | undefined | Promise<boolean | undefined>;
   suggestions?: ResolvedSuggestion[]; // Optional: resolved suggestions from PlateJS
 }
 
@@ -119,13 +120,10 @@ export function useSuggestionIdAssignment({
           updatedDiscussions: summarizeDiscussions(updatedDiscussions),
         });
 
-        const createRequests: {
-          crId: string;
-          discussionId: string;
-          changeRequestEntityId: string;
-          status: string;
-          votingStatus: string;
-        }[] = [];
+        if (hasChanges) {
+          await onDiscussionsUpdate(updatedDiscussions);
+          hasChanges = false;
+        }
 
         for (const discussion of discussionsNeedingEntity) {
           const crId = discussion.crId;
@@ -145,43 +143,35 @@ export function useSuggestionIdAssignment({
               documentId,
             });
 
-            updatedDiscussions[index] = {
+            const nextDiscussions = [...updatedDiscussions];
+            nextDiscussions[index] = {
               ...updatedDiscussions[index],
               changeRequestEntityId,
               changeRequestStatus: requiresEventConfirmation ? 'pending_submission' : 'open',
             };
-            processedEntities.current.add(discussion.id);
-            hasChanges = true;
 
             editorSelectionDebugLog('suggestion-assignment:pass2:after-update', {
               changeRequestEntityId,
               crId,
-              discussion: summarizeDiscussion(updatedDiscussions[index]),
+              discussion: summarizeDiscussion(nextDiscussions[index]),
               discussionId: discussion.id,
               documentId,
             });
 
-            createRequests.push({
+            const created = await onChangeRequestCreate({
               crId,
               discussionId: discussion.id,
               changeRequestEntityId,
               status: requiresEventConfirmation ? 'pending_submission' : 'open',
               votingStatus: requiresEventConfirmation ? 'pending_submission' : 'open',
+              discussions: nextDiscussions,
             });
+
+            if (created !== false) {
+              updatedDiscussions.splice(0, updatedDiscussions.length, ...nextDiscussions);
+              processedEntities.current.add(discussion.id);
+            }
           }
-        }
-
-        if (createRequests.length > 0 && hasChanges) {
-          editorSelectionDebugLog('suggestion-assignment:on-discussions-update:before-create', {
-            documentId,
-            updatedDiscussions: summarizeDiscussions(updatedDiscussions),
-          });
-          await onDiscussionsUpdate(updatedDiscussions);
-          hasChanges = false;
-        }
-
-        for (const request of createRequests) {
-          await onChangeRequestCreate(request);
         }
       }
     }

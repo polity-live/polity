@@ -102,10 +102,7 @@ export function useGroupRoles(groupId: string) {
 
       if (createElection) {
         toast.info(
-          translateText(
-            'generated.inline.0143_group_role_election_created_as_assignment_4c3da2db',
-            'Fuer diese gewaehlte Rolle wurde ein Auftrag vorbereitet. Waehle dort ein Event aus, um die Wahl zu starten.'
-          )
+          translateText('generated.inline.0143_group_role_election_created_as_assignment_4c3da2db')
         );
       }
 
@@ -296,10 +293,7 @@ export function useGroupRoles(groupId: string) {
 
       if (!eventId) {
         toast.info(
-          translateText(
-            'generated.inline.0142_select_event_before_group_role_election_7a82c4e8',
-            'Bitte waehle zuerst ein Event fuer diese Rollenwahl aus.'
-          )
+          translateText('generated.inline.0142_select_event_before_group_role_election_7a82c4e8')
         );
         return { success: false, reason: 'event_required' };
       }

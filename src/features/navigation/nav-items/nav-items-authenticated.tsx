@@ -9,6 +9,7 @@ export const navItemsAuthenticated = (
   navigate: NavigateFn,
   t?: (key: string) => string // Optional translation function
 ) => {
+  const translate = t ?? translateText;
   const navigatePrimary = (to: string) => {
     const performNavigation = () => navigate({ to });
     if (typeof window === 'undefined') {
@@ -92,14 +93,14 @@ export const navItemsAuthenticated = (
   const projectSecondaryNavItems: NavigationItem[] = [
     {
       id: 'tasks',
-      label: t ? t('navigation.secondary.projects.tasks') : 'Tasks',
+      label: translate('navigation.secondary.projects.tasks'),
       icon: 'File',
       href: '/projects/tasks',
       onClick: () => navigate({ to: '/projects/tasks' }),
     },
     {
       id: 'tests',
-      label: t ? t('navigation.secondary.projects.tests') : 'Tests',
+      label: translate('navigation.secondary.projects.tests'),
       icon: 'FolderOpen',
       href: '/projects/tests',
       onClick: () => navigate({ to: '/projects/tests' }),
@@ -115,21 +116,21 @@ export const navItemsAuthenticated = (
     const items: NavigationItem[] = [
       {
         id: 'overview',
-        label: t ? t('navigation.secondary.event.overview') : 'Overview',
+        label: translate('navigation.secondary.event.overview'),
         icon: 'FileText',
         href: `/event/${eventId}`,
         onClick: () => navigate({ to: `/event/${eventId}` }),
       },
       {
         id: 'agenda',
-        label: t ? t('navigation.secondary.event.agenda') : 'Agenda',
+        label: translate('navigation.secondary.event.agenda'),
         icon: 'Calendar',
         href: `/event/${eventId}/agenda`,
         onClick: () => navigate({ to: `/event/${eventId}/agenda` }),
       },
       {
         id: 'network',
-        label: t ? t('navigation.secondary.event.network') : 'Network',
+        label: translate('navigation.secondary.event.network'),
         icon: 'Network',
         href: `/event/${eventId}/network`,
         onClick: () => navigate({ to: `/event/${eventId}/network` }),
@@ -140,7 +141,7 @@ export const navItemsAuthenticated = (
     if (isAdmin) {
       items.push({
         id: 'participants',
-        label: t ? t('navigation.secondary.event.participants') : 'Participants',
+        label: translate('navigation.secondary.event.participants'),
         icon: 'Users',
         href: `/event/${eventId}/participants`,
         onClick: () => navigate({ to: `/event/${eventId}/participants` }),
@@ -150,7 +151,7 @@ export const navItemsAuthenticated = (
     if (canViewNotifications) {
       items.push({
         id: 'notifications',
-        label: t ? t('navigation.secondary.event.notifications') : 'Notifications',
+        label: translate('navigation.secondary.event.notifications'),
         icon: 'Bell',
         href: `/event/${eventId}/notifications`,
         onClick: () => navigate({ to: `/event/${eventId}/notifications` }),
@@ -160,7 +161,7 @@ export const navItemsAuthenticated = (
     if (isAdmin) {
       items.push({
         id: 'edit',
-        label: t ? t('navigation.secondary.event.edit') : 'Edit Event',
+        label: translate('navigation.secondary.event.edit'),
         icon: 'Settings',
         href: `/event/${eventId}/settings`,
         onClick: () => navigate({ to: `/event/${eventId}/settings` }),
@@ -174,7 +175,7 @@ export const navItemsAuthenticated = (
     const items: NavigationItem[] = [
       {
         id: 'user',
-        label: t ? t('navigation.secondary.user.profile') : 'User',
+        label: translate('navigation.secondary.user.profile'),
         icon: 'User',
         href: `/user/${userId}`,
         onClick: () => navigate({ to: `/user/${userId}` }),
@@ -186,14 +187,14 @@ export const navItemsAuthenticated = (
       items.push(
         {
           id: 'memberships',
-          label: t ? t('navigation.secondary.user.memberships') : 'Memberships',
+          label: translate('navigation.secondary.user.memberships'),
           icon: 'Users',
           href: `/user/${userId}/memberships`,
           onClick: () => navigate({ to: `/user/${userId}/memberships` }),
         },
         {
           id: 'subscriptions',
-          label: t ? t('navigation.secondary.user.subscriptions') : 'Subscriptions',
+          label: translate('navigation.secondary.user.subscriptions'),
           icon: 'Bell',
           href: `/user/${userId}/subscriptions`,
           onClick: () => navigate({ to: `/user/${userId}/subscriptions` }),
@@ -204,14 +205,14 @@ export const navItemsAuthenticated = (
     items.push(
       {
         id: 'meet',
-        label: t ? t('navigation.secondary.user.meet') : 'Meet',
+        label: translate('navigation.secondary.user.meet'),
         icon: 'Calendar',
         href: `/user/${userId}/meet`,
         onClick: () => navigate({ to: `/user/${userId}/meet` }),
       },
       {
         id: 'network',
-        label: t ? t('navigation.secondary.user.network') : 'Network',
+        label: translate('navigation.secondary.user.network'),
         icon: 'Network',
         href: `/user/${userId}/network`,
         onClick: () => navigate({ to: `/user/${userId}/network` }),
@@ -221,7 +222,7 @@ export const navItemsAuthenticated = (
     if (isOwnUser) {
       items.push({
         id: 'edit',
-        label: t ? t('navigation.secondary.user.edit') : 'Settings',
+        label: translate('navigation.secondary.user.edit'),
         icon: 'Settings',
         href: `/user/${userId}/settings`,
         onClick: () => navigate({ to: `/user/${userId}/settings` }),
@@ -245,7 +246,7 @@ export const navItemsAuthenticated = (
     const items: NavigationItem[] = [
       {
         id: 'overview',
-        label: t ? t('navigation.secondary.group.overview') : 'Overview',
+        label: translate('navigation.secondary.group.overview'),
         icon: 'Home',
         href: `/group/${groupId}`,
         onClick: () => navigate({ to: `/group/${groupId}` }),
@@ -256,7 +257,7 @@ export const navItemsAuthenticated = (
     if (canAccessOperation) {
       items.push({
         id: 'operation',
-        label: t ? t('navigation.secondary.group.operation') : 'Operation',
+        label: translate('navigation.secondary.group.operation'),
         icon: 'AreaChart',
         href: `/group/${groupId}/operation`,
         onClick: () => navigate({ to: `/group/${groupId}/operation` }),
@@ -266,28 +267,28 @@ export const navItemsAuthenticated = (
     items.push(
       {
         id: 'events',
-        label: t ? t('navigation.secondary.group.events') : 'Events',
+        label: translate('navigation.secondary.group.events'),
         icon: 'Calendar',
         href: `/group/${groupId}/events`,
         onClick: () => navigate({ to: `/group/${groupId}/events` }),
       },
       {
         id: 'amendments',
-        label: t ? t('navigation.secondary.group.amendments') : 'Amendments',
+        label: translate('navigation.secondary.group.amendments'),
         icon: 'FileText',
         href: `/group/${groupId}/amendments`,
         onClick: () => navigate({ to: `/group/${groupId}/amendments` }),
       },
       {
         id: 'blogs-and-statements',
-        label: t ? t('navigation.secondary.group.blogsAndStatements') : 'Blogs & Statements',
+        label: translate('navigation.secondary.group.blogsAndStatements'),
         icon: 'BookOpen',
         href: `/group/${groupId}/blogs-and-statements`,
         onClick: () => navigate({ to: `/group/${groupId}/blogs-and-statements` }),
       },
       {
         id: 'network',
-        label: t ? t('navigation.secondary.group.network') : 'Network',
+        label: translate('navigation.secondary.group.network'),
         icon: 'Network',
         href: `/group/${groupId}/network`,
         onClick: () => navigate({ to: `/group/${groupId}/network` }),
@@ -298,7 +299,7 @@ export const navItemsAuthenticated = (
     if (canAccessEditor) {
       items.push({
         id: 'editor',
-        label: t ? t('navigation.secondary.group.editor') : 'Documents',
+        label: translate('navigation.secondary.group.editor'),
         icon: 'FileText',
         href: `/group/${groupId}/editor`,
         onClick: () => navigate({ to: `/group/${groupId}/editor` }),
@@ -309,7 +310,7 @@ export const navItemsAuthenticated = (
     if (canManageMembers) {
       items.push({
         id: 'memberships',
-        label: t ? t('navigation.secondary.group.memberships') : 'Members',
+        label: translate('navigation.secondary.group.memberships'),
         icon: 'Users',
         href: `/group/${groupId}/memberships`,
         onClick: () => navigate({ to: `/group/${groupId}/memberships` }),
@@ -320,7 +321,7 @@ export const navItemsAuthenticated = (
     if (canViewNotifications) {
       items.push({
         id: 'notifications',
-        label: t ? t('navigation.secondary.group.notifications') : 'Notifications',
+        label: translate('navigation.secondary.group.notifications'),
         icon: 'Bell',
         href: `/group/${groupId}/notifications`,
         onClick: () => navigate({ to: `/group/${groupId}/notifications` }),
@@ -331,7 +332,7 @@ export const navItemsAuthenticated = (
     if (isAdmin) {
       items.push({
         id: 'edit',
-        label: t ? t('navigation.secondary.group.edit') : 'Edit Group',
+        label: translate('navigation.secondary.group.edit'),
         icon: 'Settings',
         href: `/group/${groupId}/settings`,
         onClick: () => navigate({ to: `/group/${groupId}/settings` }),
@@ -353,7 +354,7 @@ export const navItemsAuthenticated = (
     const items: NavigationItem[] = [
       {
         id: 'overview',
-        label: t ? t('navigation.secondary.amendment.overview') : 'Overview',
+        label: translate('navigation.secondary.amendment.overview'),
         icon: 'FileText',
         href: `/amendment/${amendmentId}`,
         onClick: () => navigate({ to: `/amendment/${amendmentId}` }),
@@ -364,7 +365,7 @@ export const navItemsAuthenticated = (
     if (canReadContent) {
       items.push({
         id: 'text',
-        label: t ? t('navigation.secondary.amendment.text') : 'Full Text',
+        label: translate('navigation.secondary.amendment.text'),
         icon: 'File',
         href: `/amendment/${amendmentId}/text`,
         onClick: () => navigate({ to: `/amendment/${amendmentId}/text` }),
@@ -374,7 +375,7 @@ export const navItemsAuthenticated = (
     if (canReadContent) {
       items.push({
         id: 'changeRequests',
-        label: t ? t('navigation.secondary.amendment.changeRequests') : 'Change Requests',
+        label: translate('navigation.secondary.amendment.changeRequests'),
         icon: 'FileText',
         href: `/amendment/${amendmentId}/change-requests`,
         onClick: () => navigate({ to: `/amendment/${amendmentId}/change-requests` }),
@@ -384,21 +385,21 @@ export const navItemsAuthenticated = (
     items.push(
       {
         id: 'discussions',
-        label: t ? t('navigation.secondary.amendment.discussions') : 'Discussions',
+        label: translate('navigation.secondary.amendment.discussions'),
         icon: 'MessageSquare',
         href: `/amendment/${amendmentId}/discussions`,
         onClick: () => navigate({ to: `/amendment/${amendmentId}/discussions` }),
       },
       {
-        id: 'streetscape',
-        label: t ? t('navigation.secondary.amendment.streetscape') : 'Strassenentwurf',
+        id: 'city-design',
+        label: translate('navigation.secondary.amendment.cityDesign'),
         icon: 'Map',
-        href: `/amendment/${amendmentId}/streetscape`,
-        onClick: () => navigate({ to: `/amendment/${amendmentId}/streetscape` }),
+        href: `/amendment/${amendmentId}/citydesign`,
+        onClick: () => navigate({ to: `/amendment/${amendmentId}/citydesign` }),
       },
       {
         id: 'process',
-        label: t ? t('navigation.secondary.amendment.process') : 'Process',
+        label: translate('navigation.secondary.amendment.process'),
         icon: 'Workflow',
         href: `/amendment/${amendmentId}/process`,
         onClick: () => navigate({ to: `/amendment/${amendmentId}/process` }),
@@ -408,7 +409,7 @@ export const navItemsAuthenticated = (
     if (canManage) {
       items.push({
         id: 'collaborators',
-        label: t ? t('navigation.secondary.amendment.collaborators') : 'Collaborators',
+        label: translate('navigation.secondary.amendment.collaborators'),
         icon: 'Users',
         href: `/amendment/${amendmentId}/collaborators`,
         onClick: () => navigate({ to: `/amendment/${amendmentId}/collaborators` }),
@@ -418,7 +419,7 @@ export const navItemsAuthenticated = (
     if (canViewNotifications) {
       items.push({
         id: 'notifications',
-        label: t ? t('navigation.secondary.amendment.notifications') : 'Notifications',
+        label: translate('navigation.secondary.amendment.notifications'),
         icon: 'Bell',
         href: `/amendment/${amendmentId}/notifications`,
         onClick: () => navigate({ to: `/amendment/${amendmentId}/notifications` }),
@@ -428,7 +429,7 @@ export const navItemsAuthenticated = (
     if (canManage) {
       items.push({
         id: 'edit',
-        label: t ? t('navigation.secondary.amendment.edit') : 'Edit Amendment',
+        label: translate('navigation.secondary.amendment.edit'),
         icon: 'Settings',
         href: `/amendment/${amendmentId}/settings`,
         onClick: () => navigate({ to: `/amendment/${amendmentId}/settings` }),
@@ -454,7 +455,7 @@ export const navItemsAuthenticated = (
     const items: NavigationItem[] = [
       {
         id: 'overview',
-        label: t ? t('navigation.secondary.blog.overview') : 'Overview',
+        label: translate('navigation.secondary.blog.overview'),
         icon: 'FileText',
         href: blogBase,
         onClick: () => navigate({ to: blogBase }),
@@ -466,14 +467,14 @@ export const navItemsAuthenticated = (
       items.push(
         {
           id: 'editor',
-          label: t ? t('navigation.secondary.blog.editor') : 'Editor',
+          label: translate('navigation.secondary.blog.editor'),
           icon: 'Edit',
           href: `${blogBase}/editor`,
           onClick: () => navigate({ to: `${blogBase}/editor` }),
         },
         {
           id: 'edit',
-          label: t ? t('navigation.secondary.blog.edit') : 'Edit Blog',
+          label: translate('navigation.secondary.blog.edit'),
           icon: 'Settings',
           href: `${blogBase}/edit`,
           onClick: () => navigate({ to: `${blogBase}/edit` }),
@@ -484,7 +485,7 @@ export const navItemsAuthenticated = (
     if (canViewNotifications) {
       items.push({
         id: 'notifications',
-        label: t ? t('navigation.secondary.blog.notifications') : 'Notifications',
+        label: translate('navigation.secondary.blog.notifications'),
         icon: 'Bell',
         href: `${blogBase}/notifications`,
         onClick: () => navigate({ to: `${blogBase}/notifications` }),

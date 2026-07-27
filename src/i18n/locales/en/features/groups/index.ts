@@ -1,4 +1,8 @@
 export const groupsTranslations = {
+  actionRights: {
+    manageTodos: 'Manage Todos',
+    viewTodos: 'View Todos',
+  },
   title: 'Groups',
   description: 'Manage and participate in groups',
   headerDescription: 'Discover and join communities working on important causes',
@@ -12,6 +16,48 @@ export const groupsTranslations = {
   join: 'Join Group',
   leave: 'Leave Group',
   backToGroups: 'Back to Groups',
+  datasets: {
+    archive: 'Archive dataset',
+    archiveFailed: 'The dataset could not be archived',
+    empty: 'No datasets found',
+    loadFailed: 'Datasets could not be loaded',
+    loading: 'Loading datasets',
+    manageDatasets: 'Manage datasets',
+    search: 'Search datasets',
+    searchPlaceholder: 'Search by name or description...',
+    title: 'Datasets',
+    tooLarge: 'The dataset is too large. The maximum file size is {{maxSize}}.',
+    upload: 'Upload CSV/TSV',
+    uploadFailed: 'Dataset upload failed',
+    uploadProvider: 'Upload',
+    uploaded: 'Dataset uploaded',
+    viewDatasets: 'View datasets',
+  },
+  roleConfiguration: {
+    actionRightsTab: 'Action rights',
+    rolesTab: 'Roles',
+  },
+  paymentDialog: {
+    noGroupsFound: 'No groups found.',
+    noUsersFound: 'No users found.',
+    searchGroups: 'Search groups...',
+    searchUsers: 'Search users...',
+    unknownPayer: 'Unknown payer',
+    unknownReceiver: 'Unknown receiver',
+  },
+  themes: {
+    manageThemes: 'Manage group themes',
+    viewThemes: 'View group themes',
+    previewHeadline: 'Public decisions, clearly organized.',
+    previewDescription: 'A compact preview of cards and actions.',
+    previewPrimary: 'Primary',
+    previewAccent: 'Accent',
+    previewLight: 'Light',
+    previewDark: 'Dark',
+    chartLabel: 'Chart {{number}}',
+    chartColorLabel: '{{title}} chart {{number}} color',
+    colorLabel: '{{title}} {{field}} color',
+  },
   editPage: {
     title: 'Edit Group',
     subtitle: 'Update group information',
@@ -222,6 +268,10 @@ export const groupsTranslations = {
           'This group needs to confirm its support for {{amendmentTitle}} again.',
         scheduleAmendmentVoteTitle: 'Schedule amendment vote for {{groupName}}',
         scheduleAmendmentVoteDescription: 'No eligible event is selected yet for {{groupName}}.',
+        eventRequest: 'Event request for {{amendmentTitle}}',
+        roleFallback: 'Role',
+        roleRenewalDue: 'The next regular election is scheduled for {{date}}.',
+        roleRenewalNeedsEvent: 'This role needs a new election once a suitable event is scheduled.',
       },
       delegateDialog: {
         title: 'Find election event for delegate assignment',
@@ -345,6 +395,62 @@ export const groupsTranslations = {
       blockedDescription: 'Resolve the conflict before saving the link.',
       blockedReasonTitle: 'Why is this link blocked?',
     },
+    resolutions: {
+      generic: {
+        label: 'Resolve the conflict',
+        description: 'Review the affected configuration before trying again.',
+      },
+      alignMembershipBeforeActivation: {
+        label: 'Resolve the membership first',
+        description:
+          'The person must have exactly one active feeding membership before activation.',
+      },
+      leaveOtherSubgroup: {
+        label: 'Leave the other subgroup',
+        description: 'End the active membership in the competing subgroup first.',
+      },
+      chooseOtherGroup: {
+        label: 'Choose another group',
+        description: 'Use only one feeding group for this hierarchy.',
+      },
+      contactAdmin: {
+        label: 'Contact an admin',
+        description: 'Ask the responsible group admin to resolve the membership.',
+      },
+      leaveOtherSourceGroup: {
+        label: 'Leave the other source group',
+        description: 'End one of the competing active source memberships first.',
+      },
+      contactSourceAdmins: {
+        label: 'Contact the responsible admins',
+        description: 'Ask a source-group admin to resolve the competing membership.',
+      },
+      clarifySourceMemberships: {
+        label: 'Resolve source memberships',
+        description: 'The person must be active in exactly one feeding source group.',
+      },
+      alignMemberships: {
+        label: 'Align memberships',
+        description:
+          'Remove or deactivate overlapping memberships in one of the competing subgroups.',
+      },
+      contactOtherGroup: {
+        label: 'Contact the other group',
+        description: 'Ask its responsible admin side to resolve the overlap.',
+      },
+      removeDuplicatePath: {
+        label: 'Remove or deactivate one path',
+        description: 'Only one active path may remain between the base group and target hierarchy.',
+      },
+      contactResponsibleGroup: {
+        label: 'Contact the responsible group',
+        description: 'Ask its hierarchy admins to resolve the competing path.',
+      },
+      cleanSourceGroups: {
+        label: 'Clean up source groups',
+        description: 'Remove overlapping source groups or memberships from the configuration.',
+      },
+    },
     kinds: {
       hierarchyMemberOverlap: {
         summary: 'Linking would merge members from multiple subgroups of the same hierarchy.',
@@ -379,6 +485,20 @@ export const groupsTranslations = {
               'If you cannot manage the competing path yourself, the affected hierarchy admin side is required.',
           },
         },
+      },
+      siblingSourceOverlap: {
+        summary: 'The parliament configuration contains overlapping source groups.',
+        explanation:
+          'At least one person is active in more than one feeding source group of this parliament group.',
+      },
+      siblingConnectedMembershipMissing: {
+        summary: 'A connected-group membership is required.',
+        explanation:
+          'Only active members of the connected group can receive this sibling membership.',
+      },
+      permissionBlockedResolution: {
+        summary: 'The conflict requires additional permission.',
+        explanation: 'A responsible group admin must apply the required configuration change.',
       },
     },
   },
@@ -461,6 +581,8 @@ export const groupsTranslations = {
   },
   // Toast messages for action hooks
   toasts: {
+    selectPayer: 'Please select a payer',
+    selectReceiver: 'Please select a receiver',
     created: 'Group created',
     updated: 'Group updated',
     deleted: 'Group deleted',
@@ -513,5 +635,35 @@ export const groupsTranslations = {
       activeFilters: 'Active filters:',
       searchLabel: 'Search: "{{query}}"',
     },
+  },
+  paymentTypes: {
+    membership_fee: 'Membership fee',
+    donation: 'Donation',
+    subsidies: 'Subsidies',
+    campaign: 'Campaign',
+    material: 'Material',
+    events: 'Events',
+    others: 'Other',
+    unknown: 'Unknown type',
+  },
+  processAgendaPreview: {
+    supportConfirmationTitle: 'Support confirmation: {{amendment}}',
+    mergeConfirmationTitle: 'Merge confirmation: {{amendment}}',
+    amendmentTitle: 'Amendment: {{amendment}}',
+    predicted:
+      'This agenda item will be created automatically when a suitable event is created or linked for {{group}}.',
+    pendingVote:
+      'The underlying vote is still pending, so this agenda item remains provisionally scheduled.',
+    confirmedVote:
+      'The underlying vote has been approved, so this agenda item is now actively scheduled.',
+    eventNotLinked: 'Event not linked yet · {{group}}',
+  },
+  roleTerms: {
+    revote: 'Revote {{date}}',
+    open: 'Open term',
+    everyYears: 'Every {{count}} years',
+    everyYears_one: 'Every year',
+    everyYears_other: 'Every {{count}} years',
+    recurring: 'Recurring term',
   },
 } as const;

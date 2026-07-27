@@ -63,6 +63,7 @@ export const deleteNotificationSchema = z.object({ id: z.string() });
 const basePushSubscriptionSchema = z.object({
   id: z.string(),
   user_id: z.string(),
+  device_id: z.string().nullable(),
   endpoint: z.string(),
   auth: z.string().nullable(),
   p256dh: z.string().nullable(),
@@ -73,8 +74,8 @@ const basePushSubscriptionSchema = z.object({
 
 export const selectPushSubscriptionSchema = basePushSubscriptionSchema;
 export const createPushSubscriptionSchema = basePushSubscriptionSchema
-  .omit({ id: true, user_id: true, created_at: true, updated_at: true })
-  .extend({ id: z.string() });
+  .omit({ id: true, user_id: true, created_at: true, updated_at: true, device_id: true })
+  .extend({ id: z.string(), device_id: z.string().uuid().optional() });
 export const deletePushSubscriptionSchema = z.object({ id: z.string() });
 
 // ============================================

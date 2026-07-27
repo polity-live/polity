@@ -68,8 +68,8 @@ export function useAuthVerification(): UseAuthVerificationReturn {
         return { success: true, isNewUser };
       } catch (error) {
         console.error('❌ Verification flow failed:', error);
-        const errorMessage =
-          error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+        console.error('Authentication verification failed:', error);
+        const errorMessage = t('features.auth.errors.unexpectedError');
         toast.error(errorMessage);
         return { success: false, isNewUser: false, error: errorMessage };
       } finally {

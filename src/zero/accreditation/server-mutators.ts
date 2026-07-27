@@ -9,6 +9,7 @@ import {
 } from './schema';
 import { verifyPassword } from '../voting-password/server-mutators';
 import type { Schema } from '../schema';
+import { throwAppError } from '@/features/shared/errors';
 
 const ACTIVE_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
 
@@ -61,10 +62,9 @@ const requestAccreditation = defineMutator(
       throw new Error('Accreditation agenda item does not belong to this event.');
     }
     if (!participant) throw new Error('Only active event participants can request accreditation.');
-    if (!votingPassword)
-      throw new Error('No voting password set. Please set your voting PIN first.');
+    if (!votingPassword) throwAppError('voting_password_missing');
     if (!(await verifyPassword(args.password, votingPassword.password_hash))) {
-      throw new Error('Invalid voting password.');
+      throwAppError('voting_password_invalid');
     }
     if (existing?.status === 'approved') throw new Error('Already accredited for this event.');
 

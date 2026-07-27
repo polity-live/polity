@@ -13,7 +13,16 @@ import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import {
+  serverConfirmed,
+  trackServerFinalization,
+  waitForClientApply,
+} from '@/zero/mutate-with-server-check';
+import {
+  isAppTutorialActiveInDocument,
+  reportAppTutorialAction,
+} from '@/features/app-tutorial/events';
+import { localizeAppError } from '@/features/shared/errors/app-error';
 
 interface AgendaItem {
   id: string;
@@ -135,33 +144,55 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
 
       setIsLoading(true);
       try {
+        const tutorialIsActive = isAppTutorialActiveInDocument();
+        const monitorTutorialMutation = (result: ReturnType<typeof updateAgendaItem>) => {
+          trackServerFinalization(result, {
+            onError: error => toast.error(localizeAppError(error)),
+          });
+        };
+
         // Deactivate current item if exists
         if (currentAgendaItem) {
-          await waitForClientApply(
-            updateAgendaItem({
-              id: currentAgendaItem.id,
-              status: currentAgendaItem.completedAt ? 'completed' : 'pending',
-            })
-          );
+          const deactivateResult = updateAgendaItem({
+            id: currentAgendaItem.id,
+            status: currentAgendaItem.completedAt ? 'completed' : 'pending',
+          });
+          await waitForClientApply(deactivateResult);
+          if (tutorialIsActive) monitorTutorialMutation(deactivateResult);
+          else await serverConfirmed(deactivateResult);
         }
 
         // Activate the new item
-        await waitForClientApply(
-          updateAgendaItem({
-            id: itemId,
-            status: 'in-progress',
-            start_time: Date.now(),
-            activated_at: Date.now(),
-          })
-        );
-        await waitForClientApply(
-          updateEvent({
-            id: eventId,
-            current_agenda_item_id: itemId,
-          })
-        );
+        const activateResult = updateAgendaItem({
+          id: itemId,
+          status: 'in-progress',
+          start_time: Date.now(),
+          activated_at: Date.now(),
+        });
+        await waitForClientApply(activateResult);
+        if (tutorialIsActive) monitorTutorialMutation(activateResult);
+        else await serverConfirmed(activateResult);
 
-        toast.success(`Activated: ${item.title}`);
+        const eventResult = updateEvent({
+          id: eventId,
+          current_agenda_item_id: itemId,
+          status: 'active',
+        });
+        await waitForClientApply(eventResult);
+        if (tutorialIsActive) {
+          trackServerFinalization(eventResult, {
+            onError: error => toast.error(localizeAppError(error)),
+          });
+        } else {
+          await serverConfirmed(eventResult);
+        }
+
+        reportAppTutorialAction({
+          type: 'mutation',
+          event: 'event.started',
+        });
+
+        toast.success(translateText('features.agendas.toasts.activated', { title: item.title }));
       } catch (error) {
         console.error('Error activating agenda item:', error);
         toast.error(translateText('generated.inline.0004_failed_to_activate_agenda_item_e09b69b5'));
@@ -170,7 +201,7 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
         setIsLoading(false);
       }
     },
-    [user, canManageAgenda, eventId, event?.title, currentAgendaItem, agendaItems]
+    [user, canManageAgenda, eventId, currentAgendaItem, agendaItems]
   );
 
   const startFirstPendingItem = useCallback(async () => {
@@ -234,7 +265,11 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
         })
       );
 
-      toast.success(`Completed: ${currentAgendaItem.title}`);
+      toast.success(
+        translateText('features.agendas.toasts.completed', {
+          title: currentAgendaItem.title,
+        })
+      );
     } catch (error) {
       console.error('Error completing agenda item:', error);
       toast.error(translateText('generated.inline.0010_failed_to_complete_agenda_item_46abed2b'));

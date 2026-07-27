@@ -142,7 +142,13 @@ export const userPageTranslations = {
   },
   preferences: {
     theme: 'Design',
-    themeDescription: 'Hell, Dunkel oder System-Design wählen',
+    themeDescription: 'Farben und Schriften für Polity auswählen',
+    colorMode: 'Helligkeitsmodus',
+    colorModeDescription: 'Hell, Dunkel oder automatisch passend zum System wählen',
+    groupTheme: 'Geteilt von einer Gruppe',
+    builtinTheme: 'Polity-Design',
+    organizationDisclaimer:
+      'Die Organisationsdesigns sind lediglich von öffentlich dokumentierten Farben inspiriert und stellen keine Partnerschaft dar.',
     language: 'Sprache',
     languageDescription: 'Bevorzugte Sprache wählen',
     displayCurrency: 'Anzeigewährung',
@@ -156,6 +162,7 @@ export const userPageTranslations = {
   all: {
     title: 'Alle',
     searchPlaceholder: 'Anträge, Blogs, Gruppen und Statements suchen...',
+    noResults: 'Keine Ergebnisse gefunden.',
   },
   groups: {
     title: 'Gruppen',

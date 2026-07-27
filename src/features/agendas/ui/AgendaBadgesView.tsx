@@ -56,7 +56,7 @@ export function AgendaEntityBadgeView({
   Icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <Link to={href} onClick={e => e.stopPropagation()}>
+    <Link to={href} className="inline-flex max-w-full min-w-0" onClick={e => e.stopPropagation()}>
       <SemanticBadge status={status} tone={tone} label={label} Icon={Icon} className={className} />
     </Link>
   );
