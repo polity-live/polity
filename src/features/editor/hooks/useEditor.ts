@@ -50,6 +50,12 @@ import {
 } from '@/features/shared/logic/editorSelectionDebug';
 import { getEditorContentSignature } from '@/features/shared/logic/editorContentSync';
 import {
+  APP_TUTORIAL_EXPECTED_INPUTS,
+  containsAppTutorialExpectedInput,
+  getAppTutorialExpectedInputVariants,
+} from '@/features/app-tutorial/catalog';
+import { reportAppTutorialAction } from '@/features/app-tutorial/events';
+import {
   getBranchEditingModeDisabledReasons,
   resolveSelectedBranchId,
 } from '@/features/amendments/logic/amendmentBranchDisplay';
@@ -191,6 +197,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   const [selectedCrIds, setSelectedCrIds] = useState<Set<string> | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const latestEditorContent = useRef<Value>(DEFAULT_EDITOR_CONTENT);
   const latestEditorContentSignature = useRef(getEditorContentSignature(DEFAULT_EDITOR_CONTENT));
   const [isSavingTitle, setIsSavingTitle] = useState(false);
 
@@ -208,10 +215,11 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     contextKey: string | null;
     mode: EditorMode;
   } | null>(null);
+  const getLatestContent = useCallback(() => latestEditorContent.current, []);
 
   // Derive loading state
   const isLoading =
-    (entityType === 'amendment' && amendmentLoading) ||
+    (entityType === 'amendment' && (amendmentLoading || !amendmentDocsCollabs?.document)) ||
     (entityType === 'blog' && blogLoading) ||
     (entityType === 'document' && documentLoading) ||
     (entityType === 'groupDocument' && documentLoading);
@@ -353,6 +361,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         entityType,
       });
       lastRemoteUpdate.current = Date.now();
+      latestEditorContent.current = remoteContent;
       latestEditorContentSignature.current = remoteSignature;
       setContentState(remoteContent);
     },
@@ -385,6 +394,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       });
       setTitleState(entity.title || '');
       setContentState(initialContent);
+      latestEditorContent.current = initialContent;
       latestEditorContentSignature.current = getEditorContentSignature(initialContent);
       setDiscussionsState(entity.discussions || []);
       setModeState(entity.editingMode || 'edit');
@@ -479,6 +489,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       syncClassification: 'genuine-remote',
     });
     latestEditorContentSignature.current = remoteContentSignature;
+    latestEditorContent.current = remoteContent;
     setContentState(remoteContent);
     lastRemoteUpdate.current = remoteUpdatedAt;
   }, [
@@ -561,7 +572,22 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       }
 
       isLocalChange.current = true;
+      latestEditorContent.current = newContent;
       latestEditorContentSignature.current = getEditorContentSignature(newContent);
+      const serializedContent = JSON.stringify(newContent);
+      if (
+        entityType === 'amendment' &&
+        containsAppTutorialExpectedInput(serializedContent, 'amendmentAddition')
+      ) {
+        const matchedAddition =
+          getAppTutorialExpectedInputVariants('amendmentAddition').find(addition =>
+            serializedContent.includes(addition)
+          ) ?? APP_TUTORIAL_EXPECTED_INPUTS.amendmentAddition;
+        reportAppTutorialAction({
+          type: 'input',
+          value: matchedAddition,
+        });
+      }
       // Don't call setContentState — the editor already has this content.
       // Updating React state here would trigger a re-render cascade:
       //   useEditor → EditorView → PlateEditor → controlled value effect
@@ -587,7 +613,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         }, 1000);
       }
     },
-    [contentEntityId, userId, saveContent, broadcastContent, readOnly]
+    [contentEntityId, userId, saveContent, broadcastContent, readOnly, entityType]
   );
 
   // Title change handler - debounced
@@ -842,6 +868,18 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
             if (pendingModeChange.current?.contextKey === entityContextKey) {
               pendingModeChange.current = null;
             }
+            if (entityType === 'amendment' && newMode === 'suggest_internal') {
+              reportAppTutorialAction({
+                type: 'mutation',
+                event: 'amendment.mode.suggest_internal',
+              });
+            }
+            if (entityType === 'amendment' && newMode === 'vote_internal') {
+              reportAppTutorialAction({
+                type: 'mutation',
+                event: 'amendment.mode.vote_internal',
+              });
+            }
           },
           onError: error => {
             rollbackModeChange();
@@ -850,7 +888,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
           },
         });
         await waitForClientApply(result);
-        toast.success(`Mode changed to ${newMode}`);
+        toast.success(translateText('features.editor.toasts.modeChanged', { mode: newMode }));
       } catch (error) {
         rollbackModeChange();
         console.error('Failed to change mode:', error);
@@ -909,6 +947,8 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
           entityId,
           entityType,
         });
+        latestEditorContent.current = versionContent;
+        latestEditorContentSignature.current = getEditorContentSignature(versionContent);
         setContentState(versionContent);
         lastSaveTime.current = Date.now();
         lastRemoteUpdate.current = Date.now();
@@ -994,5 +1034,6 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     setMode,
     setSelectedCrIds,
     restoreVersion: handleRestoreVersion,
+    getLatestContent,
   };
 }

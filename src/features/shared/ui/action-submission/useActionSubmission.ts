@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { LocalizedCopyRef } from '@/features/shared/i18n/localized-copy';
 
 import type {
   ActionSubmissionKind,
@@ -13,7 +14,7 @@ import type {
 export interface ActionSubmissionProgressUpdate {
   key: ActionSubmissionStepKey;
   status: ActionSubmissionProgressStatus;
-  label?: string;
+  copy?: LocalizedCopyRef;
 }
 
 export interface ActionSubmissionContext {
@@ -36,34 +37,106 @@ interface ActionResultLike {
 
 const DEFAULT_STEPS: Record<ActionSubmissionKind, ActionSubmissionStep[]> = {
   workflow: [
-    { key: 'prepare', label: 'Pfad prüfen', status: 'pending' },
-    { key: 'commit', label: 'Workflow speichern', status: 'pending' },
-    { key: 'sync', label: 'Freigaben synchronisieren', status: 'pending' },
+    {
+      key: 'prepare',
+      copy: { key: 'common.actionSubmission.steps.workflow.prepare' },
+      status: 'pending',
+    },
+    {
+      key: 'commit',
+      copy: { key: 'common.actionSubmission.steps.workflow.commit' },
+      status: 'pending',
+    },
+    {
+      key: 'sync',
+      copy: { key: 'common.actionSubmission.steps.workflow.sync' },
+      status: 'pending',
+    },
   ],
   process: [
-    { key: 'prepare', label: 'Ziel prüfen', status: 'pending' },
-    { key: 'commit', label: 'Prozesslauf starten', status: 'pending' },
-    { key: 'sync', label: 'Ansicht synchronisieren', status: 'pending' },
+    {
+      key: 'prepare',
+      copy: { key: 'common.actionSubmission.steps.process.prepare' },
+      status: 'pending',
+    },
+    {
+      key: 'commit',
+      copy: { key: 'common.actionSubmission.steps.process.commit' },
+      status: 'pending',
+    },
+    {
+      key: 'sync',
+      copy: { key: 'common.actionSubmission.steps.process.sync' },
+      status: 'pending',
+    },
   ],
   tally: [
-    { key: 'prepare', label: 'PIN prüfen', status: 'pending' },
-    { key: 'commit', label: 'Tally speichern', status: 'pending' },
-    { key: 'sync', label: 'Ansicht synchronisieren', status: 'pending' },
+    {
+      key: 'prepare',
+      copy: { key: 'common.actionSubmission.steps.tally.prepare' },
+      status: 'pending',
+    },
+    {
+      key: 'commit',
+      copy: { key: 'common.actionSubmission.steps.tally.commit' },
+      status: 'pending',
+    },
+    {
+      key: 'sync',
+      copy: { key: 'common.actionSubmission.steps.tally.sync' },
+      status: 'pending',
+    },
   ],
   link: [
-    { key: 'prepare', label: 'Verbindung prüfen', status: 'pending' },
-    { key: 'commit', label: 'Link aktivieren', status: 'pending' },
-    { key: 'sync', label: 'Netzwerk aktualisieren', status: 'pending' },
+    {
+      key: 'prepare',
+      copy: { key: 'common.actionSubmission.steps.link.prepare' },
+      status: 'pending',
+    },
+    {
+      key: 'commit',
+      copy: { key: 'common.actionSubmission.steps.link.commit' },
+      status: 'pending',
+    },
+    {
+      key: 'sync',
+      copy: { key: 'common.actionSubmission.steps.link.sync' },
+      status: 'pending',
+    },
   ],
   invite: [
-    { key: 'prepare', label: 'Empfänger prüfen', status: 'pending' },
-    { key: 'commit', label: 'Einladungen senden', status: 'pending' },
-    { key: 'sync', label: 'Listen synchronisieren', status: 'pending' },
+    {
+      key: 'prepare',
+      copy: { key: 'common.actionSubmission.steps.invite.prepare' },
+      status: 'pending',
+    },
+    {
+      key: 'commit',
+      copy: { key: 'common.actionSubmission.steps.invite.commit' },
+      status: 'pending',
+    },
+    {
+      key: 'sync',
+      copy: { key: 'common.actionSubmission.steps.invite.sync' },
+      status: 'pending',
+    },
   ],
   accept: [
-    { key: 'prepare', label: 'Einladung prüfen', status: 'pending' },
-    { key: 'commit', label: 'Rolle aktivieren', status: 'pending' },
-    { key: 'sync', label: 'Ansicht aktualisieren', status: 'pending' },
+    {
+      key: 'prepare',
+      copy: { key: 'common.actionSubmission.steps.accept.prepare' },
+      status: 'pending',
+    },
+    {
+      key: 'commit',
+      copy: { key: 'common.actionSubmission.steps.accept.commit' },
+      status: 'pending',
+    },
+    {
+      key: 'sync',
+      copy: { key: 'common.actionSubmission.steps.accept.sync' },
+      status: 'pending',
+    },
   ],
 };
 
@@ -96,7 +169,7 @@ function applyProgressUpdate(
 ) {
   return steps.map(step =>
     step.key === update.key
-      ? { ...step, status: update.status, label: update.label ?? step.label }
+      ? { ...step, status: update.status, copy: update.copy ?? step.copy }
       : step
   );
 }

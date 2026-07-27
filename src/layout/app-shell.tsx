@@ -10,6 +10,7 @@ import { useNavigationStore } from '@/features/navigation/state/navigation.store
 import { useThemeInitializer } from '@/features/shared/global-state/theme.store.tsx';
 import { I18nSyncProvider } from '@/i18n/i18n-sync-provider.tsx';
 import { PwaInstallProvider } from '@/features/pwa/hooks/usePwaInstallPrompt.ts';
+import { ForegroundPushToastListener } from '@/features/pwa/ui/ForegroundPushToastListener';
 import { AlphaWarningDialog } from '@/features/shared/ui/AlphaWarningDialog.tsx';
 import { useAuth } from '@/providers/auth-provider.tsx';
 import { useZeroReady } from '@/providers/zero-ready-context.ts';
@@ -39,6 +40,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <>
       <PwaInstallProvider />
+      <ForegroundPushToastListener />
       <AppShellInner>{children}</AppShellInner>
       <Toaster richColors position="top-right" />
     </>

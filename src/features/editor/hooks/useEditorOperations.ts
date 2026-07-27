@@ -15,7 +15,14 @@ import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import type { EditorEntityType, EditorMode, TDiscussion } from '../types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 import { createChangeRequestDiffSnapshot } from '@/features/change-requests/utils/suggestion-extraction';
+import { reportAppTutorialAction } from '@/features/app-tutorial/events';
+import {
+  serverConfirmed,
+  trackServerFinalization,
+  waitForClientApply,
+} from '@/zero/mutate-with-server-check';
 
 interface SuggestionRef {
   id?: string;
@@ -26,20 +33,27 @@ interface SuggestionRef {
 
 function getDefaultVersionTitle(creationType: string): string {
   const now = new Date();
-  const timestamp = now.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const timestamp = now.toLocaleString(
+    useLanguageStore.getState().language === 'de' ? 'de-DE' : 'en-US',
+    {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }
+  );
 
   switch (creationType) {
     case 'suggestion_accepted':
-      return `Suggestion accepted - ${timestamp}`;
+      return translateText('features.editor.defaultVersionTitles.suggestionAccepted', {
+        timestamp,
+      });
     case 'suggestion_declined':
-      return `Suggestion declined - ${timestamp}`;
+      return translateText('features.editor.defaultVersionTitles.suggestionDeclined', {
+        timestamp,
+      });
     default:
-      return `Auto-save - ${timestamp}`;
+      return translateText('features.editor.defaultVersionTitles.autoSave', { timestamp });
   }
 }
 
@@ -47,6 +61,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
   const { createVersion } = useDocumentActions();
   const {
     createChangeRequest,
+    createDocumentChangeRequest,
     deleteChangeRequest,
     finalizeInternalChangeRequestVote,
     updateChangeRequest,
@@ -97,31 +112,42 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       new_properties?: Record<string, string | number | boolean | null> | null;
       status?: string;
       votingStatus?: string;
+      documentContent: Value;
+      discussions: TDiscussion[];
     }) => {
       const status = params.status ?? 'open';
       try {
-        await createChangeRequest({
-          id: params.id,
-          amendment_id: params.amendmentId,
-          process_branch_id: params.processBranchId ?? null,
-          discussion_id: params.discussionId ?? null,
-          title: params.crId,
-          description: '',
-          status,
-          source_type: null,
-          source_id: null,
-          source_title: null,
-          change_type: params.change_type ?? null,
-          original_text: params.original_text ?? null,
-          new_text: params.new_text ?? null,
-          original_properties: params.original_properties ?? null,
-          new_properties: params.new_properties ?? null,
-          reason: null,
-          changed_character_count: params.changedCharacterCount ?? 0,
-          voting_status: params.votingStatus ?? status,
-          voting_deadline: null,
-          voting_majority_type: null,
-          quorum_required: null,
+        await serverConfirmed(
+          createDocumentChangeRequest({
+            id: params.id,
+            amendment_id: params.amendmentId,
+            process_branch_id: params.processBranchId ?? null,
+            discussion_id: params.discussionId ?? null,
+            title: params.crId,
+            description: '',
+            status,
+            source_type: null,
+            source_id: null,
+            source_title: null,
+            change_type: params.change_type ?? null,
+            original_text: params.original_text ?? null,
+            new_text: params.new_text ?? null,
+            original_properties: params.original_properties ?? null,
+            new_properties: params.new_properties ?? null,
+            reason: null,
+            changed_character_count: params.changedCharacterCount ?? 0,
+            voting_status: params.votingStatus ?? status,
+            voting_deadline: null,
+            voting_majority_type: null,
+            quorum_required: null,
+            document_content: toMutableJSONValue(params.documentContent),
+            discussions: toMutableJSONValue(params.discussions),
+          })
+        );
+        reportAppTutorialAction({
+          type: 'action',
+          event: 'change-request.created',
+          value: params.new_text ?? '',
         });
         return true;
       } catch (error) {
@@ -129,7 +155,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         return false;
       }
     },
-    [createChangeRequest]
+    [createDocumentChangeRequest]
   );
 
   const handlePendingSuggestionSubmitted = useCallback(
@@ -229,29 +255,46 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
             });
           } else {
             const changeRequestId = crypto.randomUUID();
-            await createChangeRequest({
-              id: changeRequestId,
-              amendment_id: amendmentId,
-              process_branch_id: processBranchId ?? null,
-              discussion_id: discussion.id,
-              title: discussion.crId || translateText('features.editor.changeRequest'),
-              description: '',
-              status: 'accepted',
-              source_type: null,
-              source_id: null,
-              source_title: null,
-              change_type: snapshot.change_type,
-              original_text: snapshot.original_text,
-              new_text: snapshot.new_text,
-              original_properties: snapshot.original_properties,
-              new_properties: snapshot.new_properties,
-              reason: null,
-              changed_character_count: snapshot.changed_character_count,
-              voting_status: 'completed',
-              voting_deadline: null,
-              voting_majority_type: null,
-              quorum_required: null,
-            });
+            updatedDiscussions.splice(
+              0,
+              updatedDiscussions.length,
+              ...updatedDiscussions.map(entry =>
+                entry.id === discussion.id
+                  ? {
+                      ...entry,
+                      changeRequestEntityId: changeRequestId,
+                      changeRequestStatus: 'accepted',
+                    }
+                  : entry
+              )
+            );
+            await serverConfirmed(
+              createDocumentChangeRequest({
+                id: changeRequestId,
+                amendment_id: amendmentId,
+                process_branch_id: processBranchId ?? null,
+                discussion_id: discussion.id,
+                title: discussion.crId || translateText('features.editor.changeRequest'),
+                description: '',
+                status: 'accepted',
+                source_type: null,
+                source_id: null,
+                source_title: null,
+                change_type: snapshot.change_type,
+                original_text: snapshot.original_text,
+                new_text: snapshot.new_text,
+                original_properties: snapshot.original_properties,
+                new_properties: snapshot.new_properties,
+                reason: null,
+                changed_character_count: snapshot.changed_character_count,
+                voting_status: 'completed',
+                voting_deadline: null,
+                voting_majority_type: null,
+                quorum_required: null,
+                document_content: toMutableJSONValue(content),
+                discussions: toMutableJSONValue(updatedDiscussions),
+              })
+            );
           }
         }
 
@@ -262,7 +305,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         return { updatedDiscussions: discussions };
       }
     },
-    [entityType, createVersionForEntity, createChangeRequest, updateChangeRequest]
+    [entityType, createVersionForEntity, createDocumentChangeRequest, updateChangeRequest]
   );
 
   const handleSuggestionDeclined = useCallback(
@@ -319,29 +362,46 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
               });
             } else {
               const changeRequestId = crypto.randomUUID();
-              await createChangeRequest({
-                id: changeRequestId,
-                amendment_id: amendmentId,
-                process_branch_id: processBranchId ?? null,
-                discussion_id: discussion.id,
-                title: discussion.crId || translateText('features.editor.changeRequest'),
-                description: '',
-                status: 'rejected',
-                source_type: null,
-                source_id: null,
-                source_title: null,
-                change_type: snapshot.change_type,
-                original_text: snapshot.original_text,
-                new_text: snapshot.new_text,
-                original_properties: snapshot.original_properties,
-                new_properties: snapshot.new_properties,
-                reason: null,
-                changed_character_count: snapshot.changed_character_count,
-                voting_status: 'completed',
-                voting_deadline: null,
-                voting_majority_type: null,
-                quorum_required: null,
-              });
+              updatedDiscussions.splice(
+                0,
+                updatedDiscussions.length,
+                ...updatedDiscussions.map(entry =>
+                  entry.id === discussion.id
+                    ? {
+                        ...entry,
+                        changeRequestEntityId: changeRequestId,
+                        changeRequestStatus: 'rejected',
+                      }
+                    : entry
+                )
+              );
+              await serverConfirmed(
+                createDocumentChangeRequest({
+                  id: changeRequestId,
+                  amendment_id: amendmentId,
+                  process_branch_id: processBranchId ?? null,
+                  discussion_id: discussion.id,
+                  title: discussion.crId || translateText('features.editor.changeRequest'),
+                  description: '',
+                  status: 'rejected',
+                  source_type: null,
+                  source_id: null,
+                  source_title: null,
+                  change_type: snapshot.change_type,
+                  original_text: snapshot.original_text,
+                  new_text: snapshot.new_text,
+                  original_properties: snapshot.original_properties,
+                  new_properties: snapshot.new_properties,
+                  reason: null,
+                  changed_character_count: snapshot.changed_character_count,
+                  voting_status: 'completed',
+                  voting_deadline: null,
+                  voting_majority_type: null,
+                  quorum_required: null,
+                  document_content: toMutableJSONValue(content),
+                  discussions: toMutableJSONValue(updatedDiscussions),
+                })
+              );
             }
           }
         }
@@ -353,7 +413,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         return { updatedDiscussions: discussions };
       }
     },
-    [entityType, createVersionForEntity, createChangeRequest, updateChangeRequest]
+    [entityType, createVersionForEntity, createDocumentChangeRequest, updateChangeRequest]
   );
 
   const handleVoteOnSuggestion = useCallback(
@@ -402,10 +462,18 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
 
         // Cast the vote on the change request
         const voteId = crypto.randomUUID();
-        await voteOnChangeRequest({
+        const result = voteOnChangeRequest({
           id: voteId,
           change_request_id: changeRequestId,
           vote: voteType,
+        });
+        await waitForClientApply(result);
+        trackServerFinalization(result, {
+          onSuccess: () =>
+            reportAppTutorialAction({
+              type: 'mutation',
+              event: 'change-request.voted',
+            }),
         });
 
         toast.success(translateText('generated.inline.0424_vote_recorded_871f8900'));

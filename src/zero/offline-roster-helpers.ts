@@ -7,6 +7,7 @@ import {
 } from './groups/offline-membership-helpers';
 import { loadActiveHierarchyRelationships } from './groups/membership-helpers';
 import { zql, type Schema } from './schema';
+import { resolveEventAttendanceMode } from './events/attendance-mode';
 
 type ZeroTransaction = Transaction<Schema>;
 
@@ -299,7 +300,7 @@ export async function getConfirmedOfflineAttendeeCount(tx: ZeroTransaction, even
 
 export async function eventAllowsOnlineVoting(tx: ZeroTransaction, eventId: string) {
   const event = await tx.run(zql.event.where('id', eventId).one());
-  return event?.attendance_mode !== 'offline';
+  return event ? resolveEventAttendanceMode(event) !== 'offline' : false;
 }
 
 export async function isUserForcedOfflineForEvent(
@@ -307,8 +308,16 @@ export async function isUserForcedOfflineForEvent(
   eventId: string,
   userId: string
 ) {
+  const event = await tx.run(zql.event.where('id', eventId).one());
+  if (!event || resolveEventAttendanceMode(event) !== 'hybrid') {
+    return false;
+  }
+
   const offlineParticipants = await tx.run(
-    zql.event_offline_participant.where('event_id', eventId).where('connected_user_id', userId)
+    zql.event_offline_participant
+      .where('event_id', eventId)
+      .where('connected_user_id', userId)
+      .where('attendance_status', 'confirmed')
   );
 
   return offlineParticipants.some(participant => participant.participation_channel === 'offline');

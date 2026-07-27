@@ -28,7 +28,7 @@ import {
 import {
   amendment,
   amendmentCollaborator,
-  amendmentStreetDesign,
+  amendmentCityDesign,
   amendmentPath,
   amendmentPathSegment,
   supportConfirmation,
@@ -132,6 +132,12 @@ import { votingPassword } from './voting-password/table';
 // Accreditation
 import { accreditation, accreditationAudit } from './accreditation/table';
 import { dataset, datasetSnapshot } from './datasets/table';
+import { appearanceTheme, appearanceThemeRevision } from './appearance-themes/table';
+import {
+  appTutorialRun,
+  appTutorialCheckpointEffect,
+  appTutorialEntity,
+} from './app-tutorial/table';
 
 // Relationship imports
 import { allRelationships } from './relationships';
@@ -167,7 +173,7 @@ const zeroTables = [
   // Amendments
   amendment,
   amendmentCollaborator,
-  amendmentStreetDesign,
+  amendmentCityDesign,
   amendmentPath,
   amendmentPathSegment,
   supportConfirmation,
@@ -294,6 +300,13 @@ const zeroTables = [
   // Dataset metadata
   dataset,
   datasetSnapshot,
+  // Appearance themes
+  appearanceTheme,
+  appearanceThemeRevision,
+  // Live tutorial
+  appTutorialRun,
+  appTutorialCheckpointEffect,
+  appTutorialEntity,
 ] as const;
 
 export const schema = createSchema({
@@ -355,7 +368,7 @@ export type AmendmentSupportVote = Row<Schema['tables']['amendment_support_vote'
 export type ChangeRequest = Row<Schema['tables']['change_request']>;
 export type ChangeRequestVote = Row<Schema['tables']['change_request_vote']>;
 export type AmendmentCollaborator = Row<Schema['tables']['amendment_collaborator']>;
-export type AmendmentStreetDesign = Row<Schema['tables']['amendment_street_design']>;
+export type AmendmentCityDesign = Row<Schema['tables']['amendment_city_design']>;
 export type AmendmentPath = Row<Schema['tables']['amendment_path']>;
 export type AmendmentPathSegment = Row<Schema['tables']['amendment_path_segment']>;
 export type SupportConfirmation = Row<Schema['tables']['support_confirmation']>;
@@ -439,6 +452,8 @@ export type StatementHashtag = Row<Schema['tables']['statement_hashtag']>;
 
 // Preferences
 export type UserPreference = Row<Schema['tables']['user_preference']>;
+export type AppearanceThemeRow = Row<Schema['tables']['appearance_theme']>;
+export type AppearanceThemeRevisionRow = Row<Schema['tables']['appearance_theme_revision']>;
 export type StoredPqlFilter = Row<Schema['tables']['pql_filter']>;
 export type AiSkill = Row<Schema['tables']['ai_skill']>;
 export type AiTool = Row<Schema['tables']['ai_tool']>;
@@ -457,6 +472,13 @@ export type DatasetSnapshot = Row<Schema['tables']['dataset_snapshot']>;
 export type GroupWorkflowRow = Row<Schema['tables']['group_workflow']>;
 export type GroupWorkflowStepRow = Row<Schema['tables']['group_workflow_step']>;
 export type GroupWorkflowApprovalRow = Row<Schema['tables']['group_workflow_approval']>;
+
+// Live tutorial
+export type AppTutorialRunRow = Row<Schema['tables']['app_tutorial_run']>;
+export type AppTutorialCheckpointEffectRow = Row<
+  Schema['tables']['app_tutorial_checkpoint_effect']
+>;
+export type AppTutorialEntityRow = Row<Schema['tables']['app_tutorial_entity']>;
 
 // Common
 export type Subscriber = Row<Schema['tables']['subscriber']>;

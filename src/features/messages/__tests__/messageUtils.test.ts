@@ -5,6 +5,7 @@ import {
   hasUnreadConversationRequest,
   isConversationRequester,
 } from '../logic/messageUtils';
+import { ARIA_KAI_AVATAR_URL, ARIA_KAI_USER_ID } from '@/features/assistant/constants';
 
 type TestConversationOverrides = Partial<Parameters<typeof getUnreadCount>[0]> & {
   name?: string | null;
@@ -124,5 +125,36 @@ describe('getUnreadCount', () => {
     expect(display.isEvent).toBe(true);
     expect(display.isCollective).toBe(true);
     expect(display.participantCount).toBe(2);
+  });
+
+  it('returns the canonical avatar for assistant conversations with an empty user avatar', () => {
+    const display = getConversationDisplay(
+      {
+        ...createConversation({
+          participants: [
+            {
+              user_id: 'user-a',
+              last_read_at: 0,
+              user: { id: 'user-a' },
+            },
+            {
+              user_id: ARIA_KAI_USER_ID,
+              last_read_at: 0,
+              user: {
+                id: ARIA_KAI_USER_ID,
+                first_name: 'Aria',
+                last_name: 'Kai',
+                avatar: null,
+                handle: 'aria-kai',
+              },
+            },
+          ],
+        }),
+        assistant_for_user_id: 'user-a',
+      },
+      'user-a'
+    );
+
+    expect(display.avatar).toBe(ARIA_KAI_AVATAR_URL);
   });
 });

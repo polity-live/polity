@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import type { ParticipationUserLike } from '@/features/shared/types/participation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export interface UserTableCellProps {
   user?: ParticipationUserLike | null;
@@ -19,7 +20,7 @@ function getDisplayName(user?: ParticipationUserLike | null, displayName?: strin
     return fullName;
   }
 
-  return user?.handle || user?.email || 'Unknown User';
+  return user?.handle || user?.email || null;
 }
 
 function getInitials(name: string) {
@@ -34,12 +35,10 @@ function getInitials(name: string) {
   return initials || 'U';
 }
 
-export function UserTableCell({
-  user,
-  displayName,
-  fallbackLabel = 'Unknown User',
-}: UserTableCellProps) {
-  const resolvedDisplayName = getDisplayName(user, displayName) || fallbackLabel;
+export function UserTableCell({ user, displayName, fallbackLabel }: UserTableCellProps) {
+  const { t } = useTranslation();
+  const resolvedDisplayName =
+    getDisplayName(user, displayName) || fallbackLabel || t('common.unknownUser');
   const linkUserId = user?.id || null;
 
   if (linkUserId) {

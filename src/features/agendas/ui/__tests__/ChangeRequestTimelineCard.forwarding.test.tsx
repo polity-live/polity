@@ -9,8 +9,8 @@ vi.mock('@/features/change-requests/ui/CREditorPreview', () => ({
   CREditorPreview: () => null,
 }));
 
-vi.mock('@/features/amendments/streetscape/ui/StreetDesignChangeRequestPreview', () => ({
-  StreetDesignChangeRequestPreview: () => null,
+vi.mock('@/features/amendments/city-design/ui/CityDesignChangeRequestPreview', () => ({
+  CityDesignChangeRequestPreview: () => null,
 }));
 
 vi.mock('@/features/editor/ui/SuggestionViewToggle', () => ({

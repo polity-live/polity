@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { getOtherParticipant, isConversationRequester } from '../logic/messageUtils';
-import { AriaKaiMessageActions } from '@/features/assistant/ui/AriaKaiMessageActions.tsx';
 import {
   useTranslation,
   translate as translateText,
@@ -25,9 +24,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
-import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
+import {
+  isAssistantConversation,
+  resolveAssistantAvatar,
+} from '@/features/assistant/logic/assistantHelpers';
 import { rowAttributes, ZeroVirtualSpacer } from '@/features/shared/virtualization';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
+import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
 interface StreamingAssistantMessage {
   text: string;
   isCompressing: boolean;
@@ -54,7 +57,7 @@ export function StreamingBubble({
   return (
     <div className="flex items-start gap-3">
       <Avatar className="h-8 w-8 flex-shrink-0">
-        <AvatarImage src={otherUser.avatar ?? undefined} />
+        <AvatarImage src={resolveAssistantAvatar(otherUser.id, otherUser.avatar) ?? undefined} />
         <AvatarFallback>{otherUser.first_name?.[0]?.toUpperCase() || 'A'}</AvatarFallback>
       </Avatar>
       <div className="max-w-3xl min-w-0 flex-1 space-y-3 py-1">
@@ -161,8 +164,10 @@ export function MessageListView({
   scrollToBottom,
   handleScroll,
 }: MessageListViewProps) {
+  const { language } = useTranslation();
+  const tutorialRunId = conversation?.tutorial_run_id;
   return (
-    <div className="relative min-h-0 flex-1">
+    <div className="relative min-h-0 flex-1" data-tutorial-anchor="tutorial-assistant-chat">
       {hasNewMessages && (
         <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center">
           <Button
@@ -198,7 +203,10 @@ export function MessageListView({
                     >
                       {row.message ? (
                         <MessageBubble
-                          message={row.message}
+                          message={resolveAppTutorialFixtureValue(row.message, {
+                            tutorialRunId,
+                            language,
+                          })}
                           isOwnMessage={row.message.sender?.id === currentUserId}
                           isAssistantConversation={isAssistantConversation(conversation)}
                           resolveAttachmentCardData={resolveAttachmentCardData}
@@ -218,13 +226,6 @@ export function MessageListView({
               .filter((row: any) => row.type !== 'message')
               .map((row: any) => (
                 <div key={row.key} className="w-full px-4 pb-4">
-                  {row.type === 'assistant-actions' && currentUserId && (
-                    <AriaKaiMessageActions
-                      conversationId={conversation.id}
-                      currentUserId={currentUserId}
-                    />
-                  )}
-
                   {row.type === 'streaming' && (
                     <StreamingBubble
                       streamingAssistantMessage={row.streaming}

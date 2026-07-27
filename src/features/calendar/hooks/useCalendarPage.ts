@@ -10,6 +10,7 @@ import { toCreateEventSearch } from '@/features/create/logic/createEventSearch';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import type { CalendarEvent } from '../types/calendar.types';
 import { getBaseEventId } from '../logic/eventIdUtils';
+import { getCalendarEventRoute } from '../logic/calendarEventNavigation';
 
 interface CalendarGroupOption {
   id: string;
@@ -59,7 +60,10 @@ export function useCalendarPage() {
   const onEventSelect = useCallback(
     (item: CalendarEvent) => {
       const baseEventId = getBaseEventId(item.id);
-      navigate({ to: '/event/$id', params: { id: baseEventId } });
+      navigate({
+        to: getCalendarEventRoute(item.tutorial_run_id),
+        params: { id: baseEventId },
+      });
     },
     [navigate]
   );

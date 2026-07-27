@@ -1,6 +1,7 @@
 import { KEYS } from 'platejs';
 
 import { DATA_VIEW_NODE_TYPE } from '@/features/charts/types';
+import { translate } from '@/features/shared/hooks/use-translation';
 
 export const BLOCK_SUGGESTION_MARKER = '__block__';
 
@@ -14,75 +15,78 @@ export function getSuggestionBlockLabel(node: BlockLabelNode): string {
   if (node.type === DATA_VIEW_NODE_TYPE) {
     switch (node.view) {
       case 'chart':
-        return 'Chart';
+        return translate('features.changeRequests.blockLabels.chart');
       case 'table':
-        return 'Table';
+        return translate('features.changeRequests.blockLabels.table');
       case 'stat':
-        return 'Metric';
+        return translate('features.changeRequests.blockLabels.metric');
       default:
-        return 'Data';
+        return translate('features.changeRequests.blockLabels.data');
     }
   }
 
   if (node.type === KEYS.p) {
-    if (node[KEYS.listType] === KEYS.listTodo) return 'Todo list';
-    if (node[KEYS.listType] === KEYS.ol) return 'Numbered list';
-    if (node[KEYS.listType] === KEYS.ul) return 'Bulleted list';
+    if (node[KEYS.listType] === KEYS.listTodo)
+      return translate('features.changeRequests.blockLabels.todoList');
+    if (node[KEYS.listType] === KEYS.ol)
+      return translate('features.changeRequests.blockLabels.numberedList');
+    if (node[KEYS.listType] === KEYS.ul)
+      return translate('features.changeRequests.blockLabels.bulletedList');
   }
 
   switch (node.type) {
     case KEYS.audio:
-      return 'Audio';
+      return translate('features.changeRequests.blockLabels.audio');
     case KEYS.blockquote:
-      return 'Quote';
+      return translate('features.changeRequests.blockLabels.quote');
     case KEYS.callout:
-      return 'Callout';
+      return translate('features.changeRequests.blockLabels.callout');
     case KEYS.codeBlock:
-      return 'Code';
+      return translate('features.changeRequests.blockLabels.code');
     case KEYS.column:
-      return 'Column';
+      return translate('features.changeRequests.blockLabels.column');
     case KEYS.columnGroup:
-      return '3 columns';
+      return translate('features.changeRequests.blockLabels.columns');
     case KEYS.date:
-      return 'Date';
+      return translate('features.changeRequests.blockLabels.date');
     case KEYS.equation:
-      return 'Equation';
+      return translate('features.changeRequests.blockLabels.equation');
     case KEYS.file:
-      return 'File';
+      return translate('features.changeRequests.blockLabels.file');
     case KEYS.h1:
-      return 'Heading 1';
+      return translate('features.changeRequests.blockLabels.heading1');
     case KEYS.h2:
-      return 'Heading 2';
+      return translate('features.changeRequests.blockLabels.heading2');
     case KEYS.h3:
-      return 'Heading 3';
+      return translate('features.changeRequests.blockLabels.heading3');
     case KEYS.h4:
-      return 'Heading 4';
+      return translate('features.changeRequests.blockLabels.heading4');
     case KEYS.h5:
-      return 'Heading 5';
+      return translate('features.changeRequests.blockLabels.heading5');
     case KEYS.h6:
-      return 'Heading 6';
+      return translate('features.changeRequests.blockLabels.heading6');
     case KEYS.hr:
-      return 'Divider';
+      return translate('features.changeRequests.blockLabels.divider');
     case KEYS.img:
-      return 'Image';
+      return translate('features.changeRequests.blockLabels.image');
     case KEYS.inlineEquation:
-      return 'Inline equation';
+      return translate('features.changeRequests.blockLabels.inlineEquation');
     case KEYS.link:
-      return 'Link';
+      return translate('features.changeRequests.blockLabels.link');
     case KEYS.mediaEmbed:
-      return 'Embed';
+      return translate('features.changeRequests.blockLabels.embed');
     case KEYS.p:
-      return 'Text';
+      return translate('features.changeRequests.blockLabels.text');
     case KEYS.table:
-      return 'Table';
+      return translate('features.changeRequests.blockLabels.table');
     case KEYS.toc:
-      return 'Table of contents';
+      return translate('features.changeRequests.blockLabels.tableOfContents');
     case KEYS.toggle:
-      return 'Toggle';
+      return translate('features.changeRequests.blockLabels.toggle');
     case KEYS.video:
-      return 'Video';
+      return translate('features.changeRequests.blockLabels.video');
     default:
-      return 'Block';
+      return translate('features.changeRequests.blockLabels.block');
   }
 }
 

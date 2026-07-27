@@ -1,6 +1,18 @@
 export const statementsTranslations = {
+  fallbacks: {
+    statement: 'Statement',
+    video: 'Video statement',
+    photo: 'Photo statement',
+  },
   title: 'Statements',
   description: 'Share your position and views',
+  carousel: {
+    title: 'Statements',
+    viewerTitle: 'Statement',
+  },
+  form: {
+    title: 'Headline',
+  },
   create: {
     title: 'Create Statement',
     placeholder: 'What is your position?',

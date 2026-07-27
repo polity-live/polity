@@ -1851,10 +1851,7 @@ export function buildAiTools(userId: string, timeZone = 'UTC') {
     }),
 
     read_polity_docs: tool({
-      description: translateText(
-        'generated.inline.ai_read_polity_docs_tool_description',
-        'Read and search the user-facing Polity /docs documentation. Use this for questions about how Polity features work, where to find guidance, or how users should navigate Polity workflows.'
-      ),
+      description: translateText('generated.inline.ai_read_polity_docs_tool_description'),
       inputSchema: z.object({
         query: z
           .string()
@@ -1876,7 +1873,7 @@ export function buildAiTools(userId: string, timeZone = 'UTC') {
       }),
       execute: async ({ query, page, section, language, limit }) => {
         const result = readPolityDocs({ query, page, section, language, limit });
-        const queryLabel = result.query ? ` fuer "${result.query}"` : '';
+        const queryLabel = result.query ? ` für "${result.query}"` : '';
         const returnedCount = result.pages.length + result.matches.length;
 
         return {

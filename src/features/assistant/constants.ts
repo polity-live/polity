@@ -10,8 +10,9 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
  */
 export const ARIA_KAI_USER_ID = 'a12a0000-0000-4000-a000-000000000001';
 export const ARIA_KAI_EMAIL = 'aria-kai-assistants@polity.com';
+export const ARIA_KAI_AVATAR_URL = '/avatars/aria-kai-avatar-256.webp';
 export const ARIA_KAI_WELCOME_MESSAGE =
-  'Hey, we are Aria & Kai - your personal assistants! Welcome to Polity! We would love to show you around in the app. Shall we?';
+  'Hey, we are Assistent Aria & Kai! Welcome to Polity! We would love to show you around in the app. Shall we?';
 
 /**
  * Educational content for the interactive tutorial

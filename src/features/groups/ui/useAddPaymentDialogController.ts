@@ -5,6 +5,7 @@ import { useUserState } from '@/zero/users/useUserState';
 import { useAllGroups } from '@/zero/groups/useGroupState';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { usePreferenceState } from '@/zero/preferences/usePreferenceState';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface AddPaymentDialogProps {
   open: boolean;
@@ -86,7 +87,13 @@ export function useAddPaymentDialogController({
 
     // Validate that an entity is selected
     if (!selectedEntity) {
-      toast.error(`Please select a ${direction === 'income' ? 'payer' : 'receiver'}`);
+      toast.error(
+        translateText(
+          direction === 'income'
+            ? 'features.groups.toasts.selectPayer'
+            : 'features.groups.toasts.selectReceiver'
+        )
+      );
       return;
     }
 

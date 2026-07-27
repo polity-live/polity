@@ -6,6 +6,7 @@ import { cleanupE2ERows } from './cleanup';
 import { authenticateWorker, ensureE2EAuthUser, type E2EWorkerUser } from './auth';
 import { seedCreatePrerequisites, type SeedData } from './seed';
 import { CreateFlowPage, createSmokeTestTimeoutMs } from './create-flow-page';
+import { TutorialFlowPage } from './tutorial-flow-page';
 
 const LOCK_DIR = path.join(process.cwd(), 'test-results', '.locks');
 const AUTH_LOCK_PATH = path.join(LOCK_DIR, 'create-auth.lock');
@@ -23,6 +24,7 @@ interface TestFixtures {
     prefix: string;
   };
   seed: SeedData;
+  tutorialFlowPage: TutorialFlowPage;
 }
 
 interface WorkerFixtures {
@@ -236,6 +238,10 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 
   createFlowPage: async ({ page }, use) => {
     await use(new CreateFlowPage(page));
+  },
+
+  tutorialFlowPage: async ({ page }, use) => {
+    await use(new TutorialFlowPage(page));
   },
 });
 

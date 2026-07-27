@@ -3,8 +3,9 @@ import { useGroupSubscribers } from '@/zero/groups/useGroupState';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { trackServerFinalization, waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { reportAppTutorialAction } from '@/features/app-tutorial/events';
 import type {
   ProjectedSubscriptionState,
   SubscriptionRowState,
@@ -95,16 +96,22 @@ export function useSubscribeGroup(
       const subscriptionId = crypto.randomUUID();
       createdSubscriptionIdRef.current = subscriptionId;
 
-      await waitForClientApply(
-        subscribeAction({
-          id: subscriptionId,
-          user_id: null,
-          group_id: targetGroupId,
-          amendment_id: null,
-          event_id: null,
-          blog_id: null,
-        })
-      );
+      const result = subscribeAction({
+        id: subscriptionId,
+        user_id: null,
+        group_id: targetGroupId,
+        amendment_id: null,
+        event_id: null,
+        blog_id: null,
+      });
+      trackServerFinalization(result, {
+        onSuccess: () =>
+          reportAppTutorialAction({
+            type: 'mutation',
+            event: 'subscriber.created',
+          }),
+      });
+      await waitForClientApply(result);
 
       toast.success(
         translateText('generated.inline.0591_successfully_subscribed_to_group_41ad056a')

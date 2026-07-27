@@ -1,12 +1,34 @@
 export const agendasTranslations = {
+  finalVoteActions: {
+    targetFallback: 'Schritt',
+    start: {
+      merge: 'Finale Zusammenführungsabstimmung für {{target}} starten',
+      closing: 'Finale Schlussabstimmung für {{target}} starten',
+      change_request: 'Finale Änderungsabstimmung für {{target}} starten',
+    },
+    close: {
+      merge: 'Finale Zusammenführungsabstimmung für {{target}} schließen',
+      closing: 'Finale Schlussabstimmung für {{target}} schließen',
+      change_request: 'Finale Änderungsabstimmung für {{target}} schließen',
+    },
+    cast: {
+      merge: 'An der finalen Zusammenführungsabstimmung für {{target}} teilnehmen',
+      closing: 'An der finalen Schlussabstimmung für {{target}} teilnehmen',
+      change_request: 'An der finalen Änderungsabstimmung für {{target}} teilnehmen',
+    },
+  },
   title: 'Tagesordnungen',
+  toasts: {
+    activated: 'Aktiviert: {{title}}',
+    completed: 'Abgeschlossen: {{title}}',
+  },
   ballotVisibility: {
     label: 'Stimmabgabe',
   },
   crTimeline: {
     title: 'Änderungsantrags-Abstimmungen',
     changeRequest: 'Änderungsantrag',
-    finalVote: 'Amendment wie geändert annehmen',
+    finalVote: 'Antrag in geänderter Fassung annehmen',
     completed: 'Abgeschlossen',
     voting: 'Abstimmung',
     pending: 'Ausstehend',
@@ -21,17 +43,17 @@ export const agendasTranslations = {
       'Öffne den Editor unten, um diesen Änderungsantrag einzureichen oder zu verwerfen.',
     awaitingAuthorSubmission: 'Warten auf die Einreichung durch den Autor.',
     activeInternalVoting: 'Interner Abstimmungsmodus aktiv',
-    activeEventVoting: 'Event-Abstimmungsmodus aktiv',
+    activeEventVoting: 'Veranstaltungs-Abstimmungsmodus aktiv',
     modeInfo: 'Modus',
     internalVotingActiveInfo: 'Interne Änderungsantrags-Abstimmungen sind aktiv.',
-    setToVoteEvent: 'Setze den Antrag auf Event-Abstimmungsmodus, um abzustimmen.',
-    submittedVotePending: 'Eingereicht - Wahl anstehend',
+    setToVoteEvent: 'Setze den Antrag auf Veranstaltungs-Abstimmungsmodus, um abzustimmen.',
+    submittedVotePending: 'Eingereicht – Abstimmung ausstehend',
     sortChangeRequests: 'Änderungsanträge sortieren',
     sortByNumber: 'Nach Nummer sortieren',
     sortByChangedCharacters: 'Nach Änderungsumfang sortieren',
     sortByTextPosition: 'Nach Textposition sortieren',
     sortLexicographically: 'Lexikografisch sortieren',
-    streetDesignPreview: 'Straßendesign-Vorschau',
+    cityDesignPreview: 'Vorschau der Stadtgestaltung',
     deadline: 'Frist',
     accepted: 'Angenommen',
     changeRequestVotesPlaceholder: 'Änderungsantrags-Abstimmungen erscheinen hier.',
@@ -91,7 +113,35 @@ export const agendasTranslations = {
   },
   offlineTally: {
     entry: 'Eintrag',
+    itemFallback: 'diesen Tagesordnungspunkt',
+    phases: {
+      final: 'Final',
+      indicative: 'Indikativ',
+    },
+    entities: {
+      final: 'Finale Offline-Auszählung',
+      indicative: 'Indikative Offline-Auszählung',
+    },
+    selectionCount: '{{count}} Offline-Auswahlen',
+    selectionCount_one: '{{count}} Offline-Auswahl',
+    selectionCount_other: '{{count}} Offline-Auswahlen',
+    description:
+      'Trage die zusammengefassten Offline- oder Hybrid-Auswahlen für {{item}} ein und bestätige sie mit deiner Abstimmungs-PIN.',
     maxSelectionsPerEntry: '{{entry}} kann höchstens {{count}} Offline-Auswahlen erhalten.',
     totalLimitFormula: '{{participants}} Teilnehmer × {{votes}} Auswahlen = {{total}}',
+    actions: {
+      editFinal: 'Finale Offline-Auszählung bearbeiten',
+      editIndicative: 'Indikative Offline-Auszählung bearbeiten',
+      saveFinal: 'Finale Offline-Auszählung speichern',
+      saveIndicative: 'Indikative Offline-Auszählung speichern',
+    },
+    success: {
+      final: 'Finale Offline-Auszählung gespeichert',
+      indicative: 'Indikative Offline-Auszählung gespeichert',
+    },
+  },
+  fallbacks: {
+    choice: 'Auswahl',
+    variantFinalVote: 'Finale Variantenabstimmung',
   },
 } as const;

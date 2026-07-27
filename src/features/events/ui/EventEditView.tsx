@@ -53,6 +53,7 @@ import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 import { getEventTypeTranslationKey } from '@/features/events/logic/getEventTypeTranslationKey';
 import { EventTimeSeriesSection } from './EventTimeSeriesSection';
+import { EventAttendanceModeSelector } from './EventAttendanceModeSelector';
 export interface EventEditViewProps {
   eventId: any;
   mode: any;
@@ -79,6 +80,7 @@ export interface EventEditViewProps {
   event: any;
   isLoading: any;
   isCreating: any;
+  attendanceModeLocked: boolean;
   timeSeriesValidationError: any;
   locationSummary: any;
   visibilityLabel: any;
@@ -112,6 +114,7 @@ export function EventEditView({
   event,
   isLoading,
   isCreating,
+  attendanceModeLocked,
   locationSummary,
   visibilityLabel,
   attendanceModeLabel,
@@ -315,7 +318,7 @@ export function EventEditView({
                   )}
                   description={t(
                     'features.events.agenda.genderQuota.settingsDescription',
-                    'Wenn aktiv, muessen sich maennliche und weibliche Redebeitraege abwechseln.'
+                    'Wenn aktiv, müssen sich männliche und weibliche Redebeiträge abwechseln.'
                   )}
                   checked={Boolean(formData.genderQuotaEnabled)}
                   onCheckedChange={checked => updateField('genderQuotaEnabled', checked)}
@@ -378,27 +381,12 @@ export function EventEditView({
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <FormControlLabel>
-                    {translateText('generated.inline.0327_attendance_mode_507f30a9')}
-                  </FormControlLabel>
-                  <div className="flex flex-wrap gap-2">
-                    {(['online', 'hybrid', 'offline'] as const).map((modeOption: any) => (
-                      <Button
-                        key={modeOption}
-                        type="button"
-                        variant={formData.attendanceMode === modeOption ? 'default' : 'outline'}
-                        onClick={() => updateField('attendanceMode', modeOption)}
-                      >
-                        {modeOption === 'online'
-                          ? translateText('generated.inline.0046_online_c3e839df')
-                          : modeOption === 'hybrid'
-                            ? translateText('generated.inline.0047_hybrid_8e01f6bc')
-                            : translateText('generated.inline.0048_offline_e01fa717')}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
+                <EventAttendanceModeSelector
+                  value={formData.attendanceMode}
+                  locked={attendanceModeLocked}
+                  onChange={mode => updateField('attendanceMode', mode)}
+                  t={t}
+                />
                 {formData.attendanceMode !== 'online' ? (
                   <div className="space-y-4 rounded-xl border p-4">
                     <ValidatedInputField
@@ -672,7 +660,7 @@ export function EventEditView({
                         'generated.inline.0489_lege_fest_ob_untergruppen_ihre_delegierten_st_274a60f4'
                       )}
                       descriptions={{
-                        list: 'Eine Listenwahl mit mehreren Stimmen fuer die zu vergebenden Positionen.',
+                        list: 'Eine Listenwahl mit mehreren Stimmen für die zu vergebenden Positionen.',
                         single: 'Je Delegiertensitz wird eine eigene Einzelwahl angelegt.',
                       }}
                     />

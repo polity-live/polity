@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 import {
   buildCreateEventSearchFromProcessTask,
   getProcessTaskSchedulingWindow,
@@ -8,6 +9,10 @@ import {
 } from '../processTaskEventScheduling';
 
 describe('processTaskEventScheduling', () => {
+  beforeEach(() => {
+    useLanguageStore.setState({ language: 'de' });
+  });
+
   it('builds a readable scheduling window label', () => {
     expect(
       getSchedulingWindowDisplayLabel({
@@ -16,7 +21,7 @@ describe('processTaskEventScheduling', () => {
         maxStartDate: '2026-06-12',
         maxStartTime: '18:00',
       })
-    ).toBe('Erlaubter Zeitraum fuer diesen Auftrag: 2026-06-10 09:00 bis 2026-06-12 18:00.');
+    ).toBe('Erlaubter Zeitraum für diesen Auftrag: 2026-06-10 09:00 bis 2026-06-12 18:00.');
   });
 
   it('returns the concrete window label as validation feedback when the event is outside the allowed range', () => {
@@ -29,7 +34,7 @@ describe('processTaskEventScheduling', () => {
         maxStartDate: '2026-06-12',
         maxStartTime: '18:00',
       })
-    ).toBe('Erlaubter Zeitraum fuer diesen Auftrag: 2026-06-10 09:00 bis 2026-06-12 18:00.');
+    ).toBe('Erlaubter Zeitraum für diesen Auftrag: 2026-06-10 09:00 bis 2026-06-12 18:00.');
 
     expect(
       getSchedulingWindowValidationMessage({
@@ -40,7 +45,7 @@ describe('processTaskEventScheduling', () => {
         maxStartDate: '2026-06-12',
         maxStartTime: '18:00',
       })
-    ).toBe('Erlaubter Zeitraum fuer diesen Auftrag: 2026-06-10 09:00 bis 2026-06-12 18:00.');
+    ).toBe('Erlaubter Zeitraum für diesen Auftrag: 2026-06-10 09:00 bis 2026-06-12 18:00.');
   });
 
   it('derives the event scheduling window and create-event search defaults from a process task', () => {
@@ -97,5 +102,18 @@ describe('processTaskEventScheduling', () => {
         { minStartAt, maxStartAt }
       )
     ).toBe(false);
+  });
+
+  it('renders the scheduling window in English', () => {
+    useLanguageStore.setState({ language: 'en' });
+
+    expect(
+      getSchedulingWindowDisplayLabel({
+        minStartDate: '2026-06-10',
+        minStartTime: '09:00',
+        maxStartDate: '2026-06-12',
+        maxStartTime: '18:00',
+      })
+    ).toBe('Allowed time for this task: 2026-06-10 09:00 to 2026-06-12 18:00.');
   });
 });

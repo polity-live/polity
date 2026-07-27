@@ -325,7 +325,7 @@ describe('AgendaElectionSection', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Klick fuer Einzelansicht' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Klick für Einzelansicht' }));
     fireEvent.click(screen.getByRole('button', { name: /No candidates yet/ }));
 
     expect(onOpenNamedResults).toHaveBeenCalledTimes(2);

@@ -6,13 +6,14 @@ import { CreateRecoveryState } from '@/features/create/ui/CreateRecoveryState';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { useAmendmentWikiPage } from './hooks/useAmendmentWikiPage';
 import { SupporterDirectorySection } from './ui/SupporterDirectorySection';
+import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
 
 interface AmendmentWikiProps {
   amendmentId: string;
 }
 import { AmendmentWikiView } from './AmendmentWikiView';
 export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const recoveryDraft = useCreateRecoveryDraft('amendment', amendmentId);
   const {
     user,
@@ -67,6 +68,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   const supporterDirectorySection = (
     <SupporterDirectorySection items={supporterDirectoryItems} mapItems={supporterMapItems} />
   );
+  const tutorialRunId = amendment?.tutorial_run_id;
   return (
     <AmendmentWikiView
       virtualizeParticipationDirectory
@@ -79,22 +81,42 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
       toggleSubscribe={toggleSubscribe}
       subscribeLoading={subscribeLoading}
       collaboration={collaboration}
-      amendment={amendment}
+      amendment={resolveAppTutorialFixtureValue(amendment, {
+        tutorialRunId,
+        language,
+      })}
       roles={roles}
       collaborators={collaborators}
       supporterDirectoryItems={supporterDirectoryItems}
       supportingGroupCount={supportingGroupCount}
-      clones={clones}
-      clonedFrom={clonedFrom}
+      clones={clones.map((clone: any) =>
+        resolveAppTutorialFixtureValue(clone, {
+          tutorialRunId: clone.tutorial_run_id,
+          language,
+        })
+      )}
+      clonedFrom={resolveAppTutorialFixtureValue(clonedFrom, {
+        tutorialRunId: clonedFrom?.tutorial_run_id,
+        language,
+      })}
       totalSupportingMembers={totalSupportingMembers}
       targetCollaborator={targetCollaborator}
-      targetGroup={targetGroup}
+      targetGroup={resolveAppTutorialFixtureValue(targetGroup, {
+        tutorialRunId: targetGroup?.tutorial_run_id,
+        language,
+      })}
       evaluationModeLabel={evaluationModeLabel}
       evaluationConfigurationSummary={evaluationConfigurationSummary}
       implementationStatus={implementationStatus}
       implementationDisplayStatus={implementationDisplayStatus}
-      evaluationEvent={evaluationEvent}
-      evaluationAgendaItem={evaluationAgendaItem}
+      evaluationEvent={resolveAppTutorialFixtureValue(evaluationEvent, {
+        tutorialRunId: evaluationEvent?.tutorial_run_id,
+        language,
+      })}
+      evaluationAgendaItem={resolveAppTutorialFixtureValue(evaluationAgendaItem, {
+        tutorialRunId,
+        language,
+      })}
       evaluationVoteOutcomeLabel={evaluationVoteOutcomeLabel}
       evaluationDueDateLabel={evaluationDueDateLabel}
       hasImplementationEvaluation={hasImplementationEvaluation}

@@ -19,6 +19,7 @@ import {
   formatWeekRange,
   formatMonth,
 } from '@/features/meet/logic/date-helpers.ts';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export type CalendarView = CalendarViewMode;
 
@@ -84,6 +85,7 @@ interface UpdateMeetingArgs {
 }
 
 export function useMeetPage(userId: string) {
+  const { t } = useTranslation();
   const { user: currentUser } = useAuth();
   const isOwner = currentUser?.id === userId;
   const { meetings, isLoading } = useMeetingsByCreator(userId);
@@ -130,7 +132,7 @@ export function useMeetPage(userId: string) {
         instances.push({
           id: inst.id,
           parentEventId: meeting.id,
-          title: inst.title ?? 'Meeting',
+          title: inst.title ?? t('common.entities.meeting'),
           description: typeof inst.description === 'string' ? inst.description : null,
           meetingType: meeting.meeting_type ?? null,
           startDate: inst.start_date ?? 0,
@@ -151,7 +153,7 @@ export function useMeetPage(userId: string) {
     }
 
     return instances.sort((a, b) => a.startDate - b.startDate);
-  }, [meetings, selectedDate, currentUser, view]);
+  }, [meetings, selectedDate, currentUser, view, t]);
 
   // Filter instances based on current view
   const filteredInstances = useMemo(() => {
@@ -201,10 +203,10 @@ export function useMeetPage(userId: string) {
   const goToToday = useCallback(() => setSelectedDate(new Date()), []);
 
   const currentViewTitle = useMemo(() => {
-    if (view === 'list') return 'All meeting offers';
+    if (view === 'list') return t('features.meet.page.allOffers');
     if (view === 'week') return formatWeekRange(selectedDate);
     return formatMonth(selectedDate);
-  }, [view, selectedDate]);
+  }, [view, selectedDate, t]);
 
   // Handlers
   const handleBookMeeting = useCallback(

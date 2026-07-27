@@ -1,5 +1,6 @@
 export { authTranslations } from './auth';
 export { agendasTranslations } from './agendas';
+export { appTutorialTranslations } from './app-tutorial';
 export { amendmentsTranslations } from './amendments';
 export { blogsTranslations } from './blogs';
 export { calendarTranslations } from './calendar';
@@ -28,6 +29,7 @@ export { votesTranslations } from './votes';
 
 export const features = {
   agendas: async () => (await import('./agendas')).agendasTranslations,
+  appTutorial: async () => (await import('./app-tutorial')).appTutorialTranslations,
   auth: async () => (await import('./auth')).authTranslations,
   amendments: async () => (await import('./amendments')).amendmentsTranslations,
   blogs: async () => (await import('./blogs')).blogsTranslations,

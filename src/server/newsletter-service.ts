@@ -131,7 +131,7 @@ function messageFromResendError(error: unknown): string {
   if (error && typeof error === 'object' && 'message' in error) {
     return String((error as ResendErrorLike).message);
   }
-  return 'Resend request failed';
+  return 'resend_request_failed';
 }
 
 function isNotFound(error: unknown): boolean {

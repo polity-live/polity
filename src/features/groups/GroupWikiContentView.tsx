@@ -273,7 +273,7 @@ export function GroupWikiContentView({
       <EntityWikiMedia
         imageUrl={group.image_url}
         videoUrl={group.video_url}
-        alt={group.name ?? 'Group'}
+        alt={group.name ?? t('common.entities.group')}
       />
 
       {/* Stats Bar with Events and Amendments */}

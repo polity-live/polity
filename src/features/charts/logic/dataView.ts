@@ -1,4 +1,5 @@
 import type { ChartPresentation, ChartType, DataViewQuery, DatasetColumnProfile } from '../types';
+import { translate } from '@/features/shared/hooks/use-translation';
 
 function firstProfile(
   profiles: readonly DatasetColumnProfile[],
@@ -63,7 +64,12 @@ export function inferDataViewConfiguration(profiles: readonly DatasetColumnProfi
     dimension?.type === 'date' || valueColumnLayout === 'wide' ? 'line' : 'bar';
   const presentation: ChartPresentation = {
     title:
-      measure && dimension ? `${measure.label} nach ${dimension.label}` : (measure?.label ?? ''),
+      measure && dimension
+        ? translate('common.formats.measureByDimension', {
+            measure: measure.label,
+            dimension: dimension.label,
+          })
+        : (measure?.label ?? ''),
     description: '',
     showLegend: true,
     showGrid: true,
@@ -94,7 +100,12 @@ export function getDataViewTitle({
 }) {
   if (view === 'table') return datasetTitle;
   if (view === 'stat') return measureLabel || datasetTitle;
-  return measureLabel && dimensionLabel ? `${measureLabel} nach ${dimensionLabel}` : datasetTitle;
+  return measureLabel && dimensionLabel
+    ? translate('common.formats.measureByDimension', {
+        measure: measureLabel,
+        dimension: dimensionLabel,
+      })
+    : datasetTitle;
 }
 
 export function serializeDatasetTable(

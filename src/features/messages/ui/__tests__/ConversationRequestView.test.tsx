@@ -55,6 +55,7 @@ describe('pending conversation request UI', () => {
   it('shows the waiting state without decision buttons to the sender', () => {
     renderRequest('user-sender');
 
+    expect(document.querySelector('[data-tutorial-anchor="tutorial-assistant-chat"]')).toBeTruthy();
     expect(screen.getByText('Waiting for Mina Bauer')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Accept' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Decline' })).toBeNull();

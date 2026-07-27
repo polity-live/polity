@@ -1,6 +1,17 @@
 export const createPageTranslations = {
   title: 'Erstellen',
   loading: 'Laden...',
+  recovery: {
+    discard: 'Verwerfen',
+    failedDescription:
+      'Polity konnte den letzten Schritt nicht abschließen. Du kannst es erneut versuchen, den Entwurf wiederherstellen oder ihn verwerfen.',
+    failedTitle: 'Erstellung benötigt Aufmerksamkeit',
+    pendingDescription:
+      'Der Inhalt wurde erstellt und Polity schließt die verbleibende Synchronisierung ab.',
+    pendingTitle: 'Erstellung wird abgeschlossen',
+    restore: 'Wiederherstellen',
+    retry: 'Erneut versuchen',
+  },
   previous: 'Zurück',
   next: 'Weiter',
   creating: 'Wird erstellt...',

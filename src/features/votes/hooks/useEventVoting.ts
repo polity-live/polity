@@ -359,7 +359,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
           })
         );
 
-        toast.success(`Voting completed: ${result}`);
+        toast.success(translateText('features.votes.toasts.votingCompleted', { result }));
       } catch (error) {
         console.error('Error closing voting:', error);
         toast.error(translateText('generated.inline.1237_failed_to_close_voting_ebe1b4ae'));

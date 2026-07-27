@@ -35,6 +35,7 @@ export const calendarTranslations = {
   search: {
     placeholder: 'Search events...',
     groupPlaceholder: 'Filter by group...',
+    clearSearch: 'Clear search',
     clearDate: 'Clear date',
   },
   actions: {

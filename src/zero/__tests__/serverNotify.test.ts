@@ -6,7 +6,7 @@ vi.mock('@/features/notifications/utils/notification-helpers.ts', () => ({
   testNotificationHelper: (...args: unknown[]) => notificationHelperMock(...args),
 }));
 
-import { fireNotification } from '../server-notify';
+import { fireNotification, withNotificationDeliveryQueue } from '../server-notify';
 
 describe('fireNotification', () => {
   beforeEach(() => {
@@ -52,5 +52,29 @@ describe('fireNotification', () => {
     );
 
     consoleError.mockRestore();
+  });
+
+  it('waits for unawaited notification work before finishing a mutation request', async () => {
+    let resolveHelper: (() => void) | undefined;
+    notificationHelperMock.mockReturnValueOnce(
+      new Promise<void>(resolve => {
+        resolveHelper = resolve;
+      })
+    );
+
+    let requestCompleted = false;
+    const request = withNotificationDeliveryQueue(async () => {
+      void fireNotification('testNotificationHelper', { recipientUserId: 'user-2' });
+      return 'mutation-result';
+    }).then(result => {
+      requestCompleted = true;
+      return result;
+    });
+
+    await Promise.resolve();
+    expect(requestCompleted).toBe(false);
+    resolveHelper?.();
+    await expect(request).resolves.toBe('mutation-result');
+    expect(requestCompleted).toBe(true);
   });
 });

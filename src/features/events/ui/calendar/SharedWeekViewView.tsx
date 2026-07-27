@@ -251,6 +251,9 @@ export function SharedWeekViewView({
                     return (
                       <WeekViewBlockButton
                         key={event.id}
+                        data-tutorial-anchor={
+                          event.tutorial_run_id ? 'tutorial-first-event' : undefined
+                        }
                         className={getCompactCalendarEventClassName(event)}
                         style={getWeekViewBlockStyle({
                           column: layout.column,

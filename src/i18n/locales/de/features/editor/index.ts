@@ -140,4 +140,12 @@ export const editor = {
     selectAll: 'Alle auswählen',
     deselectAll: 'Alle abwählen',
   },
+  toasts: {
+    modeChanged: 'Modus geändert zu {{mode}}',
+  },
+  defaultVersionTitles: {
+    suggestionAccepted: 'Vorschlag angenommen — {{timestamp}}',
+    suggestionDeclined: 'Vorschlag abgelehnt — {{timestamp}}',
+    autoSave: 'Automatische Speicherung — {{timestamp}}',
+  },
 };

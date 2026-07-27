@@ -12,9 +12,10 @@ import { useAuth } from '@/providers/auth-provider';
 import { getInstanceBookingCount, isBookedByUser } from '@/zero/events/useMeetingState';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
 import { toCreateEventSearch } from '@/features/create/logic/createEventSearch';
+import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
 
 export function useGroupEventsPage(groupId: string) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { events: eventsData } = useGroupEventsForCalendar(groupId);
@@ -27,7 +28,11 @@ export function useGroupEventsPage(groupId: string) {
     const rangeStart = addYears(now, -1);
     const rangeEnd = addYears(now, 1);
 
-    return (eventsData || []).flatMap(event => {
+    return (eventsData || []).flatMap(sourceEvent => {
+      const event = resolveAppTutorialFixtureValue(sourceEvent, {
+        tutorialRunId: sourceEvent.tutorial_run_id,
+        language,
+      });
       // Exclude bookable meetings from group event listings (shown in calendar instead)
       if (event.is_bookable) return [];
       const isMeeting = !!event.meeting_type;
@@ -74,7 +79,7 @@ export function useGroupEventsPage(groupId: string) {
         } as CalendarEvent;
       });
     });
-  }, [eventsData, user]);
+  }, [eventsData, language, user]);
 
   const filter = useCalendarEventFilter(events);
   const filteredEvents = getCalendarEventsForView(

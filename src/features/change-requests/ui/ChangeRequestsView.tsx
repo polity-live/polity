@@ -12,7 +12,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import type { ChangeRequestBranchSection } from '../logic/changeRequestsViewModel';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
-import type { StreetDesignPreviewSource } from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
+import type { CityDesignPreviewSource } from '@/features/amendments/city-design/logic/cityDesignChangeRequests';
 
 interface ChangeRequestsViewProps {
   virtualize?: boolean;
@@ -24,7 +24,7 @@ interface ChangeRequestsViewProps {
   diffMap: Record<string, ChangeRequestDiffData>;
   discussions: TDiscussion[];
   documentContent?: Value;
-  streetDesigns?: readonly StreetDesignPreviewSource[];
+  cityDesigns?: readonly CityDesignPreviewSource[];
   editingMode?: EditingMode | null;
   hasAmendment: boolean;
   isInVotingStage: boolean;
@@ -59,7 +59,7 @@ export function ChangeRequestsView({
   diffMap,
   discussions,
   documentContent,
-  streetDesigns = [],
+  cityDesigns = [],
   editingMode,
   hasAmendment,
   isLoading,
@@ -130,7 +130,7 @@ export function ChangeRequestsView({
         userId={userId}
         diffMap={{ ...sectionDiffMap, ...sectionObsoleteDiffMap }}
         documentContent={sectionDocumentContent}
-        streetDesigns={streetDesigns}
+        cityDesigns={cityDesigns}
         discussions={sectionDiscussions}
         amendmentId={amendmentId}
         agendaItemId={agendaItemId}
@@ -219,7 +219,7 @@ export function ChangeRequestsView({
     <PageWrapper>
       <h1 className="sr-only">{translateText('generated.inline.0285_change_requests_af9a9fa4')}</h1>
 
-      <div className="space-y-6">
+      <div className="space-y-6" data-tutorial-anchor="tutorial-change-request-vote">
         {branchSelectorBranches.length > 0 && onBranchChange ? (
           <AmendmentBranchSelectorSection
             branches={branchSelectorBranches}
@@ -231,7 +231,11 @@ export function ChangeRequestsView({
           />
         ) : null}
 
-        <div data-slot="change-requests-page-content" className="w-full">
+        <div
+          data-slot="change-requests-page-content"
+          className="w-full"
+          data-tutorial-anchor="tutorial-change-request-overview"
+        >
           {hasBranchSections ? (
             <div className="space-y-8" data-testid="change-request-branch-sections">
               {displayedBranchSections.map(section => (
@@ -268,8 +272,7 @@ export function ChangeRequestsView({
                       <FileEdit className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
                       <p className="text-muted-foreground text-sm">
                         {translateText(
-                          'generated.inline.0290_no_change_requests_for_this_branch_4fd98d30',
-                          'No change requests for this branch.'
+                          'generated.inline.0290_no_change_requests_for_this_branch_4fd98d30'
                         )}
                       </p>
                     </div>

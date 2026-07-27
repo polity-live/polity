@@ -3,7 +3,7 @@
 -- =============================================================================
 
 -- Statement table
-CREATE TABLE IF NOT EXISTS public.statement (
+CREATE TABLE public.statement (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
@@ -43,7 +43,7 @@ ALTER TABLE public.statement ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.statement FOR ALL TO service_role USING (true);
 
 -- Statement survey table (polls attached to statements)
-CREATE TABLE IF NOT EXISTS public.statement_survey (
+CREATE TABLE public.statement_survey (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   statement_id UUID NOT NULL REFERENCES public.statement (id) ON DELETE CASCADE,
   question TEXT NOT NULL,
@@ -58,7 +58,7 @@ ALTER TABLE public.statement_survey ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.statement_survey FOR ALL TO service_role USING (true);
 
 -- Statement survey option table
-CREATE TABLE IF NOT EXISTS public.statement_survey_option (
+CREATE TABLE public.statement_survey_option (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   survey_id UUID NOT NULL REFERENCES public.statement_survey (id) ON DELETE CASCADE,
   label TEXT NOT NULL,
@@ -73,7 +73,7 @@ ALTER TABLE public.statement_survey_option ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.statement_survey_option FOR ALL TO service_role USING (true);
 
 -- Statement survey vote table
-CREATE TABLE IF NOT EXISTS public.statement_survey_vote (
+CREATE TABLE public.statement_survey_vote (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   option_id UUID NOT NULL REFERENCES public.statement_survey_option (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -88,7 +88,7 @@ ALTER TABLE public.statement_survey_vote ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.statement_survey_vote FOR ALL TO service_role USING (true);
 
 -- Statement support vote table
-CREATE TABLE IF NOT EXISTS public.statement_support_vote (
+CREATE TABLE public.statement_support_vote (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   statement_id UUID NOT NULL REFERENCES public.statement (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,

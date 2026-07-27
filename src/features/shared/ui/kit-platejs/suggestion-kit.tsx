@@ -16,6 +16,7 @@ import {
 
 import { discussionPlugin } from './discussion-kit.tsx';
 import { SuggestionBreakCleanupPlugin } from '@/features/shared/logic/suggestionBreakCleanupPlugin';
+import { SuggestionForeignInsertPlugin } from '@/features/shared/logic/suggestionForeignInsertPlugin';
 
 export type SuggestionConfig = ExtendConfig<
   BaseSuggestionConfig,
@@ -92,4 +93,8 @@ export const suggestionPlugin = toTPlatePlugin<SuggestionConfig>(
   },
 });
 
-export const SuggestionKit = [suggestionPlugin, SuggestionBreakCleanupPlugin];
+export const SuggestionKit = [
+  suggestionPlugin,
+  SuggestionBreakCleanupPlugin,
+  SuggestionForeignInsertPlugin,
+];

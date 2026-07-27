@@ -2,7 +2,7 @@
 -- 25_currency.sql — Server-only Frankfurter exchange-rate cache
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS public.currency_exchange_rate_cache (
+CREATE TABLE public.currency_exchange_rate_cache (
   base_currency TEXT NOT NULL CHECK (base_currency ~ '^[A-Z]{3}$'),
   quote_currency TEXT NOT NULL CHECK (quote_currency ~ '^[A-Z]{3}$'),
   requested_date TEXT NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS public.currency_exchange_rate_cache (
   PRIMARY KEY (base_currency, quote_currency, requested_date)
 );
 
-CREATE INDEX IF NOT EXISTS idx_currency_exchange_rate_cache_fetched
+CREATE INDEX idx_currency_exchange_rate_cache_fetched
   ON public.currency_exchange_rate_cache (fetched_at);
 
 ALTER TABLE public.currency_exchange_rate_cache ENABLE ROW LEVEL SECURITY;

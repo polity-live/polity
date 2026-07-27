@@ -4,6 +4,7 @@ import { parseDatasetCsv } from '@/server/datasets/csv';
 import { persistDatasetSnapshot } from '@/server/datasets/service';
 import { assertDatasetSize, bytesToText } from '@/server/datasets/storage';
 import { loadDatasetContributionGroupName } from '@/server/datasets/access';
+import { appErrorHttpBody, appErrorHttpBodyFrom } from '@/features/shared/errors/app-error';
 
 export const Route = createFileRoute('/api/datasets/upload')({
   server: {
@@ -11,7 +12,7 @@ export const Route = createFileRoute('/api/datasets/upload')({
       POST: async ({ request }) => {
         const session = await getSession(request);
         if (!session?.user) {
-          return Response.json({ error: 'Unauthorized' }, { status: 401 });
+          return Response.json(appErrorHttpBody('permission_denied'), { status: 401 });
         }
 
         try {
@@ -22,13 +23,10 @@ export const Route = createFileRoute('/api/datasets/upload')({
           const description = String(formData.get('description') ?? '').trim();
 
           if (!(file instanceof File)) {
-            return Response.json({ error: 'CSV or TSV file is required' }, { status: 400 });
+            return Response.json(appErrorHttpBody('validation_failed'), { status: 400 });
           }
           if (!groupId) {
-            return Response.json(
-              { error: 'Group id is required for dataset uploads' },
-              { status: 400 }
-            );
+            return Response.json(appErrorHttpBody('validation_failed'), { status: 400 });
           }
           assertDatasetSize(file.size, 'Uploaded dataset');
 
@@ -59,10 +57,7 @@ export const Route = createFileRoute('/api/datasets/upload')({
 
           return Response.json(result);
         } catch (error) {
-          return Response.json(
-            { error: error instanceof Error ? error.message : 'Dataset upload failed' },
-            { status: 400 }
-          );
+          return Response.json(appErrorHttpBodyFrom(error, 'upload_failed'), { status: 400 });
         }
       },
     },

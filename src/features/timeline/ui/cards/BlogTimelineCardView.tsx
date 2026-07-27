@@ -45,9 +45,9 @@ export interface BlogTimelineCardProps {
 /**
  * Format reading time for display
  */
-function formatReadingTime(minutes: number): string {
-  if (minutes < 1) return '< 1 min read';
-  return `${minutes} min read`;
+function formatReadingTime(minutes: number, t: BlogTimelineCardViewProps['t']): string {
+  if (minutes < 1) return t('features.timeline.readingTime.underMinute');
+  return t('features.timeline.readingTime.minutes', { count: minutes });
 }
 export interface BlogTimelineCardViewProps {
   blog: any;
@@ -165,7 +165,7 @@ export function BlogTimelineCardView({
           {blog.readingTimeMinutes && (
             <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
               <Clock className="h-3.5 w-3.5" />
-              <span>{formatReadingTime(blog.readingTimeMinutes)}</span>
+              <span>{formatReadingTime(blog.readingTimeMinutes, t)}</span>
             </div>
           )}
 

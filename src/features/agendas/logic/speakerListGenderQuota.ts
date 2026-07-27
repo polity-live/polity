@@ -111,28 +111,28 @@ export function validateSpeakerGenderQuota({
 export function getSpeakerGenderLabel(gender?: string | null) {
   switch (gender) {
     case 'male':
-      return 'maennlich';
+      return translate('features.events.agenda.genderQuota.genderLabels.male');
     case 'female':
-      return 'weiblich';
+      return translate('features.events.agenda.genderQuota.genderLabels.female');
     case 'diverse':
-      return 'divers';
+      return translate('features.events.agenda.genderQuota.genderLabels.diverse');
     default:
-      return 'keine Angabe';
+      return translate('features.events.agenda.genderQuota.genderLabels.unspecified');
   }
 }
 
 export function getGenderQuotaErrorMessage(result: GenderQuotaValidationResult) {
   switch (result.reason) {
     case 'missing-gender':
-      return 'Please set a gender in your user settings before joining a gender-quoted speaker list.';
+      return encodeAppError('gender_quota_missing_gender');
     case 'unsupported-gender':
-      return 'This gender-quoted speaker list currently only accepts male and female speakers.';
+      return encodeAppError('gender_quota_unsupported_gender');
     case 'expected-male':
-      return 'The next speaker must be male.';
+      return encodeAppError('gender_quota_expected_male');
     case 'expected-female':
-      return 'The next speaker must be female.';
+      return encodeAppError('gender_quota_expected_female');
     default:
-      return 'You cannot join this gender-quoted speaker list right now.';
+      return encodeAppError('gender_quota_blocked');
   }
 }
 
@@ -142,29 +142,16 @@ export function getGenderQuotaFeedbackMessage(
 ) {
   switch (result.reason) {
     case 'missing-gender':
-      return t(
-        'features.events.agenda.genderQuota.missingGender',
-        'Bitte waehle in deinen Profileinstellungen ein Gender aus, bevor du dich auf diese Redeliste setzt.'
-      );
+      return t('features.events.agenda.genderQuota.missingGender');
     case 'unsupported-gender':
-      return t(
-        'features.events.agenda.genderQuota.unsupportedGender',
-        'Diese genderquotierte Redeliste akzeptiert aktuell nur maennlich oder weiblich.'
-      );
+      return t('features.events.agenda.genderQuota.unsupportedGender');
     case 'expected-male':
-      return t(
-        'features.events.agenda.genderQuota.expectedMale',
-        'Als Naechstes muss sich ein Mann auf die Redeliste setzen.'
-      );
+      return t('features.events.agenda.genderQuota.expectedMale');
     case 'expected-female':
-      return t(
-        'features.events.agenda.genderQuota.expectedFemale',
-        'Als Naechstes muss sich eine Frau auf die Redeliste setzen.'
-      );
+      return t('features.events.agenda.genderQuota.expectedFemale');
     default:
-      return t(
-        'features.events.agenda.genderQuota.blocked',
-        'Du kannst dich gerade nicht auf diese genderquotierte Redeliste setzen.'
-      );
+      return t('features.events.agenda.genderQuota.blocked');
   }
 }
+import { encodeAppError } from '@/features/shared/errors';
+import { translate } from '@/features/shared/hooks/use-translation';

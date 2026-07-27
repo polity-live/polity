@@ -27,11 +27,25 @@ import { AmendmentBranchSelectorSection } from '@/features/amendments/ui/Amendme
 import { isMockCRTimelineItem } from '../logic/createMockCRTimelineItems';
 import { AgendaActiveItemHeader } from './AgendaActiveItemHeader';
 import { AgendaContextTabs, AgendaPageShell, AgendaVotingWorkspace } from './AgendaUiSystem';
+import {
+  APP_TUTORIAL_AMENDMENT_AGENDA_TITLE,
+  APP_TUTORIAL_AMENDMENT_TITLE,
+  APP_TUTORIAL_ELECTION_AGENDA_TITLE,
+  APP_TUTORIAL_FIRST_EVENT_TITLE,
+  APP_TUTORIAL_PREPARED_TEXT_CHANGES,
+  getAppTutorialElectionCopy,
+} from '@/features/app-tutorial/amendment-fixture';
+import { APP_TUTORIAL_EXPECTED_INPUTS } from '@/features/app-tutorial/catalog';
+import {
+  resolveAppTutorialFixtureText,
+  resolveAppTutorialFixtureValue,
+} from '@/features/app-tutorial/fixture-copy';
 export interface EventAgendaItemDetailViewProps {
   virtualizeChangeRequests?: boolean;
   eventId: any;
   agendaItemId: any;
   t: any;
+  language?: string;
   navigate: any;
   updateSpeaker: any;
   agendaItem: any;
@@ -112,7 +126,7 @@ export interface EventAgendaItemDetailViewProps {
   setSelectedCRToolbarItemId: any;
   mockCRItems: any;
   documentContent: any;
-  streetDesigns?: any;
+  cityDesigns?: any;
   amendmentDiscussions: any;
   crDiffMap: any;
   hasAmendmentCRs: any;
@@ -202,6 +216,7 @@ export function EventAgendaItemDetailView({
   eventId,
   agendaItemId,
   t,
+  language,
   navigate,
   agendaItem,
   agendaBranchEditingMode,
@@ -257,7 +272,7 @@ export function EventAgendaItemDetailView({
   castCRVote,
   actionBarHook,
   documentContent,
-  streetDesigns,
+  cityDesigns,
   amendmentDiscussions,
   crDiffMap,
   isCRVotingActive,
@@ -322,15 +337,50 @@ export function EventAgendaItemDetailView({
   handleSubmitOfflineTally,
 }: EventAgendaItemDetailViewProps) {
   const [activeContextPane, setActiveContextPane] = useState<'details' | 'speakers'>('details');
+  const isTutorialAgendaItem = Boolean(
+    event?.tutorial_run_id ||
+    agendaItem?.amendment?.tutorial_run_id ||
+    (event?.title === APP_TUTORIAL_FIRST_EVENT_TITLE &&
+      agendaItem?.amendment?.title === APP_TUTORIAL_AMENDMENT_TITLE) ||
+    agendaItem?.title === APP_TUTORIAL_AMENDMENT_AGENDA_TITLE ||
+    agendaItem?.title === APP_TUTORIAL_ELECTION_AGENDA_TITLE
+  );
+  const tutorialElectionCopy = getAppTutorialElectionCopy(language);
+  const isTutorialElectionAgendaItem = Boolean(
+    event?.tutorial_run_id && agendaItem?.type === 'election' && election
+  );
+  const displayedAgendaTitle = isTutorialElectionAgendaItem
+    ? tutorialElectionCopy.agendaTitle
+    : resolveAppTutorialFixtureText(agendaItem?.title, {
+        tutorialRunId: event?.tutorial_run_id ?? agendaItem?.amendment?.tutorial_run_id,
+        language: language === 'en' ? 'en' : 'de',
+      });
+  const displayedAgendaDescription = isTutorialElectionAgendaItem
+    ? tutorialElectionCopy.agendaDescription
+    : resolveAppTutorialFixtureText(agendaItem?.description, {
+        tutorialRunId: event?.tutorial_run_id ?? agendaItem?.amendment?.tutorial_run_id,
+        language: language === 'en' ? 'en' : 'de',
+      });
+  const displayedElection =
+    election && isTutorialElectionAgendaItem
+      ? {
+          ...election,
+          title: tutorialElectionCopy.electionTitle,
+          description: tutorialElectionCopy.electionDescription,
+        }
+      : election;
+  const useStandaloneTutorialAmendmentVote = Boolean(
+    isTutorialAgendaItem && agendaItem?.amendment_id && vote
+  );
+  const useCRToolbar = isCRToolbarActive && !useStandaloneTutorialAmendmentVote;
   const noVotingPasswordSettingsHref = user?.id
     ? `/user/${user.id}/settings?tab=passwords`
     : undefined;
   const isDetailAgendaItemActive = detailRuntimeStatus === 'in-progress';
-  const canManageCurrentVote = isCRToolbarActive
+  const canManageCurrentVote = useCRToolbar
     ? isDetailAgendaItemActive && canManageVoteSequence
     : canManageAgenda;
-  const canCompleteAgendaItem =
-    !isCRToolbarActive || effectiveClosingVoteItem?.status === 'completed';
+  const canCompleteAgendaItem = !useCRToolbar || effectiveClosingVoteItem?.status === 'completed';
   const isOfflineOnlyAttendance = attendanceMode === 'offline';
   const selectedCRIsPlaceholder = Boolean(
     (selectedCRToolbarItem as { _votePlaceholder?: boolean } | null)?._votePlaceholder
@@ -341,19 +391,19 @@ export function EventAgendaItemDetailView({
   const canCastSelectedCRVote =
     !selectedCRIsPlaceholder && !selectedCRIsMockTimelineItem && selectedCRHasVoteChoices;
   const voteButtonDisabled =
-    !isCRToolbarActive && (disableVoteButton || actionBarHook.disableSecretIndicativeVoteButton);
+    !useCRToolbar && (disableVoteButton || actionBarHook.disableSecretIndicativeVoteButton);
   const disabledVoteTooltip =
     actionBarHook.secretIndicativeVoteTooltip ??
     translateText('generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792');
   const crCardVoteDisabledTooltip = isOfflineOnlyAttendance
     ? t(
         'features.events.agenda.actions.offlineCRVoteUnavailable',
-        'Im Offline-Modus koennen keine Online-Stimmungsabgaben abgegeben werden. Wechsle fuer Indication Votes in den Online- oder Hybrid-Modus.'
+        'Im Offline-Modus können keine Online-Stimmungsabgaben abgegeben werden. Wechsle für Indication Votes in den Online- oder Hybrid-Modus.'
       )
     : undefined;
   const toolbarVoteClick = isOfflineOnlyAttendance
     ? undefined
-    : isCRToolbarActive
+    : useCRToolbar
       ? toolbarVotingPhase !== 'closed' && !hasUserVotedOnSelectedCR && canCastSelectedCRVote
         ? actionBarHook.handleVoteClick
         : undefined
@@ -396,8 +446,58 @@ export function EventAgendaItemDetailView({
     );
   }
 
-  const hasChangeRequestResults = Boolean(agendaItem.amendment_id && crDisplayItems.length > 0);
-  const hasStandaloneVoteResults = Boolean(vote && !isVoteInCRList);
+  const persistedTutorialChangeRequests = (agendaItem.amendment?.change_requests ??
+    []) as readonly {
+    id: string;
+    title?: string | null;
+    description?: string | null;
+    new_text?: string | null;
+    status?: string | null;
+  }[];
+  const tutorialDiscussionChangeRequests = (
+    Array.isArray(agendaItem.amendment?.discussions) ? agendaItem.amendment.discussions : []
+  ) as readonly {
+    id?: string | null;
+    changeRequestEntityId?: string | null;
+    title?: string | null;
+    description?: string | null;
+    status?: string | null;
+    changeRequestStatus?: string | null;
+  }[];
+  const tutorialChangeRequests =
+    isTutorialAgendaItem && agendaItem.amendment_id
+      ? persistedTutorialChangeRequests.length > 0
+        ? persistedTutorialChangeRequests
+        : tutorialDiscussionChangeRequests.length > 0
+          ? tutorialDiscussionChangeRequests.map((discussion, index) => ({
+              id: discussion.changeRequestEntityId || discussion.id || `tutorial-cr-${index}`,
+              title: discussion.title,
+              description: discussion.description,
+              new_text: null,
+              status: discussion.changeRequestStatus || discussion.status,
+            }))
+          : APP_TUTORIAL_PREPARED_TEXT_CHANGES.map((changeRequest, index) => ({
+              id: `tutorial-prepared-cr-${index}`,
+              title: changeRequest.title,
+              description: changeRequest.description,
+              new_text: changeRequest.newText,
+              status: 'open',
+            }))
+      : [];
+  const tutorialRunId = event?.tutorial_run_id ?? agendaItem.amendment?.tutorial_run_id;
+  const displayedTutorialChangeRequests = tutorialChangeRequests.map(changeRequest =>
+    resolveAppTutorialFixtureValue(changeRequest, {
+      tutorialRunId,
+      language: language === 'en' ? 'en' : 'de',
+    })
+  );
+  const hasTutorialChangeRequestReview = tutorialChangeRequests.length > 0;
+  const hasChangeRequestResults = Boolean(
+    agendaItem.amendment_id && (crDisplayItems.length > 0 || hasTutorialChangeRequestReview)
+  );
+  const hasStandaloneVoteResults = Boolean(
+    vote && (!isVoteInCRList || useStandaloneTutorialAmendmentVote)
+  );
   const hasResultsPanel = Boolean(election || hasStandaloneVoteResults || hasChangeRequestResults);
   const branchSwitcher =
     branchSelectorBranches?.length > 1 && onBranchChange ? (
@@ -417,13 +517,18 @@ export function EventAgendaItemDetailView({
       presentation="embedded"
       agendaItem={{
         id: agendaItem.id,
-        title: agendaItem.title || '',
-        description: agendaItem.description ?? undefined,
+        title: displayedAgendaTitle || '',
+        description: displayedAgendaDescription ?? undefined,
         type: agendaItem.type === 'amendment' ? 'vote' : agendaItem.type || '',
         status: detailRuntimeStatus,
         duration: agendaItem.duration ?? undefined,
       }}
-      amendment={agendaItem.amendment ?? undefined}
+      amendment={
+        resolveAppTutorialFixtureValue(agendaItem.amendment, {
+          tutorialRunId: agendaItem.amendment?.tutorial_run_id,
+          language: language === 'en' ? 'en' : 'de',
+        }) ?? undefined
+      }
       amendmentForwardingPreview={agendaForwardingPreview}
       amendmentPathVisualizationData={detailPathVisualizationData}
       amendmentGroupTypeById={detailGroupTypeById}
@@ -431,7 +536,7 @@ export function EventAgendaItemDetailView({
       onAmendmentEventClick={targetEventId =>
         navigate({ to: '/event/$id/agenda', params: { id: targetEventId } })
       }
-      election={election ?? undefined}
+      election={displayedElection ?? undefined}
     />
   );
 
@@ -454,104 +559,154 @@ export function EventAgendaItemDetailView({
   );
 
   const changeRequestResultsPanel = hasChangeRequestResults ? (
-    <VirtualAgendaChangeRequestCardsList
-      virtualize={virtualizeChangeRequests}
-      items={crDisplayItems}
-      editingMode={agendaBranchEditingMode}
-      isVotingActive={isCRVotingActive}
-      userId={user?.id}
-      canManage={isDetailAgendaItemActive && canManageVoteSequence}
-      canVote={hasVotingRight && !isOfflineOnlyAttendance}
-      voteDisabledTooltip={crCardVoteDisabledTooltip}
-      hideInlineVotingControls
-      showAgendaDetailsVoteActions
-      currentItemId={
-        isCRVotingActive ? (currentCRSequenceItemId ?? selectedCRToolbarItem?.id) : null
-      }
-      progress={isCRVotingActive ? progress : undefined}
-      eligibleFinalVoterCount={eligibleFinalVoterCount}
-      completedCount={isCRVotingActive ? completedItems.length : undefined}
-      allCRsProcessed={isCRVotingActive ? allCRsProcessed : undefined}
-      isTimelineComplete={isCRVotingActive ? isTimelineComplete : undefined}
-      diffMap={crDiffMap}
-      documentContent={documentContent}
-      streetDesigns={streetDesigns}
-      agendaTitle={agendaItem.amendment?.title ?? agendaItem.title ?? null}
-      forwardingPreview={agendaForwardingPreview}
-      defaultSortMode={event?.change_request_vote_order ?? null}
-      discussions={amendmentDiscussions}
-      amendmentId={agendaItem.amendment_id ?? undefined}
-      agendaItemId={agendaItemId}
-      showStreetDesignPreviewAccordion
-      userRecord={userRecord}
-      hasUserVoted={isCRVotingActive ? hasUserVotedOnCR : undefined}
-      getUserSelectedChoiceIds={isCRVotingActive ? getUserSelectedChoiceIds : undefined}
-      onCastVote={isCRVotingActive && isDetailAgendaItemActive ? castCRVote : undefined}
-      onOpenVoteDialog={isCRVotingActive ? handleOpenCRVoteDialog : undefined}
-      onStartIndicative={
-        isCRVotingActive && isDetailAgendaItemActive ? startIndicativePhase : undefined
-      }
-      onStartFinal={
-        isCRVotingActive && isDetailAgendaItemActive ? handleStartSequenceFinalVote : undefined
-      }
-      onCloseVoting={isCRVotingActive && isDetailAgendaItemActive ? closeVoting : undefined}
-      sequenceInterstitial={branchSwitcher}
-    />
+    <div
+      data-tutorial-anchor={isTutorialAgendaItem ? 'tutorial-amendment-change-requests' : undefined}
+    >
+      {hasTutorialChangeRequestReview ? (
+        <div className="grid gap-3">
+          {displayedTutorialChangeRequests.map((changeRequest, index) => (
+            <Card key={changeRequest.id}>
+              <CardContent className="space-y-2 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold">
+                    {changeRequest.title || `Change Request ${index + 1}`}
+                  </p>
+                  <span className="bg-muted text-muted-foreground rounded-md px-2 py-1 text-xs font-medium">
+                    {changeRequest.status || 'open'}
+                  </span>
+                </div>
+                {changeRequest.description ? (
+                  <p className="text-muted-foreground text-sm">{changeRequest.description}</p>
+                ) : null}
+                {changeRequest.new_text ? (
+                  <p className="border-border border-l-2 pl-3 text-sm">{changeRequest.new_text}</p>
+                ) : null}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <VirtualAgendaChangeRequestCardsList
+          virtualize={virtualizeChangeRequests}
+          items={crDisplayItems}
+          editingMode={agendaBranchEditingMode}
+          isVotingActive={isCRVotingActive}
+          userId={user?.id}
+          canManage={isDetailAgendaItemActive && canManageVoteSequence}
+          canVote={hasVotingRight && !isOfflineOnlyAttendance}
+          voteDisabledTooltip={crCardVoteDisabledTooltip}
+          hideInlineVotingControls
+          showAgendaDetailsVoteActions
+          currentItemId={
+            isCRVotingActive ? (currentCRSequenceItemId ?? selectedCRToolbarItem?.id) : null
+          }
+          progress={isCRVotingActive ? progress : undefined}
+          eligibleFinalVoterCount={eligibleFinalVoterCount}
+          completedCount={isCRVotingActive ? completedItems.length : undefined}
+          allCRsProcessed={isCRVotingActive ? allCRsProcessed : undefined}
+          isTimelineComplete={isCRVotingActive ? isTimelineComplete : undefined}
+          diffMap={crDiffMap}
+          documentContent={documentContent}
+          cityDesigns={cityDesigns}
+          agendaTitle={
+            resolveAppTutorialFixtureText(agendaItem.amendment?.title ?? agendaItem.title, {
+              tutorialRunId: event?.tutorial_run_id ?? agendaItem?.amendment?.tutorial_run_id,
+              language: language === 'en' ? 'en' : 'de',
+            }) ?? null
+          }
+          forwardingPreview={agendaForwardingPreview}
+          defaultSortMode={event?.change_request_vote_order ?? null}
+          discussions={amendmentDiscussions}
+          amendmentId={agendaItem.amendment_id ?? undefined}
+          agendaItemId={agendaItemId}
+          showCityDesignPreviewAccordion
+          userRecord={userRecord}
+          hasUserVoted={isCRVotingActive ? hasUserVotedOnCR : undefined}
+          getUserSelectedChoiceIds={isCRVotingActive ? getUserSelectedChoiceIds : undefined}
+          onCastVote={isCRVotingActive && isDetailAgendaItemActive ? castCRVote : undefined}
+          onOpenVoteDialog={isCRVotingActive ? handleOpenCRVoteDialog : undefined}
+          onStartIndicative={
+            isCRVotingActive && isDetailAgendaItemActive ? startIndicativePhase : undefined
+          }
+          onStartFinal={
+            isCRVotingActive && isDetailAgendaItemActive ? handleStartSequenceFinalVote : undefined
+          }
+          onCloseVoting={isCRVotingActive && isDetailAgendaItemActive ? closeVoting : undefined}
+          sequenceInterstitial={branchSwitcher}
+        />
+      )}
+    </div>
   ) : null;
 
   const electionResultsPanel = election ? (
-    <AgendaElectionSection
-      roleName={election.title ?? t('features.events.agenda.role')}
-      electionMode={election.election_mode ? normalizeElectionMode(election.election_mode) : null}
-      seatCount={election.seat_count}
-      candidates={[...candidates] as CandidatesByElectionRow[]}
-      indicativeSelections={indicativeSelections}
-      finalSelections={finalSelections}
-      offlineTallies={election.offline_tallies ?? []}
-      attendanceMode={attendanceMode}
-      delegateTargetEventId={delegateTargetEvent?.id ?? delegateAssignmentMeta?.targetEventId}
-      delegateTargetEventTitle={delegateTargetEvent?.title ?? null}
-      showRoleAssignedMessage={isAutoAssignedRoleElection(election)}
-      userHasVoted={userHasElectionVoted}
-      userSelectedCandidateIds={userSelectedCandidateIds}
-      electionStatus={election.status}
-      canVote={hasVotingRight}
-      canBeCandidate={hasCandidateRight}
-      isUserCandidate={actionBarHook.isUserCandidate}
-      isVotingLoading={votingLoading === election.id}
-      isCandidateLoading={actionBarHook.candidateLoading}
-      onBecomeCandidate={actionBarHook.handleBecomeCandidate}
-      onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
-      onOpenNamedResults={
-        isNamedBallot(election.ballot_visibility)
-          ? () => setNamedResultsTarget('election')
+    <div
+      data-tutorial-anchor={
+        isTutorialAgendaItem
+          ? election.status === 'closed'
+            ? 'tutorial-election-result'
+            : 'tutorial-election-options'
           : undefined
       }
-    />
+    >
+      <AgendaElectionSection
+        roleName={displayedElection?.title ?? t('features.events.agenda.role')}
+        electionMode={election.election_mode ? normalizeElectionMode(election.election_mode) : null}
+        seatCount={election.seat_count}
+        candidates={[...candidates] as CandidatesByElectionRow[]}
+        indicativeSelections={indicativeSelections}
+        finalSelections={finalSelections}
+        offlineTallies={election.offline_tallies ?? []}
+        attendanceMode={attendanceMode}
+        delegateTargetEventId={delegateTargetEvent?.id ?? delegateAssignmentMeta?.targetEventId}
+        delegateTargetEventTitle={delegateTargetEvent?.title ?? null}
+        showRoleAssignedMessage={isAutoAssignedRoleElection(election)}
+        userHasVoted={userHasElectionVoted}
+        userSelectedCandidateIds={userSelectedCandidateIds}
+        electionStatus={election.status}
+        canVote={hasVotingRight}
+        canBeCandidate={hasCandidateRight}
+        isUserCandidate={actionBarHook.isUserCandidate}
+        isVotingLoading={votingLoading === election.id}
+        isCandidateLoading={actionBarHook.candidateLoading}
+        onBecomeCandidate={actionBarHook.handleBecomeCandidate}
+        onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
+        onOpenNamedResults={
+          isNamedBallot(election.ballot_visibility)
+            ? () => setNamedResultsTarget('election')
+            : undefined
+        }
+      />
+    </div>
   ) : null;
 
   const voteResultsPanel =
-    vote && !isVoteInCRList ? (
-      <AgendaVoteSection
-        voteId={vote.id}
-        voteTitle={vote.title || agendaItem.title || 'Vote'}
-        choices={[...choices] as ChoicesByVoteRow[]}
-        indicativeDecisions={indicativeDecisions}
-        finalDecisions={finalDecisions}
-        offlineTallies={vote.offline_tallies ?? []}
-        attendanceMode={attendanceMode}
-        userHasVoted={userHasVoteVoted}
-        userSelectedChoiceIds={userSelectedChoiceIds}
-        voteStatus={vote.status}
-        majorityType={vote.majority_type}
-        totalEligibleVoters={eligibleFinalVoterCount}
-        canManageOfflineResults={canManageAgenda}
-        offlineEligibleCount={confirmedOfflineParticipantCount}
-        forwardingPreview={agendaForwardingPreview}
-        onOpenNamedResults={
-          isNamedBallot(vote.ballot_visibility) ? () => setNamedResultsTarget('vote') : undefined
+    vote && (!isVoteInCRList || useStandaloneTutorialAmendmentVote) ? (
+      <div
+        data-tutorial-anchor={
+          isTutorialAgendaItem && vote.status === 'closed' ? 'tutorial-amendment-result' : undefined
         }
-      />
+      >
+        <AgendaVoteSection
+          voteId={vote.id}
+          voteTitle={vote.title || displayedAgendaTitle || 'Vote'}
+          choices={[...choices] as ChoicesByVoteRow[]}
+          indicativeDecisions={indicativeDecisions}
+          finalDecisions={finalDecisions}
+          offlineTallies={vote.offline_tallies ?? []}
+          attendanceMode={attendanceMode}
+          userHasVoted={userHasVoteVoted}
+          userSelectedChoiceIds={userSelectedChoiceIds}
+          voteStatus={vote.status}
+          majorityType={vote.majority_type}
+          totalEligibleVoters={eligibleFinalVoterCount}
+          canManageOfflineResults={canManageAgenda}
+          offlineEligibleCount={confirmedOfflineParticipantCount}
+          forwardingPreview={agendaForwardingPreview}
+          onOpenNamedResults={
+            isNamedBallot(vote.ballot_visibility) ? () => setNamedResultsTarget('vote') : undefined
+          }
+        />
+      </div>
     ) : null;
   const headerStartAt =
     agendaItem.activated_at ??
@@ -576,7 +731,7 @@ export function EventAgendaItemDetailView({
           status: detailRuntimeStatus,
           voting_phase: toolbarVotingPhase,
           election: election ? { id: election.id } : null,
-          vote: isCRToolbarActive
+          vote: useCRToolbar
             ? selectedCRToolbarItem?.vote
               ? { id: selectedCRToolbarItem.vote.id }
               : null
@@ -612,12 +767,12 @@ export function EventAgendaItemDetailView({
         onPreviousItem={agendaNav.moveToPreviousItem}
         onNextItem={agendaNav.moveToNextItem}
         onCompleteItem={canCompleteAgendaItem ? agendaNav.completeCurrentItem : undefined}
-        hasPreviousChangeRequest={isCRToolbarActive ? hasPreviousChangeRequest : undefined}
-        hasNextChangeRequest={isCRToolbarActive ? hasNextChangeRequest : undefined}
-        onPreviousChangeRequest={isCRToolbarActive ? handlePreviousChangeRequest : undefined}
-        onNextChangeRequest={isCRToolbarActive ? handleNextChangeRequest : undefined}
+        hasPreviousChangeRequest={useCRToolbar ? hasPreviousChangeRequest : undefined}
+        hasNextChangeRequest={useCRToolbar ? hasNextChangeRequest : undefined}
+        onPreviousChangeRequest={useCRToolbar ? handlePreviousChangeRequest : undefined}
+        onNextChangeRequest={useCRToolbar ? handleNextChangeRequest : undefined}
         onJumpToNextVoteStep={
-          canManageCurrentVote && isCRToolbarActive && nextStartableSequenceItem
+          canManageCurrentVote && useCRToolbar && nextStartableSequenceItem
             ? handleJumpToNextStartableSequenceItem
             : undefined
         }
@@ -635,7 +790,7 @@ export function EventAgendaItemDetailView({
         onBecomeCandidate={actionBarHook.handleBecomeCandidate}
         onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
         onStartVote={
-          canManageCurrentVote && isCRToolbarActive
+          canManageCurrentVote && useCRToolbar
             ? toolbarVotingPhase === 'pending'
               ? handleToolbarStartVote
               : undefined
@@ -644,7 +799,7 @@ export function EventAgendaItemDetailView({
               : undefined
         }
         onStartFinalVote={
-          canManageCurrentVote && isCRToolbarActive
+          canManageCurrentVote && useCRToolbar
             ? toolbarVotingPhase === 'indication' && canStartSelectedCRFinalVote
               ? handleToolbarStartFinalVote
               : undefined
@@ -653,7 +808,7 @@ export function EventAgendaItemDetailView({
               : undefined
         }
         onCloseFinalVote={
-          canManageCurrentVote && isCRToolbarActive
+          canManageCurrentVote && useCRToolbar
             ? toolbarVotingPhase === 'final'
               ? handleToolbarCloseVote
               : undefined
@@ -688,7 +843,9 @@ export function EventAgendaItemDetailView({
         open={offlineTallyDialogOpen}
         onOpenChange={handleOfflineTallyDialogOpenChange}
         title={getOfflineTallyDialogTitle(offlineTallyPhase ?? 'indicative')}
-        description={`Enter aggregated offline or hybrid selections for ${offlineTallyEntity?.title ?? 'this item'} and confirm with your voting PIN.`}
+        description={t('features.agendas.offlineTally.description', {
+          item: offlineTallyEntity?.title ?? t('features.agendas.offlineTally.itemFallback'),
+        })}
         phase={offlineTallyPhase ?? 'indicative'}
         choices={offlineTallyEntity?.choices ?? []}
         tallies={offlineTallyEntity?.tallies ?? []}
@@ -716,8 +873,10 @@ export function EventAgendaItemDetailView({
           }
         }}
         title={
-          namedResultsDialogConfig?.title ??
-          translateText('features.events.agenda.namedResults.title')
+          isTutorialElectionAgendaItem && namedResultsTarget === 'election'
+            ? tutorialElectionCopy.electionTitle
+            : (namedResultsDialogConfig?.title ??
+              translateText('features.events.agenda.namedResults.title'))
         }
         description={namedResultsDialogConfig?.description ?? ''}
         model={namedResultsDialogConfig?.model ?? null}
@@ -732,12 +891,12 @@ export function EventAgendaItemDetailView({
       <VoteCastDialog
         open={actionBarHook.voteDialogOpen}
         onOpenChange={actionBarHook.setVoteDialogOpen}
-        phase={isCRToolbarActive ? selectedCRDialogPhase : actionBarHook.voteCasting.phase}
-        title={isCRToolbarActive ? selectedCRTitle : (agendaItem.title ?? undefined)}
+        phase={useCRToolbar ? selectedCRDialogPhase : actionBarHook.voteCasting.phase}
+        title={useCRToolbar ? selectedCRTitle : (displayedAgendaTitle ?? undefined)}
         forwardingPreview={voteDialogForwardingPreview}
         documentPreviewContent={voteDialogDocumentPreviewContent}
         candidates={
-          isCRToolbarActive
+          useCRToolbar
             ? undefined
             : election
               ? candidates.map((c: any) => ({
@@ -757,14 +916,22 @@ export function EventAgendaItemDetailView({
         }
         seatCount={election?.seat_count ?? null}
         choices={
-          isCRToolbarActive
+          useCRToolbar
             ? selectedCRChoices
             : vote
               ? choices.map((c: any) => ({
                   id: c.id,
-                  label: c.label || 'Choice',
+                  label: c.label || translateText('features.agendas.fallbacks.choice'),
+                  semanticKey: c.semantic_key ?? null,
                 }))
               : undefined
+        }
+        tutorialAnchor={
+          isTutorialAgendaItem
+            ? election
+              ? 'agenda-election-vote'
+              : 'agenda-amendment-vote'
+            : undefined
         }
         requirePassword
         passwordError={passwordError}
@@ -774,7 +941,15 @@ export function EventAgendaItemDetailView({
           setPasswordError(null);
           setIsPasswordVerifying(true);
           try {
-            await verifyVotingPassword(password);
+            if (isTutorialAgendaItem) {
+              if (password !== APP_TUTORIAL_EXPECTED_INPUTS.votingPassword) {
+                throw new Error(
+                  `Invalid tutorial voting password. Use ${APP_TUTORIAL_EXPECTED_INPUTS.votingPassword}.`
+                );
+              }
+            } else {
+              await verifyVotingPassword(password);
+            }
           } catch (err) {
             const message =
               err instanceof Error
@@ -787,14 +962,10 @@ export function EventAgendaItemDetailView({
           }
         }}
         onCastVote={
-          isCRToolbarActive
-            ? handleCastCRVoteFromDialog
-            : actionBarHook.voteCasting.castAmendmentVote
+          useCRToolbar ? handleCastCRVoteFromDialog : actionBarHook.voteCasting.castAmendmentVote
         }
-        onCastElectionVote={
-          isCRToolbarActive ? undefined : actionBarHook.voteCasting.castElectionVote
-        }
-        isLoading={isCRToolbarActive ? false : actionBarHook.voteCasting.isLoading}
+        onCastElectionVote={useCRToolbar ? undefined : actionBarHook.voteCasting.castElectionVote}
+        isLoading={useCRToolbar ? false : actionBarHook.voteCasting.isLoading}
       />
 
       {/* Edit Election/Vote Dialog */}
@@ -802,10 +973,10 @@ export function EventAgendaItemDetailView({
         open={actionBarHook.editDialogOpen}
         onOpenChange={actionBarHook.setEditDialogOpen}
         agendaItemId={agendaItem.id}
-        agendaItemTitle={agendaItem.title ?? null}
-        agendaItemDescription={agendaItem.description ?? null}
+        agendaItemTitle={displayedAgendaTitle ?? null}
+        agendaItemDescription={displayedAgendaDescription ?? null}
         agendaItemDuration={agendaItem.duration ?? null}
-        election={election ?? undefined}
+        election={displayedElection ?? undefined}
         vote={vote ?? undefined}
         choices={choices.map((c: any) => ({
           id: c.id,
@@ -816,8 +987,8 @@ export function EventAgendaItemDetailView({
 
       <AgendaActiveItemHeader
         topLabel={toolbarAgendaItemTopNumber ? `TOP-${toolbarAgendaItemTopNumber}` : undefined}
-        title={agendaItem.title ?? t('features.events.agenda.details', 'Details')}
-        description={agendaItem.description ?? agendaItem.amendment?.reason ?? undefined}
+        title={displayedAgendaTitle ?? t('features.events.agenda.details', 'Details')}
+        description={displayedAgendaDescription ?? agendaItem.amendment?.reason ?? undefined}
         status={detailRuntimeStatus}
         type={agendaItem.type ?? 'discussion'}
         amendmentId={agendaItem.amendment_id ?? agendaItem.amendment?.id ?? null}

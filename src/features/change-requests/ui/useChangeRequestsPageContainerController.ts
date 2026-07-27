@@ -30,6 +30,8 @@ import {
 } from '../logic/changeRequestsViewModel';
 import { normalizeEditingMode, type EditingMode } from '@/zero/amendments/editing-mode-policy';
 import type { VoteSubmissionContext } from '@/features/shared/ui/voting';
+import { trackServerFinalization, waitForClientApply } from '@/zero/mutate-with-server-check';
+import { reportAppTutorialAction } from '@/features/app-tutorial/events';
 
 interface ChangeRequestsPageContainerProps {
   amendmentId: string;
@@ -135,7 +137,7 @@ export function useChangeRequestsPageContainerController({
   const {
     amendment,
     document,
-    streetDesigns,
+    cityDesigns,
     openChangeRequests,
     approvedChangeRequests,
     declinedChangeRequests,
@@ -319,10 +321,18 @@ export function useChangeRequestsPageContainerController({
           ? 'reject'
           : 'abstain';
 
-      await voteOnChangeRequest({
+      const result = voteOnChangeRequest({
         id: crypto.randomUUID(),
         change_request_id: changeRequestId,
         vote,
+      });
+      await waitForClientApply(result);
+      trackServerFinalization(result, {
+        onSuccess: () =>
+          reportAppTutorialAction({
+            type: 'mutation',
+            event: 'change-request.voted',
+          }),
       });
     },
     [voteOnChangeRequest]
@@ -355,7 +365,7 @@ export function useChangeRequestsPageContainerController({
     () =>
       (selectedEventVoteItem?.vote?.choices ?? []).map(choice => ({
         id: choice.id,
-        label: choice.label || 'Choice',
+        label: choice.label || translateText('common.entities.choice'),
       })),
     [selectedEventVoteItem?.vote?.choices]
   );
@@ -488,7 +498,7 @@ export function useChangeRequestsPageContainerController({
     userId,
     amendment,
     document,
-    streetDesigns,
+    cityDesigns,
     openChangeRequests,
     approvedChangeRequests,
     declinedChangeRequests,

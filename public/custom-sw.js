@@ -1,4 +1,4 @@
-/* global caches, clients, console, fetch, importScripts, Response, self, URL, workbox */
+/* global caches, clearTimeout, clients, console, fetch, importScripts, MessageChannel, Response, self, setTimeout, URL, workbox */
 
 // Custom Service Worker for Push Notifications
 // This extends the default PWA service worker with push notification capabilities
@@ -27,56 +27,181 @@ if (workboxReady) {
 // PUSH NOTIFICATION HANDLERS
 // ============================================================================
 
+const FOREGROUND_PUSH_MESSAGE_TYPE = 'polity:foreground-push:v1';
+const FOREGROUND_PUSH_ACK_TIMEOUT_MS = 500;
+const LANGUAGE_MESSAGE_TYPE = 'polity:set-language:v1';
+const LANGUAGE_CACHE = 'polity-settings-v1';
+const LANGUAGE_CACHE_KEY = '/__polity/settings/language';
+const LOCALIZED_FALLBACK_COPY = {
+  en: {
+    notificationTitle: 'New notification',
+    notificationBody: 'You have a new message',
+    offline: 'Polity is currently offline.',
+  },
+  de: {
+    notificationTitle: 'Neue Benachrichtigung',
+    notificationBody: 'Du hast eine neue Nachricht',
+    offline: 'Polity ist derzeit offline.',
+  },
+};
+
+function isSupportedLanguage(language) {
+  return language === 'de' || language === 'en';
+}
+
+async function persistLanguage(language) {
+  if (!isSupportedLanguage(language)) return;
+  try {
+    const cache = await caches.open(LANGUAGE_CACHE);
+    await cache.put(
+      LANGUAGE_CACHE_KEY,
+      new Response(language, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      })
+    );
+  } catch (error) {
+    console.warn('[Service Worker] Could not persist language:', error);
+  }
+}
+
+async function readPersistedLanguage() {
+  try {
+    const cache = await caches.open(LANGUAGE_CACHE);
+    const response = await cache.match(LANGUAGE_CACHE_KEY);
+    const language = response ? await response.text() : null;
+    return isSupportedLanguage(language) ? language : 'en';
+  } catch (error) {
+    console.warn('[Service Worker] Could not read language:', error);
+    return 'en';
+  }
+}
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== LANGUAGE_MESSAGE_TYPE) return;
+  event.waitUntil(persistLanguage(event.data.language));
+});
+
+function showSystemNotification(notificationData) {
+  return self.registration.showNotification(notificationData.title, notificationData);
+}
+
+function requestForegroundToast(windowClient, notificationData) {
+  return new Promise((resolve) => {
+    const channel = new MessageChannel();
+    let settled = false;
+
+    const finish = (handled) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      channel.port1.close();
+      resolve(handled);
+    };
+
+    const timeout = setTimeout(() => finish(false), FOREGROUND_PUSH_ACK_TIMEOUT_MS);
+    channel.port1.onmessage = (messageEvent) => {
+      finish(messageEvent.data?.handled === true);
+    };
+
+    try {
+      windowClient.postMessage(
+        {
+          type: FOREGROUND_PUSH_MESSAGE_TYPE,
+          notification: {
+            title: notificationData.title,
+            body: notificationData.body,
+            url: notificationData.data?.url || '/',
+            notificationId: notificationData.data?.notificationId,
+            notificationType: notificationData.data?.type,
+            tag: notificationData.tag,
+          },
+        },
+        [channel.port2]
+      );
+    } catch (error) {
+      console.warn('[Service Worker] Could not deliver foreground push:', error);
+      finish(false);
+    }
+  });
+}
+
+async function deliverPushNotification(notificationData, foregroundBehavior) {
+  if (foregroundBehavior !== 'toast') {
+    return showSystemNotification(notificationData);
+  }
+
+  try {
+    const windowClients = await clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    });
+    const focusedClient = windowClients.find((windowClient) => windowClient.focused === true);
+
+    if (focusedClient && (await requestForegroundToast(focusedClient, notificationData))) {
+      return;
+    }
+  } catch (error) {
+    console.warn('[Service Worker] Foreground detection failed:', error);
+  }
+
+  return showSystemNotification(notificationData);
+}
+
 /**
  * Handle push notification event
  * This is triggered when the server sends a push notification
  */
 self.addEventListener('push', (event) => {
+  event.waitUntil(
+    (async () => {
+      let language = await readPersistedLanguage();
+      let foregroundBehavior = 'system';
+      let data = null;
 
-  // Default notification options
-  let notificationData = {
-    title: 'Neue Benachrichtigung',
-    body: 'Sie haben eine neue Nachricht',
-    icon: '/android-chrome-192x192.png',
-    badge: '/favicon-32x32.png',
-    tag: 'notification',
-    requireInteraction: false,
-    data: {
-      url: '/',
-    },
-  };
+      if (event.data) {
+        try {
+          data = event.data.json();
+          if (isSupportedLanguage(data.language)) language = data.language;
+        } catch (error) {
+          console.error('[Service Worker] Error parsing push data:', error);
+        }
+      }
 
-  // Parse push notification data
-  if (event.data) {
-    try {
-      const data = event.data.json();
-      notificationData = {
-        title: data.title || notificationData.title,
-        body: data.message || data.body || notificationData.body,
-        icon: data.icon || notificationData.icon,
-        badge: data.badge || notificationData.badge,
-        tag: data.tag || data.type || notificationData.tag,
-        requireInteraction: data.requireInteraction || false,
+      const fallbackCopy = LOCALIZED_FALLBACK_COPY[language];
+      let notificationData = {
+        title: fallbackCopy.notificationTitle,
+        body: fallbackCopy.notificationBody,
+        icon: '/android-chrome-192x192.png',
+        badge: '/favicon-32x32.png',
+        tag: 'notification',
+        requireInteraction: false,
         data: {
-          url: data.actionUrl || data.url || '/',
-          notificationId: data.notificationId,
-          type: data.type,
-          ...data.data,
+          url: '/',
         },
-        actions: data.actions || [],
       };
-    } catch (error) {
-      console.error('[Service Worker] Error parsing push data:', error);
-    }
-  }
 
-  // Show the notification
-  const promiseChain = self.registration.showNotification(
-    notificationData.title,
-    notificationData
+      if (data) {
+        foregroundBehavior = data.foregroundBehavior === 'toast' ? 'toast' : 'system';
+        notificationData = {
+          title: data.title || notificationData.title,
+          body: data.message || data.body || notificationData.body,
+          icon: data.icon || notificationData.icon,
+          badge: data.badge || notificationData.badge,
+          tag: data.tag || data.type || notificationData.tag,
+          requireInteraction: data.requireInteraction || false,
+          data: {
+            url: data.actionUrl || data.url || '/',
+            notificationId: data.notificationId,
+            type: data.type,
+            ...data.data,
+          },
+          actions: data.actions || [],
+        };
+      }
+
+      return deliverPushNotification(notificationData, foregroundBehavior);
+    })()
   );
-
-  event.waitUntil(promiseChain);
 });
 
 /**
@@ -246,7 +371,8 @@ async function handleNavigationRequest(request) {
       return cachedResponse || cachedRoot;
     }
 
-    return new Response('Polity is offline right now.', {
+    const language = await readPersistedLanguage();
+    return new Response(LOCALIZED_FALLBACK_COPY[language].offline, {
       status: 503,
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',

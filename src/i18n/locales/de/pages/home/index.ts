@@ -87,11 +87,11 @@ export const homePageTranslations = {
           'Diagramme, Tabellen oder Kennzahlen mit Herausgeber, Lizenz und Datenstand in Anträge übernehmen.',
         ],
       },
-      streetDesign: {
-        eyebrow: '3D-Straßenentwurf',
+      cityDesign: {
+        eyebrow: '3D-Stadtgestaltung',
         title: 'Echte Straßenräume als nachvollziehbaren Entwurf bearbeiten.',
         description:
-          'Street Design lädt den kartierten Bestand eines gewählten Gebiets und verbindet räumliche Bearbeitung, Kosten und Änderungsanträge in einem Workspace.',
+          'Die Stadtgestaltung lädt den kartierten Bestand eines gewählten Gebiets und verbindet räumliche Bearbeitung, Kosten und Änderungsanträge in einem Workspace.',
         points: [
           'Kartenausschnitt wählen und Straßen, Gebäude, Grünflächen sowie Markierungen aus dem OSM-Kontext laden.',
           'Radwege, Gehwege, Bäume, Bänke und Grünstreifen platzieren, auswählen, ausblenden oder entfernen.',
@@ -210,6 +210,8 @@ export const homePageTranslations = {
       title: 'Beispiel-Antragstext',
       subtitle: 'Eine strukturierte Politikseite mit Status, Tags und lesbarem Dokumenttext.',
       status: 'Interne Prüfung',
+      tagClimate: '#klima',
+      tagBudget: '#haushalt',
       documentTitle: 'Antrag für Klima-Budget-Transparenz',
       paragraphs: [
         'Abschnitt 1: Der jährliche Haushalt enthält für jede Investition über dem vereinbarten Schwellenwert eine öffentliche Klimawirkungsnotiz.',
@@ -320,17 +322,18 @@ export const homePageTranslations = {
       chartLabels: ['2019', '2021', '2023', '2025', '2026'],
       areaLabels: ['Innenstadt', 'Nord', 'Süd', 'Ost', 'West'],
     },
-    streetDesignPreview: {
-      title: 'Straßenraum-Editor',
+    cityDesignPreview: {
+      title: 'Editor für Stadtgestaltung',
       subtitle: 'Bestand, Entwurf, Kosten und Change Requests in einem Workspace.',
       area: 'Euckenstraße 38, München',
       localDemo: 'Lokale Demo',
       osmLive: 'Live aus OpenStreetMap',
+      osmStored: 'Gespeicherter OSM-Ausschnitt',
       osmFallback: 'Lokaler OSM-Ersatz',
       loadingOsm: 'OSM wird geladen …',
       osmUnavailable: 'OSM nicht verfügbar',
       osmError: 'Der OpenStreetMap-Ausschnitt konnte nicht geladen werden.',
-      toolbarLabel: 'Werkzeuge für den Straßenentwurf',
+      toolbarLabel: 'Werkzeuge für die Stadtgestaltung',
       loadArea: 'Gebiet laden',
       tools: {
         bikeLane: 'Radweg',
@@ -363,7 +366,7 @@ export const homePageTranslations = {
       costTitle: 'Kostenschätzung',
       estimate: 'unverbindliche Schätzung',
       canvasLabel:
-        'Interaktiver Straßenentwurf mit kartiertem Bestand, Radweg, Bäumen und Change-Request-Overlay',
+        'Interaktive Stadtgestaltung mit kartiertem Bestand, Radweg, Bäumen und Change-Request-Overlay',
     },
     social: {
       chatTitle: 'Koalitions-Chat',
@@ -406,6 +409,8 @@ export const homePageTranslations = {
         'Mandatsnotizen der Fraktion',
       ],
       resultMeta: 'Treffer nach Titel, Text, Kommentaren und verbundenem Workflow.',
+      parliamentaryGroup: 'Fraktion',
+      budgetCommittee: 'Haushaltsausschuss',
     },
   },
   alphaWarning: {

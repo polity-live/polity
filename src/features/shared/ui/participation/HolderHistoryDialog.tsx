@@ -1,6 +1,7 @@
 'use client';
 
 import { format, formatDistanceStrict, formatDistanceToNow } from 'date-fns';
+import { de, enUS } from 'date-fns/locale';
 import { Award, Calendar, Clock, History, TrendingUp, User, UserCheck, UserX } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -15,6 +16,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
+
+function currentDateLocale() {
+  return useLanguageStore.getState().language === 'de' ? de : enUS;
+}
 
 export interface HolderHistoryUserLike {
   id?: string | null;
@@ -247,14 +253,21 @@ function PresentHolderCard({
                 <Calendar className="h-3.5 w-3.5" />
                 <span>
                   {labels.since}{' '}
-                  {entry.startDate ? format(new Date(entry.startDate), 'MMM d, yyyy') : 'N/A'}
+                  {entry.startDate
+                    ? format(new Date(entry.startDate), 'MMM d, yyyy', {
+                        locale: currentDateLocale(),
+                      })
+                    : translateText('common.holderHistory.notAvailable')}
                 </span>
               </div>
               {entry.startDate ? (
                 <div className="flex items-center gap-1.5">
                   <TrendingUp className="h-3.5 w-3.5" />
                   <span>
-                    {formatDistanceToNow(new Date(entry.startDate), { addSuffix: false })}
+                    {formatDistanceToNow(new Date(entry.startDate), {
+                      addSuffix: false,
+                      locale: currentDateLocale(),
+                    })}
                   </span>
                 </div>
               ) : null}
@@ -322,15 +335,15 @@ function getReasonIcon(reason: string) {
 function getReasonLabel(reason: string) {
   switch (reason) {
     case 'elected':
-      return 'Elected';
+      return translateText('common.holderHistory.reasons.elected');
     case 'appointed':
-      return 'Appointed';
+      return translateText('common.holderHistory.reasons.appointed');
     case 'resigned':
-      return 'Resigned';
+      return translateText('common.holderHistory.reasons.resigned');
     case 'removed':
-      return 'Removed';
+      return translateText('common.holderHistory.reasons.removed');
     case 'term_ended':
-      return 'Term Ended';
+      return translateText('common.holderHistory.reasons.termEnded');
     default:
       return reason;
   }
@@ -447,23 +460,31 @@ function buildPastPeriods(historyEntries: HolderHistoryEntryLike[]) {
 
 function formatDateRange(startDate: number | null, endDate: number | null) {
   const formattedStartDate = startDate
-    ? format(new Date(startDate), 'MMM d, yyyy')
-    : 'Unknown start';
-  const formattedEndDate = endDate ? format(new Date(endDate), 'MMM d, yyyy') : 'Present';
+    ? format(new Date(startDate), 'MMM d, yyyy', { locale: currentDateLocale() })
+    : translateText('common.holderHistory.unknownStart');
+  const formattedEndDate = endDate
+    ? format(new Date(endDate), 'MMM d, yyyy', { locale: currentDateLocale() })
+    : translateText('common.holderHistory.present');
 
   return `${formattedStartDate} -> ${formattedEndDate}`;
 }
 
 function formatPeriodDuration(startDate: number | null, endDate: number | null) {
   if (!startDate || !endDate) {
-    return 'Duration unavailable';
+    return translateText('common.holderHistory.durationUnavailable');
   }
 
-  return formatDistanceStrict(new Date(startDate), new Date(endDate));
+  return formatDistanceStrict(new Date(startDate), new Date(endDate), {
+    locale: currentDateLocale(),
+  });
 }
 
 function getUserDisplayName(user: HolderHistoryUserLike | null | undefined) {
-  return [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.handle || 'Unknown';
+  return (
+    [user?.first_name, user?.last_name].filter(Boolean).join(' ') ||
+    user?.handle ||
+    translateText('common.unknownUser')
+  );
 }
 
 function getUserInitials(user: HolderHistoryUserLike | null | undefined) {

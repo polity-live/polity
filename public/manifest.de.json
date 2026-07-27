@@ -1,0 +1,50 @@
+{
+  "short_name": "Polity",
+  "name": "Polity – Moderne politische Plattform",
+  "description": "Arbeite gemeinsam an Anträgen, organisiere Treffen und gestalte politischen Austausch.",
+  "lang": "de",
+  "id": "/",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/maskable-icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/pwa/screenshots/polity-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Polity-Arbeitsbereich auf dem Desktop"
+    },
+    {
+      "src": "/pwa/screenshots/polity-narrow.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Polity-Arbeitsbereich auf einem Mobilgerät"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["politics", "collaboration", "productivity"]
+}

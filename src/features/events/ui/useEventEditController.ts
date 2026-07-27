@@ -16,6 +16,7 @@ import { useState, useRef, useMemo, useEffect } from 'react';
 import { useAllGroups, useUserGroupsWithManageEvents } from '@/zero/groups/useGroupState';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
+import { hasOpenElectorateSnapshot } from '@/zero/events/attendance-mode';
 interface EventEditProps {
   eventId: string;
   mode?: 'create' | 'edit';
@@ -68,6 +69,19 @@ export function useEventEditController({
     isCreating,
     timeSeriesValidationError,
   } = useEventUpdate(eventId, mode);
+
+  const attendanceModeLocked = useMemo(
+    () =>
+      mode === 'edit' &&
+      Boolean(
+        event?.agenda_items?.some(
+          agendaItem =>
+            hasOpenElectorateSnapshot(agendaItem.votes) ||
+            hasOpenElectorateSnapshot(agendaItem.election)
+        )
+      ),
+    [event?.agenda_items, mode]
+  );
 
   const locationSummary = formatNamedLocation(formData.locationName, {
     country: formData.country,
@@ -171,6 +185,7 @@ export function useEventEditController({
     event,
     isLoading,
     isCreating,
+    attendanceModeLocked,
     timeSeriesValidationError,
     locationSummary,
     visibilityLabel,

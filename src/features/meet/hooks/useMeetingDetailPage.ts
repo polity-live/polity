@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 
 import { useMeetingActions } from '@/zero/events/useMeetingActions';
 import { useMeetingData } from './useMeetingData';
+import { translate } from '@/features/shared/hooks/use-translation';
 
 interface MeetingParticipantViewModel {
   id: string;
@@ -55,7 +56,7 @@ export function useMeetingDetailPage(meetingId: string) {
 
   return {
     state: 'ready' as const,
-    title: (event.title || 'Meeting') as string,
+    title: (event.title || translate('common.entities.meeting')) as string,
     isPublic: event.meeting_type === 'public-meeting',
     owner: {
       id: creator?.id ?? 'unknown',

@@ -24,8 +24,9 @@ export interface GroupEditViewProps {
   fallbackCanonicalMembershipMode: any;
   getRelativeSiblingMembershipDirection: any;
   initialFormData: any;
-  activeTab?: 'general' | 'relationships' | 'contact';
-  onTabChange?: (tab: 'general' | 'relationships' | 'contact') => void;
+  activeTab?: 'general' | 'relationships' | 'contact' | 'themes';
+  onTabChange?: (tab: 'general' | 'relationships' | 'contact' | 'themes') => void;
+  canManageGroup?: boolean;
 }
 
 export function GroupEditView({
@@ -38,6 +39,7 @@ export function GroupEditView({
   initialFormData,
   activeTab,
   onTabChange,
+  canManageGroup = true,
 }: GroupEditViewProps) {
   // Loading state
   if (isLoading) {
@@ -82,6 +84,7 @@ export function GroupEditView({
         hasSiblingConnections={group.has_sibling_connections}
         activeTab={activeTab}
         onTabChange={onTabChange}
+        canManageGroup={canManageGroup}
       />
     </SettingsPage>
   );

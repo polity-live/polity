@@ -5,7 +5,7 @@ export { changeRequest } from './table';
 export {
   selectChangeRequestSchema,
   createChangeRequestSchema,
-  createStreetDesignChangeRequestsSchema,
+  createCityDesignChangeRequestsSchema,
   updateChangeRequestSchema,
   deleteChangeRequestSchema,
   finalizeInternalChangeRequestVoteSchema,

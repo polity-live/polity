@@ -7,6 +7,10 @@ import { SubscribeButton } from '@/features/shared/ui/action-buttons';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { EmptyState, ErrorState, ProfilePageSkeleton } from '@/features/shared/ui/feedback';
 import {
+  isAssistantUser,
+  resolveAssistantAvatar,
+} from '@/features/assistant/logic/assistantHelpers';
+import {
   ActionBar,
   ResponsiveActionLabel,
   StatsBar,
@@ -22,6 +26,7 @@ import { EntityWikiMedia } from '@/features/shared/ui/wiki';
 import type { UserWikiPageState } from '../hooks/useUserWikiPage';
 import { SocialBar } from './SocialBar';
 import { UserWikiContentTabs } from './UserWikiContentTabs';
+import { WikiAvatar } from './WikiAvatar';
 
 interface UserWikiViewProps {
   page: UserWikiPageState;
@@ -47,10 +52,19 @@ export function UserWikiView({ page }: UserWikiViewProps) {
   }
 
   const user = page.user;
+  const isAriaKaiProfile = isAssistantUser(user.id);
+  const resolvedAvatar = resolveAssistantAvatar(user.id, user.avatar);
 
   return (
     <div>
       <div className="mb-8 text-center">
+        {isAriaKaiProfile ? (
+          <WikiAvatar
+            name={page.fullName}
+            avatar={resolvedAvatar ?? ''}
+            className="mx-auto mb-4 h-24 w-24 md:h-32 md:w-32"
+          />
+        ) : null}
         <div className="mb-2 flex min-w-0 flex-col items-center justify-center gap-2 md:flex-row md:gap-3">
           <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{page.fullName}</h1>
           <div className="bg-background/80 inline-flex max-w-full min-w-0 items-center gap-1 rounded-md border px-2 py-1 shadow-sm">
@@ -90,7 +104,11 @@ export function UserWikiView({ page }: UserWikiViewProps) {
         {page.bioText ? <p className="text-muted-foreground">{page.bioText}</p> : null}
       </div>
 
-      <EntityWikiMedia imageUrl={user.avatar} videoUrl={user.video_url} alt={page.fullName} />
+      <EntityWikiMedia
+        imageUrl={isAriaKaiProfile ? null : user.avatar}
+        videoUrl={user.video_url}
+        alt={page.fullName}
+      />
 
       <StatsBar
         items={[
@@ -198,7 +216,7 @@ export function UserWikiView({ page }: UserWikiViewProps) {
       <UserWikiContentTabs
         user={user}
         authorName={page.fullName}
-        authorAvatar={user.avatar ?? ''}
+        authorAvatar={resolvedAvatar ?? ''}
         searchTerms={page.searchTerms}
         handleSearchChange={page.onSearchChange}
       />

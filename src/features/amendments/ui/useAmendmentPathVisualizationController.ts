@@ -73,8 +73,8 @@ export function useAmendmentPathVisualizationController({
         type: 'default',
         position: { x: xPos, y: yPos },
         data: {
-          label: segment.group_id || 'Unknown Group',
-          event: segment.event_id || 'No Event',
+          label: segment.group_id || t('features.amendments.pathVisualization.unknownGroup'),
+          event: segment.event_id || t('features.amendments.pathVisualization.noEvent'),
           type: 'group',
         },
         style: {
@@ -118,7 +118,7 @@ export function useAmendmentPathVisualizationController({
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [amendment?.paths, setNodes, setEdges]);
+  }, [amendment?.paths, setNodes, setEdges, t]);
 
   return {
     amendmentId,

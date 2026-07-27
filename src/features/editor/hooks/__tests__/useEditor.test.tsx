@@ -25,6 +25,7 @@ const hookMocks = vi.hoisted(() => ({
     void result;
   }),
   trackServerFinalization: vi.fn(),
+  reportAppTutorialAction: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
   broadcastContent: vi.fn(),
@@ -113,6 +114,11 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
 }));
 
+vi.mock('@/features/app-tutorial/events', () => ({
+  APP_TUTORIAL_AVATAR_MENU_OPENED_ACTION: 'avatar-menu.opened',
+  reportAppTutorialAction: (...args: unknown[]) => hookMocks.reportAppTutorialAction(...args),
+}));
+
 import { useEditor } from '../useEditor';
 
 beforeEach(() => {
@@ -138,6 +144,24 @@ afterEach(() => {
 });
 
 describe('useEditor', () => {
+  it('keeps a valid amendment editor loading while its Zero document is hydrating', () => {
+    const hydratedAmendment = hookMocks.amendmentDocsCollabs;
+    hookMocks.amendmentDocsCollabs = null;
+    const { result, rerender } = renderHook(() =>
+      useEditor({
+        entityType: 'amendment',
+        entityId: 'amendment-1',
+        userId: 'user-1',
+      })
+    );
+
+    expect(result.current.isLoading).toBe(true);
+
+    hookMocks.amendmentDocsCollabs = hydratedAmendment;
+    rerender();
+    expect(result.current.isLoading).toBe(false);
+  });
+
   it('enables orphaned change-request reconciliation for normal collaborative amendment saves', async () => {
     hookMocks.amendmentDocsCollabs = {
       ...hookMocks.amendmentDocsCollabs,
@@ -165,6 +189,38 @@ describe('useEditor', () => {
         reconcile_orphaned_change_requests: true,
       })
     );
+  });
+
+  it.each([
+    'Zusätzliche entsiegelte Flächen verbessern die Versickerung bei Starkregen.',
+    'Additional unsealed areas improve infiltration during heavy rainfall.',
+  ])('recognizes the localized tutorial amendment text immediately: %s', async requiredText => {
+    hookMocks.amendmentDocsCollabs = {
+      ...hookMocks.amendmentDocsCollabs,
+      document: {
+        ...hookMocks.amendmentDocsCollabs.document,
+        editing_mode: 'edit',
+      },
+    };
+    const { result } = renderHook(() =>
+      useEditor({
+        entityType: 'amendment',
+        entityId: 'amendment-1',
+        userId: 'user-1',
+      })
+    );
+    const updatedContent = [
+      { type: 'p', children: [{ text: `Existing text ${requiredText}` }] },
+    ] as any;
+
+    await waitFor(() => expect(result.current.mode).toBe('edit'));
+    act(() => result.current.setContent(updatedContent));
+
+    expect(result.current.getLatestContent()).toBe(updatedContent);
+    expect(hookMocks.reportAppTutorialAction).toHaveBeenCalledWith({
+      type: 'input',
+      value: requiredText,
+    });
   });
 
   it('does not enable orphan reconciliation when restoring a version in collaborative mode', async () => {

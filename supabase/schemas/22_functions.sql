@@ -10,7 +10,8 @@ LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = ''
 AS $$
 DECLARE
-  assistant_user_id CONSTANT UUID := 'a12a0000-0000-4000-a000-000000000001';
+  assistant_user_id CONSTANT UUID :=
+    'a12a0000-0000-4000-a000-000000000001'::UUID;
 BEGIN
   INSERT INTO public."user" (
     id,
@@ -25,12 +26,15 @@ BEGIN
     assistant_user_id,
     'aria-kai-assistants@polity.com',
     'aria-kai',
-    'Aria & Kai',
-    'Assistants',
-    'Your personal assistants — here to help you navigate Polity!',
+    'Assistent Aria',
+    '& Kai',
+    'Assistent Aria & Kai helps you navigate Polity.',
     'public'
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE
+  SET first_name = EXCLUDED.first_name,
+      last_name = EXCLUDED.last_name,
+      bio = EXCLUDED.bio;
 
   INSERT INTO public.notification_setting (user_id)
   VALUES (assistant_user_id)
@@ -52,7 +56,7 @@ AS $$
 DECLARE
   assistant_user_id UUID;
   assistant_conversation_id UUID;
-  welcome_message CONSTANT TEXT := 'Hey, we are Aria & Kai - your personal assistants! Welcome to Polity! We would love to show you around in the app. Shall we?';
+  welcome_message CONSTANT TEXT := 'Hey! Assistent Aria & Kai is here to help you navigate Polity. How can I help?';
 BEGIN
   assistant_user_id := public.ensure_aria_kai_user();
 
@@ -73,13 +77,17 @@ BEGIN
     )
     VALUES (
       'direct',
-      'Aria & Kai',
+      'Assistent Aria & Kai',
       'accepted',
       now(),
       target_user_id,
       assistant_user_id
     )
     RETURNING id INTO assistant_conversation_id;
+  ELSE
+    UPDATE public.conversation
+    SET name = 'Assistent Aria & Kai'
+    WHERE id = assistant_conversation_id;
   END IF;
 
   INSERT INTO public.conversation_participant (
@@ -119,7 +127,6 @@ BEGIN
     FROM public.message
     WHERE conversation_id = assistant_conversation_id
       AND sender_id = assistant_user_id
-      AND content = welcome_message
   ) THEN
     INSERT INTO public.message (
       conversation_id,
@@ -204,7 +211,7 @@ $$;
 REVOKE ALL ON FUNCTION public.current_user_has_password() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.current_user_has_password() TO authenticated;
 
-CREATE OR REPLACE TRIGGER on_auth_user_created
+CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();

@@ -128,7 +128,7 @@ export function InviteDialogView({
               'generated.inline.0111_search_and_select_users_to_invite_to_collabor_eeb25776'
             ),
             people: selectedPeople,
-            badges: ['Collaborator'],
+            badges: [translateText('features.amendments.collaborators.badge')],
           }}
           target={{
             label: translateText('common.done', 'Fertig'),

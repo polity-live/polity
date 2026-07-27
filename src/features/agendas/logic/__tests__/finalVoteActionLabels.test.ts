@@ -1,8 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { getFinalVoteActionLabels } from '../finalVoteActionLabels';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
 describe('final vote action labels', () => {
+  beforeEach(() => {
+    useLanguageStore.setState({ language: 'en' });
+  });
+
   it('labels final change request vote actions with the branch-scoped CR id', () => {
     const labels = getFinalVoteActionLabels({
       item: {
@@ -16,9 +21,9 @@ describe('final vote action labels', () => {
     });
 
     expect(labels.kind).toBe('change_request');
-    expect(labels.start).toBe('Start final change request vote: Branch 2 CR-2');
-    expect(labels.close).toBe('Close final change request vote: Branch 2 CR-2');
-    expect(labels.castFinal).toBe('Cast final change request vote: Branch 2 CR-2');
+    expect(labels.start).toBe('Start the final change request vote for Branch 2 CR-2');
+    expect(labels.close).toBe('Close the final change request vote for Branch 2 CR-2');
+    expect(labels.castFinal).toBe('Vote in the final change request vote for Branch 2 CR-2');
   });
 
   it('labels final closing vote actions with the amendment title', () => {
@@ -35,9 +40,9 @@ describe('final vote action labels', () => {
     });
 
     expect(labels.kind).toBe('closing');
-    expect(labels.start).toBe('Start final closing vote: Amendment Motion A');
-    expect(labels.close).toBe('Close final closing vote: Amendment Motion A');
-    expect(labels.castFinal).toBe('Cast final closing vote: Amendment Motion A');
+    expect(labels.start).toBe('Start the final closing vote for Amendment Motion A');
+    expect(labels.close).toBe('Close the final closing vote for Amendment Motion A');
+    expect(labels.castFinal).toBe('Vote in the final closing vote for Amendment Motion A');
   });
 
   it('labels merge vote actions with ordered non-abstain branch labels joined by VS', () => {
@@ -56,9 +61,9 @@ describe('final vote action labels', () => {
     });
 
     expect(labels.kind).toBe('merge');
-    expect(labels.start).toBe('Start final merge vote Branch 1 VS Branch 2');
-    expect(labels.close).toBe('Close final merge vote Branch 1 VS Branch 2');
-    expect(labels.castFinal).toBe('Cast final merge vote Branch 1 VS Branch 2');
+    expect(labels.start).toBe('Start the final merge vote for Branch 1 VS Branch 2');
+    expect(labels.close).toBe('Close the final merge vote for Branch 1 VS Branch 2');
+    expect(labels.castFinal).toBe('Vote in the final merge vote for Branch 1 VS Branch 2');
   });
 
   it('uses merge_variant purpose as a merge vote', () => {
@@ -80,7 +85,7 @@ describe('final vote action labels', () => {
     });
 
     expect(labels.kind).toBe('merge');
-    expect(labels.start).toBe('Start final merge vote Branch 1 VS Branch 2');
+    expect(labels.start).toBe('Start the final merge vote for Branch 1 VS Branch 2');
   });
 
   it('uses closing purpose as a closing vote', () => {
@@ -96,7 +101,18 @@ describe('final vote action labels', () => {
     });
 
     expect(labels.kind).toBe('closing');
-    expect(labels.start).toBe('Start final closing vote: Agenda Motion B');
-    expect(labels.close).toBe('Close final closing vote: Agenda Motion B');
+    expect(labels.start).toBe('Start the final closing vote for Agenda Motion B');
+    expect(labels.close).toBe('Close the final closing vote for Agenda Motion B');
+  });
+
+  it('uses the active German locale', () => {
+    useLanguageStore.setState({ language: 'de' });
+
+    expect(
+      getFinalVoteActionLabels({
+        amendmentTitle: 'Antrag A',
+        item: { vote: { purpose: 'closing' } },
+      }).start
+    ).toBe('Finale Schlussabstimmung für Antrag A starten');
   });
 });

@@ -11,32 +11,33 @@ export const createNavItemsUnauthenticated = (
   navigate: NavigateFn,
   t?: (key: string) => string // Optional translation function
 ): NavigationItem[] => {
+  const translate = t ?? translateText;
   return [
     {
       id: 'home',
       icon: 'Home',
-      label: t ? t('navigation.primary.home') : 'Home',
+      label: translate('navigation.primary.home'),
       href: '/#home',
       onClick: () => navigate({ to: '/', hash: 'home' }),
     },
     {
       id: 'docs',
       icon: 'BookOpen',
-      label: t ? t('navigation.primary.docs') : 'Docs',
+      label: translate('navigation.primary.docs'),
       href: '/docs',
       onClick: () => navigate({ to: '/docs' }),
     },
     {
       id: 'pricing',
       icon: 'CreditCard',
-      label: t ? t('navigation.primary.pricing') : 'Pricing',
+      label: translate('navigation.primary.pricing'),
       href: '/pricing',
       onClick: () => navigate({ to: '/pricing' }),
     },
     {
       id: 'support',
       icon: 'Heart',
-      label: t ? t('navigation.primary.support') : 'Support',
+      label: translate('navigation.primary.support'),
       href: '/support',
       onClick: () => navigate({ to: '/support' }),
     },
@@ -54,32 +55,33 @@ export const createLandingSecondaryNavItems = (
   navigate: NavigateFn,
   t?: (key: string) => string
 ): NavigationItem[] => {
+  const translate = t ?? translateText;
   return [
     {
       id: 'landing-home',
       icon: 'Home',
-      label: t ? t('pages.home.publicLanding.nav.home') : 'Home',
+      label: translate('pages.home.publicLanding.nav.home'),
       href: '/#home',
       onClick: () => navigate({ to: '/', hash: 'home' }),
     },
     {
       id: 'landing-features',
       icon: 'Sparkles',
-      label: t ? t('pages.home.publicLanding.nav.features') : 'Features',
+      label: translate('pages.home.publicLanding.nav.features'),
       href: '/#features',
       onClick: () => navigate({ to: '/', hash: 'features' }),
     },
     {
       id: 'landing-solutions',
       icon: 'Target',
-      label: t ? t('pages.home.publicLanding.nav.solutions') : 'Solutions',
+      label: translate('pages.home.publicLanding.nav.solutions'),
       href: '/#solutions',
       onClick: () => navigate({ to: '/', hash: 'solutions' }),
     },
     {
       id: 'landing-imprint',
       icon: 'FileText',
-      label: t ? t('pages.home.publicLanding.nav.imprint') : 'Imprint',
+      label: translate('pages.home.publicLanding.nav.imprint'),
       href: '/#imprint',
       onClick: () => navigate({ to: '/', hash: 'imprint' }),
     },

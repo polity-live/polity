@@ -23,6 +23,7 @@ export function usePreferenceState() {
     (preference?.create_form_style as CreateFormStyle) ?? 'carousel';
 
   const theme: Theme = (preference?.theme as Theme) ?? 'system';
+  const appearanceThemeId = preference?.appearance_theme_id ?? null;
 
   const language: PreferenceLanguage = (preference?.language as PreferenceLanguage) ?? 'en';
 
@@ -39,15 +40,19 @@ export function usePreferenceState() {
     (preference?.decision_terminal_dashboard as DecisionTerminalDashboardConfig | undefined) ??
     null;
 
+  const appTutorialCompletedAt = preference?.app_tutorial_completed_at ?? null;
+
   return {
     preference,
     createFormStyle,
     theme,
+    appearanceThemeId,
     language,
     displayCurrency,
     navigationView,
     groupNetworkLayouts,
     decisionTerminalDashboard,
+    appTutorialCompletedAt,
     isLoading,
   };
 }

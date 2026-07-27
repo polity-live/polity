@@ -53,11 +53,11 @@ export interface VoteTimelineCardProps {
 /**
  * Format remaining time for display
  */
-function formatTimeRemaining(endTime: Date): string {
+function formatTimeRemaining(endTime: Date, t: (key: string, params?: any) => string): string {
   const now = new Date();
   const diffMs = endTime.getTime() - now.getTime();
 
-  if (diffMs <= 0) return 'Ended';
+  if (diffMs <= 0) return t('features.timeline.terminal.ended');
 
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -66,7 +66,7 @@ function formatTimeRemaining(endTime: Date): string {
   if (diffHours >= 24) {
     const days = Math.floor(diffHours / 24);
     const hours = diffHours % 24;
-    return `${days}d ${hours}h`;
+    return t('features.timeline.timeRemaining.daysHours', { days, hours });
   }
 
   if (diffHours > 0) {
@@ -215,7 +215,7 @@ export function VoteTimelineCard({ vote, href, className }: VoteTimelineCardProp
           <div className="mt-2 flex items-center justify-center gap-2">
             <Clock className={cn('h-4 w-4', statusConfig.color)} />
             <span className={cn('font-mono text-lg font-bold', statusConfig.color)}>
-              {formatTimeRemaining(endDate)}
+              {formatTimeRemaining(endDate, t)}
             </span>
           </div>
         )}

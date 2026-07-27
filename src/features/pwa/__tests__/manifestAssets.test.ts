@@ -13,15 +13,19 @@ interface WebAppManifestImage {
 }
 
 interface WebAppManifest {
+  lang: 'en' | 'de';
+  name: string;
+  description: string;
   icons: WebAppManifestImage[];
   screenshots: WebAppManifestImage[];
 }
 
 const repoRoot = process.cwd();
 const publicDir = join(repoRoot, 'public');
-const manifest = JSON.parse(
-  readFileSync(join(publicDir, 'manifest.json'), 'utf8')
-) as WebAppManifest;
+const manifests = (['en', 'de'] as const).map(
+  language =>
+    JSON.parse(readFileSync(join(publicDir, `manifest.${language}.json`), 'utf8')) as WebAppManifest
+);
 
 function publicPath(src: string) {
   return join(publicDir, src.replace(/^\//, ''));
@@ -47,6 +51,7 @@ function parseDeclaredSize(size: string) {
 
 describe('PWA manifest assets', () => {
   it('declares installable PNG icons with a valid any-purpose icon', () => {
+    const manifest = manifests[0];
     const anyPurposeIcons = manifest.icons.filter(icon => icon.purpose === 'any' || !icon.purpose);
 
     expect(anyPurposeIcons.length).toBeGreaterThan(0);
@@ -70,6 +75,7 @@ describe('PWA manifest assets', () => {
   });
 
   it('declares rich install UI screenshots for desktop and mobile', () => {
+    const manifest = manifests[0];
     expect(manifest.screenshots.some(screenshot => screenshot.form_factor === 'wide')).toBe(true);
     expect(manifest.screenshots.some(screenshot => screenshot.form_factor !== 'wide')).toBe(true);
 
@@ -81,6 +87,18 @@ describe('PWA manifest assets', () => {
       const actual = readPngDimensions(screenshot.src);
 
       expect(actual).toEqual(declared);
+    }
+  });
+
+  it('provides complete English and German metadata', () => {
+    expect(manifests.map(manifest => manifest.lang)).toEqual(['en', 'de']);
+    expect(manifests[0].name).not.toBe(manifests[1].name);
+    expect(manifests[0].description).not.toBe(manifests[1].description);
+
+    for (const manifest of manifests) {
+      expect(manifest.name).toBeTruthy();
+      expect(manifest.description).toBeTruthy();
+      expect(manifest.screenshots.every(screenshot => Boolean(screenshot.label))).toBe(true);
     }
   });
 });

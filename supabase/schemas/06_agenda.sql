@@ -5,7 +5,7 @@
 -- =============================================================================
 
 -- Agenda item table
-CREATE TABLE IF NOT EXISTS public.agenda_item (
+CREATE TABLE public.agenda_item (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID,
   amendment_id UUID,
@@ -48,7 +48,7 @@ ALTER TABLE public.process_task
   ON DELETE SET NULL;
 
 -- Speaker list table
-CREATE TABLE IF NOT EXISTS public.speaker_list (
+CREATE TABLE public.speaker_list (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   agenda_item_id UUID NOT NULL REFERENCES public.agenda_item (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useGroupState } from '@/zero/groups/useGroupState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
+import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
 
 interface GroupDisplay {
   id: string;
@@ -14,7 +15,7 @@ interface GroupDisplay {
 }
 
 export function useGroupsPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
@@ -25,16 +26,22 @@ export function useGroupsPage() {
       (typeof searchResults)[number]
     >[];
 
-    return visibleGroups.map(g => ({
-      id: g.id,
-      name: g.name ?? '',
-      description: richTextToPlainText(g.description),
-      memberCount: g.member_count ?? 0,
-      eventCount: g.event_count ?? 0,
-      amendmentCount: g.amendment_count ?? 0,
-      topics: [],
-    }));
-  }, [searchResults]);
+    return visibleGroups.map(group => {
+      const displayGroup = resolveAppTutorialFixtureValue(group, {
+        tutorialRunId: group.tutorial_run_id,
+        language,
+      });
+      return {
+        id: displayGroup.id,
+        name: displayGroup.name ?? '',
+        description: richTextToPlainText(displayGroup.description),
+        memberCount: displayGroup.member_count ?? 0,
+        eventCount: displayGroup.event_count ?? 0,
+        amendmentCount: displayGroup.amendment_count ?? 0,
+        topics: [],
+      };
+    });
+  }, [language, searchResults]);
 
   const allTags = useMemo(() => {
     const tags = groups.flatMap(g => g.topics ?? []);

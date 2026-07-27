@@ -1,3 +1,5 @@
+import { translate } from '@/features/shared/hooks/use-translation';
+
 export type FinalVoteAction = 'start' | 'close' | 'cast';
 export type FinalVoteKind = 'change_request' | 'closing' | 'merge';
 
@@ -118,7 +120,7 @@ function getChangeRequestTarget(options: FinalVoteActionLabelOptions) {
       changeRequest?.title,
       item?.title,
       fallbackTarget
-    ) ?? 'Step'
+    ) ?? translate('features.agendas.finalVoteActions.targetFallback')
   );
 }
 
@@ -126,7 +128,8 @@ function getClosingTarget(options: FinalVoteActionLabelOptions) {
   const { item, amendmentTitle, agendaTitle, fallbackTarget } = options;
 
   return (
-    firstText(amendmentTitle, agendaTitle, item?.vote?.title, item?.title, fallbackTarget) ?? 'Step'
+    firstText(amendmentTitle, agendaTitle, item?.vote?.title, item?.title, fallbackTarget) ??
+    translate('features.agendas.finalVoteActions.targetFallback')
   );
 }
 
@@ -156,7 +159,10 @@ function getMergeTarget(options: FinalVoteActionLabelOptions) {
     return branchLabels.join(' VS ');
   }
 
-  return firstText(item?.vote?.title, item?.title, fallbackTarget) ?? 'Step';
+  return (
+    firstText(item?.vote?.title, item?.title, fallbackTarget) ??
+    translate('features.agendas.finalVoteActions.targetFallback')
+  );
 }
 
 export function getFinalVoteActionTarget(options: FinalVoteActionLabelOptions) {
@@ -179,17 +185,7 @@ export function getFinalVoteActionLabel(
 ) {
   const kind = getFinalVoteKind(options.item);
   const target = getFinalVoteActionTarget(options);
-  const verb = action === 'start' ? 'Start' : action === 'close' ? 'Close' : 'Cast';
-
-  if (kind === 'merge') {
-    return `${verb} final merge vote ${target}`;
-  }
-
-  if (kind === 'closing') {
-    return `${verb} final closing vote: ${target}`;
-  }
-
-  return `${verb} final change request vote: ${target}`;
+  return translate(`features.agendas.finalVoteActions.${action}.${kind}`, { target });
 }
 
 export function getFinalVoteActionLabels(options: FinalVoteActionLabelOptions) {

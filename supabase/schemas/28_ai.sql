@@ -2,7 +2,7 @@
 -- 28_ai.sql — AI skills and secure provider credentials
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS public.ai_skill (
+CREATE TABLE public.ai_skill (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   slug TEXT NOT NULL,
@@ -14,16 +14,16 @@ CREATE TABLE IF NOT EXISTS public.ai_skill (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_skill_user_slug
+CREATE UNIQUE INDEX idx_ai_skill_user_slug
   ON public.ai_skill (user_id, slug);
-CREATE INDEX IF NOT EXISTS idx_ai_skill_user
+CREATE INDEX idx_ai_skill_user
   ON public.ai_skill (user_id);
 
 ALTER TABLE public.ai_skill ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.ai_skill FOR ALL TO service_role USING (true);
 GRANT ALL ON TABLE public.ai_skill TO service_role;
 
-CREATE TABLE IF NOT EXISTS public.ai_tool (
+CREATE TABLE public.ai_tool (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   tool_name TEXT NOT NULL,
@@ -32,16 +32,16 @@ CREATE TABLE IF NOT EXISTS public.ai_tool (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_tool_user_name
+CREATE UNIQUE INDEX idx_ai_tool_user_name
   ON public.ai_tool (user_id, tool_name);
-CREATE INDEX IF NOT EXISTS idx_ai_tool_user
+CREATE INDEX idx_ai_tool_user
   ON public.ai_tool (user_id);
 
 ALTER TABLE public.ai_tool ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.ai_tool FOR ALL TO service_role USING (true);
 GRANT ALL ON TABLE public.ai_tool TO service_role;
 
-CREATE TABLE IF NOT EXISTS public.ai_provider_credential (
+CREATE TABLE public.ai_provider_credential (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   provider TEXT NOT NULL,
@@ -52,9 +52,9 @@ CREATE TABLE IF NOT EXISTS public.ai_provider_credential (
   last_used_at TIMESTAMPTZ
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_provider_credential_user_provider
+CREATE UNIQUE INDEX idx_ai_provider_credential_user_provider
   ON public.ai_provider_credential (user_id, provider);
-CREATE INDEX IF NOT EXISTS idx_ai_provider_credential_user
+CREATE INDEX idx_ai_provider_credential_user
   ON public.ai_provider_credential (user_id);
 
 ALTER TABLE public.ai_provider_credential ENABLE ROW LEVEL SECURITY;

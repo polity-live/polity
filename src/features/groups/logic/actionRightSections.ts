@@ -31,6 +31,7 @@ const ACTION_RIGHT_SECTION_DEFINITIONS = [
       'groupMemberships',
       'groupNotifications',
       'groupRoles',
+      'groupThemes',
       'groupRelationships',
       'groupAccessRoles',
       'groups',

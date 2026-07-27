@@ -3,7 +3,7 @@
 -- =============================================================================
 
 -- Todo table
-CREATE TABLE IF NOT EXISTS public.todo (
+CREATE TABLE public.todo (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT,
   description TEXT,
@@ -34,7 +34,7 @@ ALTER TABLE public.todo ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.todo FOR ALL TO service_role USING (true);
 
 -- Todo assignment table
-CREATE TABLE IF NOT EXISTS public.todo_assignment (
+CREATE TABLE public.todo_assignment (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   todo_id UUID NOT NULL REFERENCES public.todo (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,

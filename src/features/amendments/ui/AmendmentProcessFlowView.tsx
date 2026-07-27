@@ -55,18 +55,23 @@ import {
   X,
 } from 'lucide-react';
 import { normalizeGroupAmendmentDisplayStatus } from '@/features/groups/logic/groupAmendmentStatus';
+import { isAppTutorialActiveInDocument } from '@/features/app-tutorial/events';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 function formatDateTime(timestamp?: number | null) {
   if (!timestamp) {
-    return 'Not scheduled';
+    return translateText('features.amendments.process.notScheduled');
   }
 
-  return new Date(timestamp).toLocaleString('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return new Date(timestamp).toLocaleString(
+    useLanguageStore.getState().language === 'de' ? 'de-DE' : 'en-US',
+    {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }
+  );
 }
 function getBadgeVariant(
   status?: string | null
@@ -333,6 +338,9 @@ export function AmendmentProcessFlowView({
 
             {canManageProcess ? (
               <Button
+                data-tutorial-anchor={
+                  !currentRun && !selectorOpen ? 'tutorial-process-start-group' : undefined
+                }
                 onClick={() => {
                   setPendingSelection(null);
                   setSelectorOpen(true);
@@ -1117,6 +1125,7 @@ export function AmendmentProcessFlowView({
 
       {canManageProcess && user ? (
         <Dialog
+          modal={!isAppTutorialActiveInDocument()}
           open={selectorOpen}
           onOpenChange={open => {
             if (processSubmissionActive) {
@@ -1130,6 +1139,15 @@ export function AmendmentProcessFlowView({
         >
           <ScrollableDialogContent
             showCloseButton={!processSubmissionActive}
+            onInteractOutside={event => {
+              if (
+                isAppTutorialActiveInDocument() &&
+                event.target instanceof Element &&
+                event.target.closest('[data-testid="app-tutorial-spotlight"]')
+              ) {
+                event.preventDefault();
+              }
+            }}
             className="flex h-screen w-screen max-w-none flex-col overflow-hidden rounded-none border-0 p-0 sm:h-screen sm:max-w-none"
           >
             {!processSubmissionActive ? (
@@ -1219,7 +1237,11 @@ export function AmendmentProcessFlowView({
                   >
                     {t('common.cancel')}
                   </Button>
-                  <Button onClick={handleConfirmSelection} disabled={!pendingSelection || isSaving}>
+                  <Button
+                    data-tutorial-anchor={!currentRun ? 'tutorial-confirm-process-path' : undefined}
+                    onClick={handleConfirmSelection}
+                    disabled={!pendingSelection || isSaving}
+                  >
                     {isSaving
                       ? t('features.amendments.process.processing')
                       : currentRun
@@ -1261,7 +1283,11 @@ export function AmendmentProcessFlowView({
                     )
                     .filter(Boolean) ?? [],
                 badges: [
-                  pendingSelection?.pathMode === 'workflow' ? 'Workflow-Pfad' : 'Hierarchie-Pfad',
+                  t(
+                    `features.amendments.process.pathModes.${
+                      pendingSelection?.pathMode === 'workflow' ? 'workflow' : 'hierarchy'
+                    }`
+                  ),
                 ],
               }}
               target={{

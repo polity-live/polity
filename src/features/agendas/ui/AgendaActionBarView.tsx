@@ -389,6 +389,7 @@ export function AgendaActionBarView({
           ) : null}
           {showVoteButton ? (
             <ToolbarButton
+              data-tutorial-anchor={isElection ? 'agenda-election-vote' : 'agenda-amendment-vote'}
               tooltip={voteTooltip}
               onClick={isVoteActionBlocked ? undefined : onVoteClick}
               disabled={voteLoading}
@@ -458,6 +459,7 @@ export function AgendaActionBarView({
           ) : null}
           {showStartButton ? (
             <ToolbarButton
+              data-tutorial-anchor="event-start"
               tooltip={t('features.events.navigation.start')}
               onClick={onStartItem}
               disabled={startDisabled}

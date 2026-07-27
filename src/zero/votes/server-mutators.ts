@@ -1,4 +1,5 @@
 import { defineMutator } from '@rocicorp/zero';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import {
   computeVoteResultSummary,
   type MajorityType,
@@ -18,6 +19,7 @@ import {
 } from '../ballot-eligibility';
 import {
   eventTitle,
+  isOwnedAppTutorialAgendaItem,
   recomputeEventCounters,
   requireRecentVotingPasswordVerification,
 } from '../server-helpers';
@@ -26,6 +28,7 @@ import { resolveAmendmentProcessVote } from '../amendments/process-engine';
 import { notifyProcessVoteResolution } from '../amendments/process-notifications';
 import { finalizeInternalChangeRequestsForEventPhaseTransition } from '../change-requests/internal-voting';
 import { resolveChangeRequestByVoteResult } from '../change-requests/server-resolution';
+import { materializeCurrentForwardConfirmedEventVoting } from '../agendas/server-mutators';
 import {
   createVoteSchema,
   updateVoteSchema,
@@ -583,7 +586,11 @@ async function summarizeFinalVoteResult(
   const summary = computeVoteResultSummary(
     sortedChoices.map((choice, index) => ({
       id: choice.id,
-      label: choice.label ?? `Choice ${index + 1}`,
+      label:
+        choice.label ??
+        translateText('common.formats.numberedChoice', {
+          number: index + 1,
+        }),
       order_index: choice.order_index ?? index,
     })),
     finalDecisions
@@ -738,6 +745,9 @@ async function closeExpiredFinalVote(
       },
       ctx.userID
     );
+    if (resolution.handled && 'branchId' in resolution) {
+      await materializeCurrentForwardConfirmedEventVoting(tx, ctx, resolution.branchId);
+    }
     await notifyProcessVoteResolution(tx, ctx.userID, vote.agenda_item_id, resolution);
   }
 
@@ -789,8 +799,10 @@ export const voteServerMutators = {
   }),
 
   submitVote: defineMutator(submitVoteSchema, async ({ tx, ctx, args }) => {
-    await requireRecentVotingPasswordVerification(tx, ctx.userID);
     const vote = await tx.run(zql.vote.where('id', args.vote_id).one());
+    if (!(await isOwnedAppTutorialAgendaItem(tx, vote?.agenda_item_id, ctx.userID))) {
+      await requireRecentVotingPasswordVerification(tx, ctx.userID);
+    }
     if (!vote || normalizeVotePhase(vote.status) !== args.phase) {
       throw new Error(`The ${args.phase} vote is not open.`);
     }
@@ -974,6 +986,9 @@ export const voteServerMutators = {
         },
         ctx.userID
       );
+      if (resolution.handled && 'branchId' in resolution) {
+        await materializeCurrentForwardConfirmedEventVoting(tx, ctx, resolution.branchId);
+      }
       await notifyProcessVoteResolution(tx, ctx.userID, oldVote.agenda_item_id, resolution);
     }
 

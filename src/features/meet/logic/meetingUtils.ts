@@ -7,17 +7,25 @@ export function calculateDuration(startTime: string | number, endTime: string | 
   const durationMinutes = Math.floor(durationMs / 60000);
 
   if (durationMinutes < 60) {
-    return `${durationMinutes} minutes`;
+    return translateText('features.meet.duration.minutes', { count: durationMinutes });
   }
 
   const hours = Math.floor(durationMinutes / 60);
   const minutes = durationMinutes % 60;
 
   if (minutes === 0) {
-    return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+    return translateText('features.meet.duration.hours', { count: hours });
   }
 
-  return `${hours} ${hours === 1 ? 'hour' : 'hours'} ${minutes} minutes`;
+  const key =
+    hours === 1
+      ? minutes === 1
+        ? 'oneHourOneMinute'
+        : 'oneHourManyMinutes'
+      : minutes === 1
+        ? 'manyHoursOneMinute'
+        : 'manyHoursManyMinutes';
+  return translateText(`features.meet.duration.${key}`, { hours, minutes });
 }
 
 export function getMeetingStatus(

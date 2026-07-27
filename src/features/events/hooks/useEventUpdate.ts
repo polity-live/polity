@@ -537,7 +537,10 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           ...recurringFields,
         };
 
-        await updateEvent(updateData);
+        const result = await updateEvent(updateData);
+        if (!result.success) {
+          return;
+        }
       }
 
       // Sync hashtags via junction tables

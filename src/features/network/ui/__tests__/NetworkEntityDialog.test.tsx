@@ -32,6 +32,17 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
     fallback?: string
   ) => {
     const labels: Record<string, string> = {
+      'common.network.addAllActiveMembersOf': 'Add all active members of',
+      'common.network.addOnlyMembersOf': 'Add only',
+      'common.network.directionTo': 'to',
+      'common.network.isChildGroupOf': 'is the child group of',
+      'common.network.isConnectedWith': 'is connected with',
+      'common.network.isParentGroupOf': 'is the parent group of',
+      'common.network.membersWithRole': 'members with role',
+      'features.network.membershipModes.all_members': 'All active members',
+      'features.network.membershipModes.none': 'No automatic membership',
+      'features.network.membershipModes.role_members': 'Members with selected role',
+      'features.network.membershipModes.selected_source_groups': 'Parliament membership',
       'generated.inline.0770_ist_bergeordnet_die_aktuelle_gruppe_36b12d80':
         'ist übergeordnet, die aktuelle Gruppe',
       'generated.inline.0771_ist_untergeordnet_9610f87b': 'ist untergeordnet',
@@ -56,12 +67,18 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'common.network.directionDetails': 'Richtung der einzelnen Rechte',
         'common.network.thisGroup': 'Diese Gruppe',
         'common.network.thisGroupEmbedded': 'diese Gruppe',
+        'common.network.addAllActiveMembersOf': 'Add all active members of',
+        'common.network.addOnlyMembersOf': 'Add only',
+        'common.network.isChildGroupOf': 'is the child group of',
+        'common.network.isConnectedWith': 'is connected with',
+        'common.network.isParentGroupOf': 'is the parent group of',
+        'common.network.membersWithRole': 'members with role',
         'common.network.rightAmendment': 'Antragsrecht',
         'common.network.rightAmendmentDesc': 'Recht, Anträge zu stellen',
         'common.network.directionHas': 'hat',
         'common.network.directionIn': 'in',
         'common.network.directionGrants': 'gibt',
-        'common.network.directionTo': 'an',
+        'common.network.directionTo': 'to',
         'common.network.directionAnd': 'und',
         'common.network.directionHaveMutually': 'haben gegenseitig',
         'common.network.currentGroupGivesRightTo':

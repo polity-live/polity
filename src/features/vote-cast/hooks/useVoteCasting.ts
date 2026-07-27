@@ -23,6 +23,8 @@ import {
 } from '@/features/elections/logic/electionFlowLogging';
 import { isNamedBallot } from '@/zero/shared';
 import type { VoteSubmissionContext } from '@/features/shared/ui/voting';
+import { reportAppTutorialAction } from '@/features/app-tutorial/events';
+import { localizeAppError } from '@/features/shared/errors/app-error';
 
 interface UseVoteCastingOptions {
   agendaItemId: string;
@@ -123,9 +125,18 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
         await waitForClientApply(result);
         if (context?.trackServerResult) {
           await context.trackServerResult(result);
+          reportAppTutorialAction({
+            type: 'mutation',
+            event: 'agenda-election.voted',
+          });
         } else {
           trackServerFinalization(result, {
-            onError: error => toast.error(error.message),
+            onSuccess: () =>
+              reportAppTutorialAction({
+                type: 'mutation',
+                event: 'agenda-election.voted',
+              }),
+            onError: error => toast.error(localizeAppError(error)),
           });
         }
 
@@ -219,9 +230,18 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
         await waitForClientApply(result);
         if (context?.trackServerResult) {
           await context.trackServerResult(result);
+          reportAppTutorialAction({
+            type: 'mutation',
+            event: 'agenda-amendment.voted',
+          });
         } else {
           trackServerFinalization(result, {
-            onError: error => toast.error(error.message),
+            onSuccess: () =>
+              reportAppTutorialAction({
+                type: 'mutation',
+                event: 'agenda-amendment.voted',
+              }),
+            onError: error => toast.error(localizeAppError(error)),
           });
         }
 

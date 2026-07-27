@@ -16,6 +16,7 @@ export const todo = table('todo')
     group_id: string().optional(),
     event_id: string().optional(),
     amendment_id: string().optional(),
+    tutorial_run_id: string().optional(),
     created_at: number(),
     updated_at: number(),
   })

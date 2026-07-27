@@ -47,8 +47,8 @@ import { BLOG_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 function displayName(u: Pick<User, 'first_name' | 'last_name'> | undefined | null): string {
-  if (!u) return 'Unknown';
-  return [u.first_name, u.last_name].filter(Boolean).join(' ') || 'Unknown';
+  if (!u) return translateText('common.unknown');
+  return [u.first_name, u.last_name].filter(Boolean).join(' ') || translateText('common.unknown');
 }
 
 function initials(u: Pick<User, 'first_name' | 'last_name'> | undefined | null): string {
@@ -334,7 +334,7 @@ export function BlogBloggersManagerView({
                       'generated.inline.0246_search_and_select_users_to_invite_as_bloggers_c657d837'
                     ),
                     people: selectedPeople,
-                    badges: ['Writer'],
+                    badges: [translateText('common.entities.writer')],
                   }}
                   target={{
                     label: translateText('common.done', 'Fertig'),

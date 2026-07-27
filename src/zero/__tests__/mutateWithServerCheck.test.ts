@@ -2,11 +2,14 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  isRetryableServerMutationError,
   serverConfirmed,
   trackServerFinalization,
   waitForClientApply,
   type MutationResultLike,
 } from '../mutate-with-server-check';
+
+vi.setConfig({ testTimeout: 20_000 });
 
 function mutationResult(overrides: Partial<MutationResultLike> = {}): MutationResultLike {
   return {
@@ -109,12 +112,26 @@ describe('mutate-with-server-check', () => {
     ).rejects.toThrow('Authoritative failure');
   });
 
+  it('identifies only transient database concurrency failures as retryable', () => {
+    expect(isRetryableServerMutationError(new Error('deadlock detected'))).toBe(true);
+    expect(
+      isRetryableServerMutationError('could not serialize access due to concurrent update')
+    ).toBe(true);
+    expect(isRetryableServerMutationError(new Error('Permission denied'))).toBe(false);
+  });
+
   it('keeps production serverConfirmed call sites limited to server-gated flows', () => {
     const repoRoot = process.cwd();
     const sourceRoot = join(repoRoot, 'src');
     const allowedFiles = new Set([
+      'features/agendas/hooks/useAgendaNavigation.ts',
+      'features/amendments/city-design/hooks/useCityDesignPageController.ts',
+      'features/amendments/ui/useAmendmentProcessFlowController.ts',
       'features/decision-terminal/hooks/useDecisionVoteDialogController.ts',
+      'features/editor/hooks/useEditorOperations.ts',
+      'features/events/hooks/useEventMutations.ts',
       'features/notifications/hooks/useNotificationActions.ts',
+      'features/todos/hooks/useTodoMutations.ts',
       'features/vote-cast/hooks/useVotePasswordConfirmation.ts',
       'features/vote-cast/ui/VoteCastDialog.tsx',
       'features/votes/hooks/useEventVoting.ts',

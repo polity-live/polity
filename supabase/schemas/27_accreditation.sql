@@ -3,7 +3,7 @@
 -- Depends on: 01_user, 03_event, 06_agenda
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS public.accreditation (
+CREATE TABLE public.accreditation (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
   agenda_item_id UUID NOT NULL REFERENCES public.agenda_item (id) ON DELETE CASCADE,
@@ -25,7 +25,7 @@ CREATE INDEX idx_accreditation_user ON public.accreditation (user_id);
 ALTER TABLE public.accreditation ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.accreditation FOR ALL TO service_role USING (true);
 
-CREATE TABLE IF NOT EXISTS public.accreditation_audit (
+CREATE TABLE public.accreditation_audit (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   accreditation_id UUID NOT NULL REFERENCES public.accreditation (id) ON DELETE CASCADE,
   event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,

@@ -23,6 +23,11 @@ function buildModelKey(model: { provider: string; id: string }): string {
   return `${model.provider}:${model.id}`;
 }
 import { AssistantMessageInputView } from './AssistantMessageInputView';
+import {
+  reportAppTutorialAction,
+  requestAppTutorialSpotlightTarget,
+} from '@/features/app-tutorial/events';
+import { matchesAppTutorialExpectedInput } from '@/features/app-tutorial/catalog';
 export function AssistantMessageInput({ assistantChat }: AssistantMessageInputProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -369,12 +374,29 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
       return;
     }
 
+    const isTutorialTodoRequest =
+      assistantChat.isTutorialConversation &&
+      matchesAppTutorialExpectedInput(trimmedMessage, 'assistantTodo');
+    if (isTutorialTodoRequest) {
+      requestAppTutorialSpotlightTarget('tutorial-assistant-chat');
+    }
+
+    let userMessageWasSent = false;
     await assistantChat.sendAssistantMessage(trimmedMessage, {
       onUserMessageSent: () => {
+        userMessageWasSent = true;
         setMessageText('');
         setCaretPosition(0);
       },
     });
+    if (userMessageWasSent && isTutorialTodoRequest) {
+      reportAppTutorialAction({
+        type: 'input',
+        value: trimmedMessage,
+      });
+    } else if (isTutorialTodoRequest) {
+      requestAppTutorialSpotlightTarget('message-composer');
+    }
   };
   return (
     <AssistantMessageInputView

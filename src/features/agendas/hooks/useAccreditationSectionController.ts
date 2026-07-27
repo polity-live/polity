@@ -1,11 +1,11 @@
 import { useState } from 'react';
 
-import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
 import { useAccreditationState } from '@/zero/accreditation/useAccreditationState';
 import { useAccreditationActions } from '@/zero/accreditation/useAccreditationActions';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import { showVotingPasswordErrorToast } from '@/features/notifications/utils/voting-password-error-toast';
+import { localizeAppError } from '@/features/shared/errors/app-error';
 
 interface UseAccreditationSectionControllerArgs {
   eventId: string;
@@ -16,7 +16,6 @@ export function useAccreditationSectionController({
   eventId,
   agendaItemId,
 }: UseAccreditationSectionControllerArgs) {
-  const { t } = useTranslation();
   const { user } = useAuth();
   const userId = user?.id;
 
@@ -54,10 +53,9 @@ export function useAccreditationSectionController({
       });
       setShowPasswordInput(false);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : t('common.accreditation.wrongPassword');
+      const message = localizeAppError(error);
       setPasswordError(message);
-      showVotingPasswordErrorToast(message, userId);
+      showVotingPasswordErrorToast(error, userId);
     } finally {
       setIsConfirming(false);
     }

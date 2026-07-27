@@ -2,6 +2,18 @@ export const meetTranslations = {
   title: 'Meet',
   description: 'Video meetings and calls',
   joining: 'Joining meeting...',
+  duration: {
+    minutes: '{{count}} minutes',
+    minutes_one: '{{count}} minute',
+    minutes_other: '{{count}} minutes',
+    hours: '{{count}} hours',
+    hours_one: '{{count}} hour',
+    hours_other: '{{count}} hours',
+    oneHourOneMinute: '{{hours}} hour {{minutes}} minute',
+    oneHourManyMinutes: '{{hours}} hour {{minutes}} minutes',
+    manyHoursOneMinute: '{{hours}} hours {{minutes}} minute',
+    manyHoursManyMinutes: '{{hours}} hours {{minutes}} minutes',
+  },
   loading: 'Loading meeting...',
   controls: {
     mute: 'Mute',
@@ -53,6 +65,7 @@ export const meetTranslations = {
     permissionDenied: 'Camera/microphone permission denied',
   },
   page: {
+    allOffers: 'All meeting offers',
     loadingMeeting: 'Loading meeting...',
     notFound: 'Meeting Not Found',
     notFoundDescription: "The meeting you're looking for doesn't exist or has been removed.",

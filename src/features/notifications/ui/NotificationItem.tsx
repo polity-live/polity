@@ -39,6 +39,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/features/shared/ui/ui/alert-dialog';
+import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
 
 type NotificationEntity =
   | NonNullable<Notification['recipient_group']>
@@ -290,7 +291,7 @@ function EntityMeta({
 }
 
 export function NotificationItem({
-  notification,
+  notification: sourceNotification,
   onNotificationClick,
   onMarkAsRead,
   onToggleRead,
@@ -303,7 +304,13 @@ export function NotificationItem({
   mode = 'global',
   showRecipientBadge = true,
 }: NotificationItemProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const tutorialRunId = (sourceNotification as Notification & { tutorial_run_id?: string | null })
+    .tutorial_run_id;
+  const notification = resolveAppTutorialFixtureValue(sourceNotification, {
+    tutorialRunId,
+    language,
+  });
   const Icon = getNotificationIcon(notification.type as NotificationType);
   const iconTone = getSemanticToneClasses(
     getNotificationTone(notification.type as NotificationType)
@@ -327,6 +334,9 @@ export function NotificationItem({
     .replaceAll('{{paymentDescription}}', t('common.creationFinalization.entities.payment'));
   const showDeleteForEveryone =
     mode !== 'trash' && Boolean(onDeleteForEveryone) && canDeleteForEveryone;
+  const isTutorialNotification = Boolean(
+    (notification as Notification & { tutorial_run_id?: string | null }).tutorial_run_id
+  );
 
   const cardContent = (
     <CardContent className="flex items-start gap-3 p-3">
@@ -400,6 +410,9 @@ export function NotificationItem({
           <div className="flex items-center gap-1">
             {mode !== 'trash' && (onToggleRead || (!isRead && onMarkAsRead)) ? (
               <Button
+                data-tutorial-anchor={
+                  isTutorialNotification ? 'tutorial-notification-read' : undefined
+                }
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 shrink-0"
@@ -513,11 +526,18 @@ export function NotificationItem({
 
   if (notificationHref) {
     return (
-      <Card data-slot="notification-card" data-mode={mode} className={cardClassName}>
+      <Card
+        data-slot="notification-card"
+        data-mode={mode}
+        data-tutorial-anchor={
+          isTutorialNotification ? 'tutorial-membership-notification' : undefined
+        }
+        className={cardClassName}
+      >
         <LinkSurface
           href={notificationHref}
           mode="overlay"
-          label={notification.title ?? 'Notification'}
+          label={notification.title ?? t('common.entities.notification')}
           onClick={event => {
             if (!isPlainLeftClick(event)) {
               return;
@@ -537,6 +557,7 @@ export function NotificationItem({
     <Card
       data-slot="notification-card"
       data-mode={mode}
+      data-tutorial-anchor={isTutorialNotification ? 'tutorial-membership-notification' : undefined}
       className={cardClassName}
       onClick={() => void onNotificationClick(notification)}
     >

@@ -5,7 +5,7 @@
 -- =============================================================================
 
 -- Amendment table
-CREATE TABLE IF NOT EXISTS public.amendment (
+CREATE TABLE public.amendment (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code TEXT,
   title TEXT,
@@ -71,7 +71,7 @@ ALTER TABLE public.amendment ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment FOR ALL TO service_role USING (true);
 
 -- Amendment collaborator table
-CREATE TABLE IF NOT EXISTS public.amendment_collaborator (
+CREATE TABLE public.amendment_collaborator (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -93,8 +93,8 @@ CREATE INDEX idx_zero_amendment_collaborator_amendment_created_id
 ALTER TABLE public.amendment_collaborator ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment_collaborator FOR ALL TO service_role USING (true);
 
--- Amendment street design table
-CREATE TABLE IF NOT EXISTS public.amendment_street_design (
+-- Amendment city design table
+CREATE TABLE public.amendment_city_design (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
   created_by_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -112,19 +112,19 @@ CREATE TABLE IF NOT EXISTS public.amendment_street_design (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_amendment_street_design_amendment
-  ON public.amendment_street_design (amendment_id);
-CREATE INDEX idx_amendment_street_design_created_by
-  ON public.amendment_street_design (created_by_id);
-CREATE INDEX idx_amendment_street_design_updated_at
-  ON public.amendment_street_design (updated_at DESC);
+CREATE INDEX idx_amendment_city_design_amendment
+  ON public.amendment_city_design (amendment_id);
+CREATE INDEX idx_amendment_city_design_created_by
+  ON public.amendment_city_design (created_by_id);
+CREATE INDEX idx_amendment_city_design_updated_at
+  ON public.amendment_city_design (updated_at DESC);
 
-ALTER TABLE public.amendment_street_design ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.amendment_city_design ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all"
-  ON public.amendment_street_design FOR ALL TO service_role USING (true);
+  ON public.amendment_city_design FOR ALL TO service_role USING (true);
 
 -- Amendment path table
-CREATE TABLE IF NOT EXISTS public.amendment_path (
+CREATE TABLE public.amendment_path (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
   process_run_id UUID,
@@ -139,7 +139,7 @@ ALTER TABLE public.amendment_path ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment_path FOR ALL TO service_role USING (true);
 
 -- Amendment path segment table
-CREATE TABLE IF NOT EXISTS public.amendment_path_segment (
+CREATE TABLE public.amendment_path_segment (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   path_id UUID NOT NULL REFERENCES public.amendment_path (id) ON DELETE CASCADE,
   process_branch_id UUID,
@@ -157,7 +157,7 @@ ALTER TABLE public.amendment_path_segment ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment_path_segment FOR ALL TO service_role USING (true);
 
 -- Support confirmation table
-CREATE TABLE IF NOT EXISTS public.support_confirmation (
+CREATE TABLE public.support_confirmation (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
   process_run_id UUID,
@@ -178,7 +178,7 @@ ALTER TABLE public.support_confirmation ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.support_confirmation FOR ALL TO service_role USING (true);
 
 -- Workflow runtime process execution
-CREATE TABLE IF NOT EXISTS public.amendment_process_run (
+CREATE TABLE public.amendment_process_run (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
   root_workflow_id UUID REFERENCES public.group_workflow (id) ON DELETE SET NULL,
@@ -204,7 +204,7 @@ CREATE INDEX idx_amendment_process_run_status ON public.amendment_process_run (s
 ALTER TABLE public.amendment_process_run ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment_process_run FOR ALL TO service_role USING (true);
 
-CREATE TABLE IF NOT EXISTS public.amendment_process_branch (
+CREATE TABLE public.amendment_process_branch (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   process_run_id UUID NOT NULL REFERENCES public.amendment_process_run (id) ON DELETE CASCADE,
   parent_branch_id UUID REFERENCES public.amendment_process_branch (id) ON DELETE SET NULL,
@@ -241,7 +241,7 @@ CREATE INDEX idx_amendment_process_branch_document ON public.amendment_process_b
 ALTER TABLE public.amendment_process_branch ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment_process_branch FOR ALL TO service_role USING (true);
 
-CREATE TABLE IF NOT EXISTS public.amendment_process_step_run (
+CREATE TABLE public.amendment_process_step_run (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   process_run_id UUID NOT NULL REFERENCES public.amendment_process_run (id) ON DELETE CASCADE,
   branch_id UUID NOT NULL REFERENCES public.amendment_process_branch (id) ON DELETE CASCADE,
@@ -277,7 +277,7 @@ CREATE INDEX idx_amendment_process_step_run_event
 ALTER TABLE public.amendment_process_step_run ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment_process_step_run FOR ALL TO service_role USING (true);
 
-CREATE TABLE IF NOT EXISTS public.process_task (
+CREATE TABLE public.process_task (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   process_run_id UUID NOT NULL REFERENCES public.amendment_process_run (id) ON DELETE CASCADE,
   branch_id UUID REFERENCES public.amendment_process_branch (id) ON DELETE CASCADE,
@@ -307,7 +307,7 @@ CREATE INDEX idx_process_task_due_at ON public.process_task (due_at);
 ALTER TABLE public.process_task ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.process_task FOR ALL TO service_role USING (true);
 
-CREATE TABLE IF NOT EXISTS public.amendment_group_decision (
+CREATE TABLE public.amendment_group_decision (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
   group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
@@ -388,7 +388,7 @@ ALTER TABLE public.amendment_process_branch
   ON DELETE SET NULL;
 
 -- Amendment support vote table
-CREATE TABLE IF NOT EXISTS public.amendment_support_vote (
+CREATE TABLE public.amendment_support_vote (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -403,7 +403,7 @@ ALTER TABLE public.amendment_support_vote ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment_support_vote FOR ALL TO service_role USING (true);
 
 -- Amendment vote entry table (inline upvote/downvote)
-CREATE TABLE IF NOT EXISTS public.amendment_vote_entry (
+CREATE TABLE public.amendment_vote_entry (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,

@@ -67,7 +67,9 @@ describe('AI copilot route', () => {
     const response = await handleCopilotRequest(copilotRequest({ prompt: 'Continue this' }));
 
     expect(response.status).toBe(401);
-    expect(await response.text()).toBe('Unauthorized');
+    await expect(response.json()).resolves.toEqual({
+      error: { version: 1, code: 'permission_denied' },
+    });
     expect(mockedGetAiCatalog).not.toHaveBeenCalled();
   });
 
@@ -104,7 +106,9 @@ describe('AI copilot route', () => {
     const response = await handleCopilotRequest(copilotRequest({ system: 'No prompt' }));
 
     expect(response.status).toBe(400);
-    expect(await response.text()).toBe('Invalid copilot request.');
+    await expect(response.json()).resolves.toEqual({
+      error: { version: 1, code: 'validation_failed' },
+    });
     expect(mockedGetAiCatalog).not.toHaveBeenCalled();
   });
 

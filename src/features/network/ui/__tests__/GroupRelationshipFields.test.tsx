@@ -20,8 +20,15 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, fallback?: string | Record<string, unknown>) =>
-    typeof fallback === 'string' ? fallback : key,
+  translate: (key: string, fallback?: string | Record<string, unknown>) => {
+    const labels: Record<string, string> = {
+      'common.network.addAllActiveMembersOf': 'Add all active members of',
+      'common.network.addOnlyMembersOf': 'Add only',
+      'common.network.membersWithRole': 'members with role',
+      'common.network.directionTo': 'to',
+    };
+    return labels[key] ?? (typeof fallback === 'string' ? fallback : key);
+  },
   useTranslation: () => ({
     t: (key: string, paramsOrFallback?: string | Record<string, unknown>, fallback?: string) => {
       const templates: Record<string, string> = {
@@ -38,9 +45,12 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'common.network.directionHas': 'hat',
         'common.network.directionGrants': 'gibt',
         'common.network.directionIn': 'in',
-        'common.network.directionTo': 'an',
+        'common.network.directionTo': 'to',
         'common.network.directionAnd': 'und',
         'common.network.directionHaveMutually': 'haben gegenseitig',
+        'common.network.addAllActiveMembersOf': 'Add all active members of',
+        'common.network.addOnlyMembersOf': 'Add only',
+        'common.network.membersWithRole': 'members with role',
         'common.network.asChildGroupOf': 'as child group of',
         'common.network.currentGroupGivesRightTo':
           '{{currentGroupName}} gibt {{rightLabel}} an {{selectedGroupName}}',
@@ -129,7 +139,7 @@ describe('GroupRelationshipMembershipModeDescription', () => {
     );
 
     expect(container.textContent).toMatch(
-      /Add only[\s\S]*Fraktion H66[\s\S]*members with role[\s\S]*Admin[\s\S]*to[\s\S]*Parlament Rosbach/
+      /Add only[\s\S]*Fraktion H66[\s\S]*members with role[\s\S]*Admin[\s\S]*(?:to|an)[\s\S]*Parlament Rosbach/
     );
     expect(screen.getByText('Admin').closest('[data-role-key="role-admin"]')).toBeTruthy();
   });
@@ -214,7 +224,7 @@ describe('GroupRelationshipDirectionSentence', () => {
 
     const rightChip = screen.getByText('Antragsrecht');
 
-    expect(container.textContent).toContain('Diese GruppegibtAntragsrechtanH1');
+    expect(container.textContent).toContain('Diese GruppegibtAntragsrechttoH1');
     expect(rightChip).toBeTruthy();
     expect(rightChip.className).toContain('hover:bg-accent');
     expect(rightChip.className).toContain('hover:text-accent-foreground');

@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 
 import type { MouseEventHandler, ReactNode } from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   TargetGroupEventDisplay,
   TargetGroupEventSelector,
 } from '@/features/amendments/ui/TargetGroupEventSelector';
 import { Button } from '@/features/shared/ui/ui/button';
+import { APP_TUTORIAL_ACTION_EVENT } from '@/features/app-tutorial/events';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
 const amendmentGroups = [
   {
@@ -199,6 +201,10 @@ afterEach(() => {
   cleanup();
 });
 
+beforeEach(() => {
+  useLanguageStore.setState({ language: 'en' });
+});
+
 function hasButtonText(text: string) {
   return screen
     .getAllByRole('button')
@@ -234,6 +240,94 @@ describe('TargetGroupEventSelector', () => {
     );
   });
 
+  it('uses localized fixture labels while reporting stable process group ids', async () => {
+    const sourceGroup = amendmentGroups[0] as (typeof amendmentGroups)[number] & {
+      tutorial_run_id?: string;
+    };
+    const targetGroup = amendmentGroups[2] as (typeof amendmentGroups)[number] & {
+      tutorial_run_id?: string;
+    };
+    const originalSource = {
+      name: sourceGroup.name,
+      description: sourceGroup.description,
+    };
+    const originalTarget = {
+      name: targetGroup.name,
+      description: targetGroup.description,
+    };
+    const evidence: unknown[] = [];
+    const listener = (event: Event) => {
+      evidence.push((event as CustomEvent).detail);
+    };
+
+    sourceGroup.name = 'Initiative Klimafitte Euckenstraße';
+    sourceGroup.description =
+      'Gemeinsam gestalten wir die Euckenstraße klimaresilient, sicher und lebenswert.';
+    sourceGroup.tutorial_run_id = 'tutorial-run';
+    targetGroup.name = 'Münchner Klimarat';
+    targetGroup.description = 'Transparente, vernetzte Klimapolitik für München.';
+    targetGroup.tutorial_run_id = 'tutorial-run';
+    useLanguageStore.setState({ language: 'en' });
+    window.addEventListener(APP_TUTORIAL_ACTION_EVENT, listener);
+
+    try {
+      render(
+        <TargetGroupEventSelector
+          userId="user-1"
+          onSelect={vi.fn()}
+          allowGroupWithoutEvent
+          disablePortal
+          layoutScope="amendment-process-start"
+        />
+      );
+
+      const sourceSearch = await screen.findByPlaceholderText('Select start group...');
+      fireEvent.focus(sourceSearch);
+      fireEvent.change(sourceSearch, {
+        target: { value: 'Climate-Friendly Euckenstraße Initiative' },
+      });
+      fireEvent.keyDown(sourceSearch, { key: 'Enter' });
+
+      const targetSearch = await screen.findByPlaceholderText('Find target group...');
+      fireEvent.focus(targetSearch);
+      fireEvent.change(targetSearch, { target: { value: 'Munich Climate Council' } });
+      fireEvent.keyDown(targetSearch, { key: 'Enter' });
+
+      await waitFor(() =>
+        expect(evidence).toEqual([
+          {
+            type: 'entity-selection',
+            entityId: 'group-start',
+          },
+          {
+            type: 'entity-selection',
+            entityId: 'group-target',
+          },
+        ])
+      );
+
+      act(() => {
+        useLanguageStore.setState({ language: 'de' });
+      });
+      await waitFor(() =>
+        expect(
+          screen.getByRole('button', {
+            name: 'Initiative Klimafitte Euckenstraße entfernen',
+          })
+        ).toBeTruthy()
+      );
+      expect(screen.getByRole('button', { name: 'Münchner Klimarat entfernen' })).toBeTruthy();
+    } finally {
+      window.removeEventListener(APP_TUTORIAL_ACTION_EVENT, listener);
+      sourceGroup.name = originalSource.name;
+      sourceGroup.description = originalSource.description;
+      targetGroup.name = originalTarget.name;
+      targetGroup.description = originalTarget.description;
+      delete sourceGroup.tutorial_run_id;
+      delete targetGroup.tutorial_run_id;
+    }
+  });
+
   it('keeps the selected start group when choosing a target from dropdown', async () => {
     const onSelect = vi.fn();
 
@@ -246,7 +340,7 @@ describe('TargetGroupEventSelector', () => {
       />
     );
 
-    const targetSearchInput = await screen.findByPlaceholderText('Zielgruppe suchen...');
+    const targetSearchInput = await screen.findByPlaceholderText('Find target group...');
     fireEvent.focus(targetSearchInput);
     fireEvent.change(targetSearchInput, { target: { value: 'Region' } });
 
@@ -268,7 +362,7 @@ describe('TargetGroupEventSelector', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Remove Regional Council' })).toBeTruthy()
     );
-    expect(screen.getByText('Ziel-Event')).toBeTruthy();
+    expect(screen.getByText('Target event')).toBeTruthy();
   });
 
   it('shows only amendment-right targets reachable from the selected start group', async () => {
@@ -281,7 +375,7 @@ describe('TargetGroupEventSelector', () => {
       />
     );
 
-    const targetSearchInput = await screen.findByPlaceholderText('Zielgruppe suchen...');
+    const targetSearchInput = await screen.findByPlaceholderText('Find target group...');
 
     fireEvent.focus(targetSearchInput);
     fireEvent.change(targetSearchInput, { target: { value: 'Region' } });
@@ -307,7 +401,7 @@ describe('TargetGroupEventSelector', () => {
       />
     );
 
-    const targetSearchInput = await screen.findByPlaceholderText('Zielgruppe suchen...');
+    const targetSearchInput = await screen.findByPlaceholderText('Find target group...');
 
     fireEvent.focus(targetSearchInput);
     fireEvent.change(targetSearchInput, { target: { value: 'Budget' } });
@@ -351,7 +445,7 @@ describe('TargetGroupEventSelector', () => {
         />
       );
 
-      const targetSearchInput = await screen.findByPlaceholderText('Zielgruppe suchen...');
+      const targetSearchInput = await screen.findByPlaceholderText('Find target group...');
 
       fireEvent.focus(targetSearchInput);
       fireEvent.change(targetSearchInput, { target: { value: 'Region' } });
@@ -450,8 +544,8 @@ describe('TargetGroupEventSelector', () => {
         />
       );
 
-      await waitFor(() => expect(screen.queryByPlaceholderText('Zielgruppe suchen...')).toBeNull());
-      await waitFor(() => expect(screen.getByText('Abgeleitete Zielgruppe')).toBeTruthy());
+      await waitFor(() => expect(screen.queryByPlaceholderText('Find target group...')).toBeNull());
+      await waitFor(() => expect(screen.getByText('Derived target group')).toBeTruthy());
       await waitFor(() =>
         expect(onSelect).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -511,7 +605,7 @@ describe('TargetGroupEventSelector', () => {
       />
     );
 
-    await waitFor(() => expect(screen.queryByPlaceholderText('Zielgruppe suchen...')).toBeNull());
+    await waitFor(() => expect(screen.queryByPlaceholderText('Find target group...')).toBeNull());
     expect(screen.getByText(/^(Fixe Zielgruppe|Fixed target group)$/)).toBeTruthy();
     expect(screen.getAllByText('Parliament').length).toBeGreaterThan(0);
 

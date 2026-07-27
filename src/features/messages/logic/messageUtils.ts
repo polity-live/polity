@@ -1,5 +1,6 @@
 import { ConversationDisplay } from '../types/message.types';
 import { ARIA_KAI_USER_ID } from '@/features/assistant/constants';
+import { resolveAssistantAvatar } from '@/features/assistant/logic/assistantHelpers';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface UnreadMessageLike {
@@ -9,13 +10,19 @@ interface UnreadMessageLike {
   } | null;
 }
 
+interface ConversationUserLike {
+  id?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  avatar?: string | null;
+  handle?: string | null;
+}
+
 interface UnreadParticipantLike {
   last_read_at?: number | null;
   unread_count?: number | null;
   user_id?: string | null;
-  user?: {
-    id?: string | null;
-  } | null;
+  user?: ConversationUserLike | null;
 }
 
 interface UnreadConversationLike {
@@ -42,13 +49,7 @@ interface ConversationDisplayLike {
   } | null;
   participants: readonly {
     user_id?: string | null;
-    user?: {
-      id?: string | null;
-      first_name?: string | null;
-      last_name?: string | null;
-      avatar?: string | null;
-      handle?: string | null;
-    } | null;
+    user?: ConversationUserLike | null;
   }[];
   assistant_for_user_id?: string | null;
 }
@@ -111,11 +112,12 @@ export const getConversationDisplay = (
 
   if (isAssistantConversationLike(conversation)) {
     const assistantName =
-      [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') || 'Aria & Kai';
+      [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') ||
+      'Assistent Aria & Kai';
 
     return {
       name: conversation.name?.trim() || assistantName,
-      avatar: otherUser?.avatar,
+      avatar: resolveAssistantAvatar(ARIA_KAI_USER_ID, otherUser?.avatar),
       handle: otherUser?.handle,
       isGroup: false,
       isEvent: false,

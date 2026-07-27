@@ -142,16 +142,21 @@ export function useAgendaActions() {
   );
 
   const initializeChangeRequestVoting = useCallback(
-    (args: {
-      amendment_id: string;
-      agenda_item_id: string;
-      voting_context?: 'event' | 'internal';
-      group_id?: string;
-      start_final_vote_if_no_change_requests?: boolean;
-    }) => {
+    (
+      args: {
+        amendment_id: string;
+        agenda_item_id: string;
+        voting_context?: 'event' | 'internal';
+        group_id?: string;
+        start_final_vote_if_no_change_requests?: boolean;
+      },
+      options?: { silent?: boolean }
+    ) => {
       const result = zero.mutate(mutators.agendas.initializeChangeRequestVoting(args));
-      toast.success(t('common.agendaToasts.crVotingInitialized'));
-      onServerError(result, () => toast.error(t('common.agendaToasts.crVotingInitFailed')));
+      if (!options?.silent) {
+        toast.success(t('common.agendaToasts.crVotingInitialized'));
+        onServerError(result, () => toast.error(t('common.agendaToasts.crVotingInitFailed')));
+      }
       return result;
     },
     [t, zero]

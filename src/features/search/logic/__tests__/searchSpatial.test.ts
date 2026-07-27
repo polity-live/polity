@@ -65,6 +65,7 @@ describe('searchSpatial', () => {
       summary: null,
       search_text: 'Assembly',
       visibility: 'public',
+      tutorial_run_id: null,
       owner_user_id: 'user-1',
       group_id: 'group-1',
       image_url: null,

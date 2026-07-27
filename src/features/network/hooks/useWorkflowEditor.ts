@@ -6,6 +6,7 @@ import { useWorkflowActions } from '@/zero/network/useWorkflowActions';
 import { trackServerFinalization, waitForClientApply } from '@/zero/mutate-with-server-check';
 import type { ActionSubmissionContext } from '@/features/shared/ui/action-submission';
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
+import { localizeAppError } from '@/features/shared/errors/app-error';
 
 export interface DraftWorkflowStep {
   id?: string;
@@ -178,9 +179,9 @@ export function useWorkflowEditor(groupId: string) {
         if (submissionContext) {
           trackServerFinalization(result, {
             onError: error =>
-              toast.error(error.message, {
+              toast.error(localizeAppError(error), {
                 action: {
-                  label: t('common.actions.restore', 'Wiederherstellen'),
+                  label: t('common.actions.restore'),
                   onClick: restoreDraft,
                 },
               }),
@@ -188,9 +189,9 @@ export function useWorkflowEditor(groupId: string) {
         } else {
           trackServerFinalization(result, {
             onError: error =>
-              toast.error(error.message, {
+              toast.error(localizeAppError(error), {
                 action: {
-                  label: t('common.actions.restore', 'Wiederherstellen'),
+                  label: t('common.actions.restore'),
                   onClick: restoreDraft,
                 },
               }),
@@ -198,9 +199,7 @@ export function useWorkflowEditor(groupId: string) {
         }
         toast.success(t('features.network.toasts.workflowSaved'));
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : t('features.network.toasts.workflowSaveFailed')
-        );
+        toast.error(localizeAppError(error));
       }
     },
     [

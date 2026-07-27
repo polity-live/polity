@@ -9,6 +9,7 @@ import { AlphaWarningDialog } from '@/features/shared/ui/AlphaWarningDialog.tsx'
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
 import { useNavigation } from '@/features/navigation/state/useNavigation.tsx';
 import { usePreferenceSync } from '@/zero/preferences/usePreferenceSync.ts';
+import { useAppearanceThemeSync } from '@/zero/appearance-themes/hooks';
 import { useToastSettingsSync } from '@/features/notifications/hooks/useToastSettingsSync.ts';
 import { MotionPage } from '@/features/shared/motion';
 import {
@@ -22,6 +23,7 @@ import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation.t
 import { isItemActive } from '@/features/navigation/nav-items/nav-helpers.ts';
 import { getAuthenticatedPageFrame, getAppShellResponsiveClasses } from './app-shell-layout';
 import { PageFrame } from './page-frame';
+import { AppTutorialSessionGate } from '@/features/app-tutorial/AppTutorialSessionGate';
 
 function isEntitySecondarySwipeRoute(pathname: string): boolean {
   return /^\/(?:group|user|amendment|event|blog)\/[^/]+/.test(pathname);
@@ -56,6 +58,7 @@ function findActiveNavigationItemIndex(
 
 export default function AuthenticatedShell({ children }: { children: ReactNode }) {
   usePreferenceSync();
+  useAppearanceThemeSync();
   useToastSettingsSync();
   useGlobalZeroPreloads();
   usePrimaryRouteIdlePreloads();
@@ -68,7 +71,7 @@ export default function AuthenticatedShell({ children }: { children: ReactNode }
     (secondaryNavItems ?? []).flatMap(item => (item.href ? [item.href] : []))
   );
   const pathname = useRouterState({ select: state => state.location.pathname });
-  const isFullscreenOnboarding = pathname === '/';
+  const isFullscreenOnboarding = pathname === '/' || pathname === '/onboarding';
   const pageFrame = getAuthenticatedPageFrame(pathname);
   const isSecondaryNavVisible =
     Boolean(secondaryNavItems) && ['secondary', 'combined'].includes(navigationType);
@@ -141,7 +144,10 @@ export default function AuthenticatedShell({ children }: { children: ReactNode }
   return (
     <PrioritizedPreloadProvider>
       <InternalLinkIntentPreloader />
-      <I18nSyncProvider>{content}</I18nSyncProvider>
+      <I18nSyncProvider>
+        {content}
+        <AppTutorialSessionGate pathname={pathname} />
+      </I18nSyncProvider>
     </PrioritizedPreloadProvider>
   );
 }

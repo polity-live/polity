@@ -1,4 +1,4 @@
-import { getStreetDesignSemanticChangedCharacterCount } from '@/features/amendments/streetscape/logic/streetDesignChangeRequestDiff';
+import { getCityDesignSemanticChangedCharacterCount } from '@/features/amendments/city-design/logic/cityDesignChangeRequestDiff';
 
 export const CHANGE_REQUEST_VOTE_ORDER_VALUES = [
   'text_position',
@@ -127,8 +127,8 @@ function getBranchSortNumber<T>(item: T, getChangeRequest?: (item: T) => unknown
 
 function getChangedCharacterCount<T>(item: T, getChangeRequest?: (item: T) => unknown) {
   const cr = readChangeRequest(item, getChangeRequest);
-  if (isStreetDesignChangeRequestRecord(cr)) {
-    return getStreetDesignSemanticChangedCharacterCount(
+  if (isCityDesignChangeRequestRecord(cr)) {
+    return getCityDesignSemanticChangedCharacterCount(
       cr.original_properties ?? cr.originalProperties,
       cr.new_properties ?? cr.newProperties
     );
@@ -141,15 +141,9 @@ function getChangedCharacterCount<T>(item: T, getChangeRequest?: (item: T) => un
   return persistedCount ?? computedCount;
 }
 
-function isStreetDesignChangeRequestRecord(cr: Record<string, unknown>) {
+function isCityDesignChangeRequestRecord(cr: Record<string, unknown>) {
   const sourceType = getStringValue(cr.source_type) ?? getStringValue(cr.sourceType);
-  return Boolean(
-    sourceType &&
-    (sourceType === 'street_design' ||
-      sourceType === 'streetscape' ||
-      sourceType.startsWith('street_design_') ||
-      sourceType.startsWith('streetscape_'))
-  );
+  return Boolean(sourceType && sourceType.startsWith('city_design_'));
 }
 
 function countPropertyCharacters(value: unknown) {
@@ -288,10 +282,10 @@ export function sortChangeRequestsByVoteOrder<T>(
         if (documentOrderDiff !== 0) return documentOrderDiff;
 
         if (leftPosition === null && rightPosition === null) {
-          const leftIsStreetDesign = isStreetDesignChangeRequestRecord(leftCr);
-          const rightIsStreetDesign = isStreetDesignChangeRequestRecord(rightCr);
-          if (leftIsStreetDesign !== rightIsStreetDesign) return leftIsStreetDesign ? 1 : -1;
-          if (leftIsStreetDesign && rightIsStreetDesign) {
+          const leftIsCityDesign = isCityDesignChangeRequestRecord(leftCr);
+          const rightIsCityDesign = isCityDesignChangeRequestRecord(rightCr);
+          if (leftIsCityDesign !== rightIsCityDesign) return leftIsCityDesign ? 1 : -1;
+          if (leftIsCityDesign && rightIsCityDesign) {
             const numberDiff = compareCrNumber(left.item, right.item, options.getChangeRequest);
             if (numberDiff !== 0) return numberDiff;
           }

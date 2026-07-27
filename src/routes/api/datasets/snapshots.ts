@@ -6,6 +6,7 @@ import {
   importGovDataDatasetSnapshot,
 } from '@/server/datasets/providers';
 import { importGenesisDatasetSnapshot } from '@/server/datasets/genesis';
+import { appErrorHttpBody, appErrorHttpBodyFrom } from '@/features/shared/errors/app-error';
 
 const requestSchema = z.discriminatedUnion('provider', [
   z.object({
@@ -31,7 +32,7 @@ export const Route = createFileRoute('/api/datasets/snapshots')({
       POST: async ({ request }) => {
         const session = await getSession(request);
         if (!session?.user) {
-          return Response.json({ error: 'Unauthorized' }, { status: 401 });
+          return Response.json(appErrorHttpBody('permission_denied'), { status: 401 });
         }
 
         try {
@@ -64,7 +65,9 @@ export const Route = createFileRoute('/api/datasets/snapshots')({
         } catch (error) {
           const status = error instanceof z.ZodError ? 400 : 500;
           return Response.json(
-            { error: error instanceof Error ? error.message : 'Dataset snapshot failed' },
+            error instanceof z.ZodError
+              ? appErrorHttpBody('validation_failed')
+              : appErrorHttpBodyFrom(error, 'dataset_operation_failed'),
             { status }
           );
         }

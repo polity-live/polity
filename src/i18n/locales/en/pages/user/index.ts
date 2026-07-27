@@ -141,7 +141,13 @@ export const userPageTranslations = {
   },
   preferences: {
     theme: 'Theme',
-    themeDescription: 'Choose light, dark, or system theme',
+    themeDescription: 'Choose the colors and fonts used throughout Polity',
+    colorMode: 'Color mode',
+    colorModeDescription: 'Choose light, dark, or automatically follow your system',
+    groupTheme: 'Shared by a group',
+    builtinTheme: 'Polity theme',
+    organizationDisclaimer:
+      'Organization themes are only inspired by publicly documented colors and do not imply a partnership.',
     language: 'Language',
     languageDescription: 'Choose your preferred language',
     displayCurrency: 'Display currency',
@@ -155,6 +161,7 @@ export const userPageTranslations = {
   all: {
     title: 'All',
     searchPlaceholder: 'Search amendments, blogs, groups, and statements...',
+    noResults: 'No results found.',
   },
   groups: {
     title: 'Groups',

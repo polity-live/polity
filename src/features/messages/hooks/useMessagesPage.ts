@@ -8,6 +8,7 @@ import { useConversationData } from './useConversationData';
 import { useMessageMutations } from './useMessageMutations';
 import { useConversationFilters } from './useConversationFilters';
 import { useConversationSelection } from './useConversationSelection';
+import { useNewAiConversationIntent } from './useNewAiConversationIntent';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { Conversation } from '../types/message.types';
 import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
@@ -300,6 +301,13 @@ export function useMessagesPage() {
       setConversationFilter('ai');
     }
   };
+
+  useNewAiConversationIntent({
+    enabled: searchParams.new === 'ai',
+    ready: !isLoading && Boolean(user?.id),
+    onConsume: clearComposeIntentFromUrl,
+    onCreate: handleCreateAssistantConversation,
+  });
 
   const handleDeleteConversation = async () => {
     if (conversationToDelete) {

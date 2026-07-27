@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { searchGovDataCatalogue } from '@/server/govdata/catalogue';
+import { appErrorHttpBodyFrom } from '@/features/shared/errors/app-error';
 
 export const Route = createFileRoute('/api/govdata/catalogue')({
   server: {
@@ -11,10 +12,9 @@ export const Route = createFileRoute('/api/govdata/catalogue')({
         try {
           return Response.json(await searchGovDataCatalogue(query, 20));
         } catch (error) {
-          return Response.json(
-            { error: error instanceof Error ? error.message : 'GovData catalogue is unavailable' },
-            { status: 502 }
-          );
+          return Response.json(appErrorHttpBodyFrom(error, 'external_service_failed'), {
+            status: 502,
+          });
         }
       },
     },

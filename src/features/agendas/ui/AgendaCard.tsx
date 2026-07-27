@@ -184,7 +184,11 @@ export function AgendaCard({
 
   return (
     <Card className={cardClassName}>
-      <LinkSurface href={detailsLink} mode="overlay" label={`Open agenda item ${title}`}>
+      <LinkSurface
+        href={detailsLink}
+        mode="overlay"
+        label={t('common.accessibility.openAgendaItem', { title })}
+      >
         {cardContent}
       </LinkSurface>
     </Card>

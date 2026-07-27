@@ -26,10 +26,12 @@ import { Route as AuthedCalendarRouteImport } from './routes/_authed/calendar'
 import { Route as AuthedHomeRouteImport } from './routes/_authed/home'
 import { Route as AuthedMessagesRouteImport } from './routes/_authed/messages'
 import { Route as AuthedNotificationsRouteImport } from './routes/_authed/notifications'
+import { Route as AuthedOnboardingRouteImport } from './routes/_authed/onboarding'
 import { Route as AuthedSearchRouteImport } from './routes/_authed/search'
 import { Route as AuthedTodosRouteImport } from './routes/_authed/todos'
 import { Route as ApiMutateRouteImport } from './routes/api/mutate'
 import { Route as ApiQueryRouteImport } from './routes/api/query'
+import { Route as ApiTutorialRouteImport } from './routes/api/tutorial'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
@@ -77,18 +79,22 @@ import { Route as ApiEurostatProjectionRouteImport } from './routes/api/eurostat
 import { Route as ApiGovdataCatalogueRouteImport } from './routes/api/govdata/catalogue'
 import { Route as ApiGovdataImportRouteImport } from './routes/api/govdata/import'
 import { Route as ApiNewsletterSyncRouteImport } from './routes/api/newsletter/sync'
+import { Route as ApiPushProcessRouteImport } from './routes/api/push/process'
+import { Route as ApiPushSubscriptionRouteImport } from './routes/api/push/subscription'
+import { Route as ApiPushTestRouteImport } from './routes/api/push/test'
 import { Route as ApiResendWebhookRouteImport } from './routes/api/resend/webhook'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
+import { Route as ApiTutorialCleanupRouteImport } from './routes/api/tutorial/cleanup'
 import { Route as DocsGettingStartedSlugRouteImport } from './routes/docs/getting-started/$slug'
 import { Route as DocsGuidesSlugRouteImport } from './routes/docs/guides/$slug'
 import { Route as AuthedAmendmentIdIndexRouteImport } from './routes/_authed/amendment/$id/index'
 import { Route as AuthedAmendmentIdChangeRequestsRouteImport } from './routes/_authed/amendment/$id/change-requests'
+import { Route as AuthedAmendmentIdCitydesignRouteImport } from './routes/_authed/amendment/$id/citydesign'
 import { Route as AuthedAmendmentIdCollaboratorsRouteImport } from './routes/_authed/amendment/$id/collaborators'
 import { Route as AuthedAmendmentIdDiscussionsRouteImport } from './routes/_authed/amendment/$id/discussions'
 import { Route as AuthedAmendmentIdNotificationsRouteImport } from './routes/_authed/amendment/$id/notifications'
 import { Route as AuthedAmendmentIdProcessRouteImport } from './routes/_authed/amendment/$id/process'
 import { Route as AuthedAmendmentIdSettingsRouteImport } from './routes/_authed/amendment/$id/settings'
-import { Route as AuthedAmendmentIdStreetscapeRouteImport } from './routes/_authed/amendment/$id/streetscape'
 import { Route as AuthedAmendmentIdTextRouteImport } from './routes/_authed/amendment/$id/text'
 import { Route as AuthedBlogIdIndexRouteImport } from './routes/_authed/blog/$id/index'
 import { Route as AuthedBlogIdEditRouteImport } from './routes/_authed/blog/$id/edit'
@@ -126,6 +132,7 @@ import { Route as AuthedUserIdSubscriptionsRouteImport } from './routes/_authed/
 import { Route as ApiDatasetsDatasetIdDetailsRouteImport } from './routes/api/datasets/$datasetId/details'
 import { Route as ApiDatasetsSnapshotIdProjectionRouteImport } from './routes/api/datasets/$snapshotId/projection'
 import { Route as ApiDatasetsSnapshotIdValuesRouteImport } from './routes/api/datasets/$snapshotId/values'
+import { Route as ApiPushTestJobIdRouteImport } from './routes/api/push/test/$jobId'
 import { Route as AuthedEventIdAgendaIndexRouteImport } from './routes/_authed/event/$id/agenda/index'
 import { Route as AuthedEventIdAgendaAgendaItemIdRouteImport } from './routes/_authed/event/$id/agenda/$agendaItemId'
 import { Route as AuthedGroupIdBlogIndexRouteImport } from './routes/_authed/group/$id/blog/index'
@@ -227,6 +234,11 @@ const AuthedNotificationsRoute = AuthedNotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedOnboardingRoute = AuthedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedSearchRoute = AuthedSearchRouteImport.update({
   id: '/search',
   path: '/search',
@@ -245,6 +257,11 @@ const ApiMutateRoute = ApiMutateRouteImport.update({
 const ApiQueryRoute = ApiQueryRouteImport.update({
   id: '/api/query',
   path: '/api/query',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTutorialRoute = ApiTutorialRouteImport.update({
+  id: '/api/tutorial',
+  path: '/api/tutorial',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthIndexRoute = AuthIndexRouteImport.update({
@@ -484,6 +501,21 @@ const ApiNewsletterSyncRoute = ApiNewsletterSyncRouteImport.update({
   path: '/api/newsletter/sync',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPushProcessRoute = ApiPushProcessRouteImport.update({
+  id: '/api/push/process',
+  path: '/api/push/process',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPushSubscriptionRoute = ApiPushSubscriptionRouteImport.update({
+  id: '/api/push/subscription',
+  path: '/api/push/subscription',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPushTestRoute = ApiPushTestRouteImport.update({
+  id: '/api/push/test',
+  path: '/api/push/test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiResendWebhookRoute = ApiResendWebhookRouteImport.update({
   id: '/api/resend/webhook',
   path: '/api/resend/webhook',
@@ -493,6 +525,11 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTutorialCleanupRoute = ApiTutorialCleanupRouteImport.update({
+  id: '/cleanup',
+  path: '/cleanup',
+  getParentRoute: () => ApiTutorialRoute,
 } as any)
 const DocsGettingStartedSlugRoute = DocsGettingStartedSlugRouteImport.update({
   id: '/getting-started/$slug',
@@ -513,6 +550,12 @@ const AuthedAmendmentIdChangeRequestsRoute =
   AuthedAmendmentIdChangeRequestsRouteImport.update({
     id: '/change-requests',
     path: '/change-requests',
+    getParentRoute: () => AuthedAmendmentIdRoute,
+  } as any)
+const AuthedAmendmentIdCitydesignRoute =
+  AuthedAmendmentIdCitydesignRouteImport.update({
+    id: '/citydesign',
+    path: '/citydesign',
     getParentRoute: () => AuthedAmendmentIdRoute,
   } as any)
 const AuthedAmendmentIdCollaboratorsRoute =
@@ -543,12 +586,6 @@ const AuthedAmendmentIdSettingsRoute =
   AuthedAmendmentIdSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
-    getParentRoute: () => AuthedAmendmentIdRoute,
-  } as any)
-const AuthedAmendmentIdStreetscapeRoute =
-  AuthedAmendmentIdStreetscapeRouteImport.update({
-    id: '/streetscape',
-    path: '/streetscape',
     getParentRoute: () => AuthedAmendmentIdRoute,
   } as any)
 const AuthedAmendmentIdTextRoute = AuthedAmendmentIdTextRouteImport.update({
@@ -749,6 +786,11 @@ const ApiDatasetsSnapshotIdValuesRoute =
     path: '/api/datasets/$snapshotId/values',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPushTestJobIdRoute = ApiPushTestJobIdRouteImport.update({
+  id: '/$jobId',
+  path: '/$jobId',
+  getParentRoute: () => ApiPushTestRoute,
+} as any)
 const AuthedEventIdAgendaIndexRoute =
   AuthedEventIdAgendaIndexRouteImport.update({
     id: '/',
@@ -860,10 +902,12 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthedHomeRoute
   '/messages': typeof AuthedMessagesRoute
   '/notifications': typeof AuthedNotificationsRoute
+  '/onboarding': typeof AuthedOnboardingRoute
   '/search': typeof AuthedSearchRoute
   '/todos': typeof AuthedTodosRouteWithChildren
   '/api/mutate': typeof ApiMutateRoute
   '/api/query': typeof ApiQueryRoute
+  '/api/tutorial': typeof ApiTutorialRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -910,18 +954,22 @@ export interface FileRoutesByFullPath {
   '/api/govdata/catalogue': typeof ApiGovdataCatalogueRoute
   '/api/govdata/import': typeof ApiGovdataImportRoute
   '/api/newsletter/sync': typeof ApiNewsletterSyncRoute
+  '/api/push/process': typeof ApiPushProcessRoute
+  '/api/push/subscription': typeof ApiPushSubscriptionRoute
+  '/api/push/test': typeof ApiPushTestRouteWithChildren
   '/api/resend/webhook': typeof ApiResendWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/tutorial/cleanup': typeof ApiTutorialCleanupRoute
   '/docs/getting-started/$slug': typeof DocsGettingStartedSlugRoute
   '/docs/guides/$slug': typeof DocsGuidesSlugRoute
   '/create/': typeof AuthedCreateIndexRoute
   '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
+  '/amendment/$id/citydesign': typeof AuthedAmendmentIdCitydesignRoute
   '/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
   '/amendment/$id/discussions': typeof AuthedAmendmentIdDiscussionsRoute
   '/amendment/$id/notifications': typeof AuthedAmendmentIdNotificationsRoute
   '/amendment/$id/process': typeof AuthedAmendmentIdProcessRoute
   '/amendment/$id/settings': typeof AuthedAmendmentIdSettingsRoute
-  '/amendment/$id/streetscape': typeof AuthedAmendmentIdStreetscapeRoute
   '/amendment/$id/text': typeof AuthedAmendmentIdTextRoute
   '/blog/$id/edit': typeof AuthedBlogIdEditRoute
   '/blog/$id/notifications': typeof AuthedBlogIdNotificationsRoute
@@ -955,6 +1003,7 @@ export interface FileRoutesByFullPath {
   '/api/datasets/$datasetId/details': typeof ApiDatasetsDatasetIdDetailsRoute
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
+  '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
   '/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id/': typeof AuthedBlogIdIndexRoute
   '/event/$id/': typeof AuthedEventIdIndexRoute
@@ -992,10 +1041,12 @@ export interface FileRoutesByTo {
   '/home': typeof AuthedHomeRoute
   '/messages': typeof AuthedMessagesRoute
   '/notifications': typeof AuthedNotificationsRoute
+  '/onboarding': typeof AuthedOnboardingRoute
   '/search': typeof AuthedSearchRoute
   '/todos': typeof AuthedTodosRouteWithChildren
   '/api/mutate': typeof ApiMutateRoute
   '/api/query': typeof ApiQueryRoute
+  '/api/tutorial': typeof ApiTutorialRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -1037,18 +1088,22 @@ export interface FileRoutesByTo {
   '/api/govdata/catalogue': typeof ApiGovdataCatalogueRoute
   '/api/govdata/import': typeof ApiGovdataImportRoute
   '/api/newsletter/sync': typeof ApiNewsletterSyncRoute
+  '/api/push/process': typeof ApiPushProcessRoute
+  '/api/push/subscription': typeof ApiPushSubscriptionRoute
+  '/api/push/test': typeof ApiPushTestRouteWithChildren
   '/api/resend/webhook': typeof ApiResendWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/tutorial/cleanup': typeof ApiTutorialCleanupRoute
   '/docs/getting-started/$slug': typeof DocsGettingStartedSlugRoute
   '/docs/guides/$slug': typeof DocsGuidesSlugRoute
   '/create': typeof AuthedCreateIndexRoute
   '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
+  '/amendment/$id/citydesign': typeof AuthedAmendmentIdCitydesignRoute
   '/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
   '/amendment/$id/discussions': typeof AuthedAmendmentIdDiscussionsRoute
   '/amendment/$id/notifications': typeof AuthedAmendmentIdNotificationsRoute
   '/amendment/$id/process': typeof AuthedAmendmentIdProcessRoute
   '/amendment/$id/settings': typeof AuthedAmendmentIdSettingsRoute
-  '/amendment/$id/streetscape': typeof AuthedAmendmentIdStreetscapeRoute
   '/amendment/$id/text': typeof AuthedAmendmentIdTextRoute
   '/blog/$id/edit': typeof AuthedBlogIdEditRoute
   '/blog/$id/notifications': typeof AuthedBlogIdNotificationsRoute
@@ -1079,6 +1134,7 @@ export interface FileRoutesByTo {
   '/api/datasets/$datasetId/details': typeof ApiDatasetsDatasetIdDetailsRoute
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
+  '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
   '/amendment/$id': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id': typeof AuthedBlogIdIndexRoute
   '/event/$id': typeof AuthedEventIdIndexRoute
@@ -1118,10 +1174,12 @@ export interface FileRoutesById {
   '/_authed/home': typeof AuthedHomeRoute
   '/_authed/messages': typeof AuthedMessagesRoute
   '/_authed/notifications': typeof AuthedNotificationsRoute
+  '/_authed/onboarding': typeof AuthedOnboardingRoute
   '/_authed/search': typeof AuthedSearchRoute
   '/_authed/todos': typeof AuthedTodosRouteWithChildren
   '/api/mutate': typeof ApiMutateRoute
   '/api/query': typeof ApiQueryRoute
+  '/api/tutorial': typeof ApiTutorialRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -1168,18 +1226,22 @@ export interface FileRoutesById {
   '/api/govdata/catalogue': typeof ApiGovdataCatalogueRoute
   '/api/govdata/import': typeof ApiGovdataImportRoute
   '/api/newsletter/sync': typeof ApiNewsletterSyncRoute
+  '/api/push/process': typeof ApiPushProcessRoute
+  '/api/push/subscription': typeof ApiPushSubscriptionRoute
+  '/api/push/test': typeof ApiPushTestRouteWithChildren
   '/api/resend/webhook': typeof ApiResendWebhookRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/tutorial/cleanup': typeof ApiTutorialCleanupRoute
   '/docs/getting-started/$slug': typeof DocsGettingStartedSlugRoute
   '/docs/guides/$slug': typeof DocsGuidesSlugRoute
   '/_authed/create/': typeof AuthedCreateIndexRoute
   '/_authed/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
+  '/_authed/amendment/$id/citydesign': typeof AuthedAmendmentIdCitydesignRoute
   '/_authed/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
   '/_authed/amendment/$id/discussions': typeof AuthedAmendmentIdDiscussionsRoute
   '/_authed/amendment/$id/notifications': typeof AuthedAmendmentIdNotificationsRoute
   '/_authed/amendment/$id/process': typeof AuthedAmendmentIdProcessRoute
   '/_authed/amendment/$id/settings': typeof AuthedAmendmentIdSettingsRoute
-  '/_authed/amendment/$id/streetscape': typeof AuthedAmendmentIdStreetscapeRoute
   '/_authed/amendment/$id/text': typeof AuthedAmendmentIdTextRoute
   '/_authed/blog/$id/edit': typeof AuthedBlogIdEditRoute
   '/_authed/blog/$id/notifications': typeof AuthedBlogIdNotificationsRoute
@@ -1213,6 +1275,7 @@ export interface FileRoutesById {
   '/api/datasets/$datasetId/details': typeof ApiDatasetsDatasetIdDetailsRoute
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
+  '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
   '/_authed/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/_authed/blog/$id/': typeof AuthedBlogIdIndexRoute
   '/_authed/event/$id/': typeof AuthedEventIdIndexRoute
@@ -1254,10 +1317,12 @@ export interface FileRouteTypes {
     | '/home'
     | '/messages'
     | '/notifications'
+    | '/onboarding'
     | '/search'
     | '/todos'
     | '/api/mutate'
     | '/api/query'
+    | '/api/tutorial'
     | '/auth/callback'
     | '/auth/forgot-password'
     | '/auth/reset-password'
@@ -1304,18 +1369,22 @@ export interface FileRouteTypes {
     | '/api/govdata/catalogue'
     | '/api/govdata/import'
     | '/api/newsletter/sync'
+    | '/api/push/process'
+    | '/api/push/subscription'
+    | '/api/push/test'
     | '/api/resend/webhook'
     | '/api/stripe/webhook'
+    | '/api/tutorial/cleanup'
     | '/docs/getting-started/$slug'
     | '/docs/guides/$slug'
     | '/create/'
     | '/amendment/$id/change-requests'
+    | '/amendment/$id/citydesign'
     | '/amendment/$id/collaborators'
     | '/amendment/$id/discussions'
     | '/amendment/$id/notifications'
     | '/amendment/$id/process'
     | '/amendment/$id/settings'
-    | '/amendment/$id/streetscape'
     | '/amendment/$id/text'
     | '/blog/$id/edit'
     | '/blog/$id/notifications'
@@ -1349,6 +1418,7 @@ export interface FileRouteTypes {
     | '/api/datasets/$datasetId/details'
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
+    | '/api/push/test/$jobId'
     | '/amendment/$id/'
     | '/blog/$id/'
     | '/event/$id/'
@@ -1386,10 +1456,12 @@ export interface FileRouteTypes {
     | '/home'
     | '/messages'
     | '/notifications'
+    | '/onboarding'
     | '/search'
     | '/todos'
     | '/api/mutate'
     | '/api/query'
+    | '/api/tutorial'
     | '/auth/callback'
     | '/auth/forgot-password'
     | '/auth/reset-password'
@@ -1431,18 +1503,22 @@ export interface FileRouteTypes {
     | '/api/govdata/catalogue'
     | '/api/govdata/import'
     | '/api/newsletter/sync'
+    | '/api/push/process'
+    | '/api/push/subscription'
+    | '/api/push/test'
     | '/api/resend/webhook'
     | '/api/stripe/webhook'
+    | '/api/tutorial/cleanup'
     | '/docs/getting-started/$slug'
     | '/docs/guides/$slug'
     | '/create'
     | '/amendment/$id/change-requests'
+    | '/amendment/$id/citydesign'
     | '/amendment/$id/collaborators'
     | '/amendment/$id/discussions'
     | '/amendment/$id/notifications'
     | '/amendment/$id/process'
     | '/amendment/$id/settings'
-    | '/amendment/$id/streetscape'
     | '/amendment/$id/text'
     | '/blog/$id/edit'
     | '/blog/$id/notifications'
@@ -1473,6 +1549,7 @@ export interface FileRouteTypes {
     | '/api/datasets/$datasetId/details'
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
+    | '/api/push/test/$jobId'
     | '/amendment/$id'
     | '/blog/$id'
     | '/event/$id'
@@ -1511,10 +1588,12 @@ export interface FileRouteTypes {
     | '/_authed/home'
     | '/_authed/messages'
     | '/_authed/notifications'
+    | '/_authed/onboarding'
     | '/_authed/search'
     | '/_authed/todos'
     | '/api/mutate'
     | '/api/query'
+    | '/api/tutorial'
     | '/auth/callback'
     | '/auth/forgot-password'
     | '/auth/reset-password'
@@ -1561,18 +1640,22 @@ export interface FileRouteTypes {
     | '/api/govdata/catalogue'
     | '/api/govdata/import'
     | '/api/newsletter/sync'
+    | '/api/push/process'
+    | '/api/push/subscription'
+    | '/api/push/test'
     | '/api/resend/webhook'
     | '/api/stripe/webhook'
+    | '/api/tutorial/cleanup'
     | '/docs/getting-started/$slug'
     | '/docs/guides/$slug'
     | '/_authed/create/'
     | '/_authed/amendment/$id/change-requests'
+    | '/_authed/amendment/$id/citydesign'
     | '/_authed/amendment/$id/collaborators'
     | '/_authed/amendment/$id/discussions'
     | '/_authed/amendment/$id/notifications'
     | '/_authed/amendment/$id/process'
     | '/_authed/amendment/$id/settings'
-    | '/_authed/amendment/$id/streetscape'
     | '/_authed/amendment/$id/text'
     | '/_authed/blog/$id/edit'
     | '/_authed/blog/$id/notifications'
@@ -1606,6 +1689,7 @@ export interface FileRouteTypes {
     | '/api/datasets/$datasetId/details'
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
+    | '/api/push/test/$jobId'
     | '/_authed/amendment/$id/'
     | '/_authed/blog/$id/'
     | '/_authed/event/$id/'
@@ -1645,6 +1729,7 @@ export interface RootRouteChildren {
   UnauthorizedRoute: typeof UnauthorizedRoute
   ApiMutateRoute: typeof ApiMutateRoute
   ApiQueryRoute: typeof ApiQueryRoute
+  ApiTutorialRoute: typeof ApiTutorialRouteWithChildren
   ApiAiCatalogRoute: typeof ApiAiCatalogRoute
   ApiAiChatRoute: typeof ApiAiChatRoute
   ApiAiCommandRoute: typeof ApiAiCommandRoute
@@ -1665,6 +1750,9 @@ export interface RootRouteChildren {
   ApiGovdataCatalogueRoute: typeof ApiGovdataCatalogueRoute
   ApiGovdataImportRoute: typeof ApiGovdataImportRoute
   ApiNewsletterSyncRoute: typeof ApiNewsletterSyncRoute
+  ApiPushProcessRoute: typeof ApiPushProcessRoute
+  ApiPushSubscriptionRoute: typeof ApiPushSubscriptionRoute
+  ApiPushTestRoute: typeof ApiPushTestRouteWithChildren
   ApiResendWebhookRoute: typeof ApiResendWebhookRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   ApiDatasetsDatasetIdDetailsRoute: typeof ApiDatasetsDatasetIdDetailsRoute
@@ -1793,6 +1881,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedNotificationsRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/onboarding': {
+      id: '/_authed/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthedOnboardingRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/search': {
       id: '/_authed/search'
       path: '/search'
@@ -1819,6 +1914,13 @@ declare module '@tanstack/react-router' {
       path: '/api/query'
       fullPath: '/api/query'
       preLoaderRoute: typeof ApiQueryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/tutorial': {
+      id: '/api/tutorial'
+      path: '/api/tutorial'
+      fullPath: '/api/tutorial'
+      preLoaderRoute: typeof ApiTutorialRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/': {
@@ -2150,6 +2252,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiNewsletterSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/push/process': {
+      id: '/api/push/process'
+      path: '/api/push/process'
+      fullPath: '/api/push/process'
+      preLoaderRoute: typeof ApiPushProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/push/subscription': {
+      id: '/api/push/subscription'
+      path: '/api/push/subscription'
+      fullPath: '/api/push/subscription'
+      preLoaderRoute: typeof ApiPushSubscriptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/push/test': {
+      id: '/api/push/test'
+      path: '/api/push/test'
+      fullPath: '/api/push/test'
+      preLoaderRoute: typeof ApiPushTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/resend/webhook': {
       id: '/api/resend/webhook'
       path: '/api/resend/webhook'
@@ -2163,6 +2286,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/stripe/webhook'
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/tutorial/cleanup': {
+      id: '/api/tutorial/cleanup'
+      path: '/cleanup'
+      fullPath: '/api/tutorial/cleanup'
+      preLoaderRoute: typeof ApiTutorialCleanupRouteImport
+      parentRoute: typeof ApiTutorialRoute
     }
     '/docs/getting-started/$slug': {
       id: '/docs/getting-started/$slug'
@@ -2190,6 +2320,13 @@ declare module '@tanstack/react-router' {
       path: '/change-requests'
       fullPath: '/amendment/$id/change-requests'
       preLoaderRoute: typeof AuthedAmendmentIdChangeRequestsRouteImport
+      parentRoute: typeof AuthedAmendmentIdRoute
+    }
+    '/_authed/amendment/$id/citydesign': {
+      id: '/_authed/amendment/$id/citydesign'
+      path: '/citydesign'
+      fullPath: '/amendment/$id/citydesign'
+      preLoaderRoute: typeof AuthedAmendmentIdCitydesignRouteImport
       parentRoute: typeof AuthedAmendmentIdRoute
     }
     '/_authed/amendment/$id/collaborators': {
@@ -2225,13 +2362,6 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/amendment/$id/settings'
       preLoaderRoute: typeof AuthedAmendmentIdSettingsRouteImport
-      parentRoute: typeof AuthedAmendmentIdRoute
-    }
-    '/_authed/amendment/$id/streetscape': {
-      id: '/_authed/amendment/$id/streetscape'
-      path: '/streetscape'
-      fullPath: '/amendment/$id/streetscape'
-      preLoaderRoute: typeof AuthedAmendmentIdStreetscapeRouteImport
       parentRoute: typeof AuthedAmendmentIdRoute
     }
     '/_authed/amendment/$id/text': {
@@ -2493,6 +2623,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDatasetsSnapshotIdValuesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/push/test/$jobId': {
+      id: '/api/push/test/$jobId'
+      path: '/$jobId'
+      fullPath: '/api/push/test/$jobId'
+      preLoaderRoute: typeof ApiPushTestJobIdRouteImport
+      parentRoute: typeof ApiPushTestRoute
+    }
     '/_authed/event/$id/agenda/': {
       id: '/_authed/event/$id/agenda/'
       path: '/'
@@ -2622,24 +2759,24 @@ const AuthedTodosRouteWithChildren = AuthedTodosRoute._addFileChildren(
 
 interface AuthedAmendmentIdRouteChildren {
   AuthedAmendmentIdChangeRequestsRoute: typeof AuthedAmendmentIdChangeRequestsRoute
+  AuthedAmendmentIdCitydesignRoute: typeof AuthedAmendmentIdCitydesignRoute
   AuthedAmendmentIdCollaboratorsRoute: typeof AuthedAmendmentIdCollaboratorsRoute
   AuthedAmendmentIdDiscussionsRoute: typeof AuthedAmendmentIdDiscussionsRoute
   AuthedAmendmentIdNotificationsRoute: typeof AuthedAmendmentIdNotificationsRoute
   AuthedAmendmentIdProcessRoute: typeof AuthedAmendmentIdProcessRoute
   AuthedAmendmentIdSettingsRoute: typeof AuthedAmendmentIdSettingsRoute
-  AuthedAmendmentIdStreetscapeRoute: typeof AuthedAmendmentIdStreetscapeRoute
   AuthedAmendmentIdTextRoute: typeof AuthedAmendmentIdTextRoute
   AuthedAmendmentIdIndexRoute: typeof AuthedAmendmentIdIndexRoute
 }
 
 const AuthedAmendmentIdRouteChildren: AuthedAmendmentIdRouteChildren = {
   AuthedAmendmentIdChangeRequestsRoute: AuthedAmendmentIdChangeRequestsRoute,
+  AuthedAmendmentIdCitydesignRoute: AuthedAmendmentIdCitydesignRoute,
   AuthedAmendmentIdCollaboratorsRoute: AuthedAmendmentIdCollaboratorsRoute,
   AuthedAmendmentIdDiscussionsRoute: AuthedAmendmentIdDiscussionsRoute,
   AuthedAmendmentIdNotificationsRoute: AuthedAmendmentIdNotificationsRoute,
   AuthedAmendmentIdProcessRoute: AuthedAmendmentIdProcessRoute,
   AuthedAmendmentIdSettingsRoute: AuthedAmendmentIdSettingsRoute,
-  AuthedAmendmentIdStreetscapeRoute: AuthedAmendmentIdStreetscapeRoute,
   AuthedAmendmentIdTextRoute: AuthedAmendmentIdTextRoute,
   AuthedAmendmentIdIndexRoute: AuthedAmendmentIdIndexRoute,
 }
@@ -2861,6 +2998,7 @@ interface AuthedRouteChildren {
   AuthedHomeRoute: typeof AuthedHomeRoute
   AuthedMessagesRoute: typeof AuthedMessagesRoute
   AuthedNotificationsRoute: typeof AuthedNotificationsRoute
+  AuthedOnboardingRoute: typeof AuthedOnboardingRoute
   AuthedSearchRoute: typeof AuthedSearchRoute
   AuthedTodosRoute: typeof AuthedTodosRouteWithChildren
   AuthedAmendmentIdRoute: typeof AuthedAmendmentIdRouteWithChildren
@@ -2886,6 +3024,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedHomeRoute: AuthedHomeRoute,
   AuthedMessagesRoute: AuthedMessagesRoute,
   AuthedNotificationsRoute: AuthedNotificationsRoute,
+  AuthedOnboardingRoute: AuthedOnboardingRoute,
   AuthedSearchRoute: AuthedSearchRoute,
   AuthedTodosRoute: AuthedTodosRouteWithChildren,
   AuthedAmendmentIdRoute: AuthedAmendmentIdRouteWithChildren,
@@ -2949,6 +3088,30 @@ const DocsRouteChildren: DocsRouteChildren = {
 
 const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
 
+interface ApiTutorialRouteChildren {
+  ApiTutorialCleanupRoute: typeof ApiTutorialCleanupRoute
+}
+
+const ApiTutorialRouteChildren: ApiTutorialRouteChildren = {
+  ApiTutorialCleanupRoute: ApiTutorialCleanupRoute,
+}
+
+const ApiTutorialRouteWithChildren = ApiTutorialRoute._addFileChildren(
+  ApiTutorialRouteChildren,
+)
+
+interface ApiPushTestRouteChildren {
+  ApiPushTestJobIdRoute: typeof ApiPushTestJobIdRoute
+}
+
+const ApiPushTestRouteChildren: ApiPushTestRouteChildren = {
+  ApiPushTestJobIdRoute: ApiPushTestJobIdRoute,
+}
+
+const ApiPushTestRouteWithChildren = ApiPushTestRoute._addFileChildren(
+  ApiPushTestRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
@@ -2965,6 +3128,7 @@ const rootRouteChildren: RootRouteChildren = {
   UnauthorizedRoute: UnauthorizedRoute,
   ApiMutateRoute: ApiMutateRoute,
   ApiQueryRoute: ApiQueryRoute,
+  ApiTutorialRoute: ApiTutorialRouteWithChildren,
   ApiAiCatalogRoute: ApiAiCatalogRoute,
   ApiAiChatRoute: ApiAiChatRoute,
   ApiAiCommandRoute: ApiAiCommandRoute,
@@ -2985,6 +3149,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiGovdataCatalogueRoute: ApiGovdataCatalogueRoute,
   ApiGovdataImportRoute: ApiGovdataImportRoute,
   ApiNewsletterSyncRoute: ApiNewsletterSyncRoute,
+  ApiPushProcessRoute: ApiPushProcessRoute,
+  ApiPushSubscriptionRoute: ApiPushSubscriptionRoute,
+  ApiPushTestRoute: ApiPushTestRouteWithChildren,
   ApiResendWebhookRoute: ApiResendWebhookRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   ApiDatasetsDatasetIdDetailsRoute: ApiDatasetsDatasetIdDetailsRoute,

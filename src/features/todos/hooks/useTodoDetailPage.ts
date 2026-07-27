@@ -9,6 +9,7 @@ import { useTodoDiscussion } from './useTodoDiscussion';
 import { usePermissions } from '@/zero/rbac';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
+import { reportAppTutorialAction } from '@/features/app-tutorial/events';
 
 export function useTodoDetailPage(todoId: string) {
   const [isEditing, setIsEditing] = useState(false);
@@ -71,6 +72,12 @@ export function useTodoDetailPage(todoId: string) {
 
     const result = await updateTodo(todo.id, updates);
     if (result.success) {
+      if (todo.tutorial_run_id && formData.status === 'completed') {
+        reportAppTutorialAction({ type: 'mutation', event: 'todo.completed' });
+      }
+      if (todo.tutorial_run_id && formData.status === 'in_progress') {
+        reportAppTutorialAction({ type: 'mutation', event: 'todo.in-progress' });
+      }
       setIsEditing(false);
     }
     setIsSaving(false);

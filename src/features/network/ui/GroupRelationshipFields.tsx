@@ -464,14 +464,14 @@ export function GroupRelationshipMembershipModeDescription({
 
   const sourceTag = direction === 'partner_members_to_current' ? selectedTag : currentTag;
   const targetTag = direction === 'partner_members_to_current' ? currentTag : selectedTag;
-  const selectedRoleLabel = t('common.network.selectedRole', 'selected role');
+  const selectedRoleLabel = t('common.network.selectedRole');
 
   if (membershipMode === 'all_members') {
     return (
       <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
-        <span>Add all active members of</span>
+        <span>{t('common.network.addAllActiveMembersOf')}</span>
         {sourceTag}
-        <span>to</span>
+        <span>{t('common.network.directionTo')}</span>
         {targetTag}
         <span>.</span>
       </div>
@@ -481,9 +481,9 @@ export function GroupRelationshipMembershipModeDescription({
   if (membershipMode === 'role_members') {
     return (
       <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
-        <span>Add only</span>
+        <span>{t('common.network.addOnlyMembersOf')}</span>
         {sourceTag}
-        <span>members with role</span>
+        <span>{t('common.network.membersWithRole')}</span>
         <RoleTag
           roleId={requiredSourceRoleId}
           roleName={requiredSourceRoleName ?? null}
@@ -491,7 +491,7 @@ export function GroupRelationshipMembershipModeDescription({
         >
           {requiredSourceRoleName ?? selectedRoleLabel}
         </RoleTag>
-        <span>to</span>
+        <span>{t('common.network.directionTo')}</span>
         {targetTag}
         <span>.</span>
       </div>
@@ -523,7 +523,7 @@ export function GroupRelationshipMembershipModeDescription({
 
   return (
     <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
-      <span>Do not add members automatically.</span>
+      <span>{t('common.network.doNotAddMembersAutomatically')}</span>
     </div>
   );
 }
@@ -585,7 +585,7 @@ export function SiblingMembershipModeDescription({
         </span>
         {selectedTag}
         <span className="text-xs">
-          {t('common.network.siblingMembershipExplanationOpenBetweenGroups', 'koennen')}
+          {t('common.network.siblingMembershipExplanationOpenBetweenGroups', 'können')}
         </span>
         {currentTag}
         <span className="text-xs">
@@ -678,7 +678,7 @@ function RelationshipTypeOptionContent({
     return (
       <div className="flex flex-wrap items-center gap-1.5 leading-relaxed">
         {currentTag}
-        <span className="text-xs">is the parent group of</span>
+        <span className="text-xs">{t('common.network.isParentGroupOf')}</span>
         {selectedTag}
       </div>
     );
@@ -688,7 +688,7 @@ function RelationshipTypeOptionContent({
     return (
       <div className="flex flex-wrap items-center gap-1.5 leading-relaxed">
         {currentTag}
-        <span className="text-xs">is the child group of</span>
+        <span className="text-xs">{t('common.network.isChildGroupOf')}</span>
         {selectedTag}
       </div>
     );
@@ -698,7 +698,7 @@ function RelationshipTypeOptionContent({
   return (
     <div className="flex flex-wrap items-center gap-1.5 leading-relaxed">
       {currentTag}
-      <span className="text-xs">is connected with</span>
+      <span className="text-xs">{t('common.network.isConnectedWith')}</span>
       {selectedTag}
       <span className="text-xs">
         {siblingType ? `as ${siblingType.toLowerCase()} partner groups` : 'as partner groups'}
@@ -846,6 +846,7 @@ export function GroupRelationshipTypeSummary({
 
 interface GroupRelationshipRightsSelectorProps {
   label: string;
+  tutorialAnchor?: string;
   selectedRights: Set<GroupRelationshipRight>;
   onToggleRight: (right: GroupRelationshipRight) => void;
   helperText?: string;
@@ -1209,6 +1210,7 @@ export function GroupRelationshipRightsSummary({
 
 export function GroupRelationshipRightsSelector({
   label,
+  tutorialAnchor,
   selectedRights,
   onToggleRight,
   helperText,
@@ -1228,7 +1230,7 @@ export function GroupRelationshipRightsSelector({
   const sentenceSelectedGroupName = selectedGroupName ?? '';
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-3" data-tutorial-anchor={tutorialAnchor}>
       <div className="space-y-1">
         <FormControlLabel>{label}</FormControlLabel>
         {helperText ? <p className="text-muted-foreground text-sm">{helperText}</p> : null}
@@ -1322,7 +1324,10 @@ export function GroupRelationshipRightsSelector({
                         </span>
                       </div>
                     </FormControlSelectTrigger>
-                    <FormControlSelectContent>
+                    <FormControlSelectContent
+                      data-tutorial-overlay-allowed
+                      className="z-[2147483150]"
+                    >
                       {directionOptions.map(directionOption => (
                         <FormControlSelectItem
                           key={directionOption.value}

@@ -46,7 +46,7 @@ describe('unauthenticated entity secondary navigation', () => {
       'text',
       'changeRequests',
       'discussions',
-      'streetscape',
+      'city-design',
       'process',
     ]);
     expect(items?.map(item => item.href)).toEqual([
@@ -54,7 +54,7 @@ describe('unauthenticated entity secondary navigation', () => {
       '/amendment/amendment-1/text',
       '/amendment/amendment-1/change-requests',
       '/amendment/amendment-1/discussions',
-      '/amendment/amendment-1/streetscape',
+      '/amendment/amendment-1/citydesign',
       '/amendment/amendment-1/process',
     ]);
   });

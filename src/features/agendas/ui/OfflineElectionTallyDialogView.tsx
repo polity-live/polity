@@ -114,7 +114,7 @@ export function OfflineElectionTallyDialogView({
                         phase === 'final' && 'animate-pulse ring-2 ring-current/20'
                       )}
                     >
-                      {phase}
+                      {translateText(`features.agendas.offlineTally.phases.${phase}`)}
                     </StatusBadge>
                     <span>{translateText('generated.inline.0013_tally_e086c480')}</span>
                   </span>

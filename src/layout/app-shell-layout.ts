@@ -28,7 +28,7 @@ export function isLandingPath(pathname: string): boolean {
 }
 
 export function getAuthenticatedPageFrame(pathname: string): AppShellPageFrame {
-  if (pathname.startsWith('/docs')) {
+  if (pathname.startsWith('/docs') || pathname === '/onboarding') {
     return 'bare';
   }
 

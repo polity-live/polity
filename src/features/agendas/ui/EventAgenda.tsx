@@ -14,6 +14,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
+import { agendaItemTextMatchesSearch } from '../logic/agendaItemTextSearch';
 import { useAgendaItemForwardingContext } from '@/zero/amendments';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
@@ -76,7 +77,7 @@ import { computeEligibleFinalVoterCount } from '@/features/votes/logic/computeEl
 import { useAgendaArrowNavigation } from '../hooks/useAgendaArrowNavigation';
 import { resolveClosingVoteForAgendaItem } from '../logic/resolveClosingVoteForAgendaItem';
 import { buildOfflineTallyErrorToast, isOfflineTallyPasswordError } from './offlineTallyErrorToast';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { trackServerFinalization, waitForClientApply } from '@/zero/mutate-with-server-check';
 import type { VoteSubmissionContext } from '@/features/shared/ui/voting';
 import { buildAmendmentForwardingPreview } from '@/features/amendments/logic/amendmentForwardingPreview';
 import {
@@ -92,7 +93,7 @@ interface EventAgendaProps {
 type EventAgendaItemRow = ReturnType<typeof useAgendaItems>['agendaItems'][number];
 import { EventAgendaView } from './EventAgendaView';
 export function EventAgenda({ eventId }: EventAgendaProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { user } = useAuth();
   const { currentUser } = useUserState();
   const navigate = useNavigate();
@@ -510,6 +511,51 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   );
   const streamForwardingContext = useAgendaItemForwardingContext(streamAgendaItem?.id);
   const crVoting = useAgendaItemCRVoting(streamAgendaItem?.id ?? '', user?.id);
+  const votingRepairAttemptedAgendaIdsRef = useRef(new Set<string>());
+  useEffect(() => {
+    const agendaItemId = streamAgendaItem?.id;
+    const amendmentId = streamAgendaItem?.amendment_id;
+    const currentStepRun = streamForwardingContext.currentStepRun as
+      { step_kind?: string | null; decision_status?: string | null } | null | undefined;
+
+    if (
+      !agendaItemId ||
+      !amendmentId ||
+      streamAgendaItem.forwarding_status !== 'forward_confirmed' ||
+      !canManageAgendaVoteSequence ||
+      crVoting.closingVoteItem ||
+      streamVariantVote ||
+      currentStepRun?.step_kind === 'merge_vote' ||
+      (currentStepRun?.decision_status && currentStepRun.decision_status !== 'forward_confirmed') ||
+      votingRepairAttemptedAgendaIdsRef.current.has(agendaItemId)
+    ) {
+      return;
+    }
+
+    votingRepairAttemptedAgendaIdsRef.current.add(agendaItemId);
+    const repairResult = initializeChangeRequestVoting(
+      {
+        amendment_id: amendmentId,
+        agenda_item_id: agendaItemId,
+        start_final_vote_if_no_change_requests: false,
+      },
+      { silent: true }
+    );
+    trackServerFinalization(repairResult, {
+      onError: () => {
+        votingRepairAttemptedAgendaIdsRef.current.delete(agendaItemId);
+      },
+    });
+  }, [
+    canManageAgendaVoteSequence,
+    crVoting.closingVoteItem,
+    initializeChangeRequestVoting,
+    streamAgendaItem?.amendment_id,
+    streamAgendaItem?.forwarding_status,
+    streamAgendaItem?.id,
+    streamForwardingContext.currentStepRun,
+    streamVariantVote,
+  ]);
   const { election: actionBarElection, candidates: actionBarCandidates } = useElectionState({
     agendaItemId: streamAgendaItem?.id,
   });
@@ -564,7 +610,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const namedResultsDialogConfig = useMemo(() => {
     if (namedResultsTarget === 'election' && toolbarElection && namedElectionResults) {
       return {
-        title: toolbarElection.title ?? streamAgendaItem?.title ?? 'Named election',
+        title:
+          toolbarElection.title ??
+          streamAgendaItem?.title ??
+          t('features.events.agenda.namedResults.electionFallbackTitle'),
         description: t(
           'features.events.agenda.namedResults.electionDescription',
           'Named results for the current election.'
@@ -574,7 +623,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     }
     if (namedResultsTarget === 'vote' && streamVote && namedVoteResults) {
       return {
-        title: streamVote.title ?? streamAgendaItem?.title ?? 'Named vote',
+        title:
+          streamVote.title ??
+          streamAgendaItem?.title ??
+          t('features.events.agenda.namedResults.voteFallbackTitle'),
         description: t(
           'features.events.agenda.namedResults.voteDescription',
           'Named results for the current vote.'
@@ -827,7 +879,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       ._placeholderTitle;
     if (placeholderTitle) return placeholderTitle;
     if ((activeCRToolbarItem as { _voteStepKind?: string })._voteStepKind === 'merge_variant') {
-      return activeCRToolbarItem.vote?.title ?? 'Variant final vote';
+      return activeCRToolbarItem.vote?.title ?? t('features.agendas.fallbacks.variantFinalVote');
     }
     if (activeCRToolbarItem.is_closing_vote) {
       return t('features.agendas.crTimeline.acceptAmendment');
@@ -845,9 +897,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     () =>
       (activeCRToolbarItem?.vote?.choices ?? []).map(choice => ({
         id: choice.id,
-        label: choice.label || 'Choice',
+        label: choice.label || t('features.agendas.fallbacks.choice'),
       })),
-    [activeCRToolbarItem?.vote?.choices]
+    [activeCRToolbarItem?.vote?.choices, t]
   );
   const selectedCRDialogPhase = useMemo(() => {
     if (selectedCRPhase === 'final') return 'final' as const;
@@ -1205,12 +1257,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           }
         } catch (error) {
           console.error('Failed to jump to final vote:', error);
-          toast.error(
-            t(
-              'features.agendas.crTimeline.jumpToFinalVoteFailed',
-              'Could not start the final vote.'
-            )
-          );
+          toast.error(t('features.agendas.crTimeline.jumpToFinalVoteFailed'));
         } finally {
           setSequenceVotingLoading(null);
         }
@@ -1240,7 +1287,11 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         if (finalStartableSequenceItem?.id) {
           setSelectedCRToolbarItemId(finalStartableSequenceItem.id);
         }
-        toast.error(error instanceof Error ? error.message : 'Could not start the final vote.');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : t('features.agendas.crTimeline.jumpToFinalVoteFailed')
+        );
       } finally {
         setSequenceVotingLoading(null);
       }
@@ -1552,11 +1603,16 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         topLabelCompact.includes(normalizedSearchQuery) ||
         normalizedTopLabel.includes(normalizedSearchQuery));
 
+    const isTutorialElectionItem = Boolean(event?.tutorial_run_id && item.type === 'election');
     const matchesSearch =
-      loweredSearchQuery.length === 0 ||
-      item.title?.toLowerCase().includes(loweredSearchQuery) ||
-      item.description?.toLowerCase().includes(loweredSearchQuery) ||
-      matchesTopSearch;
+      agendaItemTextMatchesSearch({
+        title: item.title,
+        description: item.description,
+        isTutorialElection: isTutorialElectionItem,
+        tutorialRunId: event?.tutorial_run_id,
+        language,
+        loweredSearchQuery,
+      }) || matchesTopSearch;
 
     const matchesType =
       typeFilter === 'all' ||
@@ -1598,6 +1654,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       virtualizeChangeRequests
       eventId={eventId}
       t={t}
+      language={language}
       user={user}
       navigate={navigate}
       event={event}

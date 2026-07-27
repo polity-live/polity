@@ -5,8 +5,10 @@ import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTodoActions } from '@/zero/todos/useTodoActions.ts';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { reportAppTutorialAction } from '@/features/app-tutorial/events';
 
 import type { Todo, TodoStatus } from '../types/todo.types';
+import { getTodoTutorialAnchor } from '../logic/tutorialTodoAnchor';
 import type { KanbanColumn } from '../ui/kanban-board-view';
 
 interface UseKanbanBoardControllerProps {
@@ -70,6 +72,7 @@ export function useKanbanBoardController({
     if (!canManageTodos || !draggedTodoId) return;
 
     try {
+      const draggedTodo = todos.find(todo => todo.id === draggedTodoId);
       const updates: Parameters<typeof updateTodo>[0] = {
         id: draggedTodoId,
         status,
@@ -77,6 +80,20 @@ export function useKanbanBoardController({
       };
 
       await waitForClientApply(updateTodo(updates));
+      if (
+        status === 'completed' &&
+        draggedTodo &&
+        getTodoTutorialAnchor(draggedTodo) === 'tutorial-network-todo'
+      ) {
+        reportAppTutorialAction({ type: 'drop', event: 'todo.completed' });
+      }
+      if (
+        status === 'in_progress' &&
+        draggedTodo &&
+        getTodoTutorialAnchor(draggedTodo) === 'tutorial-assistant-todo'
+      ) {
+        reportAppTutorialAction({ type: 'mutation', event: 'todo.in-progress' });
+      }
       toast.success(t('features.todos.kanban.statusUpdated'));
     } catch (error) {
       console.error('Failed to update todo:', error);

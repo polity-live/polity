@@ -5,6 +5,7 @@ import {
   toLocalTimestamp,
 } from '@/features/shared/logic/localDateTime';
 import type { CreateEventSearch } from '@/features/create/logic/createEventSearch';
+import { translate } from '@/features/shared/hooks/use-translation';
 
 export interface ProcessTaskScheduleMetadata {
   amendmentId?: string;
@@ -53,15 +54,18 @@ export function getSchedulingWindowDisplayLabel(args: {
   const maxLabel = formatSchedulingBoundary(args.maxStartDate, args.maxStartTime);
 
   if (minLabel && maxLabel) {
-    return `Erlaubter Zeitraum fuer diesen Auftrag: ${minLabel} bis ${maxLabel}.`;
+    return translate('features.amendments.processTaskScheduling.range', {
+      min: minLabel,
+      max: maxLabel,
+    });
   }
 
   if (minLabel) {
-    return `Dieses Event kann fruehestens am ${minLabel} beginnen.`;
+    return translate('features.amendments.processTaskScheduling.earliest', { min: minLabel });
   }
 
   if (maxLabel) {
-    return `Dieses Event muss spaetestens am ${maxLabel} beginnen.`;
+    return translate('features.amendments.processTaskScheduling.latest', { max: maxLabel });
   }
 
   return null;
@@ -147,16 +151,14 @@ export function getSchedulingWindowValidationMessage(args: {
 
   const minStartAt = toLocalTimestamp(args.minStartDate, args.minStartTime);
   if (minStartAt != null && eventStartAt < minStartAt) {
-    return windowLabel ?? 'Dieses Event muss nach dem vorherigen Prozessschritt beginnen.';
+    return windowLabel ?? translate('features.amendments.process.schedulingAfterPrevious');
   }
 
   const maxStartAt =
     toLocalTimestamp(args.maxStartDate, args.maxStartTime) ??
     toLocalEndOfDayTimestamp(args.maxStartDate);
   if (maxStartAt != null && eventStartAt > maxStartAt) {
-    return (
-      windowLabel ?? 'Dieses Event liegt ausserhalb des erlaubten Zeitfensters fuer den Auftrag.'
-    );
+    return windowLabel ?? translate('features.amendments.process.schedulingOutsideTaskWindow');
   }
 
   return null;

@@ -30,8 +30,9 @@ interface GroupEditFormProps {
   groupType?: GroupType;
   hasHierarchyChildren?: boolean | null;
   hasSiblingConnections?: boolean | null;
-  activeTab?: 'general' | 'relationships' | 'contact';
-  onTabChange?: (tab: 'general' | 'relationships' | 'contact') => void;
+  activeTab?: 'general' | 'relationships' | 'contact' | 'themes';
+  onTabChange?: (tab: 'general' | 'relationships' | 'contact' | 'themes') => void;
+  canManageGroup?: boolean;
 }
 
 export function useGroupEditFormController({
@@ -45,6 +46,7 @@ export function useGroupEditFormController({
   hasSiblingConnections,
   activeTab: requestedTab,
   onTabChange,
+  canManageGroup = true,
 }: GroupEditFormProps) {
   const { t } = useTranslation();
 
@@ -198,7 +200,7 @@ export function useGroupEditFormController({
     }
   }, [onTabChange, requestedTab, showSiblingRelationshipEditor]);
 
-  const handleTabChange = (tab: 'general' | 'relationships' | 'contact') => {
+  const handleTabChange = (tab: 'general' | 'relationships' | 'contact' | 'themes') => {
     setActiveTab(tab);
     onTabChange?.(tab);
   };
@@ -303,5 +305,6 @@ export function useGroupEditFormController({
     siblingConfigurationPreflight,
     onFormSubmit,
     confirmCreate,
+    canManageGroup,
   };
 }

@@ -46,7 +46,10 @@ describe('useAuthStore signUpWithPassword', () => {
     signUpMock.mockResolvedValue({
       data: {
         session: null,
-        user: { id: 'user-2' },
+        user: {
+          id: 'user-2',
+          identities: [{ identity_id: 'identity-2', provider: 'email' }],
+        },
       },
       error: null,
     });
@@ -57,6 +60,49 @@ describe('useAuthStore signUpWithPassword', () => {
 
     expect(result).toEqual({ status: 'confirmation_required' });
     expect(useAuthStore.getState().error).toBeNull();
+  });
+
+  it('returns a localized error when signup returns an obfuscated existing user', async () => {
+    signUpMock.mockResolvedValue({
+      data: {
+        session: null,
+        user: { id: 'obfuscated-user', identities: [] },
+      },
+      error: null,
+    });
+
+    const { useAuthStore } = await import('../auth');
+
+    const result = await useAuthStore
+      .getState()
+      .signUpWithPassword('existing@example.com', 'secret1');
+
+    const error = 'An account already exists for this email address. Sign in instead.';
+    expect(result).toEqual({ status: 'error', error });
+    expect(useAuthStore.getState().error).toBe(error);
+  });
+
+  it('returns the same localized error for user_already_exists', async () => {
+    signUpMock.mockResolvedValue({
+      data: {
+        session: null,
+        user: null,
+      },
+      error: Object.assign(new Error('User already registered'), {
+        code: 'user_already_exists',
+        status: 422,
+      }),
+    });
+
+    const { useAuthStore } = await import('../auth');
+
+    const result = await useAuthStore
+      .getState()
+      .signUpWithPassword('existing@example.com', 'secret1');
+
+    const error = 'An account already exists for this email address. Sign in instead.';
+    expect(result).toEqual({ status: 'error', error });
+    expect(useAuthStore.getState().error).toBe(error);
   });
 
   it('returns error when Supabase sign up fails', async () => {
@@ -74,8 +120,8 @@ describe('useAuthStore signUpWithPassword', () => {
 
     expect(result).toEqual({
       status: 'error',
-      error: 'Signup failed upstream',
+      error: 'Failed to create account',
     });
-    expect(useAuthStore.getState().error).toBe('Signup failed upstream');
+    expect(useAuthStore.getState().error).toBe('Failed to create account');
   });
 });

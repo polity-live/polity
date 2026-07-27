@@ -32,6 +32,9 @@ export const paymentsTranslations = {
     nextPlan: 'Nächster Tarif',
     freeFrom: 'Free ab {{date}}',
     changeScheduled: 'Wechsel geplant',
+    period: '/Monat',
+    exchangeRateNotice:
+      'Der Checkout wird in EUR abgerechnet. Umgerechnete Werte sind Schätzungen auf Basis der Kurse von Frankfurter.',
     cancellationScheduled: 'Der Wechsel zu Free zum Ende des Abrechnungszeitraums ist geplant.',
   },
 } as const;

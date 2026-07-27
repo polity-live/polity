@@ -38,7 +38,10 @@ export function hasStatementContent(statement: StatementContentLike) {
   );
 }
 
-export function getStatementHeadline(statement: StatementContentLike, fallback = 'Statement') {
+export function getStatementHeadline(
+  statement: StatementContentLike,
+  fallback = translate('features.statements.fallbacks.statement')
+) {
   const explicitTitle = cleanStatementString(statement.title);
   if (explicitTitle) return explicitTitle;
 
@@ -47,8 +50,8 @@ export function getStatementHeadline(statement: StatementContentLike, fallback =
     return firstTextLine.length > 72 ? `${firstTextLine.slice(0, 69).trim()}...` : firstTextLine;
   }
 
-  if (statement.video_url) return 'Video statement';
-  if (statement.image_url) return 'Photo statement';
+  if (statement.video_url) return translate('features.statements.fallbacks.video');
+  if (statement.image_url) return translate('features.statements.fallbacks.photo');
   return fallback;
 }
 
@@ -68,3 +71,4 @@ export function canViewExpiredStatement(
   if (!isStatementExpired(statement, now)) return true;
   return Boolean(userId && statement?.user_id === userId);
 }
+import { translate } from '@/features/shared/hooks/use-translation';

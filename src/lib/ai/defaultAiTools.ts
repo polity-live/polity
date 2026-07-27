@@ -99,12 +99,9 @@ export const DEFAULT_AI_TOOLS: readonly DefaultAiToolDefinition[] = [
   },
   {
     name: 'read_polity_docs',
-    label: translateText('generated.inline.ai_polity_docs_label', 'Polity Docs'),
+    label: translateText('generated.inline.ai_polity_docs_label'),
     kind: 'search',
-    description: translateText(
-      'generated.inline.ai_polity_docs_description',
-      'Liest und durchsucht die vorhandene Polity /docs Dokumentation.'
-    ),
+    description: translateText('generated.inline.ai_polity_docs_description'),
   },
   {
     name: 'find_group_resources',
@@ -202,87 +199,57 @@ export const DEFAULT_AI_TOOLS: readonly DefaultAiToolDefinition[] = [
   },
   {
     name: 'update_group',
-    label: translateText('generated.inline.ai_update_group_label', 'Gruppe aktualisieren'),
+    label: translateText('generated.inline.ai_update_group_label'),
     kind: 'update',
-    description: translateText(
-      'generated.inline.ai_update_group_catalog_description',
-      'Aktualisiert direkte Felder einer verwaltbaren Gruppe.'
-    ),
+    description: translateText('generated.inline.ai_update_group_catalog_description'),
   },
   {
     name: 'update_event',
-    label: translateText('generated.inline.ai_update_event_label', 'Event aktualisieren'),
+    label: translateText('generated.inline.ai_update_event_label'),
     kind: 'update',
-    description: translateText(
-      'generated.inline.ai_update_event_catalog_description',
-      'Aktualisiert direkte Felder eines verwaltbaren Events.'
-    ),
+    description: translateText('generated.inline.ai_update_event_catalog_description'),
   },
   {
     name: 'update_amendment',
-    label: translateText('generated.inline.ai_update_amendment_label', 'Amendment aktualisieren'),
+    label: translateText('generated.inline.ai_update_amendment_label'),
     kind: 'update',
-    description: translateText(
-      'generated.inline.ai_update_amendment_catalog_description',
-      'Aktualisiert einen eigenen oder verwaltbaren Änderungsantrag.'
-    ),
+    description: translateText('generated.inline.ai_update_amendment_catalog_description'),
   },
   {
     name: 'update_blog_entry',
-    label: translateText('generated.inline.ai_update_blog_label', 'Blogeintrag aktualisieren'),
+    label: translateText('generated.inline.ai_update_blog_label'),
     kind: 'update',
-    description: translateText(
-      'generated.inline.ai_update_blog_catalog_description',
-      'Aktualisiert einen verwaltbaren Blogeintrag.'
-    ),
+    description: translateText('generated.inline.ai_update_blog_catalog_description'),
   },
   {
     name: 'update_todo',
-    label: translateText('generated.inline.ai_update_todo_label', 'Todo aktualisieren'),
+    label: translateText('generated.inline.ai_update_todo_label'),
     kind: 'update',
-    description: translateText(
-      'generated.inline.ai_update_todo_catalog_description',
-      'Aktualisiert ein eigenes oder verwaltbares Todo.'
-    ),
+    description: translateText('generated.inline.ai_update_todo_catalog_description'),
   },
   {
     name: 'update_statement',
-    label: translateText('generated.inline.ai_update_statement_label', 'Statement aktualisieren'),
+    label: translateText('generated.inline.ai_update_statement_label'),
     kind: 'update',
-    description: translateText(
-      'generated.inline.ai_update_statement_catalog_description',
-      'Aktualisiert ein eigenes Statement.'
-    ),
+    description: translateText('generated.inline.ai_update_statement_catalog_description'),
   },
   {
     name: 'update_payment',
-    label: translateText('generated.inline.ai_update_payment_label', 'Zahlung aktualisieren'),
+    label: translateText('generated.inline.ai_update_payment_label'),
     kind: 'update',
-    description: translateText(
-      'generated.inline.ai_update_payment_catalog_description',
-      'Aktualisiert direkte Felder einer verwaltbaren Zahlung.'
-    ),
+    description: translateText('generated.inline.ai_update_payment_catalog_description'),
   },
   {
     name: 'update_agenda_item',
-    label: translateText(
-      'generated.inline.ai_update_agenda_item_label',
-      'Agenda-Punkt aktualisieren'
-    ),
+    label: translateText('generated.inline.ai_update_agenda_item_label'),
     kind: 'update',
-    description: translateText(
-      'generated.inline.ai_update_agenda_item_catalog_description',
-      'Aktualisiert einen verwaltbaren Agenda-Punkt.'
-    ),
+    description: translateText('generated.inline.ai_update_agenda_item_catalog_description'),
   },
   {
     name: 'update_election_candidate',
-    label: translateText('generated.inline.ai_update_candidate_label', 'Kandidatur aktualisieren'),
+    label: translateText('generated.inline.ai_update_candidate_label'),
     kind: 'update',
-    description: translateText(
-      'generated.inline.ai_update_candidate_catalog_description',
-      'Aktualisiert Name, Statement oder Bild einer Kandidatur.'
-    ),
+    description: translateText('generated.inline.ai_update_candidate_catalog_description'),
   },
 ] as const;
 

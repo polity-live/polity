@@ -370,6 +370,8 @@ export const plateJsTranslations = {
     uploadGroupRequired: 'Wähle eine deiner Gruppen aus.',
     manualDataRequired: 'Gib mindestens eine Datenzeile ein.',
     manualTitleRequired: 'Gib dem manuellen Datensatz einen Titel.',
+    manualCategoryColumn: 'Kategorie',
+    manualValueColumn: 'Wert',
     fileRequired: 'Wähle eine CSV- oder TSV-Datei aus.',
     elementMissing: 'Die Datendarstellung ist nicht mehr im Dokument vorhanden.',
     loading: 'Daten werden geladen',
@@ -534,5 +536,12 @@ export const plateJsTranslations = {
     with: 'mit:',
     replace: 'Ersetzen:',
     un: 'Nicht',
+    finalizeInternalVote: 'Interne Abstimmung beenden',
+    finalizeInternalVoteTitle: 'Interne Abstimmung beenden?',
+    finalizeInternalVoteSummary:
+      'Ergebnis: {{outcome}}. Annehmen: {{accept}}, ablehnen: {{reject}}, enthalten: {{abstain}}.',
+    outcomeAccepted: 'Angenommen',
+    outcomeRejected: 'Abgelehnt',
+    cancel: 'Abbrechen',
   },
 } as const;

@@ -497,7 +497,8 @@ export function PlateEditor({
   );
 }
 
-const value = [
+// Kept as a non-production Plate reference document; the editor fallback below is neutral.
+const platePlaygroundDemoValue = [
   {
     children: [{ text: 'Welcome to the Plate Playground!' }],
     type: 'h1',
@@ -1036,4 +1037,11 @@ const value = [
   },
 ];
 
-const defaultValue = value;
+void platePlaygroundDemoValue;
+
+const defaultValue: Value = [
+  {
+    type: 'p',
+    children: [{ text: '' }],
+  },
+];

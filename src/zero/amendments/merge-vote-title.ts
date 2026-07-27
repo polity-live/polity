@@ -25,14 +25,25 @@ export function getOrderedMergeVoteBranches<T extends MergeVoteBranchTitleSource
 
 export function getMergeVoteBranchLabel(branch: MergeVoteBranchTitleSource, index: number) {
   const title = branch.title?.trim();
-  return title || `Branch ${index + 1}`;
+  return (
+    title ||
+    translate('features.amendments.branches.numbered', {
+      number: index + 1,
+    })
+  );
 }
 
 export function buildMergeVoteTitle(
   amendmentTitle: string | null | undefined,
   branches: readonly MergeVoteBranchTitleSource[]
 ) {
-  const title = amendmentTitle?.trim() || 'Amendment';
+  const title = amendmentTitle?.trim() || translate('common.entities.amendment');
   const branchLabels = getOrderedMergeVoteBranches(branches).map(getMergeVoteBranchLabel);
-  return branchLabels.length > 0 ? `${title}: ${branchLabels.join(' vs ')}` : title;
+  return branchLabels.length > 0
+    ? translate('features.amendments.branches.mergeVoteTitle', {
+        title,
+        branches: branchLabels.join(translate('features.amendments.branches.mergeVoteSeparator')),
+      })
+    : title;
 }
+import { translate } from '@/features/shared/hooks/use-translation';

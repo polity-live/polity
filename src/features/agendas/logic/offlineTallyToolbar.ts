@@ -1,3 +1,5 @@
+import { translate } from '@/features/shared/hooks/use-translation';
+
 export type OfflineTallyPhase = 'indicative' | 'final';
 export type OfflineTallyMode = 'create' | 'edit';
 
@@ -46,7 +48,7 @@ export function resolveOfflineTallyMode(tallies: readonly unknown[]) {
 }
 
 export function getOfflineTallyDialogTitle(phase: OfflineTallyPhase) {
-  return phase === 'final' ? 'Final offline tally' : 'Indicative offline tally';
+  return translate(`features.agendas.offlineTally.entities.${phase}`);
 }
 
 export function getOfflineTallyTooltip(args: {
@@ -54,16 +56,24 @@ export function getOfflineTallyTooltip(args: {
   mode: OfflineTallyMode;
 }) {
   if (args.phase === 'indicative') {
-    return args.mode === 'edit' ? 'Edit indicative offline tally' : 'Save indicative offline tally';
+    return translate(
+      args.mode === 'edit'
+        ? 'features.agendas.offlineTally.actions.editIndicative'
+        : 'features.agendas.offlineTally.actions.saveIndicative'
+    );
   }
 
   if (args.phase === 'final') {
-    return args.mode === 'edit' ? 'Edit final offline tally' : 'Save final offline tally';
+    return translate(
+      args.mode === 'edit'
+        ? 'features.agendas.offlineTally.actions.editFinal'
+        : 'features.agendas.offlineTally.actions.saveFinal'
+    );
   }
 
   return undefined;
 }
 
 export function getOfflineTallySuccessMessage(phase: OfflineTallyPhase) {
-  return phase === 'final' ? 'Offline final tally saved' : 'Offline indicative tally saved';
+  return translate(`features.agendas.offlineTally.success.${phase}`);
 }

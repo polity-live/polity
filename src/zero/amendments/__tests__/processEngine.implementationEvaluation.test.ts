@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
 const fireNotificationMock = vi.hoisted(() => vi.fn());
 
@@ -109,6 +110,10 @@ function addRelativeOffset(timestamp: number, years: number, months: number) {
 afterEach(() => {
   fireNotificationMock.mockReset();
   vi.restoreAllMocks();
+});
+
+beforeEach(() => {
+  useLanguageStore.setState({ language: 'de' });
 });
 
 describe('process-engine implementation evaluation', () => {

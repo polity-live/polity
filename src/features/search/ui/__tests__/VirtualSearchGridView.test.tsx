@@ -45,6 +45,7 @@ describe('VirtualSearchGridView', () => {
       card_payload: { type: 'group' },
       engagement_score: 0,
       trending_score: 0,
+      tutorial_run_id: null,
       topics: [],
       group: null,
     } as SearchDocument;

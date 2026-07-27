@@ -133,7 +133,7 @@ export function normalizeAmendmentProcessStatus(status?: string | null): Amendme
 
 export function formatImplementationEvaluationDate(
   value: number | string | null | undefined,
-  locale = 'de-DE',
+  locale = useLanguageStore.getState().language === 'de' ? 'de-DE' : 'en-US',
   options?: Intl.DateTimeFormatOptions
 ) {
   if (value == null || value === '') {
@@ -157,11 +157,11 @@ export function formatImplementationEvaluationOffset(args: {
   const parts: string[] = [];
 
   if (years > 0) {
-    parts.push(`${years} ${years === 1 ? 'Jahr' : 'Jahre'}`);
+    parts.push(translate('features.amendments.implementationEvaluation.year', { count: years }));
   }
 
   if (months > 0 || parts.length === 0) {
-    parts.push(`${months} ${months === 1 ? 'Monat' : 'Monate'}`);
+    parts.push(translate('features.amendments.implementationEvaluation.month', { count: months }));
   }
 
   return parts.join(', ');
@@ -175,29 +175,34 @@ export function formatImplementationEvaluationSummary(args: {
   locale?: string;
 }) {
   if (args.mode === 'fixed_date') {
-    return formatImplementationEvaluationDate(args.fixedDate, args.locale) ?? 'Kein Datum';
+    return (
+      formatImplementationEvaluationDate(args.fixedDate, args.locale) ??
+      translate('features.amendments.implementationEvaluation.noDate')
+    );
   }
 
   if (args.mode === 'relative_to_vote') {
-    return `${formatImplementationEvaluationOffset({
-      months: args.offsetMonths,
-      years: args.offsetYears,
-    })} nach Annahme`;
+    return translate('features.amendments.implementationEvaluation.afterAdoption', {
+      offset: formatImplementationEvaluationOffset({
+        months: args.offsetMonths,
+        years: args.offsetYears,
+      }),
+    });
   }
 
-  return 'Keine Evaluierung geplant';
+  return translate('features.amendments.implementationEvaluation.noEvaluationPlanned');
 }
 
 export function getImplementationEvaluationModeLabel(mode: ImplementationEvaluationMode) {
   if (mode === 'fixed_date') {
-    return 'Fixes Datum';
+    return translate('features.amendments.implementationEvaluation.fixedDate');
   }
 
   if (mode === 'relative_to_vote') {
-    return 'Relativ zur finalen Abstimmung';
+    return translate('features.amendments.implementationEvaluation.relativeToFinalVote');
   }
 
-  return 'Keine Evaluierung';
+  return translate('features.amendments.implementationEvaluation.noEvaluation');
 }
 
 export function deriveImplementationDisplayStatus(args: {
@@ -205,23 +210,23 @@ export function deriveImplementationDisplayStatus(args: {
   implementationStatus: ImplementationEvaluationStatus;
 }) {
   if (args.processStatus === 'pending_event' || args.processStatus === 'scheduled') {
-    return 'In Bearbeitung';
+    return translate('features.amendments.implementationEvaluation.statuses.inProgress');
   }
 
   if (args.processStatus === 'in_vote' || args.implementationStatus === 'evaluation_in_vote') {
-    return 'In Abstimmung';
+    return translate('features.amendments.implementationEvaluation.statuses.inVote');
   }
 
   if (args.processStatus === 'rejected' || args.processStatus === 'withdrawn') {
-    return 'Abgelehnt';
+    return translate('features.amendments.implementationEvaluation.statuses.rejected');
   }
 
   if (args.implementationStatus === 'implemented') {
-    return 'Umgesetzt';
+    return translate('features.amendments.implementationEvaluation.statuses.implemented');
   }
 
   if (args.implementationStatus === 'implementation_failed') {
-    return 'Umsetzung verfehlt';
+    return translate('features.amendments.implementationEvaluation.statuses.implementationFailed');
   }
 
   if (
@@ -230,11 +235,13 @@ export function deriveImplementationDisplayStatus(args: {
       args.implementationStatus === 'evaluation_scheduled' ||
       args.implementationStatus === 'implementation_window')
   ) {
-    return 'Angenommen und Umsetzung';
+    return translate(
+      'features.amendments.implementationEvaluation.statuses.adoptedAndImplementing'
+    );
   }
 
   if (args.processStatus === 'completed') {
-    return 'Angenommen';
+    return translate('features.amendments.implementationEvaluation.statuses.adopted');
   }
 
   return null;
@@ -308,16 +315,18 @@ export function getImplementationReviewOutcomeLabel(
   outcome: ReturnType<typeof resolveImplementationReviewVoteOutcome>
 ) {
   if (outcome === 'yes') {
-    return 'Ja';
+    return translate('features.amendments.implementationEvaluation.outcomes.yes');
   }
 
   if (outcome === 'no') {
-    return 'Nein';
+    return translate('features.amendments.implementationEvaluation.outcomes.no');
   }
 
   if (outcome === 'tie') {
-    return 'Stimmengleichstand';
+    return translate('features.amendments.implementationEvaluation.outcomes.tie');
   }
 
   return null;
 }
+import { translate } from '@/features/shared/hooks/use-translation';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';

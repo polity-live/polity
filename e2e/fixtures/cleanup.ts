@@ -185,7 +185,7 @@ export async function cleanupE2ERows(options: CleanupOptions = {}) {
     delete from public.amendment_group_decision
     where amendment_id in (select id from public.amendment where title like ${pattern});
 
-    delete from public.amendment_street_design
+    delete from public.amendment_city_design
     where title like ${pattern}
        or amendment_id in (select id from public.amendment where title like ${pattern});
 

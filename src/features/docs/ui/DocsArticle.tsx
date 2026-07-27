@@ -8,6 +8,7 @@ import { getIconComponent } from '@/features/navigation/nav-items/icon-map';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
+import { useAuth } from '@/providers/auth-provider';
 import { getDocsNavigation, getDocsPages, getRelatedDocsPages } from '../logic/docsRegistry';
 import type { DocsPage } from '../types/docs.types';
 
@@ -130,6 +131,7 @@ function TableOfContents({ page, activeSection }: { page: DocsPage; activeSectio
 
 export function DocsArticle({ page }: { page: DocsPage }) {
   const { t, language } = useTranslation();
+  const { user } = useAuth();
   const Icon = getIconComponent(page.icon);
   const activeSection = useActiveSection(page);
   const groups = getDocsNavigation(language);
@@ -149,6 +151,15 @@ export function DocsArticle({ page }: { page: DocsPage }) {
     ],
     [group?.title, page.audience, page.kind, t]
   );
+  const primaryAction = page.primaryAction;
+  const primaryActionRoute =
+    primaryAction?.requiresAuth && !user
+      ? (primaryAction.signedOutRoute ?? '/auth/sign-in')
+      : primaryAction?.route;
+  const primaryActionLabel =
+    primaryAction?.requiresAuth && !user
+      ? (primaryAction.signedOutLabel ?? primaryAction.label)
+      : primaryAction?.label;
 
   return (
     <main className="mx-auto grid w-full max-w-[86rem] gap-10 px-5 py-8 md:px-8 md:py-12 xl:grid-cols-[minmax(0,52rem)_15rem] xl:px-12">
@@ -181,6 +192,14 @@ export function DocsArticle({ page }: { page: DocsPage }) {
               </span>
             ))}
           </div>
+          {primaryAction && primaryActionRoute && primaryActionLabel ? (
+            <Button asChild className="mt-6">
+              <Link to={primaryActionRoute as never}>
+                {primaryActionLabel}
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          ) : null}
         </header>
 
         <details className="bg-card mt-6 rounded-lg border p-4 xl:hidden">
@@ -235,7 +254,7 @@ export function DocsArticle({ page }: { page: DocsPage }) {
         )}
 
         <nav
-          aria-label="Guide pagination"
+          aria-label={t('common.accessibility.guidePagination')}
           className="mt-10 grid gap-3 border-t pt-6 sm:grid-cols-2"
         >
           {previousPage ? (

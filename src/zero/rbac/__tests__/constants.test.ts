@@ -85,6 +85,8 @@ describe('GROUP_ACTION_RIGHTS', () => {
     expect(keys.has('amendments:create')).toBe(true);
     expect(keys.has('events:manage')).toBe(true);
     expect(keys.has('groupNotifications:manageNotifications')).toBe(true);
+    expect(keys.has('groupThemes:manage')).toBe(true);
+    expect(keys.has('groupThemes:view')).toBe(true);
     expectNoRights(keys, removedGroupScopeRights);
   });
 });

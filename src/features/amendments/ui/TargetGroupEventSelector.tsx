@@ -25,8 +25,13 @@ import {
 import { ChevronRight } from 'lucide-react';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { EventTimelineCard } from '@/features/timeline/ui/cards/EventTimelineCard';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  translate as translateText,
+  useTranslation,
+} from '@/features/shared/hooks/use-translation';
+import { reportAppTutorialAction } from '@/features/app-tutorial/events';
 import { TargetGroupEventSelectorView } from './TargetGroupEventSelectorView';
+import { resolveAppTutorialFixtureText } from '@/features/app-tutorial/fixture-copy';
 
 export interface TargetGroupEventSelection {
   sourceGroupId: string;
@@ -110,6 +115,7 @@ export function TargetGroupEventSelector({
   allowSourceGroupAsTarget = false,
   layoutScope = 'default',
 }: TargetGroupEventSelectorProps) {
+  const { language, t } = useTranslation();
   const hasInitializedUserSelection = useRef(false);
   const sourcePrefillRef = useRef<string | null>(null);
   const targetPrefillRef = useRef<string | null>(null);
@@ -483,13 +489,19 @@ export function TargetGroupEventSelector({
       return;
     }
 
-    if (!selectedSourceGroupId && !selectedSourceGroup && activeSourceGroups.length === 1) {
+    if (
+      layoutScope !== 'amendment-process-start' &&
+      !selectedSourceGroupId &&
+      !selectedSourceGroup &&
+      activeSourceGroups.length === 1
+    ) {
       const defaultSourceGroup = activeSourceGroups[0];
       setSelectedSourceGroup({ id: defaultSourceGroup.id, data: defaultSourceGroup });
       onSourceGroupSelectionChange?.(defaultSourceGroup.id);
     }
   }, [
     activeSourceGroups,
+    layoutScope,
     onSourceGroupSelectionChange,
     onGroupSelectionChange,
     onSelect,
@@ -595,7 +607,7 @@ export function TargetGroupEventSelector({
     if (!calculatedPath || calculatedPath.length === 0) {
       setPathWithEvents([]);
       setPathValidationError(
-        'Kein zulaessiger Prozesspfad zwischen Start- und Zielgruppe gefunden.'
+        'Kein zulässiger Prozesspfad zwischen Start- und Zielgruppe gefunden.'
       );
       lastEmittedSelectionRef.current = null;
       onSelect(null);
@@ -730,27 +742,30 @@ export function TargetGroupEventSelector({
     setSelectedEvent({ id: nextEvent.id, data: nextEvent });
   }, [networkEvents, pathWithEvents, selectedEvent, selectedGroup?.id, targetPathSegment]);
 
-  const validatePathEventOrder = useCallback((segments: PathWithEventSegment[]): string | null => {
-    for (const current of segments) {
-      const currentEventEnd = current.eventEndDate ?? current.eventStartDate;
-      if (
-        current.eventStartDate != null &&
-        current.requiredAfter != null &&
-        current.eventStartDate < current.requiredAfter
-      ) {
-        return 'Ein Event liegt vor dem vorherigen Prozessschritt.';
+  const validatePathEventOrder = useCallback(
+    (segments: PathWithEventSegment[]): string | null => {
+      for (const current of segments) {
+        const currentEventEnd = current.eventEndDate ?? current.eventStartDate;
+        if (
+          current.eventStartDate != null &&
+          current.requiredAfter != null &&
+          current.eventStartDate < current.requiredAfter
+        ) {
+          return t('features.amendments.process.eventBeforePreviousStep');
+        }
+        if (
+          currentEventEnd != null &&
+          current.requiredBefore != null &&
+          currentEventEnd > current.requiredBefore
+        ) {
+          return t('features.amendments.process.eventAfterNextStep');
+        }
       }
-      if (
-        currentEventEnd != null &&
-        current.requiredBefore != null &&
-        currentEventEnd > current.requiredBefore
-      ) {
-        return 'Ein Event liegt nach dem naechsten bereits geplanten Prozessschritt.';
-      }
-    }
 
-    return null;
-  }, []);
+      return null;
+    },
+    [t]
+  );
 
   const updatePathSegmentEvent = useCallback(
     (segmentKey: string, item: TypeaheadItem | null) => {
@@ -925,8 +940,14 @@ export function TargetGroupEventSelector({
       setPathValidationError(null);
       onSourceGroupSelectionChange?.(group.id);
       onGroupSelectionChange?.(null);
+      if (layoutScope === 'amendment-process-start' && group.tutorial_run_id) {
+        reportAppTutorialAction({
+          type: 'entity-selection',
+          entityId: group.id,
+        });
+      }
     },
-    [onGroupSelectionChange, onSelect, onSourceGroupSelectionChange]
+    [layoutScope, onGroupSelectionChange, onSelect, onSourceGroupSelectionChange]
   );
 
   const selectTargetGroup = useCallback(
@@ -948,8 +969,14 @@ export function TargetGroupEventSelector({
       setSelectedHierarchyPathId('');
       setPathValidationError(null);
       onGroupSelectionChange?.(group.id);
+      if (layoutScope === 'amendment-process-start' && group.tutorial_run_id) {
+        reportAppTutorialAction({
+          type: 'entity-selection',
+          entityId: group.id,
+        });
+      }
     },
-    [onGroupSelectionChange, onSelect]
+    [layoutScope, onGroupSelectionChange, onSelect]
   );
 
   const handleSourceGroupSelection = useCallback(
@@ -1024,7 +1051,11 @@ export function TargetGroupEventSelector({
       toTypeaheadItems(
         upcomingEvents,
         'event',
-        event => event.title || 'Event',
+        event =>
+          resolveAppTutorialFixtureText(event.title, {
+            tutorialRunId: event.tutorial_run_id,
+            language,
+          }) || 'Event',
         event => {
           const dateLabel =
             formatEventWindowLabel(event.start_date) ??
@@ -1034,7 +1065,7 @@ export function TargetGroupEventSelector({
         undefined,
         event => `/event/${event.id}`
       ),
-    [upcomingEvents]
+    [language, upcomingEvents]
   );
 
   const handleSelectedUserChange = useCallback((item: TypeaheadItem | null) => {

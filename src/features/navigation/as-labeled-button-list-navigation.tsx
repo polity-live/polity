@@ -25,6 +25,7 @@ export function AsLabeledButtonListNavigation({
   return (
     <div
       data-navigation-type={navigationType}
+      data-tutorial-anchor={`${navigationType}-navigation`}
       data-navigation-view={navigationView}
       data-screen-type={screenType}
       className={getListNavigationContainerClasses({

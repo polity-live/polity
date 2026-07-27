@@ -9,6 +9,7 @@ import { useVoteState } from '@/zero/votes/useVoteState';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import type { EntityType, TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface UseTypeaheadDataOptions {
   entityTypes: EntityType[];
@@ -16,17 +17,20 @@ interface UseTypeaheadDataOptions {
 
 const SEARCH_DATA_LIMIT = 500;
 
-function buildUserDisplayName(user: {
-  first_name?: string | null;
-  last_name?: string | null;
-  handle?: string | null;
-  email?: string | null;
-}) {
+function buildUserDisplayName(
+  user: {
+    first_name?: string | null;
+    last_name?: string | null;
+    handle?: string | null;
+    email?: string | null;
+  },
+  fallback: string
+) {
   return (
     [user.first_name, user.last_name].filter(Boolean).join(' ') ||
     user.handle ||
     user.email ||
-    'User'
+    fallback
   );
 }
 
@@ -35,7 +39,7 @@ function getPreview(value: unknown, maxLength = 120) {
   return text ? text.substring(0, maxLength) : undefined;
 }
 
-function getFormattedDate(value: number | string | null | undefined) {
+function getFormattedDate(value: number | string | null | undefined, locale: 'de-DE' | 'en-US') {
   if (typeof value !== 'number' && typeof value !== 'string') {
     return undefined;
   }
@@ -45,7 +49,7 @@ function getFormattedDate(value: number | string | null | undefined) {
     return undefined;
   }
 
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -61,6 +65,8 @@ function compactStrings(values: readonly (string | null | undefined | false)[]) 
  * Merges multiple data sources into a unified TypeaheadItem[] shape.
  */
 export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
+  const { t, language } = useTranslation();
+  const userFallback = t('common.entities.user');
   const { user } = useAuth();
   const includeUsers = entityTypes.includes('user');
   const includeGroups = entityTypes.includes('group');
@@ -125,7 +131,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
 
     if (includeUsers && allUsers) {
       for (const currentUser of allUsers) {
-        const displayName = buildUserDisplayName(currentUser);
+        const displayName = buildUserDisplayName(currentUser, userFallback);
         result.push({
           id: currentUser.id,
           entityType: 'user',
@@ -151,7 +157,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
         result.push({
           id: group.id,
           entityType: 'group',
-          label: group.name || 'Group',
+          label: group.name || t('common.entities.group'),
           secondaryLabel: group.visibility || undefined,
           description: getPreview(group.description),
           avatar: group.image_url,
@@ -173,7 +179,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
         result.push({
           id: event.id,
           entityType: 'event',
-          label: event.title || 'Event',
+          label: event.title || t('common.entities.event'),
           secondaryLabel: event.status || undefined,
           description: getPreview(event.description),
           avatar: null,
@@ -185,7 +191,10 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
             ).event_hashtags
           ),
           keywords: compactStrings([event.location_name, event.event_type]),
-          metadata: compactStrings([getFormattedDate(event.start_date), event.location_name]),
+          metadata: compactStrings([
+            getFormattedDate(event.start_date, language === 'de' ? 'de-DE' : 'en-US'),
+            event.location_name,
+          ]),
           url: `/event/${event.id}`,
         });
       }
@@ -196,7 +205,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
         result.push({
           id: amendment.id,
           entityType: 'amendment',
-          label: amendment.title || 'Amendment',
+          label: amendment.title || t('common.entities.amendment'),
           secondaryLabel: amendment.code || undefined,
           description: getPreview(amendment.reason),
           avatar: null,
@@ -216,12 +225,13 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
     if (includeBlogs) {
       for (const blog of searchState.blogs ?? []) {
         const bloggerNames =
-          blog.bloggers?.map(blogger => buildUserDisplayName(blogger.user ?? {})).filter(Boolean) ??
-          [];
+          blog.bloggers
+            ?.map(blogger => buildUserDisplayName(blogger.user ?? {}, userFallback))
+            .filter(Boolean) ?? [];
         result.push({
           id: blog.id,
           entityType: 'blog',
-          label: blog.title || 'Blog',
+          label: blog.title || t('common.entities.blog'),
           secondaryLabel: blog.group?.name || bloggerNames[0],
           description: getPreview(blog.description ?? blog.content),
           avatar: null,
@@ -242,13 +252,15 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
       for (const todo of searchState.todos ?? []) {
         const assigneeNames =
           todo.assignments
-            ?.map(assignment => buildUserDisplayName(assignment.user ?? {}))
+            ?.map(assignment => buildUserDisplayName(assignment.user ?? {}, userFallback))
             .filter(Boolean) ?? [];
-        const creatorName = todo.creator ? buildUserDisplayName(todo.creator) : undefined;
+        const creatorName = todo.creator
+          ? buildUserDisplayName(todo.creator, userFallback)
+          : undefined;
         result.push({
           id: todo.id,
           entityType: 'todo',
-          label: todo.title || 'Task',
+          label: todo.title || t('common.entities.task'),
           secondaryLabel: todo.group?.name || creatorName,
           description: getPreview(todo.description),
           avatar: null,
@@ -263,8 +275,12 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
             ]) ?? []),
           ]),
           metadata: compactStrings([
-            creatorName ? `Creator: ${creatorName}` : undefined,
-            assigneeNames.length > 0 ? `${assigneeNames.length} assigned` : undefined,
+            creatorName ? t('common.typeahead.creator', { name: creatorName }) : undefined,
+            assigneeNames.length > 0
+              ? t('common.typeahead.assignedCount', {
+                  count: assigneeNames.length,
+                })
+              : undefined,
           ]),
           url: `/todos/${todo.id}`,
         });
@@ -276,7 +292,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
         result.push({
           id: agendaItem.id,
           entityType: 'agenda_item',
-          label: agendaItem.title || 'Agenda Point',
+          label: agendaItem.title || t('common.entities.agendaItem'),
           secondaryLabel: agendaItem.event?.title || undefined,
           description: getPreview(agendaItem.description),
           avatar: null,
@@ -287,7 +303,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
             ...(agendaItem.election?.map(election => election.title) ?? []),
           ]),
           metadata: compactStrings([
-            agendaItem.type ? `Type: ${agendaItem.type}` : undefined,
+            agendaItem.type ? t('common.typeahead.type', { type: agendaItem.type }) : undefined,
             typeof agendaItem.order_index === 'number'
               ? `#${agendaItem.order_index + 1}`
               : undefined,
@@ -317,7 +333,11 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
         result.push({
           id: vote.id,
           entityType: 'vote',
-          label: vote.title || vote.amendment?.title || vote.agenda_item?.title || 'Vote',
+          label:
+            vote.title ||
+            vote.amendment?.title ||
+            vote.agenda_item?.title ||
+            t('common.entities.vote'),
           secondaryLabel: vote.agenda_item?.event?.title || vote.agenda_item?.title || undefined,
           description: getPreview(vote.description),
           avatar: null,
@@ -329,7 +349,11 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
           ]),
           metadata: compactStrings([
             vote.status || undefined,
-            typeof vote.choices?.length === 'number' ? `${vote.choices.length} choices` : undefined,
+            typeof vote.choices?.length === 'number'
+              ? t('common.typeahead.choicesCount', {
+                  count: vote.choices.length,
+                })
+              : undefined,
           ]),
         });
       }
@@ -340,7 +364,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
         result.push({
           id: election.id,
           entityType: 'election',
-          label: election.title || election.role?.name || 'Election',
+          label: election.title || election.role?.name || t('common.entities.election'),
           secondaryLabel:
             election.role?.group?.name || election.agenda_item?.event?.title || undefined,
           description: getPreview(election.description),
@@ -354,7 +378,9 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
           metadata: compactStrings([
             election.role?.name || undefined,
             typeof election.candidates?.length === 'number'
-              ? `${election.candidates.length} candidates`
+              ? t('common.typeahead.candidatesCount', {
+                  count: election.candidates.length,
+                })
               : undefined,
           ]),
         });
@@ -366,12 +392,14 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
         result.push({
           id: role.id,
           entityType: 'role',
-          label: role.name || 'Role',
+          label: role.name || t('common.entities.role'),
           secondaryLabel: role.group?.name || undefined,
           description: getPreview(role.description),
           avatar: null,
           keywords: compactStrings([role.group?.name, role.scope, role.name]),
-          metadata: compactStrings([role.scope ? `Scope: ${role.scope}` : undefined]),
+          metadata: compactStrings([
+            role.scope ? t('common.typeahead.scope', { scope: role.scope }) : undefined,
+          ]),
         });
       }
     }
@@ -399,6 +427,9 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
     searchState.agendaItems,
     searchState.events,
     votesWithDetails,
+    t,
+    language,
+    userFallback,
   ]);
 
   return { items };

@@ -17,8 +17,12 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, fallback?: string | Record<string, unknown>) =>
-    typeof fallback === 'string' ? fallback : key,
+  translate: (key: string, fallback?: string | Record<string, unknown>) => {
+    const labels: Record<string, string> = {
+      'features.network.membershipModes.role_members': 'Members with selected role',
+    };
+    return labels[key] ?? (typeof fallback === 'string' ? fallback : key);
+  },
   useTranslation: () => ({
     t: (key: string, fallback?: string | Record<string, unknown>) => {
       const labels: Record<string, string> = {
@@ -173,6 +177,14 @@ function renderManageNetworkTab(canManageRelationships: boolean) {
 }
 
 describe('ManageNetworkTab', () => {
+  it('exposes an active relationship as the confirmed tutorial link', () => {
+    const { container } = renderManageNetworkTab(true);
+
+    expect(
+      container.querySelector('[data-tutorial-anchor="tutorial-network-confirmed"]')
+    ).not.toBeNull();
+  });
+
   it('renders a read-only management view for users with only relationship view rights', () => {
     const { container } = renderManageNetworkTab(false);
 

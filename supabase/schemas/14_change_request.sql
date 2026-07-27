@@ -4,7 +4,7 @@
 -- =============================================================================
 
 -- Change request table
-CREATE TABLE IF NOT EXISTS public.change_request (
+CREATE TABLE public.change_request (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
   process_branch_id UUID REFERENCES public.amendment_process_branch (id) ON DELETE SET NULL,

@@ -46,6 +46,11 @@ import {
 } from '@/features/events/logic/delegateAssemblyEligibility';
 import { normalizeChangeRequestVoteOrder } from '@/features/change-requests/logic/changeRequestVoteOrder';
 import { reorderOpenChangeRequestVoteStepsForEvent } from '../agendas/change-request-vote-ordering';
+import {
+  ATTENDANCE_MODE_CHANGE_LOCKED_MESSAGE,
+  hasOpenElectorateSnapshot,
+  resolveEventAttendanceMode,
+} from './attendance-mode';
 
 async function addEventParticipantRoleLink(
   tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
@@ -328,17 +333,6 @@ function isAssemblyEventType(eventType: string | null | undefined) {
   return eventType === 'general_assembly' || eventType === 'delegate_assembly';
 }
 
-function resolveAttendanceMode(event: {
-  attendance_mode?: string | null;
-  location_type?: string | null;
-}) {
-  if (event.attendance_mode === 'online' || event.attendance_mode === 'hybrid') {
-    return event.attendance_mode;
-  }
-
-  return event.location_type === 'online' ? 'online' : 'offline';
-}
-
 async function normalizeOfflineParticipantChannelsForEvent(
   tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
   eventId: string
@@ -348,7 +342,7 @@ async function normalizeOfflineParticipantChannelsForEvent(
     return;
   }
 
-  const attendanceMode = resolveAttendanceMode(event);
+  const attendanceMode = resolveEventAttendanceMode(event);
   const offlineParticipants = await tx.run(
     zql.event_offline_participant.where('event_id', eventId)
   );
@@ -362,7 +356,9 @@ async function normalizeOfflineParticipantChannelsForEvent(
             offlineParticipant.participation_channel !== 'offline'
             ? 'online'
             : 'offline'
-          : offlineParticipant.participation_channel;
+          : offlineParticipant.connected_user_id
+            ? 'online'
+            : offlineParticipant.participation_channel;
 
     if (nextParticipationChannel !== offlineParticipant.participation_channel) {
       await tx.mutate.event_offline_participant.update({
@@ -370,6 +366,23 @@ async function normalizeOfflineParticipantChannelsForEvent(
         participation_channel: nextParticipationChannel,
         updated_at: Date.now(),
       });
+    }
+  }
+}
+
+async function assertAttendanceModeCanChange(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  eventId: string
+) {
+  const agendaItems = await tx.run(zql.agenda_item.where('event_id', eventId));
+
+  for (const agendaItem of agendaItems) {
+    const [votes, elections] = await Promise.all([
+      tx.run(zql.vote.where('agenda_item_id', agendaItem.id)),
+      tx.run(zql.election.where('agenda_item_id', agendaItem.id)),
+    ]);
+    if (hasOpenElectorateSnapshot(votes) || hasOpenElectorateSnapshot(elections)) {
+      throw new Error(ATTENDANCE_MODE_CHANGE_LOCKED_MESSAGE);
     }
   }
 }
@@ -920,13 +933,13 @@ export const eventServerMutators = {
       previousEvent && args.group_id && args.group_id !== previousEvent.group_id
         ? args.group_id
         : null;
-    const nextAttendanceMode = resolveAttendanceMode({
+    const nextAttendanceMode = resolveEventAttendanceMode({
       attendance_mode: args.attendance_mode ?? previousEvent?.attendance_mode,
       location_type: args.location_type ?? previousEvent?.location_type,
     });
     const attendanceModeChanged =
       nextAttendanceMode !==
-      resolveAttendanceMode({
+      resolveEventAttendanceMode({
         attendance_mode: previousEvent?.attendance_mode,
         location_type: previousEvent?.location_type,
       });
@@ -939,6 +952,10 @@ export const eventServerMutators = {
     const changeRequestVoteOrderChanged =
       args.change_request_vote_order !== undefined &&
       nextChangeRequestVoteOrder !== previousChangeRequestVoteOrder;
+
+    if (previousEvent && attendanceModeChanged) {
+      await assertAttendanceModeCanChange(tx, args.id);
+    }
 
     if (nextEventType === 'delegate_assembly') {
       await assertDelegateAssemblyGroupEligibility(tx, nextGroupId);

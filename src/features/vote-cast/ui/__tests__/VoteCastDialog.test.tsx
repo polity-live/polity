@@ -1,8 +1,12 @@
 /* @vitest-environment jsdom */
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { useState } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { requestAppTutorialTargetRecovery } from '@/features/app-tutorial/events';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
+import { encodeAppError } from '@/features/shared/errors';
 import { VoteCastDialog } from '../VoteCastDialog';
 
 async function enterPin(pin = '1234') {
@@ -16,7 +20,7 @@ async function enterPin(pin = '1234') {
 
 function clickConfirmButton() {
   const confirmButton =
-    screen.queryByRole('button', { name: /confirm/i }) ??
+    screen.queryByRole('button', { name: /confirm|bestätigen/i }) ??
     screen.getAllByRole('button')[screen.getAllByRole('button').length - 2];
   fireEvent.click(confirmButton);
 }
@@ -27,6 +31,10 @@ afterEach(() => {
 });
 
 describe('VoteCastDialog', () => {
+  beforeEach(() => {
+    useLanguageStore.setState({ language: 'de' });
+  });
+
   it('shows document preview content before selection and keeps it during PIN entry', () => {
     render(
       <VoteCastDialog
@@ -105,6 +113,250 @@ describe('VoteCastDialog', () => {
     expect(shellClasses).toContain('max-w-5xl');
   });
 
+  it('spotlights all tutorial election candidates as one selectable target', () => {
+    render(
+      <VoteCastDialog
+        open
+        onOpenChange={vi.fn()}
+        phase="final"
+        title="Wahl zum Kreisvorsitzenden"
+        candidates={[
+          { id: 'amira', name: 'Amira Scholz' },
+          { id: 'murat', name: 'Murat Demir' },
+        ]}
+        maxVotes={1}
+        tutorialAnchor="agenda-election-vote"
+        requirePassword
+        onCastElectionVote={vi.fn()}
+      />
+    );
+
+    const target = document.querySelector('[data-tutorial-anchor="agenda-election-option"]');
+    expect(target).not.toBeNull();
+    expect(
+      document.querySelectorAll('[data-tutorial-anchor="agenda-election-option"]')
+    ).toHaveLength(1);
+    const amira = screen.getByRole('button', { name: /amira scholz/i });
+    expect(target?.contains(amira)).toBe(true);
+    expect(target?.contains(screen.getByRole('button', { name: /murat demir/i }))).toBe(true);
+
+    fireEvent.click(amira);
+    expect(document.querySelector('[data-tutorial-anchor="agenda-election-submit"]')).toBe(
+      screen.getByRole('button', { name: /confirm|bestätigen/i })
+    );
+
+    fireEvent.click(
+      document.querySelector('[data-tutorial-anchor="agenda-election-submit"]') as HTMLElement
+    );
+    expect(document.querySelector('[data-tutorial-anchor="agenda-election-password"]')).not.toBe(
+      null
+    );
+  });
+
+  it('provides separate tutorial targets for Yes and final amendment confirmation', () => {
+    render(
+      <VoteCastDialog
+        open
+        onOpenChange={vi.fn()}
+        phase="final"
+        title="Amendment vote"
+        choices={[
+          { id: 'yes', label: 'Ja', semanticKey: 'accept' },
+          { id: 'no', label: 'Nein', semanticKey: 'reject' },
+        ]}
+        tutorialAnchor="agenda-amendment-vote"
+        requirePassword
+        onCastVote={vi.fn()}
+      />
+    );
+
+    const yes = document.querySelector('[data-tutorial-anchor="agenda-amendment-yes"]');
+    expect(yes).toBe(screen.getByRole('button', { name: 'Ja' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ja' }));
+    expect(document.querySelector('[data-tutorial-anchor="agenda-amendment-submit"]')).toBe(
+      screen.getByRole('button', { name: /confirm|bestätigen/i })
+    );
+
+    fireEvent.click(
+      document.querySelector('[data-tutorial-anchor="agenda-amendment-submit"]') as HTMLElement
+    );
+    expect(document.querySelector('[data-tutorial-anchor="agenda-amendment-password"]')).not.toBe(
+      null
+    );
+  });
+
+  it('keeps controls outside the tutorial voting dialog clickable and focusable', async () => {
+    const copyPassword = vi.fn();
+    const onOpenChange = vi.fn();
+
+    render(
+      <>
+        <VoteCastDialog
+          open
+          onOpenChange={onOpenChange}
+          phase="final"
+          title="Amendment vote"
+          choices={[{ id: 'yes', label: 'Yes', semanticKey: 'accept' }]}
+          tutorialAnchor="agenda-amendment-vote"
+          requirePassword
+          onPasswordSubmit={vi.fn()}
+          onCastVote={vi.fn()}
+        />
+        <section>
+          <p>Copy 1234 and paste the password.</p>
+          <button type="button" onClick={copyPassword}>
+            Copy tutorial password
+          </button>
+        </section>
+      </>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Yes' }));
+    fireEvent.click(
+      document.querySelector('[data-tutorial-anchor="agenda-amendment-submit"]') as HTMLElement
+    );
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-tutorial-anchor="agenda-amendment-password"]')
+      ).not.toBeNull()
+    );
+
+    const copyButton = screen.getByRole('button', { name: 'Copy tutorial password' });
+    fireEvent.pointerDown(copyButton);
+    copyButton.focus();
+    expect(document.activeElement).toBe(copyButton);
+    expect(document.body.style.pointerEvents).not.toBe('none');
+
+    fireEvent.click(copyButton);
+    expect(copyPassword).toHaveBeenCalledOnce();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    expect(
+      document.querySelector('[data-tutorial-anchor="agenda-amendment-password"]')
+    ).not.toBeNull();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    expect(
+      document.querySelector('[data-tutorial-anchor="agenda-amendment-password"]')
+    ).not.toBeNull();
+  });
+
+  it('keeps the normal app dialog dismissible with Escape', () => {
+    const onOpenChange = vi.fn();
+
+    render(
+      <VoteCastDialog
+        open
+        onOpenChange={onOpenChange}
+        phase="final"
+        choices={[{ id: 'yes', label: 'Yes' }]}
+        onCastVote={vi.fn()}
+      />
+    );
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('recovers the amendment PIN step and preserves an existing choice', async () => {
+    function Harness() {
+      const [open, setOpen] = useState(true);
+      return (
+        <VoteCastDialog
+          open={open}
+          onOpenChange={setOpen}
+          phase="final"
+          choices={[
+            { id: 'yes', label: 'Ja', semanticKey: 'accept' },
+            { id: 'no', label: 'Nein', semanticKey: 'reject' },
+          ]}
+          tutorialAnchor="agenda-amendment-vote"
+          requirePassword
+          onCastVote={vi.fn()}
+        />
+      );
+    }
+
+    render(<Harness />);
+    fireEvent.click(screen.getByRole('button', { name: 'Nein' }));
+    fireEvent.click(
+      document.querySelector('[data-tutorial-anchor="agenda-amendment-submit"]') as HTMLElement
+    );
+    await waitFor(() => expect(document.querySelectorAll('input')).toHaveLength(4));
+
+    fireEvent.click(screen.getByRole('button', { name: /cancel|abbrechen/i }));
+    expect(document.querySelectorAll('input')).toHaveLength(0);
+
+    requestAppTutorialTargetRecovery('agenda-amendment-password');
+    await waitFor(() => expect(document.querySelectorAll('input')).toHaveLength(4));
+
+    requestAppTutorialTargetRecovery('agenda-amendment-submit');
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Nein' }).getAttribute('aria-pressed')).toBe('true')
+    );
+  });
+
+  it.each([
+    {
+      tutorialAnchor: 'agenda-amendment-vote',
+      recoveryAnchor: 'agenda-amendment-password',
+      candidates: undefined,
+      choices: [
+        { id: 'no', label: 'Nein', semanticKey: 'reject' },
+        { id: 'yes', label: 'Ja', semanticKey: 'accept' },
+      ],
+      selectedLabel: 'Ja',
+    },
+    {
+      tutorialAnchor: 'agenda-election-vote',
+      recoveryAnchor: 'agenda-election-password',
+      candidates: [
+        { id: 'alice', name: 'Alice' },
+        { id: 'bob', name: 'Bob' },
+      ],
+      choices: undefined,
+      selectedLabel: 'Alice',
+    },
+  ])(
+    'uses the deterministic $tutorialAnchor fallback when recovering without a selection',
+    async ({ tutorialAnchor, recoveryAnchor, candidates, choices, selectedLabel }) => {
+      function Harness() {
+        const [open, setOpen] = useState(false);
+        return (
+          <VoteCastDialog
+            open={open}
+            onOpenChange={setOpen}
+            phase="final"
+            candidates={candidates}
+            choices={choices}
+            tutorialAnchor={tutorialAnchor}
+            requirePassword
+            onCastVote={vi.fn()}
+            onCastElectionVote={vi.fn()}
+          />
+        );
+      }
+
+      render(<Harness />);
+      requestAppTutorialTargetRecovery(recoveryAnchor);
+      await waitFor(() => expect(document.querySelectorAll('input')).toHaveLength(4));
+
+      requestAppTutorialTargetRecovery(
+        tutorialAnchor === 'agenda-election-vote'
+          ? 'agenda-election-submit'
+          : 'agenda-amendment-submit'
+      );
+      await waitFor(() =>
+        expect(
+          screen
+            .getByRole('button', { name: new RegExp(selectedLabel, 'i') })
+            .getAttribute('aria-pressed')
+        ).toBe('true')
+      );
+    }
+  );
+
   it('shows the fullscreen submission overlay after password submit and auto-closes on success', async () => {
     const onOpenChange = vi.fn();
     const onPasswordSubmit = vi.fn().mockResolvedValue(undefined);
@@ -162,12 +414,12 @@ describe('VoteCastDialog', () => {
     expect(dialogContentClasses).not.toContain('max-h-[80vh]');
     expect(dialogContentClasses).not.toContain('sm:max-w-lg');
     expect(document.querySelector('[data-slot="vote-submission-overlay"]')).not.toBeNull();
-    expect(screen.getByRole('progressbar', { name: 'Stimmabgabefortschritt' })).toBeTruthy();
+    expect(screen.getByRole('progressbar', { name: 'Fortschritt der Stimmabgabe' })).toBeTruthy();
     expect(document.querySelector('[data-slot="loading-progress-bar"]')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /support/i })).toBeNull();
-    expect(screen.getByText('Stimmrecht prüfen')).toBeTruthy();
-    expect(screen.getByText('Stimme versiegeln')).toBeTruthy();
-    expect(screen.getByText('Ergebnis synchronisieren')).toBeTruthy();
+    expect(screen.getByText('Stimmrecht wird geprüft')).toBeTruthy();
+    expect(screen.getByText('Stimme wird versiegelt')).toBeTruthy();
+    expect(screen.getByText('Ergebnis wird synchronisiert')).toBeTruthy();
 
     await waitFor(() => expect(onPasswordSubmit).toHaveBeenCalledWith('1234'));
     await waitFor(() =>
@@ -186,7 +438,9 @@ describe('VoteCastDialog', () => {
 
   it('returns to PIN entry without casting when password verification fails', async () => {
     const onOpenChange = vi.fn();
-    const onPasswordSubmit = vi.fn().mockRejectedValueOnce(new Error('PIN falsch'));
+    const onPasswordSubmit = vi
+      .fn()
+      .mockRejectedValueOnce(new Error(encodeAppError('voting_password_invalid')));
     const onCastVote = vi.fn().mockResolvedValue(undefined);
 
     render(
@@ -207,7 +461,7 @@ describe('VoteCastDialog', () => {
     await enterPin();
 
     expect(await screen.findByText('PIN nicht bestätigt')).toBeTruthy();
-    expect(screen.getByText(/Voting-PIN erneut ein/i)).toBeTruthy();
+    expect(screen.getByText(/Abstimmungs-PIN erneut ein/i)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /pin erneut eingeben/i }));
 
     await waitFor(() => expect(document.querySelectorAll('input')).toHaveLength(4));
@@ -254,11 +508,13 @@ describe('VoteCastDialog', () => {
     expect(screen.queryByText('Stimme abgegeben')).toBeNull();
     rejectServer({
       type: 'error',
-      error: { type: 'server', message: 'Server rejected vote' },
+      error: { type: 'server', message: encodeAppError('mutation_server_failed') },
     });
 
     expect(await screen.findByText('Prüfung unterbrochen')).toBeTruthy();
-    expect(screen.getByText(/Server rejected vote/i)).toBeTruthy();
+    expect(
+      screen.getByText('Die Änderung konnte auf dem Server nicht gespeichert werden.')
+    ).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /erneut versuchen/i }));
 
@@ -339,11 +595,7 @@ describe('VoteCastDialog', () => {
     const onPasswordSubmit = vi.fn().mockResolvedValue(undefined);
     const onCastVote = vi
       .fn()
-      .mockRejectedValue(
-        new Error(
-          'duplicate key value violates unique constraint "indicative_voter_participation_vote_id_voter_id_key"'
-        )
-      );
+      .mockRejectedValue(new Error(encodeAppError('vote_already_submitted')));
 
     render(
       <VoteCastDialog

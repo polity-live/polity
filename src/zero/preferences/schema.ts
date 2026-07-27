@@ -97,17 +97,18 @@ export const groupNetworkLayoutSchema = z.object({
 });
 
 export const groupNetworkLayoutsSchema = z.record(z.string(), groupNetworkLayoutSchema);
-
 const baseUserPreferenceSchema = z.object({
   id: z.string(),
   user_id: z.string(),
   create_form_style: createFormStyleEnum,
   theme: themeEnum,
+  appearance_theme_id: z.string().uuid().nullable(),
   language: languageEnum,
   display_currency: currencyCodeSchema.default('EUR'),
   navigation_view: navigationViewEnum,
   group_network_layouts: groupNetworkLayoutsSchema,
   decision_terminal_dashboard: decisionTerminalDashboardConfigSchema.optional(),
+  app_tutorial_completed_at: timestampSchema.nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
@@ -115,13 +116,23 @@ const baseUserPreferenceSchema = z.object({
 export const selectUserPreferenceSchema = baseUserPreferenceSchema;
 
 export const createUserPreferenceSchema = baseUserPreferenceSchema
-  .omit({ id: true, created_at: true, updated_at: true, user_id: true })
-  .extend({ id: z.string() });
+  .omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+    user_id: true,
+    app_tutorial_completed_at: true,
+  })
+  .extend({
+    id: z.string(),
+    appearance_theme_id: z.string().uuid().nullable().optional(),
+  });
 
 export const updateUserPreferenceSchema = z.object({
   id: z.string(),
   create_form_style: createFormStyleEnum.optional(),
   theme: themeEnum.optional(),
+  appearance_theme_id: z.string().uuid().nullable().optional(),
   language: languageEnum.optional(),
   display_currency: currencyCodeSchema.optional(),
   navigation_view: navigationViewEnum.optional(),

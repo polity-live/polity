@@ -78,8 +78,8 @@ export function useAuthLogin(options: UseAuthLoginOptions = {}): UseAuthLoginRet
         return { success: true };
       } catch (error) {
         console.error('❌ Magic link send flow failed:', error);
-        const errorMessage =
-          error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+        console.error('Login request failed:', error);
+        const errorMessage = t('features.auth.errors.unexpectedError');
 
         if (onError && error instanceof Error) {
           await onError(email, error);

@@ -172,6 +172,9 @@ export function useSharedWeekViewController({
 
   const handleDayPointerDown = useCallback(
     (dayIndex: number) => (event: PointerEvent<HTMLDivElement>) => {
+      if (event.target !== event.currentTarget) {
+        return;
+      }
       if (event.pointerType === 'mouse' && event.button !== 0) {
         return;
       }

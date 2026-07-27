@@ -59,6 +59,8 @@ export const DEFAULT_GROUP_ROLES = [
       { resource: 'groupPayments' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupPayments' as ResourceType, action: 'view' as ActionType },
       { resource: 'groupRoles' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'groupThemes' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'groupThemes' as ResourceType, action: 'view' as ActionType },
       { resource: 'groupRelationships' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupRelationships' as ResourceType, action: 'view' as ActionType },
       { resource: 'groupAccessRoles' as ResourceType, action: 'manage' as ActionType },
@@ -437,16 +439,27 @@ export const GROUP_ACTION_RIGHTS = [
     action: 'view',
     label: translateText('generated.inline.0735_view_group_715a7e9b'),
   },
+  // groupThemes
+  {
+    resource: 'groupThemes',
+    action: 'manage',
+    label: translateText('features.groups.themes.manageThemes', 'Manage group themes'),
+  },
+  {
+    resource: 'groupThemes',
+    action: 'view',
+    label: translateText('features.groups.themes.viewThemes', 'View group themes'),
+  },
   // groupTodos
   {
     resource: 'groupTodos',
     action: 'manage',
-    label: translateText('generated.inline.0736_manage_todos_910e55fa'),
+    label: translateText('features.groups.actionRights.manageTodos'),
   },
   {
     resource: 'groupTodos',
     action: 'view',
-    label: translateText('generated.inline.0737_view_todos_a8a2b202'),
+    label: translateText('features.groups.actionRights.viewTodos'),
   },
   // messages
   {

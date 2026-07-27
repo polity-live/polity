@@ -132,7 +132,10 @@ export function useMessageMutations() {
     }
   };
 
-  const createAssistantConversation = async (currentUserId: string, name = 'Aria & Kai') => {
+  const createAssistantConversation = async (
+    currentUserId: string,
+    name = 'Assistent Aria & Kai'
+  ) => {
     setIsLoading(true);
     try {
       const conversationId = crypto.randomUUID();

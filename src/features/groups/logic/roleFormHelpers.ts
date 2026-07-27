@@ -2,6 +2,7 @@ import { buildRecurringEventFields } from '@/features/events/logic/buildRecurrin
 import { parseRRuleToFormState } from '@/features/events/logic/rruleHelpers';
 import type { GroupRole, RoleEditorFormState } from '../types/group.types';
 import { formatLocalDateInput, toLocalTimestamp } from '@/features/shared/logic/localDateTime';
+import { translate } from '@/features/shared/hooks/use-translation';
 
 interface RoleEditorMutationOptions {
   allowGuestRequestDefault?: boolean;
@@ -109,18 +110,24 @@ export function formatRoleTermLabel(
 ) {
   if (!role.is_recurring) {
     return role.scheduled_revote_date
-      ? `Revote ${toDateInput(role.scheduled_revote_date)}`
-      : 'Open term';
+      ? translate('features.groups.roleTerms.revote', {
+          date: toDateInput(role.scheduled_revote_date),
+        })
+      : translate('features.groups.roleTerms.open');
   }
 
   if (role.recurrence_rule) {
     try {
       const recurrence = parseRRuleToFormState(role.recurrence_rule);
       if (recurrence.pattern === 'four-yearly') {
-        return recurrence.interval > 1 ? `Every ${recurrence.interval * 4} years` : 'Every 4 years';
+        return translate('features.groups.roleTerms.everyYears', {
+          count: recurrence.interval * 4,
+        });
       }
       if (recurrence.pattern === 'yearly') {
-        return recurrence.interval > 1 ? `Every ${recurrence.interval} years` : 'Every year';
+        return translate('features.groups.roleTerms.everyYears', {
+          count: recurrence.interval,
+        });
       }
     } catch {
       return role.recurrence_rule;
@@ -128,8 +135,10 @@ export function formatRoleTermLabel(
   }
 
   return role.recurrence_interval && role.recurrence_interval > 1
-    ? `Every ${role.recurrence_interval} years`
-    : 'Recurring term';
+    ? translate('features.groups.roleTerms.everyYears', {
+        count: role.recurrence_interval,
+      })
+    : translate('features.groups.roleTerms.recurring');
 }
 
 export function toDateInput(value: number | null | undefined) {

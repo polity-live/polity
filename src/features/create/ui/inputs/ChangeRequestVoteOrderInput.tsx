@@ -76,7 +76,9 @@ export function ChangeRequestVoteOrderInput({
           )}
         >
           <Hash className="h-4 w-4" />
-          <span className="font-mono text-xs font-semibold">Chars</span>
+          <span className="font-mono text-xs font-semibold">
+            {t('features.agendas.crTimeline.sortByChangedCharactersShort')}
+          </span>
         </FilterToggleGroupItem>
         <FilterToggleGroupItem
           value="cr_number"

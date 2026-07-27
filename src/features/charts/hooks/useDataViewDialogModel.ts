@@ -35,17 +35,24 @@ import type {
   TDataViewElement,
 } from '../types';
 import { OPEN_DATA_VIEW_DIALOG_EVENT } from '../ui/chartDialogEvents';
+import { localizeAppError } from '@/features/shared/errors/app-error';
 
 const ALL_PROVIDERS: DatasetProviderId[] = ['EUROSTAT', 'GENESIS_DESTATIS', 'GOVDATA', 'UPLOAD'];
 
-const EMPTY_MANUAL_TABLE: ParsedChartTable = {
-  columns: ['Kategorie', 'Wert'],
-  rows: [
-    { Kategorie: '', Wert: '' },
-    { Kategorie: '', Wert: '' },
-    { Kategorie: '', Wert: '' },
-  ],
-};
+function createEmptyManualTable(
+  t: (key: 'plateJs.dataView.manualCategoryColumn' | 'plateJs.dataView.manualValueColumn') => string
+): ParsedChartTable {
+  const category = t('plateJs.dataView.manualCategoryColumn');
+  const value = t('plateJs.dataView.manualValueColumn');
+  return {
+    columns: [category, value],
+    rows: [
+      { [category]: '', [value]: '' },
+      { [category]: '', [value]: '' },
+      { [category]: '', [value]: '' },
+    ],
+  };
+}
 
 function emptyPresentation(): ChartPresentation {
   return {
@@ -130,7 +137,9 @@ export function useDataViewDialogModel() {
   const [uploadDescription, setUploadDescription] = React.useState('');
   const [uploading, setUploading] = React.useState(false);
   const [uploadError, setUploadError] = React.useState<string | null>(null);
-  const [manualTable, setManualTable] = React.useState<ParsedChartTable>(EMPTY_MANUAL_TABLE);
+  const [manualTable, setManualTable] = React.useState<ParsedChartTable>(() =>
+    createEmptyManualTable(t)
+  );
 
   const resetDialog = React.useCallback(
     (element?: TDataViewElement) => {
@@ -147,7 +156,7 @@ export function useDataViewDialogModel() {
       setUploadTitle('');
       setUploadDescription('');
       setUploadError(null);
-      setManualTable(EMPTY_MANUAL_TABLE);
+      setManualTable(createEmptyManualTable(t));
 
       if (!element) {
         setStage('find');
@@ -222,11 +231,9 @@ export function useDataViewDialogModel() {
               : current
           );
         })
-        .catch(loadError =>
-          setError(loadError instanceof Error ? loadError.message : String(loadError))
-        );
+        .catch(loadError => setError(localizeAppError(loadError)));
     },
-    [session?.access_token]
+    [session?.access_token, t]
   );
 
   React.useEffect(() => {
@@ -264,8 +271,7 @@ export function useDataViewDialogModel() {
           setProviderErrors(result.errors);
         })
         .catch(searchError => {
-          if (!cancelled)
-            setError(searchError instanceof Error ? searchError.message : String(searchError));
+          if (!cancelled) setError(localizeAppError(searchError));
         })
         .finally(() => {
           if (!cancelled) setSearching(false);
@@ -371,11 +377,12 @@ export function useDataViewDialogModel() {
           session?.access_token
         );
       } else {
-        throw new Error(t('plateJs.dataView.datasetUnavailable'));
+        setError(t('plateJs.dataView.datasetUnavailable'));
+        return;
       }
       activateSnapshot(result, selectedResult);
     } catch (prepareError) {
-      setError(prepareError instanceof Error ? prepareError.message : String(prepareError));
+      setError(localizeAppError(prepareError));
     } finally {
       setPreparing(false);
     }
@@ -432,11 +439,7 @@ export function useDataViewDialogModel() {
         .catch(projectionFailure => {
           if (cancelled) return;
           setProjection(null);
-          setProjectionError(
-            projectionFailure instanceof Error
-              ? projectionFailure.message
-              : String(projectionFailure)
-          );
+          setProjectionError(localizeAppError(projectionFailure));
         })
         .finally(() => {
           if (!cancelled) setProjectionLoading(false);
@@ -473,7 +476,7 @@ export function useDataViewDialogModel() {
       );
       setFilterValues(current => ({ ...current, ...Object.fromEntries(entries) }));
     } catch (loadError) {
-      setProjectionError(loadError instanceof Error ? loadError.message : String(loadError));
+      setProjectionError(localizeAppError(loadError));
     } finally {
       setFilterValuesLoading(false);
     }
@@ -545,7 +548,7 @@ export function useDataViewDialogModel() {
       setUploadOpen(false);
       activateSnapshot(result, searchResult);
     } catch (uploadError) {
-      setUploadError(uploadError instanceof Error ? uploadError.message : String(uploadError));
+      setUploadError(localizeAppError(uploadError));
     } finally {
       setUploading(false);
     }
@@ -592,7 +595,12 @@ export function useDataViewDialogModel() {
     try {
       if (editingElement) {
         const path = editor.api.findPath(editingElement);
-        if (!path) throw new Error(t('plateJs.dataView.elementMissing'));
+        if (!path) {
+          const message = t('plateJs.dataView.elementMissing');
+          setError(message);
+          toast.error(message);
+          return;
+        }
         editor.tf.setNodes(node, { at: path });
       } else {
         editor.tf.insertNodes(node);
@@ -600,7 +608,7 @@ export function useDataViewDialogModel() {
       setOpen(false);
       window.setTimeout(() => editor.tf.focus(), 0);
     } catch (saveError) {
-      const message = saveError instanceof Error ? saveError.message : String(saveError);
+      const message = localizeAppError(saveError);
       setError(message);
       toast.error(message);
     }

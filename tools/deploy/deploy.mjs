@@ -219,6 +219,14 @@ if (!skipSupabase) {
   step('Supabase — push migrations');
   run('Pushing migrations', 'supabase db push');
   success('Supabase migrations applied');
+
+  // config.toml also loads local fixtures, so never use `db push --include-seed` here.
+  step('Supabase — apply production seed');
+  run(
+    'Applying production seed',
+    'supabase db query --linked --file supabase/seed.production.sql'
+  );
+  success('Supabase production seed applied');
 } else {
   info('Supabase step skipped');
 }

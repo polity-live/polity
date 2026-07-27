@@ -91,7 +91,12 @@ export function useWorkflowFlowVisualizationController({
         : []),
       ...sortedSteps.map(step => ({
         id: step.id,
-        label: step.group?.name ?? step.label ?? `Step ${step.order_index + 1}`,
+        label:
+          step.group?.name ??
+          step.label ??
+          t('features.network.workflows.stepLabel', {
+            number: step.order_index + 1,
+          }),
       })),
     ];
 
@@ -131,7 +136,12 @@ export function useWorkflowFlowVisualizationController({
         }),
         markerEnd: { type: MarkerType.ArrowClosed, color: visual.borderColor },
         data: {
-          rights: [`Step ${index + 1} → ${index + 2}`],
+          rights: [
+            t('features.network.workflows.stepTransition', {
+              from: index + 1,
+              to: index + 2,
+            }),
+          ],
           sourceName: newNodes[index].data.label,
           targetName: newNodes[index + 1].data.label,
         },
@@ -139,7 +149,7 @@ export function useWorkflowFlowVisualizationController({
     });
 
     return { nodes: newNodes, edges: newEdges };
-  }, [sortedSteps, workflow.startGroup]);
+  }, [sortedSteps, workflow.startGroup, t]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowNode>([]);
 

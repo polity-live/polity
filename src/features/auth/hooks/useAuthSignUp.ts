@@ -46,8 +46,8 @@ export function useAuthSignUp(): UseAuthSignUpReturn {
 
         return { status: 'authenticated' };
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+        console.error('Password sign-up failed:', error);
+        const errorMessage = t('features.auth.errors.unexpectedError');
         toast.error(errorMessage);
         return { status: 'error', error: errorMessage };
       } finally {
@@ -70,8 +70,8 @@ export function useAuthSignUp(): UseAuthSignUpReturn {
 
         return { success: true };
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+        console.error('Magic-link sign-up failed:', error);
+        const errorMessage = t('features.auth.errors.unexpectedError');
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       } finally {

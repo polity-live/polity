@@ -14,6 +14,9 @@ const TestSuggestionLeaf = SuggestionLeaf as ComponentType<{
 
 const translationMock = vi.hoisted(() => ({
   'plateJs.blockSuggestion.block': 'Block',
+  'plateJs.blockSuggestion.cancel': 'Abbrechen',
+  'plateJs.blockSuggestion.finalizeInternalVote': 'Interne Abstimmung beenden',
+  'plateJs.blockSuggestion.finalizeInternalVoteTitle': 'Interne Abstimmung beenden?',
   'plateJs.dataView.chart': 'Chart',
   'plateJs.dataView.insertTitle': 'Insert data',
   'plateJs.dataView.stat': 'Metric',
@@ -97,8 +100,26 @@ vi.mock('@platejs/suggestion/react', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (_key: string, valuesOrFallback?: unknown, fallback?: string) =>
-    fallback ?? (typeof valuesOrFallback === 'string' ? valuesOrFallback : _key),
+  translate: (_key: string, valuesOrFallback?: unknown, fallback?: string) => {
+    const labels: Record<string, string> = {
+      'plateJs.blockSuggestion.finalizeInternalVote': 'Interne Abstimmung beenden',
+      'plateJs.blockSuggestion.finalizeInternalVoteTitle': 'Interne Abstimmung beenden?',
+    };
+    return (
+      labels[_key] ?? fallback ?? (typeof valuesOrFallback === 'string' ? valuesOrFallback : _key)
+    );
+  },
+  useTranslation: () => ({
+    t: (key: string) => {
+      const labels: Record<string, string> = {
+        'plateJs.blockSuggestion.block': 'Block',
+        'plateJs.blockSuggestion.finalizeInternalVote': 'Interne Abstimmung beenden',
+        'plateJs.blockSuggestion.finalizeInternalVoteTitle': 'Interne Abstimmung beenden?',
+        'plateJs.dataView.chart': 'Chart',
+      };
+      return labels[key] ?? key;
+    },
+  }),
 }));
 
 vi.mock('@/features/shared/ui/kit-platejs/suggestion-callbacks-context.tsx', () => ({
@@ -366,7 +387,7 @@ describe('suggestion editor styling', () => {
     cleanup();
   });
 
-  it('uses green styling for inserted block suggestions', () => {
+  it('keeps the fill translucent so inserted block suggestions do not cover pasted text', () => {
     render(
       <BlockSuggestion
         element={
@@ -380,10 +401,12 @@ describe('suggestion editor styling', () => {
     );
 
     const overlay = document.querySelector('[contenteditable="false"]');
+    const fill = overlay?.firstElementChild;
 
     expect(overlay?.className).toContain('border-[var(--badge-success-border)]');
-    expect(overlay?.className).toContain('bg-[var(--badge-success-bg)]');
-    expect(overlay?.className).toContain('text-[var(--badge-success-fg)]');
+    expect(overlay?.className).not.toContain('bg-[var(--badge-success-bg)]');
+    expect(fill?.className).toContain('bg-[var(--badge-success-bg)]');
+    expect(fill?.className).toContain('opacity-40');
   });
 
   it('uses red styling for removed block suggestions', () => {
@@ -400,10 +423,11 @@ describe('suggestion editor styling', () => {
     );
 
     const overlay = document.querySelector('[contenteditable="false"]');
+    const fill = overlay?.firstElementChild;
 
     expect(overlay?.className).toContain('border-[var(--badge-danger-border)]');
-    expect(overlay?.className).toContain('bg-[var(--badge-danger-bg)]');
-    expect(overlay?.className).toContain('text-[var(--badge-danger-fg)]');
+    expect(fill?.className).toContain('bg-[var(--badge-danger-bg)]');
+    expect(fill?.className).toContain('opacity-40');
   });
 
   it('uses green styling for inserted static preview block suggestions', () => {
@@ -420,10 +444,12 @@ describe('suggestion editor styling', () => {
     );
 
     const overlay = document.querySelector('[contenteditable="false"]');
+    const fill = overlay?.firstElementChild;
 
     expect(overlay?.className).toContain('border-[var(--badge-success-border)]');
-    expect(overlay?.className).toContain('bg-[var(--badge-success-bg)]');
-    expect(overlay?.className).toContain('text-[var(--badge-success-fg)]');
+    expect(overlay?.className).not.toContain('bg-[var(--badge-success-bg)]');
+    expect(fill?.className).toContain('bg-[var(--badge-success-bg)]');
+    expect(fill?.className).toContain('opacity-40');
   });
 
   it('uses red styling for removed static preview block suggestions', () => {
@@ -440,10 +466,11 @@ describe('suggestion editor styling', () => {
     );
 
     const overlay = document.querySelector('[contenteditable="false"]');
+    const fill = overlay?.firstElementChild;
 
     expect(overlay?.className).toContain('border-[var(--badge-danger-border)]');
-    expect(overlay?.className).toContain('bg-[var(--badge-danger-bg)]');
-    expect(overlay?.className).toContain('text-[var(--badge-danger-fg)]');
+    expect(fill?.className).toContain('bg-[var(--badge-danger-bg)]');
+    expect(fill?.className).toContain('opacity-40');
   });
 
   it('uses green styling for inserted static preview line breaks', () => {

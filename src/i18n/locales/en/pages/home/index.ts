@@ -86,11 +86,11 @@ export const homePageTranslations = {
           'Insert a chart, table, or statistic with publisher, license, and snapshot date attached.',
         ],
       },
-      streetDesign: {
-        eyebrow: '3D street design',
+      cityDesign: {
+        eyebrow: '3D City Design',
         title: 'Turn a real street into an understandable, editable proposal.',
         description:
-          'Street Design loads the mapped context of a selected area and brings spatial editing, costs, and change requests into one workspace.',
+          'City Design loads the mapped context of a selected area and brings spatial editing, costs, and change requests into one workspace.',
         points: [
           'Select an area and load roads, buildings, greenery, and markings from its OSM context.',
           'Place, select, hide, or remove bike lanes, sidewalks, trees, benches, and green strips.',
@@ -206,6 +206,8 @@ export const homePageTranslations = {
       title: 'Sample amendment text',
       subtitle: 'A structured policy page with status, tags, and readable document text.',
       status: 'Internal review',
+      tagClimate: '#climate',
+      tagBudget: '#budget',
       documentTitle: 'Climate Budget Transparency Amendment',
       paragraphs: [
         'Section 1: The annual budget shall include a public climate impact note for each investment above the agreed threshold.',
@@ -310,17 +312,18 @@ export const homePageTranslations = {
       chartLabels: ['2019', '2021', '2023', '2025', '2026'],
       areaLabels: ['City centre', 'North', 'South', 'East', 'West'],
     },
-    streetDesignPreview: {
-      title: 'Street space editor',
+    cityDesignPreview: {
+      title: 'City Design editor',
       subtitle: 'Existing context, design, costs, and change requests in one workspace.',
       area: 'Euckenstraße 38, Munich',
       localDemo: 'Local demo',
       osmLive: 'Live from OpenStreetMap',
+      osmStored: 'Stored OSM snapshot',
       osmFallback: 'Local OSM fallback',
       loadingOsm: 'Loading OSM …',
       osmUnavailable: 'OSM unavailable',
       osmError: 'The OpenStreetMap area could not be loaded.',
-      toolbarLabel: 'Street design tools',
+      toolbarLabel: 'City Design tools',
       loadArea: 'Load area',
       tools: {
         bikeLane: 'Bike lane',
@@ -353,7 +356,7 @@ export const homePageTranslations = {
       costTitle: 'Cost estimate',
       estimate: 'non-binding estimate',
       canvasLabel:
-        'Interactive street design with mapped context, bike lane, trees, and change-request overlay',
+        'Interactive City Design with mapped context, bike lane, trees, and change-request overlay',
     },
     social: {
       chatTitle: 'Coalition working chat',
@@ -396,6 +399,8 @@ export const homePageTranslations = {
         'Parliamentary Group Mandate Notes',
       ],
       resultMeta: 'Matched by title, text, comments, and connected workflow.',
+      parliamentaryGroup: 'Parliamentary Group',
+      budgetCommittee: 'Budget Committee',
     },
   },
   alphaWarning: {

@@ -82,6 +82,7 @@ export function MembershipButtonView({
     const Icon = buttonConfig.icon;
     const disabledButton = (
       <Button
+        data-tutorial-anchor="request-membership"
         disabled
         variant={buttonConfig.variant}
         className={resolvedClassName}
@@ -135,6 +136,7 @@ export function MembershipButtonView({
   if (hasRequested) {
     return (
       <Button
+        data-tutorial-anchor="request-membership"
         onClick={buttonConfig.onClick}
         loading={isLoading}
         loadingLabel={loadingLabel}
@@ -151,6 +153,7 @@ export function MembershipButtonView({
   if (isMember) {
     return (
       <Button
+        data-tutorial-anchor="request-membership"
         onClick={buttonConfig.onClick}
         loading={isLoading}
         loadingLabel={loadingLabel}
@@ -167,6 +170,7 @@ export function MembershipButtonView({
   if (isInvited) {
     return (
       <Button
+        data-tutorial-anchor="request-membership"
         onClick={buttonConfig.onClick}
         loading={isLoading}
         loadingLabel={loadingLabel}
@@ -182,6 +186,7 @@ export function MembershipButtonView({
 
   return (
     <Button
+      data-tutorial-anchor="request-membership"
       onClick={buttonConfig.onClick}
       loading={isLoading}
       loadingLabel={loadingLabel}

@@ -10,6 +10,10 @@ import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { CommentThread } from '@/features/shared/ui/comments';
 import type { TodoDiscussionController } from './hooks/useTodoDiscussion';
 import { TodoArchiveAction, TodoArchiveBadge } from './ui/TodoArchiveAction';
+import { BookOpen, Bot, RotateCcw } from 'lucide-react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
+import { getTodoTutorialAnchor } from './logic/tutorialTodoAnchor';
 export interface TodoDetailPageViewProps {
   todoId: any;
   t: any;
@@ -49,6 +53,7 @@ export function TodoDetailPageView({
   handleArchive,
   handleUnarchive,
 }: TodoDetailPageViewProps) {
+  const { language } = useTranslation();
   if (!todo) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -71,6 +76,10 @@ export function TodoDetailPageView({
     return <AccessDenied />;
   }
 
+  const displayTodo = resolveAppTutorialFixtureValue(todo, {
+    tutorialRunId: todo.tutorial_run_id,
+    language,
+  });
   return (
     <>
       <div className="mb-6 flex items-center justify-between">
@@ -82,13 +91,21 @@ export function TodoDetailPageView({
         </Link>
         <ShareButton
           url={`/todos/${todoId}`}
-          title={todo.title || 'Todo'}
+          title={displayTodo.title || t('common.entities.todo')}
           variant="outline"
           size="sm"
         />
       </div>
 
-      <Card>
+      <Card
+        data-tutorial-anchor={
+          getTodoTutorialAnchor(todo) === 'tutorial-assistant-todo'
+            ? 'todo-status-in-progress'
+            : getTodoTutorialAnchor(todo)
+              ? 'todo-complete'
+              : undefined
+        }
+      >
         <CardHeader>
           {todo.archived_at ? (
             <div className="mb-2">
@@ -98,7 +115,7 @@ export function TodoDetailPageView({
           <TodoDetailHeader
             isEditing={isEditing}
             isSaving={isSaving}
-            title={todo.title ?? ''}
+            title={displayTodo.title ?? ''}
             formTitle={formData.title}
             onEdit={() => setIsEditing(true)}
             onSave={handleSave}
@@ -120,9 +137,13 @@ export function TodoDetailPageView({
 
         <CardContent>
           {isEditing ? (
-            <TodoDetailEdit formData={formData} onUpdate={handleFormUpdate} />
+            <TodoDetailEdit
+              formData={formData}
+              onUpdate={handleFormUpdate}
+              isTutorialTodo={Boolean(todo.tutorial_run_id)}
+            />
           ) : (
-            <TodoDetailView todo={todo} />
+            <TodoDetailView todo={displayTodo} />
           )}
         </CardContent>
       </Card>
@@ -138,6 +159,29 @@ export function TodoDetailPageView({
               isSubmitting={discussion.isSubmitting}
               linkAuthors
             />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {todo.tutorial_run_id ? (
+        <Card className="mt-6" data-tutorial-anchor="tutorial-help-links">
+          <CardContent className="grid gap-3 pt-6 sm:grid-cols-3">
+            <Link to="/messages" className="flex items-center gap-2 text-sm hover:underline">
+              <Bot className="h-4 w-4" />
+              {t('features.todos.helpLinks.assistant')}
+            </Link>
+            <Link
+              to="/user/$id/settings"
+              params={{ id: todo.creator_id }}
+              className="flex items-center gap-2 text-sm hover:underline"
+            >
+              <RotateCcw className="h-4 w-4" />
+              {t('features.todos.helpLinks.tutorial')}
+            </Link>
+            <Link to="/docs" className="flex items-center gap-2 text-sm hover:underline">
+              <BookOpen className="h-4 w-4" />
+              {t('features.todos.helpLinks.docs')}
+            </Link>
           </CardContent>
         </Card>
       ) : null}

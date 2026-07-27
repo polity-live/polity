@@ -2,6 +2,18 @@ export const meetTranslations = {
   title: 'Videokonferenz',
   description: 'Videokonferenzen und Anrufe',
   joining: 'Beitritt zur Konferenz...',
+  duration: {
+    minutes: '{{count}} Minuten',
+    minutes_one: '{{count}} Minute',
+    minutes_other: '{{count}} Minuten',
+    hours: '{{count}} Stunden',
+    hours_one: '{{count}} Stunde',
+    hours_other: '{{count}} Stunden',
+    oneHourOneMinute: '{{hours}} Stunde {{minutes}} Minute',
+    oneHourManyMinutes: '{{hours}} Stunde {{minutes}} Minuten',
+    manyHoursOneMinute: '{{hours}} Stunden {{minutes}} Minute',
+    manyHoursManyMinutes: '{{hours}} Stunden {{minutes}} Minuten',
+  },
   loading: 'Konferenz wird geladen...',
   controls: {
     mute: 'Stummschalten',
@@ -53,6 +65,7 @@ export const meetTranslations = {
     permissionDenied: 'Kamera-/Mikrofon-Berechtigung verweigert',
   },
   page: {
+    allOffers: 'Alle Terminangebote',
     loadingMeeting: 'Besprechung wird geladen...',
     notFound: 'Besprechung nicht gefunden',
     notFoundDescription: 'Die gesuchte Besprechung existiert nicht oder wurde entfernt.',

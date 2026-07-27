@@ -2,6 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import type { DatasetChartSource, DatasetProviderId } from '../types';
 
@@ -14,7 +15,7 @@ function providerLabel(provider: DatasetProviderId) {
   if (provider === 'GENESIS_DESTATIS') return 'GENESIS/Destatis';
   if (provider === 'GOVDATA') return 'GovData';
   if (provider === 'EUROSTAT') return 'Eurostat';
-  return 'Eigene Daten';
+  return translateText('plateJs.dataView.ownData');
 }
 
 function normalizedLabel(value: string) {

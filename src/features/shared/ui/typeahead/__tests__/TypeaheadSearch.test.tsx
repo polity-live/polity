@@ -117,6 +117,7 @@ describe('TypeaheadSearch', () => {
     fireEvent.focus(screen.getByPlaceholderText('Search groups'));
 
     expect(container.querySelector('[data-typeahead-portal]')).toBeNull();
+    expect(container.querySelector('[data-typeahead-dropdown]')).toBeTruthy();
     expect(within(container).getByText('Budget Circle')).toBeTruthy();
   });
 

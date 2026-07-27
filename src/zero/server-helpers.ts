@@ -51,6 +51,22 @@ export async function requireRecentVotingPasswordVerification(
   }
 }
 
+export async function isOwnedAppTutorialAgendaItem(
+  tx: ZeroTransaction,
+  agendaItemId: string | null | undefined,
+  userId: string
+): Promise<boolean> {
+  if (!agendaItemId) return false;
+  const agendaItem = await tx.run(zql.agenda_item.where('id', agendaItemId).one());
+  if (!agendaItem?.event_id) return false;
+  const event = await tx.run(zql.event.where('id', agendaItem.event_id).one());
+  if (!event?.tutorial_run_id) return false;
+  const run = await tx.run(
+    zql.app_tutorial_run.where('id', event.tutorial_run_id).where('user_id', userId).one()
+  );
+  return Boolean(run && (run.status === 'active' || run.status === 'paused'));
+}
+
 /**
  * Throws unless the user has configured a voting PIN and verified it recently.
  * Use this for sensitive non-vote actions that must always require a PIN.

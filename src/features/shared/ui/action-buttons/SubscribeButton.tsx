@@ -36,6 +36,7 @@ export function SubscribeButton({
 
   return (
     <Button
+      data-tutorial-anchor="subscribe"
       variant={isSubscribed ? 'outline' : 'default'}
       onClick={onToggleSubscribe}
       className={cn(compactOnMobile && compactActionButtonClassName, className)}

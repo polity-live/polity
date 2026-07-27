@@ -460,7 +460,7 @@ export const groupServerMutators = {
         args: {
           id: guestRoleId,
           name: 'Guest',
-          description: 'Initial guest access role created during group setup.',
+          description: '',
           scope: 'group',
           group_id: args.group.id,
           event_id: null,

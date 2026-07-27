@@ -42,14 +42,14 @@ import { cn } from '@/features/shared/utils/utils';
 import { ChangeRequestTimelineCard } from './ChangeRequestTimelineCard';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
-import { StreetDesignChangeRequestPreview } from '@/features/amendments/streetscape/ui/StreetDesignChangeRequestPreview';
+import { CityDesignChangeRequestPreview } from '@/features/amendments/city-design/ui/CityDesignChangeRequestPreview';
 import {
-  getStreetDesignChangeRequestStreetDesignId,
-  isStreetDesignChangeRequest,
-  type StreetDesignChangeRequest,
-  type StreetDesignPreviewSource,
-} from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
-import { parseStoredStreetDesignState } from '@/features/amendments/streetscape/state/streetDesignReducer';
+  getCityDesignChangeRequestCityDesignId,
+  isCityDesignChangeRequest,
+  type CityDesignChangeRequest,
+  type CityDesignPreviewSource,
+} from '@/features/amendments/city-design/logic/cityDesignChangeRequests';
+import { parseStoredCityDesignState } from '@/features/amendments/city-design/state/cityDesignReducer';
 import { SuggestionViewToggle } from '@/features/editor/ui/SuggestionViewToggle';
 import {
   isMockCRTimelineItem,
@@ -84,11 +84,11 @@ function isChangeRequestVotesPlaceholder(item: any) {
   return item?._voteStepKind === 'change_request_votes_placeholder';
 }
 
-function getStreetDesignChangeRequestFromTimelineItem(
+function getCityDesignChangeRequestFromTimelineItem(
   item: ChangeRequestTimelineRow
-): StreetDesignChangeRequest | null {
-  const changeRequest = item.change_request as (StreetDesignChangeRequest & { id?: string }) | null;
-  if (!changeRequest || !isStreetDesignChangeRequest(changeRequest)) return null;
+): CityDesignChangeRequest | null {
+  const changeRequest = item.change_request as (CityDesignChangeRequest & { id?: string }) | null;
+  if (!changeRequest || !isCityDesignChangeRequest(changeRequest)) return null;
 
   return {
     ...changeRequest,
@@ -96,10 +96,9 @@ function getStreetDesignChangeRequestFromTimelineItem(
   };
 }
 
-function hasStreetDesignMapSelection(streetDesign: StreetDesignPreviewSource) {
+function hasCityDesignMapSelection(cityDesign: CityDesignPreviewSource) {
   return Boolean(
-    parseStoredStreetDesignState(streetDesign.design_state ?? streetDesign.designState)
-      ?.mapSelection
+    parseStoredCityDesignState(cityDesign.design_state ?? cityDesign.designState)?.mapSelection
   );
 }
 
@@ -124,13 +123,13 @@ export interface ChangeRequestCardsListViewProps {
   allCRsProcessed: any;
   isTimelineComplete: any;
   documentContent: any;
-  streetDesigns?: readonly StreetDesignPreviewSource[];
+  cityDesigns?: readonly CityDesignPreviewSource[];
   agendaTitle?: any;
   forwardingPreview?: AmendmentForwardingPreviewModel | null;
   discussions: any;
   amendmentId: any;
   agendaItemId: any;
-  showStreetDesignPreviewAccordion?: boolean;
+  showCityDesignPreviewAccordion?: boolean;
   userRecord?: any;
   hasUserVoted: any;
   getUserSelectedChoiceIds: any;
@@ -191,13 +190,13 @@ export function ChangeRequestCardsListView({
   allCRsProcessed,
   isTimelineComplete,
   documentContent,
-  streetDesigns = [],
+  cityDesigns = [],
   agendaTitle,
   forwardingPreview,
   discussions,
   amendmentId,
   agendaItemId,
-  showStreetDesignPreviewAccordion = false,
+  showCityDesignPreviewAccordion = false,
   userRecord,
   hasUserVoted,
   getUserSelectedChoiceIds,
@@ -277,35 +276,35 @@ export function ChangeRequestCardsListView({
       })
     : crItems;
   const selectedSharedStreetChangeRequests = selectedSharedPreviewItems
-    .map((item: ChangeRequestTimelineRow) => getStreetDesignChangeRequestFromTimelineItem(item))
-    .filter((changeRequest): changeRequest is StreetDesignChangeRequest => Boolean(changeRequest));
-  const sharedPreviewHasStreetDesign = selectedSharedStreetChangeRequests.length > 0;
+    .map((item: ChangeRequestTimelineRow) => getCityDesignChangeRequestFromTimelineItem(item))
+    .filter((changeRequest): changeRequest is CityDesignChangeRequest => Boolean(changeRequest));
+  const sharedPreviewHasCityDesign = selectedSharedStreetChangeRequests.length > 0;
   const sharedPreviewHasText =
     selectedSharedPreviewItems.length > selectedSharedStreetChangeRequests.length;
   const showSharedTextPreview =
-    sharedPreviewEnabled && !sharedPreviewHasStreetDesign && Boolean(documentContent);
+    sharedPreviewEnabled && !sharedPreviewHasCityDesign && Boolean(documentContent);
   const showSharedStreetPreview =
-    !showStreetDesignPreviewAccordion &&
+    !showCityDesignPreviewAccordion &&
     sharedPreviewEnabled &&
-    sharedPreviewHasStreetDesign &&
+    sharedPreviewHasCityDesign &&
     !sharedPreviewHasText &&
     Boolean(selectedSharedStreetChangeRequests[0]);
-  const streetDesignWithMapSelection = showStreetDesignPreviewAccordion
-    ? (streetDesigns.find(hasStreetDesignMapSelection) ?? null)
+  const cityDesignWithMapSelection = showCityDesignPreviewAccordion
+    ? (cityDesigns.find(hasCityDesignMapSelection) ?? null)
     : null;
-  const selectedStreetDesignChangeRequest = streetDesignWithMapSelection
+  const selectedCityDesignChangeRequest = cityDesignWithMapSelection
     ? (selectedSharedStreetChangeRequests.find(changeRequest => {
-        const targetStreetDesignId = getStreetDesignChangeRequestStreetDesignId(changeRequest);
-        return !targetStreetDesignId || targetStreetDesignId === streetDesignWithMapSelection.id;
+        const targetCityDesignId = getCityDesignChangeRequestCityDesignId(changeRequest);
+        return !targetCityDesignId || targetCityDesignId === cityDesignWithMapSelection.id;
       }) ?? null)
     : null;
-  const streetDesignPreviewChangeRequest: StreetDesignChangeRequest | null =
-    selectedStreetDesignChangeRequest ??
-    (streetDesignWithMapSelection
+  const cityDesignPreviewChangeRequest: CityDesignChangeRequest | null =
+    selectedCityDesignChangeRequest ??
+    (cityDesignWithMapSelection
       ? {
-          id: `street-design-preview-${streetDesignWithMapSelection.id ?? 'selected-map'}`,
-          source_type: 'street_design_scene',
-          source_id: streetDesignWithMapSelection.id ?? null,
+          id: `city-design-preview-${cityDesignWithMapSelection.id ?? 'selected-map'}`,
+          source_type: 'city_design_scene',
+          source_id: cityDesignWithMapSelection.id ?? null,
           change_type: null,
         }
       : null);
@@ -396,7 +395,7 @@ export function ChangeRequestCardsListView({
             isFinalVoteLocked={isLocked}
             diff={diff}
             documentContent={documentContent}
-            streetDesigns={streetDesigns}
+            cityDesigns={cityDesigns}
             suggestionId={suggestionId}
             suggestionResolutions={previewSuggestionResolutions}
             agendaTitle={agendaTitle}
@@ -549,27 +548,27 @@ export function ChangeRequestCardsListView({
         )}
         {showSharedStreetPreview && selectedSharedStreetChangeRequests[0] ? (
           <div className="bg-muted/20 space-y-2 rounded-lg border p-3">
-            <StreetDesignChangeRequestPreview
+            <CityDesignChangeRequestPreview
               changeRequest={selectedSharedStreetChangeRequests[0]}
-              streetDesigns={streetDesigns}
+              cityDesigns={cityDesigns}
             />
           </div>
         ) : null}
-        {showStreetDesignPreviewAccordion &&
-        streetDesignWithMapSelection &&
-        streetDesignPreviewChangeRequest ? (
+        {showCityDesignPreviewAccordion &&
+        cityDesignWithMapSelection &&
+        cityDesignPreviewChangeRequest ? (
           <Accordion type="single" collapsible>
-            <AccordionItem value="street-design-preview" className="border-b-0">
+            <AccordionItem value="city-design-preview" className="border-b-0">
               <AccordionTrigger
                 className="hover:bg-muted/50 rounded-md px-2 py-2 text-sm font-medium hover:no-underline"
-                data-testid="street-design-preview-accordion-trigger"
+                data-testid="city-design-preview-accordion-trigger"
               >
-                {t('features.agendas.crTimeline.streetDesignPreview', 'Street Design Preview')}
+                {t('features.agendas.crTimeline.cityDesignPreview', 'City Design Preview')}
               </AccordionTrigger>
               <AccordionContent className="pt-2 pb-0">
-                <StreetDesignChangeRequestPreview
-                  changeRequest={streetDesignPreviewChangeRequest}
-                  streetDesigns={[streetDesignWithMapSelection]}
+                <CityDesignChangeRequestPreview
+                  changeRequest={cityDesignPreviewChangeRequest}
+                  cityDesigns={[cityDesignWithMapSelection]}
                 />
               </AccordionContent>
             </AccordionItem>

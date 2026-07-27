@@ -40,6 +40,7 @@ export function AsButtonNavigationView({
 
       {isExpanded && (
         <div
+          data-tutorial-anchor={`${navigationType}-navigation`}
           className="bg-background/95 fixed inset-0 z-50 backdrop-blur-sm"
           onMouseLeave={onCollapse}
           onClick={onCollapse}

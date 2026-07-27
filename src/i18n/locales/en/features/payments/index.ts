@@ -32,6 +32,9 @@ export const paymentsTranslations = {
     nextPlan: 'Next plan',
     freeFrom: 'Free from {{date}}',
     changeScheduled: 'Change scheduled',
+    period: '/month',
+    exchangeRateNotice:
+      'Checkout is charged in EUR. Converted values are estimates using Frankfurter rates.',
     cancellationScheduled:
       'Your switch to Free at the end of the billing period has been scheduled.',
   },

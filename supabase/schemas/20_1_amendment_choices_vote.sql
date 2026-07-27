@@ -8,7 +8,7 @@
 -- =============================================================================
 
 -- Change request vote table
-CREATE TABLE IF NOT EXISTS public.change_request_vote (
+CREATE TABLE public.change_request_vote (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   change_request_id UUID NOT NULL REFERENCES public.change_request (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,

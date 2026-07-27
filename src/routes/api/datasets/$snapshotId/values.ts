@@ -1,16 +1,21 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { getSession } from '@/lib/supabase/server';
 import { getDatasetColumnValues } from '@/server/datasets/service';
+import { appErrorHttpBody, appErrorHttpBodyFrom } from '@/features/shared/errors/app-error';
 
 export const Route = createFileRoute('/api/datasets/$snapshotId/values')({
   server: {
     handlers: {
       GET: async ({ request, params }) => {
         const session = await getSession(request);
-        if (!session?.user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!session?.user) {
+          return Response.json(appErrorHttpBody('permission_denied'), { status: 401 });
+        }
         const url = new URL(request.url);
         const column = url.searchParams.get('column')?.trim();
-        if (!column) return Response.json({ error: 'Column is required' }, { status: 400 });
+        if (!column) {
+          return Response.json(appErrorHttpBody('validation_failed'), { status: 400 });
+        }
 
         try {
           return Response.json(
@@ -23,10 +28,9 @@ export const Route = createFileRoute('/api/datasets/$snapshotId/values')({
             })
           );
         } catch (error) {
-          return Response.json(
-            { error: error instanceof Error ? error.message : 'Dataset values failed' },
-            { status: 400 }
-          );
+          return Response.json(appErrorHttpBodyFrom(error, 'dataset_operation_failed'), {
+            status: 400,
+          });
         }
       },
     },

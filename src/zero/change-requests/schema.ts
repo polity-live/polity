@@ -62,7 +62,12 @@ export const createChangeRequestSchema = baseChangeRequestSchema
     discussion_id: z.string().nullable().optional(),
   });
 
-export const createStreetDesignChangeRequestsSchema = z.object({
+export const createDocumentChangeRequestSchema = createChangeRequestSchema.extend({
+  document_content: jsonSchema,
+  discussions: jsonSchema,
+});
+
+export const createCityDesignChangeRequestsSchema = z.object({
   amendment_id: z.string(),
   process_branch_id: z.string().nullable(),
   requests: z.array(createChangeRequestSchema).min(1),

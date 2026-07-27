@@ -8,15 +8,14 @@
 
 import { useState, useCallback } from 'react';
 import { useZero } from '@rocicorp/zero/react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '@/zero/mutators';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { useAuth } from '@/providers/auth-provider';
 import { showVotingPasswordErrorToast } from '@/features/notifications/utils/voting-password-error-toast';
+import { localizeAppError } from '@/features/shared/errors/app-error';
 
 export function useVotePasswordConfirmation() {
   const zero = useZero();
-  const { t } = useTranslation();
   const { user } = useAuth();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -53,15 +52,14 @@ export function useVotePasswordConfirmation() {
         setIsOpen(false);
         setPendingCallback(null);
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : t('common.votingPassword.verifyFailed');
+        const message = localizeAppError(err);
         setError(message);
-        showVotingPasswordErrorToast(message, user?.id);
+        showVotingPasswordErrorToast(err, user?.id);
       } finally {
         setIsVerifying(false);
       }
     },
-    [zero, t, pendingCallback, user?.id]
+    [zero, pendingCallback, user?.id]
   );
 
   const close = useCallback(() => {

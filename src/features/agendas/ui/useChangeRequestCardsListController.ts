@@ -27,7 +27,7 @@ import {
   sortChangeRequestsByVoteOrder,
   type ChangeRequestVoteOrder,
 } from '@/features/change-requests/logic/changeRequestVoteOrder';
-import type { StreetDesignPreviewSource } from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
+import type { CityDesignPreviewSource } from '@/features/amendments/city-design/logic/cityDesignChangeRequests';
 import type { AmendmentForwardingPreviewModel } from '@/features/amendments/logic/amendmentForwardingPreview';
 
 export { resolvePreviewCrIdForTimelineItem } from '../logic/changeRequestDocumentPreview';
@@ -88,7 +88,7 @@ interface ChangeRequestCardsListProps {
   isTimelineComplete?: boolean;
   /** Document content for editor preview */
   documentContent?: Value;
-  streetDesigns?: readonly StreetDesignPreviewSource[];
+  cityDesigns?: readonly CityDesignPreviewSource[];
   /** Agenda or amendment title used for final closing vote labels. */
   agendaTitle?: string | null;
   forwardingPreview?: AmendmentForwardingPreviewModel | null;
@@ -100,7 +100,7 @@ interface ChangeRequestCardsListProps {
   amendmentId?: string;
   /** Agenda item ID — passed to interactive editor */
   agendaItemId?: string;
-  showStreetDesignPreviewAccordion?: boolean;
+  showCityDesignPreviewAccordion?: boolean;
   /** Current user record — passed to interactive editor for author/avatar display */
   userRecord?: {
     id: string;
@@ -138,14 +138,14 @@ export function useChangeRequestCardsListController({
   allCRsProcessed,
   isTimelineComplete,
   documentContent,
-  streetDesigns = [],
+  cityDesigns = [],
   agendaTitle,
   forwardingPreview,
   defaultSortMode,
   discussions,
   amendmentId,
   agendaItemId,
-  showStreetDesignPreviewAccordion = false,
+  showCityDesignPreviewAccordion = false,
   userRecord,
   hasUserVoted,
   getUserSelectedChoiceIds,
@@ -415,13 +415,13 @@ export function useChangeRequestCardsListController({
     allCRsProcessed,
     isTimelineComplete,
     documentContent,
-    streetDesigns,
+    cityDesigns,
     agendaTitle,
     forwardingPreview,
     discussions,
     amendmentId,
     agendaItemId,
-    showStreetDesignPreviewAccordion,
+    showCityDesignPreviewAccordion,
     userRecord,
     hasUserVoted,
     getUserSelectedChoiceIds,

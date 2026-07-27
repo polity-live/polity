@@ -1,4 +1,5 @@
 import { defineMutator } from '@rocicorp/zero';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { can } from '../rbac/can';
@@ -10,8 +11,8 @@ import { voteServerMutators } from '../votes/server-mutators';
 import { snapshotVoteElectorate } from '../ballot-eligibility';
 import { eventTitle, recomputeEventCounters, recomputeEventEndDate } from '../server-helpers';
 import { resolveChangeRequestByVoteResult } from '../change-requests/server-resolution';
-import { finalizeInternalChangeRequestsForEventPhaseTransition } from '../change-requests/internal-voting';
 import { discardPendingEventSuggestions } from '../change-requests/event-suggestions';
+import { transitionProcessBranchToEventMode } from '../amendments/event-mode-transition';
 import {
   type CanonicalVotePurpose,
   VOTE_PURPOSE,
@@ -46,6 +47,10 @@ import {
 type AgendaMutatorTx = Parameters<
   typeof mutators.agendas.updateAgendaItemChangeRequest.fn
 >[0]['tx'];
+type AgendaMutatorCtx = Parameters<
+  typeof mutators.agendas.updateAgendaItemChangeRequest.fn
+>[0]['ctx'];
+const INTERNAL_VOTE_MATERIALIZATION = Symbol('internal-vote-materialization');
 
 const DEFAULT_CHANGE_REQUEST_CHOICE_SPECS = (['yes', 'no', 'abstain'] as const).map(label => ({
   label,
@@ -99,9 +104,11 @@ async function assertCurrentChangeRequestTimelineItem(
 
 async function assertCanManageAgendaVoteFlow(
   tx: AgendaMutatorTx,
-  ctx: { readonly userID: string },
+  ctx: { readonly userID: string; [INTERNAL_VOTE_MATERIALIZATION]?: true },
   agendaItemId: string
 ) {
+  if (ctx[INTERNAL_VOTE_MATERIALIZATION]) return;
+
   const agendaItem = await tx.run(zql.agenda_item.where('id', agendaItemId).one());
   if (!agendaItem?.event_id) {
     throw new Error('Agenda item is not linked to an event.');
@@ -244,18 +251,14 @@ async function syncBranchEditingMode(
     return;
   }
 
-  await finalizeInternalChangeRequestsForEventPhaseTransition({
+  return transitionProcessBranchToEventMode({
     tx,
     ctx,
     amendmentId,
     processBranchId: branch.id,
+    editingMode,
+    branch,
     now: Date.now(),
-  });
-
-  await tx.mutate.amendment_process_branch.update({
-    id: branch.id,
-    editing_mode: editingMode,
-    updated_at: Date.now(),
   });
 }
 
@@ -538,23 +541,6 @@ export const agendaServerMutators = {
         ),
       ];
       const mergeBranchIdSet = new Set(mergeBranchIds);
-      const allOpenChangeRequestsResult = await tx.run(
-        zql.change_request
-          .where('amendment_id', amendment_id)
-          .where('status', 'open')
-          .orderBy('changed_character_count', 'asc')
-          .orderBy('created_at', 'asc')
-      );
-      const allOpenChangeRequests = Array.isArray(allOpenChangeRequestsResult)
-        ? allOpenChangeRequestsResult
-        : [];
-      const changeRequests = allOpenChangeRequests.filter(changeRequest =>
-        mergeBranchIdSet.size > 1
-          ? mergeBranchIdSet.has(changeRequest.process_branch_id ?? '')
-          : processBranchId
-            ? changeRequest.process_branch_id === processBranchId
-            : !changeRequest.process_branch_id
-      );
       let eventForAgenda: Record<string, any> | null | undefined;
       const loadEventForAgenda = async () => {
         if (eventForAgenda !== undefined) {
@@ -567,22 +553,54 @@ export const agendaServerMutators = {
           : null;
         return eventForAgenda;
       };
-      const orderedChangeRequests =
-        changeRequests.length > 1
-          ? await orderChangeRequestsForVoting(
+      const loadScopedOpenChangeRequests = async () => {
+        const result = await tx.run(
+          zql.change_request
+            .where('amendment_id', amendment_id)
+            .where('status', 'open')
+            .orderBy('changed_character_count', 'asc')
+            .orderBy('created_at', 'asc')
+        );
+        const openChangeRequests = Array.isArray(result) ? result : [];
+        return openChangeRequests.filter(changeRequest =>
+          mergeBranchIdSet.size > 1
+            ? mergeBranchIdSet.has(changeRequest.process_branch_id ?? '')
+            : processBranchId
+              ? changeRequest.process_branch_id === processBranchId
+              : !changeRequest.process_branch_id
+        );
+      };
+
+      let changeRequests = await loadScopedOpenChangeRequests();
+      const orderScopedChangeRequests = async (requests: typeof changeRequests) =>
+        requests.length > 1
+          ? orderChangeRequestsForVoting(
               tx,
               amendment_id,
-              changeRequests,
+              requests,
               normalizeChangeRequestVoteOrder(
                 (await loadEventForAgenda())?.change_request_vote_order
               )
             )
-          : changeRequests;
-
+          : requests;
+      let orderedChangeRequests = await orderScopedChangeRequests(changeRequests);
       const branchIdsForModeSync =
         mergeBranchIds.length > 1 ? mergeBranchIds : [processBranchId ?? null];
+      let finalizedInternalChangeRequests = false;
       for (const branchId of branchIdsForModeSync) {
-        await syncBranchEditingMode(tx, ctx, amendment_id, branchId, 'suggest_event');
+        const transition = await syncBranchEditingMode(
+          tx,
+          ctx,
+          amendment_id,
+          branchId,
+          'suggest_event'
+        );
+        finalizedInternalChangeRequests ||= Boolean(transition?.finalizedInternalChangeRequests);
+      }
+
+      if (finalizedInternalChangeRequests) {
+        changeRequests = await loadScopedOpenChangeRequests();
+        orderedChangeRequests = await orderScopedChangeRequests(changeRequests);
       }
 
       const CHOICE_LABELS = ['yes', 'no', 'abstain'] as const;
@@ -791,7 +809,10 @@ export const agendaServerMutators = {
 
         hasChangeRequestVoteSteps = true;
         const voteId = await createVoteWithChoicesAndVoters(
-          cr.title ?? `Change Request ${nextOrderIndex + 1}`,
+          cr.title ??
+            translateText('common.formats.numberedChangeRequest', {
+              number: nextOrderIndex + 1,
+            }),
           VOTE_PURPOSE.changeRequest
         );
 
@@ -982,7 +1003,11 @@ export const agendaServerMutators = {
           id: voteId,
           agenda_item_id,
           amendment_id,
-          title: cr.title ?? `Change Request ${nextOrderIndex + 1}`,
+          title:
+            cr.title ??
+            translateText('common.formats.numberedChangeRequest', {
+              number: nextOrderIndex + 1,
+            }),
           description: null,
           status: VOTE_PHASE.indicative,
           purpose: VOTE_PURPOSE.changeRequest,
@@ -1095,3 +1120,66 @@ export const agendaServerMutators = {
     });
   }),
 };
+
+async function materializeChangeRequestVotingInternal({
+  tx,
+  ctx,
+  args,
+}: {
+  tx: AgendaMutatorTx;
+  ctx: AgendaMutatorCtx;
+  args: {
+    amendment_id: string;
+    agenda_item_id: string;
+    start_final_vote_if_no_change_requests?: boolean;
+  };
+}) {
+  const internalCtx: AgendaMutatorCtx & {
+    [INTERNAL_VOTE_MATERIALIZATION]: true;
+  } = {
+    ...ctx,
+    [INTERNAL_VOTE_MATERIALIZATION]: true,
+  };
+  await agendaServerMutators.initializeChangeRequestVoting.fn({
+    tx,
+    ctx: internalCtx,
+    args,
+  });
+}
+
+export async function materializeCurrentForwardConfirmedEventVoting(
+  tx: AgendaMutatorTx,
+  ctx: AgendaMutatorCtx,
+  branchId: string | null | undefined
+) {
+  if (!branchId) return;
+
+  const stepRuns = await tx.run(
+    zql.amendment_process_step_run.where('branch_id', branchId).orderBy('order_index', 'asc')
+  );
+  const activeStepRun = stepRuns.find(
+    stepRun => !TERMINAL_PROCESS_STEP_STATUSES.has(stepRun.status ?? '')
+  );
+
+  if (
+    !activeStepRun?.agenda_item_id ||
+    !activeStepRun.event_id ||
+    activeStepRun.step_kind === 'merge_vote' ||
+    activeStepRun.decision_status !== 'forward_confirmed'
+  ) {
+    return;
+  }
+
+  const agendaItem = await tx.run(zql.agenda_item.where('id', activeStepRun.agenda_item_id).one());
+  if (!agendaItem?.amendment_id) return;
+
+  await materializeChangeRequestVotingInternal({
+    tx,
+    ctx,
+    args: {
+      amendment_id: agendaItem.amendment_id,
+      agenda_item_id: agendaItem.id,
+      start_final_vote_if_no_change_requests: false,
+    },
+  });
+}

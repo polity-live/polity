@@ -134,7 +134,7 @@ export function CreateThreadDialogView({
                       size="icon"
                       onClick={onRemoveFile}
                       disabled={isUploading || isSubmitting}
-                      aria-label="Remove attachment"
+                      aria-label={translateText('common.accessibility.removeAttachment')}
                     >
                       <X className="h-4 w-4" />
                     </Button>

@@ -148,7 +148,11 @@ export function TypeaheadSearchBaseView({
 
       {isOpen &&
         (disablePortal ? (
-          <div ref={dropdownPortalRef} className="absolute top-full right-0 left-0 z-[9999] mt-1">
+          <div
+            ref={dropdownPortalRef}
+            data-typeahead-dropdown
+            className="absolute top-full right-0 left-0 z-[9999] mt-1"
+          >
             {dropdownContent}
           </div>
         ) : portalTarget ? (
@@ -156,6 +160,7 @@ export function TypeaheadSearchBaseView({
             <div
               ref={dropdownPortalRef}
               data-typeahead-portal
+              data-typeahead-dropdown
               style={{
                 position: 'absolute',
                 top: dropdownStyle.top,

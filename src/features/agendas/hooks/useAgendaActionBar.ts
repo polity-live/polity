@@ -27,6 +27,7 @@ import {
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { localizeAppError } from '@/features/shared/errors/app-error';
 
 interface AgendaItem {
   id: string;
@@ -262,7 +263,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
 
         setCandidacyDialogOpen(false);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to confirm candidacy.';
+        const message = localizeAppError(error);
         setCandidacyPasswordError(message);
       } finally {
         setCandidateLoading(false);

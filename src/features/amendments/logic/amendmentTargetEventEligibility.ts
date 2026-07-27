@@ -1,5 +1,6 @@
-export const AMENDMENT_TARGET_EVENT_CLOSED_MESSAGE =
-  'Die Antragsfrist fuer dieses Event ist abgelaufen.';
+import { encodeAppError, throwAppError } from '@/features/shared/errors';
+
+export const AMENDMENT_TARGET_EVENT_CLOSED_MESSAGE = encodeAppError('event_deadline_expired');
 
 export interface AmendmentTargetEventDeadlineLike {
   amendment_deadline?: number | null;
@@ -18,6 +19,6 @@ export function assertAmendmentTargetEventOpen(
   now: number = Date.now()
 ) {
   if (!isAmendmentTargetEventOpen(event, now)) {
-    throw new Error(AMENDMENT_TARGET_EVENT_CLOSED_MESSAGE);
+    throwAppError('event_deadline_expired');
   }
 }

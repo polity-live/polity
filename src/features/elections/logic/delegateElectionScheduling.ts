@@ -5,6 +5,11 @@ import {
   parseDelegateElectionMetadata,
 } from '@/features/elections/logic/electionAssignmentMetadata';
 import type { ElectionMode } from './electionMode';
+import { translate } from '@/features/shared/hooks/use-translation';
+
+function delegateAssemblyFallback() {
+  return translate('features.elections.delegate.assemblyFallback');
+}
 
 interface DelegateElectionRoleLike {
   elections?:
@@ -66,10 +71,15 @@ export function buildDelegateElectionAgendaItemTitle(args: {
   seatNumber?: number | null;
 }) {
   if (args.mode === 'list') {
-    return `Delegiertenwahl: ${args.targetEventTitle || 'Delegiertenversammlung'}`;
+    return translate('features.elections.delegate.agendaListTitle', {
+      event: args.targetEventTitle || delegateAssemblyFallback(),
+    });
   }
 
-  return `Delegiertenwahl Sitz ${args.seatNumber ?? 1}: ${args.targetEventTitle || 'Delegiertenversammlung'}`;
+  return translate('features.elections.delegate.agendaSingleTitle', {
+    seat: args.seatNumber ?? 1,
+    event: args.targetEventTitle || delegateAssemblyFallback(),
+  });
 }
 
 export function buildDelegateElectionAgendaItemDescription(args: {
@@ -79,10 +89,15 @@ export function buildDelegateElectionAgendaItemDescription(args: {
   seatNumber?: number | null;
 }) {
   if (args.mode === 'list') {
-    return `Listenwahl fuer ${args.seatCount} Delegiertensitz${args.seatCount === 1 ? '' : 'e'}.`;
+    return translate('features.elections.delegate.agendaListDescription', {
+      count: args.seatCount,
+    });
   }
 
-  return `Einzelwahl fuer Delegiertensitz ${args.seatNumber ?? 1} von ${args.totalSeatCount}.`;
+  return translate('features.elections.delegate.agendaSingleDescription', {
+    seat: args.seatNumber ?? 1,
+    total: args.totalSeatCount,
+  });
 }
 
 export function buildDelegateElectionRecordTitle(args: {
@@ -91,10 +106,15 @@ export function buildDelegateElectionRecordTitle(args: {
   seatNumber?: number | null;
 }) {
   if (args.mode === 'list') {
-    return `Delegiertenwahl fuer ${args.targetEventTitle || 'Delegiertenversammlung'}`;
+    return translate('features.elections.delegate.recordListTitle', {
+      event: args.targetEventTitle || delegateAssemblyFallback(),
+    });
   }
 
-  return `Delegiertensitz ${args.seatNumber ?? 1} fuer ${args.targetEventTitle || 'Delegiertenversammlung'}`;
+  return translate('features.elections.delegate.recordSingleTitle', {
+    seat: args.seatNumber ?? 1,
+    event: args.targetEventTitle || delegateAssemblyFallback(),
+  });
 }
 
 export function buildDelegateElectionRecordDescription(args: {
@@ -108,7 +128,11 @@ export function buildDelegateElectionRecordDescription(args: {
   mode: ElectionMode;
 }) {
   return buildDelegateElectionDescription({
-    summary: `Waehlt die Delegierten von ${args.sourceGroupName || 'dieser Untergruppe'} fuer ${args.targetEventTitle || 'die Delegiertenversammlung'}.`,
+    summary: translate('features.elections.delegate.recordSummary', {
+      sourceGroup:
+        args.sourceGroupName || translate('features.elections.delegate.sourceGroupFallback'),
+      event: args.targetEventTitle || delegateAssemblyFallback(),
+    }),
     meta: {
       kind: 'delegate_election',
       targetEventId: args.targetEventId,

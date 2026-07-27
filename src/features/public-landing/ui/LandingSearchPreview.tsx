@@ -53,7 +53,10 @@ export function LandingSearchPreview() {
         entity_type: 'workflow',
         entity_id: `landing-search-entity-${index}`,
         title: result,
-        subtitle: index === 0 ? 'Parliamentary Group' : 'Budget Committee',
+        subtitle:
+          index === 0
+            ? t('pages.home.publicLanding.searchPreview.parliamentaryGroup')
+            : t('pages.home.publicLanding.searchPreview.budgetCommittee'),
         summary: t('pages.home.publicLanding.searchPreview.resultMeta'),
         search_text: `${result} ${t('pages.home.publicLanding.searchPreview.resultMeta')}`,
         visibility: 'public',
@@ -74,8 +77,12 @@ export function LandingSearchPreview() {
         updated_at: Date.now() - index * 1000 * 60 * 15,
         engagement_score: 32 - index,
         trending_score: 18 - index,
+        tutorial_run_id: null,
         topics: [{ topic: 'climate' }, { topic: index === 0 ? 'amendments' : 'events' }],
-        group: { id: 'landing-group', name: 'Parliamentary Group' },
+        group: {
+          id: 'landing-group',
+          name: t('pages.home.publicLanding.searchPreview.parliamentaryGroup'),
+        },
       })) as SearchDocument[],
     [t, tArray]
   );

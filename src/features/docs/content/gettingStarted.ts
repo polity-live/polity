@@ -107,7 +107,7 @@ const de: GettingStartedContent = {
         id: 'app-navigation',
         title: 'Navigation nach der Anmeldung',
         markdown:
-          'Die App-Hauptnavigation öffnet Startseite, Nachrichten, Suche, Erstellen, Kalender, Aufgaben und Benachrichtigungen. Profil, Einstellungen, deine Räume sowie **Dokumentation & Hilfe** findest du im Nutzermenü am Avatar.',
+          'Die App-Hauptnavigation öffnet Startseite, Nachrichten, Suche, Erstellen, Kalender, Aufgaben und Benachrichtigungen. Profil, Einstellungen, deine Räume sowie **Dokumentation & Feedback** findest du im Nutzermenü am Avatar.',
       },
       {
         id: 'primaer-und-sekundaer',
@@ -125,7 +125,7 @@ const de: GettingStartedContent = {
         id: 'abbildungen',
         title: 'Öffentlich und angemeldet im Vergleich',
         markdown:
-          '![Die öffentliche Navigation enthält Produktseiten, Dokumentation und Anmeldung.](/docs/images/public-navigation.png)\n\n*Öffentliche Navigation dient der Orientierung und dem Zugang zu freigegebenen Inhalten.*\n\n![Die App-Navigation enthält persönliche Arbeitsbereiche; Dokumentation und Hilfe liegen im Nutzermenü.](/docs/images/app-navigation.png)\n\n*Nach der Anmeldung stehen persönliche Bereiche und kontextbezogene Tabs im Vordergrund.*',
+          '![Die öffentliche Navigation enthält Produktseiten, Dokumentation und Anmeldung.](/docs/images/public-navigation.png)\n\n*Öffentliche Navigation dient der Orientierung und dem Zugang zu freigegebenen Inhalten.*\n\n![Die App-Navigation enthält persönliche Arbeitsbereiche; Dokumentation und Feedback liegen im Nutzermenü.](/docs/images/app-navigation.png)\n\n*Nach der Anmeldung stehen persönliche Bereiche und kontextbezogene Tabs im Vordergrund.*',
       },
       {
         id: 'mobil-und-tastatur',
@@ -350,7 +350,7 @@ const en: GettingStartedContent = {
         id: 'app-navigation',
         title: 'Navigation after signing in',
         markdown:
-          'The app main navigation opens Home, Messages, Search, Create, Calendar, Tasks, and Notifications. Your profile, settings, spaces, and **Documentation & help** are available from the avatar user menu.',
+          'The app main navigation opens Home, Messages, Search, Create, Calendar, Tasks, and Notifications. Your profile, settings, spaces, and **Documentation & Feedback** are available from the avatar user menu.',
       },
       {
         id: 'primaer-und-sekundaer',
@@ -368,7 +368,7 @@ const en: GettingStartedContent = {
         id: 'abbildungen',
         title: 'Public and signed-in comparison',
         markdown:
-          '![Public navigation contains product pages, documentation, and authentication.](/docs/images/public-navigation.png)\n\n*Public navigation focuses on orientation and access to shared information.*\n\n![App navigation contains personal work areas; documentation and help are in the user menu.](/docs/images/app-navigation.png)\n\n*After signing in, personal areas and contextual tabs take priority.*',
+          '![Public navigation contains product pages, documentation, and authentication.](/docs/images/public-navigation.png)\n\n*Public navigation focuses on orientation and access to shared information.*\n\n![App navigation contains personal work areas; documentation and feedback are in the user menu.](/docs/images/app-navigation.png)\n\n*After signing in, personal areas and contextual tabs take priority.*',
       },
       {
         id: 'mobil-und-tastatur',

@@ -70,6 +70,7 @@ export function useEditorViewModel({
     setSelectedCrIds,
     selectedCrIds,
     restoreVersion,
+    getLatestContent,
   } = editorState;
 
   // Build current user object
@@ -152,13 +153,16 @@ export function useEditorViewModel({
       crId,
       discussionId,
       changeRequestEntityId,
+      discussions: nextDiscussions,
     }: {
       crId: string;
       discussionId: string;
       changeRequestEntityId: string;
+      discussions: typeof discussions;
     }) => {
       if (!amendmentId) return;
-      const snapshot = createChangeRequestDiffSnapshot(discussionId, content);
+      const documentContent = getLatestContent();
+      const snapshot = createChangeRequestDiffSnapshot(discussionId, documentContent);
       return editorOps.handleSuggestionCreated({
         id: changeRequestEntityId,
         crId,
@@ -171,9 +175,11 @@ export function useEditorViewModel({
         new_text: snapshot.new_text,
         original_properties: snapshot.original_properties,
         new_properties: snapshot.new_properties,
+        documentContent,
+        discussions: nextDiscussions,
       });
     },
-    [amendmentId, content, effectiveProcessBranchId, editorOps]
+    [amendmentId, effectiveProcessBranchId, editorOps, getLatestContent]
   );
 
   // Auto-assign suggestion IDs

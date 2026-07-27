@@ -3,9 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   applyChangeRequestVisibilityAccess,
   applyDocumentQueryAccess,
+  applyElectionQueryAccess,
   applyGroupQueryAccess,
   applySearchDocumentQueryAccess,
   applyTodoQueryAccess,
+  applyVoteQueryAccess,
 } from '../query-access';
 
 type Call = readonly [string, ...unknown[]];
@@ -53,7 +55,14 @@ describe('public content query access', () => {
     applyDocumentQueryAccess(query, undefined);
 
     expect(query.calls).toEqual([
-      ['whereExists', 'amendment', [['where', 'visibility', 'public']]],
+      [
+        'whereExists',
+        'amendment',
+        [
+          ['where', 'tutorial_run_id', 'IS', null],
+          ['where', 'visibility', 'public'],
+        ],
+      ],
     ]);
   });
 
@@ -87,7 +96,10 @@ describe('public content query access', () => {
 
     applySearchDocumentQueryAccess(query, undefined);
 
-    expect(query.calls).toEqual([['where', 'visibility', 'public']]);
+    expect(query.calls).toEqual([
+      ['where', 'tutorial_run_id', 'IS', null],
+      ['where', 'visibility', 'public'],
+    ]);
   });
 
   it('uses the materialized ACL for private authenticated search results', () => {
@@ -96,6 +108,15 @@ describe('public content query access', () => {
     applySearchDocumentQueryAccess(query, 'user-1');
 
     expect(query.calls).toEqual([
+      ['where', expect.any(Function)],
+      [
+        'exists',
+        'tutorial_run',
+        [
+          ['where', 'user_id', 'user-1'],
+          ['where', 'status', 'IN', ['active', 'paused']],
+        ],
+      ],
       ['where', expect.any(Function)],
       ['exists', 'acl', [['where', 'user_id', 'user-1']]],
     ]);
@@ -153,5 +174,50 @@ describe('public content query access', () => {
     ]);
     expect(amendmentCalls.some(call => call[0] === 'exists' && call[1] === 'group')).toBe(true);
     expect(amendmentCalls.some(call => call[0] === 'exists' && call[1] === 'event')).toBe(true);
+  });
+
+  it('scopes elections through an accessible agenda item or role root', () => {
+    const query = createQuery();
+
+    applyElectionQueryAccess(query, 'user-1');
+
+    const agendaCall = query.calls.find(call => call[0] === 'exists' && call[1] === 'agenda_item');
+    const roleCall = query.calls.find(call => call[0] === 'exists' && call[1] === 'role');
+    const agendaCalls = agendaCall?.[2] as Call[];
+    const roleCalls = roleCall?.[2] as Call[];
+    const eventCall = agendaCalls.find(call => call[0] === 'exists' && call[1] === 'event');
+    const eventCalls = eventCall?.[2] as Call[];
+
+    expect(eventCalls).toContainEqual([
+      'exists',
+      'tutorial_run',
+      [
+        ['where', 'user_id', 'user-1'],
+        ['where', 'status', 'IN', ['active', 'paused']],
+      ],
+    ]);
+    expect(roleCalls.some(call => call[0] === 'exists' && call[1] === 'group')).toBe(true);
+  });
+
+  it('scopes votes through an accessible agenda item or amendment root', () => {
+    const query = createQuery();
+
+    applyVoteQueryAccess(query, 'user-1');
+
+    const scopeCalls = query.calls.slice(0, 3);
+    expect(scopeCalls[0]).toEqual(['where', expect.any(Function)]);
+    expect(scopeCalls.some(call => call[0] === 'exists' && call[1] === 'agenda_item')).toBe(true);
+    expect(scopeCalls.some(call => call[0] === 'exists' && call[1] === 'amendment')).toBe(true);
+
+    const amendmentCall = scopeCalls.find(call => call[0] === 'exists' && call[1] === 'amendment');
+    const amendmentCalls = amendmentCall?.[2] as Call[];
+    expect(amendmentCalls).toContainEqual([
+      'exists',
+      'tutorial_run',
+      [
+        ['where', 'user_id', 'user-1'],
+        ['where', 'status', 'IN', ['active', 'paused']],
+      ],
+    ]);
   });
 });

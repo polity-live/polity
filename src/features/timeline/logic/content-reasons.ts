@@ -121,15 +121,17 @@ export function getContentReason(
 export function formatReasonString(reason: ContentReasonData): string {
   switch (reason.category) {
     case 'your_content':
-      return 'Your content';
+      return translate('features.timeline.reasons.yourContent');
     case 'trending':
-      return 'Trending now';
+      return translate('features.timeline.reasons.trending');
     case 'popular_topic':
-      return reason.context ? `Popular in ${reason.context}` : 'Popular topic';
+      return reason.context
+        ? translate('features.timeline.reasons.popularIn', { context: reason.context })
+        : translate('features.timeline.reasons.popularTopic');
     case 'similar_groups':
-      return 'Similar to groups you follow';
+      return translate('features.timeline.reasons.similarGroups');
     default:
-      return 'Recommended for you';
+      return translate('features.timeline.reasons.recommended');
   }
 }
 
@@ -163,3 +165,4 @@ export function filterByReasonStrength(
     return reason.priority >= minPriority;
   });
 }
+import { translate } from '@/features/shared/hooks/use-translation';

@@ -117,7 +117,7 @@ export function useDocumentMutations(_groupId: string): UseDocumentMutationsResu
             },
             {
               type: 'p',
-              children: [{ text: 'Start writing your document...' }],
+              children: [{ text: '' }],
             },
           ],
           editing_mode: 'single',

@@ -381,10 +381,12 @@ export const electionQueries = {
 // ── Query Row Types ─────────────────────────────────────────────────
 export type ElectionByAgendaItemRow = QueryRowType<typeof electionQueries.byAgendaItem>;
 export type ElectionByIdRow = QueryRowType<typeof electionQueries.byId>;
-export type ElectionDecisionOverviewRow = QueryRowType<typeof electionQueries.decisionOverviewPage>;
+export type ElectionDecisionOverviewRow = QueryRowType<
+  typeof electionQueries.decisionOverviewPage
+> & { readonly id: string };
 export type ElectionDecisionManagerRow = QueryRowType<
   typeof electionQueries.decisionManagerProjection
->;
+> & { readonly id: string };
 export type ElectionViewerDecisionStateRow = QueryRowType<
   typeof electionQueries.viewerDecisionState
 >;

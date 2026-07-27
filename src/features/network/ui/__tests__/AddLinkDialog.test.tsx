@@ -36,7 +36,26 @@ vi.mock('motion/react', async () => {
 });
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, fallback?: string) => fallback ?? key,
+  translate: (key: string, fallback?: string) => {
+    const labels: Record<string, string> = {
+      'common.actionSubmission.kinds.link.headline': 'POLITY verbindet.',
+      'common.actionSubmission.kinds.link.active': 'Verknüpfung wird aktiviert',
+      'common.actionSubmission.kinds.link.success': 'Verknüpfung bereit',
+      'common.actionSubmission.kinds.link.description':
+        'Die Verbindung wird geprüft, aktiviert und im Netzwerk aktualisiert.',
+    };
+    return labels[key] ?? fallback ?? key;
+  },
+  useTranslation: () => ({
+    t: (key: string) => {
+      const labels: Record<string, string> = {
+        'common.actionSubmission.steps.link.prepare': 'Verbindung wird geprüft',
+        'common.actionSubmission.steps.link.commit': 'Verknüpfung wird aktiviert',
+        'common.actionSubmission.steps.link.sync': 'Netzwerk wird aktualisiert',
+      };
+      return labels[key] ?? key;
+    },
+  }),
 }));
 
 afterEach(() => {
@@ -81,6 +100,6 @@ describe('AddLinkDialog', () => {
     });
 
     resolveSubmit();
-    await waitFor(() => expect(screen.getByText('Link bereit')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Verknüpfung bereit')).toBeTruthy());
   });
 });

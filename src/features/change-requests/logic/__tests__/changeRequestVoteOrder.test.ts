@@ -39,13 +39,13 @@ describe('changeRequestVoteOrder', () => {
     expect(ordered.map(item => item.id)).toEqual(['CR-15', 'CR-13']);
   });
 
-  it('places street-design CRs after positioned document CRs and orders them by CR number', () => {
+  it('places city-design CRs after positioned document CRs and orders them by CR number', () => {
     const documentCr = createChangeRequest('CR-8');
     const streetCr10 = createChangeRequest('CR-10', {
-      source_type: 'street_design_object',
+      source_type: 'city_design_object',
     });
     const streetCr2 = createChangeRequest('CR-2', {
-      source_type: 'street_design_object',
+      source_type: 'city_design_object',
     });
 
     const ordered = sortChangeRequestsByVoteOrder(
@@ -102,7 +102,7 @@ describe('changeRequestVoteOrder', () => {
     expect(ordered.map(item => item.id)).toEqual(['CR-6', 'CR-8', 'CR-2', 'CR-4']);
   });
 
-  it('uses semantic street-design changes instead of persisted full-snapshot sizes', () => {
+  it('uses semantic city-design changes instead of persisted full-snapshot sizes', () => {
     const streetObject = (
       customUnitCostMinor: number,
       overrides: Record<string, unknown> = {}
@@ -120,13 +120,13 @@ describe('changeRequestVoteOrder', () => {
       ...overrides,
     });
     const priceCr = createChangeRequest('CR-1', {
-      source_type: 'street_design_object',
+      source_type: 'city_design_object',
       changed_character_count: 999_999,
       original_properties: { object: streetObject(10_000) },
       new_properties: { object: streetObject(10_100) },
     });
     const geometryCr = createChangeRequest('CR-2', {
-      source_type: 'street_design_object',
+      source_type: 'city_design_object',
       changed_character_count: 1,
       original_properties: { object: streetObject(10_000) },
       new_properties: {

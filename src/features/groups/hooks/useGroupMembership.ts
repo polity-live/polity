@@ -11,6 +11,8 @@ import {
 import { useGroupConflictPreflight } from './useGroupConflictPreflight';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import type { ProjectedGroupMembershipState } from '@/features/search/types/projected-card-state';
+import { reportAppTutorialAction } from '@/features/app-tutorial/events';
+import { localizeAppError } from '@/features/shared/errors/app-error';
 
 export type MembershipStatus = 'invited' | 'requested' | 'member' | 'admin';
 
@@ -213,14 +215,18 @@ export function useGroupMembership(
       trackServerFinalization(result, {
         onError: error =>
           toast.error(t('features.groups.toasts.joinFailed'), {
-            description: error.message,
+            description: localizeAppError(error),
           }),
       });
       await waitForClientApply(result);
+      reportAppTutorialAction({
+        type: 'action',
+        event: 'group-membership.requested',
+      });
       toast.success(t('features.auth.success.membershipRequestSent'));
     } catch (error) {
       toast.error(t('features.groups.toasts.joinFailed'), {
-        description: error instanceof Error ? error.message : undefined,
+        description: localizeAppError(error),
       });
     } finally {
       setIsLoading(false);
@@ -229,6 +235,7 @@ export function useGroupMembership(
 
   const leaveGroup = async () => {
     if (!membership?.id && !guestAccess?.id) return;
+    if (effectiveStatus === 'requested' && group?.tutorial_run_id) return;
     const guestAccessId = guestAccess?.id;
 
     setIsLoading(true);
@@ -254,7 +261,7 @@ export function useGroupMembership(
       trackServerFinalization(result, {
         onError: error =>
           toast.error(t('features.groups.toasts.leaveFailed'), {
-            description: error.message,
+            description: localizeAppError(error),
           }),
       });
       await waitForClientApply(result);
@@ -268,7 +275,7 @@ export function useGroupMembership(
       }
     } catch (error) {
       toast.error(t('features.groups.toasts.leaveFailed'), {
-        description: error instanceof Error ? error.message : undefined,
+        description: localizeAppError(error),
       });
     } finally {
       setIsLoading(false);
@@ -322,7 +329,7 @@ export function useGroupMembership(
             error,
           });
           toast.error(t('features.groups.toasts.acceptInvitationFailed'), {
-            description: error.message,
+            description: localizeAppError(error),
           });
         },
       });
@@ -337,7 +344,7 @@ export function useGroupMembership(
         error,
       });
       toast.error(t('features.groups.toasts.acceptInvitationFailed'), {
-        description: error instanceof Error ? error.message : undefined,
+        description: localizeAppError(error),
       });
     } finally {
       setIsLoading(false);

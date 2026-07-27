@@ -1,5 +1,27 @@
 export const agendasTranslations = {
+  finalVoteActions: {
+    targetFallback: 'Step',
+    start: {
+      merge: 'Start the final merge vote for {{target}}',
+      closing: 'Start the final closing vote for {{target}}',
+      change_request: 'Start the final change request vote for {{target}}',
+    },
+    close: {
+      merge: 'Close the final merge vote for {{target}}',
+      closing: 'Close the final closing vote for {{target}}',
+      change_request: 'Close the final change request vote for {{target}}',
+    },
+    cast: {
+      merge: 'Vote in the final merge vote for {{target}}',
+      closing: 'Vote in the final closing vote for {{target}}',
+      change_request: 'Vote in the final change request vote for {{target}}',
+    },
+  },
   title: 'Agendas',
+  toasts: {
+    activated: 'Activated: {{title}}',
+    completed: 'Completed: {{title}}',
+  },
   ballotVisibility: {
     label: 'Ballot visibility',
   },
@@ -30,7 +52,7 @@ export const agendasTranslations = {
     sortByChangedCharacters: 'Sort by changed characters',
     sortByTextPosition: 'Sort by text position',
     sortLexicographically: 'Sort lexicographically',
-    streetDesignPreview: 'Street Design Preview',
+    cityDesignPreview: 'City Design Preview',
     deadline: 'Deadline',
     accepted: 'Accepted',
     changeRequestVotesPlaceholder: 'Change request votes will appear here.',
@@ -89,7 +111,35 @@ export const agendasTranslations = {
   },
   offlineTally: {
     entry: 'entry',
+    itemFallback: 'this item',
+    phases: {
+      final: 'Final',
+      indicative: 'Indicative',
+    },
+    entities: {
+      final: 'Final offline tally',
+      indicative: 'Indicative offline tally',
+    },
+    selectionCount: '{{count}} offline selections',
+    selectionCount_one: '{{count}} offline selection',
+    selectionCount_other: '{{count}} offline selections',
+    description:
+      'Enter aggregated offline or hybrid selections for {{item}} and confirm with your voting PIN.',
     maxSelectionsPerEntry: 'Each {{entry}} can receive at most {{count}} offline selections.',
     totalLimitFormula: '{{participants}} participants × {{votes}} selections = {{total}}',
+    actions: {
+      editFinal: 'Edit final offline tally',
+      editIndicative: 'Edit indicative offline tally',
+      saveFinal: 'Save final offline tally',
+      saveIndicative: 'Save indicative offline tally',
+    },
+    success: {
+      final: 'Offline final tally saved',
+      indicative: 'Offline indicative tally saved',
+    },
+  },
+  fallbacks: {
+    choice: 'Choice',
+    variantFinalVote: 'Variant final vote',
   },
 } as const;

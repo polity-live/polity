@@ -10,8 +10,11 @@ import { TodoDetailDialog } from '@/features/todos/ui/todo-detail-dialog.tsx';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { CheckSquare, Plus } from 'lucide-react';
+import { BookOpen, Bot, CheckSquare, Plus, RotateCcw } from 'lucide-react';
+import { getTodoTutorialAnchor } from './logic/tutorialTodoAnchor';
 import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
 export interface TodosPageViewProps {
   t: any;
   user: any;
@@ -71,9 +74,21 @@ export function TodosPageView({
   handleTodoClick,
   tabSwipeHandlers,
 }: TodosPageViewProps) {
+  const { language } = useTranslation();
   if (!user) {
     return <PageSkeleton />;
   }
+
+  const displayTodos = filteredTodos.map((todo: any) =>
+    resolveAppTutorialFixtureValue(todo, {
+      tutorialRunId: todo.tutorial_run_id,
+      language,
+    })
+  );
+  const hasTutorialAssistantTodo = filteredTodos.some(
+    (todo: any) => getTodoTutorialAnchor(todo) === 'tutorial-assistant-todo'
+  );
+  const hasTutorialTodo = filteredTodos.some((todo: any) => Boolean(getTodoTutorialAnchor(todo)));
 
   return (
     <div style={{ touchAction: 'pan-y' }} {...tabSwipeHandlers}>
@@ -127,8 +142,9 @@ export function TodosPageView({
           </Card>
         ) : viewMode === 'kanban' && selectedTab !== 'archived' ? (
           <KanbanBoard
-            todos={filteredTodos}
+            todos={displayTodos}
             virtualQuery={
+              !hasTutorialTodo &&
               selectedTab !== 'archived' &&
               activeCustomFilterIds.length === 0 &&
               Object.values(quickFilterValues ?? {}).every(value =>
@@ -140,7 +156,7 @@ export function TodosPageView({
           />
         ) : (
           <TodoList
-            todos={filteredTodos}
+            todos={displayTodos}
             onToggleComplete={handleToggleComplete}
             onTodoClick={handleTodoClick}
             virtualQuery={
@@ -158,6 +174,29 @@ export function TodosPageView({
           />
         )}
       </TodosTabs>
+
+      {hasTutorialAssistantTodo ? (
+        <Card className="mt-6" data-tutorial-anchor="tutorial-help-links">
+          <CardContent className="grid gap-3 pt-6 sm:grid-cols-3">
+            <Link to="/messages" className="flex items-center gap-2 text-sm hover:underline">
+              <Bot className="h-4 w-4" />
+              {t('features.todos.helpLinks.assistant')}
+            </Link>
+            <Link
+              to="/user/$id/settings"
+              params={{ id: user.id }}
+              className="flex items-center gap-2 text-sm hover:underline"
+            >
+              <RotateCcw className="h-4 w-4" />
+              {t('features.todos.helpLinks.tutorial')}
+            </Link>
+            <Link to="/docs" className="flex items-center gap-2 text-sm hover:underline">
+              <BookOpen className="h-4 w-4" />
+              {t('features.todos.helpLinks.docs')}
+            </Link>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {selectedTodo && (
         <TodoDetailDialog

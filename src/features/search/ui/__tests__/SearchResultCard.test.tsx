@@ -1,7 +1,8 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ to, children, ...props }: { to: string; children: React.ReactNode }) => (
@@ -32,6 +33,10 @@ vi.mock('@/features/timeline/ui/LazyCardComponents', () => ({
 
 afterEach(() => {
   cleanup();
+});
+
+beforeEach(() => {
+  useLanguageStore.setState({ language: 'en' });
 });
 
 function makeSearchDocument(overrides: Partial<SearchDocument> = {}): SearchDocument {
@@ -76,6 +81,43 @@ function readDynamicCardProps() {
 }
 
 describe('SearchResultCard', () => {
+  it('projects tutorial search cards immediately while preserving equal normal user data', () => {
+    const { rerender } = render(
+      <SearchResultCard
+        mode="preview"
+        document={makeSearchDocument({
+          title: 'Münchner Klimarat',
+          summary: 'Transparente, vernetzte Klimapolitik für München.',
+          tutorial_run_id: 'tutorial-run',
+        })}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: 'Munich Climate Council' })).toBeTruthy();
+    expect(screen.getByText('Transparent, connected climate policy for Munich.')).toBeTruthy();
+
+    act(() => {
+      useLanguageStore.setState({ language: 'de' });
+    });
+    expect(screen.getByRole('link', { name: 'Münchner Klimarat' })).toBeTruthy();
+
+    rerender(
+      <SearchResultCard
+        mode="preview"
+        document={makeSearchDocument({
+          title: 'Münchner Klimarat',
+          summary: 'Eigene Gruppe',
+          tutorial_run_id: null,
+        })}
+      />
+    );
+    act(() => {
+      useLanguageStore.setState({ language: 'en' });
+    });
+    expect(screen.getByRole('link', { name: 'Münchner Klimarat' })).toBeTruthy();
+    expect(screen.getByText('Eigene Gruppe')).toBeTruthy();
+  });
+
   it('renders an immediately navigable, fixed-cell preview without loading the dynamic card', () => {
     const { container } = render(
       <div style={{ height: 360 }}>

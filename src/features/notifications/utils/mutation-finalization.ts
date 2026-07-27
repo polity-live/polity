@@ -3,6 +3,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import type { MutationResultLike } from '@/zero/mutate-with-server-check';
 import { toMutationError } from '@/zero/mutate-with-server-check';
 import { gatedToast as toast } from './gated-toast';
+import { localizeAppError } from '@/features/shared/errors';
 
 export type CreationEntityKind =
   | 'agendaItem'
@@ -163,7 +164,7 @@ export function trackMutationFinalization({
     const resolvedErrorToast =
       typeof errorToast === 'function' ? errorToast(error) : (errorToast ?? {});
     toast.finalizationError(messages.error, {
-      description: error.message !== messages.error ? error.message : undefined,
+      description: localizeAppError(error),
       ...resolvedErrorToast,
       id: toastId,
     });

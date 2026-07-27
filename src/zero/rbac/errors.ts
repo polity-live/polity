@@ -1,4 +1,5 @@
 import type { ResourceType, ActionType } from './types';
+import { encodeAppError } from '@/features/shared/errors';
 
 /**
  * Error thrown when a permission check fails.
@@ -14,8 +15,7 @@ export class PermissionError extends Error {
   readonly scope?: string;
 
   constructor(action: ActionType, resource: ResourceType, scope?: string) {
-    const scopeMsg = scope ? ` in ${scope}` : '';
-    super(`Permission denied: cannot '${action}' on '${resource}'${scopeMsg}`);
+    super(encodeAppError('permission_denied', { action, resource }));
     this.name = 'PermissionError';
     this.resource = resource;
     this.action = action;

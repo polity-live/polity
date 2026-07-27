@@ -1,6 +1,18 @@
 export const statementsTranslations = {
+  fallbacks: {
+    statement: 'Statement',
+    video: 'Video-Statement',
+    photo: 'Foto-Statement',
+  },
   title: 'Stellungnahmen',
   description: 'Teile deine Position und Ansichten',
+  carousel: {
+    title: 'Stellungnahmen',
+    viewerTitle: 'Stellungnahme',
+  },
+  form: {
+    title: 'Überschrift',
+  },
   create: {
     title: 'Stellungnahme erstellen',
     placeholder: 'Was ist deine Position?',

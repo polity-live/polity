@@ -36,7 +36,7 @@ export const authTranslations = {
     description: 'Gib deine E-Mail-Adresse und dein Passwort ein',
     emailLabel: 'E-Mail-Adresse',
     emailPlaceholder: 'deine.email@beispiel.de',
-    emailHint: 'Gib eine gueltige E-Mail-Adresse ein.',
+    emailHint: 'Gib eine gültige E-Mail-Adresse ein.',
     passwordLabel: 'Passwort',
     forgotPassword: 'Passwort vergessen?',
     passwordPlaceholder: 'Passwort eingeben',
@@ -57,13 +57,13 @@ export const authTranslations = {
     description: 'Registriere dich mit E-Mail und Passwort',
     emailLabel: 'E-Mail-Adresse',
     emailPlaceholder: 'deine.email@beispiel.de',
-    emailHint: 'Gib eine gueltige E-Mail-Adresse ein.',
+    emailHint: 'Gib eine gültige E-Mail-Adresse ein.',
     passwordLabel: 'Passwort',
     passwordPlaceholder: 'Mindestens 6 Zeichen',
     passwordHint: 'Verwende mindestens 6 Zeichen.',
     confirmPasswordLabel: 'Passwort bestätigen',
     confirmPasswordPlaceholder: 'Passwort wiederholen',
-    confirmPasswordHint: 'Die Passwoerter muessen uebereinstimmen.',
+    confirmPasswordHint: 'Die Passwörter müssen übereinstimmen.',
     submit: 'Konto erstellen',
     submitting: 'Wird erstellt...',
     googleButton: 'Mit Google fortfahren',
@@ -74,6 +74,8 @@ export const authTranslations = {
     hasAccount: 'Bereits ein Konto?',
     signInLink: 'Anmelden',
     signUpFailed: 'Konto konnte nicht erstellt werden',
+    emailAlreadyRegistered:
+      'Für diese E-Mail-Adresse gibt es bereits ein Konto. Melde dich stattdessen an.',
     confirmationPendingTitle: 'Prüfe deine E-Mails',
     confirmationPendingDescription: 'Wir haben einen Bestätigungslink an {{email}} gesendet.',
     confirmationPendingInstructions:
@@ -123,6 +125,8 @@ export const authTranslations = {
       title: 'Richte deinen politischen Arbeitsbereich ein',
       subtitle:
         'Ein paar gezielte Entscheidungen helfen Polity, dich mit Menschen, Gruppen, Entscheidungen und Unterstützung zu verbinden.',
+      compactReason:
+        'Damit Polity dir passende Menschen, Gruppen, Entscheidungen und Unterstützung zeigen kann.',
       contextTitle: 'Warum das wichtig ist',
       contextDescription:
         'Polity funktioniert am besten, wenn Profil, Gruppenkontext und Assistenz bereit sind, bevor du in die Timeline gehst.',
@@ -262,26 +266,35 @@ export const authTranslations = {
         timeline:
           'Deine Interessen sind gespeichert. Öffne die Timeline, um passende Aktivität und neue Gruppen zu entdecken.',
         assistant:
-          'Starte mit Aria & Kai, wenn du vor dem Erkunden eine geführte Einführung möchtest.',
+          'Starte mit Assistent Aria & Kai, wenn du vor dem Erkunden eine geführte Einführung möchtest.',
       },
       nextStepLabel: 'Nächster Schritt',
       goToProfile: 'Zu meinem Profil',
       goToGroup: 'Zur Gruppe',
       goToTimeline: 'Timeline öffnen',
       showAssistant: 'Assistent öffnen',
+      explainApp: 'Erkläre mir die App',
+      recommended: 'Empfohlen',
+      exploreWithAssistant: 'Erkunde die App mit Assistent Aria & Kai',
+      exploreAlone: 'Ich möchte die App selbst erkunden',
+      pathTitle: 'Wie möchtest du starten?',
+      pathDescription:
+        'Wähle eine geführte Einführung, erkunde Polity gemeinsam mit Assistent Aria & Kai oder starte direkt mit der Suche.',
     },
     ariaKaiStep: {
       title: 'Willkommen bei Polity!',
-      subtitle: 'Lerne Aria & Kai kennen, deine persönlichen Assistenten',
-      intro:
-        'Hey! Wir sind <1>Aria & Kai</1> und wir sind hier, um dir zu helfen, Polity zu erkunden und das Beste aus allen Funktionen herauszuholen.',
-      helpText:
-        'Wann immer du Hilfe, Tipps oder Informationen über Gruppen, Events, Anträge und mehr brauchst, <1>findest du uns in deinen Nachrichten</1>. Wir sind immer bereit zu helfen!',
+      introLead: 'Wir sind ',
+      introEmphasis: 'Aria & Kai, deine persönlichen AI-Assistenten',
+      introText:
+        ' – weil jeder Weltverbesserer, egal ob ehrenamtlich oder hauptamtlich, einen persönlichen Assistenten verdient. Wir helfen dir bei deinen Vorhaben und Zielen, bringen Struktur in deine nächsten Schritte und halten dir den Rücken frei – damit aus guten Ideen echte Veränderung wird.',
+      appHelp:
+        'In Polity begleiten wir dich dabei, Gruppen zu organisieren, Veranstaltungen zu planen, Anträge voranzubringen und die passenden Funktionen für deine Vorhaben zu nutzen. Du findest uns jederzeit in deinen Nachrichten.',
       quickTip: 'Schneller Tipp:',
       tipText:
         'Wir haben bereits eine Unterhaltung mit dir begonnen. Klicke unten, um zu sehen, wo du uns immer finden kannst!',
-      dontShowAgain: 'Diese Einführung nicht mehr anzeigen',
+      assistantName: 'Aria & Kai',
       assistantBadge: 'KI',
+      previewGreeting: 'Hey! Wir sind Aria & Kai. Womit möchtest du heute anfangen?',
       previewPrompt: 'Was sollte ich zuerst tun?',
       continue: 'Weiter',
     },
@@ -294,7 +307,7 @@ export const authTranslations = {
   },
   errors: {
     systemAssistantNotFound:
-      'Systemassistent (Aria & Kai) ist nicht verfügbar. Bitte kontaktiere den Support oder führe das Seed-Skript aus, um Systembenutzer zu initialisieren.',
+      'Assistent Aria & Kai ist nicht verfügbar. Bitte kontaktiere den Support oder führe das Seed-Skript aus, um Systembenutzer zu initialisieren.',
     systemAssistantCheckFailed:
       'Fehler bei der Überprüfung der Systemassistenten-Verfügbarkeit. Bitte versuche es erneut.',
     verificationFailed: 'Verifizierung fehlgeschlagen',
@@ -303,6 +316,7 @@ export const authTranslations = {
     userInitializationFailed:
       'Dein Konto konnte nicht initialisiert werden. Bitte kontaktiere den Support.',
     magicLinkFailed: 'Magic-Link konnte nicht gesendet werden',
+    googleSignInFailed: 'Die Google-Anmeldung konnte nicht gestartet werden.',
     unexpectedError: 'Ein unerwarteter Fehler ist aufgetreten',
     fillBothFields: 'Bitte fülle beide Felder aus',
     nameTooShort: 'Name muss mindestens 2 Zeichen lang sein',

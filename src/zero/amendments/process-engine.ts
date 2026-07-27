@@ -122,11 +122,11 @@ function getProcessTaskNotificationTitle(
 
   switch (taskType) {
     case 'implementation_evaluation':
-      return 'Umsetzung evaluieren';
+      return translateText('features.amendments.processTasks.implementationEvaluation');
     case 'support_confirmation':
-      return 'Unterstützung bestätigen';
+      return translateText('features.amendments.processTasks.supportConfirmation');
     default:
-      return 'Event planen';
+      return translateText('features.amendments.processTasks.scheduleEvent');
   }
 }
 
@@ -2585,7 +2585,11 @@ export async function initializeAmendmentProcessPath(
     id: pathId,
     amendment_id: args.amendment_id,
     process_run_id: processRunId,
-    title: args.path_mode === 'workflow' ? 'Workflow path' : 'Hierarchy path',
+    title: translateText(
+      `features.amendments.process.pathModes.${
+        args.path_mode === 'workflow' ? 'workflow' : 'hierarchy'
+      }`
+    ),
     workflow_id: workflowId,
     created_at: now,
   });

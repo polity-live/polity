@@ -1,7 +1,15 @@
 'use client';
 
 import { featureThemeMarkup } from '@/features/shared/theme';
-import { createContext, ReactNode, useContext, type ComponentProps } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+  type ComponentProps,
+} from 'react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
   ReactFlow,
   Controls,
@@ -13,6 +21,7 @@ import {
   Edge,
   OnNodesChange,
   OnEdgesChange,
+  useReactFlow,
 } from '@xyflow/react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { RightsLabelEdge } from '@/features/network/ui/RightsLabelEdge';
@@ -25,6 +34,27 @@ const EdgeClickContext = createContext<((edgeId: string) => void) | null>(null);
 export const useEdgeClickContext = () => useContext(EdgeClickContext);
 
 const edgeTypes = { rightsLabel: RightsLabelEdge };
+const NETWORK_FIT_VIEW_OPTIONS = {
+  duration: 350,
+  maxZoom: 0.82,
+  padding: 0.32,
+} as const;
+
+function RefitNetworkWhenNodesChange({ nodeSetKey }: { nodeSetKey: string }) {
+  const { fitView } = useReactFlow();
+  const previousNodeSetKey = useRef(nodeSetKey);
+
+  useEffect(() => {
+    if (previousNodeSetKey.current === nodeSetKey) return;
+    previousNodeSetKey.current = nodeSetKey;
+    const timeout = window.setTimeout(() => {
+      void fitView(NETWORK_FIT_VIEW_OPTIONS);
+    }, 80);
+    return () => window.clearTimeout(timeout);
+  }, [fitView, nodeSetKey]);
+
+  return null;
+}
 
 export interface NetworkFlowBaseProps<T extends Node = Node> {
   nodes: T[];
@@ -140,6 +170,15 @@ export function NetworkFlowBaseView<T extends Node = Node>({
   edgeTypes,
   onFullscreenChange,
 }: NetworkFlowBaseViewProps<T>) {
+  const { t } = useTranslation();
+  const fullscreenLabel = isFullscreen
+    ? t('common.accessibility.exitFullscreen')
+    : t('common.accessibility.fullscreen');
+  const nodeSetKey = nodes
+    .map(node => node.id)
+    .sort()
+    .join('|');
+
   return (
     <div
       className={cn(
@@ -164,13 +203,15 @@ export function NetworkFlowBaseView<T extends Node = Node>({
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         fitView
+        fitViewOptions={NETWORK_FIT_VIEW_OPTIONS}
       >
+        <RefitNetworkWhenNodesChange nodeSetKey={nodeSetKey} />
         {panel}
         <Controls onInteractiveChange={onInteractiveChange}>
           <ControlButton
             onClick={() => onFullscreenChange(!isFullscreen)}
-            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-            aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            title={fullscreenLabel}
+            aria-label={fullscreenLabel}
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </ControlButton>

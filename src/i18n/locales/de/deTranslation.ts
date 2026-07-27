@@ -5,6 +5,7 @@ import { mergeTranslations } from '@/i18n/merge-translations.ts';
 import { commonTranslations } from './common';
 import { navigationTranslations } from './navigation';
 import { agendasTranslations } from './features/agendas';
+import { appTutorialTranslations } from './features/app-tutorial';
 import { authTranslations } from './features/auth';
 import { amendmentsTranslations } from './features/amendments';
 import { blogsTranslations } from './features/blogs';
@@ -31,6 +32,7 @@ import { timelineTranslations } from './features/timeline';
 import { todosTranslations } from './features/todos';
 import { userTranslations } from './features/users';
 import { votesTranslations } from './features/votes';
+import { wikiTranslations } from './features/wiki';
 import { landingSectionTranslations } from './pages/home/landing';
 import { componentsTranslations } from './components';
 import { generatedTranslations } from './generated';
@@ -76,6 +78,7 @@ const baseDeTranslation = {
   // Feature-specific translations
   features: {
     agendas: agendasTranslations,
+    appTutorial: appTutorialTranslations,
     auth: authTranslations,
     amendments: amendmentsTranslations,
     blogs: blogsTranslations,
@@ -102,9 +105,12 @@ const baseDeTranslation = {
     todos: todosTranslations,
     user: userTranslations,
     votes: votesTranslations,
+    wiki: wikiTranslations,
   },
 } as const;
 
-const deTranslation: I18nLocale = mergeTranslations(baseDeTranslation, generatedTranslations);
+// Semantic locale modules are the maintained source of truth. The legacy
+// generated catalog only fills gaps and must never overwrite reviewed copy.
+const deTranslation: I18nLocale = mergeTranslations(generatedTranslations, baseDeTranslation);
 
 export default deTranslation;

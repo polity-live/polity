@@ -1,12 +1,14 @@
 import { ChangeRequestsView } from './ChangeRequestsView';
 import { VoteCastDialog } from '@/features/vote-cast/ui/VoteCastDialog';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
 export interface ChangeRequestsPageContainerViewProps {
   amendmentId: any;
   userId: any;
   amendment: any;
   document: any;
-  streetDesigns?: any;
+  cityDesigns?: any;
   openChangeRequests: any;
   approvedChangeRequests: any;
   declinedChangeRequests: any;
@@ -52,7 +54,7 @@ export function ChangeRequestsPageContainerView({
   userId,
   amendment,
   document,
-  streetDesigns = [],
+  cityDesigns = [],
   openChangeRequests,
   approvedChangeRequests,
   declinedChangeRequests,
@@ -92,6 +94,14 @@ export function ChangeRequestsPageContainerView({
   onCastInternalVote,
   onFinalizeInternalVote,
 }: ChangeRequestsPageContainerViewProps) {
+  const { language } = useTranslation();
+  const tutorialRunId = amendment?.tutorial_run_id;
+  const projectFixtureValue = <T,>(value: T) =>
+    resolveAppTutorialFixtureValue(value, {
+      tutorialRunId,
+      language,
+    });
+
   return (
     <>
       <ChangeRequestsView
@@ -102,19 +112,19 @@ export function ChangeRequestsPageContainerView({
         openCount={openChangeRequests.length}
         allChangeRequestsCount={allChangeRequests.length}
         agendaItemId={agendaItemId ?? undefined}
-        diffMap={diffMap}
-        discussions={discussions}
-        documentContent={document?.content}
-        streetDesigns={streetDesigns}
+        diffMap={projectFixtureValue(diffMap)}
+        discussions={projectFixtureValue(discussions)}
+        documentContent={projectFixtureValue(document?.content)}
+        cityDesigns={cityDesigns}
         editingMode={selectedBranchEditingMode}
         hasAmendment={Boolean(amendment)}
         isInVotingStage={isInVotingStage}
         isLoading={isLoading}
-        timelineItems={timelineItems}
-        obsoleteTimelineItems={obsoleteTimelineItems}
-        obsoleteDiffMap={obsoleteDiffMap}
-        branchSections={branchSections}
-        obsoleteBranchSections={obsoleteBranchSections}
+        timelineItems={projectFixtureValue(timelineItems)}
+        obsoleteTimelineItems={projectFixtureValue(obsoleteTimelineItems)}
+        obsoleteDiffMap={projectFixtureValue(obsoleteDiffMap)}
+        branchSections={projectFixtureValue(branchSections)}
+        obsoleteBranchSections={projectFixtureValue(obsoleteBranchSections)}
         branchSelectorBranches={branchSelectorBranches}
         selectedBranchId={selectedBranchId}
         branchDiffCandidates={branchDiffCandidates}
@@ -135,8 +145,8 @@ export function ChangeRequestsPageContainerView({
         open={Boolean(eventVoteDialogOpen)}
         onOpenChange={setEventVoteDialogOpen}
         phase={selectedEventVotePhase}
-        title={selectedEventVoteTitle}
-        choices={selectedEventVoteChoices}
+        title={projectFixtureValue(selectedEventVoteTitle)}
+        choices={projectFixtureValue(selectedEventVoteChoices)}
         requirePassword
         passwordError={passwordError}
         noVotingPasswordSettingsHref={userId ? `/user/${userId}/settings?tab=passwords` : undefined}

@@ -9,6 +9,10 @@ import {
   type CreationMutationOptions,
 } from '@/features/notifications/utils/mutation-finalization';
 
+interface GroupConnectionMutationOptions {
+  silent?: boolean;
+}
+
 export function useGroupConnectionActions() {
   const zero = useZero();
   const { t } = useTranslation();
@@ -46,20 +50,30 @@ export function useGroupConnectionActions() {
   );
 
   const proposeGroupConnectionChange = useCallback(
-    (args: Parameters<typeof mutators.network.proposeGroupConnectionChange>[0]) => {
+    (
+      args: Parameters<typeof mutators.network.proposeGroupConnectionChange>[0],
+      options?: GroupConnectionMutationOptions
+    ) => {
       const result = zero.mutate(mutators.network.proposeGroupConnectionChange(args));
-      toast.success(t('common.network.relationshipsUpdated'));
-      onServerError(result, () => toast.error(t('common.network.relationshipSaveError')));
+      if (!options?.silent) {
+        toast.success(t('common.network.relationshipsUpdated'));
+        onServerError(result, () => toast.error(t('common.network.relationshipSaveError')));
+      }
       return result;
     },
     [zero, t]
   );
 
   const approveGroupConnectionRequest = useCallback(
-    (args: Parameters<typeof mutators.network.approveGroupConnectionRequest>[0]) => {
+    (
+      args: Parameters<typeof mutators.network.approveGroupConnectionRequest>[0],
+      options?: GroupConnectionMutationOptions
+    ) => {
       const result = zero.mutate(mutators.network.approveGroupConnectionRequest(args));
-      toast.success(t('common.network.relationshipsUpdated'));
-      onServerError(result, () => toast.error(t('common.network.relationshipSaveError')));
+      if (!options?.silent) {
+        toast.success(t('common.network.relationshipsUpdated'));
+        onServerError(result, () => toast.error(t('common.network.relationshipSaveError')));
+      }
       return result;
     },
     [zero, t]

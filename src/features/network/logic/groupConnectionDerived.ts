@@ -1,4 +1,5 @@
 import type { GroupConnectionListRow, GroupConnectionRequestListRow } from '@/zero/network/queries';
+import { translate } from '@/features/shared/hooks/use-translation';
 import {
   buildDerivedGroupNetworkMetaMap as buildZeroDerivedGroupNetworkMetaMap,
   getDefaultDerivedGroupNetworkMeta,
@@ -97,13 +98,13 @@ export function getCanonicalMembershipModeLabel(
 ) {
   switch (membershipMode) {
     case 'all_members':
-      return 'All active members';
+      return translate('features.network.membershipModes.all_members');
     case 'role_members':
-      return 'Members with selected role';
+      return translate('features.network.membershipModes.role_members');
     case 'selected_source_groups':
-      return 'Parliament membership';
+      return translate('features.network.membershipModes.selected_source_groups');
     default:
-      return 'No automatic membership';
+      return translate('features.network.membershipModes.none');
   }
 }
 

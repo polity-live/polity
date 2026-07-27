@@ -242,7 +242,7 @@ export function AgendaElectionSection({
   const isInteractive = Boolean(onOpenNamedResults);
   const openNamedResultsLabel = translateText(
     'generated.inline.0015_klick_fuer_einzelansicht_9d7ff135',
-    'Klick fuer Einzelansicht'
+    'Klick für Einzelansicht'
   );
   const noCandidatesLabel = t('features.events.agenda.noCandidates');
   const showDelegateParticipantsAddedMessage =

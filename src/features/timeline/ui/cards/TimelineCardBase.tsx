@@ -14,6 +14,7 @@ import {
   getContentTypeGradient,
 } from '../../constants/content-type-config';
 import { type LucideIcon } from 'lucide-react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export interface TimelineCardBaseProps {
   contentType: ContentType;
@@ -39,6 +40,7 @@ export function TimelineCardBase({
   onClick,
   href,
 }: TimelineCardBaseProps) {
+  const { t } = useTranslation();
   const shadowClasses = getCardShadowClasses(elevated);
   const tone = getContentTypeToneClasses(contentType);
 
@@ -58,7 +60,9 @@ export function TimelineCardBase({
       <LinkSurface
         href={href}
         mode="overlay"
-        label={`Open ${contentType}`}
+        label={t('common.accessibility.openNamed', {
+          name: t(CONTENT_TYPE_CONFIG[contentType].labelKey),
+        })}
         containerClassName={cardStyles}
         contentClassName="flex min-h-0 flex-1 flex-col"
       >

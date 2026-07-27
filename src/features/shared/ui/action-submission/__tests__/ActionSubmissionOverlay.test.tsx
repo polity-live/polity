@@ -2,8 +2,10 @@
 
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ComponentProps, ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { encodeAppError } from '@/features/shared/errors';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 import { ActionSubmissionOverlay, type ActionSubmissionStep } from '../ActionSubmissionOverlay';
 
 vi.mock('motion/react', async () => {
@@ -40,10 +42,26 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+beforeEach(() => {
+  useLanguageStore.setState({ language: 'de' });
+});
+
 const steps: ActionSubmissionStep[] = [
-  { key: 'prepare', label: 'Empfänger prüfen', status: 'complete' },
-  { key: 'commit', label: 'Einladungen senden', status: 'active' },
-  { key: 'sync', label: 'Listen synchronisieren', status: 'pending' },
+  {
+    key: 'prepare',
+    copy: { key: 'common.actionSubmission.steps.invite.prepare' },
+    status: 'complete',
+  },
+  {
+    key: 'commit',
+    copy: { key: 'common.actionSubmission.steps.invite.commit' },
+    status: 'active',
+  },
+  {
+    key: 'sync',
+    copy: { key: 'common.actionSubmission.steps.invite.sync' },
+    status: 'pending',
+  },
 ];
 
 describe('ActionSubmissionOverlay', () => {
@@ -70,7 +88,7 @@ describe('ActionSubmissionOverlay', () => {
     expect(overlay.className).toContain('fixed');
     expect(overlay.className).toContain('inset-0');
     expect(screen.getByText('3 Nutzer')).toBeTruthy();
-    expect(screen.getByText('Einladungen senden')).toBeTruthy();
+    expect(screen.getByText('Einladungen werden gesendet')).toBeTruthy();
     expect(screen.getByRole('progressbar', { name: 'Aktionsfortschritt' })).toBeTruthy();
     expect(document.querySelector('[data-slot="loading-progress-bar"]')).toBeTruthy();
     expect((screen.getByRole('button', { name: 'Fertig' }) as HTMLButtonElement).disabled).toBe(
@@ -85,7 +103,7 @@ describe('ActionSubmissionOverlay', () => {
         status="error"
         steps={[{ ...steps[0], status: 'error' }]}
         preview={{ title: 'Gruppe A' }}
-        error={new Error('duplicate key value violates unique constraint "invite_id_key"')}
+        error={new Error(encodeAppError('already_exists'))}
         onBack={vi.fn()}
         onRetry={vi.fn()}
       />

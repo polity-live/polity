@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { usePushSubscriptionsState } from '@/zero/notifications/usePushSubscriptionsState.ts';
-import { useNotificationActions } from '@/zero/notifications/useNotificationActions.ts';
-import { useAuth } from '@/providers/auth-provider.tsx';
-import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { pushApiFetch } from '@/features/pwa/push-api';
+import { getPushDeviceId, requiresIosHomeScreenInstall } from '@/features/pwa/push-device';
+import { useAuth } from '@/providers/auth-provider';
 
 interface UsePushSubscriptionReturn {
   isSupported: boolean;
@@ -13,82 +13,187 @@ interface UsePushSubscriptionReturn {
   isLoading: boolean;
   permission: NotificationPermission;
   error: string | null;
+  serviceWorkerReady: boolean;
+  serverSynchronized: boolean;
+  requiresIosInstall: boolean;
+  deviceId: string | null;
   subscribe: () => Promise<void>;
   unsubscribe: () => Promise<void>;
   requestPermission: () => Promise<NotificationPermission>;
+  refresh: () => Promise<void>;
 }
 
-/**
- * Hook to manage Web Push notification subscriptions
- *
- * @example
- * ```tsx
- * const { isSubscribed, subscribe, unsubscribe, permission } = usePushSubscription();
- *
- * if (permission === 'default') {
- *   Use the shared Button primitive to call subscribe().
- * }
- * ```
- */
+interface ServerSubscriptionResponse {
+  subscription: { id: string; endpoint: string; device_id: string } | null;
+}
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from(rawData, character => character.charCodeAt(0));
+}
+
+function keysMatch(left: ArrayBuffer | null, right: Uint8Array<ArrayBuffer>) {
+  if (!left) return false;
+  const current = new Uint8Array(left);
+  return current.length === right.length && current.every((value, index) => value === right[index]);
+}
+
+async function ensureServiceWorker() {
+  const registration = await navigator.serviceWorker.getRegistration('/');
+  if (!registration) {
+    await navigator.serviceWorker.register('/custom-sw.js', { scope: '/' });
+  }
+  return Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<ServiceWorkerRegistration>((_, reject) =>
+      setTimeout(() => reject(new Error('Service worker activation timed out')), 10_000)
+    ),
+  ]);
+}
+
+function subscriptionKeys(subscription: PushSubscription) {
+  const keys = subscription.toJSON().keys;
+  if (!keys?.auth || !keys.p256dh) throw new Error('Invalid Web Push subscription keys');
+  return keys as { auth: string; p256dh: string };
+}
+
 export function usePushSubscription(): UsePushSubscriptionReturn {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [isSupported, setIsSupported] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [error, setError] = useState<string | null>(null);
-
-  const { registerPushSubscription, unregisterPushSubscription } = useNotificationActions();
-  const { user } = useAuth();
-
-  // Reactive query for push subscriptions (used in unsubscribe callback)
-  const { data: pushSubscriptionsData } = usePushSubscriptionsState();
-
-  // Keep a stable ref for the translation function to avoid callback re-identity
+  const [serviceWorkerReady, setServiceWorkerReady] = useState(false);
+  const [serverSynchronized, setServerSynchronized] = useState(false);
+  const [requiresIosInstall, setRequiresIosInstall] = useState(false);
+  const [deviceId, setDeviceId] = useState<string | null>(null);
   const tRef = useRef(t);
+  const refreshSequence = useRef(0);
   tRef.current = t;
 
-  // Check if push notifications are supported
-  useEffect(() => {
-    const supported =
-      'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-
-    setIsSupported(supported);
-
-    if (supported && 'Notification' in window) {
-      setPermission(Notification.permission);
-    }
-
-    setIsLoading(false);
+  const unregisterServerDevice = useCallback(async (currentDeviceId: string) => {
+    await pushApiFetch('/api/push/subscription', {
+      method: 'DELETE',
+      body: JSON.stringify({ deviceId: currentDeviceId }),
+    });
   }, []);
 
-  // Check if user already has a subscription
-  useEffect(() => {
-    if (!isSupported || !user) {
+  const synchronizeServer = useCallback(
+    async (subscription: PushSubscription, currentDeviceId: string) => {
+      const keys = subscriptionKeys(subscription);
+      await pushApiFetch<ServerSubscriptionResponse>('/api/push/subscription', {
+        method: 'PUT',
+        body: JSON.stringify({
+          deviceId: currentDeviceId,
+          endpoint: subscription.endpoint,
+          auth: keys.auth,
+          p256dh: keys.p256dh,
+          userAgent: navigator.userAgent,
+        }),
+      });
+    },
+    []
+  );
+
+  const refresh = useCallback(async () => {
+    const sequence = ++refreshSequence.current;
+    const iosInstallRequired = requiresIosHomeScreenInstall();
+    const supported =
+      !iosInstallRequired &&
+      'serviceWorker' in navigator &&
+      'PushManager' in window &&
+      'Notification' in window;
+    const currentDeviceId = getPushDeviceId();
+
+    setRequiresIosInstall(iosInstallRequired);
+    setIsSupported(supported);
+    setDeviceId(currentDeviceId);
+    if ('Notification' in window) setPermission(Notification.permission);
+
+    if (!supported || !user || !currentDeviceId) {
+      setIsSubscribed(false);
+      setServerSynchronized(false);
+      setServiceWorkerReady(false);
       setIsLoading(false);
       return;
     }
 
-    const checkExistingSubscription = async () => {
-      try {
-        const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.getSubscription();
-        setIsSubscribed(!!subscription);
-      } catch {
-        setError(tRef.current('components.pushNotifications.errors.changeFailed'));
-      } finally {
-        setIsLoading(false);
+    setIsLoading(true);
+    try {
+      const registration = await navigator.serviceWorker.getRegistration('/');
+      setServiceWorkerReady(Boolean(registration?.active));
+      let subscription = await registration?.pushManager.getSubscription();
+
+      if (Notification.permission !== 'granted' || !subscription) {
+        await unregisterServerDevice(currentDeviceId);
+        if (sequence === refreshSequence.current) {
+          setIsSubscribed(false);
+          setServerSynchronized(false);
+          setError(null);
+        }
+        return;
       }
+
+      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+      if (!vapidPublicKey)
+        throw new Error(tRef.current('components.pushNotifications.errors.vapidMissing'));
+      const expectedKey = urlBase64ToUint8Array(vapidPublicKey);
+      if (!keysMatch(subscription.options.applicationServerKey, expectedKey)) {
+        await subscription.unsubscribe();
+        await unregisterServerDevice(currentDeviceId);
+        const readyRegistration = await ensureServiceWorker();
+        subscription = await readyRegistration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: expectedKey,
+        });
+      }
+
+      await synchronizeServer(subscription, currentDeviceId);
+      if (sequence === refreshSequence.current) {
+        setServiceWorkerReady(true);
+        setServerSynchronized(true);
+        setIsSubscribed(true);
+        setError(null);
+      }
+    } catch (refreshError) {
+      if (sequence === refreshSequence.current) {
+        setIsSubscribed(false);
+        setServerSynchronized(false);
+        setError(
+          refreshError instanceof Error
+            ? refreshError.message
+            : tRef.current('components.pushNotifications.errors.changeFailed')
+        );
+      }
+    } finally {
+      if (sequence === refreshSequence.current) setIsLoading(false);
+    }
+  }, [synchronizeServer, unregisterServerDevice, user]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    const handleEnvironmentChange = () => {
+      if (document.visibilityState === 'visible') void refresh();
     };
+    window.addEventListener('focus', handleEnvironmentChange);
+    document.addEventListener('visibilitychange', handleEnvironmentChange);
+    return () => {
+      window.removeEventListener('focus', handleEnvironmentChange);
+      document.removeEventListener('visibilitychange', handleEnvironmentChange);
+    };
+  }, [refresh]);
 
-    checkExistingSubscription();
-  }, [isSupported, user]);
-
-  const requestPermission = useCallback(async (): Promise<NotificationPermission> => {
+  const requestPermission = useCallback(async () => {
     if (!isSupported) {
       throw new Error(tRef.current('components.pushNotifications.errors.notSupported'));
     }
-
     try {
       const result = await Notification.requestPermission();
       setPermission(result);
@@ -99,179 +204,95 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
   }, [isSupported]);
 
   const subscribe = useCallback(async () => {
-    if (!isSupported) {
-      setError(tRef.current('components.pushNotifications.errors.notSupported'));
-      return;
+    if (requiresIosInstall) {
+      const installError = tRef.current('components.pushNotifications.errors.iosInstallRequired');
+      setError(installError);
+      throw new Error(installError);
     }
-
-    if (!user) {
-      setError(tRef.current('components.pushNotifications.errors.notLoggedIn'));
-      return;
+    if (!isSupported || !user || !deviceId) {
+      const unsupportedError = tRef.current(
+        user
+          ? 'components.pushNotifications.errors.notSupported'
+          : 'components.pushNotifications.errors.notLoggedIn'
+      );
+      setError(unsupportedError);
+      throw new Error(unsupportedError);
     }
 
     setIsLoading(true);
     setError(null);
-
     try {
-      // Read permission directly from the browser API (not React state)
       let currentPermission = Notification.permission;
-
-      // If already denied, don't bother calling requestPermission — the browser
-      // won't show a dialog and will just return 'denied' immediately.
       if (currentPermission === 'denied') {
-        const errorMsg = tRef.current('components.pushNotifications.errors.permissionBlocked');
-        setError(errorMsg);
-        throw new Error(errorMsg);
+        throw new Error(tRef.current('components.pushNotifications.errors.permissionBlocked'));
       }
-
+      if (currentPermission !== 'granted') currentPermission = await requestPermission();
       if (currentPermission !== 'granted') {
-        currentPermission = await requestPermission();
-      }
-
-      if (currentPermission !== 'granted') {
-        const errorMsg =
+        throw new Error(
           currentPermission === 'denied'
             ? tRef.current('components.pushNotifications.errors.permissionBlocked')
-            : tRef.current('components.pushNotifications.errors.permissionDismissed');
-        setError(errorMsg);
-        throw new Error(errorMsg);
+            : tRef.current('components.pushNotifications.errors.permissionDismissed')
+        );
       }
 
-      // Ensure service worker is registered
-      let swRegistration = await navigator.serviceWorker.getRegistration();
-
-      if (!swRegistration) {
-        try {
-          swRegistration = await navigator.serviceWorker.register('/custom-sw.js', {
-            scope: '/',
-          });
-
-          // Wait for it to become active
-          const installingWorker = swRegistration.installing;
-
-          if (installingWorker) {
-            await new Promise<void>(resolve => {
-              installingWorker.addEventListener('statechange', function (e) {
-                if ((e.target as ServiceWorker).state === 'activated') {
-                  resolve();
-                }
-              });
-            });
-          }
-        } catch {
-          throw new Error(tRef.current('components.pushNotifications.errors.swRegistration'));
-        }
-      }
-
-      // Wait for service worker to be ready with timeout
-      const registration = await Promise.race([
-        navigator.serviceWorker.ready,
-        new Promise<ServiceWorkerRegistration>((_, reject) =>
-          setTimeout(
-            () => reject(new Error(tRef.current('components.pushNotifications.errors.swTimeout'))),
-            5000
-          )
-        ),
-      ]);
-
-      // Check if already subscribed
+      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+      if (!vapidPublicKey)
+        throw new Error(tRef.current('components.pushNotifications.errors.vapidMissing'));
+      const expectedKey = urlBase64ToUint8Array(vapidPublicKey);
+      const registration = await ensureServiceWorker();
       let subscription = await registration.pushManager.getSubscription();
-
-      if (!subscription) {
-        const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-
-        if (!vapidPublicKey) {
-          throw new Error(tRef.current('components.pushNotifications.errors.vapidMissing'));
-        }
-
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-        });
+      if (subscription && !keysMatch(subscription.options.applicationServerKey, expectedKey)) {
+        await subscription.unsubscribe();
+        subscription = null;
       }
+      subscription ??= await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: expectedKey,
+      });
 
-      // Store subscription in Zero
-      const subscriptionJson = subscription.toJSON();
-      const keys = subscriptionJson.keys;
-
-      if (!keys || !keys.auth || !keys.p256dh) {
-        throw new Error(tRef.current('components.pushNotifications.errors.invalidKeys'));
-      }
-
-      await waitForClientApply(
-        registerPushSubscription({
-          id: crypto.randomUUID(),
-          endpoint: subscription.endpoint,
-          auth: keys.auth,
-          p256dh: keys.p256dh,
-          user_agent: navigator.userAgent,
-        })
-      );
-
+      await synchronizeServer(subscription, deviceId);
+      setServiceWorkerReady(true);
+      setServerSynchronized(true);
       setIsSubscribed(true);
-      setError(null);
-    } catch (err: unknown) {
-      const errorMsg =
-        err instanceof Error
-          ? err.message
+      setPermission(Notification.permission);
+    } catch (subscribeError) {
+      const subscribeMessage =
+        subscribeError instanceof Error
+          ? subscribeError.message
           : tRef.current('components.pushNotifications.errors.subscribeFailed');
-      setError(errorMsg);
+      setError(subscribeMessage);
       setIsSubscribed(false);
-      throw err;
+      setServerSynchronized(false);
+      throw subscribeError;
     } finally {
-      // Always sync permission state from the browser so the UI reflects reality
-      if ('Notification' in window) {
-        setPermission(Notification.permission);
-      }
       setIsLoading(false);
     }
-  }, [isSupported, user, requestPermission]);
+  }, [deviceId, isSupported, requestPermission, requiresIosInstall, synchronizeServer, user]);
 
   const unsubscribe = useCallback(async () => {
-    if (!isSupported) {
-      setError(tRef.current('components.pushNotifications.errors.notSupported'));
-      return;
+    if (!user || !deviceId) {
+      throw new Error(tRef.current('components.pushNotifications.errors.notLoggedIn'));
     }
-
-    if (!user) {
-      setError(tRef.current('components.pushNotifications.errors.notLoggedIn'));
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
-
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
-
-      if (subscription) {
-        const endpoint = subscription.endpoint;
-
-        // Unsubscribe from push at browser level
-        await subscription.unsubscribe();
-
-        // Remove matching subscription record(s) from Zero
-        const matchingSubs = (pushSubscriptionsData || []).filter(sub => sub.endpoint === endpoint);
-
-        for (const sub of matchingSubs) {
-          await waitForClientApply(unregisterPushSubscription({ id: sub.id }));
-        }
-      }
-
+      const registration = await navigator.serviceWorker.getRegistration('/');
+      const subscription = await registration?.pushManager.getSubscription();
+      if (subscription) await subscription.unsubscribe();
+      await unregisterServerDevice(deviceId);
       setIsSubscribed(false);
-      setError(null);
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : tRef.current('components.pushNotifications.errors.unsubscribeFailed')
-      );
-      throw err;
+      setServerSynchronized(false);
+    } catch (unsubscribeError) {
+      const unsubscribeMessage =
+        unsubscribeError instanceof Error
+          ? unsubscribeError.message
+          : tRef.current('components.pushNotifications.errors.unsubscribeFailed');
+      setError(unsubscribeMessage);
+      throw unsubscribeError;
     } finally {
       setIsLoading(false);
     }
-  }, [isSupported, user, pushSubscriptionsData]);
+  }, [deviceId, unregisterServerDevice, user]);
 
   return {
     isSupported,
@@ -279,25 +300,13 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
     isLoading,
     permission,
     error,
+    serviceWorkerReady,
+    serverSynchronized,
+    requiresIosInstall,
+    deviceId,
     subscribe,
     unsubscribe,
     requestPermission,
+    refresh,
   };
-}
-
-/**
- * Convert VAPID public key from URL-safe base64 to Uint8Array
- */
-function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-
-  return outputArray as Uint8Array<ArrayBuffer>;
 }

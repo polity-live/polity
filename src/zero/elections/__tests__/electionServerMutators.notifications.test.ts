@@ -62,6 +62,7 @@ vi.mock('../../mutators', () => ({
 
 vi.mock('../../server-helpers', () => ({
   eventTitle: eventTitleMock,
+  isOwnedAppTutorialAgendaItem: vi.fn().mockResolvedValue(false),
   recomputeEventCounters: recomputeEventCountersMock,
   requireConfiguredRecentVotingPasswordVerification:
     requireConfiguredRecentVotingPasswordVerificationMock,

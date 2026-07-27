@@ -3,10 +3,11 @@
 -- =============================================================================
 
 -- Payment table
-CREATE TABLE IF NOT EXISTS public.payment (
+CREATE TABLE public.payment (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amount NUMERIC(16,4),
-  currency TEXT NOT NULL DEFAULT 'EUR' CHECK (currency ~ '^[A-Z]{3}$'),
+  currency TEXT NOT NULL DEFAULT 'EUR'
+    CONSTRAINT payment_currency_check CHECK (currency ~ '^[A-Z]{3}$'),
   label TEXT,
   type TEXT,
   payer_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
@@ -16,12 +17,6 @@ CREATE TABLE IF NOT EXISTS public.payment (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-ALTER TABLE public.payment ALTER COLUMN amount TYPE NUMERIC(16,4);
-ALTER TABLE public.payment ADD COLUMN IF NOT EXISTS currency TEXT NOT NULL DEFAULT 'EUR';
-ALTER TABLE public.payment DROP CONSTRAINT IF EXISTS payment_currency_check;
-ALTER TABLE public.payment
-  ADD CONSTRAINT payment_currency_check CHECK (currency ~ '^[A-Z]{3}$');
-
 CREATE INDEX idx_payment_payer_user ON public.payment (payer_user_id);
 CREATE INDEX idx_payment_receiver_user ON public.payment (receiver_user_id);
 
@@ -29,7 +24,7 @@ ALTER TABLE public.payment ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.payment FOR ALL TO service_role USING (true);
 
 -- Stripe customer table
-CREATE TABLE IF NOT EXISTS public.stripe_customer (
+CREATE TABLE public.stripe_customer (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE UNIQUE,
   stripe_customer_id TEXT NOT NULL UNIQUE,
@@ -42,7 +37,7 @@ ALTER TABLE public.stripe_customer ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.stripe_customer FOR ALL TO service_role USING (true);
 
 -- Stripe subscription table
-CREATE TABLE IF NOT EXISTS public.stripe_subscription (
+CREATE TABLE public.stripe_subscription (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   customer_id UUID NOT NULL REFERENCES public.stripe_customer (id) ON DELETE CASCADE,
   stripe_subscription_id TEXT NOT NULL UNIQUE,
@@ -65,7 +60,7 @@ ALTER TABLE public.stripe_subscription ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.stripe_subscription FOR ALL TO service_role USING (true);
 
 -- Stripe payment table
-CREATE TABLE IF NOT EXISTS public.stripe_payment (
+CREATE TABLE public.stripe_payment (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   customer_id UUID NOT NULL REFERENCES public.stripe_customer (id) ON DELETE CASCADE,
   stripe_invoice_id TEXT NOT NULL UNIQUE,

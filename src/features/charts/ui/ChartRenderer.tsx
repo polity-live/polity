@@ -28,6 +28,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/features/shared/ui/ui/chart';
+import { translate } from '@/features/shared/hooks/use-translation';
 export const CHART_PALETTE = [
   featureThemeValue('chartChartRendererInfoColor'),
   featureThemeValue('chartChartRendererInfoColorAlpha'),
@@ -84,7 +85,7 @@ function getChartConfig(series: readonly string[]): ChartConfig {
     series.map((name, index) => [
       name,
       {
-        label: name === 'value' ? 'Value' : name,
+        label: name === 'value' ? translate('common.value') : name,
         color: CHART_PALETTE[index % CHART_PALETTE.length],
       },
     ])

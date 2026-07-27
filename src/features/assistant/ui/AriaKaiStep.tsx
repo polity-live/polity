@@ -1,22 +1,17 @@
 import { featureThemeClassName } from '@/features/shared/theme';
-import { FormControlCheckbox, FormControlLabel } from '@/features/shared/ui/form';
 import { MessageCircle, Sparkles } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/features/shared/ui/ui/avatar.tsx';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { BadgeControl } from '@/features/shared/ui/status';
-import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
+import { ARIA_KAI_AVATAR_URL } from '@/features/assistant/constants';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { OnboardingStepShell } from '@/features/auth/onboarding/OnboardingStepShell';
 
 interface AriaKaiStepProps {
   onNext: () => void;
-  dontShowAgain: boolean;
-  onDontShowAgainChange: (checked: boolean) => void;
 }
 
-export function AriaKaiStep({ onNext, dontShowAgain, onDontShowAgainChange }: AriaKaiStepProps) {
+export function AriaKaiStep({ onNext }: AriaKaiStepProps) {
   const { t } = useTranslation();
 
   return (
@@ -31,21 +26,19 @@ export function AriaKaiStep({ onNext, dontShowAgain, onDontShowAgainChange }: Ar
     >
       <div className="space-y-6">
         <div>
-          <div className="mb-4 flex">
+          <div className="mb-4 flex justify-center">
             <Avatar className="h-20 w-20">
+              <AvatarImage src={ARIA_KAI_AVATAR_URL} alt="" />
               <AvatarFallback
                 className={featureThemeClassName('assistantAriaKaiStepInfoAccentGradientSurface')}
               >
-                {translateText('generated.inline.0022_ak_059387a3')}
+                AK
               </AvatarFallback>
             </Avatar>
           </div>
           <h2 className="text-3xl leading-tight font-bold tracking-tight">
             {t('onboarding.ariaKaiStep.title')}
           </h2>
-          <p className="text-muted-foreground mt-3 max-w-2xl leading-7">
-            {t('onboarding.ariaKaiStep.subtitle')}
-          </p>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
@@ -56,13 +49,11 @@ export function AriaKaiStep({ onNext, dontShowAgain, onDontShowAgainChange }: Ar
                   <Sparkles className={featureThemeClassName('assistantAriaKaiStepAccentIcon')} />
                   <div>
                     <p className="text-muted-foreground text-sm leading-6">
-                      {translateText('generated.inline.0213_hey_we_re_4a4765ae')}
+                      {t('onboarding.ariaKaiStep.introLead')}
                       <span className="text-foreground font-semibold">
-                        {translateText('generated.inline.0214_aria_kai_03dc3528')}
+                        {t('onboarding.ariaKaiStep.introEmphasis')}
                       </span>
-                      {translateText(
-                        'generated.inline.0215_and_we_re_here_to_help_you_navigate_polity_an_e4c4d58f'
-                      )}
+                      {t('onboarding.ariaKaiStep.introText')}
                     </p>
                   </div>
                 </div>
@@ -73,15 +64,7 @@ export function AriaKaiStep({ onNext, dontShowAgain, onDontShowAgainChange }: Ar
                   />
                   <div>
                     <p className="text-muted-foreground text-sm leading-6">
-                      {translateText(
-                        'generated.inline.0216_whenever_you_need_assistance_tips_or_want_to__3d68725b'
-                      )}{' '}
-                      <span className="text-foreground font-semibold">
-                        {translateText(
-                          'generated.inline.0217_find_us_in_your_message_conversations_a1ecb063'
-                        )}
-                      </span>
-                      {translateText('generated.inline.0218_we_re_always_ready_to_help_788f161a')}
+                      {t('onboarding.ariaKaiStep.appHelp')}
                     </p>
                   </div>
                 </div>
@@ -98,36 +81,20 @@ export function AriaKaiStep({ onNext, dontShowAgain, onDontShowAgainChange }: Ar
 
           <aside className="bg-card rounded-lg border p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold">
-                {translateText('generated.inline.0214_aria_kai_03dc3528')}
-              </p>
+              <p className="text-sm font-semibold">{t('onboarding.ariaKaiStep.assistantName')}</p>
               <BadgeControl variant="secondary">
                 {t('onboarding.ariaKaiStep.assistantBadge')}
               </BadgeControl>
             </div>
             <div className="mt-5 space-y-3">
               <div className="bg-muted rounded-lg p-3 text-sm">
-                {translateText('generated.inline.0213_hey_we_re_4a4765ae')}
-                <span className="font-semibold">
-                  {translateText('generated.inline.0214_aria_kai_03dc3528')}
-                </span>
+                {t('onboarding.ariaKaiStep.previewGreeting')}
               </div>
               <div className="bg-primary text-primary-foreground ml-8 rounded-lg p-3 text-sm">
                 {t('onboarding.ariaKaiStep.previewPrompt')}
               </div>
             </div>
           </aside>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <FormControlCheckbox
-            id="dont-show-again"
-            checked={dontShowAgain}
-            onCheckedChange={onDontShowAgainChange}
-          />
-          <FormControlLabel htmlFor="dont-show-again">
-            {t('onboarding.ariaKaiStep.dontShowAgain')}
-          </FormControlLabel>
         </div>
       </div>
     </OnboardingStepShell>

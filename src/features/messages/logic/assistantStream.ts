@@ -1,14 +1,15 @@
+import { parseAppError, type AppErrorPayload } from '@/features/shared/errors/app-error';
+
 export type AssistantChatStreamEvent =
   | { type: 'compression-start'; compressedMessageCount?: number }
   | { type: 'text-delta'; text: string }
   | { type: 'tool-call-delta' }
   | { type: 'tool-call'; toolName: string | null; args: Record<string, unknown> | null }
   | { type: 'tool-result'; toolName: string | null }
-  | { type: 'error'; message?: string };
+  | { type: 'error'; error?: AppErrorPayload };
 
 export interface AiChatErrorResponse {
-  code?: string;
-  message?: string;
+  error?: AppErrorPayload;
 }
 
 export function parseAssistantChatStreamEvent(rawLine: string): AssistantChatStreamEvent | null {
@@ -45,7 +46,7 @@ export function parseAssistantChatStreamEvent(rawLine: string): AssistantChatStr
       case 'error':
         return {
           type: 'error',
-          message: typeof parsed.message === 'string' ? parsed.message : undefined,
+          error: parseAppError(parsed) ?? undefined,
         };
       default:
         return null;

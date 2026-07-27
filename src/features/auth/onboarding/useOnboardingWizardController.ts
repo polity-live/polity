@@ -4,8 +4,6 @@ import { useCallback } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { useWizardSwipeNavigation } from '@/features/shared/hooks/useWizardSwipeNavigation';
 import { useOnboarding } from '../hooks/useOnboarding.ts';
-import { useUserActions } from '@/zero/users/useUserActions.ts';
-import { useAuth } from '@/providers/auth-provider.tsx';
 
 interface OnboardingWizardProps {
   userId: string;
@@ -18,8 +16,6 @@ export function useOnboardingWizardController({
   onComplete,
 }: OnboardingWizardProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const { updateProfileClientApplied } = useUserActions();
 
   const {
     step,
@@ -34,7 +30,6 @@ export function useOnboardingWizardController({
     toggleSelectedGroup,
     setActiveGroupId,
     clearSelectedGroups,
-    setDontShowAriaKaiAgain,
     nextStep,
     previousStep,
     goToStep,
@@ -76,18 +71,7 @@ export function useOnboardingWizardController({
     skipMembership();
   };
 
-  const handleAriaKaiNext = async () => {
-    // Save the "don't show again" preference if user checked it
-    if (data.dontShowAriaKaiAgain && user?.id) {
-      try {
-        await updateProfileClientApplied({
-          assistant_introduction: false,
-        });
-      } catch (error) {
-        console.error('Failed to save preference:', error);
-      }
-    }
-
+  const handleAriaKaiNext = () => {
     goToStep('appInstall');
   };
 
@@ -170,8 +154,6 @@ export function useOnboardingWizardController({
     userEmail,
     onComplete,
     t,
-    user,
-    updateProfileClientApplied,
     step,
     error,
     data,
@@ -184,7 +166,6 @@ export function useOnboardingWizardController({
     toggleSelectedGroup,
     setActiveGroupId,
     clearSelectedGroups,
-    setDontShowAriaKaiAgain,
     nextStep,
     previousStep,
     goToStep,

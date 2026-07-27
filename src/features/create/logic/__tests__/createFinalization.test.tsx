@@ -16,6 +16,7 @@ import {
   useCreateRecoveryDraft,
   type CreateRecoveryDraft,
 } from '../createFinalization';
+import { parseAppError } from '@/features/shared/errors';
 
 vi.mock('@/features/notifications/utils/gated-toast', () => ({
   gatedToast: {
@@ -70,7 +71,9 @@ describe('create recovery drafts', () => {
 
     expect(getCreateRecoveryDraft(draft.id)).toMatchObject({
       status: 'failed',
-      errorMessage: 'Server rejected create',
+    });
+    expect(parseAppError(getCreateRecoveryDraft(draft.id)?.errorMessage)).toMatchObject({
+      code: 'mutation_server_failed',
     });
   });
 
@@ -189,13 +192,15 @@ describe('create finalization tracking', () => {
 
     expect(getCreateRecoveryDraft(draft.id)).toMatchObject({
       status: 'failed',
-      errorMessage: 'Server rejected create',
+    });
+    expect(parseAppError(getCreateRecoveryDraft(draft.id)?.errorMessage)).toMatchObject({
+      code: 'mutation_server_failed',
     });
     expect(gatedToast.finalizationError).toHaveBeenCalledWith(
       'Group could not be created.',
       expect.objectContaining({
         id: 'creation:group:group:group-1',
-        description: 'Server rejected create',
+        description: 'Something went wrong. Please try again.',
         action: expect.objectContaining({ label: 'Restore' }),
         cancel: expect.objectContaining({ label: 'Retry', onClick: retry }),
       })

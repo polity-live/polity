@@ -3,7 +3,7 @@
 -- =============================================================================
 
 -- Conversation table
-CREATE TABLE IF NOT EXISTS public.conversation (
+CREATE TABLE public.conversation (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   type TEXT,
   name TEXT,
@@ -22,15 +22,15 @@ CREATE TABLE IF NOT EXISTS public.conversation (
 CREATE INDEX idx_conversation_group ON public.conversation (group_id);
 CREATE INDEX idx_conversation_event ON public.conversation (event_id);
 CREATE INDEX idx_conversation_requested_by ON public.conversation (requested_by_id);
-CREATE INDEX IF NOT EXISTS idx_conversation_assistant_for_user ON public.conversation (assistant_for_user_id);
-CREATE INDEX IF NOT EXISTS idx_conversation_last_message
+CREATE INDEX idx_conversation_assistant_for_user ON public.conversation (assistant_for_user_id);
+CREATE INDEX idx_conversation_last_message
   ON public.conversation (last_message_at DESC, id DESC);
 
 ALTER TABLE public.conversation ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.conversation FOR ALL TO service_role USING (true);
 
 -- Conversation participant table
-CREATE TABLE IF NOT EXISTS public.conversation_participant (
+CREATE TABLE public.conversation_participant (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id UUID NOT NULL REFERENCES public.conversation (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -42,16 +42,16 @@ CREATE TABLE IF NOT EXISTS public.conversation_participant (
 
 CREATE INDEX idx_conversation_participant_conversation ON public.conversation_participant (conversation_id);
 CREATE INDEX idx_conversation_participant_user ON public.conversation_participant (user_id);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_conversation_participant_unique_membership
+CREATE UNIQUE INDEX idx_conversation_participant_unique_membership
   ON public.conversation_participant (conversation_id, user_id);
-CREATE INDEX IF NOT EXISTS idx_conversation_participant_user_left
+CREATE INDEX idx_conversation_participant_user_left
   ON public.conversation_participant (user_id, left_at, conversation_id);
 
 ALTER TABLE public.conversation_participant ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.conversation_participant FOR ALL TO service_role USING (true);
 
 -- Message table
-CREATE TABLE IF NOT EXISTS public.message (
+CREATE TABLE public.message (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id UUID NOT NULL REFERENCES public.conversation (id) ON DELETE CASCADE,
   sender_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -65,9 +65,9 @@ CREATE TABLE IF NOT EXISTS public.message (
 
 CREATE INDEX idx_message_conversation ON public.message (conversation_id);
 CREATE INDEX idx_message_sender ON public.message (sender_id);
-CREATE INDEX IF NOT EXISTS idx_message_conversation_created_id
+CREATE INDEX idx_message_conversation_created_id
   ON public.message (conversation_id, created_at DESC, id DESC);
-CREATE INDEX IF NOT EXISTS idx_message_content_trgm
+CREATE INDEX idx_message_content_trgm
   ON public.message USING gin (content gin_trgm_ops);
 
 ALTER TABLE public.message ENABLE ROW LEVEL SECURITY;
@@ -144,10 +144,10 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE TRIGGER trg_message_refresh_conversation_rollups
+CREATE TRIGGER trg_message_refresh_conversation_rollups
 AFTER INSERT OR UPDATE OR DELETE ON public.message
 FOR EACH ROW EXECUTE FUNCTION public.refresh_conversation_rollups_from_message();
 
-CREATE OR REPLACE TRIGGER trg_participant_refresh_conversation_rollups
+CREATE TRIGGER trg_participant_refresh_conversation_rollups
 AFTER INSERT OR UPDATE OF last_read_at, left_at, user_id OR DELETE ON public.conversation_participant
 FOR EACH ROW EXECUTE FUNCTION public.refresh_conversation_rollups_from_participant();

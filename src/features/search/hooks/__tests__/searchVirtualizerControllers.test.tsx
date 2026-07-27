@@ -53,6 +53,17 @@ describe('search virtualizer controller contracts', () => {
   beforeEach(() => {
     mocks.useZeroVirtualizer.mockReset();
     mocks.usePolityZeroGrid.mockReset();
+    mocks.usePolityZeroGrid.mockReturnValue({
+      virtualizer: {
+        getVirtualItems: () => [],
+        getTotalSize: () => 0,
+        scrollToIndex: vi.fn(),
+      },
+      rowAt: vi.fn(),
+      complete: true,
+      rowsEmpty: true,
+      total: 0,
+    });
 
     vi.stubGlobal(
       'ResizeObserver',

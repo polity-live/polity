@@ -38,6 +38,7 @@ vi.mock('@/features/amendments/ui/AmendmentBranchSelectorSection', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string) => key,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 

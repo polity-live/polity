@@ -105,7 +105,7 @@ export function DelegatesOverviewView({
                             alt={
                               [delegate.user?.first_name, delegate.user?.last_name]
                                 .filter(Boolean)
-                                .join(' ') || 'User'
+                                .join(' ') || translateText('common.entities.user')
                             }
                           />
                           <AvatarFallback>
@@ -151,7 +151,7 @@ export function DelegatesOverviewView({
                             alt={
                               [delegate.user?.first_name, delegate.user?.last_name]
                                 .filter(Boolean)
-                                .join(' ') || 'User'
+                                .join(' ') || translateText('common.entities.user')
                             }
                           />
                           <AvatarFallback>
@@ -194,7 +194,7 @@ export function DelegatesOverviewView({
                             alt={
                               [delegate.user?.first_name, delegate.user?.last_name]
                                 .filter(Boolean)
-                                .join(' ') || 'User'
+                                .join(' ') || translateText('common.entities.user')
                             }
                           />
                           <AvatarFallback>

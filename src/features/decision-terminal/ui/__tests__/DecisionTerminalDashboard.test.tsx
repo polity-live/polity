@@ -19,11 +19,19 @@ const { saveDecisionTerminalDashboard, canVote } = vi.hoisted(() => ({
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({
     t: (_key: string, options?: { defaultValue?: string } | string) =>
-      typeof options === 'string' ? options : (options?.defaultValue ?? _key),
+      _key === 'common.entities.vote'
+        ? 'Vote'
+        : typeof options === 'string'
+          ? options
+          : (options?.defaultValue ?? _key),
     i18n: { language: 'en' },
   }),
   translate: (_key: string, options?: { defaultValue?: string } | string) =>
-    typeof options === 'string' ? options : (options?.defaultValue ?? _key),
+    _key === 'common.entities.vote'
+      ? 'Vote'
+      : typeof options === 'string'
+        ? options
+        : (options?.defaultValue ?? _key),
 }));
 
 vi.mock('@/providers/auth-provider', () => ({

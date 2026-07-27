@@ -1,6 +1,9 @@
 'use client';
 
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  translate as translateText,
+  useTranslation,
+} from '@/features/shared/hooks/use-translation';
 import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
 import { AccessDenied as AccessDeniedView } from '@/features/auth/ui/AccessDenied';
 import { useCreateRecoveryDraft } from '@/features/create/logic/createFinalization';
@@ -10,6 +13,7 @@ import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { groupWikiRelatedGroupsByOrientation } from '@/features/groups/logic/groupWikiHelpers';
 import { GroupWikiContentView } from './GroupWikiContentView';
+import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
 
 interface GroupWikiProps {
   groupId: string;
@@ -38,6 +42,7 @@ function toPlainDescription(value: unknown) {
 }
 
 export function GroupWiki({ groupId }: GroupWikiProps) {
+  const { language } = useTranslation();
   const recoveryDraft = useCreateRecoveryDraft('group', groupId);
   const {
     group,
@@ -85,24 +90,34 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
     return <AccessDeniedView />;
   }
 
-  const groupLocation = formatLocation(group);
-  const groupDescription = toPlainDescription(group.description);
+  const displayGroup = resolveAppTutorialFixtureValue(group, {
+    tutorialRunId: group.tutorial_run_id,
+    language,
+  });
+  const groupLocation = formatLocation(displayGroup);
+  const groupDescription = toPlainDescription(displayGroup.description);
   const { parentGroups, childGroups } = groupWikiRelatedGroupsByOrientation(
-    [...(group.relationships_as_source ?? []), ...(group.relationships_as_target ?? [])],
+    [
+      ...(displayGroup.relationships_as_source ?? []),
+      ...(displayGroup.relationships_as_target ?? []),
+    ],
     groupId
   );
-  const siblingGroups = group.sibling_groups ?? [];
-  const connectedGroup = group.connected_group;
-  const primarySiblingMembershipMode = group.primary_sibling_membership_mode ?? null;
-  const requestJoinActionDisabled = !isMember && !hasRequested && !isInvited && !canRequestJoin;
+  const siblingGroups = displayGroup.sibling_groups ?? [];
+  const connectedGroup = displayGroup.connected_group;
+  const primarySiblingMembershipMode = displayGroup.primary_sibling_membership_mode ?? null;
+  const tutorialMembershipRequestLocked = hasRequested && Boolean(group.tutorial_run_id);
+  const requestJoinActionDisabled =
+    tutorialMembershipRequestLocked ||
+    (!isMember && !hasRequested && !isInvited && !canRequestJoin);
   const acceptInvitationDisabled = isInvited && !canAcceptInvitation;
-  const parliamentSourceGroups = (group.sibling_sources ?? [])
+  const parliamentSourceGroups = (displayGroup.sibling_sources ?? [])
     .map(sourceLink => sourceLink.source_group)
     .filter(
       (
         sourceGroup
       ): sourceGroup is NonNullable<
-        NonNullable<typeof group.sibling_sources>[number]['source_group']
+        NonNullable<typeof displayGroup.sibling_sources>[number]['source_group']
       > => Boolean(sourceGroup)
     );
   return (
@@ -115,7 +130,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       childGroups={childGroups}
       connectedGroup={connectedGroup}
       eventsCount={eventsCount}
-      group={group}
+      group={displayGroup}
       groupDescription={groupDescription}
       groupId={groupId}
       groupLocation={groupLocation}

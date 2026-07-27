@@ -97,6 +97,28 @@ export function PlateEditorView({
     });
   }, [documentId, editor]);
 
+  const handleEditorPaste = React.useCallback(
+    (event: React.ClipboardEvent<HTMLDivElement>) => {
+      const isSuggestionMode =
+        currentMode === 'suggest_internal' || currentMode === 'suggest_event';
+      const isPlainTextPaste =
+        event.clipboardData.types.includes('text/plain') &&
+        !event.clipboardData.types.includes('text/html');
+      if (!isSuggestionMode || !isPlainTextPaste) return;
+
+      const text = event.clipboardData.getData('text/plain');
+      if (!text) return;
+
+      // Slate's native plain-text paste path can bypass Plate's suggestion
+      // transform and insert an unmarked leaf. Route it through the editor
+      // transform explicitly while preserving rich clipboard handling.
+      event.preventDefault();
+      event.stopPropagation();
+      editor.tf.insertText(text);
+    },
+    [currentMode, editor]
+  );
+
   return (
     <ModeProvider
       currentMode={currentMode}
@@ -146,6 +168,7 @@ export function PlateEditorView({
                 placeholder={placeholder}
                 className={editorClassName}
                 onFocus={handleEditorFocus}
+                onPasteCapture={handleEditorPaste}
               />
             </EditorContainer>
 

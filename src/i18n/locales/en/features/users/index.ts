@@ -63,6 +63,10 @@ export const userTranslations = {
     unfollowFailed: 'Failed to unfollow user',
     statsUpdateFailed: 'Failed to update user stats',
   },
+  timeline: {
+    profileUpdatedBy: '{{name}} updated their profile',
+    profileUpdated: 'Profile updated',
+  },
   activity: {
     title: 'Activity',
     groups: 'Groups',

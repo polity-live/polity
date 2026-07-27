@@ -15,7 +15,6 @@ const wizardMocks = vi.hoisted(() => ({
   saveInterests: vi.fn(),
   sendMembershipRequests: vi.fn(),
   skipMembership: vi.fn(),
-  updateProfileClientApplied: vi.fn(),
   useOnboarding: vi.fn(),
 }));
 
@@ -25,16 +24,6 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('@/features/shared/hooks/use-translation.ts', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
-}));
-
-vi.mock('@/providers/auth-provider.tsx', () => ({
-  useAuth: () => ({ user: { id: 'user-1' } }),
-}));
-
-vi.mock('@/zero/users/useUserActions.ts', () => ({
-  useUserActions: () => ({
-    updateProfileClientApplied: wizardMocks.updateProfileClientApplied,
-  }),
 }));
 
 vi.mock('../../hooks/useOnboarding.ts', () => ({
@@ -84,7 +73,6 @@ function buildOnboardingState({
     toggleSelectedGroup: vi.fn(),
     setActiveGroupId: vi.fn(),
     clearSelectedGroups: vi.fn(),
-    setDontShowAriaKaiAgain: vi.fn(),
     nextStep: wizardMocks.nextStep,
     previousStep: wizardMocks.previousStep,
     goToStep: wizardMocks.goToStep,
@@ -104,7 +92,6 @@ function baseOnboardingData(): OnboardingData {
     selectedGroups: [],
     activeGroupId: null,
     membershipRequestSentGroupIds: [],
-    dontShowAriaKaiAgain: false,
   };
 }
 

@@ -31,6 +31,11 @@ beforeEach(async () => {
   window.localStorage.clear();
   await i18n.changeLanguage('en');
   document.documentElement.lang = 'en';
+  document.querySelector('link[rel="manifest"]')?.remove();
+  const manifestLink = document.createElement('link');
+  manifestLink.rel = 'manifest';
+  manifestLink.href = '/manifest.en.json';
+  document.head.append(manifestLink);
 });
 
 afterEach(() => {
@@ -64,6 +69,9 @@ describe('language hydration', () => {
 
     expect(container.querySelector('a')?.getAttribute('aria-label')).toBe('Startseite');
     expect(document.documentElement.lang).toBe('de');
+    expect(
+      document.querySelector<HTMLLinkElement>('link[rel="manifest"]')?.getAttribute('href')
+    ).toBe('/manifest.de.json');
     expect(consoleError).not.toHaveBeenCalled();
 
     await act(async () => root?.unmount());

@@ -9,6 +9,16 @@ import { OfflineTallyDialog } from '../OfflineTallyDialog';
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string, fallbackOrParams?: string | Record<string, string | number>) => {
     if (typeof fallbackOrParams === 'string') return fallbackOrParams;
+    const labels: Record<string, string> = {
+      'common.actionSubmission.kinds.tally.headline': 'POLITY zählt.',
+      'common.actionSubmission.kinds.tally.active': 'Auszählung wird gespeichert',
+      'common.actionSubmission.kinds.tally.success': 'Auszählung gespeichert',
+      'common.actionSubmission.kinds.tally.description':
+        'PIN, Offline-Stimmen und Ergebnisansicht werden geprüft und synchronisiert.',
+      'features.agendas.offlineTally.phases.final': 'final',
+      'features.agendas.offlineTally.phases.indicative': 'indicative',
+    };
+    if (labels[key]) return labels[key];
     if (key === 'features.agendas.offlineTally.totalLimitFormula') {
       return `${fallbackOrParams?.participants} Participants x ${fallbackOrParams?.votes} Stimmen = ${fallbackOrParams?.total}`;
     }
@@ -23,8 +33,32 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
     return key;
   },
   useTranslation: () => ({
-    t: (key: string, fallback?: string) =>
-      fallback ?? (key === 'features.events.voting.enterPin' ? 'Enter voting PIN' : key),
+    t: (
+      key: string,
+      paramsOrFallback?: string | Record<string, string | number>,
+      fallback?: string
+    ) => {
+      const labels: Record<string, string> = {
+        'common.actionSubmission.steps.tally.prepare': 'PIN prüfen',
+        'common.actionSubmission.steps.tally.commit': 'Tally speichern',
+        'common.actionSubmission.steps.tally.sync': 'Ansicht synchronisieren',
+        'features.agendas.offlineTally.entities.final': 'Final offline tally',
+        'features.agendas.offlineTally.entities.indicative': 'Indicative offline tally',
+        'features.events.voting.enterPin': 'Enter voting PIN',
+      };
+      if (labels[key]) return labels[key];
+      if (key === 'features.agendas.offlineTally.totalLimitFormula') {
+        const params =
+          typeof paramsOrFallback === 'object' && paramsOrFallback !== null ? paramsOrFallback : {};
+        return `${params.participants} Participants x ${params.votes} Stimmen = ${params.total}`;
+      }
+      if (key === 'features.agendas.offlineTally.selectionCount') {
+        const params =
+          typeof paramsOrFallback === 'object' && paramsOrFallback !== null ? paramsOrFallback : {};
+        return `${params.count} offline selections`;
+      }
+      return (typeof paramsOrFallback === 'string' ? paramsOrFallback : fallback) ?? key;
+    },
   }),
 }));
 

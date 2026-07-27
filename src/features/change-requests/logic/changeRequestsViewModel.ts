@@ -1,4 +1,5 @@
 import type { Value } from 'platejs';
+import { translate } from '@/features/shared/hooks/use-translation';
 
 import type { ChangeRequestDiffData } from '@/features/agendas/ui/ChangeRequestTimelineCard';
 import {
@@ -268,11 +269,17 @@ export function getChangeRequestBranchLabel(branch: ChangeRequestBranchSource) {
         step.target_group?.name ??
         step.source_group?.name ??
         step.workflow_step?.label ??
-        (typeof step.order_index === 'number' ? `Step ${step.order_index + 1}` : null)
+        (typeof step.order_index === 'number'
+          ? translate('features.changeRequests.branches.step', {
+              number: step.order_index + 1,
+            })
+          : null)
     )
     .filter(Boolean);
 
-  return stepLabels.length > 0 ? stepLabels.join(' -> ') : (branch.title ?? 'Branch');
+  return stepLabels.length > 0
+    ? stepLabels.join(' -> ')
+    : (branch.title ?? translate('features.changeRequests.branches.branch'));
 }
 
 function getBranchDisplayEvent(branch: ChangeRequestBranchSource) {
@@ -721,8 +728,10 @@ export function buildChangeRequestBranchSections({
     sections.push({
       id: `historical-branch-${branchId}`,
       branchId,
-      title: `Historical branch ${branchId.slice(0, 8)}`,
-      description: 'Change requests from an earlier process branch',
+      title: translate('features.changeRequests.branches.historicalTitle', {
+        id: branchId.slice(0, 8),
+      }),
+      description: translate('features.changeRequests.branches.historicalDescription'),
       ...getChangeRequestCounts(branchRequests),
       timelineItems: mapChangeRequestsToTimelineItems(branchRequests),
       diffMap: mapChangeRequestsToDiffMap(branchRequests),

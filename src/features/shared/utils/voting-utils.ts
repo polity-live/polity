@@ -3,6 +3,7 @@
  *
  * Functions for calculating voting results, majority types, and eligible voters.
  */
+import { translate } from '@/features/shared/hooks/use-translation';
 
 export type VoteValue = 'accept' | 'reject' | 'abstain';
 export type VoteResult = 'passed' | 'rejected' | 'tie';
@@ -112,13 +113,13 @@ export function isQuorumReached(
 export function getMajorityTypeText(majorityType: MajorityType): string {
   switch (majorityType) {
     case 'simple':
-      return 'Simple Majority';
+      return translate('common.majorityTypes.simple');
     case 'absolute':
-      return 'Absolute Majority';
+      return translate('common.majorityTypes.absolute');
     case 'two_thirds':
-      return 'Two-Thirds Majority';
+      return translate('common.majorityTypes.twoThirds');
     default:
-      return 'Unknown';
+      return translate('common.unknown');
   }
 }
 

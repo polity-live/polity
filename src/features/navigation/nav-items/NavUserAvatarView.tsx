@@ -33,6 +33,7 @@ export function NavUserAvatarView({
   if (navigationView === 'asButton') {
     return (
       <div
+        data-tutorial-anchor="primary-avatar"
         className={cn(
           'flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-80',
           className
@@ -50,7 +51,10 @@ export function NavUserAvatarView({
 
   if (navigationView === 'asButtonList') {
     return (
-      <div className={cn('flex items-center justify-center', className)}>
+      <div
+        data-tutorial-anchor="primary-avatar"
+        className={cn('flex items-center justify-center', className)}
+      >
         <UserMenu isMobile={isMobile} user={user} />
       </div>
     );
@@ -58,14 +62,20 @@ export function NavUserAvatarView({
 
   if (navigationView === 'asLabeledButtonList' && isMobile) {
     return (
-      <div className={cn('flex items-center justify-center', className)}>
+      <div
+        data-tutorial-anchor="primary-avatar"
+        className={cn('flex items-center justify-center', className)}
+      >
         <UserMenu isMobile={isMobile} user={user} />
       </div>
     );
   }
 
   return (
-    <div className={cn('flex w-full items-center gap-3 px-3 py-2', className)}>
+    <div
+      data-tutorial-anchor="primary-avatar"
+      className={cn('flex w-full items-center gap-3 px-3 py-2', className)}
+    >
       <UserMenu
         isMobile={isMobile}
         open={isDropdownOpen}

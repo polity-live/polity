@@ -1,7 +1,8 @@
 /* @vitest-environment jsdom */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
 const mockCREditorPreview = vi.hoisted(() =>
   vi.fn((props: unknown) => {
@@ -9,10 +10,10 @@ const mockCREditorPreview = vi.hoisted(() =>
     return null;
   })
 );
-const mockStreetDesignPreview = vi.hoisted(() =>
+const mockCityDesignPreview = vi.hoisted(() =>
   vi.fn((props: unknown) => {
     void props;
-    return <div data-testid="street-design-change-request-preview" />;
+    return <div data-testid="city-design-change-request-preview" />;
   })
 );
 
@@ -20,8 +21,8 @@ vi.mock('@/features/change-requests/ui/CREditorPreview', () => ({
   CREditorPreview: (props: any) => mockCREditorPreview(props),
 }));
 
-vi.mock('@/features/amendments/streetscape/ui/StreetDesignChangeRequestPreview', () => ({
-  StreetDesignChangeRequestPreview: (props: any) => mockStreetDesignPreview(props),
+vi.mock('@/features/amendments/city-design/ui/CityDesignChangeRequestPreview', () => ({
+  CityDesignChangeRequestPreview: (props: any) => mockCityDesignPreview(props),
 }));
 
 vi.mock('@/features/editor/ui/SuggestionViewToggle', () => ({
@@ -59,7 +60,7 @@ const translations: Record<string, string> = {
     'Collaborators vote on change requests',
   'features.amendments.voteControls.collaboratorsVoted':
     '{{voted}}/{{total}} collaborators with vote right voted',
-  'features.events.agenda.actions.castIndicativeVote': 'Cast Indication',
+  'features.events.agenda.actions.castIndicativeVote': 'Cast indication',
   'features.events.agenda.actions.castFinalVote': 'Cast final vote',
   'features.events.agenda.noChoices': 'No choices',
   'features.events.agenda.selected': 'Selected',
@@ -176,7 +177,11 @@ function createFinalVoteItem(status = 'final') {
 afterEach(() => {
   cleanup();
   mockCREditorPreview.mockClear();
-  mockStreetDesignPreview.mockClear();
+  mockCityDesignPreview.mockClear();
+});
+
+beforeEach(() => {
+  useLanguageStore.setState({ language: 'en' });
 });
 
 describe('ChangeRequestCardsListView mode labels', () => {
@@ -628,7 +633,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
     expect(screen.queryByText('3/5 Collaborators with vote right voted')).toBeNull();
   });
 
-  it('renders a street design preview instead of the document preview for street design CRs', () => {
+  it('renders a city design preview instead of the document preview for city design CRs', () => {
     const item = {
       id: 'timeline-street-1',
       change_request_id: 'street-cr-1',
@@ -638,12 +643,12 @@ describe('ChangeRequestCardsListView mode labels', () => {
     const cr = {
       id: 'street-cr-1',
       title: 'Add building',
-      source_type: 'street_design_object',
+      source_type: 'city_design_object',
       source_id: 'building-1',
       change_type: 'insert',
       original_properties: null,
       new_properties: {
-        streetDesignId: 'street-design-1',
+        cityDesignId: 'city-design-1',
         objectId: 'building-1',
       },
     };
@@ -660,7 +665,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
         isFinalVoteLocked={false}
         diff={null}
         documentContent={[{ type: 'p', children: [{ text: 'Document' }] }]}
-        streetDesigns={[{ id: 'street-design-1', design_state: null }]}
+        cityDesigns={[{ id: 'city-design-1', design_state: null }]}
         suggestionId="suggestion-1"
         crId="CR-1"
         discussions={[]}
@@ -708,7 +713,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       />
     );
 
-    expect(mockStreetDesignPreview).toHaveBeenCalledWith(
+    expect(mockCityDesignPreview).toHaveBeenCalledWith(
       expect.objectContaining({ changeRequest: expect.objectContaining({ id: 'street-cr-1' }) })
     );
     expect(mockCREditorPreview).not.toHaveBeenCalled();
@@ -1988,7 +1993,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cast Indication' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cast indication' }));
 
     expect(handleOpenVoteDialog).toHaveBeenCalledWith(item.id);
   });
@@ -2147,13 +2152,13 @@ describe('ChangeRequestCardsListView mode labels', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Start final change request vote: Branch 2 CR-2',
+        name: 'Start the final change request vote for Branch 2 CR-2',
       })
     );
 
     expect(
       screen.getByRole('heading', {
-        name: 'Start final change request vote: Branch 2 CR-2',
+        name: 'Start the final change request vote for Branch 2 CR-2',
       })
     ).toBeTruthy();
   });
@@ -2206,13 +2211,13 @@ describe('ChangeRequestCardsListView mode labels', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Close final change request vote: Branch 2 CR-2',
+        name: 'Close the final change request vote for Branch 2 CR-2',
       })
     );
 
     expect(
       screen.getByRole('heading', {
-        name: 'Close final change request vote: Branch 2 CR-2',
+        name: 'Close the final change request vote for Branch 2 CR-2',
       })
     ).toBeTruthy();
   });
@@ -2261,7 +2266,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       />
     );
 
-    expect(screen.queryByRole('button', { name: 'Cast Indication' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cast indication' })).toBeNull();
     expect(handleOpenVoteDialog).not.toHaveBeenCalled();
   });
 
@@ -2309,7 +2314,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       />
     );
 
-    const button = screen.getByRole('button', { name: 'Cast Indication' }) as HTMLButtonElement;
+    const button = screen.getByRole('button', { name: 'Cast indication' }) as HTMLButtonElement;
 
     expect(button.disabled).toBe(false);
     expect(button.getAttribute('aria-disabled')).toBe('true');
@@ -2366,7 +2371,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       />
     );
 
-    const button = screen.getByRole('button', { name: 'Cast Indication' });
+    const button = screen.getByRole('button', { name: 'Cast indication' });
 
     expect(button.getAttribute('aria-disabled')).toBe('true');
     button.focus();
@@ -2420,7 +2425,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       />
     );
 
-    expect(screen.queryByRole('button', { name: 'Cast Indication' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cast indication' })).toBeNull();
   });
 
   it('hides agenda-details vote action when the dialog opener is missing', () => {
@@ -2465,7 +2470,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       />
     );
 
-    expect(screen.queryByRole('button', { name: 'Cast Indication' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cast indication' })).toBeNull();
   });
 
   it('shows agenda-details final vote actions for merge and closing vote cards', () => {
@@ -2590,7 +2595,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       />
     );
 
-    expect(screen.queryByRole('button', { name: 'Cast Indication' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cast indication' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Cast final vote' })).toBeNull();
   });
 });

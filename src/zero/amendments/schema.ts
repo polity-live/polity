@@ -174,10 +174,10 @@ export const updateAmendmentCollaboratorSchema = baseAmendmentCollaboratorSchema
 export const deleteAmendmentCollaboratorSchema = z.object({ id: z.string() });
 
 // ============================================
-// Amendment Street Design Schemas
+// Amendment City Design Schemas
 // ============================================
 
-const baseAmendmentStreetDesignSchema = z.object({
+const baseAmendmentCityDesignSchema = z.object({
   id: z.string(),
   amendment_id: z.string(),
   created_by_id: z.string(),
@@ -195,13 +195,13 @@ const baseAmendmentStreetDesignSchema = z.object({
   updated_at: timestampSchema,
 });
 
-export const selectAmendmentStreetDesignSchema = baseAmendmentStreetDesignSchema;
+export const selectAmendmentCityDesignSchema = baseAmendmentCityDesignSchema;
 
-export const createAmendmentStreetDesignSchema = baseAmendmentStreetDesignSchema
+export const createAmendmentCityDesignSchema = baseAmendmentCityDesignSchema
   .omit({ id: true, created_at: true, updated_at: true, created_by_id: true })
   .extend({ id: z.string(), process_branch_id: z.string().nullable().optional() });
 
-export const updateAmendmentStreetDesignSchema = baseAmendmentStreetDesignSchema
+export const updateAmendmentCityDesignSchema = baseAmendmentCityDesignSchema
   .pick({
     title: true,
     bbox: true,
@@ -217,7 +217,7 @@ export const updateAmendmentStreetDesignSchema = baseAmendmentStreetDesignSchema
   .partial()
   .extend({ id: z.string(), process_branch_id: z.string().nullable().optional() });
 
-export const deleteAmendmentStreetDesignSchema = z.object({ id: z.string() });
+export const deleteAmendmentCityDesignSchema = z.object({ id: z.string() });
 
 // ============================================
 // Amendment Path Schemas
@@ -665,7 +665,7 @@ export const createAmendmentFullMutatorSchema = createAmendmentFullSchema as Sta
   AmendmentFullCreateInput
 >;
 export type AmendmentCollaborator = z.infer<typeof selectAmendmentCollaboratorSchema>;
-export type AmendmentStreetDesign = z.infer<typeof selectAmendmentStreetDesignSchema>;
+export type AmendmentCityDesign = z.infer<typeof selectAmendmentCityDesignSchema>;
 export type AmendmentPath = z.infer<typeof selectAmendmentPathSchema>;
 export type AmendmentPathSegment = z.infer<typeof selectAmendmentPathSegmentSchema>;
 export type SupportConfirmation = z.infer<typeof selectSupportConfirmationSchema>;

@@ -26,8 +26,9 @@ import {
   getWinnerBranch,
   resolveSelectedBranchId,
 } from '@/features/amendments/logic/amendmentBranchDisplay';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { serverConfirmed, waitForClientApply } from '@/zero/mutate-with-server-check';
 import { getAmendmentPermissionFlags } from '@/features/amendments/logic/amendmentPermissions';
+import { reportAppTutorialAction } from '@/features/app-tutorial/events';
 interface AmendmentProcessFlowProps {
   amendmentId: string;
   requestedBranchId?: string | null;
@@ -607,7 +608,7 @@ export function useAmendmentProcessFlowController({
             pendingSelection.eventData?.end_date ?? null
           );
 
-          await createAmendmentPath({
+          const result = await createAmendmentPath({
             amendmentId,
             amendmentTitle: amendment.title ?? '',
             amendmentReason: amendment.reason ?? null,
@@ -616,15 +617,26 @@ export function useAmendmentProcessFlowController({
             workflowId: pendingSelection.workflowId,
             pathMode: pendingSelection.pathMode,
           });
+          if (result) {
+            await waitForClientApply(result);
+            await serverConfirmed(result);
+          }
 
           if (!currentRun) {
-            await waitForClientApply(
-              updateAmendment({
-                id: amendmentId,
-                group_id: pendingSelection.groupId,
-                event_id: pendingSelection.eventId ?? null,
-              })
-            );
+            const updateResult = updateAmendment({
+              id: amendmentId,
+              group_id: pendingSelection.groupId,
+              event_id: pendingSelection.eventId ?? null,
+            });
+            await waitForClientApply(updateResult);
+            await serverConfirmed(updateResult);
+          }
+
+          if (amendment.tutorial_run_id) {
+            reportAppTutorialAction({
+              type: 'mutation',
+              event: 'amendment-process.started',
+            });
           }
 
           toast.success(

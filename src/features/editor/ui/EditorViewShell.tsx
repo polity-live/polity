@@ -247,7 +247,10 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
       ) : null}
 
       {/* Editor Card */}
-      <Card className="mt-4">
+      <Card
+        className="mt-4"
+        data-tutorial-anchor={entityType === 'amendment' ? 'amendment-text-editor' : undefined}
+      >
         <CardHeader>
           <div className="flex min-w-0 items-start gap-4">
             <FileText className="h-8 w-8 shrink-0" />

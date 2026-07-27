@@ -45,6 +45,7 @@ import {
   calculateTurnout,
 } from '../logic/trend-calculation';
 import { translateVoteChoiceLabel } from '../logic/voteChoiceTranslation';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 function normalizeMajorityType(value?: string | null): MajorityType {
   if (value === 'absolute' || value === 'two_thirds') {
@@ -443,8 +444,11 @@ export function useDecisionTerminal(
         id: generateDecisionId('election', index + 1),
         sourceId: election.id,
         type: 'election',
-        title: election.title || 'Election',
-        body: election.role?.name || election.agenda_item?.event?.title || 'Election',
+        title: election.title || translateText('common.entities.election'),
+        body:
+          election.role?.name ||
+          election.agenda_item?.event?.title ||
+          translateText('common.entities.election'),
         endsAt,
         startsAt,
         sortStartsAt,
@@ -549,7 +553,11 @@ export function useDecisionTerminal(
           ? computeVoteResultSummary(
               vote.choices.map((choice, choiceIndex) => ({
                 id: choice.id,
-                label: choice.label || `Choice ${choiceIndex + 1}`,
+                label:
+                  choice.label ||
+                  translateText('common.formats.numberedChoice', {
+                    number: choiceIndex + 1,
+                  }),
                 order_index: choice.order_index ?? choiceIndex,
               })),
               vote.final_decisions || [],

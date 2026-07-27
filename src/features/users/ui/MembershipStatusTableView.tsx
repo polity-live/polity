@@ -40,36 +40,42 @@ export function MembershipStatusTableView({
     `pages.user.memberships.sections.status.${statusType}`,
     String(statusType)
   );
+  // Tutorial anchors remain harmless without an active run. Anchoring the
+  // requested section itself is more robust than relying on a related group
+  // field that may not have reached the Zero client yet.
+  const containsTutorialRequest = statusType === 'requested' && items.length > 0;
 
   return (
-    <ManagementSection
-      title={
-        <span className="flex items-center gap-2">
-          <Icon className="h-5 w-5" />
-          {title}
-        </span>
-      }
-      description={description}
-    >
-      {virtualSource ? (
-        <VirtualDataTable
-          columns={columns}
-          source={virtualSource}
-          emptyTitle={translateText('pages.user.memberships.sections.emptyTitle', {
-            statusType: statusLabel,
-          })}
-        />
-      ) : (
-        <DataTable
-          columns={columns}
-          data={items}
-          getRowId={(item: any) => item.id}
-          enablePagination={false}
-          emptyTitle={translateText('pages.user.memberships.sections.emptyTitle', {
-            statusType: statusLabel,
-          })}
-        />
-      )}
-    </ManagementSection>
+    <div data-tutorial-anchor={containsTutorialRequest ? 'tutorial-membership-request' : undefined}>
+      <ManagementSection
+        title={
+          <span className="flex items-center gap-2">
+            <Icon className="h-5 w-5" />
+            {title}
+          </span>
+        }
+        description={description}
+      >
+        {virtualSource ? (
+          <VirtualDataTable
+            columns={columns}
+            source={virtualSource}
+            emptyTitle={translateText('pages.user.memberships.sections.emptyTitle', {
+              statusType: statusLabel,
+            })}
+          />
+        ) : (
+          <DataTable
+            columns={columns}
+            data={items}
+            getRowId={(item: any) => item.id}
+            enablePagination={false}
+            emptyTitle={translateText('pages.user.memberships.sections.emptyTitle', {
+              statusType: statusLabel,
+            })}
+          />
+        )}
+      </ManagementSection>
+    </div>
   );
 }

@@ -33,12 +33,12 @@ import {
 import { ChangeRequestSummaryItem } from '@/features/change-requests/ui/ChangeRequestSummaryItem';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
 import { splitSuggestionPreviewText } from '@/features/change-requests/logic/suggestionBlockLabels';
-import { StreetDesignChangeRequestPreview } from '@/features/amendments/streetscape/ui/StreetDesignChangeRequestPreview';
+import { CityDesignChangeRequestPreview } from '@/features/amendments/city-design/ui/CityDesignChangeRequestPreview';
 import {
-  isStreetDesignChangeRequest,
-  type StreetDesignChangeRequest,
-  type StreetDesignPreviewSource,
-} from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
+  isCityDesignChangeRequest,
+  type CityDesignChangeRequest,
+  type CityDesignPreviewSource,
+} from '@/features/amendments/city-design/logic/cityDesignChangeRequests';
 import { SuggestionViewToggle } from '@/features/editor/ui/SuggestionViewToggle';
 import {
   isMockCRTimelineItem,
@@ -159,7 +159,7 @@ export interface ChangeRequestTimelineCardViewProps {
   isFinalVoteLocked: any;
   diff: any;
   documentContent: any;
-  streetDesigns?: readonly StreetDesignPreviewSource[];
+  cityDesigns?: readonly CityDesignPreviewSource[];
   suggestionId: any;
   suggestionResolutions?: any;
   agendaTitle?: any;
@@ -221,11 +221,11 @@ export interface ChangeRequestTimelineCardViewProps {
   isLocked: any;
 }
 
-function getStreetDesignChangeRequestFromCardItem(
+function getCityDesignChangeRequestFromCardItem(
   item: any,
   cr: any
-): StreetDesignChangeRequest | null {
-  if (!cr || !isStreetDesignChangeRequest(cr)) return null;
+): CityDesignChangeRequest | null {
+  if (!cr || !isCityDesignChangeRequest(cr)) return null;
   return {
     ...cr,
     id: cr.id ?? item.change_request_id ?? item.id,
@@ -242,7 +242,7 @@ export function ChangeRequestTimelineCardView({
   canVote,
   diff,
   documentContent,
-  streetDesigns = [],
+  cityDesigns = [],
   suggestionId,
   suggestionResolutions,
   agendaTitle,
@@ -293,7 +293,7 @@ export function ChangeRequestTimelineCardView({
   handleCastVote,
   isLocked,
 }: ChangeRequestTimelineCardViewProps) {
-  const streetDesignChangeRequest = getStreetDesignChangeRequestFromCardItem(item, cr);
+  const cityDesignChangeRequest = getCityDesignChangeRequestFromCardItem(item, cr);
   const isObsolete =
     cr?.status === 'obsolete' ||
     cr?.change_request_status === 'obsolete' ||
@@ -761,15 +761,15 @@ export function ChangeRequestTimelineCardView({
                     )}
               </p>
             ) : null}
-            {showEditorPreview && streetDesignChangeRequest ? (
+            {showEditorPreview && cityDesignChangeRequest ? (
               <div className="space-y-2">
-                <StreetDesignChangeRequestPreview
-                  changeRequest={streetDesignChangeRequest}
-                  streetDesigns={streetDesigns}
+                <CityDesignChangeRequestPreview
+                  changeRequest={cityDesignChangeRequest}
+                  cityDesigns={cityDesigns}
                 />
               </div>
             ) : null}
-            {showEditorPreview && !streetDesignChangeRequest && documentContent && suggestionId && (
+            {showEditorPreview && !cityDesignChangeRequest && documentContent && suggestionId && (
               <div className="space-y-2">
                 <CREditorPreview
                   documentContent={documentContent ?? ([] as Value)}

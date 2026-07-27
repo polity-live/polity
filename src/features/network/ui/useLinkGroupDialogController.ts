@@ -3,9 +3,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useGroupRoleOptions, useGroupState } from '@/zero/groups/useGroupState';
 import { useGroupConnectionActions, useGroupConnectionState } from '@/zero/network';
-import { trackServerFinalization, waitForClientApply } from '@/zero/mutate-with-server-check';
+import {
+  isRetryableServerMutationError,
+  trackServerFinalization,
+  waitForClientApply,
+} from '@/zero/mutate-with-server-check';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useActionSubmission } from '@/features/shared/ui/action-submission';
+import {
+  APP_TUTORIAL_ACCEPT_NETWORK_EVENT,
+  consumePendingAppTutorialNetworkApproval,
+  savePendingAppTutorialNetworkApproval,
+} from '@/features/app-tutorial/events';
 import type {
   CanonicalMembershipMode,
   GroupRelationshipType,
@@ -34,8 +43,10 @@ import type { GroupRelationshipRightDisplayStatus } from '../logic/networkRelati
 import { buildExistingRightStatusesForDirection } from '../logic/networkRelationshipHelpers';
 import { matchesRelationshipSelection } from '../logic/groupRelationshipOrientation';
 import { useGroupConnectionComposer } from '../hooks/useGroupConnectionComposer';
+import { localizeAppError } from '@/features/shared/errors/app-error';
 import { useGroupConnectionComposerPreflight } from '../hooks/useGroupConnectionComposerPreflight';
 import type { GroupRelationshipRight } from './GroupRelationshipFields';
+import { resolveAppTutorialFixtureText } from '@/features/app-tutorial/fixture-copy';
 function isGroupRelationshipRight(value: string): value is GroupRelationshipRight {
   return (
     value === 'informationRight' ||
@@ -117,9 +128,10 @@ export function useLinkGroupDialogController({
   trigger,
   allRelationships,
 }: LinkGroupDialogProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
-  const { proposeGroupConnectionChange } = useGroupConnectionActions();
+  const { approveGroupConnectionRequest, proposeGroupConnectionChange } =
+    useGroupConnectionActions();
 
   const [open, setOpen] = useState(false);
   const actionSubmission = useActionSubmission('link');
@@ -130,12 +142,21 @@ export function useLinkGroupDialogController({
 
   const isEditMode = Boolean(initialTargetGroupId);
 
-  const { searchResults: availableGroupsRaw, isLoading: groupStateLoading } = useGroupState({
+  const {
+    group: currentGroup,
+    searchResults: availableGroupsRaw,
+    isLoading: groupStateLoading,
+  } = useGroupState({
     groupId: open ? currentGroupId : undefined,
     includeSearch: open,
   });
 
   const availableGroups = (availableGroupsRaw || []).filter(group => group.id !== currentGroupId);
+  const displayCurrentGroupName =
+    resolveAppTutorialFixtureText(currentGroupName, {
+      tutorialRunId: currentGroup?.tutorial_run_id,
+      language,
+    }) ?? currentGroupName;
 
   const composer = useGroupConnectionComposer();
 
@@ -159,6 +180,39 @@ export function useLinkGroupDialogController({
     groupBId: value.selectedGroupId || undefined,
     enabled: open && Boolean(value.selectedGroupId),
   });
+
+  useEffect(() => {
+    const acceptTutorialNetwork = () => {
+      const approval = consumePendingAppTutorialNetworkApproval(currentGroupId);
+      if (!approval) return;
+
+      const approveTutorialRequest = (attempt = 1) => {
+        const approvalResult = approveGroupConnectionRequest(
+          {
+            id: approval.requestId,
+            grant_request_ids: approval.grantRequestIds,
+            approve_membership: approval.approveMembership,
+          },
+          { silent: true }
+        );
+        trackServerFinalization(approvalResult, {
+          onError: error => {
+            if (attempt < 3 && isRetryableServerMutationError(error)) {
+              window.setTimeout(() => approveTutorialRequest(attempt + 1), 200);
+              return;
+            }
+            toast.error(localizeAppError(error));
+          },
+        });
+      };
+
+      approveTutorialRequest();
+    };
+
+    window.addEventListener(APP_TUTORIAL_ACCEPT_NETWORK_EVENT, acceptTutorialNetwork);
+    return () =>
+      window.removeEventListener(APP_TUTORIAL_ACCEPT_NETWORK_EVENT, acceptTutorialNetwork);
+  }, [approveGroupConnectionRequest, currentGroupId, t]);
 
   const relevantConnections = useMemo(
     () =>
@@ -592,7 +646,7 @@ export function useLinkGroupDialogController({
                 }
               : null;
 
-          const result = proposeGroupConnectionChange({
+          const proposal = {
             id: currentPrimaryRequest?.id ?? crypto.randomUUID(),
             active_connection_id: currentPrimaryConnection?.id ?? null,
             proposed_connection_id: payload.id,
@@ -604,24 +658,46 @@ export function useLinkGroupDialogController({
             initiator_group_id: currentGroupId,
             grants,
             membership_rule: membershipRule,
-          });
+          };
+          const trackProposal = (
+            result: ReturnType<typeof proposeGroupConnectionChange>,
+            attempt = 1
+          ) => {
+            trackServerFinalization(result, {
+              onError: error => {
+                if (attempt < 3 && isRetryableServerMutationError(error)) {
+                  const retryResult = proposeGroupConnectionChange(proposal, { silent: true });
+                  trackProposal(retryResult, attempt + 1);
+                  return;
+                }
+                toast.error(localizeAppError(error), {
+                  action: {
+                    label: t('common.actions.restore'),
+                    onClick: () => {
+                      resetComposer(composerSnapshot);
+                      setActiveTab(activeTabSnapshot);
+                      actionSubmission.reset();
+                      setOpen(true);
+                    },
+                  },
+                });
+              },
+            });
+          };
+          const result = proposeGroupConnectionChange(proposal, { silent: true });
           await waitForClientApply(result);
+          if (currentGroup?.tutorial_run_id) {
+            savePendingAppTutorialNetworkApproval({
+              currentGroupId,
+              requestId: proposal.id,
+              grantRequestIds: proposal.grants.map(grant => grant.id),
+              approveMembership: Boolean(proposal.membership_rule),
+            });
+          }
           context.reportProgress({ key: 'commit', status: 'complete' });
           context.reportProgress({ key: 'sync', status: 'active' });
-          trackServerFinalization(result, {
-            onError: error =>
-              toast.error(error.message || t('common.network.relationshipSaveError'), {
-                action: {
-                  label: t('common.actions.restore', 'Wiederherstellen'),
-                  onClick: () => {
-                    resetComposer(composerSnapshot);
-                    setActiveTab(activeTabSnapshot);
-                    actionSubmission.reset();
-                    setOpen(true);
-                  },
-                },
-              }),
-          });
+          toast.success(t('common.network.relationshipsUpdated'));
+          trackProposal(result);
         },
         {
           onSuccess: () => {
@@ -641,13 +717,14 @@ export function useLinkGroupDialogController({
 
   return {
     currentGroupId,
-    currentGroupName,
+    currentGroupName: displayCurrentGroupName,
     initialTargetGroupId,
     initialRelationshipType,
     initialRights,
     trigger,
     allRelationships,
     t,
+    approveGroupConnectionRequest,
     proposeGroupConnectionChange,
     open,
     setOpen,

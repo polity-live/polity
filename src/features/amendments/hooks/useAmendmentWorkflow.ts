@@ -47,7 +47,12 @@ export function useAmendmentWorkflow({
   const transitionTo = useCallback(
     async (targetStatus: EditingMode): Promise<boolean> => {
       if (!canTransitionTo(currentStatus, targetStatus)) {
-        toast.error(`Ungültiger Übergang von ${currentStatus} zu ${targetStatus}`);
+        toast.error(
+          translateText('features.amendments.toasts.invalidWorkflowTransition', {
+            from: currentStatus,
+            to: targetStatus,
+          })
+        );
         return false;
       }
 
@@ -89,7 +94,11 @@ export function useAmendmentWorkflow({
           );
         }
 
-        toast.success(`Workflow geändert zu: ${targetStatus}`);
+        toast.success(
+          translateText('features.amendments.toasts.workflowChanged', {
+            status: targetStatus,
+          })
+        );
         return true;
       } catch (error) {
         console.error('Failed to transition workflow status:', error);
@@ -153,7 +162,11 @@ export function useAmendmentWorkflow({
           })
         );
 
-        toast.success(`Interne Abstimmung gestartet (${intervalMinutes} Minuten)`);
+        toast.success(
+          translateText('features.amendments.toasts.internalVoteStarted', {
+            minutes: intervalMinutes,
+          })
+        );
         return sessionId;
       } catch (error) {
         console.error('Failed to start internal voting:', error);
@@ -244,7 +257,11 @@ export function useAmendmentWorkflow({
   const finalizeAmendment = useCallback(
     async (result: 'passed' | 'rejected'): Promise<boolean> => {
       if (!canTransitionTo(currentStatus, result)) {
-        toast.error(`Ungültiger Übergang zu ${result}`);
+        toast.error(
+          translateText('features.amendments.toasts.invalidWorkflowTransitionTo', {
+            to: result,
+          })
+        );
         return false;
       }
 
@@ -261,7 +278,11 @@ export function useAmendmentWorkflow({
         );
 
         toast.success(
-          result === 'passed' ? '🎉 Amendment wurde angenommen!' : 'Amendment wurde abgelehnt'
+          translateText(
+            result === 'passed'
+              ? 'features.amendments.toasts.passed'
+              : 'features.amendments.toasts.rejected'
+          )
         );
         return true;
       } catch (error) {

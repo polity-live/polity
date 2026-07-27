@@ -69,7 +69,7 @@ function matchesGeneratedProcessTaskTitle(
       ].includes(normalizedTitle);
     case 'support_confirmation':
       return [
-        `Unterstuetzung bestaetigen: ${amendmentTitle}`,
+        `Unterstützung bestätigen: ${amendmentTitle}`,
         `Confirm support: ${amendmentTitle}`,
       ].includes(normalizedTitle);
     default:
@@ -91,17 +91,17 @@ function matchesGeneratedProcessTaskDescription(
   switch (type) {
     case 'implementation_evaluation':
       return [
-        `Plane die Umsetzungspruefung fuer ${amendmentTitle} in ${groupName}.`,
+        `Plane die Umsetzungsprüfung für ${amendmentTitle} in ${groupName}.`,
         `Plan the implementation review for ${amendmentTitle} in ${groupName}.`,
       ].includes(normalizedDescription);
     case 'support_confirmation':
       return [
-        `Diese Gruppe muss ihre Unterstuetzung fuer ${amendmentTitle} erneut bestaetigen.`,
+        `Diese Gruppe muss ihre Unterstützung für ${amendmentTitle} erneut bestätigen.`,
         `This group needs to confirm its support for ${amendmentTitle} again.`,
       ].includes(normalizedDescription);
     default:
       return [
-        `Fuer ${amendmentTitle} fehlt noch ein passendes Event in ${groupName}.`,
+        `Für ${amendmentTitle} fehlt noch ein passendes Event in ${groupName}.`,
         `No eligible event is selected yet for ${groupName}.`,
       ].includes(normalizedDescription);
   }
@@ -261,14 +261,14 @@ export function useGroupOpenAssignments(groupId: string) {
   const scheduleRoleRenewal = useCallback(
     async (assignment: GroupOpenAssignment, eventId: string) => {
       if (!assignment.roleId) {
-        throw new Error('Die verknuepfte Rolle konnte nicht gefunden werden.');
+        throw new Error('Die verknüpfte Rolle konnte nicht gefunden werden.');
       }
 
       const role = roles.find(candidateRole => candidateRole.id === assignment.roleId);
       const event = availableEvents.find(candidateEvent => candidateEvent.id === eventId);
 
       if (!role || !event) {
-        throw new Error('Bitte zuerst eine gueltige Veranstaltung auswaehlen.');
+        throw new Error('Bitte zuerst eine gültige Veranstaltung auswählen.');
       }
 
       const alreadyLinked = (role.elections || []).some(
@@ -305,10 +305,10 @@ export function useGroupOpenAssignments(groupId: string) {
         mode ?? normalizeDelegateElectionMode(assignment.targetEvent?.delegate_election_mode);
 
       if (!targetEvent?.id || !targetEvent.group?.id) {
-        throw new Error('Das Ziel-Event fuer diesen Delegiertenauftrag fehlt.');
+        throw new Error('Das Ziel-Event für diesen Delegiertenauftrag fehlt.');
       }
       if (!event) {
-        throw new Error('Bitte zuerst eine gueltige Veranstaltung auswaehlen.');
+        throw new Error('Bitte zuerst eine gültige Veranstaltung auswählen.');
       }
       if (!isEventWithinDelegateElectionSchedulingWindow(event, assignment)) {
         const createEventSearch = buildCreateEventSearchFromDelegateElectionAssignment({
@@ -322,7 +322,7 @@ export function useGroupOpenAssignments(groupId: string) {
             minStartTime: createEventSearch.minStartTime ?? null,
             maxStartDate: createEventSearch.maxStartDate ?? null,
             maxStartTime: createEventSearch.maxStartTime ?? null,
-          }) ?? 'Dieses Event liegt ausserhalb des erlaubten Zeitfensters fuer den Auftrag.'
+          }) ?? translateText('features.amendments.process.schedulingOutsideTaskWindow')
         );
       }
       if (remainingSeatCount <= 0 || (assignment.seatCount ?? 0) <= 0) {
@@ -361,10 +361,10 @@ export function useGroupOpenAssignments(groupId: string) {
       const event = availableEvents.find(candidateEvent => candidateEvent.id === eventId);
 
       if (!task || !event) {
-        throw new Error('Bitte zuerst eine gueltige Veranstaltung auswaehlen.');
+        throw new Error('Bitte zuerst eine gültige Veranstaltung auswählen.');
       }
       if (!isAmendmentTargetEventOpen(event)) {
-        throw new Error('Die Antragsfrist fuer dieses Event ist abgelaufen.');
+        throw new Error('Die Antragsfrist für dieses Event ist abgelaufen.');
       }
 
       const schedulingWindow = getProcessTaskSchedulingWindow({
@@ -389,7 +389,7 @@ export function useGroupOpenAssignments(groupId: string) {
             minStartTime: createEventSearch.minStartTime ?? null,
             maxStartDate: createEventSearch.maxStartDate ?? null,
             maxStartTime: createEventSearch.maxStartTime ?? null,
-          }) ?? 'Dieses Event liegt ausserhalb des erlaubten Zeitfensters fuer den Auftrag.'
+          }) ?? 'Dieses Event liegt außerhalb des erlaubten Zeitfensters für den Auftrag.'
         );
       }
 
@@ -403,7 +403,11 @@ export function useGroupOpenAssignments(groupId: string) {
         await attachProcessTaskToEvent({
           task,
           event,
-          description: assignment.description || `Event-Anfrage fuer ${amendmentTitle}`,
+          description:
+            assignment.description ||
+            translateText('features.groups.memberships.openAssignments.generated.eventRequest', {
+              amendmentTitle,
+            }),
           completeProcessTaskWithEvent,
         });
 

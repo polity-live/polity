@@ -1,7 +1,6 @@
 import { useStickToBottom } from '@rocicorp/zero-virtual/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { usePolityZeroList } from '@/features/shared/virtualization';
 import type { AiAttachmentEntity } from '@/lib/ai/schemas';
@@ -28,7 +27,6 @@ interface MessageStart {
 
 export type VirtualMessageRow =
   | { type: 'message'; index: number; key: string | number; message?: Message }
-  | { type: 'assistant-actions'; key: 'assistant-actions' }
   | { type: 'streaming'; key: 'streaming'; streaming: StreamingAssistantMessage }
   | { type: 'conversation-request'; key: 'conversation-request' };
 
@@ -110,10 +108,6 @@ export function useMessageListController({
   const otherParticipantName =
     [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') ||
     t('common.labels.unspecifiedUser');
-  const hasUserRepliedToAssistant = displayMessages.some(
-    message => message.sender?.id === currentUserId
-  );
-
   const virtualRows = useMemo<VirtualMessageRow[]>(() => {
     const rows: VirtualMessageRow[] = virtualList.items.map(item => ({
       type: 'message',
@@ -122,9 +116,6 @@ export function useMessageListController({
       message: item.row,
     }));
 
-    if (isAssistantConversation(conversation) && currentUserId && !hasUserRepliedToAssistant) {
-      rows.push({ type: 'assistant-actions', key: 'assistant-actions' });
-    }
     if (streamingAssistantMessage) {
       rows.push({ type: 'streaming', key: 'streaming', streaming: streamingAssistantMessage });
     }
@@ -132,13 +123,7 @@ export function useMessageListController({
       rows.push({ type: 'conversation-request', key: 'conversation-request' });
     }
     return rows;
-  }, [
-    conversation,
-    currentUserId,
-    hasUserRepliedToAssistant,
-    streamingAssistantMessage,
-    virtualList.items,
-  ]);
+  }, [conversation, streamingAssistantMessage, virtualList.items]);
 
   const [isAtEnd, setIsAtEnd] = useState(true);
   const [hasNewMessages, setHasNewMessages] = useState(false);

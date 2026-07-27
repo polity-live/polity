@@ -18,6 +18,7 @@ import {
   XIcon,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import {
   FormControlLabel,
@@ -81,7 +82,7 @@ function formatBytes(value?: number | null) {
 
 function providerLabel(provider: DatasetProviderId) {
   if (provider === 'GENESIS_DESTATIS') return 'GENESIS/Destatis';
-  if (provider === 'UPLOAD') return 'Eigene Daten';
+  if (provider === 'UPLOAD') return translateText('plateJs.dataView.ownData');
   if (provider === 'GOVDATA') return 'GovData';
   return 'Eurostat';
 }

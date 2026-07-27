@@ -355,7 +355,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       value: 'simplifyLanguage',
       onSelect: ({ editor }) => {
         void editor.getApi(AIChatPlugin).aiChat.submit('', {
-          prompt: 'Simplify the language',
+          prompt: t('plateJs.ai.menu.simplifyLanguage'),
         });
       },
     },

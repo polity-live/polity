@@ -4,7 +4,7 @@
 -- =============================================================================
 
 -- Follow table
-CREATE TABLE IF NOT EXISTS public.follow (
+CREATE TABLE public.follow (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   follower_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   followee_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
@@ -18,7 +18,7 @@ ALTER TABLE public.follow ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.follow FOR ALL TO service_role USING (true);
 
 -- Directionless container for exactly one connection per unordered group pair.
-CREATE TABLE IF NOT EXISTS public.group_connection (
+CREATE TABLE public.group_connection (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_a_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   group_b_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
@@ -69,7 +69,7 @@ ALTER TABLE public.group_connection ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_connection FOR ALL TO service_role USING (true);
 
 -- One row is one unambiguous grant: holder has right_key in scope.
-CREATE TABLE IF NOT EXISTS public.group_right_grant (
+CREATE TABLE public.group_right_grant (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   connection_id UUID NOT NULL REFERENCES public.group_connection (id) ON DELETE CASCADE,
   right_key TEXT NOT NULL,
@@ -94,7 +94,7 @@ ALTER TABLE public.group_right_grant ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_right_grant FOR ALL TO service_role USING (true);
 
 -- At most one directed membership flow per connection.
-CREATE TABLE IF NOT EXISTS public.group_membership_rule (
+CREATE TABLE public.group_membership_rule (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   connection_id UUID NOT NULL REFERENCES public.group_connection (id) ON DELETE CASCADE,
   member_source_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
@@ -131,7 +131,7 @@ CREATE INDEX idx_group_membership_rule_mode
 ALTER TABLE public.group_membership_rule ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_membership_rule FOR ALL TO service_role USING (true);
 
-CREATE TABLE IF NOT EXISTS public.group_membership_rule_origin (
+CREATE TABLE public.group_membership_rule_origin (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   membership_rule_id UUID NOT NULL REFERENCES public.group_membership_rule (id) ON DELETE CASCADE,
   eligible_origin_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
@@ -149,7 +149,7 @@ CREATE POLICY "service_role_all" ON public.group_membership_rule_origin
   FOR ALL TO service_role USING (true);
 
 -- Materialized hierarchy closure. Reads should not have to walk the graph.
-CREATE TABLE IF NOT EXISTS public.group_hierarchy_path (
+CREATE TABLE public.group_hierarchy_path (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   ancestor_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   descendant_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
@@ -180,7 +180,7 @@ CREATE POLICY "service_role_all" ON public.group_hierarchy_path
 
 -- Materialized rights between groups. This is the read-optimized surface for
 -- permission checks and workflow routing.
-CREATE TABLE IF NOT EXISTS public.group_effective_right (
+CREATE TABLE public.group_effective_right (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   holder_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   scope_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
@@ -207,7 +207,7 @@ CREATE POLICY "service_role_all" ON public.group_effective_right
   FOR ALL TO service_role USING (true);
 
 -- Explicit exclusivity locks make membership activation checks cheap.
-CREATE TABLE IF NOT EXISTS public.group_membership_exclusivity_lock (
+CREATE TABLE public.group_membership_exclusivity_lock (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   hierarchy_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
@@ -232,7 +232,7 @@ ALTER TABLE public.group_membership_exclusivity_lock ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_membership_exclusivity_lock
   FOR ALL TO service_role USING (true);
 
-CREATE TABLE IF NOT EXISTS public.group_sibling_source_lock (
+CREATE TABLE public.group_sibling_source_lock (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   sibling_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
@@ -258,7 +258,7 @@ CREATE POLICY "service_role_all" ON public.group_sibling_source_lock
   FOR ALL TO service_role USING (true);
 
 -- Normalized change request header. Structure must be accepted before child items.
-CREATE TABLE IF NOT EXISTS public.group_connection_request (
+CREATE TABLE public.group_connection_request (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   active_connection_id UUID REFERENCES public.group_connection (id) ON DELETE SET NULL,
   proposed_connection_id UUID NOT NULL,
@@ -307,7 +307,7 @@ ALTER TABLE public.group_connection_request ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_connection_request
   FOR ALL TO service_role USING (true);
 
-CREATE TABLE IF NOT EXISTS public.group_right_grant_request (
+CREATE TABLE public.group_right_grant_request (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   connection_request_id UUID NOT NULL
     REFERENCES public.group_connection_request (id) ON DELETE CASCADE,
@@ -337,7 +337,7 @@ ALTER TABLE public.group_right_grant_request ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_right_grant_request
   FOR ALL TO service_role USING (true);
 
-CREATE TABLE IF NOT EXISTS public.group_membership_rule_request (
+CREATE TABLE public.group_membership_rule_request (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   connection_request_id UUID NOT NULL
     REFERENCES public.group_connection_request (id) ON DELETE CASCADE,
@@ -387,7 +387,7 @@ ALTER TABLE public.group_membership_rule_request ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_membership_rule_request
   FOR ALL TO service_role USING (true);
 
-CREATE TABLE IF NOT EXISTS public.group_membership_rule_request_origin (
+CREATE TABLE public.group_membership_rule_request_origin (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   membership_rule_request_id UUID NOT NULL
     REFERENCES public.group_membership_rule_request (id) ON DELETE CASCADE,
@@ -406,7 +406,7 @@ CREATE POLICY "service_role_all" ON public.group_membership_rule_request_origin
   FOR ALL TO service_role USING (true);
 
 -- Subscriber table
-CREATE TABLE IF NOT EXISTS public.subscriber (
+CREATE TABLE public.subscriber (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   subscriber_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   user_id UUID,
@@ -437,7 +437,7 @@ ALTER TABLE public.subscriber ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.subscriber FOR ALL TO service_role USING (true);
 
 -- Group workflow table (ordered workflow templates for circular/finite processes)
-CREATE TABLE IF NOT EXISTS public.group_workflow (
+CREATE TABLE public.group_workflow (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   start_group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
@@ -461,7 +461,7 @@ ALTER TABLE public.group_workflow ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_workflow FOR ALL TO service_role USING (true);
 
 -- Group workflow approval table (one approval record per participating group)
-CREATE TABLE IF NOT EXISTS public.group_workflow_approval (
+CREATE TABLE public.group_workflow_approval (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   workflow_id UUID NOT NULL REFERENCES public.group_workflow (id) ON DELETE CASCADE,
   group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
@@ -487,7 +487,7 @@ ALTER TABLE public.group_workflow_approval ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_workflow_approval FOR ALL TO service_role USING (true);
 
 -- Group workflow step table (ordered steps referencing groups)
-CREATE TABLE IF NOT EXISTS public.group_workflow_step (
+CREATE TABLE public.group_workflow_step (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   workflow_id UUID NOT NULL REFERENCES public.group_workflow (id) ON DELETE CASCADE,
   group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,

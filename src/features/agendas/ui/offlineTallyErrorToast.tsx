@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import type { ExternalToast } from '@/features/shared/ui/ui/sonner';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const NO_VOTING_PASSWORD_ERROR = 'No voting password set. Please set your voting PIN first.';
 const INVALID_VOTING_PASSWORD_ERROR = 'Invalid voting password.';
@@ -12,16 +13,16 @@ function buildNoVotingPasswordDescription(message: string, userId?: string | nul
   const settingsHref = userId ? `/user/${userId}/settings?tab=passwords` : null;
 
   if (!settingsHref) {
-    return `${message} Set one in your password settings to continue.`;
+    return `${message} ${translateText('common.votingPassword.missingSettingsSuffix')}`;
   }
 
   return (
     <span>
-      {message} Set one in your{' '}
+      {message} {translateText('common.votingPassword.missingSettingsPrefix')}{' '}
       <Link to={settingsHref} className="font-medium underline underline-offset-4">
-        password settings
+        {translateText('common.votingPassword.settingsLink')}
       </Link>{' '}
-      to continue.
+      {translateText('common.votingPassword.continueSuffix')}
     </span>
   );
 }

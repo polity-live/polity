@@ -104,14 +104,20 @@ function buildFallbackAgendaTitle(
   resolvedAmendmentTitle: string
 ) {
   if (step.support_confirmation_id) {
-    return `Support confirmation: ${resolvedAmendmentTitle}`;
+    return translateText('features.groups.processAgendaPreview.supportConfirmationTitle', {
+      amendment: resolvedAmendmentTitle,
+    });
   }
 
   if (step.step_kind === 'merge_vote') {
-    return `Merge confirmation: ${resolvedAmendmentTitle}`;
+    return translateText('features.groups.processAgendaPreview.mergeConfirmationTitle', {
+      amendment: resolvedAmendmentTitle,
+    });
   }
 
-  return `Amendment: ${resolvedAmendmentTitle}`;
+  return translateText('features.groups.processAgendaPreview.amendmentTitle', {
+    amendment: resolvedAmendmentTitle,
+  });
 }
 function buildStepTargetGroupName(step: StepRunLike, fallbackTargetGroupName: string) {
   const targetGroupName =
@@ -139,14 +145,16 @@ function buildPreviewDescription(args: {
   }
 
   if (args.isPredicted) {
-    return `Dieses Agenda item wird automatisch erstellt, sobald fuer ${args.targetGroupName} ein passendes Event angelegt oder verknuepft wird.`;
+    return translateText('features.groups.processAgendaPreview.predicted', {
+      group: args.targetGroupName,
+    });
   }
 
   if (args.state === 'scheduled_but_not_confirmed') {
-    return 'Die darunter liegende Abstimmung ist noch ausstehend. Dieses Agenda item bleibt deshalb vorerst nur vorgeplant.';
+    return translateText('features.groups.processAgendaPreview.pendingVote');
   }
 
-  return 'Die darunter liegende Abstimmung wurde bereits positiv bestaetigt. Dieses Agenda item ist damit jetzt aktiv eingeplant.';
+  return translateText('features.groups.processAgendaPreview.confirmedVote');
 }
 function buildDetailsLink(step: StepRunLike, amendmentId: string) {
   if (step.event?.id && step.agenda_item?.id) {
@@ -198,7 +206,11 @@ function buildPreviewItem(args: {
       state,
       targetGroupName,
     }),
-    subtitle: args.step.event?.title?.trim() || `Event noch nicht verknuepft · ${targetGroupName}`,
+    subtitle:
+      args.step.event?.title?.trim() ||
+      translateText('features.groups.processAgendaPreview.eventNotLinked', {
+        group: targetGroupName,
+      }),
     detailsLink: buildDetailsLink(args.step, args.amendmentId),
     type: getAgendaDisplayType({
       agendaItemType: args.step.agenda_item?.type ?? null,
@@ -271,7 +283,7 @@ export function useProcessAgendaPreviewDialogController({
   }, [activeRun]);
 
   const resolvedAmendmentTitle =
-    amendmentProcess?.title?.trim() || amendmentTitle?.trim() || 'Aenderungsantrag';
+    amendmentProcess?.title?.trim() || amendmentTitle?.trim() || 'Änderungsantrag';
 
   const previewItems = useMemo(() => {
     const branchStepRuns = [...(activeBranch?.step_runs ?? [])].sort(
@@ -290,7 +302,7 @@ export function useProcessAgendaPreviewDialogController({
       step: selectedStep,
       amendmentId,
       amendmentTitle: resolvedAmendmentTitle,
-      fallbackTargetGroupName: activeRun?.selected_target_group?.name ?? 'die zustaendige Gruppe',
+      fallbackTargetGroupName: activeRun?.selected_target_group?.name ?? 'die zuständige Gruppe',
     });
 
     return previewItem ? [previewItem] : [];

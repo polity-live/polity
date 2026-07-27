@@ -88,6 +88,7 @@ vi.mock('../../agendas/change-request-vote-ordering', () => ({
 }));
 
 import { eventServerMutators } from '../server-mutators';
+import { ATTENDANCE_MODE_CHANGE_LOCKED_MESSAGE } from '../attendance-mode';
 
 function createTx() {
   return {
@@ -148,6 +149,84 @@ describe('eventServerMutators group assignment notifications', () => {
       eventId: 'event-1',
       eventTitle: 'Planning Event',
     });
+  });
+
+  it('rejects an attendance mode change while a snapshotted vote is still open', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'event-1',
+        attendance_mode: 'offline',
+        location_type: 'physical',
+      })
+      .mockResolvedValueOnce([{ id: 'agenda-1' }])
+      .mockResolvedValueOnce([{ id: 'vote-1', status: 'final', electorate_snapshotted_at: 123 }])
+      .mockResolvedValueOnce([]);
+
+    await expect(
+      eventServerMutators.update.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: { id: 'event-1', attendance_mode: 'online', location_type: 'online' },
+      })
+    ).rejects.toThrow(ATTENDANCE_MODE_CHANGE_LOCKED_MESSAGE);
+
+    expect(mocks.updateEventFn).not.toHaveBeenCalled();
+  });
+
+  it('rejects an attendance mode change while a snapshotted election is still open', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'event-1',
+        attendance_mode: 'hybrid',
+        location_type: 'physical',
+      })
+      .mockResolvedValueOnce([{ id: 'agenda-1' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { id: 'election-1', status: 'final', electorate_snapshotted_at: 123 },
+      ]);
+
+    await expect(
+      eventServerMutators.update.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: { id: 'event-1', attendance_mode: 'offline', location_type: 'physical' },
+      })
+    ).rejects.toThrow(ATTENDANCE_MODE_CHANGE_LOCKED_MESSAGE);
+
+    expect(mocks.updateEventFn).not.toHaveBeenCalled();
+  });
+
+  it('allows an attendance mode change when every snapshotted ballot is closed', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'event-1',
+        attendance_mode: 'offline',
+        location_type: 'physical',
+        event_type: null,
+      })
+      .mockResolvedValueOnce([{ id: 'agenda-1' }])
+      .mockResolvedValueOnce([{ id: 'vote-1', status: 'closed', electorate_snapshotted_at: 123 }])
+      .mockResolvedValueOnce([
+        { id: 'election-1', status: 'closed', electorate_snapshotted_at: 123 },
+      ])
+      .mockResolvedValueOnce({
+        id: 'event-1',
+        attendance_mode: 'online',
+        location_type: 'online',
+      })
+      .mockResolvedValueOnce([]);
+
+    await eventServerMutators.update.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: { id: 'event-1', attendance_mode: 'online', location_type: 'online' },
+    });
+
+    expect(mocks.updateEventFn).toHaveBeenCalledOnce();
   });
 
   it('notifies group members when an event is assigned to a new group', async () => {

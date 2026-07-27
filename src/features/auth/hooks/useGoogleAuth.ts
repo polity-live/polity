@@ -27,8 +27,8 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
 
       return true;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+      console.error('Google sign-in failed:', error);
+      const errorMessage = t('features.auth.errors.unexpectedError');
       toast.error(errorMessage);
       return false;
     } finally {

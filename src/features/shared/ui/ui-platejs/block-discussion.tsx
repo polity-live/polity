@@ -347,6 +347,9 @@ const BlockCommentContent = ({
       variant="ghost"
       className="text-muted-foreground/80 hover:text-muted-foreground/80 data-[active=true]:bg-muted mt-1 ml-0 flex h-6 gap-1 !px-1.5 py-0 md:ml-1"
       data-active={open}
+      data-tutorial-anchor={
+        suggestionsCount > 0 ? 'tutorial-change-request-editor-trigger' : undefined
+      }
       data-suggestion-ids={
         filteredSuggestions.length > 0
           ? filteredSuggestions.map(suggestion => suggestion.suggestionId).join(' ')

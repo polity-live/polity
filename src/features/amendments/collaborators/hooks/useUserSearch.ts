@@ -4,6 +4,7 @@
 
 import { useMemo } from 'react';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { translate } from '@/features/shared/hooks/use-translation';
 
 export interface SearchableUser {
   id: string;
@@ -19,7 +20,7 @@ function buildDisplayName(user: {
   handle?: string | null;
 }): string {
   const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
-  return fullName || user.handle || 'Unnamed User';
+  return fullName || user.handle || translate('common.unknownUser');
 }
 
 export function useUserSearch(existingCollaboratorIds: string[]): {

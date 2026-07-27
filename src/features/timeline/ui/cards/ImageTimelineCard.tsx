@@ -44,13 +44,13 @@ function formatCount(count: number): string {
 /**
  * Get source type label
  */
-const SOURCE_LABELS: Record<string, string> = {
-  user: 'User Photo',
-  group: 'Group Photo',
-  event: 'Event Photo',
-  amendment: 'Amendment Image',
-  blog: 'Blog Image',
-  statement: 'Statement Image',
+const SOURCE_LABEL_KEYS: Record<string, string> = {
+  user: 'features.timeline.imageSources.user',
+  group: 'features.timeline.imageSources.group',
+  event: 'features.timeline.imageSources.event',
+  amendment: 'features.timeline.imageSources.amendment',
+  blog: 'features.timeline.imageSources.blog',
+  statement: 'features.timeline.imageSources.statement',
 };
 
 /**
@@ -85,7 +85,7 @@ export function ImageTimelineCard({
       >
         <img
           src={image.imageUrl}
-          alt={image.caption || 'Image'}
+          alt={image.caption || t('common.entities.image')}
           className="w-full object-cover"
           loading="lazy"
           style={{ minHeight: '200px', maxHeight: '400px' }}
@@ -118,7 +118,9 @@ export function ImageTimelineCard({
             variant="outline"
             className={featureThemeClassName('timelineImageTimelineCardNeutralContrastBackground')}
           >
-            {SOURCE_LABELS[image.sourceType] || image.sourceType}
+            {SOURCE_LABEL_KEYS[image.sourceType]
+              ? t(SOURCE_LABEL_KEYS[image.sourceType])
+              : image.sourceType}
           </BadgeControl>
         )}
       </div>

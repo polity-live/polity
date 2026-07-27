@@ -108,4 +108,53 @@ describe('AiContextCards', () => {
       '/group/group-created'
     );
   });
+
+  it('anchors only clickable todo cards in assistant output context', () => {
+    const outputTodo = {
+      entityType: 'todo' as const,
+      entityId: 'todo-created',
+      title: 'Created todo',
+      context_type: 'output' as const,
+      href: '/todos',
+    };
+    const { rerender } = render(
+      <AiContextCards contextLabel="output" attachments={[outputTodo]} />
+    );
+
+    expect(
+      screen.getByRole('link', { name: /Created todo/ }).getAttribute('data-tutorial-anchor')
+    ).toBe('tutorial-assistant-todo-output');
+
+    rerender(<AiContextCards contextLabel="input" attachments={[outputTodo]} />);
+    expect(
+      screen.getByRole('link', { name: /Created todo/ }).getAttribute('data-tutorial-anchor')
+    ).toBeNull();
+
+    rerender(
+      <AiContextCards
+        contextLabel="output"
+        attachments={[{ ...outputTodo, context_type: 'update' }]}
+      />
+    );
+    expect(
+      screen.getByRole('link', { name: /Created todo/ }).getAttribute('data-tutorial-anchor')
+    ).toBeNull();
+
+    rerender(
+      <AiContextCards
+        contextLabel="output"
+        attachments={[
+          {
+            entityType: 'group',
+            entityId: 'group-created',
+            title: 'Created group',
+            href: '/group/group-created',
+          },
+        ]}
+      />
+    );
+    expect(
+      screen.getByRole('link', { name: /Created group/ }).getAttribute('data-tutorial-anchor')
+    ).toBeNull();
+  });
 });

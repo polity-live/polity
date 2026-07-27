@@ -2,6 +2,7 @@ import {
   GroupConflictError,
   parseGroupConflictResponseMessage,
 } from '@/features/groups/logic/groupConflict';
+import { localizeAppError } from '@/features/shared/errors';
 
 /**
  * Utilities for Zero mutation server interaction.
@@ -30,6 +31,11 @@ interface TrackServerFinalizationOptions {
 }
 
 const ZERO_CLOSED_MESSAGE = 'Zero was explicitly closed by calling zero.close()';
+const RETRYABLE_SERVER_MUTATION_MESSAGES = [
+  'deadlock detected',
+  'could not serialize access',
+  'serialization failure',
+] as const;
 
 export function isZeroClosedMutationCancellation(value: unknown): boolean {
   if (typeof value === 'string') {
@@ -72,6 +78,19 @@ export async function serverConfirmed(result: MutationResultLike): Promise<void>
   if (serverResult.type === 'error') {
     throw toMutationError(serverResult.error?.message);
   }
+}
+
+export function isRetryableServerMutationError(value: unknown): boolean {
+  const message =
+    value instanceof Error
+      ? value.message
+      : typeof value === 'string'
+        ? value
+        : value && typeof value === 'object' && 'message' in value
+          ? String((value as { message?: unknown }).message ?? '')
+          : '';
+  const normalized = message.toLowerCase();
+  return RETRYABLE_SERVER_MUTATION_MESSAGES.some(candidate => normalized.includes(candidate));
 }
 
 export function trackServerFinalization(
@@ -119,11 +138,14 @@ export function onServerError(
   result.server
     .then(serverResult => {
       if (serverResult.type === 'error') {
-        onError(serverResult.error?.message ?? 'Mutation failed on server');
+        const rawMessage = serverResult.error?.message;
+        if (rawMessage) console.error('Zero server mutation failed', rawMessage);
+        onError(localizeAppError(toMutationError(rawMessage), { logUnknown: false }));
       }
     })
     .catch((err: unknown) => {
-      onError(err instanceof Error ? err.message : 'Mutation failed on server');
+      console.error('Zero server mutation failed', err);
+      onError(localizeAppError(err, { logUnknown: false }));
     });
 }
 

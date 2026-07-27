@@ -17,6 +17,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type {
   GroupConflict,
   GroupConflictKind,
+  GroupConflictResolutionCode,
   GroupConflictResponse,
 } from '@/features/groups/logic/groupConflict';
 import { AlertTriangle, Info, Route } from 'lucide-react';
@@ -27,12 +28,27 @@ interface GroupConflictPanelProps {
   response: GroupConflictResponse;
 }
 
-const conflictKindTranslationKeyMap: Record<GroupConflictKind, string | null> = {
+const conflictKindTranslationKeyMap: Record<GroupConflictKind, string> = {
   hierarchy_member_overlap: 'hierarchyMemberOverlap',
   hierarchy_duplicate_path: 'hierarchyDuplicatePath',
-  sibling_source_overlap: null,
-  sibling_connected_membership_missing: null,
-  permission_blocked_resolution: null,
+  sibling_source_overlap: 'siblingSourceOverlap',
+  sibling_connected_membership_missing: 'siblingConnectedMembershipMissing',
+  permission_blocked_resolution: 'permissionBlockedResolution',
+};
+
+const resolutionTranslationKeyMap: Record<GroupConflictResolutionCode, string> = {
+  align_membership_before_activation: 'alignMembershipBeforeActivation',
+  leave_other_subgroup: 'leaveOtherSubgroup',
+  choose_other_group: 'chooseOtherGroup',
+  contact_admin: 'contactAdmin',
+  leave_other_source_group: 'leaveOtherSourceGroup',
+  contact_source_admins: 'contactSourceAdmins',
+  clarify_source_memberships: 'clarifySourceMemberships',
+  align_memberships: 'alignMemberships',
+  contact_other_group: 'contactOtherGroup',
+  remove_duplicate_path: 'removeDuplicatePath',
+  contact_responsible_group: 'contactResponsibleGroup',
+  clean_source_groups: 'cleanSourceGroups',
 };
 
 function getLocalizedConflictSummary(
@@ -40,11 +56,7 @@ function getLocalizedConflictSummary(
   t: (key: string, fallback?: string) => string
 ) {
   const keySuffix = conflictKindTranslationKeyMap[conflict.kind];
-  if (!keySuffix) {
-    return conflict.summary;
-  }
-
-  return t(`features.groups.conflicts.kinds.${keySuffix}.summary`, conflict.summary);
+  return t(`features.groups.conflicts.kinds.${keySuffix}.summary`);
 }
 
 function getLocalizedConflictExplanation(
@@ -52,11 +64,7 @@ function getLocalizedConflictExplanation(
   t: (key: string, fallback?: string) => string
 ) {
   const keySuffix = conflictKindTranslationKeyMap[conflict.kind];
-  if (!keySuffix) {
-    return conflict.explanation;
-  }
-
-  return t(`features.groups.conflicts.kinds.${keySuffix}.explanation`, conflict.explanation);
+  return t(`features.groups.conflicts.kinds.${keySuffix}.explanation`);
 }
 
 function getLocalizedResolution(
@@ -69,39 +77,28 @@ function getLocalizedResolution(
     return { label: '', description: '' };
   }
 
-  if (conflict.kind === 'hierarchy_member_overlap') {
-    const keyBase =
-      resolutionIndex === 0
-        ? 'features.groups.conflicts.kinds.hierarchyMemberOverlap.resolutions.alignMemberships'
+  const legacyCode =
+    conflict.kind === 'hierarchy_member_overlap'
+      ? resolutionIndex === 0
+        ? 'align_memberships'
         : resolutionIndex === 1
-          ? 'features.groups.conflicts.kinds.hierarchyMemberOverlap.resolutions.contactOtherGroup'
-          : null;
-    if (keyBase) {
-      return {
-        label: t(`${keyBase}.label`, resolution.label),
-        description: t(`${keyBase}.description`, resolution.description),
-      };
-    }
-  }
-
-  if (conflict.kind === 'hierarchy_duplicate_path') {
-    const keyBase =
-      resolutionIndex === 0
-        ? 'features.groups.conflicts.kinds.hierarchyDuplicatePath.resolutions.removePath'
-        : resolutionIndex === 1
-          ? 'features.groups.conflicts.kinds.hierarchyDuplicatePath.resolutions.contactResponsibleGroup'
-          : null;
-    if (keyBase) {
-      return {
-        label: t(`${keyBase}.label`, resolution.label),
-        description: t(`${keyBase}.description`, resolution.description),
-      };
-    }
-  }
-
+          ? 'contact_other_group'
+          : null
+      : conflict.kind === 'hierarchy_duplicate_path'
+        ? resolutionIndex === 0
+          ? 'remove_duplicate_path'
+          : resolutionIndex === 1
+            ? 'contact_responsible_group'
+            : null
+        : null;
+  const code = resolution.code ?? legacyCode;
+  const keySuffix = code ? resolutionTranslationKeyMap[code] : null;
+  const keyBase = keySuffix
+    ? `features.groups.conflicts.resolutions.${keySuffix}`
+    : 'features.groups.conflicts.resolutions.generic';
   return {
-    label: resolution.label,
-    description: resolution.description,
+    label: t(`${keyBase}.label`),
+    description: t(`${keyBase}.description`),
   };
 }
 

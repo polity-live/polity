@@ -46,6 +46,7 @@ vi.mock('../useHierarchyLinkConflicts', () => ({
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: (...args: unknown[]) => useTranslationMock(...args),
+  translate: (key: string) => key,
 }));
 
 vi.mock('@/zero/mutate-with-server-check', () => ({

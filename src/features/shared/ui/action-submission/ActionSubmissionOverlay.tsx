@@ -19,6 +19,12 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { LoadingProgressBar } from '@/features/shared/ui/feedback';
 import { getContentTypeToneClasses, getSemanticToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
+import {
+  translate as translateText,
+  useTranslation,
+} from '@/features/shared/hooks/use-translation';
+import type { LocalizedCopyRef } from '@/features/shared/i18n/localized-copy';
+import { localizeAppError, parseAppError } from '@/features/shared/errors';
 
 export type ActionSubmissionKind = 'workflow' | 'link' | 'invite' | 'accept' | 'process' | 'tally';
 export type ActionSubmissionStepKey = 'prepare' | 'commit' | 'sync';
@@ -27,7 +33,7 @@ export type ActionSubmissionStatus = 'idle' | 'submitting' | 'ready' | 'success'
 
 export interface ActionSubmissionStep {
   key: ActionSubmissionStepKey;
-  label: ReactNode;
+  copy: LocalizedCopyRef;
   status: ActionSubmissionProgressStatus;
 }
 
@@ -63,48 +69,15 @@ interface ActionSubmissionOverlayProps {
   className?: string;
 }
 
-const KIND_COPY: Record<
-  ActionSubmissionKind,
-  { headline: string; active: string; success: string; description: string }
-> = {
-  workflow: {
-    headline: 'POLITY verbindet.',
-    active: 'Workflow wird vorbereitet',
-    success: 'Workflow bereit',
-    description:
-      'Der Pfad wird geprüft, gespeichert und mit den beteiligten Gruppen synchronisiert.',
-  },
-  process: {
-    headline: 'POLITY richtet aus.',
-    active: 'Prozesslauf wird vorbereitet',
-    success: 'Prozesslauf bereit',
-    description: 'Ziel, Pfad und beteiligte Kontexte werden geprüft und synchronisiert.',
-  },
-  tally: {
-    headline: 'POLITY zählt.',
-    active: 'Tally wird gespeichert',
-    success: 'Tally gespeichert',
-    description: 'PIN, Offline-Stimmen und Ergebnisansicht werden geprüft und synchronisiert.',
-  },
-  link: {
-    headline: 'POLITY verbindet.',
-    active: 'Link wird aktiviert',
-    success: 'Link bereit',
-    description: 'Die Verbindung wird geprüft, aktiviert und im Netzwerk aktualisiert.',
-  },
-  invite: {
-    headline: 'POLITY lädt ein.',
-    active: 'Einladungen werden vorbereitet',
-    success: 'Einladungen gesendet',
-    description: 'Empfänger, Rollen und Sichtbarkeit werden geprüft und synchronisiert.',
-  },
-  accept: {
-    headline: 'POLITY nimmt an.',
-    active: 'Annahme wird vorbereitet',
-    success: 'Annahme bestätigt',
-    description: 'Einladung, Rolle und Ansicht werden geprüft und aktualisiert.',
-  },
-};
+function getKindCopy(kind: ActionSubmissionKind) {
+  const prefix = `common.actionSubmission.kinds.${kind}`;
+  return {
+    headline: translateText(`${prefix}.headline`),
+    active: translateText(`${prefix}.active`),
+    success: translateText(`${prefix}.success`),
+    description: translateText(`${prefix}.description`),
+  };
+}
 
 function getIcon(kind: ActionSubmissionKind) {
   if (kind === 'tally') return Calculator;
@@ -124,64 +97,41 @@ function getTone(kind: ActionSubmissionKind) {
   return getSemanticToneClasses('accent');
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
-  if (typeof error === 'string' && error.trim()) return error;
-  return 'Die Aktion konnte nicht abgeschlossen werden.';
-}
-
 function getErrorDetails(error: unknown) {
-  const message = getErrorMessage(error);
-  const normalized = message.toLowerCase();
+  const payload = parseAppError(error);
 
-  if (
-    normalized.includes('conflict') ||
-    normalized.includes('blocked') ||
-    normalized.includes('blockiert') ||
-    normalized.includes('hierarchy member conflict')
-  ) {
+  if (payload?.code === 'action_blocked') {
     return {
-      title: 'Aktion blockiert',
-      description: 'Polity kann diese Änderung wegen eines Konflikts nicht übernehmen.',
+      title: translateText('common.actionSubmission.errors.blockedTitle'),
+      description: translateText('common.actionSubmission.errors.blockedDescription'),
       retryLabel: null,
       technicalDetail: null,
     };
   }
 
-  if (
-    normalized.includes('duplicate') ||
-    normalized.includes('already exists') ||
-    normalized.includes('unique constraint') ||
-    normalized.includes('bereits')
-  ) {
+  if (payload?.code === 'already_exists') {
     return {
-      title: 'Bereits vorhanden',
-      description:
-        'Diese Einladung oder Verbindung existiert bereits. Es wurde nichts doppelt angelegt.',
+      title: translateText('common.actionSubmission.errors.duplicateTitle'),
+      description: translateText('common.actionSubmission.errors.duplicateDescription'),
       retryLabel: null,
       technicalDetail: null,
     };
   }
 
-  if (
-    normalized.includes('permission') ||
-    normalized.includes('not allowed') ||
-    normalized.includes('unauthorized') ||
-    normalized.includes('forbidden')
-  ) {
+  if (payload?.code === 'permission_denied') {
     return {
-      title: 'Berechtigung fehlt',
-      description: 'Du hast für diese Aktion aktuell nicht die nötige Berechtigung.',
+      title: translateText('common.actionSubmission.errors.permissionTitle'),
+      description: translateText('common.actionSubmission.errors.permissionDescription'),
       retryLabel: null,
       technicalDetail: null,
     };
   }
 
   return {
-    title: 'Synchronisierung unterbrochen',
-    description: 'Du kannst zur Eingabe zurück oder die Aktion erneut versuchen.',
-    retryLabel: 'Erneut versuchen',
-    technicalDetail: message,
+    title: translateText('common.actionSubmission.errors.interruptedTitle'),
+    description: localizeAppError(error),
+    retryLabel: translateText('common.submissionOverlay.retry'),
+    technicalDetail: null,
   };
 }
 
@@ -190,9 +140,10 @@ function getStatusText(
   kind: ActionSubmissionKind,
   errorTitle: string
 ) {
-  if (status === 'success' || status === 'ready') return KIND_COPY[kind].success;
+  const copy = getKindCopy(kind);
+  if (status === 'success' || status === 'ready') return copy.success;
   if (status === 'error') return errorTitle;
-  return KIND_COPY[kind].active;
+  return copy.active;
 }
 
 export function ActionSubmissionOverlay({
@@ -206,17 +157,19 @@ export function ActionSubmissionOverlay({
   onRetry,
   className,
 }: ActionSubmissionOverlayProps) {
+  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const titleId = useId();
   const descriptionId = useId();
   const open = status !== 'idle';
-  const copy = KIND_COPY[kind];
+  const copy = getKindCopy(kind);
   const tone = status === 'error' ? getSemanticToneClasses('danger') : getTone(kind);
   const errorDetails = getErrorDetails(error);
   const Icon = getIcon(kind);
   const canUseTarget = status === 'success' || status === 'ready';
   const displaySteps = steps.map(step => ({
     ...step,
+    label: t(step.copy.key, step.copy.params),
     status: canUseTarget ? ('complete' as const) : step.status,
   }));
 
@@ -364,7 +317,7 @@ export function ActionSubmissionOverlay({
             <div
               className="grid w-full gap-2 sm:grid-cols-3"
               data-slot="action-submission-steps"
-              aria-label="Aktionsfortschritt"
+              aria-label={translateText('common.accessibility.actionProgress')}
             >
               {displaySteps.map((step, index) => {
                 const isComplete = step.status === 'complete';
@@ -415,12 +368,12 @@ export function ActionSubmissionOverlay({
                         <p className="truncate text-sm font-medium">{step.label}</p>
                         <p className="text-muted-foreground text-xs">
                           {isError
-                            ? 'Prüfung nötig'
+                            ? translateText('common.submissionOverlay.status.attentionRequired')
                             : isComplete
-                              ? 'Abgeschlossen'
+                              ? translateText('common.submissionOverlay.status.completed')
                               : isActive
-                                ? 'Läuft'
-                                : 'Wartet'}
+                                ? translateText('common.submissionOverlay.status.running')
+                                : translateText('common.submissionOverlay.status.waiting')}
                         </p>
                       </div>
                     </div>
@@ -429,7 +382,7 @@ export function ActionSubmissionOverlay({
               })}
             </div>
             <LoadingProgressBar
-              ariaLabel="Aktionsfortschritt"
+              ariaLabel={translateText('common.accessibility.actionProgress')}
               steps={displaySteps}
               indicatorClassName={cn(tone.text, 'bg-current')}
             />
@@ -439,7 +392,7 @@ export function ActionSubmissionOverlay({
                 {errorDetails.technicalDetail ? (
                   <details className="text-muted-foreground mx-auto max-w-xl text-xs">
                     <summary className="cursor-pointer text-center font-medium">
-                      Technische Details
+                      {translateText('common.submissionOverlay.technicalDetails')}
                     </summary>
                     <p className="bg-card mt-2 rounded-md border px-3 py-2">
                       {errorDetails.technicalDetail}
@@ -453,7 +406,7 @@ export function ActionSubmissionOverlay({
                   )}
                 >
                   <Button type="button" variant="outline" onClick={onBack}>
-                    Zurück
+                    {translateText('common.submissionOverlay.back')}
                   </Button>
                   {errorDetails.retryLabel ? (
                     <Button type="button" onClick={onRetry}>

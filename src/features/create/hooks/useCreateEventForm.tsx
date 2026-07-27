@@ -3,6 +3,7 @@ import { useQuery } from '@rocicorp/zero/react';
 import type { Value } from 'platejs';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
+import { localizeAppError } from '@/features/shared/errors';
 import { useAuth } from '@/providers/auth-provider';
 import {
   useTranslation,
@@ -427,7 +428,7 @@ export function useCreateEventForm(): CreateFormConfig {
       return createBlockedSubmitOutcome();
     }
     if (eventType === 'delegate_assembly' && !canCreateDelegateAssemblyForGroup(group)) {
-      toast.error(DELEGATE_ASSEMBLY_GROUP_ELIGIBILITY_MESSAGE);
+      toast.error(localizeAppError(DELEGATE_ASSEMBLY_GROUP_ELIGIBILITY_MESSAGE));
       return createBlockedSubmitOutcome();
     }
 

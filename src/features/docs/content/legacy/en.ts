@@ -40,6 +40,7 @@ export const docsPageTranslations = {
     overview: 'Overview',
     related: 'Continue reading',
     readGuide: 'Open guide',
+    resultCount: '{{count}} results',
     resultCount_one: '{{count}} result',
     resultCount_other: '{{count}} results',
     searchTitle: 'Search documentation',
@@ -1250,7 +1251,7 @@ export const docsPageTranslations = {
       ],
       concepts: [
         'AI output is a suggestion and needs human review, especially for governance text.',
-        'Aria and Kai explain features, while editor and chat flows can support concrete work.',
+        'Assistent Aria & Kai explains features, while editor and chat flows can support concrete work.',
         'Bring-your-own-key and shared models affect which AI functions are available.',
       ],
       watchFor: [

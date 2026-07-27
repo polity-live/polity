@@ -92,7 +92,7 @@ const navigationGuideSections: Record<DocsLanguage, DocsSection[]> = {
       id: 'angemeldeter-bereich',
       title: 'Navigation nach der Anmeldung',
       markdown:
-        'Die App-Hauptnavigation führt zu **Startseite**, **Nachrichten**, **Suche**, **Erstellen**, **Kalender**, **Aufgaben** und **Benachrichtigungen**. Das Avatar-Menü öffnet Profil, Einstellungen, eigene Räume sowie **Dokumentation & Hilfe**.',
+        'Die App-Hauptnavigation führt zu **Startseite**, **Nachrichten**, **Suche**, **Erstellen**, **Kalender**, **Aufgaben** und **Benachrichtigungen**. Das Avatar-Menü öffnet Profil, Einstellungen, eigene Räume sowie **Dokumentation & Feedback**.',
     },
     {
       id: 'entity-kontexte',
@@ -137,7 +137,7 @@ const navigationGuideSections: Record<DocsLanguage, DocsSection[]> = {
       id: 'angemeldeter-bereich',
       title: 'Navigation after signing in',
       markdown:
-        'The app main navigation leads to **Home**, **Messages**, **Search**, **Create**, **Calendar**, **Tasks**, and **Notifications**. The avatar menu opens profile, settings, your spaces, and **Documentation & help**.',
+        'The app main navigation leads to **Home**, **Messages**, **Search**, **Create**, **Calendar**, **Tasks**, and **Notifications**. The avatar menu opens profile, settings, your spaces, and **Documentation & Feedback**.',
     },
     {
       id: 'entity-kontexte',
@@ -332,7 +332,113 @@ function buildPages(language: DocsLanguage): DocsPage[] {
     sections: navigationGuideSections[language],
   };
 
-  return [...starterPages, ...guidePages, navigationGuide];
+  const appOnboardingGuide: DocsPage = {
+    slug: 'app-onboarding',
+    kind: 'guide',
+    category: 'systems',
+    icon: 'Sparkles',
+    featured: true,
+    order: guidePages.length + 1,
+    related: [
+      'navigation-and-page-structure',
+      'groups',
+      'events',
+      'amendments',
+      'search',
+      'ai-assistant',
+    ],
+    route: getDocsPageRoute('guide', 'app-onboarding'),
+    title: language === 'de' ? 'Interaktives Live-Tutorial' : 'Interactive live tutorial',
+    description:
+      language === 'de'
+        ? 'Assistent Aria & Kai führt dich mit persönlichen Sandboxdaten durch die echte App.'
+        : 'Assistent Aria & Kai guides you through the real app with personal sandbox data.',
+    audience:
+      language === 'de'
+        ? 'Neue Nutzer und alle, die die Arbeitsweise von Polity auffrischen möchten.'
+        : 'New users and anyone who wants to refresh how Polity works.',
+    keywords:
+      language === 'de'
+        ? ['Live-Tutorial', 'Sandbox', 'Assistent Aria & Kai', 'Fortsetzen', 'Neustart']
+        : ['live tutorial', 'sandbox', 'Assistent Aria & Kai', 'resume', 'restart'],
+    sections:
+      language === 'de'
+        ? [
+            {
+              id: 'how-it-works',
+              title: 'So funktioniert das Live-Tutorial',
+              markdown:
+                'Kurze Spotlight-Hinweise führen dich durch reale Routen und Controls. Nur das hervorgehobene Ziel und die Tutorialsteuerung sind bedienbar; alle übrigen Inhalte bleiben sichtbar.',
+              keywords: ['Spotlight', 'echte App', 'Controls'],
+            },
+            {
+              id: 'sandbox',
+              title: 'Deine persönliche Sandbox',
+              markdown:
+                'Jeder Durchlauf erzeugt realistische Gruppen, Events, Amendments, Netzwerkdaten, Nachrichten und Aufgaben ausschließlich für dich. Ein abgebrochener Durchlauf bleibt 30 Tage fortsetzbar.',
+              keywords: ['Sandbox', 'isoliert', '30 Tage'],
+            },
+            {
+              id: 'journey',
+              title: 'Was du praktisch ausprobierst',
+              markdown:
+                'Du nutzt Navigation und Suche, beantragst eine Mitgliedschaft, verknüpfst Gruppen, bearbeitest ein Amendment und dessen Stadtgestaltung, stimmst in einem Event ab und erstellst mit Assistent Aria & Kai eine Aufgabe.',
+              keywords: ['Navigation', 'Netzwerk', 'Amendment', 'Abstimmung', 'AI'],
+            },
+            {
+              id: 'pause-restart-finish',
+              title: 'Pausieren, neu starten und abschließen',
+              markdown:
+                'Du kannst jederzeit pausieren und in den Einstellungen fortsetzen. Ein Neustart oder der Abschluss entfernt alle Tutorialdaten. Nach dem Abschluss wirst du zu Home weitergeleitet.',
+              keywords: ['Pausieren', 'Fortsetzen', 'Neu starten', 'Home'],
+            },
+          ]
+        : [
+            {
+              id: 'how-it-works',
+              title: 'How the live tutorial works',
+              markdown:
+                'Short spotlight hints guide you through real routes and controls. Only the highlighted target and tutorial controls remain interactive while the rest of the app stays visible.',
+              keywords: ['spotlight', 'real app', 'controls'],
+            },
+            {
+              id: 'sandbox',
+              title: 'Your personal sandbox',
+              markdown:
+                'Each run creates realistic groups, events, amendments, network data, messages, and tasks for you alone. An interrupted run remains resumable for 30 days.',
+              keywords: ['sandbox', 'isolated', '30 days'],
+            },
+            {
+              id: 'journey',
+              title: 'What you try in practice',
+              markdown:
+                'You use navigation and search, request membership, link groups, edit an amendment and its City Design, vote in an event, and create a task with Assistent Aria & Kai.',
+              keywords: ['navigation', 'network', 'amendment', 'vote', 'AI'],
+            },
+            {
+              id: 'pause-restart-finish',
+              title: 'Pause, restart, and finish',
+              markdown:
+                'You can pause at any time and resume from Settings. Restarting or completing removes all tutorial data. Completion takes you to Home.',
+              keywords: ['pause', 'resume', 'restart', 'Home'],
+            },
+          ],
+    primaryAction: {
+      label:
+        language === 'de'
+          ? 'Live-Tutorial starten oder fortsetzen'
+          : 'Start or resume live tutorial',
+      route: '/onboarding',
+      requiresAuth: true,
+      signedOutLabel:
+        language === 'de'
+          ? 'Anmelden, um das Live-Tutorial zu starten'
+          : 'Sign in to start the live tutorial',
+      signedOutRoute: '/auth/sign-in',
+    },
+  };
+
+  return [...starterPages, ...guidePages, navigationGuide, appOnboardingGuide];
 }
 
 const registryByLanguage: Record<DocsLanguage, DocsPage[]> = {

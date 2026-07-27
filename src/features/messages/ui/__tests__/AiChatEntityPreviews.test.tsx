@@ -2,7 +2,7 @@
 
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ARIA_KAI_USER_ID } from '@/features/assistant/constants';
+import { ARIA_KAI_AVATAR_URL, ARIA_KAI_USER_ID } from '@/features/assistant/constants';
 import { MessageBubble } from '../MessageBubble';
 import { StreamingBubble } from '../MessageListView';
 
@@ -12,6 +12,14 @@ vi.mock('@tanstack/react-router', () => ({
       {children}
     </a>
   ),
+}));
+
+vi.mock('@/features/shared/ui/ui/avatar', () => ({
+  Avatar: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  AvatarImage: ({ alt = '', ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => (
+    <img alt={alt} {...props} />
+  ),
+  AvatarFallback: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
 
 vi.mock('../LinkPreview.tsx', () => ({
@@ -47,7 +55,7 @@ describe('AI chat entity previews', () => {
   });
 
   it('suppresses Polity previews while the AI response is streaming', () => {
-    render(
+    const { container } = render(
       <StreamingBubble
         streamingAssistantMessage={{
           text: 'See /event/event-1 and https://example.com',
@@ -55,13 +63,14 @@ describe('AI chat entity previews', () => {
           isThinking: false,
           isToolCalling: false,
         }}
-        otherUser={{ first_name: 'Aria', avatar: null } as never}
+        otherUser={{ id: ARIA_KAI_USER_ID, first_name: 'Aria', avatar: null } as never}
         hidePolityLinkPreviews
       />
     );
 
     expect(screen.getAllByTestId('link-preview')).toHaveLength(1);
     expect(screen.getByTestId('link-preview').textContent).toBe('https://example.com');
+    expect(container.querySelector(`img[src="${ARIA_KAI_AVATAR_URL}"]`)).toBeTruthy();
   });
 
   it('renders persisted output cards with assistant text and without text', () => {
@@ -86,7 +95,7 @@ describe('AI chat entity previews', () => {
       sender: { ...message.sender, id: ARIA_KAI_USER_ID, first_name: 'Aria' },
     };
 
-    const { unmount } = render(
+    const { container, unmount } = render(
       <MessageBubble
         message={assistantMessage as never}
         isOwnMessage={false}
@@ -98,6 +107,7 @@ describe('AI chat entity previews', () => {
     expect(screen.getByRole('link', { name: /Created group/ }).getAttribute('href')).toBe(
       '/group/group-created'
     );
+    expect(container.querySelector(`img[src="${ARIA_KAI_AVATAR_URL}"]`)).toBeTruthy();
 
     unmount();
     render(

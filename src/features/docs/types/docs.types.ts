@@ -41,7 +41,7 @@ export type DocsGettingStartedSlug =
   | 'organize-group-and-event'
   | 'follow-a-decision';
 
-export type DocsGuideSlug = DocsTopicSlug | 'navigation-and-page-structure';
+export type DocsGuideSlug = DocsTopicSlug | 'navigation-and-page-structure' | 'app-onboarding';
 
 export type DocsPageSlug = DocsGettingStartedSlug | DocsGuideSlug;
 
@@ -68,6 +68,15 @@ export interface DocsPage {
   sections: DocsSection[];
   slug: DocsPageSlug;
   title: string;
+  primaryAction?: DocsPrimaryAction;
+}
+
+export interface DocsPrimaryAction {
+  label: string;
+  route: string;
+  requiresAuth?: boolean;
+  signedOutLabel?: string;
+  signedOutRoute?: string;
 }
 
 export interface DocsNavigationGroup {

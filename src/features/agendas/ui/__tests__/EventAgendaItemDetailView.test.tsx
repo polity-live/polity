@@ -46,6 +46,17 @@ const amendmentBranchSelectorSectionMock = vi.hoisted(() =>
     />
   ))
 );
+const agendaItemContextCardMock = vi.hoisted(() =>
+  vi.fn((props: Record<string, unknown>) => (
+    <div
+      data-testid="agenda-item-context-card"
+      data-presentation={(props.presentation as string | undefined) ?? ''}
+    />
+  ))
+);
+const editElectionVoteDialogMock = vi.hoisted(() =>
+  vi.fn((_props: Record<string, unknown>) => <div data-testid="edit-election-vote-dialog" />)
+);
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -78,9 +89,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 }));
 
 vi.mock('../AgendaItemContextCard', () => ({
-  AgendaItemContextCard: ({ presentation }: { presentation?: string }) => (
-    <div data-testid="agenda-item-context-card" data-presentation={presentation} />
-  ),
+  AgendaItemContextCard: agendaItemContextCardMock,
 }));
 
 vi.mock('../AgendaSpeakerListSection', () => ({
@@ -105,7 +114,7 @@ vi.mock('../AgendaActionBar', () => ({
 }));
 
 vi.mock('../EditElectionVoteDialog', () => ({
-  EditElectionVoteDialog: () => <div data-testid="edit-election-vote-dialog" />,
+  EditElectionVoteDialog: editElectionVoteDialogMock,
 }));
 
 vi.mock('@/features/vote-cast/ui/VoteCastDialog', () => ({
@@ -380,6 +389,98 @@ function buildProps() {
 }
 
 describe('EventAgendaItemDetailView', () => {
+  it('localizes all tutorial election display fields without changing normal elections', () => {
+    const props = buildProps();
+    const tutorialProps = {
+      ...props,
+      language: 'en',
+      event: { ...props.event, tutorial_run_id: 'tutorial-run-1' },
+      agendaItem: {
+        ...props.agendaItem,
+        title: 'Wahl zum Kreisvorsitzenden',
+        description: 'Die Initiative wählt eine Person für den Kreisvorsitz.',
+      },
+      election: {
+        ...props.election,
+        title: 'Kreisvorsitzende:r',
+        description: 'Wahl zum Kreisvorsitz innerhalb der Initiative Klimafitte Euckenstraße.',
+      },
+    };
+
+    const { rerender } = render(<EventAgendaItemDetailView {...tutorialProps} />);
+
+    expect(agendaItemContextCardMock.mock.calls[0]?.[0].agendaItem).toMatchObject({
+      title: 'Election of the District Chair',
+      description: 'The initiative elects a person as district chair.',
+    });
+    expect(agendaElectionSectionMock.mock.calls[0]?.[0]).toMatchObject({
+      roleName: 'District Chair',
+    });
+    expect(editElectionVoteDialogMock.mock.calls[0]?.[0]).toMatchObject({
+      agendaItemTitle: 'Election of the District Chair',
+      agendaItemDescription: 'The initiative elects a person as district chair.',
+      election: expect.objectContaining({
+        title: 'District Chair',
+        description:
+          'Election of the district chair within the Climate-Friendly Euckenstraße initiative.',
+      }),
+    });
+
+    vi.clearAllMocks();
+    rerender(<EventAgendaItemDetailView {...tutorialProps} language="de" />);
+    expect(agendaItemContextCardMock.mock.calls[0]?.[0].agendaItem).toMatchObject({
+      title: 'Wahl zum Kreisvorsitzenden',
+      description: 'Die Initiative wählt eine Person für den Kreisvorsitz.',
+    });
+    expect(agendaElectionSectionMock.mock.calls[0]?.[0]).toMatchObject({
+      roleName: 'Kreisvorsitzende:r',
+    });
+
+    cleanup();
+    vi.clearAllMocks();
+    render(<EventAgendaItemDetailView {...tutorialProps} event={props.event} language="en" />);
+
+    expect(agendaItemContextCardMock.mock.calls[0]?.[0].agendaItem).toMatchObject({
+      title: 'Wahl zum Kreisvorsitzenden',
+      description: 'Die Initiative wählt eine Person für den Kreisvorsitz.',
+    });
+    expect(agendaElectionSectionMock.mock.calls[0]?.[0]).toMatchObject({
+      roleName: 'Kreisvorsitzende:r',
+    });
+  });
+
+  it('localizes prepared tutorial change requests and updates them on language changes', () => {
+    const props = buildProps();
+    const tutorialProps = {
+      ...props,
+      language: 'en',
+      event: { ...props.event, tutorial_run_id: 'tutorial-run-1' },
+      agendaItem: {
+        ...props.agendaItem,
+        type: 'amendment',
+        amendment_id: 'tutorial-amendment',
+        amendment: {
+          id: 'tutorial-amendment',
+          title: 'Klimafitte Euckenstraße: geschützter Radweg und Baumreihe',
+          tutorial_run_id: 'tutorial-run-1',
+          change_requests: [],
+          discussions: [],
+        },
+      },
+      election: null,
+    };
+
+    const { rerender } = render(<EventAgendaItemDetailView {...tutorialProps} />);
+
+    expect(screen.getByText('Plan Climate-Resilient Tree Locations')).toBeTruthy();
+    expect(screen.getByText('Set Time Limits for Loading Zones')).toBeTruthy();
+
+    rerender(<EventAgendaItemDetailView {...tutorialProps} language="de" />);
+
+    expect(screen.getByText('Baumstandorte klimaresilient planen')).toBeTruthy();
+    expect(screen.getByText('Lieferzonen zeitlich sichern')).toBeTruthy();
+  });
+
   it('renders deduplicated details and speaker-list tabs below the shared header', () => {
     render(<EventAgendaItemDetailView {...buildProps()} />);
 
@@ -416,6 +517,155 @@ describe('EventAgendaItemDetailView', () => {
     expect(voteCastDialogMock.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({ documentPreviewContent: expect.anything() })
     );
+  });
+
+  it('uses only the fixed sandbox password for the tutorial amendment vote', async () => {
+    const props = buildProps();
+    const castAmendmentVote = vi.fn();
+    const handleVoteClick = vi.fn();
+    const verifyVotingPassword = vi.fn().mockResolvedValue(undefined);
+    const finalVote = {
+      id: 'final-amendment-vote',
+      title: 'Klimafitte Euckenstraße annehmen',
+      status: 'closed',
+      majority_type: 'relative',
+      ballot_visibility: 'named',
+      offline_tallies: [],
+      closing_end_time: null,
+    };
+
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        agendaItem={{
+          ...props.agendaItem,
+          title: 'Klimafitte Euckenstraße beschließen',
+          type: 'amendment',
+          amendment_id: 'tutorial-amendment',
+          amendment: {
+            id: 'tutorial-amendment',
+            title: 'Klimafitte Euckenstraße: geschützter Radweg und Baumreihe',
+            change_requests: [],
+          },
+        }}
+        event={{
+          ...props.event,
+          title: 'Werkstatt Klimafitte Euckenstraße',
+          tutorial_run_id: 'tutorial-run-1',
+        }}
+        election={null}
+        vote={finalVote}
+        choices={[
+          { id: 'accept', label: 'Ja', semantic_key: 'accept' },
+          { id: 'reject', label: 'Nein', semantic_key: 'reject' },
+        ]}
+        isVoteInCRList
+        isCRToolbarActive
+        selectedCRToolbarItem={{ id: 'synthetic-closing-vote', vote: finalVote }}
+        selectedCRChoices={[{ id: 'synthetic-choice', label: 'Modified' }]}
+        crDisplayItems={[{ id: 'synthetic-closing-vote', vote: finalVote }]}
+        verifyVotingPassword={verifyVotingPassword}
+        actionBarHook={{
+          ...props.actionBarHook,
+          handleVoteClick,
+          voteCasting: {
+            ...props.actionBarHook.voteCasting,
+            castAmendmentVote,
+          },
+        }}
+      />
+    );
+
+    expect(screen.getByText('Baumstandorte klimaresilient planen')).toBeTruthy();
+    expect(screen.getByText('Lieferzonen zeitlich sichern')).toBeTruthy();
+    expect(
+      document.querySelector('[data-tutorial-anchor="tutorial-amendment-change-requests"]')
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-tutorial-anchor="tutorial-amendment-result"]')
+    ).not.toBeNull();
+
+    const actionBarProps = agendaActionBarMock.mock.calls.at(-1)?.[0];
+    expect(actionBarProps).toEqual(
+      expect.objectContaining({
+        onVoteClick: handleVoteClick,
+        hasPreviousChangeRequest: undefined,
+        hasNextChangeRequest: undefined,
+      })
+    );
+    expect(actionBarProps?.currentAgendaItem).toEqual(
+      expect.objectContaining({ vote: { id: 'final-amendment-vote' } })
+    );
+
+    const dialogProps = voteCastDialogMock.mock.calls.at(-1)?.[0];
+    expect(dialogProps).toEqual(
+      expect.objectContaining({
+        title: 'Klimafitte Euckenstraße beschließen',
+        onCastVote: castAmendmentVote,
+        tutorialAnchor: 'agenda-amendment-vote',
+        requirePassword: true,
+      })
+    );
+    expect(dialogProps?.choices).toEqual([
+      { id: 'accept', label: 'Ja', semanticKey: 'accept' },
+      { id: 'reject', label: 'Nein', semanticKey: 'reject' },
+    ]);
+
+    const submitPassword = dialogProps?.onPasswordSubmit as
+      ((password: string) => Promise<void>) | undefined;
+    expect(submitPassword).toBeTypeOf('function');
+    await expect(submitPassword?.('1234')).resolves.toBeUndefined();
+    expect(verifyVotingPassword).not.toHaveBeenCalled();
+
+    await expect(submitPassword?.('9999')).rejects.toThrow(
+      'Invalid tutorial voting password. Use 1234.'
+    );
+    expect(verifyVotingPassword).not.toHaveBeenCalled();
+  });
+
+  it('delegates 1234 to the real password verifier outside the tutorial', async () => {
+    const props = buildProps();
+    const verifyVotingPassword = vi.fn().mockResolvedValue(undefined);
+
+    render(<EventAgendaItemDetailView {...props} verifyVotingPassword={verifyVotingPassword} />);
+
+    const dialogProps = voteCastDialogMock.mock.calls.at(-1)?.[0];
+    expect(dialogProps).toEqual(expect.objectContaining({ requirePassword: true }));
+
+    const submitPassword = dialogProps?.onPasswordSubmit as
+      ((password: string) => Promise<void>) | undefined;
+    await expect(submitPassword?.('1234')).resolves.toBeUndefined();
+    expect(verifyVotingPassword).toHaveBeenCalledOnce();
+    expect(verifyVotingPassword).toHaveBeenCalledWith('1234');
+  });
+
+  it('uses the fixed sandbox password for the tutorial election', async () => {
+    const props = buildProps();
+    const verifyVotingPassword = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        event={{ ...props.event, tutorial_run_id: 'tutorial-run-1' }}
+        verifyVotingPassword={verifyVotingPassword}
+      />
+    );
+
+    const dialogProps = voteCastDialogMock.mock.calls.at(-1)?.[0];
+    expect(dialogProps).toEqual(
+      expect.objectContaining({
+        tutorialAnchor: 'agenda-election-vote',
+        requirePassword: true,
+      })
+    );
+
+    const submitPassword = dialogProps?.onPasswordSubmit as
+      ((password: string) => Promise<void>) | undefined;
+    await expect(submitPassword?.('1234')).resolves.toBeUndefined();
+    await expect(submitPassword?.('4321')).rejects.toThrow(
+      'Invalid tutorial voting password. Use 1234.'
+    );
+    expect(verifyVotingPassword).not.toHaveBeenCalled();
   });
 
   it('keeps the tally action but hides the vote action for offline sequence votes', () => {
@@ -488,7 +738,7 @@ describe('EventAgendaItemDetailView', () => {
       expect.objectContaining({
         canVote: false,
         voteDisabledTooltip:
-          'Im Offline-Modus koennen keine Online-Stimmungsabgaben abgegeben werden. Wechsle fuer Indication Votes in den Online- oder Hybrid-Modus.',
+          'Im Offline-Modus können keine Online-Stimmungsabgaben abgegeben werden. Wechsle für Indication Votes in den Online- oder Hybrid-Modus.',
       })
     );
     expect(typeof listProps?.onOpenVoteDialog).toBe('function');

@@ -17,12 +17,15 @@ import {
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
+import { isAppTutorialActiveInDocument } from '@/features/app-tutorial/events';
 import {
   hasConfiguredGroupConnection,
   getSelectedMembershipDirection,
   hasIncompleteMembershipRule,
 } from '../logic/groupConnectionComposer';
 import { GroupConnectionComposer } from './GroupConnectionComposer';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { resolveAppTutorialFixtureText } from '@/features/app-tutorial/fixture-copy';
 
 interface LinkGroupSubmitState {
   disabled: boolean;
@@ -220,10 +223,15 @@ export function LinkGroupDialogView({
   preflight,
   handleSubmit,
 }: LinkGroupDialogViewProps) {
+  const { language } = useTranslation();
   const submissionActive = actionSubmission.isActive;
+  const tutorialActive = isAppTutorialActiveInDocument();
+  const selectedGroup = availableGroups.find((group: any) => group.id === value.selectedGroupId);
   const selectedGroupName =
-    availableGroups.find((group: any) => group.id === value.selectedGroupId)?.name ??
-    value.selectedGroupId;
+    resolveAppTutorialFixtureText(selectedGroup?.name, {
+      tutorialRunId: selectedGroup?.tutorial_run_id,
+      language,
+    }) ?? value.selectedGroupId;
   const relationshipLabel = isEditMode
     ? t('common.network.editRelationship')
     : t('common.network.linkGroupTitle');
@@ -239,18 +247,31 @@ export function LinkGroupDialogView({
   });
 
   return (
-    <Dialog open={open} onOpenChange={submissionActive ? undefined : setOpen}>
+    <Dialog
+      modal={!tutorialActive}
+      open={open}
+      onOpenChange={submissionActive ? undefined : setOpen}
+    >
       <DialogTrigger asChild>
         {trigger ? (
           trigger
         ) : (
-          <Button>
+          <Button data-tutorial-anchor="link-group">
             <Link className="mr-2 h-4 w-4" />
             {t('components.actionBar.linkGroup')}
           </Button>
         )}
       </DialogTrigger>
       <ManagementDialogContent
+        onInteractOutside={event => {
+          if (
+            tutorialActive &&
+            event.target instanceof Element &&
+            event.target.closest('[data-testid="app-tutorial-spotlight"]')
+          ) {
+            event.preventDefault();
+          }
+        }}
         showCloseButton={!submissionActive}
         className={
           submissionActive
@@ -298,6 +319,7 @@ export function LinkGroupDialogView({
                 {t('common.actions.cancel')}
               </Button>
               <Button
+                data-tutorial-anchor="network-link-create"
                 onClick={handleSubmit}
                 disabled={submitState.disabled}
                 loading={submitState.isChecking}

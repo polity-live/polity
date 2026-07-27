@@ -104,7 +104,15 @@ vi.mock('@/features/groups/logic/groupAmendmentStatus', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (_key: string, fallback?: string) => fallback ?? _key,
+  translate: (
+    _key: string,
+    paramsOrFallback?: string | Record<string, unknown>,
+    fallback?: string
+  ) => (typeof paramsOrFallback === 'string' ? paramsOrFallback : fallback) ?? _key,
+  useTranslation: () => ({
+    t: (key: string, paramsOrFallback?: string | Record<string, unknown>, fallback?: string) =>
+      (typeof paramsOrFallback === 'string' ? paramsOrFallback : fallback) ?? key,
+  }),
 }));
 
 afterEach(() => {
@@ -283,6 +291,19 @@ function baseProps(): AmendmentProcessFlowViewProps {
 }
 
 describe('AmendmentProcessFlowView branch redesign', () => {
+  it('moves the start-group tutorial anchor from the opener into the selector', () => {
+    const props = { ...baseProps(), currentRun: null };
+    const { rerender } = render(<AmendmentProcessFlowView {...props} />);
+    const opener = screen.getByRole('button', { name: 'Create path' });
+
+    expect(opener.getAttribute('data-tutorial-anchor')).toBe('tutorial-process-start-group');
+
+    rerender(<AmendmentProcessFlowView {...props} selectorOpen />);
+
+    expect(opener.getAttribute('data-tutorial-anchor')).toBeNull();
+    expect(screen.getByTestId('target-group-event-selector')).toBeTruthy();
+  });
+
   it('renders the public process read-only without management actions', () => {
     render(<AmendmentProcessFlowView {...baseProps()} user={null} canManageProcess={false} />);
 

@@ -1,5 +1,6 @@
 export const amendmentsTranslations = {
   title: 'Anträge',
+  cityDesignPreviewUnavailable: 'Die Vorschau der Stadtgestaltung ist nicht verfügbar.',
   description: 'Anträge verwalten und verfolgen',
   create: 'Antrag erstellen',
   edit: 'Antrag bearbeiten',
@@ -77,7 +78,7 @@ export const amendmentsTranslations = {
     codePlaceholder: 'Gib den vollständigen Antragstext ein...',
     locationTitle: 'Ort',
     locationDescription:
-      'Lege den räumlichen Bezug dieses Antrags fest. Der Straßenraum-Entwurf startet standardmäßig an diesem Ort.',
+      'Lege den räumlichen Bezug dieses Antrags fest. Die Stadtgestaltung startet standardmäßig an diesem Ort.',
     locationCountryLabel: 'Land',
     locationCountryPlaceholder: 'Land',
     locationRegionLabel: 'Region',
@@ -170,6 +171,19 @@ export const amendmentsTranslations = {
     unspecified: 'nicht angegeben',
   },
   eventSuggestions: {
+    cancel: 'Vorschlag zurückziehen',
+    cancelConfirmed: 'Vorschlag zurückgezogen',
+    cancelFailed: 'Der Vorschlag konnte nicht zurückgezogen werden',
+    cancelled: 'Zurückgezogen',
+    confirm: 'Vorschlag bestätigen',
+    confirmFailed: 'Der Vorschlag konnte nicht bestätigt werden',
+    confirmMissingCrId: 'Der Vorschlag ist mit keinem Änderungsantrag verknüpft.',
+    confirmMissingDiscussion: 'Der Vorschlag hat keine verknüpfte Diskussion.',
+    confirmed: 'Bestätigt',
+    pendingOtherDescription:
+      'Dieser Vorschlag wartet auf die Bestätigung der einreichenden Person.',
+    pendingOwnDescription: 'Bestätige deinen eingereichten Vorschlag oder ziehe ihn zurück.',
+    pendingTitle: 'Vorschlag wartet auf Bestätigung',
     submittedVotePending: 'Eingereicht - Wahl anstehend',
   },
   changeRequests: {
@@ -213,6 +227,7 @@ export const amendmentsTranslations = {
   },
   collaborators: {
     title: 'Mitarbeiter',
+    badge: 'Mitarbeiter',
     activeTitle: 'Aktive Mitarbeiter ({{count}})',
     activeTitle_one: 'Aktiver Mitarbeiter ({{count}})',
     activeTitle_other: 'Aktive Mitarbeiter ({{count}})',
@@ -323,6 +338,10 @@ export const amendmentsTranslations = {
     noConnectedGroups:
       'Keine verbundenen Gruppen gefunden. Du musst Mitglied von Gruppen mit Antragsrechten sein.',
     noUpcomingEvents: 'Keine anstehenden Events für diese Gruppe',
+    networkTargetDescription: 'Wähle eine erreichbare Zielgruppe ausgehend von {{group}} aus.',
+    startGroupFallback: 'der Startgruppe',
+    groupFallback: 'Gruppe',
+    noDate: 'Kein Datum',
     confirmSelection: 'Auswahl bestätigen',
     targetSetSuccess: 'Ziel erfolgreich festgelegt',
     targetUpdatedSuccess: 'Ziel erfolgreich aktualisiert',
@@ -397,6 +416,17 @@ export const amendmentsTranslations = {
     tasksNeedAttention: '{{count}} Aufgaben brauchen Aufmerksamkeit',
     tasksNeedAttention_one: '{{count}} Aufgabe braucht Aufmerksamkeit',
     tasksNeedAttention_other: '{{count}} Aufgaben brauchen Aufmerksamkeit',
+    notScheduled: 'Nicht geplant',
+    eventBeforePreviousStep: 'Eine Veranstaltung liegt vor dem vorherigen Prozessschritt.',
+    eventAfterNextStep:
+      'Eine Veranstaltung liegt nach dem nächsten bereits geplanten Prozessschritt.',
+    schedulingAfterPrevious: 'Dieses Event muss nach dem vorherigen Prozessschritt beginnen.',
+    schedulingOutsideTaskWindow:
+      'Dieses Event liegt außerhalb des erlaubten Zeitfensters für den Auftrag.',
+    pathModes: {
+      workflow: 'Workflow-Pfad',
+      hierarchy: 'Hierarchie-Pfad',
+    },
   },
   targetSelection: {
     defaultTitle: 'Zielgruppe und Event auswählen',
@@ -448,6 +478,8 @@ export const amendmentsTranslations = {
     shortestPath_other: 'Kürzester Pfad zur Zielgruppe ({{count}} Schritte)',
     start: 'Start',
     path: 'Pfad',
+    unknownGroup: 'Unbekannte Gruppe',
+    noEvent: 'Kein Event',
   },
   wiki: {
     loading: 'Antrag wird geladen...',
@@ -457,14 +489,14 @@ export const amendmentsTranslations = {
     locationNotSet: 'Ort nicht angegeben',
     unnamedGroup: 'Unbenannte Gruppe',
   },
-  streetscape: {
+  cityDesign: {
     badge: 'Straßenraum',
     amendmentLabel: 'Antrag',
-    defaultTitle: 'Straßenentwurf',
-    savedTitleWithAmendment: '{{title}} - Straßenentwurf',
+    defaultTitle: 'Stadtgestaltung',
+    savedTitleWithAmendment: '{{title}} - Stadtgestaltung',
     save: 'Speichern',
     saving: 'Speichern...',
-    workspaceTitle: 'Straßenraum-Entwurf',
+    workspaceTitle: 'Entwurf zur Stadtgestaltung',
     workspaceDescription: 'Werkzeuge, 3D-Modell, Inspector und Kosten in einem Arbeitsbereich.',
     categoryDelete: {
       title: 'Elementkategorie löschen?',
@@ -548,7 +580,7 @@ export const amendmentsTranslations = {
       colorCrChanges: 'Änderungen einfärben',
       insert: 'Einfügen',
       layers: 'Layer',
-      noChangeRequests: 'Keine Straßenentwurf-Change-Requests.',
+      noChangeRequests: 'Keine Change Requests zur Stadtgestaltung.',
       noObjects: 'Noch keine Objekte.',
       noSelection: 'Keine Auswahl',
       objects: 'Objekte',
@@ -557,7 +589,7 @@ export const amendmentsTranslations = {
     },
     help: {
       title: 'Navigationshilfe',
-      trigger: 'Navigationshilfe für den Straßenentwurf anzeigen',
+      trigger: 'Navigationshilfe für die Stadtgestaltung anzeigen',
       description: 'Die Canvas-Steuerung hängt vom aktiven Modus ab.',
       tabs: {
         touch: 'Touch',
@@ -677,6 +709,10 @@ export const amendmentsTranslations = {
       emptyDiff: 'Kein Eigenschafts-Diff gespeichert.',
       noComments: 'Noch keine Kommentare.',
       noDescription: 'Noch keine Details.',
+      unitPrice: 'Stückpreis: {{price}}',
+      objectFallback: 'Stadtgestaltungsobjekt',
+      unitPriceChanged: 'Stückpreis des Stadtgestaltungsobjekts geändert: {{object}}',
+      objectChanged: 'Stadtgestaltungsobjekt {{changeType}}: {{object}}',
       reply: 'Antworten...',
       submitComment: 'Kommentar senden',
       tones: {
@@ -1440,6 +1476,52 @@ export const amendmentsTranslations = {
       },
     },
   },
+  branches: {
+    branch: 'Zweig',
+    numbered: 'Textvariante {{number}}',
+    mergeVoteTitle: '{{title}}: {{branches}}',
+    mergeVoteSeparator: ' gegen ',
+    step: 'Schritt {{number}}',
+    originalDocument: 'Ursprungsdokument',
+  },
+  implementationEvaluation: {
+    noDate: 'Kein Datum',
+    noEvaluationPlanned: 'Keine Evaluierung geplant',
+    fixedDate: 'Festes Datum',
+    relativeToFinalVote: 'Relativ zur finalen Abstimmung',
+    noEvaluation: 'Keine Evaluierung',
+    year: '{{count}} Jahre',
+    year_one: '{{count}} Jahr',
+    year_other: '{{count}} Jahre',
+    month: '{{count}} Monate',
+    month_one: '{{count}} Monat',
+    month_other: '{{count}} Monate',
+    afterAdoption: '{{offset}} nach Annahme',
+    statuses: {
+      inProgress: 'In Bearbeitung',
+      inVote: 'In Abstimmung',
+      rejected: 'Abgelehnt',
+      implemented: 'Umgesetzt',
+      implementationFailed: 'Umsetzung verfehlt',
+      adoptedAndImplementing: 'Angenommen und in Umsetzung',
+      adopted: 'Angenommen',
+    },
+    outcomes: {
+      yes: 'Ja',
+      no: 'Nein',
+      tie: 'Stimmengleichstand',
+    },
+  },
+  processTasks: {
+    implementationEvaluation: 'Umsetzung evaluieren',
+    supportConfirmation: 'Unterstützung bestätigen',
+    scheduleEvent: 'Veranstaltung planen',
+  },
+  processTaskScheduling: {
+    range: 'Erlaubter Zeitraum für diesen Auftrag: {{min}} bis {{max}}.',
+    earliest: 'Diese Veranstaltung kann frühestens am {{min}} beginnen.',
+    latest: 'Diese Veranstaltung muss spätestens am {{max}} beginnen.',
+  },
   versionControl: {
     createVersion: 'Version erstellen',
     createNewVersion: 'Neue Version erstellen',
@@ -1494,6 +1576,9 @@ export const amendmentsTranslations = {
     joinCollaborationFailed: 'Einladung konnte nicht angenommen werden',
     updateCollaboratorFailed: 'Mitarbeiter konnte nicht aktualisiert werden',
     workflowChanged: 'Workflow geändert zu: {{status}}',
+    invalidWorkflowTransition: 'Der Workflow kann nicht von {{from}} zu {{to}} geändert werden.',
+    invalidWorkflowTransitionTo: 'Der Workflow kann nicht zu {{to}} geändert werden.',
+    internalVoteStarted: 'Interne Abstimmung für {{minutes}} Minuten gestartet.',
     workflowChangeFailed: 'Workflow-Status konnte nicht geändert werden',
     submittedToEvent: 'Antrag zum Event eingereicht',
     submitToEventFailed: 'Antrag konnte nicht zum Event eingereicht werden',
