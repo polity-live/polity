@@ -754,7 +754,7 @@ describe('AppTutorialOrchestrator', () => {
     });
     Object.defineProperties(scroller, {
       clientWidth: { configurable: true, value: 240 },
-      scrollLeft: { configurable: true, value: 180, writable: true },
+      scrollLeft: { configurable: true, value: 380, writable: true },
       scrollTo: { configurable: true, value: scrollTo },
       scrollWidth: { configurable: true, value: 640 },
     });
@@ -769,16 +769,19 @@ describe('AppTutorialOrchestrator', () => {
       y: 736,
       toJSON: () => undefined,
     });
-    search.getBoundingClientRect = vi.fn().mockReturnValue({
-      bottom: 784,
-      height: 48,
-      left: 300,
-      right: 348,
-      top: 736,
-      width: 48,
-      x: 300,
-      y: 736,
-      toJSON: () => undefined,
+    search.getBoundingClientRect = vi.fn(() => {
+      const left = 300 - scroller.scrollLeft;
+      return {
+        bottom: 784,
+        height: 48,
+        left,
+        right: left + 48,
+        top: 736,
+        width: 48,
+        x: left,
+        y: 736,
+        toJSON: () => undefined,
+      };
     });
 
     await screen.findByRole('heading', { name: 'Start initiatives' });
@@ -786,13 +789,15 @@ describe('AppTutorialOrchestrator', () => {
 
     await screen.findByRole('heading', { name: 'Global search' });
     expect(scrollTo).toHaveBeenCalledTimes(1);
-    expect(scrollTo).toHaveBeenCalledWith({ behavior: 'auto', left: 384 });
+    expect(scrollTo).toHaveBeenCalledWith({ behavior: 'auto', left: 204 });
     expect(
       screen.getByTestId('app-tutorial-spotlight').getAttribute('data-tutorial-checkpoint')
     ).toBe('open-search');
 
+    scroller.scrollLeft = 380;
     fireEvent.scroll(scroller);
-    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(scrollTo).toHaveBeenCalledTimes(2);
+    expect(scrollTo).toHaveBeenLastCalledWith({ behavior: 'auto', left: 204 });
   });
 
   it('clamps the centered mobile search position to the primary bar range', async () => {

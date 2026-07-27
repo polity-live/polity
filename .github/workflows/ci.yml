@@ -82,13 +82,21 @@ jobs:
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: 2.109.1
+          version: 2.110.0
       - name: Disable seed data for database startup
         run: sed -i '/^\[db.seed\]/,/^\[/ s/^enabled = true$/enabled = false/' supabase/config.toml
       - name: Start database
         run: supabase db start
-      - name: Apply declarative schemas
-        run: supabase db reset --local --sql-paths "./schemas/*.sql"
+      - name: Apply migrations
+        run: supabase db reset --local --no-seed
+      - name: Verify declarative schemas match migrations
+        run: |
+          schema_diff="$(supabase db diff --output-format text --agent no)"
+          if [[ -n "${schema_diff//[[:space:]]/}" ]]; then
+            echo "Declarative schemas and migrations are out of sync:"
+            printf '%s\n' "$schema_diff"
+            exit 1
+          fi
       - name: Run pgTAP tests
         run: supabase test db --local
       - name: Stop database

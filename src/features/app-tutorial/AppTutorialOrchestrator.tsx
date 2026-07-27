@@ -406,22 +406,30 @@ function horizontalScrollerFor(target: HTMLElement) {
 }
 
 function centerMobilePrimarySearch(target: HTMLElement, anchor: string, isMobile: boolean) {
-  if (!isMobile || anchor !== MOBILE_PRIMARY_SEARCH_ANCHOR) return;
+  if (!isMobile || anchor !== MOBILE_PRIMARY_SEARCH_ANCHOR) return false;
 
   const scroller = target.closest<HTMLElement>(PRIMARY_NAVIGATION_SCROLLER_SELECTOR);
-  if (!scroller) return;
+  if (!scroller) return false;
 
   const maximumScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
-  if (maximumScrollLeft === 0) return;
+  if (maximumScrollLeft === 0) return false;
 
   const targetRect = target.getBoundingClientRect();
   const scrollerRect = scroller.getBoundingClientRect();
+  const visibleLeft = Math.max(0, scrollerRect.left);
+  const visibleRight = Math.min(window.innerWidth, scrollerRect.right);
+  if (targetRect.left >= visibleLeft && targetRect.right <= visibleRight) return false;
+
   const targetCenter = targetRect.left + targetRect.width / 2;
-  const scrollerCenter = scrollerRect.left + scrollerRect.width / 2;
+  const scrollerCenter = visibleLeft + Math.max(0, visibleRight - visibleLeft) / 2;
   const centeredScrollLeft = scroller.scrollLeft + targetCenter - scrollerCenter;
   const left = Math.min(maximumScrollLeft, Math.max(0, centeredScrollLeft));
 
+  // Assigning scrollLeft also works in older mobile webviews where the
+  // options overload of Element.scrollTo may silently do nothing.
+  scroller.scrollLeft = left;
   scroller.scrollTo({ behavior: 'auto', left });
+  return true;
 }
 
 export function visibleTutorialTarget(anchor: string) {
@@ -474,7 +482,6 @@ function useSpotlightTarget(
   const publishFrameRef = useRef<number | null>(null);
   const resolvedTargetRef = useRef<HTMLElement | null>(null);
   const resolvedAnchorRef = useRef('');
-  const centeredMobilePrimarySearchTargetRef = useRef<HTMLElement | null>(null);
 
   const resolveTarget = useCallback(() => {
     for (const anchor of anchorCandidates) {
@@ -526,7 +533,6 @@ function useSpotlightTarget(
       const waitForMobilePrimarySearchLayout =
         isMobile &&
         next.anchor === MOBILE_PRIMARY_SEARCH_ANCHOR &&
-        centeredMobilePrimarySearchTargetRef.current !== next.element &&
         Boolean(next.element.closest(PRIMARY_NAVIGATION_SCROLLER_SELECTOR));
       publishFrameRef.current = window.requestAnimationFrame(() => {
         publishFrameRef.current = null;
@@ -535,7 +541,6 @@ function useSpotlightTarget(
           return;
         }
         centerMobilePrimarySearch(next.element, next.anchor, isMobile);
-        centeredMobilePrimarySearchTargetRef.current = next.element;
         publishFrameRef.current = window.requestAnimationFrame(() => {
           publishFrameRef.current = null;
           publishTarget(next.element, next.anchor);
@@ -554,9 +559,6 @@ function useSpotlightTarget(
   }, [anchorCandidates, isMobile, publishTarget, resolveTarget]);
 
   useLayoutEffect(() => {
-    if (!isMobile || !anchorCandidates.includes(MOBILE_PRIMARY_SEARCH_ANCHOR)) {
-      centeredMobilePrimarySearchTargetRef.current = null;
-    }
     if (!enabled) {
       setTarget(null);
       setTargetAnchor('');
@@ -641,6 +643,7 @@ function useSpotlightTarget(
   useEffect(() => {
     if (!target) return;
     const update = () => {
+      centerMobilePrimarySearch(target, targetAnchor, isMobile);
       setDropdownVisible(visibleTutorialDropdownsFor(target, targetAnchor).length > 0);
       setRect(tutorialSpotlightRectFor(target, targetAnchor));
     };
@@ -654,8 +657,15 @@ function useSpotlightTarget(
       }
     };
     const observer = new ResizeObserver(update);
+    const primaryNavigationScroller =
+      isMobile && targetAnchor === MOBILE_PRIMARY_SEARCH_ANCHOR
+        ? target.closest<HTMLElement>(PRIMARY_NAVIGATION_SCROLLER_SELECTOR)
+        : null;
     const visualViewport = isMobile ? window.visualViewport : null;
     observer.observe(target);
+    if (primaryNavigationScroller && primaryNavigationScroller !== target) {
+      observer.observe(primaryNavigationScroller);
+    }
     window.addEventListener('resize', update);
     window.addEventListener('scroll', update, true);
     visualViewport?.addEventListener('resize', update);

@@ -14328,4 +14328,10 @@ using ((bucket_id = 'uploads'::text));
 using ((bucket_id = 'uploads'::text));
 
 
+revoke all on table "public"."newsletter_subscription" from "anon", "authenticated";
+
+revoke all on table "public"."newsletter_sync_outbox" from "anon", "authenticated";
+
+revoke all on table "public"."resend_webhook_event" from "anon", "authenticated";
+
 
