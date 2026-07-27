@@ -73,6 +73,28 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+  database-tests:
+    name: Database Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.109.1
+      - name: Disable seed data for database startup
+        run: sed -i '/^\[db.seed\]/,/^\[/ s/^enabled = true$/enabled = false/' supabase/config.toml
+      - name: Start database
+        run: supabase db start
+      - name: Apply declarative schemas
+        run: supabase db reset --local --sql-paths "./schemas/*.sql"
+      - name: Run pgTAP tests
+        run: supabase test db --local
+      - name: Stop database
+        if: always()
+        run: supabase stop --no-backup
+
   build:
     name: Build
     runs-on: ubuntu-latest
