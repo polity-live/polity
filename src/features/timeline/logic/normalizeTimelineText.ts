@@ -11,5 +11,17 @@ export function normalizeTimelineText(value: unknown): string | undefined {
   }
 
   const text = richTextToPlainText(value);
-  return text.length > 0 ? text : undefined;
+  if (text.length > 0) {
+    return text;
+  }
+
+  if (typeof value === 'object' && !Array.isArray(value) && 'plain' in value) {
+    const plain = value.plain;
+    if (typeof plain === 'string') {
+      const trimmed = plain.trim();
+      return trimmed.length > 0 ? trimmed : undefined;
+    }
+  }
+
+  return undefined;
 }

@@ -11,6 +11,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
+import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
 import {
   TimelineCardBase,
   TimelineCardHeader,
@@ -25,7 +26,7 @@ export interface MeetupTimelineCardProps {
   meetup: {
     id: string;
     title: string;
-    description?: string | null;
+    description?: unknown;
     startDate: MeetupDate;
     endDate?: MeetupDate;
     meetingType?: string | null;
@@ -127,6 +128,7 @@ export function MeetupTimelineCard({
       ? t('features.calendar.eventCard.publicMeeting')
       : t('features.calendar.eventCard.privateMeeting');
   const participants = meetup.participants ?? [];
+  const meetupDescription = normalizeTimelineText(meetup.description);
   const eventTone = getEntityToneClasses('event');
   const dangerTone = getSemanticToneClasses('danger');
 
@@ -212,8 +214,8 @@ export function MeetupTimelineCard({
       </TimelineCardHeader>
 
       <TimelineCardContent>
-        {meetup.description && (
-          <p className="text-muted-foreground mb-3 line-clamp-2 text-sm">{meetup.description}</p>
+        {meetupDescription && (
+          <p className="text-muted-foreground mb-3 line-clamp-2 text-sm">{meetupDescription}</p>
         )}
 
         <div className="mb-3 flex flex-wrap gap-2">

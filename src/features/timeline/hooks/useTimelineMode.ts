@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
+import { isAppTutorialSessionActive } from '@/features/app-tutorial/events';
+
 /**
  * Timeline mode types
  * - timeline: Shows the civic timeline around the user
@@ -39,6 +41,10 @@ export function useTimelineMode(defaultMode: TimelineMode = 'timeline') {
   const [mode, setModeState] = useState<TimelineMode>(() => {
     if (typeof window === 'undefined') {
       return defaultMode;
+    }
+
+    if (isAppTutorialSessionActive()) {
+      return 'decisions';
     }
 
     try {
