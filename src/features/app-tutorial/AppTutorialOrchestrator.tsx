@@ -60,6 +60,8 @@ const PROCESS_PATH_RETRY_DELAY_MS = 10_000;
 const PRIMARY_NAVIGATION_SCROLLER_SELECTOR =
   '[data-tutorial-horizontal-scroller="primary-navigation"]';
 const MOBILE_PRIMARY_SEARCH_ANCHOR = 'primary-search';
+const TUTORIAL_SEARCH_RESULT_ANCHOR = 'tutorial-search-result';
+const LINK_SURFACE_PRIMARY_SELECTOR = '[data-link-surface-primary]';
 const SPOTLIGHT_DROPDOWN_ANCHORS = new Set([
   'network-group-search',
   'city-design-location-search',
@@ -143,6 +145,19 @@ export function tutorialSpotlightRectFor(element: HTMLElement | null, anchor = '
 
 type SpotlightRect = ReturnType<typeof tutorialSpotlightRectFor>;
 type TutorialMoveResult = 'advanced' | 'busy' | 'failed' | 'pending';
+
+function spotlightRectsAreEqual(left: SpotlightRect, right: SpotlightRect) {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return (
+    left.top === right.top &&
+    left.left === right.left &&
+    left.right === right.right &&
+    left.bottom === right.bottom &&
+    left.width === right.width &&
+    left.height === right.height
+  );
+}
 
 function visibleTutorialDropdownsFor(element: HTMLElement | null, anchor: string) {
   if (!element || !SPOTLIGHT_DROPDOWN_ANCHORS.has(anchor)) return [];
@@ -336,7 +351,7 @@ function TutorialCoachCard({
   useLayoutEffect(() => {
     latestRectRef.current = rect;
     if (!pointerActiveRef.current) {
-      setPositionRect(rect);
+      setPositionRect(current => (spotlightRectsAreEqual(current, rect) ? current : rect));
     }
   }, [rect]);
 
@@ -348,7 +363,9 @@ function TutorialCoachCard({
     }
     releaseFrameRef.current = window.requestAnimationFrame(() => {
       releaseFrameRef.current = null;
-      setPositionRect(latestRectRef.current);
+      setPositionRect(current =>
+        spotlightRectsAreEqual(current, latestRectRef.current) ? current : latestRectRef.current
+      );
     });
   }, []);
 
@@ -437,6 +454,11 @@ export function visibleTutorialTarget(anchor: string) {
     Array.from(
       document.querySelectorAll<HTMLElement>(`[data-tutorial-anchor="${CSS.escape(anchor)}"]`)
     )
+      .map(element =>
+        anchor === TUTORIAL_SEARCH_RESULT_ANCHOR
+          ? (element.querySelector<HTMLElement>(LINK_SURFACE_PRIMARY_SELECTOR) ?? element)
+          : element
+      )
       .filter(element => {
         const bounds = element.getBoundingClientRect();
         const style = window.getComputedStyle(element);
@@ -496,7 +518,8 @@ function useSpotlightTarget(
     setTarget(element);
     setTargetAnchor(anchor);
     setDropdownVisible(visibleTutorialDropdownsFor(element, anchor).length > 0);
-    setRect(tutorialSpotlightRectFor(element, anchor));
+    const nextRect = tutorialSpotlightRectFor(element, anchor);
+    setRect(current => (spotlightRectsAreEqual(current, nextRect) ? current : nextRect));
     setMissing(current => (element ? false : current));
   }, []);
 
@@ -645,7 +668,8 @@ function useSpotlightTarget(
     const update = () => {
       centerMobilePrimarySearch(target, targetAnchor, isMobile);
       setDropdownVisible(visibleTutorialDropdownsFor(target, targetAnchor).length > 0);
-      setRect(tutorialSpotlightRectFor(target, targetAnchor));
+      const nextRect = tutorialSpotlightRectFor(target, targetAnchor);
+      setRect(current => (spotlightRectsAreEqual(current, nextRect) ? current : nextRect));
     };
     let animationFrame: number | null = null;
     let remainingAnimationFrames = SPOTLIGHT_ANIMATION_TRACKING_FRAMES;

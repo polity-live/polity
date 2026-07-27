@@ -1610,6 +1610,21 @@ describe('AppTutorialOrchestrator', () => {
     menu.remove();
   });
 
+  it('targets the primary card link instead of actions inside a tutorial search result', () => {
+    const result = document.createElement('div');
+    result.dataset.tutorialAnchor = 'tutorial-search-result';
+    const primaryLink = document.createElement('a');
+    primaryLink.dataset.linkSurfacePrimary = '';
+    const joinButton = document.createElement('button');
+    joinButton.textContent = 'Join';
+    result.append(primaryLink, joinButton);
+    document.body.append(result);
+
+    expect(visibleTutorialTarget('tutorial-search-result')).toBe(primaryLink);
+
+    result.remove();
+  });
+
   it.each([
     'network-group-search',
     'city-design-location-search',

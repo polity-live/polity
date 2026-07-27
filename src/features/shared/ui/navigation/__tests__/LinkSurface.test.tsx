@@ -42,6 +42,8 @@ describe('LinkSurface', () => {
 
     expect(buttonClick).toHaveBeenCalledTimes(1);
     expect(anchorClick).not.toHaveBeenCalled();
-    expect(screen.getByRole('link', { name: 'Open event' }).getAttribute('href')).toBe('/event/1');
+    const primaryLink = screen.getByRole('link', { name: 'Open event' });
+    expect(primaryLink.getAttribute('href')).toBe('/event/1');
+    expect(primaryLink.hasAttribute('data-link-surface-primary')).toBe(true);
   });
 });
