@@ -1,0 +1,149 @@
+{
+  "version": 1,
+  "expectedInventory": {
+    "tables": 141,
+    "columns": 1546,
+    "primaryKeys": 141,
+    "checks": 98,
+    "foreignKeys": 358,
+    "uniqueConstraints": 56,
+    "uniqueIndexes": 28,
+    "uniqueRules": 84,
+    "indexes": 639,
+    "functions": 65,
+    "triggers": 55,
+    "policies": 151,
+    "cronBranches": 2
+  },
+  "expectedBehaviorAssertions": {
+    "checkViolations": 104,
+    "uniqueViolations": 87
+  },
+  "globalTests": {
+    "catalog": "schema_contract.sql",
+    "security": "permissions_contract.sql"
+  },
+  "assignments": [
+    { "source": "00_extensions.sql", "behavior": [] },
+    {
+      "source": "01_user.sql",
+      "behavior": ["identity_group_network.sql", "schema_constraints.sql"]
+    },
+    {
+      "source": "02_group.sql",
+      "behavior": ["identity_group_network.sql", "schema_constraints.sql"]
+    },
+    {
+      "source": "03_event.sql",
+      "behavior": ["events_agenda_delegation.sql", "schema_constraints.sql"]
+    },
+    { "source": "04_document.sql", "behavior": ["content_collaboration.sql"] },
+    {
+      "source": "05_1_network.sql",
+      "behavior": ["identity_group_network.sql", "schema_constraints.sql"]
+    },
+    { "source": "05_2_amendment.sql", "behavior": ["governance_voting.sql", "app_tutorial.sql"] },
+    { "source": "06_agenda.sql", "behavior": ["events_agenda_delegation.sql"] },
+    {
+      "source": "07_blog.sql",
+      "behavior": ["content_collaboration.sql", "schema_constraints.sql"]
+    },
+    {
+      "source": "08_todo.sql",
+      "behavior": ["todo_discussion_thread.sql", "content_collaboration.sql"]
+    },
+    { "source": "09_message.sql", "behavior": ["conversation_rollups.sql"] },
+    {
+      "source": "10_notification.sql",
+      "behavior": ["push_notification_outbox.sql", "notification_lifecycle.sql"],
+      "securityBehavior": ["push_notification_outbox.sql"]
+    },
+    {
+      "source": "11_statement.sql",
+      "behavior": ["content_collaboration.sql", "schema_constraints.sql"]
+    },
+    { "source": "12_payment.sql", "behavior": ["account_configuration.sql"] },
+    {
+      "source": "14_change_request.sql",
+      "behavior": ["content_collaboration.sql", "governance_voting.sql"]
+    },
+    {
+      "source": "15_discussion.sql",
+      "behavior": ["todo_discussion_thread.sql", "content_collaboration.sql"]
+    },
+    { "source": "16_position_election.sql", "behavior": ["governance_voting.sql"] },
+    {
+      "source": "18_delegate.sql",
+      "behavior": ["events_agenda_delegation.sql", "schema_constraints.sql"]
+    },
+    {
+      "source": "20_0_amendment_vote.sql",
+      "behavior": ["governance_voting.sql", "schema_constraints.sql"]
+    },
+    { "source": "20_1_amendment_choices_vote.sql", "behavior": ["governance_voting.sql"] },
+    { "source": "20_2_election_candidate_vote.sql", "behavior": ["governance_voting.sql"] },
+    {
+      "source": "20_3_indicative_amendment_choice_vote.sql",
+      "behavior": ["governance_voting.sql"]
+    },
+    {
+      "source": "20_4_indicative_election_candidate_vote.sql",
+      "behavior": ["governance_voting.sql"]
+    },
+    { "source": "20_5_agenda_item_change_request.sql", "behavior": ["governance_voting.sql"] },
+    { "source": "21_common.sql", "behavior": ["content_collaboration.sql"] },
+    {
+      "source": "21_search_document.sql",
+      "behavior": ["search_document_projection.sql", "search_document_acl.sql"],
+      "securityBehavior": ["search_document_acl.sql"]
+    },
+    {
+      "source": "22_functions.sql",
+      "behavior": ["auth_assistant.sql"],
+      "securityBehavior": ["auth_assistant.sql"]
+    },
+    { "source": "23_appearance_theme.sql", "behavior": ["account_configuration.sql"] },
+    { "source": "23_storage.sql", "behavior": [], "securityBehavior": ["storage_rls.sql"] },
+    {
+      "source": "24_user_preference.sql",
+      "behavior": ["account_configuration.sql", "auth_assistant.sql"]
+    },
+    {
+      "source": "25_currency.sql",
+      "behavior": ["account_configuration.sql", "schema_constraints.sql"]
+    },
+    {
+      "source": "26_voting_password.sql",
+      "behavior": ["account_configuration.sql", "schema_constraints.sql"]
+    },
+    { "source": "27_accreditation.sql", "behavior": ["governance_voting.sql"] },
+    { "source": "28_ai.sql", "behavior": ["account_configuration.sql"] },
+    { "source": "29_pql_filter.sql", "behavior": ["account_configuration.sql"] },
+    {
+      "source": "30_datasets.sql",
+      "behavior": ["datasets.sql", "search_document_projection.sql"],
+      "securityBehavior": ["search_document_acl.sql"]
+    },
+    {
+      "source": "31_service_role_grants.sql",
+      "behavior": [],
+      "securityBehavior": ["permissions_contract.sql"]
+    },
+    {
+      "source": "32_newsletter.sql",
+      "behavior": ["newsletter_sync.sql"],
+      "securityBehavior": ["newsletter_sync.sql"]
+    },
+    {
+      "source": "33_app_tutorial.sql",
+      "behavior": ["app_tutorial.sql"],
+      "securityBehavior": ["app_tutorial.sql"]
+    },
+    { "source": "34_scheduled_jobs.sql", "behavior": [], "operations": ["cron_jobs.sql"] },
+    {
+      "source": "35_security.sql",
+      "behavior": [],
+      "securityBehavior": ["permissions_contract.sql"]
+    }
+  ]
+}

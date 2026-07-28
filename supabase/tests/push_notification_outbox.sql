@@ -1,8 +1,21 @@
+-- @covers schema 10_notification.sql
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(17);
+SELECT plan(22);
+
+CREATE OR REPLACE FUNCTION pg_temp.capture_sqlstate(command TEXT)
+RETURNS TEXT
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  EXECUTE command;
+  RETURN NULL;
+EXCEPTION WHEN OTHERS THEN
+  RETURN SQLSTATE;
+END;
+$$;
 
 SELECT hasnt_table(
   'public',
@@ -478,6 +491,8 @@ SELECT is(
   'every inbox notification enqueues one durable parent job'
 );
 
+SELECT is(pg_temp.capture_sqlstate($sql$INSERT INTO public.push_notification_outbox (notification_id) VALUES ('f5000000-0000-0000-0000-000000000001')$sql$), '23505', 'a notification has only one durable parent push job');
+
 INSERT INTO public.push_subscription (
   id,
   user_id,
@@ -501,6 +516,11 @@ VALUES (
   'auth-test',
   'key-test'
 );
+
+SELECT is(pg_temp.capture_sqlstate($sql$INSERT INTO public.push_subscription (user_id, endpoint, auth, p256dh) VALUES ('f1000000-0000-0000-0000-000000000005', 'https://push.test/no-device-1', 'auth-test', 'key-test'), ('f1000000-0000-0000-0000-000000000005', 'https://push.test/no-device-2', 'auth-test', 'key-test')$sql$), NULL, 'subscriptions without device ids are outside the partial device uniqueness rule');
+SELECT is(pg_temp.capture_sqlstate($sql$INSERT INTO public.push_subscription (user_id, device_id, endpoint, auth, p256dh) VALUES ('f1000000-0000-0000-0000-000000000004', 'f7000000-0000-0000-0000-000000000001', 'https://push.test/duplicate-device', 'auth-test', 'key-test')$sql$), '23505', 'push devices are unique per user');
+SELECT is(pg_temp.capture_sqlstate($sql$INSERT INTO public.push_subscription (user_id, device_id, endpoint, auth, p256dh) VALUES ('f1000000-0000-0000-0000-000000000002', 'f7000000-0000-0000-0000-000000000003', 'https://push.test/group-member', 'auth-test', 'key-test')$sql$), '23505', 'push endpoints are globally unique');
+SELECT is(pg_temp.capture_sqlstate($sql$INSERT INTO public.push_delivery_outbox (user_id, kind, dedupe_key, payload) VALUES ('f1000000-0000-0000-0000-000000000005', 'test', 'no-subscription-duplicate', '{}'), ('f1000000-0000-0000-0000-000000000005', 'test', 'no-subscription-duplicate', '{}')$sql$), NULL, 'deliveries without subscriptions are outside both partial delivery uniqueness rules');
 
 SELECT is(
   public.expand_push_notification_job(

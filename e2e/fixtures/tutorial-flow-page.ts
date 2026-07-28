@@ -197,8 +197,40 @@ export class TutorialFlowPage {
     return this.restartRequestCount;
   }
 
-  async useLanguage(language: AppTutorialLanguage) {
+  async useLanguage(userId: string, language: AppTutorialLanguage) {
     this.activeLanguage = language;
+    const rows = await db()<{ language: string }[]>`
+      update public.user_preference
+      set language = ${language},
+          updated_at = clock_timestamp()
+      where user_id = ${userId}
+      returning language
+    `;
+    expect(rows).toEqual([{ language }]);
+    const walRows = await db()<{ lsn: string }[]>`
+      select pg_current_wal_lsn()::text as lsn
+    `;
+    const targetLsn = walRows[0]?.lsn;
+    if (!targetLsn) throw new Error('Could not read the language update WAL position.');
+
+    await expect
+      .poll(
+        async () => {
+          const replicationRows = await db()<{ caught_up: boolean }[]>`
+            select coalesce(
+              bool_or(confirmed_flush_lsn >= ${targetLsn}::pg_lsn),
+              false
+            ) as caught_up
+            from pg_replication_slots
+            where slot_name like 'zero_%'
+              and active
+          `;
+          return replicationRows[0]?.caught_up ?? false;
+        },
+        { timeout: CHECKPOINT_TIMEOUT_MS }
+      )
+      .toBe(true);
+
     await this.page.addInitScript(selectedLanguage => {
       window.localStorage.setItem(
         'language-storage',
@@ -320,28 +352,49 @@ export class TutorialFlowPage {
       .last();
     await expect(scroller).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
 
-    const movement = await scroller.evaluate((element, minimumPixels) => {
+    const movement = await scroller.evaluate(element => {
       const range = Math.max(0, element.scrollWidth - element.clientWidth);
-      const requiredPixels = Math.min(minimumPixels, range);
       const initialScrollLeft = element.scrollLeft;
-      let nextScrollLeft = Math.min(range, initialScrollLeft + requiredPixels);
-
-      if (Math.abs(nextScrollLeft - initialScrollLeft) < requiredPixels) {
-        nextScrollLeft = Math.max(0, initialScrollLeft - requiredPixels);
-      }
-
-      element.scrollLeft = nextScrollLeft;
+      element.scrollLeft = range;
       element.dispatchEvent(new Event('scroll'));
 
       return {
         range,
-        requiredPixels,
+        finalScrollLeft: element.scrollLeft,
         actualPixels: Math.abs(element.scrollLeft - initialScrollLeft),
       };
-    }, checkpoint.completion.minimumPixels);
+    });
 
     expect(movement.range).toBeGreaterThan(0);
-    expect(movement.actualPixels).toBe(movement.requiredPixels);
+    expect(movement.finalScrollLeft).toBe(movement.range);
+    expect(movement.actualPixels).toBeGreaterThanOrEqual(checkpoint.completion.minimumPixels);
+  }
+
+  private async expectMobilePrimarySearchReachable(checkpoint: AppTutorialCheckpoint) {
+    const isMobile = await this.page.evaluate(
+      () => !window.matchMedia('(min-width: 768px)').matches
+    );
+    if (!isMobile) return;
+
+    const search = this.target(checkpoint);
+    await expect(search).toBeInViewport();
+    expect(
+      await search.evaluate(element => {
+        const scroller = element.closest<HTMLElement>(
+          '[data-tutorial-horizontal-scroller="primary-navigation"]'
+        );
+        if (!scroller) return false;
+        const targetRect = element.getBoundingClientRect();
+        const scrollerRect = scroller.getBoundingClientRect();
+        return (
+          targetRect.left >= scrollerRect.left &&
+          targetRect.right <= scrollerRect.right &&
+          targetRect.left >= 0 &&
+          targetRect.right <= window.innerWidth
+        );
+      })
+    ).toBe(true);
+    await search.click({ trial: true, timeout: CHECKPOINT_TIMEOUT_MS });
   }
 
   private async clickTarget(checkpoint: AppTutorialCheckpoint) {
@@ -508,6 +561,10 @@ export class TutorialFlowPage {
 
   private async performCheckpoint(checkpoint: AppTutorialCheckpoint) {
     switch (checkpoint.id) {
+      case 'open-search':
+        await this.expectMobilePrimarySearchReachable(checkpoint);
+        await this.clickTarget(checkpoint);
+        return;
       case 'search-initiative':
         await this.target(checkpoint)
           .locator('input')

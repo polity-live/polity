@@ -16,7 +16,7 @@ vi.mock('sonner', () => ({
   },
 }));
 
-const ALPHA_WARNING_SESSION_KEY = 'polity.alphaWarning.0.10.1.acknowledged';
+const ALPHA_WARNING_SESSION_KEY = 'polity.alphaWarning.0.11.1.acknowledged';
 const ALPHA_WARNING_TOAST_ID = 'alpha-warning';
 const APP_TUTORIAL_SESSION_CHANGE_EVENT = 'polity:app-tutorial-session-change';
 const APP_TUTORIAL_SESSION_STORAGE_KEY = 'polity:app-tutorial-session-active';
