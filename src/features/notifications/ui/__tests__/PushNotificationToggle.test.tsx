@@ -8,12 +8,17 @@ const mocks = vi.hoisted(() => ({
   unsubscribe: vi.fn(),
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
+  pushApiFetch: vi.fn(),
   pushState: {
     isSupported: true,
     isSubscribed: false,
     isLoading: false,
     permission: 'granted' as NotificationPermission,
     error: null as string | null,
+    deviceId: 'test-device-id',
+    serviceWorkerReady: true,
+    serverSynchronized: true,
+    requiresIosInstall: false,
   },
 }));
 
@@ -32,6 +37,10 @@ vi.mock('@/features/shared/ui/ui/sonner', () => ({
   },
 }));
 
+vi.mock('@/features/pwa/push-api', () => ({
+  pushApiFetch: (...args: unknown[]) => mocks.pushApiFetch(...args),
+}));
+
 vi.mock('@/features/shared/hooks/use-translation.ts', () => ({
   useTranslation: () => ({
     t: (key: string) =>
@@ -40,6 +49,11 @@ vi.mock('@/features/shared/hooks/use-translation.ts', () => ({
         'components.pushNotifications.active': 'Notifications active',
         'components.pushNotifications.activated': 'Push notifications enabled',
         'components.pushNotifications.deactivated': 'Push notifications disabled',
+        'components.pushNotifications.test.action': 'Send test',
+        'components.pushNotifications.test.description': 'Test the push chain.',
+        'components.pushNotifications.test.status.pending': 'Test pending',
+        'components.pushNotifications.test.status.sent': 'Test sent',
+        'components.pushNotifications.test.backgroundInstruction': 'Switch to the background.',
       })[key] ?? key,
   }),
 }));
@@ -57,6 +71,10 @@ describe('PushNotificationToggle', () => {
   });
 
   afterEach(cleanup);
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it('shows exactly one success toast after enabling push notifications', async () => {
     render(<PushNotificationToggle variant="minimal" />);
@@ -114,5 +132,37 @@ describe('PushNotificationToggle', () => {
     expect(mocks.toastSuccess).not.toHaveBeenCalled();
     expect(mocks.toastError).toHaveBeenCalledOnce();
     expect(mocks.toastError).toHaveBeenCalledWith('Unsubscription failed');
+  });
+
+  it('processes a scheduled test after the five-second delay', async () => {
+    vi.useFakeTimers();
+    mocks.pushState.isSubscribed = true;
+    mocks.pushApiFetch
+      .mockResolvedValueOnce({ jobId: '42', status: 'pending' })
+      .mockResolvedValueOnce({ jobId: '42', status: 'sent' });
+
+    render(<PushNotificationToggle variant="settings" showDiagnostics showDescription />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send test' }));
+    });
+
+    expect(mocks.pushApiFetch).toHaveBeenNthCalledWith(1, '/api/push/test', {
+      method: 'POST',
+      body: JSON.stringify({
+        deviceId: 'test-device-id',
+        title: 'components.pushNotifications.test.title',
+        message: 'components.pushNotifications.test.message',
+      }),
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5500);
+    });
+
+    expect(mocks.pushApiFetch).toHaveBeenNthCalledWith(2, '/api/push/test/42', {
+      method: 'POST',
+    });
+    expect(screen.getByText('Test sent')).toBeTruthy();
   });
 });

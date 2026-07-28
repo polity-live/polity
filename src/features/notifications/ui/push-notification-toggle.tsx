@@ -60,9 +60,15 @@ export function PushNotificationToggle({
     document.addEventListener('visibilitychange', handleVisible);
     return () => {
       document.removeEventListener('visibilitychange', handleVisible);
-      if (testTimer.current) window.clearTimeout(testTimer.current);
     };
   }, [testState?.jobId]);
+
+  useEffect(
+    () => () => {
+      if (testTimer.current) window.clearTimeout(testTimer.current);
+    },
+    []
+  );
 
   const handleToggle = async () => {
     try {
