@@ -2701,25 +2701,7 @@ END $$;
 -- Runs after the demo, acceptance, and deterministic test fixtures above.
 -- Overwrites display/mock fields and must never be executed against production.
 -- =============================================================================
-BEGIN;
-
-CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
-
-CREATE TEMP TABLE tmp_context_location (
-  seq INTEGER PRIMARY KEY,
-  country TEXT NOT NULL,
-  region TEXT NOT NULL,
-  post_code TEXT NOT NULL,
-  city TEXT NOT NULL,
-  street TEXT NOT NULL,
-  house_number TEXT NOT NULL,
-  latitude DOUBLE PRECISION NOT NULL,
-  longitude DOUBLE PRECISION NOT NULL,
-  location_name TEXT NOT NULL,
-  location_url TEXT NOT NULL
-) ON COMMIT DROP;
-
-INSERT INTO tmp_context_location VALUES
+INSERT INTO public.tmp_context_location VALUES
   (1, 'Germany', 'Berlin', '10178', 'Berlin', 'Rathausstrasse', '15', 52.518611, 13.408333, 'Berlin City Hall - Louise Schroeder Hall', 'https://www.openstreetmap.org/?mlat=52.518611&mlon=13.408333#map=17/52.518611/13.408333'),
   (2, 'Germany', 'Hamburg', '20095', 'Hamburg', 'Rathausmarkt', '1', 53.550556, 9.992222, 'Hamburg Rathaus - Phoenix Hall', 'https://www.openstreetmap.org/?mlat=53.550556&mlon=9.992222#map=17/53.550556/9.992222'),
   (3, 'Germany', 'Bavaria', '80331', 'Munich', 'Marienplatz', '8', 48.137222, 11.575556, 'Munich New Town Hall - Committee Room 2', 'https://www.openstreetmap.org/?mlat=48.137222&mlon=11.575556#map=17/48.137222/11.575556'),
@@ -2729,18 +2711,7 @@ INSERT INTO tmp_context_location VALUES
   (7, 'Germany', 'Hesse', '60311', 'Frankfurt am Main', 'Roemerberg', '23', 50.110556, 8.682222, 'Frankfurt Roemer - Plenary Room', 'https://www.openstreetmap.org/?mlat=50.110556&mlon=8.682222#map=17/50.110556/8.682222'),
   (8, 'Germany', 'Lower Saxony', '30159', 'Hannover', 'Trammplatz', '2', 52.367222, 9.737222, 'Hannover New Town Hall - Mosaic Hall', 'https://www.openstreetmap.org/?mlat=52.367222&mlon=9.737222#map=17/52.367222/9.737222');
 
-CREATE TEMP TABLE tmp_context_user_profile (
-  seq INTEGER PRIMARY KEY,
-  first_name TEXT NOT NULL,
-  last_name TEXT NOT NULL,
-  handle_slug TEXT NOT NULL,
-  gender TEXT NOT NULL,
-  role_title TEXT NOT NULL,
-  focus_area TEXT NOT NULL,
-  bio TEXT NOT NULL
-) ON COMMIT DROP;
-
-INSERT INTO tmp_context_user_profile VALUES
+INSERT INTO public.tmp_context_user_profile VALUES
   (1, 'Mara', 'Schneider', 'mara-schneider', 'female', 'mobility delegate', 'safer crossings and school streets', 'Neighborhood mobility delegate focused on safer crossings, school streets, and transparent implementation notes.'),
   (2, 'Jonas', 'Keller', 'jonas-keller', 'male', 'budget rapporteur', 'participatory budgeting', 'Budget rapporteur turning resident proposals into readable funding options and vote-ready agenda items.'),
   (3, 'Aylin', 'Demir', 'aylin-demir', 'female', 'housing organizer', 'tenant support and retrofits', 'Housing organizer coordinating tenant clinics, retrofit pilots, and practical mediation formats.'),
@@ -2754,17 +2725,7 @@ INSERT INTO tmp_context_user_profile VALUES
   (11, 'Milan', 'Becker', 'milan-becker', 'male', 'transport planner', 'night bus reliability', 'Transport planner testing service guarantees for late shifts, students, and cultural venues.'),
   (12, 'Hanna', 'Lorenz', 'hanna-lorenz', 'female', 'accessibility auditor', 'barrier-free streets', 'Accessibility auditor mapping curb cuts, tactile paving gaps, and routes to public buildings.');
 
-CREATE TEMP TABLE tmp_context_group_profile (
-  seq INTEGER PRIMARY KEY,
-  name TEXT NOT NULL,
-  description_text TEXT NOT NULL,
-  focus_area TEXT NOT NULL,
-  contact_slug TEXT NOT NULL,
-  subscriber_count INTEGER NOT NULL,
-  fallback_member_count INTEGER NOT NULL
-) ON COMMIT DROP;
-
-INSERT INTO tmp_context_group_profile VALUES
+INSERT INTO public.tmp_context_group_profile VALUES
   (1, 'Riverside Mobility Forum', 'Residents, planners, and local businesses coordinating safer crossings, bus priority, and delivery access near the riverfront.', 'mobility', 'riverside-mobility', 146, 28),
   (2, 'North Quarter Neighborhood Council', 'A district council turning street-level feedback into agenda-ready proposals for safety, parks, and social infrastructure.', 'neighborhood governance', 'north-quarter-council', 233, 42),
   (3, 'Green Budget Working Group', 'A finance working group reviewing climate adaptation requests, grant matches, and implementation milestones.', 'climate budget', 'green-budget', 119, 19),
@@ -2776,18 +2737,7 @@ INSERT INTO tmp_context_group_profile VALUES
   (9, 'Culture and Libraries Roundtable', 'A roundtable aligning libraries, cultural venues, and schools around access, opening hours, and shared programming.', 'culture and libraries', 'culture-libraries', 133, 24),
   (10, 'Open Procurement Review Panel', 'A review panel checking major local contracts against public-benefit goals, data quality, and delivery dates.', 'procurement', 'procurement-review', 61, 14);
 
-CREATE TEMP TABLE tmp_context_event_profile (
-  seq INTEGER PRIMARY KEY,
-  title TEXT NOT NULL,
-  description_text TEXT NOT NULL,
-  event_type TEXT NOT NULL,
-  attendance_mode TEXT NOT NULL,
-  meeting_type TEXT NOT NULL,
-  agenda_management TEXT NOT NULL,
-  capacity INTEGER NOT NULL
-) ON COMMIT DROP;
-
-INSERT INTO tmp_context_event_profile VALUES
+INSERT INTO public.tmp_context_event_profile VALUES
   (1, 'Mobility Budget Public Hearing', 'Public hearing on reallocating mobility funds toward safer junctions, night buses, and protected school routes.', 'public_hearing', 'hybrid', 'assembly', 'structured', 180),
   (2, 'Neighborhood Safety Walkthrough', 'On-site walkthrough with residents to document lighting gaps, crossing conflicts, and maintenance issues.', 'site_visit', 'offline', 'working_session', 'lightweight', 45),
   (3, 'Climate Resilience Assembly', 'Assembly for heat-response planning, shade corridors, and cooling-center coordination before summer.', 'general_assembly', 'hybrid', 'assembly', 'structured', 220),
@@ -2799,20 +2749,7 @@ INSERT INTO tmp_context_event_profile VALUES
   (9, 'Volunteer Dispatch Briefing', 'Operational briefing for volunteer coordinators supporting surveys, assembly check-in, and field observations.', 'briefing', 'online', 'working_session', 'lightweight', 70),
   (10, 'Delegates Coordination Council', 'Coordination session for delegates aligning mandate wording, amendment timelines, and voting logistics.', 'delegate_assembly', 'hybrid', 'assembly', 'structured', 110);
 
-CREATE TEMP TABLE tmp_context_amendment_profile (
-  seq INTEGER PRIMARY KEY,
-  code_prefix TEXT NOT NULL,
-  title TEXT NOT NULL,
-  reason TEXT NOT NULL,
-  category TEXT NOT NULL,
-  preamble TEXT NOT NULL,
-  tag_one TEXT NOT NULL,
-  tag_two TEXT NOT NULL,
-  tag_three TEXT NOT NULL,
-  estimated_cost_minor INTEGER NOT NULL
-) ON COMMIT DROP;
-
-INSERT INTO tmp_context_amendment_profile VALUES
+INSERT INTO public.tmp_context_amendment_profile VALUES
   (1, 'MOB', 'Safe Routes to School Pilot', 'Create a six-month pilot for protected school routes around three high-risk intersections, with before-and-after safety reporting.', 'mobility', 'Every child should be able to reach school without navigating avoidable traffic danger.', 'mobility', 'school-streets', 'safety', 18500000),
   (2, 'CLM', 'Heat Shelter Network', 'Open a coordinated network of cooling rooms in libraries, community centers, and sports halls during heat warnings.', 'climate_resilience', 'Rising heat requires visible, reachable, and well-staffed public places for immediate relief.', 'climate', 'heat', 'public-health', 9400000),
   (3, 'DAT', 'Open Contract Data Standard', 'Publish major procurement milestones, suppliers, values, and delivery dates in a reusable public format.', 'transparency', 'Public money is easier to trust when contracts can be inspected without specialist knowledge.', 'open-data', 'procurement', 'transparency', 6200000),
@@ -2843,10 +2780,10 @@ profiled AS (
     p.*,
     l.*
   FROM numbered AS n
-  JOIN tmp_context_user_profile AS p
-    ON p.seq = ((n.rn - 1) % (SELECT count(*) FROM tmp_context_user_profile)) + 1
-  JOIN tmp_context_location AS l
-    ON l.seq = ((n.rn - 1) % (SELECT count(*) FROM tmp_context_location)) + 1
+  JOIN public.tmp_context_user_profile AS p
+    ON p.seq = ((n.rn - 1) % (SELECT count(*) FROM public.tmp_context_user_profile)) + 1
+  JOIN public.tmp_context_location AS l
+    ON l.seq = ((n.rn - 1) % (SELECT count(*) FROM public.tmp_context_location)) + 1
 )
 UPDATE public."user" AS u
 SET
@@ -2908,10 +2845,10 @@ profiled AS (
     gp.*,
     l.*
   FROM numbered AS n
-  JOIN tmp_context_group_profile AS gp
-    ON gp.seq = ((n.rn - 1) % (SELECT count(*) FROM tmp_context_group_profile)) + 1
-  JOIN tmp_context_location AS l
-    ON l.seq = ((n.rn - 1) % (SELECT count(*) FROM tmp_context_location)) + 1
+  JOIN public.tmp_context_group_profile AS gp
+    ON gp.seq = ((n.rn - 1) % (SELECT count(*) FROM public.tmp_context_group_profile)) + 1
+  JOIN public.tmp_context_location AS l
+    ON l.seq = ((n.rn - 1) % (SELECT count(*) FROM public.tmp_context_location)) + 1
 )
 UPDATE public."group" AS g
 SET
@@ -3007,10 +2944,10 @@ profiled AS (
       ELSE now() + ((n.rn + 2) || ' days')::INTERVAL + INTERVAL '2 hours'
     END AS seeded_end_date
   FROM numbered AS n
-  JOIN tmp_context_event_profile AS ep
-    ON ep.seq = ((n.rn - 1) % (SELECT count(*) FROM tmp_context_event_profile)) + 1
-  JOIN tmp_context_location AS l
-    ON l.seq = ((n.rn - 1) % (SELECT count(*) FROM tmp_context_location)) + 1
+  JOIN public.tmp_context_event_profile AS ep
+    ON ep.seq = ((n.rn - 1) % (SELECT count(*) FROM public.tmp_context_event_profile)) + 1
+  JOIN public.tmp_context_location AS l
+    ON l.seq = ((n.rn - 1) % (SELECT count(*) FROM public.tmp_context_location)) + 1
 )
 UPDATE public.event AS e
 SET
@@ -3085,8 +3022,8 @@ profiled AS (
     n.rn,
     ap.*
   FROM numbered AS n
-  JOIN tmp_context_amendment_profile AS ap
-    ON ap.seq = ((n.rn - 1) % (SELECT count(*) FROM tmp_context_amendment_profile)) + 1
+  JOIN public.tmp_context_amendment_profile AS ap
+    ON ap.seq = ((n.rn - 1) % (SELECT count(*) FROM public.tmp_context_amendment_profile)) + 1
 )
 UPDATE public.amendment AS a
 SET
@@ -3152,10 +3089,10 @@ profiled AS (
     ap.estimated_cost_minor,
     l.*
   FROM numbered AS n
-  JOIN tmp_context_amendment_profile AS ap
-    ON ap.seq = ((n.rn - 1) % (SELECT count(*) FROM tmp_context_amendment_profile)) + 1
-  JOIN tmp_context_location AS l
-    ON l.seq = ((n.rn - 1) % (SELECT count(*) FROM tmp_context_location)) + 1
+  JOIN public.tmp_context_amendment_profile AS ap
+    ON ap.seq = ((n.rn - 1) % (SELECT count(*) FROM public.tmp_context_amendment_profile)) + 1
+  JOIN public.tmp_context_location AS l
+    ON l.seq = ((n.rn - 1) % (SELECT count(*) FROM public.tmp_context_location)) + 1
 )
 INSERT INTO public.amendment_city_design (
   id,
@@ -3214,4 +3151,9 @@ SELECT
   now()
 FROM profiled AS p;
 
-COMMIT;
+DROP TABLE IF EXISTS
+  public.tmp_context_amendment_profile,
+  public.tmp_context_event_profile,
+  public.tmp_context_group_profile,
+  public.tmp_context_user_profile,
+  public.tmp_context_location;

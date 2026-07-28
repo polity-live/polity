@@ -9,7 +9,11 @@ major_version = 17
 
 [db.seed]
 enabled = true
-sql_paths = ["./seed.production.sql", "./seed.local.sql"]
+sql_paths = [
+  "./seed.production.sql",
+  "./seed.local-context-tables.sql",
+  "./seed.local.sql",
+]
 
 [db.pooler]
 enabled = false
