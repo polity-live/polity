@@ -9,6 +9,9 @@ import { defineConfig, loadEnv } from 'vite';
 Object.assign(process.env, loadEnv(process.env.NODE_ENV || 'development', process.cwd(), ''));
 
 export default defineConfig({
+  nitro: {
+    traceDeps: ['web-push*'],
+  },
   plugins: [
     tanstackStart({
       router: {
@@ -46,6 +49,7 @@ export default defineConfig({
     ],
   },
   ssr: {
+    external: ['web-push'],
     noExternal: ['zustand', '@platejs/math', '@platejs/math/react', 'katex', 'react-tweet'],
   },
   css: {
