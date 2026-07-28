@@ -76,9 +76,17 @@ jobs:
   database-tests:
     name: Database Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Use pinned npm
+        run: npm install --global npm@${NPM_VERSION}
+      - name: Install dependencies
+        run: npm ci
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v1
         with:
@@ -89,6 +97,8 @@ jobs:
         run: supabase db start
       - name: Apply migrations
         run: supabase db reset --local --no-seed
+      - name: Lint database
+        run: supabase db lint --local --schema public --level warning --fail-on warning
       - name: Verify declarative schemas match migrations
         run: |
           schema_diff="$(supabase db diff --output-format text --agent no)"
@@ -97,8 +107,18 @@ jobs:
             printf '%s\n' "$schema_diff"
             exit 1
           fi
+      - name: Verify database coverage
+        run: npm run test:db:coverage
       - name: Run pgTAP tests
         run: supabase test db --local
+      - name: Run database concurrency tests
+        run: |
+          database_url="$(supabase status -o env | sed -n 's/^DB_URL="\(.*\)"$/\1/p')"
+          if [[ -z "$database_url" ]]; then
+            echo "Could not determine the local database URL"
+            exit 1
+          fi
+          SUPABASE_DB_URL="$database_url" npm run test:db:concurrency
       - name: Stop database
         if: always()
         run: supabase stop --no-backup

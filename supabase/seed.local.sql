@@ -3157,3 +3157,664 @@ DROP TABLE IF EXISTS
   public.tmp_context_group_profile,
   public.tmp_context_user_profile,
   public.tmp_context_location;
+
+-- =============================================================================
+-- Home timeline, geolocation, and Decision Terminal acceptance seed
+-- Shared by decision-terminal-demo@polity.local and test1@gmail.com–test4@gmail.com.
+-- Runs last so context enrichment cannot overwrite its geo and timing data.
+-- =============================================================================
+
+DO $$
+DECLARE
+  seed_now TIMESTAMPTZ := clock_timestamp();
+  demo_user_id UUID := 'd1000000-0000-4000-a000-000000000001';
+  u_tobias UUID := 'f1000000-0000-4000-a000-000000000001';
+  u_vidhisha UUID := 'f1000000-0000-4000-a000-000000000002';
+  u_john UUID := 'f1000000-0000-4000-a000-000000000003';
+  u_denis UUID := 'f1000000-0000-4000-a000-000000000004';
+  dev_user_ids UUID[] := ARRAY[
+    demo_user_id, u_tobias, u_vidhisha, u_john, u_denis
+  ];
+
+  demo_event_id UUID := 'd2000000-0000-4000-a000-000000000001';
+  demo_manager_role_id UUID := 'd3000000-0000-4000-a000-000000000001';
+  office_role_id UUID := 'd3000000-0000-4000-a000-000000000002';
+  g_near UUID := 'f2000000-0000-4000-a000-000000000001';
+  g_local UUID := 'f2000000-0000-4000-a000-000000000002';
+  g_regional UUID := 'f2000000-0000-4000-a000-000000000003';
+  event_far UUID := 'f4000000-0000-4000-a000-000000000001';
+  event_local UUID := 'f4000000-0000-4000-a000-000000000002';
+  amendment_near UUID := 'f5000000-0000-4000-a000-000000000001';
+  amendment_regional UUID := 'f5000000-0000-4000-a000-000000000005';
+
+  agenda_budget_id UUID := 'd4000000-0000-4000-a000-000000000001';
+  agenda_transport_id UUID := 'd4000000-0000-4000-a000-000000000002';
+  agenda_chair_id UUID := 'd4000000-0000-4000-a000-000000000003';
+  agenda_charter_id UUID := 'd4000000-0000-4000-a000-000000000004';
+  agenda_secretary_id UUID := 'd4000000-0000-4000-a000-000000000005';
+  agenda_future_vote_id UUID := 'da400000-0000-4000-a000-000000000001';
+  agenda_future_election_id UUID := 'da400000-0000-4000-a000-000000000002';
+
+  urgent_vote_id UUID := 'd5000000-0000-4000-a000-000000000001';
+  final_vote_id UUID := 'd5000000-0000-4000-a000-000000000002';
+  closed_vote_id UUID := 'd5000000-0000-4000-a000-000000000003';
+  future_vote_id UUID := 'da500000-0000-4000-a000-000000000001';
+  live_election_id UUID := 'd6000000-0000-4000-a000-000000000001';
+  closed_election_id UUID := 'd6000000-0000-4000-a000-000000000002';
+  future_election_id UUID := 'da600000-0000-4000-a000-000000000001';
+
+  dev_user_id UUID;
+  decision_id UUID;
+  target RECORD;
+  participant_id UUID;
+  user_index INTEGER := 0;
+  decision_index INTEGER;
+BEGIN
+  -- A common user origin plus near/local/regional points makes each radius
+  -- option produce a visibly different timeline and marker set.
+  UPDATE public."user"
+  SET country = 'Germany',
+      region = 'Berlin',
+      post_code = '10178',
+      city = 'Berlin',
+      street = 'Rathausstrasse',
+      house_number = '15',
+      latitude = 52.518611,
+      longitude = 13.408333,
+      location_kind = 'address',
+      location_place_id = 'dev-seed-berlin-rathaus',
+      location_boundary_source = 'dev_seed',
+      location_bounds = jsonb_build_object(
+        'south', 52.516, 'west', 13.404, 'north', 52.521, 'east', 13.413
+      ),
+      updated_at = seed_now
+  WHERE id = ANY (dev_user_ids);
+
+  UPDATE public."group"
+  SET country = 'Germany', region = 'Berlin', post_code = '10178', city = 'Berlin',
+      street = 'Spandauer Strasse', house_number = '2',
+      latitude = 52.520200, longitude = 13.409500,
+      location_kind = 'venue', location_place_id = 'dev-seed-near-group',
+      location_boundary_source = 'dev_seed', updated_at = seed_now
+  WHERE id = g_near;
+
+  UPDATE public."group"
+  SET country = 'Germany', region = 'Berlin', post_code = '12043', city = 'Berlin',
+      street = 'Karl-Marx-Strasse', house_number = '83',
+      latitude = 52.481900, longitude = 13.435800,
+      location_kind = 'venue', location_place_id = 'dev-seed-local-group',
+      location_boundary_source = 'dev_seed', updated_at = seed_now
+  WHERE id = g_local;
+
+  UPDATE public."group"
+  SET country = 'Germany', region = 'Brandenburg', post_code = '14467', city = 'Potsdam',
+      street = 'Friedrich-Ebert-Strasse', house_number = '79-81',
+      latitude = 52.400900, longitude = 13.059100,
+      location_kind = 'venue', location_place_id = 'dev-seed-regional-group',
+      location_boundary_source = 'dev_seed', updated_at = seed_now
+  WHERE id = g_regional;
+
+  UPDATE public.event
+  SET status = 'live', attendance_mode = 'hybrid', location_type = 'venue',
+      location_name = 'Alexanderplatz Civic Forum',
+      country = 'Germany', region = 'Berlin', post_code = '10178', city = 'Berlin',
+      street = 'Alexanderplatz', house_number = '1',
+      latitude = 52.521900, longitude = 13.413200,
+      location_kind = 'venue', location_place_id = 'dev-seed-demo-event',
+      location_boundary_source = 'dev_seed',
+      location_coordinates = '52.521900,13.413200',
+      start_date = seed_now - INTERVAL '2 hours',
+      end_date = seed_now + INTERVAL '14 days',
+      timezone = 'Europe/Berlin', updated_at = seed_now
+  WHERE id = demo_event_id;
+
+  UPDATE public.event
+  SET status = 'scheduled', location_type = 'venue',
+      location_name = 'Tempelhof Neighborhood Hall',
+      country = 'Germany', region = 'Berlin', post_code = '12101', city = 'Berlin',
+      street = 'Tempelhofer Damm', house_number = '45',
+      latitude = 52.469900, longitude = 13.385000,
+      location_kind = 'venue', location_place_id = 'dev-seed-local-event',
+      location_boundary_source = 'dev_seed',
+      location_coordinates = '52.469900,13.385000',
+      start_date = seed_now + INTERVAL '2 days',
+      end_date = seed_now + INTERVAL '2 days 2 hours',
+      timezone = 'Europe/Berlin', updated_at = seed_now
+  WHERE id = event_local;
+
+  UPDATE public.event
+  SET status = 'scheduled', location_type = 'venue',
+      location_name = 'Oranienburg Regional Forum',
+      country = 'Germany', region = 'Brandenburg', post_code = '16515', city = 'Oranienburg',
+      street = 'Schlossplatz', house_number = '1',
+      latitude = 52.753700, longitude = 13.236900,
+      location_kind = 'venue', location_place_id = 'dev-seed-far-event',
+      location_boundary_source = 'dev_seed',
+      location_coordinates = '52.753700,13.236900',
+      start_date = seed_now + INTERVAL '5 days',
+      end_date = seed_now + INTERVAL '5 days 2 hours',
+      timezone = 'Europe/Berlin', updated_at = seed_now
+  WHERE id = event_far;
+
+  UPDATE public.amendment
+  SET country = 'Germany', region = 'Berlin', post_code = '13353', city = 'Berlin',
+      street = 'Müllerstrasse', house_number = '147',
+      latitude = 52.549500, longitude = 13.359300,
+      location_kind = 'area', location_place_id = 'dev-seed-near-amendment',
+      location_boundary_source = 'dev_seed', updated_at = seed_now
+  WHERE id = amendment_near;
+
+  UPDATE public.amendment
+  SET country = 'Germany', region = 'Brandenburg', post_code = '14467', city = 'Potsdam',
+      street = 'Am Kanal', house_number = '47',
+      latitude = 52.395900, longitude = 13.066600,
+      location_kind = 'area', location_place_id = 'dev-seed-regional-amendment',
+      location_boundary_source = 'dev_seed', updated_at = seed_now
+  WHERE id = amendment_regional;
+
+  INSERT INTO public.hashtag (id, tag, created_at)
+  VALUES
+    ('da700000-0000-4000-a000-000000000001', 'mobility', seed_now),
+    ('da700000-0000-4000-a000-000000000002', 'climate', seed_now),
+    ('da700000-0000-4000-a000-000000000003', 'local-democracy', seed_now)
+  ON CONFLICT (tag) DO NOTHING;
+
+  user_index := 0;
+  FOREACH dev_user_id IN ARRAY dev_user_ids LOOP
+    user_index := user_index + 1;
+    INSERT INTO public.user_hashtag (id, user_id, hashtag_id, created_at)
+    SELECT
+      ('da710000-0000-4000-a000-' ||
+        lpad((user_index * 10 + topic.seq)::TEXT, 12, '0'))::UUID,
+      dev_user_id, h.id, seed_now
+    FROM (VALUES (1, 'mobility'), (2, 'local-democracy')) AS topic(seq, tag)
+    JOIN public.hashtag AS h ON h.tag = topic.tag
+    ON CONFLICT (user_id, hashtag_id) DO UPDATE
+    SET created_at = EXCLUDED.created_at;
+  END LOOP;
+
+  INSERT INTO public.group_hashtag (id, group_id, hashtag_id, created_at)
+  SELECT
+    ('da720000-0000-4000-a000-' || lpad(topic.seq::TEXT, 12, '0'))::UUID,
+    g_near, h.id, seed_now
+  FROM (VALUES (1, 'mobility'), (2, 'local-democracy')) AS topic(seq, tag)
+  JOIN public.hashtag AS h ON h.tag = topic.tag
+  ON CONFLICT (group_id, hashtag_id) DO UPDATE SET created_at = EXCLUDED.created_at;
+
+  INSERT INTO public.event_hashtag (id, event_id, hashtag_id, created_at)
+  SELECT
+    ('da730000-0000-4000-a000-' || lpad(topic.seq::TEXT, 12, '0'))::UUID,
+    demo_event_id, h.id, seed_now
+  FROM (VALUES (1, 'climate'), (2, 'local-democracy')) AS topic(seq, tag)
+  JOIN public.hashtag AS h ON h.tag = topic.tag
+  ON CONFLICT (event_id, hashtag_id) DO UPDATE SET created_at = EXCLUDED.created_at;
+
+  INSERT INTO public.amendment_hashtag (id, amendment_id, hashtag_id, created_at)
+  SELECT
+    ('da740000-0000-4000-a000-' || lpad(topic.seq::TEXT, 12, '0'))::UUID,
+    amendment_near, h.id, seed_now
+  FROM (VALUES (1, 'mobility'), (2, 'climate')) AS topic(seq, tag)
+  JOIN public.hashtag AS h ON h.tag = topic.tag
+  ON CONFLICT (amendment_id, hashtag_id) DO UPDATE SET created_at = EXCLUDED.created_at;
+
+  -- Give each dev login a confirmed event role and accreditation.
+  user_index := 0;
+  FOREACH dev_user_id IN ARRAY dev_user_ids LOOP
+    user_index := user_index + 1;
+    INSERT INTO public.event_participant (
+      id, event_id, user_id, status, visibility, created_at
+    )
+    VALUES (
+      ('da200000-0000-4000-a000-' || lpad(user_index::TEXT, 12, '0'))::UUID,
+      demo_event_id, dev_user_id, 'active', 'public',
+      seed_now - INTERVAL '90 minutes'
+    )
+    ON CONFLICT (event_id, user_id) WHERE instance_date IS NULL DO UPDATE
+    SET status = EXCLUDED.status, visibility = EXCLUDED.visibility;
+
+    SELECT ep.id INTO participant_id
+    FROM public.event_participant AS ep
+    WHERE ep.event_id = demo_event_id
+      AND ep.user_id = dev_user_id
+      AND ep.instance_date IS NULL
+    ORDER BY ep.created_at, ep.id
+    LIMIT 1;
+
+    INSERT INTO public.event_participant_role (
+      id, event_participant_id, role_id, assigned_at, assigned_by_id, created_at
+    )
+    VALUES (
+      ('da210000-0000-4000-a000-' || lpad(user_index::TEXT, 12, '0'))::UUID,
+      participant_id, demo_manager_role_id,
+      seed_now - INTERVAL '85 minutes', demo_user_id,
+      seed_now - INTERVAL '85 minutes'
+    )
+    ON CONFLICT (event_participant_id, role_id) DO UPDATE
+    SET assigned_at = EXCLUDED.assigned_at, assigned_by_id = EXCLUDED.assigned_by_id;
+
+    INSERT INTO public.accreditation (
+      id, event_id, agenda_item_id, user_id, status,
+      requested_at, decided_at, decided_by, confirmed_at, created_at
+    )
+    VALUES (
+      ('da220000-0000-4000-a000-' || lpad(user_index::TEXT, 12, '0'))::UUID,
+      demo_event_id, agenda_budget_id, dev_user_id, 'approved',
+      seed_now - INTERVAL '80 minutes', seed_now - INTERVAL '79 minutes',
+      demo_user_id, seed_now - INTERVAL '79 minutes',
+      seed_now - INTERVAL '80 minutes'
+    )
+    ON CONFLICT (event_id, user_id) DO UPDATE
+    SET agenda_item_id = EXCLUDED.agenda_item_id,
+        status = EXCLUDED.status,
+        decided_at = EXCLUDED.decided_at,
+        decided_by = EXCLUDED.decided_by,
+        confirmed_at = EXCLUDED.confirmed_at;
+  END LOOP;
+
+  -- Keep one urgent item and retain active content for multi-day dev sessions.
+  UPDATE public.agenda_item
+  SET status = 'active',
+      start_time = seed_now - INTERVAL '30 minutes',
+      end_time = seed_now + INTERVAL '45 minutes',
+      activated_at = seed_now - INTERVAL '30 minutes',
+      completed_at = NULL, voting_phase = 'indicative', updated_at = seed_now
+  WHERE id = agenda_budget_id;
+
+  UPDATE public.agenda_item
+  SET status = 'active',
+      start_time = seed_now - INTERVAL '20 minutes',
+      end_time = seed_now + INTERVAL '3 days',
+      activated_at = seed_now - INTERVAL '20 minutes',
+      completed_at = NULL, voting_phase = 'final', updated_at = seed_now
+  WHERE id = agenda_transport_id;
+
+  UPDATE public.agenda_item
+  SET status = 'active',
+      start_time = seed_now - INTERVAL '10 minutes',
+      end_time = seed_now + INTERVAL '4 days',
+      activated_at = seed_now - INTERVAL '10 minutes',
+      completed_at = NULL, voting_phase = 'indicative', updated_at = seed_now
+  WHERE id = agenda_chair_id;
+
+  UPDATE public.agenda_item
+  SET status = 'completed',
+      start_time = seed_now - INTERVAL '3 hours',
+      end_time = seed_now - INTERVAL '2 hours',
+      activated_at = seed_now - INTERVAL '3 hours',
+      completed_at = seed_now - INTERVAL '2 hours',
+      voting_phase = 'closed', updated_at = seed_now
+  WHERE id = agenda_charter_id;
+
+  UPDATE public.agenda_item
+  SET status = 'completed',
+      start_time = seed_now - INTERVAL '4 hours',
+      end_time = seed_now - INTERVAL '3 hours',
+      activated_at = seed_now - INTERVAL '4 hours',
+      completed_at = seed_now - INTERVAL '3 hours',
+      voting_phase = 'closed', updated_at = seed_now
+  WHERE id = agenda_secretary_id;
+
+  UPDATE public.vote
+  SET closing_duration_seconds = 2700,
+      closing_end_time = seed_now + INTERVAL '45 minutes',
+      updated_at = seed_now
+  WHERE id = urgent_vote_id;
+
+  UPDATE public.vote
+  SET closing_duration_seconds = 259200,
+      closing_end_time = seed_now + INTERVAL '3 days',
+      updated_at = seed_now
+  WHERE id = final_vote_id;
+
+  UPDATE public.vote
+  SET closing_end_time = seed_now - INTERVAL '2 hours',
+      closed_at = seed_now - INTERVAL '2 hours',
+      updated_at = seed_now
+  WHERE id = closed_vote_id;
+
+  UPDATE public.election
+  SET closing_duration_seconds = 345600,
+      closing_end_time = seed_now + INTERVAL '4 days',
+      updated_at = seed_now
+  WHERE id = live_election_id;
+
+  UPDATE public.election
+  SET closing_end_time = seed_now - INTERVAL '3 hours', updated_at = seed_now
+  WHERE id = closed_election_id;
+
+  -- Future vote and election fill both upcoming dashboard panels.
+  INSERT INTO public.agenda_item (
+    id, event_id, creator_id, title, description, type, status, order_index,
+    duration, scheduled_time, start_time, end_time, activated_at, completed_at,
+    majority_type, time_limit, voting_phase, created_at, updated_at
+  )
+  VALUES
+    (
+      agenda_future_vote_id, demo_event_id, demo_user_id,
+      'Future vote on the neighborhood climate fund',
+      'Scheduled vote used to demonstrate upcoming Decision Terminal items.',
+      'vote', 'planned', 6, 90, 'scheduled',
+      seed_now + INTERVAL '7 days', seed_now + INTERVAL '7 days 90 minutes',
+      NULL, NULL, 'simple', 5400, 'final', seed_now, seed_now
+    ),
+    (
+      agenda_future_election_id, demo_event_id, demo_user_id,
+      'Future election of the climate fund rapporteur',
+      'Scheduled election used to demonstrate upcoming Decision Terminal items.',
+      'election', 'planned', 7, 90, 'scheduled',
+      seed_now + INTERVAL '10 days', seed_now + INTERVAL '10 days 90 minutes',
+      NULL, NULL, 'relative', 5400, 'indicative', seed_now, seed_now
+    )
+  ON CONFLICT (id) DO UPDATE
+  SET event_id = EXCLUDED.event_id,
+      creator_id = EXCLUDED.creator_id,
+      title = EXCLUDED.title,
+      description = EXCLUDED.description,
+      type = EXCLUDED.type,
+      status = EXCLUDED.status,
+      order_index = EXCLUDED.order_index,
+      duration = EXCLUDED.duration,
+      scheduled_time = EXCLUDED.scheduled_time,
+      start_time = EXCLUDED.start_time,
+      end_time = EXCLUDED.end_time,
+      activated_at = EXCLUDED.activated_at,
+      completed_at = EXCLUDED.completed_at,
+      majority_type = EXCLUDED.majority_type,
+      time_limit = EXCLUDED.time_limit,
+      voting_phase = EXCLUDED.voting_phase,
+      updated_at = EXCLUDED.updated_at;
+
+  INSERT INTO public.vote (
+    id, agenda_item_id, title, description, status, purpose, majority_type,
+    closing_type, closing_duration_seconds, closing_end_time,
+    visibility, ballot_visibility, created_at, updated_at
+  )
+  VALUES (
+    future_vote_id, agenda_future_vote_id, 'Neighborhood climate fund',
+    'Approve the next funding round for resident-led shade and cooling projects.',
+    'final', 'closing', 'simple', 'scheduled', 5400,
+    seed_now + INTERVAL '7 days 90 minutes',
+    'public', 'named', seed_now, seed_now
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET agenda_item_id = EXCLUDED.agenda_item_id,
+      title = EXCLUDED.title,
+      description = EXCLUDED.description,
+      status = EXCLUDED.status,
+      purpose = EXCLUDED.purpose,
+      majority_type = EXCLUDED.majority_type,
+      closing_type = EXCLUDED.closing_type,
+      closing_duration_seconds = EXCLUDED.closing_duration_seconds,
+      closing_end_time = EXCLUDED.closing_end_time,
+      visibility = EXCLUDED.visibility,
+      ballot_visibility = EXCLUDED.ballot_visibility,
+      updated_at = EXCLUDED.updated_at;
+
+  INSERT INTO public.vote_choice (
+    id, vote_id, label, semantic_key, order_index, created_at
+  )
+  VALUES
+    ('da510000-0000-4000-a000-000000000001', future_vote_id, 'Yes', 'yes', 0, seed_now),
+    ('da510000-0000-4000-a000-000000000002', future_vote_id, 'No', 'no', 1, seed_now),
+    ('da510000-0000-4000-a000-000000000003', future_vote_id, 'Abstain', 'abstain', 2, seed_now)
+  ON CONFLICT (id) DO UPDATE
+  SET vote_id = EXCLUDED.vote_id,
+      label = EXCLUDED.label,
+      semantic_key = EXCLUDED.semantic_key,
+      order_index = EXCLUDED.order_index;
+
+  INSERT INTO public.election (
+    id, agenda_item_id, role_id, title, description, status, majority_type,
+    closing_type, closing_duration_seconds, closing_end_time,
+    visibility, ballot_visibility, election_mode, seat_count, max_votes,
+    created_at, updated_at
+  )
+  VALUES (
+    future_election_id, agenda_future_election_id, office_role_id,
+    'Climate fund rapporteur',
+    'Elect the rapporteur for the next neighborhood climate fund round.',
+    'indicative', 'relative', 'scheduled', 5400,
+    seed_now + INTERVAL '10 days 90 minutes',
+    'public', 'secret', 'single', 1, 1, seed_now, seed_now
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET agenda_item_id = EXCLUDED.agenda_item_id,
+      role_id = EXCLUDED.role_id,
+      title = EXCLUDED.title,
+      description = EXCLUDED.description,
+      status = EXCLUDED.status,
+      majority_type = EXCLUDED.majority_type,
+      closing_type = EXCLUDED.closing_type,
+      closing_duration_seconds = EXCLUDED.closing_duration_seconds,
+      closing_end_time = EXCLUDED.closing_end_time,
+      visibility = EXCLUDED.visibility,
+      ballot_visibility = EXCLUDED.ballot_visibility,
+      election_mode = EXCLUDED.election_mode,
+      seat_count = EXCLUDED.seat_count,
+      max_votes = EXCLUDED.max_votes,
+      updated_at = EXCLUDED.updated_at;
+
+  INSERT INTO public.election_candidate (
+    id, election_id, user_id, name, description, status, order_index, created_at
+  )
+  VALUES
+    (
+      'da610000-0000-4000-a000-000000000001', future_election_id, u_tobias,
+      'Candidate A', 'Focus on transparent milestone reporting.',
+      'nominated', 1, seed_now
+    ),
+    (
+      'da610000-0000-4000-a000-000000000002', future_election_id, u_vidhisha,
+      'Candidate B', 'Focus on resident outreach and accessible reporting.',
+      'nominated', 2, seed_now
+    )
+  ON CONFLICT (id) DO UPDATE
+  SET election_id = EXCLUDED.election_id,
+      user_id = EXCLUDED.user_id,
+      name = EXCLUDED.name,
+      description = EXCLUDED.description,
+      status = EXCLUDED.status,
+      order_index = EXCLUDED.order_index;
+
+  -- Snapshot eligibility for every documented account.
+  user_index := 0;
+  FOREACH dev_user_id IN ARRAY dev_user_ids LOOP
+    user_index := user_index + 1;
+    decision_index := 0;
+    FOREACH decision_id IN ARRAY ARRAY[
+      urgent_vote_id, final_vote_id, closed_vote_id, future_vote_id
+    ] LOOP
+      decision_index := decision_index + 1;
+      INSERT INTO public.voter (
+        id, vote_id, user_id, snapshotted_at, created_at
+      )
+      VALUES (
+        ('da520000-0000-4000-a000-' ||
+          lpad((user_index * 100 + decision_index)::TEXT, 12, '0'))::UUID,
+        decision_id, dev_user_id, seed_now, seed_now
+      )
+      ON CONFLICT (vote_id, user_id) DO UPDATE
+      SET snapshotted_at = EXCLUDED.snapshotted_at;
+    END LOOP;
+
+    decision_index := 0;
+    FOREACH decision_id IN ARRAY ARRAY[
+      live_election_id, closed_election_id, future_election_id
+    ] LOOP
+      decision_index := decision_index + 1;
+      INSERT INTO public.elector (
+        id, election_id, user_id, snapshotted_at, created_at
+      )
+      VALUES (
+        ('da620000-0000-4000-a000-' ||
+          lpad((user_index * 100 + decision_index)::TEXT, 12, '0'))::UUID,
+        decision_id, dev_user_id, seed_now, seed_now
+      )
+      ON CONFLICT (election_id, user_id) DO UPDATE
+      SET snapshotted_at = EXCLUDED.snapshotted_at;
+    END LOOP;
+  END LOOP;
+
+  CREATE TEMP TABLE home_seed_subscription_target (
+    seq INTEGER PRIMARY KEY,
+    target_type TEXT NOT NULL,
+    target_id UUID NOT NULL
+  ) ON COMMIT DROP;
+
+  INSERT INTO home_seed_subscription_target (seq, target_type, target_id)
+  VALUES
+    (1, 'group', g_near),
+    (2, 'group', g_local),
+    (3, 'group', g_regional),
+    (4, 'event', demo_event_id),
+    (5, 'event', event_local),
+    (6, 'event', event_far),
+    (7, 'amendment', amendment_near),
+    (8, 'amendment', amendment_regional),
+    (9, 'user', u_tobias);
+
+  user_index := 0;
+  FOREACH dev_user_id IN ARRAY dev_user_ids LOOP
+    user_index := user_index + 1;
+    FOR target IN
+      SELECT seq, target_type, target_id
+      FROM home_seed_subscription_target
+      ORDER BY seq
+    LOOP
+      INSERT INTO public.subscriber (
+        id, subscriber_id, user_id, group_id, amendment_id, event_id, created_at
+      )
+      VALUES (
+        ('da300000-0000-4000-a000-' ||
+          lpad((user_index * 100 + target.seq)::TEXT, 12, '0'))::UUID,
+        dev_user_id,
+        CASE WHEN target.target_type = 'user' THEN target.target_id END,
+        CASE WHEN target.target_type = 'group' THEN target.target_id END,
+        CASE WHEN target.target_type = 'amendment' THEN target.target_id END,
+        CASE WHEN target.target_type = 'event' THEN target.target_id END,
+        seed_now - (target.seq || ' minutes')::INTERVAL
+      )
+      ON CONFLICT (id) DO UPDATE
+      SET subscriber_id = EXCLUDED.subscriber_id,
+          user_id = EXCLUDED.user_id,
+          group_id = EXCLUDED.group_id,
+          amendment_id = EXCLUDED.amendment_id,
+          event_id = EXCLUDED.event_id,
+          created_at = EXCLUDED.created_at;
+    END LOOP;
+  END LOOP;
+
+  -- Unique type/entity pairs survive the timeline's primary-item deduplication.
+  INSERT INTO public.timeline_event (
+    id, event_type, entity_type, entity_id, title, description, metadata,
+    content_type, tags, stats, user_id, group_id, amendment_id, event_id,
+    actor_id, created_at
+  )
+  VALUES
+    (
+      'da800000-0000-4000-a000-000000000001', 'group_update', 'group', g_near,
+      'Safer crossings field review published',
+      'The mobility group published its latest field review and invited residents to annotate priority crossings.',
+      jsonb_build_object('seed', 'home_acceptance', 'activity', 'field_review'),
+      'group', jsonb_build_array('mobility', 'local-democracy'),
+      jsonb_build_object('members', 28, 'comments', 7, 'reactions', 14, 'score', 22),
+      NULL, g_near, NULL, NULL, demo_user_id, seed_now - INTERVAL '12 minutes'
+    ),
+    (
+      'da800000-0000-4000-a000-000000000002', 'group_update', 'group', g_local,
+      'Neighborhood workshop agenda opened',
+      'Residents can now propose agenda items for the upcoming neighborhood workshop.',
+      jsonb_build_object('seed', 'home_acceptance', 'activity', 'agenda_opened'),
+      'group', jsonb_build_array('local-democracy'),
+      jsonb_build_object('members', 42, 'comments', 4, 'reactions', 9, 'score', 16),
+      NULL, g_local, NULL, NULL, demo_user_id, seed_now - INTERVAL '28 minutes'
+    ),
+    (
+      'da800000-0000-4000-a000-000000000003', 'group_update', 'group', g_regional,
+      'Regional climate coordination note',
+      'The regional group shared implementation milestones for heat resilience projects.',
+      jsonb_build_object('seed', 'home_acceptance', 'activity', 'coordination_note'),
+      'group', jsonb_build_array('climate', 'local-democracy'),
+      jsonb_build_object('members', 19, 'comments', 5, 'reactions', 11, 'score', 18),
+      NULL, g_regional, NULL, NULL, demo_user_id, seed_now - INTERVAL '44 minutes'
+    ),
+    (
+      'da800000-0000-4000-a000-000000000004', 'event_update', 'event', demo_event_id,
+      'Decision Demo Assembly is live',
+      'Voting, election, and agenda fixtures are available in the live local assembly.',
+      jsonb_build_object('seed', 'home_acceptance', 'activity', 'event_live'),
+      'event', jsonb_build_array('climate', 'local-democracy'),
+      jsonb_build_object('participants', 9, 'comments', 6, 'reactions', 17, 'score', 28),
+      NULL, NULL, NULL, demo_event_id, demo_user_id, seed_now - INTERVAL '6 minutes'
+    ),
+    (
+      'da800000-0000-4000-a000-000000000005', 'event_update', 'event', event_local,
+      'Local design workshop scheduled',
+      'The workshop will compare street-level proposals and prepare them for an assembly decision.',
+      jsonb_build_object('seed', 'home_acceptance', 'activity', 'event_scheduled'),
+      'event', jsonb_build_array('mobility'),
+      jsonb_build_object('participants', 34, 'comments', 3, 'reactions', 8, 'score', 15),
+      NULL, NULL, NULL, event_local, demo_user_id, seed_now - INTERVAL '36 minutes'
+    ),
+    (
+      'da800000-0000-4000-a000-000000000006', 'event_update', 'event', event_far,
+      'Regional forum registration started',
+      'Registration opened for the regional forum outside the 25 km home radius.',
+      jsonb_build_object('seed', 'home_acceptance', 'activity', 'registration_open'),
+      'event', jsonb_build_array('local-democracy'),
+      jsonb_build_object('participants', 51, 'comments', 2, 'reactions', 6, 'score', 12),
+      NULL, NULL, NULL, event_far, demo_user_id, seed_now - INTERVAL '52 minutes'
+    ),
+    (
+      'da800000-0000-4000-a000-000000000007', 'amendment_update',
+      'amendment', amendment_near, 'Mobility pilot amendment updated',
+      'A cost estimate and accessibility checkpoint were added to the nearby mobility proposal.',
+      jsonb_build_object('seed', 'home_acceptance', 'activity', 'amendment_updated'),
+      'amendment', jsonb_build_array('mobility', 'climate'),
+      jsonb_build_object('comments', 12, 'reactions', 21, 'score', 33),
+      NULL, g_near, amendment_near, NULL, demo_user_id, seed_now - INTERVAL '20 minutes'
+    ),
+    (
+      'da800000-0000-4000-a000-000000000008', 'amendment_update',
+      'amendment', amendment_regional, 'Regional implementation amendment submitted',
+      'A regional proposal entered public review with milestones and a transparent delivery budget.',
+      jsonb_build_object('seed', 'home_acceptance', 'activity', 'amendment_submitted'),
+      'amendment', jsonb_build_array('climate', 'local-democracy'),
+      jsonb_build_object('comments', 8, 'reactions', 13, 'score', 24),
+      NULL, g_regional, amendment_regional, NULL, demo_user_id, seed_now - INTERVAL '60 minutes'
+    ),
+    (
+      'da800000-0000-4000-a000-000000000009', 'workflow_update',
+      'workflow', g_near, 'Committee handoff reached',
+      'The proposal advanced from neighborhood review to its committee preparation step.',
+      jsonb_build_object('seed', 'home_acceptance', 'activity', 'workflow_handoff'),
+      'workflow', jsonb_build_array('local-democracy'),
+      jsonb_build_object('comments', 5, 'reactions', 10, 'score', 19),
+      NULL, g_near, NULL, NULL, demo_user_id, seed_now - INTERVAL '32 minutes'
+    ),
+    (
+      'da800000-0000-4000-a000-000000000010', 'profile_update',
+      'user', u_tobias, 'New public field note published',
+      'A local delegate shared observations from the latest neighborhood walkthrough.',
+      jsonb_build_object('seed', 'home_acceptance', 'activity', 'field_note'),
+      'user', jsonb_build_array('mobility', 'local-democracy'),
+      jsonb_build_object('comments', 3, 'reactions', 12, 'score', 20),
+      u_tobias, NULL, NULL, NULL, u_tobias, seed_now - INTERVAL '48 minutes'
+    )
+  ON CONFLICT (id) DO UPDATE
+  SET event_type = EXCLUDED.event_type,
+      entity_type = EXCLUDED.entity_type,
+      entity_id = EXCLUDED.entity_id,
+      title = EXCLUDED.title,
+      description = EXCLUDED.description,
+      metadata = EXCLUDED.metadata,
+      content_type = EXCLUDED.content_type,
+      tags = EXCLUDED.tags,
+      stats = EXCLUDED.stats,
+      user_id = EXCLUDED.user_id,
+      group_id = EXCLUDED.group_id,
+      amendment_id = EXCLUDED.amendment_id,
+      event_id = EXCLUDED.event_id,
+      actor_id = EXCLUDED.actor_id,
+      created_at = EXCLUDED.created_at;
+END $$;

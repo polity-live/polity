@@ -19,6 +19,8 @@
     "start": "node .output/server/index.mjs",
     "lint": "oxlint .",
     "test": "vitest run",
+    "test:db:coverage": "tsx tools/database/check-pgtap-coverage.ts",
+    "test:db:concurrency": "tsx tools/database/database-concurrency.test.ts",
     "test:mutation-guards": "vitest run src/zero/__tests__/mutateWithServerCheck.test.ts",
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test --grep @smoke",

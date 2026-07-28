@@ -69,7 +69,7 @@ export async function ensureE2EAuthUser(user: E2EWorkerUser, createFormStyle = '
         'handle', ${handle}::text,
         'e2e_worker', true
       ),
-      now(),
+      now() - interval '1 day',
       now(),
       '',
       '',
@@ -82,6 +82,7 @@ export async function ensureE2EAuthUser(user: E2EWorkerUser, createFormStyle = '
         email_confirmed_at = excluded.email_confirmed_at,
         raw_app_meta_data = excluded.raw_app_meta_data,
         raw_user_meta_data = excluded.raw_user_meta_data,
+        created_at = excluded.created_at,
         updated_at = excluded.updated_at;
   `;
 
