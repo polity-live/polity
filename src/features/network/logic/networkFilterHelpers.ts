@@ -116,11 +116,8 @@ function pickRecordValues<T>(record: Record<string, T> | undefined, rights: read
 }
 
 function applyVisibleRights(edge: Edge, visibleRights: string[]): Edge | null {
-  const edgeData = edge.data as EditableRightsLabelEdgeData | undefined;
-
-  if (!edgeData?.rights) {
-    return edge;
-  }
+  // All callers only invoke this helper after resolving a non-empty rights array.
+  const edgeData = edge.data as EditableRightsLabelEdgeData;
 
   if (visibleRights.length === 0) {
     return null;

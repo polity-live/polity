@@ -82,8 +82,8 @@ export function CalendarPageView({
         headingMode="sr-only"
         actions={
           <>
-            <CalendarExportButton events={events} />
-            <Button onClick={onCreateEvent}>
+            <CalendarExportButton events={events} data-action-id="calendar.page.events.export" />
+            <Button onClick={onCreateEvent} data-action-id="calendar.page.event.create">
               <Plus className="mr-2 h-4 w-4" />
               {createEventLabel}
             </Button>

@@ -161,6 +161,7 @@ export const plateJsTranslations = {
     insertImage: 'Insert Image',
     insertVideo: 'Insert Video',
     dragToMove: 'Drag to move',
+    blockSelectionInput: 'Selected blocks keyboard input',
     turnOffSuggesting: 'Turn off suggesting',
     suggestionEdits: 'Suggestion edits',
     formatCode: 'Format code',

@@ -99,6 +99,7 @@ export const MonthViewView = ({
                       variant="ghost"
                       className="hover:bg-accent block h-auto w-full rounded-lg border p-3 text-left whitespace-normal transition-colors"
                       onClick={() => onEventOpen(event.id)}
+                      data-action-id="calendar.month-view.event.open"
                     >
                       <span className="block font-semibold">
                         {event.isMeeting && '📅 '}

@@ -2,16 +2,16 @@ import { rm } from 'node:fs/promises';
 import { createConnection } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { runCliIfMain } from '../shared/run-cli-if-main.mjs';
 
-const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const replicaFiles = ['zero.db', 'zero.db-wal', 'zero.db-wal2', 'zero.db-shm'].map(file =>
-  path.resolve(projectRoot, file)
-);
+export const ZERO_REPLICA_FILES = ['zero.db', 'zero.db-wal', 'zero.db-wal2', 'zero.db-shm'];
 
-function isZeroCachePortInUse() {
+export function isZeroCachePortInUse(options = {}) {
+  const connectionFactory = options.connectionFactory ?? createConnection;
+  const timeoutMs = options.timeoutMs ?? 1_500;
   return new Promise(resolve => {
-    const socket = createConnection({ host: '127.0.0.1', port: 4848 });
-    socket.setTimeout(1_500);
+    const socket = connectionFactory({ host: '127.0.0.1', port: 4848 });
+    socket.setTimeout(timeoutMs);
     socket.once('connect', () => {
       socket.destroy();
       resolve(true);
@@ -24,18 +24,33 @@ function isZeroCachePortInUse() {
   });
 }
 
-if (await isZeroCachePortInUse()) {
-  console.error('Port 4848 ist noch belegt. Stoppe Zero-Cache vor `npm run zero:clean`.');
-  process.exitCode = 1;
-} else {
-  for (const replicaFile of replicaFiles) {
-    if (path.dirname(replicaFile) !== projectRoot) {
-      throw new Error(`Unsicheres Replica-Ziel verweigert: ${replicaFile}`);
-    }
-    await rm(replicaFile, { force: true });
+export async function cleanZeroReplica(options = {}) {
+  const projectRoot = path.resolve(
+    options.projectRoot ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
+  );
+  const remove = options.remove ?? rm;
+  const logger = options.logger ?? console;
+  const portInUse = options.portInUse ?? isZeroCachePortInUse;
+  if (await portInUse()) {
+    logger.error('Port 4848 ist noch belegt. Stoppe Zero-Cache vor `npm run zero:clean`.');
+    return { cleaned: false, reason: 'port-in-use' };
   }
 
-  console.log(
-    'Lokale Zero-Replica entfernt. Postgres- und Anwendungsdaten wurden nicht verändert.'
-  );
+  for (const file of ZERO_REPLICA_FILES) {
+    const replicaFile = path.resolve(projectRoot, file);
+    await remove(replicaFile, { force: true });
+  }
+  logger.log('Lokale Zero-Replica entfernt. Postgres- und Anwendungsdaten wurden nicht verändert.');
+  return { cleaned: true };
 }
+
+export async function runCleanZeroReplicaCli({ clean, processState }) {
+  const result = await clean();
+  if (!result.cleaned) processState.exitCode = 1;
+  return result;
+}
+
+await runCliIfMain(
+  import.meta.url,
+  runCleanZeroReplicaCli.bind(null, { clean: cleanZeroReplica, processState: process })
+);

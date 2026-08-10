@@ -480,7 +480,11 @@ export function CityDesignPageView({
               <AlertDialogCancel>
                 {t('features.amendments.cityDesign.categoryDelete.cancel')}
               </AlertDialogCancel>
-              <AlertDialogAction variant="destructive" onClick={confirmObjectCategoryDelete}>
+              <AlertDialogAction
+                data-action-id="amendments.city-design.confirm.category-delete"
+                variant="destructive"
+                onClick={confirmObjectCategoryDelete}
+              >
                 {t('features.amendments.cityDesign.categoryDelete.confirm', {
                   count: pendingCategoryDeletionCount,
                 })}
@@ -674,6 +678,7 @@ function CityDesignNavigationHelp() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverAnchor asChild>
         <button
+          data-action-id="amendments.city-design.open.navigation-help"
           type="button"
           aria-label={t('features.amendments.cityDesign.help.trigger')}
           aria-expanded={open}
@@ -698,7 +703,12 @@ function CityDesignNavigationHelp() {
           <Tabs defaultValue="touch">
             <TabsList className="w-full">
               {helpTabs.map(tab => (
-                <TabsTrigger key={tab.key} value={tab.key} className="flex-1">
+                <TabsTrigger
+                  data-action-id="amendments.city-design.select.help-tab"
+                  key={tab.key}
+                  value={tab.key}
+                  className="flex-1"
+                >
                   {tab.label}
                 </TabsTrigger>
               ))}

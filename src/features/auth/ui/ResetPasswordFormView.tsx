@@ -38,7 +38,11 @@ export function ResetPasswordFormView({
 }: ResetPasswordFormViewProps) {
   return (
     <FormCard title={copy.title} description={copy.description} icon={<KeyRound />}>
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form
+        data-action-id="auth.reset-password.submit.password"
+        onSubmit={onSubmit}
+        className="space-y-4"
+      >
         <PasswordField
           id="reset-password"
           label={copy.newPassword}
@@ -63,6 +67,7 @@ export function ResetPasswordFormView({
         />
         {error ? <InlineNotice variant="destructive">{error}</InlineNotice> : null}
         <FormButton
+          data-action-id="auth.reset-password.submit.password"
           type="submit"
           className="w-full"
           disabled={!password || !confirmPassword || isSubmitting}

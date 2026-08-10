@@ -360,8 +360,8 @@ export function useUserNetworkFlowController({
             relationshipKinds: ['active'],
             relationshipType: 'membership',
             userConnectionDirections: ['incoming', 'outgoing'],
-            sourceName: groupNameMap.get(userId) ?? null,
-            targetName: groupNameMap.get(group.id) ?? null,
+            sourceName: groupNameMap.get(userId),
+            targetName: groupNameMap.get(group.id),
           }),
         });
       }
@@ -612,10 +612,6 @@ export function useUserNetworkFlowController({
     );
     const siblingGroupsByAnchor = new Map<string, NetworkGroupEntity[]>();
     const registerSiblingGroup = (anchorId: string, siblingGroup: NetworkGroupEntity) => {
-      if (renderedGroupIds.has(siblingGroup.id)) {
-        return;
-      }
-
       const siblingGroups = siblingGroupsByAnchor.get(anchorId) ?? [];
       if (!siblingGroupsByAnchor.has(anchorId)) {
         siblingGroupsByAnchor.set(anchorId, siblingGroups);
@@ -648,10 +644,6 @@ export function useUserNetworkFlowController({
     if (relationshipTraversalMode !== 'right') {
       stableRelationships.forEach(relationship => {
         if (!isAcceptedSiblingRelationship(relationship)) {
-          return;
-        }
-
-        if (filterRight && (relationship.with_right ?? '') !== filterRight) {
           return;
         }
 
@@ -688,11 +680,8 @@ export function useUserNetworkFlowController({
                 ? [sourceId, targetId]
                 : [targetId, sourceId];
         const edgeKey = `${edgeSourceId}<->${edgeTargetId}`;
-        const relationshipContextGroupId = userGroupIds.has(edgeSourceId)
-          ? edgeSourceId
-          : userGroupIds.has(edgeTargetId)
-            ? edgeTargetId
-            : edgeSourceId;
+        // User groups are oriented to the source; non-user sibling pairs use their canonical source.
+        const relationshipContextGroupId = edgeSourceId;
         let siblingEdgeEntry = siblingEdgeEntries.get(edgeKey);
         if (!siblingEdgeEntry) {
           siblingEdgeEntry = {
@@ -771,10 +760,8 @@ export function useUserNetworkFlowController({
 
     if (!showIndirectOnly) {
       siblingGroupsByAnchor.forEach((siblingGroups, anchorId) => {
-        const anchorPosition = nodePositions.get(anchorId);
-        if (!anchorPosition) {
-          return;
-        }
+        // Siblings are registered only for anchors already added through addNode.
+        const anchorPosition = nodePositions.get(anchorId) as { x: number; y: number };
 
         siblingGroups.forEach((siblingGroup, index) => {
           if (renderedGroupIds.has(siblingGroup.id)) {
@@ -833,15 +820,7 @@ export function useUserNetworkFlowController({
           sourceGroupType,
           targetGroupType,
         }) => {
-          if (!renderedGroupIds.has(sourceId) || !renderedGroupIds.has(targetId)) {
-            return;
-          }
-
           const edgeId = `edge-sibling-${sourceId}-to-${targetId}`;
-          if (allEdgesMap.has(edgeId)) {
-            return;
-          }
-
           const isSiblingToSibling = sourceGroupType === 'sibling' && targetGroupType === 'sibling';
           allEdgesMap.set(edgeId, {
             ...buildNetworkRelationshipEdge({
@@ -865,8 +844,8 @@ export function useUserNetworkFlowController({
                 isSiblingToSibling ? 'sibling-open' : 'sibling-parliament'
               ).borderColor,
               strokeDasharray: isSiblingToSibling ? undefined : '6 4',
-              sourceName: groupNameMap.get(sourceId) ?? null,
-              targetName: groupNameMap.get(targetId) ?? null,
+              sourceName: groupNameMap.get(sourceId),
+              targetName: groupNameMap.get(targetId),
               currentGroupId,
               previewCurrentGroupId: currentGroupId,
               bendPoints: edgeBendPointsRef.current[edgeId] ?? [],

@@ -58,6 +58,7 @@ export function DecisionDashboardHeader({
             />
           </div>
           <Button
+            data-action-id="decision-terminal.dashboard.layout.reset"
             variant="outline"
             size="icon"
             className="h-9 w-9 rounded-md"

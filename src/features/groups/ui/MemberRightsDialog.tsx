@@ -189,11 +189,20 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
 
         <DialogFooter>
           {profileUserId ? (
-            <Button variant="outline" onClick={() => onNavigateToUser(profileUserId)}>
+            <Button
+              data-action-id="groups.member-rights.open.profile"
+              variant="outline"
+              onClick={() => onNavigateToUser(profileUserId)}
+            >
               {resolvedProfileButtonLabel}
             </Button>
           ) : null}
-          <Button onClick={() => onOpenChange(false)}>{resolvedCloseButtonLabel}</Button>
+          <Button
+            data-action-id="groups.member-rights.close.dialog"
+            onClick={() => onOpenChange(false)}
+          >
+            {resolvedCloseButtonLabel}
+          </Button>
         </DialogFooter>
       </ScrollableDialogContent>
     </Dialog>

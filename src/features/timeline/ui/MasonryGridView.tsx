@@ -123,8 +123,13 @@ export function MasonryGridEmptyView({
         <h3 className="text-lg font-semibold">{labels.title}</h3>
         <p className="text-muted-foreground max-w-md text-sm">{labels.hint}</p>
       </div>
-      <Button variant="outline" asChild>
-        <Link to="/search" className="flex items-center gap-2">
+      <Button data-action-scope="presentation" variant="outline" asChild>
+        <Link
+          data-action-id="timeline.empty.search.open"
+          data-action-kind="navigation"
+          to="/search"
+          className="flex items-center gap-2"
+        >
           <Search className="h-4 w-4" />
           {labels.discoverContent}
         </Link>

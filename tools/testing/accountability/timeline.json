@@ -1,0 +1,830 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/timeline/ui/AccessibilityComponents.tsx#timeline.accessibility.skip-content": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline filtering, mode, header, and rail controls to stable user intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionBar.tsx#timeline.action-bar.bookmark.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches universal follow, discussion, reaction, share, and bookmark effects",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionBar.tsx#timeline.action-bar.compact.discussion.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches compact reaction and discussion effects through focusable controls",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionBar.tsx#timeline.action-bar.compact.reaction.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches compact reaction and discussion effects through focusable controls",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionBar.tsx#timeline.action-bar.discussion.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches universal follow, discussion, reaction, share, and bookmark effects",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionBar.tsx#timeline.action-bar.follow.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches universal follow, discussion, reaction, share, and bookmark effects",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionBar.tsx#timeline.action-bar.menu.copy-link": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires universal timeline action controls to stable user intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionBar.tsx#timeline.action-bar.menu.discussion.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires universal timeline action controls to stable user intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionBar.tsx#timeline.action-bar.menu.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires universal timeline action controls to stable user intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionBar.tsx#timeline.action-bar.menu.report": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires universal timeline action controls to stable user intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionBar.tsx#timeline.action-bar.reaction.like": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches universal follow, discussion, reaction, share, and bookmark effects",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionBar.tsx#timeline.action-bar.reaction.oppose": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches universal follow, discussion, reaction, share, and bookmark effects",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionBar.tsx#timeline.action-bar.reaction.support": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches universal follow, discussion, reaction, share, and bookmark effects",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionBar.tsx#timeline.action-bar.share": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches universal follow, discussion, reaction, share, and bookmark effects",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionTimelineCard.tsx#timeline.action.details.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionTimelineCard.tsx#timeline.action.share": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionTimelineCard.tsx#timeline.action.source.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ActionTimelineCard.tsx#timeline.action.target.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/AmendmentTimelineCardView.tsx#timeline.amendment.collaboration.leave": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/AmendmentTimelineCardView.tsx#timeline.amendment.collaboration.menu.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/AmendmentTimelineCardView.tsx#timeline.amendment.collaboration.request": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/AmendmentTimelineCardView.tsx#timeline.amendment.discussion.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/AmendmentTimelineCardView.tsx#timeline.amendment.invitation.accept": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/AmendmentTimelineCardView.tsx#timeline.amendment.invitation.reject": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/AmendmentTimelineCardView.tsx#timeline.amendment.request.withdraw": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/AmendmentTimelineCardView.tsx#timeline.amendment.share": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/AmendmentTimelineCardView.tsx#timeline.amendment.subscription.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/BlogTimelineCardView.tsx#timeline.blog.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/BlogTimelineCardView.tsx#timeline.blog.share": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/BlogTimelineCardView.tsx#timeline.blog.subscription.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ElectionTimelineCard.tsx#timeline.election.ballot.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ElectionTimelineCard.tsx#timeline.election.candidates.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ElectionTimelineCard.tsx#timeline.election.indication-results.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ElectionTimelineCard.tsx#timeline.election.nomination.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ElectionTimelineCard.tsx#timeline.election.results.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ElectionTimelineCard.tsx#timeline.election.share": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/EventTimelineCardView.tsx#timeline.event.invitation.accept": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/EventTimelineCardView.tsx#timeline.event.invitation.reject": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/EventTimelineCardView.tsx#timeline.event.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/EventTimelineCardView.tsx#timeline.event.participation.leave": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/EventTimelineCardView.tsx#timeline.event.participation.menu.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["selected", "unselected", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/EventTimelineCardView.tsx#timeline.event.participation.request": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/EventTimelineCardView.tsx#timeline.event.request.withdraw": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/EventTimelineCardView.tsx#timeline.event.share": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/EventTimelineCardView.tsx#timeline.event.subscription.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/GroupTimelineCardView.tsx#timeline.group.invitation.accept": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/GroupTimelineCardView.tsx#timeline.group.invitation.reject": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/GroupTimelineCardView.tsx#timeline.group.membership.leave": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/GroupTimelineCardView.tsx#timeline.group.membership.menu.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["selected", "unselected", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/GroupTimelineCardView.tsx#timeline.group.membership.request": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/GroupTimelineCardView.tsx#timeline.group.request.withdraw": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/GroupTimelineCardView.tsx#timeline.group.share": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/GroupTimelineCardView.tsx#timeline.group.subscription.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ImageTimelineCard.tsx#timeline.image.preview.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ImageTimelineCard.tsx#timeline.image.share": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/MeetupTimelineCard.tsx#timeline.meetup.booking.cancel": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/MeetupTimelineCard.tsx#timeline.meetup.booking.create": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/MeetupTimelineCard.tsx#timeline.meetup.delete": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/MeetupTimelineCard.tsx#timeline.meetup.online.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/MeetupTimelineCard.tsx#timeline.meetup.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/PaymentTimelineCard.tsx#timeline.payment.exchange-source.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/QuickComment.tsx#timeline.quick-comment.all.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires universal timeline action controls to stable user intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/QuickComment.tsx#timeline.quick-comment.compact.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires universal timeline action controls to stable user intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/QuickCommentView.tsx#timeline.quick-comment.cancel": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires universal timeline action controls to stable user intentions",
+        "scenarios": ["idle", "success", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/QuickCommentView.tsx#timeline.quick-comment.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires universal timeline action controls to stable user intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/QuickCommentView.tsx#timeline.quick-comment.submit": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires universal timeline action controls to stable user intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/ReasonTooltipView.tsx#timeline.reason.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires universal timeline action controls to stable user intentions",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/StatementTimelineCard.tsx#timeline.statement.share": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/TimelineCardBase.tsx#timeline.card.header.subtitle.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires universal timeline action controls to stable user intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/TimelineCardBase.tsx#timeline.card.header.title.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires universal timeline action controls to stable user intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/TodoTimelineCardView.tsx#timeline.todo.assignment.claim": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/TodoTimelineCardView.tsx#timeline.todo.completion.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/TodoTimelineCardView.tsx#timeline.todo.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/TodoTimelineCardView.tsx#timeline.todo.share": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/TodoTimelineCardView.tsx#timeline.todo.status.menu.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/TodoTimelineCardView.tsx#timeline.todo.status.select": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/UserTimelineCardView.tsx#timeline.user.message.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/UserTimelineCardView.tsx#timeline.user.share": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/UserTimelineCardView.tsx#timeline.user.subscription.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/timeline/ui/cards/VideoTimelineCardView.tsx#timeline.video.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/VideoTimelineCardView.tsx#timeline.video.play": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/VideoTimelineCardView.tsx#timeline.video.share": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/VoteTimelineCard.tsx#timeline.vote.indication-results.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/cards/VoteTimelineCard.tsx#timeline.vote.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/VoteTimelineCard.tsx#timeline.vote.share": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline card consumers to stable navigation and handler intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/CivicTimelineRail.tsx#timeline.rail.item.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline filtering, mode, header, and rail controls to stable user intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/CivicTimelineRail.tsx#timeline.rail.source.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline filtering, mode, header, and rail controls to stable user intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/MasonryGridView.tsx#timeline.empty.search.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline filtering, mode, header, and rail controls to stable user intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/ModernTimelineView.tsx#timeline.empty.search.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline filtering, mode, header, and rail controls to stable user intentions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineFilterPanel.tsx#timeline.filters.close": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches every filter family without coupling selections between controls",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineFilterPanel.tsx#timeline.filters.content.select-all": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches every filter family without coupling selections between controls",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineFilterPanel.tsx#timeline.filters.content.select-none": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches every filter family without coupling selections between controls",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineFilterPanel.tsx#timeline.filters.content.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches every filter family without coupling selections between controls",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineFilterPanel.tsx#timeline.filters.date-range.select": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches every filter family without coupling selections between controls",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineFilterPanel.tsx#timeline.filters.engagement.select": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches every filter family without coupling selections between controls",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineFilterPanel.tsx#timeline.filters.radius.select": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches every filter family without coupling selections between controls",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineFilterPanel.tsx#timeline.filters.reset": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches every filter family without coupling selections between controls",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineFilterPanel.tsx#timeline.filters.topic.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineCoreActions.test.tsx",
+        "project": "component",
+        "caseId": "dispatches every filter family without coupling selections between controls",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineHeader.tsx#timeline.header.filters.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline filtering, mode, header, and rail controls to stable user intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineHeader.tsx#timeline.header.settings.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline filtering, mode, header, and rail controls to stable user intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineHeader.tsx#timeline.header.sort.open": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline filtering, mode, header, and rail controls to stable user intentions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineHeader.tsx#timeline.header.sort.select": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline filtering, mode, header, and rail controls to stable user intentions",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/TimelineModeToggle.tsx#timeline.mode.select": [
+      {
+        "file": "src/features/timeline/ui/__tests__/TimelineActionWiring.accountability.test.ts",
+        "project": "unit",
+        "caseId": "wires timeline filtering, mode, header, and rail controls to stable user intentions",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ]
+  }
+}

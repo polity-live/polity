@@ -832,9 +832,9 @@ function mapCityDesignCollaborators(
     const firstName = getString(userRecord?.first_name);
     const lastName = getString(userRecord?.last_name);
     const name =
-      getString(userRecord?.name) ??
-      [firstName, lastName].filter(Boolean).join(' ').trim() ??
-      getString(userRecord?.email) ??
+      getString(userRecord?.name) ||
+      [firstName, lastName].filter(Boolean).join(' ').trim() ||
+      getString(userRecord?.email) ||
       'Unknown User';
 
     mapped.set(id, {
@@ -886,3 +886,13 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 function getString(value: unknown) {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
+
+export const cityDesignPageControllerInternals = {
+  originFromCenter,
+  isSameCenter,
+  getCityDesignDiscussionArray,
+  mapCityDesignCollaborators,
+  normalizeCollaboratorStatus,
+  asRecord,
+  getString,
+};

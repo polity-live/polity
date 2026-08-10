@@ -9,6 +9,13 @@ import type { NavigationItem } from '../../types/navigation.types';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   setNavigationType: vi.fn(),
+  keyboardConfig: null as null | {
+    onNavigate: (navId: string) => void;
+    onThemeToggle: () => void;
+    onKeyboardShortcutsOpen: () => void;
+    onClose: () => void;
+  },
+  getUserSecondaryNavItems: vi.fn(() => [] as NavigationItem[]),
   currentUserMembershipsWithGroups: [] as unknown[],
   userEventParticipations: [] as unknown[],
   openNavigationAmendments: [] as unknown[],
@@ -20,7 +27,15 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('@/features/navigation/nav-keyboard/use-navigation-keyboard.tsx', () => ({
   useCommandDialogShortcut: vi.fn(),
-  useNavigationKeyboard: vi.fn(),
+  useNavigationKeyboard: vi.fn((config: NonNullable<typeof mocks.keyboardConfig>) => {
+    mocks.keyboardConfig = config;
+  }),
+}));
+
+vi.mock('@/features/navigation/nav-items/nav-items-authenticated.tsx', () => ({
+  navItemsAuthenticated: vi.fn(() => ({
+    getUserSecondaryNavItems: mocks.getUserSecondaryNavItems,
+  })),
 }));
 
 vi.mock('@/features/navigation/state/navigation.store.tsx', () => ({
@@ -81,6 +96,8 @@ const primaryNavItems: NavigationItem[] = [
 beforeEach(() => {
   mocks.navigate.mockReset();
   mocks.setNavigationType.mockReset();
+  mocks.keyboardConfig = null;
+  mocks.getUserSecondaryNavItems.mockClear();
   mocks.currentUserMembershipsWithGroups = [];
   mocks.userEventParticipations = [];
   mocks.openNavigationAmendments = [];
@@ -245,6 +262,96 @@ describe('useNavigationCommandDialogController', () => {
       to: '/amendment/$id',
       params: { id: 'amendment-open' },
     });
+    expect(result.current.open).toBe(false);
+  });
+
+  it('selects primary items through click, href, and fallback routes', () => {
+    const onClick = vi.fn();
+    const { result } = renderHook(() =>
+      useNavigationCommandDialogController({
+        primaryNavItems: [
+          { id: 'action', label: 'Action', icon: 'Home', onClick },
+          { id: 'linked', label: 'Linked', icon: 'Home', href: '/linked' },
+          { id: 'home', label: 'Home', icon: 'Home' },
+          { id: 'settings', label: 'Settings', icon: 'Home' },
+        ],
+        secondaryNavItems: null,
+      })
+    );
+
+    act(() =>
+      result.current.onSelectPrimaryItem(
+        result.current.userNavItems[0] ?? {
+          id: 'action',
+          label: 'Action',
+          icon: 'Home',
+          onClick,
+        }
+      )
+    );
+    act(() =>
+      result.current.onSelectPrimaryItem({
+        id: 'linked',
+        label: 'Linked',
+        icon: 'Home',
+        href: '/linked',
+      })
+    );
+    act(() => result.current.onSelectPrimaryItem({ id: 'home', label: 'Home', icon: 'Home' }));
+    act(() =>
+      result.current.onSelectPrimaryItem({
+        id: 'settings',
+        label: 'Settings',
+        icon: 'Home',
+      })
+    );
+
+    expect(onClick).toHaveBeenCalledOnce();
+    expect(mocks.navigate).toHaveBeenNthCalledWith(1, { to: '/linked' });
+    expect(mocks.navigate).toHaveBeenNthCalledWith(2, { to: '/' });
+    expect(mocks.navigate).toHaveBeenNthCalledWith(3, { to: '/settings' });
+  });
+
+  it('classifies keyboard navigation without changing ambiguous items', () => {
+    const shared = { id: 'shared', label: 'Shared', icon: 'Home' } as NavigationItem;
+    renderHook(() =>
+      useNavigationCommandDialogController({
+        primaryNavItems: [primaryNavItems[0], shared],
+        secondaryNavItems: [{ id: 'secondary', label: 'Secondary', icon: 'Home' }, shared],
+      })
+    );
+
+    act(() => mocks.keyboardConfig!.onNavigate('missing'));
+    act(() => mocks.keyboardConfig!.onNavigate('home'));
+    act(() => mocks.keyboardConfig!.onNavigate('secondary'));
+    act(() => mocks.keyboardConfig!.onNavigate('shared'));
+
+    expect(mocks.navigate).toHaveBeenCalledTimes(3);
+    expect(mocks.setNavigationType.mock.calls).toEqual([['primary'], ['secondary']]);
+  });
+
+  it('handles keyboard close commands and builds authenticated user navigation while open', () => {
+    mocks.getUserSecondaryNavItems.mockReturnValue([
+      { id: 'profile', label: 'Profile', icon: 'Home' },
+    ]);
+    const { result } = renderHook(() =>
+      useNavigationCommandDialogController({
+        primaryNavItems,
+        secondaryNavItems: null,
+      })
+    );
+
+    act(() => mocks.keyboardConfig!.onNavigate('home'));
+    act(() => result.current.setOpen(true));
+    expect(result.current.userNavItems).toHaveLength(1);
+    expect(mocks.getUserSecondaryNavItems).toHaveBeenCalledWith('user-1', true);
+
+    act(() => mocks.keyboardConfig!.onThemeToggle());
+    act(() => result.current.setOpen(true));
+    act(() => mocks.keyboardConfig!.onKeyboardShortcutsOpen());
+    act(() => result.current.setOpen(true));
+    act(() => mocks.keyboardConfig!.onClose());
+
     expect(result.current.open).toBe(false);
   });
 });

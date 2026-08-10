@@ -35,19 +35,21 @@ function uuidPattern() {
 }
 
 async function expectPageText(create: CreateFlowPage, text: string) {
-  const targetText = create.page.getByText(text).first();
+  const targetText = create.page.getByText(text).filter({ visible: true });
 
   try {
-    await expect(targetText).toBeVisible({ timeout: 60_000 });
+    await expect.poll(() => targetText.count(), { timeout: 60_000 }).toBeGreaterThan(0);
     return;
   } catch (error) {
-    const loadingContent = create.page.getByText(/Loading (content|section)\.\.\./).first();
-    const stillLoading = await loadingContent.isVisible().catch(() => false);
+    const loadingContent = create.page
+      .getByText(/Loading (content|section)\.\.\./)
+      .filter({ visible: true });
+    const stillLoading = (await loadingContent.count()) > 0;
 
     if (!stillLoading) throw error;
 
     await create.page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(targetText).toBeVisible({ timeout: 60_000 });
+    await expect.poll(() => targetText.count(), { timeout: 60_000 }).toBeGreaterThan(0);
   }
 }
 

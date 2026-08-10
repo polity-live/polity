@@ -34,6 +34,10 @@ describe('searchMappers', () => {
       const d = new Date('2024-01-01');
       expect(toDate(d)).toBe(d);
     });
+
+    it('should preserve the Unix epoch instead of treating zero as absent', () => {
+      expect(toDate(0).getTime()).toBe(0);
+    });
   });
 
   describe('mapMosaicToContentItems — hashtag extraction', () => {
@@ -328,6 +332,369 @@ describe('searchMappers', () => {
 
     it('should return empty array for null input', () => {
       expect(mapMosaicToContentItems(null as any, emptyAgendaMap)).toEqual([]);
+    });
+
+    it('maps rich results for every searchable entity type', () => {
+      const results = mapMosaicToContentItems(
+        [
+          {
+            _type: 'group',
+            id: 'group-rich',
+            name: 'Group',
+            description: null,
+            created_at: 0,
+            member_count: 4,
+            memberships: [{ id: 'ignored' }],
+            events: [{ id: 'event' }],
+            amendments: [{ id: 'amendment' }],
+            group_hashtags: [],
+          },
+          {
+            _type: 'event',
+            id: 'event-rich',
+            title: 'Event',
+            description: '',
+            created_at: 0,
+            start_date: '2026-01-01T10:00:00.000Z',
+            end_date: '2026-01-01T12:00:00.000Z',
+            participants: [{ id: 'participant' }],
+            creator: { id: 'creator', first_name: 'Event', last_name: 'Owner' },
+            agenda_items: [
+              { election: { id: 'election' }, amendment: null },
+              { election: null, amendment: { id: 'amendment' } },
+            ],
+            event_hashtags: [],
+            group: { id: 'group', name: 'Group' },
+            is_recurring: true,
+            recurrence_pattern: 'weekly',
+          },
+          {
+            _type: 'amendment',
+            id: 'amendment-rich',
+            title: 'Amendment',
+            reason: 'Reason',
+            preamble: 'Preamble',
+            created_at: 0,
+            current_process_run: {
+              branches: [{ id: 'branch', editing_mode: 'vote', branch_sequence: 1 }],
+            },
+            amendment_hashtags: [],
+            group: { id: 'group', name: 'Group' },
+            collaborators: [{ id: 'collaborator' }],
+            change_requests: [{ id: 'change-request' }],
+            vote_entries: [{ id: 'vote' }],
+            comment_count: 2,
+          },
+          {
+            _type: 'blog',
+            id: 'blog-rich',
+            title: 'Blog',
+            description: 'Blog description',
+            created_at: 0,
+            image_url: 'cover.png',
+            bloggers: [
+              {
+                status: 'owner',
+                user_id: 'blog-owner',
+                user: { id: 'blog-owner', first_name: 'Blog', last_name: 'Owner', avatar: 'a.png' },
+              },
+            ],
+            blog_hashtags: [],
+            support_votes: [{ id: 'support' }],
+            comment_count: 3,
+          },
+          {
+            _type: 'statement',
+            id: 'statement-rich',
+            title: 'Statement',
+            text: 'Statement body',
+            created_at: 0,
+            user: {
+              id: 'statement-owner',
+              first_name: 'Statement',
+              last_name: 'Owner',
+              handle: 'owner',
+              avatar: 'owner.png',
+            },
+            group: { id: 'group', name: 'Group', image_url: 'group.png' },
+            support_votes: [{ vote: 1 }, { vote: -1 }, { vote: 0 }],
+            upvotes: 8,
+            downvotes: 7,
+            surveys: [
+              {
+                question: 'Question?',
+                options: [
+                  { label: 'A', votes: [{ id: 'vote' }] },
+                  { label: 'B', votes: undefined },
+                ],
+              },
+            ],
+            statement_hashtags: [],
+            comment_count: 5,
+          },
+          {
+            _type: 'todo',
+            id: 'todo-rich',
+            title: 'Todo',
+            description: 'Todo description',
+            created_at: 0,
+            updated_at: '2026-01-02T00:00:00.000Z',
+            due_date: '2026-01-03T00:00:00.000Z',
+            status: 'completed',
+            archived_at: 1,
+            group: { id: 'group', name: 'Group' },
+            creator: { id: 'todo-owner', first_name: 'Todo', last_name: 'Owner', avatar: 't.png' },
+            assignments: [{ id: 'assignment' }],
+            tags: ['work'],
+          },
+          {
+            _type: 'user',
+            id: 'user-rich',
+            first_name: 'User',
+            last_name: 'Name',
+            bio: 'Biography',
+            created_at: 0,
+            location: 'Hamburg',
+            group_count: 2,
+            amendment_count: 3,
+            group_memberships: [],
+            amendment_collaborations: [],
+            user_hashtags: [],
+          },
+          {
+            _type: 'election',
+            id: 'election-rich',
+            title: 'Election',
+            description: 'Election description',
+            created_at: '2026-02-01T00:00:00.000Z',
+            updated_at: '2026-02-02T00:00:00.000Z',
+            closing_end_time: '2026-02-03T00:00:00.000Z',
+            status: 'running',
+            role: { group: { id: 'group', name: 'Group' } },
+            candidates: [{ id: 'candidate' }],
+            agenda_item: { id: 'agenda', event: { id: 'event' } },
+          },
+          { _type: 'vote', id: 'vote-rich' },
+          {
+            _type: 'video',
+            id: 'video-rich',
+            title: 'Video',
+            description: 'Video description',
+            created_at: 0,
+            video_thumbnail_url: 'thumbnail.png',
+            image_url: 'fallback.png',
+            video_url: 'video.mp4',
+            actor: { id: 'actor', first_name: 'Video', last_name: 'Owner', avatar: 'v.png' },
+            group: { id: 'group', name: 'Group' },
+          },
+          {
+            _type: 'image',
+            id: 'image-rich',
+            title: 'Image',
+            description: 'Image description',
+            created_at: 0,
+            image_url: 'image.png',
+            actor: { id: 'actor', first_name: 'Image', last_name: 'Owner', avatar: 'i.png' },
+            group: { id: 'group', name: 'Group' },
+          },
+        ] as unknown as readonly SearchResultItem[],
+        emptyAgendaMap
+      );
+
+      expect(results.map(result => result.type)).toEqual([
+        'group',
+        'event',
+        'amendment',
+        'blog',
+        'statement',
+        'todo',
+        'user',
+        'election',
+        'vote',
+        'video',
+        'image',
+      ]);
+      expect(results.find(result => result.type === 'statement')).toMatchObject({
+        upvotes: 1,
+        downvotes: 1,
+        surveyOptions: [
+          { label: 'A', voteCount: 1 },
+          { label: 'B', voteCount: 0 },
+        ],
+      });
+      expect(results.find(result => result.type === 'amendment')?.description).toBe('Reason');
+    });
+
+    it('uses event agenda-map and zero fallbacks when inline agenda items are absent', () => {
+      const agendaMap = new Map([
+        [
+          'event-map',
+          [{ election: { id: 'yes' } }, { election: null }, { amendment: { id: 'a' } }],
+        ],
+      ]);
+      const results = mapMosaicToContentItems(
+        [
+          { _type: 'event', id: 'event-map', title: null, agenda_items: undefined },
+          { _type: 'event', id: 'event-zero', title: null, agenda_items: undefined },
+        ] as unknown as readonly SearchResultItem[],
+        agendaMap
+      );
+
+      expect(results.map(result => result.electionsCount)).toEqual([1, 0]);
+      expect(
+        results.every(result => result.startDate === undefined && result.endDate === undefined)
+      ).toBe(true);
+    });
+
+    it('maps minimal results through every optional fallback', () => {
+      const results = mapMosaicToContentItems(
+        [
+          {
+            _type: 'group',
+            id: 'group-minimal',
+            name: null,
+            member_count: undefined,
+            memberships: [{ id: 'member' }],
+          },
+          {
+            _type: 'amendment',
+            id: 'amendment-minimal',
+            title: null,
+            reason: '',
+            preamble: 'Fallback preamble',
+            current_process_run: null,
+          },
+          {
+            _type: 'blog',
+            id: 'blog-minimal',
+            title: null,
+            bloggers: [
+              { status: 'writer', user: null, user_id: null },
+              { status: 'writer', user: { id: 'writer', first_name: 'Writer' }, user_id: 'writer' },
+            ],
+          },
+          {
+            _type: 'statement',
+            id: 'statement-minimal',
+            text: null,
+            user: { id: 'handle-user', first_name: '', last_name: '', handle: 'fallback-handle' },
+            support_votes: undefined,
+            upvotes: 4,
+            downvotes: undefined,
+            surveys: undefined,
+          },
+          {
+            _type: 'statement',
+            id: 'statement-missing-names',
+            text: '',
+            user: { id: 'nameless-user', handle: 'nameless' },
+            support_votes: undefined,
+            upvotes: undefined,
+            downvotes: undefined,
+          },
+          {
+            _type: 'statement',
+            id: 'statement-no-user',
+            text: '',
+            user: null,
+            support_votes: undefined,
+            upvotes: undefined,
+            downvotes: undefined,
+          },
+          {
+            _type: 'todo',
+            id: 'todo-minimal',
+            title: null,
+            status: 'open',
+            archived_at: null,
+            tags: null,
+          },
+          {
+            _type: 'user',
+            id: 'user-derived-location',
+            first_name: 'Derived',
+            location: { id: 'not-a-string' },
+            group_count: undefined,
+            group_memberships: [{ id: 'membership' }],
+            amendment_count: undefined,
+            amendment_collaborations: [{ id: 'collaboration' }],
+          },
+          {
+            _type: 'user',
+            id: 'user-no-location-key',
+            first_name: 'No Location',
+          },
+          {
+            _type: 'election',
+            id: 'election-minimal',
+            title: '',
+            created_at: null,
+            updated_at: null,
+            closing_end_time: null,
+            candidates: undefined,
+            agenda_item: null,
+          },
+          {
+            _type: 'video',
+            id: 'video-minimal',
+            title: '',
+            video_thumbnail_url: '',
+            image_url: 'fallback.png',
+            actor: null,
+            group: null,
+          },
+          {
+            _type: 'image',
+            id: 'image-minimal',
+            title: '',
+            actor: null,
+            group: null,
+          },
+        ] as unknown as readonly SearchResultItem[],
+        emptyAgendaMap
+      );
+
+      expect(results.find(result => result.id === 'group-minimal')?.memberCount).toBe(1);
+      expect(results.find(result => result.id === 'amendment-minimal')?.description).toBe(
+        'Fallback preamble'
+      );
+      expect(results.find(result => result.id === 'blog-minimal')?.authorId).toBe('writer');
+      expect(results.find(result => result.id === 'statement-minimal')).toMatchObject({
+        authorName: 'fallback-handle',
+        upvotes: 4,
+        downvotes: 0,
+      });
+      expect(results.find(result => result.id === 'todo-minimal')?.tags).toEqual([]);
+      expect(results.find(result => result.id === 'election-minimal')?.totalCandidates).toBe(0);
+      expect(results.find(result => result.id === 'video-minimal')?.imageUrl).toBe('fallback.png');
+    });
+
+    it('falls back from a blog owner without a joined user and preserves undefined descriptions', () => {
+      const [blog, group] = mapMosaicToContentItems(
+        [
+          {
+            _type: 'blog',
+            id: 'blog-owner-id',
+            title: 'Blog',
+            description: undefined,
+            bloggers: [{ status: 'owner', user: null, user_id: 'owner-id' }],
+          },
+          {
+            _type: 'group',
+            id: 'group-empty-description',
+            name: 'Group',
+            description: [],
+            member_count: undefined,
+            memberships: undefined,
+          },
+        ] as unknown as readonly SearchResultItem[],
+        emptyAgendaMap
+      );
+
+      expect(blog.authorId).toBe('owner-id');
+      expect(blog.description).toBeUndefined();
+      expect(group.description).toBeNull();
+      expect(group.memberCount).toBeUndefined();
     });
   });
 });

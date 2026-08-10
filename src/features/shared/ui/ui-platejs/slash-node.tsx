@@ -42,8 +42,10 @@ import {
 } from '@/features/shared/ui/rich-text';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
+type GroupName = 'advancedBlocks' | 'ai' | 'basicBlocks' | 'inline';
+
 interface Group {
-  group: string;
+  group: GroupName;
   items: {
     icon: React.ReactNode;
     value: string;
@@ -51,9 +53,15 @@ interface Group {
     className?: string;
     focusEditor?: boolean;
     keywords?: string[];
-    label?: string;
   }[];
 }
+
+const groupTranslationKeys: Record<GroupName, string> = {
+  advancedBlocks: 'plateJs.toolbar.groups.advancedBlocks',
+  ai: 'plateJs.toolbar.groups.ai',
+  basicBlocks: 'plateJs.toolbar.groups.basicBlocks',
+  inline: 'plateJs.toolbar.groups.inline',
+};
 
 const groups: Group[] = [
   {
@@ -195,6 +203,28 @@ const groups: Group[] = [
   },
 ];
 
+const itemTranslationKeys: Record<string, string> = {
+  AI: 'plateJs.toolbar.askAI',
+  [DATA_VIEW_NODE_TYPE]: 'plateJs.dataView.insertTitle',
+  [KEYS.blockquote]: 'plateJs.quote',
+  [KEYS.callout]: 'plateJs.layout.callout',
+  [KEYS.codeBlock]: 'plateJs.code',
+  [KEYS.date]: 'plateJs.toolbar.date',
+  [KEYS.equation]: 'plateJs.equation.newEquation',
+  [KEYS.h1]: 'plateJs.headings.heading1',
+  [KEYS.h2]: 'plateJs.headings.heading2',
+  [KEYS.h3]: 'plateJs.headings.heading3',
+  [KEYS.inlineEquation]: 'plateJs.toolbar.inlineEquation',
+  [KEYS.listTodo]: 'plateJs.lists.todo',
+  [KEYS.ol]: 'plateJs.lists.numbered',
+  [KEYS.p]: 'plateJs.text',
+  [KEYS.table]: 'plateJs.toolbar.tableButton',
+  [KEYS.toc]: 'plateJs.toolbar.tableOfContents.title',
+  [KEYS.toggle]: 'plateJs.lists.toggle',
+  [KEYS.ul]: 'plateJs.lists.bulleted',
+  action_three_columns: 'plateJs.layout.threeColumns',
+};
+
 export function SlashInputElement(props: PlateElementProps<TComboboxInputElement>) {
   const { editor, element } = props;
   const { t } = useTranslation();
@@ -208,59 +238,14 @@ export function SlashInputElement(props: PlateElementProps<TComboboxInputElement
           <InlineComboboxEmpty>{t('commandDialog.noResults')}</InlineComboboxEmpty>
 
           {groups.map(({ group, items }) => {
-            // Map group names to their translation keys
-            const getGroupTranslationKey = (groupName: string) => {
-              switch (groupName) {
-                case 'basicBlocks':
-                  return 'plateJs.toolbar.groups.basicBlocks';
-                case 'lists':
-                  return 'plateJs.toolbar.groups.lists';
-                case 'media':
-                  return 'plateJs.toolbar.groups.media';
-                case 'advancedBlocks':
-                  return 'plateJs.toolbar.groups.advancedBlocks';
-                case 'inline':
-                  return 'plateJs.toolbar.groups.inline';
-                case 'ai':
-                  return 'plateJs.toolbar.groups.ai';
-                default:
-                  return 'plateJs.toolbar.groups.basicBlocks'; // fallback
-              }
-            };
-
             return (
               <InlineComboboxGroup key={group}>
                 <InlineComboboxGroupLabel>
-                  {t(getGroupTranslationKey(group))}
+                  {t(groupTranslationKeys[group], { defaultValue: group })}
                 </InlineComboboxGroupLabel>
 
-                {items.map(({ focusEditor, icon, keywords, label, value, onSelect }) => {
-                  // Get translated label based on the value
-                  let translatedLabel = label;
-                  if (value === 'AI') translatedLabel = t('plateJs.toolbar.askAI');
-                  else if (value === KEYS.p) translatedLabel = t('plateJs.text');
-                  else if (value === KEYS.h1) translatedLabel = t('plateJs.headings.heading1');
-                  else if (value === KEYS.h2) translatedLabel = t('plateJs.headings.heading2');
-                  else if (value === KEYS.h3) translatedLabel = t('plateJs.headings.heading3');
-                  else if (value === KEYS.ul) translatedLabel = t('plateJs.lists.bulleted');
-                  else if (value === KEYS.ol) translatedLabel = t('plateJs.lists.numbered');
-                  else if (value === KEYS.listTodo) translatedLabel = t('plateJs.lists.todo');
-                  else if (value === KEYS.toggle) translatedLabel = t('plateJs.lists.toggle');
-                  else if (value === KEYS.codeBlock) translatedLabel = t('plateJs.code');
-                  else if (value === KEYS.table) translatedLabel = t('plateJs.toolbar.tableButton');
-                  else if (value === KEYS.blockquote) translatedLabel = t('plateJs.quote');
-                  else if (value === KEYS.callout) translatedLabel = t('plateJs.layout.callout');
-                  else if (value === KEYS.toc)
-                    translatedLabel = t('plateJs.toolbar.tableOfContents.title');
-                  else if (value === 'action_three_columns')
-                    translatedLabel = t('plateJs.layout.threeColumns');
-                  else if (value === KEYS.equation)
-                    translatedLabel = t('plateJs.equation.newEquation');
-                  else if (value === KEYS.date) translatedLabel = t('plateJs.toolbar.date');
-                  else if (value === KEYS.inlineEquation)
-                    translatedLabel = t('plateJs.toolbar.inlineEquation');
-                  else if (value === DATA_VIEW_NODE_TYPE)
-                    translatedLabel = t('plateJs.dataView.insertTitle');
+                {items.map(({ focusEditor, icon, keywords, value, onSelect }) => {
+                  const translatedLabel = t(itemTranslationKeys[value], { defaultValue: value });
 
                   return (
                     <InlineComboboxItem
@@ -273,7 +258,7 @@ export function SlashInputElement(props: PlateElementProps<TComboboxInputElement
                       keywords={keywords}
                     >
                       <div className="text-muted-foreground mr-2">{icon}</div>
-                      {translatedLabel ?? value}
+                      {translatedLabel}
                     </InlineComboboxItem>
                   );
                 })}

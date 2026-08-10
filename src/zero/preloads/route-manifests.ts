@@ -902,10 +902,7 @@ export function createIntentTaskForHref(href: string, userId?: string): PreloadT
 }
 
 function taskForPath(tasks: readonly PreloadTask[], pathname: string) {
-  const rootHref = tasks.reduce(
-    (shortest, item) => (item.route.href.length < shortest.length ? item.route.href : shortest),
-    tasks[0]?.route.href ?? ''
-  );
+  const rootHref = tasks[0].route.href;
   return [...tasks]
     .sort((left, right) => right.route.href.length - left.route.href.length)
     .find(
@@ -916,6 +913,6 @@ function taskForPath(tasks: readonly PreloadTask[], pathname: string) {
 }
 
 function taskForAlias(tasks: readonly PreloadTask[], suffix: string, pathname: string) {
-  const matched = tasks.find(item => item.key.endsWith(`:${suffix}`));
-  return matched ? { ...matched, route: { href: pathname } } : undefined;
+  const matched = tasks.find(item => item.key.endsWith(`:${suffix}`)) as PreloadTask;
+  return { ...matched, route: { href: pathname } };
 }

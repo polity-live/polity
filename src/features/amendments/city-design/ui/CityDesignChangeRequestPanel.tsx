@@ -122,6 +122,7 @@ export function CityDesignChangeRequestCanvasList({
           </div>
           {selectedChangeRequestId ? (
             <Button
+              data-action-id="amendments.city-cr.close.selection"
               type="button"
               variant="ghost"
               size="icon"
@@ -206,7 +207,6 @@ export function CityDesignChangeRequestPanel({
 
   const submitComment = async () => {
     const text = commentValue.trim();
-    if (!text) return;
     setCommentValue('');
     await onCommentSubmit?.(changeRequest.id, text);
     setIsCommenting(false);
@@ -257,6 +257,7 @@ export function CityDesignChangeRequestPanel({
               )}
               {onTitleChange ? (
                 <Button
+                  data-action-id="amendments.city-cr.edit.title"
                   type="button"
                   variant="ghost"
                   size="icon"
@@ -273,6 +274,7 @@ export function CityDesignChangeRequestPanel({
 
         {onClose ? (
           <Button
+            data-action-id="amendments.city-cr.close.details"
             type="button"
             variant="ghost"
             size="icon"
@@ -342,6 +344,7 @@ export function CityDesignChangeRequestPanel({
       {canVote ? (
         <div className="grid grid-cols-3 gap-2">
           <Button
+            data-action-id="amendments.city-cr.vote.accept"
             type="button"
             variant="default"
             presentation="success"
@@ -352,6 +355,7 @@ export function CityDesignChangeRequestPanel({
             {getVoteLabel('accept', t)}
           </Button>
           <Button
+            data-action-id="amendments.city-cr.vote.reject"
             type="button"
             variant="destructive"
             className={cn(currentUserVote === 'reject' && 'ring-ring ring-2 ring-offset-1')}
@@ -361,6 +365,7 @@ export function CityDesignChangeRequestPanel({
             {getVoteLabel('reject', t)}
           </Button>
           <Button
+            data-action-id="amendments.city-cr.vote.abstain"
             type="button"
             variant="outline"
             className={cn(currentUserVote === 'abstain' && 'ring-ring ring-2 ring-offset-1')}
@@ -374,7 +379,12 @@ export function CityDesignChangeRequestPanel({
       {canFinalize ? (
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button type="button" variant="outline" className="w-full">
+            <Button
+              data-action-id="amendments.city-cr.open.finalize-dialog"
+              type="button"
+              variant="outline"
+              className="w-full"
+            >
               <CheckCircle2 className="mr-2 size-4" />
               {t(
                 'features.amendments.changeRequests.actions.finalizeInternalVote',
@@ -405,7 +415,10 @@ export function CityDesignChangeRequestPanel({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>{t('common.actions.cancel', 'Cancel')}</AlertDialogCancel>
-              <AlertDialogAction onClick={() => void onFinalize?.(changeRequest.id)}>
+              <AlertDialogAction
+                data-action-id="amendments.city-cr.confirm.finalize"
+                onClick={() => void onFinalize?.(changeRequest.id)}
+              >
                 {t(
                   'features.amendments.changeRequests.actions.finalizeInternalVote',
                   'Interne Abstimmung beenden'
@@ -418,7 +431,10 @@ export function CityDesignChangeRequestPanel({
 
       <Accordion type="single" collapsible defaultValue="properties">
         <AccordionItem value="properties">
-          <AccordionTrigger className="text-sm font-semibold">
+          <AccordionTrigger
+            data-action-id="amendments.city-cr.toggle.diff"
+            className="text-sm font-semibold"
+          >
             <span className="flex items-center gap-2">
               <Pencil className="text-muted-foreground size-4" />
               {t('features.amendments.cityDesign.changeRequests.diff', 'Changed properties')}
@@ -479,6 +495,7 @@ export function CityDesignChangeRequestPanel({
         <DiscussionActionBar>
           {!isCommenting && currentUserId ? (
             <Button
+              data-action-id="amendments.city-cr.open.reply"
               type="button"
               variant="ghost"
               size="sm"
@@ -507,6 +524,7 @@ export function CityDesignChangeRequestPanel({
               onChange={event => setCommentValue(event.target.value)}
             />
             <Button
+              data-action-id="amendments.city-cr.submit.comment"
               type="button"
               variant="ghost"
               size="icon"
@@ -555,6 +573,7 @@ function CityDesignChangeRequestListItem({
   const voteCounts = getVoteCounts(changeRequest);
   return (
     <button
+      data-action-id="amendments.city-cr.select.list-item"
       type="button"
       className={cn(
         'hover:bg-muted/40 focus-visible:ring-ring w-full rounded-md border p-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
@@ -872,9 +891,9 @@ function getChangeRequestAuthor(
 ) {
   const user = changeRequest.user;
   const rawName =
-    user?.name ??
-    [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim() ??
-    user?.email ??
+    user?.name ||
+    [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim() ||
+    user?.email ||
     null;
   const collaborator = collaborators.find(
     item => item.user.id === (changeRequest.user_id ?? changeRequest.userId ?? user?.id)
@@ -944,3 +963,31 @@ function getToneBadgeClassName(tone: string) {
   if (tone === 'update') return getBadgeToneClasses('info');
   return getBadgeToneClasses('neutral');
 }
+
+export const cityDesignChangeRequestPanelInternals = {
+  buildPropertyRows,
+  buildObjectInspectorRows,
+  objectValueRow,
+  objectLabel,
+  geometryWidth,
+  geometryLength,
+  geometryArea,
+  geometryRotation,
+  objectUnitCost,
+  objectTotalCost,
+  objectSuggestedCost,
+  formatNumber,
+  formatValue,
+  getVoteCounts,
+  getCurrentUserVote,
+  getVoteLabel,
+  getDiscussionForChangeRequest,
+  getChangeRequestAuthor,
+  getCommentAuthor,
+  getCommentUserId,
+  extractPlainText,
+  extractNodeText,
+  getInitial,
+  getToneDotClassName,
+  getToneBadgeClassName,
+};

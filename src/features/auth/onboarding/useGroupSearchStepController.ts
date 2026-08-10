@@ -8,6 +8,13 @@ import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 
 type PublicGroup = NonNullable<ReturnType<typeof usePublicGroups>['groups']>[number];
+type NormalizedOnboardingGroup = Group & {
+  hashtags: string[];
+  member_count: number;
+};
+type SearchableOnboardingGroup = NormalizedOnboardingGroup & {
+  matchingInterestTags: string[];
+};
 
 interface GroupSearchStepProps {
   selectedGroups: Group[];
@@ -21,7 +28,7 @@ interface GroupSearchStepProps {
   isLoading?: boolean;
 }
 
-function toOnboardingGroup(group: PublicGroup): Group {
+function toOnboardingGroup(group: PublicGroup): NormalizedOnboardingGroup {
   const location = formatLocation(group);
   const description = richTextToPlainText(group.description);
   const hashtags =
@@ -76,10 +83,9 @@ export function useGroupSearchStepController({
   const groups = useMemo(() => {
     return (groupsData ?? []).map(group => {
       const onboardingGroup = toOnboardingGroup(group);
-      const matchingInterestTags =
-        onboardingGroup.hashtags?.filter(tag =>
-          normalizedInterestTags.includes(tag.toLowerCase())
-        ) ?? [];
+      const matchingInterestTags = onboardingGroup.hashtags.filter(tag =>
+        normalizedInterestTags.includes(tag.toLowerCase())
+      );
 
       return {
         ...onboardingGroup,
@@ -90,13 +96,13 @@ export function useGroupSearchStepController({
 
   // Filter groups based on search term
   const filteredGroups = useMemo(() => {
-    const sortByInterestMatch = (groupList: Group[]) =>
+    const sortByInterestMatch = (groupList: SearchableOnboardingGroup[]) =>
       [...groupList].sort((left, right) => {
-        const leftMatches = left.matchingInterestTags?.length ?? 0;
-        const rightMatches = right.matchingInterestTags?.length ?? 0;
+        const leftMatches = left.matchingInterestTags.length;
+        const rightMatches = right.matchingInterestTags.length;
 
         if (leftMatches !== rightMatches) return rightMatches - leftMatches;
-        return (right.member_count ?? 0) - (left.member_count ?? 0);
+        return right.member_count - left.member_count;
       });
 
     if (!searchTerm.trim()) {

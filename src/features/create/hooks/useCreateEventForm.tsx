@@ -345,11 +345,9 @@ export function useCreateEventForm(): CreateFormConfig {
   const timeSeriesValidationMessage =
     timeSeriesValidationError === 'missing-required-range'
       ? t('pages.create.event.timeSeries.validation.dateTimeRangeRequired')
-      : timeSeriesValidationError === 'missing-start-date'
-        ? t('pages.create.event.timeSeries.validation.startDateRequired')
-        : timeSeriesValidationError === 'missing-weekdays'
-          ? t('pages.create.event.timeSeries.validation.weekdaysRequired')
-          : null;
+      : timeSeriesValidationError === 'missing-weekdays'
+        ? t('pages.create.event.timeSeries.validation.weekdaysRequired')
+        : null;
   const processSchedulingValidationMessage = getSchedulingWindowValidationMessage({
     startDate,
     startTime,
@@ -424,7 +422,7 @@ export function useCreateEventForm(): CreateFormConfig {
       return createBlockedSubmitOutcome();
     }
     if (!selectedGroupIsValid) {
-      toast.error(groupInvalidReason ?? t('pages.create.error.createFailed'));
+      toast.error(groupInvalidReason);
       return createBlockedSubmitOutcome();
     }
     if (eventType === 'delegate_assembly' && !canCreateDelegateAssemblyForGroup(group)) {
@@ -434,11 +432,6 @@ export function useCreateEventForm(): CreateFormConfig {
 
     if (timeSeriesValidationError === 'missing-required-range') {
       toast.error(t('pages.create.event.timeSeries.validation.dateTimeRangeRequired'));
-      return createBlockedSubmitOutcome();
-    }
-
-    if (timeSeriesValidationError === 'missing-start-date') {
-      toast.error(t('pages.create.event.timeSeries.validation.startDateRequired'));
       return createBlockedSubmitOutcome();
     }
 
@@ -1304,7 +1297,7 @@ export function useCreateEventForm(): CreateFormConfig {
   return config;
 }
 
-function createReturnToSubmitTarget(returnTo: string, label: string) {
+export function createReturnToSubmitTarget(returnTo: string, label: string) {
   const routeTarget = parseInternalReturnTo(returnTo);
 
   if (routeTarget) {
@@ -1320,7 +1313,7 @@ function createReturnToSubmitTarget(returnTo: string, label: string) {
   });
 }
 
-function parseInternalReturnTo(returnTo: string): {
+export function parseInternalReturnTo(returnTo: string): {
   to: string;
   search?: Record<string, string>;
   hash?: string;

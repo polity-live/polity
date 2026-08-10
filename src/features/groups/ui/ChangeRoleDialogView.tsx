@@ -107,6 +107,7 @@ export function ChangeRoleDialogView({
                     className="hover:bg-accent flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors"
                   >
                     <FormControlCheckbox
+                      data-action-id="groups.roles.change.toggle-role"
                       id={`role-${role.id}`}
                       checked={isChecked}
                       onCheckedChange={checked => toggleRoleSelection(role.id, checked === true)}
@@ -129,6 +130,7 @@ export function ChangeRoleDialogView({
             <div className={featureThemeClassName('groupChangeRoleDialogThemedGradientSurface')}>
               <CollapsibleTrigger asChild>
                 <Button
+                  data-action-id="groups.roles.change.toggle-rights"
                   type="button"
                   variant="ghost"
                   className="hover:bg-muted/40 flex h-auto w-full items-center justify-between rounded-none px-4 py-4 text-left"
@@ -186,10 +188,16 @@ export function ChangeRoleDialogView({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
+          <Button
+            data-action-id="groups.roles.change.cancel"
+            variant="outline"
+            onClick={() => handleOpenChange(false)}
+          >
             {cancelLabel}
           </Button>
-          <Button onClick={handleConfirm}>{submitLabel}</Button>
+          <Button data-action-id="groups.roles.change.confirm" onClick={handleConfirm}>
+            {submitLabel}
+          </Button>
         </DialogFooter>
       </ScrollableDialogContent>
     </Dialog>

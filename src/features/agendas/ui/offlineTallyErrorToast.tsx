@@ -19,7 +19,12 @@ function buildNoVotingPasswordDescription(message: string, userId?: string | nul
   return (
     <span>
       {message} {translateText('common.votingPassword.missingSettingsPrefix')}{' '}
-      <Link to={settingsHref} className="font-medium underline underline-offset-4">
+      <Link
+        data-action-id="agendas.offline-tally.password-settings.navigate"
+        data-action-kind="navigation"
+        to={settingsHref}
+        className="font-medium underline underline-offset-4"
+      >
         {translateText('common.votingPassword.settingsLink')}
       </Link>{' '}
       {translateText('common.votingPassword.continueSuffix')}

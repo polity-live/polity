@@ -84,7 +84,10 @@ export function GroupInvitePeopleInput({
         <CardContent className="space-y-3">
           <Accordion type="single" collapsible>
             <AccordionItem value="csv-format" className="border-none">
-              <AccordionTrigger className="hover:bg-muted/50 rounded-md px-3 py-2 text-sm hover:no-underline">
+              <AccordionTrigger
+                data-action-id="create.group-invite.csv-guide.toggle"
+                className="hover:bg-muted/50 rounded-md px-3 py-2 text-sm hover:no-underline"
+              >
                 {csvGuideTrigger}
               </AccordionTrigger>
               <AccordionContent className="space-y-3 px-1 pt-2">
@@ -103,6 +106,7 @@ export function GroupInvitePeopleInput({
       </Card>
       <div className="flex items-center gap-2">
         <FileUploadTrigger
+          data-action-id="create.group-invite.csv.upload"
           inputProps={{ id: 'csv-upload', accept: '.csv', onChange: onCsvUpload }}
           variant="outline"
           className="h-auto cursor-pointer px-3 py-2 text-sm"

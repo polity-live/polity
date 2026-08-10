@@ -24,6 +24,7 @@ export function StatusInput({ value, onChange }: StatusInputProps) {
       <div className="flex gap-2">
         {options.map(opt => (
           <Button
+            data-action-id="create.todo-status.select"
             key={opt.value}
             type="button"
             variant={value === opt.value ? 'default' : 'outline'}

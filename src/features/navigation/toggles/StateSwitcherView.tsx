@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface StateSwitcherViewProps {
   isMobile: boolean;
@@ -70,12 +71,14 @@ export function StateSwitcherView({
             size="icon"
             className="hover:bg-accent h-12 w-12"
             onMouseEnter={onMobileTriggerMouseEnter}
+            aria-label={translateText('navigation.toggles.state.moreOptions')}
+            data-action-id="navigation.state-switcher.mobile.open"
           >
             <MoreHorizontal className="h-5 w-5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          side={isPrimary ? 'top' : 'top'}
+          side="top"
           align="end"
           className="p-1"
           style={{ width: 'max-content', minWidth: 'fit-content' }}
@@ -110,6 +113,8 @@ export function StateSwitcherView({
             size="icon"
             className="h-8 w-8"
             onMouseEnter={onDesktopTriggerMouseEnter}
+            aria-label={translateText('navigation.toggles.state.moreOptions')}
+            data-action-id="navigation.state-switcher.desktop.open"
           >
             <MoreHorizontal className="h-4 w-4" />
           </Button>

@@ -5,10 +5,6 @@ export function useNetworkViewportPanelController(minHeight: number) {
   const [height, setHeight] = useState(minHeight);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
     let frameId = 0;
 
     const measure = () => {

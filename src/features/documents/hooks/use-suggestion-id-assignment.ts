@@ -45,7 +45,7 @@ export function useSuggestionIdAssignment({
 
   const assignMissingIds = React.useCallback(async () => {
     if (!enabled) return;
-    if (!documentId || !discussions || discussions.length === 0) return;
+    if (!documentId || discussions.length === 0) return;
 
     const updatedDiscussions = [...discussions];
     let hasChanges = false;
@@ -65,29 +65,24 @@ export function useSuggestionIdAssignment({
       for (const discussion of discussionsNeedingIds) {
         const crId = getNextSuggestionIdFromDiscussions(updatedDiscussions);
         const index = updatedDiscussions.findIndex(d => d.id === discussion.id);
-
-        if (index !== -1) {
-          updatedDiscussions[index] = {
-            ...updatedDiscussions[index],
-            crId,
-            confirmationStatus: requiresEventConfirmation
-              ? (updatedDiscussions[index].confirmationStatus ?? 'pending')
-              : updatedDiscussions[index].confirmationStatus,
-            changeRequestStatus: requiresEventConfirmation
-              ? (updatedDiscussions[index].changeRequestStatus ?? 'pending_submission')
-              : updatedDiscussions[index].changeRequestStatus,
-          };
-          processedDiscussions.current.add(discussion.id);
-          hasChanges = true;
-        }
+        updatedDiscussions[index] = {
+          ...updatedDiscussions[index],
+          crId,
+          confirmationStatus: requiresEventConfirmation
+            ? (updatedDiscussions[index].confirmationStatus ?? 'pending')
+            : updatedDiscussions[index].confirmationStatus,
+          changeRequestStatus: requiresEventConfirmation
+            ? (updatedDiscussions[index].changeRequestStatus ?? 'pending_submission')
+            : updatedDiscussions[index].changeRequestStatus,
+        };
+        processedDiscussions.current.add(discussion.id);
+        hasChanges = true;
       }
     }
 
     if (requiresEventConfirmation) {
       for (const discussion of updatedDiscussions) {
         const index = updatedDiscussions.findIndex(d => d.id === discussion.id);
-        if (index === -1) continue;
-
         const nextConfirmationStatus = discussion.confirmationStatus ?? 'pending';
 
         if (discussion.confirmationStatus !== nextConfirmationStatus) {
@@ -105,10 +100,13 @@ export function useSuggestionIdAssignment({
     // Pass 2: Create change_request entities for discussions that have crId but no entity
     if (onChangeRequestCreate) {
       const discussionsNeedingEntity = updatedDiscussions.filter(
-        discussion =>
-          discussion.crId &&
-          !discussion.changeRequestEntityId &&
-          !processedEntities.current.has(discussion.id)
+        (discussion): discussion is typeof discussion & { crId: string } => {
+          return Boolean(
+            discussion.crId &&
+            !discussion.changeRequestEntityId &&
+            !processedEntities.current.has(discussion.id)
+          );
+        }
       );
 
       if (discussionsNeedingEntity.length > 0) {
@@ -127,50 +125,45 @@ export function useSuggestionIdAssignment({
 
         for (const discussion of discussionsNeedingEntity) {
           const crId = discussion.crId;
-          if (!crId) {
-            continue;
-          }
 
           const changeRequestEntityId = crypto.randomUUID();
           const index = updatedDiscussions.findIndex(d => d.id === discussion.id);
 
-          if (index !== -1) {
-            editorSelectionDebugLog('suggestion-assignment:pass2:before-update', {
-              changeRequestEntityId,
-              crId,
-              discussion: summarizeDiscussion(updatedDiscussions[index]),
-              discussionId: discussion.id,
-              documentId,
-            });
+          editorSelectionDebugLog('suggestion-assignment:pass2:before-update', {
+            changeRequestEntityId,
+            crId,
+            discussion: summarizeDiscussion(updatedDiscussions[index]),
+            discussionId: discussion.id,
+            documentId,
+          });
 
-            const nextDiscussions = [...updatedDiscussions];
-            nextDiscussions[index] = {
-              ...updatedDiscussions[index],
-              changeRequestEntityId,
-              changeRequestStatus: requiresEventConfirmation ? 'pending_submission' : 'open',
-            };
+          const nextDiscussions = [...updatedDiscussions];
+          nextDiscussions[index] = {
+            ...updatedDiscussions[index],
+            changeRequestEntityId,
+            changeRequestStatus: requiresEventConfirmation ? 'pending_submission' : 'open',
+          };
 
-            editorSelectionDebugLog('suggestion-assignment:pass2:after-update', {
-              changeRequestEntityId,
-              crId,
-              discussion: summarizeDiscussion(nextDiscussions[index]),
-              discussionId: discussion.id,
-              documentId,
-            });
+          editorSelectionDebugLog('suggestion-assignment:pass2:after-update', {
+            changeRequestEntityId,
+            crId,
+            discussion: summarizeDiscussion(nextDiscussions[index]),
+            discussionId: discussion.id,
+            documentId,
+          });
 
-            const created = await onChangeRequestCreate({
-              crId,
-              discussionId: discussion.id,
-              changeRequestEntityId,
-              status: requiresEventConfirmation ? 'pending_submission' : 'open',
-              votingStatus: requiresEventConfirmation ? 'pending_submission' : 'open',
-              discussions: nextDiscussions,
-            });
+          const created = await onChangeRequestCreate({
+            crId,
+            discussionId: discussion.id,
+            changeRequestEntityId,
+            status: requiresEventConfirmation ? 'pending_submission' : 'open',
+            votingStatus: requiresEventConfirmation ? 'pending_submission' : 'open',
+            discussions: nextDiscussions,
+          });
 
-            if (created !== false) {
-              updatedDiscussions.splice(0, updatedDiscussions.length, ...nextDiscussions);
-              processedEntities.current.add(discussion.id);
-            }
+          if (created !== false) {
+            updatedDiscussions.splice(0, updatedDiscussions.length, ...nextDiscussions);
+            processedEntities.current.add(discussion.id);
           }
         }
       }

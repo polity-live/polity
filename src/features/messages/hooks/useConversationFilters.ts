@@ -5,7 +5,7 @@ import { isAssistantConversation } from '@/features/assistant/logic/assistantHel
 
 export type ConversationFilter = 'all' | 'direct' | 'group' | 'event' | 'ai';
 
-function sortConversations(left: Conversation, right: Conversation) {
+export function sortConversations(left: Conversation, right: Conversation) {
   if (left.pinned && !right.pinned) return -1;
   if (!left.pinned && right.pinned) return 1;
 

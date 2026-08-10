@@ -16,23 +16,23 @@ import { localizeAppError } from '@/features/shared/errors/app-error';
 
 export type MembershipStatus = 'invited' | 'requested' | 'member' | 'admin';
 
-function isGuestOnlySiblingMembershipMode(mode: string | null | undefined) {
+export function isGuestOnlySiblingMembershipMode(mode: string | null | undefined) {
   return mode === 'all_members' || mode === 'role_members' || mode === 'selected_source_groups';
 }
 
-function isAdminRole(roleName: string | null | undefined) {
+export function isAdminRole(roleName: string | null | undefined) {
   return roleName === 'Admin' || roleName === 'Board Member';
 }
 
-function isMemberRole(roleName: string | null | undefined) {
+export function isMemberRole(roleName: string | null | undefined) {
   return roleName === 'Member' || isAdminRole(roleName);
 }
 
-function isActiveMembershipStatus(status: string | null | undefined) {
+export function isActiveMembershipStatus(status: string | null | undefined) {
   return status === 'active' || status === 'member' || status === 'admin';
 }
 
-function normalizeMembershipStatus(
+export function normalizeMembershipStatus(
   status: string | null | undefined,
   roleName: string | null | undefined
 ): MembershipStatus | null {
@@ -75,7 +75,7 @@ export function useGroupMembership(
   };
 
   // Handle multiple memberships - prioritize admin, then member, then invited, then requested
-  const memberships = data.groupMemberships || [];
+  const memberships = data.groupMemberships;
   let membership = memberships[0];
   const guestAccess = projectedState?.guestAccesses[0] ?? (guestAccessesData || [])[0] ?? null;
 
@@ -246,17 +246,11 @@ export function useGroupMembership(
               id: membership.id,
             })
           )
-        : !guestAccessId
-          ? null
-          : zero.mutate(
-              mutators.groups.revokeGuestAccess({
-                id: guestAccessId,
-              })
-            );
-
-      if (!result) {
-        return;
-      }
+        : zero.mutate(
+            mutators.groups.revokeGuestAccess({
+              id: guestAccessId,
+            })
+          );
 
       trackServerFinalization(result, {
         onError: error =>
@@ -301,17 +295,11 @@ export function useGroupMembership(
               id: membership.id,
             })
           )
-        : !guestAccessId
-          ? null
-          : zero.mutate(
-              mutators.groups.acceptGuestInvitation({
-                id: guestAccessId,
-              })
-            );
-
-      if (!result) {
-        return;
-      }
+        : zero.mutate(
+            mutators.groups.acceptGuestInvitation({
+              id: guestAccessId,
+            })
+          );
       trackServerFinalization(result, {
         onSuccess: () =>
           console.info('Server successful', {

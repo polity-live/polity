@@ -28,11 +28,17 @@ describe('DeferredLandingPreview', () => {
       thresholds = [0.01];
     }
     vi.stubGlobal('IntersectionObserver', IntersectionObserverMock);
-    const load = vi.fn(async () => ({ default: () => <div>Interactive preview</div> }));
+    const load = vi.fn(async () => ({
+      default: () => <div>Interactive preview</div>,
+    }));
 
     render(<DeferredLandingPreview load={load} minHeight={320} label="Preview" />);
     expect(load).not.toHaveBeenCalled();
-    expect(observerOptions).toMatchObject({ rootMargin: '400px 0px', threshold: 0.01 });
+    expect(screen.getByRole('status', { name: 'Preview' })).toBeTruthy();
+    expect(observerOptions).toMatchObject({
+      rootMargin: '400px 0px',
+      threshold: 0.01,
+    });
 
     intersectionCallback?.(
       [{ isIntersecting: true } as IntersectionObserverEntry],
@@ -45,7 +51,9 @@ describe('DeferredLandingPreview', () => {
 
   it('loads immediately when IntersectionObserver is unavailable', async () => {
     vi.stubGlobal('IntersectionObserver', undefined);
-    const load = vi.fn(async () => ({ default: () => <div>Fallback preview</div> }));
+    const load = vi.fn(async () => ({
+      default: () => <div>Fallback preview</div>,
+    }));
 
     const { container } = render(
       <DeferredLandingPreview load={load} minHeight={360} label="Preview" />
@@ -63,10 +71,18 @@ describe('DeferredLandingPreview', () => {
       .mockRejectedValueOnce(new Error('chunk failed'))
       .mockResolvedValueOnce({ default: () => <div>Recovered preview</div> });
 
-    render(<DeferredLandingPreview load={load} minHeight={320} label="Preview unavailable" />);
+    const { container } = render(
+      <DeferredLandingPreview load={load} minHeight={320} label="Preview unavailable" />
+    );
     expect(await screen.findByRole('alert')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    const retry = container.querySelector<HTMLElement>(
+      '[data-action-id="public-landing.deferred-preview.retry"]'
+    );
+    expect(retry).not.toBeNull();
+    retry!.focus();
+    expect(document.activeElement).toBe(retry);
+    fireEvent.click(retry!);
     await waitFor(() => expect(screen.getByText('Recovered preview')).toBeTruthy());
     expect(load).toHaveBeenCalledTimes(2);
   });

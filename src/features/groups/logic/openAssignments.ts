@@ -142,8 +142,8 @@ function isFutureOrOngoingEvent(
     return false;
   }
 
-  const endDate = event.end_date ?? event.start_date ?? 0;
-  return endDate >= referenceTime;
+  const endDate = event.end_date ?? event.start_date;
+  return endDate != null && endDate >= referenceTime;
 }
 
 export function getRemainingSeatCount(
@@ -210,10 +210,10 @@ export function buildDelegateElectionAssignments(args: {
   }
 
   return args.allocations
-    .filter(allocation => (allocation.allocated_seats ?? 0) > 0 && allocation.event?.id)
-    .map<GroupOpenAssignment>(allocation => {
-      const targetEvent = allocation.event || null;
-      const seatCount = Math.max(0, allocation.allocated_seats ?? 0);
+    .flatMap<GroupOpenAssignment>(allocation => {
+      const targetEvent = allocation.event;
+      const seatCount = allocation.allocated_seats;
+      if (!targetEvent?.id || seatCount == null || seatCount <= 0) return [];
       const completedSeatCount = Math.max(
         0,
         (allocation.event?.delegates || [])
@@ -222,10 +222,8 @@ export function buildDelegateElectionAssignments(args: {
           )
           .reduce((sum, delegate) => sum + Math.max(1, delegate.seat_count ?? 1), 0)
       );
-      const scheduledSeatCount = Math.max(
-        0,
-        scheduledSeatIdsByTargetEventId.get(targetEvent?.id || '')?.size ?? 0
-      );
+      const scheduledSeatIds = scheduledSeatIdsByTargetEventId.get(targetEvent.id);
+      const scheduledSeatCount = scheduledSeatIds ? scheduledSeatIds.size : 0;
       const remainingSeatCount = Math.max(0, seatCount - completedSeatCount - scheduledSeatCount);
       const status: OpenAssignmentStatus =
         completedSeatCount >= seatCount
@@ -234,31 +232,35 @@ export function buildDelegateElectionAssignments(args: {
             ? 'scheduled'
             : 'open';
 
-      return {
-        id: `delegate:${allocation.id}`,
-        kind: 'delegate_election',
-        status,
-        title: translateText('generated.inline.0149_delegiertenwahl_fuer_valuedb90_6f57955f', {
-          valuedb90: targetEvent?.title || 'Ziel-Event',
-        }),
-        description: translateText(
-          'generated.inline.0150_value3d87_hat_aktuell_seatcount_delegiertensi_99134e30',
-          {
-            value3d87: allocation.group?.name || 'Diese Untergruppe',
-            seatCount: seatCount,
-            value5d0f: seatCount === 1 ? '' : 'e',
-            value6606: targetEvent?.group?.name || 'die Zielgruppe',
-          }
-        ),
-        seatCount,
-        scheduledSeatCount,
-        completedSeatCount,
-        remainingSeatCount,
-        sourceGroup: allocation.group ?? null,
-        targetGroup: targetEvent?.group ?? null,
-        linkedEvent: linkedEventByTargetEventId.get(targetEvent?.id || '') ?? null,
-        targetEvent,
-      };
+      return [
+        {
+          id: `delegate:${allocation.id}`,
+          kind: 'delegate_election',
+          status,
+          title: translateText('generated.inline.0149_delegiertenwahl_fuer_valuedb90_6f57955f', {
+            valuedb90: targetEvent?.title || 'Ziel-Event',
+          }),
+          description: translateText(
+            'generated.inline.0150_value3d87_hat_aktuell_seatcount_delegiertensi_99134e30',
+            {
+              value3d87: allocation.group?.name || 'Diese Untergruppe',
+              seatCount: seatCount,
+              value5d0f: seatCount === 1 ? '' : 'e',
+              value6606: targetEvent?.group?.name || 'die Zielgruppe',
+            }
+          ),
+          seatCount,
+          scheduledSeatCount,
+          completedSeatCount,
+          remainingSeatCount,
+          sourceGroup: allocation.group ?? null,
+          targetGroup: targetEvent?.group ?? null,
+          linkedEvent: linkedEventByTargetEventId.has(targetEvent.id)
+            ? linkedEventByTargetEventId.get(targetEvent.id)
+            : null,
+          targetEvent,
+        },
+      ];
     })
     .sort(
       (left, right) =>
@@ -367,16 +369,7 @@ export function buildOpenAssignments(args: {
 }
 
 function statusSortOrder(status: OpenAssignmentStatus) {
-  switch (status) {
-    case 'open':
-      return 0;
-    case 'scheduled':
-      return 1;
-    case 'completed':
-      return 2;
-    default:
-      return 3;
-  }
+  return { open: 0, scheduled: 1, completed: 2 }[status];
 }
 
 function buildProcessTaskAssignments(processTasks: readonly ProcessTaskAssignmentLike[]) {

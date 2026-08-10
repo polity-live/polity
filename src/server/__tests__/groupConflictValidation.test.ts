@@ -3,6 +3,18 @@ import { describe, expect, it } from 'vitest';
 import { groupConflictPreflightSchema } from '@/features/groups/logic/groupConflictPreflight';
 
 describe('group conflict group connection preflight', () => {
+  it('requires a group or membership identifier for membership activation', () => {
+    expect(groupConflictPreflightSchema.safeParse({ kind: 'membership_activation' }).success).toBe(
+      false
+    );
+    expect(
+      groupConflictPreflightSchema.safeParse({
+        kind: 'membership_activation',
+        membership_id: 'membership-1',
+      }).success
+    ).toBe(true);
+  });
+
   it('accepts membership-only group connection upserts', () => {
     const parsed = groupConflictPreflightSchema.safeParse({
       kind: 'group_connection_upsert',

@@ -6,7 +6,7 @@ import type { DataViewProjection, TDataViewElement } from '../types';
 import { ChartRenderer } from './ChartRenderer';
 import { DataViewAttribution } from './DataViewAttribution';
 
-function getDataViewErrorMessage(error: unknown, fallback: string) {
+export function getDataViewErrorMessage(error: unknown, fallback: string) {
   if (!(error instanceof Error)) return fallback;
   if (error.message === 'Unauthorized' || error.message.includes('401')) return fallback;
   return error.message;

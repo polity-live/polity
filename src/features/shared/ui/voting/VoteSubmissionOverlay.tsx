@@ -351,16 +351,6 @@ export function VoteSubmissionOverlay({
 
             {status === 'error' ? (
               <div className="w-full space-y-3">
-                {errorDetails.technicalDetail ? (
-                  <details className="text-muted-foreground mx-auto max-w-xl text-xs">
-                    <summary className="cursor-pointer text-center font-medium">
-                      {translateText('common.submissionOverlay.technicalDetails')}
-                    </summary>
-                    <p className="bg-card mt-2 rounded-md border px-3 py-2">
-                      {errorDetails.technicalDetail}
-                    </p>
-                  </details>
-                ) : null}
                 <div
                   className={cn(
                     'grid gap-2',

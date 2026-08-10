@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { useNavigate } from '@tanstack/react-router';
 
@@ -19,7 +19,6 @@ export function useNavUserAvatarController({
 }: UseNavUserAvatarControllerProps) {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { user } = useUserBasicState(authUser.id);
 
   const displayName =
@@ -29,16 +28,14 @@ export function useNavUserAvatarController({
   const displayAvatar = user?.avatar;
 
   const userInitials = displayName
-    ? displayName
-        .split(' ')
-        .map((name: string) => name[0])
-        .join('')
-        .toUpperCase()
-        .substring(0, 2)
-    : (authUser.email?.substring(0, 2) || 'U').toUpperCase();
+    .split(' ')
+    .map((name: string) => name[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
 
   const handleAsButtonClick = () => {
-    if (navigationView === 'asButton' && authUser.id) {
+    if (navigationView === 'asButton') {
       navigate({ to: `/user/${authUser.id}` });
     }
   };
@@ -48,9 +45,6 @@ export function useNavUserAvatarController({
   };
 
   const handleDropdownOpenChange = (open: boolean) => {
-    if (!open && closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-    }
     setIsDropdownOpen(open);
   };
 

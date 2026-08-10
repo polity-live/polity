@@ -1,0 +1,238 @@
+{
+  "version": 1,
+  "baseline": {
+    "coverageSha256": "964d666b33a6f04c8a12c53793645640c938bf990cfe6d7d7aedc0d583a3f8a1",
+    "sourceSnapshotSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "accountableAlternatives": 77763,
+    "debtFiles": 0,
+    "totals": {
+      "branches": 0,
+      "lines": 0,
+      "statements": 0,
+      "functions": 0
+    }
+  },
+  "policy": {
+    "maxBranchesPerBatch": 150,
+    "maxFocusedCoverageWorkers": 1,
+    "maxConcurrentLocalCoverageRuns": 3,
+    "artifactEnvironmentVariable": "BRANCH_CAMPAIGN_ARTIFACT_DIR",
+    "targetPercent": {
+      "branches": 100,
+      "lines": 100,
+      "statements": 100,
+      "functions": 100
+    }
+  },
+  "agents": [
+    {
+      "id": "A01",
+      "context": "Shared Plate plugins: suggestion, AI, slash and browser interaction states.",
+      "allowedTestPrefixes": [
+        "src/features/shared/ui/ui-platejs/"
+      ],
+      "allowedExistingTests": [],
+      "totals": {
+        "branches": 0,
+        "lines": 0,
+        "statements": 0,
+        "functions": 0
+      },
+      "branchFiles": 0,
+      "ownedFiles": []
+    },
+    {
+      "id": "A02",
+      "context": "Shared Plate plugins: discussions, comments, tables and navigation debt.",
+      "allowedTestPrefixes": [
+        "src/features/shared/",
+        "src/features/navigation/"
+      ],
+      "allowedExistingTests": [],
+      "totals": {
+        "branches": 0,
+        "lines": 0,
+        "statements": 0,
+        "functions": 0
+      },
+      "branchFiles": 0,
+      "ownedFiles": []
+    },
+    {
+      "id": "A03",
+      "context": "Editor hooks plus Zero document, group and agenda actions.",
+      "allowedTestPrefixes": [
+        "src/features/editor/hooks/",
+        "src/zero/documents/",
+        "src/zero/groups/",
+        "src/zero/agendas/"
+      ],
+      "allowedExistingTests": [],
+      "totals": {
+        "branches": 0,
+        "lines": 0,
+        "statements": 0,
+        "functions": 0
+      },
+      "branchFiles": 0,
+      "ownedFiles": []
+    },
+    {
+      "id": "A04",
+      "context": "Editor logic/UI, amendments, documents, docs, timeline and small Zero domains.",
+      "allowedTestPrefixes": [
+        "src/features/editor/",
+        "src/features/amendments/",
+        "src/features/documents/",
+        "src/features/docs/",
+        "src/features/timeline/",
+        "src/zero/amendments/",
+        "src/zero/appearance-themes/",
+        "src/zero/calendar-subscriptions/"
+      ],
+      "allowedExistingTests": [],
+      "totals": {
+        "branches": 0,
+        "lines": 0,
+        "statements": 0,
+        "functions": 0
+      },
+      "branchFiles": 0,
+      "ownedFiles": []
+    },
+    {
+      "id": "A05",
+      "context": "Messages UI, Zero messages and Search UI.",
+      "allowedTestPrefixes": [
+        "src/features/messages/ui/",
+        "src/features/search/ui/",
+        "src/zero/messages/"
+      ],
+      "allowedExistingTests": [],
+      "totals": {
+        "branches": 0,
+        "lines": 0,
+        "statements": 0,
+        "functions": 0
+      },
+      "branchFiles": 0,
+      "ownedFiles": []
+    },
+    {
+      "id": "A06",
+      "context": "Messages and Search hooks, controllers and logic.",
+      "allowedTestPrefixes": [
+        "src/features/messages/",
+        "src/features/search/"
+      ],
+      "allowedExistingTests": [],
+      "totals": {
+        "branches": 0,
+        "lines": 0,
+        "statements": 0,
+        "functions": 0
+      },
+      "branchFiles": 0,
+      "ownedFiles": []
+    },
+    {
+      "id": "A07",
+      "context": "Users, public surfaces, preferences, roles and i18n.",
+      "allowedTestPrefixes": [
+        "src/features/users/",
+        "src/features/public-landing/",
+        "src/features/public-pages/",
+        "src/features/app-tutorial/",
+        "src/features/roles/",
+        "src/i18n/",
+        "src/zero/users/",
+        "src/zero/preferences/"
+      ],
+      "allowedExistingTests": [],
+      "totals": {
+        "branches": 0,
+        "lines": 0,
+        "statements": 0,
+        "functions": 0
+      },
+      "branchFiles": 0,
+      "ownedFiles": []
+    },
+    {
+      "id": "A08",
+      "context": "Authentication, payments, notifications, events and calendar.",
+      "allowedTestPrefixes": [
+        "src/features/auth/",
+        "src/features/payments/",
+        "src/features/notifications/",
+        "src/features/events/",
+        "src/features/calendar/",
+        "src/zero/payments/",
+        "src/zero/notifications/"
+      ],
+      "allowedExistingTests": [],
+      "totals": {
+        "branches": 0,
+        "lines": 0,
+        "statements": 0,
+        "functions": 0
+      },
+      "branchFiles": 0,
+      "ownedFiles": []
+    },
+    {
+      "id": "A09",
+      "context": "Todos, PQL, file upload, create, groups, network and discussions.",
+      "allowedTestPrefixes": [
+        "src/features/todos/",
+        "src/features/pql/",
+        "src/features/file-upload/",
+        "src/features/create/",
+        "src/features/groups/",
+        "src/features/network/",
+        "src/features/discussions/",
+        "src/zero/todos/",
+        "src/zero/pql/"
+      ],
+      "allowedExistingTests": [],
+      "totals": {
+        "branches": 0,
+        "lines": 0,
+        "statements": 0,
+        "functions": 0
+      },
+      "branchFiles": 0,
+      "ownedFiles": []
+    },
+    {
+      "id": "A10",
+      "context": "Blogs, statements, remaining decision domains, routes and server.",
+      "allowedTestPrefixes": [
+        "src/features/blogs/",
+        "src/features/statements/",
+        "src/features/agendas/",
+        "src/features/decision-terminal/",
+        "src/features/charts/",
+        "src/features/change-requests/",
+        "src/features/meet/",
+        "src/zero/blogs/",
+        "src/zero/statements/",
+        "src/zero/votes/",
+        "src/zero/elections/",
+        "src/zero/accreditation/",
+        "src/zero/delegates/",
+        "src/routes/",
+        "src/server/"
+      ],
+      "allowedExistingTests": [],
+      "totals": {
+        "branches": 0,
+        "lines": 0,
+        "statements": 0,
+        "functions": 0
+      },
+      "branchFiles": 0,
+      "ownedFiles": []
+    }
+  ]
+}

@@ -152,7 +152,7 @@ export function formatDate(value: number | null | undefined): string | null {
   return new Intl.DateTimeFormat('de-DE', {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(new Date(value ?? 0));
+  }).format(new Date(value as number));
 }
 
 export function formatCurrency(value: number, currency: CurrencyCode): string {
@@ -305,7 +305,7 @@ async function assertGroupAccess(
       throw new Error('Group not found.');
     }
 
-    const hasRelationship = group.owner_id === userId || (membershipData?.length ?? 0) > 0;
+    const hasRelationship = group.owner_id === userId || membershipData.length > 0;
     if (!checkEntityAccess(group.visibility, true, hasRelationship)) {
       throw new Error('You do not have access to this group.');
     }
@@ -313,14 +313,15 @@ async function assertGroupAccess(
     return group;
   }
 
-  const exactNameMatches = ((await tx.run(
+  const exactNameMatches = (await tx.run(
     zql.group.where('name', normalizedReference).limit(25)
-  )) ?? []) as GroupAccessRow[];
+  )) as GroupAccessRow[];
   const candidateGroups =
     exactNameMatches.length > 0
       ? exactNameMatches
-      : (((await tx.run(zql.group.where('name', 'ILIKE', normalizedReference).limit(25))) ??
-          []) as GroupAccessRow[]);
+      : ((await tx.run(
+          zql.group.where('name', 'ILIKE', normalizedReference).limit(25)
+        )) as GroupAccessRow[]);
 
   if (candidateGroups.length === 0) {
     throw new Error(
@@ -328,20 +329,17 @@ async function assertGroupAccess(
     );
   }
 
-  const membershipData =
-    candidateGroups.length > 0
-      ? await tx.run(
-          zql.group_membership
-            .where(
-              'group_id',
-              'IN',
-              candidateGroups.map(group => group.id)
-            )
-            .where('user_id', userId)
-        )
-      : [];
+  const membershipData = await tx.run(
+    zql.group_membership
+      .where(
+        'group_id',
+        'IN',
+        candidateGroups.map(group => group.id)
+      )
+      .where('user_id', userId)
+  );
   const membershipGroupIds = new Set(
-    ((membershipData ?? []) as GroupMembershipLookupRow[]).map(row => row.group_id)
+    (membershipData as GroupMembershipLookupRow[]).map(row => row.group_id)
   );
 
   const accessibleGroups = candidateGroups.filter(group => {
@@ -388,11 +386,11 @@ async function assertGroupRoleReference(
     zql.role.where('group_id', groupId).where('scope', 'group').where('name', normalizedReference)
   );
 
-  if ((exactNameMatches?.length ?? 0) === 1) {
+  if (exactNameMatches.length === 1) {
     return exactNameMatches[0];
   }
 
-  if ((exactNameMatches?.length ?? 0) > 1) {
+  if (exactNameMatches.length > 1) {
     throw new Error(
       `Multiple roles named "${normalizedReference}" exist in the connected group. Ask the user for the exact role ID.`
     );
@@ -405,11 +403,11 @@ async function assertGroupRoleReference(
       .where('name', 'ILIKE', normalizedReference)
   );
 
-  if ((fuzzyMatches?.length ?? 0) === 1) {
+  if (fuzzyMatches.length === 1) {
     return fuzzyMatches[0];
   }
 
-  if ((fuzzyMatches?.length ?? 0) > 1) {
+  if (fuzzyMatches.length > 1) {
     throw new Error(
       `Multiple roles match "${normalizedReference}" in the connected group. Ask the user for the exact role ID.`
     );
@@ -446,7 +444,7 @@ async function assertEventAccess(
       throw new Error('Event not found.');
     }
 
-    const hasRelationship = event.creator_id === userId || (participantData?.length ?? 0) > 0;
+    const hasRelationship = event.creator_id === userId || participantData.length > 0;
     if (!checkEntityAccess(event.visibility, true, hasRelationship)) {
       throw new Error('You do not have access to this event.');
     }
@@ -454,14 +452,15 @@ async function assertEventAccess(
     return event;
   }
 
-  const exactTitleMatches = ((await tx.run(
+  const exactTitleMatches = (await tx.run(
     zql.event.where('title', normalizedReference).limit(25)
-  )) ?? []) as EventAccessRow[];
+  )) as EventAccessRow[];
   const candidateEvents =
     exactTitleMatches.length > 0
       ? exactTitleMatches
-      : (((await tx.run(zql.event.where('title', 'ILIKE', normalizedReference).limit(25))) ??
-          []) as EventAccessRow[]);
+      : ((await tx.run(
+          zql.event.where('title', 'ILIKE', normalizedReference).limit(25)
+        )) as EventAccessRow[]);
 
   if (candidateEvents.length === 0) {
     throw new Error(
@@ -469,20 +468,17 @@ async function assertEventAccess(
     );
   }
 
-  const participantData =
-    candidateEvents.length > 0
-      ? await tx.run(
-          zql.event_participant
-            .where(
-              'event_id',
-              'IN',
-              candidateEvents.map(event => event.id)
-            )
-            .where('user_id', userId)
-        )
-      : [];
+  const participantData = await tx.run(
+    zql.event_participant
+      .where(
+        'event_id',
+        'IN',
+        candidateEvents.map(event => event.id)
+      )
+      .where('user_id', userId)
+  );
   const participantEventIds = new Set(
-    ((participantData ?? []) as EventParticipantLookupRow[]).map(row => row.event_id)
+    (participantData as EventParticipantLookupRow[]).map(row => row.event_id)
   );
 
   const accessibleEvents = candidateEvents.filter(event => {
@@ -510,19 +506,18 @@ async function assertElectionAccess(
   userId: string,
   electionId: string
 ): Promise<ElectionAccessRow & { eventId: string | null }> {
-  const election =
-    ((await tx.run(zql.election.where('id', electionId).one())) as ElectionAccessRow | null) ??
-    null;
+  const election = (await tx.run(
+    zql.election.where('id', electionId).one()
+  )) as ElectionAccessRow | null;
   if (!election) {
     throw new Error('Election not found.');
   }
 
   let eventId: string | null = null;
   if (election.agenda_item_id) {
-    const agendaData =
-      ((await tx.run(
-        zql.agenda_item.where('id', election.agenda_item_id).one()
-      )) as AgendaEventRow | null) ?? null;
+    const agendaData = (await tx.run(
+      zql.agenda_item.where('id', election.agenda_item_id).one()
+    )) as AgendaEventRow | null;
 
     eventId = agendaData?.event_id ?? null;
     if (eventId) {
@@ -566,10 +561,7 @@ async function linkEntityHashtags(
   }
 
   for (const tag of normalizedTags) {
-    const hashtagId = hashtagsByTag.get(tag);
-    if (!hashtagId) {
-      continue;
-    }
+    const hashtagId = hashtagsByTag.get(tag) as string;
 
     const junctionId = crypto.randomUUID();
     switch (entityType) {
@@ -622,11 +614,11 @@ async function getNextAgendaOrder(tx: ZeroTransaction, eventId: string): Promise
     zql.agenda_item.where('event_id', eventId).orderBy('order_index', 'desc').limit(1)
   );
 
-  const highestOrder = (((data ?? []) as OrderIndexRow[])[0]?.order_index ?? 0) || 0;
+  const highestOrder = (data as OrderIndexRow[])[0]?.order_index ?? 0;
   return highestOrder + 1;
 }
 
-function buildEventCreateArgs(args: CreateEventArgs) {
+export function buildEventCreateArgs(args: CreateEventArgs) {
   return {
     id: args.id,
     title: args.title,
@@ -1075,7 +1067,7 @@ export function buildAiCreateTools(userId: string, timeZone = 'UTC') {
           'event',
           eventId,
           title,
-          [formatDate(startTimestamp), locationName, eventType].filter(Boolean).join(' · ') || null,
+          [formatDate(startTimestamp), locationName, eventType].filter(Boolean).join(' · '),
           truncate(description),
           {
             id: eventId,
@@ -1319,7 +1311,7 @@ export function buildAiCreateTools(userId: string, timeZone = 'UTC') {
           'amendment',
           amendmentId,
           title,
-          [code, visibility].filter(Boolean).join(' · ') || null,
+          [code, visibility].filter(Boolean).join(' · '),
           truncate(reason),
           {
             id: amendmentId,
@@ -1515,7 +1507,7 @@ export function buildAiCreateTools(userId: string, timeZone = 'UTC') {
           'todo',
           todoId,
           title,
-          [status, priority, formatDate(dueTimestamp)].filter(Boolean).join(' · ') || null,
+          [status, priority, formatDate(dueTimestamp)].filter(Boolean).join(' · '),
           truncate(description),
           {
             id: todoId,
@@ -1619,16 +1611,17 @@ export function buildAiCreateTools(userId: string, timeZone = 'UTC') {
           }
         });
 
+        const statementTitle = truncate(text, 90) as string;
         const attachment = buildAttachment(
           'statement',
           statementId,
-          truncate(text, 90) || 'Statement',
+          statementTitle,
           visibility,
           truncate(text),
           {
             id: statementId,
             type: 'statement',
-            title: truncate(text, 90) || 'Statement',
+            title: statementTitle,
             description: text,
             imageUrl: imageUrl ?? null,
             videoUrl: videoUrl ?? null,
@@ -1953,7 +1946,7 @@ export function buildAiCreateTools(userId: string, timeZone = 'UTC') {
               .limit(1)
           );
 
-          if (((existingCandidateData ?? []) as ExistingCandidateRow[]).length > 0) {
+          if ((existingCandidateData as ExistingCandidateRow[]).length > 0) {
             throw new Error('You are already listed as a candidate in this election.');
           }
 

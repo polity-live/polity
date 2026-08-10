@@ -70,19 +70,33 @@ export function GroupSearchStepView({
     <OnboardingStepShell
       actions={
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-          <Button variant="outline" onClick={onBack} disabled={isLoading}>
+          <Button
+            data-action-id="auth.onboarding.group-search.back"
+            variant="outline"
+            onClick={onBack}
+            disabled={isLoading}
+          >
             <ArrowLeft className="h-4 w-4" />
             {t('common.goBack')}
           </Button>
 
           <div className="flex flex-col gap-2 sm:flex-row">
             {!hasSelectedGroups && (
-              <Button variant="secondary" onClick={handleSkip} disabled={isLoading}>
+              <Button
+                data-action-id="auth.onboarding.group-search.skip"
+                variant="secondary"
+                onClick={handleSkip}
+                disabled={isLoading}
+              >
                 <SkipForward className="h-4 w-4" />
                 {t('onboarding.groupStep.skip')}
               </Button>
             )}
-            <Button onClick={hasSelectedGroups ? onNext : handleSkip} disabled={isLoading}>
+            <Button
+              data-action-id="auth.onboarding.group-search.continue"
+              onClick={hasSelectedGroups ? onNext : handleSkip}
+              disabled={isLoading}
+            >
               {hasSelectedGroups
                 ? t('onboarding.groupStep.continue')
                 : t('onboarding.groupStep.continueWithoutGroup')}
@@ -138,6 +152,7 @@ export function GroupSearchStepView({
               {hasSelectedGroups && (
                 <Button
                   type="button"
+                  data-action-id="auth.onboarding.group-search.selection.clear"
                   variant="ghost"
                   size="sm"
                   onClick={onClearSelectedGroups}
@@ -161,6 +176,7 @@ export function GroupSearchStepView({
                   >
                     <button
                       type="button"
+                      data-action-id="auth.onboarding.group-search.map.activate"
                       className="hover:bg-primary/15 min-w-0 rounded-l-md px-3 py-1.5 transition-colors"
                       onClick={() => handleActivateGroup(group.id)}
                     >
@@ -168,6 +184,7 @@ export function GroupSearchStepView({
                     </button>
                     <button
                       type="button"
+                      data-action-id="auth.onboarding.group-search.card.toggle"
                       className="hover:bg-primary/15 rounded-r-md px-2 py-1.5 transition-colors"
                       aria-label={`${t('onboarding.groupStep.clearSelection')} ${group.name}`}
                       onClick={() => handleSelectGroup(group)}
@@ -214,6 +231,7 @@ export function GroupSearchStepView({
                     <motion.button
                       key={group.id}
                       type="button"
+                      data-action-id="auth.onboarding.group-search.map-card.toggle"
                       variants={choiceSelect}
                       initial="rest"
                       animate={isSelected ? 'selected' : 'rest'}

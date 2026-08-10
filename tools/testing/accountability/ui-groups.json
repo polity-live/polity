@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/groups/ui/GroupAmendmentsPageView.tsx#groups.group-amendments-page.features-groups-amendments-create-amendment": [
+      {
+        "file": "src/features/groups/ui/__tests__/GroupAmendmentsPageView.spacing.test.tsx",
+        "project": "component",
+        "caseId": "navigates to amendment creation through a stable action when authorized",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/GroupAmendmentsPageView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/GroupBlogCard.tsx#groups.group-blog-card.group-id-blog-entry-id": [
+      {
+        "file": "src/features/groups/ui/__tests__/AuthorizedGroupOperationPage.coverage.test.tsx",
+        "project": "component",
+        "caseId": "ignores empty hashes and hashes without a section id",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/GroupBlogCard.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/GuestsTable.tsx#groups.guests-table.group-id": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddRoleDialog.coverage.test.tsx",
+        "project": "component",
+        "caseId": "executes every group form callback and both recurring-pattern paths",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/GuestsTable.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/GuestsTable.tsx#groups.guests-table.user-id": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddPaymentDialogView.actions.test.tsx",
+        "project": "component",
+        "caseId": "covers income, zero-decimal currency, selected users, avatars, and empty user fallbacks",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/GuestsTable.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/PaymentsSectionView.tsx#groups.payments-section.frankfurter": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddPaymentDialogView.actions.test.tsx",
+        "project": "component",
+        "caseId": "edits and submits payments through stable actions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/PaymentsSectionView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/PendingInvitationsTable.tsx#groups.pending-invitations-table.group-id": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddRoleDialog.coverage.test.tsx",
+        "project": "component",
+        "caseId": "executes every group form callback and both recurring-pattern paths",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/PendingInvitationsTable.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/PendingInvitationsTable.tsx#groups.pending-invitations-table.user-id": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddPaymentDialogView.actions.test.tsx",
+        "project": "component",
+        "caseId": "covers income, zero-decimal currency, selected users, avatars, and empty user fallbacks",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/PendingInvitationsTable.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/PendingRequestsTable.tsx#groups.pending-requests-table.group-id": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddRoleDialog.coverage.test.tsx",
+        "project": "component",
+        "caseId": "executes every group form callback and both recurring-pattern paths",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/PendingRequestsTable.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/PendingRequestsTable.tsx#groups.pending-requests-table.user-id": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddPaymentDialogView.actions.test.tsx",
+        "project": "component",
+        "caseId": "covers income, zero-decimal currency, selected users, avatars, and empty user fallbacks",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/PendingRequestsTable.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/RoleDetailsTable.tsx#groups.role-details-table.event-id": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddRoleDialog.actions.test.tsx",
+        "project": "component",
+        "caseId": "opens, cancels, and submits role editing through stable actions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/RoleDetailsTable.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/TodosSectionView.tsx#groups.todos-section.create-todo": [
+      {
+        "file": "src/features/groups/ui/__tests__/AmendmentGroupsView.coverage.test.tsx",
+        "project": "component",
+        "caseId": "configures the mounted local grid while retaining a closed section trigger",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/TodosSectionView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {}
+}

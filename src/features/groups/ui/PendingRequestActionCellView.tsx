@@ -35,6 +35,7 @@ export function PendingRequestActionCellView({
   return (
     <div className="flex justify-end gap-2">
       <TableActionIconButton
+        data-action-id="groups.requests.approve.membership"
         label={primaryActionLabel}
         icon={<Check className="h-4 w-4" />}
         loading={checking}
@@ -52,6 +53,7 @@ export function PendingRequestActionCellView({
         />
       ) : null}
       <TableActionIconButton
+        data-action-id="groups.requests.reject.membership"
         label={secondaryActionLabel}
         icon={<Trash2 className="h-4 w-4" />}
         variant="ghost"

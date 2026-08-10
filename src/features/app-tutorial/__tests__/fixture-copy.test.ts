@@ -139,4 +139,35 @@ describe('app tutorial localized fixture projection', () => {
       })
     ).toBe('Münchner Klimarat');
   });
+
+  it('handles unknown variants, nullish values, null prototypes, and class instances', () => {
+    expect(getAppTutorialFixtureTextVariants('München', { tutorialRunId: null })).toEqual([]);
+    expect(getAppTutorialFixtureTextVariants('', { tutorialRunId: 'tutorial-run' })).toEqual([]);
+    expect(getAppTutorialFixtureTextVariants('unknown', { tutorialRunId: 'tutorial-run' })).toEqual(
+      []
+    );
+    expect(
+      resolveAppTutorialFixtureValue(null, { tutorialRunId: 'tutorial-run', language: 'en' })
+    ).toBeNull();
+    expect(
+      resolveAppTutorialFixtureValue(undefined, {
+        tutorialRunId: 'tutorial-run',
+        language: 'en',
+      })
+    ).toBeUndefined();
+    const nullPrototype = Object.assign(Object.create(null), { city: 'München' });
+    expect(
+      resolveAppTutorialFixtureValue(nullPrototype, {
+        tutorialRunId: 'tutorial-run',
+        language: 'en',
+      })
+    ).toEqual({ city: 'Munich' });
+    const date = new Date('2026-08-09T00:00:00Z');
+    expect(
+      resolveAppTutorialFixtureValue(date, { tutorialRunId: 'tutorial-run', language: 'en' })
+    ).toBe(date);
+    expect(
+      resolveAppTutorialFixtureValue(42, { tutorialRunId: 'tutorial-run', language: 'en' })
+    ).toBe(42);
+  });
 });

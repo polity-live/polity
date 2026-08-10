@@ -54,7 +54,7 @@ function extractLastNumber(pattern: RegExp, values: unknown[]) {
     let result: number | null = null;
     pattern.lastIndex = 0;
     for (let match = pattern.exec(text); match !== null; match = pattern.exec(text)) {
-      const parsed = Number.parseInt(match[1] ?? '', 10);
+      const parsed = Number.parseInt(match[1], 10);
       if (Number.isFinite(parsed)) {
         result = parsed;
       }
@@ -184,11 +184,8 @@ function compareNullableNumbers(left: number | null, right: number | null) {
   return 0;
 }
 
-function compareNullableNumbersDescending(left: number | null, right: number | null) {
-  if (left !== null && right === null) return -1;
-  if (left === null && right !== null) return 1;
-  if (left !== null && right !== null && left !== right) return right - left;
-  return 0;
+function compareNumbersDescending(left: number, right: number) {
+  return right - left;
 }
 
 function compareCrNumber<T>(left: T, right: T, getChangeRequest?: (item: T) => unknown) {
@@ -293,7 +290,7 @@ export function sortChangeRequestsByVoteOrder<T>(
       }
 
       if (normalizedVoteOrder === 'changed_character_count') {
-        const characterCountDiff = compareNullableNumbersDescending(
+        const characterCountDiff = compareNumbersDescending(
           getChangedCharacterCount(left.item, options.getChangeRequest),
           getChangedCharacterCount(right.item, options.getChangeRequest)
         );

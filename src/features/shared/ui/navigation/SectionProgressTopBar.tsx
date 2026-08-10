@@ -3,6 +3,7 @@
 import { CheckCircle2, Circle, type LucideIcon } from 'lucide-react';
 import { type ReactNode, useEffect, useRef } from 'react';
 
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -45,6 +46,7 @@ export function SectionProgressTopBar({
   showDescriptions = false,
   className,
 }: SectionProgressTopBarProps) {
+  const { t } = useTranslation();
   const activeItemRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -80,7 +82,15 @@ export function SectionProgressTopBar({
           </div>
         )}
 
-        <Progress value={clampProgress(progressValue)} className="h-1.5" />
+        <Progress
+          value={clampProgress(progressValue)}
+          className="h-1.5"
+          aria-label={
+            typeof label === 'string' && label.trim()
+              ? label
+              : t('common.accessibility.actionProgress')
+          }
+        />
 
         <ol className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
           {items.map(item => {
@@ -93,6 +103,8 @@ export function SectionProgressTopBar({
                 <Button
                   ref={isActive ? activeItemRef : undefined}
                   type="button"
+                  data-action-id="shared.section-progress-top-bar.select-item"
+                  data-action-kind="selection"
                   variant="ghost"
                   aria-current={isActive ? 'step' : undefined}
                   disabled={isDisabled}
@@ -107,11 +119,7 @@ export function SectionProgressTopBar({
                     !isDisabled && 'hover:border-primary/40 hover:bg-accent/40',
                     isDisabled && 'cursor-default'
                   )}
-                  onClick={() => {
-                    if (!isDisabled) {
-                      onItemSelect?.(item.id);
-                    }
-                  }}
+                  onClick={() => onItemSelect?.(item.id)}
                 >
                   <span
                     className={cn(

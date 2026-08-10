@@ -65,10 +65,10 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className={className}>
       <TabsList className="w-full">
-        <TabsTrigger value="image" className="flex-1">
+        <TabsTrigger data-action-id="file-upload.media-tab.image" value="image" className="flex-1">
           {translateText('generated.inline.0521_image_50e19fda')}
         </TabsTrigger>
-        <TabsTrigger value="video" className="flex-1">
+        <TabsTrigger data-action-id="file-upload.media-tab.video" value="video" className="flex-1">
           {translateText('generated.inline.0522_video_bc17c1f0')}
         </TabsTrigger>
       </TabsList>

@@ -34,7 +34,7 @@ export interface ImageTimelineCardProps {
 /**
  * Format count for display
  */
-function formatCount(count: number): string {
+export function formatCount(count: number): string {
   if (count >= 1000) {
     return `${(count / 1000).toFixed(1)}K`;
   }
@@ -79,9 +79,19 @@ export function ImageTimelineCard({
     <TimelineCardBase contentType="image" className={className} href={sourceHref}>
       {/* Image Container */}
       <div
+        data-action-id="timeline.image.preview.open"
+        data-action-kind="interaction"
+        role="button"
+        tabIndex={0}
         className="group relative shrink-0 cursor-pointer"
         data-timeline-card-media
         onClick={onImageClick}
+        onKeyDown={event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onImageClick?.();
+          }
+        }}
       >
         <img
           src={image.imageUrl}
@@ -186,6 +196,7 @@ export function ImageTimelineCard({
       <TimelineCardActions>
         <div onClick={e => e.preventDefault()}>
           <ShareButton
+            data-action-id="timeline.image.share"
             url={sourceHref || `/image/${image.id}`}
             title={image.caption || t('features.timeline.contentTypes.image')}
             description={image.location || ''}

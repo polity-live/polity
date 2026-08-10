@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { normalizeTimelineText } from '../normalizeTimelineText';
 
 describe('normalizeTimelineText', () => {
+  it('normalizes absent, blank, and non-empty strings', () => {
+    expect(normalizeTimelineText(undefined)).toBeUndefined();
+    expect(normalizeTimelineText(null)).toBeUndefined();
+    expect(normalizeTimelineText('   ')).toBeUndefined();
+    expect(normalizeTimelineText('  Timeline  ')).toBe('Timeline');
+  });
+
   it('converts rich-text nodes into plain text', () => {
     expect(
       normalizeTimelineText([
@@ -36,5 +43,11 @@ describe('normalizeTimelineText', () => {
         venue: 'City Hall',
       })
     ).toBe('Neighborhood planning meetup');
+  });
+
+  it('rejects legacy objects without a usable plain string', () => {
+    expect(normalizeTimelineText({ other: 'value' })).toBeUndefined();
+    expect(normalizeTimelineText({ plain: 42 })).toBeUndefined();
+    expect(normalizeTimelineText({ plain: '  ' })).toBeUndefined();
   });
 });

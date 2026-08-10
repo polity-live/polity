@@ -186,4 +186,77 @@ describe('useCarouselFormLayoutController', () => {
     fireEvent.keyDown(document, { key: 'ArrowRight' });
     expect(carouselMocks.emblaApi?.scrollNext).not.toHaveBeenCalled();
   });
+
+  it('handles a missing carousel API and exposes an invalid reason', () => {
+    carouselMocks.emblaApi = null;
+    const invalidStep: CreateFormStep = {
+      ...createStep(false),
+      getInvalidReason: () => 'Complete this step',
+    };
+    const { result } = renderHook(() =>
+      useCarouselFormLayoutController({
+        steps: [invalidStep],
+        currentStep: 0,
+        onStepChange: vi.fn(),
+      })
+    );
+
+    expect(result.current.currentStepInvalidReason).toBe('Complete this step');
+    act(() => {
+      result.current.onScrollPrev();
+      result.current.onScrollNext();
+      result.current.onStepClick(0);
+    });
+  });
+
+  it('uses null when an invalid-reason callback has no result', () => {
+    const invalidStep: CreateFormStep = {
+      ...createStep(false),
+      getInvalidReason: () => undefined,
+    };
+    const { result } = renderHook(() =>
+      useCarouselFormLayoutController({
+        steps: [invalidStep],
+        currentStep: 0,
+        onStepChange: vi.fn(),
+      })
+    );
+    expect(result.current.currentStepInvalidReason).toBeNull();
+  });
+
+  it('treats an out-of-range current step as invalid', () => {
+    const { result } = renderHook(() =>
+      useCarouselFormLayoutController({ steps: [], currentStep: 0, onStepChange: vi.fn() })
+    );
+    expect(result.current.currentStepValid).toBe(false);
+  });
+
+  it('scrolls backward and accepts valid step clicks', async () => {
+    const steps = [createStep(true), createStep(true), createStep(true)];
+    carouselMocks.emblaApi = createEmblaApi(1, steps.length);
+    const { result } = renderHook(() =>
+      useCarouselFormLayoutController({ steps, currentStep: 1, onStepChange: vi.fn() })
+    );
+
+    await waitFor(() => expect(result.current.canScrollPrev).toBe(true));
+    act(() => result.current.onScrollPrev());
+    expect(carouselMocks.emblaApi?.scrollPrev).toHaveBeenCalledOnce();
+
+    act(() => result.current.onStepClick(2));
+    expect(carouselMocks.emblaApi?.scrollTo).toHaveBeenCalledWith(2);
+  });
+
+  it('synchronizes an externally changed step and rejects invalid step clicks', () => {
+    const steps = [createStep(false), createStep(true), createStep(true)];
+    const { result, rerender } = renderHook(
+      ({ currentStep }) =>
+        useCarouselFormLayoutController({ steps, currentStep, onStepChange: vi.fn() }),
+      { initialProps: { currentStep: 0 } }
+    );
+
+    rerender({ currentStep: 2 });
+    expect(carouselMocks.emblaApi?.scrollTo).toHaveBeenCalledWith(2);
+    act(() => result.current.onStepClick(1));
+    expect(carouselMocks.emblaApi?.scrollTo).not.toHaveBeenCalledWith(1);
+  });
 });

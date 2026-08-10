@@ -15,7 +15,7 @@ function normalizeLanguage(language: string) {
 
 function nullableText(value: unknown) {
   const text = String(value ?? '').trim();
-  return text && text !== ' ' ? text : null;
+  return text ? text : null;
 }
 
 export async function getEurostatCatalogue(language = 'en') {
@@ -44,7 +44,7 @@ export async function getEurostatCatalogue(language = 'en') {
         .trim()
         .toUpperCase(),
       title: String(record.title ?? '').trim(),
-      type: String(record.type ?? '').trim(),
+      type: String(record.type).trim(),
       lastUpdate: nullableText(record['last update of data']),
       structureLastChange: nullableText(record['last table structure change']),
       dataStart: nullableText(record['data start']),

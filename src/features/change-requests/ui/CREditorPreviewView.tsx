@@ -41,7 +41,13 @@ export function CREditorPreviewView({
     <Collapsible open={isOpen} onOpenChange={onOpenChange}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" presentation="mutedTiny" className="gap-1">
+          <Button
+            data-action-id="change-requests.preview.toggle"
+            variant="ghost"
+            size="sm"
+            presentation="mutedTiny"
+            className="gap-1"
+          >
             {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
             {translateText('generated.inline.0288_document_preview_88c64603')}
           </Button>

@@ -116,10 +116,6 @@ function applyGroupAmendmentFilters({
 function applyAmendmentManagerAccess<T>(q: T, userID: string | undefined): T {
   const query = q as any;
 
-  if (!userID || userID === 'anon') {
-    return query.where('id', '__unauthorized__') as T;
-  }
-
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('created_by_id', userID),

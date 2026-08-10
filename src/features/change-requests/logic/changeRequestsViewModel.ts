@@ -314,14 +314,7 @@ function getChangeRequestCounts(changeRequests: readonly ChangeRequest[]) {
 }
 
 function discussionTimestamp(discussion: TDiscussion) {
-  const value = discussion.createdAt;
-  if (value instanceof Date) return value.getTime();
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string') {
-    const parsed = Date.parse(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
+  return discussion.createdAt.getTime();
 }
 
 function normalizeRawDiscussionDate(value: unknown) {
@@ -486,22 +479,7 @@ function createDiscussionFallbackChangeRequest({
   documentContent?: Value;
   processBranchId: string | null;
 }): ChangeRequest {
-  const suggestionContent = discussion.id
-    ? extractSuggestionContent(discussion.id, documentContent)
-    : { type: 'unknown', text: '', newText: '', properties: {}, newProperties: {} };
-  const persistedChangedCharacterCount =
-    (
-      discussion as {
-        changed_character_count?: number | null;
-        changedCharacterCount?: number | null;
-      }
-    ).changed_character_count ??
-    (
-      discussion as {
-        changed_character_count?: number | null;
-        changedCharacterCount?: number | null;
-      }
-    ).changedCharacterCount;
+  const suggestionContent = extractSuggestionContent(discussion.id, documentContent);
   const computedChangedCharacterCount = countChangedCharacters(suggestionContent);
   const resolvedStatus = discussion.status;
   const isResolved = isApprovedStatus(resolvedStatus) || isDeclinedStatus(resolvedStatus);
@@ -510,7 +488,7 @@ function createDiscussionFallbackChangeRequest({
   const createdAt = discussionTimestamp(discussion);
 
   return {
-    id: discussion.changeRequestEntityId ?? discussion.id ?? logicalKey,
+    id: discussion.changeRequestEntityId ?? discussion.id,
     processBranchId,
     logicalKey,
     discussionId: discussion.id,
@@ -537,11 +515,11 @@ function createDiscussionFallbackChangeRequest({
     obsoleteReason: null,
     obsoleteAt: null,
     status: isPendingSubmission ? 'pending_submission' : (resolvedStatus ?? 'open'),
-    resolution: isResolved ? (resolvedStatus ?? null) : null,
+    resolution: isResolved ? resolvedStatus : null,
     resolvedAt: null,
     resolvedBy: null,
     createdAt,
-    userId: discussion.userId ?? '',
+    userId: discussion.userId,
     votesFor: discussion.votesFor ?? 0,
     votesAgainst: discussion.votesAgainst ?? 0,
     votesAbstain: discussion.votesAbstain ?? 0,
@@ -554,17 +532,12 @@ function createDiscussionFallbackChangeRequest({
     resolvedInMode: discussion.resolvedInMode ?? null,
     votingStatus: isPendingSubmission ? 'pending_submission' : (discussion.votingStatus ?? null),
     branchSequenceNumber: discussion.branchSequenceNumber ?? null,
-    changedCharacterCount:
-      typeof persistedChangedCharacterCount === 'number' &&
-      Number.isFinite(persistedChangedCharacterCount) &&
-      persistedChangedCharacterCount > 0
-        ? persistedChangedCharacterCount
-        : computedChangedCharacterCount,
+    changedCharacterCount: computedChangedCharacterCount,
     confirmationStatus: discussion.confirmationStatus ?? null,
     changeRequestStatus:
       discussion.changeRequestStatus ?? (isPendingSubmission ? 'pending_submission' : null),
     userVote: null,
-    comments: discussion.comments || [],
+    comments: discussion.comments,
     votes: [],
     changeRequestEntityId: discussion.changeRequestEntityId,
   };
@@ -723,7 +696,8 @@ export function buildChangeRequestBranchSections({
   });
 
   for (const branchId of historicalBranchIds) {
-    const branchRequests = historicalRequestsByBranchId.get(branchId) ?? [];
+    // branchId originates from this map's keys and the map is not mutated in this loop.
+    const branchRequests = historicalRequestsByBranchId.get(branchId) as ChangeRequest[];
 
     sections.push({
       id: `historical-branch-${branchId}`,

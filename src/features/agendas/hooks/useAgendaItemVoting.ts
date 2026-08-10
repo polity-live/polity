@@ -46,8 +46,8 @@ export type VotingPhase = 'unknown' | 'indicative' | 'final' | 'closed';
  */
 export function getVotingPhase(status?: string | null): VotingPhase {
   if (!status) return 'unknown';
-  if (status === 'indicative' || status === 'indicative') return 'indicative';
-  if (status === 'final' || status === 'final' || status === 'final') return 'final';
+  if (status === 'indicative') return 'indicative';
+  if (status === 'final') return 'final';
   if (status === 'closed' || status === 'runoff_required' || status === 'no_winner')
     return 'closed';
   return 'unknown';

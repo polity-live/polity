@@ -48,11 +48,7 @@ export interface SuggestionAnchorPosition {
   width: number;
 }
 
-export const ASSISTANT_ATTACHMENT_TYPE_OPTIONS: readonly {
-  entityType: AiAttachmentEntity;
-  token: string;
-  label: string;
-}[] = [
+export const ASSISTANT_ATTACHMENT_TYPE_OPTIONS = [
   {
     entityType: 'user',
     token: '@user@',
@@ -98,9 +94,16 @@ export const ASSISTANT_ATTACHMENT_TYPE_OPTIONS: readonly {
     token: '@election@',
     label: translateText('generated.inline.0182_elections_7213288b'),
   },
-] as const;
+] as const satisfies readonly {
+  entityType: AiAttachmentEntity;
+  token: string;
+  label: string;
+}[];
 
-const AI_ATTACHMENT_ENTITY_SET = new Set<AiAttachmentEntity>([
+type AssistantSearchAttachmentEntity =
+  (typeof ASSISTANT_ATTACHMENT_TYPE_OPTIONS)[number]['entityType'];
+
+const AI_ATTACHMENT_ENTITY_SET = new Set<AssistantSearchAttachmentEntity>([
   'user',
   'group',
   'statement',
@@ -112,15 +115,11 @@ const AI_ATTACHMENT_ENTITY_SET = new Set<AiAttachmentEntity>([
   'election',
 ]);
 
-function isAiAttachmentEntity(value: string): value is AiAttachmentEntity {
-  return AI_ATTACHMENT_ENTITY_SET.has(value as AiAttachmentEntity);
+function isAiAttachmentEntity(value: string): value is AssistantSearchAttachmentEntity {
+  return AI_ATTACHMENT_ENTITY_SET.has(value as AssistantSearchAttachmentEntity);
 }
 
-function safeText(value: string | number | Date | null | undefined): string {
-  if (value === null || value === undefined) {
-    return '';
-  }
-
+function safeText(value: string | number | Date): string {
   if (value instanceof Date) {
     return value.toISOString();
   }
@@ -136,8 +135,11 @@ function formatCount(label: string, value?: number | null): string {
   return `${value} ${label}`;
 }
 
-function buildSubtitle(item: SearchContentItem): string | null {
-  switch (item.type) {
+function buildSubtitle(
+  item: SearchContentItem,
+  entityType: AssistantSearchAttachmentEntity
+): string | null {
+  switch (entityType) {
     case 'user':
       return item.handle ? `@${item.handle}` : (item.location ?? null);
     case 'group':
@@ -159,19 +161,20 @@ function buildSubtitle(item: SearchContentItem): string | null {
       return item.status ?? null;
     case 'election':
       return [item.groupName, item.status].filter(Boolean).join(' · ') || null;
-    default:
-      return null;
   }
 }
 
-function buildPromptContext(item: SearchContentItem): string | null {
+function buildPromptContext(
+  item: SearchContentItem,
+  entityType: AssistantSearchAttachmentEntity
+): string | null {
   const lines: string[] = [];
 
   if (item.description) {
     lines.push(item.description);
   }
 
-  switch (item.type) {
+  switch (entityType) {
     case 'group':
       lines.push(
         [
@@ -256,8 +259,6 @@ function buildPromptContext(item: SearchContentItem): string | null {
           .join(' | ')
       );
       break;
-    default:
-      break;
   }
 
   const result = lines
@@ -267,7 +268,9 @@ function buildPromptContext(item: SearchContentItem): string | null {
   return result || null;
 }
 
-function toAttachmentEntity(itemType: SearchContentItem['type']): AiAttachmentEntity | null {
+function toAttachmentEntity(
+  itemType: SearchContentItem['type']
+): AssistantSearchAttachmentEntity | null {
   switch (itemType) {
     case 'user':
     case 'group':
@@ -383,10 +386,6 @@ export function parseActiveMentionQuery(
 
   const raw = mentionMatch[1];
   const atIndex = beforeCaret.length - raw.length;
-  if (raw.includes('\n')) {
-    return null;
-  }
-
   const withoutAt = raw.slice(1);
   const secondAtIndex = withoutAt.indexOf('@');
   if (secondAtIndex === -1) {
@@ -449,10 +448,6 @@ export function parseActiveToolCommand(
 
   const raw = toolMatch[1];
   const hashIndex = beforeCaret.length - raw.length;
-  if (raw.includes('\n')) {
-    return null;
-  }
-
   return {
     start: hashIndex,
     end: caretPosition,
@@ -482,8 +477,8 @@ export function buildAssistantAttachmentOption(
     return null;
   }
 
-  const subtitle = buildSubtitle(item);
-  const promptContext = buildPromptContext(item);
+  const subtitle = buildSubtitle(item, entityType);
+  const promptContext = buildPromptContext(item, entityType);
   const cardPayload: AssistantCardPayload = { cardType, cardProps };
 
   return {

@@ -10,6 +10,7 @@ import {
   hasConfiguredMembership,
   hasConfiguredGroupConnection,
   hasIncompleteMembershipRule,
+  getSelectedMembershipDirection,
   getPresetForRelationshipType,
   SELECTABLE_MEMBERSHIP_MODES,
 } from '../groupConnectionComposer';
@@ -436,5 +437,106 @@ describe('groupConnectionComposer presets', () => {
         sourceGroupIds: [],
       },
     });
+  });
+
+  it('covers optional membership state, active payload reuse, and canonical hydration fallbacks', () => {
+    const emptyRule = { membershipMode: 'none' as const, roleId: '', sourceGroupIds: [] };
+    expect(
+      hasIncompleteMembershipRule({ membershipDirection: null, membershipRule: emptyRule })
+    ).toBe(false);
+    expect(
+      hasIncompleteMembershipRule({
+        membershipDirection: 'current_members_to_partner',
+        membershipRule: { membershipMode: 'all_members', roleId: '', sourceGroupIds: [] },
+      })
+    ).toBe(false);
+    expect(
+      getSelectedMembershipDirection({ membershipDirection: null, membershipRule: emptyRule })
+    ).toBeNull();
+    expect(
+      getSelectedMembershipDirection({
+        membershipDirection: 'partner_members_to_current',
+        membershipRule: { membershipMode: 'all_members', roleId: '', sourceGroupIds: [] },
+      })
+    ).toBe('partner_members_to_current');
+
+    const preset = applyGroupConnectionPreset('parent', {
+      ...buildGroupConnectionComposerDefaults(),
+      membershipRule: null as never,
+    });
+    expect(preset.membershipRule).toEqual({
+      membershipMode: 'all_members',
+      roleId: '',
+      sourceGroupIds: [],
+    });
+
+    const activePayload = buildCanonicalGroupConnectionPayload({
+      currentGroupId: 'A',
+      otherGroupId: 'B',
+      relationshipType: 'parent',
+      rightDirections: {
+        informationRight: 'current_grants_right_to_partner',
+        amendmentRight: 'none',
+        rightToSpeak: 'none',
+        activeVotingRight: 'none',
+        passiveVotingRight: 'none',
+      },
+      membershipDirection: 'partner_members_to_current',
+      membershipRule: { membershipMode: 'role_members', roleId: '', sourceGroupIds: [] },
+      connectionId: 'connection-existing',
+      membershipRuleId: 'membership-existing',
+      existingRightIdsByKey: { informationRight: 'grant-existing' },
+      initiatorGroupId: 'A',
+      status: 'active',
+    });
+    expect(activePayload).toMatchObject({
+      id: 'connection-existing',
+      status: 'active',
+      grants: [{ id: 'grant-existing', status: 'active' }],
+      membership_rule: {
+        id: 'membership-existing',
+        required_source_role_id: null,
+      },
+    });
+
+    expect(
+      buildRelativeMembershipRuleFromCanonical({ currentGroupId: 'A', membershipRule: null })
+    ).toEqual({
+      membershipDirection: null,
+      membershipRule: { membershipMode: 'none', roleId: '', sourceGroupIds: [] },
+    });
+    expect(
+      buildRelativeMembershipRuleFromCanonical({
+        currentGroupId: 'A',
+        membershipRule: {
+          member_source_group_id: 'B',
+          membership_mode: 'selected_source_groups',
+          origins: [{ eligible_origin_group_id: 'origin-a' }, { eligible_origin_group_id: null }],
+        },
+      })
+    ).toEqual({
+      membershipDirection: 'partner_members_to_current',
+      membershipRule: {
+        membershipMode: 'selected_source_groups',
+        roleId: '',
+        sourceGroupIds: ['origin-a'],
+      },
+    });
+    expect(
+      buildRelativeMembershipRuleFromCanonical({
+        currentGroupId: 'A',
+        membershipRule: {
+          member_source_group_id: 'A',
+          membership_mode: 'all_members',
+          eligible_origin_group_ids: ['direct-origin'],
+        },
+      }).membershipRule
+    ).toEqual({ membershipMode: 'all_members', roleId: '', sourceGroupIds: ['direct-origin'] });
+    expect(
+      buildRelativeMembershipRuleFromCanonical({
+        currentGroupId: 'A',
+        membershipRule: { member_source_group_id: 'A', membership_mode: 'invalid' },
+      }).membershipRule
+    ).toEqual({ membershipMode: 'none', roleId: '', sourceGroupIds: [] });
   });
 });

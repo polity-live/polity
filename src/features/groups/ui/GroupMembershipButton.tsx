@@ -27,7 +27,12 @@ export function GroupMembershipButton({
 
   if (isInvited) {
     return (
-      <Button onClick={onAcceptInvitation} disabled={isLoading} variant="default">
+      <Button
+        data-action-id="groups.membership.accept.invitation"
+        onClick={onAcceptInvitation}
+        disabled={isLoading}
+        variant="default"
+      >
         <Check className="mr-2 h-4 w-4" />
         {t('components.actionBar.acceptInvitation')}
       </Button>
@@ -36,7 +41,12 @@ export function GroupMembershipButton({
 
   if (hasRequested) {
     return (
-      <Button onClick={onLeave} disabled={isLoading} variant="outline">
+      <Button
+        data-action-id="groups.membership.cancel.request"
+        onClick={onLeave}
+        disabled={isLoading}
+        variant="outline"
+      >
         <Clock className="mr-2 h-4 w-4" />
         {t('components.actionBar.requestPending')}
       </Button>
@@ -45,7 +55,12 @@ export function GroupMembershipButton({
 
   if (isMember) {
     return (
-      <Button onClick={onLeave} disabled={isLoading} variant="outline">
+      <Button
+        data-action-id="groups.membership.leave.group"
+        onClick={onLeave}
+        disabled={isLoading}
+        variant="outline"
+      >
         <UserMinus className="mr-2 h-4 w-4" />
         {t('components.actionBar.leaveGroup')}
       </Button>
@@ -53,7 +68,11 @@ export function GroupMembershipButton({
   }
 
   return (
-    <Button onClick={onRequestJoin} disabled={isLoading}>
+    <Button
+      data-action-id="groups.membership.request.join"
+      onClick={onRequestJoin}
+      disabled={isLoading}
+    >
       <UserPlus className="mr-2 h-4 w-4" />
       {t('components.actionBar.requestToJoin')}
     </Button>

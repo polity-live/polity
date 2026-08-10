@@ -128,4 +128,75 @@ describe('SettingsLayout', () => {
     expect(screen.getByText('Active memberships')).toBeTruthy();
     expect(screen.getByTestId('membership-table')).toBeTruthy();
   });
+
+  it('supports a wide heading-free page with separately aligned actions', () => {
+    const { container } = render(
+      <SettingsPage
+        title="Hidden title"
+        headingMode="none"
+        size="wide"
+        actions={<button>Page action</button>}
+        className="page-custom"
+        contentClassName="content-custom"
+      >
+        <span>Wide content</span>
+      </SettingsPage>
+    );
+
+    const page = container.querySelector('[data-slot="settings-page"]');
+    expect(page?.className).toContain('max-w-7xl');
+    expect(page?.className).toContain('space-y-6');
+    expect(screen.queryByText('Hidden title')).toBeNull();
+    expect(screen.getByText('Page action').parentElement?.className).toContain('justify-end');
+    expect(screen.getByText('Wide content').parentElement?.className).toContain('content-custom');
+  });
+
+  it('omits an absent sr-only description', () => {
+    render(
+      <SettingsPage title="Accessible title" headingMode="sr-only">
+        Body
+      </SettingsPage>
+    );
+    expect(screen.getByRole('heading', { name: 'Accessible title' })).toBeTruthy();
+    expect(document.querySelector('header p')).toBeNull();
+  });
+
+  it('renders tabs without an action and safely handles a missing change callback', () => {
+    render(
+      <SettingsTabs
+        value="enabled"
+        tabs={[
+          { value: 'enabled', label: 'Enabled' },
+          { value: 'disabled', label: 'Disabled', disabled: true },
+        ]}
+      >
+        Tab body
+      </SettingsTabs>
+    );
+
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Enabled' }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    expect(screen.getByRole('tab', { name: 'Disabled' })).toHaveProperty('disabled', true);
+    expect(screen.queryByRole('button', { name: 'Invite' })).toBeNull();
+  });
+
+  it('covers description-only, action-only, and headerless management sections', () => {
+    const first = render(
+      <ManagementSection description="Description only">First body</ManagementSection>
+    );
+    expect(screen.getByText('Description only')).toBeTruthy();
+    expect(screen.queryByRole('heading')).toBeNull();
+    first.unmount();
+
+    const second = render(
+      <ManagementSection action={<button>Section action</button>}>Second body</ManagementSection>
+    );
+    expect(screen.getByText('Section action')).toBeTruthy();
+    second.unmount();
+
+    const { container } = render(<ManagementSection>Headerless body</ManagementSection>);
+    expect(container.querySelector('[data-slot="management-section-header"]')).toBeNull();
+  });
 });

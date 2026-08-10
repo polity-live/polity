@@ -752,8 +752,13 @@ export function GroupRelationshipTypeSelect({
         value={value}
         onValueChange={next => onValueChange(next as GroupRelationshipType)}
         disabled={disabled}
+        data-action-id="network.relationship-type.select"
       >
-        <FormControlSelectTrigger id={id} className="h-auto min-h-12 py-3 [&>span]:line-clamp-none">
+        <FormControlSelectTrigger
+          id={id}
+          className="h-auto min-h-12 py-3 [&>span]:line-clamp-none"
+          data-action-id="network.relationship-type.select"
+        >
           <div className="min-w-0 flex-1 text-left">
             <RelationshipTypeOptionContent
               relationshipType={value}
@@ -768,7 +773,12 @@ export function GroupRelationshipTypeSelect({
           </div>
         </FormControlSelectTrigger>
         <FormControlSelectContent className="w-[var(--radix-select-trigger-width)] max-w-none">
-          <FormControlSelectItem value="parent" disabled={disabledOptions?.parent} className="py-2">
+          <FormControlSelectItem
+            value="parent"
+            disabled={disabledOptions?.parent}
+            className="py-2"
+            data-action-id="network.relationship-type.option.parent"
+          >
             <RelationshipTypeOptionContent
               relationshipType="parent"
               currentGroupName={currentGroupName}
@@ -778,7 +788,12 @@ export function GroupRelationshipTypeSelect({
               linkGroups={false}
             />
           </FormControlSelectItem>
-          <FormControlSelectItem value="child" disabled={disabledOptions?.child} className="py-2">
+          <FormControlSelectItem
+            value="child"
+            disabled={disabledOptions?.child}
+            className="py-2"
+            data-action-id="network.relationship-type.option.child"
+          >
             <RelationshipTypeOptionContent
               relationshipType="child"
               currentGroupName={currentGroupName}
@@ -792,6 +807,7 @@ export function GroupRelationshipTypeSelect({
             value="sibling"
             disabled={disabledOptions?.sibling}
             className="py-2"
+            data-action-id="network.relationship-type.option.sibling"
           >
             <RelationshipTypeOptionContent
               relationshipType="sibling"
@@ -1091,10 +1107,10 @@ export function GroupRelationshipMembershipModeSummary({
     ? 'current_members_to_partner'
     : membershipDirection;
   const descriptionCurrentGroupName = hasCanonicalMembershipEndpoints
-    ? (membershipSourceGroupName ?? membershipSourceGroupId ?? currentGroupName)
+    ? ((membershipSourceGroupName ?? membershipSourceGroupId) as string)
     : currentGroupName;
   const descriptionSelectedGroupName = hasCanonicalMembershipEndpoints
-    ? (membershipTargetGroupName ?? membershipTargetGroupId ?? selectedGroupName)
+    ? ((membershipTargetGroupName ?? membershipTargetGroupId) as string)
     : selectedGroupName;
   const descriptionCurrentGroupId = hasCanonicalMembershipEndpoints
     ? (membershipSourceGroupId ?? undefined)
@@ -1268,6 +1284,7 @@ export function GroupRelationshipRightsSelector({
                 type="button"
                 variant="ghost"
                 onClick={() => onToggleRight(option.value)}
+                data-action-id="network.right.toggle"
                 className="h-auto w-full items-start justify-start p-0 text-left whitespace-normal hover:bg-transparent disabled:opacity-100"
                 disabled={disabled}
               >
@@ -1297,20 +1314,19 @@ export function GroupRelationshipRightsSelector({
                 </div>
               </Button>
               {isSelected && onDirectionChange && directionOptions ? (
-                <div
-                  className={cn(
-                    'mt-3 ml-8 rounded-md border px-3 py-2',
-                    isSelected ? 'border-border/70 bg-background/80' : 'border-border bg-background'
-                  )}
-                >
+                <div className="border-border/70 bg-background/80 mt-3 ml-8 rounded-md border px-3 py-2">
                   <FormControlSelect
                     value={selectedDirection}
                     onValueChange={value =>
                       onDirectionChange(option.value, value as GroupRelationshipDirection)
                     }
                     disabled={disabled}
+                    data-action-id="network.right.direction.select"
                   >
-                    <FormControlSelectTrigger className="border-border bg-background/80 h-auto min-h-10 py-2 text-left shadow-none">
+                    <FormControlSelectTrigger
+                      className="border-border bg-background/80 h-auto min-h-10 py-2 text-left shadow-none"
+                      data-action-id="network.right.direction.select"
+                    >
                       <div className="min-w-0 flex-1 text-left">
                         <GroupRelationshipDirectionSentence
                           direction={selectedDirection}
@@ -1340,6 +1356,7 @@ export function GroupRelationshipRightsSelector({
                         <FormControlSelectItem
                           key={directionOption.value}
                           value={directionOption.value}
+                          data-action-id="network.right.direction.option"
                         >
                           <GroupRelationshipDirectionSentence
                             direction={directionOption.value}

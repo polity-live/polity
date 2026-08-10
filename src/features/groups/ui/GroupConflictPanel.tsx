@@ -102,6 +102,10 @@ function getLocalizedResolution(
   };
 }
 
+export const groupConflictPanelInternals = {
+  getLocalizedResolution,
+};
+
 export function GroupConflictPanel({ response }: GroupConflictPanelProps) {
   const { t } = useTranslation();
 
@@ -284,7 +288,12 @@ export function GroupConflictDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant={triggerVariant} size={triggerSize} className={className}>
+        <Button
+          data-action-id="groups.conflicts.open.details"
+          variant={triggerVariant}
+          size={triggerSize}
+          className={className}
+        >
           <Info className="mr-2 h-4 w-4" />
           {resolvedTriggerLabel}
         </Button>

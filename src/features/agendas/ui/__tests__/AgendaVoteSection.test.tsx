@@ -91,6 +91,29 @@ afterEach(() => {
 });
 
 describe('AgendaVoteSection', () => {
+  it.each(['absolute', 'two_thirds'] as const)(
+    'computes closed results for %s majority with missing choice metadata',
+    majorityType => {
+      render(
+        <AgendaVoteSection
+          voteTitle="Budget motion"
+          choices={[choice({ id: 'choice-1', label: null, order_index: null })]}
+          indicativeDecisions={[]}
+          finalDecisions={[{ choice_id: 'choice-1' }]}
+          offlineTallies={[]}
+          majorityType={majorityType}
+          userHasVoted={false}
+          userSelectedChoiceIds={[]}
+          voteStatus="closed"
+          totalEligibleVoters={1}
+        />
+      );
+      expect(
+        screen.getByText('features.events.agenda.defaultChoiceLabels.choiceWithNumber')
+      ).toBeTruthy();
+    }
+  );
+
   it('renders lean vote rows with named-results access, winner, and selection', () => {
     const onOpenNamedResults = vi.fn();
 
@@ -113,7 +136,13 @@ describe('AgendaVoteSection', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open named results' }));
+    const namedResultsAction = screen.getByRole('button', { name: 'Open named results' });
+    expect(namedResultsAction.getAttribute('data-action-id')).toBe(
+      'agendas.vote.named-results.open'
+    );
+    namedResultsAction.focus();
+    expect(document.activeElement).toBe(namedResultsAction);
+    fireEvent.click(namedResultsAction);
 
     expect(onOpenNamedResults).toHaveBeenCalledTimes(1);
     expect(container.querySelector('[data-slot="vote-results-display"]')).toBeTruthy();
@@ -154,6 +183,69 @@ describe('AgendaVoteSection', () => {
 
     expect(screen.queryByText('Winner')).toBeNull();
     expect(screen.getByText('1 · 100%')).toBeTruthy();
+  });
+
+  it('uses the leading-choice fallback when a supplied closed result has no computed winner', () => {
+    render(
+      <AgendaVoteSection
+        voteTitle="Budget motion"
+        choices={[choice({ id: 'yes', label: 'Yes', order_index: 0 })]}
+        indicativeDecisions={[]}
+        finalDecisions={[]}
+        userHasVoted={false}
+        userSelectedChoiceIds={[]}
+        voteStatus="closed"
+        voteResult="passed"
+      />
+    );
+    expect(screen.getByText('0 · 0%')).toBeTruthy();
+  });
+
+  it.each(['online', 'hybrid', 'offline'] as const)('shows %s attendance mode', attendanceMode => {
+    render(
+      <AgendaVoteSection
+        voteTitle="Budget motion"
+        choices={[choice({ id: 'yes', label: 'Yes' })]}
+        indicativeDecisions={[]}
+        finalDecisions={[]}
+        userHasVoted={false}
+        userSelectedChoiceIds={[]}
+        voteStatus="final"
+        attendanceMode={attendanceMode}
+      />
+    );
+    expect(screen.getByText(attendanceMode)).toBeTruthy();
+  });
+
+  it('omits attendance mode when explicitly unavailable', () => {
+    render(
+      <AgendaVoteSection
+        voteTitle="Budget motion"
+        choices={[choice({ id: 'yes', label: 'Yes' })]}
+        indicativeDecisions={[]}
+        finalDecisions={[]}
+        userHasVoted={false}
+        userSelectedChoiceIds={[]}
+        voteStatus="final"
+        attendanceMode={null}
+      />
+    );
+    expect(screen.queryByText('online')).toBeNull();
+  });
+
+  it('labels an indicative participation for the current user', () => {
+    render(
+      <AgendaVoteSection
+        voteTitle="Budget motion"
+        choices={[choice({ id: 'yes', label: 'Yes' })]}
+        indicativeDecisions={[{ choice_id: 'yes' }]}
+        finalDecisions={[]}
+        userHasVoted
+        userSelectedChoiceIds={['yes']}
+        voteStatus="indicative"
+      />
+    );
+    expect(screen.getByText('features.events.agenda.yourIndication')).toBeTruthy();
   });
 
   it('keeps the empty choices state visible without opening named results', () => {

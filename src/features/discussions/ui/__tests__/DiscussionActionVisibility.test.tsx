@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CommentTreeView } from '../CommentTreeView';
@@ -21,15 +21,24 @@ vi.mock('@/features/shared/virtualization', () => ({
 
 vi.mock('@/features/shared/ui/UserIdentityLink', () => ({
   UserIdentityLink: ({
+    'data-action-id': actionId,
+    userId,
     name,
     className,
     textContainerClassName,
   }: {
+    'data-action-id'?: string;
+    userId?: string;
     name?: string;
     className?: string;
     textContainerClassName?: string;
   }) => (
-    <span data-testid="user-identity" className={className}>
+    <span
+      data-testid="user-identity"
+      data-action-id={actionId}
+      data-user-id={userId}
+      className={className}
+    >
       <span className={textContainerClassName}>{name}</span>
     </span>
   ),
@@ -265,6 +274,104 @@ describe('discussion mobile layout', () => {
 });
 
 describe('discussion comment form and list updates', () => {
+  it('dispatches comment reply actions through stable intents', () => {
+    const actions = {
+      ...sharedActions,
+      setIsReplying: vi.fn(),
+      handleReply: vi.fn(),
+    };
+    const props = {
+      comment: {
+        id: 'comment-1',
+        content: 'Public comment',
+        created_at: 1,
+        user: { id: 'author-1', first_name: 'Grace' },
+      },
+      threadId: 'thread-1',
+      userId: 'user-1',
+      amendmentId: 'amendment-1',
+      amendmentTitle: 'Amendment',
+      senderName: undefined,
+      replyText: 'A reply',
+      isSubmitting: false,
+      score: 2,
+      userVote: undefined,
+      hasUpvoted: false,
+      hasDownvoted: false,
+      ...actions,
+    };
+    const view = render(<CommentTreeView {...props} isReplying={false} />);
+
+    expect(screen.getByTestId('user-identity').dataset.actionId).toBe(
+      'discussions.comment.author.open'
+    );
+    const toggle = screen.getByRole('button', { name: 'Reply' });
+    expect(toggle.dataset.actionId).toBe('discussions.comment.reply.toggle');
+    fireEvent.click(toggle);
+    expect(actions.setIsReplying).toHaveBeenCalledWith(true);
+
+    view.rerender(<CommentTreeView {...props} isReplying />);
+    const submit = screen.getByRole('button', { name: 'Post Reply' });
+    const cancel = screen.getByRole('button', { name: 'Cancel' });
+    expect(submit.dataset.actionId).toBe('discussions.comment.reply.submit');
+    expect(cancel.dataset.actionId).toBe('discussions.comment.reply.cancel');
+    fireEvent.click(submit);
+    fireEvent.click(cancel);
+    expect(actions.handleReply).toHaveBeenCalledOnce();
+    expect(actions.setIsReplying).toHaveBeenLastCalledWith(false);
+  });
+
+  it('dispatches thread comment actions through stable intents', () => {
+    const setIsCommenting = vi.fn();
+    const handleAddComment = vi.fn();
+    const props = {
+      thread: {
+        id: 'thread-1',
+        content: 'Public discussion',
+        created_at: 1,
+        user: { id: 'author-1', first_name: 'Ada' },
+      },
+      userId: 'user-1',
+      amendmentId: 'amendment-1',
+      amendmentTitle: 'Amendment',
+      senderName: undefined,
+      onCreateComment: vi.fn(),
+      onVoteThread: vi.fn(),
+      onVoteComment: vi.fn(),
+      setIsCommenting,
+      commentText: 'A comment',
+      setCommentText: vi.fn(),
+      isSubmitting: false,
+      setIsSubmitting: vi.fn(),
+      score: 3,
+      userVote: undefined,
+      hasUpvoted: false,
+      hasDownvoted: false,
+      sortedComments: [],
+      handleVote: vi.fn(),
+      handleAddComment,
+    };
+    const view = render(<ThreadCardView {...props} isCommenting={false} />);
+
+    expect(screen.getByTestId('user-identity').dataset.actionId).toBe(
+      'discussions.thread.author.open'
+    );
+    const open = screen.getByRole('button', { name: 'Add Comment' });
+    expect(open.dataset.actionId).toBe('discussions.thread.comment.open');
+    fireEvent.click(open);
+    expect(setIsCommenting).toHaveBeenCalledWith(true);
+
+    view.rerender(<ThreadCardView {...props} isCommenting />);
+    const submit = screen.getByRole('button', { name: 'Post Comment' });
+    const cancel = screen.getByRole('button', { name: 'Cancel' });
+    expect(submit.dataset.actionId).toBe('discussions.thread.comment.submit');
+    expect(cancel.dataset.actionId).toBe('discussions.thread.comment.cancel');
+    fireEvent.click(submit);
+    fireEvent.click(cancel);
+    expect(handleAddComment).toHaveBeenCalledOnce();
+    expect(setIsCommenting).toHaveBeenLastCalledWith(false);
+  });
+
   it('renders the root comment form without an outer card container', () => {
     const { container } = render(
       <ThreadCardView
@@ -379,6 +486,86 @@ describe('discussion comment form and list updates', () => {
     act(() => onTotalChange?.(10));
 
     expect(screen.getByText((_content, node) => node?.textContent === '10 comments')).toBeTruthy();
+  });
+
+  it('renders anonymous legacy authors and the singular live comment total', () => {
+    render(
+      <ThreadCardView
+        thread={{ id: 'thread-1', content: null, created_at: 1, user_id: 'legacy-author' }}
+        userId={undefined}
+        amendmentId="amendment-1"
+        amendmentTitle="Amendment"
+        senderName={undefined}
+        onCreateComment={vi.fn()}
+        onVoteThread={vi.fn()}
+        onVoteComment={vi.fn()}
+        isCommenting={false}
+        setIsCommenting={vi.fn()}
+        commentText=""
+        setCommentText={vi.fn()}
+        isSubmitting={false}
+        setIsSubmitting={vi.fn()}
+        score={0}
+        userVote={undefined}
+        hasUpvoted={false}
+        hasDownvoted={false}
+        sortedComments={[]}
+        handleVote={vi.fn()}
+        handleAddComment={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('user-identity').dataset.userId).toBe('legacy-author');
+    expect(screen.getByTestId('user-identity').textContent).toContain('Anonymous');
+
+    const onTotalChange = virtualListCapture.latestProps?.onTotalChange as
+      ((total: number) => void) | undefined;
+    act(() => onTotalChange?.(1));
+    expect(screen.getByText((_content, node) => node?.textContent === '1 comment')).toBeTruthy();
+  });
+
+  it('uses legacy comment authors and selects settled list cache policies', () => {
+    render(
+      <CommentTreeView
+        comment={{ id: 'comment-1', content: 'Legacy comment', created_at: 1, user_id: 'legacy' }}
+        threadId="thread-1"
+        userId={undefined}
+        amendmentId="amendment-1"
+        amendmentTitle="Amendment"
+        senderName={undefined}
+        isReplying={false}
+        replyText=""
+        isSubmitting={false}
+        score={0}
+        userVote={undefined}
+        hasUpvoted={false}
+        hasDownvoted={false}
+        {...sharedActions}
+      />
+    );
+
+    expect(screen.getByTestId('user-identity').dataset.userId).toBe('legacy');
+    expect(screen.getByTestId('user-identity').textContent).toContain('Anonymous');
+
+    const getPageQuery = virtualListCapture.latestProps?.getPageQuery as (input: {
+      limit: number;
+      start: unknown;
+      dir: 'forward';
+      settled: boolean;
+    }) => { options: { ttl: string } };
+    const getSingleQuery = virtualListCapture.latestProps?.getSingleQuery as (input: {
+      id: string;
+      settled: boolean;
+    }) => { options: { ttl: string } };
+
+    expect(
+      getPageQuery({ limit: 10, start: null, dir: 'forward', settled: true }).options.ttl
+    ).toBe('5m');
+    expect(
+      getPageQuery({ limit: 10, start: null, dir: 'forward', settled: false }).options.ttl
+    ).toBe('none');
+    expect(getSingleQuery({ id: 'comment-1', settled: true }).options.ttl).toBe('5m');
+    expect(getSingleQuery({ id: 'comment-1', settled: false }).options.ttl).toBe('none');
   });
 
   it('renders voting and add-comment actions in Reddit order', () => {

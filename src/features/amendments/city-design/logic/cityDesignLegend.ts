@@ -97,11 +97,9 @@ function buildExistingLegendEntries(design: CityDesignStateV1): CityDesignLegend
     const layer = getCityDesignOsmFeatureLayer(feature.kind);
     if (hiddenOsmFeatureIds.has(feature.id) || !layerVisibility[layer]) return;
 
-    const section = sectionByLayer.get(layer);
-    if (!section) return;
-    const objectType = feature.mappedObjectType ?? section.objectTypes[0];
-    if (!objectType) return;
-    const key = `${layer}:${objectType}:${feature.renderProfile ?? feature.subkind ?? ''}`;
+    const section = sectionByLayer.get(layer) as (typeof cityDesignElementSections)[number];
+    const objectType = feature.mappedObjectType as CityDesignObjectType;
+    const key = `${layer}:${objectType}:${feature.renderProfile as string}`;
     if (seenKeys.has(key)) return;
     seenKeys.add(key);
     const definition = getCityDesignObjectDefinition(objectType);
@@ -111,14 +109,14 @@ function buildExistingLegendEntries(design: CityDesignStateV1): CityDesignLegend
       id: layerEntries.length === 0 ? `existing:${layer}` : `existing:${layer}:${objectType}`,
       source: 'existing',
       kind: 'existing-layer',
-      labelKey: feature.mappedObjectType ? definition.labelKey : section.labelKey,
+      labelKey: definition.labelKey,
       color: muteExistingColor(getExistingLegendColor(feature, layer)),
       renderKind: definition.renderKind,
       layer,
       objectType,
       properties: {
         ...definition.defaultProperties,
-        ...(feature.mappedProperties ?? {}),
+        ...(feature.mappedProperties as Record<string, CityDesignPropertyValue>),
       },
       sectionId: section.layer,
       width: feature.widthMeters ?? definition.defaultWidth,
@@ -143,8 +141,6 @@ function muteExistingColor(color: string) {
 }
 
 function buildPlannedLegendEntryGroups(): CityDesignLegendEntryGroup[] {
-  const seenEntryIds = new Set<string>();
-
   return cityDesignElementSections.flatMap(section => {
     const entries =
       section.tools && section.tools.length > 0
@@ -168,21 +164,13 @@ function buildPlannedLegendEntryGroups(): CityDesignLegendEntryGroup[] {
             })
           );
 
-    const uniqueEntries = entries.filter(entry => {
-      if (seenEntryIds.has(entry.id)) return false;
-      seenEntryIds.add(entry.id);
-      return true;
-    });
-
-    return uniqueEntries.length > 0
-      ? [
-          {
-            id: `planned-group:${section.layer}`,
-            labelKey: section.labelKey,
-            entries: uniqueEntries,
-          },
-        ]
-      : [];
+    return [
+      {
+        id: `planned-group:${section.layer}`,
+        labelKey: section.labelKey,
+        entries,
+      },
+    ];
   });
 }
 
@@ -235,3 +223,13 @@ function getPlannedLegendColor(
 function stringProperty(value: unknown) {
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
+
+export const cityDesignLegendInternals = {
+  buildExistingLegendEntries,
+  buildPlannedLegendEntryGroups,
+  createPlannedPresetLegendEntry,
+  getExistingLegendColor,
+  getPlannedLegendColor,
+  muteExistingColor,
+  stringProperty,
+};

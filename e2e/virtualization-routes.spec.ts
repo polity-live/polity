@@ -34,8 +34,20 @@ function collectVirtualizerFailures(page: Page) {
   return failures;
 }
 
+async function waitForPaint(page: Page, frames = 2) {
+  await page.evaluate(
+    frameCount =>
+      new Promise<void>(resolve => {
+        const next = (remaining: number) =>
+          requestAnimationFrame(() => (remaining <= 1 ? resolve() : next(remaining - 1)));
+        next(frameCount);
+      }),
+    frames
+  );
+}
+
 test.describe('virtualized routes', () => {
-  test('render the migrated desktop surfaces without virtualizer failures @smoke', async ({
+  test('render the migrated desktop surfaces without virtualizer failures @nightly', async ({
     page,
   }) => {
     const failures = collectVirtualizerFailures(page);
@@ -45,13 +57,15 @@ test.describe('virtualized routes', () => {
       await page.goto(route);
       await expect(page).not.toHaveURL(/\/unauthorized(?:\?|$)/);
       await expect(page.locator('body')).toContainText(marker);
-      await page.waitForTimeout(500);
+      await waitForPaint(page);
     }
 
     expect(failures).toEqual([]);
   });
 
-  test('keeps the responsive search grid stable on a mobile viewport @smoke', async ({ page }) => {
+  test('keeps the responsive search grid stable on a mobile viewport @pr @mobile', async ({
+    page,
+  }) => {
     const failures = collectVirtualizerFailures(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/search');
@@ -59,13 +73,16 @@ test.describe('virtualized routes', () => {
     await expect(page).not.toHaveURL(/\/unauthorized(?:\?|$)/);
     await expect(page.locator('body')).toContainText('Search');
     await page.mouse.wheel(0, 1200);
-    await page.waitForTimeout(750);
+    await expect.poll(() => page.locator('[data-index]').count()).toBeGreaterThan(0);
+    await waitForPaint(page);
 
     expect(await page.locator('[data-index]').count()).toBeLessThanOrEqual(14);
     expect(failures).toEqual([]);
   });
 
-  test('bounds search rendering work during rapid desktop scrolling', async ({ page }) => {
+  test('bounds search rendering work during rapid desktop scrolling @nightly @performance', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.addInitScript(() => {
       window.__searchScrollLongTasks = [];
@@ -81,9 +98,9 @@ test.describe('virtualized routes', () => {
 
     await scroller.hover();
     await page.mouse.wheel(0, 2400);
-    await page.waitForTimeout(1000);
+    await waitForPaint(page);
     await page.mouse.wheel(0, -2400);
-    await page.waitForTimeout(1000);
+    await waitForPaint(page);
     await page.evaluate(() => {
       window.__searchScrollLongTasks = [];
     });
@@ -91,10 +108,10 @@ test.describe('virtualized routes', () => {
     let maxMountedCells = 0;
     for (let index = 0; index < 5; index += 1) {
       await page.mouse.wheel(0, 900);
-      await page.waitForTimeout(100);
+      await waitForPaint(page);
       maxMountedCells = Math.max(maxMountedCells, await page.locator('[data-index]').count());
     }
-    await page.waitForTimeout(1000);
+    await waitForPaint(page, 4);
 
     const visibleCells = await scroller.evaluate(element => {
       const viewport = element.getBoundingClientRect();
@@ -112,14 +129,14 @@ test.describe('virtualized routes', () => {
     expect(maxLongTask).toBeLessThan(searchScrollLongTaskBudget);
   });
 
-  test('restores conversations after using the mobile thread back button @smoke', async ({
+  test('restores conversations after using the mobile thread back button @nightly @mobile', async ({
     page,
   }) => {
     const failures = collectVirtualizerFailures(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/messages');
 
-    const conversation = page.getByRole('button', { name: /Aria & Kai/ }).first();
+    const conversation = page.getByRole('button', { name: /Aria & Kai/ });
     await expect(conversation).toBeVisible({ timeout: 40_000 });
     await conversation.click();
 

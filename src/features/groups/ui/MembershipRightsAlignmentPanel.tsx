@@ -138,11 +138,13 @@ export function MembershipRightsAlignmentPanel<TMembership extends Participation
       cell: ({ row }) => (
         <div className="flex justify-end gap-2">
           <TableActionIconButton
+            data-action-id="groups.members.rights-alignment.view-rights"
             label={t('features.groups.memberships.rightsAlignment.actions.rights')}
             icon={<Eye className="h-4 w-4" />}
             onClick={() => onOpenRightsDialog(row.original.membership)}
           />
           <TableActionIconButton
+            data-action-id="groups.members.rights-alignment.change-role"
             label={t('features.groups.memberships.rightsAlignment.actions.manageRoles')}
             icon={<ArrowUpDown className="h-4 w-4" />}
             variant="outline"
@@ -332,3 +334,15 @@ function getMemberName(membership: ParticipationLike) {
 function formatPathTitle(paths: readonly { groupPath: string[] }[]) {
   return paths.map(path => path.groupPath.join(' > ')).join('\n');
 }
+
+export const membershipRightsAlignmentPanelInternals = {
+  AlignmentStatusBadge,
+  OriginCell,
+  ConnectedRightsCell,
+  ActionRightList,
+  RoleList,
+  getStatusLabel,
+  tText,
+  getMemberName,
+  formatPathTitle,
+};

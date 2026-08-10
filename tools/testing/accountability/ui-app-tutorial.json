@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/app-tutorial/AppTutorialSettingsPanel.tsx#app-tutorial.app-tutorial-settings-panel.onboarding": [
+      {
+        "file": "src/features/app-tutorial/__tests__/AppTutorialSettingsPanel.test.tsx",
+        "project": "component",
+        "caseId": "disables the action while loading and reports load errors",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/app-tutorial/AppTutorialSettingsPanel.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {}
+}

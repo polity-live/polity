@@ -120,7 +120,7 @@ export function useBlogState(options: BlogStateOptions = {}) {
     versions: versions ?? [],
     subscriberCount,
     subscribers: subscribers ?? [],
-    comments: comments ?? [],
+    comments,
     blogThread: blogThread ?? null,
     blogsByGroup: blogsByGroup ?? [],
     bloggersByUser: bloggersByUser ?? [],

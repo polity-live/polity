@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   sharedSubscribe: vi.fn(),
+  sharedUnsubscribe: vi.fn(),
+  sharedCreateLink: vi.fn(),
+  sharedDeleteLink: vi.fn(),
   fireNotification: vi.fn(),
   userName: vi.fn(),
   groupName: vi.fn(),
@@ -19,6 +22,9 @@ vi.mock('../../mutators', () => ({
   mutators: {
     common: {
       subscribe: { fn: mocks.sharedSubscribe },
+      unsubscribe: { fn: mocks.sharedUnsubscribe },
+      createLink: { fn: mocks.sharedCreateLink },
+      deleteLink: { fn: mocks.sharedDeleteLink },
     },
   },
 }));
@@ -115,4 +121,126 @@ describe('commonServerMutators.subscribe notifications', () => {
       });
     }
   );
+
+  it('recomputes every supplied counter and follows another user only once', async () => {
+    const tx = { run: vi.fn() };
+    await commonServerMutators.subscribe.fn({
+      tx: tx as never,
+      ctx: { userID: 'sender', email: '' },
+      args: {
+        ...baseArgs,
+        user_id: 'recipient',
+        group_id: 'group-1',
+        event_id: 'event-1',
+        amendment_id: 'amendment-1',
+        blog_id: 'blog-1',
+      },
+    });
+    expect(mocks.recomputeUserCounters).toHaveBeenCalled();
+    expect(mocks.recomputeGroupCounters).toHaveBeenCalled();
+    expect(mocks.recomputeEventCounters).toHaveBeenCalled();
+    expect(mocks.recomputeAmendmentCounters).toHaveBeenCalled();
+    expect(mocks.recomputeBlogCounters).toHaveBeenCalled();
+
+    vi.clearAllMocks();
+    await commonServerMutators.subscribe.fn({
+      tx: tx as never,
+      ctx: { userID: 'sender', email: '' },
+      args: { ...baseArgs, user_id: 'recipient' },
+    });
+    expect(mocks.fireNotification).toHaveBeenCalledWith(
+      'notifyNewFollower',
+      expect.objectContaining({ recipientUserId: 'recipient' })
+    );
+
+    vi.clearAllMocks();
+    await commonServerMutators.subscribe.fn({
+      tx: tx as never,
+      ctx: { userID: 'sender', email: '' },
+      args: { ...baseArgs, user_id: 'sender' },
+    });
+    expect(mocks.fireNotification).not.toHaveBeenCalled();
+  });
+
+  it('includes resolved blog group and owner recipients', async () => {
+    const tx = {
+      run: vi
+        .fn()
+        .mockResolvedValueOnce({ id: 'blog-1', group_id: 'group-1' })
+        .mockResolvedValueOnce({ user_id: 'owner-1' }),
+    };
+    await commonServerMutators.subscribe.fn({
+      tx: tx as never,
+      ctx: { userID: 'sender', email: '' },
+      args: { ...baseArgs, blog_id: 'blog-1' },
+    });
+    expect(mocks.fireNotification).toHaveBeenCalledWith(
+      'notifyBlogNewSubscriber',
+      expect.objectContaining({ groupId: 'group-1', ownerId: 'owner-1' })
+    );
+  });
+
+  it('handles missing and populated unsubscribe rows', async () => {
+    const missingTx = { run: vi.fn().mockResolvedValue(null) };
+    await commonServerMutators.unsubscribe.fn({
+      tx: missingTx as never,
+      ctx: { userID: 'sender', email: '' },
+      args: { id: 'missing' },
+    });
+    expect(mocks.recomputeUserCounters).not.toHaveBeenCalled();
+
+    const populatedTx = {
+      run: vi.fn().mockResolvedValue({
+        user_id: 'user-1',
+        group_id: 'group-1',
+        event_id: 'event-1',
+        amendment_id: 'amendment-1',
+        blog_id: 'blog-1',
+      }),
+    };
+    await commonServerMutators.unsubscribe.fn({
+      tx: populatedTx as never,
+      ctx: { userID: 'sender', email: '' },
+      args: { id: 'subscription' },
+    });
+    expect(mocks.recomputeBlogCounters).toHaveBeenCalledWith(populatedTx, 'blog-1');
+
+    vi.clearAllMocks();
+    await commonServerMutators.unsubscribe.fn({
+      tx: { run: vi.fn().mockResolvedValue({}) } as never,
+      ctx: { userID: 'sender', email: '' },
+      args: { id: 'empty-subscription' },
+    });
+    expect(mocks.recomputeBlogCounters).not.toHaveBeenCalled();
+  });
+
+  it('notifies only group-scoped link creates and persisted group link deletes', async () => {
+    const tx = { run: vi.fn() };
+    await commonServerMutators.createLink.fn({
+      tx: tx as never,
+      ctx: { userID: 'sender', email: '' },
+      args: { id: 'link-1', group_id: 'group-1' } as never,
+    });
+    await commonServerMutators.createLink.fn({
+      tx: tx as never,
+      ctx: { userID: 'sender', email: '' },
+      args: { id: 'link-2', group_id: null } as never,
+    });
+
+    const deleteTx = { run: vi.fn().mockResolvedValueOnce({ group_id: 'group-1' }).mockResolvedValueOnce(null) };
+    await commonServerMutators.deleteLink.fn({
+      tx: deleteTx as never,
+      ctx: { userID: 'sender', email: '' },
+      args: { id: 'link-1' },
+    });
+    await commonServerMutators.deleteLink.fn({
+      tx: deleteTx as never,
+      ctx: { userID: 'sender', email: '' },
+      args: { id: 'missing-link' },
+    });
+    expect(mocks.fireNotification).toHaveBeenCalledWith(
+      'notifyLinkRemoved',
+      expect.objectContaining({ groupId: 'group-1' })
+    );
+  });
 });

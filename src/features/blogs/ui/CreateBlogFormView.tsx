@@ -168,6 +168,7 @@ export function CreateBlogFormView({
           <div className="mt-4 flex justify-center gap-2">
             {[0, 1, 2].map((index: any) => (
               <Button
+                data-action-id="blogs.create.select-step"
                 key={index}
                 type="button"
                 variant="ghost"
@@ -185,6 +186,7 @@ export function CreateBlogFormView({
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button
+            data-action-id="blogs.create.previous-step"
             type="button"
             variant="outline"
             onClick={() => carouselApi?.scrollPrev()}
@@ -194,6 +196,7 @@ export function CreateBlogFormView({
           </Button>
           {currentStep < 2 ? (
             <Button
+              data-action-id="blogs.create.next-step"
               type="button"
               onClick={() => carouselApi?.scrollNext()}
               disabled={currentStep === 0 && !formData.title}
@@ -201,7 +204,12 @@ export function CreateBlogFormView({
               {translateText('generated.inline.0047_next_bc981983')}
             </Button>
           ) : (
-            <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+            <Button
+              data-action-id="blogs.create.submit"
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
               {isSubmitting
                 ? translateText('generated.inline.0013_creating_28ea7667')
                 : translateText('generated.inline.0039_create_blog_post_94626f08')}

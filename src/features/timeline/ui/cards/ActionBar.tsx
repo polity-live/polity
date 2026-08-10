@@ -101,6 +101,8 @@ export function ActionBar({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                data-action-id="timeline.action-bar.follow.toggle"
+                data-action-kind="selection"
                 variant={isFollowing ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={onFollow}
@@ -128,6 +130,9 @@ export function ActionBar({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              data-action-id="timeline.action-bar.discussion.open"
+              data-action-kind="interaction"
+              aria-label={t('features.timeline.cards.discuss')}
               variant="ghost"
               size="sm"
               onClick={onDiscuss}
@@ -146,6 +151,9 @@ export function ActionBar({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  data-action-id="timeline.action-bar.reaction.support"
+                  data-action-kind="selection"
+                  aria-label={t('features.timeline.cards.support')}
                   variant={userReaction === 'support' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => onReact?.('support')}
@@ -168,6 +176,9 @@ export function ActionBar({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  data-action-id="timeline.action-bar.reaction.oppose"
+                  data-action-kind="selection"
+                  aria-label={t('features.timeline.cards.oppose')}
                   variant={userReaction === 'oppose' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => onReact?.('oppose')}
@@ -194,6 +205,13 @@ export function ActionBar({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                data-action-id="timeline.action-bar.reaction.like"
+                data-action-kind="selection"
+                aria-label={
+                  userReaction === 'support'
+                    ? t('features.timeline.cards.liked')
+                    : t('features.timeline.cards.like')
+                }
                 variant={userReaction === 'support' ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() => onReact?.('support')}
@@ -228,6 +246,9 @@ export function ActionBar({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              data-action-id="timeline.action-bar.share"
+              data-action-kind="interaction"
+              aria-label={t('features.timeline.cards.share')}
               variant="ghost"
               size="sm"
               onClick={onShare}
@@ -243,6 +264,13 @@ export function ActionBar({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              data-action-id="timeline.action-bar.bookmark.toggle"
+              data-action-kind="selection"
+              aria-label={
+                isBookmarked
+                  ? t('features.timeline.cards.bookmarked')
+                  : t('features.timeline.cards.bookmark')
+              }
               variant={isBookmarked ? 'secondary' : 'ghost'}
               size="sm"
               onClick={onBookmark}
@@ -269,21 +297,39 @@ export function ActionBar({
         {/* More Options */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className={cn('px-2')}>
+            <Button
+              data-action-id="timeline.action-bar.menu.open"
+              data-action-kind="interaction"
+              aria-label={t('features.timeline.cards.more', 'More actions')}
+              variant="ghost"
+              size="sm"
+              className={cn('px-2')}
+            >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onShare}>
+            <DropdownMenuItem
+              data-action-id="timeline.action-bar.menu.copy-link"
+              data-action-kind="interaction"
+              onClick={onShare}
+            >
               <Share2 className="mr-2 h-4 w-4" />
               {translateText('generated.inline.1157_copy_link_672d82d0')}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onDiscuss}>
+            <DropdownMenuItem
+              data-action-id="timeline.action-bar.menu.discussion.open"
+              data-action-kind="interaction"
+              onClick={onDiscuss}
+            >
               <MessageCircle className="mr-2 h-4 w-4" />
               {translateText('generated.inline.1158_view_discussion_131ff1c9')}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              data-action-id="timeline.action-bar.menu.report"
+              data-action-kind="interaction"
+            >
               <HelpCircle className="mr-2 h-4 w-4" />
               {translateText('generated.inline.1159_report_issue_0b07f35d')}
             </DropdownMenuItem>
@@ -313,6 +359,9 @@ export function ActionBarCompact({
   return (
     <div className={cn(featureThemeClassName('timelineActionBarNeutralText'), className)}>
       <Button
+        data-action-id="timeline.action-bar.compact.reaction.toggle"
+        data-action-kind="selection"
+        aria-label={translateText('generated.inline.0118_follow_66587a7a')}
         type="button"
         variant="ghost"
         size="sm"
@@ -323,6 +372,9 @@ export function ActionBarCompact({
         {reactionCount > 0 && <span className="text-xs">{reactionCount}</span>}
       </Button>
       <Button
+        data-action-id="timeline.action-bar.compact.discussion.open"
+        data-action-kind="interaction"
+        aria-label={translateText('generated.inline.1158_view_discussion_131ff1c9')}
         type="button"
         variant="ghost"
         size="sm"

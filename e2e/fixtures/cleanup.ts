@@ -1,476 +1,221 @@
 import { closeDb, db, runCleanupStep } from './db';
 
-interface CleanupOptions {
-  prefix?: string;
-  includeWorkerUsers?: boolean;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export interface CleanupOptions {
+  actorIds: readonly string[];
+  entityIds?: readonly string[];
   closeConnection?: boolean;
 }
 
-function patternFor(prefix?: string) {
-  return prefix ? `${prefix}%` : 'E2E-%';
+export interface CleanupResources {
+  actorIds: string[];
+  entityIds: string[];
+  resourceIds: string[];
 }
 
-export async function cleanupE2ERows(options: CleanupOptions = {}) {
+function exactIds(values: readonly string[], label: string) {
+  const ids = [...new Set(values)];
+  for (const id of ids) {
+    if (!UUID_PATTERN.test(id)) {
+      throw new Error(`Refusing E2E cleanup with an invalid ${label}: ${id}`);
+    }
+  }
+  return ids;
+}
+
+export function normalizeCleanupResources(options: CleanupOptions): CleanupResources {
+  const actorIds = exactIds(options.actorIds, 'actor ID');
+  if (actorIds.length === 0) {
+    throw new Error('Refusing E2E cleanup without an exact actor ID.');
+  }
+  const entityIds = exactIds(options.entityIds ?? [], 'entity ID');
+  return {
+    actorIds,
+    entityIds,
+    resourceIds: [...new Set([...actorIds, ...entityIds])],
+  };
+}
+
+/**
+ * Deletes only rows identified by the current test's exact UUIDs or by exact
+ * foreign-key relationships to those UUIDs. Text prefixes are deliberately not
+ * accepted: two parallel tests may share a run prefix, but never an actor ID.
+ */
+export async function cleanupE2ERows(options: CleanupOptions) {
   const sql = db();
-  const pattern = patternFor(options.prefix);
-  const includeWorkerUsers = options.includeWorkerUsers ?? false;
+  const { actorIds, resourceIds } = normalizeCleanupResources(options);
+  const actors = sql.array(actorIds);
+  const resources = sql.array(resourceIds);
 
   await runCleanupStep(
     'notifications',
     () => sql`
-    delete from public.notification_read
-    where read_by_user_id in (select id from public."user" where bio like ${pattern});
-
-    delete from public.notification
-    where title like ${pattern}
-       or message like ${pattern}
-       or action_url like ${pattern}
-       or recipient_id in (select id from public."user" where bio like ${pattern})
-       or sender_id in (select id from public."user" where bio like ${pattern});
-  `
+      delete from public.notification
+      where id = any(${resources}::uuid[])
+         or recipient_id = any(${actors}::uuid[])
+         or sender_id = any(${actors}::uuid[])
+    `
   );
 
   await runCleanupStep(
     'payments',
     () => sql`
-    delete from public.payment
-    where label like ${pattern}
-       or payer_user_id in (select id from public."user" where bio like ${pattern})
-       or receiver_user_id in (select id from public."user" where bio like ${pattern})
-       or payer_group_id in (select id from public."group" where name like ${pattern})
-       or receiver_group_id in (select id from public."group" where name like ${pattern});
-  `
+      delete from public.payment
+      where id = any(${resources}::uuid[])
+         or payer_user_id = any(${actors}::uuid[])
+         or receiver_user_id = any(${actors}::uuid[])
+         or payer_group_id = any(${resources}::uuid[])
+         or receiver_group_id = any(${resources}::uuid[])
+    `
   );
 
   await runCleanupStep(
-    'elections and votes',
+    'elections',
     () => sql`
-    delete from public.final_candidate_selection
-    where election_id in (select id from public.election where title like ${pattern})
-       or candidate_id in (
-         select c.id
-         from public.election_candidate c
-         left join public.election e on e.id = c.election_id
-         where c.name like ${pattern}
-            or c.description like ${pattern}
-            or c.image_url like ${pattern}
-            or e.title like ${pattern}
-       );
-
-    delete from public.indicative_candidate_selection
-    where election_id in (select id from public.election where title like ${pattern})
-       or candidate_id in (
-         select c.id
-         from public.election_candidate c
-         left join public.election e on e.id = c.election_id
-         where c.name like ${pattern}
-            or c.description like ${pattern}
-            or c.image_url like ${pattern}
-            or e.title like ${pattern}
-       );
-
-    delete from public.final_elector_participation
-    where election_id in (select id from public.election where title like ${pattern});
-
-    delete from public.indicative_elector_participation
-    where election_id in (select id from public.election where title like ${pattern});
-
-    delete from public.elector
-    where election_id in (select id from public.election where title like ${pattern});
-
-    delete from public.election_offline_tally
-    where election_id in (select id from public.election where title like ${pattern});
-
-    delete from public.election_candidate
-    where name like ${pattern}
-       or description like ${pattern}
-       or image_url like ${pattern}
-       or election_id in (select id from public.election where title like ${pattern});
-
-    delete from public.election
-    where title like ${pattern}
-       or description like ${pattern}
-       or agenda_item_id in (select id from public.agenda_item where title like ${pattern});
-  `
+      delete from public.election
+      where id = any(${resources}::uuid[])
+         or agenda_item_id = any(${resources}::uuid[])
+    `
   );
 
   await runCleanupStep(
     'agenda items',
     () => sql`
-    delete from public.speaker_list
-    where agenda_item_id in (select id from public.agenda_item where title like ${pattern});
-
-    delete from public.agenda_item_change_request
-    where agenda_item_id in (select id from public.agenda_item where title like ${pattern});
-
-    delete from public.agenda_item
-    where title like ${pattern}
-       or description like ${pattern}
-       or event_id in (select id from public.event where title like ${pattern})
-       or amendment_id in (select id from public.amendment where title like ${pattern});
-  `
+      delete from public.agenda_item
+      where id = any(${resources}::uuid[])
+         or event_id = any(${resources}::uuid[])
+         or amendment_id = any(${resources}::uuid[])
+         or creator_id = any(${actors}::uuid[])
+    `
   );
 
   await runCleanupStep(
-    'documents and amendments',
+    'documents for amendments',
     () => sql`
-    update public.amendment
-    set document_id = null
-    where title like ${pattern};
+      delete from public.document
+      where id = any(${resources}::uuid[])
+         or amendment_id = any(${resources}::uuid[])
+    `
+  );
 
-    delete from public.document_cursor
-    where document_id in (
-      select id from public.document
-      where content::text like ${pattern}
-         or amendment_id in (select id from public.amendment where title like ${pattern})
-    );
-
-    delete from public.document_collaborator
-    where document_id in (
-      select id from public.document
-      where content::text like ${pattern}
-         or amendment_id in (select id from public.amendment where title like ${pattern})
-    );
-
-    delete from public.document_version
-    where change_summary like ${pattern}
-       or content::text like ${pattern}
-       or amendment_id in (select id from public.amendment where title like ${pattern});
-
-    delete from public.document
-    where content::text like ${pattern}
-       or amendment_id in (select id from public.amendment where title like ${pattern});
-
-    delete from public.support_confirmation
-    where amendment_id in (select id from public.amendment where title like ${pattern});
-
-    delete from public.process_task
-    where title like ${pattern}
-       or description like ${pattern}
-       or process_run_id in (
-         select id from public.amendment_process_run
-         where amendment_id in (select id from public.amendment where title like ${pattern})
-       );
-
-    delete from public.amendment_process_step_run
-    where process_run_id in (
-      select id from public.amendment_process_run
-      where amendment_id in (select id from public.amendment where title like ${pattern})
-    );
-
-    delete from public.amendment_path_segment
-    where path_id in (
-      select id from public.amendment_path
-      where amendment_id in (select id from public.amendment where title like ${pattern})
-    );
-
-    delete from public.amendment_path
-    where title like ${pattern}
-       or amendment_id in (select id from public.amendment where title like ${pattern});
-
-    update public.amendment_process_run
-    set active_branch_id = null, terminal_step_run_id = null
-    where amendment_id in (select id from public.amendment where title like ${pattern});
-
-    delete from public.amendment_process_branch
-    where title like ${pattern}
-       or process_run_id in (
-         select id from public.amendment_process_run
-         where amendment_id in (select id from public.amendment where title like ${pattern})
-       );
-
-    delete from public.amendment_process_run
-    where amendment_id in (select id from public.amendment where title like ${pattern});
-
-    delete from public.amendment_group_decision
-    where amendment_id in (select id from public.amendment where title like ${pattern});
-
-    delete from public.amendment_city_design
-    where title like ${pattern}
-       or amendment_id in (select id from public.amendment where title like ${pattern});
-
-    delete from public.amendment_collaborator
-    where amendment_id in (select id from public.amendment where title like ${pattern});
-
-    delete from public.amendment
-    where title like ${pattern}
-       or reason like ${pattern}
-       or image_url like ${pattern};
-  `
+  await runCleanupStep(
+    'amendments',
+    () => sql`
+      delete from public.amendment
+      where id = any(${resources}::uuid[])
+         or created_by_id = any(${actors}::uuid[])
+    `
   );
 
   await runCleanupStep(
     'events',
     () => sql`
-    delete from public.event_participant_role
-    where event_participant_id in (
-      select id from public.event_participant
-      where event_id in (select id from public.event where title like ${pattern})
-    );
-
-    delete from public.event_participant
-    where event_id in (select id from public.event where title like ${pattern})
-       or user_id in (select id from public."user" where bio like ${pattern});
-
-    delete from public.event_offline_participant
-    where event_id in (select id from public.event where title like ${pattern})
-       or first_name like ${pattern}
-       or last_name like ${pattern};
-
-    delete from public.event_assembly_scope
-    where event_id in (select id from public.event where title like ${pattern});
-
-    delete from public.event_exception
-    where parent_event_id in (select id from public.event where title like ${pattern})
-       or new_title like ${pattern};
-
-    delete from public.participant
-    where event_id in (select id from public.event where title like ${pattern})
-       or name like ${pattern}
-       or email like ${pattern};
-
-    delete from public.event
-    where title like ${pattern}
-       or image_url like ${pattern}
-       or group_id in (select id from public."group" where name like ${pattern});
-  `
+      delete from public.event
+      where id = any(${resources}::uuid[])
+         or group_id = any(${resources}::uuid[])
+         or creator_id = any(${actors}::uuid[])
+    `
   );
 
   await runCleanupStep(
     'todos',
     () => sql`
-    delete from public.todo_assignment
-    where todo_id in (select id from public.todo where title like ${pattern})
-       or user_id in (select id from public."user" where bio like ${pattern});
-
-    delete from public.todo
-    where title like ${pattern}
-       or description like ${pattern};
-  `
+      delete from public.todo
+      where id = any(${resources}::uuid[])
+         or creator_id = any(${actors}::uuid[])
+    `
   );
 
   await runCleanupStep(
-    'statements and surveys',
+    'statements',
     () => sql`
-    delete from public.statement_survey_vote
-    where option_id in (
-      select o.id
-      from public.statement_survey_option o
-      join public.statement_survey s on s.id = o.survey_id
-      join public.statement st on st.id = s.statement_id
-      where st.title like ${pattern} or st.text like ${pattern}
-    );
-
-    delete from public.statement_survey_option
-    where label like ${pattern}
-       or survey_id in (
-         select s.id
-         from public.statement_survey s
-         join public.statement st on st.id = s.statement_id
-         where st.title like ${pattern} or st.text like ${pattern}
-       );
-
-    delete from public.statement_survey
-    where question like ${pattern}
-       or statement_id in (
-         select id from public.statement
-         where title like ${pattern} or text like ${pattern} or image_url like ${pattern} or video_url like ${pattern}
-       );
-
-    delete from public.statement_support_vote
-    where statement_id in (
-      select id from public.statement
-      where title like ${pattern} or text like ${pattern} or image_url like ${pattern} or video_url like ${pattern}
-    );
-
-    delete from public.statement
-    where title like ${pattern}
-       or text like ${pattern}
-       or image_url like ${pattern}
-       or video_url like ${pattern};
-  `
+      delete from public.statement
+      where id = any(${resources}::uuid[])
+         or user_id = any(${actors}::uuid[])
+    `
   );
 
   await runCleanupStep(
     'blogs',
     () => sql`
-    delete from public.blog_support_vote
-    where blog_id in (select id from public.blog where title like ${pattern} or image_url like ${pattern});
-
-    delete from public.blog_blogger
-    where blog_id in (select id from public.blog where title like ${pattern} or image_url like ${pattern})
-       or user_id in (select id from public."user" where bio like ${pattern});
-
-    delete from public.blog
-    where title like ${pattern}
-       or description like ${pattern}
-       or image_url like ${pattern};
-  `
-  );
-
-  await runCleanupStep(
-    'timeline and search rows',
-    () => sql`
-    delete from public.reaction
-    where user_id in (select id from public."user" where bio like ${pattern})
-       or timeline_event_id in (select id from public.timeline_event where title like ${pattern});
-
-    delete from public.timeline_event
-    where title like ${pattern}
-       or description like ${pattern}
-       or image_url like ${pattern}
-       or video_url like ${pattern}
-       or user_id in (select id from public."user" where bio like ${pattern});
-
-    delete from public.search_document_acl
-    where document_id in (
-      select id from public.search_document
-      where title like ${pattern}
-         or subtitle like ${pattern}
-         or summary like ${pattern}
-         or search_text like ${pattern}
-    );
-
-    delete from public.search_document_topic
-    where document_id in (
-      select id from public.search_document
-      where title like ${pattern}
-         or subtitle like ${pattern}
-         or summary like ${pattern}
-         or search_text like ${pattern}
-    );
-
-    delete from public.search_document
-    where title like ${pattern}
-       or subtitle like ${pattern}
-       or summary like ${pattern}
-       or search_text like ${pattern};
-  `
-  );
-
-  await runCleanupStep(
-    'hashtags',
-    () => sql`
-    delete from public.user_hashtag where hashtag_id in (select id from public.hashtag where tag ilike 'e2e%');
-    delete from public.group_hashtag where hashtag_id in (select id from public.hashtag where tag ilike 'e2e%');
-    delete from public.amendment_hashtag where hashtag_id in (select id from public.hashtag where tag ilike 'e2e%');
-    delete from public.event_hashtag where hashtag_id in (select id from public.hashtag where tag ilike 'e2e%');
-    delete from public.blog_hashtag where hashtag_id in (select id from public.hashtag where tag ilike 'e2e%');
-    delete from public.statement_hashtag where hashtag_id in (select id from public.hashtag where tag ilike 'e2e%');
-    delete from public.hashtag where tag ilike 'e2e%';
-  `
-  );
-
-  await runCleanupStep(
-    'groups and roles',
-    () => sql`
-    delete from public.action_right
-    where role_id in (select id from public.role where name like ${pattern})
-       or group_id in (select id from public."group" where name like ${pattern})
-       or event_id in (select id from public.event where title like ${pattern})
-       or amendment_id in (select id from public.amendment where title like ${pattern})
-       or blog_id in (select id from public.blog where title like ${pattern});
-
-    delete from public.role_holder_history
-    where role_id in (select id from public.role where name like ${pattern})
-       or user_id in (select id from public."user" where bio like ${pattern});
-
-    delete from public.group_guest_role
-    where group_guest_access_id in (
-      select id from public.group_guest_access
-      where group_id in (select id from public."group" where name like ${pattern})
-         or user_id in (select id from public."user" where bio like ${pattern})
-    );
-
-    delete from public.group_guest_access
-    where group_id in (select id from public."group" where name like ${pattern})
-       or user_id in (select id from public."user" where bio like ${pattern});
-
-    delete from public.group_membership_role
-    where group_membership_id in (
-      select id from public.group_membership
-      where group_id in (select id from public."group" where name like ${pattern})
-         or user_id in (select id from public."user" where bio like ${pattern})
-    )
-       or role_id in (select id from public.role where name like ${pattern});
-
-    delete from public.group_membership_origin
-    where group_membership_id in (
-      select id from public.group_membership
-      where group_id in (select id from public."group" where name like ${pattern})
-         or user_id in (select id from public."user" where bio like ${pattern})
-    );
-
-    delete from public.group_membership
-    where group_id in (select id from public."group" where name like ${pattern})
-       or user_id in (select id from public."user" where bio like ${pattern});
-
-    delete from public.role
-    where name like ${pattern}
-       or group_id in (select id from public."group" where name like ${pattern});
-
-    update public."group"
-    set connected_group_id = null, sibling_role_id = null
-    where name like ${pattern};
-
-    delete from public."group"
-    where name like ${pattern}
-       or email like ${pattern}
-       or image_url like ${pattern};
-  `
-  );
-
-  await runCleanupStep(
-    'fixture users',
-    () => sql`
-    delete from public.notification_setting
-    where user_id in (select id from public."user" where bio like ${pattern});
-
-    delete from public.user_preference
-    where user_id in (select id from public."user" where bio like ${pattern});
-
-    delete from public."user"
-    where bio like ${pattern};
-
-    delete from auth.identities
-    where user_id in (
-      select id
-      from auth.users
-      where raw_user_meta_data->>'e2e_prefix' like ${pattern}
-    );
-
-    delete from auth.users
-    where raw_user_meta_data->>'e2e_prefix' like ${pattern};
-  `
-  );
-
-  if (includeWorkerUsers) {
-    await runCleanupStep(
-      'worker auth users',
-      () => sql`
-      delete from public.notification_setting
-      where user_id in (
-        select id from public."user" where email like 'e2e-create-flow-worker-%@polity.local'
-      );
-
-      delete from public.user_preference
-      where user_id in (
-        select id from public."user" where email like 'e2e-create-flow-worker-%@polity.local'
-      );
-
-      delete from public."user"
-      where email like 'e2e-create-flow-worker-%@polity.local';
-
-      delete from auth.identities
-      where user_id in (
-        select id from auth.users where email like 'e2e-create-flow-worker-%@polity.local'
-      );
-
-      delete from auth.users
-      where email like 'e2e-create-flow-worker-%@polity.local';
+      delete from public.blog
+      where id = any(${resources}::uuid[])
+         or group_id = any(${resources}::uuid[])
     `
-    );
-  }
+  );
+
+  await runCleanupStep(
+    'timeline rows',
+    () => sql`
+      delete from public.timeline_event
+      where id = any(${resources}::uuid[])
+         or entity_id = any(${resources}::uuid[])
+         or user_id = any(${actors}::uuid[])
+         or actor_id = any(${actors}::uuid[])
+         or group_id = any(${resources}::uuid[])
+         or amendment_id = any(${resources}::uuid[])
+         or event_id = any(${resources}::uuid[])
+         or todo_id = any(${resources}::uuid[])
+         or blog_id = any(${resources}::uuid[])
+         or statement_id = any(${resources}::uuid[])
+         or election_id = any(${resources}::uuid[])
+         or amendment_vote_id = any(${resources}::uuid[])
+    `
+  );
+
+  await runCleanupStep(
+    'search rows owned by actors or groups',
+    () => sql`
+      delete from public.search_document
+      where entity_id = any(${resources}::uuid[])
+         or owner_user_id = any(${actors}::uuid[])
+         or group_id = any(${resources}::uuid[])
+    `
+  );
+
+  await runCleanupStep(
+    'links',
+    () => sql`
+      delete from public.link
+      where id = any(${resources}::uuid[])
+         or user_id = any(${actors}::uuid[])
+         or group_id = any(${resources}::uuid[])
+         or event_id = any(${resources}::uuid[])
+    `
+  );
+
+  await runCleanupStep(
+    'groups',
+    () => sql`
+      delete from public."group"
+      where id = any(${resources}::uuid[])
+    `
+  );
+
+  await runCleanupStep(
+    'fixture public users',
+    () => sql`
+      delete from public."user"
+      where id = any(${actors}::uuid[])
+    `
+  );
+
+  await runCleanupStep(
+    'fixture auth identities',
+    () => sql`
+      delete from auth.identities
+      where user_id = any(${actors}::uuid[])
+    `
+  );
+
+  await runCleanupStep(
+    'fixture auth users',
+    () => sql`
+      delete from auth.users
+      where id = any(${actors}::uuid[])
+    `
+  );
 
   if (options.closeConnection) {
     await closeDb();

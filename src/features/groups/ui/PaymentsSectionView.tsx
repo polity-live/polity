@@ -189,7 +189,11 @@ export function PaymentsSectionView({
           <p className="text-muted-foreground text-xs">
             {t('pages.user.preferences.displayCurrency')}
           </p>
-          <CurrencySelect value={targetCurrency} onChange={setTargetCurrency} />
+          <CurrencySelect
+            data-action-id="groups.payments.display-currency.select"
+            value={targetCurrency}
+            onChange={setTargetCurrency}
+          />
         </div>
         {conversionState.isLoading ? (
           <p className="text-muted-foreground text-sm">

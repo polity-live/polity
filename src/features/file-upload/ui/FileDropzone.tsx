@@ -137,7 +137,8 @@ export function FileDropzone({
         event.preventDefault();
         event.stopPropagation();
         resetDragState();
-        handleFiles(Array.from(event.dataTransfer.files ?? []));
+        // DragEvent.dataTransfer.files is always a FileList, including for an empty drop.
+        handleFiles(Array.from(event.dataTransfer.files));
       }}
     >
       <div className="mx-auto flex max-w-md flex-col items-center gap-4 text-center">
@@ -149,6 +150,7 @@ export function FileDropzone({
           {hint ? <p className="text-muted-foreground">{hint}</p> : null}
         </div>
         <FileUploadTrigger
+          data-action-id="file-upload.dropzone.browse"
           inputProps={{ ...inputProps, accept, multiple: maxFiles > 1 }}
           onFilesSelected={files => handleFiles(Array.from(files))}
           variant="outline"

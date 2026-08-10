@@ -43,7 +43,7 @@ function countCreateTableColumns(sql: string): number {
     let depth = 1;
     let segment = '';
     let quote: "'" | '"' | undefined;
-    const openingParenthesis = (table.index ?? 0) + table[0].length;
+    const openingParenthesis = table.index + table[0].length;
 
     const finishSegment = (): void => {
       const definition = segment.trim();

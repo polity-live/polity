@@ -100,7 +100,7 @@ function useActiveHashSectionRoute({
     }
 
     setActiveSectionId(activeId =>
-      activeId && sectionIds.includes(activeId) ? activeId : (sectionIds[0] ?? null)
+      activeId && sectionIds.includes(activeId) ? activeId : sectionIds[0]
     );
   }, [enabled, normalizedHash, sectionIds]);
 

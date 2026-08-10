@@ -58,8 +58,7 @@ function normalizeRequest(request: ServerExchangeRateRequest): ServerExchangeRat
 }
 
 async function fetchJson(url: URL): Promise<unknown> {
-  let lastError: unknown;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; ; attempt += 1) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5_000);
     try {
@@ -69,13 +68,11 @@ async function fetchJson(url: URL): Promise<unknown> {
       if (!retriable || attempt === 1) {
         throw new Error(`Frankfurter returned ${response.status}`);
       }
-      lastError = new Error(`Frankfurter returned ${response.status}`);
     } finally {
       clearTimeout(timeout);
     }
     await new Promise(resolve => setTimeout(resolve, 250));
   }
-  throw lastError instanceof Error ? lastError : new Error('Frankfurter request failed');
 }
 
 async function readCachedRate(request: ServerExchangeRateRequest): Promise<CacheRow | null> {
@@ -276,3 +273,9 @@ export function validateExchangeRateDate(date?: string): string | undefined {
   if (!isIsoDate(date)) throw new Error('Invalid exchange-rate date');
   return date;
 }
+
+export const frankfurterContracts = {
+  resetCatalogCache() {
+    catalogCache = null;
+  },
+};

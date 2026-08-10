@@ -49,6 +49,15 @@ describe('RelatedGroupsTabs', () => {
 
     expect(activePanelText()).toContain('Child A');
     expect(activePanelText()).toContain('Parent A');
+    expect(screen.getByRole('tab', { name: 'Alle' }).getAttribute('data-action-id')).toBe(
+      'groups.related.select.all'
+    );
+    expect(
+      screen.getByRole('tab', { name: 'Untergeordnete Gruppen' }).getAttribute('data-action-id')
+    ).toBe('groups.related.select.children');
+    expect(
+      screen.getByRole('tab', { name: 'Übergeordnete Gruppen' }).getAttribute('data-action-id')
+    ).toBe('groups.related.select.parents');
 
     selectTab('Untergeordnete Gruppen');
 

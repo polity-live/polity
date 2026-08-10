@@ -96,7 +96,9 @@ export function LegalInfoPageView({
                     <p className="text-muted-foreground mt-2 text-sm">{link.description}</p>
                   </div>
                   <Button asChild variant="outline" size="sm">
-                    <SmartLink href={link.to}>{relatedActionLabel ?? link.title}</SmartLink>
+                    <SmartLink data-action-id="public-pages.legal.related.open" href={link.to}>
+                      {relatedActionLabel ?? link.title}
+                    </SmartLink>
                   </Button>
                 </PanelContent>
               </Panel>

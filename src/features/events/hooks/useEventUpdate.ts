@@ -250,7 +250,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         }
       }
 
-      setFormData({
+      setFormData(previous => ({
         title: event.title || '',
         description: richTextToPlainText(event.description ?? ''),
         descriptionContent: toRichTextValue(event.description ?? ''),
@@ -280,7 +280,9 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         imageURL: event.image_url || '',
         videoURL: event.video_url || '',
         visibility: (event.visibility as Visibility) ?? 'public',
-        tags: [],
+        // Hashtag junction rows can resolve in the same render as the event.
+        // Preserve the independently hydrated tags instead of overwriting them.
+        tags: previous.tags,
         registrationDeadline: formatLocalDateTimeInput(event.registration_deadline),
         amendmentDeadline: formatLocalDateTimeInput(event.amendment_deadline),
         candidacyDeadline: formatLocalDateTimeInput(event.candidacy_deadline),
@@ -306,7 +308,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         recurrenceInterval,
         recurrenceWeekdays,
         recurrenceEndDate,
-      });
+      }));
     }
   }, [event]);
 
@@ -395,7 +397,8 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         delegatesNominationDeadline: formData.delegatesNominationDeadline,
       });
       const defaultFinalVoteDurationSeconds = formData.defaultFinalVoteDurationMinutes.trim()
-        ? Math.max(1, Number.parseInt(formData.defaultFinalVoteDurationMinutes, 10) || 1) * 60
+        ? // Submission validation above guarantees a positive integer here.
+          Number.parseInt(formData.defaultFinalVoteDurationMinutes, 10) * 60
         : null;
 
       if (isCreating) {

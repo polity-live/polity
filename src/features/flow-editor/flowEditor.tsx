@@ -121,12 +121,18 @@ export function FlowEditorView({ controller }: { controller: FlowEditorControlle
           <div className="flex flex-wrap gap-2">
             {isInteractive ? (
               <>
-                <Button size="sm" onClick={addProposalNode}>
+                <Button
+                  size="sm"
+                  data-action-id="flow-editor.toolbar.add-proposal"
+                  onClick={addProposalNode}
+                >
                   {translateText('generated.inline.0530_add_proposal_250e96f5')}
                 </Button>
                 <Button
                   size="sm"
+                  data-action-id="flow-editor.toolbar.multi-select.toggle"
                   variant={multiSelectMode ? 'default' : 'outline'}
+                  aria-pressed={multiSelectMode}
                   onClick={toggleMultiSelectMode}
                 >
                   {multiSelectMode
@@ -134,29 +140,51 @@ export function FlowEditorView({ controller }: { controller: FlowEditorControlle
                     : translateText('generated.inline.0077_multi_select_off_8e759b57')}
                 </Button>
                 {selectedNodes.length >= 2 ? (
-                  <Button size="sm" variant="secondary" onClick={createGroup}>
+                  <Button
+                    size="sm"
+                    data-action-id="flow-editor.toolbar.group-selected"
+                    variant="secondary"
+                    onClick={createGroup}
+                  >
                     {translateText('generated.inline.0531_group_selected_dc201db7')}
                     {selectedNodes.length})
                   </Button>
                 ) : null}
                 {selectedNodes.length === 1 && selectedNodes[0].type === 'group' ? (
-                  <Button size="sm" variant="secondary" onClick={ungroupNodes}>
+                  <Button
+                    size="sm"
+                    data-action-id="flow-editor.toolbar.ungroup"
+                    variant="secondary"
+                    onClick={ungroupNodes}
+                  >
                     {translateText('generated.inline.0532_ungroup_2b31e968')}
                   </Button>
                 ) : null}
                 {selectedNodes.length > 0 ? (
-                  <Button size="sm" variant="destructive" onClick={deleteSelectedNodes}>
+                  <Button
+                    size="sm"
+                    data-action-id="flow-editor.toolbar.delete-selected"
+                    variant="destructive"
+                    onClick={deleteSelectedNodes}
+                  >
                     {translateText('generated.inline.0533_delete_selected_76bf56ab')}
                   </Button>
                 ) : null}
-                <Button size="sm" variant="outline" onClick={resetWorkflow}>
+                <Button
+                  size="sm"
+                  data-action-id="flow-editor.toolbar.reset"
+                  variant="outline"
+                  onClick={resetWorkflow}
+                >
                   {translateText('generated.inline.0343_reset_44c57abd')}
                 </Button>
               </>
             ) : null}
             <Button
               size="sm"
+              data-action-id="flow-editor.toolbar.interactivity.toggle"
               variant={isInteractive ? 'outline' : 'default'}
+              aria-pressed={!isInteractive}
               onClick={() => setIsInteractive(!isInteractive)}
             >
               {isInteractive
@@ -186,10 +214,19 @@ export function FlowEditorView({ controller }: { controller: FlowEditorControlle
                   placeholder={translateText('generated.inline.0536_enter_node_label_4bb64c3c')}
                 />
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={updateNodeProperties}>
+                  <Button
+                    size="sm"
+                    data-action-id="flow-editor.node.save"
+                    onClick={updateNodeProperties}
+                  >
                     {translateText('generated.inline.0269_save_efc007a3')}
                   </Button>
-                  <Button size="sm" variant="outline" onClick={cancelEditNode}>
+                  <Button
+                    size="sm"
+                    data-action-id="flow-editor.node.edit.cancel"
+                    variant="outline"
+                    onClick={cancelEditNode}
+                  >
                     {translateText('generated.inline.0065_cancel_77dfd213')}
                   </Button>
                 </div>
@@ -198,10 +235,19 @@ export function FlowEditorView({ controller }: { controller: FlowEditorControlle
               <div>
                 <h3 className="text-md font-bold">{selectedNodes[0].data.label}</h3>
                 <div className="mt-2 flex gap-2">
-                  <Button size="sm" onClick={startEditingNode}>
+                  <Button
+                    size="sm"
+                    data-action-id="flow-editor.node.edit.open"
+                    onClick={startEditingNode}
+                  >
                     {translateText('generated.inline.0534_edit_node_1519442f')}
                   </Button>
-                  <Button size="sm" variant="destructive" onClick={deleteSelectedNodes}>
+                  <Button
+                    size="sm"
+                    data-action-id="flow-editor.node.delete"
+                    variant="destructive"
+                    onClick={deleteSelectedNodes}
+                  >
                     {translateText('generated.inline.0537_delete_f6fdbe48')}
                   </Button>
                 </div>
@@ -234,16 +280,35 @@ export function FlowEditorView({ controller }: { controller: FlowEditorControlle
                 placeholder={translateText('generated.inline.0540_enter_edge_label_ec3a6029')}
               />
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" onClick={updateEdgeLabel}>
+                <Button
+                  size="sm"
+                  data-action-id="flow-editor.edge.label.save"
+                  onClick={updateEdgeLabel}
+                >
                   {translateText('generated.inline.0541_update_label_b571fe01')}
                 </Button>
-                <Button size="sm" variant="outline" onClick={clearSelectedEdge}>
+                <Button
+                  size="sm"
+                  data-action-id="flow-editor.edge.edit.cancel"
+                  variant="outline"
+                  onClick={clearSelectedEdge}
+                >
                   {translateText('generated.inline.0065_cancel_77dfd213')}
                 </Button>
-                <Button size="sm" variant="destructive" onClick={deleteSelectedEdge}>
+                <Button
+                  size="sm"
+                  data-action-id="flow-editor.edge.delete"
+                  variant="destructive"
+                  onClick={deleteSelectedEdge}
+                >
                   {translateText('generated.inline.0542_delete_edge_6351bded')}
                 </Button>
-                <Button size="sm" variant="outline" onClick={resetEdgeState}>
+                <Button
+                  size="sm"
+                  data-action-id="flow-editor.edge.path.reset"
+                  variant="outline"
+                  onClick={resetEdgeState}
+                >
                   {translateText('generated.inline.0543_reset_edge_path_e7f03a62')}
                 </Button>
               </div>

@@ -220,9 +220,7 @@ async function loadResolutionTarget(
     process_branch_id?: string | null;
   }
 ) {
-  const amendmentRow = cr.amendment_id
-    ? await tx.run(zql.amendment.where('id', cr.amendment_id).one())
-    : null;
+  const amendmentRow = await tx.run(zql.amendment.where('id', cr.amendment_id).one());
 
   if (!cr.process_branch_id) {
     return {

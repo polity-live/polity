@@ -111,7 +111,12 @@ export function CancelEventDialogView({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <FormControlLabel>{t('features.events.cancel.reassign.label')}</FormControlLabel>
-                <Button variant="ghost" size="sm" onClick={handleSelectAll}>
+                <Button
+                  data-action-id="events.cancel.select-all-items"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSelectAll}
+                >
                   {selectedItems.length === agendaItems.length
                     ? t('common.deselectAll')
                     : t('common.selectAll')}
@@ -126,6 +131,8 @@ export function CancelEventDialogView({
                       className="hover:bg-muted flex items-center gap-3 rounded-lg p-2"
                     >
                       <FormControlCheckbox
+                        data-action-id="events.cancel.toggle-item"
+                        aria-label={`${t('features.events.cancel.reassign.label')}: ${item.title}`}
                         checked={selectedItems.includes(item.id)}
                         onCheckedChange={() => handleItemToggle(item.id)}
                       />
@@ -167,8 +174,12 @@ export function CancelEventDialogView({
               <FormControlLabel>
                 {t('features.events.cancel.reassign.targetEvent')}
               </FormControlLabel>
-              <FormControlSelect value={targetEventId} onValueChange={setTargetEventId}>
-                <FormControlSelectTrigger>
+              <FormControlSelect
+                data-action-id="events.cancel.target.select"
+                value={targetEventId}
+                onValueChange={setTargetEventId}
+              >
+                <FormControlSelectTrigger data-action-id="events.cancel.target.open">
                   <FormControlSelectValue
                     placeholder={t('features.events.cancel.reassign.selectEvent')}
                   />
@@ -180,7 +191,11 @@ export function CancelEventDialogView({
                     </div>
                   ) : (
                     availableEvents.map((event: any) => (
-                      <FormControlSelectItem key={event.id} value={event.id}>
+                      <FormControlSelectItem
+                        data-action-id="events.cancel.target.choose"
+                        key={event.id}
+                        value={event.id}
+                      >
                         <div className="flex items-center gap-2">
                           <span>{event.title}</span>
                           <BadgeControl variant="outline" size="xs">
@@ -212,10 +227,16 @@ export function CancelEventDialogView({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+          <Button
+            data-action-id="events.cancel.close"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
             {t('common.cancel')}
           </Button>
           <Button
+            data-action-id="events.cancel.confirm"
             variant="destructive"
             onClick={handleCancel}
             disabled={isLoading || !reason.trim()}

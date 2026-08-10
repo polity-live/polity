@@ -66,16 +66,11 @@ function timestamp(value: unknown) {
 }
 
 function existingCrId(row: ChangeRequestDisplaySource) {
-  return (
-    getCanonicalChangeRequestCrId(row) ??
-    row.crId ??
-    row.cr_id ??
-    (row.title?.startsWith('CR-') ? row.title : null)
-  );
+  return getCanonicalChangeRequestCrId(row) ?? row.crId ?? row.cr_id ?? null;
 }
 
-function isGeneratedCrTitle(value: string | null | undefined) {
-  return /^CR-\d+$/.test(value ?? '');
+function isGeneratedCrTitle(value: string) {
+  return /^CR-\d+$/.test(value);
 }
 
 function stableCrNumber(row: ChangeRequestDisplaySource) {
@@ -149,7 +144,6 @@ export function createBranchScopedChangeRequestDisplayMap<
 
   for (const [branchId, requests] of requestsByBranch) {
     const branchDisplayNumber = branchNumbers.get(branchId);
-    if (!branchDisplayNumber) continue;
 
     const usedNumbers = new Set(requests.map(persistedCrNumber).filter(number => number > 0));
     let nextFallbackNumber = 1;

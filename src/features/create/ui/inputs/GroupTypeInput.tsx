@@ -35,6 +35,7 @@ export function GroupTypeInput({ value, label, options, onChange }: GroupTypeInp
               }`}
             >
               <FormControlRadioGroupItem
+                data-action-id="create.group-type.select"
                 value={optionValue}
                 id={`group-type-${optionValue}`}
                 data-create-option={optionValue}

@@ -27,7 +27,9 @@ const subscriptionIds = [
   '93000000-0000-0000-0000-000000000001',
   '93000000-0000-0000-0000-000000000002',
 ] as const;
-const newsletterJobIds = [98001, 98002] as const;
+// The claim function intentionally has no tenant filter and orders by id. Negative,
+// exact fixture ids make these rows first without cleaning or mutating unrelated jobs.
+const newsletterJobIds = [-98002, -98001] as const;
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);

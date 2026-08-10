@@ -98,7 +98,7 @@ export function InviteMembersDialogView({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
+      <DialogTrigger data-action-scope="presentation" asChild>
         {disabled && disabledReason ? (
           <Tooltip>
             <TooltipTrigger asChild>{triggerButton}</TooltipTrigger>
@@ -189,7 +189,12 @@ export function InviteMembersDialogView({
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isInviting}>
+              <Button
+                data-action-id="groups.invitations.dialog.cancel"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isInviting}
+              >
                 {cancelLabel}
               </Button>
               <div className="flex items-center gap-2">
@@ -203,7 +208,12 @@ export function InviteMembersDialogView({
                     )}
                   />
                 ) : null}
-                <Button onClick={onInvite} disabled={inviteDisabled} title={submitDisabledReason}>
+                <Button
+                  data-action-id="groups.invitations.dialog.submit"
+                  onClick={onInvite}
+                  disabled={inviteDisabled}
+                  title={submitDisabledReason}
+                >
                   {submitConflictLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

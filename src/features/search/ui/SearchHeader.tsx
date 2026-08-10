@@ -67,6 +67,7 @@ export function SearchHeader({
             aria-label={t('features.search.viewToggle', { defaultValue: 'Search view' })}
           >
             <Button
+              data-action-id="search.header.view.list"
               variant={view === 'list' ? 'secondary' : 'ghost'}
               size="icon"
               className="rounded-none border-0"
@@ -77,6 +78,7 @@ export function SearchHeader({
               <List className="h-4 w-4" />
             </Button>
             <Button
+              data-action-id="search.header.view.spatial"
               variant={view === 'spatial' ? 'secondary' : 'ghost'}
               size="icon"
               className="rounded-none border-0"
@@ -88,6 +90,7 @@ export function SearchHeader({
             </Button>
           </div>
           <Button
+            data-action-id="search.header.filters.toggle"
             variant="outline"
             size="icon"
             className="rounded-md"
@@ -110,6 +113,7 @@ export function SearchHeader({
 
               return (
                 <FilterButton
+                  data-action-id="search.header.topic.toggle"
                   key={topic}
                   active={isActive}
                   className="rounded-md"

@@ -140,18 +140,17 @@ export function useInfiniteTimeline<T>({
       }
     };
 
-    observerRef.current = new IntersectionObserver(handleIntersection, {
+    const observer = new IntersectionObserver(handleIntersection, {
       root: null,
       rootMargin: `${threshold}px`,
       threshold: 0,
     });
+    observerRef.current = observer;
 
-    observerRef.current.observe(sentinelRef.current);
+    observer.observe(sentinelRef.current);
 
     return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
+      observer.disconnect();
     };
   }, [autoLoad, hasMore, loadMore, threshold]);
 

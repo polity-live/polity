@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Button } from '@/features/shared/ui/ui/button';
 
@@ -191,12 +191,22 @@ describe('AgendaActionBar', () => {
   });
 
   it('renders agenda lifecycle controls when agenda management rights are present', () => {
+    const onOpenCurrentItem = vi.fn();
+    const onPreviousItem = vi.fn();
+    const onNextItem = vi.fn();
+    const onCompleteItem = vi.fn();
+    const onStartItem = vi.fn();
     const { rerender } = render(
       <AgendaActionBar
         {...baseProps}
         {...lifecycleProps}
         canManageAgenda
         currentItemLabel="TOP-1"
+        onOpenCurrentItem={onOpenCurrentItem}
+        onPreviousItem={onPreviousItem}
+        onNextItem={onNextItem}
+        onCompleteItem={onCompleteItem}
+        onStartItem={onStartItem}
       />
     );
 
@@ -208,6 +218,16 @@ describe('AgendaActionBar', () => {
     ).toBeTruthy();
     expect(screen.getByRole('button', { name: 'features.events.navigation.next' })).toBeTruthy();
 
+    fireEvent.click(document.querySelector('[data-action-id="agendas.toolbar.item.previous"]')!);
+    fireEvent.click(document.querySelector('[data-action-id="agendas.toolbar.item.open"]')!);
+    fireEvent.click(document.querySelector('[data-action-id="agendas.toolbar.item.complete"]')!);
+    fireEvent.click(document.querySelector('[data-action-id="agendas.toolbar.item.next"]')!);
+
+    expect(onPreviousItem).toHaveBeenCalledTimes(1);
+    expect(onOpenCurrentItem).toHaveBeenCalledTimes(1);
+    expect(onCompleteItem).toHaveBeenCalledTimes(1);
+    expect(onNextItem).toHaveBeenCalledTimes(1);
+
     rerender(
       <AgendaActionBar
         {...baseProps}
@@ -215,22 +235,30 @@ describe('AgendaActionBar', () => {
         canManageAgenda
         currentAgendaItem={null}
         currentItemLabel={null}
+        onStartItem={onStartItem}
       />
     );
 
-    expect(screen.getByRole('button', { name: 'features.events.navigation.start' })).toBeTruthy();
+    const startButton = screen.getByRole('button', { name: 'features.events.navigation.start' });
+    expect(startButton.getAttribute('data-action-id')).toBe('agendas.toolbar.item.start');
+    fireEvent.click(startButton);
+    expect(onStartItem).toHaveBeenCalledTimes(1);
   });
 
   it('renders the Enter Tally button when enabled by the container', () => {
+    const onOfflineTallyClick = vi.fn();
     render(
       <AgendaActionBar
         {...baseProps}
         showOfflineTallyButton
-        onOfflineTallyClick={() => undefined}
+        onOfflineTallyClick={onOfflineTallyClick}
       />
     );
 
-    expect(screen.getByText('Enter Tally')).toBeTruthy();
+    const tallyButton = screen.getByText('Enter Tally').closest('button')!;
+    expect(tallyButton.getAttribute('data-action-id')).toBe('agendas.toolbar.offline-tally.open');
+    fireEvent.click(tallyButton);
+    expect(onOfflineTallyClick).toHaveBeenCalledTimes(1);
   });
 
   it('does not render the Enter Tally button when the container hides it', () => {
@@ -247,9 +275,19 @@ describe('AgendaActionBar', () => {
     ).toBe('/event/event-1/agenda');
     expect(
       screen
+        .getByRole('link', { name: 'features.events.agenda.backToAgenda' })
+        .getAttribute('data-action-id')
+    ).toBe('agendas.toolbar.navigate.back');
+    expect(
+      screen
         .getByRole('link', { name: 'features.events.agenda.quickActions.addItem' })
         .getAttribute('href')
     ).toBe('/create/agenda-item?eventId=event-1');
+    expect(
+      screen
+        .getByRole('link', { name: 'features.events.agenda.quickActions.addItem' })
+        .getAttribute('data-action-id')
+    ).toBe('agendas.toolbar.item.create');
     expect(
       screen
         .getByRole('link', { name: 'features.events.agenda.quickActions.createElection' })
@@ -257,12 +295,35 @@ describe('AgendaActionBar', () => {
     ).toBe('/create/agenda-item?eventId=event-1&type=election');
     expect(
       screen
+        .getByRole('link', { name: 'features.events.agenda.quickActions.createElection' })
+        .getAttribute('data-action-id')
+    ).toBe('agendas.toolbar.election.create');
+    expect(
+      screen
         .getByRole('link', { name: 'features.events.agenda.quickActions.createVote' })
         .getAttribute('href')
     ).toBe('/create/agenda-item?eventId=event-1&type=vote');
+    expect(
+      screen
+        .getByRole('link', { name: 'features.events.agenda.quickActions.createVote' })
+        .getAttribute('data-action-id')
+    ).toBe('agendas.toolbar.vote.create');
   });
 
-  it('only renders the Vote button during the final vote phase', () => {
+  it('renders a back-only context group without management shortcuts', () => {
+    const { container } = render(
+      <AgendaActionBar {...baseProps} currentAgendaItem={null} onBackToAgenda={noop} />
+    );
+
+    expect(container.querySelector('[data-agenda-toolbar-group="context"]')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'features.events.agenda.backToAgenda' })).toBeTruthy();
+    expect(
+      screen.queryByRole('link', { name: 'features.events.agenda.quickActions.addItem' })
+    ).toBeNull();
+  });
+
+  it('renders the Vote button during indicative and final voting, but not while pending', () => {
+    const onVoteClick = vi.fn();
     const { container, rerender } = render(
       <AgendaActionBar
         {...baseProps}
@@ -271,15 +332,18 @@ describe('AgendaActionBar', () => {
           voting_phase: 'pending',
         }}
         canVote
-        onVoteClick={() => undefined}
+        onVoteClick={onVoteClick}
       />
     );
 
     expect(container.querySelector('.civic-ballot-submit')).toBeNull();
 
-    rerender(<AgendaActionBar {...baseProps} canVote onVoteClick={() => undefined} />);
+    rerender(<AgendaActionBar {...baseProps} canVote onVoteClick={onVoteClick} />);
 
-    expect(container.querySelector('.civic-ballot-submit')).toBeNull();
+    const indicativeVoteButton = container.querySelector('.civic-ballot-submit')!;
+    expect(indicativeVoteButton.getAttribute('data-action-id')).toBe('agendas.toolbar.ballot.cast');
+    fireEvent.click(indicativeVoteButton);
+    expect(onVoteClick).toHaveBeenCalledTimes(1);
 
     rerender(
       <AgendaActionBar
@@ -289,11 +353,14 @@ describe('AgendaActionBar', () => {
           voting_phase: 'final',
         }}
         canVote
-        onVoteClick={() => undefined}
+        onVoteClick={onVoteClick}
       />
     );
 
-    expect(container.querySelector('.civic-ballot-submit')).toBeTruthy();
+    const voteButton = container.querySelector('.civic-ballot-submit')!;
+    expect(voteButton.getAttribute('data-action-id')).toBe('agendas.toolbar.ballot.cast');
+    fireEvent.click(voteButton);
+    expect(onVoteClick).toHaveBeenCalledTimes(2);
   });
 
   it('renders the Vote button as blocked with help when active voting rights are missing', () => {
@@ -358,6 +425,9 @@ describe('AgendaActionBar', () => {
   });
 
   it('uses custom final vote labels as tooltip and accessible name for start and close actions', () => {
+    const onStartVote = vi.fn();
+    const onStartFinalVote = vi.fn();
+    const onCloseFinalVote = vi.fn();
     const { rerender } = render(
       <AgendaActionBar
         {...baseProps}
@@ -366,7 +436,7 @@ describe('AgendaActionBar', () => {
           voting_phase: 'pending',
         }}
         canManageAgenda
-        onStartVote={() => undefined}
+        onStartVote={onStartVote}
         startVoteTooltip="Start final change request vote: Branch 2 CR-2"
       />
     );
@@ -376,12 +446,18 @@ describe('AgendaActionBar', () => {
         name: 'Start final change request vote: Branch 2 CR-2',
       })
     ).toBeTruthy();
+    const startVoteButton = screen.getByRole('button', {
+      name: 'Start final change request vote: Branch 2 CR-2',
+    });
+    expect(startVoteButton.getAttribute('data-action-id')).toBe('agendas.toolbar.vote.start');
+    fireEvent.click(startVoteButton);
+    expect(onStartVote).toHaveBeenCalledTimes(1);
 
     rerender(
       <AgendaActionBar
         {...baseProps}
         canManageAgenda
-        onStartFinalVote={() => undefined}
+        onStartFinalVote={onStartFinalVote}
         startFinalVoteTooltip="Start final closing vote: Amendment A"
       />
     );
@@ -391,6 +467,14 @@ describe('AgendaActionBar', () => {
         name: 'Start final closing vote: Amendment A',
       })
     ).toBeTruthy();
+    const startFinalVoteButton = screen.getByRole('button', {
+      name: 'Start final closing vote: Amendment A',
+    });
+    expect(startFinalVoteButton.getAttribute('data-action-id')).toBe(
+      'agendas.toolbar.vote.start-final'
+    );
+    fireEvent.click(startFinalVoteButton);
+    expect(onStartFinalVote).toHaveBeenCalledTimes(1);
 
     rerender(
       <AgendaActionBar
@@ -400,7 +484,7 @@ describe('AgendaActionBar', () => {
           voting_phase: 'final',
         }}
         canManageAgenda
-        onCloseFinalVote={() => undefined}
+        onCloseFinalVote={onCloseFinalVote}
         closeVoteTooltip="Close final merge vote Branch 1 VS Branch 2"
       />
     );
@@ -410,6 +494,14 @@ describe('AgendaActionBar', () => {
         name: 'Close final merge vote Branch 1 VS Branch 2',
       })
     ).toBeTruthy();
+    const closeFinalVoteButton = screen.getByRole('button', {
+      name: 'Close final merge vote Branch 1 VS Branch 2',
+    });
+    expect(closeFinalVoteButton.getAttribute('data-action-id')).toBe(
+      'agendas.toolbar.vote.close-final'
+    );
+    fireEvent.click(closeFinalVoteButton);
+    expect(onCloseFinalVote).toHaveBeenCalledTimes(1);
   });
 
   it('renders the jump to next voting step action when provided', () => {
@@ -424,9 +516,60 @@ describe('AgendaActionBar', () => {
       />
     );
 
-    screen.getByRole('button', { name: 'Next voting step' }).click();
+    const jumpButton = screen.getByRole('button', { name: 'Next voting step' });
+    expect(jumpButton.getAttribute('data-action-id')).toBe('agendas.toolbar.vote-step.next');
+    jumpButton.click();
 
     expect(handleJump).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the fallback label for the jump action', () => {
+    render(<AgendaActionBar {...baseProps} canManageAgenda onJumpToNextVoteStep={noop} />);
+
+    expect(screen.getByRole('button', { name: 'Next voting step' })).toBeTruthy();
+  });
+
+  it('renders election voting, edit tally, and completed lifecycle variants', () => {
+    const electionItem = {
+      id: 'election-item',
+      type: 'election',
+      status: 'in-progress',
+      voting_phase: 'final',
+      election: { id: 'election-1' },
+    };
+    const { container } = render(
+      <AgendaActionBar
+        {...baseProps}
+        {...lifecycleProps}
+        currentAgendaItem={electionItem}
+        canManageAgenda
+        canVote
+        isCurrentItemCompleted
+        offlineTallyMode="edit"
+        onOfflineTallyClick={noop}
+        onVoteClick={noop}
+      />
+    );
+
+    expect(
+      container
+        .querySelector('[data-action-id="agendas.toolbar.ballot.cast"]')
+        ?.getAttribute('data-tutorial-anchor')
+    ).toBe('agenda-election-vote');
+    expect(
+      container.querySelector('[data-action-id="agendas.toolbar.offline-tally.open"] svg')
+    ).toBeTruthy();
+    expect(
+      container.querySelector('[data-action-id="agendas.toolbar.item.complete"]')?.className
+    ).toContain('bg-[var(--badge-success-bg)]');
+  });
+
+  it('renders next-item navigation without a current item', () => {
+    render(
+      <AgendaActionBar {...baseProps} canManageAgenda currentAgendaItem={null} onNextItem={noop} />
+    );
+
+    expect(screen.getByRole('button', { name: 'features.events.navigation.next' })).toBeTruthy();
   });
 
   it('renders the candidate button as blocked with help when passive voting rights are missing', () => {
@@ -450,5 +593,84 @@ describe('AgendaActionBar', () => {
 
     expect(candidateButton.getAttribute('aria-disabled')).toBe('true');
     expect(candidateButton.className).toContain('text-muted-foreground');
+  });
+
+  it('dispatches agenda management actions through stable identities', () => {
+    const callbacks = {
+      onMoveToEvent: vi.fn(),
+      onEditItem: vi.fn(),
+      onDeleteItem: vi.fn(),
+      onPreviousChangeRequest: vi.fn(),
+      onNextChangeRequest: vi.fn(),
+    };
+
+    render(
+      <AgendaActionBar
+        {...baseProps}
+        canManageAgenda
+        hasPreviousChangeRequest
+        hasNextChangeRequest
+        {...callbacks}
+      />
+    );
+
+    for (const [actionId, callback] of [
+      ['agendas.toolbar.item.move-event', callbacks.onMoveToEvent],
+      ['agendas.toolbar.item.edit', callbacks.onEditItem],
+      ['agendas.toolbar.item.delete', callbacks.onDeleteItem],
+      ['agendas.toolbar.change-request.previous', callbacks.onPreviousChangeRequest],
+      ['agendas.toolbar.change-request.next', callbacks.onNextChangeRequest],
+    ] as const) {
+      const action = document.querySelector(`[data-action-id="${actionId}"]`)!;
+      fireEvent.click(action);
+      expect(callback).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it('dispatches speaker and candidacy actions across their controlled states', () => {
+    const onJoinSpeakerList = vi.fn();
+    const onLeaveSpeakerList = vi.fn();
+    const onBecomeCandidate = vi.fn();
+    const onWithdrawCandidacy = vi.fn();
+    const electionItem = {
+      id: 'election-item',
+      type: 'election',
+      status: 'in-progress',
+      voting_phase: 'indication',
+      election: { id: 'election-1' },
+    };
+    const { rerender } = render(
+      <AgendaActionBar
+        {...baseProps}
+        currentAgendaItem={electionItem}
+        canBeCandidate
+        onJoinSpeakerList={onJoinSpeakerList}
+        onBecomeCandidate={onBecomeCandidate}
+      />
+    );
+
+    fireEvent.click(document.querySelector('[data-action-id="agendas.toolbar.speaker.join"]')!);
+    fireEvent.click(document.querySelector('[data-action-id="agendas.toolbar.candidacy.become"]')!);
+    expect(onJoinSpeakerList).toHaveBeenCalledTimes(1);
+    expect(onBecomeCandidate).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <AgendaActionBar
+        {...baseProps}
+        currentAgendaItem={electionItem}
+        canBeCandidate
+        isUserInSpeakerList
+        isUserCandidate
+        onLeaveSpeakerList={onLeaveSpeakerList}
+        onWithdrawCandidacy={onWithdrawCandidacy}
+      />
+    );
+
+    fireEvent.click(document.querySelector('[data-action-id="agendas.toolbar.speaker.leave"]')!);
+    fireEvent.click(
+      document.querySelector('[data-action-id="agendas.toolbar.candidacy.withdraw"]')!
+    );
+    expect(onLeaveSpeakerList).toHaveBeenCalledTimes(1);
+    expect(onWithdrawCandidacy).toHaveBeenCalledTimes(1);
   });
 });

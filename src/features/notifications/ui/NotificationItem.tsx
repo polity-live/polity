@@ -83,11 +83,11 @@ function getEntityLabel(entity: NotificationEntity | null | undefined) {
 }
 
 function getEntityInitial(entity: NotificationEntity | null | undefined) {
-  return getEntityLabel(entity)[0]?.toUpperCase() || 'E';
+  return getEntityLabel(entity)[0].toUpperCase();
 }
 
-function getEntityImage(entity: NotificationEntity | null | undefined) {
-  return entity && 'image_url' in entity ? entity.image_url : undefined;
+function getEntityImage(entity: NotificationEntity) {
+  return entity.image_url;
 }
 
 function getEntityHref(notification: Notification, entity: NotificationEntity | null) {
@@ -110,11 +110,7 @@ function getEntityHref(notification: Notification, entity: NotificationEntity | 
     return `/amendment/${entity.id}`;
   }
 
-  if (entity === notification.recipient_blog || entity === notification.on_behalf_of_blog) {
-    return `/blog/${entity.id}`;
-  }
-
-  return null;
+  return `/blog/${entity.id}`;
 }
 
 function getRecipientEntity(notification: Notification) {
@@ -197,12 +193,13 @@ function UserMeta({
     <Avatar className="h-5 w-5 shrink-0">
       <AvatarImage src={user.avatar ?? undefined} />
       <AvatarFallback className={featureThemeClassName('agendaAccreditationSectionThemedText')}>
-        {userName[0]?.toUpperCase() || 'U'}
+        {userName[0].toUpperCase()}
       </AvatarFallback>
     </Avatar>
   );
   const name = user.id ? (
     <SmartLink
+      data-action-id="notifications.item.navigate.user-name"
       href={`/user/${user.id}`}
       className="hover:text-primary truncate font-medium hover:underline"
     >
@@ -227,11 +224,15 @@ function UserMeta({
   }
 
   const linkedAvatar = (
-    <SmartLink href={`/user/${user.id}`} className="shrink-0">
+    <SmartLink
+      data-action-id="notifications.item.navigate.user-avatar"
+      href={`/user/${user.id}`}
+      className="shrink-0"
+    >
       <Avatar className="hover:ring-primary h-5 w-5 hover:ring-1">
         <AvatarImage src={user.avatar ?? undefined} />
         <AvatarFallback className={featureThemeClassName('agendaAccreditationSectionThemedText')}>
-          {userName[0]?.toUpperCase() || 'U'}
+          {userName[0].toUpperCase()}
         </AvatarFallback>
       </Avatar>
     </SmartLink>
@@ -273,14 +274,22 @@ function EntityMeta({
   return (
     <>
       {href ? (
-        <SmartLink href={href} className="shrink-0">
+        <SmartLink
+          data-action-id="notifications.item.navigate.entity-avatar"
+          href={href}
+          className="shrink-0"
+        >
           {avatar}
         </SmartLink>
       ) : (
         avatar
       )}
       {href ? (
-        <SmartLink href={href} className="hover:text-primary truncate font-medium hover:underline">
+        <SmartLink
+          data-action-id="notifications.item.navigate.entity-name"
+          href={href}
+          className="hover:text-primary truncate font-medium hover:underline"
+        >
           {label}
         </SmartLink>
       ) : (
@@ -410,6 +419,7 @@ export function NotificationItem({
           <div className="flex items-center gap-1">
             {mode !== 'trash' && (onToggleRead || (!isRead && onMarkAsRead)) ? (
               <Button
+                data-action-id="notifications.item.toggle.read-state"
                 data-tutorial-anchor={
                   isTutorialNotification ? 'tutorial-notification-read' : undefined
                 }
@@ -437,6 +447,7 @@ export function NotificationItem({
             ) : null}
             {mode === 'trash' && onRestoreNotification ? (
               <Button
+                data-action-id="notifications.item.restore.from-trash"
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 shrink-0"
@@ -449,6 +460,7 @@ export function NotificationItem({
             ) : null}
             {mode === 'trash' && onPurgeNotification ? (
               <Button
+                data-action-id="notifications.item.purge.permanently"
                 variant="ghost"
                 size="icon"
                 className="text-destructive h-6 w-6 shrink-0"
@@ -461,6 +473,7 @@ export function NotificationItem({
             ) : null}
             {mode !== 'trash' && onDeleteNotification ? (
               <Button
+                data-action-id="notifications.item.hide.for-me"
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 shrink-0"
@@ -477,8 +490,12 @@ export function NotificationItem({
             ) : null}
             {showDeleteForEveryone ? (
               <AlertDialog>
-                <AlertDialogTrigger asChild>
+                <AlertDialogTrigger
+                  asChild
+                  data-action-id="notifications.item.delete-for-everyone.open"
+                >
                   <Button
+                    data-action-id="notifications.item.delete-for-everyone.open"
                     variant="ghost"
                     size="icon"
                     className="text-destructive h-6 w-6 shrink-0"
@@ -505,6 +522,7 @@ export function NotificationItem({
                   <AlertDialogFooter>
                     <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
                     <AlertDialogAction
+                      data-action-id="notifications.item.delete-for-everyone.confirm"
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       onClick={() => void onDeleteForEveryone?.(notification.id)}
                     >
@@ -535,6 +553,7 @@ export function NotificationItem({
         className={cardClassName}
       >
         <LinkSurface
+          data-action-id="notifications.item.open.linked"
           href={notificationHref}
           mode="overlay"
           label={notification.title ?? t('common.entities.notification')}
@@ -555,6 +574,7 @@ export function NotificationItem({
 
   return (
     <Card
+      data-action-id="notifications.item.open.unlinked"
       data-slot="notification-card"
       data-mode={mode}
       data-tutorial-anchor={isTutorialNotification ? 'tutorial-membership-notification' : undefined}

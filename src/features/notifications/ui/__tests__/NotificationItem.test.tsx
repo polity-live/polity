@@ -113,6 +113,13 @@ describe('NotificationItem', () => {
     expect(newBadge.className).toContain('font-mono');
     expect(newBadge.className).toContain('uppercase');
     expect(container.querySelectorAll('[data-slot="badge-control"]').length).toBeGreaterThan(0);
+    for (const actionId of [
+      'notifications.item.navigate.user-name',
+      'notifications.item.navigate.user-avatar',
+      'notifications.item.open.linked',
+    ]) {
+      expect(container.querySelector(`[data-action-id="${actionId}"]`)).toBeTruthy();
+    }
   });
 
   it('only renders the delete action when a delete handler is provided', () => {
@@ -228,6 +235,41 @@ describe('NotificationItem', () => {
     expect(onDeleteForEveryone).toHaveBeenCalledWith(item.id);
   });
 
+  it('dispatches trash and unlinked-card actions through stable notification intents', () => {
+    const item = notification({
+      is_read: true,
+      related_user: undefined,
+      related_user_id: null,
+    });
+    const onRestoreNotification = vi.fn();
+    const onPurgeNotification = vi.fn();
+    const onNotificationClick = vi.fn();
+    const { container, rerender } = render(
+      <NotificationItem
+        notification={item}
+        mode="trash"
+        onNotificationClick={onNotificationClick}
+        onRestoreNotification={onRestoreNotification}
+        onPurgeNotification={onPurgeNotification}
+      />
+    );
+
+    fireEvent.click(
+      container.querySelector('[data-action-id="notifications.item.restore.from-trash"]')!
+    );
+    fireEvent.click(
+      container.querySelector('[data-action-id="notifications.item.purge.permanently"]')!
+    );
+    expect(onRestoreNotification).toHaveBeenCalledWith(item.id, expect.any(Object));
+    expect(onPurgeNotification).toHaveBeenCalledWith(item.id, expect.any(Object));
+
+    rerender(<NotificationItem notification={item} onNotificationClick={onNotificationClick} />);
+    fireEvent.click(
+      container.querySelector('[data-action-id="notifications.item.open.unlinked"]')!
+    );
+    expect(onNotificationClick).toHaveBeenCalledWith(item);
+  });
+
   it('hides the single read action for personal and effectively read entity notifications', () => {
     const onMarkAsRead = vi.fn();
     const { rerender } = render(
@@ -332,7 +374,7 @@ describe('NotificationItem', () => {
       avatar: null,
     } as NonNullable<Notification['sender']>;
 
-    render(
+    const { container } = render(
       <NotificationItem
         notification={notification({
           type: 'collaboration_request',
@@ -355,6 +397,36 @@ describe('NotificationItem', () => {
     expect(screen.getByText('->')).toBeTruthy();
     expect(screen.getAllByText('Civic Amendment').length).toBeGreaterThan(0);
     expect(screen.queryByText('for')).toBeNull();
+    expect(
+      container.querySelector('[data-action-id="notifications.item.navigate.entity-avatar"]')
+    ).toBeTruthy();
+    expect(
+      container.querySelector('[data-action-id="notifications.item.navigate.entity-name"]')
+    ).toBeTruthy();
+  });
+
+  it('renders entity identity without navigation when the entity has no persistent id', () => {
+    const { container } = render(
+      <NotificationItem
+        notification={notification({
+          recipient_group: undefined,
+          on_behalf_of_group: {
+            id: '',
+            name: 'Unsaved group',
+            image_url: null,
+          } as unknown as NonNullable<Notification['on_behalf_of_group']>,
+        })}
+        onNotificationClick={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByText('Unsaved group')).toHaveLength(2);
+    expect(
+      container.querySelector('[data-action-id="notifications.item.navigate.entity-avatar"]')
+    ).toBeNull();
+    expect(
+      container.querySelector('[data-action-id="notifications.item.navigate.entity-name"]')
+    ).toBeNull();
   });
 
   it('renders entity-page notifications through the same card slot', () => {
@@ -406,5 +478,256 @@ describe('NotificationItem', () => {
       'civic-load-card-reveal'
     );
     expectNoLeftBorderClasses(container);
+  });
+
+  it('selects entity scopes and dispatches bulk read through stable actions', () => {
+    const item = notification({ id: 'notification-entity', is_read: false });
+    const onMarkAllAsRead = vi.fn();
+    const labels = {
+      loading: 'Loading notifications',
+      title: 'Civic Group notifications',
+      statusDescription: 'Unread notifications',
+      markAllRead: 'Mark all read',
+      searchPlaceholder: 'Search notifications',
+      all: 'All',
+      unread: 'Unread',
+      read: 'Read',
+      noNotificationsYet: 'No notifications yet',
+      notificationsWillShowHere: 'Notifications will show here',
+      allCaughtUp: 'All caught up',
+      allRead: 'All read',
+      noReadNotifications: 'No read notifications',
+      readNotificationsAppearHere: 'Read notifications appear here',
+    };
+
+    const { container } = render(
+      <EntityNotificationsView
+        entityId="group-1"
+        entityType="group"
+        isLoading={false}
+        notifications={[item]}
+        filteredNotifications={[item]}
+        unreadNotifications={[item]}
+        readNotifications={[]}
+        searchQuery=""
+        labels={labels}
+        onSearchQueryChange={vi.fn()}
+        onMarkAllAsRead={onMarkAllAsRead}
+        onNotificationClick={vi.fn()}
+        onMarkAsRead={vi.fn()}
+        formatTime={() => 'now'}
+      />
+    );
+
+    for (const value of ['all', 'unread', 'read']) {
+      const tab = container.querySelector(
+        `[data-action-id="notifications.entity-tabs.select.${value}"]`
+      );
+      expect(tab).toBeTruthy();
+      expect(tab?.getAttribute('role')).toBe('tab');
+    }
+    expect(
+      container
+        .querySelector('[data-action-id="notifications.entity-tabs.select.all"]')
+        ?.getAttribute('data-state')
+    ).toBe('active');
+    fireEvent.click(
+      container.querySelector('[data-action-id="notifications.entity.mark-all.read"]')!
+    );
+    expect(onMarkAllAsRead).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    [
+      'event',
+      { on_behalf_of_event: { id: 'event-1', title: 'Civic Event', image_url: 'event.png' } },
+    ],
+    [
+      'amendment',
+      {
+        on_behalf_of_amendment: {
+          id: 'amendment-1',
+          title: 'Civic Amendment',
+          image_url: null,
+        },
+      },
+    ],
+    ['blog', { on_behalf_of_blog: { id: 'blog-1', title: 'Civic Blog', image_url: null } }],
+  ])('links %s notification entities to their detail page', (entityType, entity) => {
+    const item = notification({
+      recipient_group: undefined,
+      ...entity,
+    } as Partial<Notification>);
+    const { container } = render(
+      <NotificationItem notification={item} onNotificationClick={vi.fn()} />
+    );
+    const entityLink = container.querySelector(
+      '[data-action-id="notifications.item.navigate.entity-name"]'
+    ) as HTMLAnchorElement;
+    expect(entityLink.getAttribute('href')).toContain(`/${entityType}/`);
+  });
+
+  it('covers entity fallbacks and actor layouts without persistent identities', () => {
+    const idlessSender = {
+      id: '',
+      first_name: 'Idless',
+      last_name: 'Sender',
+      email: 'sender@example.com',
+      avatar: 'sender.png',
+    } as NonNullable<Notification['sender']>;
+    const idlessRelated = {
+      id: '',
+      first_name: 'Idless',
+      last_name: 'Related',
+      email: 'related@example.com',
+      avatar: 'related.png',
+    } as NonNullable<Notification['related_user']>;
+    const { container, rerender } = render(
+      <NotificationItem
+        notification={notification({
+          sender: idlessSender,
+          related_user: idlessRelated,
+          related_user_id: '',
+          recipient_group: undefined,
+          on_behalf_of_event: { id: 'event-1', title: '', image_url: null } as NonNullable<
+            Notification['on_behalf_of_event']
+          >,
+        })}
+        onNotificationClick={vi.fn()}
+      />
+    );
+    expect(container.textContent).toContain('generated.inline.0119_entity_c7fb3177');
+    expect(
+      container.querySelector('[data-action-id="notifications.item.navigate.entity-name"]')
+    ).toBeTruthy();
+
+    rerender(
+      <NotificationItem
+        notification={notification({
+          sender: undefined,
+          related_user: undefined,
+          related_user_id: null,
+          recipient_group: undefined,
+          on_behalf_of_event: {
+            id: 'event-2',
+            title: 'Hosted event',
+            image_url: null,
+          } as NonNullable<Notification['on_behalf_of_event']>,
+        })}
+        onNotificationClick={vi.fn()}
+      />
+    );
+    expect(screen.getAllByText('Hosted event').length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    'membership_rejected',
+    'event_deleted',
+    'invite_approved',
+    'task_completed',
+    'vote_required',
+    'task_overdue',
+    'election_started',
+    'neutral_notice',
+  ])('maps the %s notification type to a semantic icon tone', type => {
+    const { container } = render(
+      <NotificationItem
+        notification={notification({
+          type: type as Notification['type'],
+          sender: undefined,
+          related_user: undefined,
+          related_user_id: null,
+          recipient_group: undefined,
+          message: undefined,
+          is_read: true,
+        })}
+        onNotificationClick={vi.fn()}
+        showRecipientBadge={false}
+      />
+    );
+    expect(container.querySelector('[data-slot="notification-card"]')).toBeTruthy();
+  });
+
+  it('toggles read state and handles linked pointer modifiers before normal navigation', () => {
+    const onToggleRead = vi.fn();
+    const onNotificationClick = vi.fn();
+    const item = notification({
+      is_read: true,
+      tutorial_run_id: 'tutorial-1',
+    } as Partial<Notification>);
+    const { container } = render(
+      <NotificationItem
+        notification={item}
+        onNotificationClick={onNotificationClick}
+        onToggleRead={onToggleRead}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'features.notifications.item.markUnread' }));
+    expect(onToggleRead).toHaveBeenCalledWith(item, expect.any(Object));
+
+    const link = container.querySelector(
+      '[data-action-id="notifications.item.open.linked"]'
+    ) as HTMLAnchorElement;
+    fireEvent.click(link, { ctrlKey: true });
+    expect(onNotificationClick).not.toHaveBeenCalled();
+    fireEvent.click(link);
+    expect(onNotificationClick).toHaveBeenCalledWith(item);
+    expect(container.innerHTML).toContain('tutorial-membership-notification');
+    expect(container.innerHTML).toContain('tutorial-notification-read');
+  });
+
+  it('uses the generic entity label when globally deleting an unscoped notification', () => {
+    const item = notification({
+      is_read: true,
+      sender: undefined,
+      related_user: undefined,
+      related_user_id: null,
+      recipient_group: undefined,
+    });
+    render(
+      <NotificationItem
+        notification={item}
+        onNotificationClick={vi.fn()}
+        onDeleteForEveryone={vi.fn()}
+        canDeleteForEveryone
+      />
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'features.notifications.item.deleteForEveryone' })
+    );
+    expect(screen.getByRole('alertdialog').textContent).toContain(
+      'features.notifications.globalDelete.description'
+    );
+  });
+
+  it('falls back to a translated linked label and marks unlinked tutorial cards', () => {
+    const linked = notification({ title: null as unknown as string });
+    const onNotificationClick = vi.fn();
+    const { container, rerender } = render(
+      <NotificationItem notification={linked} onNotificationClick={onNotificationClick} />
+    );
+    expect(
+      container
+        .querySelector('[data-action-id="notifications.item.open.linked"]')
+        ?.getAttribute('aria-label')
+    ).toContain('common.entities.notification');
+
+    rerender(
+      <NotificationItem
+        notification={notification({
+          tutorial_run_id: 'tutorial-2',
+          recipient_group: undefined,
+          sender: undefined,
+          related_user: undefined,
+          related_user_id: null,
+        } as Partial<Notification>)}
+        onNotificationClick={onNotificationClick}
+      />
+    );
+    expect(
+      container
+        .querySelector('[data-action-id="notifications.item.open.unlinked"]')
+        ?.getAttribute('data-tutorial-anchor')
+    ).toBe('tutorial-membership-notification');
   });
 });

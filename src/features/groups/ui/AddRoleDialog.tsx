@@ -30,6 +30,7 @@ import type { RoleEditorFormState } from '../types/group.types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface AddRoleDialogProps {
+  'data-action-id'?: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   form: RoleEditorFormState;
@@ -45,6 +46,7 @@ interface AddRoleDialogProps {
 }
 
 export function AddRoleDialog({
+  'data-action-id': actionId,
   isOpen,
   onOpenChange,
   form,
@@ -88,14 +90,16 @@ export function AddRoleDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {trigger === undefined ? (
-        <DialogTrigger asChild>
-          <Button>
+        <DialogTrigger data-action-id="groups.roles.open.create-dialog" asChild>
+          <Button data-action-id="groups.roles.open.create-dialog">
             <Plus className="mr-2 h-4 w-4" />
             {translateText('generated.inline.0125_add_role_82d0afcc')}
           </Button>
         </DialogTrigger>
       ) : trigger ? (
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogTrigger data-action-scope="presentation" asChild>
+          {trigger}
+        </DialogTrigger>
       ) : null}
       <ScrollableDialogContent management className="!max-w-3xl sm:!max-w-3xl">
         <DialogHeader>
@@ -321,10 +325,15 @@ export function AddRoleDialog({
           </div>
         </div>
         <DialogFooter className="px-6 pb-6">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            data-action-id="groups.roles.dialog.cancel"
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
             {translateText('generated.inline.0065_cancel_77dfd213')}
           </Button>
-          <Button type="button" onClick={onSubmit}>
+          <Button data-action-id={actionId} type="button" onClick={onSubmit}>
             {submitLabel}
           </Button>
         </DialogFooter>

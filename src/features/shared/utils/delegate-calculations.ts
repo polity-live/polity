@@ -37,14 +37,6 @@ export function calculateDelegateAllocations(
 
   const totalMembers = validGroups.reduce((sum, g) => sum + g.memberCount, 0);
 
-  if (totalMembers === 0) {
-    return validGroups.map(g => ({
-      groupId: g.id,
-      allocatedDelegates: 0,
-      memberCount: g.memberCount,
-    }));
-  }
-
   // Calculate quota (members per delegate)
   const quota = totalMembers / totalDelegates;
 
@@ -72,11 +64,7 @@ export function calculateDelegateAllocations(
 
     // Allocate remaining delegates to groups with largest remainders
     for (let i = 0; i < remainingDelegates && i < sorted.length; i++) {
-      const group = sorted[i];
-      const original = allocations.find(a => a.groupId === group.groupId);
-      if (original) {
-        original.allocatedDelegates += 1;
-      }
+      sorted[i].allocatedDelegates += 1;
     }
   }
 

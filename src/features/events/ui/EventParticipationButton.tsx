@@ -25,7 +25,12 @@ export function EventParticipationButton({
 }: EventParticipationButtonProps) {
   if (isInvited) {
     return (
-      <Button onClick={onAcceptInvitation} disabled={isLoading} variant="default">
+      <Button
+        data-action-id="events.participation.accept-invitation"
+        onClick={onAcceptInvitation}
+        disabled={isLoading}
+        variant="default"
+      >
         <Check className="mr-2 h-4 w-4" />
         {translateText('generated.inline.0165_accept_invitation_f41d2aa6')}
       </Button>
@@ -34,7 +39,12 @@ export function EventParticipationButton({
 
   if (hasRequested) {
     return (
-      <Button onClick={onLeave} disabled={isLoading} variant="outline">
+      <Button
+        data-action-id="events.participation.cancel-request"
+        onClick={onLeave}
+        disabled={isLoading}
+        variant="outline"
+      >
         <Clock className="mr-2 h-4 w-4" />
         {translateText('generated.inline.0166_request_pending_cdab22cf')}
       </Button>
@@ -43,7 +53,12 @@ export function EventParticipationButton({
 
   if (isParticipant) {
     return (
-      <Button onClick={onLeave} disabled={isLoading} variant="outline">
+      <Button
+        data-action-id="events.participation.leave"
+        onClick={onLeave}
+        disabled={isLoading}
+        variant="outline"
+      >
         <UserMinus className="mr-2 h-4 w-4" />
         {translateText('generated.inline.0517_leave_event_dd3851a6')}
       </Button>
@@ -51,7 +66,11 @@ export function EventParticipationButton({
   }
 
   return (
-    <Button onClick={onRequestParticipation} disabled={isLoading}>
+    <Button
+      data-action-id="events.participation.request"
+      onClick={onRequestParticipation}
+      disabled={isLoading}
+    >
       <UserPlus className="mr-2 h-4 w-4" />
       {translateText('generated.inline.0518_request_to_participate_6a191730')}
     </Button>

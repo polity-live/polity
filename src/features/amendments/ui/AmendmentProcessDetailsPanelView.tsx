@@ -77,7 +77,10 @@ export function AmendmentProcessDetailsPanelView({
   return (
     <Collapsible open={open} onOpenChange={onOpenChange}>
       <div className="bg-muted/30 rounded-lg border">
-        <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center gap-2 px-4 py-3 text-sm font-medium transition-colors">
+        <CollapsibleTrigger
+          data-action-id="amendments.process-details.toggle.panel"
+          className="hover:bg-muted/50 flex w-full items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
+        >
           {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <ScrollText className="text-muted-foreground h-4 w-4" />
           <span>{labels.amendmentDetails}</span>

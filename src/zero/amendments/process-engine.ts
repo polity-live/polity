@@ -1,9 +1,7 @@
 import { type Transaction } from '@rocicorp/zero';
-import { computeVoteResult, type MajorityType } from '@/features/votes/logic/computeVoteResult';
 import type { Schema } from '../schema';
 import { zql } from '../schema';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { fireNotification } from '../server-notify';
 import { finalizeInternalChangeRequestsForEventPhaseTransition } from '../change-requests/internal-voting';
 import { isAmendmentTargetEventOpen } from '@/features/amendments/logic/amendmentTargetEventEligibility';
 import { type CanonicalVotePurpose, VOTE_PURPOSE, VOTE_PHASE } from '../votes/vote-workflow';
@@ -14,28 +12,38 @@ import {
   type MergeVoteBranchTitleSource,
 } from './merge-vote-title';
 import { normalizeEditingMode } from './editing-mode-policy';
+import {
+  type AmendmentProcessStatus as ProcessStatus,
+  compareStepRunsByProcessOrder,
+  computeConfirmedAgendaTailOrderIndex,
+  deriveProcessRunState,
+  getBranchStartGroupIdFromStepRuns,
+  getEventOrderingAnchor,
+  getEvaluationTargetGroupId,
+  getForwardedEventEditingMode,
+  getStepDecisionStatus,
+  getStepRunFingerprint,
+  isTerminalBranchStatus,
+  isTerminalStepStatus,
+  resolveDecisionVoteOutcome,
+  resolveConcreteEvaluationDate,
+  resolveMergeRoundOneOutcome,
+  resolveReplannedStepSchedule,
+} from './process-engine-logic';
+import { normalizeMainScopeChangeRequestsForFirstBranch } from './process-engine-normalization';
+import { createBranchDocumentArtifacts } from './process-branch-document-artifacts';
+import {
+  createImplementationEvaluationTask,
+  createScheduleEventTask,
+} from './process-task-service';
 
 type ZeroTransaction = Transaction<Schema>;
 
-type ProcessStatus =
-  | 'pending_event'
-  | 'scheduled'
-  | 'in_vote'
-  | 'approved'
-  | 'rejected'
-  | 'merged'
-  | 'withdrawn'
-  | 'completed';
-
 type GroupDecisionStatus = 'supported' | 'accepted' | 'rejected' | 'withdrawn';
-type VoteResult = 'passed' | 'rejected' | 'tie';
 type StepKind = 'group_vote' | 'merge_vote' | 'workflow_handoff';
 type SelectionMode = 'default_target_workflow' | 'explicit_workflow' | null;
 type MergeStrategy = 'winner_continues' | null;
 type AgendaType = 'amendment' | 'implementation_review' | 'support_confirmation';
-type ProcessTaskNotificationType =
-  'schedule_event' | 'implementation_evaluation' | 'support_confirmation';
-
 interface EnrichedPathSegmentInput {
   groupId: string;
   groupName: string;
@@ -105,56 +113,7 @@ interface ChoiceLabelSpec {
   semanticKey?: string | null;
 }
 
-interface VoteOutcome {
-  result: VoteResult;
-  totalEligible: number;
-  tallyByChoiceId: Map<string, number>;
-}
-
-function getProcessTaskNotificationTitle(
-  taskType: string | null | undefined,
-  title?: string | null
-) {
-  const trimmedTitle = title?.trim();
-  if (trimmedTitle) {
-    return trimmedTitle;
-  }
-
-  switch (taskType) {
-    case 'implementation_evaluation':
-      return translateText('features.amendments.processTasks.implementationEvaluation');
-    case 'support_confirmation':
-      return translateText('features.amendments.processTasks.supportConfirmation');
-    default:
-      return translateText('features.amendments.processTasks.scheduleEvent');
-  }
-}
-
-function fireProcessTaskCreatedNotification(args: {
-  senderId?: string | null;
-  groupId?: string | null;
-  groupName?: string | null;
-  taskTitle?: string | null;
-  taskType: ProcessTaskNotificationType;
-}) {
-  if (!args.senderId || !args.groupId) {
-    return;
-  }
-
-  fireNotification('notifyProcessTaskCreated', {
-    senderId: args.senderId,
-    groupId: args.groupId,
-    groupName: args.groupName || 'die zuständige Gruppe',
-    taskTitle: getProcessTaskNotificationTitle(args.taskType, args.taskTitle),
-  });
-}
-
-interface MergeRoundOneOutcome {
-  result: 'tie' | 'winner';
-  winnerBranchId: string | null;
-  winnerChoiceId: string | null;
-  loserBranchIds: string[];
-}
+export { resolveMergeRoundOneOutcome };
 
 interface WorkflowRuntimeStepTemplate {
   workflowId: string | null;
@@ -171,79 +130,6 @@ interface WorkflowRuntimeStepTemplate {
   autoTaskOnMissingEvent: boolean;
   targetWorkflowId: string | null;
   groupName: string;
-}
-
-const TERMINAL_STEP_STATUSES = new Set<ProcessStatus>([
-  'approved',
-  'rejected',
-  'merged',
-  'withdrawn',
-  'completed',
-]);
-const TERMINAL_BRANCH_STATUSES = new Set(['completed', 'rejected', 'withdrawn', 'merged']);
-
-function isTerminalStepStatus(status: string | null | undefined): status is ProcessStatus {
-  return TERMINAL_STEP_STATUSES.has((status ?? 'scheduled') as ProcessStatus);
-}
-
-function isTerminalBranchStatus(status: string | null | undefined) {
-  return TERMINAL_BRANCH_STATUSES.has(status ?? '');
-}
-
-function normalizeMajorityType(value?: string | null): MajorityType {
-  if (value === 'absolute' || value === 'two_thirds') {
-    return value;
-  }
-
-  return 'simple';
-}
-
-function normalizeDecisionChoiceLabel(label?: string | null) {
-  return label?.trim().toLowerCase() ?? null;
-}
-
-function isAcceptDecisionChoice(label?: string | null) {
-  const normalized = normalizeDecisionChoiceLabel(label);
-  return normalized === 'accept' || normalized === 'yes';
-}
-
-function isRejectDecisionChoice(label?: string | null) {
-  const normalized = normalizeDecisionChoiceLabel(label);
-  return normalized === 'reject' || normalized === 'no';
-}
-
-function getEventOrderingAnchor(args: {
-  eventStartDate?: number | null;
-  eventEndDate?: number | null;
-}) {
-  return args.eventEndDate ?? args.eventStartDate ?? null;
-}
-
-function getStepRunFingerprint(stepRun: {
-  process_run_id: string;
-  workflow_step_id?: string | null;
-  target_group_id?: string | null;
-  event_id?: string | null;
-  order_index: number;
-  step_kind: string;
-}) {
-  if (stepRun.workflow_step_id) {
-    return `workflow:${stepRun.workflow_step_id}`;
-  }
-
-  if (stepRun.step_kind === 'merge_vote' && stepRun.event_id && stepRun.target_group_id) {
-    return `auto-merge:${stepRun.process_run_id}:${stepRun.target_group_id}:${stepRun.event_id}`;
-  }
-
-  return `runtime:${stepRun.process_run_id}:${stepRun.target_group_id ?? 'none'}:${stepRun.order_index}:${stepRun.step_kind}`;
-}
-
-function compareStepRunsByProcessOrder(
-  left: { id: string; order_index: number },
-  right: { id: string; order_index: number }
-) {
-  const byOrderIndex = left.order_index - right.order_index;
-  return byOrderIndex !== 0 ? byOrderIndex : left.id.localeCompare(right.id);
 }
 
 function buildChoiceLabel(label: string) {
@@ -269,44 +155,6 @@ function buildMergeVoteChoiceLabels<TBranch extends MergeVoteBranchTitleSource>(
       processBranchId: null,
     },
   ];
-}
-
-function addCalendarOffset(args: {
-  timestamp: number;
-  months?: number | null;
-  years?: number | null;
-}) {
-  const baseDate = new Date(args.timestamp);
-  const originalDay = baseDate.getDate();
-  const result = new Date(args.timestamp);
-  result.setDate(1);
-  result.setFullYear(result.getFullYear() + (args.years ?? 0));
-  result.setMonth(result.getMonth() + (args.months ?? 0));
-  const lastDayOfTargetMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
-  result.setDate(Math.min(originalDay, lastDayOfTargetMonth));
-  return result.getTime();
-}
-
-function resolveConcreteEvaluationDate(args: {
-  evaluationMode?: 'fixed_date' | 'relative_to_vote' | null;
-  evaluationDate?: number | null;
-  evaluationOffsetMonths?: number | null;
-  evaluationOffsetYears?: number | null;
-  decisionTimestamp: number;
-}) {
-  if (args.evaluationMode === 'fixed_date') {
-    return args.evaluationDate ?? null;
-  }
-
-  if (args.evaluationMode === 'relative_to_vote') {
-    return addCalendarOffset({
-      timestamp: args.decisionTimestamp,
-      months: args.evaluationOffsetMonths ?? 0,
-      years: args.evaluationOffsetYears ?? 0,
-    });
-  }
-
-  return null;
 }
 
 async function createVoteChoices(
@@ -347,9 +195,9 @@ async function upsertGroupDecision(
   args: {
     amendmentId: string;
     groupId: string;
-    processRunId?: string | null;
-    processBranchId?: string | null;
-    processStepRunId?: string | null;
+    processRunId: string;
+    processBranchId: string;
+    processStepRunId: string;
     status: GroupDecisionStatus;
   }
 ) {
@@ -364,9 +212,9 @@ async function upsertGroupDecision(
   if (existing) {
     await tx.mutate.amendment_group_decision.update({
       id: existing.id,
-      process_run_id: args.processRunId ?? null,
-      process_branch_id: args.processBranchId ?? null,
-      process_step_run_id: args.processStepRunId ?? null,
+      process_run_id: args.processRunId,
+      process_branch_id: args.processBranchId,
+      process_step_run_id: args.processStepRunId,
       status: args.status,
       decided_at: now,
       updated_at: now,
@@ -379,9 +227,9 @@ async function upsertGroupDecision(
     id,
     amendment_id: args.amendmentId,
     group_id: args.groupId,
-    process_run_id: args.processRunId ?? null,
-    process_branch_id: args.processBranchId ?? null,
-    process_step_run_id: args.processStepRunId ?? null,
+    process_run_id: args.processRunId,
+    process_branch_id: args.processBranchId,
+    process_step_run_id: args.processStepRunId,
     status: args.status,
     decided_at: now,
     created_at: now,
@@ -392,8 +240,7 @@ async function upsertGroupDecision(
 
 async function updatePathSegmentStatus(tx: ZeroTransaction, stepRunId: string, status: string) {
   const segments = await tx.run(zql.amendment_path_segment.where('process_step_run_id', stepRunId));
-  const segmentRows = Array.isArray(segments) ? segments.filter(Boolean) : [];
-  for (const segment of segmentRows) {
+  for (const segment of segments) {
     await tx.mutate.amendment_path_segment.update({
       id: segment.id,
       status,
@@ -412,8 +259,7 @@ async function updatePathSegmentsForStepRun(
   const segments = await tx.run(
     zql.amendment_path_segment.where('process_step_run_id', args.stepRunId)
   );
-  const segmentRows = Array.isArray(segments) ? segments.filter(Boolean) : [];
-  for (const segment of segmentRows) {
+  for (const segment of segments) {
     await tx.mutate.amendment_path_segment.update({
       id: segment.id,
       event_id: args.eventId,
@@ -456,17 +302,6 @@ async function insertPathSegmentForStepRun(
     status: args.status,
     created_at: Date.now(),
   });
-}
-
-function getBranchStartGroupIdFromStepRuns(
-  stepRuns: readonly {
-    order_index: number;
-    target_group_id?: string | null;
-    source_group_id?: string | null;
-  }[]
-) {
-  const firstStepRun = [...stepRuns].sort((left, right) => left.order_index - right.order_index)[0];
-  return firstStepRun?.target_group_id ?? firstStepRun?.source_group_id ?? null;
 }
 
 async function getExistingBranchStartGroupIds(tx: ZeroTransaction, processRunId: string) {
@@ -571,410 +406,6 @@ async function createAgendaItemAndVote(
   await createVoteChoices(tx, args.voteId, args.choiceLabels ?? getDefaultDecisionChoices());
 }
 
-async function createScheduleEventTask(
-  tx: ZeroTransaction,
-  args: {
-    processRunId: string;
-    branchId: string;
-    stepRunId: string;
-    taskTitle: string;
-    taskDescription: string;
-    groupId: string;
-    targetGroupId: string | null;
-    metadata: Record<string, unknown>;
-    senderId?: string | null;
-    groupName?: string | null;
-  }
-) {
-  const now = Date.now();
-  const existingTask = await tx.run(
-    zql.process_task.where('step_run_id', args.stepRunId).where('task_type', 'schedule_event').one()
-  );
-  const reusableTask = Array.isArray(existingTask) ? null : existingTask;
-
-  if (reusableTask && reusableTask.status !== 'completed' && reusableTask.status !== 'cancelled') {
-    return reusableTask.id;
-  }
-
-  const id = crypto.randomUUID();
-  await tx.mutate.process_task.insert({
-    id,
-    process_run_id: args.processRunId,
-    branch_id: args.branchId,
-    step_run_id: args.stepRunId,
-    task_type: 'schedule_event',
-    status: 'open',
-    title: args.taskTitle,
-    description: args.taskDescription,
-    group_id: args.groupId,
-    target_group_id: args.targetGroupId,
-    event_id: null,
-    agenda_item_id: null,
-    support_confirmation_id: null,
-    due_at: null,
-    resolved_at: null,
-    metadata: args.metadata as never,
-    created_at: now,
-    updated_at: now,
-  });
-  fireProcessTaskCreatedNotification({
-    senderId: args.senderId,
-    groupId: args.groupId,
-    groupName: args.groupName,
-    taskTitle: args.taskTitle,
-    taskType: 'schedule_event',
-  });
-  return id;
-}
-
-async function createImplementationEvaluationTask(
-  tx: ZeroTransaction,
-  args: {
-    processRunId: string;
-    amendmentId: string;
-    amendmentTitle: string;
-    targetGroupId: string;
-    targetGroupName: string;
-    dueAt: number;
-    requiredAfter: number;
-    evaluationMode: 'fixed_date' | 'relative_to_vote';
-    senderId?: string | null;
-  }
-) {
-  const existingTasks = await tx.run(
-    zql.process_task
-      .where('process_run_id', args.processRunId)
-      .where('task_type', 'implementation_evaluation')
-      .orderBy('created_at', 'asc')
-  );
-
-  const reusableTask =
-    existingTasks.find(task => task.status !== 'cancelled') ??
-    existingTasks.find(task => task.status === 'cancelled') ??
-    null;
-
-  if (reusableTask) {
-    if (reusableTask.status !== 'cancelled') {
-      return reusableTask.id;
-    }
-
-    const taskTitle = translateText(
-      'generated.inline.0682_umsetzung_evaluieren_amendmenttitle_7226ff50',
-      {
-        amendmentTitle: args.amendmentTitle,
-      }
-    );
-    const taskDescription = translateText(
-      'generated.inline.0683_plane_die_umsetzungspruefung_fuer_amendmentti_14e50868',
-      { amendmentTitle: args.amendmentTitle, targetGroupName: args.targetGroupName }
-    );
-
-    await tx.mutate.process_task.update({
-      id: reusableTask.id,
-      status: 'open',
-      title: taskTitle,
-      description: taskDescription,
-      group_id: args.targetGroupId,
-      target_group_id: args.targetGroupId,
-      event_id: null,
-      agenda_item_id: null,
-      support_confirmation_id: null,
-      due_at: args.dueAt,
-      resolved_at: null,
-      metadata: {
-        amendmentId: args.amendmentId,
-        amendmentTitle: args.amendmentTitle,
-        groupName: args.targetGroupName,
-        requiredAfter: args.requiredAfter,
-        requiredBefore: args.dueAt,
-        targetGroupId: args.targetGroupId,
-        evaluationMode: args.evaluationMode,
-        evaluationDueAt: args.dueAt,
-      } as never,
-      updated_at: Date.now(),
-    });
-    fireProcessTaskCreatedNotification({
-      senderId: args.senderId,
-      groupId: args.targetGroupId,
-      groupName: args.targetGroupName,
-      taskTitle,
-      taskType: 'implementation_evaluation',
-    });
-
-    return reusableTask.id;
-  }
-
-  const now = Date.now();
-  const taskId = crypto.randomUUID();
-  const taskTitle = translateText(
-    'generated.inline.0682_umsetzung_evaluieren_amendmenttitle_7226ff50',
-    {
-      amendmentTitle: args.amendmentTitle,
-    }
-  );
-  const taskDescription = translateText(
-    'generated.inline.0683_plane_die_umsetzungspruefung_fuer_amendmentti_14e50868',
-    { amendmentTitle: args.amendmentTitle, targetGroupName: args.targetGroupName }
-  );
-  await tx.mutate.process_task.insert({
-    id: taskId,
-    process_run_id: args.processRunId,
-    branch_id: null,
-    step_run_id: null,
-    task_type: 'implementation_evaluation',
-    status: 'open',
-    title: taskTitle,
-    description: taskDescription,
-    group_id: args.targetGroupId,
-    target_group_id: args.targetGroupId,
-    event_id: null,
-    agenda_item_id: null,
-    support_confirmation_id: null,
-    due_at: args.dueAt,
-    resolved_at: null,
-    metadata: {
-      amendmentId: args.amendmentId,
-      amendmentTitle: args.amendmentTitle,
-      groupName: args.targetGroupName,
-      requiredAfter: args.requiredAfter,
-      requiredBefore: args.dueAt,
-      targetGroupId: args.targetGroupId,
-      evaluationMode: args.evaluationMode,
-      evaluationDueAt: args.dueAt,
-    } as never,
-    created_at: now,
-    updated_at: now,
-  });
-  fireProcessTaskCreatedNotification({
-    senderId: args.senderId,
-    groupId: args.targetGroupId,
-    groupName: args.targetGroupName,
-    taskTitle,
-    taskType: 'implementation_evaluation',
-  });
-
-  return taskId;
-}
-
-function changeRequestCreatedAt(value: unknown) {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string') {
-    const parsed = Date.parse(value);
-    return Number.isNaN(parsed) ? Number.POSITIVE_INFINITY : parsed;
-  }
-  return Number.POSITIVE_INFINITY;
-}
-
-type MainScopeDiscussion = Record<string, any> & { id?: string };
-type MainScopeChangeRequest = Record<string, any> & {
-  id: string;
-  suggestion_id?: string | null;
-  title?: string | null;
-  branch_sequence_number?: number | null;
-  created_at?: number | string | null;
-};
-
-function normalizeMainScopeChangeRequestsForFirstBranch(
-  discussionsValue: readonly unknown[],
-  changeRequestsValue: readonly unknown[]
-) {
-  const discussions = discussionsValue.filter((value): value is MainScopeDiscussion =>
-    Boolean(value && typeof value === 'object')
-  );
-  const changeRequests = changeRequestsValue
-    .filter((value): value is MainScopeChangeRequest =>
-      Boolean(
-        value &&
-        typeof value === 'object' &&
-        'id' in value &&
-        typeof (value as { id?: unknown }).id === 'string'
-      )
-    )
-    .sort((left, right) => {
-      const byCreatedAt =
-        changeRequestCreatedAt(left.created_at) - changeRequestCreatedAt(right.created_at);
-      return byCreatedAt !== 0 ? byCreatedAt : String(left.id).localeCompare(String(right.id));
-    })
-    .map((changeRequest, index): MainScopeChangeRequest => ({
-      ...changeRequest,
-      branch_sequence_number: index + 1,
-      title:
-        changeRequest.title == null || /^CR-\d+$/.test(String(changeRequest.title))
-          ? `CR-${index + 1}`
-          : changeRequest.title,
-    }));
-
-  const candidateByDiscussionId = new Map<string, string>();
-  const discussionIdsByChangeRequestId = new Map<string, string[]>();
-
-  for (const discussion of discussions) {
-    if (typeof discussion.id !== 'string' || !discussion.id) continue;
-    const candidateIds = new Set(
-      changeRequests
-        .filter(
-          changeRequest =>
-            changeRequest.suggestion_id === discussion.id ||
-            changeRequest.id === discussion.changeRequestEntityId
-        )
-        .map(changeRequest => String(changeRequest.id))
-    );
-    if (candidateIds.size !== 1) continue;
-
-    const [changeRequestId] = candidateIds;
-    candidateByDiscussionId.set(discussion.id, changeRequestId);
-    discussionIdsByChangeRequestId.set(changeRequestId, [
-      ...(discussionIdsByChangeRequestId.get(changeRequestId) ?? []),
-      discussion.id,
-    ]);
-  }
-
-  const unambiguousDiscussionIdByChangeRequestId = new Map<string, string>();
-  for (const [changeRequestId, discussionIds] of discussionIdsByChangeRequestId) {
-    if (discussionIds.length === 1) {
-      unambiguousDiscussionIdByChangeRequestId.set(changeRequestId, discussionIds[0]);
-    }
-  }
-
-  const normalizedChangeRequests = changeRequests.map(changeRequest => {
-    const discussionId = unambiguousDiscussionIdByChangeRequestId.get(String(changeRequest.id));
-    return discussionId ? { ...changeRequest, suggestion_id: discussionId } : changeRequest;
-  });
-  const changeRequestById = new Map(
-    normalizedChangeRequests.map(changeRequest => [String(changeRequest.id), changeRequest])
-  );
-  const normalizedDiscussions = discussions.map(discussion => {
-    const changeRequestId =
-      typeof discussion.id === 'string' ? candidateByDiscussionId.get(discussion.id) : undefined;
-    if (
-      !changeRequestId ||
-      unambiguousDiscussionIdByChangeRequestId.get(changeRequestId) !== discussion.id
-    ) {
-      return discussion;
-    }
-
-    const changeRequest = changeRequestById.get(changeRequestId);
-    if (!changeRequest) return discussion;
-    const sequenceNumber = changeRequest.branch_sequence_number as number;
-    const crId = `CR-${sequenceNumber}`;
-    return {
-      ...discussion,
-      crId,
-      displayCrId: crId,
-      changeRequestEntityId: changeRequest.id,
-      branchSequenceNumber: sequenceNumber,
-      branchScopedCrNumber: sequenceNumber,
-    };
-  });
-
-  return { discussions: normalizedDiscussions, changeRequests: normalizedChangeRequests };
-}
-
-async function loadCanonicalAmendmentDocument(
-  tx: ZeroTransaction,
-  args: {
-    amendmentId: string;
-  }
-) {
-  const amendmentResult = await tx.run(zql.amendment.where('id', args.amendmentId).one());
-  const amendment = Array.isArray(amendmentResult) ? null : amendmentResult;
-  if (!amendment?.document_id) {
-    return null;
-  }
-
-  const document = await tx.run(zql.document.where('id', amendment.document_id).one());
-  if (!document?.content) {
-    return null;
-  }
-
-  return { amendment, document };
-}
-
-async function findProcessRunBaseSnapshot(tx: ZeroTransaction, processRunId: string) {
-  const branches = await tx.run(
-    zql.amendment_process_branch.where('process_run_id', processRunId).orderBy('created_at', 'asc')
-  );
-
-  for (const branch of branches) {
-    if (!branch.document_version_id) {
-      continue;
-    }
-
-    const version = await tx.run(
-      zql.document_version.where('id', branch.document_version_id).one()
-    );
-    if (version?.content) {
-      return {
-        versionId: version.id,
-        content: version.content,
-      };
-    }
-  }
-
-  return null;
-}
-
-async function createBranchDocumentArtifacts(
-  tx: ZeroTransaction,
-  args: {
-    amendmentId: string;
-    processRunId?: string | null;
-    authorId: string;
-    changeSummary: string;
-  }
-) {
-  const existingBase = args.processRunId
-    ? await findProcessRunBaseSnapshot(tx, args.processRunId)
-    : null;
-  let documentVersionId = existingBase?.versionId ?? null;
-  let branchContent = existingBase?.content ?? null;
-  let editingMode: string | null = null;
-
-  if (!branchContent) {
-    const canonical = await loadCanonicalAmendmentDocument(tx, { amendmentId: args.amendmentId });
-    if (!canonical?.document?.content) {
-      return { documentVersionId: null, documentId: null, editingMode: null };
-    }
-
-    const { document } = canonical;
-    branchContent = document.content as typeof branchContent;
-    editingMode = document.editing_mode ?? null;
-
-    const latestVersion = await tx.run(
-      zql.document_version
-        .where('document_id', document.id)
-        .orderBy('version_number', 'desc')
-        .limit(1)
-        .one()
-    );
-    documentVersionId = crypto.randomUUID();
-
-    await tx.mutate.document_version.insert({
-      id: documentVersionId,
-      document_id: document.id,
-      amendment_id: args.amendmentId,
-      blog_id: null,
-      content: branchContent,
-      version_number: (latestVersion?.version_number ?? 0) + 1,
-      change_summary: args.changeSummary,
-      author_id: args.authorId,
-      created_at: Date.now(),
-    });
-  }
-
-  const branchDocumentId = crypto.randomUUID();
-  const now = Date.now();
-  await tx.mutate.document.insert({
-    id: branchDocumentId,
-    amendment_id: args.amendmentId,
-    content: branchContent,
-    editing_mode: normalizeEditingMode(editingMode),
-    created_at: now,
-    updated_at: now,
-  });
-
-  return { documentVersionId, documentId: branchDocumentId, editingMode };
-}
-
 async function closeOpenScheduleTasksForStepRun(tx: ZeroTransaction, stepRunId: string) {
   const tasks = await tx.run(
     zql.process_task.where('step_run_id', stepRunId).where('task_type', 'schedule_event')
@@ -1019,17 +450,7 @@ async function getConfirmedAgendaTailOrderIndex(
 ) {
   const agendaItems = await tx.run(zql.agenda_item.where('event_id', eventId));
 
-  return agendaItems.reduce((maxOrderIndex, agendaItem) => {
-    if (excludeAgendaItemId && agendaItem.id === excludeAgendaItemId) {
-      return maxOrderIndex;
-    }
-
-    if (agendaItem.forwarding_status === 'previous_decision_outstanding') {
-      return maxOrderIndex;
-    }
-
-    return Math.max(maxOrderIndex, agendaItem.order_index ?? 0);
-  }, 0);
+  return computeConfirmedAgendaTailOrderIndex(agendaItems, excludeAgendaItemId);
 }
 
 async function appendAgendaItemToConfirmedAgenda(
@@ -1048,15 +469,11 @@ async function appendAgendaItemToConfirmedAgenda(
 
 async function syncBranchEditingMode(
   tx: ZeroTransaction,
-  branchId: string | null | undefined,
-  amendmentId: string | null | undefined,
+  branchId: string,
+  amendmentId: string,
   editingMode: 'view' | 'suggest_event' | 'passed' | 'rejected',
   actorUserId?: string | null
 ) {
-  if (!branchId || !amendmentId) {
-    return;
-  }
-
   const branch = await tx.run(zql.amendment_process_branch.where('id', branchId).one());
   if (!branch || branch.editing_mode === editingMode) {
     return;
@@ -1077,19 +494,6 @@ async function syncBranchEditingMode(
     editing_mode: editingMode,
     updated_at: Date.now(),
   });
-}
-
-async function getForwardedEventEditingMode(
-  tx: ZeroTransaction,
-  eventId: string | null | undefined,
-  now: number
-) {
-  if (!eventId) {
-    return 'view' as const;
-  }
-
-  void now;
-  return 'suggest_event' as const;
 }
 
 async function deleteVoteRuntime(tx: ZeroTransaction, voteId: string | null | undefined) {
@@ -1225,112 +629,6 @@ async function fetchVoteWithDetails(tx: ZeroTransaction, voteId: string) {
   );
 }
 
-function buildTallyByChoiceId(vote: NonNullable<Awaited<ReturnType<typeof fetchVoteWithDetails>>>) {
-  const tallyByChoiceId = new Map<string, number>();
-
-  for (const choice of vote.choices ?? []) {
-    tallyByChoiceId.set(choice.id, 0);
-  }
-
-  for (const decision of vote.final_decisions ?? []) {
-    tallyByChoiceId.set(decision.choice_id, (tallyByChoiceId.get(decision.choice_id) ?? 0) + 1);
-  }
-
-  for (const tally of vote.offline_tallies ?? []) {
-    if (tally.phase !== 'final') {
-      continue;
-    }
-
-    tallyByChoiceId.set(tally.choice_id, (tallyByChoiceId.get(tally.choice_id) ?? 0) + tally.count);
-  }
-
-  return tallyByChoiceId;
-}
-
-function resolveDecisionVoteOutcome(
-  vote: NonNullable<Awaited<ReturnType<typeof fetchVoteWithDetails>>>
-): VoteOutcome {
-  const sortedChoices = [...(vote.choices ?? [])].sort(
-    (left, right) => (left.order_index ?? 0) - (right.order_index ?? 0)
-  );
-  const acceptChoice =
-    sortedChoices.find(choice => isAcceptDecisionChoice(choice.label)) ?? sortedChoices[0] ?? null;
-  const rejectChoice =
-    sortedChoices.find(choice => isRejectDecisionChoice(choice.label)) ?? sortedChoices[1] ?? null;
-  const tallyByChoiceId = buildTallyByChoiceId(vote);
-  const acceptCount = acceptChoice ? (tallyByChoiceId.get(acceptChoice.id) ?? 0) : 0;
-  const rejectCount = rejectChoice ? (tallyByChoiceId.get(rejectChoice.id) ?? 0) : 0;
-  const totalEligible = Math.max(
-    vote.voters?.length ?? 0,
-    (vote.final_participations?.length ?? 0) +
-      (vote.offline_tallies ?? [])
-        .filter(tally => tally.phase === 'final')
-        .reduce((sum, tally) => sum + tally.count, 0)
-  );
-
-  return {
-    result: computeVoteResult(
-      acceptCount,
-      rejectCount,
-      totalEligible,
-      normalizeMajorityType(vote.majority_type)
-    ),
-    totalEligible,
-    tallyByChoiceId,
-  };
-}
-
-export function resolveMergeRoundOneOutcome(args: {
-  vote: NonNullable<Awaited<ReturnType<typeof fetchVoteWithDetails>>>;
-  candidateStepRuns: readonly {
-    branch_id: string;
-    created_at: number;
-  }[];
-}): MergeRoundOneOutcome {
-  const sortedChoices = [...(args.vote.choices ?? [])].sort(
-    (left, right) => (left.order_index ?? 0) - (right.order_index ?? 0)
-  );
-  const sortedCandidates = [...args.candidateStepRuns].sort(
-    (left, right) => left.created_at - right.created_at
-  );
-  const tallyByChoiceId = buildTallyByChoiceId(args.vote);
-  const ranked = sortedChoices.map((choice, index) => ({
-    choiceId: choice.id,
-    branchId: choice.process_branch_id ?? sortedCandidates[index]?.branch_id ?? null,
-    count: tallyByChoiceId.get(choice.id) ?? 0,
-  }));
-  const sortedRanked = [...ranked].sort((left, right) => right.count - left.count);
-  const best = sortedRanked[0] ?? null;
-  const secondBest = sortedRanked[1] ?? null;
-
-  if (!best || !best.branchId) {
-    return {
-      result: 'tie',
-      winnerBranchId: null,
-      winnerChoiceId: null,
-      loserBranchIds: [],
-    };
-  }
-
-  if (secondBest && secondBest.count === best.count) {
-    return {
-      result: 'tie',
-      winnerBranchId: null,
-      winnerChoiceId: null,
-      loserBranchIds: [],
-    };
-  }
-
-  return {
-    result: 'winner',
-    winnerBranchId: best.branchId,
-    winnerChoiceId: best.choiceId,
-    loserBranchIds: ranked
-      .filter(entry => entry.branchId && entry.branchId !== best.branchId)
-      .map(entry => entry.branchId as string),
-  };
-}
-
 async function getAmendmentContextForTask(
   tx: ZeroTransaction,
   task: {
@@ -1390,24 +688,11 @@ async function syncBranchSchedulingState(tx: ZeroTransaction, branchId: string) 
   const stepRunResult = await tx.run(
     zql.amendment_process_step_run.where('branch_id', branchId).orderBy('order_index', 'asc')
   );
-  const stepRuns = Array.isArray(stepRunResult) ? stepRunResult.filter(Boolean) : [];
+  const stepRuns = stepRunResult;
   const firstUnresolvedStep = stepRuns.find(step => !isTerminalStepStatus(step.status));
 
   for (const stepRun of stepRuns) {
-    const decisionStatus =
-      stepRun.status === 'approved' || stepRun.status === 'completed'
-        ? 'approved'
-        : stepRun.status === 'rejected'
-          ? 'rejected'
-          : stepRun.status === 'merged'
-            ? 'merged'
-            : stepRun.status === 'withdrawn'
-              ? 'withdrawn'
-              : stepRun.decision_status === 'tie'
-                ? 'tie'
-                : firstUnresolvedStep?.id === stepRun.id
-                  ? 'forward_confirmed'
-                  : 'previous_decision_outstanding';
+    const decisionStatus = getStepDecisionStatus(stepRun, firstUnresolvedStep?.id);
 
     if (stepRun.decision_status !== decisionStatus) {
       await tx.mutate.amendment_process_step_run.update({
@@ -1449,22 +734,9 @@ async function recomputeProcessRunState(tx: ZeroTransaction, processRunId: strin
   const branchResult = await tx.run(
     zql.amendment_process_branch.where('process_run_id', processRunId).orderBy('created_at', 'asc')
   );
-  const branches = Array.isArray(branchResult) ? branchResult.filter(Boolean) : [];
+  const branches = branchResult;
 
-  const nonTerminalBranches = branches.filter(branch => !isTerminalBranchStatus(branch.status));
-
-  let status: ProcessStatus = 'completed';
-  if (nonTerminalBranches.some(branch => branch.status === 'in_vote')) {
-    status = 'in_vote';
-  } else if (nonTerminalBranches.some(branch => branch.status === 'scheduled')) {
-    status = 'scheduled';
-  } else if (nonTerminalBranches.some(branch => branch.status === 'pending_event')) {
-    status = 'pending_event';
-  } else if (branches.some(branch => branch.status === 'rejected')) {
-    status = 'rejected';
-  }
-
-  const activeBranchId = nonTerminalBranches[0]?.id ?? null;
+  const { status, activeBranchId } = deriveProcessRunState(branches);
   await tx.mutate.amendment_process_run.update({
     id: processRunId,
     status,
@@ -1477,13 +749,12 @@ async function recomputeProcessRunState(tx: ZeroTransaction, processRunId: strin
 
 async function findActiveRunsForOrigin(tx: ZeroTransaction, originAmendmentId: string) {
   const runs = await tx.run(zql.amendment_process_run.where('amendment_id', originAmendmentId));
-  const runRows = Array.isArray(runs) ? runs.filter(Boolean) : [];
-  return runRows.filter(run => !['completed', 'rejected', 'withdrawn'].includes(run.status));
+  return runs.filter(run => !['completed', 'rejected', 'withdrawn'].includes(run.status));
 }
 
 async function getAmendmentOriginId(tx: ZeroTransaction, amendmentId: string) {
   const amendmentResult = await tx.run(zql.amendment.where('id', amendmentId).one());
-  const amendment = Array.isArray(amendmentResult) ? null : amendmentResult;
+  const amendment = amendmentResult;
   const originAmendmentId =
     amendment?.origin_amendment_id ?? amendment?.clone_source_id ?? amendmentId;
 
@@ -1521,7 +792,7 @@ async function findFirstUnresolvedStepRunForBranch(tx: ZeroTransaction, branchId
   const stepRuns = await tx.run(
     zql.amendment_process_step_run.where('branch_id', branchId).orderBy('order_index', 'asc')
   );
-  return stepRuns.find(step => !isTerminalStepStatus(step.status)) ?? null;
+  return stepRuns.find(step => !isTerminalStepStatus(step.status)) as (typeof stepRuns)[number];
 }
 
 async function findBranchesParticipatingInMergeStep(
@@ -1593,23 +864,17 @@ async function materializeMergeVoteFromCandidates<
     }[];
   }
 ) {
-  if (args.candidateBranches.length === 0) {
-    return { scheduled: false as const };
-  }
-
   const candidateByBranchId = new Map(
     args.candidateBranches.map(candidate => [candidate.branch.id, candidate])
   );
   const orderedBranches = getOrderedMergeVoteBranches(
     args.candidateBranches.map(candidate => candidate.branch)
   );
-  const orderedCandidates = orderedBranches
-    .map(branch => candidateByBranchId.get(branch.id))
-    .filter((candidate): candidate is (typeof args.candidateBranches)[number] =>
-      Boolean(candidate)
-    );
+  const orderedCandidates = orderedBranches.map(
+    branch => candidateByBranchId.get(branch.id) as (typeof args.candidateBranches)[number]
+  );
   const candidateStepRuns = orderedCandidates.map(candidate => candidate.stepRun);
-  const commonEventId = candidateStepRuns[0]?.event_id ?? null;
+  const commonEventId = candidateStepRuns[0].event_id ?? null;
 
   if (!commonEventId || candidateStepRuns.some(step => step.event_id !== commonEventId)) {
     return { scheduled: false as const };
@@ -1718,7 +983,10 @@ async function maybeScheduleMergeRoundOne(
     fingerprint
   );
 
-  if (candidateBranches.length === 0) {
+  // A merge decision only exists when at least two independently active
+  // branches have reached the same merge point. Scheduling a one-choice vote
+  // would prematurely collapse a branch before its sibling arrives.
+  if (candidateBranches.length < 2) {
     return { scheduled: false as const };
   }
 
@@ -1763,8 +1031,8 @@ async function maybeScheduleAutomaticMergeAtCrossing(
       .orderBy('branch_id', 'asc')
       .orderBy('order_index', 'asc')
   );
-  const branchRows = Array.isArray(branches) ? branches.filter(Boolean) : [];
-  const stepRunRows = Array.isArray(stepRuns) ? stepRuns.filter(Boolean) : [];
+  const branchRows = branches;
+  const stepRunRows = stepRuns;
 
   type BranchRow = (typeof branchRows)[number];
   type StepRunRow = (typeof stepRunRows)[number];
@@ -1813,9 +1081,7 @@ async function maybeScheduleAutomaticMergeAtCrossing(
 
     const candidateBranches = getOrderedMergeVoteBranches(
       Array.from(branchCandidates.values()).map(candidate => candidate.branch)
-    )
-      .map(branch => branchCandidates.get(branch.id))
-      .filter((candidate): candidate is CrossingCandidate => Boolean(candidate));
+    ).map(branch => branchCandidates.get(branch.id) as CrossingCandidate);
     const candidateStepRuns = candidateBranches.map(candidate => candidate.stepRun);
     const carrierStepRun =
       candidateStepRuns.find(stepRun => stepRun.agenda_item_id && stepRun.vote_id) ?? null;
@@ -1853,8 +1119,8 @@ async function maybeScheduleAutomaticMergeAtCrossing(
         ...stepRun,
         step_kind: 'merge_vote',
         merge_strategy: 'winner_continues',
-        agenda_item_id: keepPair ? (stepRun.agenda_item_id ?? null) : null,
-        vote_id: keepPair ? (stepRun.vote_id ?? null) : null,
+        agenda_item_id: keepPair ? (stepRun.agenda_item_id as string) : null,
+        vote_id: keepPair ? (stepRun.vote_id as string) : null,
         status: 'pending_event',
         decision_status: stepRun.decision_status === 'tie' ? 'tie' : 'forward_confirmed',
       };
@@ -1876,7 +1142,7 @@ async function maybeScheduleAutomaticMergeAtCrossing(
       });
     }
 
-    const mergeSchedule = await materializeMergeVoteFromCandidates(tx, {
+    await materializeMergeVoteFromCandidates(tx, {
       amendmentId: args.amendmentId,
       amendmentTitle: args.amendmentTitle,
       amendmentReason: args.amendmentReason,
@@ -1884,9 +1150,7 @@ async function maybeScheduleAutomaticMergeAtCrossing(
       candidateBranches: materializeCandidates,
     });
 
-    if (mergeSchedule.scheduled) {
-      scheduled = true;
-    }
+    scheduled = true;
   }
 
   return { scheduled };
@@ -1900,10 +1164,6 @@ async function shiftLaterStepRunOrderIndexes(
     delta: number;
   }
 ) {
-  if (args.delta === 0) {
-    return;
-  }
-
   const laterStepRuns = await tx.run(
     zql.amendment_process_step_run
       .where('branch_id', args.branchId)
@@ -1937,19 +1197,29 @@ async function shiftLaterStepRunOrderIndexes(
 async function createRoundTwoMergeApprovalStep(
   tx: ZeroTransaction,
   args: {
-    winnerStepRunId: string;
+    winnerStepRun: {
+      id: string;
+      process_run_id: string;
+      branch_id: string;
+      workflow_id?: string | null;
+      selection_mode?: string | null;
+      merge_strategy?: string | null;
+      source_group_id?: string | null;
+      target_group_id?: string | null;
+      event_id?: string | null;
+      order_index: number;
+      starts_at?: number | null;
+    };
     amendmentId: string;
     amendmentTitle: string;
     amendmentReason: string | null;
     creatorId: string;
   }
 ) {
-  const winnerStepRun = await tx.run(
-    zql.amendment_process_step_run.where('id', args.winnerStepRunId).one()
-  );
-  if (!winnerStepRun) {
-    return null;
-  }
+  const { winnerStepRun } = args;
+  const sourceGroupId = winnerStepRun.source_group_id ?? null;
+  const targetGroupId = winnerStepRun.target_group_id ?? null;
+  const decisionGroupId = targetGroupId ?? sourceGroupId ?? '';
 
   await shiftLaterStepRunOrderIndexes(tx, {
     branchId: winnerStepRun.branch_id,
@@ -1988,8 +1258,8 @@ async function createRoundTwoMergeApprovalStep(
     selection_mode: winnerStepRun.selection_mode ?? null,
     merge_strategy: winnerStepRun.merge_strategy ?? null,
     status: winnerStepRun.event_id ? 'scheduled' : 'pending_event',
-    source_group_id: winnerStepRun.source_group_id ?? null,
-    target_group_id: winnerStepRun.target_group_id ?? null,
+    source_group_id: sourceGroupId,
+    target_group_id: targetGroupId,
     event_id: winnerStepRun.event_id ?? null,
     agenda_item_id: agendaItemId,
     vote_id: voteId,
@@ -2007,7 +1277,7 @@ async function createRoundTwoMergeApprovalStep(
     pathId,
     branchId: winnerStepRun.branch_id,
     stepRunId,
-    groupId: winnerStepRun.target_group_id ?? winnerStepRun.source_group_id ?? '',
+    groupId: decisionGroupId,
     eventId: winnerStepRun.event_id ?? null,
     orderIndex: winnerStepRun.order_index + 1,
     status: winnerStepRun.event_id ? 'forward_confirmed' : 'previous_decision_outstanding',
@@ -2020,8 +1290,8 @@ async function createRoundTwoMergeApprovalStep(
       stepRunId,
       taskTitle: `Schedule merge confirmation for ${args.amendmentTitle}`,
       taskDescription: 'A follow-up yes/no merge confirmation event is still missing.',
-      groupId: winnerStepRun.target_group_id ?? winnerStepRun.source_group_id ?? '',
-      targetGroupId: winnerStepRun.target_group_id ?? null,
+      groupId: decisionGroupId,
+      targetGroupId,
       senderId: args.creatorId,
       metadata: {
         amendmentId: args.amendmentId,
@@ -2061,7 +1331,7 @@ async function resolveWorkflowHandoffTarget(
       .orderBy('created_at', 'asc')
   );
 
-  return defaultWorkflows[0]?.id ?? null;
+  return defaultWorkflows[0]?.id;
 }
 
 async function buildWorkflowRuntimeStepTemplates(
@@ -2084,23 +1354,24 @@ async function buildWorkflowRuntimeStepTemplates(
 
   const groupIds = [...new Set(workflowSteps.map(step => step.group_id))];
   const events = await tx.run(zql.event.where('group_id', 'IN', groupIds).related('group'));
-  const eventsByGroupId = new Map<string, typeof events>();
+  type EligibleEvent = (typeof events)[number] & { start_date: number };
+  const eventsByGroupId = new Map<string, EligibleEvent[]>();
 
   for (const event of events) {
     const groupId = event.group?.id ?? event.group_id ?? null;
-    if (!groupId || (event.start_date ?? 0) <= Date.now()) {
+    if (!groupId || event.start_date == null || event.start_date <= Date.now()) {
       continue;
     }
 
     const groupEvents = eventsByGroupId.get(groupId) ?? [];
-    groupEvents.push(event);
+    groupEvents.push({ ...event, start_date: event.start_date });
     eventsByGroupId.set(groupId, groupEvents);
   }
 
   for (const [groupId, groupEvents] of eventsByGroupId.entries()) {
     eventsByGroupId.set(
       groupId,
-      [...groupEvents].sort((left, right) => (left.start_date ?? 0) - (right.start_date ?? 0))
+      [...groupEvents].sort((left, right) => left.start_date - right.start_date)
     );
   }
 
@@ -2109,14 +1380,9 @@ async function buildWorkflowRuntimeStepTemplates(
 
   for (const step of workflowSteps) {
     const event =
-      (eventsByGroupId.get(step.group_id) ?? []).find(candidate => {
-        const startDate = candidate.start_date ?? null;
-        if (startDate == null) {
-          return false;
-        }
-
-        return lowerBound == null || startDate >= lowerBound;
-      }) ?? null;
+      (eventsByGroupId.get(step.group_id) ?? []).find(
+        candidate => lowerBound == null || candidate.start_date >= lowerBound
+      ) ?? null;
 
     const stepKind: StepKind =
       step.step_kind === 'merge_vote' || step.step_kind === 'workflow_handoff'
@@ -2345,24 +1611,30 @@ async function createInitialStepRunFromPathSegment(
   }
 ) {
   const stepRunId = crypto.randomUUID();
-  const shouldCreateImmediateVote =
-    args.segment.stepKind !== 'merge_vote' && Boolean(args.segment.eventId);
+  const { segment } = args;
+  const eventId = segment.eventId;
+  const stepKind = segment.stepKind ?? 'group_vote';
+  const workflowStepId = segment.workflowStepId ?? null;
+  const selectionMode =
+    segment.selectionMode ?? (args.workflowId ? 'explicit_workflow' : 'default_target_workflow');
+  const mergeStrategy = segment.mergeStrategy ?? null;
+  const shouldCreateImmediateVote = stepKind !== 'merge_vote' && Boolean(eventId);
   const agendaItemId = shouldCreateImmediateVote
-    ? (args.segment.agendaItemId ?? crypto.randomUUID())
+    ? (segment.agendaItemId ?? crypto.randomUUID())
     : null;
   const voteId = shouldCreateImmediateVote
-    ? (args.segment.amendmentVoteId ?? crypto.randomUUID())
+    ? (segment.amendmentVoteId ?? crypto.randomUUID())
     : null;
 
-  if (args.segment.eventId && agendaItemId && voteId) {
+  if (eventId && agendaItemId && voteId) {
     await createAgendaItemAndVote(tx, {
       agendaItemId,
       voteId,
-      eventId: args.segment.eventId,
+      eventId,
       amendmentId: args.amendmentId,
       amendmentTitle: args.amendmentTitle,
       amendmentReason: args.amendmentReason,
-      forwardingStatus: args.segment.forwardingStatus,
+      forwardingStatus: segment.forwardingStatus,
       creatorId: args.creatorId,
       votePurpose: VOTE_PURPOSE.closing,
     });
@@ -2373,22 +1645,20 @@ async function createInitialStepRunFromPathSegment(
     process_run_id: args.processRunId,
     branch_id: args.branchId,
     workflow_id: args.workflowId,
-    workflow_step_id: args.segment.workflowStepId ?? null,
-    step_kind: args.segment.stepKind ?? 'group_vote',
-    selection_mode:
-      args.segment.selectionMode ??
-      (args.workflowId ? 'explicit_workflow' : 'default_target_workflow'),
-    merge_strategy: args.segment.mergeStrategy ?? null,
-    status: args.segment.eventId ? 'scheduled' : 'pending_event',
+    workflow_step_id: workflowStepId,
+    step_kind: stepKind,
+    selection_mode: selectionMode,
+    merge_strategy: mergeStrategy,
+    status: eventId ? 'scheduled' : 'pending_event',
     source_group_id: args.sourceGroupId,
-    target_group_id: args.segment.groupId,
-    event_id: args.segment.eventId ?? null,
+    target_group_id: segment.groupId,
+    event_id: eventId,
     agenda_item_id: agendaItemId,
     vote_id: voteId,
     support_confirmation_id: null,
-    decision_status: args.segment.forwardingStatus,
+    decision_status: segment.forwardingStatus,
     order_index: args.orderIndex,
-    starts_at: args.segment.eventStartDate ?? null,
+    starts_at: segment.eventStartDate,
     ends_at: null,
     created_at: Date.now(),
     updated_at: Date.now(),
@@ -2399,48 +1669,46 @@ async function createInitialStepRunFromPathSegment(
     path_id: args.pathId,
     process_branch_id: args.branchId,
     process_step_run_id: stepRunId,
-    group_id: args.segment.groupId,
-    event_id: args.segment.eventId ?? null,
+    group_id: segment.groupId,
+    event_id: eventId,
     order_index: args.orderIndex,
-    status: args.segment.forwardingStatus,
+    status: segment.forwardingStatus,
     created_at: Date.now(),
   });
 
-  if (!args.segment.eventId && args.segment.autoTaskOnMissingEvent !== false) {
+  if (!eventId && segment.autoTaskOnMissingEvent !== false) {
     await createScheduleEventTask(tx, {
       processRunId: args.processRunId,
       branchId: args.branchId,
       stepRunId,
-      taskTitle: `Schedule amendment vote for ${args.segment.groupName}`,
-      taskDescription: `No eligible event is selected yet for ${args.segment.groupName}.`,
-      groupId: args.segment.groupId,
+      taskTitle: `Schedule amendment vote for ${segment.groupName}`,
+      taskDescription: `No eligible event is selected yet for ${segment.groupName}.`,
+      groupId: segment.groupId,
       targetGroupId: args.targetGroupId,
       senderId: args.creatorId,
-      groupName: args.segment.groupName,
+      groupName: segment.groupName,
       metadata: {
         amendmentId: args.amendmentId,
         amendmentTitle: args.amendmentTitle,
-        groupName: args.segment.groupName,
+        groupName: segment.groupName,
         orderIndex: args.orderIndex,
-        requiredAfter: args.segment.requiredAfter ?? null,
-        requiredBefore: args.segment.requiredBefore ?? null,
+        requiredAfter: segment.requiredAfter ?? null,
+        requiredBefore: segment.requiredBefore ?? null,
         sourceGroupId: args.sourceGroupId,
         targetGroupId: args.targetGroupId,
         pathMode: args.pathMode,
         workflowId: args.workflowId,
-        workflowStepId: args.segment.workflowStepId ?? null,
-        stepKind: args.segment.stepKind ?? 'group_vote',
-        selectionMode:
-          args.segment.selectionMode ??
-          (args.workflowId ? 'explicit_workflow' : 'default_target_workflow'),
-        mergeStrategy: args.segment.mergeStrategy ?? null,
-        eventRule: args.segment.eventRule ?? null,
-        autoTaskOnMissingEvent: args.segment.autoTaskOnMissingEvent ?? true,
-        targetWorkflowId: args.segment.targetWorkflowId ?? null,
+        workflowStepId,
+        stepKind,
+        selectionMode,
+        mergeStrategy,
+        eventRule: segment.eventRule ?? null,
+        autoTaskOnMissingEvent: segment.autoTaskOnMissingEvent ?? true,
+        targetWorkflowId: segment.targetWorkflowId ?? null,
         evaluationMode:
           args.evaluationMode && args.evaluationMode !== 'none' ? args.evaluationMode : null,
         evaluationDueAt: args.evaluationDate ?? null,
-        forwardingStatus: args.segment.forwardingStatus,
+        forwardingStatus: segment.forwardingStatus,
       },
     });
   }
@@ -2457,8 +1725,11 @@ export async function initializeAmendmentProcessPath(
     return { handled: false };
   }
 
-  const targetGroupId = args.enriched_path[args.enriched_path.length - 1]?.groupId ?? null;
+  const firstSegment = args.enriched_path[0] as EnrichedPathSegmentInput;
+  const lastSegment = args.enriched_path.at(-1) as EnrichedPathSegmentInput;
+  const targetGroupId = lastSegment.groupId;
   const workflowId = args.workflow_id ?? null;
+  const pathMode = args.path_mode ?? 'hierarchy';
   const originAmendmentId = await getAmendmentOriginId(tx, args.amendment_id);
   const activeRuns = await findActiveRunsForOrigin(tx, originAmendmentId);
   const existingRun =
@@ -2467,7 +1738,7 @@ export async function initializeAmendmentProcessPath(
         (run.selected_target_group_id ?? null) === targetGroupId &&
         (run.selected_target_workflow_id ?? null) === workflowId
     ) ?? null;
-  const requestedStartGroupId = args.source_group_id ?? args.enriched_path[0]?.groupId ?? null;
+  const requestedStartGroupId = args.source_group_id ?? firstSegment.groupId;
 
   if (!existingRun && activeRuns.length > 0) {
     throw new Error('Additional process branches must use the active process target.');
@@ -2586,9 +1857,7 @@ export async function initializeAmendmentProcessPath(
     amendment_id: args.amendment_id,
     process_run_id: processRunId,
     title: translateText(
-      `features.amendments.process.pathModes.${
-        args.path_mode === 'workflow' ? 'workflow' : 'hierarchy'
-      }`
+      `features.amendments.process.pathModes.${pathMode === 'workflow' ? 'workflow' : 'hierarchy'}`
     ),
     workflow_id: workflowId,
     created_at: now,
@@ -2600,8 +1869,7 @@ export async function initializeAmendmentProcessPath(
       processRunId,
       branchId,
       pathId,
-      sourceGroupId:
-        index === 0 ? previousGroupId : (args.enriched_path[index - 1]?.groupId ?? null),
+      sourceGroupId: previousGroupId,
       segment,
       orderIndex: index,
       amendmentId: args.amendment_id,
@@ -2610,7 +1878,7 @@ export async function initializeAmendmentProcessPath(
       creatorId: userId,
       targetGroupId,
       workflowId,
-      pathMode: args.path_mode ?? 'hierarchy',
+      pathMode,
       evaluationMode: args.evaluation_mode,
       evaluationDate: args.evaluation_date,
     });
@@ -2619,7 +1887,7 @@ export async function initializeAmendmentProcessPath(
 
   const branchSync = await syncBranchSchedulingState(tx, branchId);
   const firstUnresolvedStep = await findFirstUnresolvedStepRunForBranch(tx, branchId);
-  if (firstUnresolvedStep?.step_kind === 'merge_vote') {
+  if (firstUnresolvedStep.step_kind === 'merge_vote') {
     await maybeScheduleMergeRoundOne(tx, {
       processRunId,
       stepRunId: firstUnresolvedStep.id,
@@ -2680,11 +1948,13 @@ export async function replanProcessBranchEvents(
   if (!amendment) {
     throw new Error('Amendment not found.');
   }
+  const amendmentTitle = amendment.title ?? 'Amendment';
+  const amendmentReason = amendment.reason ?? null;
 
   const stepRuns = await tx.run(
     zql.amendment_process_step_run.where('branch_id', branch.id).orderBy('order_index', 'asc')
   );
-  const stepRunRows = Array.isArray(stepRuns) ? stepRuns.filter(Boolean) : [];
+  const stepRunRows = stepRuns;
   if (stepRunRows.length === 0) {
     return { handled: false as const };
   }
@@ -2708,7 +1978,9 @@ export async function replanProcessBranchEvents(
       isTerminalStepStatus(stepRun.status) ? Math.max(latest, stepRun.order_index) : latest,
     -1
   );
-  const firstUnresolvedStep = stepRunRows.find(stepRun => !isTerminalStepStatus(stepRun.status));
+  const firstUnresolvedStep = stepRunRows.find(
+    stepRun => !isTerminalStepStatus(stepRun.status)
+  ) as (typeof stepRunRows)[number];
   const stepRunsById = new Map(stepRunRows.map(stepRun => [stepRun.id, stepRun]));
   const now = Date.now();
   const eventIdsToLoad = new Set<string>();
@@ -2732,6 +2004,10 @@ export async function replanProcessBranchEvents(
     }
   }
 
+  const selectedUpdates: {
+    stepRun: (typeof stepRunRows)[number];
+    eventId: string | null;
+  }[] = [];
   for (const [stepRunId, eventId] of updatesByStepRunId.entries()) {
     const stepRun = stepRunsById.get(stepRunId);
     if (!stepRun) {
@@ -2742,6 +2018,7 @@ export async function replanProcessBranchEvents(
       throw new Error('Decided process steps cannot be replanned.');
     }
 
+    selectedUpdates.push({ stepRun, eventId });
     if (!eventId) {
       continue;
     }
@@ -2763,23 +2040,9 @@ export async function replanProcessBranchEvents(
     }
   }
 
-  const candidateSteps = stepRunRows.map(stepRun => {
-    const nextEventId = updatesByStepRunId.has(stepRun.id)
-      ? (updatesByStepRunId.get(stepRun.id) ?? null)
-      : (stepRun.event_id ?? null);
-    const event = nextEventId ? (eventsById.get(nextEventId) ?? null) : null;
-
-    return {
-      stepRun,
-      eventId: nextEventId,
-      eventStartDate:
-        event?.start_date ?? (nextEventId === stepRun.event_id ? stepRun.starts_at : null),
-      eventEndDate:
-        event?.end_date ??
-        event?.start_date ??
-        (nextEventId === stepRun.event_id ? stepRun.starts_at : null),
-    };
-  });
+  const candidateSteps = stepRunRows.map(stepRun =>
+    resolveReplannedStepSchedule(stepRun, updatesByStepRunId, eventsById)
+  );
 
   let previousEventEnd: number | null = null;
   for (const candidate of candidateSteps) {
@@ -2791,25 +2054,18 @@ export async function replanProcessBranchEvents(
       throw new Error('Process step events must stay in chronological order.');
     }
 
-    previousEventEnd = candidate.eventEndDate ?? candidate.eventStartDate;
+    previousEventEnd = candidate.eventEndDate as number;
   }
 
   const changedStepRunIds: string[] = [];
-  for (const [stepRunId, eventId] of updatesByStepRunId.entries()) {
-    const stepRun = stepRunsById.get(stepRunId);
-    if (!stepRun) {
-      continue;
-    }
-
-    const event = eventId ? (eventsById.get(eventId) ?? null) : null;
+  for (const { stepRun, eventId } of selectedUpdates) {
+    const event = eventId ? (eventsById.get(eventId) as ProcessEventScheduleRow) : null;
     const existingEventId = stepRun.event_id ?? null;
     const eventChanged = existingEventId !== eventId;
     const shouldCreateImmediateVote =
       stepRun.step_kind !== 'merge_vote' && Boolean(eventId) && event != null;
     const forwardingStatus =
-      firstUnresolvedStep?.id === stepRun.id
-        ? 'forward_confirmed'
-        : 'previous_decision_outstanding';
+      firstUnresolvedStep.id === stepRun.id ? 'forward_confirmed' : 'previous_decision_outstanding';
     let agendaItemId: string | null = stepRun.agenda_item_id ?? null;
     let voteId: string | null = stepRun.vote_id ?? null;
 
@@ -2827,8 +2083,8 @@ export async function replanProcessBranchEvents(
         voteId,
         eventId: event.id,
         amendmentId: amendment.id,
-        amendmentTitle: amendment.title ?? 'Amendment',
-        amendmentReason: amendment.reason ?? null,
+        amendmentTitle,
+        amendmentReason,
         forwardingStatus,
         creatorId: processRun.created_by_id,
         votePurpose: VOTE_PURPOSE.closing,
@@ -2871,7 +2127,7 @@ export async function replanProcessBranchEvents(
         groupName: targetGroup?.name ?? null,
         metadata: {
           amendmentId: amendment.id,
-          amendmentTitle: amendment.title ?? 'Amendment',
+          amendmentTitle,
           groupName: targetGroup?.name ?? null,
           orderIndex: stepRun.order_index,
           workflowId: stepRun.workflow_id ?? null,
@@ -2888,16 +2144,17 @@ export async function replanProcessBranchEvents(
   }
 
   const branchSync = await syncBranchSchedulingState(tx, branch.id);
-  const firstUnresolvedAfterReplan =
-    branchSync.stepRuns.find(stepRun => !isTerminalStepStatus(stepRun.status)) ?? null;
+  const firstUnresolvedAfterReplan = branchSync.stepRuns.find(
+    stepRun => !isTerminalStepStatus(stepRun.status)
+  ) as (typeof branchSync.stepRuns)[number];
 
-  if (firstUnresolvedAfterReplan?.step_kind === 'merge_vote') {
+  if (firstUnresolvedAfterReplan.step_kind === 'merge_vote') {
     await maybeScheduleMergeRoundOne(tx, {
       processRunId: processRun.id,
       stepRunId: firstUnresolvedAfterReplan.id,
       amendmentId: amendment.id,
-      amendmentTitle: amendment.title ?? 'Amendment',
-      amendmentReason: amendment.reason ?? null,
+      amendmentTitle,
+      amendmentReason,
       creatorId: processRun.created_by_id,
     });
   }
@@ -2905,8 +2162,8 @@ export async function replanProcessBranchEvents(
   await maybeScheduleAutomaticMergeAtCrossing(tx, {
     processRunId: processRun.id,
     amendmentId: amendment.id,
-    amendmentTitle: amendment.title ?? 'Amendment',
-    amendmentReason: amendment.reason ?? null,
+    amendmentTitle,
+    amendmentReason,
     creatorId: processRun.created_by_id,
   });
   const runSync = await recomputeProcessRunState(tx, processRun.id);
@@ -3152,6 +2409,8 @@ export async function resolveAmendmentProcessVote(
   }
 
   const now = Date.now();
+  const amendmentTitle = amendment?.title ?? agendaItem.title ?? 'Amendment';
+  const amendmentReason = amendment?.reason ?? null;
 
   if (stepRuns[0].step_kind === 'merge_vote') {
     const mergeOutcome = resolveMergeRoundOneOutcome({
@@ -3269,7 +2528,7 @@ export async function resolveAmendmentProcessVote(
         : await tx.run(zql.amendment.where('id', winnerAmendmentId).one());
 
     const roundTwoStepRunId = await createRoundTwoMergeApprovalStep(tx, {
-      winnerStepRunId: winnerStepRun.id,
+      winnerStepRun,
       amendmentId: winnerAmendmentId,
       amendmentTitle: winnerAmendment?.title ?? agendaItem.title ?? 'Amendment',
       amendmentReason: winnerAmendment?.reason ?? null,
@@ -3406,8 +2665,8 @@ export async function resolveAmendmentProcessVote(
     await materializeWorkflowHandoff(tx, {
       stepRunId: stepRun.id,
       amendmentId,
-      amendmentTitle: amendment?.title ?? agendaItem.title ?? 'Amendment',
-      amendmentReason: amendment?.reason ?? null,
+      amendmentTitle,
+      amendmentReason,
       creatorId: processRun.created_by_id,
     });
   }
@@ -3457,7 +2716,10 @@ export async function resolveAmendmentProcessVote(
     let implementationStatus = processRun.implementation_status ?? null;
 
     if (evaluationMode && concreteEvaluationDate != null) {
-      const targetGroupId = processRun.selected_target_group_id ?? stepRun.target_group_id ?? null;
+      const targetGroupId = getEvaluationTargetGroupId(
+        processRun.selected_target_group_id,
+        stepRun.target_group_id
+      );
 
       if (concreteEvaluationDate < now || !targetGroupId) {
         implementationStatus = 'implementation_failed';
@@ -3466,7 +2728,7 @@ export async function resolveAmendmentProcessVote(
         await createImplementationEvaluationTask(tx, {
           processRunId: processRun.id,
           amendmentId,
-          amendmentTitle: amendment?.title ?? agendaItem.title ?? 'Amendment',
+          amendmentTitle,
           targetGroupId,
           targetGroupName: targetGroup?.name ?? 'die zuständige Gruppe',
           dueAt: concreteEvaluationDate,
@@ -3507,8 +2769,8 @@ export async function resolveAmendmentProcessVote(
       processRunId: processRun.id,
       stepRunId: nextStep.id,
       amendmentId,
-      amendmentTitle: amendment?.title ?? agendaItem.title ?? 'Amendment',
-      amendmentReason: amendment?.reason ?? null,
+      amendmentTitle,
+      amendmentReason,
       creatorId: processRun.created_by_id,
     });
   } else if (nextStep.event_id && (!nextStep.agenda_item_id || !nextStep.vote_id)) {
@@ -3519,8 +2781,8 @@ export async function resolveAmendmentProcessVote(
       voteId,
       eventId: nextStep.event_id,
       amendmentId,
-      amendmentTitle: amendment?.title ?? agendaItem.title ?? 'Amendment',
-      amendmentReason: amendment?.reason ?? null,
+      amendmentTitle,
+      amendmentReason,
       forwardingStatus: 'forward_confirmed',
       creatorId: processRun.created_by_id,
       votePurpose: VOTE_PURPOSE.closing,
@@ -3555,8 +2817,8 @@ export async function resolveAmendmentProcessVote(
   await maybeScheduleAutomaticMergeAtCrossing(tx, {
     processRunId: processRun.id,
     amendmentId: processRun.amendment_id,
-    amendmentTitle: amendment?.title ?? agendaItem.title ?? 'Amendment',
-    amendmentReason: amendment?.reason ?? null,
+    amendmentTitle,
+    amendmentReason,
     creatorId: processRun.created_by_id,
   });
 
@@ -3566,7 +2828,7 @@ export async function resolveAmendmentProcessVote(
     tx,
     branch.id,
     amendmentId,
-    await getForwardedEventEditingMode(tx, nextStep.event_id, now),
+    getForwardedEventEditingMode(nextStep.event_id),
     processRun.created_by_id
   );
 

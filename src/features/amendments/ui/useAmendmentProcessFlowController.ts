@@ -214,39 +214,37 @@ export function useAmendmentProcessFlowController({
 
     const currentRunStepRunIds = new Set(currentRunStepRuns.map(step => step.id));
 
-    return (
-      paths
-        .map(path => {
-          const segments = path.segments ?? [];
-          return {
-            path,
-            isCurrentRunPath: path.process_run_id === currentRun?.id,
-            overlapCount: segments.filter(
-              segment =>
-                segment.process_step_run_id && currentRunStepRunIds.has(segment.process_step_run_id)
-            ).length,
-            terminalCount: segments.filter(segment =>
-              TERMINAL_PATH_DISPLAY_STATUSES.has(segment.status ?? '')
-            ).length,
-            createdAt: path.created_at ?? 0,
-          };
-        })
-        .sort((left, right) => {
-          if (left.isCurrentRunPath !== right.isCurrentRunPath) {
-            return left.isCurrentRunPath ? -1 : 1;
-          }
+    return paths
+      .map(path => {
+        const segments = path.segments ?? [];
+        return {
+          path,
+          isCurrentRunPath: path.process_run_id === currentRun?.id,
+          overlapCount: segments.filter(
+            segment =>
+              segment.process_step_run_id && currentRunStepRunIds.has(segment.process_step_run_id)
+          ).length,
+          terminalCount: segments.filter(segment =>
+            TERMINAL_PATH_DISPLAY_STATUSES.has(segment.status ?? '')
+          ).length,
+          createdAt: path.created_at ?? 0,
+        };
+      })
+      .sort((left, right) => {
+        if (left.isCurrentRunPath !== right.isCurrentRunPath) {
+          return left.isCurrentRunPath ? -1 : 1;
+        }
 
-          if (left.overlapCount !== right.overlapCount) {
-            return right.overlapCount - left.overlapCount;
-          }
+        if (left.overlapCount !== right.overlapCount) {
+          return right.overlapCount - left.overlapCount;
+        }
 
-          if (left.terminalCount !== right.terminalCount) {
-            return right.terminalCount - left.terminalCount;
-          }
+        if (left.terminalCount !== right.terminalCount) {
+          return right.terminalCount - left.terminalCount;
+        }
 
-          return right.createdAt - left.createdAt;
-        })[0]?.path ?? null
-    );
+        return right.createdAt - left.createdAt;
+      })[0].path;
   }, [amendment?.paths, currentRun?.id, currentRunStepRuns]);
 
   const displayPathSegments = useMemo(
@@ -261,8 +259,10 @@ export function useAmendmentProcessFlowController({
     () =>
       new Map(
         displayPathSegments
-          .filter(segment => segment.process_step_run_id)
-          .map(segment => [segment.process_step_run_id ?? '', segment])
+          .filter((segment): segment is typeof segment & { process_step_run_id: string } =>
+            Boolean(segment.process_step_run_id)
+          )
+          .map(segment => [segment.process_step_run_id, segment])
       ),
     [displayPathSegments]
   );
@@ -478,12 +478,12 @@ export function useAmendmentProcessFlowController({
     );
 
     return stepRuns.map((step: any, index: number) => {
-      const segment = pathSegments[index];
+      const segment = pathSegments[index] as (typeof pathSegments)[number];
       const editable =
         !isTerminalProcessBranch(eventEditorBranch.status) &&
         step.order_index > lastDecidedOrderIndex &&
         !isTerminalProcessStep(step.status);
-      const selectedEventId = segment?.eventId ?? null;
+      const selectedEventId = segment.eventId ?? null;
 
       return {
         step,
@@ -491,12 +491,10 @@ export function useAmendmentProcessFlowController({
         editable,
         isDecided: step.order_index <= lastDecidedOrderIndex || isTerminalProcessStep(step.status),
         selectedEventId,
-        eligibleEvents: segment
-          ? getEligibleEventsForPathSegment({
-              segment,
-              events: allEvents ?? [],
-            })
-          : [],
+        eligibleEvents: getEligibleEventsForPathSegment({
+          segment,
+          events: allEvents ?? [],
+        }),
       };
     });
   }, [allEvents, allEventsById, eventDraftsByStepRunId, eventEditorBranch]);

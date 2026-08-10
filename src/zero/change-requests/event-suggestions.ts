@@ -34,6 +34,7 @@ export function discardPendingEventSuggestionsFromState({
     return {
       changed: false,
       removedCount: 0,
+      removedChangeRequestIds: [],
       content: content ?? null,
       discussions: [...discussions],
     };
@@ -100,7 +101,7 @@ export async function discardPendingEventSuggestions({
     return { removedCount: 0 };
   }
 
-  for (const changeRequestId of cleanup.removedChangeRequestIds ?? []) {
+  for (const changeRequestId of cleanup.removedChangeRequestIds) {
     await tx.mutate.change_request.delete({ id: changeRequestId });
   }
 

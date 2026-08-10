@@ -22,12 +22,13 @@ export function DecisionVoteButtonView({
   if (decision.isClosed || !decision.canOpenVoteDialog || !decision.eventId) {
     return (
       <Button
+        data-action-id="decision-terminal.vote.results.open"
         variant="ghost"
         size={compact ? 'sm' : 'default'}
         className="text-muted-foreground gap-2 rounded-md"
         asChild
       >
-        <SmartLink href={decision.href}>
+        <SmartLink href={decision.href} data-action-id="decision-terminal.vote.results.open">
           <ExternalLink className="h-4 w-4" />
           {!compact ? <span>{translateText('generated.inline.0347_view_69bd4ef9')}</span> : null}
         </SmartLink>
@@ -38,6 +39,7 @@ export function DecisionVoteButtonView({
   if (isLoading) {
     return (
       <Button
+        data-action-id="decision-terminal.vote.cast"
         variant="outline"
         size={compact ? 'sm' : 'default'}
         className="gap-2 rounded-md"
@@ -55,6 +57,7 @@ export function DecisionVoteButtonView({
 
   return (
     <Button
+      data-action-id="decision-terminal.vote.cast"
       size={compact ? 'sm' : 'default'}
       className="border-primary/30 bg-background text-primary hover:bg-primary/10 gap-2 rounded-md border font-semibold shadow-sm"
       variant="outline"

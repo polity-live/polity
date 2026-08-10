@@ -5,9 +5,12 @@ import {
   APP_ERROR_PREFIX,
   AppError,
   appErrorHttpBody,
+  appErrorHttpBodyFrom,
   encodeAppError,
   localizeAppError,
   parseAppError,
+  throwAppError,
+  toAppError,
 } from '../app-error';
 
 describe('application error payloads', () => {
@@ -53,5 +56,79 @@ describe('application error payloads', () => {
     expect(localizeAppError(new Error('legacy database detail'))).toBe(
       'Something went wrong. Please try again.'
     );
+  });
+
+  it('validates every payload and parameter boundary', () => {
+    const valid = {
+      version: 1 as const,
+      code: 'validation_failed' as const,
+      params: { omitted: undefined, empty: null, text: 'value', count: 2 },
+    };
+    expect(parseAppError(valid)).toEqual(valid);
+
+    for (const invalid of [
+      null,
+      1,
+      [],
+      {},
+      { version: 0, code: 'unknown' },
+      { version: 1, code: 1 },
+      { version: 1, code: 'not-a-code' },
+      { version: 1, code: 'unknown', params: null },
+      { version: 1, code: 'unknown', params: 'bad' },
+      { version: 1, code: 'unknown', params: [] },
+      { version: 1, code: 'unknown', params: { invalid: true } },
+      { error: { version: 0, code: 'unknown' } },
+    ]) {
+      expect(parseAppError(invalid)).toBeNull();
+    }
+
+    expect(parseAppError({ message: encodeAppError('already_exists') })).toEqual({
+      version: 1,
+      code: 'already_exists',
+    });
+    expect(parseAppError({ message: 42 })).toBeNull();
+    expect(parseAppError({ other: 'value' })).toBeNull();
+    expect(parseAppError(undefined)).toBeNull();
+    expect(
+      parseAppError(`${APP_ERROR_PREFIX}${JSON.stringify({ version: 1, code: 'bad' })}`)
+    ).toBeNull();
+  });
+
+  it('omits empty params and throws structured errors with and without params', () => {
+    expect(encodeAppError('unknown')).not.toContain('params');
+    expect(encodeAppError('unknown', {})).not.toContain('params');
+    expect(appErrorHttpBody('unknown')).toEqual({ error: { version: 1, code: 'unknown' } });
+    expect(appErrorHttpBody('unknown', {})).toEqual({ error: { version: 1, code: 'unknown' } });
+    expect(appErrorHttpBody('unknown', { count: 1 }).error.params).toEqual({ count: 1 });
+
+    expect(() => throwAppError('action_blocked')).toThrow(AppError);
+    expect(() => throwAppError('action_blocked', {})).toThrow(AppError);
+    expect(() => throwAppError('action_blocked', { reason: 'closed' })).toThrow(
+      encodeAppError('action_blocked', { reason: 'closed' })
+    );
+  });
+
+  it('controls unknown logging and converts arbitrary values to error forms', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    expect(localizeAppError('plain', { logUnknown: false })).toBe(
+      'Something went wrong. Please try again.'
+    );
+    expect(localizeAppError(null)).toBe('Something went wrong. Please try again.');
+    expect(error).not.toHaveBeenCalled();
+
+    const parsed = toAppError(encodeAppError('already_exists'));
+    expect(parsed.payload.code).toBe('already_exists');
+    expect(toAppError('plain').payload.code).toBe('unknown');
+    expect(toAppError('plain', 'external_service_failed').payload.code).toBe(
+      'external_service_failed'
+    );
+
+    expect(appErrorHttpBodyFrom(parsed).error.code).toBe('already_exists');
+    expect(appErrorHttpBodyFrom(null).error.code).toBe('unknown');
+    expect(appErrorHttpBodyFrom('plain', 'mutation_server_failed').error.code).toBe(
+      'mutation_server_failed'
+    );
+    expect(error).toHaveBeenCalledWith('Unstructured server error', 'plain');
   });
 });

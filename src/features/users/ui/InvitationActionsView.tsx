@@ -39,6 +39,7 @@ export function InvitationActionsView({
         loading={checking}
         loadingLabel={labels.checking}
         onClick={() => onAccept?.(item.id)}
+        data-action-id="users.invitation.accept"
       >
         <Check className="mr-1 h-4 w-4" />
         {labels.accept}
@@ -51,7 +52,12 @@ export function InvitationActionsView({
           title={labels.blockedTitle}
         />
       ) : null}
-      <Button variant="outline" size="sm" onClick={() => onDecline?.(item.id)}>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onDecline?.(item.id)}
+        data-action-id="users.invitation.decline"
+      >
         <X className="mr-1 h-4 w-4" />
         {labels.decline}
       </Button>

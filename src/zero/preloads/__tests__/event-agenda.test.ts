@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  areEventAgendaPreloadDependenciesEqual,
   createEventAgendaBasePreloadEntries,
   createEventAgendaDependentPreloadEntries,
   discoverEventAgendaPreloadDependencies,
   EMPTY_EVENT_AGENDA_PRELOAD_DEPENDENCIES,
+  eventAgendaPreloadDependenciesKey,
   extractCurrentUserParticipantEventIds,
 } from '../event-agenda';
 
@@ -94,6 +96,49 @@ describe('event agenda preloads', () => {
       userElectionParticipations: [],
       userVoteParticipations: [],
     });
+  });
+
+  it('ignores malformed, singular, missing-id, and unmatched relationship rows', () => {
+    const dependencies = discoverEventAgendaPreloadDependencies(
+      [
+        null,
+        'invalid',
+        {
+          id: '',
+          election: { id: 'election-1', electors: { id: '', user_id: 'user-1' } },
+          votes: { id: 'vote-1', voters: { id: '', user: { id: 'user-1' } } },
+        },
+        {
+          election: [{ electors: [] }],
+          votes: [{ voters: [] }],
+        },
+        { election: 42, votes: 42 },
+      ],
+      'user-1'
+    );
+    expect(dependencies).toEqual({
+      agendaItemIds: [],
+      electionIds: ['election-1'],
+      voteIds: ['vote-1'],
+      userElectionParticipations: [],
+      userVoteParticipations: [],
+    });
+    expect(createEventAgendaDependentPreloadEntries(dependencies).map(entry => entry.key)).toEqual([
+      'queries.elections.candidatesByElection:{"election_id":"election-1"}',
+      'queries.elections.electorsByElection:{"election_id":"election-1"}',
+      'queries.votes.choicesByVote:{"vote_id":"vote-1"}',
+    ]);
+  });
+
+  it('creates stable dependency identities and equality comparisons', () => {
+    const first = discoverEventAgendaPreloadDependencies([{ id: 'agenda-1' }]);
+    const same = { ...first, agendaItemIds: [...first.agendaItemIds] };
+    const different = { ...first, agendaItemIds: ['agenda-2'] };
+    expect(eventAgendaPreloadDependenciesKey(first)).toBe(
+      eventAgendaPreloadDependenciesKey(same)
+    );
+    expect(areEventAgendaPreloadDependenciesEqual(first, same)).toBe(true);
+    expect(areEventAgendaPreloadDependenciesEqual(first, different)).toBe(false);
   });
 
   it('creates the base event agenda preload keys used by event-route and participant-event preloads', () => {

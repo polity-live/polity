@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures/test';
 
 const RUNS = 3;
@@ -16,8 +17,22 @@ function median(values: readonly number[]) {
   return sorted[Math.floor(sorted.length / 2)] ?? 0;
 }
 
+async function waitForPaint(page: Page, frames = 4) {
+  await page.evaluate(
+    frameCount =>
+      new Promise<void>(resolve => {
+        const next = (remaining: number) =>
+          requestAnimationFrame(() => (remaining <= 1 ? resolve() : next(remaining - 1)));
+        next(frameCount);
+      }),
+    frames
+  );
+}
+
 test.describe('messages to search transition', () => {
-  test('stays responsive while progressively activating search cards', async ({ page }) => {
+  test('stays responsive while progressively activating search cards @nightly @performance', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.addInitScript(() => {
       window.__messagesSearchEvents = [];
@@ -49,14 +64,16 @@ test.describe('messages to search transition', () => {
 
     // Warm the route once so development-only module compilation is not part of the click budget.
     await page.goto('/search');
-    await expect(page.getByTestId('search-results-scroll')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId('search-results-scroll')).toBeVisible({
+      timeout: 20_000,
+    });
     await page.getByRole('link', { name: 'Messages' }).click();
     await expect(page).toHaveURL(/\/messages(?:\?|$)/);
 
     const measurements: TransitionMeasurement[] = [];
     for (let run = 0; run < RUNS; run += 1) {
       await expect(page).toHaveURL(/\/messages(?:\?|$)/);
-      await page.waitForTimeout(1_000);
+      await waitForPaint(page);
       await page.evaluate(() => {
         window.__messagesSearchEvents = [];
         window.__messagesSearchLongTasks = [];
@@ -66,12 +83,15 @@ test.describe('messages to search transition', () => {
       await page.getByRole('link', { name: 'Search' }).click();
       await expect(page).toHaveURL(/\/search(?:\?|$)/);
       await expect
-        .poll(() => page.locator('[data-search-document-id]').count(), { timeout: 10_000 })
+        .poll(() => page.locator('[data-search-document-id]').count(), {
+          timeout: 10_000,
+        })
         .toBeGreaterThan(0);
 
-      const firstCard = page.locator('[data-search-document-id]').first();
-      await expect(firstCard).toHaveAttribute('data-search-card-mode', /preview|interactive/);
-      await expect(firstCard.getByRole('link').first()).toBeVisible();
+      const initialCard = page.locator('[data-search-document-id][data-index="0"]');
+      await expect(initialCard).toHaveCount(1);
+      await expect(initialCard).toHaveAttribute('data-search-card-mode', /preview|interactive/);
+      await expect(initialCard.getByRole('link').filter({ visible: true })).toHaveCount(1);
 
       await expect
         .poll(
@@ -80,7 +100,7 @@ test.describe('messages to search transition', () => {
           { timeout: 5_000 }
         )
         .toBe(0);
-      await page.waitForTimeout(300);
+      await waitForPaint(page);
 
       measurements.push(
         await page.evaluate(() => {

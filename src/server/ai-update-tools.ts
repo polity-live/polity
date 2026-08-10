@@ -78,6 +78,14 @@ function paymentDirection(payment: {
   return payment.receiver_group_id ? 'income' : 'expense';
 }
 
+function requireValue<T>(value: T | null | undefined, message: string): T {
+  return value ?? fail(message);
+}
+
+function fail(message: string): never {
+  throw new Error(message);
+}
+
 async function hashtagTags(
   tx: ZeroTransaction,
   entityType: 'group' | 'event' | 'amendment' | 'blog' | 'statement',
@@ -728,7 +736,7 @@ export function buildAiUpdateTools(userId: string, timeZone = 'UTC') {
             payment.amount == null ? null : formatCurrency(payment.amount, currency),
           ]
             .filter(Boolean)
-            .join(' · ') || null,
+            .join(' · '),
           null,
           timelineItem({
             id: payment.id,
@@ -817,18 +825,20 @@ export function buildAiUpdateTools(userId: string, timeZone = 'UTC') {
                   .where('user_id', args.candidateUserId ?? userId)
                   .one()
               );
-          if (!candidate) throw new Error('Election candidate not found');
+          const requiredCandidate = requireValue(candidate, 'Election candidate not found');
           await runZeroMutator(
             tx,
             serverMutators.elections.updateCandidate({
-              id: candidate.id,
+              id: requiredCandidate.id,
               ...(args.name !== undefined ? { name: args.name } : {}),
               ...(args.statement !== undefined ? { description: args.statement } : {}),
               ...(args.imageUrl !== undefined ? { image_url: args.imageUrl } : {}),
             }),
             ctx
           );
-          const updated = await tx.run(zql.election_candidate.where('id', candidate.id).one());
+          const updated = await tx.run(
+            zql.election_candidate.where('id', requiredCandidate.id).one()
+          );
           if (!updated) throw new Error('Election candidate not found after update');
           const election = await tx.run(zql.election.where('id', updated.election_id).one());
           const agendaItem = election?.agenda_item_id

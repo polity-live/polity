@@ -52,7 +52,7 @@ type SendPushNotification = (
   payload: string
 ) => Promise<unknown>;
 
-interface PushDeliveryDependencies {
+export interface PushDeliveryDependencies {
   supabase?: ServerSupabase;
   config?: Partial<PushDeliveryConfig>;
   initializeVapid?: (config: PushDeliveryConfig) => void;
@@ -415,9 +415,9 @@ export function buildPushTestPayload(
 export async function enqueueDirectPushDelivery(
   userId: string,
   notificationId: string,
-  payload: Pick<PushPayload, 'title' | 'message' | 'actionUrl' | 'type'>
+  payload: Pick<PushPayload, 'title' | 'message' | 'actionUrl' | 'type'>,
+  supabase = getSupabase()
 ) {
-  const supabase = getSupabase();
   const fullPayload = buildDirectPushPayload(notificationId, payload);
   const { data, error } = await (supabase.rpc as any)('enqueue_direct_push_delivery', {
     target_user_id: userId,
@@ -431,9 +431,10 @@ export async function enqueueDirectPushDelivery(
 export async function schedulePushTest(
   userId: string,
   deviceId: string,
-  payload: Pick<PushPayload, 'title' | 'message'>
+  payload: Pick<PushPayload, 'title' | 'message'>,
+  supabase = getSupabase(),
+  randomUUID = () => crypto.randomUUID()
 ) {
-  const supabase = getSupabase();
   const { data: subscription, error } = await table(supabase, 'push_subscription')
     .select('id')
     .eq('user_id', userId)
@@ -442,7 +443,7 @@ export async function schedulePushTest(
   if (error) throw new Error(error.message);
   if (!subscription) throw new PushDeliveryHttpError('No server subscription for this device', 409);
 
-  const testId = crypto.randomUUID();
+  const testId = randomUUID();
   const { data: job, error: insertError } = await table(supabase, 'push_delivery_outbox')
     .insert({
       user_id: userId,
@@ -458,12 +459,15 @@ export async function schedulePushTest(
   return { jobId: String(job.id), status: job.status, scheduledAt: job.available_at };
 }
 
-export async function getPushTestStatus(userId: string, deliveryId: string) {
+export async function getPushTestStatus(
+  userId: string,
+  deliveryId: string,
+  supabase = getSupabase()
+) {
   if (!/^\d+$/.test(deliveryId)) {
     throw new PushDeliveryHttpError('Invalid test job id', 400);
   }
 
-  const supabase = getSupabase();
   const { data, error } = await table(supabase, 'push_delivery_outbox')
     .select('id,status,skip_reason,last_error,available_at,completed_at')
     .eq('id', deliveryId)
@@ -482,8 +486,24 @@ export async function getPushTestStatus(userId: string, deliveryId: string) {
   };
 }
 
-export async function processPushTest(userId: string, deliveryId: string) {
-  await getPushTestStatus(userId, deliveryId);
-  await executePushDelivery({ deliveryId });
-  return getPushTestStatus(userId, deliveryId);
+export async function processPushTest(
+  userId: string,
+  deliveryId: string,
+  supabase = getSupabase(),
+  executeDelivery = executePushDelivery
+) {
+  await getPushTestStatus(userId, deliveryId, supabase);
+  await executeDelivery({ deliveryId }, { supabase });
+  return getPushTestStatus(userId, deliveryId, supabase);
 }
+
+export const pushDeliveryContracts = {
+  getSupabase,
+  readConfig,
+  initVapid,
+  message,
+  updateJob,
+  failOrRetryJob,
+  processDeliveryJob,
+  retryNotificationJob,
+};

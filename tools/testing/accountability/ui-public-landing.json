@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/public-landing/ui/PublicLandingPage.tsx#public-landing.contact.support.open": [
+      {
+        "file": "src/features/public-landing/ui/__tests__/ContactLink.test.tsx",
+        "project": "component",
+        "caseId": "wires the complete imprint contact surface",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/public-landing/ui/PublicLandingPage.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {}
+}

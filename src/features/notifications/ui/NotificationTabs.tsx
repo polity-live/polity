@@ -22,13 +22,13 @@ export function NotificationTabs({
 
   return (
     <ScrollableTabsList className="w-fit max-w-full">
-      <TabsTrigger value="all">
+      <TabsTrigger data-action-id="notifications.tabs.select.all" value="all">
         {t('features.notifications.filters.all')}
         <BadgeControl variant="secondary" className="ml-2">
           {allCount}
         </BadgeControl>
       </TabsTrigger>
-      <TabsTrigger value="unread">
+      <TabsTrigger data-action-id="notifications.tabs.select.unread" value="unread">
         {t('features.notifications.filters.unread')}
         {unreadCount > 0 && (
           <BadgeControl variant="default" className="ml-2">
@@ -36,20 +36,22 @@ export function NotificationTabs({
           </BadgeControl>
         )}
       </TabsTrigger>
-      <TabsTrigger value="read">{t('features.notifications.filters.read')}</TabsTrigger>
-      <TabsTrigger value="personal">
+      <TabsTrigger data-action-id="notifications.tabs.select.read" value="read">
+        {t('features.notifications.filters.read')}
+      </TabsTrigger>
+      <TabsTrigger data-action-id="notifications.tabs.select.personal" value="personal">
         {t('features.notifications.filters.personal')}
         <BadgeControl variant="secondary" className="ml-2">
           {personalCount}
         </BadgeControl>
       </TabsTrigger>
-      <TabsTrigger value="entity">
+      <TabsTrigger data-action-id="notifications.tabs.select.entity" value="entity">
         {t('features.notifications.filters.entity')}
         <BadgeControl variant="secondary" className="ml-2">
           {entityCount}
         </BadgeControl>
       </TabsTrigger>
-      <TabsTrigger value="trash">
+      <TabsTrigger data-action-id="notifications.tabs.select.trash" value="trash">
         {t('features.notifications.filters.trash')}
         {trashCount > 0 ? (
           <BadgeControl variant="secondary" className="ml-2">

@@ -115,6 +115,31 @@ describe('deployPolityTemplate', () => {
     } satisfies Partial<ResendTemplateDeploymentError>);
     expect(client.create).not.toHaveBeenCalled();
   });
+
+  it('accepts a not-found name without a 404 status', async () => {
+    const client = createClient({
+      get: response(null, { message: 'Missing', name: 'not_found', statusCode: 400 }),
+    });
+    await expect(deployPolityTemplate({ client, definition, rendered })).resolves.toMatchObject({
+      action: 'created',
+    });
+  });
+
+  it.each([
+    ['update error', { get: response({ id: 'existing' }, null), update: response(null, error()) }],
+    [
+      'update without data',
+      { get: response({ id: 'existing' }, null), update: response(null, null) },
+    ],
+    ['creation error', { get: response(null, null), create: response(null, error()) }],
+    ['creation without data', { get: response(null, null), create: response(null, null) }],
+    ['publish error', { get: response(null, null), publish: response(null, error()) }],
+    ['publish without data', { get: response(null, null), publish: response(null, null) }],
+  ])('rejects a %s response', async (_label, overrides) => {
+    await expect(
+      deployPolityTemplate({ client: createClient(overrides), definition, rendered })
+    ).rejects.toThrow();
+  });
 });
 
 describe('assertTemplateEnvironment', () => {
@@ -135,6 +160,10 @@ describe('assertTemplateEnvironment', () => {
 
 function response(data: unknown, error: unknown) {
   return { data, error, headers: null };
+}
+
+function error() {
+  return { message: 'Resend failed', name: 'application_error', statusCode: 500 };
 }
 
 function createClient(overrides: Record<string, unknown> = {}) {

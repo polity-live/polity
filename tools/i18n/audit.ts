@@ -1,6 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join, relative } from 'node:path';
 
 import { parse } from '@babel/parser';
 
@@ -8,6 +7,7 @@ import deTranslation from '../../src/i18n/locales/de/deTranslation.ts';
 import enTranslation from '../../src/i18n/locales/en/enTranslation.ts';
 import { isAllowlistedAuditValue } from './audit-allowlist.ts';
 import { auditGermanOrthography } from './german-orthography.ts';
+import { runCliIfMain } from '../shared/run-cli-if-main.mjs';
 
 interface AstNode {
   type: string;
@@ -92,21 +92,32 @@ const NON_UI_HELPER_RETURN_FILES = [
 ];
 const TOAST_METHODS = new Set(['error', 'info', 'success', 'warning']);
 
-function flatten(value: unknown, prefix = '', result = new Set<string>()): Set<string> {
+export function flattenTranslationKeys(
+  value: unknown,
+  prefix = '',
+  result = new Set<string>()
+): Set<string> {
   if (!value || typeof value !== 'object') return result;
   for (const [key, child] of Object.entries(value)) {
     const path = prefix ? `${prefix}.${key}` : key;
     if (typeof child === 'string' || Array.isArray(child)) result.add(path);
-    else flatten(child, path, result);
+    else flattenTranslationKeys(child, path, result);
   }
   return result;
 }
 
-const GERMAN_LOCALE_KEYS = flatten(deTranslation);
-const ENGLISH_LOCALE_KEYS = flatten(enTranslation);
+const GERMAN_LOCALE_KEYS = flattenTranslationKeys(deTranslation);
+const ENGLISH_LOCALE_KEYS = flattenTranslationKeys(enTranslation);
 
-function localeHasTranslationKey(keys: ReadonlySet<string>, key: string): boolean {
+export function localeHasTranslationKey(keys: ReadonlySet<string>, key: string): boolean {
   return keys.has(key) || (keys.has(`${key}_one`) && keys.has(`${key}_other`));
+}
+
+export function allLocalesHaveTranslationKey(
+  localeKeys: readonly ReadonlySet<string>[],
+  key: string
+): boolean {
+  return localeKeys.every(keys => localeHasTranslationKey(keys, key));
 }
 
 function normalizeCopy(value: string): string {
@@ -144,10 +155,8 @@ function stringValue(node: unknown): string | null {
   ) {
     return candidate.quasis
       .map(quasi => {
-        const value = (quasi as AstNode).value;
-        return value && typeof value === 'object' && 'cooked' in value
-          ? String((value as { cooked: unknown }).cooked ?? '')
-          : '';
+        const value = (quasi as AstNode).value as { cooked: unknown };
+        return String(value.cooked);
       })
       .join('');
   }
@@ -165,11 +174,8 @@ function copyValue(node: unknown): string | null {
 
   return quasis
     .map((quasi, index) => {
-      const value = (quasi as AstNode).value;
-      const cooked =
-        value && typeof value === 'object' && 'cooked' in value
-          ? String((value as { cooked: unknown }).cooked ?? '')
-          : '';
+      const value = (quasi as AstNode).value as { cooked: unknown };
+      const cooked = String(value.cooked);
       return `${cooked}${index < quasis.length - 1 ? '${…}' : ''}`;
     })
     .join('');
@@ -219,7 +225,7 @@ function nestedCopyValues(node: unknown): { node: AstNode; value: string }[] {
   ) {
     const callee = candidate.callee as AstNode;
     if (callee.type === 'MemberExpression') {
-      const method = propertyName(callee.property);
+      const method = propertyName(callee.property as AstNode);
       if (method && ['includes', 'some', 'every', 'find', 'findIndex'].includes(method)) {
         return [];
       }
@@ -230,9 +236,7 @@ function nestedCopyValues(node: unknown): { node: AstNode; value: string }[] {
   return [];
 }
 
-function propertyName(node: unknown): string | null {
-  if (!node || typeof node !== 'object') return null;
-  const candidate = node as AstNode;
+function propertyName(candidate: AstNode): string | null {
   if (candidate.type === 'Identifier' || candidate.type === 'JSXIdentifier') {
     return String(candidate.name);
   }
@@ -240,19 +244,15 @@ function propertyName(node: unknown): string | null {
 }
 
 function memberCall(node: AstNode): { object: string | null; property: string | null } {
-  if (node.type !== 'CallExpression' || !node.callee || typeof node.callee !== 'object') {
-    return { object: null, property: null };
-  }
   const callee = node.callee as AstNode;
   if (callee.type === 'Identifier') {
     return { object: null, property: String(callee.name) };
   }
   if (callee.type !== 'MemberExpression') return { object: null, property: null };
-  const object =
-    callee.object && typeof callee.object === 'object'
-      ? propertyName(callee.object as AstNode)
-      : null;
-  return { object, property: propertyName(callee.property) };
+  return {
+    object: propertyName(callee.object as AstNode),
+    property: propertyName(callee.property as AstNode),
+  };
 }
 
 function walk(node: unknown, visit: (node: AstNode, parent: AstNode | null) => void) {
@@ -283,7 +283,7 @@ function finding(
 ): I18nAuditFinding {
   return {
     file,
-    line: node.loc?.start.line ?? 1,
+    line: (node.loc as NonNullable<AstNode['loc']>).start.line,
     kind,
     value: normalizeCopy(value),
   };
@@ -313,8 +313,7 @@ export function auditSourceText(source: string, file = 'fixture.tsx'): I18nAudit
     }
 
     if (node.type === 'JSXAttribute') {
-      const name = propertyName(node.name);
-      if (!name) return;
+      const name = propertyName(node.name as AstNode) as string;
       for (const item of nestedCopyValues(node.value)) {
         if (!looksLikeCopy(item.value)) continue;
         if (TRANSLATABLE_ATTRIBUTES.has(name)) {
@@ -327,7 +326,7 @@ export function auditSourceText(source: string, file = 'fixture.tsx'): I18nAudit
     }
 
     if (node.type === 'ObjectProperty') {
-      const name = propertyName(node.key);
+      const name = propertyName(node.key as AstNode);
       if (
         !name ||
         !COPY_PROPERTIES.has(name) ||
@@ -361,7 +360,7 @@ export function auditSourceText(source: string, file = 'fixture.tsx'): I18nAudit
 
     if (node.type !== 'CallExpression') return;
     const { object, property } = memberCall(node);
-    const firstArgument = Array.isArray(node.arguments) ? node.arguments[0] : null;
+    const firstArgument = (node.arguments as unknown[])[0];
     const value = copyValue(firstArgument);
     const translationKey = stringValue(firstArgument);
 
@@ -379,10 +378,7 @@ export function auditSourceText(source: string, file = 'fixture.tsx'): I18nAudit
     ) {
       return;
     }
-    if (
-      !localeHasTranslationKey(GERMAN_LOCALE_KEYS, translationKey) ||
-      !localeHasTranslationKey(ENGLISH_LOCALE_KEYS, translationKey)
-    ) {
+    if (!allLocalesHaveTranslationKey([GERMAN_LOCALE_KEYS, ENGLISH_LOCALE_KEYS], translationKey)) {
       findings.push(finding(file, node, 'missing-key', translationKey));
     }
   });
@@ -481,17 +477,27 @@ export function auditRepository(root = process.cwd()): I18nAuditFinding[] {
   );
 }
 
-const isCli =
-  process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.cwd(), process.argv[1]);
-if (isCli) {
-  const findings = auditRepository();
+export function runI18nAuditCli(
+  options: {
+    audit?: () => I18nAuditFinding[];
+    logger?: Pick<Console, 'error' | 'log'>;
+    processState?: { exitCode?: number };
+  } = {}
+) {
+  const audit = options.audit ?? auditRepository;
+  const logger = options.logger ?? console;
+  const processState = options.processState ?? process;
+  const findings = audit();
   if (findings.length > 0) {
     for (const item of findings) {
-      console.error(`${item.file}:${item.line} [${item.kind}] ${JSON.stringify(item.value)}`);
+      logger.error(`${item.file}:${item.line} [${item.kind}] ${JSON.stringify(item.value)}`);
     }
-    console.error(`\n${findings.length} unexplained i18n finding(s).`);
-    process.exitCode = 1;
+    logger.error(`\n${findings.length} unexplained i18n finding(s).`);
+    processState.exitCode = 1;
   } else {
-    console.log('i18n audit passed with zero unexplained findings.');
+    logger.log('i18n audit passed with zero unexplained findings.');
   }
+  return findings;
 }
+
+await runCliIfMain(import.meta.url, runI18nAuditCli);

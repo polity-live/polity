@@ -5,11 +5,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDataViewProjection } from '../../api/datasetClient';
 import type { DataViewKind, DataViewProjection, TDataViewElement } from '../../types';
-import { DataViewRenderer } from '../DataViewRenderer';
+import { DataViewRenderer, getDataViewErrorMessage } from '../DataViewRenderer';
+
+const chartCapture = vi.hoisted(() => ({ props: null as any }));
 
 vi.mock('../../api/datasetClient', () => ({ createDataViewProjection: vi.fn() }));
 vi.mock('../ChartRenderer', () => ({
-  ChartRenderer: () => <div data-testid="rendered-chart" />,
+  ChartRenderer: (props: any) => {
+    chartCapture.props = props;
+    return <div data-testid="rendered-chart" />;
+  },
 }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -104,5 +109,106 @@ describe('DataViewRenderer attribution', () => {
       expect(screen.getByText('plateJs.dataView.previewUnavailable')).toBeTruthy()
     );
     expect(screen.queryByText('Unauthorized')).toBeNull();
+  });
+
+  it('normalizes non-errors, authorization failures, and safe server messages', () => {
+    expect(getDataViewErrorMessage('failure', 'Fallback')).toBe('Fallback');
+    expect(getDataViewErrorMessage(new Error('Unauthorized'), 'Fallback')).toBe('Fallback');
+    expect(getDataViewErrorMessage(new Error('request returned 401'), 'Fallback')).toBe('Fallback');
+    expect(getDataViewErrorMessage(new Error('Dataset missing'), 'Fallback')).toBe(
+      'Dataset missing'
+    );
+  });
+
+  it('falls back to source and projection labels and renders optional descriptions', async () => {
+    const staticElement = {
+      ...baseElement,
+      presentation: { ...baseElement.presentation, title: '' },
+    };
+    const staticView = render(<DataViewRenderer element={staticElement} staticMode />);
+    expect(screen.getByText('Employment')).toBeTruthy();
+    staticView.unmount();
+
+    vi.mocked(createDataViewProjection).mockResolvedValueOnce(projectionFor('chart'));
+    render(
+      <DataViewRenderer
+        element={{ ...staticElement, chartType: undefined as any }}
+        accessToken="token"
+      />
+    );
+    await waitFor(() => expect(screen.getByTestId('rendered-chart')).toBeTruthy());
+    expect(chartCapture.props.chartType).toBe('bar');
+    cleanup();
+
+    vi.mocked(createDataViewProjection).mockResolvedValueOnce(projectionFor('stat'));
+    render(
+      <DataViewRenderer
+        element={{
+          ...staticElement,
+          view: 'stat',
+          presentation: { title: '', description: 'Stat details' },
+        }}
+        accessToken="token"
+      />
+    );
+    await waitFor(() => expect(screen.getByText('Value')).toBeTruthy());
+    expect(screen.getByText('Stat details')).toBeTruthy();
+    cleanup();
+
+    vi.mocked(createDataViewProjection).mockResolvedValueOnce(projectionFor('table'));
+    render(
+      <DataViewRenderer
+        element={{
+          ...staticElement,
+          view: 'table',
+          presentation: { title: 'Table title', description: 'Table details' },
+        }}
+        accessToken="token"
+      />
+    );
+    await waitFor(() => expect(screen.getByText('Table details')).toBeTruthy());
+    cleanup();
+
+    vi.mocked(createDataViewProjection).mockResolvedValueOnce(projectionFor('table'));
+    render(
+      <DataViewRenderer
+        element={{ ...staticElement, view: 'table', presentation: { title: '' } }}
+        accessToken="token"
+      />
+    );
+    await waitFor(() => expect(screen.getByText('Year')).toBeTruthy());
+    expect(screen.queryByRole('figure')?.querySelector('figcaption')).toBeNull();
+  });
+
+  it('renders the projection fallback when a request returns no projection', async () => {
+    vi.mocked(createDataViewProjection).mockResolvedValueOnce(null as any);
+    render(<DataViewRenderer element={baseElement} accessToken="token" />);
+    await waitFor(() =>
+      expect(screen.getByText('plateJs.dataView.previewUnavailable')).toBeTruthy()
+    );
+  });
+
+  it('ignores both resolved and rejected work after unmount', async () => {
+    let resolve!: (value: DataViewProjection) => void;
+    vi.mocked(createDataViewProjection).mockReturnValueOnce(
+      new Promise(value => {
+        resolve = value;
+      })
+    );
+    const resolvedView = render(<DataViewRenderer element={baseElement} accessToken="token" />);
+    resolvedView.unmount();
+    resolve(projectionFor('chart'));
+    await Promise.resolve();
+
+    let reject!: (error: Error) => void;
+    vi.mocked(createDataViewProjection).mockReturnValueOnce(
+      new Promise((_resolve, failure) => {
+        reject = failure;
+      })
+    );
+    const rejectedView = render(<DataViewRenderer element={baseElement} accessToken="token" />);
+    rejectedView.unmount();
+    reject(new Error('ignored'));
+    await Promise.resolve();
   });
 });

@@ -33,9 +33,7 @@ export function findReachableGroupsByRight(args: {
 
   while (queue.length > 0) {
     const current = queue.shift();
-    if (!current) {
-      continue;
-    }
+    if (!current) continue;
     const holderGroupId = current.groupPath[current.groupPath.length - 1];
     if (!holderGroupId || current.grantIds.length >= maxDepth) {
       continue;
@@ -55,9 +53,10 @@ export function findReachableGroupsByRight(args: {
         grantIds,
       };
       const existing = bestByTarget.get(candidate.targetGroupId);
+      // Breadth-first traversal discovers candidates in nondecreasing depth order.
+      // Only an equally short, lexicographically smaller path can improve an existing entry.
       if (
         !existing ||
-        candidate.depth < existing.depth ||
         (candidate.depth === existing.depth &&
           candidate.groupPath.join('>') < existing.groupPath.join('>'))
       ) {
@@ -101,9 +100,7 @@ export function findRightPaths(args: {
 
   while (queue.length > 0 && results.length < maxPaths) {
     const current = queue.shift();
-    if (!current) {
-      continue;
-    }
+    if (!current) continue;
     const holderGroupId = current.groupPath[current.groupPath.length - 1];
     if (!holderGroupId || current.grantIds.length >= maxDepth) {
       continue;

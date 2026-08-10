@@ -1,10 +1,13 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { NetworkEntityDialog } from '../NetworkEntityDialog';
+
+const navigate = vi.hoisted(() => vi.fn());
+const groupEvents = vi.hoisted(() => ({ props: [] as any[] }));
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -22,7 +25,7 @@ vi.mock('@tanstack/react-router', () => ({
       {children}
     </a>
   ),
-  useNavigate: () => vi.fn(),
+  useNavigate: () => navigate,
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
@@ -115,12 +118,200 @@ vi.mock('@/features/shared/ui/ui/dialog', () => ({
   DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
 }));
 
+vi.mock('@/features/search/ui/GroupSearchCard', () => ({
+  GroupSearchCard: () => <div data-testid="group-search-card" />,
+}));
+
+vi.mock('../GroupEventsList', () => ({
+  GroupEventsList: (props: any) => {
+    groupEvents.props.push(props);
+    return <div data-testid="group-events-list" />;
+  },
+}));
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  groupEvents.props = [];
 });
 
 describe('NetworkEntityDialog', () => {
+  it('uses custom and default group-event selection and nullable group names', () => {
+    const onOpenChange = vi.fn();
+    const onEventSelect = vi.fn();
+    const { rerender } = render(
+      <NetworkEntityDialog
+        open
+        onOpenChange={onOpenChange}
+        entity={{
+          type: 'group',
+          data: { id: 'group-1', name: null, onEventSelect },
+        }}
+      />
+    );
+    groupEvents.props.at(-1).onEventClick('event-1', { id: 'event-1' });
+    expect(onEventSelect).toHaveBeenCalledWith('event-1', { id: 'event-1' });
+    expect(navigate).not.toHaveBeenCalled();
+
+    rerender(
+      <NetworkEntityDialog
+        open
+        onOpenChange={onOpenChange}
+        entity={{ type: 'group', data: { id: 'group-2', name: 'Council' } }}
+      />
+    );
+    groupEvents.props.at(-1).onEventClick('event-2', { id: 'event-2' });
+    expect(navigate).toHaveBeenCalledWith({ to: '/event/event-2' });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('renders complete and minimal event and user details', () => {
+    const onOpenChange = vi.fn();
+    const { rerender } = render(
+      <NetworkEntityDialog
+        open
+        onOpenChange={onOpenChange}
+        entity={{
+          type: 'event',
+          data: {
+            id: 'event-full',
+            imageURL: 'event.png',
+            title: null,
+            description: 'Description',
+            startDate: 1,
+            location: 'Berlin',
+          },
+        }}
+      />
+    );
+    expect(document.querySelector('img')?.getAttribute('alt')).toBeNull();
+    rerender(
+      <NetworkEntityDialog open onOpenChange={onOpenChange} entity={{ type: 'event', data: {} }} />
+    );
+    expect(
+      document.querySelector('[data-action-id="network.entity-dialog.event.open"]')
+    ).toBeNull();
+
+    rerender(
+      <NetworkEntityDialog
+        open
+        onOpenChange={onOpenChange}
+        entity={{
+          type: 'user',
+          data: {
+            id: 'user-full',
+            name: null,
+            subtitle: 'Subtitle',
+            avatarFile: { url: 'avatar.png' },
+          },
+        }}
+      />
+    );
+    expect(document.querySelector('img')?.getAttribute('alt')).toBeNull();
+    rerender(
+      <NetworkEntityDialog
+        open
+        onOpenChange={onOpenChange}
+        entity={{ type: 'user', data: { avatarFile: null } }}
+      />
+    );
+    expect(document.querySelector('[data-action-id="network.entity-dialog.user.open"]')).toBeNull();
+  });
+
+  it('renders relationship fallbacks without canonical preview metadata', () => {
+    const base = {
+      source: 'source',
+      target: 'target',
+      sourceName: 'Source',
+      targetName: 'Target',
+    };
+    const { rerender } = render(
+      <NetworkEntityDialog
+        open
+        onOpenChange={vi.fn()}
+        entity={{
+          type: 'relationship',
+          data: {
+            ...base,
+            relationshipType: 'other' as never,
+            label: 'Relation',
+            membershipMode: 'all_members',
+            rights: ['amendmentRight', 'not-a-right'],
+          },
+        }}
+      />
+    );
+    expect(screen.getByText('Relation')).toBeTruthy();
+
+    rerender(
+      <NetworkEntityDialog
+        open
+        onOpenChange={vi.fn()}
+        entity={{
+          type: 'relationship',
+          data: {
+            ...base,
+            relationshipType: 'other' as never,
+            label: 'Connection label',
+            rights: [],
+            relationshipKinds: ['active', 'incoming', 'outgoing', 'custom'] as never,
+          },
+        }}
+      />
+    );
+    expect(screen.getAllByText('Connection label').length).toBeGreaterThan(0);
+
+    rerender(
+      <NetworkEntityDialog
+        open
+        onOpenChange={vi.fn()}
+        entity={{
+          type: 'relationship',
+          data: { ...base, relationshipType: 'other' as never, label: null, rights: null as never },
+        }}
+      />
+    );
+    expect(screen.getByText('common.labels.connection')).toBeTruthy();
+  });
+
+  it('closes and navigates to every supported entity through stable actions', () => {
+    const onOpenChange = vi.fn();
+    const { rerender } = render(
+      <NetworkEntityDialog
+        open
+        onOpenChange={onOpenChange}
+        entity={{ type: 'group', data: { id: 'group-1', name: 'Council' } }}
+      />
+    );
+
+    fireEvent.click(document.querySelector('[data-action-id="network.entity-dialog.group.open"]')!);
+    expect(navigate).toHaveBeenCalledWith({ to: '/group/group-1' });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+
+    rerender(
+      <NetworkEntityDialog
+        open
+        onOpenChange={onOpenChange}
+        entity={{ type: 'user', data: { id: 'user-1', name: 'Ada' } }}
+      />
+    );
+    fireEvent.click(document.querySelector('[data-action-id="network.entity-dialog.user.open"]')!);
+    expect(navigate).toHaveBeenCalledWith({ to: '/user/user-1' });
+
+    rerender(
+      <NetworkEntityDialog
+        open
+        onOpenChange={onOpenChange}
+        entity={{ type: 'event', data: { id: 'event-1', title: 'Assembly' } }}
+      />
+    );
+    fireEvent.click(document.querySelector('[data-action-id="network.entity-dialog.event.open"]')!);
+    expect(navigate).toHaveBeenCalledWith({ to: '/event/event-1' });
+
+    fireEvent.click(document.querySelector('[data-action-id="network.entity-dialog.close"]')!);
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
+  });
+
   it('renders static relationship summaries without the compact duplicate helper line', () => {
     const { container } = render(
       <NetworkEntityDialog

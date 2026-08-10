@@ -33,19 +33,19 @@ export function useCarouselFormLayoutController({
   const canNavigateNext = canNavigateForwardToStep(steps, currentStep + 1);
 
   const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    const index = emblaApi.selectedScrollSnap();
+    const api = emblaApi as NonNullable<typeof emblaApi>;
+    const index = api.selectedScrollSnap();
 
     if (index > currentStep && !canNavigateForwardToStep(steps, index)) {
-      emblaApi.scrollTo(currentStep);
+      api.scrollTo(currentStep);
       setCanScrollPrev(currentStep > 0);
       setCanScrollNext(currentStep < steps.length - 1);
       return;
     }
 
     onStepChange(index);
-    setCanScrollPrev(emblaApi.canScrollPrev());
-    setCanScrollNext(emblaApi.canScrollNext());
+    setCanScrollPrev(api.canScrollPrev());
+    setCanScrollNext(api.canScrollNext());
   }, [currentStep, emblaApi, onStepChange, steps]);
 
   useEffect(() => {

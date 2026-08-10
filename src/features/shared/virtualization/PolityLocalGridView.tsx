@@ -28,8 +28,8 @@ export function PolityLocalGridView<T>({
   const [width, setWidth] = useState(0);
 
   useEffect(() => {
-    const element = parentRef.current;
-    if (!element) return;
+    // React attaches the rendered div ref before running this mount effect.
+    const element = parentRef.current as HTMLDivElement;
     if (typeof ResizeObserver === 'undefined') {
       setWidth(element.clientWidth || 1024);
       return;

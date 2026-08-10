@@ -50,6 +50,20 @@ function getPositions(nodes: ReturnType<typeof testNode>[]) {
 }
 
 describe('networkLayoutHelpers', () => {
+  it('normalizes missing and partially persisted layouts', () => {
+    expect(normalizeGroupNetworkLayout(null)).toEqual({
+      node_positions: {},
+      edge_bend_points: {},
+    });
+    expect(
+      normalizeGroupNetworkLayout({
+        node_positions: undefined,
+        edge_bend_points: undefined,
+      } as never)
+    ).toEqual({ node_positions: {}, edge_bend_points: {} });
+    expect(areGroupNetworkLayoutsEqual(undefined, null)).toBe(true);
+  });
+
   it('treats layouts with the same content as equal even when their key order differs', () => {
     expect(
       areGroupNetworkLayoutsEqual(
@@ -163,5 +177,52 @@ describe('networkLayoutHelpers', () => {
       y: 300,
     });
     expectNoNodeOverlaps(resolvedNodes);
+  });
+
+  it('uses string, measured, legacy, invalid, and default node dimensions', () => {
+    const nodes = [
+      {
+        ...testNode('fixed', { x: 0, y: 0 }),
+        style: { width: '220px', height: 'invalid' },
+      },
+      {
+        ...testNode('measured', { x: 0, y: 0 }),
+        style: {},
+        measured: { width: 210, height: 90 },
+      },
+      {
+        ...testNode('legacy', { x: 0, y: 0 }),
+        style: {},
+        measured: undefined,
+        width: 205,
+        height: 88,
+      },
+      {
+        ...testNode('default', { x: 0, y: 0 }),
+        style: { width: Number.NaN, height: -1 },
+      },
+    ];
+    const resolved = resolveInitialNetworkNodeOverlaps(nodes, { fixedNodeIds: ['fixed'] });
+    expect(resolved).toHaveLength(4);
+    expect(new Set(resolved.map(node => `${node.position.x}:${node.position.y}`)).size).toBe(4);
+  });
+
+  it('uses the vertical fallback when ring search is disabled', () => {
+    const resolved = resolveInitialNetworkNodeOverlaps(
+      [testNode('fixed', { x: 0, y: 0 }), testNode('moving', { x: 0, y: 0 })],
+      { fixedNodeIds: ['fixed'], maxSearchRings: 0, gridStep: 100 }
+    );
+    expect(resolved[1].position.y).toBeGreaterThan(0);
+  });
+
+  it('preserves the preferred position when every fallback candidate is occupied', () => {
+    const fixed = testNode('fixed', { x: 0, y: 0 }, { width: 180, height: 300_000 });
+    const moving = testNode('moving', { x: 0, y: 0 });
+    const resolved = resolveInitialNetworkNodeOverlaps([fixed, moving], {
+      fixedNodeIds: ['fixed'],
+      maxSearchRings: 0,
+      gridStep: 1,
+    });
+    expect(resolved[1]).toBe(moving);
   });
 });

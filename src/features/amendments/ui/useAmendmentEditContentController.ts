@@ -10,11 +10,7 @@ import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
-import {
-  AMENDMENT_EDITING_MODE_ORDER,
-  normalizeEditingMode,
-  type EditingMode,
-} from '@/zero/amendments/editing-mode-policy';
+import { normalizeEditingMode, type EditingMode } from '@/zero/amendments/editing-mode-policy';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { getEditingModeOption, type SelectableEditingMode } from '@/features/shared/ui/status';
@@ -52,6 +48,13 @@ function normalizeInternalCRResolutionVisibility(
   value: string | null | undefined
 ): InternalCRResolutionVisibility {
   return value === 'collaborators' ? 'collaborators' : DEFAULT_INTERNAL_CR_RESOLUTION_VISIBILITY;
+}
+
+function clearPendingWorkflowModeForSource(
+  current: { branchId: string; mode: EditingMode } | null,
+  workflowModeSourceKey: string | null
+) {
+  return current?.branchId === workflowModeSourceKey ? null : current;
 }
 
 interface AmendmentEditContentProps {
@@ -189,11 +192,7 @@ export function useAmendmentEditContentController({
     };
   }, [amendmentProcess, formData.workflowStatus, t]);
 
-  const workflowMenuValue = (
-    (AMENDMENT_EDITING_MODE_ORDER as readonly EditingMode[]).includes(formData.workflowStatus)
-      ? formData.workflowStatus
-      : 'view'
-  ) as SelectableEditingMode;
+  const workflowMenuValue = formData.workflowStatus as SelectableEditingMode;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -311,7 +310,7 @@ export function useAmendmentEditContentController({
       }
 
       setPendingWorkflowMode({
-        branchId: workflowModeSourceKey ?? 'unknown',
+        branchId: workflowModeSourceKey as string,
         mode: nextWorkflowStatus,
       });
 
@@ -347,7 +346,7 @@ export function useAmendmentEditContentController({
       } catch (error) {
         if (!modePersisted) {
           setPendingWorkflowMode(current =>
-            current?.branchId === workflowModeSourceKey ? null : current
+            clearPendingWorkflowModeForSource(current, workflowModeSourceKey)
           );
           setFormData(prev => ({ ...prev, workflowStatus: previousWorkflowStatus }));
         }
@@ -435,10 +434,6 @@ export function useAmendmentEditContentController({
           })
         );
       } else {
-        if (!amendment) {
-          toast.error(t('features.amendments.editContent.updateFailed'));
-          return;
-        }
         await waitForClientApply(
           updateAmendment({
             id: amendmentId,
@@ -638,3 +633,9 @@ export function useAmendmentEditContentController({
     confirmCreate,
   };
 }
+
+export const amendmentEditContentControllerInternals = {
+  normalizeInternalCRVotingCloseTrigger,
+  normalizeInternalCRResolutionVisibility,
+  clearPendingWorkflowModeForSource,
+};

@@ -53,6 +53,11 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string, fallback?: unknown) => (typeof fallback === 'string' ? fallback : key),
 }));
 
+vi.mock('@/features/groups/ui/ProcessAgendaPreviewDialog', () => ({
+  ProcessAgendaPreviewDialog: ({ open, amendmentId }: { open: boolean; amendmentId: string }) =>
+    open ? <div data-testid="agenda-preview-dialog">{amendmentId}</div> : null,
+}));
+
 vi.mock('react-i18next', () => {
   const translations: Record<string, string> = {
     'features.groups.memberships.openAssignments.titleWithCount': 'Open Assignments ({{count}})',
@@ -79,6 +84,7 @@ vi.mock('react-i18next', () => {
     'features.groups.memberships.openAssignments.thisGroup': 'this group',
     'features.groups.memberships.openAssignments.completedBanner': 'Fully scheduled or completed',
     'features.groups.memberships.openAssignments.toScheduledElection': 'To scheduled election',
+    'features.groups.memberships.openAssignments.showAgendaItems': 'Show agenda items',
     'features.groups.memberships.openAssignments.searchDelegateElectionEvent':
       'Find event for delegate election',
     'features.groups.memberships.openAssignments.searchRoleRenewalEvent':
@@ -200,21 +206,35 @@ describe('OpenAssignmentsPanel', () => {
       />
     );
 
-    expect(
-      screen.getByRole('link', { name: 'Target: Delegate assembly' }).getAttribute('href')
-    ).toBe('/event/target-event');
-    expect(screen.getByRole('link', { name: 'Linked: E1H1' }).getAttribute('href')).toBe(
-      '/event/linked-event'
+    const targetEventLink = screen.getByRole('link', { name: 'Target: Delegate assembly' });
+    const linkedEventLink = screen.getByRole('link', { name: 'Linked: E1H1' });
+    const sourceGroupLink = screen.getByRole('link', { name: 'B1' });
+    const targetGroupLink = screen.getByRole('link', { name: 'H2' });
+    const scheduledElectionLink = screen.getByRole('link', { name: 'To scheduled election' });
+
+    expect(targetEventLink.getAttribute('href')).toBe('/event/target-event');
+    expect(targetEventLink.getAttribute('data-action-id')).toBe(
+      'groups.assignments.target-event.open'
     );
-    expect(screen.getByRole('link', { name: 'B1' }).getAttribute('href')).toBe(
-      '/group/source-group'
+    expect(linkedEventLink.getAttribute('href')).toBe('/event/linked-event');
+    expect(linkedEventLink.getAttribute('data-action-id')).toBe(
+      'groups.assignments.linked-event.open'
     );
-    expect(screen.getByRole('link', { name: 'H2' }).getAttribute('href')).toBe(
-      '/group/target-group'
+    expect(sourceGroupLink.getAttribute('href')).toBe('/group/source-group');
+    expect(sourceGroupLink.getAttribute('data-action-id')).toBe(
+      'groups.assignments.source-group.open'
     );
-    expect(screen.getByRole('link', { name: 'To scheduled election' }).getAttribute('href')).toBe(
-      '/event/linked-event'
+    expect(targetGroupLink.getAttribute('href')).toBe('/group/target-group');
+    expect(targetGroupLink.getAttribute('data-action-id')).toBe(
+      'groups.assignments.target-group.open'
     );
+    expect(scheduledElectionLink.getAttribute('href')).toBe('/event/linked-event');
+    expect(scheduledElectionLink.getAttribute('data-action-id')).toBe(
+      'groups.assignments.scheduled-election.open'
+    );
+
+    scheduledElectionLink.focus();
+    expect(document.activeElement).toBe(scheduledElectionLink);
   });
 
   it('keeps completed schedule-event process assignments visible with their linked event', () => {
@@ -263,6 +283,17 @@ describe('OpenAssignmentsPanel', () => {
     ).toBe('/event/linked-event');
     expect(screen.getByText('Fully scheduled or completed')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Attach to event' })).toBeNull();
+
+    expect(
+      screen.getByRole('link', { name: 'Street safety amendment' }).getAttribute('data-action-id')
+    ).toBe('groups.assignments.amendment.open');
+
+    const agendaPreviewButton = screen.getByRole('button', { name: 'Show agenda items' });
+    expect(agendaPreviewButton.getAttribute('data-action-id')).toBe(
+      'groups.assignments.agenda-preview.open'
+    );
+    fireEvent.click(agendaPreviewButton);
+    expect(screen.getByTestId('agenda-preview-dialog').textContent).toBe('amendment-1');
   });
 
   it('filters expired amendment-deadline events from process task scheduling', () => {
@@ -286,6 +317,8 @@ describe('OpenAssignmentsPanel', () => {
         title: 'Street safety amendment',
       },
     };
+
+    const onScheduleProcessTask = vi.fn().mockResolvedValue(undefined);
 
     render(
       <OpenAssignmentsPanel
@@ -314,17 +347,30 @@ describe('OpenAssignmentsPanel', () => {
         ]}
         onScheduleRoleRenewal={vi.fn()}
         onScheduleDelegateElection={vi.fn()}
-        onScheduleProcessTask={vi.fn()}
+        onScheduleProcessTask={onScheduleProcessTask}
       />
     );
 
     expect(screen.getByText('Open amendment deadline')).toBeTruthy();
     expect(screen.queryByText('Expired amendment deadline')).toBeNull();
 
-    fireEvent.click(screen.getByRole('combobox'));
+    const eventSelect = screen.getByRole('combobox');
+    expect(eventSelect.getAttribute('data-action-id')).toBe('groups.assignments.event.select');
+    fireEvent.click(eventSelect);
 
     expect(screen.getByText('No amendment deadline')).toBeTruthy();
     expect(screen.queryByText('Expired amendment deadline')).toBeNull();
+
+    const noDeadlineOption = screen.getByRole('option', { name: 'No amendment deadline' });
+    expect(noDeadlineOption.getAttribute('data-action-id')).toBe('groups.assignments.event.select');
+    fireEvent.click(noDeadlineOption);
+
+    const scheduleButton = screen.getByRole('button', { name: 'Attach to event' });
+    expect(scheduleButton.getAttribute('data-action-id')).toBe(
+      'groups.assignments.process-task.schedule'
+    );
+    fireEvent.click(scheduleButton);
+    expect(onScheduleProcessTask).toHaveBeenCalledWith(assignment, 'event-no-deadline');
   });
 
   it('filters open assignments by status and vote or election type', () => {
@@ -372,6 +418,9 @@ describe('OpenAssignmentsPanel', () => {
     expect(
       within(statusFilter).getByRole('button', { name: 'All' }).getAttribute('aria-pressed')
     ).toBe('true');
+    expect(
+      within(statusFilter).getByRole('button', { name: 'All' }).getAttribute('data-action-id')
+    ).toBe('groups.assignments.filter.change');
     expect(
       within(statusFilter).getByRole('button', { name: 'All' }).getAttribute('data-active')
     ).toBe('true');
@@ -462,6 +511,9 @@ describe('OpenAssignmentsPanel', () => {
     expect(createEventUrl.searchParams.get('returnTo')).toBe(
       '/group/source-group/memberships?tab=openAssignments'
     );
+    expect(screen.getByRole('link', { name: 'Create event' }).getAttribute('data-action-id')).toBe(
+      'groups.assignments.event.create-for-assignment'
+    );
   });
 
   it('focuses role-renewal assignments and returns event creation to the same assignment', () => {
@@ -532,10 +584,15 @@ describe('OpenAssignmentsPanel', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Find event for role election' })).toBeTruthy();
+    const openEventDialogButton = screen.getByRole('button', {
+      name: 'Find event for role election',
+    });
+    expect(openEventDialogButton.getAttribute('data-action-id')).toBe(
+      'groups.assignments.event-dialog.open'
+    );
     expect(screen.queryByRole('button', { name: 'Attach to event' })).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Find event for role election' }));
+    fireEvent.click(openEventDialogButton);
 
     expect(screen.getByText('Role election event')).toBeTruthy();
     expect(screen.getByText('Local assembly')).toBeTruthy();

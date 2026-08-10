@@ -193,9 +193,7 @@ export function useStreetSceneCanvasViewController({
       cameraPoseFrameRef.current = null;
       const nextPose = pendingCameraPoseRef.current;
       pendingCameraPoseRef.current = null;
-      if (nextPose) {
-        setCameraPose(nextPose);
-      }
+      setCameraPose(nextPose as CityDesignCameraPose);
     });
   }, []);
   const renderedChangeRequests = showChangeRequests ? changeRequests : EMPTY_CHANGE_REQUESTS;
@@ -568,3 +566,10 @@ function isEditableKeyboardTarget(target: EventTarget | null) {
     target.closest('input, textarea, select, button, [contenteditable="true"], [role="textbox"]')
   );
 }
+
+export const streetSceneCanvasControllerInternals = {
+  cancelStreetSceneAnimationFrame,
+  consumeFocusRequests,
+  isEditableKeyboardTarget,
+  requestStreetSceneAnimationFrame,
+};

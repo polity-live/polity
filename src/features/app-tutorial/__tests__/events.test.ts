@@ -5,6 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   APP_TUTORIAL_RECOVER_TARGET_EVENT,
   APP_TUTORIAL_SPOTLIGHT_TARGET_EVENT,
+  APP_TUTORIAL_ACCEPT_NETWORK_EVENT,
+  APP_TUTORIAL_ACTION_EVENT,
+  reportAppTutorialAction,
+  requestAppTutorialNetworkApproval,
+  isAppTutorialActiveInDocument,
   activateAppTutorialSession,
   consumePendingAppTutorialNetworkApproval,
   deactivateAppTutorialSession,
@@ -17,6 +22,18 @@ import {
 describe('app tutorial network approval storage', () => {
   beforeEach(() => {
     window.sessionStorage.clear();
+  });
+
+  it('rejects malformed and invalid stored approvals', () => {
+    window.sessionStorage.setItem('polity:app-tutorial-pending-network', '{invalid');
+    expect(consumePendingAppTutorialNetworkApproval('initiative-1')).toBeNull();
+    for (const value of [
+      { currentGroupId: 'initiative-1', requestId: 4, grantRequestIds: [] },
+      { currentGroupId: 'initiative-1', requestId: 'request-1', grantRequestIds: null },
+    ]) {
+      window.sessionStorage.setItem('polity:app-tutorial-pending-network', JSON.stringify(value));
+      expect(consumePendingAppTutorialNetworkApproval('initiative-1')).toBeNull();
+    }
   });
 
   it('keeps the configured request available for Continue and consumes it once', () => {
@@ -51,6 +68,35 @@ describe('app tutorial tab session', () => {
     expect(isAppTutorialSessionActive()).toBe(true);
     deactivateAppTutorialSession();
     expect(isAppTutorialSessionActive()).toBe(false);
+  });
+
+  it('is inert without browser globals and reflects the active body marker', () => {
+    expect(isAppTutorialActiveInDocument()).toBe(false);
+    document.body.setAttribute('data-app-tutorial-active', '');
+    expect(isAppTutorialActiveInDocument()).toBe(true);
+    document.body.removeAttribute('data-app-tutorial-active');
+
+    vi.stubGlobal('window', undefined);
+    try {
+      expect(isAppTutorialSessionActive()).toBe(false);
+      expect(activateAppTutorialSession()).toBeUndefined();
+      expect(deactivateAppTutorialSession()).toBeUndefined();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('dispatches tutorial actions and network approval requests', () => {
+    const action = vi.fn();
+    const approval = vi.fn();
+    window.addEventListener(APP_TUTORIAL_ACTION_EVENT, action);
+    window.addEventListener(APP_TUTORIAL_ACCEPT_NETWORK_EVENT, approval);
+    reportAppTutorialAction({ type: 'click', anchor: 'target' });
+    requestAppTutorialNetworkApproval();
+    expect(action).toHaveBeenCalledOnce();
+    expect(approval).toHaveBeenCalledOnce();
+    window.removeEventListener(APP_TUTORIAL_ACTION_EVENT, action);
+    window.removeEventListener(APP_TUTORIAL_ACCEPT_NETWORK_EVENT, approval);
   });
 });
 

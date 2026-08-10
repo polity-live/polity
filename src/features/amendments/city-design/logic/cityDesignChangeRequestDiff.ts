@@ -481,7 +481,6 @@ function applySemanticChangePatch(current: unknown, before: unknown, after: unkn
         Reflect.deleteProperty(result, key);
         continue;
       }
-      if (!afterHasKey) continue;
       result[key] = applySemanticChangePatch(result[key], before[key], after[key]);
     }
     return result;
@@ -533,3 +532,19 @@ function flattenKeys(value: unknown, keys: Record<string, true> = {}) {
   });
   return keys;
 }
+
+export const cityDesignChangeRequestDiffInternals = {
+  applySemanticChangePatch,
+  asCityDesignObject,
+  asRecord,
+  asStringArray,
+  countChangedValueCharacters,
+  createObjectPayload,
+  flattenKeys,
+  getEffectiveUnitCostMinor,
+  getSemanticSnapshotValue,
+  isOnlyObjectCostChanged,
+  isPlainRecord,
+  normalizeCityDesignChangeType,
+  stableJson,
+};

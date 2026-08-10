@@ -44,4 +44,52 @@ describe('eventStreamUrl', () => {
       externalUrl: 'https://video.example/live',
     });
   });
+
+  it('covers empty, malformed, explicit HTTP, and optional validation variants', () => {
+    expect(normalizeEventStreamUrl(null)).toBeNull();
+    expect(normalizeEventStreamUrl('   ')).toBeNull();
+    expect(normalizeEventStreamUrl('http://example.com/live')).toBe('http://example.com/live');
+    expect(normalizeEventStreamUrl('http://[')).toBeNull();
+    expect(normalizeEventStreamUrl('https://')).toBeNull();
+    expect(isValidOptionalEventStreamUrl('video.example/live')).toBe(true);
+    expect(isValidOptionalEventStreamUrl('javascript:bad')).toBe(false);
+    expect(resolveEventStreamSource(undefined, 'parent.test')).toBeNull();
+  });
+
+  it.each([
+    'https://youtu.be/',
+    'https://youtu.be/short',
+    'https://youtube.com/watch',
+    'https://youtube.com/live/',
+    'https://youtube.com/other/dQw4w9WgXcQ',
+    'https://youtube-nocookie.com/embed/dQw4w9WgXcQ',
+  ])('handles sparse YouTube-shaped URL %s', value => {
+    const source = resolveEventStreamSource(value, 'parent.test');
+    if (value.includes('youtube-nocookie')) expect(source?.provider).toBe('youtube');
+    else expect(source?.provider).toBe('external');
+  });
+
+  it.each([
+    ['https://m.twitch.tv/channel/clip/HelpfulClip', 'clip=HelpfulClip'],
+    ['https://twitch.tv/clip/HelpfulClip', 'clip=HelpfulClip'],
+    ['https://twitch.tv/videos/not-a-number', null],
+    ['https://twitch.tv/videos', null],
+    ['https://twitch.tv/directory', null],
+    ['https://twitch.tv/channel/clip/', 'channel=channel'],
+    ['https://clips.twitch.tv/', null],
+  ])('covers Twitch path variant %s', (value, expected) => {
+    const source = resolveEventStreamSource(value, 'parent.test');
+    if (expected) {
+      expect(source && 'embedUrl' in source ? source.embedUrl : '').toContain(expected);
+    } else {
+      expect(source?.provider).toBe('external');
+    }
+  });
+
+  it('requires a Twitch parent and rejects unrelated Twitch-like hosts', () => {
+    expect(resolveEventStreamSource('https://twitch.tv/channel', '')?.provider).toBe('external');
+    expect(resolveEventStreamSource('https://example.com/channel', 'parent.test')?.provider).toBe(
+      'external'
+    );
+  });
 });

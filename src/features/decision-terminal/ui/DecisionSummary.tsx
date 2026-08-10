@@ -41,9 +41,8 @@ export function CollapsibleSection({
   const [needsCollapse, setNeedsCollapse] = React.useState(false);
 
   React.useEffect(() => {
-    if (contentRef.current) {
-      setNeedsCollapse(contentRef.current.scrollHeight > maxContentHeight);
-    }
+    const content = contentRef.current;
+    setNeedsCollapse(Boolean(content && content.scrollHeight > maxContentHeight));
   }, [section.content, maxContentHeight]);
 
   return (

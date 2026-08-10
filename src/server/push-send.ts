@@ -16,14 +16,11 @@ function getSupabase() {
   return createClient(supabaseUrl, serviceRoleKey);
 }
 
-function initVapid() {
-  if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
-    throw new Error('Missing VAPID configuration');
-  }
+function initVapid(publicKey: string, privateKey: string) {
   webpush.setVapidDetails(
     process.env.VAPID_EMAIL || 'mailto:your-email@example.com',
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
+    publicKey,
+    privateKey
   );
 }
 
@@ -59,7 +56,7 @@ export async function sendPushNotificationToUser(
   try {
     const { userId, notification } = data;
 
-    if (!userId || !notification) {
+    if (!userId) {
       throw new Error('Missing userId or notification data');
     }
 
@@ -85,12 +82,14 @@ export async function sendPushNotificationToUser(
       };
     }
 
-    if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+    const publicKey = process.env.VAPID_PUBLIC_KEY;
+    const privateKey = process.env.VAPID_PRIVATE_KEY;
+    if (!publicKey || !privateKey) {
       console.warn('[Push API] VAPID keys not configured');
       return { message: 'push_not_configured', sent: 0, failed: 0 };
     }
 
-    initVapid();
+    initVapid(publicKey, privateKey);
 
     // Prepare notification payload
     const localizedTitle =
@@ -153,9 +152,7 @@ export async function sendPushNotificationToUser(
     );
 
     const sent = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
-    const failed = results.filter(
-      r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)
-    ).length;
+    const failed = results.filter(r => r.status === 'fulfilled' && !r.value.success).length;
 
     return {
       message: translateText('generated.inline.0681_push_notifications_sent_adb2827e'),

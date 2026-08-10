@@ -31,6 +31,19 @@ describe('amendment forwarding preview', () => {
         materializedTarget
       )
     ).toBe('forwarded');
+    expect(
+      deriveAmendmentForwardingStatus({ decision_status: 'approved' }, materializedTarget)
+    ).toBe('forwarded');
+  });
+
+  it('stays pending for absent steps and partially materialized targets', () => {
+    expect(deriveAmendmentForwardingStatus(undefined, undefined)).toBe('pending');
+    expect(
+      deriveAmendmentForwardingStatus(
+        { status: 'approved' },
+        { ...materializedTarget, agenda_item_id: null }
+      )
+    ).toBe('pending');
   });
 
   it.each([
@@ -59,6 +72,29 @@ describe('amendment forwarding preview', () => {
       nextEventId: 'event-next',
       nextEventTitle: 'EH1',
       nextEventStartDate: 123,
+    });
+  });
+
+  it('requires an amendment and event and defaults optional destination fields', () => {
+    expect(buildAmendmentForwardingPreview({ nextStepRun: materializedTarget })).toBeNull();
+    expect(
+      buildAmendmentForwardingPreview({
+        amendmentId: 'amendment-1',
+        nextStepRun: { ...materializedTarget, event: null },
+      })
+    ).toBeNull();
+    expect(
+      buildAmendmentForwardingPreview({
+        amendmentId: 'amendment-1',
+        nextStepRun: { event: {} },
+      })
+    ).toEqual({
+      status: 'pending',
+      nextGroupId: null,
+      nextGroupName: null,
+      nextEventId: null,
+      nextEventTitle: 'Next event',
+      nextEventStartDate: null,
     });
   });
 });

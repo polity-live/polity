@@ -2,9 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   buildNamedElectionResultsModel,
   buildNamedVoteResultsModel,
+  resolveResultsPhase,
 } from '../buildNamedBallotResults';
 
 describe('buildNamedBallotResults', () => {
+  it('resolves explicit final and unknown result phases', () => {
+    expect(resolveResultsPhase('final')).toEqual({ phase: 'final', isClosed: false });
+    expect(resolveResultsPhase('unknown')).toEqual({ phase: 'final', isClosed: false });
+  });
   it('uses indicative participations and sorts eligible voters alphabetically', () => {
     const model = buildNamedVoteResultsModel({
       vote: {
@@ -390,5 +395,85 @@ describe('buildNamedBallotResults', () => {
       status: 'offline_aggregated',
       selections: [],
     });
+  });
+
+  it('handles sparse final votes, unnamed and unknown groups, and invalid offline options', () => {
+    const model = buildNamedVoteResultsModel({
+      vote: {
+        status: 'final',
+        choices: undefined,
+        voters: [{ id: 'voter-null', user_id: null }],
+        final_participations: [
+          { user_id: 'user-known', voter_id: null, decisions: [{ choice_id: null }] },
+          { user_id: null, voter: { user_id: null }, voter_id: null, decisions: [] },
+        ],
+        offline_tallies: [{ phase: 'final', choice_id: null, count: 2 }],
+      },
+      eligibleParticipants: [
+        { id: 'unknown', user_id: 'user-unknown' },
+        {
+          id: 'known',
+          user_id: 'user-known',
+          source_group: { id: 'group-1', name: '' },
+        },
+      ],
+      confirmedOfflineParticipants: [],
+      groupedBySourceGroup: true,
+    });
+
+    expect(model.phase).toBe('final');
+    expect(model.groups.map(group => group.key)).toEqual(['group:group-1', 'group:unknown']);
+    expect(model.groups[0].label).toBeTruthy();
+
+    const reversed = buildNamedVoteResultsModel({
+      vote: { status: 'final', choices: [], final_participations: undefined },
+      eligibleParticipants: [
+        { id: 'known', user_id: 'user-known', source_group: { id: 'group-1', name: 'Known' } },
+        { id: 'unknown', user_id: 'user-unknown' },
+      ],
+      confirmedOfflineParticipants: [],
+      groupedBySourceGroup: true,
+    });
+    expect(reversed.groups.at(-1)?.key).toBe('group:unknown');
+  });
+
+  it('handles sparse indicative elections and direct-user participations', () => {
+    const empty = buildNamedElectionResultsModel({
+      election: {
+        status: 'indicative',
+        candidates: undefined,
+        electors: [{ id: 'elector-null', user_id: null }],
+        indicative_participations: undefined,
+      },
+      eligibleParticipants: [],
+      confirmedOfflineParticipants: [],
+      groupedBySourceGroup: false,
+    });
+    expect(empty.phase).toBe('indicative');
+    expect(empty.groups).toEqual([]);
+
+    const direct = buildNamedElectionResultsModel({
+      election: {
+        status: 'indicative',
+        candidates: [{ id: 'candidate-1', name: 'Candidate', order_index: null }],
+        indicative_participations: [
+          { user_id: 'user-1', elector_id: null, selections: [{ candidate_id: 'candidate-1' }] },
+          { user_id: null, elector: { user_id: null }, elector_id: null, selections: [] },
+        ],
+      },
+      eligibleParticipants: [{ id: 'participant-1', user_id: 'user-1' }],
+      confirmedOfflineParticipants: [],
+      groupedBySourceGroup: false,
+    });
+    expect(direct.totalRecordedCount).toBe(1);
+
+    expect(
+      buildNamedElectionResultsModel({
+        election: { status: 'final', candidates: [], final_participations: undefined },
+        eligibleParticipants: [],
+        confirmedOfflineParticipants: [],
+        groupedBySourceGroup: false,
+      }).phase
+    ).toBe('final');
   });
 });

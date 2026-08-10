@@ -157,7 +157,14 @@ export function TimelineFilterPanel({
           <SheetTitle className="flex items-center justify-between">
             {t('features.timeline.filters.title', { defaultValue: 'Filters' })}
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={onResetFilters} className="h-8 text-xs">
+              <Button
+                data-action-id="timeline.filters.reset"
+                data-action-kind="interaction"
+                variant="ghost"
+                size="sm"
+                onClick={onResetFilters}
+                className="h-8 text-xs"
+              >
                 <RotateCcw className="mr-1 h-3 w-3" />
                 {t('features.timeline.filters.clearAll', { defaultValue: 'Clear all' })}
               </Button>
@@ -179,6 +186,8 @@ export function TimelineFilterPanel({
               </h4>
               <div className="flex gap-2">
                 <Button
+                  data-action-id="timeline.filters.content.select-all"
+                  data-action-kind="selection"
                   variant="ghost"
                   size="sm"
                   onClick={handleSelectAllContentTypes}
@@ -187,6 +196,8 @@ export function TimelineFilterPanel({
                   {t('features.timeline.filters.all', { defaultValue: 'All' })}
                 </Button>
                 <Button
+                  data-action-id="timeline.filters.content.select-none"
+                  data-action-kind="selection"
                   variant="ghost"
                   size="sm"
                   onClick={handleDeselectAllContentTypes}
@@ -213,6 +224,8 @@ export function TimelineFilterPanel({
                     )}
                   >
                     <FormControlCheckbox
+                      data-action-id="timeline.filters.content.toggle"
+                      data-action-kind="selection"
                       id={`filter-${type}`}
                       checked={isSelected}
                       onCheckedChange={() => onContentTypeToggle(type)}
@@ -242,6 +255,8 @@ export function TimelineFilterPanel({
                 <div className="flex flex-wrap gap-2">
                   {RADIUS_OPTIONS.map(option => (
                     <FilterButton
+                      data-action-id="timeline.filters.radius.select"
+                      data-action-kind="selection"
                       key={option.value}
                       active={radiusKm === option.value}
                       onClick={() => onRadiusChange(option.value)}
@@ -265,6 +280,8 @@ export function TimelineFilterPanel({
             <div className="flex flex-wrap gap-2">
               {DATE_RANGE_OPTIONS.map(option => (
                 <FilterButton
+                  data-action-id="timeline.filters.date-range.select"
+                  data-action-kind="selection"
                   key={option.value}
                   active={dateRange === option.value}
                   onClick={() => onDateRangeChange(option.value)}
@@ -288,6 +305,8 @@ export function TimelineFilterPanel({
                 <div className="flex flex-wrap gap-2">
                   {ENGAGEMENT_OPTIONS.map(option => (
                     <FilterButton
+                      data-action-id="timeline.filters.engagement.select"
+                      data-action-kind="selection"
                       key={option.value}
                       active={engagement === option.value}
                       onClick={() => onEngagementChange(option.value)}
@@ -314,6 +333,8 @@ export function TimelineFilterPanel({
                     const isSelected = topics.includes(topic);
                     return (
                       <FilterButton
+                        data-action-id="timeline.filters.topic.toggle"
+                        data-action-kind="selection"
                         key={topic}
                         active={isSelected}
                         onClick={() => onTopicToggle(topic)}
@@ -331,7 +352,12 @@ export function TimelineFilterPanel({
 
         {/* Footer with apply/close */}
         <div className="mt-8 flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
+          <Button
+            data-action-id="timeline.filters.close"
+            data-action-kind="interaction"
+            variant="outline"
+            onClick={onClose}
+          >
             {t('common.actions.close', { defaultValue: 'Close' })}
           </Button>
         </div>

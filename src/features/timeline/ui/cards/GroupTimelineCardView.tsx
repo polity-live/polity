@@ -113,7 +113,13 @@ export function GroupTimelineCardView({
   const subscriptionLoadingLabel = t('common.checks.subscription');
 
   return (
-    <TimelineCardBase contentType="group" className={className} href={groupHref}>
+    <TimelineCardBase
+      data-action-id="timeline.group.open"
+      data-action-kind="navigation"
+      contentType="group"
+      className={className}
+      href={groupHref}
+    >
       <TimelineCardHeader
         contentType="group"
         title={group.name}
@@ -163,6 +169,8 @@ export function GroupTimelineCardView({
         <Popover open={membershipOpen} onOpenChange={setMembershipOpen}>
           <PopoverTrigger asChild onClick={e => e.stopPropagation()}>
             <Button
+              data-action-id="timeline.group.membership.menu.open"
+              data-action-kind="selection"
               variant={getMembershipVariant()}
               size="sm"
               disabled={requestMembershipDisabled && !membershipLoading}
@@ -183,6 +191,8 @@ export function GroupTimelineCardView({
             <div className="flex flex-col gap-1">
               {isMember && (
                 <Button
+                  data-action-id="timeline.group.membership.leave"
+                  data-action-kind="async-action"
                   variant="ghost"
                   size="sm"
                   onClick={e => {
@@ -200,6 +210,8 @@ export function GroupTimelineCardView({
               {isInvited && (
                 <>
                   <Button
+                    data-action-id="timeline.group.invitation.accept"
+                    data-action-kind="async-action"
                     variant="ghost"
                     size="sm"
                     onClick={e => {
@@ -214,6 +226,8 @@ export function GroupTimelineCardView({
                     {t('features.timeline.cards.group.acceptInvitation')}
                   </Button>
                   <Button
+                    data-action-id="timeline.group.invitation.reject"
+                    data-action-kind="async-action"
                     variant="ghost"
                     size="sm"
                     onClick={e => {
@@ -231,6 +245,8 @@ export function GroupTimelineCardView({
               )}
               {hasRequested && (
                 <Button
+                  data-action-id="timeline.group.request.withdraw"
+                  data-action-kind="async-action"
                   variant="ghost"
                   size="sm"
                   onClick={e => {
@@ -247,6 +263,8 @@ export function GroupTimelineCardView({
               )}
               {!isMember && !isInvited && !hasRequested && (
                 <Button
+                  data-action-id="timeline.group.membership.request"
+                  data-action-kind="async-action"
                   variant="ghost"
                   size="sm"
                   onClick={e => {
@@ -273,6 +291,8 @@ export function GroupTimelineCardView({
 
         {/* Subscribe Button */}
         <Button
+          data-action-id="timeline.group.subscription.toggle"
+          data-action-kind="async-action"
           variant={(group.isSubscribed ?? subscription.isSubscribed) ? 'outline' : 'ghost'}
           size="sm"
           onClick={e => {
@@ -294,6 +314,7 @@ export function GroupTimelineCardView({
         {/* Share Button */}
         <div onClick={e => e.stopPropagation()}>
           <ShareButton
+            data-action-id="timeline.group.share"
             url={groupHref}
             title={group.name}
             description={groupDescription || ''}

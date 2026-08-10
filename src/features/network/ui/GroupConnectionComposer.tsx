@@ -104,8 +104,10 @@ export function GroupConnectionComposer({
     [value.rightDirections]
   );
 
-  const selectedPreset =
-    PRESET_OPTIONS.find(option => option.value === value.preset) ?? PRESET_OPTIONS[1];
+  // `value.preset` is the same closed union used to construct PRESET_OPTIONS.
+  const selectedPreset = PRESET_OPTIONS.find(
+    option => option.value === value.preset
+  ) as (typeof PRESET_OPTIONS)[number];
   const selectedPresetMembershipDirection = getPresetMembershipDirection(selectedPreset.value);
   const presetMembershipRule = value.membershipRule;
   const hydratedMembershipDirection =

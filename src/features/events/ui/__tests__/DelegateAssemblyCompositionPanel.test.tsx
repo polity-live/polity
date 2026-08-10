@@ -32,13 +32,16 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('@/features/charts/ui/ChartRenderer', () => ({
   CHART_PALETTE: ['#0f766e', '#2563eb', '#9333ea', '#d97706'],
-  ChartRenderer: ({ points }: { points: { x: string; value: number }[] }) => (
+  ChartRenderer: ({ points, valueFormatter }: any) => (
     <div data-testid="composition-chart">
-      {points.map(point => (
+      {points.map((point: any) => (
         <span key={point.x}>
-          {point.x}:{point.value}
+          {point.x}:{point.value}:{valueFormatter(point.value, point)}
         </span>
       ))}
+      <span data-testid="unknown-composition-value">
+        {valueFormatter(7, { x: 'unknown-category', value: 7 })}
+      </span>
     </div>
   ),
 }));
@@ -173,5 +176,42 @@ describe('DelegateAssemblyCompositionPanel', () => {
     expect(screen.getAllByRole('link', { name: 'B1' })[0].getAttribute('href')).toBe(
       '/group/group-b1'
     );
+    expect(screen.getAllByTestId('unknown-composition-value')[0]?.textContent).toBe('7 (0.0%)');
+  });
+
+  it('renders an empty state without ratio information', () => {
+    useDelegateAssemblyCompositionDataMock.mockReturnValue({
+      event: null,
+      allocations: [],
+      delegates: [],
+      scheduledElections: [],
+      isLoading: false,
+    });
+    render(<DelegateAssemblyCompositionPanel eventId="target-event" />);
+    expect(screen.getByText('features.events.participants.composition.empty')).toBeTruthy();
+    expect(screen.queryByText('1 delegate per 1 member')).toBeNull();
+  });
+
+  it('renders zero-value remainder shares as zero percent', () => {
+    useDelegateAssemblyCompositionDataMock.mockReturnValue({
+      ...createDelegateCompositionData(),
+      allocations: [
+        {
+          group_id: 'group-b1',
+          allocated_seats: 1,
+          group: { id: 'group-b1', name: 'B1' },
+        },
+      ],
+      delegates: [
+        {
+          group_id: 'group-b1',
+          status: 'confirmed',
+          seat_count: 2,
+          group: { id: 'group-b1', name: 'B1' },
+        },
+      ],
+    });
+    render(<DelegateAssemblyCompositionPanel eventId="target-event" />);
+    expect(screen.getAllByText('0%').length).toBeGreaterThan(0);
   });
 });

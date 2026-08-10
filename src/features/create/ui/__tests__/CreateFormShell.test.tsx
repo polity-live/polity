@@ -193,6 +193,9 @@ describe('CreateFormShell', () => {
     expect(screen.queryByTestId('carousel-layout')).toBeNull();
     expect(screen.queryByTestId('one-page-layout')).not.toBeNull();
     expect(updateFormStyle).toHaveBeenCalledWith('one_page');
+    expect(screen.getByRole('button', { name: /eine seite/i }).getAttribute('data-action-id')).toBe(
+      'create.form-style.select'
+    );
   });
 
   it('shows the fullscreen submit overlay and activates the target button after success', async () => {
@@ -229,6 +232,7 @@ describe('CreateFormShell', () => {
     const targetLink = screen.getByRole('link', { name: /zur gruppe/i });
     expect(targetLink.getAttribute('data-router-link')).toBe('true');
     expect(targetLink.getAttribute('href')).toBe('/group/group-1');
+    expect(targetLink.getAttribute('data-action-id')).toBe('create.submission.target.open-ready');
     expect(screen.queryByTestId('carousel-layout')).toBeNull();
     expect(screen.getByText('Alpha Group Review')).toBeTruthy();
 
@@ -296,7 +300,9 @@ describe('CreateFormShell', () => {
     expect(screen.getByText('Create failed')).toBeTruthy();
     expect(screen.getByTestId('carousel-layout')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /back to form/i }));
+    const back = screen.getByRole('button', { name: /back to form/i });
+    expect(back.getAttribute('data-action-id')).toBe('create.submission.back');
+    fireEvent.click(back);
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -322,10 +328,35 @@ describe('CreateFormShell', () => {
     const targetLink = screen.getByRole('link', { name: /zur gruppe/i });
     expect(targetLink.getAttribute('data-router-link')).toBe('true');
     expect(targetLink.getAttribute('href')).toBe('/group/group-1');
+    expect(targetLink.getAttribute('data-action-id')).toBe('create.submission.target.open-error');
 
     fireEvent.click(targetLink);
 
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('retries an interrupted submission through a stable error action', () => {
+    const onRetry = vi.fn();
+    render(
+      <CreateSubmissionOverlay
+        status="error"
+        entityType="group"
+        title="Created entity"
+        error={new Error('Interrupted')}
+        target={null}
+        progressSteps={[]}
+        onBack={vi.fn()}
+        onRetry={onRetry}
+      />
+    );
+
+    const retry = document.querySelector(
+      '[data-action-id="create.submission.retry"]'
+    ) as HTMLElement;
+    retry.focus();
+    expect(document.activeElement).toBe(retry);
+    fireEvent.click(retry);
+    expect(onRetry).toHaveBeenCalledOnce();
   });
 
   it.each([

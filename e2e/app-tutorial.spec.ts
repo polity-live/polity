@@ -10,11 +10,13 @@ import {
 const FULL_TUTORIAL_SCENARIOS = [
   {
     name: 'mobile in de',
+    tags: '@nightly @mobile',
     language: 'de',
     viewport: { width: 393, height: 852 },
   },
   {
     name: 'desktop in en',
+    tags: '@nightly',
     language: 'en',
     viewport: { width: 1280, height: 720 },
   },
@@ -22,7 +24,7 @@ const FULL_TUTORIAL_SCENARIOS = [
 
 test.describe.serial('localized live tutorial', () => {
   for (const scenario of FULL_TUTORIAL_SCENARIOS) {
-    test(`completes all live tutorial checkpoints on ${scenario.name}`, async ({
+    test(`completes all live tutorial checkpoints on ${scenario.name} ${scenario.tags}`, async ({
       page,
       e2eUser,
       tutorialFlowPage,

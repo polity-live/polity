@@ -88,7 +88,11 @@ export function VotingSessionManagerView({
           <CardHeader>
             <div className="flex items-center justify-between">
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" presentation="transparentGhost">
+                <Button
+                  data-action-id="votes.session.setup.toggle"
+                  variant="ghost"
+                  presentation="transparentGhost"
+                >
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Play className="h-5 w-5" />
                     {t('features.events.voting.startVoting')}
@@ -107,20 +111,30 @@ export function VotingSessionManagerView({
               <div>
                 <FormControlLabel>{t('features.events.voting.majorityType')}</FormControlLabel>
                 <FormControlSelect
+                  data-action-id="votes.session.majority.select"
                   value={majorityType}
                   onValueChange={v => setMajorityType(v as MajorityType)}
                 >
-                  <FormControlSelectTrigger>
+                  <FormControlSelectTrigger data-action-id="votes.session.majority.select">
                     <FormControlSelectValue />
                   </FormControlSelectTrigger>
                   <FormControlSelectContent>
-                    <FormControlSelectItem value="simple">
+                    <FormControlSelectItem
+                      data-action-id="votes.session.majority.simple"
+                      value="simple"
+                    >
                       {t('features.events.voting.simpleMajority')}
                     </FormControlSelectItem>
-                    <FormControlSelectItem value="absolute">
+                    <FormControlSelectItem
+                      data-action-id="votes.session.majority.absolute"
+                      value="absolute"
+                    >
                       {t('features.events.voting.absoluteMajority')}
                     </FormControlSelectItem>
-                    <FormControlSelectItem value="two_thirds">
+                    <FormControlSelectItem
+                      data-action-id="votes.session.majority.two-thirds"
+                      value="two_thirds"
+                    >
                       {t('features.events.voting.twoThirdsMajority')}
                     </FormControlSelectItem>
                   </FormControlSelectContent>
@@ -146,6 +160,7 @@ export function VotingSessionManagerView({
               </div>
 
               <Button
+                data-action-id="votes.session.introduction.start"
                 onClick={handleStartIntroduction}
                 disabled={isLoading || totalVoters === 0}
                 className="w-full"
@@ -174,7 +189,11 @@ export function VotingSessionManagerView({
         <CardHeader>
           <div className="flex items-center justify-between">
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" presentation="transparentGhost">
+              <Button
+                data-action-id="votes.session.active.toggle"
+                variant="ghost"
+                presentation="transparentGhost"
+              >
                 <CardTitle className="flex items-center gap-2 text-lg">
                   {currentSession.phase === 'introduction' && (
                     <>
@@ -294,7 +313,12 @@ export function VotingSessionManagerView({
             {canManageVoting && (
               <div className="flex gap-2">
                 {currentSession.phase === 'introduction' && (
-                  <Button onClick={handleStartVoting} disabled={isLoading} className="flex-1">
+                  <Button
+                    data-action-id="votes.session.voting.start"
+                    onClick={handleStartVoting}
+                    disabled={isLoading}
+                    className="flex-1"
+                  >
                     {isLoading ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
@@ -306,6 +330,7 @@ export function VotingSessionManagerView({
 
                 {currentSession.phase === 'voting' && (
                   <Button
+                    data-action-id="votes.session.voting.close"
                     variant="destructive"
                     onClick={handleCloseVoting}
                     disabled={isLoading}

@@ -3,7 +3,7 @@
 import type { CSSProperties } from 'react';
 
 import { Button } from '@/features/shared/ui/ui/button';
-import { UserPlus, Plus, Trash2, Shield } from 'lucide-react';
+import { Check, UserPlus, Plus, Trash2, Shield } from 'lucide-react';
 import {
   DataTable,
   MatrixCheckbox,
@@ -16,7 +16,7 @@ import {
 } from '@/features/shared/ui/data-table';
 import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { ScrollableTabsList } from '@/features/shared/ui/navigation';
-import { InlineCheckbox, SearchField, ValidatedField } from '@/features/shared/ui/form';
+import { SearchField, ValidatedField } from '@/features/shared/ui/form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { RoleTag } from '@/features/groups/ui/RoleTag';
 import {
@@ -46,13 +46,11 @@ import type { User } from '@/zero';
 import { BLOG_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
-function displayName(u: Pick<User, 'first_name' | 'last_name'> | undefined | null): string {
-  if (!u) return translateText('common.unknown');
+function displayName(u: Pick<User, 'first_name' | 'last_name'>): string {
   return [u.first_name, u.last_name].filter(Boolean).join(' ') || translateText('common.unknown');
 }
 
-function initials(u: Pick<User, 'first_name' | 'last_name'> | undefined | null): string {
-  if (!u) return 'U';
+function initials(u: Pick<User, 'first_name' | 'last_name'>): string {
   return u.first_name?.charAt(0) || u.last_name?.charAt(0) || 'U';
 }
 export interface BlogBloggersManagerViewProps {
@@ -174,7 +172,7 @@ export function BlogBloggersManagerView({
           <h2 className="mb-2 text-2xl font-bold">
             {translateText('generated.inline.0239_blog_not_found_70b91de2')}
           </h2>
-          <Button onClick={() => window.history.back()}>
+          <Button data-action-id="blogs.bloggers.back" onClick={() => window.history.back()}>
             {translateText('generated.inline.0240_go_back_f03e2d07')}
           </Button>
         </div>
@@ -215,12 +213,12 @@ export function BlogBloggersManagerView({
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <ScrollableTabsList>
-            <TabsTrigger value="bloggers">
+            <TabsTrigger data-action-id="blogs.bloggers.tab.bloggers" value="bloggers">
               {translateText('features.blogs.bloggers.tabTitle', {
                 count: filteredBloggers.length,
               })}
             </TabsTrigger>
-            <TabsTrigger value="roles">
+            <TabsTrigger data-action-id="blogs.bloggers.tab.roles" value="roles">
               {translateText('features.blogs.bloggers.rolesTabTitle', {
                 count: rolesData.roles.length,
               })}
@@ -229,7 +227,7 @@ export function BlogBloggersManagerView({
           {canManageBloggers ? (
             <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button data-action-id="blogs.bloggers.invite.open">
                   <UserPlus className="mr-2 h-4 w-4" />
                   {translateText('generated.inline.0245_invite_bloggers_0224f12b')}
                 </Button>
@@ -271,14 +269,19 @@ export function BlogBloggersManagerView({
                             ) : (
                               filteredUsers?.map((u: any) => (
                                 <CommandItem
+                                  data-action-id="blogs.bloggers.invite.select-user"
                                   key={u.id}
                                   className="flex cursor-pointer items-center space-x-2"
                                   onSelect={() => toggleUserSelection(u.id)}
                                 >
-                                  <InlineCheckbox
-                                    checked={selectedUsers.includes(u.id)}
-                                    onCheckedChange={() => toggleUserSelection(u.id)}
-                                  />
+                                  <span
+                                    aria-hidden="true"
+                                    className="border-primary flex h-4 w-4 items-center justify-center rounded border"
+                                  >
+                                    {selectedUsers.includes(u.id) ? (
+                                      <Check className="h-3 w-3" />
+                                    ) : null}
+                                  </span>
                                   <Avatar className="h-8 w-8">
                                     <AvatarImage src={u.avatar || ''} />
                                     <AvatarFallback>{initials(u)}</AvatarFallback>
@@ -307,10 +310,15 @@ export function BlogBloggersManagerView({
                       ) : null}
                     </div>
                     <DialogFooter>
-                      <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
+                      <Button
+                        data-action-id="blogs.bloggers.invite.cancel"
+                        variant="outline"
+                        onClick={() => setInviteDialogOpen(false)}
+                      >
                         {translateText('generated.inline.0065_cancel_77dfd213')}
                       </Button>
                       <Button
+                        data-action-id="blogs.bloggers.invite.submit"
                         onClick={handleInviteBloggers}
                         disabled={selectedUsers.length === 0 || isInviting}
                       >
@@ -447,7 +455,7 @@ export function BlogBloggersManagerView({
               {canManageBloggers ? (
                 <Dialog open={addRoleDialogOpen} onOpenChange={setAddRoleDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button>
+                    <Button data-action-id="blogs.bloggers.role.open-create">
                       <Plus className="mr-2 h-4 w-4" />
                       {translateText('generated.inline.0125_add_role_82d0afcc')}
                     </Button>
@@ -484,13 +492,18 @@ export function BlogBloggersManagerView({
                     </div>
                     <DialogFooter>
                       <Button
+                        data-action-id="blogs.bloggers.role.cancel-create"
                         type="button"
                         variant="outline"
                         onClick={() => setAddRoleDialogOpen(false)}
                       >
                         {translateText('generated.inline.0065_cancel_77dfd213')}
                       </Button>
-                      <Button type="button" onClick={handleCreateRole}>
+                      <Button
+                        data-action-id="blogs.bloggers.role.create"
+                        type="button"
+                        onClick={handleCreateRole}
+                      >
                         {translateText('generated.inline.0132_create_role_5bea05a8')}
                       </Button>
                     </DialogFooter>
@@ -517,6 +530,10 @@ export function BlogBloggersManagerView({
                             ) : null}
                             {canManageBloggers && r.name !== 'Owner' ? (
                               <Button
+                                data-action-id="blogs.bloggers.role.delete"
+                                aria-label={translateText('features.blogs.bloggers.deleteRole', {
+                                  role: r.name || 'Role',
+                                })}
                                 variant="ghost"
                                 size="sm"
                                 className="mt-1 h-6 w-6 p-0"
@@ -544,6 +561,8 @@ export function BlogBloggersManagerView({
                               <MatrixTableCell key={r.id} className="text-center">
                                 <div className="flex justify-center">
                                   <MatrixCheckbox
+                                    data-action-id="blogs.bloggers.permission.toggle"
+                                    aria-label={`${label}: ${r.name || 'Role'}`}
                                     checked={hasRight}
                                     disabled={!canManageBloggers}
                                     onCheckedChange={() =>

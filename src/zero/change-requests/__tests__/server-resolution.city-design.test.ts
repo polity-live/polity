@@ -190,4 +190,128 @@ describe('resolveChangeRequestByVoteResult for CityDesign', () => {
       })
     );
   });
+
+  it('inserts a missing design using snapshot context and the translated title fallback', async () => {
+    const [generatedPayload] = createCityDesignChangeRequestPayloads({
+      amendmentId: 'amendment-1',
+      cityDesignId: 'city-design-new',
+      baseDesign: state([]),
+      draftDesign: state([object()]),
+      createId: () => 'cr-insert-new-design',
+    });
+    const payload = { ...generatedPayload, source_title: null, title: null };
+    const tx = createTx([payload, null, null]);
+
+    await resolveChangeRequestByVoteResult({
+      tx: tx as never,
+      ctx: { userID: 'creator' },
+      changeRequestId: payload.id,
+      voteResult: 'passed',
+      now: 2_000,
+    });
+
+    expect(tx.mutate.amendment_city_design.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amendment_id: 'amendment-1',
+        created_by_id: 'creator',
+        title: 'Change Request',
+        created_at: 2_000,
+      })
+    );
+    expect(tx.mutate.amendment_city_design.update).not.toHaveBeenCalled();
+  });
+
+  it('falls back from new to original design context', async () => {
+    const [generatedPayload] = createCityDesignChangeRequestPayloads({
+      amendmentId: 'amendment-1',
+      cityDesignId: 'city-design-1',
+      baseDesign: state([]),
+      draftDesign: state([object()]),
+      createId: () => 'cr-original-context',
+    });
+    const newProperties = { ...(generatedPayload.new_properties as Record<string, unknown>) };
+    const designContext = newProperties.designContext;
+    delete newProperties.designContext;
+    const payload = {
+      ...generatedPayload,
+      new_properties: newProperties,
+      original_properties: { cityDesignId: 'city-design-1', designContext },
+    };
+    const tx = createTx([
+      payload,
+      { id: 'city-design-1', amendment_id: 'amendment-1', design_state: state([]) },
+    ]);
+
+    await resolveChangeRequestByVoteResult({
+      tx: tx as never,
+      ctx: { userID: 'user' },
+      changeRequestId: payload.id,
+      voteResult: 'passed',
+      now: 1,
+    });
+
+    expect(tx.mutate.amendment_city_design.update).toHaveBeenCalledOnce();
+  });
+
+  it('uses the persisted design when no snapshot context is available', async () => {
+    const [generatedPayload] = createCityDesignChangeRequestPayloads({
+      amendmentId: 'amendment-1',
+      cityDesignId: 'city-design-1',
+      baseDesign: state([]),
+      draftDesign: state([object()]),
+      createId: () => 'cr-no-context',
+    });
+    const newProperties = { ...(generatedPayload.new_properties as Record<string, unknown>) };
+    delete newProperties.designContext;
+    const payload = {
+      ...generatedPayload,
+      new_properties: newProperties,
+      original_properties: null,
+    };
+    const tx = createTx([
+      payload,
+      { id: 'city-design-1', amendment_id: 'amendment-1', design_state: state([]) },
+    ]);
+
+    await resolveChangeRequestByVoteResult({
+      tx: tx as never,
+      ctx: { userID: 'user' },
+      changeRequestId: payload.id,
+      voteResult: 'passed',
+      now: 1,
+    });
+
+    expect(tx.mutate.amendment_city_design.update).toHaveBeenCalledOnce();
+  });
+
+  it('falls back to amendment lookup for malformed snapshot ids', async () => {
+    const [generatedPayload] = createCityDesignChangeRequestPayloads({
+      amendmentId: 'amendment-1',
+      cityDesignId: 'city-design-1',
+      baseDesign: state([]),
+      draftDesign: state([object()]),
+      createId: () => 'cr-malformed-snapshot',
+    });
+    const payload = {
+      ...generatedPayload,
+      new_properties: [],
+      original_properties: { cityDesignId: '' },
+    };
+    const tx = createTx([
+      payload,
+      { id: 'city-design-1', amendment_id: 'amendment-1', design_state: state([]) },
+    ]);
+
+    await resolveChangeRequestByVoteResult({
+      tx: tx as never,
+      ctx: { userID: 'user' },
+      changeRequestId: payload.id,
+      voteResult: 'rejected',
+      now: 1,
+    });
+
+    expect(tx.mutate.change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'rejected' })
+    );
+  });
 });

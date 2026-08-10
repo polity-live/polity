@@ -6,6 +6,7 @@ interface EnsureUserViewProps {
   children: ReactNode;
   isLoading: boolean;
   hasUser: boolean;
+  zeroConnectionState: string;
   connectionStatus: 'syncing' | 'disconnected' | 'connecting';
   retry: () => void | Promise<void>;
   signOut: () => void | Promise<void>;
@@ -15,6 +16,7 @@ export function EnsureUserView({
   children,
   isLoading,
   hasUser,
+  zeroConnectionState,
   connectionStatus,
   retry,
   signOut,
@@ -27,5 +29,17 @@ export function EnsureUserView({
     return null;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <span
+        hidden
+        data-testid="app-readiness"
+        data-app-state="ready"
+        data-auth-state="authenticated"
+        data-data-state="hydrated"
+        data-zero-connection={zeroConnectionState}
+      />
+      {children}
+    </>
+  );
 }

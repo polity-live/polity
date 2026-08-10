@@ -33,6 +33,8 @@ function formatBytes(value?: number | null) {
   return `${(value / 1_000_000).toFixed(1)} MB`;
 }
 
+export const groupDatasetsSectionInternals = { providerLabel, formatBytes };
+
 export function GroupDatasetsSection({
   groupId,
   canManageDatasets,
@@ -143,6 +145,7 @@ export function GroupDatasetsSection({
         />
         {canManageDatasets ? (
           <FileUploadTrigger
+            data-action-id="groups.datasets.upload.file"
             inputProps={{
               accept: '.csv,.tsv,text/csv,text/tab-separated-values,text/plain',
             }}
@@ -203,6 +206,7 @@ export function GroupDatasetsSection({
             </div>
             {canManageDatasets ? (
               <Button
+                data-action-id="groups.datasets.archive.dataset"
                 type="button"
                 variant="ghost"
                 size="icon"

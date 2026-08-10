@@ -373,4 +373,12 @@ describe('ModernTimelineView', () => {
     expect(railColumn.className).toContain('min-w-0');
     expect(railColumn.className).toContain('max-w-full');
   });
+
+  it('shows discoverable activity only when a discover count exists', () => {
+    const props = createTimelineViewProps();
+    props.civicTimeline.discoverCount = 3;
+    render(<ModernTimelineView {...props} />);
+
+    expect(screen.getByText('{{count}} discover')).toBeTruthy();
+  });
 });

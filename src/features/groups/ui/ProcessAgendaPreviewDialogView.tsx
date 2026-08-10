@@ -80,6 +80,8 @@ function TimelineList({
   );
 }
 
+export const processAgendaPreviewDialogViewInternals = { formatTime, TimelineList };
+
 export interface ProcessAgendaPreviewDialogViewProps {
   open: any;
   onOpenChange: any;

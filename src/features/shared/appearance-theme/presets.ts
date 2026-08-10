@@ -67,9 +67,9 @@ interface PresetInput {
   description: string;
   primary: string;
   primaryForeground: string;
-  darkPrimary?: string;
-  darkPrimaryForeground?: string;
-  darkAccent?: string;
+  darkPrimary: string;
+  darkPrimaryForeground: string;
+  darkAccent: string;
   charts: ThemePalette['charts'];
   fonts: ThemeFonts;
   lightSurfaces: {
@@ -130,8 +130,8 @@ function preset(input: PresetInput): AppearanceThemeDefinition {
       foreground: input.darkSurfaces.foreground,
       card: input.darkSurfaces.card,
       cardForeground: input.darkSurfaces.foreground,
-      primary: input.darkPrimary ?? input.primary,
-      primaryForeground: input.darkPrimaryForeground ?? input.primaryForeground,
+      primary: input.darkPrimary,
+      primaryForeground: input.darkPrimaryForeground,
       secondary: input.darkSurfaces.surface,
       secondaryForeground: input.darkSurfaces.foreground,
       muted: input.darkSurfaces.surface,
@@ -140,9 +140,9 @@ function preset(input: PresetInput): AppearanceThemeDefinition {
       accentForeground: input.darkSurfaces.accentForeground,
       border: input.darkSurfaces.border,
       input: input.darkSurfaces.border,
-      brand: input.darkPrimary ?? input.primary,
-      ring: input.darkAccent ?? input.darkSurfaces.accentForeground,
-      highlight: input.darkAccent ?? input.darkSurfaces.accentForeground,
+      brand: input.darkPrimary,
+      ring: input.darkAccent,
+      highlight: input.darkAccent,
       charts: input.charts,
     },
     fonts: input.fonts,

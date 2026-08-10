@@ -197,8 +197,9 @@ export function getOwnContentStats(result: OwnContentResult): {
   let maxEngagement = 0;
 
   for (const item of allItems) {
-    if ((item.engagementScore || 0) > maxEngagement) {
-      maxEngagement = item.engagementScore || 0;
+    const engagement = item.engagementScore ?? 0;
+    if (engagement > maxEngagement) {
+      maxEngagement = engagement;
       topPerforming = item;
     }
   }

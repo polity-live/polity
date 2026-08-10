@@ -11,11 +11,19 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 }));
 
 vi.mock('@/features/shared/ui/action-buttons', () => ({
-  SubscribeButton: () => <button type="button">subscribe</button>,
+  SubscribeButton: ({ 'data-action-id': actionId }: { 'data-action-id'?: string }) => (
+    <button type="button" data-action-id={actionId}>
+      subscribe
+    </button>
+  ),
 }));
 
 vi.mock('@/features/shared/ui/action-buttons/ShareButton.tsx', () => ({
-  ShareButton: () => <button type="button">share</button>,
+  ShareButton: ({ 'data-action-id': actionId }: { 'data-action-id'?: string }) => (
+    <button type="button" data-action-id={actionId}>
+      share
+    </button>
+  ),
 }));
 
 vi.mock('@/features/shared/ui/hashtags', () => ({
@@ -91,6 +99,10 @@ describe('UserWikiView actions', () => {
     expect(screen.getByRole('button', { name: 'subscribe' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'message' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'share' })).toBeTruthy();
+    expect(document.querySelector('[data-action-id="users.wiki.subscribe"]')).toBeTruthy();
+    expect(document.querySelector('[data-action-id="users.wiki.message"]')).toBeTruthy();
+    expect(document.querySelector('[data-action-id="users.wiki.share"]')).toBeTruthy();
+    expect(document.querySelector('[data-action-id="users.wiki.support-tier.help"]')).toBeTruthy();
   });
 
   it('stacks the pricing tier and mobile hashtags below a constrained title', () => {

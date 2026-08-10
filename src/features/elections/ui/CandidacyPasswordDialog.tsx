@@ -18,6 +18,7 @@ import { cn } from '@/features/shared/utils/utils';
 export type CandidacyPasswordDialogMode = 'become' | 'withdraw';
 
 export interface CandidacyPasswordDialogProps {
+  'data-action-id'?: string;
   open: boolean;
   mode: CandidacyPasswordDialogMode;
   electionTitle?: string | null;
@@ -33,6 +34,7 @@ export interface CandidacyPasswordDialogProps {
 }
 
 export function CandidacyPasswordDialog({
+  'data-action-id': actionId,
   open,
   mode,
   electionTitle,
@@ -166,8 +168,9 @@ export function CandidacyPasswordDialog({
                   })}
                 </div>
               ) : (
-                <div className="rounded-lg border border-dashed p-4">
+                <div data-action-id={actionId} className="rounded-lg border border-dashed p-4">
                   <VotePasswordInput
+                    data-action-id="elections.candidacy.submit"
                     onSubmit={onSubmit}
                     error={error}
                     noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
@@ -182,6 +185,7 @@ export function CandidacyPasswordDialog({
                 {isSubmitting ? t('features.events.candidacy.verifyingPin') : null}
               </p>
               <Button
+                data-action-id="elections.candidacy.cancel"
                 type="button"
                 variant="outline"
                 disabled={isSubmitting}

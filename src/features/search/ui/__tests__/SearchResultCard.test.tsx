@@ -135,7 +135,10 @@ describe('SearchResultCard', () => {
     const link = screen.getByRole('link', { name: 'Civic Assembly' });
 
     expect(preview).toBeTruthy();
+    expect(link.getAttribute('data-action-id')).toBe('search.result.preview.open');
     expect(link.getAttribute('href')).toBe('/group/group-1');
+    link.focus();
+    expect(document.activeElement).toBe(link);
     expect(screen.getByText('A group for civic work.')).toBeTruthy();
     expect(screen.getByText('#democracy')).toBeTruthy();
     expect(screen.getByText('12')).toBeTruthy();

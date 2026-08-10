@@ -106,6 +106,16 @@ function sortPayments(items: GroupPaymentRow[]): GroupPaymentRow[] {
   );
 }
 
+export const paymentsSectionInternals = {
+  getPaymentTypeLabel,
+  getPaymentDirection,
+  getUserLabel,
+  getGroupLabel,
+  getCounterpartyKey,
+  getCounterpartyLabel,
+  sortPayments,
+};
+
 interface PaymentsSectionProps {
   canManagePayments?: boolean;
   groupId: string;

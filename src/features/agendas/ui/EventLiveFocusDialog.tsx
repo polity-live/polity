@@ -174,6 +174,17 @@ function getAgendaVisualStatus(status?: string | null, isLive?: boolean): Agenda
   return 'planned';
 }
 
+const ignoreCandidateAction = () => undefined;
+
+export const eventLiveFocusDialogTestApi = {
+  canShowVotingAction,
+  formatGenderBadgeLabel,
+  getAgendaVisualStatus,
+  getInitials,
+  getSpeakerName,
+  ignoreCandidateAction,
+};
+
 function SpeakerFocusPanel({
   className,
   t,
@@ -213,6 +224,7 @@ function SpeakerFocusPanel({
           ) : null}
           {onCollapse ? (
             <Button
+              data-action-id="agendas.live-focus.speakers.collapse"
               type="button"
               variant="ghost"
               size="icon"
@@ -255,6 +267,8 @@ function SpeakerFocusPanel({
               </div>
               {canManageAgenda && onMarkSpeakerCompleted ? (
                 <Button
+                  data-action-id="agendas.live-focus.speaker.complete"
+                  data-action-kind="async-action"
                   type="button"
                   variant="outline"
                   size="sm"
@@ -335,6 +349,7 @@ function SpeakerFocusRail({
   return (
     <aside className="bg-card hidden min-h-0 flex-col items-center gap-3 rounded-lg border p-2 shadow-sm lg:flex">
       <Button
+        data-action-id="agendas.live-focus.speakers.expand"
         type="button"
         variant="ghost"
         size="icon"
@@ -346,6 +361,7 @@ function SpeakerFocusRail({
         <PanelRightOpen className="h-4 w-4" />
       </Button>
       <button
+        data-action-id="agendas.live-focus.speakers.expand"
         type="button"
         onClick={onExpand}
         className="hover:bg-accent focus-visible:ring-ring flex w-full flex-col items-center gap-1 rounded-md px-2 py-3 text-center transition-colors focus-visible:ring-2 focus-visible:outline-none"
@@ -482,6 +498,7 @@ export function EventLiveFocusDialog({
             </div>
           </div>
           <Button
+            data-action-id="agendas.live-focus.dialog.close"
             type="button"
             variant="ghost"
             size="icon"
@@ -605,7 +622,7 @@ export function EventLiveFocusDialog({
                         canVote={false}
                         canBeCandidate={false}
                         isUserCandidate={false}
-                        onBecomeCandidate={() => undefined}
+                        onBecomeCandidate={ignoreCandidateAction}
                       />
                     ) : null)}
 
@@ -665,6 +682,7 @@ export function EventLiveFocusDialog({
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               {showVoteButton ? (
                 <Button
+                  data-action-id="agendas.live-focus.ballot.cast"
                   type="button"
                   size="lg"
                   onClick={isVoteActionBlocked ? undefined : onVoteClick}
@@ -693,6 +711,7 @@ export function EventLiveFocusDialog({
 
               {currentAgendaItem && !isUserInSpeakerList && onJoinSpeakerList ? (
                 <Button
+                  data-action-id="agendas.live-focus.speaker.join"
                   type="button"
                   variant={showVoteButton ? 'outline' : 'default'}
                   size="lg"
@@ -707,6 +726,7 @@ export function EventLiveFocusDialog({
 
               {currentAgendaItem && isUserInSpeakerList && onLeaveSpeakerList ? (
                 <Button
+                  data-action-id="agendas.live-focus.speaker.leave"
                   type="button"
                   variant="outline"
                   size="lg"
@@ -721,6 +741,7 @@ export function EventLiveFocusDialog({
 
               {isElectionItem && !isUserCandidate && onBecomeCandidate ? (
                 <Button
+                  data-action-id="agendas.live-focus.candidacy.become"
                   type="button"
                   variant="outline"
                   size="lg"
@@ -736,6 +757,7 @@ export function EventLiveFocusDialog({
 
               {isElectionItem && isUserCandidate && onWithdrawCandidacy ? (
                 <Button
+                  data-action-id="agendas.live-focus.candidacy.withdraw"
                   type="button"
                   variant="outline"
                   size="lg"
@@ -757,6 +779,8 @@ export function EventLiveFocusDialog({
               <div className="flex flex-wrap items-center gap-2">
                 {showOfflineTallyButton || onOfflineTallyClick ? (
                   <Button
+                    data-action-id="agendas.live-focus.offline-tally.open"
+                    data-action-kind="interaction"
                     type="button"
                     variant="outline"
                     onClick={onOfflineTallyClick}
@@ -773,6 +797,7 @@ export function EventLiveFocusDialog({
                 ) : null}
                 {onJumpToNextVoteStep ? (
                   <Button
+                    data-action-id="agendas.live-focus.vote-step.next"
                     type="button"
                     variant="outline"
                     onClick={onJumpToNextVoteStep}
@@ -784,31 +809,55 @@ export function EventLiveFocusDialog({
                   </Button>
                 ) : null}
                 {onStartVote ? (
-                  <Button type="button" variant="outline" onClick={onStartVote}>
+                  <Button
+                    data-action-id="agendas.live-focus.vote.start"
+                    data-action-kind="async-action"
+                    type="button"
+                    variant="outline"
+                    onClick={onStartVote}
+                  >
                     <Play className="h-4 w-4" />
                     {startVoteLabel ?? t('features.events.agenda.actions.startVote')}
                   </Button>
                 ) : null}
                 {onStartFinalVote ? (
-                  <Button type="button" variant="outline" onClick={onStartFinalVote}>
+                  <Button
+                    data-action-id="agendas.live-focus.vote.start-final"
+                    data-action-kind="async-action"
+                    type="button"
+                    variant="outline"
+                    onClick={onStartFinalVote}
+                  >
                     <Gavel className="h-4 w-4" />
                     {startFinalVoteLabel ?? t('features.events.agenda.actions.startFinalVote')}
                   </Button>
                 ) : null}
                 {onCloseFinalVote ? (
-                  <Button type="button" variant="outline" onClick={onCloseFinalVote}>
+                  <Button
+                    data-action-id="agendas.live-focus.vote.close-final"
+                    data-action-kind="async-action"
+                    type="button"
+                    variant="outline"
+                    onClick={onCloseFinalVote}
+                  >
                     <CheckCircle2 className="h-4 w-4" />
                     {closeFinalVoteLabel ?? t('features.events.agenda.actions.closeFinalVote')}
                   </Button>
                 ) : null}
                 {onEditItem ? (
-                  <Button type="button" variant="outline" onClick={onEditItem}>
+                  <Button
+                    data-action-id="agendas.live-focus.item.edit"
+                    type="button"
+                    variant="outline"
+                    onClick={onEditItem}
+                  >
                     <PencilLine className="h-4 w-4" />
                     {t('common.actions.edit', 'Edit')}
                   </Button>
                 ) : null}
                 {onCompleteItem ? (
                   <Button
+                    data-action-id="agendas.live-focus.item.complete"
                     type="button"
                     variant="outline"
                     onClick={onCompleteItem}
@@ -821,6 +870,7 @@ export function EventLiveFocusDialog({
                 ) : null}
                 {onNextItem ? (
                   <Button
+                    data-action-id="agendas.live-focus.item.next"
                     type="button"
                     variant="outline"
                     onClick={onNextItem}

@@ -6,6 +6,7 @@ import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { useAuth } from '@/providers/auth-provider';
 import { useUserState } from '@/zero/users/useUserState';
 import { usePermissions } from '@/zero/rbac/usePermissions';
+import { mapEditorUserRecord } from '@/routes/_authed';
 
 export const Route = createFileRoute('/_authed/group/$id/blog/$entryId/editor')({
   component: GroupBlogEditorPage,
@@ -28,17 +29,7 @@ function GroupBlogEditorPage() {
     return <AccessDenied />;
   }
 
-  const userRecord = currentUser
-    ? {
-        id: currentUser.id,
-        name:
-          [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ') ||
-          currentUser.handle ||
-          '',
-        email: user?.email,
-        avatar: currentUser.avatar ?? undefined,
-      }
-    : undefined;
+  const userRecord = mapEditorUserRecord(currentUser, user?.email);
 
   return (
     <EditorView entityType="blog" entityId={entryId} userId={user?.id} userRecord={userRecord} />

@@ -9,7 +9,6 @@ import {
   getAppTutorialCheckpoint,
   getNextAppTutorialCheckpoint,
   matchesAppTutorialExpectedInput,
-  matchesTutorialInput,
   resolveAppTutorialRoute,
   type AppTutorialCheckpointId,
   type AppTutorialCompletion,
@@ -122,7 +121,9 @@ export class AppTutorialEffectPendingError extends Error {
 }
 
 function uuidPair(a: string, b: string): [string, string] {
-  return a < b ? [a, b] : [b, a];
+  const pair: [string, string] = [a, b];
+  pair.sort();
+  return pair;
 }
 
 function richText(text: string) {
@@ -862,8 +863,7 @@ async function validateEvidence(
         evidence.type !== 'action' ||
         evidence.event !== completion.event ||
         (completion.expectedInputKey &&
-          !matchesAppTutorialExpectedInput(evidence.value ?? '', completion.expectedInputKey)) ||
-        (completion.expected && !matchesTutorialInput(evidence.value ?? '', completion.expected))
+          !matchesAppTutorialExpectedInput(evidence.value ?? '', completion.expectedInputKey))
       ) {
         throw new Error('Expected tutorial action did not succeed');
       }
@@ -884,9 +884,7 @@ async function validateEvidence(
     case 'input':
       if (
         evidence.type !== 'input' ||
-        (completion.expectedInputKey
-          ? !matchesAppTutorialExpectedInput(evidence.value ?? '', completion.expectedInputKey)
-          : !matchesTutorialInput(evidence.value ?? '', completion.expected))
+        !matchesAppTutorialExpectedInput(evidence.value ?? '', completion.expectedInputKey)
       ) {
         throw new Error('Expected tutorial input was not provided');
       }

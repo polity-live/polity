@@ -48,7 +48,9 @@ export const decisionTerminalWidgetVisibilityEnum = z.enum([
 ]);
 
 export const decisionTerminalWidgetFiltersSchema = z.object({
-  status: z.array(z.enum(['live', 'opening_soon', 'recently_closed', 'closed', 'all'])).optional(),
+  status: z
+    .array(z.enum(['live', 'opening_soon', 'closing_soon', 'recently_closed', 'closed', 'all']))
+    .optional(),
   types: z.array(z.enum(['vote', 'election'])).optional(),
   onlyVotable: z.boolean().optional(),
   onlyUrgent: z.boolean().optional(),

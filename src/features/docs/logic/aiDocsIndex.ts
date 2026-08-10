@@ -65,7 +65,8 @@ export interface AiDocsReadResult {
 
 function clampLimit(value: number | null | undefined, fallback = 8): number {
   if (!Number.isFinite(value)) return fallback;
-  return Math.max(1, Math.min(20, Math.floor(value ?? fallback)));
+  // Number.isFinite only accepts finite numbers, so the nullish fallback is unreachable here.
+  return Math.max(1, Math.min(20, Math.floor(value as number)));
 }
 
 function toAiPage(

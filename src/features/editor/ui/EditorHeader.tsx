@@ -63,8 +63,10 @@ export function EditorHeader({
             </h2>
             {canEditTitle ? (
               <Button
+                data-action-id="editor.header.title.edit"
                 variant="ghost"
                 size="sm"
+                aria-label={t('features.editor.header.editTitle', 'Edit title')}
                 className="h-7 w-7 p-0"
                 onClick={() => setIsEditingTitle(true)}
               >

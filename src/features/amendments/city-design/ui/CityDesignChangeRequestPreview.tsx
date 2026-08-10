@@ -50,8 +50,7 @@ export function CityDesignChangeRequestPreview({
   );
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return undefined;
+    const canvas = canvasRef.current as HTMLCanvasElement;
 
     let controller: CityDesignSceneController | undefined;
     let isActive = true;

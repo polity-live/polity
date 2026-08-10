@@ -3,6 +3,7 @@ import {
   VOTE_PHASE,
   VOTE_PURPOSE,
   isFinalVotePhase,
+  isClosedVotePhase,
   isIndicativeVotePhase,
   isInternalVotePhase,
   normalizeVotePhase,
@@ -21,5 +22,8 @@ describe('vote workflow semantics', () => {
     expect(VOTE_PURPOSE.closing).toBe('closing');
     expect(VOTE_PURPOSE.mergeVariant).toBe('merge_variant');
     expect(isFinalVotePhase(VOTE_PHASE.final)).toBe(true);
+    expect(normalizeVotePhase(VOTE_PHASE.closed)).toBe(VOTE_PHASE.closed);
+    expect(isClosedVotePhase(VOTE_PHASE.closed)).toBe(true);
+    expect(() => normalizeVotePhase('legacy')).toThrow('Unknown vote phase: legacy');
   });
 });

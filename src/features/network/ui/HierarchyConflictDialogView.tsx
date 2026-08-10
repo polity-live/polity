@@ -132,6 +132,7 @@ export function HierarchyConflictDialogView({
                                 type="button"
                                 variant="outline"
                                 size="sm"
+                                data-action-id="network.hierarchy-conflict.group.message"
                                 className="h-8 px-2 text-xs"
                                 onClick={event => {
                                   event.stopPropagation();
@@ -145,6 +146,7 @@ export function HierarchyConflictDialogView({
                                 type="button"
                                 variant="destructive"
                                 size="sm"
+                                data-action-id="network.hierarchy-conflict.relationship.deactivate"
                                 className="h-8 px-2 text-xs"
                                 disabled={removingUserId === user.userId || isSubmitting}
                                 onClick={async event => {
@@ -190,6 +192,7 @@ export function HierarchyConflictDialogView({
                               type="button"
                               variant="outline"
                               size="sm"
+                              data-action-id="network.hierarchy-conflict.user.message"
                               className="h-8 px-2 text-xs"
                               onClick={event => {
                                 event.stopPropagation();
@@ -219,6 +222,7 @@ export function HierarchyConflictDialogView({
             type="button"
             variant="outline"
             disabled={isSubmitting}
+            data-action-id="network.hierarchy-conflict.cancel"
             onClick={() => onOpenChange(false)}
           >
             {t('common.actions.cancel')}
@@ -227,6 +231,7 @@ export function HierarchyConflictDialogView({
             type="button"
             variant="destructive"
             disabled={isSubmitting}
+            data-action-id="network.hierarchy-conflict.reject"
             onClick={handleReject}
           >
             {t('common.network.reject')}
@@ -240,6 +245,7 @@ export function HierarchyConflictDialogView({
               relationshipPreflight.isLoading
             }
             onClick={handleAccept}
+            data-action-id="network.hierarchy-conflict.accept"
           >
             {t('common.network.accept')}
           </Button>

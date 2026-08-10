@@ -30,6 +30,7 @@ export function ThemeToggleView({
   return (
     <div className={cn('flex gap-1', className)}>
       <NavigationIconToggleButton
+        data-action-id="navigation.theme.light.select"
         value="light"
         currentValue={currentTheme}
         onClick={onLight}
@@ -38,6 +39,7 @@ export function ThemeToggleView({
         size={size}
       />
       <NavigationIconToggleButton
+        data-action-id="navigation.theme.dark.select"
         value="dark"
         currentValue={currentTheme}
         onClick={onDark}
@@ -46,6 +48,7 @@ export function ThemeToggleView({
         size={size}
       />
       <NavigationIconToggleButton
+        data-action-id="navigation.theme.system.select"
         value="system"
         currentValue={currentTheme}
         onClick={onSystem}

@@ -94,14 +94,7 @@ export function canReadVisibility(
   ctx: AuthContext,
   hasPrivateAccess = false
 ): boolean {
-  const normalizedVisibility =
-    visibility === 'public' || visibility === 'authenticated'
-      ? visibility
-      : visibility === 'private'
-        ? visibility
-        : 'private';
-
-  if (normalizedVisibility === 'public') return true;
-  if (normalizedVisibility === 'authenticated') return isAuthenticatedUser(ctx);
+  if (visibility === 'public') return true;
+  if (visibility === 'authenticated') return isAuthenticatedUser(ctx);
   return isAuthenticatedUser(ctx) && hasPrivateAccess;
 }

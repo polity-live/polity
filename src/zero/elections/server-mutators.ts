@@ -75,7 +75,7 @@ interface ElectionAssignmentResult {
 }
 
 function isFinalElectionVoteStatus(status?: string | null) {
-  return status === 'final' || status === 'final';
+  return status === 'final';
 }
 
 async function loadElectionEventId(tx: ElectionServerTx, electionId: string) {
@@ -272,7 +272,7 @@ function resolveSingleWinner(args: {
   }
 
   const runnerUpVotes = sortedCandidates[1]
-    ? (voteCountByCandidateId.get(sortedCandidates[1].id) ?? 0)
+    ? (voteCountByCandidateId.get(sortedCandidates[1].id) as number)
     : -1;
   if (winnerVotes === runnerUpVotes) {
     return {
@@ -280,7 +280,7 @@ function resolveSingleWinner(args: {
       voteCountByCandidateId,
       requiresRunoff: true,
       tiedCandidateIds: sortedCandidates
-        .filter(candidate => (voteCountByCandidateId.get(candidate.id) ?? 0) === winnerVotes)
+        .filter(candidate => voteCountByCandidateId.get(candidate.id) === winnerVotes)
         .map(candidate => candidate.id),
     };
   }
@@ -335,7 +335,7 @@ function resolveMultiSeatWinners(args: {
   );
 
   const positiveVoteCandidates = sortedCandidates.filter(
-    candidate => (voteCountByCandidateId.get(candidate.id) ?? 0) > 0
+    candidate => (voteCountByCandidateId.get(candidate.id) as number) > 0
   );
   const winners = positiveVoteCandidates.slice(0, seatCount);
 
@@ -348,9 +348,10 @@ function resolveMultiSeatWinners(args: {
     };
   }
 
-  const boundaryWinner = winners[winners.length - 1];
+  // The empty-winners return above guarantees that this final slice entry exists.
+  const boundaryWinner = winners[winners.length - 1] as CandidateLike;
   const nextCandidate = positiveVoteCandidates[winners.length];
-  if (!boundaryWinner || !nextCandidate) {
+  if (!nextCandidate) {
     return {
       winners,
       voteCountByCandidateId,
@@ -359,15 +360,15 @@ function resolveMultiSeatWinners(args: {
     };
   }
 
-  const boundaryVotes = voteCountByCandidateId.get(boundaryWinner.id) ?? 0;
-  const nextVotes = voteCountByCandidateId.get(nextCandidate.id) ?? 0;
-  if (boundaryVotes > 0 && boundaryVotes === nextVotes) {
+  const boundaryVotes = voteCountByCandidateId.get(boundaryWinner.id) as number;
+  const nextVotes = voteCountByCandidateId.get(nextCandidate.id) as number;
+  if (boundaryVotes === nextVotes) {
     return {
       winners: [],
       voteCountByCandidateId,
       requiresRunoff: true,
       tiedCandidateIds: positiveVoteCandidates
-        .filter(candidate => (voteCountByCandidateId.get(candidate.id) ?? 0) === boundaryVotes)
+        .filter(candidate => voteCountByCandidateId.get(candidate.id) === boundaryVotes)
         .map(candidate => candidate.id),
     };
   }
@@ -889,6 +890,19 @@ async function applyElectionAssignments(
     tiedCandidateIds: [],
   };
 }
+
+export const electionServerMutatorTestApi = {
+  addEventParticipantRoleLink,
+  applyElectionAssignments,
+  assertOfflineElectionTallyWithinCap,
+  assertOnlineElectionVoteAllowed,
+  ensureActiveEventParticipant,
+  isFinalElectionVoteStatus,
+  resolveDefaultActiveParticipantRoleId,
+  syncConfirmedDelegatesFromSeatRoles,
+  syncRoleHoldersForRole,
+  syncUsersToEventRole,
+};
 
 /** Server-only mutators — override shared mutators with additional server-side logic. */
 export const electionServerMutators = {

@@ -28,20 +28,32 @@ export function NotificationHeader({
       <div className="flex shrink-0 items-center gap-2">
         <PushNotificationToggle variant="minimal" />
         {unreadCount > 0 && (
-          <Button onClick={onMarkAllAsRead} variant="outline">
+          <Button
+            data-action-id="notifications.header.mark-all.read"
+            onClick={onMarkAllAsRead}
+            variant="outline"
+          >
             <CheckCheck className="mr-2 h-4 w-4" />
             {t('features.notifications.markAllAsRead')}
           </Button>
         )}
         {onMarkAllAsUnread ? (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={t('common.actions.more')}>
+            <DropdownMenuTrigger asChild data-action-id="notifications.header.menu.open">
+              <Button
+                data-action-id="notifications.header.menu.open"
+                variant="ghost"
+                size="icon"
+                aria-label={t('common.actions.more')}
+              >
                 <Ellipsis className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onMarkAllAsUnread}>
+              <DropdownMenuItem
+                data-action-id="notifications.header.mark-all.unread"
+                onClick={onMarkAllAsUnread}
+              >
                 <Mail className="mr-2 h-4 w-4" />
                 {t('features.notifications.markAllAsUnread')}
               </DropdownMenuItem>

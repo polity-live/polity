@@ -34,7 +34,7 @@ export interface PaymentTimelineCardProps {
   className?: string;
 }
 
-function formatPaymentDate(value?: string | Date | null): string | null {
+export function formatTimelinePaymentDate(value?: string | Date | null): string | null {
   if (!value) {
     return null;
   }
@@ -49,13 +49,13 @@ function formatPaymentDate(value?: string | Date | null): string | null {
   }).format(parsed);
 }
 
-function paymentRateDate(value?: string | Date | null): string | undefined {
+export function getTimelinePaymentRateDate(value?: string | Date | null): string | undefined {
   if (!value) return undefined;
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString().slice(0, 10);
 }
 
-function formatPaymentType(value?: string | null): string | null {
+export function formatTimelinePaymentType(value?: string | null): string | null {
   const normalized = value?.trim();
   if (!normalized) {
     return null;
@@ -67,7 +67,7 @@ function formatPaymentType(value?: string | null): string | null {
 export function PaymentTimelineCard({ payment, href, className }: PaymentTimelineCardProps) {
   const { t, language } = useTranslation();
   const originalCurrency = payment.currency ?? 'EUR';
-  const requestedDate = paymentRateDate(payment.createdAt);
+  const requestedDate = getTimelinePaymentRateDate(payment.createdAt);
   const { conversion, isLoading, targetCurrency } = useCurrencyConversion({
     amount: payment.amount,
     currency: originalCurrency,
@@ -78,14 +78,14 @@ export function PaymentTimelineCard({ payment, href, className }: PaymentTimelin
         approximate: targetCurrency !== originalCurrency,
       })
     : Number.isFinite(payment.amount)
-      ? formatCurrencyMajor(payment.amount ?? 0, originalCurrency, language)
+      ? formatCurrencyMajor(payment.amount as number, originalCurrency, language)
       : null;
   const originalAmountLabel =
     conversion && targetCurrency !== originalCurrency
       ? formatCurrencyMajor(payment.amount ?? 0, originalCurrency, language)
       : null;
-  const createdAtLabel = formatPaymentDate(payment.createdAt);
-  const paymentTypeLabel = formatPaymentType(payment.type);
+  const createdAtLabel = formatTimelinePaymentDate(payment.createdAt);
+  const paymentTypeLabel = formatTimelinePaymentType(payment.type);
   const description = normalizeTimelineText(payment.description);
   const paymentHref = href ?? (payment.groupId ? `/group/${payment.groupId}` : undefined);
   const isIncome = payment.direction === 'income';
@@ -123,6 +123,8 @@ export function PaymentTimelineCard({ payment, href, className }: PaymentTimelin
                     <p className="text-muted-foreground text-xs">
                       {originalAmountLabel} · {conversion?.rateDate} ·{' '}
                       <a
+                        data-action-id="timeline.payment.exchange-source.open"
+                        data-action-kind="navigation"
                         href="https://frankfurter.dev/"
                         target="_blank"
                         rel="noreferrer"

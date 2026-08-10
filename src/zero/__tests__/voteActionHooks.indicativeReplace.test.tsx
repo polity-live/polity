@@ -11,10 +11,16 @@ const mocks = vi.hoisted(() => {
     zeroMutate: vi.fn(),
     onServerError: vi.fn(),
     trackServerFinalization: vi.fn(),
+    isZeroClosedMutationCancellation: vi.fn(),
     toastSuccess: vi.fn(),
     toastError: vi.fn(),
     t: vi.fn((key: string) => key),
     voteMutators: {
+      updateVote: vi.fn((args: unknown) => token('mutators.votes.updateVote', args)),
+      startVote: vi.fn((args: unknown) => token('mutators.votes.startVote', args)),
+      closeExpiredFinalVotesForEvent: vi.fn((args: unknown) =>
+        token('mutators.votes.closeExpiredFinalVotesForEvent', args)
+      ),
       submitVote: vi.fn((args: unknown) => token('mutators.votes.submitVote', args)),
       replaceIndicativeVote: vi.fn((args: unknown) =>
         token('mutators.votes.replaceIndicativeVote', args)
@@ -32,6 +38,8 @@ const mocks = vi.hoisted(() => {
       ),
     },
     electionMutators: {
+      updateElection: vi.fn((args: unknown) => token('mutators.elections.updateElection', args)),
+      startElection: vi.fn((args: unknown) => token('mutators.elections.startElection', args)),
       submitElectionVote: vi.fn((args: unknown) =>
         token('mutators.elections.submitElectionVote', args)
       ),
@@ -54,6 +62,11 @@ const mocks = vi.hoisted(() => {
         token('mutators.elections.createFinalCandidateSelection', args)
       ),
     },
+    agendaMutators: {
+      initializeChangeRequestVoting: vi.fn((args: unknown) =>
+        token('mutators.agendas.initializeChangeRequestVoting', args)
+      ),
+    },
   };
 });
 
@@ -67,12 +80,15 @@ vi.mock('../mutators', () => ({
   mutators: {
     votes: mocks.voteMutators,
     elections: mocks.electionMutators,
+    agendas: mocks.agendaMutators,
   },
 }));
 
 vi.mock('../mutate-with-server-check', () => ({
   onServerError: (...args: unknown[]) => mocks.onServerError(...args),
   trackServerFinalization: (...args: unknown[]) => mocks.trackServerFinalization(...args),
+  isZeroClosedMutationCancellation: (...args: unknown[]) =>
+    mocks.isZeroClosedMutationCancellation(...args),
 }));
 
 vi.mock('@/features/notifications/utils/gated-toast', () => ({
@@ -89,12 +105,14 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 
 import { useElectionActions } from '../elections/useElectionActions';
 import { useVoteActions } from '../votes/useVoteActions';
+import { useAgendaActions } from '../agendas/useAgendaActions';
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.zeroMutate.mockReturnValue({
     server: Promise.resolve({ type: 'success' }),
   });
+  mocks.isZeroClosedMutationCancellation.mockReturnValue(false);
 });
 
 describe('vote action hooks route indicative replacement', () => {
@@ -254,5 +272,88 @@ describe('vote action hooks route indicative replacement', () => {
     expect(mocks.toastSuccess).toHaveBeenNthCalledWith(2, 'common.agendaToasts.voteCast', {
       id: 'vote-cast-success',
     });
+  });
+
+  it('routes vote and election phase transitions through start mutators', () => {
+    const voteActions = renderHook(() => useVoteActions());
+    const electionActions = renderHook(() => useElectionActions());
+
+    act(() => {
+      voteActions.result.current.updateVote({ id: 'vote-1', status: 'indicative' } as never);
+      voteActions.result.current.updateVote({ id: 'vote-1', status: 'final' } as never);
+      voteActions.result.current.updateVote({ id: 'vote-1', status: 'closed' } as never);
+      electionActions.result.current.updateElection({
+        id: 'election-1',
+        status: 'indicative',
+      } as never);
+      electionActions.result.current.updateElection({
+        id: 'election-1',
+        status: 'final',
+      } as never);
+      electionActions.result.current.updateElection({
+        id: 'election-1',
+        status: 'closed',
+      } as never);
+    });
+
+    expect(mocks.voteMutators.startVote).toHaveBeenCalledTimes(2);
+    expect(mocks.voteMutators.updateVote).toHaveBeenCalledTimes(1);
+    expect(mocks.electionMutators.startElection).toHaveBeenCalledTimes(2);
+    expect(mocks.electionMutators.updateElection).toHaveBeenCalledTimes(1);
+  });
+
+  it('suppresses vote, election, and agenda success tracking when requested', () => {
+    const voteActions = renderHook(() => useVoteActions());
+    const electionActions = renderHook(() => useElectionActions());
+    const agendaActions = renderHook(() => useAgendaActions());
+    const voteParticipation = { id: 'vote-p', vote_id: 'vote-1', voter_id: 'voter-1' };
+    const electionParticipation = {
+      id: 'election-p',
+      election_id: 'election-1',
+      elector_id: 'elector-1',
+    };
+
+    act(() => {
+      voteActions.result.current.castIndicativeVote(voteParticipation, [], { silent: true });
+      voteActions.result.current.castFinalVote(voteParticipation, [], { silent: true });
+      electionActions.result.current.castIndicativeVote(electionParticipation, [], { silent: true });
+      electionActions.result.current.castFinalVote(electionParticipation, [], { silent: true });
+      agendaActions.result.current.initializeChangeRequestVoting(
+        { amendment_id: 'amendment-1', agenda_item_id: 'agenda-1' },
+        { silent: true }
+      );
+    });
+
+    expect(mocks.trackServerFinalization).not.toHaveBeenCalled();
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
+
+    act(() => {
+      agendaActions.result.current.initializeChangeRequestVoting({
+        amendment_id: 'amendment-1',
+        agenda_item_id: 'agenda-1',
+      });
+    });
+    expect(mocks.toastSuccess).toHaveBeenCalledWith('common.agendaToasts.crVotingInitialized');
+  });
+
+  it('logs only genuine close-expired failures', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { result } = renderHook(() => useVoteActions());
+
+    act(() => {
+      result.current.closeExpiredFinalVotesForEvent({ event_id: 'event-1' });
+    });
+    const callback = mocks.onServerError.mock.calls.at(-1)?.[1];
+    mocks.isZeroClosedMutationCancellation.mockReturnValueOnce(true);
+    callback('closed');
+    expect(consoleError).not.toHaveBeenCalled();
+
+    mocks.isZeroClosedMutationCancellation.mockReturnValueOnce(false);
+    callback('network failure');
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to close expired final votes:',
+      'network failure'
+    );
+    consoleError.mockRestore();
   });
 });

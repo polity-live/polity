@@ -152,7 +152,8 @@ export function CalendarChronologicalListContentView({
             const isToday = dateKey === todayDateKey;
             const shouldRenderTodayMarker = index === todayMarkerIndex;
             const date = new Date(`${dateKey}T00:00:00`);
-            let itemRenderIndex = itemOffsets[index] ?? 0;
+            // A rendered entry and its offset are produced from the same groupedEntries index.
+            let itemRenderIndex = itemOffsets[index];
 
             return (
               <div

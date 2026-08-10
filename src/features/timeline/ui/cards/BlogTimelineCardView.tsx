@@ -45,7 +45,7 @@ export interface BlogTimelineCardProps {
 /**
  * Format reading time for display
  */
-function formatReadingTime(minutes: number, t: BlogTimelineCardViewProps['t']): string {
+export function formatReadingTime(minutes: number, t: BlogTimelineCardViewProps['t']): string {
   if (minutes < 1) return t('features.timeline.readingTime.underMinute');
   return t('features.timeline.readingTime.minutes', { count: minutes });
 }
@@ -74,7 +74,13 @@ export function BlogTimelineCardView({
   const subscriptionLoadingLabel = t('common.checks.subscription');
 
   return (
-    <TimelineCardBase contentType="blog" className={className} href={blogUrl}>
+    <TimelineCardBase
+      data-action-id="timeline.blog.open"
+      data-action-kind="navigation"
+      contentType="blog"
+      className={className}
+      href={blogUrl}
+    >
       {/* Cover Image or Gradient Header */}
       {blog.coverImageUrl ? (
         <div className="relative aspect-video shrink-0" data-timeline-card-media>
@@ -90,6 +96,8 @@ export function BlogTimelineCardView({
           <div className="absolute right-0 bottom-0 left-0 p-4">
             <h3 className="text-background line-clamp-2 text-base leading-tight font-bold">
               <SmartLink
+                data-action-id="timeline.blog.open"
+                data-action-kind="navigation"
                 href={blogUrl}
                 onClick={e => e.stopPropagation()}
                 className="hover:underline"
@@ -107,6 +115,8 @@ export function BlogTimelineCardView({
           </div>
           <h3 className="line-clamp-2 text-lg leading-tight font-bold">
             <SmartLink
+              data-action-id="timeline.blog.open"
+              data-action-kind="navigation"
               href={blogUrl}
               onClick={e => e.stopPropagation()}
               className="hover:underline"
@@ -122,6 +132,8 @@ export function BlogTimelineCardView({
         {blog.coverImageUrl && (
           <h3 className="mb-2 line-clamp-2 text-base leading-tight font-bold">
             <SmartLink
+              data-action-id="timeline.blog.open"
+              data-action-kind="navigation"
               href={blogUrl}
               onClick={e => e.stopPropagation()}
               className="hover:underline"
@@ -206,6 +218,8 @@ export function BlogTimelineCardView({
       <TimelineCardActions>
         {/* Subscribe Button */}
         <Button
+          data-action-id="timeline.blog.subscription.toggle"
+          data-action-kind="async-action"
           variant={subscription.isSubscribed ? 'outline' : 'ghost'}
           size="sm"
           onClick={e => {
@@ -222,6 +236,7 @@ export function BlogTimelineCardView({
         {/* Share Button */}
         <div onClick={e => e.preventDefault()}>
           <ShareButton
+            data-action-id="timeline.blog.share"
             url={blogUrl}
             title={blog.title}
             description={blog.excerpt || ''}

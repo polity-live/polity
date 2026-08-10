@@ -5,10 +5,12 @@ import { X } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { getMotionPreset } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type NavigationButtonSize = 'default' | 'small';
 
 export function NavigationIconToggleButton<TValue extends string>({
+  'data-action-id': actionId,
   value,
   currentValue,
   onClick,
@@ -16,6 +18,7 @@ export function NavigationIconToggleButton<TValue extends string>({
   title,
   size = 'default',
 }: {
+  'data-action-id'?: string;
   value: TValue;
   currentValue: TValue;
   onClick: () => void;
@@ -32,6 +35,8 @@ export function NavigationIconToggleButton<TValue extends string>({
       className={cn('h-8 w-8', getMotionPreset('press'), size === 'small' && 'h-6 w-6')}
       onClick={onClick}
       title={title}
+      aria-label={title}
+      data-action-id={actionId}
     >
       <Icon className={cn('h-4 w-4', size === 'small' && 'h-3 w-3')} />
     </Button>
@@ -39,12 +44,14 @@ export function NavigationIconToggleButton<TValue extends string>({
 }
 
 export function FloatingNavigationButton({
+  'data-action-id': actionId,
   side,
   isExpanded,
   onExpand,
   onToggleExpanded,
   icon,
 }: {
+  'data-action-id'?: string;
   side: 'left' | 'right';
   isExpanded: boolean;
   onExpand: () => void;
@@ -63,6 +70,8 @@ export function FloatingNavigationButton({
       onMouseEnter={onExpand}
       onClick={onToggleExpanded}
       aria-expanded={isExpanded}
+      aria-label={translateText('navigation.toggles.state.toggleNavigation')}
+      data-action-id={actionId}
     >
       {icon}
     </Button>
@@ -70,10 +79,12 @@ export function FloatingNavigationButton({
 }
 
 export function NavigationCloseButton({
+  'data-action-id': actionId,
   side,
   onClose,
   className,
 }: {
+  'data-action-id'?: string;
   side: 'left' | 'right';
   onClose: () => void;
   className?: string;
@@ -89,6 +100,8 @@ export function NavigationCloseButton({
         className
       )}
       onClick={onClose}
+      aria-label={translateText('navigation.toggles.state.closeNavigation')}
+      data-action-id={actionId}
     >
       <X className="h-4 w-4" />
     </Button>

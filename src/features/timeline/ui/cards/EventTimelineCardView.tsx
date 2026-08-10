@@ -149,7 +149,14 @@ export function EventTimelineCardView({
   const subscriptionLoadingLabel = t('common.checks.subscription');
 
   return (
-    <TimelineCardBase contentType="event" className={className} onClick={onSelect} href={eventHref}>
+    <TimelineCardBase
+      data-action-id="timeline.event.open"
+      data-action-kind="navigation"
+      contentType="event"
+      className={className}
+      onClick={onSelect}
+      href={eventHref}
+    >
       <TimelineCardHeader
         contentType="event"
         title={event.title}
@@ -245,6 +252,8 @@ export function EventTimelineCardView({
         <Popover open={rsvpOpen} onOpenChange={setRsvpOpen}>
           <PopoverTrigger asChild onClick={e => e.stopPropagation()}>
             <Button
+              data-action-id="timeline.event.participation.menu.open"
+              data-action-kind="selection"
               variant={getRsvpVariant()}
               size="sm"
               disabled={eventPastDisabled && !participationLoading}
@@ -259,6 +268,8 @@ export function EventTimelineCardView({
             <div className="flex flex-col gap-1">
               {isParticipant && (
                 <Button
+                  data-action-id="timeline.event.participation.leave"
+                  data-action-kind="async-action"
                   variant="ghost"
                   size="sm"
                   onClick={e => {
@@ -276,6 +287,8 @@ export function EventTimelineCardView({
               {isInvited && (
                 <>
                   <Button
+                    data-action-id="timeline.event.invitation.accept"
+                    data-action-kind="async-action"
                     variant="ghost"
                     size="sm"
                     onClick={e => {
@@ -290,6 +303,8 @@ export function EventTimelineCardView({
                     {t('features.timeline.cards.event.acceptInvitation')}
                   </Button>
                   <Button
+                    data-action-id="timeline.event.invitation.reject"
+                    data-action-kind="async-action"
                     variant="ghost"
                     size="sm"
                     onClick={e => {
@@ -307,6 +322,8 @@ export function EventTimelineCardView({
               )}
               {hasRequested && (
                 <Button
+                  data-action-id="timeline.event.request.withdraw"
+                  data-action-kind="async-action"
                   variant="ghost"
                   size="sm"
                   onClick={e => {
@@ -323,6 +340,8 @@ export function EventTimelineCardView({
               )}
               {!isParticipant && !isInvited && !hasRequested && eventTimeStatus !== 'past' && (
                 <Button
+                  data-action-id="timeline.event.participation.request"
+                  data-action-kind="async-action"
                   variant="ghost"
                   size="sm"
                   onClick={e => {
@@ -343,6 +362,8 @@ export function EventTimelineCardView({
 
         {/* Subscribe Button */}
         <Button
+          data-action-id="timeline.event.subscription.toggle"
+          data-action-kind="async-action"
           variant={(event.isSubscribed ?? subscription.isSubscribed) ? 'outline' : 'ghost'}
           size="sm"
           onClick={e => {
@@ -364,6 +385,7 @@ export function EventTimelineCardView({
         {/* Share Button */}
         <div onClick={e => e.preventDefault()}>
           <ShareButton
+            data-action-id="timeline.event.share"
             url={`/event/${event.id}`}
             title={event.title}
             description={eventDescription || ''}

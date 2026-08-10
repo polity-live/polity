@@ -33,6 +33,14 @@ interface AmendmentSearchAndFiltersProps {
   actions?: ReactNode;
 }
 
+function applyStatusFilter(value: string, onStatusChange: (value: string) => void) {
+  if (value) {
+    onStatusChange(value);
+  }
+}
+
+export const amendmentSearchAndFiltersInternals = { applyStatusFilter };
+
 export function AmendmentSearchAndFilters({
   filters,
   showFilters,
@@ -63,7 +71,12 @@ export function AmendmentSearchAndFilters({
           onValueChange={onSearchChange}
           clearLabel={translateText('generated.inline.1132_clear_search_67300d0f')}
         />
-        <Button variant="outline" size="icon" onClick={onToggleFilters}>
+        <Button
+          data-action-id="groups.amendments.toggle.filters"
+          variant="outline"
+          size="icon"
+          onClick={onToggleFilters}
+        >
           <Filter className="h-4 w-4" />
         </Button>
         {actions ? <div className="flex shrink-0 items-center">{actions}</div> : null}
@@ -77,6 +90,7 @@ export function AmendmentSearchAndFilters({
           </span>
           {filters.statusFilter !== 'all' && (
             <StatusBadge
+              data-action-id="groups.amendments.clear.status-filter"
               status={filters.statusFilter}
               className="cursor-pointer"
               onClick={onClearStatusFilter}
@@ -84,6 +98,7 @@ export function AmendmentSearchAndFilters({
               {translateText('generated.inline.0643_status_11dc9e19')}
               {statusLabels[filters.statusFilter] ?? filters.statusFilter}
               <Button
+                data-action-id="groups.amendments.clear.status-filter"
                 type="button"
                 variant="ghost"
                 size="icon"
@@ -98,10 +113,16 @@ export function AmendmentSearchAndFilters({
             </StatusBadge>
           )}
           {filters.hashtagFilter && (
-            <EntityBadge tone="neutral" className="cursor-pointer" onClick={onClearHashtagFilter}>
+            <EntityBadge
+              data-action-id="groups.amendments.clear.hashtag-filter"
+              tone="neutral"
+              className="cursor-pointer"
+              onClick={onClearHashtagFilter}
+            >
               <Hash className="mr-1 h-3 w-3" />
               {filters.hashtagFilter.replace(/^#/, '')}
               <Button
+                data-action-id="groups.amendments.clear.hashtag-filter"
                 type="button"
                 variant="ghost"
                 size="icon"
@@ -136,37 +157,38 @@ export function AmendmentSearchAndFilters({
                 variant="outline"
                 className="flex flex-wrap justify-start"
                 value={filters.statusFilter}
-                onValueChange={value => {
-                  if (value) {
-                    onStatusChange(value);
-                  }
-                }}
+                onValueChange={value => applyStatusFilter(value, onStatusChange)}
               >
                 <FilterToggleGroupItem
+                  data-action-id="groups.amendments.filter.all"
                   value="all"
                   aria-label={t('features.groups.common.filters.allStatuses')}
                 >
                   {t('features.groups.common.filters.allStatuses')}
                 </FilterToggleGroupItem>
                 <FilterToggleGroupItem
+                  data-action-id="groups.amendments.filter.accepted"
                   value="accepted"
                   aria-label={t('features.groups.common.status.acceptedApproved')}
                 >
                   {t('features.groups.common.status.acceptedApproved')}
                 </FilterToggleGroupItem>
                 <FilterToggleGroupItem
+                  data-action-id="groups.amendments.filter.pending"
                   value="pending"
                   aria-label={t('features.groups.common.status.pending')}
                 >
                   {t('features.groups.common.status.pending')}
                 </FilterToggleGroupItem>
                 <FilterToggleGroupItem
+                  data-action-id="groups.amendments.filter.rejected"
                   value="rejected"
                   aria-label={t('features.groups.common.status.rejected')}
                 >
                   {t('features.groups.common.status.rejected')}
                 </FilterToggleGroupItem>
                 <FilterToggleGroupItem
+                  data-action-id="groups.amendments.filter.withdrawn"
                   value="withdrawn"
                   aria-label={t('features.groups.common.status.withdrawn')}
                 >

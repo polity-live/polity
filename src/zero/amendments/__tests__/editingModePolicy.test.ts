@@ -2,10 +2,23 @@ import { describe, expect, it } from 'vitest';
 
 import {
   AMENDMENT_EDITING_MODE_ORDER,
+  EDITING_MODE_TRANSITIONS,
   MANUALLY_SELECTABLE_MODES,
+  areInternalModesAllowed,
+  canTransitionTo,
   canManuallySelectEditingMode,
+  getAutomaticEditingMode,
   getAmendmentEditingModePolicy,
+  getDefaultEditingMode,
   isAgendaItemStarted,
+  isAutomaticEventMode,
+  isEditingMode,
+  isEventPhase,
+  isManualInternalMode,
+  isSelectableByCollaborator,
+  isSuggestingMode,
+  isTerminalEditingMode,
+  isVotingMode,
   normalizeEditingMode,
 } from '../editing-mode-policy';
 import { updateAmendmentProcessBranchSchema } from '../schema';
@@ -105,10 +118,97 @@ describe('amendment editing mode policy', () => {
   });
 
   it('detects started agenda items from server-relevant status and timestamps', () => {
+    expect(isAgendaItemStarted(null)).toBe(false);
+    expect(isAgendaItemStarted({ status: null })).toBe(false);
     expect(isAgendaItemStarted({ status: 'planned' })).toBe(false);
     expect(isAgendaItemStarted({ status: 'active' })).toBe(true);
     expect(isAgendaItemStarted({ activated_at: 10 })).toBe(true);
     expect(isAgendaItemStarted({ start_time: 20 })).toBe(true);
     expect(isAgendaItemStarted({ completed_at: 30 })).toBe(true);
+  });
+
+  it('exhaustively classifies canonical, automatic, terminal, and selectable modes', () => {
+    const allModes = [
+      'edit',
+      'view',
+      'suggest_internal',
+      'suggest_event',
+      'vote_internal',
+      'event_final_closing_vote',
+      'passed',
+      'rejected',
+    ] as const;
+    expect(allModes.map(isEditingMode)).toEqual(allModes.map(() => true));
+    expect(isEditingMode(undefined)).toBe(false);
+    expect(isEditingMode('legacy')).toBe(false);
+    expect(normalizeEditingMode(null)).toBe('edit');
+
+    expect(allModes.filter(isManualInternalMode)).toEqual([
+      'edit',
+      'suggest_internal',
+      'vote_internal',
+    ]);
+    expect(isManualInternalMode(null)).toBe(false);
+    expect(allModes.filter(isAutomaticEventMode)).toEqual([
+      'suggest_event',
+      'event_final_closing_vote',
+    ]);
+    expect(isAutomaticEventMode('legacy')).toBe(false);
+    expect(allModes.filter(isTerminalEditingMode)).toEqual(['passed', 'rejected']);
+    expect(allModes.filter(isVotingMode)).toEqual(['vote_internal', 'event_final_closing_vote']);
+    expect(allModes.filter(isSuggestingMode)).toEqual(['suggest_internal', 'suggest_event']);
+    expect(allModes.filter(isSelectableByCollaborator)).toEqual([
+      'edit',
+      'view',
+      'suggest_internal',
+      'vote_internal',
+    ]);
+    expect(allModes.filter(isEventPhase)).toEqual([
+      'suggest_event',
+      'event_final_closing_vote',
+      'passed',
+      'rejected',
+    ]);
+    expect(getDefaultEditingMode()).toBe('edit');
+  });
+
+  it('covers every transition and automatic-policy boundary', () => {
+    for (const [current, allowed] of Object.entries(EDITING_MODE_TRANSITIONS)) {
+      for (const target of [
+        'edit',
+        'view',
+        'suggest_internal',
+        'suggest_event',
+        'vote_internal',
+        'event_final_closing_vote',
+        'passed',
+        'rejected',
+      ] as const) {
+        expect(canTransitionTo(current as never, target)).toBe(allowed.includes(target as never));
+      }
+    }
+
+    expect(areInternalModesAllowed({ eventVotingOpen: true })).toBe(false);
+    expect(areInternalModesAllowed({ hasProcess: true, firstAgendaItemStarted: true })).toBe(false);
+    expect(getAutomaticEditingMode({})).toBeNull();
+    expect(getAutomaticEditingMode({ eventSuggestionOpen: true })).toBe('suggest_event');
+    expect(getAutomaticEditingMode({ eventVotingOpen: true })).toBe('event_final_closing_vote');
+    expect(canManuallySelectEditingMode(undefined)).toBe(true);
+    expect(canManuallySelectEditingMode('legacy')).toBe(true);
+
+    const closed = getAmendmentEditingModePolicy({
+      hasProcess: true,
+      firstAgendaItemStarted: true,
+    });
+    expect(closed.allowedModes).toEqual([]);
+    expect(closed.canUserChangeMode).toBe(false);
+    expect(closed.disabledModeReasons).toEqual({
+      view: 'internal-window-closed',
+      edit: 'internal-window-closed',
+      suggest_internal: 'internal-window-closed',
+      vote_internal: 'internal-window-closed',
+      suggest_event: 'event-controlled',
+      event_final_closing_vote: 'event-controlled',
+    });
   });
 });

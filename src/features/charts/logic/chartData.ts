@@ -54,7 +54,7 @@ export function parseChartCsv(text: string): ParsedChartTable {
   const rows = dataRows
     .slice(0, MAX_MANUAL_CHART_ROWS + 1)
     .map(row =>
-      Object.fromEntries(columns.map((column, index) => [column, String(row[index] ?? '').trim()]))
+      Object.fromEntries(columns.map((column, index) => [column, String(row[index]).trim()]))
     )
     .filter(row => columns.some(column => row[column] !== ''));
 
@@ -129,7 +129,7 @@ export function inferChartMapping(table: ParsedChartTable): ChartMapping {
       dateLikeNumericColumns.length >= 2 ? dateLikeNumericColumns : numericColumns;
     return {
       xColumn,
-      valueColumn: valueColumns[0] ?? valueColumn,
+      valueColumn: valueColumns[0],
       seriesColumn: null,
       tableMode: 'rowsAsSeries',
       valueColumns,

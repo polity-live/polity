@@ -38,7 +38,7 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function compileTemplate(key: string, template: string): TemplateMatch | null {
+function compileTemplate(key: string, template: string): TemplateMatch {
   const placeholders: string[] = [];
   let pattern = '^';
   let offset = 0;
@@ -46,9 +46,8 @@ function compileTemplate(key: string, template: string): TemplateMatch | null {
     pattern += escapeRegExp(template.slice(offset, match.index));
     pattern += '(.+?)';
     placeholders.push(match[1]);
-    offset = (match.index ?? 0) + match[0].length;
+    offset = match.index + match[0].length;
   }
-  if (placeholders.length === 0) return null;
   pattern += `${escapeRegExp(template.slice(offset))}$`;
   return { key, placeholders, pattern: new RegExp(pattern, 's') };
 }
@@ -63,8 +62,7 @@ const templateMatches: TemplateMatch[] = [];
 for (const templates of Object.values(templatesByLanguage)) {
   for (const [key, template] of templates) {
     if (template.includes('{{')) {
-      const compiled = compileTemplate(key, template);
-      if (compiled) templateMatches.push(compiled);
+      templateMatches.push(compileTemplate(key, template));
     } else {
       exactMatches.set(template, key);
     }

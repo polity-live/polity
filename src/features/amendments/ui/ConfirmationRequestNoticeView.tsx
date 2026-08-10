@@ -71,6 +71,7 @@ export function ConfirmationRequestNoticeView({
 
               <div className="flex items-center gap-1">
                 <Button
+                  data-action-id="amendments.confirmation.navigate.changes"
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
@@ -80,6 +81,7 @@ export function ConfirmationRequestNoticeView({
                   <Eye className="h-4 w-4" />
                 </Button>
                 <Button
+                  data-action-id="amendments.confirmation.accept.request"
                   variant="ghost"
                   size="icon"
                   className={featureThemeClassName('featureThemeSuccessBackground')}
@@ -90,6 +92,7 @@ export function ConfirmationRequestNoticeView({
                   <Check className="h-4 w-4" />
                 </Button>
                 <Button
+                  data-action-id="amendments.confirmation.decline.request"
                   variant="ghost"
                   size="icon"
                   className={featureThemeClassName('featureThemeDangerBackground')}

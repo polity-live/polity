@@ -47,6 +47,16 @@ describe('eventTimeSeriesValidation', () => {
     ).toBe('missing-weekdays');
   });
 
+  it('requires a start date for every recurring series', () => {
+    expect(
+      getEventTimeSeriesValidationError({
+        startDate: '',
+        recurrencePattern: 'daily',
+        recurrenceWeekdays: [],
+      })
+    ).toBe('missing-start-date');
+  });
+
   it('reports a valid create time series once all required fields are present', () => {
     const args = {
       startDate: '2026-05-27',

@@ -3,6 +3,7 @@ import {
   executeNewsletterSync,
   handleResendWebhook,
   NewsletterHttpError,
+  type NewsletterServiceDeps,
 } from './newsletter-service';
 
 function errorResponse(error: unknown, fallback: string) {
@@ -12,16 +13,22 @@ function errorResponse(error: unknown, fallback: string) {
   return new Response(message, { status });
 }
 
-export async function handleNewsletterSyncRequest(request: Request) {
+export async function handleNewsletterSyncRequest(
+  request: Request,
+  deps: NewsletterServiceDeps = {}
+) {
   try {
-    authorizeNewsletterSync(request);
-    return Response.json(await executeNewsletterSync());
+    authorizeNewsletterSync(request, deps);
+    return Response.json(await executeNewsletterSync(deps));
   } catch (error) {
     return errorResponse(error, 'Newsletter sync failed');
   }
 }
 
-export async function handleResendWebhookRequest(request: Request) {
+export async function handleResendWebhookRequest(
+  request: Request,
+  deps: NewsletterServiceDeps = {}
+) {
   const svixId = request.headers.get('svix-id');
   const svixTimestamp = request.headers.get('svix-timestamp');
   const svixSignature = request.headers.get('svix-signature');
@@ -32,7 +39,7 @@ export async function handleResendWebhookRequest(request: Request) {
   try {
     const rawBody = await request.text();
     return Response.json(
-      await handleResendWebhook({ rawBody, svixId, svixTimestamp, svixSignature })
+      await handleResendWebhook({ rawBody, svixId, svixTimestamp, svixSignature }, deps)
     );
   } catch (error) {
     return errorResponse(error, 'Resend webhook failed');

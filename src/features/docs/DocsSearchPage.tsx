@@ -63,6 +63,7 @@ export function DocsSearchPage({ initialQuery }: { initialQuery: string }) {
               const Icon = getIconComponent(match.page.icon);
               return (
                 <Link
+                  data-action-id="docs.search-page.result.open"
                   key={`${match.page.slug}:${match.section?.id ?? 'page'}`}
                   to={match.route as never}
                   className="hover:bg-card group grid gap-3 px-2 py-5 transition-colors sm:grid-cols-[2rem_minmax(0,1fr)_auto]"

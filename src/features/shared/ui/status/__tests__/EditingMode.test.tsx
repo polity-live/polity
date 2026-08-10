@@ -5,6 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '../../ui/dropdown-menu';
 import {
+  EditingModeBadge,
   EditingModeMenuItems,
   EVENT_PHASE_LOCKED_MODE_TOOLTIP_KEY,
   SYSTEM_MANAGED_EVENT_MODE_TOOLTIP_KEY,
@@ -112,6 +113,29 @@ describe('EditingModeMenuItems', () => {
 
     fireEvent.click(helpButtons[0]);
     expect(screen.getAllByText(SYSTEM_MANAGED_EVENT_MODE_TOOLTIP).length).toBeGreaterThan(0);
+    fireEvent.click(helpButtons[0]);
+  });
+
+  it('renders badge icons and manual modes without descriptions', () => {
+    const { rerender } = render(<EditingModeBadge mode="edit" showIcon />);
+    expect(document.querySelector('svg')).toBeTruthy();
+
+    rerender(
+      <DropdownMenu open>
+        <DropdownMenuTrigger>Open</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <EditingModeMenuItems
+            disabledModeReasons={{ edit: 'custom lock' }}
+            onValueChange={vi.fn()}
+            showAutomaticEventModes={false}
+            showDescriptions={false}
+            value="view"
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+    expect(screen.getByText('custom lock')).toBeTruthy();
+    expect(screen.queryByText('Event Suggestions')).toBeNull();
   });
 
   it('locks every mode while event suggestions are active and marks the current mode', () => {

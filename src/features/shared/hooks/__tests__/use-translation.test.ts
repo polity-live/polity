@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { useLanguageStore } from '@/features/shared/global-state/language.store';
-import { translate } from '@/features/shared/hooks/use-translation';
+import { translate, translateWithLanguage } from '@/features/shared/hooks/use-translation';
 
 describe('translate count plurals', () => {
   afterEach(() => {
@@ -81,5 +81,30 @@ describe('translate count plurals', () => {
 
     expect(translate('components.labels.members')).toBe('Members');
     expect(translate('missing.translation', 'Fallback')).toBe('Fallback');
+  });
+
+  it('keeps invalid, empty, and over-deep paths defensive', () => {
+    expect(translateWithLanguage('en', '')).toBe('');
+    expect(translateWithLanguage('en', 'components.labels.members.extra')).toBe(
+      'components.labels.members.extra'
+    );
+    expect(translateWithLanguage('en', 'missing.deep.path')).toBe('missing.deep.path');
+  });
+
+  it('interpolates present values while retaining nullish placeholders', () => {
+    expect(
+      translateWithLanguage(
+        'en',
+        'missing.greeting',
+        { name: 'Ada', missing: null, absent: undefined },
+        'Hello {{name}} {{missing}} {{absent}}'
+      )
+    ).toBe('Hello Ada {{missing}} {{absent}}');
+  });
+
+  it('stringifies non-string translation leaves', () => {
+    expect(translateWithLanguage('en', 'pages.home.publicLanding.hero.decisionFlow')).toBe(
+      'Proposal,Amendment,Vote'
+    );
   });
 });

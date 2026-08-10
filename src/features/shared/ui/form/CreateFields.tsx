@@ -87,7 +87,7 @@ function useCreateFieldState(
   const hintText = isInvalid
     ? Boolean(required) && !hasValue
       ? t('pages.create.common.requiredHint')
-      : (validationError ?? fallbackHint)
+      : validationError
     : isValid && !hint
       ? t('pages.create.common.validHint')
       : fallbackHint;

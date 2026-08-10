@@ -326,7 +326,8 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
       const displayCrId = record.displayCrId ?? cr?.title ?? '';
 
       return {
-        id: cr?.id ?? discussion?.id ?? record.logicalKey,
+        // Canonical records always contain a saved request or a discussion with an id.
+        id: cr?.id ?? (discussion as DiscussionEntry).id,
         processBranchId: cr?.process_branch_id ?? null,
         logicalKey: record.logicalKey,
         discussionId: discussion?.id ?? null,
@@ -358,7 +359,7 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
         obsoleteReason: cr?.obsolete_reason ?? null,
         obsoleteAt: cr?.obsolete_at ?? null,
         status: isObsolete ? 'obsolete' : (cr?.status ?? discussion?.status ?? 'open'),
-        resolution: isObsolete ? 'obsolete' : isResolved ? (resolvedStatus ?? null) : null,
+        resolution: isObsolete ? 'obsolete' : isResolved ? resolvedStatus : null,
         resolvedAt: isObsolete
           ? (cr?.obsolete_at ?? null)
           : isResolved && cr

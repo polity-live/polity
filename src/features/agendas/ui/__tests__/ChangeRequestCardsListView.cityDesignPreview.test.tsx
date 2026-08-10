@@ -118,6 +118,9 @@ describe('ChangeRequestCardsListView city design preview', () => {
 
     const [documentPreview] = screen.getAllByRole('button', { name: 'Document Preview' });
     const cityDesignTrigger = screen.getByTestId('city-design-preview-accordion-trigger');
+    expect(cityDesignTrigger.getAttribute('data-action-id')).toBe(
+      'agendas.change-request-list.city-preview.toggle'
+    );
     expect(
       documentPreview.compareDocumentPosition(cityDesignTrigger) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();

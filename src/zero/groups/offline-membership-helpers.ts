@@ -417,7 +417,7 @@ async function getDesiredOfflineGroupConnectionMembershipSources(
       }
 
       const selectedSourceGroupIds = [
-        ...new Set(directionalContext.membershipRule.eligible_origin_group_ids ?? []),
+        ...new Set(directionalContext.membershipRule.eligible_origin_group_ids),
       ].filter(Boolean);
       if (selectedSourceGroupIds.length === 0) {
         continue;
@@ -492,7 +492,7 @@ async function addSelectedOfflineSourceGroupMembershipSources(
 
     desiredMembershipSources.set(groupOfflineMemberId, {
       source: SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE,
-      sourceGroupId: [...sourceGroupIds][0] ?? null,
+      sourceGroupId: [...sourceGroupIds][0],
     });
   }
 }
@@ -616,7 +616,7 @@ export async function recomputeOfflineSiblingMembershipsForGroup(
         if (
           directionalContext.recipientGroupId === currentGroupId ||
           directionalContext.connectedGroupId === currentGroupId ||
-          (directionalContext.membershipRule.eligible_origin_group_ids ?? []).includes(
+          directionalContext.membershipRule.eligible_origin_group_ids.includes(
             currentGroupId
           )
         ) {
@@ -724,3 +724,21 @@ export async function reconcileOfflineHierarchyForBaseGroup(
     affectedGroupIds,
   };
 }
+
+export const offlineMembershipHelperInternals = {
+  normalizeSourceGroupId,
+  getDirectionalMembershipContexts,
+  isEffectiveOfflineMembership,
+  loadOfflineMembershipsWithMembersForGroup,
+  loadOfflineMembershipsWithMembersByGroupIds,
+  loadActiveOfflineMembershipsForGroup,
+  getActiveOfflineMembersForGroupRole,
+  isActiveGroupConnectionStatus,
+  getNetworkMembershipSourceForMode,
+  getOfflineMembershipKey,
+  upsertOfflineMembership,
+  upsertHierarchyDerivedOfflineMembership,
+  upsertAutomaticSiblingOfflineMembership,
+  getDesiredOfflineGroupConnectionMembershipSources,
+  addSelectedOfflineSourceGroupMembershipSources,
+};

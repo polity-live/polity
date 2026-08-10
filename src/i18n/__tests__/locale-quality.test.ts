@@ -9,6 +9,14 @@ import { groupsTranslations as deGroups } from '@/i18n/locales/de/features/group
 import { agendasTranslations as enAgendas } from '@/i18n/locales/en/features/agendas';
 import { groupsTranslations as enGroups } from '@/i18n/locales/en/features/groups';
 
+const skippedReferenceDirectories = new Set([
+  '__tests__',
+  'fixtures',
+  'generated',
+  'locales',
+  'node_modules',
+]);
+
 function flatten(value: unknown, prefix = ''): Map<string, string> {
   const result = new Map<string, string>();
   if (!value || typeof value !== 'object') return result;
@@ -41,8 +49,10 @@ describe('runtime locale quality', () => {
       for (const entry of readdirSync(directory, { withFileTypes: true })) {
         if (entry.name === 'generated.ts' || entry.name === 'node_modules') continue;
         const path = join(directory, entry.name);
-        if (entry.isDirectory()) collectReferences(path);
-        else if (/\.[cm]?[jt]sx?$/.test(entry.name)) {
+        if (entry.isDirectory()) {
+          if (skippedReferenceDirectories.has(entry.name)) continue;
+          collectReferences(path);
+        } else if (/\.[cm]?[jt]sx?$/.test(entry.name)) {
           for (const match of readFileSync(path, 'utf8').matchAll(
             /generated\.inline\.([A-Za-z0-9_]+)/g
           )) {

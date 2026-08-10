@@ -85,16 +85,15 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
       try {
         context?.reportProgress('cast', 'active');
 
+        const resolvedElectorId = electorId ?? crypto.randomUUID();
         const elector =
           electorId == null
             ? {
-                id: crypto.randomUUID(),
+                id: resolvedElectorId,
                 election_id: electionId,
                 user_id: userId,
               }
             : undefined;
-        const resolvedElectorId = electorId ?? elector?.id;
-        if (!resolvedElectorId) return;
 
         const participationId = crypto.randomUUID();
         const participationArgs = {
@@ -188,16 +187,15 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
       try {
         context?.reportProgress('cast', 'active');
 
+        const resolvedVoterId = voterId ?? crypto.randomUUID();
         const voter =
           voterId == null
             ? {
-                id: crypto.randomUUID(),
+                id: resolvedVoterId,
                 vote_id: voteId,
                 user_id: userId,
               }
             : undefined;
-        const resolvedVoterId = voterId ?? voter?.id;
-        if (!resolvedVoterId) return;
 
         const participationId = crypto.randomUUID();
         const participationArgs = {

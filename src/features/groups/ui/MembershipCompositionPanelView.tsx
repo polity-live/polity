@@ -66,8 +66,12 @@ export function MembershipCompositionPanelView({
           variant="outline"
           size="sm"
         >
-          <ToggleGroupItem value="percent">{labels.modePercent}</ToggleGroupItem>
-          <ToggleGroupItem value="absolute">{labels.modeAbsolute}</ToggleGroupItem>
+          <ToggleGroupItem data-action-id="groups.composition.select.percent" value="percent">
+            {labels.modePercent}
+          </ToggleGroupItem>
+          <ToggleGroupItem data-action-id="groups.composition.select.absolute" value="absolute">
+            {labels.modeAbsolute}
+          </ToggleGroupItem>
         </ToggleGroup>
       </div>
 

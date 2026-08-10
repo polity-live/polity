@@ -58,7 +58,18 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
       election.agenda_item?.event ? [election.agenda_item.event] : []
     );
 
-    return getCreateSelectableEventIds(electionEvents, activeGroupIds, userEventParticipations);
+    const validActiveGroupIds = new Set<string>(
+      [...activeGroupIds].filter((id): id is string => typeof id === 'string')
+    );
+    return new Set<string>(
+      [
+        ...getCreateSelectableEventIds(
+          electionEvents,
+          validActiveGroupIds,
+          userEventParticipations
+        ),
+      ].filter((id): id is string => typeof id === 'string')
+    );
   }, [activeGroupIds, electionsForSearch, userEventParticipations]);
   const eligibleElections = useMemo(
     () =>

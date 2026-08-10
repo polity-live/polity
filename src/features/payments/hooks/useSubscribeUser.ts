@@ -46,7 +46,7 @@ export function useSubscribeUser(
 
   // Update subscription state when data changes
   useEffect(() => {
-    const subscribers = subscriptionRows || [];
+    const subscribers = subscriptionRows;
 
     // Check if the current user is subscribed by looking for their ID in the subscriber list
     const subscribed = authUser?.id
@@ -76,7 +76,7 @@ export function useSubscribeUser(
     }
 
     // Prevent duplicate subscriptions
-    const existing = (subscriptionRows || []).find(
+    const existing = subscriptionRows.find(
       sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
     );
     if (existing) return;
@@ -118,7 +118,7 @@ export function useSubscribeUser(
       return;
     }
 
-    const subscribers = subscriptionRows || [];
+    const subscribers = subscriptionRows;
     let subsToDelete = subscribers.filter(
       sub => sub.subscriber_id === authUser.id || sub.subscriber_user?.id === authUser.id
     );

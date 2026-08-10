@@ -120,6 +120,7 @@ export function SupportConfirmationPanelView({
 
             {/* Compare button */}
             <Button
+              data-action-id="amendments.support-confirmation.toggle.comparison"
               variant="outline"
               size="sm"
               onClick={() =>
@@ -150,6 +151,7 @@ export function SupportConfirmationPanelView({
             {/* Action buttons */}
             <div className="flex gap-2 pt-2">
               <Button
+                data-action-id="amendments.support-confirmation.accept.request"
                 onClick={() => handleConfirm(confirmation.id)}
                 disabled={processingId === confirmation.id}
                 className="flex-1"
@@ -158,6 +160,7 @@ export function SupportConfirmationPanelView({
                 {t('features.amendments.supportConfirmation.confirm')}
               </Button>
               <Button
+                data-action-id="amendments.support-confirmation.decline.request"
                 variant="destructive"
                 onClick={() => handleDecline(confirmation.id)}
                 disabled={processingId === confirmation.id}

@@ -129,4 +129,125 @@ describe('right traversal', () => {
       },
     ]);
   });
+
+  it('honors depth bounds, empty starts, cycles, and deterministic shortest-path ties', () => {
+    const tieGrants = [
+      {
+        id: 'a-x',
+        connection_id: 'a-x',
+        right_key: 'amendmentRight',
+        holder_group_id: 'A',
+        scope_group_id: 'X',
+        status: 'active',
+      },
+      {
+        id: 'a-b',
+        connection_id: 'a-b',
+        right_key: 'amendmentRight',
+        holder_group_id: 'A',
+        scope_group_id: 'B',
+        status: 'active',
+      },
+      {
+        id: 'a-c',
+        connection_id: 'a-c',
+        right_key: 'amendmentRight',
+        holder_group_id: 'A',
+        scope_group_id: 'C',
+        status: 'active',
+      },
+      {
+        id: 'x-t',
+        connection_id: 'x-t',
+        right_key: 'amendmentRight',
+        holder_group_id: 'X',
+        scope_group_id: 'T',
+        status: 'active',
+      },
+      {
+        id: 'b-t',
+        connection_id: 'b-t',
+        right_key: 'amendmentRight',
+        holder_group_id: 'B',
+        scope_group_id: 'T',
+        status: 'active',
+      },
+      {
+        id: 'c-a-cycle',
+        connection_id: 'c-a',
+        right_key: 'amendmentRight',
+        holder_group_id: 'C',
+        scope_group_id: 'A',
+        status: 'active',
+      },
+      {
+        id: 'c-t',
+        connection_id: 'c-t',
+        right_key: 'amendmentRight',
+        holder_group_id: 'C',
+        scope_group_id: 'T',
+        status: 'active',
+      },
+    ];
+
+    const reachable = findReachableGroupsByRight({
+      startGroupId: 'A',
+      rightKey: 'amendmentRight',
+      grants: tieGrants,
+    });
+    expect(reachable.find(path => path.targetGroupId === 'T')?.groupPath).toEqual(['A', 'B', 'T']);
+    expect(reachable.slice(0, 3).map(path => path.targetGroupId)).toEqual(['B', 'C', 'X']);
+    expect(
+      findReachableGroupsByRight({
+        startGroupId: 'A',
+        rightKey: 'amendmentRight',
+        grants: tieGrants,
+        maxDepth: 0,
+      }).map(path => path.targetGroupId)
+    ).toEqual(['B', 'C', 'X']);
+    expect(
+      findReachableGroupsByRight({
+        startGroupId: '',
+        rightKey: 'amendmentRight',
+        grants: tieGrants,
+      })
+    ).toEqual([]);
+  });
+
+  it('uses default path limits and stops at cycles, depth bounds, and empty queues', () => {
+    expect(
+      findRightPaths({
+        startGroupId: 'B1',
+        targetGroupId: 'missing',
+        rightKey: 'amendmentRight',
+        grants,
+        maxDepth: 1,
+      })
+    ).toEqual([]);
+    expect(
+      findRightPaths({
+        startGroupId: 'B1',
+        targetGroupId: 'missing',
+        rightKey: 'amendmentRight',
+        grants,
+      })
+    ).toEqual([]);
+    expect(
+      findRightPaths({
+        startGroupId: '',
+        targetGroupId: 'missing',
+        rightKey: 'amendmentRight',
+        grants: [],
+        maxPaths: 0,
+      })
+    ).toEqual([]);
+    expect(
+      findRightPaths({
+        startGroupId: 'dead-end',
+        targetGroupId: 'missing',
+        rightKey: 'amendmentRight',
+        grants: [],
+      })
+    ).toEqual([]);
+  });
 });

@@ -75,15 +75,15 @@ export function useReactions(options: UseReactionsOptions): UseReactionsReturn {
           setUserReaction(null);
           setCounts(prev => ({
             ...prev,
-            [type]: Math.max(0, prev[type] - 1),
-            total: Math.max(0, prev.total - 1),
+            [type]: prev[type] - 1,
+            total: prev.total - 1,
           }));
         } else {
           // Remove previous reaction if exists
           if (userReaction) {
             setCounts(prev => ({
               ...prev,
-              [userReaction]: Math.max(0, prev[userReaction] - 1),
+              [userReaction]: prev[userReaction] - 1,
             }));
           }
 
@@ -113,8 +113,8 @@ export function useReactions(options: UseReactionsOptions): UseReactionsReturn {
       setUserReaction(null);
       setCounts(prev => ({
         ...prev,
-        [previousReaction]: Math.max(0, prev[previousReaction] - 1),
-        total: Math.max(0, prev.total - 1),
+        [previousReaction]: prev[previousReaction] - 1,
+        total: prev.total - 1,
       }));
 
       // Known limitation: Reactions table not in Zero schema. Persisted when schema is extended.

@@ -30,16 +30,20 @@ export function NetworkTabs({
       className="space-y-4"
     >
       <TabsList>
-        <TabsTrigger value="current-network">
+        <TabsTrigger value="current-network" data-action-id="network.tab.current.select">
           {t('features.network.tabs.currentNetwork')}
         </TabsTrigger>
         {showManageNetworkTab ? (
-          <TabsTrigger value="manage-network" data-tutorial-anchor="manage-network">
+          <TabsTrigger
+            value="manage-network"
+            data-tutorial-anchor="manage-network"
+            data-action-id="network.tab.relationships.select"
+          >
             {t('features.network.tabs.manageNetwork')}
           </TabsTrigger>
         ) : null}
         {showManageWorkflowsTab ? (
-          <TabsTrigger value="manage-workflows">
+          <TabsTrigger value="manage-workflows" data-action-id="network.tab.workflows.select">
             {t('features.network.tabs.manageWorkflows')}
           </TabsTrigger>
         ) : null}

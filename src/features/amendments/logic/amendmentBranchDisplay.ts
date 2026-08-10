@@ -204,7 +204,7 @@ export function getResolvedMergeWinnerBranch(
   )?.merged_into_branch_id;
 
   if (mergedIntoBranchId) {
-    return branchById.get(mergedIntoBranchId) ?? null;
+    return branchById.get(mergedIntoBranchId) as (typeof orderedBranches)[number];
   }
 
   const explicitWinner =
@@ -243,7 +243,7 @@ export function resolveEventDetailSelectedBranchId({
   const winnerBranch = getResolvedMergeWinnerBranch(orderedBranches, activeBranchId);
   if (winnerBranch) return winnerBranch.id;
 
-  return orderedBranches[0]?.id ?? null;
+  return orderedBranches[0].id;
 }
 
 export function getLatestBranchWithContent(branches: readonly AmendmentProcessBranchSource[]) {

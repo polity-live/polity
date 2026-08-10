@@ -11,8 +11,37 @@ interface GroupDisplay {
   memberCount?: number;
   eventCount?: number;
   amendmentCount?: number;
-  topics?: string[];
+  topics: string[];
 }
+
+function getAllGroupTags(groups: readonly GroupDisplay[]) {
+  return [...new Set(groups.flatMap(group => group.topics))].sort();
+}
+
+function filterGroupDisplays(
+  groups: readonly GroupDisplay[],
+  searchTerm: string,
+  selectedTags: readonly string[]
+) {
+  const normalizedSearch = searchTerm.toLowerCase();
+  return groups.filter(group => {
+    const matchesSearch =
+      !searchTerm ||
+      group.name.toLowerCase().includes(normalizedSearch) ||
+      group.description?.toLowerCase().includes(normalizedSearch) ||
+      group.topics.some(tag => tag.toLowerCase().includes(normalizedSearch));
+
+    const matchesTags =
+      selectedTags.length === 0 ||
+      selectedTags.every(selectedTag =>
+        group.topics.some(groupTag => groupTag.toLowerCase().includes(selectedTag.toLowerCase()))
+      );
+
+    return Boolean(matchesSearch && matchesTags);
+  });
+}
+
+export const groupsPageInternals = { getAllGroupTags, filterGroupDisplays };
 
 export function useGroupsPage() {
   const { t, language } = useTranslation();
@@ -44,27 +73,13 @@ export function useGroupsPage() {
   }, [language, searchResults]);
 
   const allTags = useMemo(() => {
-    const tags = groups.flatMap(g => g.topics ?? []);
-    return [...new Set(tags)].sort();
+    return getAllGroupTags(groups);
   }, [groups]);
 
-  const filteredGroups = useMemo(() => {
-    return groups.filter(group => {
-      const matchesSearch =
-        !searchTerm ||
-        group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        group.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        group.topics?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-
-      const matchesTags =
-        selectedTags.length === 0 ||
-        selectedTags.every(selectedTag =>
-          group.topics?.some(groupTag => groupTag.toLowerCase().includes(selectedTag.toLowerCase()))
-        );
-
-      return matchesSearch && matchesTags;
-    });
-  }, [groups, searchTerm, selectedTags]);
+  const filteredGroups = useMemo(
+    () => filterGroupDisplays(groups, searchTerm, selectedTags),
+    [groups, searchTerm, selectedTags]
+  );
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));

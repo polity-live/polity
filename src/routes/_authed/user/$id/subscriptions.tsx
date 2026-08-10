@@ -10,6 +10,27 @@ export const Route = createFileRoute('/_authed/user/$id/subscriptions')({
   component: UserSubscriptionsPage,
 });
 
+interface SubscriptionRouteTarget {
+  amendment?: { id?: string | null } | null;
+  blog?: { group_id?: string | null; id?: string | null } | null;
+  event?: { id?: string | null } | null;
+  group?: { id?: string | null } | null;
+  user?: { id?: string | null } | null;
+}
+
+export function getSubscriptionHref(subscription: SubscriptionRouteTarget, profileUserId: string) {
+  if (subscription.user?.id) return `/user/${subscription.user.id}`;
+  if (subscription.group?.id) return `/group/${subscription.group.id}`;
+  if (subscription.amendment?.id) return `/amendment/${subscription.amendment.id}`;
+  if (subscription.event?.id) return `/event/${subscription.event.id}`;
+  if (subscription.blog?.id) {
+    return subscription.blog.group_id
+      ? `/group/${subscription.blog.group_id}/blog/${subscription.blog.id}`
+      : `/user/${profileUserId}/blog/${subscription.blog.id}`;
+  }
+  return null;
+}
+
 function UserSubscriptionsPage() {
   const { id } = Route.useParams();
   const { subscriptions, subscribers, unsubscribe } = useUserSubscriptions(id);
@@ -46,18 +67,7 @@ function UserSubscriptionsPage() {
         <SubscriptionsTable
           subscriptions={filteredSubscriptions}
           onUnsubscribe={unsubscribe}
-          getSubscriptionHref={subscription => {
-            if (subscription.user?.id) return `/user/${subscription.user.id}`;
-            if (subscription.group?.id) return `/group/${subscription.group.id}`;
-            if (subscription.amendment?.id) return `/amendment/${subscription.amendment.id}`;
-            if (subscription.event?.id) return `/event/${subscription.event.id}`;
-            if (subscription.blog?.id) {
-              return subscription.blog.group_id
-                ? `/group/${subscription.blog.group_id}/blog/${subscription.blog.id}`
-                : `/user/${id}/blog/${subscription.blog.id}`;
-            }
-            return null;
-          }}
+          getSubscriptionHref={subscription => getSubscriptionHref(subscription, id)}
           emptyMessage={
             hasActiveFilters ? translateText('pages.user.subscriptions.noFilterResults') : undefined
           }

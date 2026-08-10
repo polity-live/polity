@@ -45,11 +45,22 @@ export function TodoDetailHeader({
       <div className="flex gap-2">
         {isEditing ? (
           <>
-            <Button onClick={onSave} disabled={isSaving} size="sm">
+            <Button
+              onClick={onSave}
+              disabled={isSaving}
+              size="sm"
+              data-action-id="todos.detail-header.save"
+            >
               <Save className="mr-2 h-4 w-4" />
               {translateText('generated.inline.0269_save_efc007a3')}
             </Button>
-            <Button onClick={onCancel} variant="outline" size="sm" disabled={isSaving}>
+            <Button
+              onClick={onCancel}
+              variant="outline"
+              size="sm"
+              disabled={isSaving}
+              data-action-id="todos.detail-header.cancel"
+            >
               <X className="mr-2 h-4 w-4" />
               {translateText('generated.inline.0065_cancel_77dfd213')}
             </Button>
@@ -58,7 +69,12 @@ export function TodoDetailHeader({
           <>
             {archiveAction}
             {canEdit ? (
-              <Button onClick={onEdit} variant="outline" size="sm">
+              <Button
+                onClick={onEdit}
+                variant="outline"
+                size="sm"
+                data-action-id="todos.detail-header.edit"
+              >
                 <Edit className="mr-2 h-4 w-4" />
                 {translateText('generated.inline.0729_edit_5301648d')}
               </Button>

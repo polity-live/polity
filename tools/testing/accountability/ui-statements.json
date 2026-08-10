@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/statements/ui/StatementCard.tsx#statements.statement-card.statement-id": [
+      {
+        "file": "src/features/statements/ui/__tests__/StatementCard.branch.A10.test.tsx",
+        "project": "component",
+        "caseId": "falls back to the formatted author name and video-only media",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/statements/ui/StatementCard.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/statements/ui/StatementDetail.tsx#statements.statement-detail.action": [
+      {
+        "file": "src/features/statements/ui/__tests__/StatementDetail.branch.A10.test.tsx",
+        "project": "component",
+        "caseId": "renders and drives every rich detail, owner, survey, and edit action",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/statements/ui/StatementDetail.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/statements/ui/StatementDetail.tsx#statements.statement-detail.group-id": [
+      {
+        "file": "src/features/statements/ui/__tests__/StatementDetail.actions.test.tsx",
+        "project": "component",
+        "caseId": "exposes stable statement author and share navigation contracts",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/statements/ui/StatementDetail.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {}
+}

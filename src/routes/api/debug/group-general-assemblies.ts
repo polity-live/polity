@@ -62,14 +62,11 @@ export const Route = createFileRoute('/api/debug/group-general-assemblies')({
           }
 
           const affectedGroupIdList = [...affectedGroupIds];
-          const generalAssemblyEvents =
-            affectedGroupIdList.length > 0
-              ? await tx.run(
-                  zql.event
-                    .where('group_id', 'IN', affectedGroupIdList)
-                    .where('event_type', 'general_assembly')
-                )
-              : [];
+          const generalAssemblyEvents = await tx.run(
+            zql.event
+              .where('group_id', 'IN', affectedGroupIdList)
+              .where('event_type', 'general_assembly')
+          );
 
           const eventIds = generalAssemblyEvents.map(event => event.id);
           const participations =

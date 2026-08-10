@@ -33,8 +33,6 @@ export const VideoElement = withHOC(
 
     const isEditorMounted = useEditorMounted();
 
-    const isTweet = true;
-
     const { isDragging, handleRef } = useDraggable({
       element: props.element,
     });
@@ -47,8 +45,8 @@ export const VideoElement = withHOC(
             align={align}
             options={{
               align,
-              maxWidth: isTweet ? 550 : '100%',
-              minWidth: isTweet ? 300 : 100,
+              maxWidth: 550,
+              minWidth: 300,
               readOnly,
             }}
           >

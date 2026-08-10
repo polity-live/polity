@@ -107,5 +107,5 @@ export function splitSuggestionPreviewText(value: string, lineBreakLabel?: strin
     .map(part => (part ? part : lineBreakLabel))
     .filter((part): part is string => Boolean(part));
 
-  return split.length > 0 ? split : lineBreakLabel ? [lineBreakLabel] : [];
+  return split;
 }

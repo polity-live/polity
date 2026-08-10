@@ -78,6 +78,10 @@ export function SpatialSearchResultsList({
               >
                 <div
                   data-search-document-id={cell.document?.id}
+                  data-action-id="search.spatial-result.select"
+                  role="button"
+                  tabIndex={cell.document ? 0 : -1}
+                  aria-pressed={isActive}
                   className={cn(
                     'civic-load-card-reveal h-full rounded-2xl border p-1 transition-colors',
                     isActive ? 'border-primary bg-primary/5' : 'border-transparent bg-transparent'
@@ -89,6 +93,12 @@ export function SpatialSearchResultsList({
                   }
                   onClick={() => {
                     if (cell.document) {
+                      onDocumentSelect(cell.document);
+                    }
+                  }}
+                  onKeyDown={event => {
+                    if (cell.document && (event.key === 'Enter' || event.key === ' ')) {
+                      event.preventDefault();
                       onDocumentSelect(cell.document);
                     }
                   }}

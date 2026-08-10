@@ -47,6 +47,24 @@ describe('CityDesignToolbarView', () => {
       />
     );
 
+    for (const actionId of [
+      'amendments.city-toolbar.select.mode-place',
+      'amendments.city-toolbar.select.mode-select',
+      'amendments.city-toolbar.select.mode-camera',
+      'amendments.city-toolbar.toggle.existing-section',
+      'amendments.city-toolbar.toggle.osm-layer',
+      'amendments.city-toolbar.toggle.street-markings',
+      'amendments.city-toolbar.toggle.elements-section',
+      'amendments.city-toolbar.select.placement-tool',
+      'amendments.city-toolbar.toggle.added-section',
+      'amendments.city-toolbar.toggle.object-category',
+      'amendments.city-toolbar.select.object-category',
+      'amendments.city-toolbar.toggle.object-category-visibility',
+      'amendments.city-toolbar.delete.object-category',
+    ]) {
+      expect(document.querySelector(`[data-action-id="${actionId}"]`), actionId).toBeTruthy();
+    }
+
     fireEvent.click(screen.getByRole('button', { name: /place/i }));
     expect(onInteractionModeChange).toHaveBeenCalledWith('place');
 
@@ -219,6 +237,14 @@ describe('CityDesignToolbarView', () => {
     expect(screen.getByRole('button', { name: 'Expand Greenery' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Expand Greenery' }));
     expect(screen.getByRole('button', { name: 'Collapse Greenery' })).toBeTruthy();
+
+    for (const actionId of [
+      'amendments.city-toolbar.select.object',
+      'amendments.city-toolbar.toggle.object-visibility',
+      'amendments.city-toolbar.delete.object',
+    ]) {
+      expect(document.querySelector(`[data-action-id="${actionId}"]`), actionId).toBeTruthy();
+    }
 
     fireEvent.click(screen.getByRole('button', { name: 'Select Deciduous tree' }));
     expect(onObjectSelect).toHaveBeenCalledWith('tree-1');

@@ -5,13 +5,22 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { commandDialogShortcut } from '@/features/navigation/nav-keyboard/keyboard-navigation';
-import { KeyboardPlatformProvider, useResolvedKeyboardShortcut } from '../keyboard-shortcut';
+import {
+  KeyboardPlatformProvider,
+  useKeyboardShortcutDisplay,
+  useResolvedKeyboardShortcut,
+  type KeyboardShortcutDefinition,
+} from '../keyboard-shortcut';
 
 function ShortcutProbe() {
   const shortcut = useResolvedKeyboardShortcut(commandDialogShortcut);
   return (
     <span>{shortcut ? `${shortcut.display}|${shortcut.ariaKeyShortcuts}` : 'unresolved'}</span>
   );
+}
+
+function DisplayProbe({ shortcut }: { shortcut?: KeyboardShortcutDefinition }) {
+  return <span>{useKeyboardShortcutDisplay(shortcut) ?? 'none'}</span>;
 }
 
 afterEach(() => {
@@ -57,5 +66,23 @@ describe('KeyboardPlatformProvider', () => {
     );
 
     expect(await screen.findByText('⌘ K|Meta+K')).toBeTruthy();
+  });
+
+  it('exposes display-only shortcuts and keeps missing definitions unresolved', () => {
+    const shortcut: KeyboardShortcutDefinition = {
+      macos: { modifiers: ['meta'], key: 'k' },
+      windows: { modifiers: ['control'], key: 'k' },
+      linux: { modifiers: ['control'], key: 'k' },
+    };
+    const rendered = render(
+      <KeyboardPlatformProvider platform="windows">
+        <DisplayProbe shortcut={shortcut} />
+      </KeyboardPlatformProvider>
+    );
+    expect(screen.getByText('Ctrl K')).toBeTruthy();
+    rendered.unmount();
+
+    render(<DisplayProbe />);
+    expect(screen.getByText('none')).toBeTruthy();
   });
 });

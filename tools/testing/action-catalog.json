@@ -1,0 +1,294 @@
+{
+  "version": 2,
+  "description": "Executable coverage catalog for Polity's critical user processes.",
+  "accountability": {
+    "criticalProcessE2EGaps": [],
+    "routeBehaviorGaps": []
+  },
+  "processes": [
+    {
+      "id": "group-creation",
+      "name": "Group creation",
+      "critical": true,
+      "actions": [
+        {
+          "id": "configure-and-submit-group",
+          "coverage": [
+            "src/features/create/ui/__tests__/CreateFormLayoutSubmit.test.tsx",
+            "src/features/create/logic/__tests__/groupInviteCsv.test.ts"
+          ]
+        },
+        {
+          "id": "persist-owner-membership-and-rights",
+          "coverage": ["src/zero/groups/__tests__/groupSharedMutators.create.test.ts"]
+        }
+      ],
+      "prE2E": [
+        {
+          "file": "e2e/create/group.spec.ts",
+          "project": "playwright",
+          "caseId": "creates a minimal group @pr @nightly @critical @mobile @cross-browser",
+          "tags": ["@pr", "@nightly", "@critical", "@mobile", "@cross-browser"],
+          "coversActions": ["configure-and-submit-group", "persist-owner-membership-and-rights"]
+        }
+      ]
+    },
+    {
+      "id": "network-creation",
+      "name": "Network creation and group linking",
+      "critical": true,
+      "actions": [
+        {
+          "id": "compose-link-and-rights",
+          "coverage": [
+            "src/features/network/ui/__tests__/LinkGroupDialogView.test.tsx",
+            "src/features/network/logic/__tests__/groupConnectionComposer.test.ts"
+          ]
+        },
+        {
+          "id": "authorize-reconcile-and-derive-link",
+          "coverage": [
+            "src/zero/network/__tests__/networkSharedMutators.authorization.test.ts",
+            "src/zero/network/__tests__/groupGraphReconcile.test.ts"
+          ]
+        }
+      ],
+      "prE2E": [
+        {
+          "file": "e2e/critical/network-linking.spec.ts",
+          "project": "playwright",
+          "caseId": "links two groups after realtime approval by a second administrator @pr @critical",
+          "tags": ["@pr", "@critical"],
+          "coversActions": ["compose-link-and-rights", "authorize-reconcile-and-derive-link"]
+        }
+      ]
+    },
+    {
+      "id": "event-creation",
+      "name": "Event creation",
+      "critical": true,
+      "actions": [
+        {
+          "id": "configure-times-participation-and-recurrence",
+          "coverage": [
+            "src/features/create/hooks/__tests__/useCreateEventForm.test.tsx",
+            "src/features/events/logic/__tests__/eventTimeSeriesValidation.test.ts"
+          ]
+        },
+        {
+          "id": "persist-event-rights-and-notifications",
+          "coverage": ["src/zero/events/__tests__/eventServerMutators.notifications.test.ts"]
+        }
+      ],
+      "prE2E": [
+        {
+          "file": "e2e/create/event.spec.ts",
+          "project": "playwright",
+          "caseId": "creates a minimal open event @pr @critical",
+          "tags": ["@pr", "@critical"],
+          "coversActions": [
+            "configure-times-participation-and-recurrence",
+            "persist-event-rights-and-notifications"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "amendment-creation",
+      "name": "Amendment creation",
+      "critical": true,
+      "actions": [
+        {
+          "id": "select-target-and-validate-eligibility",
+          "coverage": [
+            "src/features/create/logic/__tests__/createEligibility.test.ts",
+            "src/features/amendments/ui/__tests__/TargetGroupEventSelector.test.tsx"
+          ]
+        },
+        {
+          "id": "initialize-amendment-document",
+          "coverage": [
+            "src/zero/amendments/__tests__/amendmentSharedMutators.documentChangeRequest.test.ts"
+          ]
+        }
+      ],
+      "prE2E": [
+        {
+          "file": "e2e/create/amendment.spec.ts",
+          "project": "playwright",
+          "caseId": "creates a targeted amendment @pr @critical",
+          "tags": ["@pr", "@critical"],
+          "coversActions": [
+            "select-target-and-validate-eligibility",
+            "initialize-amendment-document"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "amendment-editing",
+      "name": "Amendment editing and change requests",
+      "critical": true,
+      "actions": [
+        {
+          "id": "edit-content-and-collaborators",
+          "coverage": [
+            "src/features/amendments/ui/__tests__/useAmendmentEditContentController.test.tsx",
+            "src/features/amendments/collaborators/ui/__tests__/InviteDialog.test.tsx"
+          ]
+        },
+        {
+          "id": "create-number-and-resolve-change-request",
+          "coverage": [
+            "src/zero/amendments/__tests__/amendmentSharedMutators.changeRequestNumbering.test.ts",
+            "src/zero/change-requests/__tests__/server-resolution.test.ts"
+          ]
+        }
+      ],
+      "prE2E": [
+        {
+          "file": "e2e/critical/amendment-editing-forwarding.spec.ts",
+          "project": "playwright",
+          "caseId": "edits and reloads persisted amendment metadata @pr @critical",
+          "tags": ["@pr", "@critical"],
+          "coversActions": [
+            "edit-content-and-collaborators",
+            "create-number-and-resolve-change-request"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "amendment-forwarding",
+      "name": "Amendment path and forwarding",
+      "critical": true,
+      "actions": [
+        {
+          "id": "calculate-preview-and-branches",
+          "coverage": [
+            "src/features/amendments/logic/__tests__/amendmentPathHelpers.test.ts",
+            "src/features/amendments/ui/__tests__/AmendmentForwardingPreview.test.tsx"
+          ]
+        },
+        {
+          "id": "initialize-replan-and-merge-process",
+          "coverage": [
+            "src/zero/amendments/__tests__/processEngine.initialize.test.ts",
+            "src/zero/amendments/__tests__/processEngine.replan.test.ts",
+            "src/zero/amendments/__tests__/processEngine.mergeVote.test.ts"
+          ]
+        }
+      ],
+      "prE2E": [
+        {
+          "file": "e2e/critical/amendment-editing-forwarding.spec.ts",
+          "project": "playwright",
+          "caseId": "creates a persisted cross-group amendment path through the UI @pr @critical",
+          "tags": ["@pr", "@critical"],
+          "coversActions": ["calculate-preview-and-branches", "initialize-replan-and-merge-process"]
+        }
+      ]
+    },
+    {
+      "id": "agenda-and-event-start",
+      "name": "Agenda management and event start",
+      "critical": true,
+      "actions": [
+        {
+          "id": "order-start-and-resume-agenda",
+          "coverage": [
+            "src/features/agendas/logic/__tests__/getAgendaRuntimeStatus.test.ts",
+            "src/features/agendas/ui/__tests__/EventLiveFocusDialog.test.tsx"
+          ]
+        },
+        {
+          "id": "initialize-agenda-voting",
+          "coverage": [
+            "src/zero/agendas/__tests__/agendaServerMutators.initializeChangeRequestVoting.test.ts"
+          ]
+        }
+      ],
+      "prE2E": [
+        {
+          "file": "e2e/critical/agenda-event-start.spec.ts",
+          "project": "playwright",
+          "caseId": "starts an event and its first agenda item and restores both after reload @pr @critical",
+          "tags": ["@pr", "@critical"],
+          "coversActions": ["order-start-and-resume-agenda", "initialize-agenda-voting"]
+        }
+      ]
+    },
+    {
+      "id": "voting-and-elections",
+      "name": "Votes, elections and final amendment decisions",
+      "critical": true,
+      "actions": [
+        {
+          "id": "determine-electorate-majority-and-results",
+          "coverage": [
+            "src/features/votes/logic/__tests__/computeEligibleVoters.test.ts",
+            "src/features/vote-cast/logic/__tests__/computeVoteResults.test.ts"
+          ]
+        },
+        {
+          "id": "cast-named-secret-and-election-ballots",
+          "coverage": [
+            "src/features/vote-cast/ui/__tests__/VoteCastDialog.test.tsx",
+            "src/zero/votes/__tests__/vote-workflow.test.ts",
+            "src/zero/elections/__tests__/electionSharedMutators.ballotVisibility.test.ts"
+          ]
+        }
+      ],
+      "prE2E": [
+        {
+          "file": "e2e/critical/voting-election.spec.ts",
+          "project": "playwright",
+          "caseId": "starts and casts a secret indicative election ballot @pr @critical",
+          "tags": ["@pr", "@critical"],
+          "coversActions": [
+            "determine-electorate-majority-and-results",
+            "cast-named-secret-and-election-ballots"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "invitations-and-requests",
+      "name": "Invitations and requests for groups, events and amendments",
+      "critical": true,
+      "actions": [
+        {
+          "id": "send-and-review-invitations",
+          "coverage": [
+            "src/features/amendments/collaborators/ui/__tests__/InviteDialog.test.tsx",
+            "src/features/groups/ui/__tests__/PendingRequestActionCellView.loading.test.tsx"
+          ]
+        },
+        {
+          "id": "persist-status-and-publish-notification",
+          "coverage": [
+            "src/zero/groups/__tests__/groupServerMutators.membership-events.test.ts",
+            "src/zero/events/__tests__/eventServerMutators.notifications.test.ts",
+            "src/zero/amendments/__tests__/process-notifications.test.ts"
+          ]
+        }
+      ],
+      "prE2E": [
+        {
+          "file": "e2e/critical/invitations-requests.spec.ts",
+          "project": "playwright",
+          "caseId": "invites a group member and persists the notification @pr @critical",
+          "tags": ["@pr", "@critical"],
+          "coversActions": ["send-and-review-invitations"]
+        },
+        {
+          "file": "e2e/critical/invitations-requests.spec.ts",
+          "project": "playwright",
+          "caseId": "invites an amendment collaborator and persists the notification @pr @critical",
+          "tags": ["@pr", "@critical"],
+          "coversActions": ["persist-status-and-publish-notification"]
+        }
+      ]
+    }
+  ]
+}

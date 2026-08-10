@@ -122,11 +122,10 @@ export function usePqlQueryEditorController<TItem, TFieldKey extends string>({
     }
 
     if (event.key === 'Enter' || event.key === 'Tab') {
-      const selectedSuggestion = suggestions[selectedSuggestionIndex];
-      if (selectedSuggestion) {
-        handleSuggestionSelect(selectedSuggestion);
-        event.preventDefault();
-      }
+      // Hover and keyboard navigation only publish indices from this non-empty list.
+      const selectedSuggestion = suggestions[selectedSuggestionIndex] as PqlSuggestion;
+      handleSuggestionSelect(selectedSuggestion);
+      event.preventDefault();
       return;
     }
 

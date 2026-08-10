@@ -22,6 +22,7 @@ function dimension(id: string, valueCount: number): EurostatDimension {
 describe('Eurostat utilities', () => {
   it('creates canonical hashes independent of object key order', () => {
     expect(stableStringify({ b: 2, a: { d: 4, c: 3 } })).toBe('{"a":{"c":3,"d":4},"b":2}');
+    expect(stableStringify([2, { b: 1, a: 0 }])).toBe('[2,{"a":0,"b":1}]');
     expect(createStableHash({ a: 1, b: 2 })).toBe(createStableHash({ b: 2, a: 1 }));
   });
 
@@ -45,9 +46,34 @@ describe('Eurostat utilities', () => {
     expect(
       partitions.reduce((total, partition) => total + estimatePartitionCells(partition.filters), 0)
     ).toBe(130 * 80 * 7);
+    expect(estimatePartitionCells({ empty: [] })).toBe(1);
+    expect(buildEurostatPartitions([], 1)).toEqual([{ index: 0, filters: {}, estimatedCells: 1 }]);
   });
 
   it('requires exactly one filter for every unused dimension', () => {
+    expect(() =>
+      validateProjectionDimensions(['geo', 'time'], {
+        datasetId: 'dataset',
+        xDimension: 'unknown',
+        filters: { geo: 'DE' },
+      })
+    ).toThrow('Unknown X dimension');
+    expect(() =>
+      validateProjectionDimensions(['geo', 'time'], {
+        datasetId: 'dataset',
+        xDimension: 'time',
+        seriesDimension: 'unknown',
+        filters: { geo: 'DE' },
+      })
+    ).toThrow('Unknown series dimension');
+    expect(() =>
+      validateProjectionDimensions(['geo', 'time'], {
+        datasetId: 'dataset',
+        xDimension: 'time',
+        seriesDimension: 'time',
+        filters: { geo: 'DE' },
+      })
+    ).toThrow('X and series dimensions must differ');
     expect(() =>
       validateProjectionDimensions(['geo', 'unit', 'time'], {
         datasetId: 'dataset',
@@ -69,6 +95,8 @@ describe('Eurostat utilities', () => {
 
   it('normalizes and validates the Eurostat projection value field', () => {
     expect(normalizeEurostatValueField()).toBe('OBS_VALUE');
+    expect(normalizeEurostatValueField(null)).toBe('OBS_VALUE');
+    expect(normalizeEurostatValueField('   ')).toBe('OBS_VALUE');
     expect(normalizeEurostatValueField('OBS_VALUE')).toBe('OBS_VALUE');
     expect(() => normalizeEurostatValueField('OTHER_VALUE')).toThrow(
       'Unsupported Eurostat value field'
@@ -83,5 +111,15 @@ describe('Eurostat utilities', () => {
     });
 
     await expect(readEurostatCsvResponse(response)).resolves.toBe('geo,OBS_VALUE\nDE,42\n');
+  });
+
+  it('reads raw CSV and detects gzip by magic bytes without a disposition header', async () => {
+    await expect(readEurostatCsvResponse(new Response('plain,csv\n1,2'))).resolves.toBe(
+      'plain,csv\n1,2'
+    );
+    await expect(readEurostatCsvResponse(new Response(gzipSync('magic,csv\n3,4')))).resolves.toBe(
+      'magic,csv\n3,4'
+    );
+    await expect(readEurostatCsvResponse(new Response(new Uint8Array()))).resolves.toBe('');
   });
 });

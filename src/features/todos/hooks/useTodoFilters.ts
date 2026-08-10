@@ -28,12 +28,8 @@ interface UseTodoFiltersOptions {
 }
 
 function getTodoUserLabel(
-  user: Todo['creator'] | Todo['assignments'][number]['user']
-): string | null {
-  if (!user?.id) {
-    return null;
-  }
-
+  user: NonNullable<Todo['creator'] | Todo['assignments'][number]['user']>
+): string {
   return (
     [user.first_name, user.last_name].filter(Boolean).join(' ') ||
     user.handle ||
@@ -142,7 +138,7 @@ export function useTodoFilters(
           continue;
         }
 
-        const label = getTodoUserLabel(user) ?? user.id;
+        const label = getTodoUserLabel(user);
 
         nextOptions.set(user.id, {
           value: user.id,
@@ -168,7 +164,7 @@ export function useTodoFilters(
 
       nextOptions.set(creator.id, {
         value: creator.id,
-        label: getTodoUserLabel(creator) ?? creator.id,
+        label: getTodoUserLabel(creator),
         keywords: [creator.handle ?? '', creator.email ?? ''].filter(Boolean),
       });
     }

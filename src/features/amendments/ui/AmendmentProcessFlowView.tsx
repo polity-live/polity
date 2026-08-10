@@ -338,6 +338,7 @@ export function AmendmentProcessFlowView({
 
             {canManageProcess ? (
               <Button
+                data-action-id="amendments.process-path.open.selector"
                 data-tutorial-anchor={
                   !currentRun && !selectorOpen ? 'tutorial-process-start-group' : undefined
                 }
@@ -429,8 +430,12 @@ export function AmendmentProcessFlowView({
         <>
           <Tabs defaultValue="flow" className="space-y-4">
             <ScrollableTabsList className="w-full sm:w-auto">
-              <TabsTrigger value="flow">{t('features.amendments.process.flowTab')}</TabsTrigger>
-              <TabsTrigger value="steps">{t('features.amendments.process.stepsTab')}</TabsTrigger>
+              <TabsTrigger data-action-id="amendments.process-view.select.flow" value="flow">
+                {t('features.amendments.process.flowTab')}
+              </TabsTrigger>
+              <TabsTrigger data-action-id="amendments.process-view.select.steps" value="steps">
+                {t('features.amendments.process.stepsTab')}
+              </TabsTrigger>
             </ScrollableTabsList>
 
             <TabsContent value="flow" className="mt-0" data-testid="amendment-process-flow-tab">
@@ -780,6 +785,7 @@ export function AmendmentProcessFlowView({
                         </Button>
                         {canManageProcess ? (
                           <Button
+                            data-action-id="amendments.process-replan.open.event-editor"
                             type="button"
                             variant="outline"
                             size="sm"
@@ -1076,6 +1082,7 @@ export function AmendmentProcessFlowView({
                         </div>
                         {row.selectedEventId ? (
                           <Button
+                            data-action-id="amendments.process-replan.clear.event"
                             type="button"
                             variant="outline"
                             size="icon"
@@ -1100,6 +1107,7 @@ export function AmendmentProcessFlowView({
 
             <DialogFooter separator>
               <Button
+                data-action-id="amendments.process-replan.cancel.event-editor"
                 type="button"
                 variant="outline"
                 onClick={closeBranchEventEditor}
@@ -1108,6 +1116,7 @@ export function AmendmentProcessFlowView({
                 {t('common.cancel')}
               </Button>
               <Button
+                data-action-id="amendments.process-replan.save.events"
                 type="button"
                 onClick={saveBranchEventReplan}
                 disabled={
@@ -1229,6 +1238,7 @@ export function AmendmentProcessFlowView({
 
                 <DialogFooter separator className="px-6 py-4">
                   <Button
+                    data-action-id="amendments.process-selection.cancel.dialog"
                     variant="outline"
                     onClick={() => {
                       setSelectorOpen(false);
@@ -1238,6 +1248,7 @@ export function AmendmentProcessFlowView({
                     {t('common.cancel')}
                   </Button>
                   <Button
+                    data-action-id="amendments.process-selection.confirm.path"
                     data-tutorial-anchor={!currentRun ? 'tutorial-confirm-process-path' : undefined}
                     onClick={handleConfirmSelection}
                     disabled={!pendingSelection || isSaving}
@@ -1307,3 +1318,10 @@ export function AmendmentProcessFlowView({
     </div>
   );
 }
+
+export const amendmentProcessFlowViewInternals = {
+  formatDateTime,
+  getBadgeVariant,
+  GroupReference,
+  EventReference,
+};

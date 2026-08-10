@@ -5,10 +5,15 @@ import {
   buildDirectRelationships,
   buildIndirectRelationships,
   buildMixedRelationshipGraph,
+  buildExistingRightStatusesForDirection,
   getAcceptedSiblingGroups,
   getGroupRelationshipKind,
+  getGroupRelationshipRightDisplayStatus,
+  getRelativeMembershipDirectionForRelationship,
   isActiveGroupRelationshipStatus,
   isAcceptedSiblingRelationship,
+  isRequestGroupRelationshipStatus,
+  isVisibleGroupRelationshipStatus,
 } from '../networkRelationshipHelpers';
 import type { NormalizedGroupRelationship } from '../../types/network.types';
 
@@ -84,6 +89,117 @@ function rel(
 }
 
 describe('networkRelationshipHelpers', () => {
+  it('classifies active, requested, pending, and hidden relationship statuses', () => {
+    expect(isActiveGroupRelationshipStatus('active')).toBe(true);
+    expect(isActiveGroupRelationshipStatus('pending')).toBe(false);
+    expect(isRequestGroupRelationshipStatus('requested')).toBe(true);
+    expect(isRequestGroupRelationshipStatus('pending')).toBe(true);
+    expect(isRequestGroupRelationshipStatus('active')).toBe(false);
+    expect(isVisibleGroupRelationshipStatus('active')).toBe(true);
+    expect(isVisibleGroupRelationshipStatus('requested')).toBe(true);
+    expect(isVisibleGroupRelationshipStatus('pending')).toBe(true);
+    expect(isVisibleGroupRelationshipStatus('rejected')).toBe(false);
+
+    expect(getGroupRelationshipKind(rel({ id: 'active-kind' }), 'anchor')).toBe('active');
+    expect(
+      getGroupRelationshipKind(rel({ id: 'hidden-kind', status: 'rejected' }), 'anchor')
+    ).toBeNull();
+    expect(
+      getGroupRelationshipKind(
+        rel({ id: 'unrelated-kind', group_id: 'a', related_group_id: 'b', status: 'pending' }),
+        'outside'
+      )
+    ).toBeNull();
+    expect(
+      getGroupRelationshipKind(
+        rel({ id: 'outgoing-kind', status: 'requested', initiator_group_id: 'anchor' }),
+        'anchor'
+      )
+    ).toBe('outgoing');
+    expect(
+      getGroupRelationshipKind(
+        rel({ id: 'incoming-kind', status: 'pending', initiator_group_id: 'sibling-a' }),
+        'anchor'
+      )
+    ).toBe('incoming');
+  });
+
+  it('builds accepted and request right statuses with request precedence', () => {
+    expect(getGroupRelationshipRightDisplayStatus(rel({ id: 'accepted' }), 'anchor')).toBe(
+      'accepted'
+    );
+    expect(
+      getGroupRelationshipRightDisplayStatus(rel({ id: 'rejected', status: 'rejected' }), 'anchor')
+    ).toBeNull();
+    expect(
+      getGroupRelationshipRightDisplayStatus(
+        rel({ id: 'outgoing', status: 'pending', initiator_group_id: 'anchor' }),
+        'anchor'
+      )
+    ).toBe('outgoing');
+    expect(
+      getGroupRelationshipRightDisplayStatus(
+        rel({ id: 'incoming', status: 'requested', initiator_group_id: 'sibling-a' }),
+        'anchor'
+      )
+    ).toBe('incoming');
+
+    const statuses = buildExistingRightStatusesForDirection(
+      [
+        rel({ id: 'active-right', with_right: 'informationRight' }),
+        rel({
+          id: 'request-overrides',
+          with_right: 'informationRight',
+          status: 'requested',
+          initiator_group_id: 'sibling-a',
+        }),
+        rel({ id: 'empty-right', with_right: null }),
+        rel({ id: 'hidden-right', with_right: 'amendmentRight', status: 'rejected' }),
+        rel({
+          id: 'other-pair',
+          group_id: 'other-a',
+          related_group_id: 'other-b',
+          with_right: 'rightToSpeak',
+        }),
+      ],
+      { currentGroupId: 'anchor', otherGroupId: 'sibling-a', relationshipType: 'sibling' }
+    );
+    expect(Object.fromEntries(statuses)).toEqual({ informationRight: 'incoming' });
+  });
+
+  it('maps membership direction only for complete participating endpoints', () => {
+    expect(
+      getRelativeMembershipDirectionForRelationship({
+        relationship: { member_source_group_id: null, member_target_group_id: 'target' },
+        currentGroupId: 'target',
+      })
+    ).toBeNull();
+    expect(
+      getRelativeMembershipDirectionForRelationship({
+        relationship: { member_source_group_id: 'source', member_target_group_id: null },
+        currentGroupId: 'source',
+      })
+    ).toBeNull();
+    expect(
+      getRelativeMembershipDirectionForRelationship({
+        relationship: { member_source_group_id: 'source', member_target_group_id: 'target' },
+        currentGroupId: 'outside',
+      })
+    ).toBeNull();
+    expect(
+      getRelativeMembershipDirectionForRelationship({
+        relationship: { member_source_group_id: 'source', member_target_group_id: 'target' },
+        currentGroupId: 'source',
+      })
+    ).toBe('current_members_to_partner');
+    expect(
+      getRelativeMembershipDirectionForRelationship({
+        relationship: { member_source_group_id: 'source', member_target_group_id: 'target' },
+        currentGroupId: 'target',
+      })
+    ).toBe('partner_members_to_current');
+  });
+
   it('treats only active sibling relationships as accepted', () => {
     expect(isAcceptedSiblingRelationship(rel({ id: 'active-sibling', status: 'active' }))).toBe(
       true
@@ -123,6 +239,591 @@ describe('networkRelationshipHelpers', () => {
     );
 
     expect(siblingGroups.map(group => group.id)).toEqual(['sibling-a', 'sibling-b']);
+  });
+
+  it('ignores sibling rows without a participating hydrated entity', () => {
+    const missingEntities = {
+      ...rel({ id: 'missing-entities', group_id: 'a', related_group_id: 'b' }),
+      group: null,
+      related_group: null,
+    };
+    expect(getAcceptedSiblingGroups([missingEntities], 'outside')).toEqual([]);
+  });
+
+  it('builds direct structure and right-scope relationships with defensive filtering', () => {
+    const parent = {
+      ...rel({
+        id: 'parent',
+        group_id: 'parent',
+        related_group_id: 'anchor',
+        relationship_type: 'parent',
+        parent_group_id: 'parent',
+        child_group_id: 'anchor',
+        group: { id: 'parent', name: 'Parent' },
+        related_group: { id: 'anchor', name: 'Anchor' },
+        membership_mode: 'role_members',
+        member_source_group_id: 'anchor',
+        member_target_group_id: 'parent',
+        required_source_role_id: 'role',
+      }),
+      required_source_role: { id: 'role', name: 'Role' },
+    } as NormalizedGroupRelationship;
+    const parentDuplicate = rel({
+      ...parent,
+      id: 'parent-duplicate',
+      with_right: 'amendmentRight',
+      required_source_role_id: null,
+      required_source_role: null,
+    } as never);
+    const child = rel({
+      id: 'child',
+      group_id: 'anchor',
+      related_group_id: 'child',
+      relationship_type: 'child',
+      parent_group_id: 'anchor',
+      child_group_id: 'child',
+      group: { id: 'anchor', name: 'Anchor' },
+      related_group: { id: 'child', name: 'Child' },
+    });
+    const missingParentEntity = { ...parent, id: 'missing-parent', group: null };
+    const missingChildEntity = { ...child, id: 'missing-child', related_group: null };
+    const result = buildDirectRelationships(
+      [parent, parentDuplicate, child, missingParentEntity, missingChildEntity],
+      'anchor'
+    );
+    expect(result.parents).toHaveLength(1);
+    expect(result.parents[0]).toMatchObject({
+      rights: ['informationRight', 'amendmentRight'],
+      membershipMode: 'role_members',
+      requiredSourceRoleId: 'role',
+      requiredSourceRoleName: 'Role',
+      membershipDirection: 'current_members_to_partner',
+    });
+    expect(result.children).toHaveLength(1);
+
+    expect(buildDirectRelationships([parent], 'anchor', 'otherRight')).toEqual({
+      parents: [],
+      children: [],
+    });
+    expect(
+      buildDirectRelationships(
+        [
+          { ...rel({ id: 'peer-right' }), grant_id: null },
+          { ...parent, id: 'no-grant', grant_id: null },
+          { ...parent, id: 'wrong-holder', group_id: 'other' },
+          {
+            ...parent,
+            id: 'missing-scope',
+            group_id: 'anchor',
+            related_group_id: 'parent',
+            group: groupStub('anchor', 'Anchor'),
+            related_group: null,
+          },
+          {
+            ...parent,
+            id: 'right-parent',
+            group_id: 'anchor',
+            related_group_id: 'parent',
+            group: groupStub('anchor', 'Anchor'),
+            related_group: groupStub('parent', 'Parent'),
+          },
+          {
+            ...parent,
+            id: 'right-parent-duplicate',
+            grant_id: 'right-parent-duplicate-grant',
+            group_id: 'anchor',
+            related_group_id: 'parent',
+            group: groupStub('anchor', 'Anchor'),
+            related_group: groupStub('parent', 'Parent'),
+          },
+          child,
+        ],
+        'anchor',
+        undefined,
+        'anchor',
+        'right'
+      )
+    ).toMatchObject({
+      parents: [expect.objectContaining({ group: expect.objectContaining({ id: 'parent' }) })],
+      children: [expect.objectContaining({ group: expect.objectContaining({ id: 'child' }) })],
+    });
+  });
+
+  it('walks indirect hierarchy chains in both directions and preserves levels', () => {
+    const relationships = [
+      rel({
+        id: 'parent-1',
+        group_id: 'parent-1',
+        related_group_id: 'anchor',
+        relationship_type: 'parent',
+        parent_group_id: 'parent-1',
+        child_group_id: 'anchor',
+        group: { id: 'parent-1', name: 'Parent 1' },
+        related_group: { id: 'anchor', name: 'Anchor' },
+      }),
+      rel({
+        id: 'parent-2',
+        group_id: 'parent-2',
+        related_group_id: 'parent-1',
+        relationship_type: 'parent',
+        parent_group_id: 'parent-2',
+        child_group_id: 'parent-1',
+        group: { id: 'parent-2', name: 'Parent 2' },
+        related_group: { id: 'parent-1', name: 'Parent 1' },
+      }),
+      rel({
+        id: 'child-1',
+        group_id: 'anchor',
+        related_group_id: 'child-1',
+        relationship_type: 'child',
+        parent_group_id: 'anchor',
+        child_group_id: 'child-1',
+        group: { id: 'anchor', name: 'Anchor' },
+        related_group: { id: 'child-1', name: 'Child 1' },
+      }),
+      rel({
+        id: 'child-2',
+        group_id: 'child-1',
+        related_group_id: 'child-2',
+        relationship_type: 'child',
+        parent_group_id: 'child-1',
+        child_group_id: 'child-2',
+        group: { id: 'child-1', name: 'Child 1' },
+        related_group: { id: 'child-2', name: 'Child 2' },
+      }),
+      rel({ id: 'ignored-peer' }),
+      rel({
+        id: 'ignored-right',
+        group_id: 'parent-3',
+        related_group_id: 'parent-2',
+        relationship_type: 'parent',
+        parent_group_id: 'parent-3',
+        child_group_id: 'parent-2',
+        with_right: 'amendmentRight',
+      }),
+      {
+        ...rel({
+          id: 'missing-parent-entity',
+          group_id: 'missing-parent',
+          related_group_id: 'parent-2',
+          relationship_type: 'parent',
+          parent_group_id: 'missing-parent',
+          child_group_id: 'parent-2',
+        }),
+        group: null,
+      },
+      {
+        ...rel({
+          id: 'missing-child-entity',
+          group_id: 'child-2',
+          related_group_id: 'missing-child',
+          relationship_type: 'child',
+          parent_group_id: 'child-2',
+          child_group_id: 'missing-child',
+        }),
+        related_group: null,
+      },
+    ];
+
+    const result = buildIndirectRelationships(
+      relationships,
+      'anchor',
+      'informationRight',
+      'anchor',
+      'structure'
+    );
+    expect(result.parents.map(entry => [entry.group.id, entry.level, entry.childId])).toEqual([
+      ['parent-1', 1, 'anchor'],
+      ['parent-2', 2, 'parent-1'],
+    ]);
+    expect(result.children.map(entry => [entry.group.id, entry.level, entry.parentId])).toEqual([
+      ['child-1', 1, 'anchor'],
+      ['child-2', 2, 'child-1'],
+    ]);
+  });
+
+  it('walks indirect right-scope chains while rejecting invalid, missing, and cyclic grants', () => {
+    const rightRelationship = (
+      id: string,
+      holderId: string,
+      scopeId: string,
+      parentId: string,
+      childId: string
+    ) =>
+      rel({
+        id,
+        group_id: holderId,
+        related_group_id: scopeId,
+        relationship_type: parentId === scopeId ? 'child' : 'parent',
+        parent_group_id: parentId,
+        child_group_id: childId,
+        group: { id: holderId, name: holderId },
+        related_group: { id: scopeId, name: scopeId },
+      });
+    const relationships = [
+      rightRelationship('anchor-parent', 'anchor', 'parent-1', 'parent-1', 'anchor'),
+      rightRelationship('parent-grandparent', 'parent-1', 'parent-2', 'parent-2', 'parent-1'),
+      rightRelationship('anchor-child', 'anchor', 'child-1', 'anchor', 'child-1'),
+      rightRelationship('child-grandchild', 'child-1', 'child-2', 'child-1', 'child-2'),
+      { ...rightRelationship('cycle', 'parent-2', 'anchor', 'parent-2', 'anchor') },
+      {
+        ...rightRelationship('missing-scope', 'parent-2', 'missing', 'missing', 'parent-2'),
+        related_group: null,
+      },
+      {
+        ...rightRelationship('no-grant', 'child-2', 'ignored', 'child-2', 'ignored'),
+        grant_id: null,
+      },
+      {
+        ...rightRelationship('wrong-right', 'child-2', 'ignored-2', 'child-2', 'ignored-2'),
+        with_right: 'amendmentRight',
+      },
+      {
+        ...rightRelationship('missing-right', 'child-2', 'ignored-3', 'child-2', 'ignored-3'),
+        with_right: null,
+      },
+    ];
+    const result = buildIndirectRelationships(
+      relationships,
+      'anchor',
+      undefined,
+      'anchor',
+      'right'
+    );
+    expect(result.parents.map(entry => [entry.group.id, entry.level])).toEqual([
+      ['parent-1', 1],
+      ['parent-2', 2],
+    ]);
+    expect(result.children.map(entry => [entry.group.id, entry.level])).toEqual([
+      ['child-1', 1],
+      ['child-2', 2],
+    ]);
+  });
+
+  it('builds mixed right traversal for parent, child, sibling, duplicate, and invalid grants', () => {
+    const parent = rel({
+      id: 'right-parent',
+      group_id: 'anchor',
+      related_group_id: 'parent',
+      relationship_type: 'child',
+      connection_type: 'hierarchy',
+      parent_group_id: 'parent',
+      child_group_id: 'anchor',
+      group: { id: 'anchor', name: 'Anchor' },
+      related_group: { id: 'parent', name: 'Parent' },
+    });
+    const child = rel({
+      id: 'right-child',
+      group_id: 'anchor',
+      related_group_id: 'child',
+      relationship_type: 'parent',
+      connection_type: 'hierarchy',
+      parent_group_id: 'anchor',
+      child_group_id: 'child',
+      group: { id: 'anchor', name: 'Anchor' },
+      related_group: { id: 'child', name: 'Child' },
+    });
+    const sibling = rel({
+      id: 'right-sibling',
+      group_id: 'anchor',
+      related_group_id: 'sibling',
+      relationship_type: 'sibling',
+      group: { id: 'anchor', name: 'Anchor' },
+      related_group: { id: 'sibling', name: 'Sibling' },
+    });
+    const graph = buildMixedRelationshipGraph(
+      [
+        parent,
+        { ...parent, id: 'right-parent-duplicate', grant_id: 'duplicate-grant' },
+        child,
+        { ...child, id: 'right-child-duplicate', grant_id: 'child-duplicate-grant' },
+        sibling,
+        { ...sibling, id: 'right-sibling-duplicate', grant_id: 'sibling-duplicate-grant' },
+        { ...parent, id: 'missing-right', with_right: null },
+        { ...parent, id: 'missing-grant', grant_id: null },
+        { ...parent, id: 'inactive', status: 'pending' },
+        { ...parent, id: 'missing-group', group: null },
+        { ...parent, id: 'missing-related', related_group: null },
+        { ...parent, id: 'wrong-filter', with_right: 'amendmentRight' },
+      ],
+      'anchor',
+      'informationRight',
+      'anchor',
+      'right'
+    );
+    expect(graph.parents.map(entry => entry.group.id)).toEqual(['parent']);
+    expect(graph.children.map(entry => entry.group.id)).toEqual(['child']);
+    expect(graph.siblingAttachments.map(entry => entry.group.id)).toEqual(['sibling']);
+    expect(graph.parents[0].rights).toEqual(['informationRight']);
+  });
+
+  it('merges request and role metadata into existing direct entries', () => {
+    const base = rel({
+      id: 'base',
+      group_id: 'parent',
+      related_group_id: 'anchor',
+      relationship_type: 'parent',
+      parent_group_id: 'parent',
+      child_group_id: 'anchor',
+      group: { id: 'parent', name: 'Parent' },
+      related_group: { id: 'anchor', name: 'Anchor' },
+      membership_mode: 'role_members',
+      required_source_role_id: null,
+    });
+    const withRole = {
+      ...base,
+      id: 'with-role',
+      grant_id: 'with-role-grant',
+      required_source_role_id: 'role',
+      required_source_role: { id: 'role', name: 'Role' },
+    } as NormalizedGroupRelationship;
+    const incoming = {
+      ...base,
+      id: 'incoming',
+      grant_id: 'incoming-grant',
+      status: 'requested',
+      initiator_group_id: 'parent',
+    };
+    const outgoing = {
+      ...incoming,
+      id: 'outgoing',
+      grant_id: 'outgoing-grant',
+      initiator_group_id: 'anchor',
+    };
+    const missingRoleAgain = {
+      ...base,
+      id: 'missing-role-again',
+      grant_id: 'missing-role-again-grant',
+    };
+    const hidden = {
+      ...base,
+      id: 'hidden',
+      grant_id: 'hidden-grant',
+      status: 'rejected',
+      membership_mode: undefined as never,
+    };
+    const entry = buildDirectRelationships(
+      [base, missingRoleAgain, withRole, incoming, hidden],
+      'anchor'
+    ).parents[0];
+    expect(entry).toMatchObject({
+      relationshipKinds: ['active', 'incoming'],
+      rightRelationshipKinds: { informationRight: 'active' },
+      requiredSourceRoleId: 'role',
+      requiredSourceRoleName: 'Role',
+    });
+
+    const activeAfterIncoming = buildDirectRelationships([incoming, base], 'anchor').parents[0];
+    expect(activeAfterIncoming.rightRelationshipKinds).toEqual({ informationRight: 'active' });
+
+    const requestOnly = buildDirectRelationships([incoming, outgoing], 'anchor').parents[0];
+    expect(requestOnly.rightRelationshipKinds).toEqual({ informationRight: 'incoming' });
+  });
+
+  it('merges recursive hierarchy paths into groups that are also directly reachable', () => {
+    const relationships = [
+      rel({
+        id: 'parent-a-direct',
+        group_id: 'parent-a',
+        related_group_id: 'anchor',
+        relationship_type: 'parent',
+        parent_group_id: 'parent-a',
+        child_group_id: 'anchor',
+        group: { id: 'parent-a', name: 'Parent A' },
+        related_group: { id: 'anchor', name: 'Anchor' },
+      }),
+      rel({
+        id: 'parent-b-direct',
+        group_id: 'parent-b',
+        related_group_id: 'anchor',
+        relationship_type: 'parent',
+        parent_group_id: 'parent-b',
+        child_group_id: 'anchor',
+        group: { id: 'parent-b', name: 'Parent B' },
+        related_group: { id: 'anchor', name: 'Anchor' },
+      }),
+      rel({
+        id: 'parent-b-via-a',
+        group_id: 'parent-b',
+        related_group_id: 'parent-a',
+        relationship_type: 'parent',
+        parent_group_id: 'parent-b',
+        child_group_id: 'parent-a',
+        group: { id: 'parent-b', name: 'Parent B' },
+        related_group: { id: 'parent-a', name: 'Parent A' },
+      }),
+      rel({
+        id: 'parent-a-direct-amendment',
+        group_id: 'parent-a',
+        related_group_id: 'anchor',
+        relationship_type: 'parent',
+        parent_group_id: 'parent-a',
+        child_group_id: 'anchor',
+        with_right: 'amendmentRight',
+        group: { id: 'parent-a', name: 'Parent A' },
+        related_group: { id: 'anchor', name: 'Anchor' },
+      }),
+      rel({
+        id: 'parent-b-via-a-amendment',
+        group_id: 'parent-b',
+        related_group_id: 'parent-a',
+        relationship_type: 'parent',
+        parent_group_id: 'parent-b',
+        child_group_id: 'parent-a',
+        with_right: 'amendmentRight',
+        group: { id: 'parent-b', name: 'Parent B' },
+        related_group: { id: 'parent-a', name: 'Parent A' },
+      }),
+      rel({
+        id: 'child-a-direct',
+        group_id: 'anchor',
+        related_group_id: 'child-a',
+        relationship_type: 'child',
+        parent_group_id: 'anchor',
+        child_group_id: 'child-a',
+        group: { id: 'anchor', name: 'Anchor' },
+        related_group: { id: 'child-a', name: 'Child A' },
+      }),
+      rel({
+        id: 'child-b-direct',
+        group_id: 'anchor',
+        related_group_id: 'child-b',
+        relationship_type: 'child',
+        parent_group_id: 'anchor',
+        child_group_id: 'child-b',
+        group: { id: 'anchor', name: 'Anchor' },
+        related_group: { id: 'child-b', name: 'Child B' },
+      }),
+      rel({
+        id: 'child-b-via-a',
+        group_id: 'child-a',
+        related_group_id: 'child-b',
+        relationship_type: 'child',
+        parent_group_id: 'child-a',
+        child_group_id: 'child-b',
+        group: { id: 'child-a', name: 'Child A' },
+        related_group: { id: 'child-b', name: 'Child B' },
+      }),
+      rel({
+        id: 'child-a-direct-amendment',
+        group_id: 'anchor',
+        related_group_id: 'child-a',
+        relationship_type: 'child',
+        parent_group_id: 'anchor',
+        child_group_id: 'child-a',
+        with_right: 'amendmentRight',
+        group: { id: 'anchor', name: 'Anchor' },
+        related_group: { id: 'child-a', name: 'Child A' },
+      }),
+      rel({
+        id: 'child-b-via-a-amendment',
+        group_id: 'child-a',
+        related_group_id: 'child-b',
+        relationship_type: 'child',
+        parent_group_id: 'child-a',
+        child_group_id: 'child-b',
+        with_right: 'amendmentRight',
+        group: { id: 'child-a', name: 'Child A' },
+        related_group: { id: 'child-b', name: 'Child B' },
+      }),
+    ];
+
+    const result = buildIndirectRelationships(relationships, 'anchor');
+    expect(result.parents.map(entry => entry.group.id)).toEqual(['parent-a', 'parent-b']);
+    expect(result.children.map(entry => entry.group.id)).toEqual(['child-a', 'child-b']);
+  });
+
+  it('normalizes incomplete legacy relationship metadata in indirect results', () => {
+    const incompleteParent = {
+      ...rel({
+        id: 'incomplete-parent',
+        group_id: 'parent',
+        related_group_id: 'anchor',
+        relationship_type: null,
+        connection_type: 'hierarchy',
+        parent_group_id: 'parent',
+        child_group_id: 'anchor',
+        group: { id: 'parent', name: 'Parent' },
+        related_group: { id: 'anchor', name: 'Anchor' },
+      }),
+      membership_mode: undefined,
+    } as unknown as NormalizedGroupRelationship;
+    const incompleteChild = {
+      ...rel({
+        id: 'incomplete-child',
+        group_id: 'anchor',
+        related_group_id: 'child',
+        relationship_type: null,
+        connection_type: 'hierarchy',
+        parent_group_id: 'anchor',
+        child_group_id: 'child',
+        group: { id: 'anchor', name: 'Anchor' },
+        related_group: { id: 'child', name: 'Child' },
+      }),
+      membership_mode: undefined,
+    } as unknown as NormalizedGroupRelationship;
+
+    const structure = buildIndirectRelationships([incompleteParent, incompleteChild], 'anchor');
+    expect(structure.parents[0]).toMatchObject({
+      sourceRelationshipType: null,
+      membershipMode: null,
+    });
+    expect(structure.children[0]).toMatchObject({
+      sourceRelationshipType: null,
+      membershipMode: null,
+    });
+
+    const malformedRight = {
+      ...rel({
+        id: 'malformed-right',
+        group_id: 'anchor',
+        related_group_id: 'scope',
+        relationship_type: null,
+        connection_type: 'hierarchy',
+        parent_group_id: 'unrelated-parent',
+        child_group_id: 'unrelated-child',
+        group: { id: 'anchor', name: 'Anchor' },
+        related_group: { id: 'scope', name: 'Scope' },
+      }),
+      membership_mode: undefined,
+    } as unknown as NormalizedGroupRelationship;
+    const right = buildIndirectRelationships(
+      [malformedRight],
+      'anchor',
+      undefined,
+      'anchor',
+      'right'
+    );
+    expect(right.children[0]).toMatchObject({
+      sourceRelationshipType: null,
+      membershipMode: null,
+    });
+  });
+
+  it('ignores invalid legacy structure rows when building the mixed graph', () => {
+    const valid = rel({
+      id: 'valid-child',
+      group_id: 'anchor',
+      related_group_id: 'child',
+      relationship_type: 'child',
+      group: { id: 'anchor', name: 'Anchor' },
+      related_group: { id: 'child', name: 'Child' },
+    });
+    const pendingHierarchy = { ...valid, id: 'pending-hierarchy', status: 'pending' };
+    const peerHierarchy = {
+      ...valid,
+      id: 'peer-hierarchy',
+      connection_type: 'peer',
+      parent_group_id: null,
+      child_group_id: null,
+    } as NormalizedGroupRelationship;
+    const missingEntity = { ...valid, id: 'missing-entity', related_group: null };
+
+    const graph = buildMixedRelationshipGraph(
+      [pendingHierarchy, peerHierarchy, missingEntity, valid],
+      'anchor'
+    );
+    expect(graph.children.map(entry => entry.group.id)).toEqual(['child']);
   });
 
   it('does not traverse into active islands hidden behind pending relationships', () => {

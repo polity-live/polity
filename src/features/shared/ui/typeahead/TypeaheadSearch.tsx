@@ -261,7 +261,9 @@ export function TypeaheadSearchBaseContainer(props: TypeaheadSearchBaseComponent
       const element = inputWrapperRef.current ?? containerRef.current;
       if (!element) return;
       const rect = element.getBoundingClientRect();
-      const target = portalTarget ?? document.body;
+      // Portal selection is finalized by the preceding layout effect before the menu can open.
+      const target = portalTarget;
+      if (!target) return;
 
       if (target === document.body) {
         setDropdownStyle({

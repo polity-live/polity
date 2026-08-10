@@ -308,12 +308,14 @@ export function MembershipsByRoleTables<
               return (
                 <div className="flex justify-end gap-2">
                   <TableActionIconButton
+                    data-action-id="groups.members.by-role.view-rights"
                     label={rightsLabel}
                     icon={<Eye className="h-4 w-4" />}
                     onClick={() => onOpenRightsDialog(membership)}
                   />
                   {onSecondaryAction && !effectiveReadOnly ? (
                     <TableActionIconButton
+                      data-action-id="groups.members.by-role.secondary-action"
                       label={secondaryActionLabel || secondaryActionDefaultLabel}
                       tooltip={secondaryActionTooltip}
                       icon={<ArrowUpDown className="h-4 w-4" />}
@@ -323,6 +325,7 @@ export function MembershipsByRoleTables<
                   ) : null}
                   {section.kind === 'role' && section.role ? (
                     <TableActionIconButton
+                      data-action-id="groups.members.by-role.remove-role"
                       label={resolvedRemoveActionLabel}
                       icon={<Trash2 className="h-4 w-4" />}
                       variant="ghost"

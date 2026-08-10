@@ -170,6 +170,7 @@ export function OfflineElectionTallyDialogView({
               ) : (
                 <div className="rounded-lg border border-dashed p-4">
                   <VotePasswordInput
+                    data-action-scope="presentation"
                     onSubmit={onPasswordSubmit}
                     error={passwordError}
                     noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
@@ -198,6 +199,8 @@ export function OfflineElectionTallyDialogView({
               </p>
               {step === 'password' ? (
                 <Button
+                  data-action-id="agendas.offline-election-tally.counts.back"
+                  data-action-kind="selection"
                   type="button"
                   variant="outline"
                   disabled={isSubmitting}
@@ -206,11 +209,19 @@ export function OfflineElectionTallyDialogView({
                   {translateText('generated.inline.0493_back_b52b36b7', 'Back')}
                 </Button>
               ) : null}
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                data-action-id="agendas.offline-election-tally.cancel"
+                data-action-kind="interaction"
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 {translateText('generated.inline.0065_cancel_77dfd213')}
               </Button>
               {step === 'counts' ? (
                 <Button
+                  data-action-id="agendas.offline-election-tally.counts.confirm"
+                  data-action-kind="async-action"
                   type="button"
                   disabled={isSubmitting || isOverLimit}
                   onClick={onConfirmCounts}

@@ -1,0 +1,237 @@
+name: Nightly Tests
+
+on:
+  schedule:
+    - cron: "17 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24.x"
+  NPM_VERSION: "11.18.0"
+
+jobs:
+  deep-code-quality:
+    name: Coverage, mutation and artifact contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm install --global npm@${NPM_VERSION}
+      - run: npm ci
+      - name: Verify full repository accountability
+        run: npm run test:static
+      - name: Run full instrumented coverage and ratchet
+        env:
+          COVERAGE_WITH_LCOV: "1"
+        run: npm run test:coverage:ratchet
+      - name: Verify email render, links and translations
+        run: |
+          npm run email:check
+          npm run email:auth:check
+      - name: Run critical-domain mutation testing
+        run: npm run test:mutation
+      - name: Upload deep-quality reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: nightly-deep-quality-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 30
+          path: |
+            coverage/
+            reports/mutation/
+            reports/stryker-incremental.json
+
+  browser-golden-journeys:
+    name: Golden / ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: chromium-desktop
+            browser: chromium
+            extra: --grep-invert @performance
+          - project: chromium-mobile
+            browser: chromium
+            extra: --grep-invert @performance
+          - project: firefox-nightly
+            browser: firefox
+            extra: ""
+          - project: webkit-nightly
+            browser: webkit
+            extra: ""
+    env:
+      CI: "1"
+      E2E_APP_COMMAND: npm run start:e2e
+      E2E_RUN_ID: nightly-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.project }}
+      PLAYWRIGHT_OUTPUT_DIR: test-results/${{ matrix.project }}
+      VITE_APP_URL: http://localhost:3000
+      VITE_ZERO_CACHE_URL: http://127.0.0.1:4848
+      ZERO_UPSTREAM_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm install --global npm@${NPM_VERSION}
+      - run: npm ci
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.110.0
+      - name: Install selected browser
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Start seeded isolated stack
+        run: |
+          supabase start
+          supabase db reset --local
+      - name: Export isolated stack environment
+        run: |
+          eval "$(supabase status -o env)"
+          {
+            echo "VITE_SUPABASE_URL=$API_URL"
+            echo "VITE_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "E2E_DATABASE_URL=$DB_URL"
+          } >> "$GITHUB_ENV"
+      - run: npm run build:e2e
+      - run: node tools/zero/clean-dev-cache.mjs
+      - name: Run golden journeys
+        env:
+          PROJECT: ${{ matrix.project }}
+          EXTRA: ${{ matrix.extra }}
+        run: npx playwright test --config=playwright.nightly.config.ts --project="$PROJECT" $EXTRA
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: nightly-${{ matrix.project }}-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 21
+          path: |
+            playwright-report/
+            test-results/
+      - if: always()
+        run: supabase stop --no-backup
+
+  browser-performance:
+    name: Browser Performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: "1"
+      E2E_APP_COMMAND: npm run start:e2e
+      E2E_RUN_ID: performance-${{ github.run_id }}-${{ github.run_attempt }}
+      VITE_APP_URL: http://localhost:3000
+      VITE_ZERO_CACHE_URL: http://127.0.0.1:4848
+      ZERO_UPSTREAM_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm install --global npm@${NPM_VERSION}
+      - run: npm ci
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.110.0
+      - run: npx playwright install --with-deps chromium
+      - run: |
+          supabase start
+          supabase db reset --local --no-seed
+      - name: Export isolated stack environment
+        run: |
+          eval "$(supabase status -o env)"
+          {
+            echo "VITE_SUPABASE_URL=$API_URL"
+            echo "VITE_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "E2E_DATABASE_URL=$DB_URL"
+          } >> "$GITHUB_ENV"
+      - run: npm run build:e2e
+      - run: node tools/zero/clean-dev-cache.mjs
+      - run: npx playwright test --project=chromium-desktop --grep @performance
+      - name: Upload measurements and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: nightly-performance-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 30
+          path: |
+            playwright-report/
+            test-results/
+      - if: always()
+        run: supabase stop --no-backup
+
+  browser-stability:
+    name: Chromium PR journeys / 20 repetitions
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      CI: "1"
+      E2E_APP_COMMAND: npm run start:e2e
+      E2E_RUN_ID: stability-${{ github.run_id }}-${{ github.run_attempt }}
+      PLAYWRIGHT_OUTPUT_DIR: test-results/stability
+      VITE_APP_URL: http://localhost:3000
+      VITE_ZERO_CACHE_URL: http://127.0.0.1:4848
+      ZERO_UPSTREAM_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm install --global npm@${NPM_VERSION}
+      - run: npm ci
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.110.0
+      - run: npx playwright install --with-deps chromium
+      - name: Start clean isolated stack
+        run: |
+          supabase start
+          supabase db reset --local --no-seed
+      - name: Export isolated stack environment
+        run: |
+          eval "$(supabase status -o env)"
+          {
+            echo "VITE_SUPABASE_URL=$API_URL"
+            echo "VITE_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "E2E_DATABASE_URL=$DB_URL"
+          } >> "$GITHUB_ENV"
+      - run: npm run build:e2e
+      - run: node tools/zero/clean-dev-cache.mjs
+      - name: Repeat all PR journeys without retries
+        run: npx playwright test --project=chromium-desktop --grep @pr --repeat-each=20 --workers=1
+      - name: Upload stability diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: nightly-stability-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 30
+          path: |
+            playwright-report/
+            test-results/
+      - if: always()
+        run: supabase stop --no-backup

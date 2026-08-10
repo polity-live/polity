@@ -46,7 +46,12 @@ export function EditingModeSelectorView({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          data-action-id="editor.automatic-mode.open"
+        >
           <Icon className="h-4 w-4" />
           <span className="text-xs font-medium">{currentModeConfig.label}</span>
           <ChevronDown className="h-3 w-3 opacity-50" />
@@ -60,6 +65,7 @@ export function EditingModeSelectorView({
 
           return (
             <DropdownMenuItem
+              data-action-id="editor.automatic-mode.select"
               key={mode.value}
               onClick={() => void onModeChange(mode.value)}
               className={isActive ? 'bg-accent' : ''}

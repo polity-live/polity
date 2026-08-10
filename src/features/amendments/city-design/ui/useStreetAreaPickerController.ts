@@ -328,9 +328,9 @@ export function useStreetAreaPickerController({
         setMapViewportFocusKey(key => key + 1);
       }
 
-      if (result) {
-        onSelectionAddressChange(createCityDesignSelectionAddress(result, locationSearchValues));
-      }
+      onSelectionAddressChange(
+        createCityDesignSelectionAddress(result as GeoResolvedAddress, locationSearchValues)
+      );
     },
     [locationSearchValues, onMapSelectionChange, onSelectionAddressChange, readOnly]
   );

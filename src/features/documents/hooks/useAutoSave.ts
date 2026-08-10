@@ -152,10 +152,9 @@ export function useAutoSave<T = unknown>(options: UseAutoSaveOptions<T>): UseAut
         pendingDataRef.current = data;
 
         debounceTimeoutRef.current = setTimeout(() => {
-          if (pendingDataRef.current) {
-            executeSave(pendingDataRef.current);
-            pendingDataRef.current = null;
-          }
+          const pending = pendingDataRef.current;
+          pendingDataRef.current = null;
+          if (pending !== null) executeSave(pending);
         }, throttleMs - timeSinceLastSave);
         return;
       }

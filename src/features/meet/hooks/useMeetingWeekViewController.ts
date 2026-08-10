@@ -18,7 +18,8 @@ export function useMeetingWeekViewController({
 }: UseMeetingWeekViewControllerArgs) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const weekDays = useMemo(() => getWeekGridDays(selectedDate), [selectedDate]);
-  const weekStartKey = weekDays[0]?.getTime() ?? 0;
+  // getWeekGridDays always returns the complete seven-day grid.
+  const weekStartKey = weekDays[0].getTime();
   const halfHourMarkers = useMemo(
     () =>
       Array.from({ length: 24 }, (_, hour) => hour * WEEK_VIEW_HOUR_HEIGHT + WEEK_VIEW_SLOT_HEIGHT),

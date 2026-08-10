@@ -1,9 +1,25 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { getAuthRedirectUrl, getSafeAuthRedirect } from '../authRedirects';
 
 describe('getAuthRedirectUrl', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('builds an absolute redirect without requiring a browser global', () => {
+    expect(getAuthRedirectUrl('/auth/callback')).toMatch(/^https?:\/\/[^/]+\/auth\/callback$/);
+  });
+
+  it('uses the current origin in a browser', () => {
+    vi.stubGlobal('window', { location: { origin: 'https://browser.example' } });
+
+    expect(getAuthRedirectUrl('/auth/callback')).toBe('https://browser.example/auth/callback');
+  });
+
+  it('uses the configured fallback origin outside a browser', () => {
+    vi.stubGlobal('window', undefined);
+
     expect(getAuthRedirectUrl('/auth/callback')).toMatch(/^https?:\/\/[^/]+\/auth\/callback$/);
   });
 });

@@ -16,7 +16,13 @@ export function useCurrencyConversion(args: {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!Number.isFinite(args.amount) || !args.currency || !targetCurrency) {
+    const amount = args.amount;
+    if (
+      typeof amount !== 'number' ||
+      !Number.isFinite(amount) ||
+      !args.currency ||
+      !targetCurrency
+    ) {
       setConversion(null);
       setIsLoading(false);
       return;
@@ -24,7 +30,7 @@ export function useCurrencyConversion(args: {
 
     if (args.currency === targetCurrency) {
       setConversion(
-        convertCurrency(args.amount ?? 0, {
+        convertCurrency(amount, {
           baseCurrency: args.currency,
           quoteCurrency: targetCurrency,
           requestedDate: args.date ?? null,
@@ -42,7 +48,7 @@ export function useCurrencyConversion(args: {
     setConversion(null);
     setIsLoading(true);
     void convertCurrencyAmount({
-      amount: args.amount ?? 0,
+      amount,
       base: args.currency,
       quote: targetCurrency,
       date: args.date,

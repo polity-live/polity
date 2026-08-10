@@ -138,12 +138,10 @@ export type AppTutorialCompletion =
   | { type: 'horizontal-scroll'; minimumPixels: number }
   | { type: 'click' }
   | { type: 'view' }
-  | { type: 'input'; expected: string; expectedInputKey?: never }
-  | { type: 'input'; expectedInputKey: AppTutorialExpectedInputKey; expected?: never }
+  | { type: 'input'; expectedInputKey: AppTutorialExpectedInputKey }
   | {
       type: 'action';
       event: string;
-      expected?: string;
       expectedInputKey?: AppTutorialExpectedInputKey;
     }
   | {

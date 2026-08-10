@@ -23,6 +23,7 @@ export function PaymentEntityTypeInput({
       <FormControlLabel>{label}</FormControlLabel>
       <div className="flex gap-2">
         <Button
+          data-action-id="create.payment-entity.select.user"
           type="button"
           variant={entityType === 'user' ? 'default' : 'outline'}
           onClick={() => {
@@ -34,6 +35,7 @@ export function PaymentEntityTypeInput({
           {userLabel}
         </Button>
         <Button
+          data-action-id="create.payment-entity.select.group"
           type="button"
           variant={entityType === 'group' ? 'default' : 'outline'}
           onClick={() => {

@@ -9,7 +9,7 @@ export const Route = createFileRoute('/api/datasets/$datasetId/details')({
       GET: async ({ request, params }) => {
         const session = await getSession(request);
         try {
-          return Response.json(await loadDatasetDetails(params.datasetId, session?.user.id));
+          return Response.json(await loadDatasetDetails(params.datasetId, session?.user?.id));
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Dataset details failed';
           const denied = message.includes('access');

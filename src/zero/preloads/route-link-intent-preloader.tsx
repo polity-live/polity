@@ -8,7 +8,7 @@ function closestInternalAnchor(target: EventTarget | null) {
   if (!anchor || anchor.target || anchor.download || anchor.dataset.preload === 'false')
     return null;
 
-  const href = anchor.getAttribute('href')?.trim();
+  const href = anchor.getAttribute('href');
   if (!href || href.startsWith('#')) return null;
   return anchor;
 }

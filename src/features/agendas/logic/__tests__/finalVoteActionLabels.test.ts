@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { getFinalVoteActionLabels } from '../finalVoteActionLabels';
+import { getFinalVoteActionLabels, getFinalVoteActionTarget } from '../finalVoteActionLabels';
 import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
 describe('final vote action labels', () => {
@@ -114,5 +114,29 @@ describe('final vote action labels', () => {
         item: { vote: { purpose: 'closing' } },
       }).start
     ).toBe('Finale Schlussabstimmung für Antrag A starten');
+  });
+
+  it('uses translated fallbacks and record-based branch labels for sparse items', () => {
+    expect(getFinalVoteActionTarget({ item: { title: '   ' } })).toBe('Step');
+    expect(
+      getFinalVoteActionTarget({ item: { _voteStepKind: 'closing', vote: { title: '' } } })
+    ).toBe('Step');
+    expect(getFinalVoteActionTarget({ item: { _voteStepKind: 'merge_variant', vote: {} } })).toBe(
+      'Step'
+    );
+
+    const target = getFinalVoteActionTarget({
+      item: {
+        _voteStepKind: 'merge_variant',
+        vote: {
+          choices: [
+            { process_branch_id: 'branch-2', order_index: undefined },
+            { process_branch_id: 'branch-1', order_index: undefined },
+          ],
+        },
+      },
+      branchLabelsById: { 'branch-1': 'Branch 1', 'branch-2': 'Branch 2' },
+    });
+    expect(target).toBe('Branch 2 VS Branch 1');
   });
 });

@@ -79,6 +79,12 @@ function buildRelatedItems(
   );
 }
 
+export const relatedGroupsTabsInternals = {
+  toPlainDescription,
+  getRelatedGroupSearchText,
+  buildRelatedItems,
+};
+
 export function RelatedGroupsTabs({ parentGroups, childGroups }: RelatedGroupsTabsProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<RelatedGroupsTab>('all');
@@ -149,9 +155,15 @@ export function RelatedGroupsTabs({ parentGroups, childGroups }: RelatedGroupsTa
     <section className="mb-8 space-y-4" data-slot="related-groups-tabs">
       <Tabs value={activeTab} onValueChange={value => setActiveTab(value as RelatedGroupsTab)}>
         <ScrollableTabsList>
-          <TabsTrigger value="all">{t('common.labels.all')}</TabsTrigger>
-          <TabsTrigger value="childGroups">{t('pages.group.childGroups.title')}</TabsTrigger>
-          <TabsTrigger value="parentGroups">{t('pages.group.parentGroups.title')}</TabsTrigger>
+          <TabsTrigger data-action-id="groups.related.select.all" value="all">
+            {t('common.labels.all')}
+          </TabsTrigger>
+          <TabsTrigger data-action-id="groups.related.select.children" value="childGroups">
+            {t('pages.group.childGroups.title')}
+          </TabsTrigger>
+          <TabsTrigger data-action-id="groups.related.select.parents" value="parentGroups">
+            {t('pages.group.parentGroups.title')}
+          </TabsTrigger>
         </ScrollableTabsList>
 
         <div className="relative mt-4">

@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BlockDraggable } from '../block-draggable';
@@ -153,5 +153,18 @@ describe('BlockDraggable', () => {
     expect(blockWrapper).toBeInstanceOf(HTMLDivElement);
     expect(mocks.nodeRef.current).toBe(blockWrapper);
     expect(mocks.previewRef.current).toBe(blockWrapper);
+  });
+
+  it('uses one named native button for dragging and block selection', () => {
+    renderBlockDraggable();
+    const dragHandle = screen.getByRole('button', { name: 'plateJs.toolbar.dragToMove' });
+
+    fireEvent.click(dragHandle);
+
+    expect(
+      dragHandle.querySelector('button, [role="button"], a, input, select, textarea')
+    ).toBeNull();
+    expect(mocks.blockSelectionSet).toHaveBeenCalledOnce();
+    expect(mocks.blockSelectionSet).toHaveBeenCalledWith('block-1');
   });
 });

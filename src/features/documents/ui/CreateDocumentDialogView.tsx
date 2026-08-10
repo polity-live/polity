@@ -37,7 +37,7 @@ export function CreateDocumentDialogView({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button size="lg">
+        <Button data-action-id="documents.create.open" size="lg">
           <Plus className="mr-2 h-4 w-4" />
           {translateText('generated.inline.0404_new_document_e69f5da6')}
         </Button>
@@ -72,7 +72,12 @@ export function CreateDocumentDialogView({
               autoFocus
             />
           </div>
-          <Button onClick={onCreate} className="w-full" disabled={isCreating || !title.trim()}>
+          <Button
+            data-action-id="documents.create.submit"
+            onClick={onCreate}
+            className="w-full"
+            disabled={isCreating || !title.trim()}
+          >
             {isCreating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -7,7 +7,7 @@ const heavyPreviewResource =
 test.describe('public landing startup performance', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('defers interactive previews until scrolling without startup layout shifts', async ({
+  test('defers interactive previews until scrolling without startup layout shifts @nightly @performance', async ({
     page,
   }) => {
     test.setTimeout(120_000);
@@ -30,7 +30,6 @@ test.describe('public landing startup performance', () => {
 
     await page.goto('/');
     await expect(page.locator('h1')).toBeVisible();
-    await page.waitForLoadState('networkidle');
 
     const previews = page.locator(deferredPreviewSelector);
     await expect(previews).toHaveCount(9);
@@ -58,12 +57,12 @@ test.describe('public landing startup performance', () => {
     );
     expect(startupMaxLongTask).toBeLessThan(500);
 
-    for (let index = 0; index < 9; index += 1) {
-      await previews.nth(index).scrollIntoViewIfNeeded();
-      await expect(previews.nth(index)).toHaveAttribute('data-preview-state', 'ready', {
+    for (const preview of await previews.all()) {
+      await preview.scrollIntoViewIfNeeded();
+      await expect(preview).toHaveAttribute('data-preview-state', 'ready', {
         timeout: 20_000,
       });
-      await expect(previews.nth(index).getByRole('alert')).toHaveCount(0);
+      await expect(preview.getByRole('alert')).toHaveCount(0);
     }
 
     expect(await page.evaluate(() => window.__publicLandingPerformance.cls)).toBeLessThan(0.05);

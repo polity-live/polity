@@ -80,6 +80,7 @@ export function CarouselFormLayoutView({
         className="bg-background/95 flex shrink-0 items-center justify-between border-t pt-4"
       >
         <Button
+          data-action-id="create.carousel.previous"
           type="button"
           variant="outline"
           size="sm"
@@ -101,6 +102,7 @@ export function CarouselFormLayoutView({
 
           {isLastStep ? (
             <Button
+              data-action-id="create.carousel.submit"
               type="button"
               size="sm"
               onClick={onSubmit}
@@ -111,6 +113,7 @@ export function CarouselFormLayoutView({
             </Button>
           ) : (
             <Button
+              data-action-id="create.carousel.next"
               type="button"
               size="sm"
               onClick={onScrollNext}

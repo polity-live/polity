@@ -69,7 +69,7 @@ function snapshotFromStoredResult(
   result: DatasetSearchResult,
   profiles: DatasetColumnProfile[]
 ): DatasetSnapshotImportResult {
-  const snapshotId = result.snapshotId ?? '';
+  const snapshotId = result.snapshotId ?? result.snapshotKey ?? result.id;
   return {
     datasetId: result.id,
     snapshotId,
@@ -487,11 +487,11 @@ export function useDataViewDialogModel() {
       setUploadError(t('plateJs.dataView.uploadPermission'));
       return;
     }
-    if (!uploadGroupId || !uploadGroups.some(group => group.id === uploadGroupId)) {
+    const uploadGroup = uploadGroups.find(group => group.id === uploadGroupId);
+    if (!uploadGroupId || !uploadGroup) {
       setUploadError(t('plateJs.dataView.uploadGroupRequired'));
       return;
     }
-    const uploadGroup = uploadGroups.find(group => group.id === uploadGroupId);
     let file = uploadFile;
     if (uploadMode === 'manual') {
       if (!uploadTitle.trim()) {
@@ -507,7 +507,7 @@ export function useDataViewDialogModel() {
       }
       file = new File(
         [serializeDatasetTable(manualTable.columns, manualTable.rows)],
-        `${uploadTitle.trim() || 'dataset'}.csv`,
+        `${uploadTitle.trim()}.csv`,
         { type: 'text/csv' }
       );
     }
@@ -534,7 +534,7 @@ export function useDataViewDialogModel() {
         providerDatasetId: file.name,
         title: uploadTitle.trim() || file.name,
         description: uploadDescription.trim() || null,
-        publisher: result.publisher || uploadGroup?.name || t('plateJs.dataView.ownData'),
+        publisher: result.publisher || uploadGroup.name,
         sourceUrl: result.sourceUrl,
         snapshotId: result.snapshotId,
         snapshotKey: result.snapshotKey,

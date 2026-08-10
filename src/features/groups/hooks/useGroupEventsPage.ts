@@ -28,7 +28,7 @@ export function useGroupEventsPage(groupId: string) {
     const rangeStart = addYears(now, -1);
     const rangeEnd = addYears(now, 1);
 
-    return (eventsData || []).flatMap(sourceEvent => {
+    return eventsData.flatMap(sourceEvent => {
       const event = resolveAppTutorialFixtureValue(sourceEvent, {
         tutorialRunId: sourceEvent.tutorial_run_id,
         language,

@@ -10,6 +10,7 @@ import {
   CommandList,
 } from '@/features/shared/ui/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 import type { PqlComboboxOption } from './PqlCombobox';
 
@@ -49,42 +50,37 @@ export function PqlComboboxView({
 }: PqlComboboxViewProps) {
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          role="combobox"
-          className="w-full justify-between"
-          disabled={disabled}
-        >
-          <span className="truncate text-left">{selectedOption?.label ?? placeholder}</span>
-          <div className="ml-2 flex items-center gap-1">
-            {allowClear && selectedOption ? (
-              <span
-                role="button"
-                tabIndex={0}
-                className="hover:bg-muted rounded-sm p-0.5"
-                onClick={event => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onClearSelection();
-                }}
-                onKeyDown={event => {
-                  if (event.key !== 'Enter' && event.key !== ' ') {
-                    return;
-                  }
-
-                  event.preventDefault();
-                  onClearSelection();
-                }}
-              >
-                <X className="h-3.5 w-3.5" />
-              </span>
-            ) : null}
-            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
-          </div>
-        </Button>
-      </PopoverTrigger>
+      <div className="flex w-full gap-1">
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            data-action-id="pql.combobox.open"
+            variant="outline"
+            role="combobox"
+            className="min-w-0 flex-1 justify-between"
+            disabled={disabled}
+          >
+            <span className="truncate text-left">{selectedOption?.label ?? placeholder}</span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        {allowClear && selectedOption ? (
+          <Button
+            type="button"
+            data-action-id="pql.combobox.selection.clear"
+            variant="ghost"
+            size="icon"
+            aria-label={translateText('common.accessibility.removeNamed', {
+              name: selectedOption.label,
+            })}
+            className="shrink-0"
+            disabled={disabled}
+            onClick={onClearSelection}
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        ) : null}
+      </div>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
@@ -100,6 +96,7 @@ export function PqlComboboxView({
                 return (
                   <CommandItem
                     key={option.value}
+                    data-action-id="pql.combobox.option.select"
                     value={option.value}
                     onSelect={() => onSelectOption(option.value)}
                   >

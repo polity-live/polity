@@ -108,6 +108,13 @@ function getSupabase(): SupabaseClient {
   return createClient(getRequiredEnv('SUPABASE_URL'), getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY'));
 }
 
+function getServiceClients(deps: StripeServiceDeps) {
+  return {
+    stripe: deps.stripe ?? getStripe(),
+    supabase: deps.supabase ?? getSupabase(),
+  };
+}
+
 function fromTable(supabase: SupabaseClient, table: string): any {
   return (supabase.from as any)(table);
 }
@@ -129,15 +136,16 @@ async function requireAuthenticatedUser(
     ? deps.user
     : await readRequestUser(deps.request);
 
-  if (!user?.id) {
+  const authenticatedUser = user && typeof user.id === 'string' && user.id.length > 0 ? user : null;
+  if (authenticatedUser === null) {
     throw new Error('Unauthorized');
   }
 
-  if (expectedUserId && expectedUserId !== user.id) {
+  if (expectedUserId && expectedUserId !== authenticatedUser.id) {
     throw new Error('Forbidden');
   }
 
-  return user;
+  return authenticatedUser;
 }
 
 async function readRequestUser(requestOverride?: Request): Promise<StripeUser | null> {
@@ -169,10 +177,11 @@ function getCheckoutLineItems(
     return [{ price: getFixedPriceId(data.plan), quantity: 1 }];
   }
 
+  const amount = Number(data.amount);
   if (
-    !Number.isInteger(data.amount) ||
-    (data.amount ?? 0) < CUSTOM_AMOUNT_MIN_CENTS ||
-    (data.amount ?? 0) > CUSTOM_AMOUNT_MAX_CENTS
+    !Number.isInteger(amount) ||
+    amount < CUSTOM_AMOUNT_MIN_CENTS ||
+    amount > CUSTOM_AMOUNT_MAX_CENTS
   ) {
     throw new Error('Custom amount must be between EUR 1 and EUR 999');
   }
@@ -183,7 +192,7 @@ function getCheckoutLineItems(
         currency: 'eur',
         product: getRequiredEnv('STRIPE_PRODUCT_CUSTOM'),
         recurring: { interval: 'month' },
-        unit_amount: data.amount,
+        unit_amount: amount,
       },
       quantity: 1,
     },
@@ -761,7 +770,7 @@ async function loadMirroredSubscriptionStatus(supabase: SupabaseClient, userId: 
     subscription: activeSubscription
       ? {
           id: activeSubscription.stripe_subscription_id ?? activeSubscription.id,
-          status: activeSubscription.status ?? 'unknown',
+          status: activeSubscription.status,
           amount: activeSubscription.amount ?? 0,
           currency: activeSubscription.currency ?? 'eur',
           interval: activeSubscription.interval_period ?? 'month',
@@ -795,8 +804,7 @@ export async function executeStripeCreateCheckout(
   deps: StripeServiceDeps = {}
 ) {
   const user = await requireAuthenticatedUser(data.userId, deps);
-  const stripe = deps.stripe ?? getStripe();
-  const supabase = deps.supabase ?? getSupabase();
+  const { stripe, supabase } = getServiceClients(deps);
   await validateCheckoutConfiguration(stripe, data.plan);
   const customer = await findStripeCustomerForUser(stripe, supabase, user.id);
   const origin = getAppOrigin();
@@ -837,8 +845,7 @@ export async function executeStripeCreatePortal(
   deps: StripeServiceDeps = {}
 ) {
   const user = await requireAuthenticatedUser(undefined, deps);
-  const stripe = deps.stripe ?? getStripe();
-  const supabase = deps.supabase ?? getSupabase();
+  const { stripe, supabase } = getServiceClients(deps);
   const customerId = (await findStripeCustomerForUser(stripe, supabase, user.id))?.id;
 
   if (!customerId) {
@@ -867,8 +874,7 @@ export async function executeStripeCancelSubscription(
   deps: StripeServiceDeps = {}
 ) {
   const user = await requireAuthenticatedUser(undefined, deps);
-  const stripe = deps.stripe ?? getStripe();
-  const supabase = deps.supabase ?? getSupabase();
+  const { stripe, supabase } = getServiceClients(deps);
   const subscription = await stripe.subscriptions.retrieve(data.subscriptionId);
   const customerId = getCustomerIdFromSubscription(subscription);
 
@@ -895,8 +901,7 @@ export async function executeStripeSubscriptionStatus(
   deps: StripeServiceDeps = {}
 ) {
   const user = await requireAuthenticatedUser(data.userId, deps);
-  const stripe = deps.stripe ?? getStripe();
-  const supabase = deps.supabase ?? getSupabase();
+  const { stripe, supabase } = getServiceClients(deps);
   const mirroredStatus = await loadMirroredSubscriptionStatus(supabase, user.id);
 
   if (mirroredStatus) {
@@ -967,8 +972,7 @@ export async function executeStripeRepairCheckoutSession(
   deps: StripeServiceDeps = {}
 ) {
   const user = await requireAuthenticatedUser(data.userId, deps);
-  const stripe = deps.stripe ?? getStripe();
-  const supabase = deps.supabase ?? getSupabase();
+  const { stripe, supabase } = getServiceClients(deps);
   const session = await stripe.checkout.sessions.retrieve(data.sessionId, {
     expand: ['subscription', 'customer'],
   });
@@ -1007,15 +1011,13 @@ export async function executeStripeReconcileCustomer(
   deps: StripeServiceDeps = {}
 ) {
   const user = await requireAuthenticatedUser(data.userId, deps);
-  const stripe = deps.stripe ?? getStripe();
-  const supabase = deps.supabase ?? getSupabase();
+  const { stripe, supabase } = getServiceClients(deps);
   await reconcileStripeCustomer(stripe, supabase, user);
   return executeStripeSubscriptionStatus({ userId: user.id }, { stripe, supabase, user });
 }
 
 export async function handleStripeWebhook(data: StripeWebhookInput, deps: StripeServiceDeps = {}) {
-  const stripe = deps.stripe ?? getStripe();
-  const supabase = deps.supabase ?? getSupabase();
+  const { stripe, supabase } = getServiceClients(deps);
 
   let event: Stripe.Event;
   try {
@@ -1061,3 +1063,37 @@ export async function handleStripeWebhook(data: StripeWebhookInput, deps: Stripe
 
   return { received: true, eventId: event.id };
 }
+
+export const stripeServiceContracts = {
+  assertResourceMode,
+  assertSecretKeyMatchesMode,
+  assertStripeCustomerBelongsToUser,
+  findLocalCustomerId,
+  findStripeCustomerForUser,
+  getAppOrigin,
+  getCheckoutLineItems,
+  getCustomerIdFromSubscription,
+  getCustomerEntityIdForStripeCustomer,
+  getStripeMode,
+  getServiceClients,
+  handleCheckoutSessionCompleted,
+  handleSubscriptionChanged,
+  invoiceCustomerId,
+  invoiceSubscriptionId,
+  loadMirroredSubscriptionStatus,
+  mirrorTimestampToIso,
+  mirrorTimestampToIsoOrNow,
+  readRequestUser,
+  reconcileStripeCustomer,
+  requireAuthenticatedUser,
+  subscriptionAmount,
+  subscriptionInterval,
+  syncRecentInvoicesForCustomer,
+  timestampToIso,
+  timestampToIsoOrNow,
+  upsertStripeCustomer,
+  upsertStripePayment,
+  upsertStripeSubscription,
+  validateCheckoutConfiguration,
+  validatePortalConfiguration,
+};

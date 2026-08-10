@@ -360,6 +360,7 @@ export function CityDesignTopBarView({
       <ToolbarGroup>
         {!readOnly ? (
           <ToolbarButton
+            data-action-id="amendments.city-topbar.select.mode-place"
             type="button"
             aria-label={t('features.amendments.cityDesign.modes.place')}
             pressed={interactionMode === 'place'}
@@ -370,6 +371,7 @@ export function CityDesignTopBarView({
           </ToolbarButton>
         ) : null}
         <ToolbarButton
+          data-action-id="amendments.city-topbar.select.mode-select"
           type="button"
           aria-label={t('features.amendments.cityDesign.modes.select')}
           pressed={interactionMode === 'select'}
@@ -379,6 +381,7 @@ export function CityDesignTopBarView({
           <MousePointer2 className="size-4" />
         </ToolbarButton>
         <ToolbarButton
+          data-action-id="amendments.city-topbar.select.mode-camera"
           type="button"
           aria-label={t('features.amendments.cityDesign.modes.camera')}
           pressed={interactionMode === 'camera'}
@@ -391,6 +394,7 @@ export function CityDesignTopBarView({
 
       <ToolbarGroup>
         <CityDesignModeToolbarButton
+          data-action-id="amendments.city-topbar.open.editing-mode"
           availableModes={availableModes}
           canChangeMode={canChangeMode}
           disabledModeReasons={modeDisabledReasons}
@@ -409,6 +413,7 @@ export function CityDesignTopBarView({
         >
           <DialogTrigger asChild>
             <ToolbarButton
+              data-action-id="amendments.city-topbar.open.area-picker"
               type="button"
               data-tutorial-anchor="city-design-map-selection"
               aria-label={t('features.amendments.cityDesign.areaPicker.title')}
@@ -456,6 +461,7 @@ export function CityDesignTopBarView({
         <Popover open={costSummaryOpen} onOpenChange={onCostSummaryOpenChange}>
           <PopoverTrigger asChild>
             <ToolbarButton
+              data-action-id="amendments.city-topbar.open.cost-summary"
               type="button"
               aria-label={t('features.amendments.cityDesign.cost.title')}
               pressed={costSummaryOpen}
@@ -487,6 +493,7 @@ export function CityDesignTopBarView({
               <DropdownMenu key={section.layer} modal={false}>
                 <DropdownMenuTrigger asChild>
                   <ToolbarButton
+                    data-action-id="amendments.city-topbar.open.placement-section"
                     type="button"
                     data-tutorial-anchor={
                       section.layer === 'trees' ? 'city-design-trees-menu' : undefined
@@ -523,6 +530,7 @@ export function CityDesignTopBarView({
 
                     return (
                       <DropdownMenuItem
+                        data-action-id="amendments.city-topbar.select.placement-tool"
                         key={tool.id}
                         data-tutorial-anchor={
                           section.layer === 'trees' &&
@@ -573,6 +581,7 @@ export function CityDesignTopBarView({
             {!mapContextReadOnly ? (
               <>
                 <ToolbarButton
+                  data-action-id="amendments.city-topbar.load.osm"
                   type="button"
                   data-tutorial-anchor="city-design-load-osm"
                   aria-label={t('features.amendments.cityDesign.areaPicker.loadOsm')}
@@ -587,6 +596,7 @@ export function CityDesignTopBarView({
             ) : null}
 
             <ToolbarButton
+              data-action-id="amendments.city-topbar.save.design"
               type="button"
               data-tutorial-anchor="city-design-save"
               aria-label={t('features.amendments.cityDesign.save')}
@@ -607,14 +617,15 @@ export function CityDesignTopBarView({
           {selectedObject ? (
             <>
               <ToolbarButton
+                data-action-id="amendments.city-topbar.toggle.selected-object-visibility"
                 type="button"
                 aria-label={getActionLabel(
                   hiddenObjectIdSet.has(selectedObject.id) ? 'show' : 'hide',
-                  selectedObjectLabel ?? selectedObject.id
+                  selectedObjectLabel as string
                 )}
                 tooltip={getActionLabel(
                   hiddenObjectIdSet.has(selectedObject.id) ? 'show' : 'hide',
-                  selectedObjectLabel ?? selectedObject.id
+                  selectedObjectLabel as string
                 )}
                 onClick={() =>
                   onObjectVisibilityChange(
@@ -630,9 +641,10 @@ export function CityDesignTopBarView({
                 )}
               </ToolbarButton>
               <ToolbarButton
+                data-action-id="amendments.city-topbar.delete.selected-object"
                 type="button"
-                aria-label={getActionLabel('remove', selectedObjectLabel ?? selectedObject.id)}
-                tooltip={getActionLabel('remove', selectedObjectLabel ?? selectedObject.id)}
+                aria-label={getActionLabel('remove', selectedObjectLabel as string)}
+                tooltip={getActionLabel('remove', selectedObjectLabel as string)}
                 disabled={readOnly}
                 onClick={() => onObjectDelete(selectedObject.id)}
               >
@@ -641,6 +653,7 @@ export function CityDesignTopBarView({
             </>
           ) : selectedOsmWay && !mapContextReadOnly ? (
             <ToolbarButton
+              data-action-id="amendments.city-topbar.hide.selected-osm-way"
               type="button"
               aria-label={t('features.amendments.cityDesign.inspector.removeFromMap')}
               tooltip={t('features.amendments.cityDesign.inspector.removeFromMap')}
@@ -678,6 +691,7 @@ export function CityDesignSecondaryActionBarView({
     <div className="scrollbar-hide mb-6 overflow-x-auto">
       <div className="flex w-max min-w-full items-center justify-end gap-4">
         <ShareButton
+          data-action-id="amendments.city-secondary.open.share"
           url={`/amendment/${amendmentId}/citydesign`}
           title={title}
           description={t('features.amendments.cityDesign.workspaceDescription')}
@@ -693,7 +707,13 @@ export function CityDesignSecondaryActionBarView({
             existingCollaboratorIds={existingCollaboratorIds}
           />
         ) : (
-          <Button variant="outline" size="sm" disabled className="gap-2">
+          <Button
+            data-action-id="amendments.city-secondary.show.invite-disabled"
+            variant="outline"
+            size="sm"
+            disabled
+            className="gap-2"
+          >
             <Users className="size-4" />
             {t('features.editor.inviteDialog.invite')}
           </Button>
@@ -706,6 +726,7 @@ export function CityDesignSecondaryActionBarView({
         />
 
         <Button
+          data-action-id="amendments.city-secondary.toggle.cr-overlay"
           type="button"
           variant={showChangeRequests ? 'default' : 'outline'}
           size="sm"
@@ -717,6 +738,7 @@ export function CityDesignSecondaryActionBarView({
         </Button>
 
         <Button
+          data-action-id="amendments.city-secondary.toggle.cr-color-mode"
           type="button"
           variant={colorModeIsTinted ? 'default' : 'outline'}
           size="sm"
@@ -733,12 +755,14 @@ export function CityDesignSecondaryActionBarView({
 }
 
 function CityDesignModeToolbarButton({
+  'data-action-id': actionId,
   availableModes,
   canChangeMode,
   disabledModeReasons,
   mode,
   onModeChange,
 }: {
+  'data-action-id': string;
   availableModes?: readonly SelectableEditingMode[];
   canChangeMode: boolean;
   disabledModeReasons: Partial<Record<SelectableEditingMode, string>>;
@@ -753,6 +777,7 @@ function CityDesignModeToolbarButton({
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
       <DropdownMenuTrigger asChild>
         <ToolbarButton
+          data-action-id={actionId}
           type="button"
           aria-label={currentOption.label}
           pressed={open}
@@ -802,6 +827,7 @@ function LayersDropdown({
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <ToolbarButton
+          data-action-id="amendments.city-layers.open.menu"
           type="button"
           aria-label={t('features.amendments.cityDesign.topbar.layers')}
           isDropdown
@@ -818,6 +844,7 @@ function LayersDropdown({
 
           return (
             <DropdownMenuCheckboxItem
+              data-action-id="amendments.city-layers.toggle.layer"
               key={section.layer}
               checked={visible}
               onCheckedChange={checked =>
@@ -831,6 +858,7 @@ function LayersDropdown({
         })}
         <DropdownMenuSeparator />
         <DropdownMenuCheckboxItem
+          data-action-id="amendments.city-layers.toggle.street-markings"
           checked={showStreetMarkings}
           onCheckedChange={checked => onShowStreetMarkingsChange(checked === true)}
         >
@@ -875,6 +903,7 @@ function ObjectsDropdown({
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <ToolbarButton
+          data-action-id="amendments.city-objects.open.menu"
           type="button"
           aria-label={t('features.amendments.cityDesign.topbar.objects')}
           isDropdown
@@ -887,7 +916,7 @@ function ObjectsDropdown({
       <DropdownMenuContent align="start" className="max-h-[70vh] w-80">
         <DropdownMenuLabel>{t('features.amendments.cityDesign.topbar.objects')}</DropdownMenuLabel>
         {objectGroups.length === 0 ? (
-          <DropdownMenuItem disabled>
+          <DropdownMenuItem data-action-scope="presentation" disabled>
             {t('features.amendments.cityDesign.topbar.noObjects')}
           </DropdownMenuItem>
         ) : (
@@ -904,6 +933,7 @@ function ObjectsDropdown({
                   <span className="ml-auto">{group.objects.length}</span>
                 </DropdownMenuLabel>
                 <DropdownMenuItem
+                  data-action-id="amendments.city-objects.toggle.category-visibility"
                   onSelect={() => onObjectCategoryVisibilityChange(group.category, categoryHidden)}
                 >
                   {categoryHidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
@@ -911,6 +941,7 @@ function ObjectsDropdown({
                 </DropdownMenuItem>
                 {!readOnly ? (
                   <DropdownMenuItem
+                    data-action-id="amendments.city-objects.delete.category"
                     variant="destructive"
                     onSelect={() => onObjectCategoryDelete(group.category)}
                   >
@@ -929,6 +960,7 @@ function ObjectsDropdown({
                   return (
                     <div key={object.id} className="pl-2">
                       <DropdownMenuItem
+                        data-action-id="amendments.city-objects.select.object"
                         className={cn(
                           selectedObjectId === object.id && 'bg-primary/5 text-primary'
                         )}
@@ -941,6 +973,7 @@ function ObjectsDropdown({
                         </span>
                       </DropdownMenuItem>
                       <DropdownMenuItem
+                        data-action-id="amendments.city-objects.toggle.object-visibility"
                         onSelect={() => onObjectVisibilityChange(object.id, hidden)}
                       >
                         {hidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
@@ -948,6 +981,7 @@ function ObjectsDropdown({
                       </DropdownMenuItem>
                       {!readOnly ? (
                         <DropdownMenuItem
+                          data-action-id="amendments.city-objects.delete.object"
                           variant="destructive"
                           onSelect={() => onObjectDelete(object.id)}
                         >
@@ -978,6 +1012,7 @@ function ComparisonDropdown({
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <ToolbarButton
+          data-action-id="amendments.city-comparison.open.menu"
           type="button"
           aria-label={t('features.amendments.cityDesign.cost.comparison')}
           isDropdown
@@ -992,7 +1027,11 @@ function ComparisonDropdown({
           onValueChange={value => onComparisonModeChange(value as CityDesignComparisonMode)}
         >
           {comparisonModes.map(item => (
-            <DropdownMenuRadioItem key={item.mode} value={item.mode}>
+            <DropdownMenuRadioItem
+              data-action-id="amendments.city-comparison.select.mode"
+              key={item.mode}
+              value={item.mode}
+            >
               {t(item.labelKey)}
             </DropdownMenuRadioItem>
           ))}
@@ -1015,7 +1054,13 @@ function ChangeRequestsDropdown({
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="outline" size="sm" className="gap-2">
+        <Button
+          data-action-id="amendments.city-cr-menu.open.list"
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
           <MessageSquare className="size-4" />
           {t('features.amendments.cityDesign.topbar.changeRequestsCount', {
             count: changeRequests.length,
@@ -1026,17 +1071,21 @@ function ChangeRequestsDropdown({
         <DropdownMenuLabel>
           {t('features.amendments.cityDesign.topbar.changeRequests')}
         </DropdownMenuLabel>
-        <DropdownMenuItem onSelect={() => onChangeRequestSelect(null)}>
+        <DropdownMenuItem
+          data-action-id="amendments.city-cr-menu.select.all"
+          onSelect={() => onChangeRequestSelect(null)}
+        >
           {t('features.amendments.cityDesign.topbar.allChangeRequests')}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         {changeRequests.length === 0 ? (
-          <DropdownMenuItem disabled>
+          <DropdownMenuItem data-action-scope="presentation" disabled>
             {t('features.amendments.cityDesign.topbar.noChangeRequests')}
           </DropdownMenuItem>
         ) : (
           changeRequests.map(changeRequest => (
             <DropdownMenuItem
+              data-action-id="amendments.city-cr-menu.select.request"
               key={changeRequest.id}
               className={cn(
                 selectedChangeRequestId === changeRequest.id && 'bg-primary/5 text-primary'
@@ -1075,3 +1124,8 @@ function getChangeRequestToneClassName(tone: string) {
       return 'bg-muted-foreground/45';
   }
 }
+
+export const cityDesignTopBarInternals = {
+  getChangeRequestToneClassName,
+  isSectionToolSelected,
+};

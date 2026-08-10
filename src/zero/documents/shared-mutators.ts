@@ -205,7 +205,6 @@ async function authorizeTodoThreadAccess(
   action: 'create' | 'update' | 'delete' | 'view'
 ) {
   requireAuthenticated(tx, ctx, { action, resource: 'threads', scope: `todo:${todoId}` });
-  if (tx.location === 'client') return;
 
   const todo = await tx.run(applyTodoQueryAccess(zql.todo.where('id', todoId), ctx.userID).one());
   if (!todo) {
@@ -335,8 +334,6 @@ async function authorizeThreadParentParticipation(
   ctx: Parameters<typeof can>[1],
   thread: NonNullable<Awaited<ReturnType<typeof authorizeDocumentScopeByThread>>>
 ) {
-  if (tx.location === 'client') return;
-
   requireAuthenticated(tx, ctx, {
     action: 'create',
     resource: 'comments',
@@ -377,8 +374,6 @@ async function authorizeThreadParentManage(
   thread: NonNullable<Awaited<ReturnType<typeof authorizeDocumentScopeByThread>>>,
   action: 'update' | 'delete'
 ) {
-  if (tx.location === 'client') return;
-
   if (thread.document_id) {
     await authorizeDocumentGroupManage(tx, ctx, thread.document_id);
     return;

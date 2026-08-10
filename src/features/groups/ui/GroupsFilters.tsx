@@ -49,6 +49,7 @@ export const GroupsFilters: React.FC<GroupsFiltersProps> = ({
           </h3>
           {hasActiveFilters && (
             <Button
+              data-action-id="groups.list.filters.clear-all"
               variant="ghost"
               size="sm"
               onClick={clearAllFilters}
@@ -64,7 +65,12 @@ export const GroupsFilters: React.FC<GroupsFiltersProps> = ({
           {allTags.map(tag => {
             const isSelected = selectedTags.includes(tag);
             return (
-              <FilterButton key={tag} active={isSelected} onClick={() => toggleTag(tag)}>
+              <FilterButton
+                data-action-id="groups.list.filters.toggle-tag"
+                key={tag}
+                active={isSelected}
+                onClick={() => toggleTag(tag)}
+              >
                 #{tag}
               </FilterButton>
             );

@@ -242,4 +242,98 @@ describe('useStreetAreaPickerController', () => {
     expect(onSelectionAddressChange).toHaveBeenCalledTimes(1);
     expect(onSelectionAddressChange).toHaveBeenCalledWith(undefined);
   });
+
+  it('ignores edits and reverse geocoding in read-only mode', async () => {
+    const onMapSelectionChange = vi.fn();
+    const { result } = renderHook(() =>
+      useStreetAreaPickerController(
+        createControllerOptions({ readOnly: true, onMapSelectionChange })
+      )
+    );
+    act(() => {
+      result.current.onLocationSearchFieldChange('street', 'Street');
+      result.current.onLocationSearchResolved(
+        { place_id: 'readonly-street', street: 'Street', lat: 1, lon: 2 },
+        'street'
+      );
+    });
+    await act(async () => result.current.onBboxMoveEnd({ lat: 1, lon: 2 }));
+    expect(onMapSelectionChange).not.toHaveBeenCalled();
+    expect(geoapifyReverseFn).not.toHaveBeenCalled();
+  });
+
+  it('clears user-driven fields, rejects incomplete coordinates, and keeps equal centers still', () => {
+    const onMapSelectionChange = vi.fn();
+    const onSelectionAddressChange = vi.fn();
+    const { result } = renderHook(() =>
+      useStreetAreaPickerController(
+        createControllerOptions({ onMapSelectionChange, onSelectionAddressChange })
+      )
+    );
+    act(() => {
+      result.current.onLocationSearchFieldChange('street', 'Street');
+      result.current.onLocationSearchFieldChange('street', '');
+      result.current.onLocationSearchFieldChange('city', '');
+      result.current.onLocationSearchFieldChange('street', 'Street');
+      result.current.onLocationSearchResolved(
+        { place_id: 'incomplete-street', street: 'Street' },
+        'street'
+      );
+      result.current.onLocationSearchFieldChange('street', 'Street');
+      result.current.onLocationSearchResolved(
+        { place_id: 'complete-street', street: 'Street', lat: 52.52, lon: 13.405 },
+        'street'
+      );
+    });
+    expect(onMapSelectionChange).not.toHaveBeenCalled();
+    expect(onSelectionAddressChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a stale reverse-geocoding rejection', async () => {
+    let rejectReverse!: (reason: Error) => void;
+    vi.mocked(geoapifyReverseFn).mockReturnValue(
+      new Promise((_resolve, reject) => {
+        rejectReverse = reject;
+      })
+    );
+    const onSelectionAddressChange = vi.fn();
+    const { result } = renderHook(() =>
+      useStreetAreaPickerController(createControllerOptions({ onSelectionAddressChange }))
+    );
+    let request!: Promise<void>;
+    act(() => {
+      request = result.current.onBboxMoveEnd({ lat: 1, lon: 2 });
+      result.current.onBboxMove({ lat: 3, lon: 4 });
+    });
+    await act(async () => {
+      rejectReverse(new Error('late'));
+      await request;
+    });
+    expect(onSelectionAddressChange).not.toHaveBeenCalled();
+  });
+
+  it('does not update modules after an immediate unmount', () => {
+    const hook = renderHook(() => useStreetAreaPickerController(createControllerOptions()));
+    hook.unmount();
+  });
 });
+
+function createControllerOptions(overrides: Record<string, unknown> = {}) {
+  return {
+    center: { lat: 52.52, lon: 13.405 },
+    bbox: { south: 52.51, west: 13.39, north: 52.53, east: 13.42 },
+    mapSelection: {
+      center: { lat: 52.52, lon: 13.405 },
+      widthMeters: 100,
+      heightMeters: 100,
+      rotationDeg: 0,
+    },
+    isLoadingOsm: false,
+    osmError: null,
+    readOnly: false,
+    onMapSelectionChange: vi.fn(),
+    onSelectionAddressChange: vi.fn(),
+    onLoadOsm: vi.fn(),
+    ...overrides,
+  } as Parameters<typeof useStreetAreaPickerController>[0];
+}

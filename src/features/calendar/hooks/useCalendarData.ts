@@ -20,14 +20,14 @@ export const useCalendarData = () => {
   const isLoading = false;
 
   const calendarEvents: CalendarEvent[] = useMemo(() => {
-    if (!eventsData || !user) return [];
+    if (!user) return [];
 
     // Define a reasonable range for recurring events (±1 year from now)
     const now = new Date();
     const rangeStart = addYears(now, -1);
     const rangeEnd = addYears(now, 1);
 
-    const userEvents = (eventsData || [])
+    const userEvents = eventsData
       .filter(event => isCalendarEventVisibleToUser(event, user.id))
       .flatMap(event => {
         const isMeeting = !!event.meeting_type;
@@ -69,7 +69,7 @@ export const useCalendarData = () => {
             group_id: event.group_id,
             organizerName: event.group?.name || creatorName,
             attendeeCount: event.participants?.length,
-            hashtags: extractHashtagTags(event.event_hashtags)?.map((tag: string) => ({
+            hashtags: extractHashtagTags(event.event_hashtags).map((tag: string) => ({
               id: tag,
               tag,
             })),

@@ -62,6 +62,7 @@ export function SubscribersTable({ subscribers, onRemove }: SubscribersTableProp
 
           return (
             <SmartLink
+              data-action-id="payments.subscribers.user.open"
               href={`/user/${subscriber.id}`}
               className="flex items-center gap-3 hover:underline"
             >
@@ -99,6 +100,7 @@ export function SubscribersTable({ subscribers, onRemove }: SubscribersTableProp
         cell: ({ row }) => (
           <div className="flex justify-end">
             <Button
+              data-action-id="payments.subscribers.remove"
               variant="ghost"
               size="sm"
               onClick={() => onRemove(row.original.subscription.id)}

@@ -85,6 +85,9 @@ export function QuickComment({
   if (compact && !isExpanded) {
     return (
       <Button
+        data-action-id="timeline.quick-comment.compact.open"
+        data-action-kind="interaction"
+        aria-label={defaultPlaceholder}
         type="button"
         variant="ghost"
         onClick={() => {
@@ -100,6 +103,7 @@ export function QuickComment({
   }
   return (
     <QuickCommentView
+      data-action-scope="presentation"
       className={className}
       comment={comment}
       commentCount={commentCount}
@@ -158,7 +162,14 @@ export function CommentPreview({
         </div>
       ))}
       {hiddenCount > 0 && onViewAll && (
-        <Button type="button" variant="link" className="h-auto p-0 text-sm" onClick={onViewAll}>
+        <Button
+          data-action-id="timeline.quick-comment.all.open"
+          data-action-kind="interaction"
+          type="button"
+          variant="link"
+          className="h-auto p-0 text-sm"
+          onClick={onViewAll}
+        >
           {t('features.timeline.comments.viewAll', { count: comments.length })}
         </Button>
       )}

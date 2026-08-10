@@ -15,26 +15,48 @@ interface CivicTimelineMapProps {
   activeItemId?: string | null;
   onActiveItemChange?: (itemId: string | null) => void;
   onItemSelect?: (item: CivicTimelineItem) => void;
+  loadModules?: CivicTimelineMapModuleLoader;
 }
 
-function averageCenter(items: CivicTimelineItem[]): [number, number] {
-  const mapItems = items.filter(item => item.coordinates);
+export type CivicTimelineMapModuleLoader = () => Promise<{
+  reactLeafletModule: ReactLeafletModule;
+  leafletModule: LeafletModule;
+}>;
+
+export async function loadCivicTimelineMapModules() {
+  const [reactLeafletModule, leafletModule] = await Promise.all([
+    import('react-leaflet'),
+    import('leaflet'),
+  ]);
+  return { reactLeafletModule, leafletModule };
+}
+
+export function averageCenter(items: CivicTimelineItem[]): [number, number] {
+  const mapItems = items.filter(
+    (
+      item
+    ): item is CivicTimelineItem & { coordinates: NonNullable<CivicTimelineItem['coordinates']> } =>
+      Boolean(item.coordinates)
+  );
   if (mapItems.length === 0) {
     return [51.1657, 10.4515];
   }
 
   const totals = mapItems.reduce(
-    (sum, item) => ({
-      latitude: sum.latitude + (item.coordinates?.latitude ?? 0),
-      longitude: sum.longitude + (item.coordinates?.longitude ?? 0),
-    }),
+    (sum, item) => {
+      const coordinates = item.coordinates;
+      return {
+        latitude: sum.latitude + coordinates.latitude,
+        longitude: sum.longitude + coordinates.longitude,
+      };
+    },
     { latitude: 0, longitude: 0 }
   );
 
   return [totals.latitude / mapItems.length, totals.longitude / mapItems.length];
 }
 
-function getMarkerColor(type: CivicTimelineItem['type']) {
+export function getMarkerColor(type: CivicTimelineItem['type']) {
   switch (type) {
     case 'vote':
     case 'election':
@@ -68,25 +90,28 @@ export function CivicTimelineMap({
   activeItemId,
   onActiveItemChange,
   onItemSelect,
+  loadModules = loadCivicTimelineMapModules,
 }: CivicTimelineMapProps) {
-  const [reactLeafletModule, setReactLeafletModule] = useState<ReactLeafletModule | null>(null);
-  const [leafletModule, setLeafletModule] = useState<LeafletModule | null>(null);
+  const [modules, setModules] = useState<{
+    reactLeafletModule: ReactLeafletModule;
+    leafletModule: LeafletModule;
+  } | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     let isActive = true;
 
-    const loadModules = async () => {
+    const performModuleLoad = async () => {
       try {
-        const [nextReactLeafletModule, nextLeafletModule] = await Promise.all([
-          import('react-leaflet'),
-          import('leaflet'),
-        ]);
+        const { reactLeafletModule: nextReactLeafletModule, leafletModule: nextLeafletModule } =
+          await loadModules();
 
         if (!isActive) return;
 
-        setReactLeafletModule(nextReactLeafletModule);
-        setLeafletModule(nextLeafletModule);
+        setModules({
+          reactLeafletModule: nextReactLeafletModule,
+          leafletModule: nextLeafletModule,
+        });
       } catch {
         if (isActive) {
           setLoadFailed(true);
@@ -94,15 +119,15 @@ export function CivicTimelineMap({
       }
     };
 
-    void loadModules();
+    void performModuleLoad();
 
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [loadModules]);
 
   const iconsByType = useMemo(() => {
-    if (!leafletModule) return new Map<string, import('leaflet').DivIcon>();
+    if (!modules) return new Map<string, import('leaflet').DivIcon>();
 
     const icons = new Map<string, import('leaflet').DivIcon>();
     for (const item of items) {
@@ -110,7 +135,7 @@ export function CivicTimelineMap({
       const color = getMarkerColor(item.type);
       icons.set(
         item.type,
-        leafletModule.divIcon({
+        modules.leafletModule.divIcon({
           className: '',
           html: `<span style="display:block;width:18px;height:18px;border-radius:9999px;background:${color};border:2px solid white;box-shadow:0 1px 6px rgba(15,23,42,.35);"></span>`,
           iconAnchor: [9, 9],
@@ -119,18 +144,18 @@ export function CivicTimelineMap({
       );
     }
     return icons;
-  }, [items, leafletModule]);
+  }, [items, modules]);
 
   const activeIcon = useMemo(() => {
-    if (!leafletModule) return null;
+    if (!modules) return null;
 
-    return leafletModule.divIcon({
+    return modules.leafletModule.divIcon({
       className: '',
       html: featureThemeMarkup('timelineCivicTimelineMapMapMarkerMarkup'),
       iconAnchor: [12, 12],
       iconSize: [24, 24],
     });
-  }, [leafletModule]);
+  }, [modules]);
 
   if (items.length === 0) {
     return (
@@ -148,7 +173,7 @@ export function CivicTimelineMap({
     );
   }
 
-  if (!reactLeafletModule || !leafletModule || !activeIcon) {
+  if (!modules) {
     return (
       <MapPanelSkeleton
         label={translateText('common.locationPicker.loading', 'Loading map...')}
@@ -162,7 +187,7 @@ export function CivicTimelineMap({
 
   return (
     <CivicTimelineMapView
-      activeIcon={activeIcon}
+      activeIcon={activeIcon as import('leaflet').DivIcon}
       activeItem={activeItem}
       activeItemId={activeItemId}
       center={averageCenter(items)}
@@ -170,7 +195,7 @@ export function CivicTimelineMap({
       items={items}
       onActiveItemChange={onActiveItemChange}
       onItemSelect={onItemSelect}
-      reactLeafletModule={reactLeafletModule}
+      reactLeafletModule={modules.reactLeafletModule}
       zoom={items.length === 1 ? 10 : 6}
     />
   );

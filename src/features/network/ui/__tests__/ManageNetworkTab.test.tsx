@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -9,6 +9,8 @@ import type {
   GroupedRelationshipRequest,
   NormalizedGroupRelationship,
 } from '../../types/network.types';
+
+const hierarchyCanActivateLink = vi.hoisted(() => vi.fn(() => false));
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) => (
@@ -51,7 +53,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 
 vi.mock('../../hooks/useHierarchyLinkConflicts', () => ({
   useHierarchyLinkConflicts: () => ({
-    canActivateLink: () => false,
+    canActivateLink: hierarchyCanActivateLink,
     getConflictUserIds: () => [],
     resolveConflictUsers: () => [],
     resolvePartnerUsers: () => [],
@@ -60,15 +62,27 @@ vi.mock('../../hooks/useHierarchyLinkConflicts', () => ({
 }));
 
 vi.mock('../LinkGroupDialog', () => ({
-  LinkGroupDialog: ({ initialTargetGroupId }: { initialTargetGroupId?: string }) => (
+  LinkGroupDialog: ({
+    initialTargetGroupId,
+    trigger,
+  }: {
+    initialTargetGroupId?: string;
+    trigger?: ReactNode;
+  }) => (
     <div
       data-testid={
         initialTargetGroupId
           ? `link-group-dialog-${initialTargetGroupId}`
           : 'link-group-dialog-create'
       }
-    />
+    >
+      {trigger}
+    </div>
   ),
+}));
+
+vi.mock('../HierarchyConflictDialog', () => ({
+  HierarchyConflictDialog: () => <div data-testid="hierarchy-conflict-dialog" />,
 }));
 
 afterEach(() => {
@@ -146,7 +160,11 @@ function renderManageNetworkTab(canManageRelationships: boolean) {
     connection_request_id: 'request-outgoing',
   });
 
-  return render(
+  const onAcceptRequest = vi.fn().mockResolvedValue(undefined);
+  const onRejectRequest = vi.fn().mockResolvedValue(undefined);
+  const onDeleteRelationship = vi.fn();
+  const onDirectionFilterChange = vi.fn();
+  const rendered = render(
     <ManageNetworkTab
       canManageRelationships={canManageRelationships}
       groupId="current-group"
@@ -156,7 +174,7 @@ function renderManageNetworkTab(canManageRelationships: boolean) {
       searchQuery=""
       onSearchQueryChange={() => undefined}
       directionFilter="all"
-      onDirectionFilterChange={() => undefined}
+      onDirectionFilterChange={onDirectionFilterChange}
       manageRightFilter={new Set(['informationRight'])}
       onToggleRightFilter={() => undefined}
       incomingRequests={[buildGroupedRequest([incomingRelationship])]}
@@ -169,14 +187,55 @@ function renderManageNetworkTab(canManageRelationships: boolean) {
         },
       ]}
       allRelationships={[incomingRelationship, outgoingRelationship] as never[]}
-      onAcceptRequest={vi.fn().mockResolvedValue(undefined)}
-      onRejectRequest={vi.fn().mockResolvedValue(undefined)}
-      onDeleteRelationship={vi.fn()}
+      onAcceptRequest={onAcceptRequest}
+      onRejectRequest={onRejectRequest}
+      onDeleteRelationship={onDeleteRelationship}
     />
   );
+
+  return {
+    ...rendered,
+    onAcceptRequest,
+    onRejectRequest,
+    onDeleteRelationship,
+    onDirectionFilterChange,
+  };
 }
 
 describe('ManageNetworkTab', () => {
+  it('dispatches relationship row actions and filters through stable intents', async () => {
+    hierarchyCanActivateLink.mockReturnValue(true);
+    const { onAcceptRequest } = renderManageNetworkTab(true);
+
+    expect(
+      document.querySelector('[data-action-id="network.relationship.delete.open"]')
+    ).toBeTruthy();
+    expect(
+      document.querySelector('[data-action-id="network.relationship.request.edit"]')
+    ).toBeTruthy();
+    expect(
+      document.querySelector('[data-action-id="network.relationship.active.edit"]')
+    ).toBeTruthy();
+    expect(
+      document.querySelector('[data-action-id="network.relationship.active.delete.open"]')
+    ).toBeTruthy();
+
+    fireEvent.click(
+      document.querySelector('[data-action-id="network.relationship.request.approve"]')!
+    );
+    await waitFor(() => expect(onAcceptRequest).toHaveBeenCalled());
+    cleanup();
+    hierarchyCanActivateLink.mockReturnValue(false);
+    const { onDirectionFilterChange } = renderManageNetworkTab(true);
+    fireEvent.click(
+      document.querySelector('[data-action-id="network.relationship.request.manage"]')!
+    );
+    fireEvent.click(
+      document.querySelector('[data-action-id="network.relationship.direction-filter.select"]')!
+    );
+    expect(onDirectionFilterChange).toHaveBeenCalled();
+  });
+
   it('exposes an active relationship as the confirmed tutorial link', () => {
     const { container } = renderManageNetworkTab(true);
 

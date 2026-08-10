@@ -1,8 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildBranchDiffCandidates,
+  countOpenChangeRequests,
+  getBranchCreatedAt,
+  getBranchDisplayEvent,
+  getBranchDocumentContent,
   getBranchEditingModeDisabledReasons,
   getBranchEditingMode,
+  getBranchPathLabel,
+  getLatestBranchWithContent,
   getOrderedBranches,
+  getOrderedBranchSteps,
+  getResolvedMergeWinnerBranch,
+  getWinnerBranch,
+  isBranchEditable,
   mapAmendmentBranchStatusChips,
   resolveEventDetailSelectedBranchId,
   resolveSelectedBranchId,
@@ -198,5 +209,141 @@ describe('amendmentBranchDisplay', () => {
         activeBranchId: 'branch-b',
       })
     ).toBe('branch-a');
+  });
+
+  it('covers branch labels, events, content, timestamps, editability, and vote states exhaustively', () => {
+    expect(getOrderedBranchSteps(null)).toEqual([]);
+    expect(getOrderedBranches(null)).toEqual([]);
+    expect(
+      getOrderedBranchSteps({
+        id: 'branch',
+        step_runs: [{ order_index: null }, { order_index: 2 }, { order_index: undefined }],
+      }).map(step => step.order_index)
+    ).toEqual([null, undefined, 2]);
+    expect(getBranchPathLabel(null)).toBeTruthy();
+    expect(
+      getBranchPathLabel({
+        id: 'branch',
+        step_runs: [
+          { order_index: 3 },
+          { target_group: { name: 'Target' } },
+          { source_group: { name: 'Source' } },
+          { workflow_step: { label: 'Workflow' } },
+          { order_index: null },
+        ],
+      })
+    ).toContain('Target');
+    expect(getBranchPathLabel({ id: 'branch', title: null })).toBeTruthy();
+
+    expect(
+      getBranchDisplayEvent({
+        id: 'branch',
+        step_runs: [
+          { event_id: null },
+          { event_id: 'terminal', status: 'completed' },
+          { event_id: 'active', status: null },
+        ],
+      })?.event_id
+    ).toBe('active');
+    expect(
+      getBranchDisplayEvent({
+        id: 'branch',
+        step_runs: [{ event_id: 'terminal', status: 'completed' }],
+      })?.event_id
+    ).toBe('terminal');
+    expect(getBranchDisplayEvent(null)).toBeNull();
+
+    expect(
+      countOpenChangeRequests({
+        id: 'branch',
+        change_requests: [
+          { voting_status: 'completed' },
+          { status: 'accepted' },
+          { status: 'approved' },
+          { status: 'rejected' },
+          { status: 'declined' },
+          { status: null },
+        ],
+      })
+    ).toBe(1);
+    expect(countOpenChangeRequests(null)).toBe(0);
+    expect(isBranchEditable(null)).toBe(true);
+    expect(isBranchEditable({ id: 'branch', status: 'rejected' })).toBe(false);
+    expect(isBranchEditable({ id: 'branch', resolution: 'merge_loser' })).toBe(false);
+
+    expect(getBranchDocumentContent(null)).toBeNull();
+    expect(getBranchDocumentContent({ id: 'a', document: { content: 'current' } })).toBe('current');
+    expect(getBranchDocumentContent({ id: 'a', document_version: { content: 'version' } })).toBe(
+      'version'
+    );
+    expect(getBranchCreatedAt({ id: 'a', created_at: 12 })).toBe(12);
+    expect(getBranchCreatedAt({ id: 'a', created_at: '2026-01-01T00:00:00Z' })).toBeGreaterThan(0);
+    expect(getBranchCreatedAt({ id: 'a', created_at: 'invalid' })).toBe(0);
+    expect(getBranchCreatedAt(null)).toBe(0);
+  });
+
+  it('covers winner and selection fallbacks plus diff candidates', () => {
+    const branches: AmendmentProcessBranchSource[] = [
+      { id: 'empty', created_at: 0, status: 'rejected', resolution: 'withdrawn' },
+      { id: 'active', created_at: 1, status: 'scheduled', document: { content: 'A' } },
+      {
+        id: 'loser',
+        created_at: 2,
+        status: 'completed',
+        resolution: 'merge_loser',
+        merged_into_branch_id: 'winner',
+        document_version: { content: 'L' },
+      },
+      {
+        id: 'winner',
+        created_at: 3,
+        status: 'merged',
+        resolution: 'winner',
+        document: { content: 'W' },
+      },
+    ];
+    expect(getWinnerBranch(branches, 'active')?.id).toBe('winner');
+    expect(getWinnerBranch([{ id: 'merged', status: 'merged' }])?.id).toBe('merged');
+    expect(getWinnerBranch([{ id: 'active' }], 'active')?.id).toBe('active');
+    expect(getWinnerBranch([], 'active')).toBeNull();
+    expect(getResolvedMergeWinnerBranch(branches, 'active')?.id).toBe('winner');
+    expect(getResolvedMergeWinnerBranch([{ id: 'winner', resolution: 'accepted' }])?.id).toBe(
+      'winner'
+    );
+    expect(
+      getResolvedMergeWinnerBranch([{ id: 'loser', resolution: 'merge_loser' }], 'loser')?.id
+    ).toBe('loser');
+    expect(
+      getResolvedMergeWinnerBranch([{ id: 'loser', resolution: 'merge_loser' }], 'missing')
+    ).toBeNull();
+    expect(getResolvedMergeWinnerBranch([{ id: 'plain' }], 'plain')).toBeNull();
+
+    expect(resolveEventDetailSelectedBranchId({ branches: [], requestedBranchId: 'x' })).toBeNull();
+    expect(resolveEventDetailSelectedBranchId({ branches, requestedBranchId: 'active' })).toBe(
+      'active'
+    );
+    expect(resolveSelectedBranchId({ branches: [], requestedBranchId: 'x' })).toBeNull();
+    expect(resolveSelectedBranchId({ branches, requestedBranchId: 'active' })).toBe('active');
+    expect(resolveSelectedBranchId({ branches: [{ id: 'editable' }] })).toBe('editable');
+    expect(
+      resolveSelectedBranchId({
+        branches: [{ id: 'winner', resolution: 'winner', status: 'completed' }],
+      })
+    ).toBe('winner');
+    expect(resolveSelectedBranchId({ branches: [{ id: 'none', status: 'rejected' }] })).toBeNull();
+    expect(getLatestBranchWithContent(branches)?.id).toBe('winner');
+
+    const candidates = buildBranchDiffCandidates({
+      branches,
+      originalContent: 'Original',
+      activeBranchId: 'active',
+    });
+    expect(candidates.map(candidate => candidate.id)).toEqual([
+      'original-document',
+      'active',
+      'loser',
+      'winner',
+    ]);
+    expect(buildBranchDiffCandidates({ branches: [{ id: 'empty' }] })).toEqual([]);
   });
 });

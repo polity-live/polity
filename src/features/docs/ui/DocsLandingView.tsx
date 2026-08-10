@@ -46,13 +46,26 @@ export function DocsLandingView({ categorySections, copy, featuredTopics }: Docs
                 <p className="text-muted-foreground max-w-3xl text-lg leading-8">{copy.subtitle}</p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <Button asChild size="lg">
-                  <Link to="/docs/$topic" params={{ topic: 'auth-and-onboarding' }}>
+                <Button asChild size="lg" data-action-id="docs.landing-view.onboarding.open">
+                  <Link
+                    to="/docs/$topic"
+                    params={{ topic: 'auth-and-onboarding' }}
+                    data-action-id="docs.landing-view.onboarding.open"
+                  >
                     {copy.primaryCta}
                   </Link>
                 </Button>
-                <Button asChild variant="outline" size="lg">
-                  <Link to="/docs/$topic" params={{ topic: 'create-workflows' }}>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  data-action-id="docs.landing-view.workflows.open"
+                >
+                  <Link
+                    to="/docs/$topic"
+                    params={{ topic: 'create-workflows' }}
+                    data-action-id="docs.landing-view.workflows.open"
+                  >
                     {copy.secondaryCta}
                   </Link>
                 </Button>

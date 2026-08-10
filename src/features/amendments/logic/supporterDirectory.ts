@@ -84,11 +84,6 @@ function mergeGroupData(
     return undefined;
   }
 
-  const candidate = primary ?? fallback ?? undefined;
-  if (!candidate) {
-    return undefined;
-  }
-
   return {
     ...fallback,
     ...primary,

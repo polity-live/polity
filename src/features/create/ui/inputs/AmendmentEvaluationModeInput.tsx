@@ -19,6 +19,7 @@ export function AmendmentEvaluationModeInput({
       <div className="flex flex-wrap gap-2">
         {options.map(option => (
           <Button
+            data-action-id="create.amendment-evaluation.select"
             key={option.value}
             type="button"
             variant={value === option.value ? 'default' : 'outline'}

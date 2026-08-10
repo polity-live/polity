@@ -9,7 +9,7 @@ interface AlphaWarningToastContentProps {
 export function AlphaWarningToastContent({ title, version }: AlphaWarningToastContentProps) {
   return (
     <span className="flex items-center gap-2">
-      <span>{title}</span>
+      <span className="text-[var(--badge-warning-fg)]">{title}</span>
       <Badge className={getSemanticToneClasses('warning').badge}>{version}</Badge>
     </span>
   );

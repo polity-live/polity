@@ -12,11 +12,12 @@ const carouselMocks = vi.hoisted(() => ({
     on: vi.fn(),
     off: vi.fn(),
   },
+  currentApi: undefined as any,
   ref: vi.fn(),
 }));
 
 vi.mock('embla-carousel-react', () => ({
-  default: () => [carouselMocks.ref, carouselMocks.api],
+  default: () => [carouselMocks.ref, carouselMocks.currentApi],
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
@@ -56,6 +57,7 @@ function renderCarouselWithControls() {
 }
 
 beforeEach(() => {
+  carouselMocks.currentApi = carouselMocks.api;
   carouselMocks.api.canScrollPrev.mockReturnValue(true);
   carouselMocks.api.canScrollNext.mockReturnValue(true);
 });
@@ -96,5 +98,82 @@ describe('Carousel keyboard navigation', () => {
       expect(button.className).toContain('rounded-md');
       expect(button.className).not.toContain('rounded-full');
     }
+  });
+
+  it('supports vertical layout, explicit props, API publication, and disabled controls', async () => {
+    carouselMocks.api.canScrollPrev.mockReturnValue(false);
+    carouselMocks.api.canScrollNext.mockReturnValue(false);
+    const setApi = vi.fn();
+    const onKeyDown = vi.fn((event: React.KeyboardEvent) => event.preventDefault());
+    const view = render(
+      <Carousel
+        orientation="vertical"
+        opts={{ loop: true }}
+        plugins={[]}
+        setApi={setApi}
+        onKeyDown={onKeyDown}
+        tabIndex={3}
+      >
+        <CarouselContent className="content-class">
+          <CarouselItem className="item-class">Vertical slide</CarouselItem>
+        </CarouselContent>
+        <CarouselPrevious variant="ghost" size="sm" />
+        <CarouselNext variant="ghost" size="sm" />
+      </Carousel>
+    );
+    await waitFor(() => expect(setApi).toHaveBeenCalledWith(carouselMocks.api));
+    const region = screen.getByRole('region');
+    expect(region.getAttribute('tabindex')).toBe('3');
+    fireEvent.keyDown(region, { key: 'ArrowRight' });
+    expect(onKeyDown).toHaveBeenCalled();
+    expect(carouselMocks.api.scrollNext).not.toHaveBeenCalled();
+    expect(screen.getByText('Vertical slide').className).toContain('pt-4');
+    for (const button of screen.getAllByRole('button')) {
+      expect((button as HTMLButtonElement).disabled).toBe(true);
+      expect(button.className).toContain('rotate-90');
+    }
+    view.unmount();
+    expect(carouselMocks.api.off).toHaveBeenCalled();
+  });
+
+  it('handles a missing carousel API without publishing or scrolling', () => {
+    carouselMocks.currentApi = undefined;
+    const setApi = vi.fn();
+    render(
+      <Carousel setApi={setApi}>
+        <CarouselContent>
+          <CarouselItem>Unavailable</CarouselItem>
+        </CarouselContent>
+        <CarouselPrevious />
+        <CarouselNext />
+      </Carousel>
+    );
+    fireEvent.click(screen.getByRole('button', { name: /previous/i }));
+    fireEvent.click(screen.getByRole('button', { name: /next/i }));
+    expect(setApi).not.toHaveBeenCalled();
+  });
+
+  it('updates control state from selection events and tolerates an empty callback API', async () => {
+    renderCarouselWithControls();
+    await waitFor(() => expect(carouselMocks.api.on).toHaveBeenCalled());
+    const onSelect = carouselMocks.api.on.mock.calls.find(call => call[0] === 'select')?.[1];
+    expect(onSelect).toBeTypeOf('function');
+    onSelect(undefined);
+    carouselMocks.api.canScrollPrev.mockReturnValue(false);
+    carouselMocks.api.canScrollNext.mockReturnValue(false);
+    onSelect(carouselMocks.api);
+    await waitFor(() => {
+      for (const button of screen.getAllByRole('button')) {
+        expect((button as HTMLButtonElement).disabled).toBe(true);
+      }
+    });
+  });
+
+  it('throws when a carousel child is rendered outside its provider', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    expect(() => render(<CarouselContent />)).toThrow(
+      'useCarousel must be used within a <Carousel />'
+    );
+    error.mockRestore();
   });
 });

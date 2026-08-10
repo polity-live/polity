@@ -23,6 +23,7 @@ export function ToasterView({ theme, toastOptions, ...props }: ToasterProps) {
             'pointer-events-auto group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
           closeButton:
             'pointer-events-auto !static !order-last !ml-3 !h-5 !w-5 !shrink-0 !self-start !transform-none group-[.toast]:border-border/60 group-[.toast]:bg-background/80 group-[.toast]:text-muted-foreground hover:text-foreground',
+          success: '!text-success',
           ...toastOptions?.classNames,
         },
       }}

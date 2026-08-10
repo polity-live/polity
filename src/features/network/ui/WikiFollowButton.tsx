@@ -17,7 +17,12 @@ export const WikiFollowButton: React.FC<WikiFollowButtonProps> = ({
   onClick,
   className,
 }) => (
-  <Button variant={following ? 'outline' : 'default'} onClick={onClick} className={className}>
+  <Button
+    variant={following ? 'outline' : 'default'}
+    onClick={onClick}
+    className={className}
+    data-action-id="network.wiki-follow.toggle"
+  >
     {following
       ? translateText('generated.inline.0117_following_90eeb100')
       : translateText('generated.inline.0118_follow_66587a7a')}

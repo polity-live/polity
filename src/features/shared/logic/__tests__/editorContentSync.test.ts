@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { BaseSuggestionPlugin } from '@platejs/suggestion';
 import type { Value } from 'platejs';
 import { createPlateEditor } from 'platejs/react';
 
 import {
   areEditorValuesEqual,
+  getEditorContentSignature,
   hasEditorContentOperations,
   replaceEditorValuePreservingSelection,
 } from '../editorContentSync';
@@ -17,6 +18,11 @@ const paragraph = (text: string): Value => [
 ];
 
 describe('editorContentSync', () => {
+  it('normalizes nullish values and omits undefined object properties', () => {
+    expect(getEditorContentSignature(undefined)).toBe('null');
+    expect(getEditorContentSignature({ keep: 1, omit: undefined })).toBe('{"keep":1}');
+  });
+
   it('recognizes structurally equal values as a semantic no-op', () => {
     expect(areEditorValuesEqual(paragraph('Text'), paragraph('Text'))).toBe(true);
     expect(areEditorValuesEqual(paragraph('Text'), paragraph('Other'))).toBe(false);
@@ -162,6 +168,161 @@ describe('editorContentSync', () => {
     replaceEditorValuePreservingSelection(editor, paragraph('External'), true);
 
     expect(editor.history.undos).toHaveLength(0);
+  });
+
+  it('supports replacing without preserving a selection', () => {
+    const editor = createPlateEditor({ value: paragraph('Original') });
+    editor.selection = {
+      anchor: { path: [0, 0], offset: 2 },
+      focus: { path: [0, 0], offset: 2 },
+    };
+
+    expect(replaceEditorValuePreservingSelection(editor, paragraph('External'), false)).toBeNull();
+    expect(editor.children).toEqual(paragraph('External'));
+  });
+
+  it('keeps a null selection null when preservation is requested', () => {
+    const editor = createPlateEditor({ value: paragraph('Original') });
+    editor.selection = null;
+
+    expect(replaceEditorValuePreservingSelection(editor, paragraph('External'), true)).toBeNull();
+    expect(editor.selection).toBeNull();
+  });
+
+  it('falls back when block-start lookup is unavailable or throws', () => {
+    const editor = createPlateEditor({
+      value: [{ id: 'block', type: 'p', children: [{ text: 'Text' }] }],
+    });
+    editor.selection = {
+      anchor: { path: [], offset: 0 },
+      focus: { path: [0, 0], offset: 1 },
+    };
+    const start = editor.api.start.bind(editor.api);
+    let calls = 0;
+    editor.api.start = ((at: Parameters<typeof start>[0]) => {
+      calls += 1;
+      if (calls === 1) return null;
+      if (calls === 2) throw new Error('malformed selection');
+      return start(at);
+    }) as typeof editor.api.start;
+
+    expect(
+      replaceEditorValuePreservingSelection(
+        editor,
+        [{ id: 'block', type: 'p', children: [{ text: 'Updated' }] }],
+        true
+      )
+    ).toEqual({
+      anchor: { path: [0, 0], offset: 0 },
+      focus: { path: [0, 0], offset: 1 },
+    });
+  });
+
+  it('prefers the next leaf when selection sits at an inline boundary', () => {
+    const editor = createPlateEditor({
+      value: [
+        {
+          id: 'block',
+          type: 'p',
+          children: [{ text: 'A' }, { text: 'B', bold: true }],
+        },
+      ],
+    });
+    editor.selection = {
+      anchor: { path: [0, 1], offset: 0 },
+      focus: { path: [0, 0], offset: 0 },
+    };
+
+    replaceEditorValuePreservingSelection(
+      editor,
+      [
+        {
+          id: 'block',
+          type: 'p',
+          children: [{ text: 'A' }, { text: 'Changed', italic: true }],
+        },
+      ],
+      true
+    );
+
+    expect(editor.selection).toEqual({
+      anchor: { path: [0, 1], offset: 0 },
+      focus: { path: [0, 0], offset: 0 },
+    });
+  });
+
+  it('falls back by index when a stable block id no longer exists', () => {
+    const editor = createPlateEditor({
+      value: [{ id: 'removed', type: 'p', children: [{ text: 'Original' }] }],
+    });
+    editor.selection = {
+      anchor: { path: [0, 0], offset: 3 },
+      focus: { path: [0, 0], offset: 3 },
+    };
+
+    replaceEditorValuePreservingSelection(
+      editor,
+      [{ id: 'replacement', type: 'p', children: [{ text: 'Changed' }] }],
+      true
+    );
+    expect(editor.selection).toEqual({
+      anchor: { path: [0, 0], offset: 3 },
+      focus: { path: [0, 0], offset: 3 },
+    });
+  });
+
+  it('returns no restored selection when the replacement has no roots', () => {
+    const editor = createPlateEditor({ value: paragraph('Original') });
+    editor.selection = {
+      anchor: { path: [0, 0], offset: 1 },
+      focus: { path: [0, 0], offset: 1 },
+    };
+    editor.tf.setValue = (() => {
+      editor.children = [];
+    }) as typeof editor.tf.setValue;
+
+    expect(replaceEditorValuePreservingSelection(editor, paragraph('Ignored'), true)).toBeNull();
+  });
+
+  it('uses the document-end fallback and rejects a missing focus point', () => {
+    let globalEndCalls = 0;
+    const select = vi.fn();
+    const fakeEditor = {
+      children: [
+        { type: 'p', children: [{ text: 'A' }] },
+        { type: 'p', children: [{ text: 'B' }] },
+      ],
+      selection: {
+        anchor: { path: [0, 0], offset: 3 },
+        focus: { path: [1, 0], offset: 3 },
+      },
+      api: {
+        start: (path: number[]) => ({ path: [...path, 0], offset: 0 }),
+        string: () => 'abc',
+        nodes: () => [],
+        end: (path: number[]) => {
+          if (path.length > 0) return null;
+          globalEndCalls += 1;
+          return globalEndCalls === 1 ? { path: [0, 0], offset: 1 } : null;
+        },
+      },
+      tf: {
+        withoutSaving: (callback: () => void) => callback(),
+        deselect: () => undefined,
+        setValue: () => undefined,
+        select,
+      },
+      getApi: () => ({ suggestion: undefined }),
+    };
+
+    expect(
+      replaceEditorValuePreservingSelection(
+        fakeEditor as unknown as Parameters<typeof replaceEditorValuePreservingSelection>[0],
+        paragraph('Changed'),
+        true
+      )
+    ).toBeNull();
+    expect(select).not.toHaveBeenCalled();
   });
 
   it('does not turn an external value replacement into a whole-document suggestion', () => {

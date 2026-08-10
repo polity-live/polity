@@ -8,6 +8,10 @@ export const todosTranslations = {
   description: 'Verwalte deine Aufgaben und verfolge deinen Fortschritt',
   loading: 'Laden...',
   loadingTodos: 'Todos werden geladen...',
+  view: {
+    list: 'Listenansicht',
+    kanban: 'Kanban-Ansicht',
+  },
   create: {
     title: 'Aufgabe erstellen',
     placeholder: 'Was muss erledigt werden?',
@@ -141,6 +145,7 @@ export const todosTranslations = {
     addAssignee: 'Zuständigen hinzufügen',
     searchMembers: 'Mitglieder suchen...',
     noMembersFound: 'Keine Mitglieder gefunden.',
+    removeAssignee: 'Zuständigkeit entfernen',
   },
   group: {
     title: 'Gruppe',

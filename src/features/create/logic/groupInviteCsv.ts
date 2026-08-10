@@ -38,8 +38,8 @@ export interface InviteCsvMatchResult {
   missingColumns: boolean;
 }
 
-function normalizeValue(value: string | null | undefined): string {
-  return (value ?? '')
+function normalizeValue(value: string): string {
+  return value
     .trim()
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -48,8 +48,7 @@ function normalizeValue(value: string | null | undefined): string {
 }
 
 function getUserDisplayName(user: MatchableUser): string {
-  const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
-  return fullName || user.handle || user.email || user.id;
+  return [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
 }
 
 function parseCsvLine(line: string): string[] {

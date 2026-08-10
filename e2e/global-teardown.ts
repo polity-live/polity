@@ -1,9 +1,5 @@
-import { cleanupE2ERows } from './fixtures/cleanup';
+import { closeDb } from './fixtures/db';
 
 export default async function globalTeardown() {
-  await cleanupE2ERows({
-    prefix: 'E2E-',
-    includeWorkerUsers: true,
-    closeConnection: true,
-  });
+  await closeDb();
 }

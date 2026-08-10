@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createEntityNodeLegendItem,
+  createGroupNodeLegendItem,
   createProcessStatusLegendItem,
   createWorkflowStepLegendItem,
   getCivicNetworkMiniMapNodeColor,
@@ -9,11 +10,17 @@ import {
   getCivicNetworkNodeStyle,
   getEntityNetworkEdgeColor,
   getEntityNetworkNodeStyle,
+  getGroupDisplayLabel,
+  getGroupNodeDisplayLabel,
+  getGroupNodeLegendSwatch,
   getGroupNodeStyle,
+  getGroupNodeVisualTokens,
+  getGroupNodeVisualVariant,
   getNetworkSelectionStyle,
   getProcessStatusNodeAccent,
   getProcessStatusVisualTokens,
   getWorkflowStepNodeStyle,
+  renderRightsEdgeLabel,
 } from '../networkVisualHelpers';
 
 describe('networkVisualHelpers civic flow visuals', () => {
@@ -144,5 +151,105 @@ describe('networkVisualHelpers civic flow visuals', () => {
     expect(getCivicNetworkMiniMapNodeColor({ data: { visualVariant: 'child' } })).toBe(
       'var(--badge-warning-border)'
     );
+  });
+
+  it('covers every minimap discriminator and safe group fallback', () => {
+    for (const entityType of ['user', 'group', 'event', 'amendment', 'blog'] as const) {
+      expect(getCivicNetworkMiniMapNodeColor({ data: { entityType } })).toContain(entityType);
+    }
+    expect(getCivicNetworkMiniMapNodeColor({ data: { type: 'user' } })).toContain('user');
+    expect(getCivicNetworkMiniMapNodeColor({ data: { type: 'user-center' } })).toContain('user');
+    expect(getCivicNetworkMiniMapNodeColor({ data: { type: 'event' } })).toContain('event');
+    expect(getCivicNetworkMiniMapNodeColor({ data: { type: 'event-center' } })).toContain('event');
+    expect(getCivicNetworkMiniMapNodeColor({ data: { type: 'amendment' } })).toContain('amendment');
+    expect(getCivicNetworkMiniMapNodeColor({ type: 'user' })).toContain('user');
+
+    for (const visualVariant of [
+      'current',
+      'parent',
+      'child',
+      'sibling-open',
+      'sibling-elected',
+      'sibling-parliament',
+    ] as const) {
+      expect(getCivicNetworkMiniMapNodeColor({ data: { visualVariant } })).toBeTruthy();
+    }
+    for (const processState of ['approved', 'active-next', 'pending', 'rejected'] as const) {
+      expect(getCivicNetworkMiniMapNodeColor({ data: { processState } })).toBeTruthy();
+    }
+    expect(getCivicNetworkMiniMapNodeColor({ data: { status: 'approved' } })).toBe(
+      'var(--badge-success-border)'
+    );
+    expect(
+      getCivicNetworkMiniMapNodeColor({ data: { entityType: 'other', visualVariant: 'other' } })
+    ).toBe('var(--entity-group-border)');
+    expect(getCivicNetworkMiniMapNodeColor({})).toBe('var(--entity-group-border)');
+  });
+
+  it('covers group roles, display labels, tokens, swatches, and right labels', () => {
+    expect(getGroupNodeVisualVariant({ role: 'current' })).toBe('current');
+    expect(getGroupNodeVisualVariant({ role: 'parent' })).toBe('parent');
+    expect(getGroupNodeVisualVariant({ role: 'child' })).toBe('child');
+    expect(getGroupNodeVisualVariant({ role: 'sibling', siblingMembershipMode: 'elected' })).toBe(
+      'sibling-elected'
+    );
+    expect(
+      getGroupNodeVisualVariant({ role: 'sibling', siblingMembershipMode: 'parliament' })
+    ).toBe('sibling-parliament');
+    expect(getGroupNodeVisualVariant({ role: 'sibling', siblingMembershipMode: null })).toBe(
+      'sibling-open'
+    );
+    expect(getGroupNodeVisualTokens('parent')).not.toBe(getGroupNodeVisualTokens('parent'));
+    expect(getGroupNodeDisplayLabel('Council', 'current')).toContain('Council');
+    expect(getGroupNodeDisplayLabel(null, 'current')).toBe('● ');
+    expect(getGroupNodeLegendSwatch('child')).toBeTruthy();
+    expect(
+      createGroupNodeLegendItem({ id: 'group', label: 'Group', visualVariant: 'current' }).swatch
+    ).toBeTruthy();
+
+    expect(getGroupDisplayLabel('Council', 'HIERARCHICAL')).toContain('🏛');
+    expect(getGroupDisplayLabel(null, 'hierarchical')).toBe('🏛 ');
+    expect(getGroupDisplayLabel('Council', 'base')).toContain('◉');
+    expect(getGroupDisplayLabel(null, 'base')).toBe('◉ ');
+    expect(getGroupDisplayLabel('Council', 'sibling')).toContain('◎');
+    expect(getGroupDisplayLabel(null, 'sibling')).toBe('◎ ');
+    expect(getGroupDisplayLabel('Council', 'other')).toBe('Council');
+    expect(getGroupDisplayLabel(null, null)).toBe('');
+    expect(renderRightsEdgeLabel([])).toBeTruthy();
+    expect(renderRightsEdgeLabel(['amendmentRight'])).toBeTruthy();
+  });
+
+  it('honors every civic style override and primary-emphasis branch', () => {
+    const options = {
+      width: 220,
+      height: 120,
+      borderRadius: '2px',
+      padding: '3px',
+      fontSize: '14px',
+      fontWeight: '500',
+      textAlign: 'left' as const,
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      boxShadow: 'none',
+      borderWidth: 7,
+    };
+    expect(getCivicNetworkNodeStyle({ type: 'entity', entityType: 'blog' }, options)).toMatchObject(
+      options
+    );
+    expect(getCivicNetworkNodeStyle({ type: 'group', visualVariant: 'parent' }).borderWidth).toBe(
+      2
+    );
+    expect(getCivicNetworkNodeStyle({ type: 'group', visualVariant: 'current' }).fontWeight).toBe(
+      '700'
+    );
+    expect(getCivicNetworkNodeStyle({ type: 'workflow', role: 'start' }).fontWeight).toBe('700');
+    expect(getCivicNetworkNodeStyle({ type: 'workflow', role: 'end' }).fontWeight).toBe('600');
+    expect(getCivicNetworkNodeStyle({ type: 'process', state: 'active-next' }).fontWeight).toBe(
+      '700'
+    );
+    expect(getCivicNetworkNodeStyle({ type: 'process', state: 'pending' }).fontWeight).toBe('600');
+    expect(getWorkflowStepNodeStyle('intermediate', { width: 250 }).width).toBe(250);
   });
 });

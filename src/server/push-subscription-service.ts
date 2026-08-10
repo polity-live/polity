@@ -174,3 +174,8 @@ export async function unregisterPushSubscriptionForUser(
   if (countError) throw new Error(countError.message);
   if ((count ?? 0) === 0) await setPushDeliverySetting(supabase, userId, false);
 }
+
+export const pushSubscriptionContracts = {
+  getSupabase,
+  setPushDeliverySetting,
+};

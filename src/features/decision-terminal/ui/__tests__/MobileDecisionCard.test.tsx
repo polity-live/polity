@@ -68,7 +68,36 @@ describe('MobileDecisionCard', () => {
     expect(screen.getByText('Polity Tester')).toBeTruthy();
     expect(screen.getByText('3 · 75%')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /View results/ }));
+    const open = screen.getByRole('button', { name: /View results/ });
+    expect(open.dataset.actionId).toBe('decision-terminal.mobile.decision.open');
+    fireEvent.click(open);
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('toggles indication results through its stable nested action', () => {
+    render(
+      <MobileDecisionCard
+        decision={electionDecision({
+          candidates: [
+            {
+              id: 'candidate-1',
+              name: 'Polity Tester',
+              votes: 3,
+              indicationVotes: 2,
+              actualPercentage: 75,
+              indicationPercentage: 67,
+            },
+          ],
+        })}
+        onClick={vi.fn()}
+      />
+    );
+
+    const toggle = document.querySelector(
+      '[data-action-id="decision-terminal.mobile.indication-results.toggle"]'
+    ) as HTMLButtonElement;
+    expect(toggle).toBeTruthy();
+    fireEvent.click(toggle);
+    expect(screen.getByText('IND')).toBeTruthy();
   });
 });

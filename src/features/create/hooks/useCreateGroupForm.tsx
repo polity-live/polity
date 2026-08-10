@@ -854,9 +854,7 @@ export function useCreateGroupForm(): CreateFormConfig {
     getSelectedRights(
       pendingLink?.rightDirections ?? createInitialRelationshipDirections()
     ).forEach(right => {
-      if (!statuses.has(right)) {
-        statuses.set(right, 'outgoing');
-      }
+      statuses.set(right, 'outgoing');
     });
 
     return statuses.size > 0 ? statuses : undefined;

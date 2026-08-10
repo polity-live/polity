@@ -61,7 +61,8 @@ function formatMobileHourLabel(hour: number, locale: string): { hour: string; da
   date.setHours(hour, 0, 0, 0);
 
   const parts = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).formatToParts(date);
-  const hourPart = parts.find(part => part.type === 'hour')?.value ?? String(hour);
+  // Intl always emits an hour part when the formatter requests an hour.
+  const { value: hourPart } = parts.find(part => part.type === 'hour') as Intl.DateTimeFormatPart;
   const dayPeriod = parts.find(part => part.type === 'dayPeriod')?.value;
 
   return { hour: hourPart, dayPeriod };
@@ -134,6 +135,7 @@ export function SharedWeekViewView({
 
               return (
                 <WeekViewDayHeaderButton
+                  data-action-id="events.week.select-date"
                   key={day.toISOString()}
                   date={day}
                   locale={locale}
@@ -232,6 +234,7 @@ export function SharedWeekViewView({
                           {formatTimeRange(selectedRange.start, selectedRange.end, locale)}
                         </p>
                         <Button
+                          data-action-id="events.week.create-range"
                           size="sm"
                           disabled={!onCreateEventRange}
                           onClick={() => onCreateEventRange?.(selectedRange)}
@@ -250,6 +253,7 @@ export function SharedWeekViewView({
 
                     return (
                       <WeekViewBlockButton
+                        data-action-id="events.week.select-event"
                         key={event.id}
                         data-tutorial-anchor={
                           event.tutorial_run_id ? 'tutorial-first-event' : undefined

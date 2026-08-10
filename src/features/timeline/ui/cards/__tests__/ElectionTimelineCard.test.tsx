@@ -4,7 +4,14 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ElectionTimelineCard } from '../ElectionTimelineCard';
+import {
+  ElectionTimelineCard,
+  formatElectionCountPercent,
+  formatElectionDate,
+  getElectionCurrentPhase,
+  getElectionInitials,
+  normalizeElectionPercent,
+} from '../ElectionTimelineCard';
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -52,7 +59,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'features.timeline.cards.viewResults': 'View results',
       };
 
-      return fallback ?? labels[key] ?? key;
+      return typeof fallback === 'string' ? fallback : (labels[key] ?? key);
     },
   }),
 }));
@@ -63,6 +70,22 @@ afterEach(() => {
 });
 
 describe('ElectionTimelineCard', () => {
+  it('formats dates, initials, percentages, and phases at their boundaries', () => {
+    expect(formatElectionDate('2026-06-20T12:00:00Z')).toEqual(expect.any(String));
+    expect(formatElectionDate(new Date('2026-06-20T12:00:00Z'))).toEqual(expect.any(String));
+    expect(getElectionInitials('Ada')).toBe('A');
+    expect(getElectionInitials('Ada Lovelace Byron')).toBe('AL');
+    expect(normalizeElectionPercent(Number.NaN)).toBe(0);
+    expect(normalizeElectionPercent(null)).toBe(0);
+    expect(normalizeElectionPercent(-5)).toBe(0);
+    expect(normalizeElectionPercent(105)).toBe(100);
+    expect(normalizeElectionPercent(55)).toBe(55);
+    expect(formatElectionCountPercent(undefined, undefined)).toBe('0 · 0%');
+    expect(getElectionCurrentPhase('nominations_open')).toBe('nomination');
+    expect(getElectionCurrentPhase('voting_open')).toBe('voting');
+    expect(getElectionCurrentPhase('closed')).toBe('results');
+  });
+
   it('marks the winner in the candidate row and keeps result/share actions', () => {
     const onViewResults = vi.fn();
     const { container } = render(
@@ -128,6 +151,8 @@ describe('ElectionTimelineCard', () => {
           title: 'Board election',
           roleName: 'Board',
           status: 'voting_open',
+          agendaEventId: 'event-1',
+          agendaItemId: 'agenda-1',
           votingEndDate: new Date('2026-06-20T12:00:00Z'),
           candidates: [
             {
@@ -151,5 +176,139 @@ describe('ElectionTimelineCard', () => {
 
     expect(onCastVote).toHaveBeenCalledTimes(1);
     expect(onViewCandidates).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders nomination indication rows, remaining candidates, group navigation, and actions', () => {
+    const onNominate = vi.fn();
+    const onViewCandidates = vi.fn();
+    const candidates = Array.from({ length: 6 }, (_, index) => ({
+      id: `candidate-${index}`,
+      name: `Candidate ${index}`,
+      indicationCount: index,
+      indicationPercentage: index * 25,
+    }));
+    const { container } = render(
+      <ElectionTimelineCard
+        election={{
+          id: 'election-nominations',
+          title: 'Nomination',
+          roleName: 'Chair',
+          groupId: 'group-1',
+          groupName: 'Civic Group',
+          status: 'nominations_open',
+          nominationsEndDate: '2026-06-20T12:00:00Z',
+          candidates,
+          totalCandidates: 6,
+          isIndicationPhase: true,
+        }}
+        onNominate={onNominate}
+        onViewCandidates={onViewCandidates}
+      />
+    );
+
+    expect(container.querySelectorAll('[data-election-candidate-row="true"]')).toHaveLength(5);
+    expect(screen.getByText('+1')).toBeTruthy();
+    expect(screen.getByText('Submit by', { exact: false })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Show indication results' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /nominate/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'View candidates' }));
+    expect(onNominate).toHaveBeenCalledOnce();
+    expect(onViewCandidates).toHaveBeenCalledOnce();
+  });
+
+  it('renders closed results without candidates or a winner and supports both result actions', () => {
+    const onViewResults = vi.fn();
+    const onViewCandidates = vi.fn();
+    render(
+      <ElectionTimelineCard
+        election={{
+          id: 'election-closed',
+          title: 'Closed',
+          roleName: 'Chair',
+          status: 'closed',
+          candidates: [],
+          totalCandidates: 0,
+        }}
+        onViewResults={onViewResults}
+        onViewCandidates={onViewCandidates}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'View results' }));
+    fireEvent.click(screen.getByRole('button', { name: 'View candidates' }));
+    expect(onViewResults).toHaveBeenCalledOnce();
+    expect(onViewCandidates).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Share Closed' })).toBeTruthy();
+  });
+
+  it('renders a winner-only display with and without a percentage', () => {
+    const { rerender } = render(
+      <ElectionTimelineCard
+        href="/custom-election"
+        election={{
+          id: 'election-winner',
+          title: 'Winner only',
+          roleName: 'Chair',
+          status: 'winner_announced',
+          candidates: [],
+          winnerName: 'Ada Lovelace',
+          winnerVotePercentage: 61,
+          totalCandidates: 2,
+        }}
+      />
+    );
+    expect(screen.getByText('61% of votes')).toBeTruthy();
+
+    rerender(
+      <ElectionTimelineCard
+        election={{
+          id: 'election-winner',
+          title: 'Winner only',
+          roleName: 'Chair',
+          status: 'winner_announced',
+          candidates: [],
+          winnerName: 'Ada Lovelace',
+          totalCandidates: 2,
+        }}
+      />
+    );
+    expect(screen.queryByText('61% of votes')).toBeNull();
+  });
+
+  it('marks a candidate winner by name when no winner id exists', () => {
+    const { container } = render(
+      <ElectionTimelineCard
+        election={{
+          id: 'election-name-winner',
+          title: 'Winner by name',
+          roleName: 'Chair',
+          status: 'winner_announced',
+          candidates: [{ id: 'candidate-1', name: 'Ada Lovelace' }],
+          winnerName: 'Ada Lovelace',
+          totalCandidates: 1,
+        }}
+      />
+    );
+    expect(
+      container.querySelector('[data-election-candidate-row="true"]')?.getAttribute('data-winner')
+    ).toBe('true');
+  });
+
+  it('falls back safely for an unexpected runtime status', () => {
+    render(
+      <ElectionTimelineCard
+        election={{
+          id: 'election-runtime',
+          title: 'Runtime status',
+          roleName: 'Chair',
+          status: 'runtime' as any,
+          candidates: [],
+          totalCandidates: 0,
+          totalVoters: 0,
+          turnoutPercentage: 0,
+        }}
+      />
+    );
+    expect(screen.getByText('0 voted')).toBeTruthy();
+    expect(screen.getByText('0% turnout')).toBeTruthy();
   });
 });

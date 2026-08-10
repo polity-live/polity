@@ -4,13 +4,15 @@ import { useCalendarEventFilter } from '@/features/events/hooks/useCalendarEvent
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { getCalendarEventsForView } from '../logic/listViewHelpers';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toCreateEventSearch } from '@/features/create/logic/createEventSearch';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import type { CalendarEvent } from '../types/calendar.types';
 import { getBaseEventId } from '../logic/eventIdUtils';
 import { getCalendarEventRoute } from '../logic/calendarEventNavigation';
+import { getFirstTutorialEventStart } from '../logic/tutorialCalendarDate';
+import { APP_TUTORIAL_ACTIVE_BODY_ATTRIBUTE } from '@/features/app-tutorial/events';
 
 interface CalendarGroupOption {
   id: string;
@@ -51,6 +53,18 @@ export function useCalendarPage() {
     );
   }, [events]);
   const filter = useCalendarEventFilter(events, { selectedGroupId });
+  const firstTutorialEventStart = useMemo(() => getFirstTutorialEventStart(events), [events]);
+
+  useEffect(() => {
+    if (
+      firstTutorialEventStart === null ||
+      !document.body.hasAttribute(APP_TUTORIAL_ACTIVE_BODY_ATTRIBUTE)
+    ) {
+      return;
+    }
+
+    calendar.setSelectedDate(new Date(firstTutorialEventStart));
+  }, [calendar.setSelectedDate, firstTutorialEventStart]);
 
   const filteredEvents = getCalendarEventsForView(
     calendar.viewMode,

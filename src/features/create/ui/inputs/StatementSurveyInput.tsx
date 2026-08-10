@@ -51,6 +51,7 @@ export function StatementSurveyInput({
       ))}
       {surveyOptions.length < 4 && (
         <Button
+          data-action-id="create.statement-survey.option.add"
           type="button"
           variant="link"
           className="h-auto p-0 text-sm"

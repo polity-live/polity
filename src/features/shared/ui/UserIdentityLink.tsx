@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { cn } from '@/features/shared/utils/utils';
 
 interface UserIdentityLinkProps {
+  'data-action-id'?: string;
   avatarClassName?: string;
   avatarUrl?: string | null;
   className?: string;
@@ -32,6 +33,7 @@ function getInitials(label?: string) {
 }
 
 export function UserIdentityLink({
+  'data-action-id': actionId,
   avatarClassName,
   avatarUrl,
   className,
@@ -78,7 +80,12 @@ export function UserIdentityLink({
   }
 
   return (
-    <Link to="/user/$id" params={{ id: userId }} className={identityClassName}>
+    <Link
+      to="/user/$id"
+      params={{ id: userId }}
+      className={identityClassName}
+      data-action-id={actionId}
+    >
       {content}
     </Link>
   );

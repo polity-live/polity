@@ -164,7 +164,10 @@ export function EventStreamView({
     return (
       <div className="flex h-[400px] flex-col items-center justify-center gap-4">
         <p className="text-muted-foreground text-lg">{t('features.events.stream.noActiveItem')}</p>
-        <Button onClick={() => navigate({ to: `/event/${eventId}` })}>
+        <Button
+          data-action-id="events.stream.back-to-event"
+          onClick={() => navigate({ to: `/event/${eventId}` })}
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t('features.events.backToEvent')}
         </Button>
@@ -308,6 +311,7 @@ export function EventStreamView({
             <div className="flex items-center justify-between">
               <CollapsibleTrigger asChild>
                 <Button
+                  data-action-id="events.stream.speakers.toggle"
                   variant="ghost"
                   className={featureThemeClassName('agendaEventStreamSectionThemedPanel')}
                 >
@@ -323,6 +327,7 @@ export function EventStreamView({
               </CollapsibleTrigger>
               {userSpeaker ? (
                 <Button
+                  data-action-id="events.stream.speakers.remove-self.header"
                   onClick={() => handleRemoveFromSpeakerList(userSpeaker.id)}
                   disabled={removingSpeaker === userSpeaker.id}
                   variant="outline"
@@ -335,6 +340,7 @@ export function EventStreamView({
                 </Button>
               ) : canJoinSpeakerList ? (
                 <Button
+                  data-action-id="events.stream.speakers.add-self"
                   onClick={handleAddToSpeakerList}
                   disabled={addingSpeaker || !user}
                   size="lg"
@@ -366,6 +372,8 @@ export function EventStreamView({
                   {/* Carousel Navigation Buttons */}
                   {canScrollLeft && (
                     <Button
+                      data-action-id="events.stream.speakers.previous"
+                      aria-label={t('common.pagination.previous')}
                       variant="outline"
                       size="icon"
                       className="absolute top-1/2 left-0 z-10 -translate-y-1/2 rounded-md shadow-lg"
@@ -376,6 +384,8 @@ export function EventStreamView({
                   )}
                   {canScrollRight && (
                     <Button
+                      data-action-id="events.stream.speakers.next"
+                      aria-label={t('common.pagination.next')}
                       variant="outline"
                       size="icon"
                       className="absolute top-1/2 right-0 z-10 -translate-y-1/2 rounded-md shadow-lg"
@@ -416,6 +426,10 @@ export function EventStreamView({
                         >
                           {isCurrentUser && (
                             <Button
+                              data-action-id="events.stream.speakers.remove-self.card"
+                              aria-label={translateText(
+                                'generated.inline.0016_remove_yourself_fa3b0e30'
+                              )}
                               variant="ghost"
                               size="icon"
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90 absolute -top-2 -right-2 z-10 h-6 w-6 rounded-md"
@@ -431,7 +445,7 @@ export function EventStreamView({
                               <Avatar className="border-background h-20 w-20 border-4 shadow-lg">
                                 <AvatarImage src={speakerAvatar} />
                                 <AvatarFallback className="text-2xl">
-                                  {speakerName[0]?.toUpperCase() || 'U'}
+                                  {speakerName[0].toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
                             </div>

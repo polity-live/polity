@@ -23,7 +23,7 @@ export function EntityWikiMedia({ imageUrl, videoUrl, alt, className }: EntityWi
         />
       ) : (
         <img
-          src={imageUrl ?? undefined}
+          src={imageUrl as string}
           alt={alt}
           className="mx-auto h-64 w-full max-w-4xl rounded-lg object-cover shadow-lg"
         />

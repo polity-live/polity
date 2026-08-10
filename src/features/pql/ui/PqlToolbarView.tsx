@@ -140,6 +140,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
               <span>{badge.label}</span>
               <Button
                 type="button"
+                data-action-id="pql.toolbar.active-badge.clear"
                 variant="ghost"
                 size="icon"
                 className="hover:bg-primary-foreground/20 h-5 w-5 text-current hover:text-current"
@@ -161,6 +162,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
             <CollapsibleTrigger asChild>
               <Button
                 type="button"
+                data-action-id="pql.toolbar.field-filters.toggle"
                 variant="ghost"
                 className="flex w-full items-center justify-between px-0 py-3 hover:bg-transparent"
               >
@@ -192,6 +194,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                         {values.length > 0 ? (
                           <Button
                             type="button"
+                            data-action-id="pql.toolbar.quick-filter.clear"
                             variant="ghost"
                             size="sm"
                             onClick={() => onQuickFilterClear(quickFilter.fieldKey)}
@@ -259,6 +262,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                             return (
                               <FilterButton
                                 key={option.value}
+                                data-action-id="pql.toolbar.quick-filter.toggle"
                                 active={isActive}
                                 onClick={() =>
                                   onQuickFilterToggle(quickFilter.fieldKey, option.value)
@@ -284,6 +288,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
           <CollapsibleTrigger asChild>
             <Button
               type="button"
+              data-action-id="pql.toolbar.custom-filters.toggle"
               variant="ghost"
               className="flex w-full items-center justify-between px-0 py-3 hover:bg-transparent"
             >
@@ -303,6 +308,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
             <div className="mb-4 flex justify-end">
               <Button
                 type="button"
+                data-action-id="pql.toolbar.custom-filter.add"
                 onClick={() => {
                   onEditFilter(null);
                   onBuilderOpenChange(true);
@@ -330,6 +336,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                     >
                       <Button
                         type="button"
+                        data-action-id="pql.toolbar.custom-filter.card.toggle"
                         variant="ghost"
                         className={featureThemeClassName('pqlPqlToolbarContrastPanel')}
                         onClick={() => onCustomFilterToggle(filter.id)}
@@ -349,6 +356,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
 
                       <div className="flex items-center gap-2">
                         <FilterButton
+                          data-action-id="pql.toolbar.custom-filter.apply.toggle"
                           active={isActive}
                           onClick={() => onCustomFilterToggle(filter.id)}
                         >
@@ -358,6 +366,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                         </FilterButton>
                         <Button
                           type="button"
+                          data-action-id="pql.toolbar.custom-filter.edit"
                           variant="outline"
                           size="icon"
                           onClick={() => {
@@ -369,6 +378,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                         </Button>
                         <Button
                           type="button"
+                          data-action-id="pql.toolbar.custom-filter.delete"
                           variant="ghost"
                           size="icon"
                           onClick={() => onCustomFilterDelete(filter.id)}

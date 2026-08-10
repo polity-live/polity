@@ -149,6 +149,10 @@ describe('OnboardingWizardView desktop sidebar', () => {
 
     render(<OnboardingWizardView {...props} />);
 
+    expect(
+      document.querySelectorAll('[data-action-id="auth.onboarding.wizard.step.select"]').length
+    ).toBeGreaterThan(0);
+
     fireEvent.click(screen.getByRole('button', { name: 'onboarding.shell.steps.interests.label' }));
     fireEvent.click(
       screen.getByRole('button', {

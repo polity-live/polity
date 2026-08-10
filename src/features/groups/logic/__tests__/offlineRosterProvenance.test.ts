@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { resolveOfflineRosterProvenance } from '../offlineRosterProvenance';
+import {
+  hydrateProvenanceGroupName,
+  resolveOfflineRosterProvenance,
+} from '../offlineRosterProvenance';
 
 function group(
   id: string,
@@ -108,5 +111,186 @@ describe('resolveOfflineRosterProvenance', () => {
       partGroup: { id: baseGroup.id, name: 'B1' },
       baseGroup: { id: baseGroup.id, name: 'B1' },
     });
+  });
+
+  it('returns an empty result for absent, unsupported, or empty composition inputs', () => {
+    const hierarchical = group('root', 'hierarchical');
+    const base = group('base', 'base');
+
+    expect(
+      resolveOfflineRosterProvenance({
+        group: null,
+        offlineMembers: [{ id: 'offline', group_id: 'base', group: base }],
+        relationships: [],
+        groupsById: new Map(),
+      }).size
+    ).toBe(0);
+    expect(
+      resolveOfflineRosterProvenance({
+        group: base,
+        offlineMembers: [{ id: 'offline', group_id: 'base', group: base }],
+        relationships: [],
+        groupsById: new Map(),
+      }).size
+    ).toBe(0);
+    expect(
+      resolveOfflineRosterProvenance({
+        group: hierarchical,
+        offlineMembers: [],
+        relationships: [],
+        groupsById: new Map(),
+      }).size
+    ).toBe(0);
+  });
+
+  it('ignores offline rows without a resolvable group identity', () => {
+    const root = group('root', 'hierarchical');
+
+    const result = resolveOfflineRosterProvenance({
+      group: root,
+      offlineMembers: [
+        { id: 'missing-all', group_id: null, group: null },
+        {
+          id: 'missing-id',
+          group_id: null,
+          group: { id: '', name: 'Missing', group_type: 'base' },
+        },
+      ],
+      relationships: [],
+      groupsById: new Map(),
+    });
+
+    expect(result.size).toBe(0);
+  });
+
+  it('adds offline-only groups to the lookup and resolves group-id fallbacks', () => {
+    const root = group('root', 'hierarchical');
+    const base = group('base', 'base', { name: 'Offline Base' });
+
+    const result = resolveOfflineRosterProvenance({
+      group: root,
+      offlineMembers: [{ id: 'offline', group_id: null, group: base }],
+      relationships: [relationship('root-base', 'root', 'base')],
+      groupsById: new Map([[root.id, root]]),
+    });
+
+    expect(result.get('offline')).toMatchObject({
+      baseGroup: { id: 'base', name: 'Offline Base', group_type: 'base' },
+    });
+  });
+
+  it('preserves a useful lookup name when an incoming row only repeats its id', () => {
+    const assembly = group('assembly', 'sibling', { sibling_membership_mode: 'parliament' });
+    const existingBase = group('base', 'base', { name: 'Existing Base' });
+    const idOnlyBase = { ...existingBase, name: existingBase.id, group_type: null };
+
+    const result = resolveOfflineRosterProvenance({
+      group: assembly,
+      offlineMembers: [{ id: 'offline', group_id: 'base', group: idOnlyBase }],
+      relationships: [],
+      groupsById: new Map([
+        [assembly.id, assembly],
+        [existingBase.id, existingBase],
+      ]),
+      siblingRootGroupIds: ['base'],
+    });
+
+    expect(result.get('offline')).toMatchObject({
+      partGroup: { id: 'base', name: 'Existing Base', group_type: 'base' },
+      baseGroup: { id: 'base', name: 'Existing Base', group_type: 'base' },
+    });
+  });
+
+  it('falls back to the base group when candidate sibling roots are not hierarchical', () => {
+    const assembly = group('assembly', 'sibling', { sibling_membership_mode: 'parliament' });
+    const rootCandidate = group('candidate', 'base');
+    const base = group('base', 'base');
+    const result = resolveOfflineRosterProvenance({
+      group: assembly,
+      offlineMembers: [{ id: 'offline', group_id: 'base', group: base }],
+      relationships: [],
+      groupsById: new Map([
+        [assembly.id, assembly],
+        [rootCandidate.id, rootCandidate],
+        [base.id, base],
+      ]),
+      siblingRootGroupIds: ['candidate'],
+    });
+
+    expect(result.get('offline')?.baseGroup?.id).toBe('base');
+  });
+
+  it('handles a hierarchical offline row whose referenced group is not hydrated', () => {
+    const root = group('root', 'hierarchical');
+    const result = resolveOfflineRosterProvenance({
+      group: root,
+      offlineMembers: [{ id: 'ghost-offline', group_id: 'ghost', group: null }],
+      relationships: [],
+      groupsById: new Map([[root.id, root]]),
+    });
+
+    expect(result.has('ghost-offline')).toBe(true);
+  });
+
+  it('skips missing sibling identities in both current and root membership projections', () => {
+    const assembly = group('assembly', 'sibling', { sibling_membership_mode: 'parliament' });
+    const result = resolveOfflineRosterProvenance({
+      group: assembly,
+      offlineMembers: [
+        { id: 'missing', group_id: null, group: null },
+        { id: 'ghost', group_id: 'ghost', group: null },
+      ],
+      relationships: [],
+      groupsById: new Map([[assembly.id, assembly]]),
+      siblingRootGroupIds: ['unknown-root'],
+    });
+
+    expect(result.has('missing')).toBe(false);
+    expect(result.has('ghost')).toBe(true);
+  });
+
+  it('supports a hierarchical sibling root even when the base row has no hydrated group', () => {
+    const assembly = group('assembly', 'sibling', { sibling_membership_mode: 'parliament' });
+    const sourceRoot = group('source-root', 'hierarchical');
+    const result = resolveOfflineRosterProvenance({
+      group: assembly,
+      offlineMembers: [{ id: 'ghost', group_id: 'ghost-base', group: null }],
+      relationships: [relationship('source-ghost', 'source-root', 'ghost-base')],
+      groupsById: new Map([
+        [assembly.id, assembly],
+        [sourceRoot.id, sourceRoot],
+      ]),
+      siblingRootGroupIds: ['source-root'],
+    });
+
+    expect(result.has('ghost')).toBe(true);
+  });
+});
+
+describe('hydrateProvenanceGroupName', () => {
+  it('resolves display names and group types through every fallback layer', () => {
+    expect(hydrateProvenanceGroupName(null, new Map())).toBeNull();
+
+    expect(
+      hydrateProvenanceGroupName(
+        { id: 'group', name: undefined, group_type: null } as any,
+        new Map([['group', { id: 'group', name: 'group', group_type: 'base' }]]),
+        { id: 'group', name: 'Fallback Display', group_type: 'hierarchical' }
+      )
+    ).toEqual({ id: 'group', name: 'Fallback Display', group_type: 'base' });
+
+    expect(
+      hydrateProvenanceGroupName(
+        { id: 'lookup-id', name: undefined, group_type: undefined } as any,
+        new Map([['lookup-id', { id: 'lookup-id', name: 'lookup-id', group_type: undefined }]])
+      )
+    ).toEqual({ id: 'lookup-id', name: 'lookup-id', group_type: undefined });
+
+    expect(
+      hydrateProvenanceGroupName(
+        { id: 'id-only', name: undefined, group_type: undefined } as any,
+        new Map()
+      )
+    ).toEqual({ id: 'id-only', name: 'id-only', group_type: undefined });
   });
 });

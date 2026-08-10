@@ -83,7 +83,7 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
 
     setVotingLoading(election.id);
     try {
-      const isIndicative = election.status === 'indicative' || election.status === 'indicative';
+      const isIndicative = election.status === 'indicative';
       const participationId = crypto.randomUUID();
       const participationArgs = {
         id: participationId,
@@ -118,7 +118,7 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
 
     setVotingLoading(vote.id);
     try {
-      const isIndicative = vote.status === 'indicative' || vote.status === 'indicative';
+      const isIndicative = vote.status === 'indicative';
       const participationId = crypto.randomUUID();
       const participationArgs = {
         id: participationId,

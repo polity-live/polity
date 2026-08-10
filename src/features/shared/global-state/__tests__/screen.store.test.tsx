@@ -34,6 +34,9 @@ describe('responsive screen detector', () => {
   });
 
   it('resolves the mobile media query in the client layout effect', () => {
+    act(() => useScreenStore.getState().setScreenType('mobile'));
+    expect(useScreenStore.getState().screenType).toBe('mobile');
+
     renderHook(() => useScreenResponsiveDetector());
 
     expect(useScreenStore.getState().isMobileScreen).toBe(true);

@@ -23,6 +23,76 @@ vi.mock('@tanstack/react-router', () => ({
 afterEach(cleanup);
 
 describe('UserMenuView', () => {
+  it('dispatches menu, search, documentation, and logout actions through stable intents', () => {
+    const onOpenChange = vi.fn();
+    const onLogoutDialogOpenChange = vi.fn();
+    const onClearGroupSearch = vi.fn();
+    const onClearEventSearch = vi.fn();
+    const onClearAmendmentSearch = vi.fn();
+    const onLogout = vi.fn();
+    render(
+      <UserMenuView
+        {...buildMinimalProps(onOpenChange)}
+        groups={[{ id: 'group-1', name: 'Group', image_url: null }]}
+        events={[{ key: 'event-1', id: 'event-1', title: 'Event', start_date: Date.now() }]}
+        amendments={[{ id: 'amendment-1', title: 'Amendment' }]}
+        showGroupSearch
+        showEventSearch
+        showAmendmentSearch
+        groupSearchQuery="g"
+        eventSearchQuery="e"
+        amendmentSearchQuery="a"
+        logoutDialogOpen
+        onLogoutDialogOpenChange={onLogoutDialogOpenChange}
+        onClearGroupSearch={onClearGroupSearch}
+        onClearEventSearch={onClearEventSearch}
+        onClearAmendmentSearch={onClearAmendmentSearch}
+        onLogout={onLogout}
+      />
+    );
+
+    expect(document.querySelector('[data-action-id="navigation.user-menu.open"]')).toBeTruthy();
+    expect(
+      document.querySelector('[data-action-id="navigation.user-menu.profile.open"]')
+    ).toBeTruthy();
+    expect(
+      document.querySelector('[data-action-id="navigation.user-menu.settings.open"]')
+    ).toBeTruthy();
+    fireEvent.click(
+      document.querySelector('[data-action-id="navigation.user-menu.events.toggle"]')!
+    );
+    fireEvent.click(
+      document.querySelector('[data-action-id="navigation.user-menu.amendments.toggle"]')!
+    );
+    fireEvent.click(
+      document.querySelector('[data-action-id="navigation.user-menu.groups-search.clear"]')!
+    );
+    fireEvent.click(
+      document.querySelector('[data-action-id="navigation.user-menu.events-search.clear"]')!
+    );
+    fireEvent.click(
+      document.querySelector('[data-action-id="navigation.user-menu.amendments-search.clear"]')!
+    );
+    fireEvent.click(
+      document.querySelector('[data-action-id="navigation.user-menu.docs-dialog.open"]')!
+    );
+    expect(
+      document.querySelector('[data-action-id="navigation.user-menu.documentation.open"]')
+    ).toBeTruthy();
+    fireEvent.click(
+      document.querySelector('[data-action-id="navigation.user-menu.logout-dialog.open"]')!
+    );
+    fireEvent.click(
+      document.querySelector('[data-action-id="navigation.user-menu.logout.confirm"]')!
+    );
+
+    expect(onClearGroupSearch).toHaveBeenCalledOnce();
+    expect(onClearEventSearch).toHaveBeenCalledOnce();
+    expect(onClearAmendmentSearch).toHaveBeenCalledOnce();
+    expect(onLogoutDialogOpenChange).toHaveBeenCalledWith(true);
+    expect(onLogout).toHaveBeenCalledOnce();
+  });
+
   it('renders role-based groups, events, and amendments in accordion sections', () => {
     render(
       <UserMenuView
@@ -178,6 +248,108 @@ describe('UserMenuView', () => {
     expect(feedback.getAttribute('href')).toBe('https://github.com/polity-live/polity/issues');
     expect(feedback.getAttribute('target')).toBe('_blank');
     expect(feedback.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('covers mobile, search, entity fallback, and optional menu callback states', () => {
+    const onGroupSearchChange = vi.fn();
+    const onEventSearchChange = vi.fn();
+    const onAmendmentSearchChange = vi.fn();
+    render(
+      <UserMenuView
+        {...buildMinimalProps(vi.fn())}
+        isMobile
+        onOpenChange={undefined}
+        displayAvatar="avatar.png"
+        groups={[{ id: 'group-fallback', name: null, image_url: 'group.png' } as any]}
+        events={[
+          {
+            id: 'event-fallback',
+            key: 'event-fallback:key',
+            start_date: 0,
+            title: null,
+          } as any,
+        ]}
+        amendments={[{ id: 'amendment-fallback', title: null } as any]}
+        showGroupSearch
+        showEventSearch
+        showAmendmentSearch
+        onGroupSearchChange={onGroupSearchChange}
+        onEventSearchChange={onEventSearchChange}
+        onAmendmentSearchChange={onAmendmentSearchChange}
+      />
+    );
+
+    expect(screen.getByText('G')).toBeTruthy();
+    const groupInput = screen.getByPlaceholderText('Search groups...');
+    fireEvent.change(groupInput, { target: { value: 'group' } });
+    fireEvent.keyDown(groupInput, { key: 'x' });
+    fireEvent.pointerDown(groupInput);
+    expect(onGroupSearchChange).toHaveBeenCalledWith('group');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Events' }));
+    const eventInput = screen.getByPlaceholderText('Search events...');
+    fireEvent.change(eventInput, { target: { value: 'event' } });
+    fireEvent.keyDown(eventInput, { key: 'x' });
+    fireEvent.pointerDown(eventInput);
+    expect(onEventSearchChange).toHaveBeenCalledWith('event');
+    expect(screen.getByText('Event')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Amendments' }));
+    const amendmentInput = screen.getByPlaceholderText('Search amendments...');
+    fireEvent.change(amendmentInput, { target: { value: 'amendment' } });
+    fireEvent.keyDown(amendmentInput, { key: 'x' });
+    fireEvent.pointerDown(amendmentInput);
+    expect(onAmendmentSearchChange).toHaveBeenCalledWith('amendment');
+    expect(screen.getByText('Amendment')).toBeTruthy();
+
+    for (const label of [
+      'Tutorial',
+      'AI assistant',
+      'Documentation',
+      'Feedback, Feature Requests & Bugs',
+    ]) {
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Documentation & Feedback' }));
+      fireEvent.click(screen.getByRole('link', { name: label }));
+    }
+  });
+
+  it('shows the navigation loading state independently of empty entity sections', () => {
+    render(<UserMenuView {...buildMinimalProps(vi.fn())} navigationEntitiesLoading />);
+    const loading = screen.getByTestId('user-menu-navigation-loading');
+    expect(loading.textContent).toBe('Loading...');
+    expect(loading.getAttribute('aria-live')).toBe('polite');
+    expect(loading.getAttribute('role')).toBe('menuitem');
+    expect(loading.getAttribute('aria-disabled')).toBe('true');
+    expect(loading.closest('[aria-hidden="true"]')).toBeNull();
+    expect(screen.getByRole('menu').querySelector('[role="status"]')).toBeNull();
+    expect(screen.getByRole('menuitem', { name: 'Loading...' })).toBe(loading);
+    expect(screen.queryByTestId('user-menu-navigation-sections')).toBeNull();
+  });
+
+  it('renders each entity section independently with search disabled', () => {
+    const base = buildMinimalProps(vi.fn());
+    const view = render(
+      <UserMenuView
+        {...base}
+        events={[{ id: 'event-only', key: 'event-only:key', start_date: 0, title: 'Event only' }]}
+      />
+    );
+    expect(screen.queryByTestId('user-menu-groups-accordion')).toBeNull();
+    expect(screen.queryByTestId('user-menu-amendments-accordion')).toBeNull();
+
+    view.rerender(
+      <UserMenuView {...base} amendments={[{ id: 'amendment-only', title: 'Amendment only' }]} />
+    );
+    expect(screen.queryByTestId('user-menu-events-accordion')).toBeNull();
+
+    view.rerender(
+      <UserMenuView
+        {...base}
+        groups={[{ id: 'group-only', name: 'Group only', image_url: null }]}
+      />
+    );
+    expect(screen.queryByTestId('user-menu-events-accordion')).toBeNull();
+    expect(screen.queryByTestId('user-menu-amendments-accordion')).toBeNull();
   });
 });
 

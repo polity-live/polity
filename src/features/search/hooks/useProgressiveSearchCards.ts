@@ -68,9 +68,8 @@ export function useProgressiveSearchCards({
     }
 
     const idleWindow = window as IdleWindow;
-    const currentInteractiveIds =
-      state.contextKey === contextKey ? state.interactiveIds : new Set<string>();
-    const pendingIds = documentIds.filter(id => !currentInteractiveIds.has(id));
+    // Activation is only enabled after the context effect has reset this state.
+    const pendingIds = documentIds.filter(id => !state.interactiveIds.has(id));
     let cancelled = false;
     let idleHandle: number | null = null;
     let fallbackHandle: ReturnType<typeof setTimeout> | null = null;

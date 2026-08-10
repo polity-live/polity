@@ -5,7 +5,7 @@ function cssAttr(value: string) {
 }
 
 export function fieldLocator(page: Page, fieldKey: string) {
-  return page.locator(`[data-create-field="${cssAttr(fieldKey)}"]`);
+  return page.locator(`[data-create-field="${cssAttr(fieldKey)}"]:visible`);
 }
 
 export class FormActions {
@@ -27,9 +27,10 @@ export class FormActions {
       .locator(
         'textarea, input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"]):not([type="file"]), [contenteditable="true"]'
       )
-      .first();
+      .filter({ visible: true });
 
     if (options.optional && !(await control.count())) return false;
+    await expect(control).toHaveCount(1);
     await expect(control).toBeVisible();
 
     const contentEditable = await control.evaluate(
@@ -51,29 +52,28 @@ export class FormActions {
     const field = this.field(fieldKey);
     if (options.optional && !(await field.count())) return false;
 
-    const fieldOption = field.locator(`[data-create-option="${cssAttr(value)}"]`).first();
+    const fieldOption = field.locator(`[data-create-option="${cssAttr(value)}"]:visible`);
     if (await fieldOption.count()) {
       await fieldOption.click();
       return true;
     }
 
-    const trigger = field.locator('button[role="combobox"], [data-slot="select-trigger"]').first();
+    const trigger = field.locator(
+      'button[role="combobox"]:visible, [data-slot="select-trigger"]:visible'
+    );
     if (options.optional && !(await trigger.count())) return false;
 
     await expect(trigger).toBeVisible();
     await trigger.click();
 
-    const portalOption = this.page.locator(`[data-create-option="${cssAttr(value)}"]`).last();
+    const portalOption = this.page.locator(`[data-create-option="${cssAttr(value)}"]:visible`);
     await expect(portalOption).toBeVisible();
     await portalOption.click();
     return true;
   }
 
   async chooseGlobalOption(value: string) {
-    await this.page
-      .locator(`[data-create-option="${cssAttr(value)}"]`)
-      .first()
-      .click();
+    await this.page.locator(`[data-create-option="${cssAttr(value)}"]:visible`).click();
   }
 
   async setChecked(fieldKey: string, checked: boolean, options: { optional?: boolean } = {}) {
@@ -84,9 +84,10 @@ export class FormActions {
       .locator(
         'button[role="switch"], input[type="checkbox"], [role="checkbox"], button[aria-pressed]'
       )
-      .first();
+      .filter({ visible: true });
 
     if (options.optional && !(await control.count())) return false;
+    await expect(control).toHaveCount(1);
     await expect(control).toBeVisible();
 
     const role = await control.getAttribute('role');
@@ -102,7 +103,7 @@ export class FormActions {
   }
 
   async submit() {
-    const submit = this.page.locator('[data-create-action="submit"]').last();
+    const submit = this.page.locator('[data-create-action="submit"]:visible');
 
     for (let index = 0; index < 12; index += 1) {
       if ((await submit.count()) && (await submit.isVisible())) {
@@ -110,7 +111,7 @@ export class FormActions {
         return;
       }
 
-      const next = this.page.locator('[data-create-action="next-step"]').last();
+      const next = this.page.locator('[data-create-action="next-step"]:visible');
       if ((await next.count()) && (await next.isVisible())) {
         await next.click();
       } else {
@@ -122,16 +123,18 @@ export class FormActions {
   }
 
   async expectSubmitDisabled() {
-    await expect(this.page.locator('[data-create-action="submit"]').last()).toBeDisabled();
+    await expect(this.page.locator('[data-create-action="submit"]:visible')).toBeDisabled();
   }
 
   async waitForSubmissionReady() {
     await expect(this.page.locator('[data-slot="create-submission-overlay"]')).toBeVisible({
       timeout: 20_000,
     });
-    const navigateTarget = this.page.locator('[data-create-action="navigate-created-target"]');
+    const navigateTarget = this.page.locator(
+      '[data-create-action="navigate-created-target"]:visible'
+    );
     await expect(navigateTarget).toHaveCount(1, { timeout: 10_000 });
-    await expect(navigateTarget.first()).toBeEnabled({
+    await expect(navigateTarget).toBeEnabled({
       timeout: 20_000,
     });
   }

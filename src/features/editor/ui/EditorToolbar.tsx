@@ -89,6 +89,7 @@ export function EditorToolbar({
         {/* Share Button */}
         {showSharing && (
           <ShareButton
+            data-action-id="editor.toolbar.share.open"
             url={typeof window !== 'undefined' ? window.location.href : ''}
             title={shareTitle}
             description={shareDescription || ''}

@@ -238,6 +238,7 @@ export function RoleDetailsTable<TRole extends RoleRow>({
           <div className="flex flex-wrap justify-end gap-2">
             {onViewHistory ? (
               <TableActionIconButton
+                data-action-id="groups.roles.view.history"
                 label={viewHistoryLabel}
                 icon={<History className="h-4 w-4" />}
                 variant="outline"
@@ -247,6 +248,7 @@ export function RoleDetailsTable<TRole extends RoleRow>({
             {role.assignment_mode === 'assigned' ? (
               onAssignHolder ? (
                 <TableActionIconButton
+                  data-action-id="groups.roles.assign.holder"
                   label={assignLabel}
                   icon={<UserPlus className="h-4 w-4" />}
                   variant="outline"
@@ -261,6 +263,7 @@ export function RoleDetailsTable<TRole extends RoleRow>({
               ) : null
             ) : electionAction ? (
               <TableActionIconButton
+                data-action-id="groups.roles.create.election"
                 label={createElectionLabel}
                 icon={<Vote className="h-4 w-4" />}
                 variant="outline"
@@ -268,12 +271,14 @@ export function RoleDetailsTable<TRole extends RoleRow>({
               />
             ) : null}
             <TableActionIconButton
+              data-action-id="groups.roles.edit.definition"
               label={editLabel}
               icon={<PencilLine className="h-4 w-4" />}
               variant="outline"
               onClick={() => onEdit(role)}
             />
             <TableActionIconButton
+              data-action-id="groups.roles.delete.definition"
               label={deleteLabel}
               icon={<Trash2 className="h-4 w-4" />}
               destructive

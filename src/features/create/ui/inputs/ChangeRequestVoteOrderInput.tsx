@@ -48,6 +48,7 @@ export function ChangeRequestVoteOrderInput({
         )}
       >
         <FilterToggleGroupItem
+          data-action-id="create.change-request-order.select.text-position"
           value="text_position"
           size="sm"
           className="h-8 px-2"
@@ -62,6 +63,7 @@ export function ChangeRequestVoteOrderInput({
           <span className="font-mono text-xs font-semibold">A-Z</span>
         </FilterToggleGroupItem>
         <FilterToggleGroupItem
+          data-action-id="create.change-request-order.select.changed-character-count"
           value="changed_character_count"
           size="sm"
           className="h-8 px-2"
@@ -81,6 +83,7 @@ export function ChangeRequestVoteOrderInput({
           </span>
         </FilterToggleGroupItem>
         <FilterToggleGroupItem
+          data-action-id="create.change-request-order.select.cr-number"
           value="cr_number"
           size="sm"
           className="h-8 px-2"

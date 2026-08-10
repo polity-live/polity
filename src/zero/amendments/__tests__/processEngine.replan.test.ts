@@ -79,7 +79,7 @@ function eventRow(overrides: Record<string, unknown> = {}) {
 
 function createMinimalTx(runResults: unknown[]) {
   return {
-    run: vi.fn(async () => runResults.shift() ?? []),
+    run: vi.fn(async () => (runResults.length > 0 ? runResults.shift() : [])),
     mutate: {
       amendment_process_step_run: { update: vi.fn() },
       amendment_path_segment: { update: vi.fn() },
@@ -105,6 +105,129 @@ function createMinimalTx(runResults: unknown[]) {
 describe('replanProcessBranchEvents', () => {
   beforeEach(() => {
     fireNotificationMock.mockReset();
+  });
+
+  it.each([
+    {
+      name: 'missing branch',
+      runResults: [null],
+      error: 'Process branch not found',
+    },
+    {
+      name: 'terminal branch',
+      runResults: [baseBranch({ status: 'completed' })],
+      error: 'Completed process branches cannot be replanned',
+    },
+    {
+      name: 'missing process run',
+      runResults: [baseBranch(), null],
+      error: 'Process run not found',
+    },
+    {
+      name: 'missing amendment',
+      runResults: [baseBranch(), baseProcessRun(), null],
+      error: 'Amendment not found',
+    },
+  ])('rejects a $name prerequisite', async ({ runResults, error }) => {
+    const tx = createMinimalTx([...runResults]);
+
+    await expect(
+      replanProcessBranchEvents(tx as never, 'user-1', {
+        branch_id: 'branch-1',
+        event_updates: [{ step_run_id: 'step-1', event_id: null }],
+      })
+    ).rejects.toThrow(error);
+  });
+
+  it('returns early for a branch without steps or without event updates', async () => {
+    const noStepsTx = createMinimalTx([baseBranch(), baseProcessRun(), baseAmendment(), []]);
+    await expect(
+      replanProcessBranchEvents(noStepsTx as never, 'user-1', {
+        branch_id: 'branch-1',
+        event_updates: [{ step_run_id: 'step-1', event_id: null }],
+      })
+    ).resolves.toEqual({ handled: false });
+
+    const noUpdatesTx = createMinimalTx([
+      baseBranch(),
+      baseProcessRun(),
+      baseAmendment(),
+      [stepRun({ event_id: null, agenda_item_id: null, vote_id: null })],
+    ]);
+    await expect(
+      replanProcessBranchEvents(noUpdatesTx as never, 'user-1', {
+        branch_id: 'branch-1',
+        event_updates: [],
+      })
+    ).resolves.toEqual({
+      handled: true,
+      processRunId: 'run-1',
+      branchId: 'branch-1',
+      changedStepRunIds: [],
+    });
+  });
+
+  it.each([
+    {
+      name: 'step outside the branch',
+      update: { step_run_id: 'step-other', event_id: null },
+      event: undefined,
+      error: 'Step run does not belong to this branch',
+    },
+    {
+      name: 'unknown event',
+      update: { step_run_id: 'step-1', event_id: 'event-missing' },
+      event: null,
+      error: 'Selected event not found',
+    },
+    {
+      name: 'event for another group',
+      update: { step_run_id: 'step-1', event_id: 'event-wrong-group' },
+      event: eventRow({ id: 'event-wrong-group', group_id: 'group-other' }),
+      error: 'Selected event does not belong to the step group',
+    },
+    {
+      name: 'step without a group',
+      update: { step_run_id: 'step-1', event_id: 'event-no-group' },
+      event: eventRow({ id: 'event-no-group' }),
+      stepOverrides: { source_group_id: null, target_group_id: null },
+      error: 'Selected event does not belong to the step group',
+    },
+    {
+      name: 'event without a start date',
+      update: { step_run_id: 'step-1', event_id: 'event-no-start' },
+      event: eventRow({ id: 'event-no-start', start_date: null }),
+      error: 'Selected event is not eligible',
+    },
+    {
+      name: 'event in the past',
+      update: { step_run_id: 'step-1', event_id: 'event-past' },
+      event: eventRow({ id: 'event-past', start_date: Date.now() - 1_000 }),
+      error: 'Selected event is not eligible',
+    },
+    {
+      name: 'closed event',
+      update: { step_run_id: 'step-1', event_id: 'event-closed' },
+      event: eventRow({ id: 'event-closed', amendment_deadline: Date.now() - 1_000 }),
+      error: 'Selected event is not eligible',
+    },
+  ])('rejects an invalid $name selection', async ({ update, event, error, stepOverrides = {} }) => {
+    const step = stepRun({
+      event_id: null,
+      agenda_item_id: null,
+      vote_id: null,
+      ...stepOverrides,
+    });
+    const runResults: unknown[] = [baseBranch(), baseProcessRun(), baseAmendment(), [step]];
+    if (event !== undefined) runResults.push(event);
+    const tx = createMinimalTx(runResults);
+
+    await expect(
+      replanProcessBranchEvents(tx as never, 'user-1', {
+        branch_id: 'branch-1',
+        event_updates: [update],
+      })
+    ).rejects.toThrow(error);
   });
 
   it('blocks replanning decided steps', async () => {
@@ -232,6 +355,233 @@ describe('replanProcessBranchEvents', () => {
         group_id: 'group-target',
       })
     );
+  });
+
+  it.each([
+    { name: 'source group only', sourceGroupId: 'group-source', expectedGroupId: 'group-source' },
+    { name: 'no decision group', sourceGroupId: null, expectedGroupId: '' },
+  ])(
+    'creates a deterministic clear-event task for a step with $name',
+    async ({ sourceGroupId, expectedGroupId }) => {
+      const step = stepRun({
+        target_group_id: null,
+        source_group_id: sourceGroupId,
+        workflow_id: null,
+        workflow_step_id: null,
+        selection_mode: null,
+        merge_strategy: null,
+        agenda_item_id: null,
+        vote_id: null,
+      });
+      const pendingStep = { ...step, event_id: null, starts_at: null, status: 'pending_event' };
+      const branch = baseBranch();
+      const tx = createMinimalTx([
+        branch,
+        baseProcessRun({ selected_target_group_id: null }),
+        baseAmendment(),
+        [step],
+        eventRow(),
+        [],
+        ...(sourceGroupId ? [null] : []),
+        null,
+        [pendingStep],
+        [],
+        [branch],
+        [pendingStep],
+        [{ ...branch, status: 'pending_event' }],
+      ]);
+
+      await expect(
+        replanProcessBranchEvents(tx as never, 'user-1', {
+          branch_id: 'branch-1',
+          event_updates: [{ step_run_id: 'step-1', event_id: null }],
+        })
+      ).resolves.toMatchObject({ handled: true, branchStatus: 'pending_event' });
+
+      expect(tx.mutate.process_task.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          group_id: expectedGroupId,
+          metadata: expect.objectContaining({ groupName: null }),
+        })
+      );
+    }
+  );
+
+  it('schedules a previously empty step and closes only open schedule tasks', async () => {
+    const step = stepRun({
+      event_id: null,
+      agenda_item_id: null,
+      vote_id: null,
+      status: 'pending_event',
+      starts_at: null,
+    });
+    const scheduledStep = stepRun({
+      event_id: 'event-new',
+      agenda_item_id: 'agenda-new',
+      vote_id: 'vote-new',
+      status: 'scheduled',
+      starts_at: future,
+    });
+    const pathSegment = { id: 'segment-1' };
+    const branch = baseBranch();
+    const tx = createMinimalTx([
+      branch,
+      baseProcessRun(),
+      baseAmendment({ title: null, reason: null }),
+      [step],
+      eventRow({ id: 'event-new', end_date: null }),
+      [],
+      [pathSegment],
+      [
+        { id: 'task-completed', status: 'completed' },
+        { id: 'task-cancelled', status: 'cancelled' },
+        { id: 'task-open', status: 'open' },
+      ],
+      [scheduledStep],
+      { id: 'agenda-new', forwarding_status: 'previous_decision_outstanding' },
+      [pathSegment],
+      { id: 'vote-new', status: 'indicative' },
+      [branch],
+      [scheduledStep],
+      [{ ...branch, status: 'scheduled' }],
+    ]);
+
+    await expect(
+      replanProcessBranchEvents(tx as never, 'user-1', {
+        branch_id: 'branch-1',
+        event_updates: [{ step_run_id: 'step-1', event_id: 'event-new' }],
+      })
+    ).resolves.toMatchObject({
+      handled: true,
+      changedStepRunIds: ['step-1'],
+      branchStatus: 'scheduled',
+      runStatus: 'scheduled',
+    });
+
+    expect(tx.mutate.agenda_item.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Amendment: Amendment' })
+    );
+    expect(tx.mutate.process_task.update).toHaveBeenCalledTimes(1);
+    expect(tx.mutate.process_task.update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'task-open', status: 'completed' })
+    );
+  });
+
+  it('places a newly scheduled later decision behind the unresolved first step', async () => {
+    const firstStep = stepRun({
+      id: 'step-first',
+      target_group_id: 'group-first',
+      event_id: null,
+      agenda_item_id: null,
+      vote_id: null,
+      status: 'pending_event',
+      starts_at: null,
+      order_index: 0,
+    });
+    const laterStep = stepRun({
+      id: 'step-later',
+      target_group_id: 'group-target',
+      event_id: null,
+      agenda_item_id: null,
+      vote_id: null,
+      status: 'pending_event',
+      starts_at: null,
+      order_index: 1,
+    });
+    const scheduledLaterStep = {
+      ...laterStep,
+      event_id: 'event-new',
+      agenda_item_id: 'agenda-new',
+      vote_id: 'vote-new',
+      status: 'scheduled',
+      starts_at: future,
+      decision_status: 'previous_decision_outstanding',
+    };
+    const branch = baseBranch();
+    const tx = createMinimalTx([
+      branch,
+      baseProcessRun(),
+      baseAmendment(),
+      [firstStep, laterStep],
+      eventRow({ id: 'event-new' }),
+      [],
+      [],
+      [firstStep, scheduledLaterStep],
+      [],
+      { id: 'agenda-new', forwarding_status: 'previous_decision_outstanding' },
+      [],
+      [branch],
+      [firstStep, scheduledLaterStep],
+      [{ ...branch, status: 'pending_event' }],
+    ]);
+
+    await expect(
+      replanProcessBranchEvents(tx as never, 'user-1', {
+        branch_id: 'branch-1',
+        event_updates: [{ step_run_id: 'step-later', event_id: 'event-new' }],
+      })
+    ).resolves.toMatchObject({ handled: true, branchStatus: 'pending_event' });
+
+    expect(tx.mutate.agenda_item.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        order_index: 999,
+        forwarding_status: 'previous_decision_outstanding',
+      })
+    );
+  });
+
+  it('reevaluates a first unresolved merge after its event is replanned', async () => {
+    const mergeStep = stepRun({
+      step_kind: 'merge_vote',
+      workflow_step_id: 'workflow-merge',
+      event_id: 'event-old',
+      agenda_item_id: null,
+      vote_id: null,
+      status: 'scheduled',
+    });
+    const replannedMergeStep = {
+      ...mergeStep,
+      event_id: 'event-new',
+      starts_at: future + 2 * 60 * 60 * 1000,
+    };
+    const branch = baseBranch();
+    const tx = createMinimalTx([
+      branch,
+      baseProcessRun(),
+      baseAmendment(),
+      [mergeStep],
+      eventRow(),
+      eventRow({
+        id: 'event-new',
+        start_date: future + 2 * 60 * 60 * 1000,
+        end_date: future + 3 * 60 * 60 * 1000,
+      }),
+      [],
+      [],
+      [replannedMergeStep],
+      [],
+      replannedMergeStep,
+      [branch],
+      [replannedMergeStep],
+      [branch],
+      [replannedMergeStep],
+      [{ ...branch, status: 'scheduled' }],
+    ]);
+
+    await expect(
+      replanProcessBranchEvents(tx as never, 'user-1', {
+        branch_id: 'branch-1',
+        event_updates: [{ step_run_id: 'step-1', event_id: 'event-new' }],
+      })
+    ).resolves.toMatchObject({
+      handled: true,
+      changedStepRunIds: ['step-1'],
+      branchStatus: 'scheduled',
+      runStatus: 'scheduled',
+    });
+
+    expect(tx.mutate.agenda_item.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.vote.insert).not.toHaveBeenCalled();
   });
 
   it('reuses one future agenda and vote pair when branches later merge at one event', async () => {
@@ -414,5 +764,50 @@ describe('replanProcessBranchEvents', () => {
         purpose: 'closing',
       })
     );
+  });
+
+  it.each([
+    {
+      name: 'task does not exist',
+      runResults: [null],
+      expectedRunCalls: 1,
+    },
+    {
+      name: 'event does not exist',
+      runResults: [
+        {
+          id: 'task-1',
+          process_run_id: 'run-1',
+          support_confirmation_id: null,
+        },
+        null,
+      ],
+      expectedRunCalls: 2,
+    },
+    {
+      name: 'process run does not exist',
+      runResults: [
+        {
+          id: 'task-1',
+          process_run_id: 'run-1',
+          support_confirmation_id: null,
+        },
+        eventRow({ id: 'event-new' }),
+        null,
+      ],
+      expectedRunCalls: 3,
+    },
+  ])('does not complete a task when the $name', async ({ runResults, expectedRunCalls }) => {
+    const tx = createMinimalTx(runResults);
+
+    await expect(
+      completeProcessTaskWithEvent(tx as never, 'user-1', {
+        process_task_id: 'task-1',
+        event_id: 'event-new',
+      })
+    ).resolves.toEqual({ handled: false });
+
+    expect(tx.run).toHaveBeenCalledTimes(expectedRunCalls);
+    expect(tx.mutate.process_task.update).not.toHaveBeenCalled();
   });
 });

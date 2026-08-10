@@ -139,7 +139,6 @@ export function VoteCastDialog({
   const [submissionSteps, setSubmissionSteps] = useState<VoteSubmissionProgressStep[]>(
     createInitialProgressSteps
   );
-  const serverRejectedRef = useRef(false);
   const submissionInFlightRef = useRef(false);
 
   const isElection = Boolean(candidates?.length);
@@ -155,7 +154,6 @@ export function VoteCastDialog({
     setSubmissionStatus('idle');
     setSubmissionError(null);
     setSubmissionSteps(createInitialProgressSteps());
-    serverRejectedRef.current = false;
     submissionInFlightRef.current = false;
   }, []);
 
@@ -164,7 +162,6 @@ export function VoteCastDialog({
     setSubmissionStatus('idle');
     setSubmissionError(null);
     setSubmissionSteps(createInitialProgressSteps());
-    serverRejectedRef.current = false;
     submissionInFlightRef.current = false;
   }, []);
 
@@ -183,7 +180,6 @@ export function VoteCastDialog({
       setSubmissionStatus('idle');
       setSubmissionError(null);
       setSubmissionSteps(createInitialProgressSteps());
-      serverRejectedRef.current = false;
       submissionInFlightRef.current = false;
 
       if (tutorialAnchor === AMENDMENT_TUTORIAL_ANCHOR) {
@@ -236,7 +232,6 @@ export function VoteCastDialog({
 
   const handleServerRejection = useCallback(
     (error: Error) => {
-      serverRejectedRef.current = true;
       setSubmissionError(error);
       setSubmissionStatus('error');
       setSubmissionSteps(prev =>
@@ -256,7 +251,6 @@ export function VoteCastDialog({
             setSubmissionStatus('idle');
             setSubmissionError(null);
             setSubmissionSteps(createInitialProgressSteps());
-            serverRejectedRef.current = false;
             setStep(requirePassword ? 'password' : 'choice');
             onOpenChange(true);
           },
@@ -315,7 +309,6 @@ export function VoteCastDialog({
       setSubmissionError(null);
       setSubmissionSteps(createInitialProgressSteps());
       setSubmissionStatus('verifying');
-      serverRejectedRef.current = false;
       markStep('verify', 'active');
 
       try {
@@ -325,10 +318,8 @@ export function VoteCastDialog({
         markStep('verify', 'complete');
 
         await submitVote(submissionContext);
-        if (!serverRejectedRef.current) {
-          setSubmissionSteps(prev => prev.map(stepItem => ({ ...stepItem, status: 'complete' })));
-          setSubmissionStatus('success');
-        }
+        setSubmissionSteps(prev => prev.map(stepItem => ({ ...stepItem, status: 'complete' })));
+        setSubmissionStatus('success');
       } catch (error) {
         setSubmissionError(error);
         setSubmissionStatus('error');
@@ -360,7 +351,6 @@ export function VoteCastDialog({
     setSubmissionStatus('idle');
     setSubmissionError(null);
     setSubmissionSteps(createInitialProgressSteps());
-    serverRejectedRef.current = false;
     setStep(requirePassword ? 'password' : 'choice');
   };
 
@@ -369,7 +359,6 @@ export function VoteCastDialog({
       setSubmissionStatus('idle');
       setSubmissionError(null);
       setSubmissionSteps(createInitialProgressSteps());
-      serverRejectedRef.current = false;
       setStep('password');
       return;
     }

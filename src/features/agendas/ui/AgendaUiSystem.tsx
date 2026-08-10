@@ -193,12 +193,16 @@ export function AgendaContextTabs({
     >
       <TabsList className="h-auto w-full justify-start rounded-none border-x-0 border-t-0 bg-transparent p-0 shadow-none">
         <TabsTrigger
+          data-action-id="agendas.context.details.select"
+          data-action-kind="selection"
           value="details"
           className="rounded-none border-b-2 border-transparent px-4 py-2.5 data-[state=active]:border-current data-[state=active]:bg-transparent data-[state=active]:shadow-none"
         >
           {detailsLabel}
         </TabsTrigger>
         <TabsTrigger
+          data-action-id="agendas.context.speakers.select"
+          data-action-kind="selection"
           value="speakers"
           className="rounded-none border-b-2 border-transparent px-4 py-2.5 data-[state=active]:border-current data-[state=active]:bg-transparent data-[state=active]:shadow-none"
         >

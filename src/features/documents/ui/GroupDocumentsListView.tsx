@@ -25,6 +25,7 @@ interface VirtualGroupDocument {
 }
 
 function CreateAction({
+  'data-action-id': actionId,
   canManageDocuments,
   groupId,
   groupName,
@@ -33,18 +34,20 @@ function CreateAction({
 }: Pick<
   GroupDocumentsListModel,
   'canManageDocuments' | 'groupId' | 'groupName' | 'isCreating' | 'onCreateDocument'
->) {
+> & { 'data-action-id': string }) {
   if (!canManageDocuments) {
     return null;
   }
 
   return (
-    <CreateDocumentDialog
-      groupId={groupId}
-      groupName={groupName}
-      onCreateDocument={onCreateDocument}
-      isCreating={isCreating}
-    />
+    <div data-action-id={actionId}>
+      <CreateDocumentDialog
+        groupId={groupId}
+        groupName={groupName}
+        onCreateDocument={onCreateDocument}
+        isCreating={isCreating}
+      />
+    </div>
   );
 }
 
@@ -148,6 +151,7 @@ export function GroupDocumentsListView({
         {canManageDocuments ? (
           <div className="mb-6">
             <CreateAction
+              data-action-id="documents.create.open.empty-header"
               canManageDocuments={canManageDocuments}
               groupId={groupId}
               groupName={groupName}
@@ -167,6 +171,7 @@ export function GroupDocumentsListView({
                 : translateText('generated.inline.0061_no_documents_available_yet_02bcc505')}
             </p>
             <CreateAction
+              data-action-id="documents.create.open.empty-card"
               canManageDocuments={canManageDocuments}
               groupId={groupId}
               groupName={groupName}
@@ -201,6 +206,7 @@ export function GroupDocumentsListView({
         actions={
           canManageDocuments ? (
             <CreateAction
+              data-action-id="documents.create.open.toolbar"
               canManageDocuments={canManageDocuments}
               groupId={groupId}
               groupName={groupName}

@@ -30,6 +30,21 @@ describe('calendarEventVisibility', () => {
     ).toBe(true);
   });
 
+  it('uses hydrated participant relations and tolerates a missing participant list', () => {
+    expect(
+      isCalendarEventVisibleToUser(
+        {
+          ...baseEvent,
+          participants: [{ user_id: 'other', user: { id: 'user-1' } }],
+        },
+        'user-1'
+      )
+    ).toBe(true);
+    expect(isCalendarEventVisibleToUser({ ...baseEvent, participants: undefined }, 'user-1')).toBe(
+      false
+    );
+  });
+
   it('shows bookable meetings before the user has booked them', () => {
     expect(
       isCalendarEventVisibleToUser(

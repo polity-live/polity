@@ -1,8 +1,11 @@
 /* @vitest-environment jsdom */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createPointCityDesignObject } from '../../logic/cityDesignPlacement';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  createCorridorCityDesignObject,
+  createPointCityDesignObject,
+} from '../../logic/cityDesignPlacement';
 import { DEFAULT_CITY_DESIGN_OSM_LAYER_VISIBILITY } from '../../logic/cityDesignOsm';
 import { createEmptyCityDesignState } from '../../state/cityDesignReducer';
 import type { CityDesignStateV1 } from '../../types';
@@ -15,6 +18,10 @@ import {
 
 afterEach(() => {
   cleanup();
+});
+
+beforeEach(() => {
+  HTMLElement.prototype.scrollIntoView = vi.fn();
 });
 
 function renderCanvasView(
@@ -67,6 +74,8 @@ function createTestDesign(overrides: Partial<CityDesignStateV1> = {}): CityDesig
 describe('StreetSceneCanvasViewView', () => {
   it('shows semantic OSM mapping and imports an exact feature as a planned change', () => {
     const onImportOsmWay = vi.fn();
+    const onClose = vi.fn();
+    const onHideOsmWay = vi.fn();
     render(
       <CityDesignOsmPopover
         osmWay={{
@@ -84,15 +93,31 @@ describe('StreetSceneCanvasViewView', () => {
         }}
         readOnly={false}
         hideReadOnly={false}
-        onClose={vi.fn()}
-        onHideOsmWay={vi.fn()}
+        onClose={onClose}
+        onHideOsmWay={onHideOsmWay}
         onImportOsmWay={onImportOsmWay}
       />
     );
 
     expect(screen.getByText('Charging station · Exact mapping')).not.toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Import as planned change' }));
+    fireEvent.click(
+      document.querySelector<HTMLElement>(
+        '[data-action-id="amendments.city-osm-popover.import.as-planned"]'
+      ) as HTMLElement
+    );
+    fireEvent.click(
+      document.querySelector<HTMLElement>(
+        '[data-action-id="amendments.city-osm-popover.remove.from-map"]'
+      ) as HTMLElement
+    );
+    fireEvent.click(
+      document.querySelector<HTMLElement>(
+        '[data-action-id="amendments.city-osm-popover.close.details"]'
+      ) as HTMLElement
+    );
     expect(onImportOsmWay).toHaveBeenCalledWith('charger-1');
+    expect(onHideOsmWay).toHaveBeenCalledWith('charger-1');
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('does not show the OSM loading bar by default', () => {
@@ -151,6 +176,113 @@ describe('StreetSceneCanvasViewView', () => {
     expect(onDeleteObject).toHaveBeenCalledWith('tree-123456');
   });
 
+  it('dispatches selected-object popover actions through stable intents', () => {
+    const sidewalk = createCorridorCityDesignObject({
+      id: 'sidewalk-1',
+      type: 'sidewalk',
+      start: { x: 0, z: 0 },
+      end: { x: 12, z: 0 },
+      width: 2.4,
+      overrides: {
+        properties: {
+          accessibility: true,
+          deckElevationMeters: 0,
+          layerIndex: 0,
+          pathType: 'sidewalk',
+          structureKind: 'surface',
+          surface: 'paving_stones',
+        },
+      },
+    });
+    const selectedObject = {
+      ...sidewalk,
+      cost: { ...sidewalk.cost, customUnitCostMinor: 12_345 },
+      provenance: {
+        source: 'osm' as const,
+        featureId: 'osm-sidewalk-1',
+        confidence: 'exact' as const,
+      },
+    };
+    const onObjectSelect = vi.fn();
+    const onPropertyChange = vi.fn();
+    const onUnitCostChange = vi.fn();
+    const onOsmImportUndo = vi.fn();
+    const onObjectVisibilityChange = vi.fn();
+    const onDeleteObject = vi.fn();
+    renderCanvasView({
+      selectedObject,
+      onObjectSelect,
+      onPropertyChange,
+      onUnitCostChange,
+      onOsmImportUndo,
+      onObjectVisibilityChange,
+      onDeleteObject,
+    });
+
+    const checkbox = document.querySelector<HTMLInputElement>(
+      '[data-action-id="amendments.city-object-popover.toggle.object-property"]'
+    );
+    expect(checkbox).toBeTruthy();
+    fireEvent.click(checkbox as HTMLInputElement);
+    fireEvent.click(
+      document.querySelector<HTMLElement>(
+        '[data-action-id="amendments.city-object-popover.reset.unit-cost"]'
+      ) as HTMLElement
+    );
+    fireEvent.click(
+      document.querySelector<HTMLElement>(
+        '[data-action-id="amendments.city-object-popover.undo.osm-import"]'
+      ) as HTMLElement
+    );
+    fireEvent.click(
+      document.querySelector<HTMLElement>(
+        '[data-action-id="amendments.city-object-popover.toggle.visibility"]'
+      ) as HTMLElement
+    );
+    fireEvent.click(
+      document.querySelector<HTMLElement>(
+        '[data-action-id="amendments.city-object-popover.delete.object"]'
+      ) as HTMLElement
+    );
+    fireEvent.click(
+      document.querySelector<HTMLElement>(
+        '[data-action-id="amendments.city-object-popover.close.details"]'
+      ) as HTMLElement
+    );
+
+    expect(onPropertyChange).toHaveBeenCalledWith('sidewalk-1', 'accessibility', false);
+    expect(onUnitCostChange).toHaveBeenCalledWith('sidewalk-1', null);
+    expect(onOsmImportUndo).toHaveBeenCalledWith('osm-sidewalk-1');
+    expect(onObjectVisibilityChange).toHaveBeenCalledWith('sidewalk-1', false);
+    expect(onDeleteObject).toHaveBeenCalledWith('sidewalk-1');
+    expect(onObjectSelect).toHaveBeenCalledWith(null);
+  });
+
+  it('dispatches selected-object property choices through stable popover actions', async () => {
+    const building = createCorridorCityDesignObject({
+      id: 'building-popover-1',
+      type: 'building',
+      start: { x: 0, z: 0 },
+      end: { x: 8, z: 0 },
+      width: 8,
+    });
+    const onPropertyChange = vi.fn();
+    renderCanvasView({ selectedObject: building, onPropertyChange });
+
+    const trigger = document.querySelector<HTMLElement>(
+      '[data-action-id="amendments.city-object-popover.select.object-property"]'
+    );
+    expect(trigger).toBeTruthy();
+    fireEvent.keyDown(trigger as HTMLElement, { key: 'Enter' });
+    const option = await screen.findByRole('option', { name: 'Brick' });
+    expect(option.getAttribute('data-action-id')).toBe(
+      'amendments.city-object-popover.select.object-property-option'
+    );
+    fireEvent.click(option);
+
+    expect(onPropertyChange).toHaveBeenCalled();
+  });
+
   it('shows path placement controls while drawing curves', () => {
     const onFinishPathPlacement = vi.fn();
     const onCancelPlacement = vi.fn();
@@ -166,6 +298,13 @@ describe('StreetSceneCanvasViewView', () => {
     fireEvent.click(screen.getByRole('button', { name: /done/i }));
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
+    expect(
+      document.querySelector('[data-action-id="amendments.city-canvas.finish.path-placement"]')
+    ).toBeTruthy();
+    expect(
+      document.querySelector('[data-action-id="amendments.city-canvas.cancel.path-placement"]')
+    ).toBeTruthy();
+
     expect(onFinishPathPlacement).toHaveBeenCalled();
     expect(onCancelPlacement).toHaveBeenCalled();
   });
@@ -173,6 +312,9 @@ describe('StreetSceneCanvasViewView', () => {
   it('renders an accordion legend with placement presets', () => {
     const { container } = renderCanvasView({ selectedObject: null });
     const legendButton = screen.getByRole('button', { name: /legend/i });
+    expect(legendButton.getAttribute('data-action-id')).toBe(
+      'amendments.city-canvas.toggle.legend'
+    );
     const legendRoot = legendButton.parentElement;
 
     expect(legendButton).not.toBeNull();
@@ -336,6 +478,9 @@ describe('StreetSceneCanvasViewView', () => {
     });
 
     const marker = screen.getByTestId('city-design-cr-marker-cr-add-tree');
+    expect(marker.getAttribute('data-action-id')).toBe(
+      'amendments.city-canvas.select.change-request-marker'
+    );
     expect(marker.getAttribute('data-change-request-tone')).toBe('add');
     expect(marker.textContent).toContain('Add canopy tree');
     expect(marker.textContent).toContain('CR-');

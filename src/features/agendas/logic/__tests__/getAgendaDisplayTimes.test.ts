@@ -37,6 +37,19 @@ describe('getAgendaDisplayTimes', () => {
     });
   });
 
+  it('uses legacy start and end timestamps when activation fields are absent', () => {
+    expect(
+      getAgendaDisplayTimes({
+        status: 'completed',
+        start_time: 1_717_066_000_000,
+        end_time: 1_717_066_600_000,
+      })
+    ).toMatchObject({
+      actualStartTime: 1_717_066_000_000,
+      actualEndTime: 1_717_066_600_000,
+    });
+  });
+
   it('uses the activation timestamp and duration for active agenda items', () => {
     expect(
       getAgendaDisplayTimes({
@@ -87,5 +100,9 @@ describe('getAgendaDisplayTimes', () => {
       displayStartTime: 1_717_066_000_000,
       displayEndTime: 1_717_066_900_000,
     });
+  });
+
+  it('keeps the expected end unset when an ongoing status has no start timestamp', () => {
+    expect(getAgendaDisplayTimes({ status: 'active' }).expectedEndTime).toBeUndefined();
   });
 });

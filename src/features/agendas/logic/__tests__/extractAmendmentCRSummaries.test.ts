@@ -3,6 +3,19 @@ import { describe, expect, it } from 'vitest';
 import { extractAmendmentCRSummaries } from '../extractAmendmentCRSummaries';
 
 describe('extractAmendmentCRSummaries', () => {
+  it('returns undecorated summaries when no branch display sources are supplied', () => {
+    expect(extractAmendmentCRSummaries([], [])).toEqual([]);
+  });
+
+  it('keeps confirmation unset for a discussion without a persisted change request', () => {
+    const summaries = extractAmendmentCRSummaries(
+      [{ id: 'discussion-only', crId: 'CR-1', title: 'Discussion only' }],
+      []
+    );
+
+    expect(summaries[0]?.confirmationStatus).toBeNull();
+  });
+
   it('merges saved vote state and duplicate snapshot diff into one summary', () => {
     const summaries = extractAmendmentCRSummaries(
       [

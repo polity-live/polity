@@ -28,7 +28,7 @@ interface UseBlogDetailControllerOptions {
 }
 
 function mapBlogComments(commentsRows: NonNullable<ReturnType<typeof useBlogState>['comments']>) {
-  return (commentsRows || []).map<CommentData>(comment => ({
+  return commentsRows.map<CommentData>(comment => ({
     id: comment.id,
     text: comment.content ?? '',
     createdAt: comment.created_at ?? 0,

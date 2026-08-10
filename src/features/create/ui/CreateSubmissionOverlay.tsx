@@ -69,12 +69,25 @@ function targetHref(target: CreateSubmitTarget | null | undefined) {
   return target.kind === 'route' ? routeHref(target) : target.href;
 }
 
-function renderTargetLink(target: CreateSubmitTarget, href: string, content: ReactNode) {
+function renderTargetLink(
+  target: CreateSubmitTarget,
+  href: string,
+  content: ReactNode,
+  actionId: string
+) {
   if (target.kind === 'route') {
-    return <SmartLink href={href}>{content}</SmartLink>;
+    return (
+      <SmartLink href={href} data-action-id={actionId}>
+        {content}
+      </SmartLink>
+    );
   }
 
-  return <a href={href}>{content}</a>;
+  return (
+    <a href={href} data-action-id={actionId}>
+      {content}
+    </a>
+  );
 }
 
 export function CreateSubmissionOverlay({
@@ -271,6 +284,7 @@ export function CreateSubmissionOverlay({
 
               {status === 'error' && target ? (
                 <Button
+                  data-action-id="create.submission.target.open-error"
                   type="button"
                   size="lg"
                   asChild={Boolean(href)}
@@ -282,12 +296,18 @@ export function CreateSubmissionOverlay({
                   className="mx-auto flex w-full max-w-xs"
                 >
                   {href && target
-                    ? renderTargetLink(target, href, targetButtonContent)
+                    ? renderTargetLink(
+                        target,
+                        href,
+                        targetButtonContent,
+                        'create.submission.target.open-error'
+                      )
                     : targetButtonContent}
                 </Button>
               ) : status === 'error' ? (
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Button
+                    data-action-id="create.submission.back"
                     type="button"
                     variant="outline"
                     onClick={onBack}
@@ -295,12 +315,18 @@ export function CreateSubmissionOverlay({
                   >
                     {t('pages.create.progress.submission.overlay.backToForm')}
                   </Button>
-                  <Button type="button" onClick={onRetry} data-create-action="retry-submit">
+                  <Button
+                    data-action-id="create.submission.retry"
+                    type="button"
+                    onClick={onRetry}
+                    data-create-action="retry-submit"
+                  >
                     {t('pages.create.progress.submission.overlay.retry')}
                   </Button>
                 </div>
               ) : (
                 <Button
+                  data-action-id="create.submission.target.open-ready"
                   type="button"
                   size="lg"
                   disabled={!canNavigateToTarget}
@@ -315,7 +341,12 @@ export function CreateSubmissionOverlay({
                   successLabel={targetLabel}
                 >
                   {canNavigateToTarget && href && target
-                    ? renderTargetLink(target, href, targetButtonContent)
+                    ? renderTargetLink(
+                        target,
+                        href,
+                        targetButtonContent,
+                        'create.submission.target.open-ready'
+                      )
                     : targetButtonContent}
                 </Button>
               )}

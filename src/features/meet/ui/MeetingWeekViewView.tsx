@@ -1,4 +1,5 @@
 import { featureThemeClassName } from '@/features/shared/theme';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { cn } from '@/features/shared/utils/utils';
 import { MapPin, Video } from 'lucide-react';
@@ -111,6 +112,7 @@ export function MeetingWeekViewView({
 
               return (
                 <WeekViewDayHeaderButton
+                  data-action-id="meet.week.day-header.select"
                   key={day.toISOString()}
                   date={day}
                   locale={locale}
@@ -158,8 +160,17 @@ export function MeetingWeekViewView({
                     isSelected && 'bg-accent/10'
                   )}
                   style={{ height: `${MEETING_WEEK_TOTAL_DAY_HEIGHT}px` }}
-                  onClick={() => onDateSelect(day)}
                 >
+                  <button
+                    type="button"
+                    data-action-id="meet.week.day-column.select"
+                    aria-label={translateText('common.accessibility.selectNamed', {
+                      name: day.toLocaleDateString(locale, { dateStyle: 'full' }),
+                    })}
+                    aria-pressed={isSelected}
+                    className="absolute inset-0 z-0 h-full w-full cursor-pointer"
+                    onClick={() => onDateSelect(day)}
+                  />
                   {hourMarkers.map(hour => (
                     <div
                       key={`meeting-hour-line-${day.toISOString()}-${hour}`}
@@ -183,6 +194,7 @@ export function MeetingWeekViewView({
 
                     return (
                       <WeekViewBlockButton
+                        data-action-id="meet.week.instance.select"
                         key={instance.id}
                         tone="card"
                         className={cn(getCompactCardClassName(instance), isPast && 'opacity-50')}

@@ -33,6 +33,10 @@ describe('listViewHelpers', () => {
     ).toBe('2026-05-14');
   });
 
+  it('has no list anchor when no event dates exist', () => {
+    expect(getListAnchorDateKey([], new Date('2026-05-14T12:00:00'))).toBeNull();
+  });
+
   it('anchors the list to the next future event date when today has no events', () => {
     expect(
       getListAnchorDateKey(

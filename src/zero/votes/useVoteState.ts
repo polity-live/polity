@@ -31,7 +31,7 @@ export function useVoteState(
     voteId ? queries.votes.byId({ id: voteId }) : undefined
   );
 
-  const resolvedVoteId = voteId ?? voteById?.id ?? votesByAgendaItem?.[0]?.id;
+  const resolvedVoteId = voteId ?? votesByAgendaItem?.[0]?.id;
 
   // ── Choices for the vote ──────────────────────────────────────────
   const [choices, choicesResult] = useQuery(

@@ -78,13 +78,23 @@ export function SupportPageView({
                   </ul>
                   {area.external ? (
                     <Button asChild variant="outline" className="w-full">
-                      <a href={area.href} target="_blank" rel="noopener noreferrer">
+                      <a
+                        data-action-id="public-pages.support-area.external.open"
+                        href={area.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         {area.cta}
                       </a>
                     </Button>
                   ) : (
                     <Button asChild variant="outline" className="w-full">
-                      <SmartLink href={area.href}>{area.cta}</SmartLink>
+                      <SmartLink
+                        data-action-id="public-pages.support-area.internal.open"
+                        href={area.href}
+                      >
+                        {area.cta}
+                      </SmartLink>
                     </Button>
                   )}
                 </PanelContent>
@@ -99,7 +109,9 @@ export function SupportPageView({
           <h2 className="text-2xl font-bold">{communityTitle}</h2>
           <p className="text-muted-foreground">{communityDescription}</p>
           <Button asChild size="lg">
-            <SmartLink href="/auth">{getStartedLabel}</SmartLink>
+            <SmartLink data-action-id="public-pages.support.auth.open" href="/auth">
+              {getStartedLabel}
+            </SmartLink>
           </Button>
         </div>
       </Section>

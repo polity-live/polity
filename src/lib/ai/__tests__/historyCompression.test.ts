@@ -1,40 +1,70 @@
 import { describe, expect, it } from 'vitest';
+
 import { compressConversationHistory, estimateAiTextTokens } from '../historyCompression';
 
-describe('historyCompression', () => {
-  it('leaves short conversations untouched', () => {
-    const result = compressConversationHistory({
-      systemPrompt: 'You are Aria & Kai.',
-      contextWindow: 200000,
-      messages: [
-        { role: 'user', content: 'Hello' },
-        { role: 'assistant', content: 'Hi there' },
-      ],
+describe('AI history compression', () => {
+  it('estimates normalized text and skips compression without a usable window', () => {
+    expect(estimateAiTextTokens('   ')).toBe(0);
+    expect(estimateAiTextTokens('abcd   efgh')).toBe(3);
+    const messages = [{ role: 'user' as const, content: 'hello' }];
+    expect(
+      compressConversationHistory({ systemPrompt: '', messages, contextWindow: null })
+    ).toEqual({
+      messages,
+      estimatedTokens: 10,
+      wasCompressed: false,
+      compressedMessageCount: 0,
     });
-
-    expect(result.wasCompressed).toBe(false);
-    expect(result.messages).toHaveLength(2);
+    expect(
+      compressConversationHistory({ systemPrompt: '', messages, contextWindow: 10_000 })
+        .wasCompressed
+    ).toBe(false);
   });
 
-  it('compresses earlier turns when the context window is nearly full', () => {
-    const longTurn = 'A'.repeat(2200);
-    const messages = Array.from({ length: 16 }, (_, index) => ({
-      role: index % 2 === 0 ? ('user' as const) : ('assistant' as const),
-      content: `${index + 1}: ${longTurn}`,
+  it('skips histories below the compression trigger', () => {
+    const messages = Array.from({ length: 6 }, (_, index) => ({
+      role: index % 2 ? ('assistant' as const) : ('user' as const),
+      content: 'short',
     }));
+    expect(
+      compressConversationHistory({ systemPrompt: 'system', messages, contextWindow: 10_000 })
+        .wasCompressed
+    ).toBe(false);
+  });
 
-    const uncompressedTokens = estimateAiTextTokens(
-      messages.map(message => message.content).join(' ')
-    );
+  it('returns an early candidate that fits while compacting old content', () => {
+    const messages = [
+      { role: 'user' as const, content: '' },
+      { role: 'assistant' as const, content: 'x'.repeat(5_000) },
+      ...Array.from({ length: 11 }, (_, index) => ({
+        role: index % 2 ? ('assistant' as const) : ('user' as const),
+        content: index === 0 ? 'short' : index < 7 ? 'y'.repeat(2_000) : 'recent',
+      })),
+    ];
     const result = compressConversationHistory({
-      systemPrompt: 'You are Aria & Kai.',
-      contextWindow: Math.max(5000, Math.floor(uncompressedTokens * 1.05)),
+      systemPrompt: 'system',
       messages,
+      contextWindow: 5_000,
     });
-
     expect(result.wasCompressed).toBe(true);
     expect(result.compressedMessageCount).toBeGreaterThan(0);
-    expect(result.messages[0]?.content).toContain('Earlier conversation history was compressed');
-    expect(result.messages.at(-1)?.content).toContain(longTurn);
+    expect(result.messages[0].content).toContain('[empty]');
+    expect(result.messages[0].content).toContain('Assistant:');
+    expect(result.messages[0].content).toContain('…');
+  });
+
+  it('returns the smallest candidate when no candidate meets the target', () => {
+    const messages = Array.from({ length: 20 }, (_, index) => ({
+      role: index % 2 ? ('assistant' as const) : ('user' as const),
+      content: 'z'.repeat(3_000),
+    }));
+    const result = compressConversationHistory({
+      systemPrompt: 's'.repeat(5_000),
+      messages,
+      contextWindow: 5_000,
+    });
+    expect(result.wasCompressed).toBe(true);
+    expect(result.estimatedTokens).toBeGreaterThan(1_024);
+    expect(result.messages.length).toBeGreaterThan(1);
   });
 });

@@ -51,18 +51,21 @@ export function NavigationDemoView({
               <Button
                 variant={screenType === 'mobile' ? 'default' : 'outline'}
                 onClick={() => handleScreenTypeChange('mobile')}
+                data-action-id="navigation.demo.screen.mobile"
               >
                 {t('navigationDemo.screenType.mobile')}
               </Button>
               <Button
                 variant={screenType === 'desktop' ? 'default' : 'outline'}
                 onClick={() => handleScreenTypeChange('desktop')}
+                data-action-id="navigation.demo.screen.desktop"
               >
                 {t('navigationDemo.screenType.desktop')}
               </Button>
               <Button
                 variant={screenType === 'automatic' ? 'default' : 'outline'}
                 onClick={() => handleScreenTypeChange('automatic')}
+                data-action-id="navigation.demo.screen.automatic"
               >
                 {t('navigationDemo.screenType.automatic')}
               </Button>
@@ -77,16 +80,13 @@ export function NavigationDemoView({
           <div className="border-t pt-4">
             <h3 className="mb-3 text-lg font-medium">{t('navigationDemo.commandPalette.title')}</h3>
             <div>
-              <Button
-                variant="outline"
-                className="text-muted-foreground w-full justify-start text-sm"
-              >
+              <div className="text-muted-foreground flex w-full justify-start rounded-md border px-4 py-2 text-sm">
                 <Search className="mr-2 h-4 w-4" />
                 <span>{t('navigationDemo.commandPalette.placeholder')}</span>
                 <kbd className="bg-muted text-muted-foreground pointer-events-none ml-auto inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
                   <span className="text-xs">⌘</span>K
                 </kbd>
-              </Button>
+              </div>
             </div>
           </div>
           <div className="border-t pt-4">
@@ -106,18 +106,21 @@ export function NavigationDemoView({
               <Button
                 variant={priority === 'primary' ? 'default' : 'outline'}
                 onClick={() => handlePriorityChange('primary')}
+                data-action-id="navigation.demo.priority.primary"
               >
                 {t('navigationDemo.priority.primary')}
               </Button>
               <Button
                 variant={priority === 'secondary' ? 'default' : 'outline'}
                 onClick={() => handlePriorityChange('secondary')}
+                data-action-id="navigation.demo.priority.secondary"
               >
                 {t('navigationDemo.priority.secondary')}
               </Button>
               <Button
                 variant={priority === 'combined' ? 'default' : 'outline'}
                 onClick={() => handlePriorityChange('combined')}
+                data-action-id="navigation.demo.priority.combined"
               >
                 {t('navigationDemo.priority.combined')}
               </Button>

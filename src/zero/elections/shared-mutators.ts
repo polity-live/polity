@@ -51,7 +51,6 @@ async function assertElectionManagerForEvent(
   ctx: ElectionCtx,
   eventId: string | null | undefined
 ) {
-  if (tx.location === 'client') return;
   if (!eventId) throw new PermissionError('manage_votes', 'events', 'event required');
 
   try {
@@ -85,7 +84,6 @@ async function assertElectionEventRight(
   electionId: string,
   action: 'active_voting' | 'passive_voting'
 ) {
-  if (tx.location === 'client') return;
   const { eventId } = await loadElectionEventId(tx, electionId);
   if (!eventId) throw new PermissionError(action, 'events', 'event required');
   await can(tx, ctx, { action, resource: 'events', eventId });
@@ -160,10 +158,7 @@ async function ensureElectorRow(
     );
     if (existingForUser) return existingForUser.id;
 
-    const { eventId } = await loadElectionEventId(tx, elector.election_id);
-    if (eventId) {
-      throw new Error('User is not part of the frozen electorate snapshot for this election.');
-    }
+    throw new Error('User is not part of the frozen electorate snapshot for this election.');
   }
 
   const now = Date.now();
@@ -215,7 +210,6 @@ async function assertSecretElectionSelectionOwner(
   electionId: string,
   phase: 'indicative' | 'final'
 ) {
-  if (tx.location === 'client') return;
   const { eventId } = await loadElectionEventId(tx, electionId);
   if (!eventId) {
     throw new PermissionError('active_voting', 'events', 'event required');
@@ -245,7 +239,11 @@ async function assertSecretElectionSelectionOwner(
           );
         })();
 
-  if (!participation) throw new Error('Election participation not found');
+  if (participation) {
+    return;
+  } else {
+    throw new Error('Election participation not found');
+  }
 }
 
 async function assertSecretElectionSelectionOwnerOrManager(
@@ -328,8 +326,8 @@ export const electionSharedMutators = {
       role_id: args.role_id ?? position_id ?? undefined,
       ...(electionMode !== undefined ? { election_mode: electionMode } : {}),
       ...(seatCount !== undefined ? { seat_count: seatCount } : {}),
-      ...(electionMode !== undefined || seatCount !== undefined || args.max_votes !== undefined
-        ? { max_votes: deriveElectionMaxVotes(electionMode ?? 'single', seatCount) }
+      ...(electionMode !== undefined
+        ? { max_votes: deriveElectionMaxVotes(electionMode, seatCount) }
         : {}),
       updated_at: Date.now(),
     });
@@ -449,7 +447,7 @@ export const electionSharedMutators = {
       if (!participation.elector_id && !elector) {
         throw new Error('Elector is required for the legacy indicative mutator.');
       }
-      let resolvedParticipation = participation;
+      let electorId = participation.elector_id;
       if (elector) {
         if (
           elector.id !== participation.elector_id ||
@@ -457,14 +455,12 @@ export const electionSharedMutators = {
         ) {
           throw new Error('Elector does not match indicative election participation.');
         }
-        resolvedParticipation = {
-          ...participation,
-          elector_id: await ensureElectorRow(tx, ctx, elector),
-        };
+        electorId = await ensureElectorRow(tx, ctx, elector);
       }
-      if (!resolvedParticipation.elector_id) {
+      if (!electorId) {
         throw new Error('Elector is required for the legacy indicative mutator.');
       }
+      const resolvedParticipation = { ...participation, elector_id: electorId };
       await assertElectorOwner(
         tx,
         ctx,
@@ -637,26 +633,26 @@ export const electionSharedMutators = {
               .one()
           );
 
-    if (existingTally) {
+    if (!existingTally) {
+      await tx.mutate.election_offline_tally.insert({
+        id: tallyArgs.id ?? crypto.randomUUID(),
+        election_id: tallyArgs.election_id,
+        phase: tallyArgs.phase,
+        candidate_id: tallyArgs.candidate_id,
+        count: tallyArgs.count,
+        updated_by_id: ctx.userID,
+        created_at: now,
+        updated_at: now,
+      });
+      return;
+    } else {
       await tx.mutate.election_offline_tally.update({
         id: existingTally.id,
         count: tallyArgs.count,
         updated_by_id: ctx.userID,
         updated_at: now,
       });
-      return;
     }
-
-    await tx.mutate.election_offline_tally.insert({
-      id: tallyArgs.id ?? crypto.randomUUID(),
-      election_id: tallyArgs.election_id,
-      phase: tallyArgs.phase,
-      candidate_id: tallyArgs.candidate_id,
-      count: tallyArgs.count,
-      updated_by_id: ctx.userID,
-      created_at: now,
-      updated_at: now,
-    });
   }),
 
   deleteOfflineTally: defineMutator(deleteElectionOfflineTallySchema, async ({ tx, ctx, args }) => {

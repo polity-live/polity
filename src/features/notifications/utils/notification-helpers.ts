@@ -1407,7 +1407,7 @@ async function findRecentRelationshipNotification(
     .order('created_at', { ascending: false })
     .limit(1);
 
-  query = applyNullableFilter(query, 'action_url', config.actionUrl ?? null);
+  query = applyNullableFilter(query, 'action_url', config.actionUrl);
   query = applyNullableFilter(query, 'related_group_id', config.relatedGroupId ?? null);
 
   if (config.recipientUserId) {
@@ -1493,6 +1493,8 @@ async function notifyRelationshipGroupAudience(
   config: NotificationConfig & {
     recipientEntityType: 'group';
     recipientEntityId: string;
+    onBehalfOfEntityType: 'group';
+    onBehalfOfEntityId: string;
   },
   options?: { dedupeWindowMs?: number }
 ) {
@@ -1511,8 +1513,8 @@ async function notifyRelationshipGroupAudience(
           recipientUserId,
           recipientEntityType: undefined,
           recipientEntityId: undefined,
-          onBehalfOfEntityType: config.onBehalfOfEntityType ?? 'group',
-          onBehalfOfEntityId: config.onBehalfOfEntityId ?? config.recipientEntityId,
+          onBehalfOfEntityType: config.onBehalfOfEntityType,
+          onBehalfOfEntityId: config.onBehalfOfEntityId,
         },
         options
       )

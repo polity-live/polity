@@ -153,6 +153,7 @@ export function RolesPermissionsTableView({
                                 >
                                   <div className="flex justify-center">
                                     <MatrixCheckbox
+                                      data-action-id="groups.roles.permissions.toggle"
                                       checked={hasRight}
                                       disabled={Boolean(disabledReason)}
                                       onCheckedChange={() =>

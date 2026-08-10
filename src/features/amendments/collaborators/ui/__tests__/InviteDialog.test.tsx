@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { InviteDialog } from '@/features/amendments/collaborators/ui/InviteDialog';
 
 vi.mock('@tanstack/react-router', () => ({
@@ -46,16 +46,45 @@ describe('InviteDialog', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Invite Collaborator/i }));
+    fireEvent.click(
+      document.querySelector('[data-action-id="amendments.collaborators.open.invite-dialog"]')!
+    );
     fireEvent.focus(screen.getByPlaceholderText('Search by name, handle, or email...'));
     fireEvent.click(screen.getByRole('button', { name: /Alice Example/i }));
 
     expect(screen.getByText('@alice')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /Invite\s*\(1\)/i }));
+    fireEvent.click(
+      document.querySelector('[data-action-id="amendments.collaborators.submit.invite"]')!
+    );
 
     await waitFor(() =>
       expect(onInviteUsers).toHaveBeenCalledWith(['user-1'], 'amendment-1', 'role-1')
     );
   });
+
+  it('cancels collaborator invitations through a stable dialog action', async () => {
+    render(
+      <InviteDialog
+        amendmentId="amendment-1"
+        existingCollaborators={[]}
+        roles={[{ id: 'role-1', name: 'Collaborator' } as never]}
+        onInviteUsers={vi.fn()}
+      />
+    );
+    fireEvent.click(
+      document.querySelector('[data-action-id="amendments.collaborators.open.invite-dialog"]')!
+    );
+    const cancel = await waitFor(() => {
+      const action = document.querySelector(
+        '[data-action-id="amendments.collaborators.cancel.invite"]'
+      );
+      expect(action).toBeTruthy();
+      return action;
+    });
+    fireEvent.click(cancel!);
+    expect(screen.queryByText(/Invite Collaborators/i)).toBeNull();
+  });
 });
+
+afterEach(cleanup);

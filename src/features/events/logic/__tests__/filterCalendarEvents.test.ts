@@ -53,6 +53,13 @@ describe('filterCalendarEvents', () => {
         dateFilter: '2026-05-16',
       })
     ).toEqual([events[1], events[2]]);
+
+    expect(
+      filterCalendarEvents(events, {
+        searchQuery: '',
+        dateFilter: 'not-a-date',
+      })
+    ).toEqual([]);
   });
 
   it('filters by query across title, group name, hashtag, and location', () => {

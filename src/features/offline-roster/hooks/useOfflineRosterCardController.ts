@@ -24,11 +24,7 @@ function buildCorrelationId(flow: string) {
   return `${flow}:${crypto.randomUUID()}`;
 }
 
-function getUserDisplayName(user?: OfflineRosterConnectedUser | null) {
-  if (!user) {
-    return '';
-  }
-
+function getUserDisplayName(user: OfflineRosterConnectedUser) {
   return (
     `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.handle || user.email || 'User'
   );

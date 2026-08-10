@@ -18,7 +18,7 @@ export function AriaKaiStep({ onNext }: AriaKaiStepProps) {
     <OnboardingStepShell
       actions={
         <div className="flex flex-col sm:flex-row sm:justify-end">
-          <Button onClick={onNext} size="lg">
+          <Button data-action-id="assistant.onboarding.continue" onClick={onNext} size="lg">
             {t('onboarding.ariaKaiStep.continue')}
           </Button>
         </div>

@@ -79,4 +79,87 @@ describe('effective hierarchy memberships', () => {
     expect(rows.some(row => row.id.startsWith('effective:'))).toBe(false);
     expect(countDistinctMembershipUsers(rows)).toBe(1);
   });
+
+  it('returns no rows for a target without an identity', () => {
+    expect(
+      selectMaterializedHierarchicalMemberships({
+        targetGroup: { id: '', name: 'Missing' },
+        relationships: [],
+        memberships: [membership('active', { group_id: 'H1' })],
+      })
+    ).toEqual([]);
+  });
+
+  it('accepts every active status spelling and active board membership', () => {
+    const rows = selectMaterializedHierarchicalMemberships({
+      targetGroup: h1,
+      relationships: [],
+      memberships: [
+        membership('active', { group_id: 'H1', status: 'ACTIVE' }),
+        membership('member', { group_id: 'H1', status: 'member' }),
+        membership('admin', { group_id: 'H1', status: 'admin' }),
+        {
+          ...membership('board', { group_id: 'H1', status: 'requested' }),
+          role: { id: 'board-role', name: 'Board Member' },
+        },
+        {
+          ...membership('not-board', { group_id: 'H1', status: 'requested' }),
+          role: { id: 'other-role', name: 'Other' },
+        },
+        {
+          ...membership('missing-status', { group_id: 'H1' }),
+          status: null,
+          role: null,
+        },
+      ],
+    });
+
+    expect(rows.map(row => row.id)).toEqual(['active', 'member', 'admin', 'board']);
+  });
+
+  it('prefers materialized derived rows and then direct or legacy rows per user', () => {
+    const rows = selectMaterializedHierarchicalMemberships({
+      targetGroup: h1,
+      relationships: [],
+      memberships: [
+        membership('other-source', {
+          user_id: 'u1',
+          group_id: 'H1',
+          source: 'imported',
+        }),
+        membership('direct', { user_id: 'u1', group_id: 'H1', source: 'direct' }),
+        membership('derived', { user_id: 'u1', group_id: 'H1', source: 'derived' }),
+        {
+          ...membership('legacy', { user_id: 'u2', group_id: 'H1' }),
+          source: null,
+        },
+        membership('imported', { user_id: 'u3', group_id: 'H1', source: 'imported' }),
+      ],
+    });
+
+    expect(rows.map(row => row.id)).toEqual(['derived', 'legacy', 'imported']);
+  });
+
+  it('drops memberships without a user key and counts distinct nested and scalar user ids', () => {
+    const withoutUser = {
+      ...membership('without-user', { group_id: 'H1' }),
+      user_id: null,
+      user: null,
+    };
+    const rows = selectMaterializedHierarchicalMemberships({
+      targetGroup: h1,
+      relationships: [],
+      memberships: [withoutUser],
+    });
+
+    expect(rows).toEqual([]);
+    expect(
+      countDistinctMembershipUsers([
+        { user: { id: 'nested' }, user_id: 'ignored' },
+        { user: null, user_id: 'scalar' },
+        { user: { id: 'nested' }, user_id: null },
+        { user: null, user_id: null },
+      ])
+    ).toBe(2);
+  });
 });

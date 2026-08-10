@@ -24,10 +24,12 @@ export function useGroupSearchCardController({ group }: UseGroupSearchCardContro
   const { user } = useAuth();
 
   if (isSearchGroup(group)) {
-    const userMembership = group.memberships?.find(m => m.user?.id === user?.id);
+    const userMembership = user?.id
+      ? group.memberships.find(m => m.user?.id === user.id)
+      : undefined;
     const role =
       getPrimaryMembershipRole(userMembership)?.name || (userMembership ? 'Member' : 'Visitor');
-    const memberCount = group.member_count ?? group.memberships?.length ?? 0;
+    const memberCount = group.member_count ?? group.memberships.length;
     const description = richTextToPlainText(group.description);
 
     return {
@@ -51,7 +53,7 @@ export function useGroupSearchCardController({ group }: UseGroupSearchCardContro
 
   return {
     group: {
-      id: String(group.id ?? ''),
+      id: String(group.id),
       name: group.name ?? '',
       description: description || undefined,
       memberCount: group.member_count ?? 0,

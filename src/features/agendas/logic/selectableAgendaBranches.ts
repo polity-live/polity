@@ -78,7 +78,7 @@ function findMergeVote(
 ) {
   return (
     votes.find(candidate => candidate.purpose === VOTE_PURPOSE.mergeVariant) ??
-    (vote?.purpose === VOTE_PURPOSE.mergeVariant ? (vote ?? null) : null)
+    (vote?.purpose === VOTE_PURPOSE.mergeVariant ? vote : null)
   );
 }
 

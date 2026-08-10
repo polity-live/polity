@@ -350,6 +350,23 @@ async function assertValidEventRoleDefaults(
   }
 }
 
+export const eventSharedMutatorInternals = {
+  isAssemblyEventType,
+  resolveAttendanceMode,
+  normalizeRequiredName,
+  normalizeOptionalReason,
+  loadParticipantForRoleMutation,
+  assertCanManageEventOfflineParticipants,
+  loadOfflineParticipantForMutation,
+  assertUniqueConnectedOfflineUserWithinEvent,
+  addEventParticipantRole,
+  removeEventParticipantRole,
+  syncEventParticipantRoles,
+  resolveDefaultEventParticipantRoleId,
+  clearEventRoleDefaults,
+  assertValidEventRoleDefaults,
+};
+
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const eventSharedMutators = {
   create: defineMutator(eventCreateSchema, async ({ tx, ctx, args }) => {
@@ -558,8 +575,7 @@ export const eventSharedMutators = {
   importOfflineParticipants: defineMutator(
     eventOfflineParticipantBulkImportSchema,
     async ({ tx, ctx, args }) => {
-      const event = await assertCanManageEventOfflineParticipants(tx, ctx, args.event_id);
-      const attendanceMode = resolveAttendanceMode(event);
+      await assertCanManageEventOfflineParticipants(tx, ctx, args.event_id);
       const existingOfflineParticipants = await tx.run(
         zql.event_offline_participant.where('event_id', args.event_id)
       );
@@ -601,7 +617,7 @@ export const eventSharedMutators = {
           reason_not_signed_up: reasonNotSignedUp,
           connected_user_id: null,
           attendance_status: 'listed',
-          participation_channel: attendanceMode === 'offline' ? 'offline' : 'offline',
+          participation_channel: 'offline',
           created_at: createdAt,
           updated_at: createdAt,
         });

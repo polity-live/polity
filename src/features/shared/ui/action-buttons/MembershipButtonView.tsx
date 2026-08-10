@@ -10,6 +10,7 @@ import { Check, Clock, UserMinus, UserPlus, type LucideIcon } from 'lucide-react
 import { cn } from '@/features/shared/utils/utils';
 
 interface MembershipButtonViewProps {
+  actionId?: string;
   isMember: boolean;
   hasRequested: boolean;
   isInvited: boolean;
@@ -50,6 +51,7 @@ interface MembershipButtonViewProps {
 }
 
 export function MembershipButtonView({
+  actionId,
   isMember,
   hasRequested,
   isInvited,
@@ -82,6 +84,7 @@ export function MembershipButtonView({
     const Icon = buttonConfig.icon;
     const disabledButton = (
       <Button
+        data-action-id={actionId}
         data-tutorial-anchor="request-membership"
         disabled
         variant={buttonConfig.variant}
@@ -136,6 +139,7 @@ export function MembershipButtonView({
   if (hasRequested) {
     return (
       <Button
+        data-action-id={actionId}
         data-tutorial-anchor="request-membership"
         onClick={buttonConfig.onClick}
         loading={isLoading}
@@ -153,6 +157,7 @@ export function MembershipButtonView({
   if (isMember) {
     return (
       <Button
+        data-action-id={actionId}
         data-tutorial-anchor="request-membership"
         onClick={buttonConfig.onClick}
         loading={isLoading}
@@ -170,6 +175,7 @@ export function MembershipButtonView({
   if (isInvited) {
     return (
       <Button
+        data-action-id={actionId}
         data-tutorial-anchor="request-membership"
         onClick={buttonConfig.onClick}
         loading={isLoading}
@@ -186,6 +192,7 @@ export function MembershipButtonView({
 
   return (
     <Button
+      data-action-id={actionId}
       data-tutorial-anchor="request-membership"
       onClick={buttonConfig.onClick}
       loading={isLoading}

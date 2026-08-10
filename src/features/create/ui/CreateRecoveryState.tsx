@@ -58,16 +58,31 @@ export function CreateRecoveryState({ draft }: CreateRecoveryStateProps) {
       </div>
       <div className="flex flex-wrap justify-center gap-2">
         {canRetry ? (
-          <Button type="button" onClick={retry} loading={isRetrying}>
+          <Button
+            data-action-id="create.recovery.retry"
+            type="button"
+            onClick={retry}
+            loading={isRetrying}
+          >
             <RotateCcw className="h-4 w-4" />
             {translateText('pages.create.recovery.retry', 'Retry')}
           </Button>
         ) : null}
-        <Button type="button" variant="outline" onClick={restore}>
+        <Button
+          data-action-id="create.recovery.restore"
+          type="button"
+          variant="outline"
+          onClick={restore}
+        >
           <FilePenLine className="h-4 w-4" />
           {translateText('pages.create.recovery.restore', 'Restore')}
         </Button>
-        <Button type="button" variant="ghost" onClick={discard}>
+        <Button
+          data-action-id="create.recovery.discard"
+          type="button"
+          variant="ghost"
+          onClick={discard}
+        >
           <Trash2 className="h-4 w-4" />
           {translateText('pages.create.recovery.discard', 'Discard')}
         </Button>

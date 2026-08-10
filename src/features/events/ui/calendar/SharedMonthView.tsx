@@ -116,26 +116,30 @@ export function SharedMonthView({
                   key={`${weekIndex}-${dayIndex}`}
                   className={cn(
                     'min-h-[120px] border-r border-b p-1 transition-colors',
-                    isSelected && 'bg-accent/50',
-                    'hover:bg-accent/30 cursor-pointer'
+                    isSelected && 'bg-accent/50'
                   )}
-                  onClick={() => onDateSelect(day)}
                 >
                   <div className="mb-1 flex justify-end">
-                    <span
+                    <button
+                      data-action-id="events.month.select-date"
+                      type="button"
+                      aria-label={day.toLocaleDateString(language)}
+                      onClick={() => onDateSelect(day)}
                       className={cn(
-                        'inline-flex h-6 w-6 items-center justify-center rounded-md text-xs font-medium',
+                        'hover:bg-accent inline-flex h-6 w-6 items-center justify-center rounded-md text-xs font-medium',
                         isCurrentDay && 'bg-primary text-primary-foreground',
                         isSelected && !isCurrentDay && 'bg-accent-foreground/10 font-bold'
                       )}
                     >
                       {day.getDate()}
-                    </span>
+                    </button>
                   </div>
                   <ScrollArea className="h-[90px]">
                     <div className="space-y-0.5">
                       {dayEvents.map((event: any) => (
-                        <div
+                        <button
+                          data-action-id="events.month.select-event"
+                          type="button"
                           key={event.id}
                           data-tutorial-anchor={
                             event.tutorial_run_id ? 'tutorial-first-event' : undefined
@@ -144,10 +148,7 @@ export function SharedMonthView({
                             featureThemeClassName('eventSharedMonthThemedText'),
                             getCompactCalendarEventClassName(event)
                           )}
-                          onClick={e => {
-                            e.stopPropagation();
-                            onEventSelect(event);
-                          }}
+                          onClick={() => onEventSelect(event)}
                         >
                           <p className="flex items-center gap-1 truncate font-medium">
                             {!event.isMeeting && <CalendarIcon className="h-2.5 w-2.5 shrink-0" />}
@@ -170,7 +171,7 @@ export function SharedMonthView({
                               {event.location}
                             </p>
                           )}
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </ScrollArea>

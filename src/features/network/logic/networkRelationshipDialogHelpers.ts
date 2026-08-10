@@ -23,18 +23,6 @@ function getGroupIdFromEdgeNodeId(value?: string) {
   return value.replace(/^(parent-|child-)/, '');
 }
 
-function invertRelationshipType(relationshipType: GroupRelationshipType): GroupRelationshipType {
-  if (relationshipType === 'parent') {
-    return 'child';
-  }
-
-  if (relationshipType === 'child') {
-    return 'parent';
-  }
-
-  return 'sibling';
-}
-
 function shouldSwapRelationshipPerspective(relationship: NetworkRelationshipDialogData) {
   const connectionDirections = Array.isArray(relationship.userConnectionDirections)
     ? relationship.userConnectionDirections
@@ -76,7 +64,7 @@ export function getRelationshipPreviewData(
 
   if (shouldSwapRelationshipPerspective(relationship)) {
     return {
-      relationshipType: invertRelationshipType(relationship.relationshipType),
+      relationshipType: relationship.relationshipType === 'parent' ? 'child' : 'parent',
       currentGroupName: targetName,
       currentGroupId: targetGroupId,
       selectedGroupName: sourceName,

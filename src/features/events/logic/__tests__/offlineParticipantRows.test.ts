@@ -130,4 +130,112 @@ describe('buildOfflineRosterRowsForEvent', () => {
     expect(model.offlineRows).toHaveLength(1);
     expect(model.allRows.map(row => row.id)).toEqual(['active:participant-1', 'offline-extra-1']);
   });
+
+  it('normalizes sparse active identities, provenance groups, roles, and online attendance', () => {
+    const model = buildOfflineRosterRowsForEvent({
+      attendanceMode: 'online',
+      activeParticipants: [
+        {
+          id: 'user-object',
+          user_id: null,
+          user: { id: 'user-2', first_name: null, last_name: null },
+          roles: null,
+          partGroup: { id: 'part-1', name: 42 },
+          baseGroup: { id: '', name: 'Invalid' },
+        },
+        {
+          id: 'no-user',
+          user_id: null,
+          user: null,
+          roles: [],
+          partGroup: null,
+          baseGroup: 'invalid',
+        },
+      ],
+      offlineParticipants: [],
+      showParticipantComposition: true,
+      showBaseGroupColumn: true,
+    });
+    expect(model.activeRows[0]).toMatchObject({
+      firstName: '',
+      lastName: '',
+      partGroup: { id: 'part-1', name: null },
+      baseGroup: null,
+      attendanceStatus: null,
+      participationChannel: null,
+      roles: null,
+    });
+    expect(model.activeRows[1]).toMatchObject({ partGroup: null, baseGroup: null });
+  });
+
+  it('uses hybrid online overrides, duplicate connected rows, and every offline row capability', () => {
+    const model = buildOfflineRosterRowsForEvent({
+      attendanceMode: 'hybrid',
+      activeParticipants: [activeParticipant],
+      offlineParticipants: [
+        connectedOfflineParticipant({
+          id: 'online-override',
+          participation_channel: 'online',
+          attendance_status: 'listed',
+        }),
+        connectedOfflineParticipant({ id: 'duplicate', attendance_status: 'confirmed' }),
+        {
+          id: 'group-member',
+          first_name: 'Group',
+          last_name: 'Member',
+          source_type: 'group_member',
+          attendance_status: 'listed',
+          participation_channel: 'online',
+          connected_user_id: 'inactive-user',
+          connected_user: { id: 'inactive-user', first_name: 'Inactive' },
+          group_offline_member: { group: { id: 'source-group', name: 'Source Group' } },
+        },
+        {
+          id: 'event-extra',
+          first_name: 'Extra',
+          last_name: 'Person',
+          source_type: 'event_extra',
+          attendance_status: 'confirmed',
+          participation_channel: 'offline',
+          connected_user_id: null,
+          connected_user: null,
+          group_offline_member: { group: { id: null, name: 'Invalid' } },
+        },
+      ],
+      eventBaseGroupReference: { id: 'base-group', name: 'Base Group' },
+      showParticipantComposition: false,
+      showBaseGroupColumn: true,
+    });
+    expect(model.activeRows[0]).toMatchObject({
+      attendanceStatus: 'confirmed',
+      participationChannel: 'online',
+      canToggleChannel: true,
+    });
+    expect(model.offlineRows).toEqual([
+      expect.objectContaining({
+        id: 'group-member',
+        readOnlyIdentity: true,
+        canConnect: false,
+        canEdit: false,
+        canDelete: false,
+        canConfirmParticipation: true,
+        canWithdrawParticipation: false,
+        canToggleChannel: true,
+        participationChannel: 'online',
+        partGroup: { id: 'source-group', name: 'Source Group' },
+      }),
+      expect.objectContaining({
+        id: 'event-extra',
+        readOnlyIdentity: false,
+        canConnect: true,
+        canEdit: true,
+        canDelete: true,
+        canConfirmParticipation: false,
+        canWithdrawParticipation: true,
+        canToggleChannel: false,
+        participationChannel: 'offline',
+        partGroup: { id: 'base-group', name: 'Base Group' },
+      }),
+    ]);
+  });
 });

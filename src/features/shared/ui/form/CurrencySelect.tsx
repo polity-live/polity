@@ -16,13 +16,20 @@ import { cn } from '@/features/shared/utils/utils';
 import type { CurrencyCode } from '@/features/shared/logic/currency';
 
 export interface CurrencySelectProps {
+  'data-action-id'?: string;
   value: CurrencyCode;
   onChange: (currency: CurrencyCode) => void;
   disabled?: boolean;
   ariaLabel?: string;
 }
 
-export function CurrencySelect({ value, onChange, disabled, ariaLabel }: CurrencySelectProps) {
+export function CurrencySelect({
+  'data-action-id': actionId,
+  value,
+  onChange,
+  disabled,
+  ariaLabel,
+}: CurrencySelectProps) {
   const { language, t } = useTranslation();
   const currencies = useCurrencyCatalog(language);
   const [open, setOpen] = useState(false);
@@ -39,6 +46,7 @@ export function CurrencySelect({ value, onChange, disabled, ariaLabel }: Currenc
           aria-label={ariaLabel ?? t('pages.user.preferences.displayCurrency')}
           className="w-full justify-between"
           disabled={disabled}
+          data-action-id={actionId}
         >
           <span className="truncate">{selected?.label ?? value}</span>
           <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />

@@ -68,4 +68,12 @@ describe('createAppTutorialAmendmentTextFixture', () => {
       });
     }
   });
+
+  it('omits the optional closing paragraph', () => {
+    const fixture = createAppTutorialAmendmentTextFixture({
+      baseText: 'Base',
+      changes: [],
+    });
+    expect(fixture.documentContent).toEqual([{ type: 'p', children: [{ text: 'Base' }] }]);
+  });
 });

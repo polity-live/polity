@@ -6,10 +6,13 @@ import {
   APP_TUTORIAL_FIXTURE_VERSION,
   APP_TUTORIAL_NETWORK_RIGHT_DIRECTIONS,
   getAppTutorialExpectedInput,
+  getAppTutorialExpectedInputKey,
   getAppTutorialCheckpoint,
   getNextAppTutorialCheckpoint,
   matchesAppTutorialExpectedInput,
   matchesTutorialInput,
+  localizeAppTutorialExpectedInput,
+  localizeAppTutorialText,
   resolveAppTutorialRoute,
 } from '../catalog';
 import { APP_TUTORIAL_AVATAR_MENU_OPENED_ACTION } from '../events';
@@ -77,6 +80,16 @@ describe('app tutorial catalog', () => {
         'assistantTodo'
       )
     ).toBe(true);
+  });
+
+  it('preserves unknown copy and rejects unknown checkpoints and route aliases', () => {
+    expect(getAppTutorialExpectedInputKey('not prescribed')).toBeNull();
+    expect(localizeAppTutorialExpectedInput('not prescribed', 'en')).toBe('not prescribed');
+    expect(localizeAppTutorialText('Unverändert', 'de')).toBe('Unverändert');
+    expect(() => getAppTutorialCheckpoint('unknown')).toThrow('Unknown app tutorial checkpoint');
+    expect(() => resolveAppTutorialRoute('/group/:missing', {})).toThrow(
+      'Missing tutorial entity alias'
+    );
   });
 
   it('resolves entity routes and advances sequentially', () => {

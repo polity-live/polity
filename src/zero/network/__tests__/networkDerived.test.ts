@@ -292,4 +292,164 @@ describe('zero network derived helpers', () => {
       parliament_source_group_ids: ['P2', 'P3', 'P1'],
     });
   });
+
+  it('uses legacy endpoint, status, and timestamp fallbacks while filtering inactive rows', () => {
+    const now = Date.now();
+    const rows = deriveGroupRelationships({
+      connections: [
+        {
+          id: 'legacy-hierarchy',
+          group_a_id: 'A',
+          group_b_id: 'B',
+          connection_type: 'hierarchy',
+          parent_group_id: null,
+          child_group_id: null,
+          status: undefined,
+        },
+        {
+          id: 'inactive',
+          group_a_id: 'A',
+          group_b_id: 'C',
+          connection_type: 'peer',
+          status: 'pending',
+        },
+      ],
+      grants: [
+        {
+          id: 'missing-connection',
+          connection_id: 'missing',
+          right_key: 'informationRight',
+          holder_group_id: 'A',
+          scope_group_id: 'B',
+        },
+        {
+          id: 'legacy-grant',
+          connection_id: 'legacy-hierarchy',
+          right_key: 'informationRight',
+          holder_group_id: 'A',
+          scope_group_id: 'B',
+        },
+      ],
+      rules: [],
+    });
+
+    expect(rows.map(row => row.id)).toEqual([
+      'legacy-hierarchy:structure',
+      'inactive:structure',
+      'legacy-grant',
+    ]);
+    expect(rows[0]).toMatchObject({
+      group_id: 'A',
+      related_group_id: 'B',
+      status: null,
+      parent_group_id: null,
+      child_group_id: null,
+    });
+    expect(rows[0]?.created_at).toBeGreaterThanOrEqual(now);
+    expect(rows[2]).toMatchObject({ status: null, initiator_group_id: null });
+    expect(rows[2]?.created_at).toBeGreaterThanOrEqual(now);
+
+    const filtered = deriveGroupRelationships({
+      connections: [
+        {
+          id: 'active',
+          group_a_id: 'A',
+          group_b_id: 'B',
+          connection_type: 'peer',
+          status: 'active',
+          created_at: 7,
+        },
+        {
+          id: 'inactive',
+          group_a_id: 'A',
+          group_b_id: 'C',
+          connection_type: 'peer',
+          status: 'pending',
+        },
+      ],
+      grants: [
+        {
+          id: 'connection-status-fallback',
+          connection_id: 'active',
+          right_key: 'informationRight',
+          holder_group_id: 'A',
+          scope_group_id: 'B',
+          status: undefined,
+        },
+      ],
+      rules: [],
+      includeInactive: false,
+    });
+    expect(filtered.map(row => row.id)).toEqual(['active:structure']);
+  });
+
+  it('derives open peer metadata and timestamp ordering fallbacks', () => {
+    const meta = buildDerivedGroupNetworkMetaMap({
+      groupIds: ['target', 'isolated'],
+      connections: [
+        {
+          id: 'undated',
+          group_a_id: 'old-source',
+          group_b_id: 'target',
+          connection_type: 'peer',
+          status: 'active',
+        },
+        {
+          id: 'created-only',
+          group_a_id: 'source',
+          group_b_id: 'target',
+          connection_type: 'peer',
+          status: 'active',
+          created_at: 5,
+        },
+      ],
+      rules: [
+        {
+          id: 'open-rule',
+          connection_id: 'created-only',
+          member_source_group_id: 'source',
+          member_target_group_id: 'target',
+          membership_mode: 'all_members',
+        },
+      ],
+    });
+
+    expect(meta.get('target')).toMatchObject({
+      primary_sibling_connection_id: 'created-only',
+      connected_group_id: 'source',
+      primary_incoming_sibling_membership_mode: 'all_members',
+      primary_outgoing_sibling_membership_mode: 'none',
+      sibling_membership_mode: 'open',
+    });
+    expect(meta.get('isolated')).toEqual(expect.objectContaining({ group_type: 'base' }));
+
+    expect(
+      buildDerivedGroupNetworkMetaMap({ groupIds: ['isolated'], rules: [] }).get('isolated')
+    ).toEqual(expect.objectContaining({ has_sibling_connections: false }));
+
+    const reversedTimestampInputs = [
+      {
+        id: 'created-only',
+        group_a_id: 'source',
+        group_b_id: 'target',
+        connection_type: 'peer' as const,
+        status: 'active',
+        created_at: 5,
+      },
+      {
+        id: 'undated',
+        group_a_id: 'old-source',
+        group_b_id: 'target',
+        connection_type: 'peer' as const,
+        status: 'active',
+      },
+    ];
+    expect(
+      buildDerivedGroupNetworkMetaMap({
+        groupIds: ['target'],
+        connections: reversedTimestampInputs,
+        rules: [],
+      }).get('target')?.primary_sibling_connection_id
+    ).toBe('created-only');
+  });
 });

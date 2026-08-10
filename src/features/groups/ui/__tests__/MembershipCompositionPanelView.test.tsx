@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { MembershipCompositionPanel } from '../MembershipCompositionPanel';
@@ -124,5 +124,40 @@ describe('MembershipCompositionPanelView', () => {
     );
 
     expect(screen.getByText('5 (62.5%)')).toBeTruthy();
+  });
+
+  it('switches composition modes through stable keyboard-focusable actions', () => {
+    const onDisplayModeChange = vi.fn();
+    const { container, rerender } = render(
+      <MembershipCompositionPanelView
+        isLoading={false}
+        displayMode="percent"
+        memberRows={[]}
+        leadershipRows={[]}
+        labels={labels}
+        onDisplayModeChange={onDisplayModeChange}
+      />
+    );
+
+    const absolute = container.querySelector<HTMLElement>(
+      '[data-action-id="groups.composition.select.absolute"]'
+    )!;
+    absolute.focus();
+    expect(document.activeElement).toBe(absolute);
+    fireEvent.click(absolute);
+    rerender(
+      <MembershipCompositionPanelView
+        isLoading={false}
+        displayMode="absolute"
+        memberRows={[]}
+        leadershipRows={[]}
+        labels={labels}
+        onDisplayModeChange={onDisplayModeChange}
+      />
+    );
+    fireEvent.click(
+      container.querySelector<HTMLElement>('[data-action-id="groups.composition.select.percent"]')!
+    );
+    expect(onDisplayModeChange.mock.calls).toEqual([['absolute'], ['percent']]);
   });
 });

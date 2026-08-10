@@ -38,6 +38,7 @@ export function NavUserAvatar2View({
           className
         )}
         onClick={onClick}
+        data-action-id="navigation.avatar2.overlay.open"
       >
         <Avatar className="h-12 w-12">
           <AvatarImage src={avatarUrl} alt={userName} />
@@ -62,6 +63,7 @@ export function NavUserAvatar2View({
               className
             )}
             onClick={onClick}
+            data-action-id="navigation.avatar2.list.open"
             onMouseEnter={onHoverStart}
             onMouseLeave={onHoverEnd}
             {...(isMobile && {
@@ -91,6 +93,7 @@ export function NavUserAvatar2View({
             size="icon"
             className={cn('hover:bg-accent h-12 w-12 flex-shrink-0', className)}
             onClick={onClick}
+            data-action-id="navigation.avatar2.mobile-labeled.open"
             onMouseEnter={onHoverStart}
             onMouseLeave={onHoverEnd}
             onTouchStart={onHoverStart}
@@ -116,6 +119,7 @@ export function NavUserAvatar2View({
           variant="ghost"
           className={cn('mt-2 h-12 w-full justify-start gap-3 pl-3', className)}
           onClick={onClick}
+          data-action-id="navigation.avatar2.desktop-labeled.open"
         >
           <Avatar className="h-8 w-8">
             <AvatarImage src={avatarUrl} alt={userName} />

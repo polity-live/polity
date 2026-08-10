@@ -24,7 +24,7 @@ interface OfflineRosterProvenanceResult {
   provenanceBucketLabel: string | null;
 }
 
-function hydrateProvenanceGroupName(
+export function hydrateProvenanceGroupName(
   group: ParticipationProvenanceGroupLike | null,
   groupsById: ReadonlyMap<string, OfflineRosterGroupLike>,
   fallbackGroup?: ParticipationProvenanceGroupLike | null
@@ -204,7 +204,7 @@ export function resolveOfflineRosterProvenance(args: {
               id: `root:${offlineMember.id}`,
               userId: offlineMember.id,
               groupId: sourceRootGroupId,
-              group: hydratedGroupsById.get(sourceRootGroupId) ?? null,
+              group: hydratedGroupsById.get(sourceRootGroupId),
               sourceGroupId: baseGroupId,
               sourceGroup: hydratedGroupsById.get(baseGroupId) ?? offlineMember.group ?? null,
             }),

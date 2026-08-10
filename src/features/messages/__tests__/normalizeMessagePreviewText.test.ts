@@ -18,6 +18,8 @@ describe('normalizeMessagePreviewText', () => {
   });
 
   it('returns undefined for empty values', () => {
+    expect(normalizeMessagePreviewText(undefined)).toBeUndefined();
+    expect(normalizeMessagePreviewText(null)).toBeUndefined();
     expect(normalizeMessagePreviewText('   ')).toBeUndefined();
     expect(
       normalizeMessagePreviewText([
@@ -27,5 +29,9 @@ describe('normalizeMessagePreviewText', () => {
         },
       ])
     ).toBeUndefined();
+  });
+
+  it('trims non-empty plain strings', () => {
+    expect(normalizeMessagePreviewText('  Preview  ')).toBe('Preview');
   });
 });

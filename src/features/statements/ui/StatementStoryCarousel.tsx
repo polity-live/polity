@@ -76,10 +76,12 @@ function getMediaType(statement: StatementCarouselRow): StatementMediaType {
 }
 
 function StatementStoryThumbnail({
+  'data-action-id': actionId,
   statement,
   active,
   onClick,
 }: {
+  'data-action-id'?: string;
   statement: StatementCarouselRow;
   active: boolean;
   onClick: () => void;
@@ -91,6 +93,7 @@ function StatementStoryThumbnail({
   return (
     <button
       type="button"
+      data-action-id={actionId}
       onClick={onClick}
       className={cn(
         'group bg-card flex w-[8.5rem] shrink-0 flex-col gap-2 rounded-lg border p-2 text-left shadow-sm transition',
@@ -186,6 +189,7 @@ function StatementStoryViewerContent({
       <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <UserIdentityLink
+            data-action-id="statements.carousel.author.open"
             userId={authorId}
             avatarUrl={authorAvatar}
             name={authorName}
@@ -203,24 +207,35 @@ function StatementStoryViewerContent({
         </div>
         <div className="flex items-center gap-2">
           <Button
+            data-action-id="statements.carousel.story.previous"
             type="button"
             variant="outline"
             size="icon"
+            aria-label={t('features.statements.carousel.previous', 'Previous statement')}
             onClick={goPrev}
             disabled={!canGoPrev}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <Button
+            data-action-id="statements.carousel.story.next"
             type="button"
             variant="outline"
             size="icon"
+            aria-label={t('features.statements.carousel.next', 'Next statement')}
             onClick={goNext}
             disabled={!canGoNext}
           >
             <ArrowRight className="h-4 w-4" />
           </Button>
-          <Button type="button" variant="ghost" size="icon" onClick={onClose}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            data-action-id="statements.carousel.viewer.close"
+            aria-label={t('common.actions.close', 'Close')}
+            onClick={onClose}
+          >
             <X className="h-5 w-5" />
           </Button>
         </div>
@@ -365,6 +380,7 @@ export function StatementStoryCarousel({
       <div className="flex gap-3 overflow-x-auto pb-2">
         {statements.map((statement, index) => (
           <StatementStoryThumbnail
+            data-action-id="statements.carousel.story.open"
             key={statement.id}
             statement={statement}
             active={activeIndex === index}
@@ -391,7 +407,7 @@ export function StatementStoryCarousel({
           </DialogTitle>
           {activeStatement ? (
             <StatementStoryViewerContent
-              activeIndex={activeIndex ?? 0}
+              activeIndex={activeIndex as number}
               onActiveIndexChange={setActiveIndex}
               onClose={() => setActiveIndex(null)}
               statements={statements}

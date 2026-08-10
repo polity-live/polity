@@ -62,7 +62,10 @@ export interface StreetAreaPickerViewProps {
   bounds: LatLngBounds | null;
   selectionCorners: LeafletPosition[];
   rotateHandlePosition: LeafletPosition;
-  resizeHandles: { handle: CityDesignBboxResizeHandle; position: LeafletPosition }[];
+  resizeHandles: {
+    handle: CityDesignBboxResizeHandle;
+    position: LeafletPosition;
+  }[];
   widthMeters: number;
   heightMeters: number;
   rotationDeg: number;
@@ -122,17 +125,11 @@ export function StreetAreaPickerView({
   const [internalMapSectionOpen, setInternalMapSectionOpen] = useState(true);
   const mapSectionOpen = open ?? internalMapSectionOpen;
   const setMapSectionOpen = onOpenChange ?? setInternalMapSectionOpen;
-  const updateWidth = (value: number) => {
-    if (Number.isFinite(value)) onWidthMetersChange(value);
-  };
+  const updateWidth = (value: number) => applyFiniteMapDimension(value, onWidthMetersChange);
 
-  const updateHeight = (value: number) => {
-    if (Number.isFinite(value)) onHeightMetersChange(value);
-  };
+  const updateHeight = (value: number) => applyFiniteMapDimension(value, onHeightMetersChange);
 
-  const updateRotation = (value: number) => {
-    if (Number.isFinite(value)) onRotationDegreesChange(value);
-  };
+  const updateRotation = (value: number) => applyFiniteMapDimension(value, onRotationDegreesChange);
 
   const mapReady =
     !mapUnavailable &&
@@ -157,6 +154,7 @@ export function StreetAreaPickerView({
         <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
           <CollapsibleTrigger asChild>
             <Button
+              data-action-id="amendments.street-area.toggle.map-section"
               type="button"
               variant="ghost"
               className="h-auto min-w-0 justify-start px-2 py-1"
@@ -223,6 +221,7 @@ export function StreetAreaPickerView({
                 />
               </div>
               <Button
+                data-action-id="amendments.street-area.load.osm"
                 size="sm"
                 data-tutorial-anchor="city-design-load-osm"
                 onClick={onLoadOsm}
@@ -245,6 +244,7 @@ export function StreetAreaPickerView({
                   </h3>
                 </div>
                 <Button
+                  data-action-id="amendments.street-area.reset.location-search"
                   type="button"
                   size="icon"
                   variant="ghost"
@@ -259,6 +259,7 @@ export function StreetAreaPickerView({
               <div
                 className="pt-3"
                 data-tutorial-anchor="city-design-location-search"
+                data-location-search-ready={locationSearchResetKey > 0 ? 'true' : 'false'}
                 onMouseDownCapture={event => {
                   if (!tutorialActive || !(event.target instanceof Element)) return;
                   const option = event.target.closest('[role="option"]');
@@ -339,7 +340,11 @@ export function StreetAreaPickerView({
                   {selectionCorners.length >= 3 ? (
                     <reactLeafletModule.Polygon
                       positions={selectionCorners}
-                      pathOptions={{ color: '#0f766e', weight: 2, fillOpacity: 0.08 }}
+                      pathOptions={{
+                        color: '#0f766e',
+                        weight: 2,
+                        fillOpacity: 0.08,
+                      }}
                     />
                   ) : null}
                   <StreetAreaPickerSelectionOverlay
@@ -390,3 +395,9 @@ function MapClickHandler({
 
   return null;
 }
+
+function applyFiniteMapDimension(value: number, onChange: (value: number) => void) {
+  if (Number.isFinite(value)) onChange(value);
+}
+
+export const streetAreaPickerViewInternals = { applyFiniteMapDimension };

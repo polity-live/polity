@@ -58,9 +58,7 @@ export function findShortestPath(
   });
 
   while (queue.length > 0) {
-    const item = queue.shift();
-    if (!item) break;
-    const [currentGroupId, path] = item;
+    const [currentGroupId, path] = queue.shift() as [string, PathSegment[]];
 
     // Check if we've reached the target
     if (currentGroupId === targetGroupId) {

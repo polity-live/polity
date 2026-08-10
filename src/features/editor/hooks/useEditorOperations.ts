@@ -17,6 +17,7 @@ import type { EditorEntityType, EditorMode, TDiscussion } from '../types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { useLanguageStore } from '@/features/shared/global-state/language.store';
 import { createChangeRequestDiffSnapshot } from '@/features/change-requests/utils/suggestion-extraction';
+import { BLOCK_SUGGESTION_MARKER } from '@/features/change-requests/logic/suggestionBlockLabels';
 import { reportAppTutorialAction } from '@/features/app-tutorial/events';
 import {
   serverConfirmed,
@@ -31,7 +32,9 @@ interface SuggestionRef {
   crId?: string;
 }
 
-function getDefaultVersionTitle(creationType: string): string {
+function getDefaultVersionTitle(
+  creationType: 'suggestion_accepted' | 'suggestion_declined'
+): string {
   const now = new Date();
   const timestamp = now.toLocaleString(
     useLanguageStore.getState().language === 'de' ? 'de-DE' : 'en-US',
@@ -52,8 +55,6 @@ function getDefaultVersionTitle(creationType: string): string {
       return translateText('features.editor.defaultVersionTitles.suggestionDeclined', {
         timestamp,
       });
-    default:
-      return translateText('features.editor.defaultVersionTitles.autoSave', { timestamp });
   }
 }
 
@@ -79,7 +80,11 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
     versions.length > 0 ? Math.max(...versions.map(v => v.version_number ?? 0)) : 0;
 
   const createVersionForEntity = useCallback(
-    async (content: Value, creationType: string, title?: string) => {
+    async (
+      content: Value,
+      creationType: 'suggestion_accepted' | 'suggestion_declined',
+      title?: string
+    ) => {
       const versionId = crypto.randomUUID();
       const newVersionNumber = latestVersionNumber + 1;
       const versionTitle = title || getDefaultVersionTitle(creationType);
@@ -147,7 +152,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         reportAppTutorialAction({
           type: 'action',
           event: 'change-request.created',
-          value: params.new_text ?? '',
+          value: (params.new_text ?? '').replaceAll(BLOCK_SUGGESTION_MARKER, ' ').trim(),
         });
         return true;
       } catch (error) {
@@ -223,7 +228,9 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
 
       try {
         const versionTitle = suggestion?.crId
-          ? translateText('generated.inline.0053_crid_accepted_a55aa162', { crId: suggestion.crId })
+          ? translateText('generated.inline.0053_crid_accepted_a55aa162', {
+              crId: suggestion.crId,
+            })
           : undefined;
 
         await createVersionForEntity(content, 'suggestion_accepted', versionTitle);
@@ -329,7 +336,9 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
 
       try {
         const versionTitle = suggestion?.crId
-          ? translateText('generated.inline.0054_crid_declined_2252b75e', { crId: suggestion.crId })
+          ? translateText('generated.inline.0054_crid_declined_2252b75e', {
+              crId: suggestion.crId,
+            })
           : undefined;
 
         await createVersionForEntity(content, 'suggestion_declined', versionTitle);
@@ -497,7 +506,9 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         return;
       }
 
-      await finalizeInternalChangeRequestVote({ change_request_id: changeRequestId });
+      await finalizeInternalChangeRequestVote({
+        change_request_id: changeRequestId,
+      });
     },
     [finalizeInternalChangeRequestVote]
   );

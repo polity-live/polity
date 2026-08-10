@@ -44,6 +44,35 @@ describe('cityDesignSelectionAddress', () => {
     });
   });
 
+  it('prefers freshly resolved fields over a stale controlled-input snapshot', () => {
+    const address = createCityDesignSelectionAddress(
+      {
+        place_id: 'street-1',
+        formatted: 'Euckenstraße, 81369 München, Deutschland',
+        country: 'Deutschland',
+        state: 'Bayern',
+        city: 'München',
+        postcode: '81369',
+        street: 'Euckenstraße',
+        lat: 48.13956,
+        lon: 11.51946,
+      },
+      {
+        country: 'Deutschland',
+        region: 'Bayern',
+        city: 'München',
+        post_code: '',
+        street: '',
+        house_number: '',
+      }
+    );
+
+    expect(address).toMatchObject({
+      postCode: '81369',
+      street: 'Euckenstraße',
+    });
+  });
+
   it('falls back from structured address to origin label and coordinates', () => {
     const center = { lat: 52.52, lon: 13.405 };
 

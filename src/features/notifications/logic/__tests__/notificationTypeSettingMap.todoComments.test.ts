@@ -26,4 +26,20 @@ describe('todo comment notification setting', () => {
     expect(shouldDispatchNotification('todo_comment_added', settings)).toBe(false);
     expect(shouldDispatchNotification('todo_updated', settings)).toBe(true);
   });
+
+  it('defaults to dispatch for entity, unmapped, absent, and missing-category settings', () => {
+    expect(
+      shouldDispatchNotification('todo_comment_added', DEFAULT_NOTIFICATION_SETTINGS, {
+        isEntityNotification: true,
+      })
+    ).toBe(true);
+    expect(shouldDispatchNotification('system' as never, DEFAULT_NOTIFICATION_SETTINGS)).toBe(true);
+    expect(shouldDispatchNotification('todo_comment_added', null)).toBe(true);
+    expect(
+      shouldDispatchNotification('todo_comment_added', {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        todoNotifications: undefined,
+      } as never)
+    ).toBe(true);
+  });
 });

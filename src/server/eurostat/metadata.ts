@@ -112,18 +112,14 @@ function getConstraintDimensions(
     .sort((left, right) => left.position - right.position);
 }
 
-function buildDataUrl(
-  code: string,
-  filters: Record<string, readonly string[]>,
-  attributes: 'all' | 'none' = 'all'
-) {
+function buildDataUrl(code: string, filters: Record<string, readonly string[]>) {
   const url = new URL(
     `${EUROSTAT_BASE_URL}/sdmx/3.0/data/dataflow/ESTAT/${encodeURIComponent(code)}/1.0`
   );
   for (const [dimension, values] of Object.entries(filters)) {
     url.searchParams.set(`c[${dimension}]`, values.join(','));
   }
-  url.searchParams.set('attributes', attributes);
+  url.searchParams.set('attributes', 'all');
   url.searchParams.set('measures', 'all');
   return url;
 }
@@ -133,8 +129,11 @@ async function sampleDataset(code: string, dimensions: readonly EurostatDimensio
     dimensions.map(dimension => [
       dimension.id,
       [
-        (dimension.id === 'TIME_PERIOD' ? dimension.values.at(-1)?.id : dimension.values[0]?.id) ??
-          '',
+        (
+          (dimension.id === 'TIME_PERIOD'
+            ? dimension.values.at(-1)
+            : dimension.values[0]) as EurostatDimension['values'][number]
+        ).id,
       ],
     ])
   );

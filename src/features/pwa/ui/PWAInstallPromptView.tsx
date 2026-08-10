@@ -31,6 +31,7 @@ export function PWAInstallPromptView({
             <p className="text-muted-foreground mt-1 text-sm">{installDescription}</p>
           </div>
           <Button
+            data-action-id="pwa.install-prompt.dismiss.icon"
             type="button"
             variant="ghost"
             size="icon"
@@ -41,10 +42,21 @@ export function PWAInstallPromptView({
           </Button>
         </div>
         <div className="mt-4 flex gap-2">
-          <Button type="button" variant="outline" className="flex-1" onClick={onDismiss}>
+          <Button
+            data-action-id="pwa.install-prompt.dismiss.not-now"
+            type="button"
+            variant="outline"
+            className="flex-1"
+            onClick={onDismiss}
+          >
             {notNowLabel}
           </Button>
-          <Button type="button" className="flex-1" onClick={onInstall}>
+          <Button
+            data-action-id="pwa.install-prompt.install"
+            type="button"
+            className="flex-1"
+            onClick={onInstall}
+          >
             {installLabel}
           </Button>
         </div>

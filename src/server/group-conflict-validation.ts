@@ -533,7 +533,7 @@ async function buildMembershipActivationConflicts(
                 'generated.inline.0664_beende_zuerst_die_aktive_mitgliedschaft_in_ei_d743c119'
               ),
               self_service: true,
-              group_id: matchingSourceGroupIds[1] ?? matchingSourceGroupIds[0],
+              group_id: matchingSourceGroupIds[1],
             },
             {
               code: 'choose_other_group',
@@ -553,7 +553,7 @@ async function buildMembershipActivationConflicts(
                 'generated.inline.0667_falls_du_die_andere_source_mitgliedschaft_nic_b3b9e3b0'
               ),
               self_service: false,
-              group_id: matchingSourceGroupIds[1] ?? matchingSourceGroupIds[0],
+              group_id: matchingSourceGroupIds[1],
               required_role: 'Admin',
             },
           ]
@@ -888,7 +888,8 @@ async function buildGroupConnectionUpsertConflicts(
 
       const involvedSourceGroupIds = new Set<string>();
       for (const userId of overlappingUserIds) {
-        for (const sourceGroupId of membershipsByUserId.get(userId) ?? []) {
+        // overlappingUserIds is derived directly from membershipsByUserId entries.
+        for (const sourceGroupId of membershipsByUserId.get(userId) as string[]) {
           involvedSourceGroupIds.add(sourceGroupId);
         }
       }

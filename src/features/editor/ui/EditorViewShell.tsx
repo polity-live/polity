@@ -194,6 +194,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
             {/* Share Button */}
             {capabilities.sharing && (
               <ShareButton
+                data-action-id="editor.shell.share.open"
                 url={`/${entityType}/${entityId}`}
                 title={title}
                 description={entity.metadata?.amendmentCode || ''}

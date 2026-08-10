@@ -158,18 +158,37 @@ export function EditElectionVoteDialogView({
           {/* Majority type */}
           <div className="space-y-2">
             <FormControlLabel>{t('features.events.agenda.majorityType')}</FormControlLabel>
-            <FormControlSelect value={majorityType} onValueChange={setMajorityType}>
-              <FormControlSelectTrigger>
+            <FormControlSelect
+              data-action-scope="presentation"
+              value={majorityType}
+              onValueChange={setMajorityType}
+            >
+              <FormControlSelectTrigger
+                data-action-id="agendas.edit-vote.majority.open"
+                data-action-kind="interaction"
+              >
                 <FormControlSelectValue />
               </FormControlSelectTrigger>
               <FormControlSelectContent>
-                <FormControlSelectItem value="relative">
+                <FormControlSelectItem
+                  value="relative"
+                  data-action-id="agendas.edit-vote.majority.relative"
+                  data-action-kind="selection"
+                >
                   {t('features.events.agenda.majorityRelative')}
                 </FormControlSelectItem>
-                <FormControlSelectItem value="absolute">
+                <FormControlSelectItem
+                  value="absolute"
+                  data-action-id="agendas.edit-vote.majority.absolute"
+                  data-action-kind="selection"
+                >
                   {t('features.events.agenda.majorityAbsolute')}
                 </FormControlSelectItem>
-                <FormControlSelectItem value="two_thirds_absolute">
+                <FormControlSelectItem
+                  value="two_thirds_absolute"
+                  data-action-id="agendas.edit-vote.majority.two-thirds"
+                  data-action-kind="selection"
+                >
                   {t('features.events.agenda.majorityTwoThirds')}
                 </FormControlSelectItem>
               </FormControlSelectContent>
@@ -181,13 +200,23 @@ export function EditElectionVoteDialogView({
             <FormControlLabel>{t('features.events.agenda.closingType')}</FormControlLabel>
             <FormControlRadioGroup value={closingType} onValueChange={setClosingType}>
               <div className="flex items-center space-x-2">
-                <FormControlRadioGroupItem value="moderator" id="closing-moderator" />
+                <FormControlRadioGroupItem
+                  value="moderator"
+                  id="closing-moderator"
+                  data-action-id="agendas.edit-vote.closing.moderator"
+                  data-action-kind="selection"
+                />
                 <FormControlLabel htmlFor="closing-moderator">
                   {t('features.events.agenda.closingModerator')}
                 </FormControlLabel>
               </div>
               <div className="flex items-center space-x-2">
-                <FormControlRadioGroupItem value="time" id="closing-time" />
+                <FormControlRadioGroupItem
+                  value="time"
+                  id="closing-time"
+                  data-action-id="agendas.edit-vote.closing.time"
+                  data-action-kind="selection"
+                />
                 <FormControlLabel htmlFor="closing-time">
                   {t('features.events.agenda.closingTime')}
                 </FormControlLabel>
@@ -242,6 +271,7 @@ export function EditElectionVoteDialogView({
                   <div key={choice.id} className="flex items-center gap-2">
                     <span className="flex-1 text-sm">{choice.label}</span>
                     <Button
+                      data-action-id="agendas.edit-vote.choice.remove"
                       type="button"
                       size="icon"
                       variant="ghost"
@@ -265,6 +295,8 @@ export function EditElectionVoteDialogView({
                     }}
                   />
                   <Button
+                    data-action-id="agendas.edit-vote.choice.add"
+                    data-action-kind="interaction"
                     type="button"
                     size="icon"
                     variant="outline"
@@ -280,10 +312,18 @@ export function EditElectionVoteDialogView({
         </AgendaDialogBody>
 
         <DialogFooter separator surface="background">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            data-action-id="agendas.edit-vote.dialog.cancel"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
             {t('common.actions.cancel')}
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button
+            data-action-id="agendas.edit-vote.dialog.save"
+            onClick={handleSave}
+            disabled={saving}
+          >
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {t('common.actions.save')}
           </Button>

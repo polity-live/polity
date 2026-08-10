@@ -59,6 +59,12 @@ export function TypeaheadSelectedCard({
     }
   };
 
+  const handleContainerKeyDown = (event: React.KeyboardEvent) => {
+    if (disabled || !onClick || (event.key !== 'Enter' && event.key !== ' ')) return;
+    event.preventDefault();
+    onClick(event as unknown as React.MouseEvent);
+  };
+
   const content = (
     <div className="flex items-start gap-3">
       <Avatar className={cn('shrink-0 ring-1 ring-white/60', isCompact ? 'h-8 w-8' : 'h-10 w-10')}>
@@ -166,7 +172,14 @@ export function TypeaheadSelectedCard({
   }
 
   return (
-    <div data-slot="typeahead-selected" onClick={handleContainerClick} className={surfaceClassName}>
+    <div
+      data-slot="typeahead-selected"
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick && !disabled ? 0 : undefined}
+      onClick={onClick ? handleContainerClick : undefined}
+      onKeyDown={onClick ? handleContainerKeyDown : undefined}
+      className={surfaceClassName}
+    >
       {content}
     </div>
   );

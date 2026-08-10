@@ -18,12 +18,8 @@ import {
 async function authorizeGroupTodoManage(
   tx: Parameters<typeof can>[0],
   ctx: Parameters<typeof can>[1],
-  groupId: string | null | undefined
+  groupId: string
 ) {
-  if (!groupId) {
-    return;
-  }
-
   await can(tx, ctx, {
     action: 'manage',
     resource: 'groupTodos',

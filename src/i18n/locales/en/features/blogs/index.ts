@@ -60,6 +60,8 @@ export const blogsTranslations = {
     ownerRole: 'Owner',
     invite: 'Invite Blogger',
     remove: 'Remove',
+    updateRole: 'Update role',
+    deleteRole: 'Delete role',
     noResults: 'No bloggers found',
     searchPlaceholder: 'Search bloggers...',
   },

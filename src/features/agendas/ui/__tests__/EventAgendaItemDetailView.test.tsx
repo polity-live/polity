@@ -6,6 +6,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { EventAgendaItemDetailView } from '../EventAgendaItemDetailView';
 
+function requireDefined<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error('Expected captured mock value');
+  return value;
+}
+
 const agendaElectionSectionMock = vi.hoisted(() =>
   vi.fn((props: { delegateTargetEventId?: string | null }) => (
     <div
@@ -19,6 +24,21 @@ const agendaActionBarMock = vi.hoisted(() =>
     void props;
     return <div data-testid="agenda-action-bar" />;
   })
+);
+const agendaSpeakerListSectionMock = vi.hoisted(() =>
+  vi.fn((_props: Record<string, unknown>) => <div data-testid="agenda-speaker-list-section" />)
+);
+const agendaVoteSectionMock = vi.hoisted(() =>
+  vi.fn((_props: Record<string, unknown>) => <div data-testid="agenda-vote-section" />)
+);
+const offlineTallyDialogMock = vi.hoisted(() =>
+  vi.fn((_props: Record<string, unknown>) => <div data-testid="offline-tally-dialog" />)
+);
+const namedBallotResultsDialogMock = vi.hoisted(() =>
+  vi.fn((_props: Record<string, unknown>) => <div data-testid="named-ballot-results-dialog" />)
+);
+const agendaActiveItemHeaderMock = vi.hoisted(() =>
+  vi.fn((_props: Record<string, unknown>) => <div data-testid="agenda-active-item-header" />)
 );
 const voteCastDialogMock = vi.hoisted(() =>
   vi.fn((props: Record<string, unknown>) => (
@@ -93,11 +113,11 @@ vi.mock('../AgendaItemContextCard', () => ({
 }));
 
 vi.mock('../AgendaSpeakerListSection', () => ({
-  AgendaSpeakerListSection: () => <div data-testid="agenda-speaker-list-section" />,
+  AgendaSpeakerListSection: agendaSpeakerListSectionMock,
 }));
 
 vi.mock('../AgendaVoteSection', () => ({
-  AgendaVoteSection: () => <div data-testid="agenda-vote-section" />,
+  AgendaVoteSection: agendaVoteSectionMock,
 }));
 
 vi.mock('../AgendaElectionSection', () => ({
@@ -106,7 +126,7 @@ vi.mock('../AgendaElectionSection', () => ({
 }));
 
 vi.mock('../OfflineTallyDialog', () => ({
-  OfflineTallyDialog: () => <div data-testid="offline-tally-dialog" />,
+  OfflineTallyDialog: offlineTallyDialogMock,
 }));
 
 vi.mock('../AgendaActionBar', () => ({
@@ -146,7 +166,11 @@ vi.mock('@/features/search/ui/EventSearchCard', () => ({
 }));
 
 vi.mock('../NamedBallotResultsDialog', () => ({
-  NamedBallotResultsDialog: () => <div data-testid="named-ballot-results-dialog" />,
+  NamedBallotResultsDialog: namedBallotResultsDialogMock,
+}));
+
+vi.mock('../AgendaActiveItemHeader', () => ({
+  AgendaActiveItemHeader: agendaActiveItemHeaderMock,
 }));
 
 vi.mock('../../logic/offlineTallyToolbar', () => ({
@@ -155,7 +179,7 @@ vi.mock('../../logic/offlineTallyToolbar', () => ({
 }));
 
 vi.mock('@/zero/shared', () => ({
-  isNamedBallot: () => false,
+  isNamedBallot: (visibility: unknown) => visibility === 'named',
 }));
 
 afterEach(() => {
@@ -1187,5 +1211,402 @@ describe('EventAgendaItemDetailView', () => {
         onBranchChange,
       })
     );
+  });
+
+  it('renders loading and missing-record boundaries', () => {
+    const props = buildProps();
+    const { rerender } = render(<EventAgendaItemDetailView {...props} isLoading />);
+    expect(document.querySelector('.animate-pulse')).not.toBeNull();
+
+    rerender(<EventAgendaItemDetailView {...props} agendaItem={null} />);
+    expect(document.body.textContent).toContain(
+      'generated.inline.0051_tagesordnungspunkt_nicht_gefunden_6faf6631'
+    );
+
+    rerender(<EventAgendaItemDetailView {...props} event={null} />);
+    expect(document.body.textContent).toContain(
+      'generated.inline.0051_tagesordnungspunkt_nicht_gefunden_6faf6631'
+    );
+  });
+
+  it('maps rich election, vote, timing, tally, and navigation fallbacks', async () => {
+    const props = buildProps();
+    const navigate = vi.fn();
+    const setNamedResultsTarget = vi.fn();
+    const setPasswordError = vi.fn();
+    const setIsPasswordVerifying = vi.fn();
+    const verifyVotingPassword = vi.fn().mockRejectedValue('denied');
+    const candidates = [
+      {
+        id: 'full',
+        user: { first_name: 'Ada', last_name: 'Lovelace', email: 'ada@test', avatar: 'a.png' },
+      },
+      { id: 'email', user: { first_name: '', last_name: '', email: 'mail@test' } },
+      { id: 'fallback-user', user: { first_name: '', last_name: '', email: '' } },
+      { id: 'named', name: 'Named candidate' },
+      { id: 'fallback-candidate' },
+    ];
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        navigate={navigate}
+        user={null}
+        agendaItem={{
+          ...props.agendaItem,
+          title: '',
+          description: null,
+          type: '',
+          duration: 10,
+          scheduled_time: '2026-01-01T10:00:00.000Z',
+          amendment: { id: 'amendment-1', reason: 'Fallback reason', group: { id: 'group-1' } },
+        }}
+        election={{
+          ...props.election,
+          title: null,
+          election_mode: 'single',
+          seat_count: undefined,
+          offline_tallies: undefined,
+          ballot_visibility: 'named',
+        }}
+        vote={{
+          id: 'vote-1',
+          title: '',
+          status: 'closed',
+          ballot_visibility: 'named',
+          offline_tallies: undefined,
+          closing_end_time: '2026-01-01T11:00:00.000Z',
+        }}
+        candidates={candidates}
+        choices={[
+          { id: 'yes', label: 'Yes', semantic_key: 'accept', order_index: 1 },
+          { id: 'fallback', label: '', semantic_key: undefined, order_index: 2 },
+        ]}
+        delegateTargetEvent={{ id: 'direct-event', title: 'Direct target' }}
+        toolbarAgendaItem={{ id: 'toolbar-item', title: 'Toolbar item' }}
+        toolbarAgendaItemTopNumber={2}
+        namedResultsTarget="election"
+        setNamedResultsTarget={setNamedResultsTarget}
+        offlineTallyPhase={null}
+        offlineTallyEntity={{
+          kind: 'election',
+          title: null,
+          choices: undefined,
+          tallies: undefined,
+          maxTotalVotes: undefined,
+          maxPerEntryVotes: undefined,
+          participantCount: undefined,
+          votesPerParticipant: undefined,
+        }}
+        verifyVotingPassword={verifyVotingPassword}
+        setPasswordError={setPasswordError}
+        setIsPasswordVerifying={setIsPasswordVerifying}
+      />
+    );
+
+    const contextProps = requireDefined(agendaItemContextCardMock.mock.calls.at(-1)?.[0]);
+    (contextProps.onAmendmentGroupClick as (id: string) => void)('group-2');
+    (contextProps.onAmendmentEventClick as (id: string) => void)('event-2');
+    const actionProps = requireDefined(agendaActionBarMock.mock.calls.at(-1)?.[0]);
+    (actionProps.onBackToAgenda as () => void)();
+    (actionProps.onOpenCurrentItem as () => void)();
+    expect(navigate).toHaveBeenCalledTimes(4);
+
+    expect(agendaElectionSectionMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        roleName: 'features.events.agenda.role',
+        delegateTargetEventId: 'direct-event',
+        delegateTargetEventTitle: 'Direct target',
+      })
+    );
+    const electionSectionProps = requireDefined(
+      agendaElectionSectionMock.mock.calls.at(-1)?.[0]
+    ) as unknown as { onOpenNamedResults: () => void };
+    electionSectionProps.onOpenNamedResults();
+    const voteSectionProps = requireDefined(agendaVoteSectionMock.mock.calls.at(-1)?.[0]);
+    (voteSectionProps.onOpenNamedResults as () => void)();
+    expect(setNamedResultsTarget).toHaveBeenCalledWith('election');
+    expect(setNamedResultsTarget).toHaveBeenCalledWith('vote');
+
+    const namedProps = requireDefined(namedBallotResultsDialogMock.mock.calls.at(-1)?.[0]);
+    (namedProps.onOpenChange as (open: boolean) => void)(true);
+    (namedProps.onOpenChange as (open: boolean) => void)(false);
+    expect(setNamedResultsTarget).toHaveBeenCalledWith(null);
+
+    expect(offlineTallyDialogMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        phase: 'indicative',
+        choices: [],
+        tallies: [],
+        maxTotalVotes: null,
+        maxPerEntryVotes: null,
+        participantCount: null,
+        votesPerParticipant: null,
+      })
+    );
+    expect(requireDefined(agendaActiveItemHeaderMock.mock.calls.at(-1)?.[0]).timing).toEqual(
+      expect.objectContaining({ startIsEstimated: true, endIsEstimated: true })
+    );
+
+    const dialogProps = requireDefined(voteCastDialogMock.mock.calls.at(-1)?.[0]);
+    expect(dialogProps.candidates).toEqual([
+      expect.objectContaining({ name: 'Ada Lovelace', avatar: 'a.png' }),
+      expect.objectContaining({ name: 'mail@test' }),
+      expect.objectContaining({ name: 'features.events.agenda.candidate' }),
+      expect.objectContaining({ name: 'Named candidate' }),
+      expect.objectContaining({ name: 'features.events.agenda.candidate' }),
+    ]);
+    expect(dialogProps.choices).toEqual([
+      { id: 'yes', label: 'Yes', semanticKey: 'accept' },
+      { id: 'fallback', label: 'features.agendas.fallbacks.choice', semanticKey: null },
+    ]);
+    await expect(
+      (dialogProps.onPasswordSubmit as (password: string) => Promise<void>)('bad')
+    ).rejects.toBe('denied');
+    expect(setPasswordError).toHaveBeenCalledWith(
+      'generated.inline.0010_verification_failed_e10d7e51'
+    );
+    expect(setIsPasswordVerifying).toHaveBeenNthCalledWith(1, true);
+    expect(setIsPasswordVerifying).toHaveBeenLastCalledWith(false);
+  });
+
+  it('derives tutorial change requests from persisted and discussion sources', () => {
+    const props = buildProps();
+    const persistedAgendaItem = {
+      ...props.agendaItem,
+      title: 'Different title',
+      type: 'amendment',
+      amendment_id: 'tutorial-amendment',
+      amendment: {
+        id: 'tutorial-amendment',
+        title: 'Klimafitte Euckenstraße: geschützter Radweg und Baumreihe',
+        change_requests: [
+          { id: 'persisted-empty', title: null, status: null, description: null, new_text: null },
+        ],
+      },
+    };
+    const { rerender } = render(
+      <EventAgendaItemDetailView
+        {...props}
+        event={{ ...props.event, title: 'Werkstatt Klimafitte Euckenstraße' }}
+        agendaItem={persistedAgendaItem}
+        election={null}
+      />
+    );
+    expect(document.body.textContent).toContain('Change Request 1');
+    expect(document.body.textContent).toContain('open');
+
+    rerender(
+      <EventAgendaItemDetailView
+        {...props}
+        language="en"
+        event={{ ...props.event, tutorial_run_id: 'tutorial-run' }}
+        agendaItem={{
+          ...persistedAgendaItem,
+          amendment: {
+            ...persistedAgendaItem.amendment,
+            change_requests: [],
+            discussions: [
+              {
+                changeRequestEntityId: 'entity-id',
+                id: 'discussion-id',
+                title: 'Discussion one',
+                description: 'Description one',
+                changeRequestStatus: 'accepted',
+                status: 'open',
+              },
+              { id: 'discussion-two', title: 'Discussion two', status: 'closed' },
+              {},
+            ],
+          },
+        }}
+        election={null}
+      />
+    );
+    expect(document.body.textContent).toContain('Discussion one');
+    expect(document.body.textContent).toContain('Discussion two');
+    expect(document.body.textContent).toContain('Change Request 3');
+  });
+
+  it('covers empty record fallbacks, non-sequence controls, and accreditation', () => {
+    const props = buildProps();
+    const actionBarHook = {
+      ...props.actionBarHook,
+      canManageAgenda: true,
+      hasVotingRight: true,
+      canJoinSpeakerList: true,
+    };
+    const emptyAgendaItem = {
+      id: 'empty-item',
+      title: undefined,
+      description: undefined,
+      type: undefined,
+      status: 'pending',
+      duration: undefined,
+      scheduled_time: null,
+      start_time: null,
+      end_time: null,
+      activated_at: null,
+      completed_at: null,
+      amendment_id: null,
+      amendment: null,
+    };
+    const { rerender } = render(
+      <EventAgendaItemDetailView
+        {...props}
+        agendaItem={emptyAgendaItem}
+        event={{ ...props.event, status: 'in-progress' }}
+        user={null}
+        election={null}
+        vote={null}
+        canManageAgenda
+        canJoinSpeakerList
+        hasVotingRight
+        toolbarVotingPhase="pending"
+        actionBarHook={actionBarHook}
+      />
+    );
+    expect(screen.queryByTestId('agenda-detail-results')).toBeNull();
+    expect(agendaActionBarMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        onStartVote: props.actionBarHook.handleStartVote,
+        onStartFinalVote: props.handleToolbarStartFinalVote,
+        onCloseFinalVote: props.handleToolbarCloseVote,
+        onJoinSpeakerList: props.actionBarHook.handleJoinSpeakerList,
+      })
+    );
+    expect(agendaActiveItemHeaderMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        title: 'Details',
+        description: undefined,
+        type: 'discussion',
+      })
+    );
+
+    rerender(
+      <EventAgendaItemDetailView
+        {...props}
+        agendaItem={{ ...emptyAgendaItem, type: 'accreditation' }}
+        event={{ ...props.event, status: 'in-progress' }}
+        election={null}
+        vote={{
+          id: 'anonymous-vote',
+          title: '',
+          ballot_visibility: 'anonymous',
+          offline_tallies: [],
+        }}
+        toolbarVotingPhase="closed"
+        actionBarHook={actionBarHook}
+      />
+    );
+    expect(screen.getByTestId('accreditation-section')).toBeTruthy();
+    expect(agendaVoteSectionMock.mock.calls.at(-1)?.[0].onOpenNamedResults).toBeUndefined();
+    expect(agendaActionBarMock.mock.calls.at(-1)?.[0].onStartVote).toBeUndefined();
+  });
+
+  it('covers active change-request list and selector fallbacks', () => {
+    const props = buildProps();
+    const crItem = { id: 'cr-one', vote: { id: 'vote-one' } };
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        language="en"
+        agendaItem={{
+          ...props.agendaItem,
+          title: undefined,
+          type: 'amendment',
+          amendment_id: 'amendment-one',
+          amendment: { id: 'amendment-one', title: undefined, editing_mode: 'suggest_event' },
+        }}
+        election={null}
+        branchSelectorBranches={[{ id: 'one' }, { id: 'two' }]}
+        selectedBranchId={undefined}
+        branchDiffCandidates={undefined}
+        defaultBranchDiffRightCandidateId={undefined}
+        onBranchChange={vi.fn()}
+        crDisplayItems={[crItem]}
+        isCRVotingActive
+        detailRuntimeStatus="in-progress"
+        hasVotingRight
+        canManageVoteSequence
+      />
+    );
+    expect(amendmentBranchSelectorSectionMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        selectedBranchId: null,
+        branchDiffCandidates: [],
+        defaultDiffRightCandidateId: null,
+      })
+    );
+    expect(changeRequestCardsListMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({ canVote: true, amendmentId: 'amendment-one' })
+    );
+  });
+
+  it('exposes each managed change-request toolbar phase and completion boundary', () => {
+    const props = buildProps();
+    const selected = { id: 'selected', vote: { id: 'selected-vote' } };
+    const common = {
+      ...props,
+      agendaItem: {
+        ...props.agendaItem,
+        amendment_id: 'amendment-one',
+        amendment: { id: 'amendment-one', editing_mode: 'event_final_closing_vote' },
+      },
+      election: null,
+      canManageVoteSequence: true,
+      detailRuntimeStatus: 'in-progress',
+      isCRToolbarActive: true,
+      isCRVotingActive: true,
+      selectedCRToolbarItem: selected,
+      selectedCRChoices: [{ id: 'yes', label: 'Yes' }],
+      canStartSelectedCRFinalVote: true,
+      effectiveClosingVoteItem: { id: 'closing', status: 'pending' },
+    };
+    const { rerender } = render(
+      <EventAgendaItemDetailView {...common} toolbarVotingPhase="pending" />
+    );
+    expect(agendaActionBarMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        onStartVote: props.handleToolbarStartVote,
+        onCompleteItem: undefined,
+      })
+    );
+
+    rerender(<EventAgendaItemDetailView {...common} toolbarVotingPhase="indication" />);
+    expect(agendaActionBarMock.mock.calls.at(-1)?.[0].onStartFinalVote).toBe(
+      props.handleToolbarStartFinalVote
+    );
+
+    rerender(
+      <EventAgendaItemDetailView
+        {...common}
+        toolbarVotingPhase="final"
+        effectiveClosingVoteItem={{ id: 'closing', status: 'completed' }}
+      />
+    );
+    expect(agendaActionBarMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        onCloseFinalVote: props.handleToolbarCloseVote,
+        onCompleteItem: props.agendaNav.completeCurrentItem,
+      })
+    );
+  });
+
+  it('marks a closed tutorial election result and localizes its named-results title', () => {
+    const props = buildProps();
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        language="en"
+        event={{ ...props.event, tutorial_run_id: 'tutorial-run' }}
+        election={{ ...props.election, status: 'closed', ballot_visibility: 'named' }}
+        namedResultsTarget="election"
+      />
+    );
+
+    expect(
+      document.querySelector('[data-tutorial-anchor="tutorial-election-result"]')
+    ).not.toBeNull();
+    expect(namedBallotResultsDialogMock.mock.calls.at(-1)?.[0].title).toBe('District Chair');
   });
 });

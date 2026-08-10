@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildPvrRelationshipsForConflictCheck,
   canActivateHierarchyLink,
   getHierarchyLinkConflictUserIds,
   getHierarchyLinkDuplicatePathConflicts,
+  isGroupLinkRelationship,
 } from '../hierarchyLinkHelpers';
 import type { NormalizedGroupRelationship } from '../../types/network.types';
 
@@ -46,6 +48,81 @@ const overlappingMemberships = [
 ];
 
 describe('hierarchyLinkHelpers', () => {
+  it('recognizes supported rights and normalizes legacy structural rows', () => {
+    expect(isGroupLinkRelationship(rel({ id: 'supported', with_right: 'informationRight' }))).toBe(
+      true
+    );
+    expect(isGroupLinkRelationship(rel({ id: 'missing', with_right: null }))).toBe(false);
+    expect(
+      isGroupLinkRelationship(rel({ id: 'unknown', with_right: 'unknownRight' as never }))
+    ).toBe(false);
+
+    const rows = buildPvrRelationshipsForConflictCheck([
+      rel({
+        id: 'peer',
+        status: 'active',
+        relationship_type: null,
+        connection_type: 'peer',
+        parent_group_id: null,
+        child_group_id: null,
+      }),
+      rel({
+        id: 'parent-fallback',
+        status: 'active',
+        relationship_type: null,
+        group_id: 'parent',
+        related_group_id: 'child',
+        parent_group_id: 'parent',
+        child_group_id: 'child',
+        with_right: null,
+        initiator_group_id: null,
+        created_at: 0,
+      }),
+      rel({
+        id: 'duplicate',
+        status: 'active',
+        relationship_type: null,
+        group_id: 'child',
+        related_group_id: 'parent',
+        parent_group_id: 'parent',
+        child_group_id: 'child',
+      }),
+      {
+        ...rel({
+          id: 'second-pair',
+          status: 'active',
+          group_id: 'parent-2',
+          related_group_id: 'child-2',
+        }),
+        created_at: null as never,
+      },
+    ]);
+
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      id: 'parent-fallback',
+      relationship_type: 'parent',
+      with_right: null,
+      status: 'active',
+      initiator_group_id: null,
+      created_at: 0,
+    });
+    expect(rows[1].created_at).toBe(0);
+  });
+
+  it('returns no conflicts for peer relationships', () => {
+    const peer = rel({
+      id: 'peer',
+      relationship_type: 'sibling',
+      connection_type: 'peer',
+      parent_group_id: null,
+      child_group_id: null,
+    });
+    expect(getHierarchyLinkConflictUserIds(peer, [], [])).toEqual([]);
+    expect(getHierarchyLinkDuplicatePathConflicts(peer, [])).toEqual([]);
+    expect(buildPvrRelationshipsForConflictCheck([], peer)).toEqual([]);
+  });
+
   it('detects conflicts for passive voting right links', () => {
     const relationships = [
       rel({ id: 'existing', status: 'active', group_id: 'parent', related_group_id: 'base-a' }),

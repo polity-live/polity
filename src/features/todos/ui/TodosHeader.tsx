@@ -22,6 +22,8 @@ export function TodosHeader({ viewMode, setViewMode }: TodosHeaderProps) {
             variant={viewMode === 'list' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setViewMode('list')}
+            aria-label={t('features.todos.view.list')}
+            data-action-id="todos.header.view.list"
           >
             <LayoutList className="h-4 w-4" />
           </Button>
@@ -29,16 +31,18 @@ export function TodosHeader({ viewMode, setViewMode }: TodosHeaderProps) {
             variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setViewMode('kanban')}
+            aria-label={t('features.todos.view.kanban')}
+            data-action-id="todos.header.view.kanban"
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
         </div>
-        <Link to="/create/todo">
-          <Button>
+        <Button asChild data-action-id="todos.header.create">
+          <Link to="/create/todo" data-action-id="todos.header.create">
             <Plus className="mr-2 h-4 w-4" />
             {t('features.todos.create.newTodo')}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
     </>
   );

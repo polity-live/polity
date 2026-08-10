@@ -103,12 +103,14 @@ export function AmendmentBranchSelectorSection({
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
           <Select
+            data-action-id="amendments.branches.select.current"
             value={selectedBranchId ?? (includeAllBranchesOption ? 'all' : 'main')}
             onValueChange={branchId =>
               onBranchChange(branchId === 'main' || branchId === 'all' ? null : branchId)
             }
           >
             <SelectTrigger
+              data-action-id="amendments.branches.select.current"
               className="w-full sm:w-48"
               aria-label={t('features.amendments.text.branchSelector.selectAria')}
             >
@@ -116,7 +118,11 @@ export function AmendmentBranchSelectorSection({
             </SelectTrigger>
             <SelectContent className="w-[min(48rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]">
               {includeAllBranchesOption ? (
-                <SelectItem value="all" textValue={resolvedAllBranchesLabel}>
+                <SelectItem
+                  data-action-id="amendments.branches.select.all"
+                  value="all"
+                  textValue={resolvedAllBranchesLabel}
+                >
                   <div className="flex min-w-0 flex-col gap-1">
                     <span className="truncate">{resolvedAllBranchesLabel}</span>
                     <span className="text-muted-foreground text-xs">
@@ -129,12 +135,17 @@ export function AmendmentBranchSelectorSection({
                 const branchLabel = getBranchPathLabel(branch);
                 const eventStep = getBranchDisplayEvent(branch);
                 const eventCount = eventStep?.event_id
-                  ? (eventIdCounts.get(eventStep.event_id) ?? 0)
+                  ? (eventIdCounts.get(eventStep.event_id) as number)
                   : 0;
                 const openChangeRequests = countOpenChangeRequests(branch);
 
                 return (
-                  <SelectItem key={branch.id} value={branch.id} textValue={branchLabel}>
+                  <SelectItem
+                    key={branch.id}
+                    data-action-id="amendments.branches.select.path-option"
+                    value={branch.id}
+                    textValue={branchLabel}
+                  >
                     <div className="flex min-w-0 flex-col gap-1">
                       <span className="truncate">{branchLabel}</span>
                       <span className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
@@ -167,6 +178,7 @@ export function AmendmentBranchSelectorSection({
           {showBranchDiff ? (
             <CollapsibleTrigger asChild>
               <Button
+                data-action-id="amendments.branches.toggle.diff"
                 variant="outline"
                 size="sm"
                 className="w-full justify-between sm:w-auto"

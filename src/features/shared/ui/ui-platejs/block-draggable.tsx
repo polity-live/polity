@@ -118,15 +118,7 @@ function Draggable(props: PlateElementProps) {
                 isInColumn && 'mr-1.5'
               )}
             >
-              <Button
-                ref={handleRef}
-                variant="ghost"
-                className="h-6 w-4.5 p-0"
-                data-block-id={blockId}
-                data-plate-prevent-deselect
-              >
-                <DragHandle />
-              </Button>
+              <DragHandle blockId={blockId} handleRef={handleRef} />
             </div>
           </div>
         </Gutter>
@@ -182,7 +174,13 @@ function Gutter({ children, className, ...props }: React.ComponentProps<'div'>) 
   );
 }
 
-const DragHandle = React.memo(function DragHandle() {
+const DragHandle = React.memo(function DragHandle({
+  blockId,
+  handleRef,
+}: {
+  blockId?: string;
+  handleRef: React.Ref<HTMLButtonElement>;
+}) {
   const editor = useEditorRef();
   const element = useElement();
   const { t } = useTranslation();
@@ -190,15 +188,20 @@ const DragHandle = React.memo(function DragHandle() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div
-          className="flex size-full items-center justify-center"
+        <Button
+          ref={handleRef}
+          type="button"
+          variant="ghost"
+          className="h-6 w-4.5 p-0"
+          data-block-id={blockId}
+          data-plate-prevent-deselect
+          aria-label={t('plateJs.toolbar.dragToMove')}
           onClick={() => {
             editor.getApi(BlockSelectionPlugin).blockSelection.set(element.id as string);
           }}
-          role="button"
         >
-          <GripVertical className="text-muted-foreground" />
-        </div>
+          <GripVertical aria-hidden="true" className="text-muted-foreground" />
+        </Button>
       </TooltipTrigger>
       <TooltipContent>{t('plateJs.toolbar.dragToMove')}</TooltipContent>
     </Tooltip>

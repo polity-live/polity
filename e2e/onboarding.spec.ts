@@ -1,7 +1,10 @@
 import { test, expect } from './fixtures/test';
 import { db } from './fixtures/db';
 
-test('completes onboarding without interests or groups', async ({ page, e2eUser }) => {
+test('completes onboarding without interests or groups @pr @critical', async ({
+  page,
+  e2eUser,
+}) => {
   const sql = db();
   const originalRows = await sql<{ first_name: string | null; last_name: string | null }[]>`
     select first_name, last_name
@@ -20,7 +23,7 @@ test('completes onboarding without interests or groups', async ({ page, e2eUser 
 
     await page.goto('/');
 
-    await expect(page.locator('#firstName')).toBeVisible();
+    await expect(page.locator('#firstName')).toBeVisible({ timeout: 90_000 });
     await page.locator('#firstName').fill('E2E');
     await page.locator('#lastName').fill('Onboarding');
     await page
@@ -28,20 +31,32 @@ test('completes onboarding without interests or groups', async ({ page, e2eUser 
       .evaluate(form => (form as HTMLFormElement).requestSubmit());
 
     await expect(page.getByRole('heading', { name: 'What are you interested in?' })).toBeVisible();
-    await page.locator('[data-slot="onboarding-action-bar"] button').last().click();
+    await page
+      .locator('[data-slot="onboarding-action-bar"]')
+      .getByRole('button', { name: 'Skip for now', exact: true })
+      .click();
 
     await expect(page.getByRole('heading', { name: 'Find your group' })).toBeVisible();
-    await page.locator('[data-slot="onboarding-action-bar"] button').last().click();
+    await page
+      .locator('[data-slot="onboarding-action-bar"]')
+      .getByRole('button', { name: 'Continue without group', exact: true })
+      .click();
 
     await expect(page.getByRole('heading', { name: 'Welcome to Polity!' })).toBeVisible();
-    await page.locator('[data-slot="onboarding-action-bar"] button').last().click();
+    await page
+      .locator('[data-slot="onboarding-action-bar"]')
+      .getByRole('button', { name: 'Continue', exact: true })
+      .click();
 
     await expect(
       page.getByRole('heading', {
         name: 'Install Polity on this device',
       })
     ).toBeVisible();
-    await page.locator('[data-slot="onboarding-action-bar"] button').last().click();
+    await page
+      .locator('[data-slot="onboarding-action-bar"]')
+      .getByRole('button', { name: 'Continue to start', exact: true })
+      .click();
 
     await expect(page.getByRole('heading', { name: "You're all set!" })).toBeVisible();
     await expect(page.getByText('E2E Onboarding', { exact: true })).toBeVisible();

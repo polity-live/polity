@@ -124,10 +124,20 @@ export function PqlFilterBuilderDialogView<TItem, TFieldKey extends string>({
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            data-action-id="pql.filter-builder.cancel"
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+          >
             {translateText('generated.inline.0065_cancel_77dfd213')}
           </Button>
-          <Button type="button" onClick={onSave} disabled={!isValid}>
+          <Button
+            type="button"
+            data-action-id="pql.filter-builder.save"
+            onClick={onSave}
+            disabled={!isValid}
+          >
             {translateText('generated.inline.1093_save_filter_f7f579af')}
           </Button>
         </DialogFooter>

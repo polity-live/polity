@@ -28,7 +28,10 @@ export async function transitionProcessBranchToEventMode({
   const branch =
     providedBranch ??
     (await tx.run(zql.amendment_process_branch.where('id', processBranchId).one()));
-  if (!branch || branch.editing_mode === 'passed' || branch.editing_mode === 'rejected') {
+  if (!branch) {
+    return { changed: false, finalizedInternalChangeRequests: false };
+  }
+  if (branch.editing_mode === 'passed' || branch.editing_mode === 'rejected') {
     return { changed: false, finalizedInternalChangeRequests: false };
   }
 

@@ -27,7 +27,7 @@ export interface MobileDecisionCardProps {
   className?: string;
 }
 
-function getInitials(name: string) {
+export function getMobileDecisionInitials(name: string) {
   return (
     name
       .split(' ')
@@ -38,7 +38,7 @@ function getInitials(name: string) {
   );
 }
 
-function normalizePercent(value: number | null | undefined) {
+export function normalizeMobileDecisionPercent(value: number | null | undefined) {
   if (!Number.isFinite(value ?? 0)) {
     return 0;
   }
@@ -46,11 +46,14 @@ function normalizePercent(value: number | null | undefined) {
   return Math.max(0, Math.min(100, value ?? 0));
 }
 
-function formatCountPercent(count: number | null | undefined, percent: number | null | undefined) {
-  return `${Math.round(count ?? 0)} · ${normalizePercent(percent).toFixed(0)}%`;
+export function formatMobileDecisionCountPercent(
+  count: number | null | undefined,
+  percent: number | null | undefined
+) {
+  return `${Math.round(count ?? 0)} · ${normalizeMobileDecisionPercent(percent).toFixed(0)}%`;
 }
 
-function getElectionCandidateRows(decision: DecisionItem) {
+export function getMobileElectionCandidateRows(decision: DecisionItem) {
   if (decision.type !== 'election' || !decision.candidates?.length) {
     return [];
   }
@@ -117,9 +120,9 @@ function getElectionCandidateRows(decision: DecisionItem) {
     .slice(0, 3);
 }
 
-function ElectionCandidateRows({ decision }: { decision: DecisionItem }) {
+export function MobileElectionCandidateRows({ decision }: { decision: DecisionItem }) {
   const [showIndicationResults, setShowIndicationResults] = useState(false);
-  const rows = getElectionCandidateRows(decision);
+  const rows = getMobileElectionCandidateRows(decision);
   if (!rows.length) return null;
 
   const canToggleIndicationResults =
@@ -139,6 +142,7 @@ function ElectionCandidateRows({ decision }: { decision: DecisionItem }) {
           <BadgeControl asChild variant={showIndicationResults ? 'secondary' : 'outline'} size="xs">
             <button
               type="button"
+              data-action-id="decision-terminal.mobile.indication-results.toggle"
               onClick={event => {
                 event.stopPropagation();
                 setShowIndicationResults(current => !current);
@@ -172,7 +176,7 @@ function ElectionCandidateRows({ decision }: { decision: DecisionItem }) {
             <Avatar className="h-8 w-8 shrink-0 rounded-md">
               <AvatarImage src={candidate.avatarUrl} alt={candidate.label} />
               <AvatarFallback className="rounded-md text-xs font-semibold">
-                {getInitials(candidate.label)}
+                {getMobileDecisionInitials(candidate.label)}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
@@ -187,7 +191,7 @@ function ElectionCandidateRows({ decision }: { decision: DecisionItem }) {
               </div>
             </div>
             <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
-              {formatCountPercent(candidate.value, candidate.percent)}
+              {formatMobileDecisionCountPercent(candidate.value, candidate.percent)}
             </span>
           </div>
           <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
@@ -204,11 +208,16 @@ function ElectionCandidateRows({ decision }: { decision: DecisionItem }) {
               <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
                 <div
                   className="bg-brand/35 h-full rounded-full"
-                  style={{ width: `${normalizePercent(candidate.indicationPercent)}%` }}
+                  style={{
+                    width: `${normalizeMobileDecisionPercent(candidate.indicationPercent)}%`,
+                  }}
                 />
               </div>
               <span className="text-muted-foreground text-xs tabular-nums">
-                {formatCountPercent(candidate.indicationValue, candidate.indicationPercent)}
+                {formatMobileDecisionCountPercent(
+                  candidate.indicationValue,
+                  candidate.indicationPercent
+                )}
               </span>
             </div>
           ) : null}
@@ -231,11 +240,10 @@ export function MobileDecisionCard({ decision, onClick, className }: MobileDecis
   return (
     <article
       className={cn(
-        'bg-card cursor-pointer rounded-lg border p-3 shadow-sm',
+        'bg-card rounded-lg border p-3 shadow-sm',
         decision.isUrgent && !decision.isClosed && 'border-destructive/50 bg-destructive/5',
         className
       )}
-      onClick={onClick}
       data-testid="decision-card"
       data-swipeable="true"
     >
@@ -282,7 +290,7 @@ export function MobileDecisionCard({ decision, onClick, className }: MobileDecis
 
       {hasElectionCandidates ? (
         <div className="mt-2 mb-2 space-y-1.5">
-          <ElectionCandidateRows decision={decision} />
+          <MobileElectionCandidateRows decision={decision} />
           {!decision.isClosed && <TrendIndicator trend={decision.trend} compact />}
         </div>
       ) : votes ? (
@@ -298,6 +306,7 @@ export function MobileDecisionCard({ decision, onClick, className }: MobileDecis
       ) : null}
 
       <Button
+        data-action-id="decision-terminal.mobile.decision.open"
         variant="outline"
         size="sm"
         className="mt-1 h-8 w-full justify-between rounded-md"

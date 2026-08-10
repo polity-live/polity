@@ -131,12 +131,12 @@ export function TodosPageView({
                         })}
               </p>
               {selectedTab !== 'archived' ? (
-                <Link to="/create/todo">
-                  <Button>
+                <Button asChild data-action-id="todos.list.empty.create">
+                  <Link to="/create/todo" data-action-id="todos.list.empty.create">
                     <Plus className="mr-2 h-4 w-4" />
                     {t('features.todos.create.createFirstTodo')}
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               ) : null}
             </CardContent>
           </Card>

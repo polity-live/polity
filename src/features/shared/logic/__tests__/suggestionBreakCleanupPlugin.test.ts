@@ -59,6 +59,12 @@ function createLineBreakSuggestionEditor(isSuggesting: boolean) {
 }
 
 describe('SuggestionBreakCleanupPlugin', () => {
+  it('keeps a normal break result when the editor has no selection', () => {
+    const editor = createSuggestionEditor(false);
+    editor.selection = null;
+    expect(() => editor.tf.insertBreak()).not.toThrow();
+  });
+
   it('removes inherited suggestion marks from a normal line break after suggestion mode', () => {
     const editor = createSuggestionEditor(false);
     editor.selection = {

@@ -28,6 +28,7 @@ function ThemeCard({
       variant="outline"
       aria-pressed={selected}
       onClick={onSelect}
+      data-action-id="users.appearance.theme.select"
       className={cn(
         'h-auto min-h-32 items-stretch justify-start overflow-hidden p-0 text-left whitespace-normal',
         selected && 'border-primary ring-primary/25 ring-2'

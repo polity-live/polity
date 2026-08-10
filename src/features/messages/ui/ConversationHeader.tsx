@@ -106,20 +106,24 @@ export function ConversationHeader({
           placeholder={t('features.messages.ai.renameConversationPlaceholder')}
         />
         <Button
+          data-action-id="messages.conversation.rename.save"
           type="button"
           variant="ghost"
           size="icon"
           className="h-7 w-7"
           onClick={() => void handleSaveRename()}
+          aria-label={t('common.actions.save')}
         >
           <Check className="h-4 w-4" />
         </Button>
         <Button
+          data-action-id="messages.conversation.rename.cancel"
           type="button"
           variant="ghost"
           size="icon"
           className="h-7 w-7"
           onClick={handleCancelRename}
+          aria-label={t('common.actions.cancel')}
         >
           <X className="h-4 w-4" />
         </Button>
@@ -127,7 +131,11 @@ export function ConversationHeader({
     ) : (
       <div className="flex min-w-0 items-center gap-2">
         {entityHref ? (
-          <Link to={entityHref} className="min-w-0 hover:underline">
+          <Link
+            to={entityHref}
+            data-action-id="messages.conversation.entity-title.open"
+            className="min-w-0 hover:underline"
+          >
             <h3 className="truncate font-semibold">{display.name}</h3>
           </Link>
         ) : (
@@ -140,6 +148,7 @@ export function ConversationHeader({
                 <TooltipTrigger asChild>
                   <PopoverTrigger asChild>
                     <Button
+                      data-action-id="messages.conversation.ai-information.open"
                       type="button"
                       variant="ghost"
                       size="icon"
@@ -159,6 +168,7 @@ export function ConversationHeader({
               </PopoverContent>
             </Popover>
             <Button
+              data-action-id="messages.conversation.rename.open"
               type="button"
               variant="ghost"
               size="icon"
@@ -179,7 +189,12 @@ export function ConversationHeader({
   const identityContent = (
     <>
       {entityHref && !isEditingName ? (
-        <Link to={entityHref} className="flex-shrink-0">
+        <Link
+          to={entityHref}
+          data-action-id="messages.conversation.entity-avatar.open"
+          aria-label={display.name}
+          className="flex-shrink-0"
+        >
           {avatarContent}
         </Link>
       ) : (
@@ -189,6 +204,7 @@ export function ConversationHeader({
         {titleContent}
         {display.isCollective ? (
           <Button
+            data-action-id="messages.conversation.members.open"
             type="button"
             variant="link"
             onClick={onMembersClick}

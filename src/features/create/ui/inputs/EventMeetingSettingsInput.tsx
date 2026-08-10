@@ -34,6 +34,7 @@ export function EventMeetingSettingsInput({
         <FormControlLabel>{labels.format}</FormControlLabel>
         <div className="flex flex-wrap gap-2">
           <Button
+            data-action-id="create.event-meeting.select.one-on-one"
             type="button"
             variant={meetingType === 'one-on-one' ? 'default' : 'outline'}
             onClick={() => onMeetingTypeChange('one-on-one')}
@@ -42,6 +43,7 @@ export function EventMeetingSettingsInput({
             {labels.oneOnOne}
           </Button>
           <Button
+            data-action-id="create.event-meeting.select.public"
             type="button"
             variant={meetingType === 'public-meeting' ? 'default' : 'outline'}
             onClick={() => onMeetingTypeChange('public-meeting')}

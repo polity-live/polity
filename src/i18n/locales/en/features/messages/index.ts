@@ -66,6 +66,7 @@ export const messagesTranslations = {
     send: 'Send',
     cancel: 'Cancel',
     sending: 'Sending...',
+    removeAttachment: 'Remove attachment',
   },
   conversation: {
     title: 'Conversation',
@@ -121,6 +122,7 @@ export const messagesTranslations = {
     information: 'About AI responses',
     searchSettings: 'Search tools and skills…',
     noSettingsFound: 'No matching tools or skills found.',
+    removeSkill: 'Remove skill',
     openResult: 'Open',
     showMoreResults: 'Show {{count}} more',
     showFewerResults: 'Show fewer',

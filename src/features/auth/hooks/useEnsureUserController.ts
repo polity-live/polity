@@ -18,6 +18,7 @@ export function useEnsureUserController() {
   return {
     isLoading,
     hasUser: Boolean(user),
+    zeroConnectionState: connectionState.name,
     retry,
     signOut,
     connectionStatus:

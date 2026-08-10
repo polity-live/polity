@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { createRef } from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ConversationListView } from '../ConversationListView';
@@ -60,6 +60,9 @@ describe('ConversationListView', () => {
   });
 
   it('hides the route title and places rounded-corner conversation actions right of search', () => {
+    const onConversationFilterChange = vi.fn();
+    const onNewAiConversationClick = vi.fn();
+    const onNewConversationClick = vi.fn();
     const { container } = render(
       <ConversationListView
         className=""
@@ -68,10 +71,10 @@ describe('ConversationListView', () => {
         conversations={[]}
         currentUserId="user-1"
         filterButtons={['all']}
-        onConversationFilterChange={vi.fn()}
+        onConversationFilterChange={onConversationFilterChange}
         onDeleteConversationClick={vi.fn()}
-        onNewAiConversationClick={vi.fn()}
-        onNewConversationClick={vi.fn()}
+        onNewAiConversationClick={onNewAiConversationClick}
+        onNewConversationClick={onNewConversationClick}
         onSearchChange={vi.fn()}
         onSelectConversation={vi.fn()}
         virtualItems={[]}
@@ -115,6 +118,18 @@ describe('ConversationListView', () => {
     expect(listHeader?.className).toContain('md:px-6');
     expect(listContent?.className).toContain('py-4');
     expect(listContent?.className).toContain('md:p-4');
+
+    expect(startButton.getAttribute('data-action-id')).toBe('messages.conversation.create.open');
+    expect(aiButton.getAttribute('data-action-id')).toBe('messages.ai-conversation.create');
+    fireEvent.click(startButton);
+    fireEvent.click(aiButton);
+    fireEvent.click(screen.getByRole('button', { name: 'All' }));
+    expect(onNewConversationClick).toHaveBeenCalledOnce();
+    expect(onNewAiConversationClick).toHaveBeenCalledOnce();
+    expect(onConversationFilterChange).toHaveBeenCalledWith('all');
+    expect(screen.getByRole('button', { name: 'All' }).getAttribute('data-action-id')).toBe(
+      'messages.conversation.filter.select'
+    );
   });
 
   it('renders zero-virtual extents as content spacers', () => {

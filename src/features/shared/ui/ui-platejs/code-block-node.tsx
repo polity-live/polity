@@ -140,7 +140,7 @@ function CodeBlockCombobox() {
 function CopyButton({
   value,
   ...props
-}: { value: (() => string) | string } & Omit<React.ComponentProps<typeof Button>, 'value'>) {
+}: { value: () => string } & Omit<React.ComponentProps<typeof Button>, 'value'>) {
   const [hasCopied, setHasCopied] = React.useState(false);
 
   React.useEffect(() => {
@@ -152,7 +152,7 @@ function CopyButton({
   return (
     <Button
       onClick={() => {
-        void navigator.clipboard.writeText(typeof value === 'function' ? value() : value);
+        void navigator.clipboard.writeText(value());
         setHasCopied(true);
       }}
       {...props}

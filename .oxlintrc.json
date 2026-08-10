@@ -163,6 +163,18 @@
       }
     },
     {
+      "files": [
+        "**/__tests__/**/*",
+        "**/*.test.*",
+        "**/*.spec.*",
+        "e2e/**/*",
+        "supabase/tests/**/*"
+      ],
+      "rules": {
+        "typescript/no-non-null-assertion": "off"
+      }
+    },
+    {
       "files": ["public/custom-sw.js"],
       "env": {
         "serviceworker": true

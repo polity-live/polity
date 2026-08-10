@@ -59,6 +59,56 @@ function hasButtonText(text: string) {
 }
 
 describe('WorkflowEditor', () => {
+  it('selects workflow graph start and target modes through stable controls', async () => {
+    render(
+      <WorkflowEditor
+        currentGroupId="current-group"
+        currentGroupName="Current Group"
+        allRelationships={[]}
+        isOpen
+        editingWorkflow={null}
+        draftStartGroupId="current-group"
+        setDraftStartGroupId={vi.fn()}
+        draftName="Draft process"
+        setDraftName={vi.fn()}
+        draftDescription=""
+        setDraftDescription={vi.fn()}
+        draftIsDefaultEntry={false}
+        setDraftIsDefaultEntry={vi.fn()}
+        draftSteps={[]}
+        availableGroups={[{ id: 'current-group', name: 'Current Group' }]}
+        availableWorkflows={[]}
+        onClose={vi.fn()}
+        onAddStep={vi.fn()}
+        onUpdateStep={vi.fn()}
+        onRemoveStep={vi.fn()}
+        onMoveStep={vi.fn()}
+        onSave={vi.fn()}
+      />
+    );
+
+    fireEvent.mouseDown(
+      document.querySelector('[data-action-id="network.workflow-editor.builder.graph.select"]')!,
+      { button: 0, ctrlKey: false }
+    );
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-action-id="network.workflow-editor.graph.start.select"]')
+      ).toBeTruthy()
+    );
+    const start = document.querySelector(
+      '[data-action-id="network.workflow-editor.graph.start.select"]'
+    )!;
+    const target = document.querySelector(
+      '[data-action-id="network.workflow-editor.graph.target.select"]'
+    )!;
+
+    fireEvent.click(start);
+    expect(start.className).toContain('bg-primary');
+    fireEvent.click(target);
+    expect(target.className).toContain('bg-primary');
+  });
+
   it('reuses the shared workflow visualization for the current flow preview', () => {
     render(
       <WorkflowEditor

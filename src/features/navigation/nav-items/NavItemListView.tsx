@@ -67,7 +67,7 @@ function NavigationItemIcon({ item, className }: { item: any; className: string 
         <BadgeControl
           aria-hidden="true"
           data-slot="navigation-item-badge"
-          className="ring-background pointer-events-none absolute top-0 right-0 flex h-4 min-w-4 translate-x-[65%] -translate-y-[55%] items-center justify-center px-0.5 py-0 leading-none tabular-nums ring-2"
+          className="ring-background bg-foreground text-background pointer-events-none absolute top-0 right-0 flex h-4 min-w-4 translate-x-[65%] -translate-y-[55%] items-center justify-center px-0.5 py-0 leading-none tabular-nums ring-2"
           shape="pill"
           size="tiny"
           variant="default"
@@ -130,22 +130,29 @@ export function NavItemListView({
                   shortcut={getItemShortcut(item)}
                   side="top"
                 >
-                  <Link
-                    to={item.href || '#'}
-                    preload="intent"
-                    className="inline-block"
-                    data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className={cn(
+                      'hover:bg-accent relative h-24 w-24 flex-shrink-0 flex-col gap-2',
+                      isItemActive(item, currentRoute, isPrimary) &&
+                        'bg-accent text-accent-foreground'
+                    )}
+                    data-action-id="navigation.item.overlay.compact.open"
                   >
-                    <Button
+                    <Link
+                      to={item.href || '#'}
+                      preload="intent"
+                      className="inline-block"
                       aria-label={item.label}
-                      variant="ghost"
-                      disabled={loadingItem === item.id}
-                      className={cn(
-                        'hover:bg-accent relative h-24 w-24 flex-shrink-0 flex-col gap-2',
-                        isItemActive(item, currentRoute, isPrimary) &&
-                          'bg-accent text-accent-foreground'
-                      )}
+                      aria-disabled={loadingItem === item.id}
+                      data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
+                      data-action-id="navigation.item.overlay.compact.open"
                       onClick={e => {
+                        if (loadingItem === item.id) {
+                          e.preventDefault();
+                          return;
+                        }
                         if (item.onClick) {
                           e.preventDefault();
                           handleItemClick(item);
@@ -164,8 +171,8 @@ export function NavItemListView({
                         />
                       )}
                       <span className="text-sm">{item.label}</span>
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </NavigationItemTooltip>
               ))}
             </div>
@@ -179,22 +186,29 @@ export function NavItemListView({
                 shortcut={getItemShortcut(item)}
                 side="top"
               >
-                <Link
-                  to={item.href || '#'}
-                  preload="intent"
-                  className="inline-block"
-                  data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
+                <Button
+                  asChild
+                  variant="ghost"
+                  className={cn(
+                    'hover:bg-accent relative h-24 w-24 flex-shrink-0 flex-col gap-2',
+                    isItemActive(item, currentRoute, isPrimary) &&
+                      'bg-accent text-accent-foreground'
+                  )}
+                  data-action-id="navigation.item.overlay.grid.open"
                 >
-                  <Button
+                  <Link
+                    to={item.href || '#'}
+                    preload="intent"
+                    className="inline-block"
                     aria-label={item.label}
-                    variant="ghost"
-                    disabled={loadingItem === item.id}
-                    className={cn(
-                      'hover:bg-accent relative h-24 w-24 flex-shrink-0 flex-col gap-2',
-                      isItemActive(item, currentRoute, isPrimary) &&
-                        'bg-accent text-accent-foreground'
-                    )}
+                    aria-disabled={loadingItem === item.id}
+                    data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
+                    data-action-id="navigation.item.overlay.grid.open"
                     onClick={e => {
+                      if (loadingItem === item.id) {
+                        e.preventDefault();
+                        return;
+                      }
                       if (item.onClick) {
                         e.preventDefault();
                         handleItemClick(item);
@@ -213,8 +227,8 @@ export function NavItemListView({
                       />
                     )}
                     <span className="text-sm">{item.label}</span>
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </NavigationItemTooltip>
             ))
           )}
@@ -273,6 +287,7 @@ export function NavItemListView({
                     item.onClick();
                   }
                 }}
+                data-action-id="navigation.item.icon.open"
               >
                 <NavigationItemIcon
                   item={item}
@@ -337,20 +352,22 @@ export function NavItemListView({
               shortcut={getItemShortcut(item)}
               side="right"
             >
-              <Link
-                to={item.href || '#'}
-                preload="intent"
-                className={linkClasses}
-                data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
+              <Button
+                asChild
+                variant="ghost"
+                className={cn(
+                  buttonClasses,
+                  isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
+                )}
+                data-action-id="navigation.item.labeled.open"
               >
-                <Button
+                <Link
+                  to={item.href || '#'}
+                  preload="intent"
+                  className={linkClasses}
                   aria-label={item.label}
-                  variant="ghost"
-                  className={cn(
-                    buttonClasses,
-                    isItemActive(item, currentRoute, isPrimary) &&
-                      'bg-accent text-accent-foreground'
-                  )}
+                  data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
+                  data-action-id="navigation.item.labeled.open"
                   onClick={e => {
                     if (item.onClick) {
                       e.preventDefault();
@@ -366,8 +383,8 @@ export function NavItemListView({
                     )}
                   />
                   <span className={labelClasses}>{item.label}</span>
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </NavigationItemTooltip>
           ))}
         </div>

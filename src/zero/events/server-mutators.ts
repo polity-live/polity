@@ -430,6 +430,27 @@ async function assertEventStatusTransitionEligibility(
   });
 }
 
+export const eventServerMutatorInternals = {
+  addEventParticipantRoleLink,
+  syncEventParticipantRoleLinks,
+  sameStringSet,
+  eventParticipantRoleIds,
+  eventRolesWithRights,
+  isOrganizerLikeRole,
+  eventRoleSummary,
+  hasOrganizerLikeRole,
+  notifyActiveEventParticipantRoleChange,
+  isConfirmedDelegateForEvent,
+  isActiveMemberOfGroup,
+  assertEventParticipationEligibility,
+  isGuestInviteForEvent,
+  isAssemblyEventType,
+  normalizeOfflineParticipantChannelsForEvent,
+  assertAttendanceModeCanChange,
+  assertDelegateAssemblyGroupEligibility,
+  assertEventStatusTransitionEligibility,
+};
+
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const eventServerMutators = {
   create: defineMutator(eventCreateSchema, async ({ tx, ctx, args }) => {
@@ -505,7 +526,7 @@ export const eventServerMutators = {
 
     const defaultInviteRole = eventRoleTemplates.find(roleDef => roleDef.default_invite_role);
     const defaultInviteRoleId = defaultInviteRole
-      ? (roleIds[defaultInviteRole.name] ?? null)
+      ? roleIds[defaultInviteRole.name]
       : (roleIds.Participant ?? null);
 
     const creatorParticipation = await tx.run(

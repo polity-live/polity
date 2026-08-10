@@ -56,4 +56,90 @@ describe('CivicMotionTimeline', () => {
     expect(timeline.style.getPropertyValue('--civic-motion-timeline-current-left')).toBe('50%');
     expect(timeline.style.getPropertyValue('--civic-motion-timeline-end-left')).toBe('83.333%');
   });
+
+  it('renders nothing for an empty timeline', () => {
+    const { container } = render(<CivicMotionTimeline items={[]} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('derives the active item and renders all optional item and branch copy', () => {
+    const { container } = render(
+      <CivicMotionTimeline
+        compact
+        className="timeline"
+        items={[
+          {
+            description: 'Completed description',
+            id: 'complete',
+            isComplete: true,
+            label: 'Complete',
+            tone: 'success',
+            value: 'Done',
+          },
+          { id: 'active', isActive: true, label: 'Active' },
+        ]}
+        branches={[
+          {
+            description: 'Branch description',
+            id: 'branch',
+            label: 'Branch',
+            tone: 'warning',
+            value: 'Branch value',
+          },
+        ]}
+      />
+    );
+
+    expect(container.querySelector('.civic-motion-timeline')?.className).toContain(
+      'civic-motion-timeline-compact'
+    );
+    expect(container.querySelector('.civic-motion-timeline')?.getAttribute('role')).toBeNull();
+    expect(screen.getByText('Done')).toBeTruthy();
+    expect(screen.getByText('Completed description')).toBeTruthy();
+    expect(screen.getByText('Branch value')).toBeTruthy();
+    expect(screen.getByText('Branch description')).toBeTruthy();
+    expect(container.querySelector('[data-tone="success"]')).toBeTruthy();
+    expect(container.querySelector('[data-tone="warning"]')).toBeTruthy();
+    expect(container.querySelector('.civic-motion-timeline-branch-label')).toBeNull();
+  });
+
+  it('falls back to the last complete item when no item is explicitly active', () => {
+    const { container } = render(
+      <CivicMotionTimeline
+        activeIndex={-1}
+        items={[
+          { id: 'one', isComplete: true, label: 'One' },
+          { id: 'two', label: 'Two' },
+          { id: 'three', isComplete: true, label: 'Three' },
+        ]}
+      />
+    );
+    const items = container.querySelectorAll('.civic-motion-timeline-item');
+    expect(items[2].className).toContain('item-active');
+    expect(items[1].className).not.toContain('item-complete');
+  });
+
+  it('uses the first item when there are no completed or active items', () => {
+    const { container } = render(<CivicMotionTimeline items={[{ id: 'only', label: 'Only' }]} />);
+    expect(container.querySelector('.civic-motion-timeline-item')?.className).toContain(
+      'item-active'
+    );
+    expect(container.querySelector('.civic-motion-timeline-rail')).toBeNull();
+    expect(container.querySelector('[data-tone="neutral"]')).toBeTruthy();
+  });
+
+  it('bounds an explicit active index to the final item', () => {
+    const { container } = render(
+      <CivicMotionTimeline
+        activeIndex={99}
+        items={[
+          { id: 'one', label: 'One' },
+          { id: 'two', label: 'Two' },
+        ]}
+      />
+    );
+    expect(container.querySelectorAll('.civic-motion-timeline-item')[1].className).toContain(
+      'item-active'
+    );
+  });
 });

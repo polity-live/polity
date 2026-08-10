@@ -248,6 +248,7 @@ export function StreetCostSummaryView({
               {comparisonModes.map(item => (
                 <Button
                   key={item.mode}
+                  data-action-id="amendments.city-cost.select.comparison-mode"
                   type="button"
                   variant="outline"
                   size="sm"
@@ -289,7 +290,7 @@ export function StreetCostSummaryView({
               const CategoryIcon = categoryIcons[group.category];
               const categoryLabel = getCategoryLabel(group.category);
               const isCategoryOpen = openCategories.includes(group.category);
-              const firstLine = group.lines[0] ?? null;
+              const firstLine = group.lines[0] as (typeof group.lines)[number];
 
               return (
                 <Collapsible
@@ -307,6 +308,7 @@ export function StreetCostSummaryView({
                   >
                     <CollapsibleTrigger asChild>
                       <Button
+                        data-action-id="amendments.city-cost.toggle.cost-category"
                         type="button"
                         variant="ghost"
                         size="icon"
@@ -330,10 +332,11 @@ export function StreetCostSummaryView({
                     </CollapsibleTrigger>
                     <TooltipHint content={getActionLabel('select', categoryLabel)}>
                       <button
+                        data-action-id="amendments.city-cost.select.cost-category"
                         type="button"
                         aria-label={getActionLabel('select', categoryLabel)}
                         className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
-                        onClick={() => onObjectSelect?.(firstLine?.objectId ?? null)}
+                        onClick={() => onObjectSelect?.(firstLine.objectId)}
                       >
                         <span className="flex min-w-0 items-center gap-2">
                           <CategoryIcon className="size-4 flex-none" />
@@ -360,6 +363,7 @@ export function StreetCostSummaryView({
                     </TooltipHint>
                     <div className="-mr-1 flex flex-none items-center gap-1">
                       <Button
+                        data-action-id="amendments.city-cost.delete.cost-category"
                         type="button"
                         size="icon"
                         variant="ghost"
@@ -389,6 +393,7 @@ export function StreetCostSummaryView({
                           >
                             <TooltipHint content={getActionLabel('select', lineLabel)}>
                               <button
+                                data-action-id="amendments.city-cost.select.cost-object"
                                 type="button"
                                 aria-label={getActionLabel('select', lineLabel)}
                                 className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
@@ -424,6 +429,7 @@ export function StreetCostSummaryView({
                               </button>
                             </TooltipHint>
                             <Button
+                              data-action-id="amendments.city-cost.delete.cost-object"
                               type="button"
                               size="icon"
                               variant="ghost"

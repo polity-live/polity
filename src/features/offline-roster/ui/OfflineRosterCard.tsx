@@ -64,11 +64,7 @@ export type {
   OfflineRosterRow,
 } from '../types';
 
-function getUserDisplayName(user?: OfflineRosterConnectedUser | null) {
-  if (!user) {
-    return '';
-  }
-
+function getUserDisplayName(user: OfflineRosterConnectedUser) {
   return (
     `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.handle || user.email || 'User'
   );
@@ -239,6 +235,7 @@ export function OfflineRosterCardView({
       <div className="flex flex-wrap justify-end gap-2">
         {row.canViewRights ? (
           <TableActionIconButton
+            data-action-id="offline-roster.row.rights.open"
             label={rightsLabel}
             icon={<Eye className="h-4 w-4" />}
             onClick={() => onOpenRightsDialog?.(row)}
@@ -246,6 +243,7 @@ export function OfflineRosterCardView({
         ) : null}
         {row.canManageRoles ? (
           <TableActionIconButton
+            data-action-id="offline-roster.row.roles.open"
             label={manageRolesLabel}
             icon={<ArrowUpDown className="h-4 w-4" />}
             variant="outline"
@@ -254,6 +252,7 @@ export function OfflineRosterCardView({
         ) : null}
         {row.canConfirmParticipation ? (
           <TableActionIconButton
+            data-action-id="offline-roster.row.participation.confirm"
             label={confirmLabel}
             icon={<Check className="h-4 w-4" />}
             variant="outline"
@@ -262,6 +261,7 @@ export function OfflineRosterCardView({
         ) : null}
         {row.canWithdrawParticipation ? (
           <TableActionIconButton
+            data-action-id="offline-roster.row.participation.withdraw"
             label={withdrawLabel}
             icon={<CircleX className="h-4 w-4" />}
             variant="outline"
@@ -270,6 +270,7 @@ export function OfflineRosterCardView({
         ) : null}
         {row.canToggleChannel ? (
           <TableActionIconButton
+            data-action-id="offline-roster.row.channel.toggle"
             label={setChannelLabel}
             icon={
               nextChannel === 'offline' ? (
@@ -284,6 +285,7 @@ export function OfflineRosterCardView({
         ) : null}
         {row.canConnect ? (
           <TableActionIconButton
+            data-action-id="offline-roster.row.connection.open"
             label={connectLabel}
             icon={<Link2 className="h-4 w-4" />}
             variant="outline"
@@ -292,6 +294,7 @@ export function OfflineRosterCardView({
         ) : null}
         {row.canEdit ? (
           <TableActionIconButton
+            data-action-id="offline-roster.row.edit.open"
             label={editLabel}
             icon={<Pencil className="h-4 w-4" />}
             onClick={() => openEditRow(row)}
@@ -299,6 +302,7 @@ export function OfflineRosterCardView({
         ) : null}
         {row.canDelete ? (
           <TableActionIconButton
+            data-action-id="offline-roster.row.delete"
             label={deleteLabel}
             icon={<Trash2 className="h-4 w-4" />}
             destructive
@@ -562,7 +566,11 @@ export function OfflineRosterCardView({
         description={description}
         action={
           showManageButton ? (
-            <Button type="button" onClick={() => setManageOpen(true)}>
+            <Button
+              type="button"
+              data-action-id="offline-roster.manage.open"
+              onClick={() => setManageOpen(true)}
+            >
               <UserRoundPlus className="mr-2 h-4 w-4" />
               {manageButtonLabel}
             </Button>
@@ -607,10 +615,18 @@ export function OfflineRosterCardView({
                 className="mt-5 space-y-4"
               >
                 <TabsList className="grid w-full grid-cols-2 sm:w-auto">
-                  <TabsTrigger value="single" disabled={isManageSubmitActive}>
+                  <TabsTrigger
+                    data-action-id="offline-roster.manage.tab.single"
+                    value="single"
+                    disabled={isManageSubmitActive}
+                  >
                     {translateText('generated.inline.0959_einzeluser_9d0b4724')}
                   </TabsTrigger>
-                  <TabsTrigger value="csv" disabled={isManageSubmitActive}>
+                  <TabsTrigger
+                    data-action-id="offline-roster.manage.tab.csv"
+                    value="csv"
+                    disabled={isManageSubmitActive}
+                  >
                     {translateText('generated.inline.0960_csv_upload_7aa7415d')}
                   </TabsTrigger>
                 </TabsList>
@@ -689,6 +705,7 @@ export function OfflineRosterCardView({
                     </p>
                     <Button
                       type="button"
+                      data-action-id="offline-roster.manage.csv.choose"
                       variant="outline"
                       className="mt-4"
                       disabled={isManageSubmitActive}
@@ -867,6 +884,7 @@ export function OfflineRosterCardView({
               <DialogFooter className="mt-5 sm:items-center">
                 <Button
                   type="button"
+                  data-action-id="offline-roster.manage.cancel"
                   variant="outline"
                   disabled={isManageSubmitActive}
                   onClick={() => handleCloseManageDialog(false)}
@@ -875,6 +893,7 @@ export function OfflineRosterCardView({
                 </Button>
                 <Button
                   type="button"
+                  data-action-id="offline-roster.manage.submit"
                   loading={isManageSubmitting}
                   successState={isManageSubmitSuccess}
                   disabled={
@@ -929,6 +948,7 @@ export function OfflineRosterCardView({
           <DialogFooter>
             <Button
               type="button"
+              data-action-id="offline-roster.connection.cancel"
               variant="outline"
               onClick={() => {
                 setConnectRow(null);
@@ -939,6 +959,7 @@ export function OfflineRosterCardView({
             </Button>
             <Button
               type="button"
+              data-action-id="offline-roster.connection.submit"
               disabled={!selectedConnectedUser || isSubmitting}
               onClick={() => void handleConnect()}
             >
@@ -992,10 +1013,20 @@ export function OfflineRosterCardView({
             multiline
           />
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setEditRow(null)}>
+            <Button
+              type="button"
+              data-action-id="offline-roster.edit.cancel"
+              variant="outline"
+              onClick={() => setEditRow(null)}
+            >
               {translateText('generated.inline.0065_cancel_77dfd213')}
             </Button>
-            <Button type="button" disabled={isSubmitting} onClick={() => void handleSaveEdit()}>
+            <Button
+              type="button"
+              data-action-id="offline-roster.edit.submit"
+              disabled={isSubmitting}
+              onClick={() => void handleSaveEdit()}
+            >
               {translateText('generated.inline.0269_save_efc007a3')}
             </Button>
           </DialogFooter>

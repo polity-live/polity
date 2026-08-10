@@ -25,10 +25,7 @@ export function buildEurostatPartitions(
   const complete: Record<string, string[]>[] = [];
 
   while (pending.length > 0) {
-    const current = pending.pop();
-    if (!current) {
-      continue;
-    }
+    const current = pending.pop() as Record<string, string[]>;
 
     const cost = estimatePartitionCells(current);
     const splitCandidate = Object.entries(current)

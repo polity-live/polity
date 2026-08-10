@@ -89,6 +89,7 @@ export function VerifyFormView({
 
       <div className="space-y-3">
         <FormButton
+          data-action-id="auth.verify.submit.code"
           type="button"
           onClick={onVerify}
           className="w-full"
@@ -106,6 +107,7 @@ export function VerifyFormView({
 
         <div className="flex gap-2">
           <FormButton
+            data-action-id="auth.verify.navigate.email"
             type="button"
             variant="outline"
             onClick={onBackToEmail}
@@ -117,6 +119,7 @@ export function VerifyFormView({
           </FormButton>
 
           <FormButton
+            data-action-id="auth.verify.resend.code"
             type="button"
             variant="outline"
             onClick={onResendCode}

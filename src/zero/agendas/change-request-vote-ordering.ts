@@ -20,10 +20,6 @@ function asArray(value: unknown): AnyRecord[] {
   return Array.isArray(value) ? (value as AnyRecord[]) : [];
 }
 
-function isRecord(value: unknown): value is AnyRecord {
-  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
-}
-
 function getStringValue(value: unknown) {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
@@ -153,7 +149,8 @@ export async function createChangeRequestVoteOrderContext(
     };
   };
 
-  contextByBranchId.set(NULL_BRANCH_KEY, buildContext(amendment));
+  const amendmentContext = buildContext(amendment);
+  contextByBranchId.set(NULL_BRANCH_KEY, amendmentContext);
   for (const branch of branches) {
     if (branch.id) {
       contextByBranchId.set(branch.id, buildContext(branch));
@@ -163,8 +160,7 @@ export async function createChangeRequestVoteOrderContext(
   return {
     getTextPosition(changeRequest: AnyRecord) {
       const branchKey = getStringValue(changeRequest.process_branch_id) ?? NULL_BRANCH_KEY;
-      const context = contextByBranchId.get(branchKey) ?? contextByBranchId.get(NULL_BRANCH_KEY);
-      if (!context) return null;
+      const context = contextByBranchId.get(branchKey) ?? amendmentContext;
 
       const suggestionId = findSuggestionIdForChangeRequest(
         changeRequest,
@@ -189,8 +185,7 @@ export async function orderChangeRequestsForVoting<T extends AnyRecord>(
 
   const orderContext = await createChangeRequestVoteOrderContext(tx, amendmentId, changeRequests);
   return sortChangeRequestsByVoteOrder(changeRequests, voteOrder, {
-    getTextPosition: (_item, changeRequest) =>
-      isRecord(changeRequest) ? orderContext.getTextPosition(changeRequest) : null,
+    getTextPosition: item => orderContext.getTextPosition(item),
   });
 }
 

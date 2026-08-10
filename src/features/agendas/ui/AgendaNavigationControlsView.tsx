@@ -77,6 +77,8 @@ export function AgendaNavigationControlsView({
           {/* Navigation buttons */}
           <div className="flex items-center justify-between gap-2">
             <Button
+              data-action-id="agendas.navigation.previous"
+              data-action-kind="async-action"
               variant="outline"
               size="sm"
               onClick={moveToPreviousItem}
@@ -91,6 +93,8 @@ export function AgendaNavigationControlsView({
             </Button>
 
             <Button
+              data-action-id="agendas.navigation.complete"
+              data-action-kind="async-action"
               variant="default"
               size="sm"
               onClick={completeCurrentItem}
@@ -106,6 +110,8 @@ export function AgendaNavigationControlsView({
             </Button>
 
             <Button
+              data-action-id="agendas.navigation.next"
+              data-action-kind="async-action"
               variant="outline"
               size="sm"
               onClick={moveToNextItem}

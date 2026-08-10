@@ -177,6 +177,7 @@ export function PendingInvitationsTable<TParticipation extends ParticipationLike
           return (
             <div className="flex justify-end">
               <TableActionIconButton
+                data-action-id="groups.invitations.withdraw.pending"
                 label={withdrawActionLabel}
                 icon={<Trash2 className="h-4 w-4" />}
                 variant="ghost"

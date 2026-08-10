@@ -62,4 +62,42 @@ describe('useNavUserAvatarController', () => {
 
     expect(mocks.navigate).toHaveBeenCalledWith({ to: '/user/user-1' });
   });
+
+  it('uses the generic fallback and ignores profile clicks in other navigation views', () => {
+    mocks.useUserBasicState.mockReturnValue({ user: undefined, isLoading: false });
+    const { result } = renderHook(() =>
+      useNavUserAvatarController({
+        navigationView: 'asButtonList',
+        authUser: { id: 'user-2' },
+      })
+    );
+
+    expect(result.current.displayName).toBe('User');
+    expect(result.current.userInitials).toBe('U');
+    act(() => result.current.onAsButtonClick());
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+
+  it('supports partial names and both dropdown state APIs', () => {
+    mocks.useUserBasicState.mockReturnValue({
+      user: { id: 'user-3', first_name: 'Grace', last_name: null },
+      isLoading: false,
+    });
+    const { result } = renderHook(() =>
+      useNavUserAvatarController({
+        navigationView: 'asLabeledButtonList',
+        authUser: { id: 'user-3', email: 'grace@example.test' },
+      })
+    );
+
+    expect(result.current.displayName).toBe('Grace');
+    act(() => result.current.onNameClick());
+    expect(result.current.isDropdownOpen).toBe(true);
+    act(() => result.current.onNameClick());
+    expect(result.current.isDropdownOpen).toBe(false);
+    act(() => result.current.onDropdownOpenChange(true));
+    expect(result.current.isDropdownOpen).toBe(true);
+    act(() => result.current.onDropdownOpenChange(false));
+    expect(result.current.isDropdownOpen).toBe(false);
+  });
 });

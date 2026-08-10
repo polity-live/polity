@@ -447,13 +447,6 @@ export function ChangeRequestTimelineCardView({
           )
         : startIndicativeActionLabel;
   const handleOpenVoteDialog = () => {
-    if (
-      !canOpenVoteDialogFromAgendaDetails ||
-      voteButtonDisabledReasons.length > 0 ||
-      !onOpenVoteDialog
-    ) {
-      return;
-    }
     onOpenVoteDialog(item.id);
   };
   const handleStartFinalVote = async () => {
@@ -485,7 +478,11 @@ export function ChangeRequestTimelineCardView({
           item.status === 'completed' && 'opacity-75'
         )}
       >
-        <CollapsibleTrigger className="w-full">
+        <CollapsibleTrigger
+          data-action-id="agendas.change-request.details.toggle"
+          data-action-kind="selection"
+          className="w-full"
+        >
           <CardHeader className="flex flex-col items-stretch gap-3 space-y-0 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
             <div
               className="w-full min-w-0 flex-1 sm:w-auto sm:pr-3"
@@ -772,7 +769,7 @@ export function ChangeRequestTimelineCardView({
             {showEditorPreview && !cityDesignChangeRequest && documentContent && suggestionId && (
               <div className="space-y-2">
                 <CREditorPreview
-                  documentContent={documentContent ?? ([] as Value)}
+                  documentContent={documentContent as Value}
                   suggestionIds={selectedSuggestionIds}
                   suggestionResolutions={suggestionResolutions}
                   allowInteractiveEditor={canSubmitPendingSuggestion}
@@ -920,6 +917,8 @@ export function ChangeRequestTimelineCardView({
               cr && (
                 <div className="flex gap-2 pt-2">
                   <Button
+                    data-action-id="agendas.change-request.internal-vote.accept"
+                    data-action-kind="async-action"
                     size="sm"
                     variant="default"
                     className={cn(
@@ -935,6 +934,8 @@ export function ChangeRequestTimelineCardView({
                     {translateText('generated.inline.0121_accept_bb54db51')}
                   </Button>
                   <Button
+                    data-action-id="agendas.change-request.internal-vote.reject"
+                    data-action-kind="async-action"
                     size="sm"
                     variant="destructive"
                     className={cn(
@@ -949,6 +950,8 @@ export function ChangeRequestTimelineCardView({
                     {translateText('generated.inline.1142_reject_2b03b592')}
                   </Button>
                   <Button
+                    data-action-id="agendas.change-request.internal-vote.abstain"
+                    data-action-kind="async-action"
                     size="sm"
                     variant="secondary"
                     className={cn(
@@ -974,6 +977,8 @@ export function ChangeRequestTimelineCardView({
 
                   return (
                     <Button
+                      data-action-id="agendas.change-request.vote.cast-choice"
+                      data-action-kind="async-action"
                       key={choice.id}
                       size="sm"
                       variant={
@@ -1027,6 +1032,8 @@ export function ChangeRequestTimelineCardView({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
+                        data-action-id="agendas.change-request.vote-dialog.open"
+                        data-action-kind="async-action"
                         size="sm"
                         variant="outline"
                         className={cn(
@@ -1056,6 +1063,8 @@ export function ChangeRequestTimelineCardView({
                   <>
                     {isJumpToFinalVoteStep ? (
                       <Button
+                        data-action-id="agendas.change-request.final-vote.jump"
+                        data-action-kind="async-action"
                         size="sm"
                         variant="outline"
                         disabled={votingLoading}
@@ -1071,6 +1080,8 @@ export function ChangeRequestTimelineCardView({
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
+                            data-action-id="agendas.change-request.final-vote.confirmation.open"
+                            data-action-kind="interaction"
                             size="sm"
                             variant="outline"
                             disabled={votingLoading}
@@ -1092,6 +1103,8 @@ export function ChangeRequestTimelineCardView({
                               {t('common.actions.cancel', 'Cancel')}
                             </AlertDialogCancel>
                             <AlertDialogAction
+                              data-action-id="agendas.change-request.final-vote.confirmation.confirm"
+                              data-action-kind="async-action"
                               disabled={votingLoading}
                               onClick={() => {
                                 void handleStartFinalVote();
@@ -1108,7 +1121,12 @@ export function ChangeRequestTimelineCardView({
                 {isFinal && !hideInlineVotingControls && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button size="sm" variant="default" onClick={e => e.stopPropagation()}>
+                      <Button
+                        data-action-id="agendas.change-request.close-vote.confirmation.open"
+                        size="sm"
+                        variant="default"
+                        onClick={e => e.stopPropagation()}
+                      >
                         <CheckCircle2 className="mr-1 h-3 w-3" />
                         {closeFinalActionLabel}
                       </Button>
@@ -1127,7 +1145,11 @@ export function ChangeRequestTimelineCardView({
                         <AlertDialogCancel>
                           {t('common.actions.cancel', 'Cancel')}
                         </AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onCloseVoting?.(item.id)}>
+                        <AlertDialogAction
+                          data-action-id="agendas.change-request.close-vote.confirmation.confirm"
+                          data-action-kind="async-action"
+                          onClick={() => onCloseVoting?.(item.id)}
+                        >
                           {closeFinalActionLabel}
                         </AlertDialogAction>
                       </AlertDialogFooter>

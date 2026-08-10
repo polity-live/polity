@@ -109,13 +109,13 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 
 type ChangeRequestTimelineIdentitySource = Record<string, any>;
 
-function addTimelineIdentityKey(keys: Set<string>, value: unknown) {
+export function addTimelineIdentityKey(keys: Set<string>, value: unknown) {
   if (typeof value !== 'string' && typeof value !== 'number') return;
   const normalized = String(value).trim();
   if (normalized.length > 0) keys.add(normalized);
 }
 
-function collectTimelineItemIdentityKeys(item: ChangeRequestTimelineIdentitySource) {
+export function collectTimelineItemIdentityKeys(item: ChangeRequestTimelineIdentitySource) {
   const keys = new Set<string>();
   const changeRequest = item.change_request ?? {};
   const branchId =
@@ -166,7 +166,7 @@ function collectTimelineItemIdentityKeys(item: ChangeRequestTimelineIdentitySour
   return keys;
 }
 
-function collectCRSummaryIdentityKeys(summary: {
+export function collectCRSummaryIdentityKeys(summary: {
   id?: string | null;
   changeRequestEntityId?: string | null;
   suggestionId?: string | null;
@@ -622,8 +622,7 @@ export function EventAgendaItemDetail({
       new_properties?: any;
     }[];
 
-    const setDiff = (keys: (string | null | undefined)[], diff: ChangeRequestDiffData | null) => {
-      if (!diff) return;
+    const setDiff = (keys: (string | null | undefined)[], diff: ChangeRequestDiffData) => {
       for (const key of keys) {
         if (key) map[key] = diff;
       }
@@ -763,7 +762,7 @@ export function EventAgendaItemDetail({
     return {
       ...buildVoteSequencePlaceholder({
         agendaItemId: agendaItem.id,
-        orderIndex: synthesizedVariantVoteItem ? 1 : 0,
+        orderIndex: 1,
         kind: 'change_request_votes_placeholder',
         title: t(
           'features.agendas.crTimeline.changeRequestVotesPlaceholder',
@@ -798,9 +797,7 @@ export function EventAgendaItemDetail({
     }
 
     const orderIndex =
-      (synthesizedVariantVoteItem ? 1 : 0) +
-      votableCRDisplayItemsBase.length +
-      (changeRequestVotesPlaceholderItem ? 1 : 0);
+      1 + votableCRDisplayItemsBase.length + (changeRequestVotesPlaceholderItem ? 1 : 0);
 
     return buildVoteSequencePlaceholder({
       agendaItemId: agendaItem.id,
@@ -1021,22 +1018,18 @@ export function EventAgendaItemDetail({
         setSequenceVotingLoading(itemId);
         try {
           if (closingJump.shouldInitialize) {
-            if (!agendaItem?.amendment_id || !agendaItem?.id) {
-              throw new Error('Missing amendment agenda item context.');
-            }
-
             await waitForClientApply(
               initializeChangeRequestVoting({
-                amendment_id: agendaItem.amendment_id,
-                agenda_item_id: agendaItem.id,
+                // A closing jump can only originate from a placeholder that is
+                // synthesized for an amendment agenda item with both IDs.
+                amendment_id: agendaItem?.amendment_id as string,
+                agenda_item_id: agendaItem?.id as string,
                 start_final_vote_if_no_change_requests: false,
               })
             );
           }
 
-          if (closingJump.targetItemId) {
-            setSelectedCRToolbarItemId(closingJump.targetItemId);
-          }
+          setSelectedCRToolbarItemId(closingJump.targetItemId as string);
         } catch (error) {
           console.error('Failed to jump to final vote:', error);
           toast.error(t('features.agendas.crTimeline.jumpToFinalVoteFailed'));
@@ -1066,9 +1059,8 @@ export function EventAgendaItemDetail({
 
         await startFinalPhase(itemId);
       } catch (error) {
-        if (finalStartableSequenceItem?.id) {
-          setSelectedCRToolbarItemId(finalStartableSequenceItem.id);
-        }
+        // Reaching the try block proves that this item is the final-startable item.
+        setSelectedCRToolbarItemId(finalStartableSequenceItem?.id as string);
         toast.error(
           error instanceof Error
             ? error.message
@@ -1138,8 +1130,7 @@ export function EventAgendaItemDetail({
 
   const handleToolbarStartFinalVote = useCallback(() => {
     if (isCRToolbarActive) {
-      if (!selectedCRToolbarItem) return;
-      void handleStartSequenceFinalVote(selectedCRToolbarItem.id);
+      void handleStartSequenceFinalVote((selectedCRToolbarItem as ChangeRequestTimelineRow).id);
       return;
     }
 
@@ -1148,8 +1139,7 @@ export function EventAgendaItemDetail({
 
   const handleToolbarCloseVote = useCallback(() => {
     if (isCRToolbarActive) {
-      if (!selectedCRToolbarItem) return;
-      void handleCloseSequenceVoting(selectedCRToolbarItem.id);
+      void handleCloseSequenceVoting((selectedCRToolbarItem as ChangeRequestTimelineRow).id);
       return;
     }
 
@@ -1407,7 +1397,9 @@ export function EventAgendaItemDetail({
         agendaTitle: agendaItem?.title ?? null,
         amendmentTitle: agendaItem?.amendment?.title ?? null,
         branchLabelsById: agendaBranchLabelsById,
-        fallbackTarget: selectedCRTitle ?? 'Step',
+        // Every selected sequence item resolves to a placeholder, vote,
+        // closing-vote, or generated change-request title.
+        fallbackTarget: selectedCRTitle as string,
       })
     : null;
 
@@ -1432,10 +1424,7 @@ export function EventAgendaItemDetail({
     : undefined;
 
   const castFinalVoteTooltip = isCRToolbarActive
-    ? (selectedFinalVoteActionLabels?.castFinal ??
-      (isSelectedClosingVote
-        ? t('features.events.agenda.actions.castFinalVote')
-        : t('features.agendas.crTimeline.castFinal')))
+    ? (selectedFinalVoteActionLabels as NonNullable<typeof selectedFinalVoteActionLabels>).castFinal
     : undefined;
 
   // Handler: Mark speaker as completed
@@ -1758,7 +1747,7 @@ export function EventAgendaItemDetail({
 
         const correlationId = `${offlineTallyEntity.kind}-offline-tally:${crypto.randomUUID()}`;
         const existingCountByChoiceId = new Map(
-          offlineTallyEntity.tallies.map(tally => [tally.id, tally.count ?? 0])
+          offlineTallyEntity.tallies.map(tally => [tally.id, tally.count])
         );
         const updates = offlineTallyEntity.choices
           .map(choice => {

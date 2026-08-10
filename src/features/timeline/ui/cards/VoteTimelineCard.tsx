@@ -53,7 +53,10 @@ export interface VoteTimelineCardProps {
 /**
  * Format remaining time for display
  */
-function formatTimeRemaining(endTime: Date, t: (key: string, params?: any) => string): string {
+export function formatVoteTimeRemaining(
+  endTime: Date,
+  t: (key: string, params?: any) => string
+): string {
   const now = new Date();
   const diffMs = endTime.getTime() - now.getTime();
 
@@ -76,7 +79,7 @@ function formatTimeRemaining(endTime: Date, t: (key: string, params?: any) => st
   return `${diffMinutes}:${diffSeconds.toString().padStart(2, '0')}`;
 }
 
-function normalizePercent(percent: number | null | undefined) {
+export function normalizeVotePercent(percent: number | null | undefined) {
   if (!Number.isFinite(percent ?? 0)) {
     return 0;
   }
@@ -84,8 +87,11 @@ function normalizePercent(percent: number | null | undefined) {
   return Math.max(0, Math.min(100, percent ?? 0));
 }
 
-function formatCountPercent(count: number | null | undefined, percent: number | null | undefined) {
-  return `${Math.round(count ?? 0)} · ${normalizePercent(percent).toFixed(0)}%`;
+export function formatVoteCountPercent(
+  count: number | null | undefined,
+  percent: number | null | undefined
+) {
+  return `${Math.round(count ?? 0)} · ${normalizeVotePercent(percent).toFixed(0)}%`;
 }
 
 /**
@@ -215,7 +221,7 @@ export function VoteTimelineCard({ vote, href, className }: VoteTimelineCardProp
           <div className="mt-2 flex items-center justify-center gap-2">
             <Clock className={cn('h-4 w-4', statusConfig.color)} />
             <span className={cn('font-mono text-lg font-bold', statusConfig.color)}>
-              {formatTimeRemaining(endDate, t)}
+              {formatVoteTimeRemaining(endDate, t)}
             </span>
           </div>
         )}
@@ -224,7 +230,13 @@ export function VoteTimelineCard({ vote, href, className }: VoteTimelineCardProp
       <TimelineCardContent>
         {/* Amendment Title (card click handles navigation) */}
         <p className="mb-2 line-clamp-2 text-sm font-medium">
-          <SmartLink href={voteHref} onClick={e => e.stopPropagation()} className="hover:underline">
+          <SmartLink
+            data-action-id="timeline.vote.open"
+            data-action-kind="navigation"
+            href={voteHref}
+            onClick={e => e.stopPropagation()}
+            className="hover:underline"
+          >
             {vote.amendmentTitle}
           </SmartLink>
         </p>
@@ -244,6 +256,8 @@ export function VoteTimelineCard({ vote, href, className }: VoteTimelineCardProp
                   size="xs"
                 >
                   <button
+                    data-action-id="timeline.vote.indication-results.toggle"
+                    data-action-kind="selection"
                     type="button"
                     onClick={event => {
                       event.preventDefault();
@@ -270,7 +284,7 @@ export function VoteTimelineCard({ vote, href, className }: VoteTimelineCardProp
                     {t('features.timeline.cards.indication', { defaultValue: 'Indication' })} *
                   </span>
                   <span className="text-muted-foreground tabular-nums">
-                    {formatCountPercent(
+                    {formatVoteCountPercent(
                       vote.indicationSupportCount,
                       vote.indicationSupportPercentage
                     )}
@@ -318,7 +332,7 @@ export function VoteTimelineCard({ vote, href, className }: VoteTimelineCardProp
                         : featureThemeClassName('timelineUseTodoTimelineCardDangerText')
                     )}
                   >
-                    {formatCountPercent(vote.supportCount, vote.supportPercentage)}
+                    {formatVoteCountPercent(vote.supportCount, vote.supportPercentage)}
                   </span>
                 </div>
                 <Progress
@@ -406,6 +420,7 @@ export function VoteTimelineCard({ vote, href, className }: VoteTimelineCardProp
         )}
         <div onClick={e => e.preventDefault()}>
           <ShareButton
+            data-action-id="timeline.vote.share"
             url={voteHref}
             title={vote.amendmentTitle}
             description={vote.question || ''}

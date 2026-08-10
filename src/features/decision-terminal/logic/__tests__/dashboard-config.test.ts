@@ -5,7 +5,12 @@ import type { DecisionItem } from '../../ui/types';
 import {
   DECISION_TERMINAL_DASHBOARD_VERSION,
   DECISION_TERMINAL_GRID_COLUMNS,
+  DECISION_WIDGET_SIZE_PRESETS,
+  applyWidgetSizePreset,
+  createDecisionWidgetConfig,
   createDefaultDecisionTerminalDashboardConfig,
+  getDecisionTerminalColumnsForBreakpoint,
+  getWidgetSizePreset,
   normalizeDecisionTerminalDashboardConfig,
   selectWidgetDecisions,
 } from '../dashboard-config';
@@ -289,5 +294,277 @@ describe('decision terminal dashboard config', () => {
         onlyConfirmedEventRole: true,
       }).map(item => item.id)
     ).toEqual(['V-non-event', 'V-confirmed-role']);
+  });
+
+  it('resolves known grid widths and falls back to the desktop width', () => {
+    for (const [breakpoint, columns] of Object.entries(DECISION_TERMINAL_GRID_COLUMNS)) {
+      expect(getDecisionTerminalColumnsForBreakpoint(breakpoint)).toBe(columns);
+    }
+    expect(getDecisionTerminalColumnsForBreakpoint('unknown')).toBe(
+      DECISION_TERMINAL_GRID_COLUMNS.lg
+    );
+  });
+
+  it('creates widgets with explicit and generated ids', () => {
+    expect(createDecisionWidgetConfig('active_votes', 'custom-widget')).toEqual(
+      expect.objectContaining({ id: 'custom-widget', type: 'active_votes' })
+    );
+    expect(createDecisionWidgetConfig('past_votes').id).toMatch(/^widget-past_votes-/);
+  });
+
+  it('detects every exact and inferred widget size preset', () => {
+    const defaults = createDefaultDecisionTerminalDashboardConfig();
+    const widgetId = defaults.layouts.lg[0].i;
+    const withSize = (w: number, h: number) => ({
+      ...defaults.layouts,
+      lg: defaults.layouts.lg.map(item => (item.i === widgetId ? { ...item, w, h } : item)),
+    });
+
+    for (const [preset, size] of Object.entries(DECISION_WIDGET_SIZE_PRESETS)) {
+      expect(getWidgetSizePreset(withSize(size.w, size.h), widgetId)).toBe(preset);
+    }
+    expect(getWidgetSizePreset({ ...defaults.layouts, lg: [] }, widgetId)).toBe('2x1');
+    expect(getWidgetSizePreset(withSize(12, 5), widgetId)).toBe('full');
+    expect(getWidgetSizePreset(withSize(9, 7), widgetId)).toBe('3x2');
+    expect(getWidgetSizePreset(withSize(7, 7), widgetId)).toBe('2x2');
+    expect(getWidgetSizePreset(withSize(7, 5), widgetId)).toBe('2x1');
+    expect(getWidgetSizePreset(withSize(4, 5), widgetId)).toBe('1x1');
+  });
+
+  it('applies presets, clamps them to columns, and resolves collisions deterministically', () => {
+    const layouts = {
+      lg: [
+        { i: 'priority', x: 10, y: 0, w: 2, h: 2, minW: 8 },
+        { i: 'overlap', x: 8, y: 0, w: 4, h: 2 },
+        { i: 'same-id', x: 0, y: 0, w: 2, h: 2 },
+        { i: 'same-id', x: 0, y: 0, w: 2, h: 2 },
+        { i: 'left', x: 0, y: 20, w: 2, h: 2 },
+        { i: 'right', x: 10, y: 20, w: 2, h: 2 },
+        { i: 'above', x: 4, y: 10, w: 2, h: 2 },
+        { i: 'below', x: 4, y: 30, w: 2, h: 2 },
+      ],
+      xxs: [{ i: 'priority', x: 1, y: 0, w: 1, h: 1 }],
+    };
+
+    const resized = applyWidgetSizePreset(layouts, 'priority', 'full');
+    expect(resized.lg.find(item => item.i === 'priority')).toEqual(
+      expect.objectContaining({ x: 0, w: 12, h: 6, minW: 8 })
+    );
+    expect(resized.lg.find(item => item.i === 'overlap')?.y).toBeGreaterThanOrEqual(6);
+    expect(resized.xxs).toEqual(layouts.xxs);
+    expect(resized.xxs).not.toBe(layouts.xxs);
+
+    const mobile = applyWidgetSizePreset(layouts, 'priority', '2x1', ['xxs']);
+    expect(mobile.xxs[0]).toEqual(expect.objectContaining({ x: 0, w: 2, h: 4, minW: 1 }));
+
+    const missing = applyWidgetSizePreset(layouts, 'missing', '1x1', ['lg']);
+    expect(missing).toEqual(layouts);
+    expect(missing.lg).not.toBe(layouts.lg);
+
+    const separated = applyWidgetSizePreset(
+      {
+        lg: [
+          { i: 'priority', x: 0, y: 10, w: 4, h: 4 },
+          { i: 'strictly-above', x: 0, y: 0, w: 4, h: 2 },
+        ],
+      },
+      'priority',
+      '1x1',
+      ['lg']
+    );
+    expect(separated.lg.find(item => item.i === 'strictly-above')?.y).toBe(0);
+  });
+
+  it('normalizes every layout field and restores incomplete breakpoints', () => {
+    const config = createDefaultDecisionTerminalDashboardConfig();
+    const malformedLg = config.layouts.lg.map((item, index) => ({
+      ...item,
+      x: index === 0 ? 99.8 : item.x,
+      y: index === 0 ? -3.2 : item.y,
+      w: index === 0 ? 20.2 : item.w,
+      h: index === 0 ? 1.2 : item.h,
+      minW: index === 0 ? 50.9 : undefined,
+      minH: index === 0 ? 0.2 : undefined,
+      maxW: 99,
+      maxH: 99,
+    }));
+    const normalized = normalizeDecisionTerminalDashboardConfig({
+      ...config,
+      layouts: {
+        lg: malformedLg,
+        md: [],
+        sm: config.layouts.sm.slice(0, 1),
+        xs: config.layouts.xs,
+        xxs: config.layouts.xxs,
+      },
+    });
+
+    expect(normalized.layouts.lg[0]).toEqual(
+      expect.objectContaining({ x: 0, y: 0, w: 12, h: 3, minW: 12, minH: 1 })
+    );
+    expect(normalized.layouts.lg[0].maxW).toBeUndefined();
+    expect(normalized.layouts.lg[0].maxH).toBeUndefined();
+    expect(normalized.layouts.lg[1].minW).toBeUndefined();
+    expect(normalized.layouts.lg[1].minH).toBeUndefined();
+    expect(normalized.layouts.md).toEqual(config.layouts.md);
+    expect(normalized.layouts.sm).toEqual(config.layouts.sm);
+  });
+
+  it('covers status, visibility, role, search, limit, and panel filters', () => {
+    const candidates = [
+      decision({ id: 'live', title: 'Alpha', body: 'Body alpha', turnout: 10 }),
+      decision({ id: 'opening', isOpeningSoon: true, temporalBucket: 'future', turnout: 20 }),
+      decision({ id: 'closing', isClosingSoon: true, isUrgent: false, turnout: 30 }),
+      decision({
+        id: 'recently-closed',
+        isClosed: true,
+        isRecentlyClosed: true,
+        temporalBucket: 'past',
+        visibility: 'private',
+        turnout: undefined,
+      }),
+      decision({ id: 'closed', isClosed: true, temporalBucket: 'past', turnout: 40 }),
+      decision({
+        id: 'election',
+        type: 'election',
+        temporalBucket: 'active',
+        isIndicationPhase: false,
+        canOpenVoteDialog: false,
+        isUrgent: true,
+        turnout: 50,
+      }),
+    ];
+    const base = widget('global_decision_timeline');
+    const ids = (filters: typeof base.filters, visibility = base.visibility, query = '') =>
+      selectWidgetDecisions(candidates, { ...base, filters, visibility }, query).map(
+        item => item.id
+      );
+
+    expect(ids(undefined)).toHaveLength(6);
+    expect(ids({ status: ['all'] })).toHaveLength(6);
+    expect(ids({ status: ['live'] })).toEqual(
+      expect.arrayContaining(['live', 'closing', 'election'])
+    );
+    expect(ids({ status: ['opening_soon'] })).toEqual(['opening']);
+    expect(ids({ status: ['closing_soon'] })).toEqual(['closing']);
+    expect(ids({ status: ['recently_closed'] })).toEqual(['recently-closed']);
+    expect(ids({ status: ['closed'] })).toEqual(
+      expect.arrayContaining(['recently-closed', 'closed'])
+    );
+    expect(ids({ status: ['not-a-status' as never] })).toHaveLength(6);
+    expect(ids({ types: ['election'] })).toEqual(['election']);
+    expect(ids({ onlyVotable: true })).not.toContain('election');
+    expect(ids({ onlyUrgent: true })).toEqual(expect.arrayContaining(['closing', 'election']));
+    expect(ids({ onlyIndicative: true })).not.toContain('election');
+    expect(ids({ minTurnout: 35 })).toEqual(expect.arrayContaining(['closed', 'election']));
+    expect(ids(undefined, 'private')).toEqual(['recently-closed']);
+    expect(ids(undefined, 'all')).toHaveLength(6);
+    expect(ids(undefined, 'public', 'alpha')).toEqual(['live']);
+    expect(ids(undefined, 'public', 'body alpha')).toEqual(['live']);
+    expect(ids(undefined, 'public', 'CLOSING')).toEqual(['closing']);
+    expect(ids(undefined, 'public', 'missing')).toEqual([]);
+    expect(selectWidgetDecisions(candidates, { ...base, limit: 2 })).toHaveLength(2);
+
+    expect(
+      selectWidgetDecisions(
+        [decision({ eventRoleFilterApplies: true, hasConfirmedEventRole: false })],
+        base,
+        '',
+        { onlyConfirmedEventRole: false }
+      )
+    ).toHaveLength(1);
+  });
+
+  it('sorts through every supported strategy and handles missing or invalid dates', () => {
+    const first = decision({
+      id: 'first',
+      endsAt: null,
+      sortEndsAt: undefined,
+      startsAt: 'invalid',
+      sortStartsAt: undefined,
+      turnout: undefined,
+      trend: undefined,
+      isUrgent: false,
+    } as unknown as Partial<DecisionItem>);
+    const second = decision({
+      id: 'second',
+      endsAt: '2026-01-02T00:00:00Z',
+      sortEndsAt: '2026-01-02T00:00:00Z',
+      startsAt: 1,
+      sortStartsAt: new Date('2026-01-01T00:00:00Z'),
+      turnout: 25,
+      trend: { direction: 'up', percentage: -40 },
+      isUrgent: true,
+    } as unknown as Partial<DecisionItem>);
+    const bothMissing = decision({
+      id: 'both-missing',
+      endsAt: '2026-01-03T00:00:00Z',
+      sortEndsAt: null,
+      startsAt: null,
+      sortStartsAt: null,
+      turnout: undefined,
+      trend: undefined,
+      isUrgent: false,
+    } as unknown as Partial<DecisionItem>);
+    const base = widget('global_decision_timeline');
+
+    for (const sort of [
+      'active_closing',
+      'future_start',
+      'past_end',
+      'recent',
+      'turnout',
+      'trend',
+      'urgency',
+      'closing_soon',
+      undefined,
+    ] as const) {
+      expect(selectWidgetDecisions([second, first], { ...base, sort })).toHaveLength(2);
+    }
+    expect(
+      selectWidgetDecisions([first, bothMissing], { ...base, sort: 'future_start' })
+    ).toHaveLength(2);
+    expect(selectWidgetDecisions([first, bothMissing], { ...base, sort: 'turnout' })).toHaveLength(
+      2
+    );
+    expect(selectWidgetDecisions([first, bothMissing], { ...base, sort: 'trend' })).toHaveLength(2);
+    expect(selectWidgetDecisions([first, bothMissing], { ...base, sort: 'urgency' })).toHaveLength(
+      2
+    );
+  });
+
+  it('derives temporal buckets and routes every panel type', () => {
+    const implicit = [
+      decision({ id: 'past-vote', temporalBucket: undefined, isClosed: true }),
+      decision({
+        id: 'future-election',
+        type: 'election',
+        temporalBucket: undefined,
+        isFutureDecision: true,
+      }),
+      decision({ id: 'final-active', temporalBucket: undefined, phase: 'final' }),
+      decision({
+        id: 'opening-vote',
+        temporalBucket: undefined,
+        phase: undefined,
+        isOpeningSoon: true,
+      }),
+      decision({ id: 'default-active', temporalBucket: undefined, phase: undefined }),
+    ];
+
+    expect(selectWidgetDecisions(implicit, widget('past_votes')).map(item => item.id)).toEqual([
+      'past-vote',
+    ]);
+    expect(
+      selectWidgetDecisions(implicit, widget('future_elections')).map(item => item.id)
+    ).toEqual(['future-election']);
+    expect(selectWidgetDecisions(implicit, widget('active_votes')).map(item => item.id)).toEqual(
+      expect.arrayContaining(['final-active', 'default-active'])
+    );
+    expect(selectWidgetDecisions(implicit, widget('future_votes')).map(item => item.id)).toEqual([
+      'opening-vote',
+    ]);
+    expect(selectWidgetDecisions(implicit, widget('active_elections'))).toEqual([]);
+    expect(selectWidgetDecisions(implicit, widget('past_elections'))).toEqual([]);
   });
 });

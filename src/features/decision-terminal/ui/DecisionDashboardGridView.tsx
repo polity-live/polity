@@ -87,6 +87,7 @@ function DecisionWidgetPanel({
       count={widgetDecisions.length}
       actions={
         <Button
+          data-action-id="decision-terminal.dashboard.event-role-filter.toggle"
           type="button"
           variant={onlyConfirmedEventRole ? 'default' : 'outline'}
           size="sm"

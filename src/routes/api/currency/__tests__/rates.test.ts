@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('@tanstack/react-router', () => ({
+  createFileRoute: () => (options: unknown) => options,
+}));
+
 vi.mock('@/server/currency/frankfurter', () => ({
   getExchangeRates: vi.fn(),
   validateExchangeRateDate: (date?: string) => {
@@ -11,7 +15,22 @@ vi.mock('@/server/currency/frankfurter', () => ({
   },
 }));
 
-import { currencyRateRequestSchema } from '../rates';
+import { getExchangeRates } from '@/server/currency/frankfurter';
+import { currencyRateRequestSchema, Route } from '../rates';
+
+const post = (
+  Route as unknown as {
+    server: { handlers: { POST: (input: { request: Request }) => Promise<Response> } };
+  }
+).server.handlers.POST;
+
+function request(body: unknown) {
+  return new Request('http://localhost/api/currency/rates', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
 
 describe('currency rate API validation', () => {
   it('accepts up to 100 normalized requests', () => {
@@ -39,5 +58,27 @@ describe('currency rate API validation', () => {
         requests: [{ base: 'EUR', quote: 'USD', date: '2026-99-99' }],
       })
     ).toThrow();
+  });
+
+  it('returns rates and maps validation and provider failures', async () => {
+    const mockedGetExchangeRates = vi.mocked(getExchangeRates);
+    mockedGetExchangeRates.mockResolvedValueOnce([
+      { base: 'EUR', quote: 'USD', date: null, rate: 1.1 },
+    ] as never);
+    let response = await post({
+      request: request({ requests: [{ base: 'EUR', quote: 'USD' }] }),
+    });
+    expect(response.status).toBe(200);
+
+    response = await post({ request: request({ requests: [{ base: 'NOPE', quote: 'USD' }] }) });
+    expect(response.status).toBe(400);
+
+    mockedGetExchangeRates.mockRejectedValueOnce(new Error('provider failed'));
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    response = await post({
+      request: request({ requests: [{ base: 'EUR', quote: 'USD' }] }),
+    });
+    expect(response.status).toBe(502);
+    errorSpy.mockRestore();
   });
 });

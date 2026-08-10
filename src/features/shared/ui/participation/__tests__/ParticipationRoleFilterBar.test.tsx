@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  getParticipationDisplayRoles,
   ParticipationRoleFilterBar,
   filterParticipationsByRole,
 } from '../ParticipationRoleFilterBar';
@@ -53,6 +54,14 @@ describe('ParticipationRoleFilterBar', () => {
     ).toEqual(['four']);
   });
 
+  it('normalizes legacy roles and deduplicates elected roles', () => {
+    const role = { id: 'legacy', name: '' };
+    expect(getParticipationDisplayRoles({ id: 'one', role, elected_roles: [role] })).toEqual([
+      role,
+    ]);
+    expect(getParticipationDisplayRoles({ id: 'two' })).toEqual([]);
+  });
+
   it('toggles colored role filter buttons', () => {
     const onSelectedRoleIdsChange = vi.fn();
 
@@ -93,5 +102,30 @@ describe('ParticipationRoleFilterBar', () => {
     expect(screen.getByRole('button', { name: 'Admin' }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('button', { name: 'Admin' }).getAttribute('data-active')).toBe('true');
     expect(screen.getByRole('button', { name: 'Admin' }).className).toContain('bg-primary');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Admin' }));
+    expect(onSelectedRoleIdsChange).toHaveBeenLastCalledWith([]);
+  });
+
+  it('renders no roles as null and supports labels and fallback names', () => {
+    expect(
+      render(
+        <ParticipationRoleFilterBar
+          roles={[]}
+          selectedRoleIds={[]}
+          onSelectedRoleIdsChange={vi.fn()}
+        />
+      ).container.firstChild
+    ).toBeNull();
+    render(
+      <ParticipationRoleFilterBar
+        roles={[{ id: 'unknown', name: '' }]}
+        selectedRoleIds={[]}
+        onSelectedRoleIdsChange={vi.fn()}
+        label="Filter roles"
+      />
+    );
+    expect(screen.getByText('Filter roles')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Role' })).toBeTruthy();
   });
 });

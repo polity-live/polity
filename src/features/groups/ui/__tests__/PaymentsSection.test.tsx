@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@tanstack/react-router', () => ({
@@ -33,6 +33,22 @@ vi.mock('@/zero/preferences/usePreferenceState', () => ({
   usePreferenceState: () => ({ displayCurrency: 'EUR' }),
 }));
 
+vi.mock('@/features/shared/ui/form/CurrencySelect', () => ({
+  CurrencySelect: ({
+    'data-action-id': actionId,
+    value,
+    onChange,
+  }: {
+    'data-action-id'?: string;
+    value: string;
+    onChange: (value: string) => void;
+  }) => (
+    <button data-action-id={actionId} type="button" onClick={() => onChange('USD')}>
+      {value}
+    </button>
+  ),
+}));
+
 import { PaymentsSection } from '../PaymentsSection';
 
 afterEach(() => {
@@ -62,5 +78,14 @@ describe('PaymentsSection', () => {
 
     expect(screen.queryByText('Add Income')).not.toBeNull();
     expect(screen.queryByText('Add Expense')).not.toBeNull();
+  });
+
+  it('changes the display currency through a stable action', () => {
+    const { container } = render(<PaymentsSection {...baseProps} canManagePayments />);
+    const action = container.querySelector<HTMLElement>(
+      '[data-action-id="groups.payments.display-currency.select"]'
+    )!;
+    fireEvent.click(action);
+    expect(action.textContent).toBe('USD');
   });
 });

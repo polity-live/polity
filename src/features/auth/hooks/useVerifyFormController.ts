@@ -63,7 +63,7 @@ export function useVerifyFormController() {
       inputRefs.current[index + 1]?.focus();
     }
 
-    if (newCode.every(digit => digit !== '') && value) {
+    if (newCode.every(digit => digit !== '')) {
       void handleVerify(newCode.join(''));
     }
   };

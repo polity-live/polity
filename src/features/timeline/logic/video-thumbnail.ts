@@ -19,7 +19,7 @@ const VIDEO_PATTERNS = {
     /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
     /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
   ],
-  vimeo: [/vimeo\.com\/(?:video\/)?(\d+)/, /player\.vimeo\.com\/video\/(\d+)/],
+  vimeo: [/vimeo\.com\/(?:video\/)?(\d+)/],
   dailymotion: [/dailymotion\.com\/video\/([a-zA-Z0-9]+)/, /dai\.ly\/([a-zA-Z0-9]+)/],
   wistia: [
     /wistia\.com\/medias\/([a-zA-Z0-9]+)/,
@@ -124,13 +124,13 @@ export function getVideoEmbedUrl(url: string): string | null {
 
   switch (provider) {
     case 'youtube':
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+      return `https://www.youtube.com/embed/${videoId}`;
     case 'vimeo':
-      return videoId ? `https://player.vimeo.com/video/${videoId}` : null;
+      return `https://player.vimeo.com/video/${videoId}`;
     case 'dailymotion':
-      return videoId ? `https://www.dailymotion.com/embed/video/${videoId}` : null;
+      return `https://www.dailymotion.com/embed/video/${videoId}`;
     case 'wistia':
-      return videoId ? `https://fast.wistia.net/embed/iframe/${videoId}` : null;
+      return `https://fast.wistia.net/embed/iframe/${videoId}`;
     case 'direct':
       return url;
     default:
@@ -146,15 +146,11 @@ export function getVideoMetadata(url: string): VideoMetadata {
 
   const thumbnailUrl =
     provider === 'youtube'
-      ? videoId
-        ? getYouTubeThumbnail(videoId)
-        : ''
+      ? getYouTubeThumbnail(videoId as string)
       : provider === 'vimeo'
-        ? videoId
-          ? getVimeoThumbnailUrl(videoId)
-          : ''
-        : provider === 'dailymotion' && videoId
-          ? getDailymotionThumbnail(videoId)
+        ? getVimeoThumbnailUrl(videoId as string)
+        : provider === 'dailymotion'
+          ? getDailymotionThumbnail(videoId as string)
           : '';
 
   return {

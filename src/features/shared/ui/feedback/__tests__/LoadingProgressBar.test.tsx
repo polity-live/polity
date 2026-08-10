@@ -105,6 +105,16 @@ describe('LoadingProgressBar', () => {
     expect(document.querySelector('[data-slot="loading-progress-active-indicator"]')).toBeTruthy();
   });
 
+  it('hides unlabeled progress and renders a stable sweep for reduced motion', () => {
+    motionState.reducedMotion = true;
+    const { container } = render(<LoadingProgressBar />);
+    const progress = container.querySelector('[data-slot="loading-progress-bar"]');
+    expect(progress?.getAttribute('aria-hidden')).toBe('true');
+    expect(
+      container.querySelector('[data-slot="loading-progress-reduced-indicator"]')
+    ).toBeTruthy();
+  });
+
   it('renders optimistic indeterminate progress with an immediately visible rising fill', () => {
     render(<LoadingProgressBar ariaLabel="Loading workspace" motionStyle="optimistic" />);
 
@@ -173,6 +183,16 @@ describe('LoadingProgressBar', () => {
 
     expect(progressbar.getAttribute('aria-valuenow')).toBe('0');
     expect(indicator?.style.width).toBe('0%');
+
+    rerender(<LoadingProgressBar ariaLabel="Import" value={50} />);
+    expect(
+      document.querySelector<HTMLElement>('[data-slot="loading-progress-indicator"]')?.style.width
+    ).toBe('50%');
+
+    rerender(<LoadingProgressBar ariaLabel="Import" value={Number.NaN} />);
+    expect(
+      document.querySelector<HTMLElement>('[data-slot="loading-progress-indicator"]')?.style.width
+    ).toBe('0%');
   });
 
   it('renders complete, active, and pending step segments', () => {
@@ -182,7 +202,7 @@ describe('LoadingProgressBar', () => {
         steps={[
           { key: 'prepare', label: 'Prepare', status: 'complete' },
           { key: 'commit', label: 'Commit', status: 'active' },
-          { key: 'sync', label: 'Sync', status: 'pending' },
+          { key: 'sync', label: <span>Sync</span> },
         ]}
       />
     );

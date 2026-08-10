@@ -331,7 +331,11 @@ export function NetworkEntityDialogView({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            data-action-id="network.entity-dialog.close"
+          >
             {t('common.actions.cancel')}
           </Button>
           {entity.type === 'group' && entity.data?.id && (
@@ -340,6 +344,7 @@ export function NetworkEntityDialogView({
                 navigate({ to: `/group/${entity.data.id}` });
                 onOpenChange(false);
               }}
+              data-action-id="network.entity-dialog.group.open"
             >
               {t('common.labels.showGroup')}
             </Button>
@@ -350,6 +355,7 @@ export function NetworkEntityDialogView({
                 navigate({ to: `/user/${entity.data.id}` });
                 onOpenChange(false);
               }}
+              data-action-id="network.entity-dialog.user.open"
             >
               {t('common.labels.showUser')}
             </Button>
@@ -360,6 +366,7 @@ export function NetworkEntityDialogView({
                 navigate({ to: `/event/${entity.data.id}` });
                 onOpenChange(false);
               }}
+              data-action-id="network.entity-dialog.event.open"
             >
               {t('common.labels.showEvent')}
             </Button>

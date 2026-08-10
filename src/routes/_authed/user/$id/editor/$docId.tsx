@@ -3,6 +3,7 @@ import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { EditorView } from '@/features/editor/ui/EditorView';
 import { useAuth } from '@/providers/auth-provider';
 import { useUserState } from '@/zero/users/useUserState';
+import { mapEditorUserRecord } from '@/routes/_authed';
 
 export const Route = createFileRoute('/_authed/user/$id/editor/$docId')({
   component: UserEditorDocPage,
@@ -17,17 +18,7 @@ function UserEditorDocPage() {
     return <AccessDenied />;
   }
 
-  const userRecord = currentUser
-    ? {
-        id: currentUser.id,
-        name:
-          [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ') ||
-          currentUser.handle ||
-          '',
-        email: user?.email,
-        avatar: currentUser.avatar ?? undefined,
-      }
-    : undefined;
+  const userRecord = mapEditorUserRecord(currentUser, user?.email);
 
   return (
     <EditorView entityType="document" entityId={docId} userId={user?.id} userRecord={userRecord} />

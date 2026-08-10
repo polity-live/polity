@@ -328,6 +328,7 @@ function SearchPreviewCard({ document }: { document: SearchDocument }) {
     <a
       href={model.href}
       aria-label={model.title || fallback}
+      data-action-id="search.result.preview.open"
       data-search-card-mode="preview"
       className="focus-visible:ring-ring block h-full rounded-2xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
     >

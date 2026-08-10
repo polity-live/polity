@@ -17,7 +17,13 @@ export const WikiSubscribeButton: React.FC<WikiSubscribeButtonProps> = ({
   onClick,
   className,
 }) => (
-  <Button variant={subscribed ? 'outline' : 'default'} onClick={onClick} className={className}>
+  <Button
+    data-action-id="payments.wiki-subscription.toggle"
+    variant={subscribed ? 'outline' : 'default'}
+    aria-pressed={subscribed}
+    onClick={onClick}
+    className={className}
+  >
     {subscribed
       ? translateText('generated.inline.0131_unsubscribe_834cc0ee')
       : translateText('generated.inline.0128_subscribe_d6981f74')}

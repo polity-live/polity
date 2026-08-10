@@ -91,15 +91,15 @@ export function TimelineModeToggle({
         const config = MODE_CONFIG[m];
         const Icon = config.icon;
         const isActive = mode === m;
-        const badgeCount =
-          m === 'timeline' ? followingBadge : m === 'decisions' ? decisionsBadge : undefined;
+        const badgeCount = m === 'timeline' ? followingBadge : decisionsBadge;
         const showBadge = badgeCount !== undefined && badgeCount > 0;
 
         return (
           <ToggleGroupItem
+            data-action-id="timeline.mode.select"
+            data-action-kind="selection"
             key={m}
             value={m}
-            aria-controls={`timeline-panel-${m}`}
             aria-label={t(config.labelKey)}
             className={cn(
               'relative h-auto gap-1.5 px-3 py-1.5 text-sm font-medium transition-all duration-200',

@@ -43,9 +43,13 @@ describe('MessageContent Markdown', () => {
     );
 
     expect(screen.getByRole('link', { name: 'Group' }).getAttribute('href')).toBe('/group/one');
+    expect(screen.getByRole('link', { name: 'Group' }).getAttribute('data-action-id')).toBe(
+      'messages.content.markdown-internal.open'
+    );
     const external = screen.getByRole('link', { name: 'External' });
     expect(external.getAttribute('target')).toBe('_blank');
     expect(external.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(external.getAttribute('data-action-id')).toBe('messages.content.markdown-external.open');
     expect(container.querySelector('script')).toBeNull();
     expect(screen.queryByRole('link', { name: 'Bad' })).toBeNull();
     expect(screen.getByText('Bad')).toBeTruthy();
@@ -63,6 +67,12 @@ describe('MessageContent Markdown', () => {
 
     expect(screen.getByRole('link', { name: '/group/group-1' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'https://example.com' })).toBeTruthy();
+    expect(
+      screen.getByRole('link', { name: '/group/group-1' }).getAttribute('data-action-id')
+    ).toBe('messages.content.plain-internal.open');
+    expect(
+      screen.getByRole('link', { name: 'https://example.com' }).getAttribute('data-action-id')
+    ).toBe('messages.content.plain-external.open');
     expect(screen.getAllByTestId('link-preview')).toHaveLength(1);
     expect(screen.getByTestId('link-preview').textContent).toBe('https://example.com');
   });

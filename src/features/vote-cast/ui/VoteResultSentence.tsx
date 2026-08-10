@@ -55,7 +55,11 @@ export function VoteResultSentence({
   if (isWinner && isFinal) {
     const rolePart = roleName ? (
       roleLink ? (
-        <Link to={roleLink} className="hover:text-primary font-medium underline underline-offset-4">
+        <Link
+          data-action-id="vote-cast.result.role.open"
+          to={roleLink}
+          className="hover:text-primary font-medium underline underline-offset-4"
+        >
           {roleName}
         </Link>
       ) : (
@@ -65,6 +69,7 @@ export function VoteResultSentence({
 
     const winnerPart = winnerLink ? (
       <Link
+        data-action-id="vote-cast.result.winner.open"
         to={winnerLink}
         className={featureThemeClassName('votecastVoteResultSentenceWarningText')}
       >

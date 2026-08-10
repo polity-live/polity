@@ -125,21 +125,42 @@ export function GroupNetworkFlowContentView({
     return (
       <div className="flex h-full min-h-0 flex-col gap-4">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setViewMode('hierarchy')}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setViewMode('hierarchy')}
+            data-action-id="network.group-flow.empty-view.hierarchy"
+          >
             {t('common.network.hierarchyView')}
           </Button>
-          <Button variant="default" size="sm" onClick={() => setViewMode('workflow')}>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setViewMode('workflow')}
+            data-action-id="network.group-flow.empty-view.workflow"
+          >
             {t('common.network.workflowView')}
           </Button>
-          <FormControlSelect value={selectedWorkflowId} onValueChange={setSelectedWorkflowId}>
-            <FormControlSelectTrigger className="w-[240px]">
+          <FormControlSelect
+            value={selectedWorkflowId}
+            onValueChange={setSelectedWorkflowId}
+            data-action-id="network.group-flow.workflow.select"
+          >
+            <FormControlSelectTrigger
+              className="w-[240px]"
+              data-action-id="network.group-flow.workflow.select"
+            >
               <FormControlSelectValue
                 placeholder={t('features.network.workflows.selectWorkflow')}
               />
             </FormControlSelectTrigger>
             <FormControlSelectContent>
               {sortedGroupWorkflows.map((w: any) => (
-                <FormControlSelectItem key={w.id} value={w.id}>
+                <FormControlSelectItem
+                  key={w.id}
+                  value={w.id}
+                  data-action-id="network.group-flow.workflow.option"
+                >
                   {w.name ?? translateText('generated.inline.0093_untitled_621521f9')}
                 </FormControlSelectItem>
               ))}
@@ -172,11 +193,17 @@ export function GroupNetworkFlowContentView({
           variant={viewMode === 'hierarchy' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setViewMode('hierarchy')}
+          data-action-id="network.group-flow.view.hierarchy"
         >
           {t('common.network.hierarchyView')}
         </Button>
         {showWorkflowView && groupWorkflows.length > 0 && (
-          <Button variant="outline" size="sm" onClick={() => setViewMode('workflow')}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setViewMode('workflow')}
+            data-action-id="network.group-flow.view.workflow"
+          >
             {t('common.network.workflowView')}
           </Button>
         )}
@@ -263,6 +290,7 @@ export function GroupNetworkFlowContentView({
               size="sm"
               variant="outline"
               onClick={handleSaveLayout}
+              data-action-id="network.group-layout.save"
               disabled={isLayoutLoading || !hasLayoutChanges}
             >
               {t('common.network.saveLayout')}
@@ -271,6 +299,7 @@ export function GroupNetworkFlowContentView({
               size="sm"
               variant="outline"
               onClick={handleResetLayout}
+              data-action-id="network.group-layout.reset"
               disabled={isLayoutLoading || (!hasSavedLayout && !hasLayoutChanges)}
             >
               {t('common.network.resetLayout')}

@@ -15,9 +15,10 @@ interface UserGroupMembershipRoleLinkLike<TRole extends UserGroupRoleLike = User
 function selectPrimaryGroupRole<TRole extends UserGroupRoleLike>(roles: readonly TRole[]) {
   if (roles.length === 0) return null;
 
-  return (
-    [...roles].sort((left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1))[0] ?? null
-  );
+  // Sorting preserves the non-empty length established above, so index zero exists.
+  return [...roles].sort(
+    (left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1)
+  )[0] as TRole;
 }
 
 function normalizeGroupMemberships<

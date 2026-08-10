@@ -268,7 +268,7 @@ export function ManageNetworkTabContentView({
   const filterOptions: FilterOption[] = NETWORK_FLOW_FILTER_TYPES.map(right => ({
     label:
       right === MEMBERSHIP_FLOW_RIGHT
-        ? getRightLabel(right, (key, fallback) => t(key) || fallback || key)
+        ? getRightLabel(right, (key, fallback) => t(key, fallback))
         : t(
             `common.rights.${right === 'informationRight' ? 'information' : right === 'amendmentRight' ? 'amendment' : right === 'rightToSpeak' ? 'speak' : right === 'activeVotingRight' ? 'activeVoting' : 'passiveVoting'}`
           ) || right,
@@ -308,7 +308,12 @@ export function ManageNetworkTabContentView({
   }) => (
     <DangerConfirmDialog
       trigger={
-        <Button variant="ghost" size="icon" className="h-8 w-8">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          data-action-id="network.relationship.delete.open"
+        >
           <Trash2 className="h-4 w-4" />
           <span className="sr-only">{t('common.actions.delete')}</span>
         </Button>
@@ -497,7 +502,12 @@ export function ManageNetworkTabContentView({
         initialRelationshipType={display.relationshipType}
         initialRights={row.isStructure || !row.rel.with_right ? [] : [row.rel.with_right]}
         trigger={
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            data-action-id="network.relationship.request.edit"
+          >
             <Pencil className="h-4 w-4" />
             <span className="sr-only">{t('common.network.editRelationship')}</span>
           </Button>
@@ -550,6 +560,7 @@ export function ManageNetworkTabContentView({
             size="sm"
             variant="default"
             disabled={linkSubmission.isActive}
+            data-action-id="network.relationship.request.approve"
             onClick={() =>
               void handleAcceptLinkRequest(row.rels, otherGroupName).catch(() => undefined)
             }
@@ -561,6 +572,7 @@ export function ManageNetworkTabContentView({
             size="sm"
             variant="default"
             onClick={() => openManageDialog(row.rels, otherGroupName, row.request.group.id)}
+            data-action-id="network.relationship.request.manage"
           >
             {t('common.network.manage')}
           </Button>
@@ -750,7 +762,12 @@ export function ManageNetworkTabContentView({
                   initialRelationshipType={row.original.type}
                   initialRights={row.original.rights}
                   trigger={
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      data-action-id="network.relationship.active.edit"
+                    >
                       <Pencil className="h-4 w-4" />
                       <span className="sr-only">
                         {translateText('generated.inline.0801_edit_relationship_e03de7d7')}
@@ -761,7 +778,12 @@ export function ManageNetworkTabContentView({
                 />
                 <DangerConfirmDialog
                   trigger={
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      data-action-id="network.relationship.active.delete.open"
+                    >
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">
                         {translateText('generated.inline.0802_delete_relationship_98af16bc')}
@@ -927,6 +949,7 @@ export function ManageNetworkTabContentView({
                   key={option.value}
                   active={isActive}
                   onClick={() => onDirectionFilterChange(option.value)}
+                  data-action-id="network.relationship.direction-filter.select"
                 >
                   {option.label}
                 </FilterButton>

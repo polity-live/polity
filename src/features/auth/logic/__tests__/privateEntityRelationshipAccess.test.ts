@@ -8,6 +8,13 @@ import {
 } from '../privateEntityRelationshipAccess';
 
 describe('privateEntityRelationshipAccess', () => {
+  it('rejects every private relationship without an authenticated user', () => {
+    expect(hasPrivateGroupRouteAccess('owner', null, [])).toBe(false);
+    expect(hasPrivateAmendmentRouteAccess('creator', undefined, [])).toBe(false);
+    expect(hasPrivateEventRouteAccess('creator', null, [])).toBe(false);
+    expect(hasPrivateBlogRouteAccess(undefined, [])).toBe(false);
+  });
+
   it('allows private group access for owners and active members only', () => {
     expect(hasPrivateGroupRouteAccess('user-1', 'user-1', [])).toBe(true);
     expect(hasPrivateGroupRouteAccess('user-1', 'user-2', ['active'])).toBe(true);

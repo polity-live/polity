@@ -74,7 +74,7 @@ export function AssignHolderDialogView({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <ScrollableDialogContent management className="sm:max-w-[500px]">
-        <form onSubmit={handleSubmit}>
+        <form data-action-scope="presentation" onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>
               {translateText('generated.inline.0646_assign_incumbent_d397e41f')}
@@ -134,6 +134,7 @@ export function AssignHolderDialogView({
               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
+                    data-action-id="groups.roles.holder.open-member-picker"
                     id="holder-select"
                     variant="outline"
                     role="combobox"
@@ -178,6 +179,7 @@ export function AssignHolderDialogView({
                           if (!user) return null;
                           return (
                             <CommandItem
+                              data-action-id="groups.roles.holder.choose-member"
                               key={user.id}
                               value={user.id}
                               onSelect={value => {
@@ -222,18 +224,28 @@ export function AssignHolderDialogView({
                 {translateText('generated.inline.0654_assignment_reason_74518646')}
               </FormControlLabel>
               <FormControlSelect
+                data-action-scope="presentation"
                 value={reason}
                 onValueChange={value => setReason(value as 'elected' | 'appointed')}
                 disabled={isElectedRole}
               >
-                <FormControlSelectTrigger id="assignment-reason">
+                <FormControlSelectTrigger
+                  data-action-id="groups.roles.holder.open-reason"
+                  id="assignment-reason"
+                >
                   <FormControlSelectValue />
                 </FormControlSelectTrigger>
                 <FormControlSelectContent>
-                  <FormControlSelectItem value="appointed">
+                  <FormControlSelectItem
+                    data-action-id="groups.roles.holder.choose-appointed"
+                    value="appointed"
+                  >
                     {translateText('generated.inline.0655_appointed_9f51a760')}
                   </FormControlSelectItem>
-                  <FormControlSelectItem value="elected">
+                  <FormControlSelectItem
+                    data-action-id="groups.roles.holder.choose-elected"
+                    value="elected"
+                  >
                     {translateText('generated.inline.0656_elected_27d35d1d')}
                   </FormControlSelectItem>
                 </FormControlSelectContent>
@@ -246,13 +258,18 @@ export function AssignHolderDialogView({
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              data-action-id="groups.roles.holder.cancel"
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               {isElectedRole
                 ? translateText('generated.inline.0088_close_bbfa773e')
                 : translateText('generated.inline.0089_cancel_77dfd213')}
             </Button>
             {!isElectedRole && (
-              <Button type="submit">
+              <Button data-action-id="groups.roles.holder.submit" type="submit">
                 {currentHolder
                   ? translateText('generated.inline.0090_replace_holder_da55b9f7')
                   : translateText('generated.inline.0091_assign_holder_2a88e099')}

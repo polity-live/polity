@@ -99,7 +99,7 @@ function buildFilter(field: GeoAddressField, context: GeoAddressContext): string
     }
   }
 
-  if (field === 'street' || field === 'house_number') {
+  if (field === 'street') {
     const placeId =
       context.post_code?.place_id ?? context.city?.place_id ?? context.region?.place_id;
     if (placeId) {
@@ -117,7 +117,7 @@ function buildBias(field: GeoAddressField, context: GeoAddressContext): string |
 
   const source = context.post_code ?? context.city ?? context.region ?? context.country;
 
-  if (source?.lon && source?.lat) {
+  if (source?.lon != null && source.lat != null) {
     return `proximity:${source.lon},${source.lat}`;
   }
 

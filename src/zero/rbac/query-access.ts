@@ -162,7 +162,7 @@ function applyGroupRoleRightAccess<T>(
   q: T,
   userID: string | undefined | null,
   actions: readonly string[],
-  resources: readonly string[] = ['groups']
+  resources: readonly string[]
 ): T {
   const query = q as any;
 

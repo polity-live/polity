@@ -52,7 +52,6 @@ interface RecoveryDraftSnapshotCacheEntry {
 const recoveryDraftSnapshotCache = new Map<string, RecoveryDraftSnapshotCacheEntry>();
 
 function emitCreateRecoveryDraftsChanged() {
-  if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent(CREATE_RECOVERY_DRAFTS_CHANGED_EVENT));
 }
 
@@ -64,7 +63,7 @@ function getRecoverableEntityDraftId(
   return `${entityType}:${entityId}`;
 }
 
-function isCreateRecoveryDraftExpired(
+export function isCreateRecoveryDraftExpired(
   draft: Pick<CreateRecoveryDraft, 'submittedAt'>,
   now = Date.now(),
   expiryMs = DEFAULT_EXPIRY_MS
@@ -72,7 +71,7 @@ function isCreateRecoveryDraftExpired(
   return now - draft.submittedAt > expiryMs;
 }
 
-function routeForTarget(target: CreateSubmitTarget) {
+export function routeForCreateTarget(target: CreateSubmitTarget) {
   if (target.kind === 'external') return target.href;
 
   const concretePath = Object.entries(target.params ?? {}).reduce(
@@ -118,7 +117,7 @@ function readRecoveryDraftByStorageId(id: string): CreateRecoveryDraft | null {
   return draft;
 }
 
-function subscribeCreateRecoveryDrafts(onStoreChange: () => void) {
+export function subscribeCreateRecoveryDrafts(onStoreChange: () => void) {
   if (typeof window === 'undefined') return () => undefined;
 
   const handleStorage = (event: StorageEvent) => {
@@ -247,7 +246,7 @@ export async function waitForOptimisticCreate(result: MutationResultLike) {
   await (result.client ?? Promise.resolve());
 }
 
-function getFinalizationEntityKind(draft: CreateRecoveryDraft): CreationEntityKind {
+export function getCreateFinalizationEntityKind(draft: CreateRecoveryDraft): CreationEntityKind {
   switch (draft.entityType) {
     case 'agenda_item':
       return 'agendaItem';
@@ -276,7 +275,7 @@ export function trackCreateFinalization({ result, draft, retry }: TrackCreateFin
 
   trackMutationFinalization({
     result,
-    entityKind: getFinalizationEntityKind(recoveryDraft),
+    entityKind: getCreateFinalizationEntityKind(recoveryDraft),
     operationId: recoveryDraft.id,
     pendingToast: { testId: 'create-finalization-pending-toast' },
     successToast: { testId: 'create-finalization-saved-toast' },
@@ -303,5 +302,5 @@ export function trackCreateFinalization({ result, draft, retry }: TrackCreateFin
 }
 
 export function openCreateRecoveryTarget(draft: CreateRecoveryDraft) {
-  window.location.assign(routeForTarget(draft.target));
+  window.location.assign(routeForCreateTarget(draft.target));
 }

@@ -71,16 +71,16 @@ export function useMessageState(options: MessageStateOptions = {}) {
   );
 
   const isLoading =
-    (conversationId !== undefined &&
+    (Boolean(conversationId) &&
       (messagesResult.type === 'unknown' ||
         conversationResult.type === 'unknown' ||
         unreadResult.type === 'unknown')) ||
     (includeRelations === true && conversationsWithRelationsResult.type === 'unknown') ||
     (includeForUnread === true && conversationsForUnreadResult.type === 'unknown') ||
     (includeConversationsByUser === true &&
-      userId !== undefined &&
+      Boolean(userId) &&
       conversationsByUserResult.type === 'unknown') ||
-    (groupId !== undefined && groupConversationResult.type === 'unknown');
+    (Boolean(groupId) && groupConversationResult.type === 'unknown');
 
   const orderedMessages = useMemo(() => [...(messages ?? [])].reverse(), [messages]);
 
@@ -91,7 +91,7 @@ export function useMessageState(options: MessageStateOptions = {}) {
     conversationsWithRelations: conversationsWithRelations ?? [],
     conversationsForUnread,
     conversationsByUser: conversationsByUser ?? [],
-    groupConversation: groupConversation ?? undefined,
+    groupConversation,
     isLoading,
   };
 }

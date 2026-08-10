@@ -59,13 +59,23 @@ export function ForgotPasswordFormView({
       }
     >
       {sent ? (
-        <FormButton type="button" variant="outline" className="w-full" onClick={onBackToSignIn}>
+        <FormButton
+          data-action-id="auth.forgot-password.navigate.sign-in"
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={onBackToSignIn}
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           {copy.backToSignIn}
         </FormButton>
       ) : (
         <>
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form
+            data-action-id="auth.forgot-password.submit.reset"
+            onSubmit={onSubmit}
+            className="space-y-4"
+          >
             <TextField
               id="email"
               type="email"
@@ -82,7 +92,12 @@ export function ForgotPasswordFormView({
               <InlineNotice variant="destructive">{displayError}</InlineNotice>
             ) : null}
 
-            <FormButton type="submit" className="w-full" disabled={isSubmitting || !email}>
+            <FormButton
+              data-action-id="auth.forgot-password.submit.reset"
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting || !email}
+            >
               {isSubmitting ? (
                 <>
                   <Spinner className="mr-2" />
@@ -96,6 +111,7 @@ export function ForgotPasswordFormView({
 
           <div className="text-muted-foreground mt-6 text-center text-sm">
             <FormButton
+              data-action-id="auth.forgot-password.navigate.sign-in"
               type="button"
               variant="link"
               className="h-auto p-0 font-medium"

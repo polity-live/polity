@@ -283,9 +283,7 @@ export async function reconcileGeneralAssemblyParticipantsForEvent(
 
     for (const membership of desiredOfflineMembersByKey.values()) {
       const offlineMember = membership.group_offline_member;
-      if (!offlineMember) {
-        continue;
-      }
+      if (!offlineMember) continue;
 
       const existingOfflineParticipant =
         offlineParticipantsBySourceId.get(offlineMember.id) ??

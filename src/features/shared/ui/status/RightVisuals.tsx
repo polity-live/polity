@@ -161,7 +161,8 @@ export function RightBadge({
   requestKind?: RightRequestKind | null;
 }) {
   const { t } = useTranslation();
-  const label = getRightLabel(right, (key, fallback) => t(key) || fallback || key);
+  // getRightLabel only invokes this callback with a non-empty built-in fallback.
+  const label = getRightLabel(right, (key, fallback) => t(key) || (fallback as string));
   const requestStatusLabel =
     requestKind === 'incoming'
       ? t('common.network.incomingRequest')
@@ -187,17 +188,20 @@ export function RightFilterOptionButton({
   right,
   children,
   onClick,
+  'data-action-id': dataActionId,
 }: {
   active: boolean;
   right: string;
   children: ReactNode;
   onClick: () => void;
+  'data-action-id'?: string;
 }) {
   return (
     <Button
       size="sm"
       variant="outline"
       onClick={onClick}
+      data-action-id={dataActionId}
       className={cn(
         'text-xs',
         active

@@ -26,6 +26,12 @@ function buildRelationship(
 }
 
 describe('networkRelationshipDialogHelpers', () => {
+  it('rejects unsupported relationship types', () => {
+    expect(
+      getRelationshipPreviewData(buildRelationship({ relationshipType: 'unsupported' as 'parent' }))
+    ).toBeNull();
+  });
+
   it('keeps sibling preview anchored to the source group for incoming-only edges', () => {
     const preview = getRelationshipPreviewData(buildRelationship({ relationshipType: 'sibling' }));
 
@@ -70,6 +76,27 @@ describe('networkRelationshipDialogHelpers', () => {
     ).toBe('current_grants_right_to_partner');
   });
 
+  it('swaps child relationships to their parent perspective', () => {
+    expect(
+      getRelationshipPreviewData(
+        buildRelationship({
+          source: 'child-child',
+          target: 'parent-parent',
+          sourceName: undefined,
+          targetName: undefined,
+          relationshipType: 'child',
+        })
+      )
+    ).toEqual({
+      relationshipType: 'parent',
+      currentGroupName: 'parent-parent',
+      currentGroupId: 'parent',
+      selectedGroupName: 'child-child',
+      selectedGroupId: 'child',
+      isIncomingPerspective: true,
+    });
+  });
+
   it('prefers explicit preview metadata when the edge was display-oriented', () => {
     const preview = getRelationshipPreviewData(
       buildRelationship({
@@ -91,5 +118,75 @@ describe('networkRelationshipDialogHelpers', () => {
       selectedGroupId: 'hierarchieOben',
       isIncomingPerspective: false,
     });
+  });
+
+  it('handles explicit target perspective and absent endpoint ids', () => {
+    expect(
+      getRelationshipPreviewData(
+        buildRelationship({
+          source: undefined,
+          target: undefined,
+          sourceName: undefined,
+          targetName: undefined,
+          relationshipType: 'parent',
+          userConnectionDirections: undefined,
+        })
+      )
+    ).toEqual({
+      relationshipType: 'parent',
+      currentGroupName: '',
+      currentGroupId: undefined,
+      selectedGroupName: '',
+      selectedGroupId: undefined,
+      isIncomingPerspective: false,
+    });
+
+    expect(
+      getRelationshipPreviewData(
+        buildRelationship({
+          currentGroupId: 'hierarchieSeiteGewählt',
+          currentGroupName: 'Aktuell',
+          selectedGroupId: 'hierarchieOben',
+          selectedGroupName: 'Gewählt',
+        })
+      )?.isIncomingPerspective
+    ).toBe(true);
+  });
+
+  it('does not swap outgoing or bidirectional hierarchy perspectives', () => {
+    expect(
+      getRelationshipPreviewData(
+        buildRelationship({ relationshipType: 'parent', userConnectionDirections: ['outgoing'] })
+      )?.isIncomingPerspective
+    ).toBe(false);
+    expect(
+      getRelationshipPreviewData(
+        buildRelationship({
+          relationshipType: 'parent',
+          userConnectionDirections: ['incoming', 'outgoing'],
+        })
+      )?.isIncomingPerspective
+    ).toBe(false);
+  });
+
+  it('maps every edge direction in both preview perspectives', () => {
+    expect(
+      getRelationshipDirectionForPreview({
+        edgeDirection: 'bidirectional',
+        isIncomingPerspective: false,
+      })
+    ).toBe('mutual');
+    expect(
+      getRelationshipDirectionForPreview({
+        edgeDirection: 'backward',
+        isIncomingPerspective: true,
+      })
+    ).toBe('partner_grants_right_to_current');
+    expect(
+      getRelationshipDirectionForPreview({
+        edgeDirection: 'forward',
+        isIncomingPerspective: false,
+      })
+    ).toBe('partner_grants_right_to_current');
   });
 });

@@ -132,7 +132,7 @@ export function useCityDesignRemoteCursors({
       if (pendingBroadcastRef.current) clearTimeout(pendingBroadcastRef.current);
       pendingBroadcastRef.current = setTimeout(() => {
         pendingBroadcastRef.current = null;
-        if (latestPayloadRef.current) sendPayload(latestPayloadRef.current);
+        sendPayload(latestPayloadRef.current as NonNullable<typeof latestPayloadRef.current>);
       }, CURSOR_BROADCAST_THROTTLE_MS - elapsed);
     },
     [enabled, sendPayload, userColor, userId, userName]
@@ -178,3 +178,5 @@ function parseCursorPayload(payload: Record<string, unknown>): CursorBroadcastPa
 
   return { senderId, userName, userColor, position: { x, z }, layer };
 }
+
+export const cityDesignRemoteCursorInternals = { parseCursorPayload };

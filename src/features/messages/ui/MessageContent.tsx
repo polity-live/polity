@@ -80,6 +80,7 @@ export function MessageContent({
                 return (
                   <SmartLink
                     href={toInternalPolityHref(href)}
+                    data-action-id="messages.content.markdown-internal.open"
                     className="text-primary underline underline-offset-2"
                   >
                     {children}
@@ -89,6 +90,7 @@ export function MessageContent({
               return (
                 <a
                   href={href}
+                  data-action-id="messages.content.markdown-external.open"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary underline underline-offset-2"
@@ -119,6 +121,7 @@ export function MessageContent({
                 <SmartLink
                   key={index}
                   href={href}
+                  data-action-id="messages.content.plain-internal.open"
                   className="text-primary hover:text-primary/80 underline"
                 >
                   {part.content}
@@ -130,6 +133,7 @@ export function MessageContent({
               <a
                 key={index}
                 href={part.content}
+                data-action-id="messages.content.plain-external.open"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:text-primary/80 underline"

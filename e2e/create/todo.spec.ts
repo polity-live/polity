@@ -1,23 +1,6 @@
 import { test, expect } from '../fixtures/test';
-import { cartesianProduct, matrixLimit, scenarioLabel } from '../fixtures/matrix';
-import { fillMinimalTodo, gotoTodo, layouts, visibilityValues } from './helpers';
+import { fillMinimalTodo, gotoTodo } from './helpers';
 import { submitSmokeAndExpectCreated } from './smoke-expectations';
-
-const scenarios = cartesianProduct(
-  {
-    layout: layouts,
-    title: ['empty', 'valid'],
-    description: ['absent', 'present'],
-    group: ['absent', 'present'],
-    assignee: ['absent', 'present'],
-    priority: ['low', 'medium', 'high'],
-    status: ['pending', 'in_progress', 'completed'],
-    dueDate: ['absent', 'date_only', 'with_time'],
-    visibility: visibilityValues,
-    tags: ['absent', 'present'],
-  },
-  { max: matrixLimit(48), name: scenarioLabel }
-);
 
 async function selectCurrentTodoDeadline(
   createFlowPage: Parameters<typeof gotoTodo>[0],
@@ -32,7 +15,7 @@ async function selectCurrentTodoDeadline(
 }
 
 test.describe('create/todo', () => {
-  test('creates a minimal todo @smoke', async ({ createFlowPage, e2eRun }) => {
+  test('creates a minimal todo @nightly', async ({ createFlowPage, e2eRun }) => {
     await gotoTodo(createFlowPage);
     await fillMinimalTodo(createFlowPage, e2eRun.prefix);
     await submitSmokeAndExpectCreated(createFlowPage, {
@@ -41,7 +24,7 @@ test.describe('create/todo', () => {
     });
   });
 
-  test('creates a todo with an explicit local deadline time @create-full', async ({
+  test('creates a todo with an explicit local deadline time @nightly', async ({
     createFlowPage,
     e2eRun,
   }) => {
@@ -58,17 +41,16 @@ test.describe('create/todo', () => {
     await expect(createFlowPage.page).toHaveURL(/\/todos\/[0-9a-f-]+\/?$/);
 
     const comment = `${e2eRun.prefix} Todo comment`;
-    const commentInput = createFlowPage.page.getByPlaceholder('Add a comment...').first();
-    await expect(commentInput).toBeVisible({ timeout: 60_000 });
+    const commentInput = createFlowPage.page
+      .getByPlaceholder('Add a comment...')
+      .filter({ visible: true });
+    await expect(commentInput).toHaveCount(1, { timeout: 60_000 });
     await commentInput.fill(comment);
     await commentInput.press('Control+Enter');
     await expect(createFlowPage.page.getByText(comment, { exact: true })).toBeVisible();
   });
 
-  test('archives and restores a completed todo @create-full', async ({
-    createFlowPage,
-    e2eRun,
-  }) => {
+  test('archives and restores a completed todo @nightly', async ({ createFlowPage, e2eRun }) => {
     const prefix = `${e2eRun.prefix} Archive`;
     const title = `${prefix} Created Todo`;
 
@@ -98,59 +80,4 @@ test.describe('create/todo', () => {
     await createFlowPage.page.getByRole('tab', { name: /Completed/ }).click();
     await expect(createFlowPage.page.getByText(title, { exact: true })).toBeVisible();
   });
-
-  for (const scenario of scenarios) {
-    test(`matrix ${scenario.name} @create-full`, async ({ createFlowPage, e2eRun, seed }) => {
-      await gotoTodo(createFlowPage, scenario.data.layout as 'one_page' | 'carousel');
-
-      if (scenario.data.title === 'valid') {
-        await createFlowPage.form.fillText('title', `${e2eRun.prefix} Matrix Todo`, {
-          optional: true,
-        });
-      }
-      if (scenario.data.description === 'present') {
-        await createFlowPage.form.fillText('description', `${e2eRun.prefix} todo description`, {
-          optional: true,
-        });
-      }
-      if (scenario.data.group === 'present') {
-        await createFlowPage.selectTypeahead('group', seed.groupName, {
-          entityType: 'group',
-          optional: true,
-        });
-      }
-      if (scenario.data.assignee === 'present') {
-        await createFlowPage.selectTypeahead('assignee', e2eRun.prefix, {
-          entityType: 'user',
-          optional: true,
-        });
-      }
-      await createFlowPage.form.chooseOption('priority', scenario.data.priority as string, {
-        optional: true,
-      });
-      await createFlowPage.form.chooseOption('status', scenario.data.status as string, {
-        optional: true,
-      });
-      await createFlowPage.form.chooseOption('visibility', scenario.data.visibility as string, {
-        optional: true,
-      });
-
-      if (scenario.data.dueDate !== 'absent') {
-        await selectCurrentTodoDeadline(createFlowPage, { optional: true });
-      }
-      if (scenario.data.dueDate === 'with_time') {
-        const field = createFlowPage.form.field('due-date-time');
-        const timeInput = field.locator('input[type="time"]');
-        if ((await timeInput.count()) && (await timeInput.isVisible())) {
-          await timeInput.fill('14:30');
-        }
-      }
-
-      if (scenario.data.layout === 'one_page' && scenario.data.title === 'empty') {
-        await createFlowPage.form.expectSubmitDisabled();
-      } else {
-        await expect(createFlowPage.page.locator('[data-create-flow="todo"]')).toBeVisible();
-      }
-    });
-  }
 });

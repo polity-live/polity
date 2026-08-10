@@ -3,6 +3,7 @@ import { useQuery } from '@rocicorp/zero/react';
 import { queries } from '../queries';
 import type { GroupConnectionListRow } from '../network/queries';
 import {
+  buildDerivedGroupNetworkMetaMap,
   type DerivedGroupNetworkMeta,
   deriveNormalizedGroupRelationships,
 } from '@/features/network/logic/groupConnectionDerived';
@@ -48,15 +49,15 @@ interface GroupOfflineMembershipRoleLinkLike<TRole extends GroupRoleLike = Group
   role?: TRole | null;
 }
 
-function selectPrimaryGroupRole<TRole extends GroupRoleLike>(roles: readonly TRole[]) {
+export function selectPrimaryGroupRole<TRole extends GroupRoleLike>(roles: readonly TRole[]) {
   if (roles.length === 0) return null;
 
-  return (
-    [...roles].sort((left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1))[0] ?? null
-  );
+  return [...roles].sort(
+    (left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1)
+  )[0] as TRole;
 }
 
-function normalizeMembershipWithRoles<
+export function normalizeMembershipWithRoles<
   TMembership extends {
     membership_roles?: readonly GroupMembershipRoleLinkLike<TRole>[] | null;
     role?: TRole | null;
@@ -78,7 +79,7 @@ function normalizeMembershipWithRoles<
   };
 }
 
-function normalizeMemberships<
+export function normalizeMemberships<
   TMembership extends {
     membership_roles?: readonly GroupMembershipRoleLinkLike<TRole>[] | null;
     role?: TRole | null;
@@ -88,7 +89,7 @@ function normalizeMemberships<
   return (memberships || []).map(membership => normalizeMembershipWithRoles(membership));
 }
 
-function normalizeGuestAccesses<
+export function normalizeGuestAccesses<
   TGuestAccess extends {
     guest_roles?: readonly GroupGuestRoleLinkLike<TRole>[] | null;
     role?: TRole | null;
@@ -110,7 +111,7 @@ function normalizeGuestAccesses<
   });
 }
 
-function normalizeOfflineMemberships<
+export function normalizeOfflineMemberships<
   TMembership extends {
     user_id?: string | null;
     status?: string | null;
@@ -171,7 +172,7 @@ function normalizeOfflineMemberships<
     });
 }
 
-function mapRoleForDisplay<T extends GroupRoleDisplayLike>(role: T) {
+export function mapRoleForDisplay<T extends GroupRoleDisplayLike>(role: T) {
   return {
     ...role,
     title: role.name,
@@ -183,11 +184,11 @@ function mapRoleForDisplay<T extends GroupRoleDisplayLike>(role: T) {
   };
 }
 
-function isActiveConnectionStatus(status: string | null | undefined) {
+export function isActiveConnectionStatus(status: string | null | undefined) {
   return status === 'active';
 }
 
-function uniqueById<T extends { id?: string | null }>(items: readonly T[]) {
+export function uniqueById<T extends { id?: string | null }>(items: readonly T[]) {
   const seenIds = new Set<string>();
   return items.filter(item => {
     if (!item.id || seenIds.has(item.id)) {
@@ -231,55 +232,37 @@ export type AugmentedGroupWithDerivedNetworkMeta<TGroup extends { id?: string | 
     relationships_as_target: DerivedRelationshipRow[];
   };
 
-function augmentGroupWithDerivedNetworkMeta<
-  TGroup extends {
-    id?: string | null;
-    group_type?: string | null;
-    has_hierarchy_children?: boolean | null;
-    has_sibling_connections?: boolean | null;
-    connected_group_id?: string | null;
-    primary_sibling_membership_mode?: string | null;
-    sibling_membership_mode?: string | null;
-    sibling_role_id?: string | null;
-  },
->(
+interface GroupNetworkMetaSource {
+  id?: string | null;
+  group_type?: string | null;
+  has_hierarchy_children?: boolean | null;
+  has_sibling_connections?: boolean | null;
+  connected_group_id?: string | null;
+  primary_sibling_membership_mode?: string | null;
+  sibling_membership_mode?: string | null;
+  sibling_role_id?: string | null;
+}
+
+export function augmentGroupWithDerivedNetworkMeta<TGroup extends GroupNetworkMetaSource>(
+  group: TGroup,
+  allConnections: readonly GroupConnectionListRow[],
+  allGroups?: readonly GroupReferenceLike[]
+): AugmentedGroupWithDerivedNetworkMeta<TGroup>;
+export function augmentGroupWithDerivedNetworkMeta<TGroup extends GroupNetworkMetaSource>(
   group: TGroup | null | undefined,
   allConnections: readonly GroupConnectionListRow[],
-  allGroups: readonly { id?: string | null }[] = []
+  allGroups?: readonly GroupReferenceLike[]
+): AugmentedGroupWithDerivedNetworkMeta<TGroup> | null;
+export function augmentGroupWithDerivedNetworkMeta<TGroup extends GroupNetworkMetaSource>(
+  group: TGroup | null | undefined,
+  allConnections: readonly GroupConnectionListRow[],
+  allGroups: readonly GroupReferenceLike[] = []
 ): AugmentedGroupWithDerivedNetworkMeta<TGroup> | null {
   if (!group?.id) {
     return null;
   }
 
   const groupId = group.id;
-  const fallbackMeta = {
-    group_type: 'base' as const,
-    has_hierarchy_children: false,
-    has_sibling_connections: false,
-    connected_group_id: null,
-    sibling_membership_mode: null,
-    primary_sibling_membership_mode: null,
-    sibling_role_id: null,
-    parliament_source_group_ids: [],
-    primary_incoming_sibling_membership_mode: null,
-    primary_outgoing_sibling_membership_mode: null,
-    incoming_sibling_role_id: null,
-    outgoing_sibling_role_id: null,
-    incoming_parliament_source_group_ids: [],
-    outgoing_parliament_source_group_ids: [],
-    primary_sibling_connection_id: null,
-  };
-  const derivedMeta = {
-    ...fallbackMeta,
-    group_type: group.group_type ?? fallbackMeta.group_type,
-    has_hierarchy_children: group.has_hierarchy_children ?? fallbackMeta.has_hierarchy_children,
-    has_sibling_connections: group.has_sibling_connections ?? fallbackMeta.has_sibling_connections,
-    connected_group_id: group.connected_group_id ?? fallbackMeta.connected_group_id,
-    primary_sibling_membership_mode:
-      group.primary_sibling_membership_mode ?? fallbackMeta.primary_sibling_membership_mode,
-    sibling_membership_mode: group.sibling_membership_mode ?? fallbackMeta.sibling_membership_mode,
-    sibling_role_id: group.sibling_role_id ?? fallbackMeta.sibling_role_id,
-  };
   const relevantConnections = allConnections.filter(
     connection =>
       connection.group_a_id === groupId ||
@@ -287,6 +270,28 @@ function augmentGroupWithDerivedNetworkMeta<
       connection.from_group_id === groupId ||
       connection.to_group_id === groupId
   );
+  // The builder emits one entry for every explicit group ID.
+  const networkMeta = buildDerivedGroupNetworkMetaMap(relevantConnections, [groupId]).get(
+    groupId
+  ) as DerivedGroupNetworkMeta;
+  const derivedMeta: DerivedGroupNetworkMeta = {
+    ...networkMeta,
+    group_type:
+      (group.group_type as DerivedGroupNetworkMeta['group_type'] | null) ?? networkMeta.group_type,
+    has_hierarchy_children: group.has_hierarchy_children ?? networkMeta.has_hierarchy_children,
+    has_sibling_connections:
+      group.has_sibling_connections ?? networkMeta.has_sibling_connections,
+    connected_group_id: group.connected_group_id ?? networkMeta.connected_group_id,
+    primary_sibling_membership_mode:
+      (group.primary_sibling_membership_mode as
+        | DerivedGroupNetworkMeta['primary_sibling_membership_mode']
+        | null) ?? networkMeta.primary_sibling_membership_mode,
+    sibling_membership_mode:
+      (group.sibling_membership_mode as
+        | DerivedGroupNetworkMeta['sibling_membership_mode']
+        | null) ?? networkMeta.sibling_membership_mode,
+    sibling_role_id: group.sibling_role_id ?? networkMeta.sibling_role_id,
+  };
   const relationshipRows = deriveNormalizedGroupRelationships(relevantConnections);
   const groupsById = new Map(
     allGroups
@@ -309,18 +314,10 @@ function augmentGroupWithDerivedNetworkMeta<
     }
   }
 
-  const primarySiblingLink =
-    relevantConnections.find(
-      connection => connection.id === derivedMeta.primary_sibling_connection_id
-    ) ?? null;
   const connectedGroup =
     derivedMeta.connected_group_id != null
       ? (groupsById.get(derivedMeta.connected_group_id) ?? null)
-      : primarySiblingLink == null
-        ? null
-        : primarySiblingLink.group_a_id === groupId
-          ? (primarySiblingLink.group_b ?? groupsById.get(primarySiblingLink.group_b_id) ?? null)
-          : (primarySiblingLink.group_a ?? groupsById.get(primarySiblingLink.group_a_id) ?? null);
+      : null;
 
   const siblingGroups = uniqueById(
     relevantConnections
@@ -479,7 +476,7 @@ export function useGroupState(options: GroupStateOptions = {}) {
   const augmentedSearchResults = useMemo(() => {
     const augmentedResults = (searchResults ?? [])
       .map(result =>
-        augmentGroupWithDerivedNetworkMeta(result, allGroupConnections ?? [], searchResults ?? [])
+        augmentGroupWithDerivedNetworkMeta(result, allGroupConnections ?? [], searchResults)
       )
       .filter(result => result != null);
 
@@ -571,13 +568,13 @@ export function useGroupWikiData(groupId: string) {
         roles: projectedRoles,
       },
       (wikiNetworkData ?? []) as unknown as GroupConnectionListRow[],
-      overviewData ?? []
+      overviewData
     );
 
     return {
       ...augmentedGroup,
       memberships: [],
-      roles: (augmentedGroup?.roles || []).map(mapRoleForDisplay),
+      roles: augmentedGroup.roles.map(mapRoleForDisplay),
     };
   }, [overviewData, roleProjectionData, wikiNetworkData]);
 
@@ -665,17 +662,9 @@ export function useAllGroups() {
 
   const groups = useMemo(
     () =>
-      (groupsData || [])
-        .map(group =>
-          augmentGroupWithDerivedNetworkMeta(group, allGroupConnections ?? [], groupsData ?? [])
-        )
-        .filter(
-          (
-            group
-          ): group is NonNullable<
-            ReturnType<typeof augmentGroupWithDerivedNetworkMeta<(typeof groupsData)[number]>>
-          > => group != null
-        ),
+      (groupsData || []).map(group =>
+        augmentGroupWithDerivedNetworkMeta(group, allGroupConnections ?? [], groupsData)
+      ),
     [allGroupConnections, groupsData]
   );
 
@@ -714,13 +703,13 @@ export function useGroupById(groupId?: string) {
     const augmentedGroup = augmentGroupWithDerivedNetworkMeta(
       currentGroup,
       allGroupConnections ?? [],
-      groupsData ?? []
+      groupsData
     );
 
     return {
       ...augmentedGroup,
-      memberships: normalizeMemberships(augmentedGroup?.memberships),
-      guest_accesses: normalizeGuestAccesses(augmentedGroup?.guest_accesses),
+      memberships: normalizeMemberships(augmentedGroup.memberships),
+      guest_accesses: normalizeGuestAccesses(augmentedGroup.guest_accesses),
     };
   }, [allGroupConnections, groupsData]);
   const memberships = useMemo(() => group?.memberships || [], [group]);
@@ -935,7 +924,7 @@ export function useGroupNetwork(groupId: string) {
 
   return {
     group,
-    relationships: relationshipsData || [],
+    relationships: relationshipsData,
     isLoading: groupResult.type === 'unknown' || allGroupConnectionsResult.type === 'unknown',
   };
 }

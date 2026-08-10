@@ -145,7 +145,7 @@ export const useChat = () => {
   const transport = React.useMemo(
     () =>
       new DefaultChatTransport<EditorUIMessage>({
-        api: options.api ?? '/api/ai/command',
+        api: options.api,
         body: options.body,
         credentials: options.credentials,
         headers: {

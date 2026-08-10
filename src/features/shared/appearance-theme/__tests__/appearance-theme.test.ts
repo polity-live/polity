@@ -3,13 +3,21 @@ import {
   appearanceThemeDefinitionSchema,
   BUILTIN_THEMES,
   buildThemeCss,
+  BUILTIN_THEME_IDS,
   contrastRatio,
+  getBuiltinTheme,
   themeFontsSchema,
   POLITY_THEME,
   validateThemeForPublishing,
 } from '..';
 
 describe('appearance theme contract', () => {
+  it('resolves the default, known, and unknown built-in ids', () => {
+    expect(getBuiltinTheme(null)).toBe(POLITY_THEME);
+    expect(getBuiltinTheme(BUILTIN_THEME_IDS.spd)?.slug).toBe('spd');
+    expect(getBuiltinTheme('unknown')).toBeNull();
+  });
+
   it('ships seven valid, WCAG-AA preset themes', () => {
     expect(BUILTIN_THEMES).toHaveLength(7);
     for (const theme of BUILTIN_THEMES) {

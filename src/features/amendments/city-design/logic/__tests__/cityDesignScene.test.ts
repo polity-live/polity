@@ -92,6 +92,14 @@ describe('cityDesignScene coordinate mapping', () => {
     expect(Math.abs(eastArrow[2].z)).toBeLessThan(Math.abs(eastArrow[1].z));
     expect(northArrow[0]).toMatchObject({ x: 0, z: -2 });
     expect(Math.min(...northArrow.slice(1).map(point => point.z))).toBeGreaterThan(northArrow[0].z);
+    expect(
+      createLaneArrowPolygon({
+        center: { x: 1, z: 2 },
+        direction: { x: 0, z: 0 },
+        length: 4,
+        width: 1,
+      })[0]
+    ).toMatchObject({ x: 1, z: 4 });
   });
 
   it('renders green OSM areas below mobility layers and buildings', () => {
@@ -121,6 +129,7 @@ describe('cityDesignScene coordinate mapping', () => {
     expect(getCityDesignTreeRenderKind('zierkirsche')).toBe('ornamental_cherry');
     expect(getCityDesignTreeRenderKind('pflaume')).toBe('flowering_plum');
     expect(getCityDesignTreeRenderKind('custom_species')).toBe('deciduous');
+    expect(getCityDesignTreeRenderKind(undefined)).toBe('deciduous');
   });
 
   it('uses distinct tree render profiles for known species and a deciduous custom fallback', () => {
@@ -208,6 +217,9 @@ describe('cityDesignScene coordinate mapping', () => {
       )
     ).toBeCloseTo(-0.18);
     expect(getCityDesignOsmFeatureRenderY(osmWay({ kind: 'road' }), 0.052)).toBe(0.052);
+    expect(
+      getCityDesignOsmFeatureRenderY(osmWay({ kind: 'road', deckElevationMeters: 0 }), 0.052)
+    ).toBe(0.052);
   });
 
   it('creates internal bridge ramps where a bridge road meets surface level', () => {
@@ -276,6 +288,35 @@ describe('cityDesignScene coordinate mapping', () => {
     ).toHaveLength(0);
   });
 
+  it('prefers a same-kind lower connection over a nearer cross-kind connection', () => {
+    const source = rampFeature({
+      id: 'source-road',
+      start: { x: 0, z: 0 },
+      end: { x: 20, z: 0 },
+      surfaceY: 4,
+      structureKind: 'bridge',
+    });
+    const nearerRail = rampFeature({
+      id: 'nearer-rail',
+      kind: 'rail',
+      start: { x: 20.2, z: 0 },
+      end: { x: 35, z: 0 },
+      surfaceY: 0.07,
+    });
+    const sameKindRoad = rampFeature({
+      id: 'same-kind-road',
+      start: { x: 21, z: 0 },
+      end: { x: 40, z: 0 },
+      surfaceY: 0.052,
+    });
+
+    const endRamp = getCityDesignElevationRampSegments([source, nearerRail, sameKindRoad]).find(
+      ramp => ramp.sourceId === source.id && ramp.endpoint === 'end'
+    );
+
+    expect(endRamp?.endY).toBe(0.052);
+  });
+
   it('keeps connected viaduct rails continuously elevated', () => {
     const ramps = getCityDesignElevationRampSegments([
       rampFeature({
@@ -321,6 +362,66 @@ describe('cityDesignScene coordinate mapping', () => {
     expect(getCityDesignElevationRampLength(3.6, true)).toBe(10);
   });
 
+  it('safely rejects malformed persisted elevation centerlines', () => {
+    expect(
+      getCityDesignElevationRampSegments([
+        {
+          id: 'malformed-bridge',
+          kind: 'road',
+          geometry: {
+            kind: 'path_corridor',
+            points: [],
+            roundedCenterline: [],
+            polygon: [],
+            length: 0,
+            width: 2,
+            area: 0,
+            cornerRadius: 0,
+          },
+          surfaceY: 3,
+          structureKind: 'bridge',
+        },
+      ])
+    ).toEqual([]);
+  });
+
+  it('contains one-point ramps and refuses ramps toward a higher disconnected deck', () => {
+    const onePointBridge = {
+      id: 'one-point-bridge',
+      kind: 'road' as const,
+      geometry: {
+        kind: 'path_corridor' as const,
+        points: [{ x: 0, z: 0 }],
+        roundedCenterline: [{ x: 0, z: 0 }],
+        polygon: [],
+        length: 10,
+        width: 2,
+        area: 20,
+        cornerRadius: 0,
+      },
+      surfaceY: 3,
+      structureKind: 'bridge',
+    };
+    expect(getCityDesignElevationRampSegments([onePointBridge])).toEqual([]);
+
+    const bridge = rampFeature({
+      id: 'lower-bridge',
+      start: { x: 0, z: 0 },
+      end: { x: 20, z: 0 },
+      surfaceY: 3,
+      structureKind: 'bridge',
+    });
+    const higherConnection = rampFeature({
+      id: 'higher-deck',
+      start: { x: 20, z: 0 },
+      end: { x: 40, z: 0 },
+      surfaceY: 5,
+      structureKind: 'bridge',
+    });
+    const ramps = getCityDesignElevationRampSegments([bridge, higherConnection]);
+    expect(ramps.some(ramp => ramp.sourceId === bridge.id && ramp.endpoint === 'end')).toBe(false);
+  });
+
   it('coalesces render requests into one animation frame', () => {
     const callbacks: FrameRequestCallback[] = [];
     const frameApi = {
@@ -357,5 +458,28 @@ describe('cityDesignScene coordinate mapping', () => {
 
     expect(frameApi.cancelAnimationFrame).toHaveBeenCalledWith(11);
     expect(frameApi.requestAnimationFrame).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not render a stale callback after disposal and tolerates disposal without a frame', () => {
+    let callback: FrameRequestCallback | undefined;
+    const frameApi = {
+      requestAnimationFrame: vi.fn((nextCallback: FrameRequestCallback) => {
+        callback = nextCallback;
+        return 13;
+      }),
+      cancelAnimationFrame: vi.fn(),
+    };
+    const renderFrame = vi.fn();
+    const scheduler = createCityDesignRenderScheduler(renderFrame, frameApi);
+
+    scheduler.requestRender();
+    scheduler.dispose();
+    callback?.(20);
+
+    expect(renderFrame).not.toHaveBeenCalled();
+
+    const idleScheduler = createCityDesignRenderScheduler(vi.fn(), frameApi);
+    idleScheduler.dispose();
+    expect(frameApi.cancelAnimationFrame).toHaveBeenCalledTimes(1);
   });
 });

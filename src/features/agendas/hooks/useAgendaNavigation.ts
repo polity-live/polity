@@ -92,8 +92,10 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
 
     if (event.current_agenda_item_id) {
       const currentItem = event.agenda_items.find(item => item.id === event.current_agenda_item_id);
-      const isCompleted = currentItem?.status === 'completed' || Boolean(currentItem?.completed_at);
-      if (currentItem && !isCompleted) {
+      // Keep an explicitly selected completed item addressable until the
+      // event pointer advances. Navigation controls use that short-lived
+      // state to enable moving to the next item.
+      if (currentItem) {
         return currentItem.id;
       }
     }
@@ -103,7 +105,7 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
 
   const currentAgendaItem = useMemo(() => {
     if (!currentAgendaItemId) return null;
-    return agendaItems.find(item => item.id === currentAgendaItemId) || null;
+    return agendaItems.find(item => item.id === currentAgendaItemId);
   }, [currentAgendaItemId, agendaItems]);
 
   const currentIndex = useMemo(() => {
@@ -280,7 +282,7 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
   }, [user, canManageAgenda, currentAgendaItem, eventId]);
 
   return {
-    currentAgendaItem,
+    currentAgendaItem: currentAgendaItem ?? null,
     startableAgendaItem,
     currentIndex,
     totalItems: agendaItems.length,

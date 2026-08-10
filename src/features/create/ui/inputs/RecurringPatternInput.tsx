@@ -86,11 +86,10 @@ export function RecurringPatternInput({
   );
 
   const toggleWeekday = (day: number) => {
-    if (!onWeekdaysChange) return;
     const next = weekdays.includes(day)
       ? weekdays.filter(d => d !== day)
       : [...weekdays, day].sort((left, right) => left - right);
-    onWeekdaysChange(next);
+    onWeekdaysChange?.(next);
   };
 
   return (
@@ -153,6 +152,7 @@ export function RecurringPatternInput({
                 <FormControlLabel>{t('pages.create.event.recurringEnds')}</FormControlLabel>
                 {selectedEndDate ? (
                   <Button
+                    data-action-id="create.recurring.end-date.clear"
                     type="button"
                     variant="ghost"
                     size="sm"

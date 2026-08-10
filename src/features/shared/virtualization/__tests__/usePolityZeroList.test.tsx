@@ -92,4 +92,15 @@ describe('Polity zero-virtual list context identity', () => {
     expect(capturedContext(mocks.useZeroVirtualizer)).toBe(context);
     expect(capturedContext(mocks.useZeroVirtualizer)).not.toBe(initialContext);
   });
+
+  it('preserves non-finite numeric contexts instead of caching them', () => {
+    let context = { score: Number.NaN };
+    const { rerender } = renderHook(() => usePolityZeroList(listOptions(context)));
+    const initialContext = capturedContext(mocks.useZeroVirtualizer);
+
+    context = { score: Number.POSITIVE_INFINITY };
+    rerender();
+    expect(capturedContext(mocks.useZeroVirtualizer)).toBe(context);
+    expect(capturedContext(mocks.useZeroVirtualizer)).not.toBe(initialContext);
+  });
 });

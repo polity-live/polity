@@ -51,4 +51,27 @@ describe('ImageUpload dropzone', () => {
     });
     expect(toastError).toHaveBeenCalledWith('Images only');
   });
+
+  it('opens editing and removes an existing image through stable disabled-aware actions', () => {
+    const onImageChange = vi.fn();
+    const onImageRemove = vi.fn();
+    const { container } = render(
+      <ImageUpload
+        currentImage="https://example.test/current.png"
+        onImageChange={onImageChange}
+        onImageRemove={onImageRemove}
+      />
+    );
+    const edit = container.querySelector<HTMLElement>(
+      '[data-action-id="file-upload.image.edit.open"]'
+    )!;
+    const remove = container.querySelector<HTMLElement>(
+      '[data-action-id="file-upload.image.remove"]'
+    )!;
+    edit.focus();
+    fireEvent.keyDown(edit, { key: 'Enter' });
+    fireEvent.click(edit);
+    fireEvent.click(remove);
+    expect(onImageRemove).toHaveBeenCalledWith('https://example.test/current.png');
+  });
 });

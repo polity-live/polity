@@ -24,7 +24,10 @@ export function useExportToolbarButtonController() {
     document.head.append(style);
 
     const editorDom = editor.api.toDOMNode(editor);
-    if (!editorDom) return;
+    if (!editorDom) {
+      style.remove();
+      return;
+    }
 
     const canvas = await html2canvas(editorDom, {
       onclone: (document: Document) => {

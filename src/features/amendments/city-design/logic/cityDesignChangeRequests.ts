@@ -377,3 +377,12 @@ function getTimestamp(value: string | number | null | undefined) {
   const parsed = Date.parse(value);
   return Number.isFinite(parsed) ? parsed : 0;
 }
+
+export const cityDesignChangeRequestInternals = {
+  asRecord,
+  getComparableProperties,
+  getSnapshotCityDesignId,
+  getTimestamp,
+  normalizeChangeTypeLabel,
+  stringifyDiffValue,
+};

@@ -22,9 +22,14 @@ export function StatementMediaDisplay({
         <video src={videoUrl} poster={imageUrl ?? undefined} controls className="w-full rounded-lg">
           <track kind="captions" />
         </video>
-      ) : imageUrl ? (
-        <img src={imageUrl} alt={alt} className="w-full rounded-lg object-cover" loading="lazy" />
-      ) : null}
+      ) : (
+        <img
+          src={imageUrl as string}
+          alt={alt}
+          className="w-full rounded-lg object-cover"
+          loading="lazy"
+        />
+      )}
     </div>
   );
 }

@@ -122,9 +122,7 @@ function isActiveEventParticipantStatus(status: string | null | undefined) {
 function selectPrimaryEventRole<TRole extends EventRoleLike>(roles: readonly TRole[]) {
   if (roles.length === 0) return null;
 
-  return (
-    [...roles].sort((left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1))[0] ?? null
-  );
+  return [...roles].sort((left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1))[0];
 }
 
 function normalizeParticipantWithRoles<
@@ -316,7 +314,7 @@ export function useEventById(eventId?: string) {
       ((event?.roles ?? []) as DisplayRole[]).map(role => ({
         ...role,
         title: role.name ?? null,
-        holders: role.holders || [],
+        holders: role.holders,
       })),
     [event]
   );
@@ -564,7 +562,7 @@ export function useEventDelegates(eventId: string, groupId?: string) {
 
   return {
     event: eventData?.[0] || null,
-    relationships: relationships || [],
+    relationships,
     isLoading: eventResult.type === 'unknown' || relationshipsResult.type === 'unknown',
   };
 }

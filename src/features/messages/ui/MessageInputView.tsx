@@ -108,6 +108,8 @@ export function MessageInputView({
                 onClick={() =>
                   attachments.removeAttachment(attachment.entityType, attachment.entityId)
                 }
+                aria-label={t('features.messages.compose.removeAttachment')}
+                data-action-id="messages.composer.attachment.remove"
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -124,6 +126,7 @@ export function MessageInputView({
       toolbar={
         <>
           <FileUploadTrigger
+            data-action-id="messages.composer.file.upload"
             variant="ghost"
             size="icon"
             className="h-8 w-8 rounded-md"
@@ -150,6 +153,8 @@ export function MessageInputView({
               (!messageText.trim() && attachments.selectedAttachments.length === 0) ||
               attachments.isUploadingAttachments
             }
+            aria-label={t('common.send')}
+            data-action-id="messages.composer.send"
           >
             <Send className="h-4 w-4" />
           </Button>
@@ -158,6 +163,7 @@ export function MessageInputView({
     >
       <div className="relative">
         <FormControlTextarea
+          data-action-id="messages.composer.text.change"
           ref={textareaRef}
           placeholder={t('features.messages.compose.messagePlaceholder')}
           value={messageText}
@@ -219,6 +225,7 @@ export function MessageInputView({
                         type="button"
                         variant="ghost"
                         onClick={() => handleAttachmentTypeSelect(option.entityType)}
+                        data-action-id="messages.composer.suggestion.attachment-type.select"
                         className="h-auto w-full justify-start gap-3 px-2 py-2 text-left whitespace-normal"
                       >
                         <AtSign className="text-muted-foreground h-4 w-4" />
@@ -244,6 +251,7 @@ export function MessageInputView({
                         type="button"
                         variant="ghost"
                         onClick={() => handleAttachmentSelect(option)}
+                        data-action-id="messages.composer.suggestion.attachment.select"
                         className="h-auto w-full items-start justify-start gap-3 px-2 py-2 text-left whitespace-normal"
                       >
                         <AtSign className="text-muted-foreground mt-0.5 h-4 w-4" />

@@ -84,15 +84,10 @@ export function resolveHierarchicalAncestors(
 
   while (queue.length > 0) {
     const current = queue.shift();
-    if (current == null) {
-      continue;
-    }
     // Find parents of `current` (current is the child → related_group_id)
     for (const rel of hierarchyRelationships) {
       const pair = getHierarchyRelationshipPair(rel);
-      if (!pair) {
-        continue;
-      }
+      if (!pair) continue;
 
       if (pair.childGroupId === current && !visited.has(pair.parentGroupId)) {
         visited.add(pair.parentGroupId);
@@ -126,13 +121,11 @@ export function resolveBaseGroupMembers(
 
   while (queue.length > 0) {
     const current = queue.shift();
-    if (current == null) {
-      continue;
-    }
     // Find children of `current` (current is the parent → group_id)
     for (const rel of hierarchyRelationships) {
       const pair = getHierarchyRelationshipPair(rel);
-      if (!pair || pair.parentGroupId !== current || visited.has(pair.childGroupId)) {
+      if (!pair) continue;
+      if (pair.parentGroupId !== current || visited.has(pair.childGroupId)) {
         continue;
       }
 
@@ -218,12 +211,10 @@ export function resolveChildBaseGroups(
 
   while (queue.length > 0) {
     const current = queue.shift();
-    if (current == null) {
-      continue;
-    }
     for (const rel of hierarchyRelationships) {
       const pair = getHierarchyRelationshipPair(rel);
-      if (!pair || pair.parentGroupId !== current || visited.has(pair.childGroupId)) {
+      if (!pair) continue;
+      if (pair.parentGroupId !== current || visited.has(pair.childGroupId)) {
         continue;
       }
 
@@ -311,15 +302,9 @@ export function detectLinkConflicts(
 
   for (const link of hierarchySafeParentChildLinks) {
     const pair = getHierarchyRelationshipPair(link);
-    if (!pair) {
-      continue;
-    }
+    if (!pair) continue;
 
-    if (
-      pair.parentGroupId !== parentGroupId ||
-      pair.childGroupId === childGroupId ||
-      !isActiveRelationshipStatus(link.status)
-    ) {
+    if (pair.parentGroupId !== parentGroupId || pair.childGroupId === childGroupId) {
       continue;
     }
 
@@ -357,7 +342,7 @@ export interface HierarchyDuplicatePathConflict {
   paths: string[][];
 }
 
-function collectPathMapForBaseGroup(
+export function collectPathMapForBaseGroup(
   baseGroupId: string,
   relationships: GroupRelationshipRow[]
 ): Map<string, string[][]> {
@@ -366,9 +351,7 @@ function collectPathMapForBaseGroup(
 
   for (const relationship of activeHierarchyRelationships) {
     const pair = getHierarchyRelationshipPair(relationship);
-    if (!pair) {
-      continue;
-    }
+    if (!pair) continue;
 
     const existingParentIds = parentIdsByChildId.get(pair.childGroupId) ?? [];
     existingParentIds.push(pair.parentGroupId);
@@ -412,9 +395,7 @@ export function detectDuplicateHierarchyPaths(
 
   for (const relationship of hierarchySafeRelationships) {
     const pair = getHierarchyRelationshipPair(relationship);
-    if (!pair) {
-      continue;
-    }
+    if (!pair) continue;
 
     childIds.add(pair.childGroupId);
     parentIds.add(pair.parentGroupId);

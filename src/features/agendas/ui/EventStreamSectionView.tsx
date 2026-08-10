@@ -175,6 +175,8 @@ export function EventStreamSectionView({
         <CardHeader surface="primarySoft">
           <CollapsibleTrigger asChild>
             <Button
+              data-action-id="agendas.stream.section.toggle"
+              data-action-kind="selection"
               variant="ghost"
               className={featureThemeClassName('agendaEventAgendaThemedPanel')}
             >
@@ -323,6 +325,8 @@ export function EventStreamSectionView({
                 <div className="flex items-center justify-between">
                   <CollapsibleTrigger asChild>
                     <Button
+                      data-action-id="agendas.stream.speakers.toggle"
+                      data-action-kind="selection"
                       variant="ghost"
                       className={featureThemeClassName('agendaEventStreamSectionThemedPanel')}
                     >
@@ -338,6 +342,8 @@ export function EventStreamSectionView({
                   </CollapsibleTrigger>
                   {userSpeaker ? (
                     <Button
+                      data-action-id="agendas.stream.speakers.leave"
+                      data-action-kind="async-action"
                       onClick={() => onRemoveFromSpeakerList(userSpeaker.id)}
                       disabled={removingSpeaker === userSpeaker.id}
                       variant="outline"
@@ -350,6 +356,8 @@ export function EventStreamSectionView({
                     </Button>
                   ) : onAddToSpeakerList ? (
                     <Button
+                      data-action-id="agendas.stream.speakers.join"
+                      data-action-kind="async-action"
                       onClick={onAddToSpeakerList}
                       disabled={addingSpeaker || !userId}
                       size="sm"
@@ -374,6 +382,9 @@ export function EventStreamSectionView({
                     <div className="relative">
                       {canScrollLeft && (
                         <Button
+                          data-action-id="agendas.stream.speakers.scroll.previous"
+                          data-action-kind="interaction"
+                          aria-label={t('features.events.navigation.previous')}
                           variant="outline"
                           size="icon"
                           className="absolute top-1/2 left-0 z-10 -translate-y-1/2 rounded-md shadow-lg"
@@ -384,6 +395,9 @@ export function EventStreamSectionView({
                       )}
                       {canScrollRight && (
                         <Button
+                          data-action-id="agendas.stream.speakers.scroll.next"
+                          data-action-kind="interaction"
+                          aria-label={t('features.events.navigation.next')}
                           variant="outline"
                           size="icon"
                           className="absolute top-1/2 right-0 z-10 -translate-y-1/2 rounded-md shadow-lg"
@@ -422,6 +436,11 @@ export function EventStreamSectionView({
                             >
                               {isCurrentUser && (
                                 <Button
+                                  data-action-id="agendas.stream.speakers.leave"
+                                  data-action-kind="async-action"
+                                  aria-label={translateText(
+                                    'generated.inline.0016_remove_yourself_fa3b0e30'
+                                  )}
                                   variant="ghost"
                                   size="icon"
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90 absolute -top-2 -right-2 z-10 h-6 w-6 rounded-md"
@@ -436,7 +455,7 @@ export function EventStreamSectionView({
                                   <Avatar className="border-background h-16 w-16 border-4 shadow-lg">
                                     <AvatarImage src={speakerAvatar} />
                                     <AvatarFallback className="text-xl">
-                                      {speakerName[0]?.toUpperCase() || 'U'}
+                                      {speakerName.charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                   </Avatar>
                                 </div>

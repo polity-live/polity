@@ -2,8 +2,8 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { type ColumnDef } from '@/features/shared/ui/data-table';
 import { ChoiceField, ValidatedField } from '@/features/shared/ui/form';
-import { CountBadge, StatusBadge } from '@/features/shared/ui/status';
-import { Trash2, UserCheck, Edit2 } from 'lucide-react';
+import { CountBadge } from '@/features/shared/ui/status';
+import { Trash2, Edit2 } from 'lucide-react';
 import { useState } from 'react';
 import { useEventRoles } from '../hooks/useEventPositions';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -133,20 +133,11 @@ export function EventPositions({ eventId }: { eventId: string }) {
     {
       id: 'election',
       header: translateText('generated.inline.1052_election_217da2dc'),
-      cell: () => {
-        const hasElection = false;
-
-        return hasElection ? (
-          <StatusBadge status="election" tone="info">
-            <UserCheck className="mr-1 h-3 w-3" />
-            {translateText('generated.inline.1052_election_217da2dc')}
-          </StatusBadge>
-        ) : (
-          <span className="text-muted-foreground text-sm">
-            {translateText('generated.inline.1054_manual_4e836fdc')}
-          </span>
-        );
-      },
+      cell: () => (
+        <span className="text-muted-foreground text-sm">
+          {translateText('generated.inline.1054_manual_4e836fdc')}
+        </span>
+      ),
     },
     {
       id: 'actions',
@@ -160,10 +151,20 @@ export function EventPositions({ eventId }: { eventId: string }) {
 
         return (
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => actions.openEdit(role)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => actions.openEdit(role)}
+              data-action-id="positions.event-role.edit.open"
+            >
               <Edit2 className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setPendingDeleteRoleId(role.id)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setPendingDeleteRoleId(role.id)}
+              data-action-id="positions.event-role.delete.request"
+            >
               <Trash2 className="text-destructive h-4 w-4" />
             </Button>
           </div>

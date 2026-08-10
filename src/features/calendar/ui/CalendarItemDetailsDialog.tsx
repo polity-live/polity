@@ -158,6 +158,7 @@ export function CalendarItemDetailsDialog({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary text-sm font-medium break-all underline-offset-4 hover:underline"
+                  data-action-id="calendar.item-details.online.open"
                 >
                   {onlineUrl}
                 </a>
@@ -198,12 +199,18 @@ export function CalendarItemDetailsDialog({
         </ScrollArea>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            data-action-id="calendar.item-details.close"
+          >
             {t('common.close')}
           </Button>
           {eventHref && (
-            <Button asChild>
-              <Link to={eventHref}>{t('features.calendar.details.openEventWiki')}</Link>
+            <Button asChild data-action-id="calendar.item-details.event.open">
+              <Link to={eventHref} data-action-id="calendar.item-details.event.open">
+                {t('features.calendar.details.openEventWiki')}
+              </Link>
             </Button>
           )}
         </DialogFooter>

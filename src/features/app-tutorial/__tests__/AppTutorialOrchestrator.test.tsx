@@ -6,10 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   AppTutorialOrchestrator,
+  centerMobileTutorialTarget,
+  horizontalScrollerFor,
   mobileDetailsOpenByDefault,
   tutorialInputValuesFor,
   tutorialCardStyle,
   tutorialSpotlightRectFor,
+  tutorialTargetIsLoading,
   visibleTutorialTarget,
 } from '../AppTutorialOrchestrator';
 import { useScreenStore } from '@/features/shared/global-state/screen.store';
@@ -25,8 +28,13 @@ import {
 const mocks = vi.hoisted(() => ({
   advanceTutorial: vi.fn(),
   loadTutorialRun: vi.fn(),
+  localizeError: vi.fn(),
   navigate: vi.fn(),
+  href: '/group/group-1/network?tab=manage-network',
+  pathname: '/group/group-1/network',
+  pauseTutorial: vi.fn(),
   resizeObserve: vi.fn(),
+  restartTutorial: vi.fn(),
   writeClipboard: vi.fn(),
 }));
 
@@ -35,8 +43,8 @@ vi.mock('@tanstack/react-router', () => ({
   useRouterState: ({ select }: { select: (state: unknown) => unknown }) =>
     select({
       location: {
-        pathname: '/group/group-1/network',
-        href: '/group/group-1/network?tab=manage-network',
+        pathname: mocks.pathname,
+        href: mocks.href,
       },
     }),
 }));
@@ -77,12 +85,15 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
       })[key] ?? key,
   }),
 }));
+vi.mock('@/features/shared/errors/app-error', () => ({
+  localizeAppError: mocks.localizeError,
+}));
 
 vi.mock('../api', () => ({
   advanceTutorial: mocks.advanceTutorial,
   loadTutorialRun: mocks.loadTutorialRun,
-  pauseTutorial: vi.fn(),
-  restartTutorial: vi.fn(),
+  pauseTutorial: mocks.pauseTutorial,
+  restartTutorial: mocks.restartTutorial,
 }));
 
 beforeEach(() => {
@@ -133,6 +144,11 @@ beforeEach(() => {
     },
   });
   mocks.writeClipboard.mockResolvedValue(undefined);
+  mocks.href = '/group/group-1/network?tab=manage-network';
+  mocks.pathname = '/group/group-1/network';
+  mocks.localizeError.mockImplementation((error: unknown) =>
+    error instanceof Error ? error.message : 'Unknown tutorial error'
+  );
   mocks.navigate.mockResolvedValue(undefined);
   mocks.loadTutorialRun.mockResolvedValue({
     run: {
@@ -149,6 +165,26 @@ beforeEach(() => {
     pending: true,
     route: '/group/group-1/network?tab=manage-network',
   });
+  mocks.pauseTutorial.mockResolvedValue({
+    run: {
+      runId: 'run-1',
+      status: 'paused',
+      currentCheckpointId: 'view-network-pending',
+      route: '/group/group-1/network?tab=manage-network',
+      revision: 5,
+      expiresAt: '2026-08-25T00:00:00.000Z',
+    },
+  });
+  mocks.restartTutorial.mockResolvedValue({
+    run: {
+      runId: 'run-2',
+      status: 'active',
+      currentCheckpointId: 'primary-navigation',
+      route: '/home',
+      revision: 1,
+      expiresAt: '2026-08-25T00:00:00.000Z',
+    },
+  });
 });
 
 afterEach(() => {
@@ -160,11 +196,196 @@ afterEach(() => {
 });
 
 describe('AppTutorialOrchestrator', () => {
+  it('returns home after completing the final tutorial checkpoint', async () => {
+    mocks.loadTutorialRun.mockResolvedValueOnce({
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'select-climate-council-child',
+        route: '/group/group-1/network?tab=manage-network',
+        revision: 1,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+    mocks.advanceTutorial.mockResolvedValueOnce({ completed: true, pending: false });
+
+    render(
+      <>
+        <button data-tutorial-anchor="network-child-preset">Child preset</button>
+        <AppTutorialOrchestrator />
+      </>
+    );
+
+    await screen.findByRole('heading', { name: 'Link as a child group' });
+    fireEvent.click(screen.getByRole('button', { name: 'Child preset' }));
+    await waitFor(() =>
+      expect(mocks.advanceTutorial).toHaveBeenCalledWith(1, 'select-climate-council-child', {
+        type: 'click',
+        anchor: 'network-child-preset',
+      })
+    );
+    await waitFor(() =>
+      expect(mocks.navigate).toHaveBeenCalledWith({ to: '/home', search: {}, replace: true })
+    );
+  });
+
+  it('advances search when the expected initiative is entered', async () => {
+    mocks.loadTutorialRun.mockResolvedValueOnce({
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'search-initiative',
+        route: '/search',
+        revision: 2,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+
+    render(
+      <>
+        <input aria-label="Initiative search" data-tutorial-anchor="search-input" />
+        <AppTutorialOrchestrator />
+      </>
+    );
+
+    await screen.findByRole('heading', { name: 'Find the initiative' });
+    const input = screen.getByRole('textbox', { name: 'Initiative search' });
+    fireEvent.input(input, { target: { value: 'Wrong initiative' } });
+    expect(mocks.advanceTutorial).not.toHaveBeenCalled();
+    fireEvent.input(input, {
+      target: { value: 'Climate-Friendly Euckenstraße Initiative' },
+    });
+    await waitFor(() =>
+      expect(mocks.advanceTutorial).toHaveBeenCalledWith(2, 'search-initiative', {
+        type: 'input',
+        value: 'Climate-Friendly Euckenstraße Initiative',
+      })
+    );
+  });
+
   it('uses compact defaults for actions and expanded defaults for explanatory steps', () => {
     expect(mobileDetailsOpenByDefault({ type: 'click' })).toBe(false);
-    expect(mobileDetailsOpenByDefault({ type: 'input', expected: 'groupSearch' })).toBe(false);
+    expect(mobileDetailsOpenByDefault({ type: 'input', expectedInputKey: 'groupSearch' })).toBe(
+      false
+    );
     expect(mobileDetailsOpenByDefault({ type: 'acknowledge' })).toBe(true);
     expect(mobileDetailsOpenByDefault({ type: 'view' })).toBe(true);
+  });
+
+  it('handles non-list serialized input values and tutorial target loading markers', () => {
+    const target = document.createElement('div');
+    expect(tutorialInputValuesFor(target)).toEqual([]);
+    target.setAttribute('data-tutorial-input-values', '{"value":"not-a-list"}');
+    expect(tutorialInputValuesFor(target)).toEqual([]);
+    target.setAttribute('data-tutorial-input-values', '{invalid');
+    expect(tutorialInputValuesFor(target)).toEqual([]);
+
+    const explicitLoading = document.createElement('div');
+    explicitLoading.dataset.tutorialLoadingAnchor = 'fixture-anchor';
+    document.body.append(explicitLoading);
+    expect(tutorialTargetIsLoading('fixture-anchor')).toBe(true);
+    explicitLoading.remove();
+
+    const menu = document.createElement('div');
+    menu.setAttribute('role', 'menu');
+    const profile = document.createElement('a');
+    profile.dataset.tutorialAnchor = 'avatar-profile';
+    const loading = document.createElement('div');
+    loading.dataset.testid = 'user-menu-navigation-loading';
+    menu.append(profile, loading);
+    document.body.append(menu);
+    expect(tutorialTargetIsLoading('avatar-profile')).toBe(true);
+    loading.remove();
+    expect(tutorialTargetIsLoading('avatar-profile')).toBe(false);
+    menu.remove();
+  });
+
+  it('resolves horizontal scrollers and mobile centering guard paths', () => {
+    const explicit = document.createElement('div');
+    explicit.dataset.tutorialHorizontalScroller = 'primary-navigation';
+    expect(horizontalScrollerFor(explicit)).toBe(explicit);
+
+    const container = document.createElement('div');
+    const overflow = document.createElement('div');
+    overflow.style.overflowX = 'auto';
+    Object.defineProperties(overflow, {
+      scrollWidth: { configurable: true, value: 300 },
+      clientWidth: { configurable: true, value: 100 },
+    });
+    container.append(overflow);
+    expect(horizontalScrollerFor(container)).toBe(overflow);
+
+    overflow.style.overflowX = 'hidden';
+    Object.defineProperty(overflow, 'scrollWidth', { configurable: true, value: 100 });
+    expect(horizontalScrollerFor(container)).toBe(container);
+    overflow.style.overflowX = 'scroll';
+    Object.defineProperty(overflow, 'scrollWidth', { configurable: true, value: 300 });
+    const realGetComputedStyle = window.getComputedStyle;
+    const styleSpy = vi
+      .spyOn(window, 'getComputedStyle')
+      .mockImplementation(element =>
+        element === overflow
+          ? ({ overflowX: 'scroll' } as CSSStyleDeclaration)
+          : realGetComputedStyle(element)
+      );
+    expect(horizontalScrollerFor(container)).toBe(overflow);
+    styleSpy.mockRestore();
+
+    const target = document.createElement('button');
+    expect(centerMobileTutorialTarget(target, 'primary-search', false)).toBe(false);
+    expect(centerMobileTutorialTarget(target, 'unsupported-anchor', true)).toBe(false);
+    expect(centerMobileTutorialTarget(target, 'primary-search', true)).toBe(false);
+
+    explicit.append(target);
+    Object.defineProperties(explicit, {
+      scrollWidth: { configurable: true, value: 100 },
+      clientWidth: { configurable: true, value: 100 },
+      scrollLeft: { configurable: true, value: 0, writable: true },
+      scrollTo: { configurable: true, value: vi.fn() },
+    });
+    expect(centerMobileTutorialTarget(target, 'primary-search', true)).toBe(false);
+
+    Object.defineProperty(explicit, 'scrollWidth', { configurable: true, value: 300 });
+    explicit.getBoundingClientRect = vi.fn().mockReturnValue({
+      left: 0,
+      right: 100,
+      width: 100,
+      top: 0,
+      bottom: 40,
+      height: 40,
+    });
+    target.getBoundingClientRect = vi.fn().mockReturnValue({
+      left: 10,
+      right: 50,
+      width: 40,
+      top: 0,
+      bottom: 40,
+      height: 40,
+    });
+    expect(centerMobileTutorialTarget(target, 'primary-search', true)).toBe(false);
+
+    target.getBoundingClientRect = vi.fn().mockReturnValue({
+      left: 220,
+      right: 260,
+      width: 40,
+      top: 0,
+      bottom: 40,
+      height: 40,
+    });
+    expect(centerMobileTutorialTarget(target, 'primary-search', true)).toBe(true);
+    expect(explicit.scrollTo).toHaveBeenCalledWith({ behavior: 'auto', left: 190 });
+  });
+
+  it('positions add-tree and left-side desktop coach variants', () => {
+    vi.stubGlobal('innerHeight', 800);
+    vi.stubGlobal('innerWidth', 1200);
+    const rect = { top: 100, bottom: 160, left: 900, right: 1100, width: 200, height: 60 };
+
+    vi.mocked(window.matchMedia).mockReturnValueOnce({ matches: true } as MediaQueryList);
+    expect(tutorialCardStyle(rect, 'add-tree-row')).toMatchObject({ right: 12, bottom: 12 });
+    vi.mocked(window.matchMedia).mockReturnValueOnce({ matches: false } as MediaQueryList);
+    expect(tutorialCardStyle(rect, 'add-tree-row')).toMatchObject({ right: 12, bottom: 76 });
+    expect(tutorialCardStyle(rect)).toMatchObject({ left: 508, top: 100 });
   });
 
   it('renders the open-network action inside the coach card and advances from there', async () => {
@@ -202,7 +423,12 @@ describe('AppTutorialOrchestrator', () => {
     const action = await screen.findByRole('button', { name: 'Network' });
     const card = screen.getByTestId('app-tutorial-coach-card');
 
+    expect(action.getAttribute('data-action-id')).toBe('app-tutorial.coach.card-action.execute');
+    expect(
+      screen.getByRole('button', { name: 'Leave tutorial' }).getAttribute('data-action-id')
+    ).toBe('app-tutorial.coach.leave');
     expect(card.contains(action)).toBe(true);
+    expect(card.className).toContain('pointer-events-auto');
     expect(
       document.querySelectorAll('[data-tutorial-anchor="tutorial-open-network"]')
     ).toHaveLength(1);
@@ -218,7 +444,8 @@ describe('AppTutorialOrchestrator', () => {
     expect(mocks.advanceTutorial).toHaveBeenCalledTimes(1);
     await waitFor(() =>
       expect(mocks.navigate).toHaveBeenCalledWith({
-        to: '/group/group-1/network?tab=current-network',
+        to: '/group/group-1/network',
+        search: { tab: 'current-network' },
         replace: true,
       })
     );
@@ -382,6 +609,26 @@ describe('AppTutorialOrchestrator', () => {
     });
   });
 
+  it('keeps the desktop card inside the viewport for an offscreen target', () => {
+    vi.stubGlobal('innerHeight', 720);
+    vi.stubGlobal('innerWidth', 1280);
+
+    expect(
+      tutorialCardStyle({
+        top: 2520,
+        bottom: 2580,
+        left: 0,
+        right: 1280,
+        width: 1280,
+        height: 60,
+      })
+    ).toMatchObject({
+      left: 450,
+      top: 308,
+      width: 380,
+    });
+  });
+
   it('keeps the mobile coach global and switches from the link trigger to group search', async () => {
     useScreenStore.setState({ isMobileScreen: true });
     mocks.advanceTutorial.mockResolvedValueOnce({
@@ -463,21 +710,51 @@ describe('AppTutorialOrchestrator', () => {
     );
     expect(overlaySurfaces).toHaveLength(4);
     expect(
-      overlaySurfaces.every(element => element.getAttribute('class')?.includes('bg-black/40'))
+      overlaySurfaces.every(
+        element =>
+          element.getAttribute('class')?.includes('bg-black/40') &&
+          element.getAttribute('class')?.includes('pointer-events-none')
+      )
     ).toBe(true);
     expect(linkTrigger.getAttribute('tabindex')).not.toBe('-1');
 
     fireEvent.click(linkTrigger);
 
-    const groupSearch = await screen.findByRole('textbox', { name: 'Group search' });
+    const groupSearch = await screen.findByRole('textbox', {
+      name: 'Group search',
+    });
     await waitFor(() => expect(groupSearch.getAttribute('tabindex')).not.toBe('-1'));
-    const groupResult = screen.getByRole('button', { name: 'Munich Climate Council' });
+    const groupResult = screen.getByRole('button', {
+      name: 'Munich Climate Council',
+    });
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Show instruction' })).toBeTruthy()
     );
     expect(groupResult.getAttribute('tabindex')).not.toBe('-1');
     expect(groupResult.closest('[inert]')).toBeNull();
     expect(linkTrigger.getAttribute('tabindex')).toBe('-1');
+
+    const dropdown = groupResult.parentElement as HTMLElement;
+    dropdown.getBoundingClientRect = vi.fn().mockReturnValue({
+      bottom: 0,
+      height: 0,
+      left: 0,
+      right: 0,
+      top: 0,
+      width: 0,
+    });
+    fireEvent(window, new Event('resize'));
+    await act(async () => Promise.resolve());
+    dropdown.getBoundingClientRect = vi.fn().mockReturnValue({
+      bottom: 420,
+      height: 260,
+      left: 20,
+      right: 320,
+      top: 160,
+      width: 300,
+    });
+    fireEvent(window, new Event('resize'));
+    await act(async () => Promise.resolve());
 
     fireEvent.click(groupResult);
 
@@ -510,7 +787,9 @@ describe('AppTutorialOrchestrator', () => {
     );
 
     await screen.findByRole('heading', { name: 'Find Munich Climate Council' });
-    const result = screen.getByRole('button', { name: 'Munich Climate Council' });
+    const result = screen.getByRole('button', {
+      name: 'Munich Climate Council',
+    });
 
     await waitFor(() => expect(result.getAttribute('tabindex')).not.toBe('-1'));
     expect(result.closest('[inert]')).toBeNull();
@@ -617,6 +896,11 @@ describe('AppTutorialOrchestrator', () => {
       screen.getByTestId('app-tutorial-spotlight').getAttribute('data-tutorial-checkpoint')
     ).toBe('search-initiative');
     const details = screen.getByRole('button', { name: 'Show details' });
+    const copy = screen.getByRole('button', {
+      name: 'Copy: Climate-Friendly Euckenstraße Initiative',
+    });
+    expect(details.getAttribute('data-action-id')).toBe('app-tutorial.coach.details.toggle');
+    expect(copy.getAttribute('data-action-id')).toBe('app-tutorial.coach.checkpoint-copy.copy');
     expect(details.getAttribute('aria-expanded')).toBe('false');
     expect(
       screen.queryByText(
@@ -646,7 +930,12 @@ describe('AppTutorialOrchestrator', () => {
 
     const card = screen.getByTestId('app-tutorial-coach-card');
     const expanded = document.getElementById('app-tutorial-expanded-instruction');
-    const showInstruction = screen.getByRole('button', { name: 'Show instruction' });
+    const showInstruction = screen.getByRole('button', {
+      name: 'Show instruction',
+    });
+    expect(showInstruction.getAttribute('data-action-id')).toBe(
+      'app-tutorial.coach.instruction.toggle'
+    );
     expect(card.style.height).toBe('76px');
     expect(expanded?.parentElement?.className).toContain('h-full');
     expect(expanded?.parentElement?.firstElementChild?.className).toContain('h-full');
@@ -881,7 +1170,11 @@ describe('AppTutorialOrchestrator', () => {
     await screen.findByRole('heading', { name: 'Start initiatives' });
     fireEvent.click(screen.getByRole('button', { name: 'Create navigation' }));
     await waitFor(() =>
-      expect(mocks.navigate).toHaveBeenCalledWith({ to: '/create', replace: true })
+      expect(mocks.navigate).toHaveBeenCalledWith({
+        to: '/create',
+        search: {},
+        replace: true,
+      })
     );
 
     expect(screen.queryByRole('heading', { name: 'Global search' })).toBeNull();
@@ -924,7 +1217,9 @@ describe('AppTutorialOrchestrator', () => {
       );
 
       const scroller = screen.getByTestId('mobile-city-design-toolbar');
-      const tutorialTarget = screen.getByRole('button', { name: accessibleName });
+      const tutorialTarget = screen.getByRole('button', {
+        name: accessibleName,
+      });
       const scrollTo = vi.fn(({ left }: ScrollToOptions) => {
         scroller.scrollLeft = left ?? scroller.scrollLeft;
       });
@@ -1240,7 +1535,11 @@ describe('AppTutorialOrchestrator', () => {
   });
 
   it('advances mobile navigation after a normal 48 pixel scroll', async () => {
-    const { scroller } = await renderPrimaryNavigation(100);
+    const { scroller, target } = await renderPrimaryNavigation(100);
+
+    fireEvent.pointerDown(target, { pointerId: 1 });
+    fireEvent.pointerMove(target, { clientX: 60, clientY: 0, pointerId: 1 });
+    expect(mocks.advanceTutorial).not.toHaveBeenCalled();
 
     scroller.scrollLeft = 48;
     fireEvent.scroll(scroller);
@@ -1306,6 +1605,12 @@ describe('AppTutorialOrchestrator', () => {
         scrollRangePixels: 0,
       })
     );
+
+    fireEvent.pointerDown(target, { clientX: 100, clientY: 100, pointerId: 3 });
+    fireEvent.pointerMove(target, { clientX: 40, clientY: 100, pointerId: 4 });
+    fireEvent.pointerUp(target, { clientX: 40, clientY: 100, pointerId: 4 });
+    fireEvent.pointerCancel(target, { pointerId: 3 });
+    fireEvent.pointerCancel(target, { pointerId: 3 });
   });
 
   it('continues to show Continue for primary navigation on desktop', async () => {
@@ -1328,7 +1633,11 @@ describe('AppTutorialOrchestrator', () => {
     fireEvent.scroll(scroller);
     expect(mocks.advanceTutorial).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    const continueAction = screen.getByRole('button', { name: 'Continue' });
+    expect(continueAction.getAttribute('data-action-id')).toBe(
+      'app-tutorial.coach.checkpoint.confirm'
+    );
+    fireEvent.click(continueAction);
     await waitFor(() =>
       expect(mocks.advanceTutorial).toHaveBeenCalledWith(0, 'primary-navigation', {
         type: 'acknowledge',
@@ -1353,6 +1662,74 @@ describe('AppTutorialOrchestrator', () => {
       </>
     );
     expect(mocks.loadTutorialRun).toHaveBeenCalledTimes(1);
+  });
+
+  it('pauses through the stable coach leave action', async () => {
+    render(
+      <>
+        <div data-tutorial-anchor="tutorial-network-pending">Pending request</div>
+        <AppTutorialOrchestrator />
+      </>
+    );
+
+    const leave = await screen.findByRole('button', { name: 'Leave tutorial' });
+    expect(leave.getAttribute('data-action-id')).toBe('app-tutorial.coach.leave');
+    leave.focus();
+    expect(document.activeElement).toBe(leave);
+    fireEvent.click(leave);
+
+    await waitFor(() => expect(mocks.pauseTutorial).toHaveBeenCalledWith(4));
+  });
+
+  it('exposes stable missing-target recovery actions after the bounded wait', async () => {
+    vi.useFakeTimers();
+    render(<AppTutorialOrchestrator />);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(8_000);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText('This target is not available right now')).toBeTruthy();
+    const retry = screen.getByRole('button', { name: 'Try again' });
+    const leave = screen.getByRole('button', { name: 'Leave tutorial' });
+    const restart = screen.getByRole('button', { name: 'Restart' });
+    expect(retry.getAttribute('data-action-id')).toBe('app-tutorial.missing-target.retry');
+    expect(leave.getAttribute('data-action-id')).toBe('app-tutorial.missing-target.leave');
+    expect(restart.getAttribute('data-action-id')).toBe('app-tutorial.missing-target.restart');
+    restart.focus();
+    expect(document.activeElement).toBe(restart);
+    fireEvent.click(leave);
+    fireEvent.click(restart);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(mocks.restartTutorial).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows leaving while a confirmed network target is still loading', async () => {
+    mocks.loadTutorialRun.mockResolvedValueOnce({
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'view-network-confirmed',
+        route: '/group/group-1/network?tab=current-network',
+        revision: 5,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+    render(<AppTutorialOrchestrator />);
+
+    expect(await screen.findByText('Loading the accepted link …')).toBeTruthy();
+    const leave = screen.getByRole('button', { name: 'Leave tutorial' });
+    expect(leave.getAttribute('data-action-id')).toBe('app-tutorial.loading.leave');
+    fireEvent.click(leave);
+
+    await waitFor(() => expect(mocks.pauseTutorial).toHaveBeenCalledWith(5));
   });
 
   it.each([
@@ -1604,6 +1981,12 @@ describe('AppTutorialOrchestrator', () => {
     expect(screen.getByRole('heading', { name: 'Request pending' })).toBeTruthy();
     expect(mocks.advanceTutorial).not.toHaveBeenCalled();
     expect(screen.queryByText('Network connection request was not found')).toBeNull();
+    const target = document.querySelector('[data-tutorial-anchor="tutorial-network-pending"]');
+    await waitFor(() =>
+      expect(target?.getAttribute('data-tutorial-current-target')).toBe('view-network-pending')
+    );
+    // Simulate a newer checkpoint claiming the same element before this effect cleans up.
+    target?.setAttribute('data-tutorial-current-target', 'newer-checkpoint');
 
     fireEvent.click(continueButton);
 
@@ -1675,7 +2058,8 @@ describe('AppTutorialOrchestrator', () => {
       })
     );
     expect(mocks.navigate).toHaveBeenCalledWith({
-      to: '/group/group-1/network?tab=current-network',
+      to: '/group/group-1/network',
+      search: { tab: 'current-network' },
       replace: true,
     });
     window.removeEventListener(APP_TUTORIAL_ACCEPT_NETWORK_EVENT, approvalRequested);
@@ -1700,7 +2084,9 @@ describe('AppTutorialOrchestrator', () => {
       </>
     );
 
-    const continueButton = await screen.findByRole('button', { name: 'Continue' });
+    const continueButton = await screen.findByRole('button', {
+      name: 'Continue',
+    });
     expect(mocks.advanceTutorial).not.toHaveBeenCalled();
 
     fireEvent.click(continueButton);
@@ -1816,6 +2202,9 @@ describe('AppTutorialOrchestrator', () => {
     document.body.append(result);
 
     expect(visibleTutorialTarget('tutorial-search-result')).toBe(primaryLink);
+
+    primaryLink.remove();
+    expect(visibleTutorialTarget('tutorial-search-result')).toBe(result);
 
     result.remove();
   });
@@ -1938,6 +2327,14 @@ describe('AppTutorialOrchestrator', () => {
     });
 
     await waitFor(() => expect(outline.style.top).toBe('100px'));
+    act(() => {
+      let frame = 32;
+      while (animationFrames.length > 0 && frame < 1_000) {
+        animationFrames.shift()?.(frame);
+        frame += 16;
+      }
+    });
+    expect(animationFrames).toHaveLength(0);
   });
 
   it('waits for the real click before advancing the Yes selection checkpoint', async () => {
@@ -2126,7 +2523,9 @@ describe('AppTutorialOrchestrator', () => {
       </>
     );
 
-    const streetCopyButton = await screen.findByRole('button', { name: 'Copy: Euckenstraße' });
+    const streetCopyButton = await screen.findByRole('button', {
+      name: 'Copy: Euckenstraße',
+    });
     const instruction = screen.getByText(
       'Enter Euckenstraße in the Street field and select the result. Then enter 38 in the House Number field and select that result.'
     );
@@ -2236,7 +2635,9 @@ describe('AppTutorialOrchestrator', () => {
     act(() => vi.advanceTimersByTime(8_000));
 
     expect(
-      screen.queryByRole('heading', { name: 'This target is not available right now' })
+      screen.queryByRole('heading', {
+        name: 'This target is not available right now',
+      })
     ).toBeNull();
     expect(screen.getByText('Loading the amendment for the next tutorial step …')).toBeTruthy();
   });
@@ -2356,9 +2757,480 @@ describe('AppTutorialOrchestrator', () => {
     );
 
     expect(await screen.findByText('The OSM data could not be loaded.')).toBeTruthy();
-    fireEvent.click(await screen.findByRole('button', { name: 'Retry OSM loading' }));
+    const retryOsm = await screen.findByRole('button', { name: 'Retry OSM loading' });
+    expect(retryOsm.getAttribute('data-action-id')).toBe('app-tutorial.coach.osm.retry');
+    fireEvent.click(retryOsm);
 
     expect(retryLoad).toHaveBeenCalledTimes(1);
     expect(mocks.advanceTutorial).not.toHaveBeenCalled();
+  });
+
+  it('ignores a tutorial load that settles after unmounting', async () => {
+    let resolveLoad!: (value: { run: null }) => void;
+    const pendingLoad = new Promise<{ run: null }>(resolve => {
+      resolveLoad = resolve;
+    });
+    mocks.loadTutorialRun.mockReturnValueOnce(pendingLoad);
+
+    const view = render(<AppTutorialOrchestrator />);
+    view.unmount();
+    await act(async () => {
+      resolveLoad({ run: null });
+      await pendingLoad;
+    });
+
+    expect(mocks.loadTutorialRun).toHaveBeenCalledOnce();
+  });
+
+  it('refreshes the run and displays an advancing conflict', async () => {
+    mocks.advanceTutorial.mockRejectedValueOnce(new Error('Revision conflict'));
+    mocks.loadTutorialRun.mockResolvedValueOnce({
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'view-network-pending',
+        route: '/group/group-1/network?tab=manage-network',
+        revision: 4,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+
+    render(
+      <>
+        <div data-tutorial-anchor="tutorial-network-pending">Pending request</div>
+        <AppTutorialOrchestrator />
+      </>
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    await waitFor(() => expect(mocks.loadTutorialRun).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText(/Revision conflict/i)).toBeTruthy();
+  });
+
+  it.each([
+    [
+      'request-membership',
+      'request-membership',
+      { type: 'action', event: 'group-membership.requested' },
+    ],
+    ['subscribe-initiative', 'subscribe', { type: 'mutation', event: 'subscriber.created' }],
+    [
+      'complete-network-todo',
+      'tutorial-network-todo-board',
+      { type: 'drop', event: 'todo.completed' },
+    ],
+    [
+      'select-climate-council-rights',
+      'network-rights-selector',
+      { type: 'input', value: 'informationRight amendmentRight' },
+    ],
+  ] as const)(
+    'accepts %s evidence from the tutorial action bus',
+    async (checkpointId, anchor, detail) => {
+      mocks.loadTutorialRun.mockResolvedValueOnce({
+        run: {
+          runId: 'run-1',
+          status: 'active',
+          currentCheckpointId: checkpointId,
+          route: '/group/group-1/network?tab=manage-network',
+          revision: 2,
+          expiresAt: '2026-08-25T00:00:00.000Z',
+        },
+      });
+      render(
+        <>
+          <div data-tutorial-anchor={anchor}>Target</div>
+          <AppTutorialOrchestrator />
+        </>
+      );
+      await screen.findByTestId('app-tutorial-target-outline');
+
+      if (checkpointId === 'select-climate-council-rights') {
+        window.dispatchEvent(
+          new CustomEvent(APP_TUTORIAL_ACTION_EVENT, {
+            detail: { type: 'input', value: undefined },
+          })
+        );
+        expect(mocks.advanceTutorial).not.toHaveBeenCalled();
+      }
+      window.dispatchEvent(new CustomEvent(APP_TUTORIAL_ACTION_EVENT, { detail }));
+
+      await waitFor(() =>
+        expect(mocks.advanceTutorial).toHaveBeenCalledWith(2, checkpointId, detail)
+      );
+    }
+  );
+
+  it('uses acknowledge copy and evidence for an acknowledgement checkpoint', async () => {
+    mocks.loadTutorialRun.mockResolvedValueOnce({
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'secondary-navigation',
+        route: '/group/group-1',
+        revision: 3,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+    render(
+      <>
+        <div data-tutorial-anchor="secondary-navigation">Secondary navigation</div>
+        <AppTutorialOrchestrator />
+      </>
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Got it' }));
+    await waitFor(() =>
+      expect(mocks.advanceTutorial).toHaveBeenCalledWith(3, 'secondary-navigation', {
+        type: 'acknowledge',
+        desktopAcknowledged: false,
+      })
+    );
+  });
+
+  it('reports clipboard and restart failures in the coach', async () => {
+    mocks.writeClipboard.mockRejectedValueOnce(new Error('clipboard denied'));
+    mocks.loadTutorialRun.mockResolvedValueOnce({
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'search-initiative',
+        route: '/search',
+        revision: 2,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+    render(
+      <>
+        <input data-tutorial-anchor="search-input" />
+        <AppTutorialOrchestrator />
+      </>
+    );
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Copy: Climate-Friendly Euckenstraße Initiative',
+      })
+    );
+    expect(await screen.findByText('The text could not be copied to the clipboard.')).toBeTruthy();
+    cleanup();
+
+    vi.useFakeTimers();
+    mocks.restartTutorial.mockRejectedValueOnce(new Error('restart failed'));
+    render(<AppTutorialOrchestrator />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(8_000);
+      await Promise.resolve();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Restart' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(mocks.localizeError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'restart failed' })
+    );
+  });
+
+  it('restores an existing tabindex when the spotlight is removed', async () => {
+    const view = render(
+      <>
+        <div data-tutorial-anchor="tutorial-network-pending">Pending request</div>
+        <button data-testid="outside-focus" tabIndex={5}>
+          Outside
+        </button>
+        <AppTutorialOrchestrator />
+      </>
+    );
+    const outside = await screen.findByTestId('outside-focus');
+    await waitFor(() => expect(outside.getAttribute('tabindex')).toBe('-1'));
+    view.unmount();
+    expect(outside.getAttribute('tabindex')).toBe('5');
+  });
+
+  it('coalesces pointer-release frames and cancels a pending frame on unmount', async () => {
+    const view = render(
+      <>
+        <div data-tutorial-anchor="tutorial-network-pending">Pending request</div>
+        <AppTutorialOrchestrator />
+      </>
+    );
+    const card = await screen.findByTestId('app-tutorial-coach-card');
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn((callback: FrameRequestCallback) => {
+        frames.push(callback);
+        return frames.length;
+      })
+    );
+    const cancel = vi.fn();
+    vi.stubGlobal('cancelAnimationFrame', cancel);
+
+    fireEvent.pointerDown(card);
+    fireEvent.pointerUp(window);
+    act(() => frames.shift()?.(0));
+
+    fireEvent.pointerDown(card);
+    fireEvent.pointerUp(window);
+    fireEvent.pointerDown(card);
+    fireEvent.pointerUp(window);
+    expect(cancel).toHaveBeenCalled();
+    const cancellationsBeforeUnmount = cancel.mock.calls.length;
+    view.unmount();
+    expect(cancel.mock.calls.length).toBeGreaterThan(cancellationsBeforeUnmount);
+  });
+
+  it('keeps a non-conflict advance failure local to the current run', async () => {
+    mocks.advanceTutorial.mockRejectedValueOnce(new Error('network unavailable'));
+    render(
+      <>
+        <div data-tutorial-anchor="tutorial-network-pending">Pending request</div>
+        <AppTutorialOrchestrator />
+      </>
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    await waitFor(() =>
+      expect(mocks.localizeError).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'network unavailable' })
+      )
+    );
+    expect(mocks.loadTutorialRun).toHaveBeenCalledOnce();
+  });
+
+  it('debounces the avatar target and clears its settling timer on unmount', async () => {
+    vi.useFakeTimers();
+    mocks.loadTutorialRun.mockResolvedValueOnce({
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'open-profile',
+        route: '/group/group-1',
+        revision: 2,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+    const view = render(
+      <>
+        <a data-tutorial-anchor="avatar-profile">Profile</a>
+        <AppTutorialOrchestrator />
+      </>
+    );
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const profile = screen.getByText('Profile');
+    profile.setAttribute('data-tutorial-anchor', 'avatar-profile');
+    await act(async () => Promise.resolve());
+
+    view.unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('drops a stale publication frame when the spotlight target is replaced', async () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn((callback: FrameRequestCallback) => {
+        frames.push(callback);
+        return frames.length;
+      })
+    );
+    const cancel = vi.fn();
+    vi.stubGlobal('cancelAnimationFrame', cancel);
+    let replaceTarget: () => void = () => undefined;
+    function DynamicTarget() {
+      const [version, setVersion] = useState(0);
+      replaceTarget = () => setVersion(value => value + 1);
+      return <div key={version} data-tutorial-anchor="tutorial-network-pending" />;
+    }
+
+    render(
+      <>
+        <DynamicTarget />
+        <AppTutorialOrchestrator />
+      </>
+    );
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(frames.length).toBeGreaterThan(0);
+    act(() => replaceTarget());
+    await act(async () => Promise.resolve());
+    expect(cancel).toHaveBeenCalled();
+
+    act(() => {
+      for (const callback of frames.splice(0)) callback(0);
+    });
+  });
+
+  it('re-resolves attribute mutations on both the current and another candidate', async () => {
+    render(
+      <>
+        <div data-testid="current-target" data-tutorial-anchor="tutorial-network-pending" />
+        <AppTutorialOrchestrator />
+      </>
+    );
+    await screen.findByTestId('app-tutorial-target-outline');
+    const current = screen.getByTestId('current-target');
+    current.setAttribute('data-tutorial-anchor', 'tutorial-network-pending');
+    await act(async () => Promise.resolve());
+
+    const other = document.createElement('div');
+    document.body.append(other);
+    await act(async () => Promise.resolve());
+    other.setAttribute('data-tutorial-anchor', 'tutorial-network-pending');
+    await act(async () => Promise.resolve());
+    other.remove();
+  });
+
+  it('uses the extended missing-target delay for process-path review', async () => {
+    vi.useFakeTimers();
+    mocks.loadTutorialRun.mockResolvedValueOnce({
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'review-amendment-process-path',
+        route: '/amendment/amendment-1/process',
+        revision: 2,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+    render(<AppTutorialOrchestrator />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => vi.advanceTimersByTime(8_000));
+    expect(screen.queryByText('This target is not available right now')).toBeNull();
+    act(() => vi.advanceTimersByTime(2_000));
+    expect(screen.getByText('This target is not available right now')).toBeTruthy();
+  });
+
+  it('does not reschedule a pending simulation after it unmounts', async () => {
+    let resolveLateRetry!: (value: { completed: false; pending: true; route: string }) => void;
+    const lateRetry = new Promise<{ completed: false; pending: true; route: string }>(resolve => {
+      resolveLateRetry = resolve;
+    });
+    mocks.advanceTutorial
+      .mockResolvedValueOnce({
+        completed: false,
+        pending: true,
+        route: '/group/group-1/network?tab=manage-network',
+      })
+      .mockResolvedValueOnce({
+        completed: false,
+        pending: true,
+        route: '/group/group-1/network?tab=manage-network',
+      })
+      .mockReturnValueOnce(lateRetry);
+    const view = render(
+      <>
+        <div data-tutorial-anchor="tutorial-network-pending">Pending request</div>
+        <AppTutorialOrchestrator />
+      </>
+    );
+    const continueButton = await screen.findByRole('button', { name: 'Continue' });
+    vi.useFakeTimers();
+    fireEvent.click(continueButton);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(mocks.advanceTutorial).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await Promise.resolve();
+      vi.advanceTimersByTime(250);
+      await Promise.resolve();
+    });
+    act(() => vi.advanceTimersByTime(650));
+    await act(async () => Promise.resolve());
+    expect(mocks.advanceTutorial).toHaveBeenCalledTimes(3);
+    view.unmount();
+    await act(async () => {
+      resolveLateRetry({
+        completed: false,
+        pending: true,
+        route: '/group/group-1/network?tab=manage-network',
+      });
+      await lateRetry;
+    });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('suppresses delayed route repair while an advance is in flight', async () => {
+    vi.useFakeTimers();
+    let resolveAdvance!: (value: { completed: false; pending: true; route: string }) => void;
+    const pendingAdvance = new Promise<{ completed: false; pending: true; route: string }>(
+      resolve => {
+        resolveAdvance = resolve;
+      }
+    );
+    mocks.loadTutorialRun.mockResolvedValueOnce({
+      run: {
+        runId: 'run-1',
+        status: 'active',
+        currentCheckpointId: 'search-initiative',
+        route: '/search',
+        revision: 2,
+        expiresAt: '2026-08-25T00:00:00.000Z',
+      },
+    });
+    mocks.advanceTutorial.mockReturnValueOnce(pendingAdvance);
+    render(
+      <>
+        <input aria-label="Repair search" data-tutorial-anchor="search-input" />
+        <AppTutorialOrchestrator />
+      </>
+    );
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent(APP_TUTORIAL_ACTION_EVENT, {
+          detail: {
+            type: 'input',
+            value: 'Climate-Friendly Euckenstraße Initiative',
+          },
+        })
+      );
+    });
+    expect(mocks.advanceTutorial).toHaveBeenCalledOnce();
+    act(() => vi.advanceTimersByTime(700));
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    await act(async () => {
+      resolveAdvance({ completed: false, pending: true, route: '/search' });
+      await pendingAdvance;
+    });
+  });
+
+  it('retries a non-voting missing target through its run route', async () => {
+    vi.useFakeTimers();
+    render(<AppTutorialOrchestrator />);
+    await act(async () => Promise.resolve());
+    act(() => vi.advanceTimersByTime(8_000));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(screen.queryByText('This target is not available right now')).toBeNull();
+  });
+
+  it('logs a tutorial state load failure without rendering a run', async () => {
+    const loadError = new Error('load failed');
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    mocks.loadTutorialRun.mockRejectedValueOnce(loadError);
+
+    render(<AppTutorialOrchestrator />);
+
+    await waitFor(() =>
+      expect(error).toHaveBeenCalledWith('Tutorial state load failed:', loadError)
+    );
+    expect(screen.queryByTestId('app-tutorial-spotlight')).toBeNull();
   });
 });

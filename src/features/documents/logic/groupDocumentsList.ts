@@ -54,7 +54,8 @@ export function buildCollaboratorOptions(documents: readonly GroupDocumentListIt
 
       nextOptions.set(user.id, {
         value: user.id,
-        label: getCollaboratorLabel(user) ?? user.id,
+        // A user with an id always falls back to that id in getCollaboratorLabel.
+        label: getCollaboratorLabel(user) as string,
         keywords: [user.handle ?? '', user.email ?? ''].filter(Boolean),
       });
     }

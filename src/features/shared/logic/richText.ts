@@ -73,38 +73,22 @@ function plainTextToRichText(text: string): Value {
     .map(block => block.trim())
     .filter(Boolean);
 
-  if (blocks.length === 0) {
-    return EMPTY_RICH_TEXT_VALUE;
-  }
-
   return blocks.map(block => ({
     type: 'p',
     children: [{ text: block }],
   }));
 }
 
-function extractText(value: unknown): string {
-  if (typeof value === 'string') {
-    return value;
-  }
-
+function extractText(value: Descendant | Value): string {
   if (Array.isArray(value)) {
     return value.map(extractText).join('\n');
-  }
-
-  if (!isRecord(value)) {
-    return '';
   }
 
   if (typeof value.text === 'string') {
     return value.text;
   }
 
-  if (Array.isArray(value.children)) {
-    return value.children.map(extractText).join('');
-  }
-
-  return '';
+  return (value.children as Descendant[]).map(extractText).join('');
 }
 
 export function toRichTextValue(value: unknown): Value {

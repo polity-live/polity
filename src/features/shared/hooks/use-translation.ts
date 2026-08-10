@@ -33,7 +33,7 @@ function getNestedValue(obj: TranslationTree, path: string): TranslationValue {
   }
 
   // Return the value as-is (string, array, object, etc.)
-  return current !== undefined ? current : path;
+  return current;
 }
 
 /**

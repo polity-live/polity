@@ -47,7 +47,7 @@ import {
 import { translateVoteChoiceLabel } from '../logic/voteChoiceTranslation';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
-function normalizeMajorityType(value?: string | null): MajorityType {
+export function normalizeMajorityType(value?: string | null): MajorityType {
   if (value === 'absolute' || value === 'two_thirds') {
     return value;
   }
@@ -55,7 +55,7 @@ function normalizeMajorityType(value?: string | null): MajorityType {
   return 'simple';
 }
 
-function mapClosedVoteResult(
+export function mapClosedVoteResult(
   result: 'passed' | 'rejected' | 'tie'
 ): Extract<DecisionItem['status'], 'passed' | 'failed' | 'tied'> {
   switch (result) {
@@ -69,7 +69,7 @@ function mapClosedVoteResult(
   }
 }
 
-function countVoteChoices(vote: VoteWithDetailsRow, decisionType: 'indicative' | 'final') {
+export function countVoteChoices(vote: VoteWithDetailsRow, decisionType: 'indicative' | 'final') {
   const decisions =
     decisionType === 'indicative' ? vote.indicative_decisions || [] : vote.final_decisions || [];
   const sortedChoices = [...(vote.choices || [])].sort(
@@ -91,18 +91,18 @@ function countVoteChoices(vote: VoteWithDetailsRow, decisionType: 'indicative' |
 
 type ElectionCandidateRow = NonNullable<ElectionWithDetailsRow['candidates']>[number];
 
-function getUserFullName(user?: ElectionCandidateRow['user'] | null): string | null {
+export function getUserFullName(user?: ElectionCandidateRow['user'] | null): string | null {
   const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim();
   return fullName || null;
 }
 
-function getCandidateDisplayName(candidate: ElectionCandidateRow): string {
+export function getCandidateDisplayName(candidate: ElectionCandidateRow): string {
   return getUserFullName(candidate.user) || candidate.name?.trim() || 'Candidate';
 }
 
 const CONFIRMED_EVENT_ROLE_STATUSES = new Set(['active', 'member', 'admin', 'confirmed']);
 
-function hasConfirmedEventRole(
+export function hasConfirmedEventRole(
   event:
     | {
         participants?:
@@ -127,7 +127,7 @@ function hasConfirmedEventRole(
   );
 }
 
-function mergeDecisionAgendaTimingSource(
+export function mergeDecisionAgendaTimingSource(
   agendaItem: DecisionAgendaTimingSource | null | undefined,
   calculatedAgendaItem: DecisionAgendaTimingSource | null | undefined
 ): DecisionAgendaTimingSource | null {
@@ -147,13 +147,40 @@ function mergeDecisionAgendaTimingSource(
   };
 }
 
-function dedupeRowsById<T extends { id: string }>(rows: readonly T[]): T[] {
+export function dedupeRowsById<T extends { id: string }>(rows: readonly T[]): T[] {
   const seen = new Set<string>();
   return rows.filter(row => {
     if (seen.has(row.id)) return false;
     seen.add(row.id);
     return true;
   });
+}
+
+export function compareDecisionItems(a: DecisionItem, b: DecisionItem): number {
+  const bucketOrder = { active: 0, future: 1, past: 2 } as const;
+  const leftBucket = a.temporalBucket ?? (a.isClosed ? 'past' : 'active');
+  const rightBucket = b.temporalBucket ?? (b.isClosed ? 'past' : 'active');
+
+  if (leftBucket !== rightBucket) {
+    return bucketOrder[leftBucket] - bucketOrder[rightBucket];
+  }
+
+  if (leftBucket === 'future') {
+    return (
+      new Date(a.sortStartsAt ?? a.startsAt ?? a.endsAt).getTime() -
+      new Date(b.sortStartsAt ?? b.startsAt ?? b.endsAt).getTime()
+    );
+  }
+
+  if (leftBucket === 'past') {
+    return (
+      new Date(b.sortEndsAt ?? b.endsAt).getTime() - new Date(a.sortEndsAt ?? a.endsAt).getTime()
+    );
+  }
+
+  return (
+    new Date(a.sortEndsAt ?? a.endsAt).getTime() - new Date(b.sortEndsAt ?? b.endsAt).getTime()
+  );
 }
 
 // Re-export DecisionItem for use in other hooks
@@ -300,14 +327,14 @@ export function useDecisionTerminal(
   const agendaEventIds = useMemo(() => {
     const eventIds = new Set<string>();
 
-    for (const election of electionRows || []) {
+    for (const election of electionRows) {
       const eventId = election.agenda_item?.event?.id;
       if (eventId) {
         eventIds.add(eventId);
       }
     }
 
-    for (const vote of voteRows || []) {
+    for (const vote of voteRows) {
       const eventId = vote.agenda_item?.event?.id;
       if (eventId) {
         eventIds.add(eventId);
@@ -341,7 +368,7 @@ export function useDecisionTerminal(
     const items: DecisionItem[] = [];
     const now = new Date();
 
-    const elections = electionRows || [];
+    const elections = electionRows;
     elections.forEach((election, index) => {
       const calculatedAgendaItem = election.agenda_item?.id
         ? agendaItemsById.get(election.agenda_item.id)
@@ -361,8 +388,8 @@ export function useDecisionTerminal(
       const { startsAt, endsAt, sortStartsAt, sortEndsAt, hasExplicitClosingEnd } = decisionTimes;
 
       const candidates = election.candidates || [];
-      const indicativeSelections = election.indicative_selections || [];
-      const finalSelections = election.final_selections || [];
+      const indicativeSelections = election.indicative_selections;
+      const finalSelections = election.final_selections;
 
       // Count indicative selections per candidate
       const indicationCounts = new Map<string, number>();
@@ -499,7 +526,7 @@ export function useDecisionTerminal(
       });
     });
 
-    const votes = voteRows || [];
+    const votes = voteRows;
     votes.forEach((vote, index) => {
       const calculatedAgendaItem = vote.agenda_item?.id
         ? agendaItemsById.get(vote.agenda_item.id)
@@ -560,8 +587,8 @@ export function useDecisionTerminal(
                   }),
                 order_index: choice.order_index ?? choiceIndex,
               })),
-              vote.final_decisions || [],
-              totalMembers ?? (vote.final_decisions?.length || 0),
+              vote.final_decisions,
+              totalMembers,
               normalizeMajorityType(vote.majority_type)
             )
           : null;
@@ -649,33 +676,7 @@ export function useDecisionTerminal(
       });
     });
 
-    items.sort((a, b) => {
-      const bucketOrder = { active: 0, future: 1, past: 2 } as const;
-      const leftBucket = a.temporalBucket ?? (a.isClosed ? 'past' : 'active');
-      const rightBucket = b.temporalBucket ?? (b.isClosed ? 'past' : 'active');
-
-      if (leftBucket !== rightBucket) {
-        return bucketOrder[leftBucket] - bucketOrder[rightBucket];
-      }
-
-      if (leftBucket === 'future') {
-        return (
-          new Date(a.sortStartsAt ?? a.startsAt ?? a.endsAt).getTime() -
-          new Date(b.sortStartsAt ?? b.startsAt ?? b.endsAt).getTime()
-        );
-      }
-
-      if (leftBucket === 'past') {
-        return (
-          new Date(b.sortEndsAt ?? b.endsAt).getTime() -
-          new Date(a.sortEndsAt ?? a.endsAt).getTime()
-        );
-      }
-
-      return (
-        new Date(a.sortEndsAt ?? a.endsAt).getTime() - new Date(b.sortEndsAt ?? b.endsAt).getTime()
-      );
-    });
+    items.sort(compareDecisionItems);
 
     return items;
   }, [agendaItemsById, electionRows, user?.id, voteRows]);
@@ -688,10 +689,7 @@ export function useDecisionTerminal(
     [decisions]
   );
 
-  const activeCount = useMemo(
-    () => decisions.filter(d => d.isActiveDecision ?? (!d.isClosed && !d.isOpeningSoon)).length,
-    [decisions]
-  );
+  const activeCount = useMemo(() => decisions.filter(d => d.isActiveDecision).length, [decisions]);
 
   const recentlyClosedCount = useMemo(() => decisions.filter(d => d.isClosed).length, [decisions]);
 

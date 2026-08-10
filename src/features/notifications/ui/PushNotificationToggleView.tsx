@@ -61,7 +61,6 @@ function StatusRow({ ok, label, value }: { ok: boolean; label: string; value: st
 
 function Diagnostics({
   t,
-  isSupported,
   isSubscribed,
   permission,
   serviceWorkerReady,
@@ -72,7 +71,6 @@ function Diagnostics({
 }: Pick<
   PushNotificationToggleViewProps,
   | 't'
-  | 'isSupported'
   | 'isSubscribed'
   | 'permission'
   | 'serviceWorkerReady'
@@ -92,13 +90,9 @@ function Diagnostics({
     <div className="bg-muted/40 space-y-3 rounded-md border p-3">
       <div className="space-y-2">
         <StatusRow
-          ok={isSupported}
+          ok
           label={t('components.pushNotifications.diagnostics.browser')}
-          value={t(
-            isSupported
-              ? 'components.pushNotifications.diagnostics.ready'
-              : 'components.pushNotifications.diagnostics.missing'
-          )}
+          value={t('components.pushNotifications.diagnostics.ready')}
         />
         <StatusRow
           ok={permission === 'granted'}
@@ -130,6 +124,7 @@ function Diagnostics({
           {testState?.error ? `: ${t('common.appErrors.push_operation_failed')}` : null}
         </div>
         <Button
+          data-action-id="notifications.push-test.send.current-device"
           type="button"
           size="sm"
           variant="outline"
@@ -154,13 +149,17 @@ function Diagnostics({
 }
 
 function ToggleButton({
+  'data-action-id': actionId,
   t,
   isSubscribed,
   isLoading,
   handleToggle,
-}: Pick<PushNotificationToggleViewProps, 't' | 'isSubscribed' | 'isLoading' | 'handleToggle'>) {
+}: Pick<PushNotificationToggleViewProps, 't' | 'isSubscribed' | 'isLoading' | 'handleToggle'> & {
+  'data-action-id': string;
+}) {
   return (
     <Button
+      data-action-id={actionId}
       onClick={() => void handleToggle()}
       disabled={isLoading}
       variant={isSubscribed ? 'outline' : 'default'}
@@ -209,6 +208,7 @@ export function PushNotificationToggleView(props: PushNotificationToggleViewProp
     if (variant === 'minimal' && !showDiagnostics) {
       return (
         <Button
+          data-action-id="notifications.push-unavailable.show.browser"
           variant="outline"
           size="sm"
           disabled
@@ -230,6 +230,7 @@ export function PushNotificationToggleView(props: PushNotificationToggleViewProp
     if (variant === 'minimal' && !showDiagnostics) {
       return (
         <Button
+          data-action-id="notifications.push-unavailable.show.permission"
           variant="outline"
           size="sm"
           disabled
@@ -277,7 +278,7 @@ export function PushNotificationToggleView(props: PushNotificationToggleViewProp
                 )}
               </div>
             </div>
-            <ToggleButton {...props} />
+            <ToggleButton data-action-id="notifications.push.toggle.card" {...props} />
           </div>
           {showDiagnostics ? <Diagnostics {...props} /> : null}
           {error ? (
@@ -300,7 +301,7 @@ export function PushNotificationToggleView(props: PushNotificationToggleViewProp
               {t('components.pushNotifications.description')}
             </p>
           </div>
-          <ToggleButton {...props} />
+          <ToggleButton data-action-id="notifications.push.toggle.settings" {...props} />
         </div>
         {showDiagnostics ? <Diagnostics {...props} /> : null}
         {error ? <p className="text-destructive text-xs">{error}</p> : null}
@@ -328,7 +329,7 @@ export function PushNotificationToggleView(props: PushNotificationToggleViewProp
             ) : null}
           </div>
         ) : null}
-        <ToggleButton {...props} />
+        <ToggleButton data-action-id="notifications.push.toggle.inline" {...props} />
       </div>
       {showDiagnostics ? <Diagnostics {...props} /> : null}
       {error ? <p className="text-destructive text-xs">{error}</p> : null}

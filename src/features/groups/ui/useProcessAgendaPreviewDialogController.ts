@@ -236,6 +236,16 @@ function buildPreviewItem(args: {
   } satisfies PreviewItem;
 }
 
+export const processAgendaPreviewInternals = {
+  isTerminalStatus,
+  getAgendaDisplayType,
+  buildFallbackAgendaTitle,
+  buildStepTargetGroupName,
+  buildPreviewDescription,
+  buildDetailsLink,
+  buildPreviewItem,
+};
+
 export function useProcessAgendaPreviewDialogController({
   open,
   onOpenChange,

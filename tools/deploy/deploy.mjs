@@ -1,28 +1,19 @@
-#!/usr/bin/env node
 /* global console, fetch, setTimeout */
 
 import { execSync } from 'node:child_process';
-import process, { stdin as input, stdout as output } from 'node:process';
-import { createInterface } from 'node:readline/promises';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import process, { stdin as input, stdout as output } from 'node:process';
+import { createInterface } from 'node:readline/promises';
 
-// ── ANSI colors ──────────────────────────────────────────────
+import { runCliIfMain } from '../shared/run-cli-if-main.mjs';
+
 const RED = '\x1b[31m';
 const GREEN = '\x1b[32m';
 const YELLOW = '\x1b[33m';
 const CYAN = '\x1b[36m';
 const BOLD = '\x1b[1m';
 const RESET = '\x1b[0m';
-
-// ── Parse CLI flags ──────────────────────────────────────────
-const args = new Set(process.argv.slice(2));
-
-const skipSupabaseFlag = args.has('--skip-supabase');
-const skipFlyFlag = args.has('--skip-fly');
-const skipVercelFlag = args.has('--skip-vercel');
-const deployAll = args.has('--all') || args.has('--yes');
-const dryRun = args.has('--dry-run');
 
 const ALLOWED_FLAGS = new Set([
   '--skip-supabase',
@@ -33,256 +24,227 @@ const ALLOWED_FLAGS = new Set([
   '--dry-run',
 ]);
 
-for (const arg of args) {
-  if (!ALLOWED_FLAGS.has(arg)) {
-    error(`Unknown flag: ${arg}`);
-    info(`Allowed flags: ${[...ALLOWED_FLAGS].join(', ')}`);
-    process.exit(1);
+export function parseDeployOptions(argv) {
+  const args = new Set(argv);
+  for (const argument of args) {
+    if (!ALLOWED_FLAGS.has(argument)) throw new Error(`Unknown flag: ${argument}`);
   }
+  const skipSupabase = args.has('--skip-supabase');
+  const skipFly = args.has('--skip-fly');
+  const skipVercel = args.has('--skip-vercel');
+  const deployAll = args.has('--all') || args.has('--yes');
+  return {
+    deployAll,
+    dryRun: args.has('--dry-run'),
+    promptForTargets: !deployAll && !skipSupabase && !skipFly && !skipVercel,
+    targets: {
+      supabase: !skipSupabase,
+      fly: !skipFly,
+      vercel: !skipVercel,
+    },
+  };
 }
 
-// ── Helpers ──────────────────────────────────────────────────
-function info(msg) {
-  console.log(`${CYAN}ℹ${RESET}  ${msg}`);
+export function createReporter(logger = console) {
+  return {
+    info: message => logger.log(`${CYAN}ℹ${RESET}  ${message}`),
+    success: message => logger.log(`${GREEN}✔${RESET}  ${message}`),
+    warn: message => logger.warn(`${YELLOW}⚠${RESET}  ${message}`),
+    error: message => logger.error(`${RED}✖${RESET}  ${message}`),
+    step: label => logger.log(`\n${CYAN}${BOLD}${label}${RESET}`),
+  };
 }
 
-function success(msg) {
-  console.log(`${GREEN}✔${RESET}  ${msg}`);
-}
-
-function warn(msg) {
-  console.warn(`${YELLOW}⚠${RESET}  ${msg}`);
-}
-
-function error(msg) {
-  console.error(`${RED}✖${RESET}  ${msg}`);
-}
-
-function step(label) {
-  console.log(`\n${CYAN}${BOLD}${label}${RESET}`);
-}
-
-function run(label, cmd) {
-  info(`${label}: ${BOLD}${cmd}${RESET}`);
-  if (dryRun) {
-    warn('(dry-run) skipped');
-    return;
-  }
-  execSync(cmd, { stdio: 'inherit' });
-}
-
-function hasCommand(name) {
+export function hasCommand(name, options = {}) {
+  const execute = options.execute ?? execSync;
+  const platform = options.platform ?? process.platform;
   try {
-    const check = process.platform === 'win32' ? `where ${name}` : `which ${name}`;
-    execSync(check, { stdio: 'ignore' });
+    execute(platform === 'win32' ? `where ${name}` : `which ${name}`, { stdio: 'ignore' });
     return true;
   } catch {
     return false;
   }
 }
 
-function formatTargets({ supabase, fly, vercel }) {
+export function formatTargets({ supabase, fly, vercel }) {
   const selected = [];
-  if (vercel) {
-    selected.push('Frontend → Vercel');
-  }
-  if (supabase) {
-    selected.push('Supabase → Supabase');
-  }
-  if (fly) {
-    selected.push('Docker/Zero → Fly.io');
-  }
-  return selected.length ? selected.join(', ') : 'none';
+  if (vercel) selected.push('Frontend → Vercel');
+  if (supabase) selected.push('Supabase → Supabase');
+  if (fly) selected.push('Docker/Zero → Fly.io');
+  return selected.length === 0 ? 'none' : selected.join(', ');
 }
 
-async function confirmTarget(readline, question, defaultValue = true) {
+export async function confirmTarget(readline, question, defaultValue = true, warn = console.warn) {
   const hint = defaultValue ? 'Y/n' : 'y/N';
-
   while (true) {
     const answer = (await readline.question(`${question} (${hint}) `)).trim().toLowerCase();
-
-    if (!answer) {
-      return defaultValue;
-    }
-
-    if (['y', 'yes', 'j', 'ja'].includes(answer)) {
-      return true;
-    }
-
-    if (['n', 'no', 'nein'].includes(answer)) {
-      return false;
-    }
-
+    if (!answer) return defaultValue;
+    if (['y', 'yes', 'j', 'ja'].includes(answer)) return true;
+    if (['n', 'no', 'nein'].includes(answer)) return false;
     warn('Please answer with y/yes/j/ja or n/no/nein.');
   }
 }
 
-async function promptDeployTargets() {
-  step('Deploy targets');
-  info('Choose which parts should be deployed. Press Enter for yes.');
-
-  const readline = createInterface({ input, output });
-
+export async function promptDeployTargets(options = {}) {
+  const reporter = options.reporter ?? createReporter();
+  reporter.step('Deploy targets');
+  reporter.info('Choose which parts should be deployed. Press Enter for yes.');
+  const readline = (options.createReadline ?? createInterface)({
+    input: options.input ?? input,
+    output: options.output ?? output,
+  });
   try {
     return {
-      vercel: await confirmTarget(readline, 'Deploy frontend to Vercel?'),
-      supabase: await confirmTarget(readline, 'Deploy Supabase migrations to Supabase?'),
-      fly: await confirmTarget(readline, 'Deploy Docker/Zero to Fly.io?'),
+      vercel: await confirmTarget(readline, 'Deploy frontend to Vercel?', true, reporter.warn),
+      supabase: await confirmTarget(
+        readline,
+        'Deploy Supabase migrations to Supabase?',
+        true,
+        reporter.warn
+      ),
+      fly: await confirmTarget(readline, 'Deploy Docker/Zero to Fly.io?', true, reporter.warn),
     };
   } finally {
     readline.close();
   }
 }
 
-const skipFlagsProvided = skipSupabaseFlag || skipFlyFlag || skipVercelFlag;
-const promptForTargets = !deployAll && !skipFlagsProvided;
+export async function waitForZeroHealth(options = {}) {
+  const fetcher = options.fetcher ?? fetch;
+  const now = options.now ?? Date.now;
+  const wait = options.wait ?? (milliseconds => new Promise(resolveWait => setTimeout(resolveWait, milliseconds)));
+  const timeout = options.timeout ?? 180_000;
+  const interval = options.interval ?? 5_000;
+  const start = now();
+  let lastError = '';
 
-if (promptForTargets && !input.isTTY) {
-  error('Interactive target selection requires a terminal.');
-  info('Use --all for a full deploy or --skip-* flags for non-interactive target selection.');
-  process.exit(1);
-}
-
-const targets = promptForTargets
-  ? await promptDeployTargets()
-  : {
-      supabase: !skipSupabaseFlag,
-      fly: !skipFlyFlag,
-      vercel: !skipVercelFlag,
-    };
-
-const skipSupabase = !targets.supabase;
-const skipFly = !targets.fly;
-const skipVercel = !targets.vercel;
-
-if (!promptForTargets) {
-  step('Deploy targets');
-}
-
-info(`Selected: ${formatTargets(targets)}`);
-
-if (!targets.supabase && !targets.fly && !targets.vercel) {
-  warn('No deploy targets selected. Nothing to do.');
-  process.exit(0);
-}
-
-// ── 1. Git branch check ─────────────────────────────────────
-step('Pre-flight checks');
-
-const branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf-8' }).trim();
-const allowedBranches = ['master', 'deploy'];
-
-if (!allowedBranches.includes(branch)) {
-  error(
-    `Current branch is "${branch}". Deploy is only allowed from: ${allowedBranches.join(', ')}`
-  );
-  process.exit(1);
-}
-
-success(`Branch: ${branch}`);
-
-// ── 2. CLI availability ──────────────────────────────────────
-// Fly CLI can be "flyctl" or "fly" depending on the install method
-const flyBin = hasCommand('flyctl') ? 'flyctl' : 'fly';
-
-const cliChecks = [
-  { name: 'supabase', skip: skipSupabase },
-  { name: 'fly', skip: skipFly, cmd: flyBin },
-  { name: 'vercel', skip: skipVercel },
-];
-
-for (const { name, skip, cmd } of cliChecks) {
-  if (skip) {
-    info(`${name} CLI check skipped (--skip-${name})`);
-    continue;
-  }
-  const bin = cmd || name;
-  if (!hasCommand(bin)) {
-    error(`"${bin}" CLI not found. Install it or pass --skip-${name}`);
-    process.exit(1);
-  }
-  success(`${name} CLI found (${bin})`);
-}
-
-// ── 3. Project linking checks ────────────────────────────────
-if (!skipVercel && !existsSync(resolve('.vercel/project.json'))) {
-  error('Vercel project not linked. Run: vercel link');
-  process.exit(1);
-}
-
-if (dryRun) {
-  warn('Running in dry-run mode — commands will be printed but not executed.\n');
-}
-
-// ── 4. Supabase: push migrations ─────────────────────────────
-if (!skipSupabase) {
-  step('Supabase — push migrations');
-  run('Pushing migrations', 'supabase db push');
-  success('Supabase migrations applied');
-
-  // config.toml also loads local fixtures, so never use `db push --include-seed` here.
-  step('Supabase — apply production seed');
-  run(
-    'Applying production seed',
-    'supabase db query --linked --file supabase/seed.production.sql'
-  );
-  success('Supabase production seed applied');
-} else {
-  info('Supabase step skipped');
-}
-
-// ── 5. Fly.io: deploy Zero ───────────────────────────────────
-if (!skipFly) {
-  step('Fly.io — deploy Zero');
-  run('Deploying zero-cache', `${flyBin} deploy --yes`);
-  success('Fly.io deploy complete');
-
-  // Healthcheck polling
-  if (!dryRun) {
-    info('Waiting for zero-cache healthcheck…');
-    const healthUrl = 'https://zero.polity.live/keepalive';
-    const timeout = 180_000;
-    const interval = 5_000;
-    const start = Date.now();
-    let healthy = false;
-    let lastError = '';
-
-    while (Date.now() - start < timeout) {
+  while (now() - start < timeout) {
+    try {
+      const response = await fetcher('https://zero.polity.live/keepalive');
+      if (response.ok) return { healthy: true, lastError: '' };
+      let body = '';
       try {
-        const res = await fetch(healthUrl);
-        if (res.ok) {
-          healthy = true;
-          break;
-        }
-        const body = await res.text().catch(() => '');
-        lastError = `HTTP ${res.status}${body ? ': ' + body.slice(0, 200) : ''}`;
-      } catch (err) {
-        lastError = err.cause?.code || err.message || String(err);
+        body = await response.text();
+      } catch {
+        body = '';
       }
-      await new Promise(r => setTimeout(r, interval));
+      lastError = `HTTP ${response.status}${body ? `: ${body.slice(0, 200)}` : ''}`;
+    } catch (error) {
+      lastError = error?.cause?.code ?? error?.message ?? String(error);
     }
-
-    if (healthy) {
-      success('zero-cache is healthy');
-    } else {
-      warn(`zero-cache did not become healthy within ${timeout / 1000}s — continuing anyway`);
-      if (lastError) {
-        warn(`Last error: ${lastError}`);
-      }
-      info(`Check Fly.io logs: ${flyBin} logs`);
-    }
+    await wait(interval);
   }
-} else {
-  info('Fly.io step skipped');
+  return { healthy: false, lastError };
 }
 
-// ── 6. Vercel: deploy app ────────────────────────────────────
-if (!skipVercel) {
-  step('Vercel — deploy app');
-  run('Deploying to production', 'vercel --prod --archive=tgz');
-  success('Vercel deploy complete');
-} else {
-  info('Vercel step skipped');
+export async function runDeployCli(options = {}) {
+  const reporter = options.reporter ?? createReporter(options.logger);
+  const parsed = parseDeployOptions(options.args ?? process.argv.slice(2));
+  if (parsed.promptForTargets && !(options.inputIsTTY ?? input.isTTY)) {
+    throw new Error(
+      'Interactive target selection requires a terminal. Use --all or --skip-* flags.'
+    );
+  }
+  const targets = parsed.promptForTargets
+    ? await (options.promptTargets ?? promptDeployTargets)({ reporter })
+    : parsed.targets;
+  if (!parsed.promptForTargets) reporter.step('Deploy targets');
+  reporter.info(`Selected: ${formatTargets(targets)}`);
+  if (!targets.supabase && !targets.fly && !targets.vercel) {
+    reporter.warn('No deploy targets selected. Nothing to do.');
+    return { deployed: false, reason: 'no-targets', targets };
+  }
+
+  reporter.step('Pre-flight checks');
+  const execute = options.execute ?? execSync;
+  const branch = String(
+    execute('git rev-parse --abbrev-ref HEAD', { encoding: 'utf-8' })
+  ).trim();
+  const allowedBranches = ['master', 'deploy'];
+  if (!allowedBranches.includes(branch)) {
+    throw new Error(
+      `Current branch is "${branch}". Deploy is only allowed from: ${allowedBranches.join(', ')}`
+    );
+  }
+  reporter.success(`Branch: ${branch}`);
+
+  const commandAvailable =
+    options.commandAvailable ??
+    (name => hasCommand(name, { execute, platform: options.platform ?? process.platform }));
+  const flyBin = commandAvailable('flyctl') ? 'flyctl' : 'fly';
+  const checks = [
+    { name: 'supabase', enabled: targets.supabase },
+    { name: 'fly', enabled: targets.fly, bin: flyBin },
+    { name: 'vercel', enabled: targets.vercel },
+  ];
+  for (const check of checks) {
+    if (!check.enabled) {
+      reporter.info(`${check.name} CLI check skipped (--skip-${check.name})`);
+      continue;
+    }
+    const bin = check.bin ?? check.name;
+    if (!commandAvailable(bin)) {
+      throw new Error(`"${bin}" CLI not found. Install it or pass --skip-${check.name}`);
+    }
+    reporter.success(`${check.name} CLI found (${bin})`);
+  }
+
+  const projectLinked = options.projectLinked ?? existsSync(resolve('.vercel/project.json'));
+  if (targets.vercel && !projectLinked) throw new Error('Vercel project not linked. Run: vercel link');
+  if (parsed.dryRun) reporter.warn('Running in dry-run mode — commands will be printed but not executed.\n');
+
+  const run = (label, command) => {
+    reporter.info(`${label}: ${BOLD}${command}${RESET}`);
+    if (parsed.dryRun) {
+      reporter.warn('(dry-run) skipped');
+      return;
+    }
+    execute(command, { stdio: 'inherit' });
+  };
+
+  if (targets.supabase) {
+    reporter.step('Supabase — push migrations');
+    run('Pushing migrations', 'supabase db push');
+    reporter.success('Supabase migrations applied');
+    reporter.step('Supabase — apply production seed');
+    run('Applying production seed', 'supabase db query --linked --file supabase/seed.production.sql');
+    reporter.success('Supabase production seed applied');
+  } else {
+    reporter.info('Supabase step skipped');
+  }
+
+  if (targets.fly) {
+    reporter.step('Fly.io — deploy Zero');
+    run('Deploying zero-cache', `${flyBin} deploy --yes`);
+    reporter.success('Fly.io deploy complete');
+    if (!parsed.dryRun) {
+      reporter.info('Waiting for zero-cache healthcheck…');
+      const health = await (options.checkHealth ?? waitForZeroHealth)();
+      if (health.healthy) {
+        reporter.success('zero-cache is healthy');
+      } else {
+        reporter.warn('zero-cache did not become healthy within 180s — continuing anyway');
+        if (health.lastError) reporter.warn(`Last error: ${health.lastError}`);
+        reporter.info(`Check Fly.io logs: ${flyBin} logs`);
+      }
+    }
+  } else {
+    reporter.info('Fly.io step skipped');
+  }
+
+  if (targets.vercel) {
+    reporter.step('Vercel — deploy app');
+    run('Deploying to production', 'vercel --prod --archive=tgz');
+    reporter.success('Vercel deploy complete');
+  } else {
+    reporter.info('Vercel step skipped');
+  }
+  return { deployed: !parsed.dryRun, dryRun: parsed.dryRun, targets };
 }
 
-// ── Done ─────────────────────────────────────────────────────
+export function reportDeployError(error, logger = console, processState = process) {
+  createReporter(logger).error(error instanceof Error ? error.message : String(error));
+  processState.exitCode = 1;
+}
+
+await runCliIfMain(import.meta.url, runDeployCli, { onError: reportDeployError });

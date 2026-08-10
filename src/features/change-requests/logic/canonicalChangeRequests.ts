@@ -219,8 +219,6 @@ export function buildCanonicalChangeRequestRecords<
     if (!record) {
       record = { logicalKey: key, discussion, changeRequests: [] };
       recordByKey.set(key, record);
-    } else if (!record.discussion && discussion) {
-      record.discussion = discussion;
     }
     return record;
   };

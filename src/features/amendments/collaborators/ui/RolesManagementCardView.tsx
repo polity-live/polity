@@ -96,6 +96,7 @@ export function RolesManagementCardView({
       cell: ({ row }) =>
         row.original.scope === 'amendment' ? (
           <TableActionIconButton
+            data-action-id="amendments.roles.remove.current"
             label={translateText('generated.inline.0096_remove_e963907d')}
             icon={<Trash2 className="h-4 w-4" />}
             destructive
@@ -122,7 +123,7 @@ export function RolesManagementCardView({
           </div>
           <Dialog open={addRoleDialogOpen} onOpenChange={setAddRoleDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button data-action-id="amendments.roles.open.create-dialog">
                 <Plus className="mr-2 h-4 w-4" />
                 {translateText('generated.inline.0125_add_role_82d0afcc')}
               </Button>
@@ -158,10 +159,19 @@ export function RolesManagementCardView({
                 />
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setAddRoleDialogOpen(false)}>
+                <Button
+                  data-action-id="amendments.roles.cancel.create"
+                  type="button"
+                  variant="outline"
+                  onClick={() => setAddRoleDialogOpen(false)}
+                >
                   {translateText('generated.inline.0065_cancel_77dfd213')}
                 </Button>
-                <Button type="button" onClick={handleAddRole}>
+                <Button
+                  data-action-id="amendments.roles.submit.create"
+                  type="button"
+                  onClick={handleAddRole}
+                >
                   {translateText('generated.inline.0132_create_role_5bea05a8')}
                 </Button>
               </DialogFooter>

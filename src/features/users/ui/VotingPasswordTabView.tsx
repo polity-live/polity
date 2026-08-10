@@ -95,7 +95,11 @@ export function VotingPasswordTabView({
         {requiresInitialPassword ? (
           <p className="text-muted-foreground text-sm">{copy.initialPasswordRequired}</p>
         ) : (
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form
+            onSubmit={onSubmit}
+            className="space-y-4"
+            data-action-id="users.voting-password.submit"
+          >
             <FormFieldShell
               id="voting-password"
               label={hasVotingPassword ? copy.newPassword : copy.setPassword}
@@ -160,7 +164,11 @@ export function VotingPasswordTabView({
 
             {error ? <InlineNotice variant="destructive">{error}</InlineNotice> : null}
 
-            <FormButton type="submit" disabled={!isValid || isBusy}>
+            <FormButton
+              type="submit"
+              disabled={!isValid || isBusy}
+              data-action-id="users.voting-password.submit"
+            >
               {isBusy ? <Spinner className="mr-2" /> : null}
               {hasVotingPassword ? copy.update : copy.save}
             </FormButton>

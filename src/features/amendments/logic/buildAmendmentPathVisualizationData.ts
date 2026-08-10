@@ -89,7 +89,7 @@ export function buildAmendmentPathGroupTypeById<
   return new Map(
     stepRuns
       .filter(step => step.target_group_id)
-      .map(step => [step.target_group_id ?? '', null] as const)
+      .map(step => [step.target_group_id as string, null] as const)
   );
 }
 

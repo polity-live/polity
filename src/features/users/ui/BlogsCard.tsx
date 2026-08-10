@@ -40,7 +40,11 @@ export const BlogsCard: React.FC<BlogsCardProps> = ({ blog, gradientClass, href 
   if (href) {
     return (
       <Card asChild className={cardClassName}>
-        <SmartLink href={href} className="block cursor-pointer">
+        <SmartLink
+          href={href}
+          className="block cursor-pointer"
+          data-action-id="users.blog-card.open"
+        >
           <CardHeader className="">
             <CardTitle>{blog.title}</CardTitle>
             <CardDescription>{blog.date}</CardDescription>

@@ -34,6 +34,7 @@ export function BulletedListToolbarButton() {
   return (
     <ToolbarSplitButton pressed={open}>
       <ToolbarSplitButtonPrimary
+        aria-label={t('plateJs.toolbar.bulletedList')}
         className="data-[state=on]:bg-success data-[state=on]:text-success-foreground"
         onClick={() => {
           toggleList(editor, {
@@ -47,7 +48,9 @@ export function BulletedListToolbarButton() {
 
       <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
         <DropdownMenuTrigger asChild>
-          <ToolbarSplitButtonSecondary />
+          <ToolbarSplitButtonSecondary
+            aria-label={`${t('plateJs.toolbar.bulletedList')}: ${t('plateJs.toolbar.more')}`}
+          />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="start" alignOffset={-32}>
@@ -115,6 +118,7 @@ export function NumberedListToolbarButton() {
   return (
     <ToolbarSplitButton pressed={open}>
       <ToolbarSplitButtonPrimary
+        aria-label={t('plateJs.toolbar.numberedList')}
         className="data-[state=on]:bg-success data-[state=on]:text-success-foreground"
         onClick={() =>
           toggleList(editor, {
@@ -128,7 +132,9 @@ export function NumberedListToolbarButton() {
 
       <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
         <DropdownMenuTrigger asChild>
-          <ToolbarSplitButtonSecondary />
+          <ToolbarSplitButtonSecondary
+            aria-label={`${t('plateJs.toolbar.numberedList')}: ${t('plateJs.toolbar.more')}`}
+          />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="start" alignOffset={-32}>

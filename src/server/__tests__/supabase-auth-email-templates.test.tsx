@@ -71,4 +71,58 @@ describe('Supabase auth template deployment', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(3);
     expect(fetchImpl.mock.calls[1][1]).toMatchObject({ method: 'PATCH' });
   });
+
+  it('does not patch an already current configuration', async () => {
+    const desired = await buildSupabaseAuthTemplatePayload();
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify(desired), { status: 200 }));
+    await expect(
+      deploySupabaseAuthTemplates({
+        accessToken: 'token',
+        fetchImpl: fetchImpl as typeof fetch,
+        projectRef: 'project',
+      })
+    ).resolves.toEqual({ changedFields: [], deployed: false });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces Management API errors and verification mismatches', async () => {
+    const failedFetch = vi.fn().mockResolvedValue(new Response('denied', { status: 403 }));
+    await expect(
+      deploySupabaseAuthTemplates({
+        accessToken: 'token',
+        fetchImpl: failedFetch as typeof fetch,
+        projectRef: 'project',
+      })
+    ).rejects.toThrow('Supabase Management API 403: denied');
+
+    const mismatchFetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }))
+      .mockResolvedValueOnce(new Response('', { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }));
+    await expect(
+      deploySupabaseAuthTemplates({
+        accessToken: 'token',
+        fetchImpl: mismatchFetch as typeof fetch,
+        projectRef: 'project',
+      })
+    ).rejects.toThrow('Supabase template verification failed for:');
+  });
+
+  it('uses the global fetch implementation by default', async () => {
+    const desired = await buildSupabaseAuthTemplatePayload();
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify(desired), { status: 200 }));
+    vi.stubGlobal('fetch', fetchImpl);
+    try {
+      await expect(
+        deploySupabaseAuthTemplates({ accessToken: 'token', projectRef: 'project' })
+      ).resolves.toEqual({ changedFields: [], deployed: false });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });

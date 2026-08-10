@@ -104,4 +104,32 @@ describe('StreetCostSummaryView', () => {
 
     expect(onComparisonModeChange).toHaveBeenCalledWith('new_design');
   });
+
+  it('dispatches grouped cost navigation through stable actions', () => {
+    const onObjectSelect = vi.fn();
+    render(
+      <StreetCostSummaryView
+        summary={summary()}
+        comparisonMode="overlay"
+        onComparisonModeChange={vi.fn()}
+        onObjectSelect={onObjectSelect}
+        onDeleteObject={vi.fn()}
+      />
+    );
+
+    const toggle = document.querySelector<HTMLElement>(
+      '[data-action-id="amendments.city-cost.toggle.cost-category"]'
+    );
+    const selectCategory = document.querySelector<HTMLElement>(
+      '[data-action-id="amendments.city-cost.select.cost-category"]'
+    );
+    expect(toggle).toBeTruthy();
+    expect(selectCategory).toBeTruthy();
+
+    fireEvent.click(selectCategory as HTMLElement);
+    fireEvent.click(toggle as HTMLElement);
+
+    expect(onObjectSelect).toHaveBeenCalledWith('tree-1');
+    expect(screen.getByRole('button', { name: 'Select Tree' })).toBeTruthy();
+  });
 });

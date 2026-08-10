@@ -268,8 +268,7 @@ function ColorInput({
   return (
     <div className="flex flex-col items-center">
       {React.Children.map(children, child => {
-        if (!child) return child;
-
+        // ColorInput is internal and always receives the concrete custom-color menu item.
         return React.cloneElement(
           child as React.ReactElement<{
             onClick: () => void;

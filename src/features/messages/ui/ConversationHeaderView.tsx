@@ -46,6 +46,7 @@ export function ConversationHeaderView({
     >
       <div className="flex min-w-0 flex-1 items-center">
         <Button
+          data-action-id="messages.conversation.back"
           variant="ghost"
           size="icon"
           className="mr-2 md:hidden"
@@ -63,10 +64,16 @@ export function ConversationHeaderView({
         {/* Only show pin for accepted conversations */}
         {conversation.status === 'accepted' && (
           <Button
+            data-action-id="messages.conversation.pin.toggle"
             variant="ghost"
             size="icon"
             onClick={() => onTogglePin(conversation.id, conversation.pinned || false)}
             title={
+              conversation.pinned
+                ? t('features.messages.conversation.unpin')
+                : t('features.messages.conversation.pin')
+            }
+            aria-label={
               conversation.pinned
                 ? t('features.messages.conversation.unpin')
                 : t('features.messages.conversation.pin')
@@ -84,10 +91,16 @@ export function ConversationHeaderView({
           (conversation.status !== 'pending' ||
             isConversationRequester(conversation, currentUserId)) && (
             <Button
+              data-action-id="messages.conversation.delete.open"
               variant="ghost"
               size="icon"
               onClick={() => onDeleteClick(conversation.id)}
               title={
+                conversation.status === 'pending'
+                  ? t('features.messages.conversation.cancelRequest')
+                  : t('features.messages.conversation.delete')
+              }
+              aria-label={
                 conversation.status === 'pending'
                   ? t('features.messages.conversation.cancelRequest')
                   : t('features.messages.conversation.delete')

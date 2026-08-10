@@ -64,7 +64,10 @@ export function AmendmentGroupsView({
             onOpenChange={() => onToggleSection(section.key)}
           >
             <div className="bg-card rounded-lg border">
-              <CollapsibleTrigger className="hover:bg-accent flex w-full items-center justify-between p-4">
+              <CollapsibleTrigger
+                data-action-id="groups.amendments.toggle.status-section"
+                className="hover:bg-accent flex w-full items-center justify-between p-4"
+              >
                 <div className="flex items-center gap-2">
                   {isSectionOpen ? (
                     <ChevronDown className="h-5 w-5" />
@@ -152,16 +155,11 @@ export function AmendmentGroupsView({
                       className="max-h-[42rem] min-h-80 overflow-auto"
                       renderItem={(amendment, index) => (
                         <div
-                          className={isSectionOpen ? 'civic-load-card-reveal' : undefined}
+                          className="civic-load-card-reveal"
                           style={
-                            isSectionOpen
-                              ? ({
-                                  '--civic-load-index': Math.min(
-                                    sectionMotionStartIndex + index,
-                                    11
-                                  ),
-                                } as CSSProperties)
-                              : undefined
+                            {
+                              '--civic-load-index': Math.min(sectionMotionStartIndex + index, 11),
+                            } as CSSProperties
                           }
                         >
                           <AmendmentTimelineCard amendment={amendment.cardAmendment} />

@@ -128,7 +128,10 @@ function VirtualDiscussionThreadList({
           )}
         </p>
         {userId ? (
-          <Button onClick={() => onCreateDialogOpenChange(true)}>
+          <Button
+            data-action-id="discussions.list.thread.create"
+            onClick={() => onCreateDialogOpenChange(true)}
+          >
             <Plus className="mr-2 h-4 w-4" />
             {translateText('generated.inline.0394_create_first_thread_e26d65a7')}
           </Button>
@@ -216,26 +219,33 @@ export function DiscussionsView({
           <div className="mb-4 flex justify-end">
             <div className="flex w-full min-w-0 flex-nowrap items-center gap-2 sm:w-auto sm:gap-3">
               {userId ? (
-                <Button onClick={() => onCreateDialogOpenChange(true)}>
+                <Button
+                  data-action-id="discussions.list.thread.create"
+                  onClick={() => onCreateDialogOpenChange(true)}
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   {translateText('generated.inline.0392_new_thread_66826f91')}
                 </Button>
               ) : null}
               <FormControlSelect
+                data-action-id="discussions.list.sort.change"
                 value={sortBy}
                 onValueChange={value => onSortByChange(value as DiscussionSortMode)}
               >
-                <FormControlSelectTrigger className="ml-auto max-w-[180px] min-w-0 flex-1 sm:w-[180px] sm:flex-none">
+                <FormControlSelectTrigger
+                  data-action-id="discussions.list.sort.open"
+                  className="ml-auto max-w-[180px] min-w-0 flex-1 sm:w-[180px] sm:flex-none"
+                >
                   <FormControlSelectValue />
                 </FormControlSelectTrigger>
                 <FormControlSelectContent>
-                  <FormControlSelectItem value="votes">
+                  <FormControlSelectItem value="votes" data-action-id="discussions.list.sort.votes">
                     <div className="flex items-center gap-2">
                       <TrendingUp className="h-4 w-4" />
                       <span>{translateText('generated.inline.0390_top_voted_3ecc2d00')}</span>
                     </div>
                   </FormControlSelectItem>
-                  <FormControlSelectItem value="time">
+                  <FormControlSelectItem value="time" data-action-id="discussions.list.sort.time">
                     <div className="flex items-center gap-2">
                       <CalendarIcon className="h-4 w-4" />
                       <span>{translateText('generated.inline.0391_newest_first_a40bb555')}</span>

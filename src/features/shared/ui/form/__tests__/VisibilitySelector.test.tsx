@@ -43,6 +43,12 @@ describe('VisibilitySelector', () => {
     }
     fireEvent.click(authenticatedOption);
     expect(onChange).toHaveBeenCalledWith('authenticated');
+
+    const tooltipButton = screen.getByRole('button', {
+      name: 'Anyone can see this content',
+    });
+    fireEvent.click(tooltipButton);
+    fireEvent.mouseDown(tooltipButton);
   });
 
   it('renders the longer German labels', () => {
@@ -53,5 +59,14 @@ describe('VisibilitySelector', () => {
     expect(screen.getByText('Öffentlich')).toBeTruthy();
     expect(screen.getByText('Authentifiziert')).toBeTruthy();
     expect(screen.getByText('Privat')).toBeTruthy();
+  });
+
+  it('supports a custom label without tooltip controls', () => {
+    render(
+      <VisibilitySelector value="private" onChange={vi.fn()} label="Audience" showTooltip={false} />
+    );
+
+    expect(screen.getByText('Audience')).toBeTruthy();
+    expect(screen.queryAllByRole('button')).toHaveLength(3);
   });
 });

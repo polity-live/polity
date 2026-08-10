@@ -65,6 +65,7 @@ export function NameStepView({
         <div className="flex flex-col sm:flex-row sm:justify-end">
           <Button
             form="onboarding-name-form"
+            data-action-id="auth.onboarding.name.continue"
             type="submit"
             size="lg"
             className="w-full sm:w-auto"
@@ -88,7 +89,12 @@ export function NameStepView({
             <p className="text-muted-foreground mt-3 max-w-xl leading-7">{labels.description}</p>
           </div>
 
-          <form id="onboarding-name-form" onSubmit={onSubmit} className="space-y-5">
+          <form
+            id="onboarding-name-form"
+            data-action-id="auth.onboarding.name.form.submit"
+            onSubmit={onSubmit}
+            className="space-y-5"
+          >
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <FormControlLabel htmlFor="firstName">{labels.firstName}</FormControlLabel>

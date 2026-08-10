@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/messages/ui/GroupMembersDialog.tsx#messages.group-members-dialog.group-id": [
+      {
+        "file": "src/features/messages/ui/__tests__/AiFindingsCardGroup.test.tsx",
+        "project": "component",
+        "caseId": "shows four findings initially and expands the remaining results",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/messages/ui/GroupMembersDialog.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {}
+}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildMembershipRightsAlignmentRows,
+  buildMembershipRightsAlignmentRowsFromRelationships,
   GROUP_RIGHT_ACTION_RIGHT_MAPPING,
 } from '../membershipRightsAlignment';
 
@@ -213,5 +214,155 @@ describe('buildMembershipRightsAlignmentRows', () => {
 
     expect(row.sourceGroupId).toBe('B2');
     expect(row.status).toBe('aligned');
+  });
+
+  it('normalizes derived relationship rows and ignores incomplete or unknown rights', () => {
+    const [row] = buildMembershipRightsAlignmentRowsFromRelationships({
+      targetGroupId: 'H1',
+      memberships: [
+        membership('relationship', {
+          actionRights: [{ resource: 'amendments', action: 'create' }],
+        }),
+      ],
+      relationships: [
+        {
+          id: 'valid',
+          connection_id: null,
+          grant_id: null,
+          with_right: 'amendmentRight',
+          group_id: 'B1',
+          related_group_id: 'H1',
+          status: 'active',
+        },
+        {
+          id: 'no-right',
+          with_right: null,
+          group_id: 'B1',
+          related_group_id: 'H1',
+          status: 'active',
+        },
+        {
+          id: 'no-holder',
+          with_right: 'amendmentRight',
+          group_id: null,
+          related_group_id: 'H1',
+          status: 'active',
+        },
+        {
+          id: 'no-scope',
+          with_right: 'amendmentRight',
+          group_id: 'B1',
+          related_group_id: null,
+          status: 'active',
+        },
+        {
+          id: 'unknown-right',
+          with_right: 'unknownRight',
+          group_id: 'B1',
+          related_group_id: 'H1',
+          status: 'active',
+        },
+      ],
+    });
+
+    expect(row.status).toBe('aligned');
+    expect(row.connectedRights).toHaveLength(1);
+    expect(row.connectedRights[0]?.paths[0]?.groupPath).toEqual(['B1', 'H1']);
+  });
+
+  it('ignores inactive, incomplete, and unknown raw grants', () => {
+    const [row] = buildMembershipRightsAlignmentRows({
+      targetGroupId: 'H1',
+      memberships: [membership('invalid-grants')],
+      grants: [
+        grant('inactive', 'informationRight', 'B1', 'H1', 'requested'),
+        { ...grant('no-key', 'informationRight', 'B1', 'H1'), right_key: null },
+        { ...grant('no-holder', 'informationRight', 'B1', 'H1'), holder_group_id: null },
+        { ...grant('no-scope', 'informationRight', 'B1', 'H1'), scope_group_id: null },
+        grant('unknown', 'unknownRight', 'B1', 'H1'),
+      ],
+    });
+
+    expect(row.connectedRights).toEqual([]);
+    expect(row.status).toBe('aligned');
+  });
+
+  it('uses source-group and no-source fallbacks when no base group is projected', () => {
+    const [sourceRow, noSourceRow] = buildMembershipRightsAlignmentRows({
+      targetGroupId: 'H1',
+      memberships: [
+        {
+          ...membership('source-fallback'),
+          baseGroup: undefined,
+          source_group_id: 'B1',
+        },
+        {
+          ...membership('no-source'),
+          baseGroup: undefined,
+          source_group_id: null,
+        },
+      ],
+      grants: [],
+    });
+
+    expect(sourceRow.sourceGroupId).toBe('B1');
+    expect(noSourceRow.sourceGroupId).toBeNull();
+    expect(noSourceRow.connectedRights).toEqual([]);
+  });
+
+  it('keeps forward-compatible group-right mappings ordered with fallback labels', () => {
+    const original = GROUP_RIGHT_ACTION_RIGHT_MAPPING.rightToSpeak;
+    GROUP_RIGHT_ACTION_RIGHT_MAPPING.rightToSpeak = [
+      { resource: 'zCustomResource' as never, action: 'customAction' as never },
+      { resource: 'aCustomResource' as never, action: 'customAction' as never },
+    ];
+
+    try {
+      const [row] = buildMembershipRightsAlignmentRows({
+        targetGroupId: 'H1',
+        memberships: [membership('forward-compatible')],
+        grants: [grant('custom', 'rightToSpeak', 'B1', 'H1')],
+      });
+
+      expect(row.expectedRights).toEqual([
+        {
+          resource: 'aCustomResource',
+          action: 'customAction',
+          label: 'aCustomResource / customAction',
+        },
+        {
+          resource: 'zCustomResource',
+          action: 'customAction',
+          label: 'zCustomResource / customAction',
+        },
+      ]);
+    } finally {
+      GROUP_RIGHT_ACTION_RIGHT_MAPPING.rightToSpeak = original;
+    }
+  });
+
+  it('expands implied actions from a connected-right mapping', () => {
+    const original = GROUP_RIGHT_ACTION_RIGHT_MAPPING.rightToSpeak;
+    GROUP_RIGHT_ACTION_RIGHT_MAPPING.rightToSpeak = [{ resource: 'groups', action: 'manage' }];
+
+    try {
+      const [row] = buildMembershipRightsAlignmentRows({
+        targetGroupId: 'H1',
+        memberships: [membership('implied-actions')],
+        grants: [grant('manage', 'rightToSpeak', 'B1', 'H1')],
+      });
+
+      expect(row.expectedRights.map(right => `${right.resource}:${right.action}`)).toEqual(
+        expect.arrayContaining([
+          'groups:manage',
+          'groups:view',
+          'groups:create',
+          'groups:update',
+          'groups:delete',
+        ])
+      );
+    } finally {
+      GROUP_RIGHT_ACTION_RIGHT_MAPPING.rightToSpeak = original;
+    }
   });
 });

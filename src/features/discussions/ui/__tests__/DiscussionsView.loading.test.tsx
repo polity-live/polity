@@ -70,6 +70,31 @@ describe('DiscussionsView loading state', () => {
     expect(document.querySelector('[data-slot="entity-page-skeleton"]')).toBeTruthy();
     expect(screen.queryByText('generated.inline.0386_loading_discussions_8b32b1c7')).toBeNull();
   });
+
+  it('renders the missing-amendment state once loading settles', () => {
+    render(
+      <DiscussionsView
+        amendmentId="missing"
+        hasAmendment={false}
+        isCreateDialogOpen={false}
+        isLoading={false}
+        onCreateComment={vi.fn()}
+        onCreateDialogOpenChange={vi.fn()}
+        onCreateThread={vi.fn(async () => 'thread-1')}
+        onSortByChange={vi.fn()}
+        onVoteComment={vi.fn()}
+        onVoteThread={vi.fn()}
+        sortBy="votes"
+      />
+    );
+
+    expect(screen.getByText('generated.inline.0066_amendment_not_found_3cea3d4d')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'generated.inline.0067_the_amendment_you_re_looking_for_doesn_t_exis_f871134d'
+      )
+    ).toBeTruthy();
+  });
 });
 
 describe('DiscussionsView toolbar', () => {

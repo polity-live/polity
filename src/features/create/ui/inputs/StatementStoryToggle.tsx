@@ -23,7 +23,12 @@ export function StatementStoryToggle({
         <FormControlLabel className="text-base font-semibold">{label}</FormControlLabel>
         <p className="text-muted-foreground text-sm">{description}</p>
       </div>
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+      <Switch
+        data-action-id="create.statement-story.toggle"
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        aria-label={label}
+      />
     </div>
   );
 }

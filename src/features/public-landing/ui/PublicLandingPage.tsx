@@ -371,7 +371,7 @@ function StoryPoints({
   );
 }
 
-function SectionHeading({
+export function SectionHeading({
   eyebrow,
   title,
   description,
@@ -382,9 +382,9 @@ function SectionHeading({
 }) {
   return (
     <div className="max-w-3xl space-y-3">
-      <p className="text-brand text-sm font-semibold uppercase">{eyebrow}</p>
+      <p className="text-foreground text-sm font-semibold uppercase">{eyebrow}</p>
       <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
-      <p className="text-muted-foreground text-base leading-7">{description}</p>
+      <p className="text-foreground text-base leading-7">{description}</p>
     </div>
   );
 }
@@ -400,7 +400,8 @@ function LandingDecisionFlow({ steps }: { steps: string[] }) {
         <div className="bg-border absolute top-5 right-[16.666%] left-[16.666%] h-px" />
         <span className="landing-decision-flow-marker bg-highlight ring-highlight/20 absolute top-[0.875rem] h-3 w-3 -translate-x-1/2 rounded-full shadow-sm ring-4" />
         {flowSteps.map((step, index) => {
-          const Icon = decisionIcons[index] ?? CheckCircle2;
+          // flowSteps is always normalized to exactly decisionIcons.length entries above.
+          const Icon = decisionIcons[index] as StoryIcon;
           return (
             <div
               key={`${step}-${index}`}
@@ -497,12 +498,14 @@ function ImprintSection({ t, tArray }: { t: LandingTranslator; tArray: LandingAr
         </div>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <ContactLink
+            data-action-id="public-landing.contact.email.open"
             href={`mailto:${SUPPORT_EMAIL}`}
             title={t('pages.imprint.contact.email.title')}
             value={SUPPORT_EMAIL}
             description={t('pages.imprint.contact.email.description')}
           />
           <ContactLink
+            data-action-id="public-landing.contact.repository.open"
             href={GITHUB_REPOSITORY_URL}
             title={t('pages.imprint.contact.repository.title')}
             value={GITHUB_REPOSITORY_URL}
@@ -510,6 +513,7 @@ function ImprintSection({ t, tArray }: { t: LandingTranslator; tArray: LandingAr
             external
           />
           <ContactLink
+            data-action-id="public-landing.contact.support.open"
             href="/support"
             title={t('pages.imprint.contact.support.title')}
             value="/support"
@@ -521,13 +525,15 @@ function ImprintSection({ t, tArray }: { t: LandingTranslator; tArray: LandingAr
   );
 }
 
-function ContactLink({
+export function ContactLink({
+  'data-action-id': actionId,
   href,
   title,
   value,
   description,
   external,
 }: {
+  'data-action-id': string;
   href: string;
   title: string;
   value: string;
@@ -536,6 +542,7 @@ function ContactLink({
 }) {
   return (
     <SmartLink
+      data-action-id={actionId}
       href={href}
       target={external ? '_blank' : undefined}
       rel={external ? 'noopener noreferrer' : undefined}

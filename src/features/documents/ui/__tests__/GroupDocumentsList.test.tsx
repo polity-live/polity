@@ -89,6 +89,7 @@ vi.mock('../CreateDocumentDialog', () => ({
 }));
 
 import { GroupDocumentsList } from '../GroupDocumentsList';
+import { GroupDocumentsListView } from '../GroupDocumentsListView';
 
 afterEach(() => {
   cleanup();
@@ -115,5 +116,53 @@ describe('GroupDocumentsList', () => {
     expect(screen.getByTestId('group-document-card').getAttribute('href')).toBe(
       '/group/group-1/editor/doc-1'
     );
+  });
+
+  it('labels toolbar and both empty-state creation surfaces as distinct stable variants', () => {
+    const common = {
+      canManageDocuments: true,
+      fields: [],
+      groupId: 'group-1',
+      groupName: 'Council',
+      isCreating: false,
+      isLoading: false,
+      onCreateDocument: vi.fn(),
+      pql: {
+        searchQuery: '',
+        setSearchQuery: vi.fn(),
+        quickFilterValues: {},
+        setQuickFilterValues: vi.fn(),
+        toggleQuickFilterValue: vi.fn(),
+        clearQuickFilter: vi.fn(),
+        savedFilters: [],
+        saveCustomFilter: vi.fn(),
+        deleteCustomFilter: vi.fn(),
+        activeCustomFilterIds: [],
+        toggleCustomFilter: vi.fn(),
+        filteredItems: [],
+        hasActiveFilters: false,
+      },
+    };
+    const { container, rerender } = render(
+      <GroupDocumentsListView {...({ ...common, documents: [] } as any)} />
+    );
+    expect(
+      container.querySelector('[data-action-id="documents.create.open.empty-header"]')
+    ).toBeTruthy();
+    expect(
+      container.querySelector('[data-action-id="documents.create.open.empty-card"]')
+    ).toBeTruthy();
+    rerender(
+      <GroupDocumentsListView
+        {...({
+          ...common,
+          documents: [{ id: 'doc-1' }],
+          pql: { ...common.pql, filteredItems: [{ id: 'doc-1' }] },
+        } as any)}
+      />
+    );
+    expect(
+      container.querySelector('[data-action-id="documents.create.open.toolbar"]')
+    ).toBeTruthy();
   });
 });

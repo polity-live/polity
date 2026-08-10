@@ -78,10 +78,6 @@ function normalizeConnectionKind(
     return connection.connection_kind;
   }
 
-  if (connection.connection_type === 'hierarchy') {
-    return 'hierarchy';
-  }
-
   const endpointTypes = [
     groupsById.get(connection.group_a_id)?.group_type,
     groupsById.get(connection.group_b_id)?.group_type,
@@ -151,10 +147,7 @@ function buildExplicitGroupMetaMap(args: {
     const siblingConnections = activeConnections
       .filter(connection => {
         const directed = getDirectedConnectionFields(connection, new Map());
-        return (
-          connection.connection_type === 'peer' ||
-          (directed.connection_kind !== 'hierarchy' && directed.connection_kind != null)
-        );
+        return connection.connection_type === 'peer' || directed.connection_kind !== 'hierarchy';
       })
       .sort(
         (left, right) =>
@@ -167,9 +160,10 @@ function buildExplicitGroupMetaMap(args: {
           rule: rulesByConnectionId.get(connection.id),
         }))
         .find(context => context.rule?.member_target_group_id === groupId) ?? null;
+    const incomingSiblingRule = incomingSiblingContext?.rule;
     const primarySiblingConnection = incomingSiblingContext?.connection ?? siblingConnections[0];
-    const primarySiblingMode = incomingSiblingContext
-      ? (incomingSiblingContext.rule?.membership_mode ?? 'none')
+    const primarySiblingMode = incomingSiblingRule
+      ? incomingSiblingRule.membership_mode
       : siblingConnections.length > 0
         ? 'none'
         : null;
@@ -177,7 +171,7 @@ function buildExplicitGroupMetaMap(args: {
       ? getDirectedConnectionFields(primarySiblingConnection, new Map())
       : null;
     const connectedGroupId =
-      incomingSiblingContext?.rule?.member_source_group_id ??
+      incomingSiblingRule?.member_source_group_id ??
       (directedSibling == null
         ? null
         : directedSibling.from_group_id === groupId
@@ -195,7 +189,7 @@ function buildExplicitGroupMetaMap(args: {
       connected_group_id: connectedGroupId ?? null,
       primary_sibling_membership_mode: primarySiblingMode,
       sibling_membership_mode: toSiblingMembershipKind(primarySiblingMode),
-      sibling_role_id: incomingSiblingContext?.rule?.required_source_role_id ?? null,
+      sibling_role_id: incomingSiblingRule?.required_source_role_id ?? null,
     });
   }
 
@@ -267,16 +261,11 @@ function buildHierarchyPaths(connections: readonly any[]) {
 function findHierarchyPathForMembership(
   paths: readonly any[],
   groupId: string,
-  baseGroupId: string | null
+  baseGroupId: string
 ) {
-  if (!baseGroupId) {
-    return null;
-  }
-  return (
-    paths
-      .filter(path => path.ancestor_group_id === groupId && path.base_group_id === baseGroupId)
-      .sort((left, right) => left.depth - right.depth)[0] ?? null
-  );
+  return paths
+    .filter(path => path.ancestor_group_id === groupId && path.base_group_id === baseGroupId)
+    .sort((left, right) => left.depth - right.depth)[0];
 }
 
 function sortHierarchyOrigins(origins: readonly HierarchyMembershipOriginPlan[]) {
@@ -381,23 +370,24 @@ function resolveMembershipProjection(args: {
   }
 
   if (source === HIERARCHY_DERIVED_MEMBERSHIP_SOURCE) {
-    const baseGroupId = membership.source_group_id ?? membership.base_group_id ?? null;
+    // Hierarchy rows reach this phase only after reconciliation has attached a desired origin.
+    const baseGroupId = membership.source_group_id as string;
     const path = findHierarchyPathForMembership(hierarchyPaths, membership.group_id, baseGroupId);
-    const sourceMembership = baseGroupId
-      ? directMembershipByUserAndGroup.get(`${membership.user_id}:${baseGroupId}`)
-      : null;
+    const sourceMembership = directMembershipByUserAndGroup.get(
+      `${membership.user_id}:${baseGroupId}`
+    );
 
     return {
       origin_kind: 'hierarchy',
-      connection_id: path?.connection_id ?? membership.connection_id ?? null,
+      connection_id: path.connection_id,
       membership_rule_id: null,
-      part_group_id: path?.direct_child_group_id ?? baseGroupId ?? membership.part_group_id ?? null,
+      part_group_id: path.direct_child_group_id,
       base_group_id: baseGroupId,
       is_auto_managed: true,
-      source_membership_id: sourceMembership?.id ?? null,
+      source_membership_id: sourceMembership.id,
       source_role_id: null,
-      path_group_ids: path?.path_group_ids ?? [baseGroupId, membership.group_id].filter(Boolean),
-      depth: path?.depth ?? 0,
+      path_group_ids: path.path_group_ids,
+      depth: path.depth,
     };
   }
 
@@ -476,9 +466,6 @@ async function reconcileGroupMeta(
 
   for (const group of args.groups) {
     const meta = metaByGroupId.get(group.id);
-    if (!meta) {
-      continue;
-    }
     const patch: Record<string, unknown> = { id: group.id };
     for (const key of [
       'group_type',
@@ -629,10 +616,8 @@ async function reconcileHierarchyMembershipRows(
   }
 
   for (const [key, plan] of desiredPlans) {
+    // Plans are created only after their first origin has been appended.
     const primaryOrigin = plan.origins[0];
-    if (!primaryOrigin) {
-      continue;
-    }
 
     const existingMembership = membershipsByGroupAndUser.get(key);
     const basePatch = {
@@ -886,12 +871,11 @@ async function reconcileEventProjections(
       continue;
     }
 
-    const sourceGroupIds =
-      uniqueStrings(
-        args.hierarchyPaths
-          .filter(path => path.ancestor_group_id === event.group_id)
-          .map(path => path.base_group_id)
-      ) || [];
+    const sourceGroupIds = uniqueStrings(
+      args.hierarchyPaths
+        .filter(path => path.ancestor_group_id === event.group_id)
+        .map(path => path.base_group_id)
+    );
     const scopedSourceGroupIds = sourceGroupIds.length > 0 ? sourceGroupIds : [event.group_id];
     const isDelegateAssembly = event.event_type === 'delegate_assembly';
 

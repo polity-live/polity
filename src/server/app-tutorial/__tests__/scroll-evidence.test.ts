@@ -48,4 +48,11 @@ describe('tutorial horizontal scroll evidence', () => {
   it('preserves the desktop acknowledgement path', () => {
     expect(horizontalScrollEvidenceIsValid(48, { desktopAcknowledged: true })).toBe(true);
   });
+
+  it('rejects invalid ranges, evidence types, and missing movement', () => {
+    expect(requiredHorizontalScrollPixels(48, Number.NaN)).toBe(48);
+    expect(requiredHorizontalScrollPixels(48, -1)).toBe(48);
+    expect(horizontalScrollEvidenceIsValid(48, { type: 'click' })).toBe(false);
+    expect(horizontalScrollEvidenceIsValid(48, { type: 'scroll' })).toBe(false);
+  });
 });

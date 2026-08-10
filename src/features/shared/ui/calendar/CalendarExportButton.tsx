@@ -10,6 +10,7 @@ export interface CalendarExportButtonProps {
   size?: ButtonProps['size'];
   variant?: ButtonProps['variant'];
   className?: string;
+  'data-action-id'?: string;
 }
 
 export function CalendarExportButton({
@@ -19,6 +20,7 @@ export function CalendarExportButton({
   size = 'sm',
   variant = 'outline',
   className,
+  'data-action-id': dataActionId,
 }: CalendarExportButtonProps) {
   const { t } = useTranslation();
 
@@ -30,6 +32,7 @@ export function CalendarExportButton({
       onClick={onExport}
       disabled={disabled}
       className={className}
+      data-action-id={dataActionId}
     >
       <Download className="mr-2 h-4 w-4" />
       {label ?? t('features.calendar.actions.export')}

@@ -130,8 +130,8 @@ export function ModernTimelineView({
 
       <StatementStoryCarousel />
 
-      <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
-        <BadgeControl variant="outline" shape="rounded">
+      <div className="text-foreground flex flex-wrap items-center gap-2 text-sm">
+        <BadgeControl variant="outline" shape="rounded" className="text-foreground">
           <MapPinned className="mr-1.5 h-3.5 w-3.5" />
           {t('features.timeline.around.mappedCount', {
             count: civicTimeline.mapItems.length,
@@ -139,7 +139,7 @@ export function ModernTimelineView({
           })}
         </BadgeControl>
         {civicTimeline.discoverCount > 0 ? (
-          <BadgeControl variant="outline" shape="rounded">
+          <BadgeControl variant="outline" shape="rounded" className="text-foreground">
             <Sparkles className="mr-1.5 h-3.5 w-3.5" />
             {t('features.timeline.around.discoverCount', {
               count: civicTimeline.discoverCount,
@@ -191,9 +191,15 @@ export function ModernTimelineView({
 
           {civicTimeline.items.length > 0 ? (
             <div className="mt-6 flex justify-center">
-              <Button variant="outline" asChild>
-                <SmartLink href="/search">
-                  {t('features.timeline.discoverContent', { defaultValue: 'Discover Content' })}
+              <Button data-action-scope="presentation" variant="outline" asChild>
+                <SmartLink
+                  data-action-id="timeline.empty.search.open"
+                  data-action-kind="navigation"
+                  href="/search"
+                >
+                  {t('features.timeline.discoverContent', {
+                    defaultValue: 'Discover Content',
+                  })}
                 </SmartLink>
               </Button>
             </div>

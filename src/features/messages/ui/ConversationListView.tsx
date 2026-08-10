@@ -78,6 +78,7 @@ export function ConversationListView({
             <div className="relative min-w-0 flex-1">
               <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
               <FormControlInput
+                data-action-id="messages.conversation.search.change"
                 placeholder={t('features.messages.searchConversations')}
                 value={searchQuery}
                 onChange={e => onSearchChange(e.target.value)}
@@ -86,6 +87,7 @@ export function ConversationListView({
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <Button
+                data-action-id="messages.conversation.create.open"
                 size="icon"
                 variant="outline"
                 onClick={onNewConversationClick}
@@ -95,6 +97,7 @@ export function ConversationListView({
                 <MessageCircle className="h-5 w-5" />
               </Button>
               <Button
+                data-action-id="messages.ai-conversation.create"
                 size="icon"
                 variant="default"
                 onClick={onNewAiConversationClick}
@@ -108,6 +111,7 @@ export function ConversationListView({
           <div className="flex flex-wrap gap-2">
             {filterButtons.map((filter: any) => (
               <Button
+                data-action-id="messages.conversation.filter.select"
                 key={filter}
                 type="button"
                 size="sm"

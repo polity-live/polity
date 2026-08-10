@@ -76,6 +76,15 @@ describe('useOfflineTallyDialogController', () => {
     expect(result.current.isOverLimit).toBe(false);
   });
 
+  it('normalizes nullable persisted tallies and ignores unchanged draft writes', () => {
+    const { result } = renderController(buildProps({ tallies: [{ id: 'accept', count: null }] }));
+    expect(result.current.draft.accept).toBe('0');
+
+    const previousDraft = result.current.draft;
+    act(() => result.current.onDraftValueChange('accept', '0'));
+    expect(result.current.draft).toBe(previousDraft);
+  });
+
   it('preserves edits across equivalent rerenders with unstable getter identities', () => {
     const { result, rerender } = renderController(buildProps(), { unstableGetters: true });
 

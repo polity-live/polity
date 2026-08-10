@@ -1,9 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   registerPushSubscriptionForUser,
   unregisterPushSubscriptionForUser,
   PushSubscriptionConflictError,
+  pushSubscriptionContracts,
+  getPushSubscriptionForDevice,
 } from '../push-subscription-service';
 
 type Row = Record<string, any>;
@@ -113,6 +115,23 @@ function createSupabaseFixture(initial: Record<string, Row[]> = {}) {
   };
 }
 
+function scriptedClient(results: Record<string, any>[]) {
+  const queue = [...results];
+  return {
+    from: vi.fn(() => {
+      const query: any = {};
+      for (const method of ['select', 'insert', 'update', 'delete', 'eq']) {
+        query[method] = vi.fn(() => query);
+      }
+      const next = async () => queue.shift() ?? { data: null, error: null };
+      query.maybeSingle = vi.fn(next);
+      query.single = vi.fn(next);
+      query.then = (resolve: (value: unknown) => unknown) => next().then(resolve);
+      return query;
+    }),
+  } as any;
+}
+
 const firstDevice = '10000000-0000-4000-8000-000000000001';
 const secondDevice = '10000000-0000-4000-8000-000000000002';
 
@@ -127,6 +146,26 @@ function input(deviceId = firstDevice, endpoint = 'https://push.test/first') {
 }
 
 describe('push subscription reconciliation', () => {
+  it('validates the default Supabase configuration', () => {
+    try {
+      vi.stubEnv('SUPABASE_URL', '');
+      vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', '');
+      expect(() => pushSubscriptionContracts.getSupabase()).toThrow(
+        'Missing Supabase configuration'
+      );
+
+      vi.stubEnv('SUPABASE_URL', 'https://example.supabase.co');
+      expect(() => pushSubscriptionContracts.getSupabase()).toThrow(
+        'Missing Supabase configuration'
+      );
+
+      vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'service-role-key');
+      expect(pushSubscriptionContracts.getSupabase()).toBeDefined();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it('repairs a changed browser endpoint for the same device', async () => {
     const fixture = createSupabaseFixture();
 
@@ -223,5 +262,217 @@ describe('push subscription reconciliation', () => {
     await unregisterPushSubscriptionForUser('user-a', secondDevice, fixture.client);
     expect(fixture.tables.push_subscription).toHaveLength(0);
     expect(fixture.tables.notification_setting[0].delivery_settings.pushNotifications).toBe(false);
+  });
+
+  it('loads a device subscription and surfaces lookup failures', async () => {
+    await expect(
+      getPushSubscriptionForDevice(
+        'user-a',
+        firstDevice,
+        scriptedClient([{ data: { id: 'subscription' }, error: null }])
+      )
+    ).resolves.toEqual({ id: 'subscription' });
+    await expect(
+      getPushSubscriptionForDevice(
+        'user-a',
+        firstDevice,
+        scriptedClient([{ error: { message: 'lookup failed' } }])
+      )
+    ).rejects.toThrow('lookup failed');
+  });
+
+  it('surfaces endpoint, device, deletion, update, count, and insert failures', async () => {
+    await expect(
+      registerPushSubscriptionForUser(
+        'user-a',
+        input(),
+        scriptedClient([{ error: { message: 'endpoint' } }, { data: null, error: null }])
+      )
+    ).rejects.toThrow('endpoint');
+    await expect(
+      registerPushSubscriptionForUser(
+        'user-a',
+        input(),
+        scriptedClient([{ data: null, error: null }, { error: { message: 'device' } }])
+      )
+    ).rejects.toThrow('device');
+    await expect(
+      registerPushSubscriptionForUser(
+        'user-a',
+        input(),
+        scriptedClient([
+          { data: null, error: null },
+          { data: { id: 'old-device' }, error: null },
+          { error: { message: 'delete' } },
+        ])
+      )
+    ).rejects.toThrow('delete');
+    await expect(
+      registerPushSubscriptionForUser(
+        'user-a',
+        input(),
+        scriptedClient([
+          { data: { id: 'same', user_id: 'user-a' }, error: null },
+          { data: { id: 'same' }, error: null },
+          { error: { message: 'update' } },
+        ])
+      )
+    ).rejects.toThrow('update');
+    await expect(
+      registerPushSubscriptionForUser(
+        'user-b',
+        input(),
+        scriptedClient([
+          {
+            data: {
+              id: 'same',
+              user_id: 'user-a',
+              auth: 'auth-key',
+              p256dh: 'p256dh-key',
+            },
+            error: null,
+          },
+          { data: null, error: null },
+          { data: { id: 'same' }, error: null },
+          { data: null, error: null },
+          { error: null },
+          { count: null, error: { message: 'count' } },
+        ])
+      )
+    ).rejects.toThrow('count');
+    await expect(
+      registerPushSubscriptionForUser(
+        'user-a',
+        { ...input(), userAgent: undefined },
+        scriptedClient([
+          { data: null, error: null },
+          { data: null, error: null },
+          { error: { message: 'insert' } },
+        ])
+      )
+    ).rejects.toThrow('insert');
+  });
+
+  it('covers successful endpoint updates and previous-owner device counts', async () => {
+    const sameUser = await registerPushSubscriptionForUser(
+      'user-a',
+      input(),
+      scriptedClient([
+        {
+          data: {
+            id: 'same',
+            user_id: 'user-a',
+            auth: 'auth-key',
+            p256dh: 'p256dh-key',
+          },
+          error: null,
+        },
+        { data: { id: 'same' }, error: null },
+        { data: { id: 'same' }, error: null },
+        { data: null, error: null },
+        { error: null },
+      ])
+    );
+    expect(sameUser).toEqual({ id: 'same' });
+
+    const retainedPreviousOwner = await registerPushSubscriptionForUser(
+      'user-b',
+      input(),
+      scriptedClient([
+        {
+          data: {
+            id: 'transferred',
+            user_id: 'user-a',
+            auth: 'auth-key',
+            p256dh: 'p256dh-key',
+          },
+          error: null,
+        },
+        { data: null, error: null },
+        { data: { id: 'transferred' }, error: null },
+        { data: null, error: null },
+        { error: null },
+        { count: 1, error: null },
+      ])
+    );
+    expect(retainedPreviousOwner).toEqual({ id: 'transferred' });
+
+    await expect(
+      registerPushSubscriptionForUser(
+        'user-b',
+        input(),
+        scriptedClient([
+          {
+            data: {
+              id: 'transferred',
+              user_id: 'user-a',
+              auth: 'auth-key',
+              p256dh: 'p256dh-key',
+            },
+            error: null,
+          },
+          { data: null, error: null },
+          { data: { id: 'transferred' }, error: null },
+          { data: null, error: null },
+          { error: null },
+          { count: null, error: null },
+          { data: null, error: null },
+          { error: null },
+        ])
+      )
+    ).resolves.toEqual({ id: 'transferred' });
+  });
+
+  it('surfaces notification setting and unregister persistence errors', async () => {
+    await expect(
+      pushSubscriptionContracts.setPushDeliverySetting(
+        scriptedClient([{ error: { message: 'setting load' } }]),
+        'user-a',
+        true
+      )
+    ).rejects.toThrow('setting load');
+    await expect(
+      pushSubscriptionContracts.setPushDeliverySetting(
+        scriptedClient([
+          { data: { id: 'setting', delivery_settings: null }, error: null },
+          { error: { message: 'setting update' } },
+        ]),
+        'user-a',
+        true
+      )
+    ).rejects.toThrow('setting update');
+    await expect(
+      pushSubscriptionContracts.setPushDeliverySetting(
+        scriptedClient([{ data: null, error: null }, { error: { message: 'setting insert' } }]),
+        'user-a',
+        true
+      )
+    ).rejects.toThrow('setting insert');
+    await expect(
+      unregisterPushSubscriptionForUser(
+        'user-a',
+        firstDevice,
+        scriptedClient([{ error: { message: 'delete' } }])
+      )
+    ).rejects.toThrow('delete');
+    await expect(
+      unregisterPushSubscriptionForUser(
+        'user-a',
+        firstDevice,
+        scriptedClient([{ error: null }, { error: { message: 'count' } }])
+      )
+    ).rejects.toThrow('count');
+    await expect(
+      unregisterPushSubscriptionForUser(
+        'user-a',
+        firstDevice,
+        scriptedClient([
+          { error: null },
+          { count: null, error: null },
+          { data: null, error: null },
+          { error: null },
+        ])
+      )
+    ).resolves.toBeUndefined();
   });
 });

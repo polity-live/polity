@@ -110,4 +110,41 @@ describe('useEntityNotificationCountRows', () => {
     expect(mocks.useQuery).toHaveBeenCalledWith(undefined);
     expect(result.current).toEqual({ rows: [], isLoading: false });
   });
+
+  it('collects rows from every nested entity relation and tolerates empty access rows', () => {
+    mocks.responses.set('group-owner', [
+      [
+        {
+          recipient_notifications: null,
+          group: { recipient_notifications: [{ id: 'group-row' }] },
+          event: { recipient_notifications: [{ id: 'event-row' }] },
+          amendment: { recipient_notifications: [{ id: 'amendment-row' }] },
+          blog: { recipient_notifications: [{ id: 'blog-row' }] },
+        },
+        {},
+      ],
+      { type: 'complete' },
+    ]);
+
+    const { result } = renderHook(() =>
+      useEntityNotificationCountRows({ entityId: 'group-1', entityType: 'group' })
+    );
+
+    expect(result.current.rows.map(row => row.id)).toEqual([
+      'group-row',
+      'event-row',
+      'amendment-row',
+      'blog-row',
+    ]);
+  });
+
+  it('treats an unresolved enabled access branch as an empty collection', () => {
+    mocks.responses.set('group-owner', [undefined, { type: 'complete' }]);
+
+    const { result } = renderHook(() =>
+      useEntityNotificationCountRows({ entityId: 'group-1', entityType: 'group' })
+    );
+
+    expect(result.current.rows).toEqual([]);
+  });
 });

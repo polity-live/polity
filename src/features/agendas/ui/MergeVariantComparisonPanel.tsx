@@ -129,16 +129,14 @@ function buildUnifiedLineDiff(leftLines: string[], rightLines: string[]): LineDi
       continue;
     }
 
-    if (rightIndex < rightLines.length) {
-      rows.push({
-        kind: 'add',
-        oldLineNumber: null,
-        newLineNumber,
-        text: rightLines[rightIndex],
-      });
-      rightIndex += 1;
-      newLineNumber += 1;
-    }
+    rows.push({
+      kind: 'add',
+      oldLineNumber: null,
+      newLineNumber,
+      text: rightLines[rightIndex],
+    });
+    rightIndex += 1;
+    newLineNumber += 1;
   }
 
   return rows;
@@ -184,8 +182,8 @@ function VariantPreview({
   testId,
 }: {
   candidate: VariantDiffCandidate;
-  descriptor?: string;
-  testId?: string;
+  descriptor: string;
+  testId: string;
 }) {
   const editor = useMemo(() => {
     const value = normalizePlateValue(candidate.content);
@@ -197,16 +195,16 @@ function VariantPreview({
   }, [candidate.content]);
 
   return (
-    <div className="rounded-md border p-3" data-testid={testId ?? 'merge-variant-preview'}>
+    <div className="rounded-md border p-3" data-testid={testId}>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <BadgeControl variant={descriptor ? 'default' : 'outline'}>{candidate.label}</BadgeControl>
+        <BadgeControl variant="default">{candidate.label}</BadgeControl>
         {candidate.groupName ? (
           <BadgeControl variant="secondary" className="gap-1">
             <FileText className="h-3 w-3" />
             {candidate.groupName}
           </BadgeControl>
         ) : null}
-        {descriptor ? <span className="text-muted-foreground text-xs">{descriptor}</span> : null}
+        <span className="text-muted-foreground text-xs">{descriptor}</span>
       </div>
       <div className="bg-muted/20 max-h-72 overflow-auto rounded-md border p-3">
         <EditorStatic editor={editor} variant="none" />
@@ -227,10 +225,12 @@ function VariantPicker({
   rightCandidate: VariantDiffCandidate;
   onLeftCandidateChange: (value: string) => void;
   onRightCandidateChange: (value: string) => void;
+  'data-action-scope'?: 'presentation';
 }) {
   return (
     <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-end">
       <CandidateSelect
+        data-action-id="agendas.merge-comparison.left-variant.select"
         label={translateText('features.agendas.mergeComparison.baseVariant')}
         value={leftCandidate.id}
         candidates={candidates}
@@ -239,6 +239,7 @@ function VariantPicker({
       />
       <ArrowRight className="text-muted-foreground hidden h-4 w-4 lg:block" />
       <CandidateSelect
+        data-action-id="agendas.merge-comparison.right-variant.select"
         label={translateText('features.agendas.mergeComparison.comparisonVariant')}
         value={rightCandidate.id}
         candidates={candidates}
@@ -323,23 +324,30 @@ function CandidateSelect({
   candidates,
   testId,
   onValueChange,
+  'data-action-id': actionId,
 }: {
   label: string;
   value: string;
   candidates: VariantDiffCandidate[];
   testId: string;
   onValueChange: (value: string) => void;
+  'data-action-id': string;
 }) {
   return (
     <label className="min-w-0 flex-1 space-y-1">
       <span className="text-muted-foreground text-xs font-medium">{label}</span>
-      <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger data-testid={testId} aria-label={label}>
+      <Select data-action-scope="presentation" value={value} onValueChange={onValueChange}>
+        <SelectTrigger
+          data-testid={testId}
+          data-action-id={actionId}
+          data-action-scope="presentation"
+          aria-label={label}
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {candidates.map(candidate => (
-            <SelectItem key={candidate.id} value={candidate.id}>
+            <SelectItem key={candidate.id} value={candidate.id} data-action-scope="presentation">
               {candidate.label}
             </SelectItem>
           ))}
@@ -366,7 +374,6 @@ export function VariantDiffPanel({
     () => candidates.filter(candidate => candidate.content),
     [candidates]
   );
-  const baseCandidate = orderedCandidates[0] ?? null;
   const [leftCandidateId, setLeftCandidateId] = useState<string | null>(
     defaultLeftCandidateId ?? null
   );
@@ -386,7 +393,9 @@ export function VariantDiffPanel({
     (nextCandidateId: string) => {
       setLeftCandidateId(nextCandidateId);
       if (rightCandidate?.id === nextCandidateId) {
-        setRightCandidateId(getFirstOtherCandidate(orderedCandidates, nextCandidateId)?.id ?? null);
+        setRightCandidateId(
+          (getFirstOtherCandidate(orderedCandidates, nextCandidateId) as MergeVariantCandidate).id
+        );
       }
     },
     [orderedCandidates, rightCandidate?.id]
@@ -396,19 +405,21 @@ export function VariantDiffPanel({
     (nextCandidateId: string) => {
       setRightCandidateId(nextCandidateId);
       if (leftCandidate?.id === nextCandidateId) {
-        setLeftCandidateId(getFirstOtherCandidate(orderedCandidates, nextCandidateId)?.id ?? null);
+        setLeftCandidateId(
+          (getFirstOtherCandidate(orderedCandidates, nextCandidateId) as MergeVariantCandidate).id
+        );
       }
     },
     [leftCandidate?.id, orderedCandidates]
   );
 
-  if (!baseCandidate || orderedCandidates.length < 2) {
+  if (orderedCandidates.length < 2 || !leftCandidate || !rightCandidate) {
     return null;
   }
 
-  if (!leftCandidate || !rightCandidate) {
-    return null;
-  }
+  // With at least two candidates the default resolvers always produce a distinct pair.
+  const resolvedLeftCandidate = leftCandidate as MergeVariantCandidate;
+  const resolvedRightCandidate = rightCandidate as MergeVariantCandidate;
 
   return (
     <Card>
@@ -426,18 +437,19 @@ export function VariantDiffPanel({
       <CardContent>
         <Tabs defaultValue="variants" className="space-y-3">
           <TabsList>
-            <TabsTrigger value="variants">
+            <TabsTrigger value="variants" data-action-id="agendas.merge-comparison.tab.variants">
               {translateText('features.agendas.mergeComparison.variants')}
             </TabsTrigger>
-            <TabsTrigger value="diff">
+            <TabsTrigger value="diff" data-action-id="agendas.merge-comparison.tab.diff">
               {translateText('features.agendas.mergeComparison.diff')}
             </TabsTrigger>
           </TabsList>
 
           <VariantPicker
+            data-action-scope="presentation"
             candidates={orderedCandidates}
-            leftCandidate={leftCandidate}
-            rightCandidate={rightCandidate}
+            leftCandidate={resolvedLeftCandidate}
+            rightCandidate={resolvedRightCandidate}
             onLeftCandidateChange={handleLeftCandidateChange}
             onRightCandidateChange={handleRightCandidateChange}
           />
@@ -445,12 +457,12 @@ export function VariantDiffPanel({
           <TabsContent value="variants">
             <div className="grid gap-3 lg:grid-cols-2" data-testid="merge-variant-grid">
               <VariantPreview
-                candidate={leftCandidate}
+                candidate={resolvedLeftCandidate}
                 descriptor={translateText('features.agendas.mergeComparison.baseVariant')}
                 testId="merge-variant-left-preview"
               />
               <VariantPreview
-                candidate={rightCandidate}
+                candidate={resolvedRightCandidate}
                 descriptor={translateText('features.agendas.mergeComparison.comparisonVariant')}
                 testId="merge-variant-right-preview"
               />
@@ -458,7 +470,10 @@ export function VariantDiffPanel({
           </TabsContent>
 
           <TabsContent value="diff">
-            <LineDiffView leftCandidate={leftCandidate} rightCandidate={rightCandidate} />
+            <LineDiffView
+              leftCandidate={resolvedLeftCandidate}
+              rightCandidate={resolvedRightCandidate}
+            />
           </TabsContent>
         </Tabs>
       </CardContent>
@@ -473,3 +488,13 @@ export function MergeVariantComparisonPanel({
 }) {
   return <VariantDiffPanel candidates={candidates} />;
 }
+
+export const mergeVariantComparisonTestApi = {
+  normalizePlateValue,
+  extractTextFromNode,
+  extractPlainTextLines,
+  buildUnifiedLineDiff,
+  getFirstOtherCandidate,
+  getDefaultLeftCandidate,
+  getDefaultRightCandidate,
+};

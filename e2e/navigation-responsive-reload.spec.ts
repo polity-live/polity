@@ -18,6 +18,11 @@ interface NavigationBox {
   left: number;
 }
 
+interface NavigationViewport {
+  width: number;
+  height: number;
+}
+
 async function installNavigationLayoutSampler(page: Page) {
   await page.addInitScript(() => {
     window.__navigationLayoutSamples = [];
@@ -64,8 +69,8 @@ async function installNavigationLayoutSampler(page: Page) {
 }
 
 async function currentNavigationBoxes(page: Page) {
-  return page.evaluate(() =>
-    Object.fromEntries(
+  return page.evaluate(() => ({
+    boxes: Object.fromEntries(
       Array.from(document.querySelectorAll<HTMLElement>('[data-navigation-type]')).map(element => {
         const bounds = element.getBoundingClientRect();
         return [
@@ -78,30 +83,44 @@ async function currentNavigationBoxes(page: Page) {
           },
         ];
       })
-    )
-  ) as Promise<Record<'primary' | 'secondary', NavigationBox>>;
+    ) as Record<'primary' | 'secondary', NavigationBox>,
+    viewport: { width: window.innerWidth, height: window.innerHeight },
+  })) as Promise<{
+    boxes: Record<'primary' | 'secondary', NavigationBox>;
+    viewport: NavigationViewport;
+  }>;
 }
 
-async function expectNavigationBars(page: Page, viewportWidth: number, viewportHeight: number) {
+function isNavigationBar(
+  box: NavigationBox | undefined,
+  viewport: NavigationViewport,
+  edge: 'top' | 'bottom'
+) {
+  if (!box) return false;
+
+  const spansViewport = box.width >= viewport.width * 0.95;
+  const isHorizontal = box.height < Math.min(100, viewport.height * 0.2);
+  const touchesHorizontalEdge = Math.abs(box.left) <= 2;
+  const touchesVerticalEdge =
+    edge === 'top' ? Math.abs(box.top) <= 2 : Math.abs(box.top + box.height - viewport.height) <= 2;
+
+  return spansViewport && isHorizontal && touchesHorizontalEdge && touchesVerticalEdge;
+}
+
+async function expectNavigationBars(page: Page) {
   await expect
     .poll(async () => {
-      const boxes = await currentNavigationBoxes(page);
-      return (
-        boxes.primary.width === viewportWidth &&
-        boxes.primary.height < 100 &&
-        boxes.primary.left === 0 &&
-        Math.abs(boxes.primary.top + boxes.primary.height - viewportHeight) <= 1 &&
-        boxes.secondary.width === viewportWidth &&
-        boxes.secondary.height < 100 &&
-        boxes.secondary.top === 0 &&
-        boxes.secondary.left === 0
-      );
+      const { boxes, viewport } = await currentNavigationBoxes(page);
+      return {
+        primary: isNavigationBar(boxes.primary, viewport, 'bottom'),
+        secondary: isNavigationBar(boxes.secondary, viewport, 'top'),
+      };
     })
-    .toBe(true);
+    .toEqual({ primary: true, secondary: true });
 }
 
 test.describe('responsive navigation reload', () => {
-  test('never exposes desktop sidebars during an authenticated mobile reload @smoke', async ({
+  test('never exposes desktop sidebars during an authenticated mobile reload @pr @mobile @critical', async ({
     page,
     seed,
   }) => {
@@ -119,7 +138,9 @@ test.describe('responsive navigation reload', () => {
       timeout: 40_000,
     });
     await expect(page.locator('[data-navigation-type="secondary"]')).toBeVisible();
-    await page.waitForTimeout(500);
+    await expect
+      .poll(() => page.evaluate(() => window.__navigationLayoutSamples.length))
+      .toBeGreaterThan(0);
 
     const samples = await page.evaluate(() => window.__navigationLayoutSamples);
     const sidebarSamples = samples.filter(
@@ -130,10 +151,10 @@ test.describe('responsive navigation reload', () => {
     expect(samples.length).toBeGreaterThan(0);
     expect(sidebarSamples).toEqual([]);
 
-    await expectNavigationBars(page, 390, 844);
+    await expectNavigationBars(page);
   });
 
-  test('switches from bars to sidebars exactly at the desktop breakpoint', async ({
+  test('switches from bars to sidebars exactly at the desktop breakpoint @nightly', async ({
     page,
     seed,
   }) => {
@@ -144,11 +165,11 @@ test.describe('responsive navigation reload', () => {
     });
     await expect(page.locator('[data-navigation-type="secondary"]')).toBeVisible();
 
-    await expectNavigationBars(page, 767, 844);
+    await expectNavigationBars(page);
 
     await page.setViewportSize({ width: 768, height: 844 });
     await expect
-      .poll(() => currentNavigationBoxes(page))
+      .poll(async () => (await currentNavigationBoxes(page)).boxes)
       .toMatchObject({
         primary: { width: 64, height: 844, top: 0, left: 0 },
         secondary: { width: 64, height: 844, top: 0, left: 704 },

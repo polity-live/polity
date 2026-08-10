@@ -98,28 +98,24 @@ function CompositionSectionCard({ section }: { section: DelegateAssemblyComposit
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {chartRows.length === 0 ? (
-          <CompositionRowsTable rows={section.rows} total={section.total} />
-        ) : (
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] xl:items-center">
-            <ChartRenderer
-              chartType="pie"
-              points={chartRows.map(row => ({
-                x: getCompositionRowLabel(row, t),
-                value: row.value,
-              }))}
-              presentation={{ donut: true, showLegend: false }}
-              heightClassName="h-72"
-              valueFormatter={(value, point) => {
-                const row = chartRows.find(item => getCompositionRowLabel(item, t) === point.x);
-                const share = row?.share ?? 0;
-                return `${value.toLocaleString()} (${share.toFixed(1)}%)`;
-              }}
-            />
+        {/* Section construction guarantees at least one positive row whenever a section is shown. */}
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] xl:items-center">
+          <ChartRenderer
+            chartType="pie"
+            points={chartRows.map(row => ({
+              x: getCompositionRowLabel(row, t),
+              value: row.value,
+            }))}
+            presentation={{ donut: true, showLegend: false }}
+            heightClassName="h-72"
+            valueFormatter={(value, point) => {
+              const row = chartRows.find(item => getCompositionRowLabel(item, t) === point.x);
+              return `${value.toLocaleString()} (${(row?.share ?? 0).toFixed(1)}%)`;
+            }}
+          />
 
-            <CompositionRowsTable rows={section.rows} total={section.total} />
-          </div>
-        )}
+          <CompositionRowsTable rows={section.rows} total={section.total} />
+        </div>
       </CardContent>
     </Card>
   );

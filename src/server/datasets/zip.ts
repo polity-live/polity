@@ -27,24 +27,30 @@ export function unzipFirstTextFile(bytes: Uint8Array) {
     return new TextDecoder().decode(bytes);
   }
 
-  const centralDirectoryOffset = readUInt32LE(bytes, eocdOffset + 16);
-  if (readUInt32LE(bytes, centralDirectoryOffset) !== 0x02014b50) {
-    throw new Error('ZIP_CENTRAL_DIRECTORY_NOT_FOUND');
-  }
+  let centralEntryOffset = readUInt32LE(bytes, eocdOffset + 16);
+  let compressionMethod: number;
+  let compressedSize: number;
+  let localHeaderOffset: number;
 
-  const compressionMethod = readUInt16LE(bytes, centralDirectoryOffset + 10);
-  const compressedSize = readUInt32LE(bytes, centralDirectoryOffset + 20);
-  const fileNameLength = readUInt16LE(bytes, centralDirectoryOffset + 28);
-  const extraLength = readUInt16LE(bytes, centralDirectoryOffset + 30);
-  const commentLength = readUInt16LE(bytes, centralDirectoryOffset + 32);
-  const localHeaderOffset = readUInt32LE(bytes, centralDirectoryOffset + 42);
-  const fileName = new TextDecoder().decode(
-    bytes.slice(centralDirectoryOffset + 46, centralDirectoryOffset + 46 + fileNameLength)
-  );
+  while (true) {
+    if (readUInt32LE(bytes, centralEntryOffset) !== 0x02014b50) {
+      throw new Error('ZIP_CENTRAL_DIRECTORY_NOT_FOUND');
+    }
 
-  if (!fileName || fileName.endsWith('/')) {
-    const nextOffset = centralDirectoryOffset + 46 + fileNameLength + extraLength + commentLength;
-    if (readUInt32LE(bytes, nextOffset) !== 0x02014b50) {
+    compressionMethod = readUInt16LE(bytes, centralEntryOffset + 10);
+    compressedSize = readUInt32LE(bytes, centralEntryOffset + 20);
+    const fileNameLength = readUInt16LE(bytes, centralEntryOffset + 28);
+    const extraLength = readUInt16LE(bytes, centralEntryOffset + 30);
+    const commentLength = readUInt16LE(bytes, centralEntryOffset + 32);
+    localHeaderOffset = readUInt32LE(bytes, centralEntryOffset + 42);
+    const fileName = new TextDecoder().decode(
+      bytes.slice(centralEntryOffset + 46, centralEntryOffset + 46 + fileNameLength)
+    );
+
+    if (fileName && !fileName.endsWith('/')) break;
+
+    centralEntryOffset += 46 + fileNameLength + extraLength + commentLength;
+    if (readUInt32LE(bytes, centralEntryOffset) !== 0x02014b50) {
       throw new Error('ZIP_HAS_NO_FILE_ENTRY');
     }
   }

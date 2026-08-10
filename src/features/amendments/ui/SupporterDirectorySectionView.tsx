@@ -53,6 +53,7 @@ export function SupporterDirectorySectionView({
         <div className="space-y-2">
           {sortedItems.map((item: any) => (
             <Button
+              data-action-id="amendments.supporters.navigate.group"
               key={item.groupId}
               type="button"
               variant="ghost"

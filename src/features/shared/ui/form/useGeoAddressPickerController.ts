@@ -11,7 +11,7 @@ import {
   toGeoCoordinates,
   type GeoCoordinates,
 } from '@/features/shared/logic/geoCoordinates';
-import type { GeoLocationKind, GeoLocationShape } from '@/features/shared/logic/geoLocationShape';
+import type { GeoLocationShape } from '@/features/shared/logic/geoLocationShape';
 import { geoapifyBoundaryFn } from '@/server/geoapify-boundary';
 import { geoapifyReverseFn } from '@/server/geoapify-reverse';
 
@@ -51,18 +51,6 @@ function mapResolvedAddressToValues(result: GeoResolvedAddress): GeoAddressValue
   };
 }
 
-function mapFieldToLocationKind(field: GeoAddressField | null): GeoLocationKind {
-  if (field === 'post_code') {
-    return 'postcode';
-  }
-
-  if (field === 'city' || field === 'region' || field === 'country') {
-    return field;
-  }
-
-  return 'point';
-}
-
 function isBoundaryField(
   field: GeoAddressField | null
 ): field is 'country' | 'region' | 'city' | 'post_code' {
@@ -80,14 +68,14 @@ function pointShape(placeId?: string | null): GeoLocationShape {
 }
 
 function unresolvedBoundaryShape(
-  field: GeoAddressField,
-  placeId?: string | null
+  field: 'country' | 'region' | 'city' | 'post_code',
+  placeId: string
 ): GeoLocationShape {
   const boundaries = field === 'post_code' ? 'postal_code' : 'administrative';
 
   return {
-    kind: mapFieldToLocationKind(field),
-    placeId: placeId ?? null,
+    kind: field === 'post_code' ? 'postcode' : field,
+    placeId,
     boundarySource: `geoapify:${boundaries}`,
     geometry: null,
     bounds: null,

@@ -115,7 +115,8 @@ export const PlaceholderElement = withHOC(
       } = {
         children: [{ text: '' }],
         isUpload: true,
-        type: element.mediaType || 'file',
+        // currentContent was resolved above, so mediaType is one of the supported keys.
+        type: element.mediaType,
         url: uploadedFile.url,
       };
 
@@ -173,18 +174,27 @@ export const PlaceholderElement = withHOC(
             className={cn(
               'bg-muted hover:bg-primary/10 flex cursor-pointer items-center rounded-sm p-3 pr-9 select-none'
             )}
+            role="button"
+            tabIndex={loading ? -1 : 0}
+            aria-label={String(currentContent.content)}
             onClick={() => !loading && openFilePicker()}
+            onKeyDown={event => {
+              if (!loading && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+                openFilePicker();
+              }
+            }}
             contentEditable={false}
           >
             <div className="text-muted-foreground/80 relative mr-3 flex [&_svg]:size-6">
               {currentContent.icon}
             </div>
             <div className="text-muted-foreground text-sm whitespace-nowrap">
-              <div>{loading ? uploadingFile?.name : currentContent.content}</div>
+              <div>{loading ? uploadingFile.name : currentContent.content}</div>
 
               {loading && !isImage && (
                 <div className="mt-1 flex items-center gap-1.5">
-                  <div>{formatBytes(uploadingFile?.size ?? 0)}</div>
+                  <div>{formatBytes(uploadingFile.size)}</div>
                   <div>–</div>
                   <div className="flex items-center">
                     <Loader2Icon className="text-muted-foreground mr-1 size-3.5 animate-spin" />
@@ -239,23 +249,12 @@ export function ImageProgress({
   );
 }
 
-function formatBytes(
-  bytes: number,
-  opts: {
-    decimals?: number;
-    sizeType?: 'accurate' | 'normal';
-  } = {}
-) {
-  const { decimals = 0, sizeType = 'normal' } = opts;
-
+function formatBytes(bytes: number) {
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const accurateSizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB'];
 
   if (bytes === 0) return '0 Byte';
 
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
 
-  return `${(bytes / Math.pow(1024, i)).toFixed(decimals)} ${
-    sizeType === 'accurate' ? (accurateSizes[i] ?? 'Bytest') : (sizes[i] ?? 'Bytes')
-  }`;
+  return `${(bytes / Math.pow(1024, i)).toFixed(0)} ${sizes[i] ?? 'Bytes'}`;
 }

@@ -75,6 +75,11 @@ export interface CivicTimelineScoreBreakdown {
   diversity: number;
 }
 
+export type ScoredCivicTimelineItem = CivicTimelineItem & {
+  score: number;
+  scoreBreakdown: CivicTimelineScoreBreakdown;
+};
+
 export interface CivicTimelineUserContext {
   userId: string;
   coordinates?: CivicTimelineCoordinates | null;
@@ -262,7 +267,7 @@ function calculateInterestMatchScore(item: CivicTimelineItem, context: CivicTime
 export function scoreCivicTimelineItem(
   item: CivicTimelineItem,
   context: CivicTimelineUserContext
-): CivicTimelineItem {
+): ScoredCivicTimelineItem {
   const now = context.now ?? new Date();
   const distanceKm = calculateDistanceKm(context.coordinates, item.coordinates);
   const interestMatchScore = calculateInterestMatchScore(item, context);
@@ -300,7 +305,7 @@ export function rankCivicTimelineItems(
 
   return items
     .map(item => scoreCivicTimelineItem(item, context))
-    .sort((left, right) => (right.score ?? 0) - (left.score ?? 0))
+    .sort((left, right) => right.score - left.score)
     .map(item => {
       const count = typeCounts.get(item.type) ?? 0;
       typeCounts.set(item.type, count + 1);
@@ -309,17 +314,15 @@ export function rankCivicTimelineItems(
 
       const diversityPenalty = Math.min(count * 2.5, SCORING_WEIGHTS.diversity);
       const nextDiversity = Math.max(0, SCORING_WEIGHTS.diversity - diversityPenalty);
-      const currentDiversity = item.scoreBreakdown?.diversity ?? SCORING_WEIGHTS.diversity;
+      const currentDiversity = item.scoreBreakdown.diversity;
 
       return {
         ...item,
-        score: (item.score ?? 0) - currentDiversity + nextDiversity,
-        scoreBreakdown: item.scoreBreakdown
-          ? { ...item.scoreBreakdown, diversity: nextDiversity }
-          : item.scoreBreakdown,
+        score: item.score - currentDiversity + nextDiversity,
+        scoreBreakdown: { ...item.scoreBreakdown, diversity: nextDiversity },
       };
     })
-    .sort((left, right) => (right.score ?? 0) - (left.score ?? 0));
+    .sort((left, right) => right.score - left.score);
 }
 
 function itemDedupeKey(item: CivicTimelineItem) {

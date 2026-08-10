@@ -761,6 +761,40 @@ async function assertUniqueConnectedOfflineUserWithinGroup(
   }
 }
 
+export const groupSharedMutatorInternals = {
+  isAllowedAmendmentActionRight,
+  requiresGuestAccessFlow,
+  assertRoleDefaultCompatibility,
+  authorizeScopedRoleMutation,
+  loadMembershipForRoleMutation,
+  loadOfflineMembershipForRoleMutation,
+  loadGuestAccessForRoleMutation,
+  loadRole,
+  authorizeRoleHolderHistoryMutation,
+  authorizeExistingRoleHolderHistoryMutation,
+  assertRolesAssignableToMembers,
+  assertRolesAssignableToGuests,
+  assertCanDirectlyMutateOfficialMembership,
+  addGroupMembershipRole,
+  removeGroupMembershipRole,
+  syncGroupMembershipRoles,
+  addGroupOfflineMembershipRole,
+  removeGroupOfflineMembershipRole,
+  syncGroupOfflineMembershipRoles,
+  addGroupGuestRole,
+  removeGroupGuestRole,
+  syncGroupGuestRoles,
+  resolveDefaultMembershipRoleId,
+  resolveDefaultGuestRoleId,
+  assignDefaultInviteRoleToOfflineMembership,
+  clearGroupRoleDefaults,
+  normalizeOptionalReason,
+  normalizeRequiredName,
+  assertCanManageGroupOfflineMembers,
+  loadGroupOfflineMemberForMutation,
+  assertUniqueConnectedOfflineUserWithinGroup,
+};
+
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const groupSharedMutators = {
   create: defineMutator(groupCreateSchema, async ({ tx, ctx, args }) => {

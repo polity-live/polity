@@ -123,16 +123,20 @@ describe('MembershipRightsAlignmentPanel', () => {
     expect(screen.getByText('Info')).toBeTruthy();
     expect(screen.getByText('View Documents')).toBeTruthy();
 
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /^features\.groups\.memberships\.rightsAlignment\.actions\.rights$/,
-      })
+    const rightsAction = screen.getByRole('button', {
+      name: /^features\.groups\.memberships\.rightsAlignment\.actions\.rights$/,
+    });
+    const roleAction = screen.getByRole('button', {
+      name: /^features\.groups\.memberships\.rightsAlignment\.actions\.manageRoles$/,
+    });
+    expect(rightsAction.getAttribute('data-action-id')).toBe(
+      'groups.members.rights-alignment.view-rights'
     );
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /^features\.groups\.memberships\.rightsAlignment\.actions\.manageRoles$/,
-      })
+    expect(roleAction.getAttribute('data-action-id')).toBe(
+      'groups.members.rights-alignment.change-role'
     );
+    fireEvent.click(rightsAction);
+    fireEvent.click(roleAction);
 
     expect(onOpenRightsDialog).toHaveBeenCalledWith(rows[0].membership);
     expect(onOpenChangeRoleDialog).toHaveBeenCalledWith(rows[0].membership);
@@ -163,7 +167,7 @@ describe('MembershipRightsAlignmentPanel', () => {
       ],
     });
 
-    render(
+    const { container } = render(
       <MembershipRightsAlignmentPanel
         rows={rows}
         onOpenRightsDialog={vi.fn()}
@@ -171,7 +175,18 @@ describe('MembershipRightsAlignmentPanel', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('radio', { name: /missing/i }));
+    for (const actionId of [
+      'groups.members.rights-alignment.filter-all',
+      'groups.members.rights-alignment.filter-extra',
+      'groups.members.rights-alignment.filter-mixed',
+      'groups.members.rights-alignment.filter-aligned',
+      'groups.members.rights-alignment.filter-missing',
+    ]) {
+      const action = container.querySelector<HTMLElement>(`[data-action-id="${actionId}"]`)!;
+      action.focus();
+      expect(document.activeElement).toBe(action);
+      fireEvent.click(action);
+    }
 
     const missingFilter = screen.getByRole('radio', { name: /missing/i });
     expect(missingFilter.getAttribute('data-slot')).toBe('filter-toggle-group-item');

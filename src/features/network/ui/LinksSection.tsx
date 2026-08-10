@@ -37,6 +37,7 @@ export function LinksSection({ links, addLinkButton }: LinksSectionProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:bg-accent flex items-center gap-2 rounded-lg border p-3 transition-colors"
+                data-action-id="network.external-link.open"
               >
                 <ExternalLink className="text-muted-foreground h-4 w-4" />
                 <span className="font-medium">{link.label}</span>

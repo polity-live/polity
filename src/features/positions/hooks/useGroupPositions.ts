@@ -39,7 +39,7 @@ export function useGroupRoles(groupId: string) {
   const [createElection, setCreateElection] = useState(false);
 
   // Query roles with all relationships
-  const roles = rolesData || [];
+  const roles = rolesData;
 
   const resetForm = () => {
     setTitle('');
@@ -69,7 +69,6 @@ export function useGroupRoles(groupId: string) {
     }
 
     const roleTitle = title.trim();
-    const hasRecurringTerm = termNum > 0;
     resetForm();
     setAddDialogOpen(false);
 
@@ -89,10 +88,10 @@ export function useGroupRoles(groupId: string) {
           assignment_mode: createElection ? 'elected' : 'assigned',
           visibility: 'public',
           term_start_date: toLocalTimestamp(firstTermStart),
-          is_recurring: hasRecurringTerm,
-          recurrence_pattern: hasRecurringTerm ? 'yearly' : null,
-          recurrence_rule: hasRecurringTerm ? `FREQ=YEARLY;INTERVAL=${termNum}` : null,
-          recurrence_interval: hasRecurringTerm ? termNum : null,
+          is_recurring: true,
+          recurrence_pattern: 'yearly',
+          recurrence_rule: `FREQ=YEARLY;INTERVAL=${termNum}`,
+          recurrence_interval: termNum,
           recurrence_days: null,
           recurrence_end_date: null,
           scheduled_revote_date: null,
@@ -184,7 +183,6 @@ export function useGroupRoles(groupId: string) {
       return { success: false };
     }
 
-    const hasRecurringTerm = termNum > 0;
     resetForm();
     setEditingRole(null);
     setEditDialogOpen(false);
@@ -197,10 +195,10 @@ export function useGroupRoles(groupId: string) {
           name: title.trim(),
           description: description.trim() || '',
           term_start_date: toLocalTimestamp(firstTermStart),
-          is_recurring: hasRecurringTerm,
-          recurrence_pattern: hasRecurringTerm ? 'yearly' : null,
-          recurrence_rule: hasRecurringTerm ? `FREQ=YEARLY;INTERVAL=${termNum}` : null,
-          recurrence_interval: hasRecurringTerm ? termNum : null,
+          is_recurring: true,
+          recurrence_pattern: 'yearly',
+          recurrence_rule: `FREQ=YEARLY;INTERVAL=${termNum}`,
+          recurrence_interval: termNum,
           recurrence_days: null,
           recurrence_end_date: null,
         })
@@ -309,15 +307,13 @@ export function useGroupRoles(groupId: string) {
 
       toast.success(translateText('generated.inline.1030_holder_removed_successfully_07da569a'));
 
-      if (currentHistoryEntry) {
-        await waitForClientApply(
-          updateHistoryAction({
-            id: currentHistoryEntry.id,
-            end_date: now,
-            reason: reason,
-          })
-        );
-      }
+      await waitForClientApply(
+        updateHistoryAction({
+          id: currentHistoryEntry.id,
+          end_date: now,
+          reason: reason,
+        })
+      );
 
       return { success: true };
     } catch (error) {

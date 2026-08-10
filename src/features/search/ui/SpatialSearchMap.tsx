@@ -137,9 +137,7 @@ function SpatialSearchBoundsReporter({
     reportBounds();
 
     return () => {
-      if (timerRef.current !== null) {
-        window.clearTimeout(timerRef.current);
-      }
+      window.clearTimeout(timerRef.current as number);
     };
   }, [reportBounds]);
 

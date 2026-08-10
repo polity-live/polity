@@ -35,4 +35,27 @@ describe('agendaItemTextMatchesSearch', () => {
       })
     ).toBe(true);
   });
+
+  it('matches a normal item by description and accepts an empty query', () => {
+    const item = {
+      title: 'Ordinary title',
+      description: 'Distinctive description',
+      isTutorialElection: false,
+      language: 'en',
+    } as const;
+
+    expect(agendaItemTextMatchesSearch({ ...item, loweredSearchQuery: 'distinctive' })).toBe(true);
+    expect(agendaItemTextMatchesSearch({ ...item, loweredSearchQuery: '' })).toBe(true);
+  });
+
+  it('uses German fixture resolution for non-English languages', () => {
+    expect(
+      agendaItemTextMatchesSearch({
+        title: 'Deutscher Titel',
+        isTutorialElection: false,
+        language: 'de',
+        loweredSearchQuery: 'deutscher',
+      })
+    ).toBe(true);
+  });
 });

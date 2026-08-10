@@ -119,8 +119,7 @@ export function checkPermission(
 // ============================================================================
 
 export function isSelf(targetUserId: string | undefined, authUserId: string | undefined): boolean {
-  if (!targetUserId || !authUserId) return false;
-  return targetUserId === authUserId;
+  return Boolean(targetUserId && targetUserId === authUserId);
 }
 
 // ============================================================================
@@ -185,7 +184,7 @@ function getRoleActionRights(role: any): any[] {
 }
 
 function getActionRightAmendmentId(right: any): string | undefined {
-  return right?.amendment?.id ?? right?.amendment_id ?? undefined;
+  return right.amendment?.id ?? right.amendment_id;
 }
 
 function hasGroupPermission(
@@ -255,7 +254,7 @@ function hasBlogPermission(
 }
 
 function hasAmendmentPermission(
-  amendment: Amendment | undefined,
+  amendment: Amendment,
   userId: string,
   resource: ResourceType,
   action: ActionType
@@ -264,7 +263,7 @@ function hasAmendmentPermission(
     return true;
   }
 
-  if (amendment?.amendmentRoleCollaborators) {
+  if (amendment.amendmentRoleCollaborators) {
     const collaborator = amendment.amendmentRoleCollaborators.find(
       c =>
         c.user?.id === userId && hasActiveStatus(c.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
@@ -280,7 +279,7 @@ function hasAmendmentPermission(
     }
   }
 
-  const rawRoleCollaborator = (amendment?.collaborators as any[] | undefined)?.find(
+  const rawRoleCollaborator = (amendment.collaborators as any[] | undefined)?.find(
     collaborator =>
       collaborator.user?.id === userId &&
       hasActiveStatus(collaborator.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES) &&
@@ -292,11 +291,11 @@ function hasAmendmentPermission(
       (right: any) =>
         right.resource === resource &&
         checkWithInheritance(right.action, action) &&
-        (!getActionRightAmendmentId(right) || getActionRightAmendmentId(right) === amendment?.id)
+        (!getActionRightAmendmentId(right) || getActionRightAmendmentId(right) === amendment.id)
     );
   }
 
-  if (!amendment?.collaborators || !amendment?.roles) return false;
+  if (!amendment.collaborators || !amendment.roles) return false;
 
   const collaboration = amendment.collaborators.find(
     c => c.user?.id === userId && hasActiveStatus(c.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)

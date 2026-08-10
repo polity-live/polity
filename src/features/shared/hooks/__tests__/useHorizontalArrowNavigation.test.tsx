@@ -100,4 +100,12 @@ describe('useHorizontalArrowNavigation', () => {
     fireEvent.keyDown(screen.getByLabelText('Scoped input'), { key: 'ArrowLeft' });
     expect(onGoPrev).not.toHaveBeenCalled();
   });
+
+  it('returns an inert handler when arrow navigation is off', () => {
+    const onGoNext = vi.fn();
+    render(<ScopedArrowTarget mode="off" onGoNext={onGoNext} />);
+
+    fireEvent.keyDown(screen.getByTestId('surface'), { key: 'ArrowRight' });
+    expect(onGoNext).not.toHaveBeenCalled();
+  });
 });

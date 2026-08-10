@@ -376,3 +376,12 @@ export function applyCityDesignOsmSemanticMapping(
     renderProfile: mapping.renderProfile,
   };
 }
+
+export const cityDesignOsmMappingInternals = {
+  compactProperties,
+  finiteNumber,
+  integer,
+  sidePropertyTag,
+  sideTag,
+  stringValue,
+};

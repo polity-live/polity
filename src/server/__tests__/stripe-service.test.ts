@@ -8,6 +8,7 @@ import {
   executeStripeRepairCheckoutSession,
   executeStripeSubscriptionStatus,
   handleStripeWebhook,
+  stripeServiceContracts,
 } from '@/server/stripe-service';
 import { handleStripeWebhookRequest } from '@/server/stripe-webhook-route';
 
@@ -226,6 +227,24 @@ function createStripeMock(overrides: Record<string, any> = {}) {
   };
 
   return stripe as any;
+}
+
+function createScriptedSupabase(results: { data?: any; error?: any }[]) {
+  const queue = [...results];
+  const from = vi.fn(() => {
+    const query: any = {};
+    for (const method of ['select', 'eq', 'insert', 'update']) {
+      query[method] = vi.fn(() => query);
+    }
+    const next = () => Promise.resolve(queue.shift() ?? { data: null, error: null });
+    query.maybeSingle = vi.fn(next);
+    query.single = vi.fn(next);
+    query.upsert = vi.fn(next);
+    query.then = (resolve: (value: unknown) => unknown, reject: (error: unknown) => unknown) =>
+      next().then(resolve, reject);
+    return query;
+  });
+  return { client: { from } as any, from, queue };
 }
 
 beforeEach(() => {
@@ -514,6 +533,859 @@ describe('Stripe service security', () => {
       status: 'active',
     });
     expect(result.subscription.cancelAtPeriodEnd).toBe(true);
+  });
+});
+
+describe('Stripe service boundary contracts', () => {
+  const c = stripeServiceContracts;
+
+  it('validates environment mode, secret prefixes, app origins, plans, and custom amounts', () => {
+    vi.stubEnv('STRIPE_MODE', 'preview');
+    expect(() => c.getStripeMode()).toThrow('test or live');
+    vi.stubEnv('STRIPE_MODE', 'test');
+    expect(c.getStripeMode()).toBe('test');
+    expect(() => c.assertSecretKeyMatchesMode('sk_live_wrong')).toThrow('sk_test_');
+    c.assertSecretKeyMatchesMode('sk_test_ok');
+    vi.stubEnv('STRIPE_MODE', 'live');
+    c.assertSecretKeyMatchesMode('sk_live_ok');
+
+    vi.stubEnv('VITE_APP_URL', 'ftp://app.example');
+    expect(() => c.getAppOrigin()).toThrow('HTTP(S)');
+    vi.stubEnv('VITE_APP_URL', 'http://app.example/path');
+    expect(c.getAppOrigin()).toBe('http://app.example');
+
+    vi.stubEnv('STRIPE_MODE', 'test');
+    expect(c.getCheckoutLineItems({ plan: 'development' })).toEqual([
+      { price: 'price_development', quantity: 1 },
+    ]);
+    for (const amount of [undefined, 1.5, 99, 99_901]) {
+      expect(() => c.getCheckoutLineItems({ plan: 'custom', amount })).toThrow('between EUR 1');
+    }
+    expect(c.getCheckoutLineItems({ plan: 'custom', amount: 100 })[0]).toMatchObject({
+      price_data: { unit_amount: 100 },
+    });
+    expect(c.getCheckoutLineItems({ plan: 'custom', amount: 99_900 })[0]).toMatchObject({
+      price_data: { unit_amount: 99_900 },
+    });
+  });
+
+  it('accepts a structurally valid injected authenticated user', async () => {
+    await expect(
+      c.requireAuthenticatedUser(undefined, { user: { id: 'user-1', email: null } })
+    ).resolves.toEqual({ id: 'user-1', email: null });
+    await expect(
+      c.requireAuthenticatedUser(undefined, { user: { id: '', email: null } })
+    ).rejects.toThrow('Unauthorized');
+    await expect(
+      c.requireAuthenticatedUser(undefined, { user: { id: 42, email: null } } as any)
+    ).rejects.toThrow('Unauthorized');
+  });
+
+  it('normalizes customer, timestamp, interval, and amount representations', () => {
+    expect(c.getCustomerIdFromSubscription({ customer: 'cus_string' } as any)).toBe('cus_string');
+    expect(c.getCustomerIdFromSubscription({ customer: { id: 'cus_object' } } as any)).toBe(
+      'cus_object'
+    );
+    expect(c.timestampToIso(null)).toBeNull();
+    expect(c.timestampToIso(1)).toBe('1970-01-01T00:00:01.000Z');
+    expect(c.mirrorTimestampToIso('2026-01-01T00:00:00.000Z')).toBe('2026-01-01T00:00:00.000Z');
+    expect(c.mirrorTimestampToIso(1)).toBe('1970-01-01T00:00:01.000Z');
+    expect(c.mirrorTimestampToIso(10_000_000_001)).toBe('1970-04-26T17:46:40.001Z');
+    expect(c.mirrorTimestampToIso({})).toBeNull();
+    vi.useFakeTimers().setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+    expect(c.timestampToIsoOrNow(null)).toBe('2026-01-01T00:00:00.000Z');
+    expect(c.mirrorTimestampToIsoOrNow(null)).toBe('2026-01-01T00:00:00.000Z');
+    vi.useRealTimers();
+    expect(c.subscriptionInterval({ items: { data: [] } } as any)).toBe('month');
+    expect(c.subscriptionAmount({ items: { data: [] } } as any)).toBe(0);
+    expect(
+      c.subscriptionInterval({
+        items: { data: [{ price: { recurring: { interval: 'year' } } }] },
+      } as any)
+    ).toBe('year');
+    expect(
+      c.subscriptionAmount({ items: { data: [{ price: { unit_amount: 500 } }] } } as any)
+    ).toBe(500);
+  });
+
+  it('validates fixed prices, custom products, portal configuration, and caches successes', async () => {
+    for (const price of [
+      { active: false, currency: 'eur', recurring: { interval: 'month' }, livemode: false },
+      { active: true, currency: 'usd', recurring: { interval: 'month' }, livemode: false },
+      { active: true, currency: 'eur', recurring: { interval: 'year' }, livemode: false },
+    ]) {
+      const stripe = createStripeMock({ prices: { retrieve: vi.fn().mockResolvedValue(price) } });
+      await expect(c.validateCheckoutConfiguration(stripe, 'running')).rejects.toThrow(
+        'active, monthly'
+      );
+    }
+
+    const deleted = createStripeMock({
+      products: { retrieve: vi.fn().mockResolvedValue({ deleted: true, livemode: false }) },
+    });
+    await expect(c.validateCheckoutConfiguration(deleted, 'custom')).rejects.toThrow('deleted');
+    const inactive = createStripeMock({
+      products: {
+        retrieve: vi.fn().mockResolvedValue({ active: false, livemode: false }),
+      },
+    });
+    await expect(c.validateCheckoutConfiguration(inactive, 'custom')).rejects.toThrow('active');
+
+    const valid = createStripeMock();
+    await c.validateCheckoutConfiguration(valid, 'running');
+    await c.validateCheckoutConfiguration(valid, 'running');
+    expect(valid.prices.retrieve).toHaveBeenCalledOnce();
+
+    const inactivePortal = createStripeMock({
+      billingPortal: {
+        sessions: { create: vi.fn() },
+        configurations: {
+          retrieve: vi.fn().mockResolvedValue({ active: false, livemode: false }),
+        },
+      },
+    });
+    await expect(c.validatePortalConfiguration(inactivePortal)).rejects.toThrow('active');
+    const portal = createStripeMock();
+    await expect(c.validatePortalConfiguration(portal)).resolves.toBe('bpc_test');
+    await expect(c.validatePortalConfiguration(portal)).resolves.toBe('bpc_test');
+    expect(portal.billingPortal.configurations.retrieve).toHaveBeenCalledOnce();
+  });
+
+  it('loads local customers and searches Stripe across deleted, search, and list fallbacks', async () => {
+    await expect(
+      c.findLocalCustomerId(createScriptedSupabase([{ error: { message: 'db' } }]).client, 'user-1')
+    ).rejects.toThrow('Failed to load Stripe customer');
+    await expect(
+      c.findLocalCustomerId(
+        createScriptedSupabase([{ data: { stripe_customer_id: 42 } }]).client,
+        'user-1'
+      )
+    ).resolves.toBeNull();
+
+    const localStripe = createStripeMock();
+    await expect(
+      c.findStripeCustomerForUser(
+        localStripe,
+        createScriptedSupabase([{ data: { stripe_customer_id: 'cus_local' } }]).client,
+        'user-1'
+      )
+    ).resolves.toMatchObject({ id: 'cus_local' });
+
+    const searched = createStripeMock({
+      customers: {
+        retrieve: vi.fn().mockResolvedValue({ id: 'deleted', deleted: true }),
+        search: vi.fn().mockResolvedValue({ data: [{ id: 'cus_search' }] }),
+        list: vi.fn(),
+        update: vi.fn(),
+      },
+    });
+    await expect(
+      c.findStripeCustomerForUser(
+        searched,
+        createScriptedSupabase([{ data: { stripe_customer_id: 'deleted' } }]).client,
+        'user-1'
+      )
+    ).resolves.toMatchObject({ id: 'cus_search' });
+
+    const listed = createStripeMock({
+      customers: {
+        retrieve: vi.fn(),
+        search: vi.fn().mockRejectedValue(new Error('unsupported')),
+        list: vi.fn().mockResolvedValue({
+          data: [
+            { id: 'other', metadata: {} },
+            { id: 'cus_list', metadata: { userId: 'user-1' } },
+          ],
+        }),
+        update: vi.fn(),
+      },
+    });
+    await expect(
+      c.findStripeCustomerForUser(listed, createScriptedSupabase([{ data: null }]).client, 'user-1')
+    ).resolves.toMatchObject({ id: 'cus_list' });
+    const none = createStripeMock();
+    await expect(
+      c.findStripeCustomerForUser(none, createScriptedSupabase([{ data: null }]).client, 'user-1')
+    ).resolves.toBeUndefined();
+  });
+
+  it('covers every local customer upsert branch and persistence error', async () => {
+    const input = { userId: 'user-1', stripeCustomerId: 'cus_1', email: null };
+    await expect(
+      c.upsertStripeCustomer(createScriptedSupabase([{ error: { message: 'load' } }]).client, input)
+    ).rejects.toThrow('Failed to load Stripe customer');
+    await expect(
+      c.upsertStripeCustomer(
+        createScriptedSupabase([{ data: { id: 'row', user_id: 'other' } }]).client,
+        input
+      )
+    ).rejects.toThrow('different user');
+    await expect(
+      c.upsertStripeCustomer(
+        createScriptedSupabase([
+          { data: { id: 'row', user_id: 'user-1' } },
+          { error: { message: 'update' } },
+        ]).client,
+        input
+      )
+    ).rejects.toThrow('Failed to update Stripe customer');
+    await expect(
+      c.upsertStripeCustomer(
+        createScriptedSupabase([
+          { data: { id: 'row', user_id: 'user-1' } },
+          { data: { id: 'row' } },
+        ]).client,
+        input
+      )
+    ).resolves.toBe('row');
+    await expect(
+      c.upsertStripeCustomer(
+        createScriptedSupabase([{ data: null }, { error: { message: 'user-load' } }]).client,
+        input
+      )
+    ).rejects.toThrow('Failed to load user Stripe customer');
+    await expect(
+      c.upsertStripeCustomer(
+        createScriptedSupabase([
+          { data: null },
+          { data: { id: 'user-row' } },
+          { error: { message: 'user-update' } },
+        ]).client,
+        input
+      )
+    ).rejects.toThrow('Failed to update user Stripe customer');
+    await expect(
+      c.upsertStripeCustomer(
+        createScriptedSupabase([
+          { data: null },
+          { data: { id: 'user-row' } },
+          { data: { id: 'user-row' } },
+        ]).client,
+        input
+      )
+    ).resolves.toBe('user-row');
+    await expect(
+      c.upsertStripeCustomer(
+        createScriptedSupabase([{ data: null }, { data: null }, { error: { message: 'insert' } }])
+          .client,
+        input
+      )
+    ).rejects.toThrow('Failed to insert Stripe customer');
+    await expect(
+      c.upsertStripeCustomer(
+        createScriptedSupabase([{ data: null }, { data: null }, { data: { id: 'inserted' } }])
+          .client,
+        input
+      )
+    ).resolves.toBe('inserted');
+  });
+
+  it('covers subscription and invoice mirror persistence fallbacks', async () => {
+    const minimalSubscription = {
+      id: 'sub_minimal',
+      status: 'past_due',
+      cancel_at_period_end: false,
+      currency: 'eur',
+      items: { data: [] },
+    } as any;
+    await expect(
+      c.upsertStripeSubscription(
+        createScriptedSupabase([{ error: { message: 'subscription' } }]).client,
+        'row',
+        'cus_1',
+        minimalSubscription
+      )
+    ).rejects.toThrow('Failed to upsert Stripe subscription');
+    await expect(
+      c.upsertStripeSubscription(
+        createScriptedSupabase([{ error: null }]).client,
+        'row',
+        'cus_1',
+        minimalSubscription
+      )
+    ).resolves.toBeUndefined();
+
+    const stripe = createStripeMock();
+    await expect(
+      c.upsertStripePayment(
+        stripe,
+        createScriptedSupabase([]).client,
+        { customer: null } as any,
+        'paid'
+      )
+    ).rejects.toThrow('missing a Stripe customer');
+    await expect(
+      c.upsertStripePayment(
+        stripe,
+        createScriptedSupabase([{ data: { id: 'row' } }, { error: { message: 'payment' } }]).client,
+        {
+          id: 'in_error',
+          customer: { id: 'cus_1' },
+          parent: { subscription_details: { subscription: { id: 'sub_1' } } },
+          amount_paid: 0,
+          amount_due: 100,
+          currency: 'eur',
+          status_transitions: {},
+        } as any,
+        'failed'
+      )
+    ).rejects.toThrow('Failed to upsert Stripe payment');
+    await expect(
+      c.upsertStripePayment(
+        stripe,
+        createScriptedSupabase([{ data: { id: 'row' } }, { error: null }]).client,
+        {
+          id: 'in_paid',
+          customer: 'cus_1',
+          parent: { subscription_details: { subscription: 'sub_1' } },
+          amount_paid: 100,
+          amount_due: 100,
+          currency: 'eur',
+          status_transitions: {},
+        } as any,
+        'paid'
+      )
+    ).resolves.toBeUndefined();
+  });
+
+  it('loads malformed and defaulted mirrored subscription status rows', async () => {
+    await expect(
+      c.loadMirroredSubscriptionStatus(
+        createScriptedSupabase([{ error: { message: 'customer' } }]).client,
+        'user-1'
+      )
+    ).rejects.toThrow('mirrored Stripe customer');
+    await expect(
+      c.loadMirroredSubscriptionStatus(createScriptedSupabase([{ data: null }]).client, 'user-1')
+    ).resolves.toBeNull();
+    await expect(
+      c.loadMirroredSubscriptionStatus(
+        createScriptedSupabase([
+          { data: { id: 'row' } },
+          { error: { message: 'subscriptions' } },
+          { data: [] },
+        ]).client,
+        'user-1'
+      )
+    ).rejects.toThrow('mirrored Stripe subscriptions');
+    await expect(
+      c.loadMirroredSubscriptionStatus(
+        createScriptedSupabase([
+          { data: { id: 'row' } },
+          { data: [] },
+          { error: { message: 'payments' } },
+        ]).client,
+        'user-1'
+      )
+    ).rejects.toThrow('mirrored Stripe payments');
+    await expect(
+      c.loadMirroredSubscriptionStatus(
+        createScriptedSupabase([{ data: { id: 'row' } }, { data: null }, { data: null }]).client,
+        'user-1'
+      )
+    ).resolves.toBeNull();
+
+    const result = await c.loadMirroredSubscriptionStatus(
+      createScriptedSupabase([
+        { data: { id: 'row' } },
+        {
+          data: [
+            { id: 'older', status: 'canceled', created_at: '2025-01-01', canceled_at: 1 },
+            { id: 'active', status: 'trialing', updated_at: '2026-01-01' },
+          ],
+        },
+        { data: [{ id: 'pay-old' }, { id: 'pay-new', created_at: '2026-01-01' }] },
+      ]).client,
+      'user-1'
+    );
+    expect(result).toMatchObject({
+      hasSubscription: true,
+      subscription: {
+        id: 'active',
+        status: 'trialing',
+        amount: 0,
+        currency: 'eur',
+        interval: 'month',
+        cancelAtPeriodEnd: false,
+      },
+      allSubscriptions: [expect.any(Object), expect.any(Object)],
+      payments: [expect.any(Object), expect.any(Object)],
+    });
+
+    await expect(
+      c.loadMirroredSubscriptionStatus(
+        createScriptedSupabase([
+          { data: { id: 'row' } },
+          { data: [{ id: 'inactive', status: null }, {}] },
+          { data: [{ id: 'payment' }, {}] },
+        ]).client,
+        'user-1'
+      )
+    ).resolves.toMatchObject({ hasSubscription: false, subscription: null });
+  });
+
+  it('validates customer ownership and creates missing local customer entities', async () => {
+    const stripe = createStripeMock();
+    await expect(
+      c.assertStripeCustomerBelongsToUser(
+        stripe,
+        createScriptedSupabase([{ error: { message: 'ownership' } }]).client,
+        'cus_1',
+        'user-1'
+      )
+    ).rejects.toThrow('ownership');
+    await expect(
+      c.assertStripeCustomerBelongsToUser(
+        stripe,
+        createScriptedSupabase([{ data: { user_id: 'user-1' } }]).client,
+        'cus_1',
+        'user-1'
+      )
+    ).resolves.toBeUndefined();
+    await expect(
+      c.assertStripeCustomerBelongsToUser(
+        stripe,
+        createScriptedSupabase([{ data: { user_id: 'other' } }]).client,
+        'cus_1',
+        'user-1'
+      )
+    ).rejects.toThrow('Forbidden');
+
+    for (const customer of [
+      { id: 'cus_1', deleted: true },
+      { id: 'cus_1', metadata: { userId: 'other' } },
+    ]) {
+      const customerStripe = createStripeMock({
+        customers: {
+          retrieve: vi.fn().mockResolvedValue(customer),
+          search: vi.fn(),
+          list: vi.fn(),
+          update: vi.fn(),
+        },
+      });
+      await expect(
+        c.assertStripeCustomerBelongsToUser(
+          customerStripe,
+          createScriptedSupabase([{ data: null }]).client,
+          'cus_1',
+          'user-1'
+        )
+      ).rejects.toThrow('Forbidden');
+    }
+    await expect(
+      c.assertStripeCustomerBelongsToUser(
+        stripe,
+        createScriptedSupabase([{ data: null }]).client,
+        'cus_1',
+        'user-1'
+      )
+    ).resolves.toBeUndefined();
+
+    await expect(
+      c.getCustomerEntityIdForStripeCustomer(
+        stripe,
+        createScriptedSupabase([{ error: { message: 'entity' } }]).client,
+        'cus_1'
+      )
+    ).rejects.toThrow('Failed to load Stripe customer');
+    await expect(
+      c.getCustomerEntityIdForStripeCustomer(
+        stripe,
+        createScriptedSupabase([{ data: { id: 'row' } }]).client,
+        'cus_1'
+      )
+    ).resolves.toBe('row');
+    const unlinked = createStripeMock({
+      customers: {
+        retrieve: vi.fn().mockResolvedValue({ id: 'cus_1', metadata: {} }),
+        search: vi.fn(),
+        list: vi.fn(),
+        update: vi.fn(),
+      },
+    });
+    await expect(
+      c.getCustomerEntityIdForStripeCustomer(
+        unlinked,
+        createScriptedSupabase([{ data: null }]).client,
+        'cus_1'
+      )
+    ).rejects.toThrow('not linked');
+    await expect(
+      c.getCustomerEntityIdForStripeCustomer(
+        stripe,
+        createScriptedSupabase([
+          { data: null },
+          { data: null },
+          { data: null },
+          { data: { id: 'inserted' } },
+        ]).client,
+        'cus_1'
+      )
+    ).resolves.toBe('inserted');
+  });
+
+  it('normalizes invoice relationship shapes and synchronizes every actionable invoice status', async () => {
+    expect(c.invoiceCustomerId({ customer: 'cus_1' } as any)).toBe('cus_1');
+    expect(c.invoiceCustomerId({ customer: { id: 'cus_2' } } as any)).toBe('cus_2');
+    expect(c.invoiceCustomerId({ customer: null } as any)).toBeNull();
+    expect(
+      c.invoiceSubscriptionId({
+        parent: { subscription_details: { subscription: 'sub_1' } },
+      } as any)
+    ).toBe('sub_1');
+    expect(
+      c.invoiceSubscriptionId({
+        parent: { subscription_details: { subscription: { id: 'sub_2' } } },
+      } as any)
+    ).toBe('sub_2');
+    expect(c.invoiceSubscriptionId({ parent: null } as any)).toBeNull();
+
+    const { db, client } = createFakeSupabase({
+      stripe_customer: [{ id: 'row', user_id: 'user-1', stripe_customer_id: 'cus_1' }],
+    });
+    const statuses = [
+      { id: 'paid', status: 'paid' },
+      { id: 'uncollectible', status: 'uncollectible' },
+      { id: 'void', status: 'void' },
+      { id: 'attempted-open', status: 'open', attempted: true },
+      { id: 'open', status: 'open', attempted: false },
+      { id: 'draft', status: 'draft' },
+    ];
+    const stripe = createStripeMock({
+      invoices: {
+        list: vi.fn().mockResolvedValue({
+          data: statuses.map(invoice => ({
+            ...invoice,
+            customer: 'cus_1',
+            amount_paid: 100,
+            amount_due: 100,
+            currency: 'eur',
+            status_transitions: {},
+          })),
+        }),
+      },
+    });
+    await c.syncRecentInvoicesForCustomer(stripe, client as any, 'cus_1');
+    expect(db.stripe_payment.map(row => row.stripe_invoice_id)).toEqual([
+      'paid',
+      'uncollectible',
+      'void',
+      'attempted-open',
+    ]);
+  });
+
+  it('handles checkout metadata fallbacks, missing fields, and optional synchronization', async () => {
+    const { client } = createFakeSupabase();
+    const stripe = createStripeMock();
+    await expect(
+      c.handleCheckoutSessionCompleted(
+        stripe,
+        client as any,
+        {
+          metadata: {},
+          subscription: null,
+          customer: 'cus_1',
+        } as any
+      )
+    ).rejects.toThrow('missing user metadata');
+    await expect(
+      c.handleCheckoutSessionCompleted(
+        stripe,
+        client as any,
+        {
+          metadata: { userId: 'user-1' },
+          customer: null,
+        } as any
+      )
+    ).rejects.toThrow('missing a customer');
+
+    const updateFailure = createStripeMock();
+    updateFailure.customers.update.mockRejectedValue(new Error('metadata unavailable'));
+    await expect(
+      c.handleCheckoutSessionCompleted(
+        updateFailure,
+        createFakeSupabase().client as any,
+        {
+          metadata: { userId: 'user-1' },
+          customer: { id: 'cus_1' },
+          customer_details: null,
+          subscription: null,
+        } as any
+      )
+    ).resolves.toBeUndefined();
+
+    const subscriptionObject = createStripeMock();
+    subscriptionObject.subscriptions.retrieve.mockResolvedValue({
+      id: 'sub_object',
+      metadata: { userId: 'user-1' },
+      customer: 'cus_1',
+      status: 'active',
+      currency: 'eur',
+      items: { data: [] },
+    });
+    await expect(
+      c.handleCheckoutSessionCompleted(
+        subscriptionObject,
+        createFakeSupabase().client as any,
+        {
+          metadata: {},
+          customer: { id: 'cus_1' },
+          subscription: { id: 'sub_object' },
+        } as any
+      )
+    ).resolves.toBeUndefined();
+  });
+
+  it('reconciles missing customers and email fallbacks', async () => {
+    const noneStripe = createStripeMock();
+    await expect(
+      c.reconcileStripeCustomer(noneStripe, createFakeSupabase().client as any, {
+        id: 'user-1',
+        email: 'user@example.com',
+      })
+    ).resolves.toBe(false);
+
+    const customer = { id: 'cus_1', email: null, metadata: { userId: 'user-1' } };
+    const stripe = createStripeMock({
+      customers: {
+        retrieve: vi.fn().mockResolvedValue(customer),
+        search: vi.fn().mockResolvedValue({ data: [customer] }),
+        list: vi.fn(),
+        update: vi.fn(),
+      },
+    });
+    await expect(
+      c.reconcileStripeCustomer(stripe, createFakeSupabase().client as any, {
+        id: 'user-1',
+        email: null,
+      })
+    ).resolves.toBe(true);
+  });
+
+  it('covers checkout customer selection, empty email, missing URL, and portal not-found paths', async () => {
+    const seeded = createFakeSupabase({
+      stripe_customer: [{ id: 'row', user_id: 'user-1', stripe_customer_id: 'cus_1' }],
+    });
+    const stripe = createStripeMock();
+    await executeStripeCreateCheckout(
+      { plan: 'running' },
+      { stripe, supabase: seeded.client as any, user: { id: 'user-1', email: null } }
+    );
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({ customer: 'cus_1' })
+    );
+
+    const noUrl = createStripeMock({
+      checkout: {
+        sessions: {
+          create: vi.fn().mockResolvedValue({ url: null }),
+          retrieve: vi.fn(),
+        },
+      },
+    });
+    await expect(
+      executeStripeCreateCheckout(
+        { plan: 'running' },
+        { stripe: noUrl, supabase: createFakeSupabase().client as any, user: { id: 'user-1' } }
+      )
+    ).rejects.toThrow('did not return a URL');
+    await expect(
+      executeStripeCreatePortal(
+        {},
+        { stripe, supabase: createFakeSupabase().client as any, user: { id: 'user-1' } }
+      )
+    ).rejects.toThrow('Stripe customer not found');
+  });
+
+  it('falls back to live Stripe status for missing, inactive, active, paid, and failed records', async () => {
+    const stripe = createStripeMock();
+    await expect(
+      executeStripeSubscriptionStatus(
+        {},
+        { stripe, supabase: createFakeSupabase().client as any, user: { id: 'user-1' } }
+      )
+    ).resolves.toMatchObject({ hasCustomer: false, hasSubscription: false });
+
+    const seed = {
+      stripe_customer: [{ id: 'row', user_id: 'user-1', stripe_customer_id: 'cus_1' }],
+    };
+    const inactiveStripe = createStripeMock({
+      subscriptions: {
+        retrieve: vi.fn(),
+        update: vi.fn(),
+        list: vi.fn().mockResolvedValue({
+          data: [
+            {
+              id: 'sub_canceled',
+              customer: 'cus_1',
+              status: 'canceled',
+              currency: 'eur',
+              items: { data: [] },
+            },
+          ],
+        }),
+      },
+      invoices: { list: vi.fn().mockResolvedValue({ data: [] }) },
+    });
+    await expect(
+      executeStripeSubscriptionStatus(
+        {},
+        {
+          stripe: inactiveStripe,
+          supabase: createFakeSupabase(seed).client as any,
+          user: { id: 'user-1' },
+        }
+      )
+    ).resolves.toMatchObject({ hasCustomer: true, hasSubscription: false, subscription: null });
+
+    const activeStripe = createStripeMock({
+      subscriptions: {
+        retrieve: vi.fn(),
+        update: vi.fn(),
+        list: vi.fn().mockResolvedValue({
+          data: [
+            {
+              id: 'sub_active',
+              customer: 'cus_1',
+              status: 'active',
+              currency: 'eur',
+              items: { data: [] },
+            },
+          ],
+        }),
+      },
+      invoices: {
+        list: vi.fn().mockResolvedValue({
+          data: [
+            { id: 'paid', amount_paid: 100, currency: 'eur', status: 'paid' },
+            { id: 'failed', amount_paid: 0, currency: 'eur', status: 'open' },
+          ],
+        }),
+      },
+    });
+    await expect(
+      executeStripeSubscriptionStatus(
+        {},
+        {
+          stripe: activeStripe,
+          supabase: createFakeSupabase(seed).client as any,
+          user: { id: 'user-1' },
+        }
+      )
+    ).resolves.toMatchObject({
+      hasSubscription: true,
+      subscription: { id: 'sub_active' },
+      payments: [{ status: 'paid' }, { status: 'failed' }],
+    });
+  });
+
+  it('validates repair session completion and ownership metadata fallbacks', async () => {
+    const incomplete = createStripeMock({
+      checkout: {
+        sessions: {
+          create: vi.fn(),
+          retrieve: vi.fn().mockResolvedValue({ status: 'open' }),
+        },
+      },
+    });
+    await expect(
+      executeStripeRepairCheckoutSession(
+        { sessionId: 'open' },
+        { stripe: incomplete, supabase: createFakeSupabase().client as any, user: { id: 'user-1' } }
+      )
+    ).rejects.toThrow('not complete');
+
+    const viaClientReference = createStripeMock({
+      checkout: {
+        sessions: {
+          create: vi.fn(),
+          retrieve: vi.fn().mockResolvedValue({
+            status: null,
+            metadata: {},
+            client_reference_id: 'user-1',
+            customer: null,
+            subscription: null,
+          }),
+        },
+      },
+    });
+    await expect(
+      executeStripeRepairCheckoutSession(
+        { sessionId: 'client-ref' },
+        {
+          stripe: viaClientReference,
+          supabase: createFakeSupabase().client as any,
+          user: { id: 'user-1' },
+        }
+      )
+    ).rejects.toThrow('missing user metadata');
+
+    const deletedSubscription = createStripeMock({
+      checkout: {
+        sessions: {
+          create: vi.fn(),
+          retrieve: vi.fn().mockResolvedValue({
+            status: 'complete',
+            metadata: {},
+            client_reference_id: null,
+            customer: 'cus_1',
+            subscription: { id: 'sub_deleted', deleted: true },
+          }),
+        },
+      },
+    });
+    await expect(
+      executeStripeRepairCheckoutSession(
+        { sessionId: 'deleted' },
+        {
+          stripe: deletedSubscription,
+          supabase: createFakeSupabase().client as any,
+          user: { id: 'user-1' },
+        }
+      )
+    ).rejects.toThrow('Forbidden');
+
+    const viaSubscription = createStripeMock({
+      checkout: {
+        sessions: {
+          create: vi.fn(),
+          retrieve: vi.fn().mockResolvedValue({
+            status: 'complete',
+            metadata: {},
+            client_reference_id: null,
+            customer: { id: 'cus_1' },
+            customer_details: null,
+            subscription: {
+              id: 'sub_object',
+              metadata: { userId: 'user-1' },
+              customer: 'cus_1',
+              status: 'active',
+              currency: 'eur',
+              items: { data: [] },
+            },
+          }),
+        },
+      },
+      invoices: { list: vi.fn().mockResolvedValue({ data: [] }) },
+    });
+    viaSubscription.subscriptions.retrieve.mockResolvedValue({
+      id: 'sub_object',
+      metadata: { userId: 'user-1' },
+      customer: 'cus_1',
+      status: 'active',
+      currency: 'eur',
+      items: { data: [] },
+    });
+    await expect(
+      executeStripeRepairCheckoutSession(
+        { sessionId: 'subscription-metadata' },
+        {
+          stripe: viaSubscription,
+          supabase: createFakeSupabase().client as any,
+          user: { id: 'user-1' },
+        }
+      )
+    ).resolves.toMatchObject({ hasCustomer: true });
   });
 });
 
@@ -1005,5 +1877,76 @@ describe('Stripe webhook handling', () => {
 
     expect(response.status).toBe(500);
     await expect(response.text()).resolves.toContain('database unavailable');
+  });
+
+  it('returns JSON for accepted events and preserves typed signature errors', async () => {
+    const stripe = createStripeMock();
+    stripe.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_unknown',
+      type: 'customer.created',
+      livemode: false,
+      data: { object: {} },
+    });
+    const response = await handleStripeWebhookRequest(
+      new Request('https://app.example/api/stripe/webhook', {
+        method: 'POST',
+        headers: { 'stripe-signature': 'sig' },
+        body: '{}',
+      }),
+      { stripe, supabase: createFakeSupabase().client as any }
+    );
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ received: true, eventId: 'evt_unknown' });
+
+    stripe.webhooks.constructEvent.mockImplementation(() => {
+      throw new Error('bad signature');
+    });
+    const invalid = await handleStripeWebhookRequest(
+      new Request('https://app.example/api/stripe/webhook', {
+        method: 'POST',
+        headers: { 'stripe-signature': 'bad' },
+        body: '{}',
+      }),
+      { stripe, supabase: createFakeSupabase().client as any }
+    );
+    expect(invalid.status).toBe(400);
+  });
+
+  it('uses stable fallback messages for non-Error failures', async () => {
+    const stripe = createStripeMock();
+    stripe.webhooks.constructEvent
+      .mockImplementationOnce(() => {
+        throw 'invalid signature';
+      })
+      .mockReturnValueOnce({
+        id: 'evt_plain_db',
+        type: 'customer.subscription.updated',
+        livemode: false,
+        data: { object: { customer: 'cus_1' } },
+      });
+    await expect(
+      handleStripeWebhook(
+        { rawBody: '{}', signature: 'bad' },
+        { stripe, supabase: createFakeSupabase().client as any }
+      )
+    ).rejects.toMatchObject({ message: 'Stripe signature verification failed' });
+
+    const response = await handleStripeWebhookRequest(
+      new Request('https://app.example/api/stripe/webhook', {
+        method: 'POST',
+        headers: { 'stripe-signature': 'sig' },
+        body: '{}',
+      }),
+      {
+        stripe,
+        supabase: {
+          from: () => {
+            throw 'plain database failure';
+          },
+        } as any,
+      }
+    );
+    expect(response.status).toBe(500);
+    await expect(response.text()).resolves.toBe('Stripe webhook failed');
   });
 });

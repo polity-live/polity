@@ -29,7 +29,11 @@ vi.mock('@/features/editor/ui/SuggestionViewToggle', () => ({
   SuggestionViewToggle: () => null,
 }));
 
-import { ChangeRequestCardsListView } from '../ChangeRequestCardsListView';
+import {
+  ChangeRequestCardsListView,
+  changeRequestCardsListViewTestApi,
+} from '../ChangeRequestCardsListView';
+import { createEmptyCityDesignState } from '@/features/amendments/city-design/state/cityDesignReducer';
 import { ChangeRequestCardsList } from '../ChangeRequestCardsList';
 import { ChangeRequestTimelineCardView } from '../ChangeRequestTimelineCardView';
 import { resolvePreviewCrIdForTimelineItem } from '../useChangeRequestCardsListController';
@@ -178,6 +182,277 @@ afterEach(() => {
   cleanup();
   mockCREditorPreview.mockClear();
   mockCityDesignPreview.mockClear();
+});
+
+describe('ChangeRequestCardsListView uncovered branch contracts', () => {
+  it('classifies finalizable, synthetic, sort, and city-design helper states', () => {
+    const api = changeRequestCardsListViewTestApi;
+
+    expect(api.isChangeRequestSortMode('text_position')).toBe(true);
+    expect(api.isChangeRequestSortMode('changed_character_count')).toBe(true);
+    expect(api.isChangeRequestSortMode('cr_number')).toBe(true);
+    expect(api.isChangeRequestSortMode('invalid')).toBe(false);
+    expect(api.canFinalizeInternalChangeRequest({})).toBe(false);
+    expect(
+      api.canFinalizeInternalChangeRequest({ change_request: {}, is_closing_vote: true })
+    ).toBe(false);
+    expect(
+      api.canFinalizeInternalChangeRequest({
+        _originalStatus: 'pending_submission',
+        change_request: { status: 'pending_submission' },
+      })
+    ).toBe(false);
+    expect(
+      api.canFinalizeInternalChangeRequest({ change_request: { voting_status: 'completed' } })
+    ).toBe(false);
+    for (const status of ['accepted', 'approved', 'rejected', 'declined']) {
+      expect(api.canFinalizeInternalChangeRequest({ change_request: { status } })).toBe(false);
+    }
+    expect(api.canFinalizeInternalChangeRequest({ change_request: { status: 'open' } })).toBe(true);
+    expect(api.isVoteSequencePlaceholder({ _votePlaceholder: true })).toBe(true);
+    expect(api.isVoteSequencePlaceholder(null)).toBe(false);
+    expect(
+      api.isChangeRequestVotesPlaceholder({ _voteStepKind: 'change_request_votes_placeholder' })
+    ).toBe(true);
+    expect(api.isChangeRequestVotesPlaceholder(null)).toBe(false);
+
+    expect(api.getCityDesignChangeRequestFromTimelineItem({} as never)).toBeNull();
+    expect(
+      api.getCityDesignChangeRequestFromTimelineItem({
+        change_request: { source_type: 'text' },
+      } as never)
+    ).toBeNull();
+    expect(
+      api.getCityDesignChangeRequestFromTimelineItem({
+        id: 'row-id',
+        change_request_id: 'change-request-id',
+        change_request: { source_type: 'city_design_scene' },
+      } as never)?.id
+    ).toBe('change-request-id');
+    expect(
+      api.getCityDesignChangeRequestFromTimelineItem({
+        id: 'row-id',
+        change_request: { source_type: 'city_design_scene' },
+      } as never)?.id
+    ).toBe('row-id');
+    expect(api.hasCityDesignMapSelection({ design_state: null })).toBe(false);
+    expect(
+      api.hasCityDesignMapSelection({
+        design_state: {
+          ...createEmptyCityDesignState(),
+          mapSelection: {
+            center: { lat: 52.52, lon: 13.405 },
+            widthMeters: 100,
+            heightMeters: 80,
+            rotationDeg: 0,
+          },
+        },
+      })
+    ).toBe(true);
+  });
+
+  it('renders internal finalization, completion, and the sequence interstitial', () => {
+    const onFinalizeInternalVote = vi.fn(async () => undefined);
+    const item = {
+      id: 'internal-row',
+      change_request_id: null,
+      status: 'pending',
+      change_request: {
+        title: 'Internal CR',
+        status: 'open',
+        votes_for: 2,
+        votes_against: 1,
+        votes_abstain: 0,
+      },
+    };
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        editingMode="vote_internal"
+        isVotingActive={false}
+        canManage
+        isTimelineComplete
+        sequenceInterstitial={<span>Voting boundary</span>}
+        items={[item]}
+        crItems={[item]}
+        sequenceItems={[item]}
+        searchedItems={[item]}
+        filteredItems={[item]}
+        categorized={{ open: [item], accepted: [], rejected: [], obsolete: [] }}
+        effectivePreviewCrIds={null}
+        getPreviewCrId={() => null}
+        onFinalizeInternalVote={onFinalizeInternalVote}
+      />
+    );
+
+    expect(screen.getByText('Voting boundary')).toBeTruthy();
+    expect(screen.getByText('All Completed')).toBeTruthy();
+    expect(document.body.textContent).toContain('Internal change request votes are active.');
+    fireEvent.click(
+      document.querySelector(
+        '[data-action-id="agendas.change-request-list.internal-vote.close-open"]'
+      )!
+    );
+    fireEvent.click(
+      document.querySelector(
+        '[data-action-id="agendas.change-request-list.internal-vote.close-confirm"]'
+      )!
+    );
+    expect(onFinalizeInternalVote).toHaveBeenCalledWith('internal-row');
+  });
+
+  it('renders the non-all empty state and accepts a non-set preview selection', () => {
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        editingMode="view"
+        isVotingActive={false}
+        activeTab="accepted"
+        hasCRCategoryItems
+        crItems={[
+          { id: 'hidden', change_request: { title: 'Hidden' } },
+          { id: 'hidden-2', change_request: { title: 'Hidden 2' } },
+        ]}
+        filteredItems={[]}
+        effectivePreviewCrIds={42 as never}
+        getPreviewCrId={() => 'cr-hidden'}
+        setSortMode={undefined as never}
+      />
+    );
+
+    expect(screen.getByText('No change requests in this category')).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: 'Sort by text position' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Sort by changed characters' }));
+  });
+
+  it('renders shared text and street previews across their selection modes', () => {
+    const textItem = { id: 'text', change_request: { title: 'Text CR' } };
+    const cityItem = {
+      id: 'city',
+      change_request_id: 'city-cr',
+      change_request: { title: 'Street CR', source_type: 'city_design_scene' },
+    };
+    const common = {
+      ...baseProps,
+      editingMode: 'view' as const,
+      isVotingActive: false,
+      sharedPreviewEnabled: true,
+      documentContent: [],
+      discussions: [{ id: 'one' }, { id: 'two' }],
+      effectivePreviewCrIds: null,
+      getPreviewCrId: () => null,
+    };
+    const { rerender } = render(
+      <ChangeRequestCardsListView
+        {...common}
+        items={[textItem]}
+        crItems={[textItem]}
+        searchedItems={[textItem]}
+        filteredItems={[textItem]}
+        categorized={{ open: [textItem], accepted: [], rejected: [], obsolete: [] }}
+      />
+    );
+    expect(mockCREditorPreview).toHaveBeenCalled();
+
+    rerender(
+      <ChangeRequestCardsListView
+        {...common}
+        items={[cityItem]}
+        crItems={[cityItem]}
+        searchedItems={[cityItem]}
+        filteredItems={[cityItem]}
+        categorized={{ open: [cityItem], accepted: [], rejected: [], obsolete: [] }}
+        cityDesigns={[]}
+      />
+    );
+    expect(mockCityDesignPreview).toHaveBeenCalledWith(
+      expect.objectContaining({ changeRequest: expect.objectContaining({ id: 'city-cr' }) })
+    );
+
+    const mapDesign = {
+      ...createEmptyCityDesignState(),
+      mapSelection: {
+        center: { lat: 52.52, lon: 13.405 },
+        widthMeters: 100,
+        heightMeters: 80,
+        rotationDeg: 0,
+      },
+    };
+    rerender(
+      <ChangeRequestCardsListView
+        {...common}
+        items={[]}
+        crItems={[]}
+        searchedItems={[]}
+        filteredItems={[]}
+        categorized={{ open: [], accepted: [], rejected: [], obsolete: [] }}
+        showCityDesignPreviewAccordion
+        cityDesigns={[{ design_state: mapDesign }]}
+      />
+    );
+    expect(screen.getByTestId('city-design-preview-accordion-trigger')).toBeTruthy();
+
+    rerender(
+      <ChangeRequestCardsListView
+        {...common}
+        items={[]}
+        crItems={[]}
+        searchedItems={[]}
+        filteredItems={[]}
+        categorized={{ open: [], accepted: [], rejected: [], obsolete: [] }}
+        showCityDesignPreviewAccordion
+        cityDesigns={[]}
+      />
+    );
+    expect(screen.queryByTestId('city-design-preview-accordion-trigger')).toBeNull();
+
+    const accordionCityItem = {
+      id: 'accordion-city',
+      change_request: {
+        title: 'Accordion city',
+        source_type: 'city_design_scene',
+        source_id: null,
+      },
+    };
+    const mapSource = { id: 'map-design', design_state: mapDesign };
+    rerender(
+      <ChangeRequestCardsListView
+        {...common}
+        items={[accordionCityItem]}
+        crItems={[accordionCityItem]}
+        searchedItems={[accordionCityItem]}
+        filteredItems={[accordionCityItem]}
+        categorized={{ open: [accordionCityItem], accepted: [], rejected: [], obsolete: [] }}
+        showCityDesignPreviewAccordion
+        cityDesigns={[mapSource]}
+      />
+    );
+    expect(screen.getByTestId('city-design-preview-accordion-trigger')).toBeTruthy();
+
+    rerender(
+      <ChangeRequestCardsListView
+        {...common}
+        items={[
+          {
+            ...accordionCityItem,
+            change_request: { ...accordionCityItem.change_request, source_id: 'map-design' },
+          },
+        ]}
+        crItems={[
+          {
+            ...accordionCityItem,
+            change_request: { ...accordionCityItem.change_request, source_id: 'map-design' },
+          },
+        ]}
+        searchedItems={[]}
+        filteredItems={[]}
+        categorized={{ open: [], accepted: [], rejected: [], obsolete: [] }}
+        showCityDesignPreviewAccordion
+        cityDesigns={[mapSource]}
+      />
+    );
+    expect(screen.getByTestId('city-design-preview-accordion-trigger')).toBeTruthy();
+  });
 });
 
 beforeEach(() => {
@@ -387,6 +662,13 @@ describe('ChangeRequestCardsListView mode labels', () => {
     const rejectedIndex = tabs.findIndex(tab => tab.textContent?.includes('Rejected'));
     const obsoleteIndex = tabs.findIndex(tab => tab.textContent?.includes('Obsolete'));
     expect(obsoleteIndex).toBe(rejectedIndex + 1);
+    expect(tabs.map(tab => tab.getAttribute('data-action-id')).filter(Boolean)).toEqual([
+      'agendas.change-request-list.tab.all',
+      'agendas.change-request-list.tab.open',
+      'agendas.change-request-list.tab.accepted',
+      'agendas.change-request-list.tab.rejected',
+      'agendas.change-request-list.tab.obsolete',
+    ]);
 
     fireEvent.mouseDown(screen.getByRole('tab', { name: /^Obsolete 1$/ }), {
       button: 0,
@@ -459,7 +741,14 @@ describe('ChangeRequestCardsListView mode labels', () => {
 
     expectVisibleTitleOrder(['CR-11', 'CR-13', 'CR-15', 'CR-9']);
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Sort by number' }));
+    const numericSort = screen.getByRole('radio', { name: 'Sort by number' });
+    expect(numericSort.getAttribute('data-action-id')).toBe(
+      'agendas.change-request-list.sort.cr-number'
+    );
+    expect(
+      screen.getByRole('radio', { name: 'Sort by text position' }).getAttribute('data-action-id')
+    ).toBe('agendas.change-request-list.sort.text-position');
+    fireEvent.click(numericSort);
 
     expectVisibleTitleOrder(['CR-9', 'CR-11', 'CR-13', 'CR-15']);
   });
@@ -493,7 +782,13 @@ describe('ChangeRequestCardsListView mode labels', () => {
     );
 
     expect(screen.getByRole('radio', { name: 'Sort by text position' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('radio', { name: 'Sort by changed characters' }));
+    const changedCharactersSort = screen.getByRole('radio', {
+      name: 'Sort by changed characters',
+    });
+    expect(changedCharactersSort.getAttribute('data-action-id')).toBe(
+      'agendas.change-request-list.sort.changed-characters'
+    );
+    fireEvent.click(changedCharactersSort);
 
     expectVisibleTitleOrder(['CR-13', 'CR-11', 'CR-9']);
   });
@@ -848,13 +1143,22 @@ describe('ChangeRequestCardsListView mode labels', () => {
 
     expect(screen.queryByRole('button', { name: 'Start final vote' })).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Interne Abstimmung beenden' }));
+    const closeInternalVote = screen.getByRole('button', {
+      name: 'Interne Abstimmung beenden',
+    });
+    expect(closeInternalVote.getAttribute('data-action-id')).toBe(
+      'agendas.change-request-list.internal-vote.close-open'
+    );
+    fireEvent.click(closeInternalVote);
 
     expect(screen.getByText('Interne Abstimmung beenden?')).toBeTruthy();
 
     const closeButtons = screen.getAllByRole('button', {
       name: 'Interne Abstimmung beenden',
     });
+    expect(closeButtons[closeButtons.length - 1].getAttribute('data-action-id')).toBe(
+      'agendas.change-request-list.internal-vote.close-confirm'
+    );
     fireEvent.click(closeButtons[closeButtons.length - 1]);
 
     expect(handleFinalizeInternalVote).toHaveBeenCalledWith('cr-row-1');

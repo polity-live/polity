@@ -52,12 +52,21 @@ export function InterestStep({
     <OnboardingStepShell
       actions={
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-          <Button variant="outline" onClick={onBack} disabled={isLoading}>
+          <Button
+            data-action-id="auth.onboarding.interests.back"
+            variant="outline"
+            onClick={onBack}
+            disabled={isLoading}
+          >
             <ArrowLeft className="h-4 w-4" />
             {t('common.goBack')}
           </Button>
 
-          <Button onClick={onNext} disabled={isLoading}>
+          <Button
+            data-action-id="auth.onboarding.interests.continue"
+            onClick={onNext}
+            disabled={isLoading}
+          >
             {selectedInterestTags.length > 0
               ? t('onboarding.interestStep.continue')
               : t('onboarding.interestStep.skip')}
@@ -100,6 +109,7 @@ export function InterestStep({
             {selectedInterestTags.length > 0 && (
               <Button
                 type="button"
+                data-action-id="auth.onboarding.interests.clear"
                 variant="ghost"
                 size="sm"
                 onClick={onClearInterestTags}
@@ -119,6 +129,7 @@ export function InterestStep({
                 <button
                   key={tag}
                   type="button"
+                  data-action-id="auth.onboarding.interests.tag.toggle"
                   disabled={isLoading}
                   className={cn(
                     'flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold transition-colors',

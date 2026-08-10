@@ -63,7 +63,8 @@ export function DataViewAttribution({
       {t('plateJs.dataView.source')}:{' '}
       {linkedSource ? (
         <a
-          href={source.sourceUrl ?? undefined}
+          data-action-id="charts.attribution.open-source"
+          href={source.sourceUrl as string}
           target="_blank"
           rel="noreferrer"
           className="text-foreground underline underline-offset-2"

@@ -37,6 +37,7 @@ export function LocationTypeInput({ value, onChange }: LocationTypeInputProps) {
       {/* Location type toggle */}
       <div className="flex gap-2">
         <Button
+          data-action-id="create.location-type.select.online"
           type="button"
           variant={value.locationType === 'online' ? 'default' : 'outline'}
           className="flex-1 gap-2"
@@ -46,6 +47,7 @@ export function LocationTypeInput({ value, onChange }: LocationTypeInputProps) {
           {t('pages.create.event.locationTypes.online')}
         </Button>
         <Button
+          data-action-id="create.location-type.select.physical"
           type="button"
           variant={value.locationType === 'physical' ? 'default' : 'outline'}
           className="flex-1 gap-2"

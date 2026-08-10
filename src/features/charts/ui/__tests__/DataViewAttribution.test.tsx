@@ -5,11 +5,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DataViewAttribution } from '../DataViewAttribution';
 
-afterEach(cleanup);
+const translationState = vi.hoisted(() => ({ language: 'de-DE' as string | undefined }));
+
+afterEach(() => {
+  cleanup();
+  translationState.language = 'de-DE';
+});
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    i18n: { resolvedLanguage: 'de-DE' },
+    i18n: { resolvedLanguage: translationState.language },
     t: (key: string, options?: Record<string, unknown>) =>
       key === 'plateJs.dataView.source'
         ? 'Quelle'
@@ -66,5 +71,54 @@ describe('DataViewAttribution', () => {
       />
     );
     expect(screen.getByRole('link').textContent).toBe('Eurostat');
+  });
+
+  it('covers provider, publisher, URL, and invalid date fallbacks', () => {
+    const { rerender } = render(
+      <DataViewAttribution
+        className="custom-attribution"
+        source={{
+          provider: 'GENESIS_DESTATIS',
+          publisher: ' ',
+          sourceUrl: null,
+          snapshotTakenAt: null,
+        }}
+      />
+    );
+    expect(screen.getByTestId('data-view-attribution').textContent).toBe(
+      'Quelle: GENESIS/Destatis'
+    );
+    expect(screen.getByTestId('data-view-attribution').className).toContain('custom-attribution');
+
+    rerender(
+      <DataViewAttribution
+        source={{
+          provider: 'UPLOAD',
+          publisher: null,
+          sourceUrl: 'https://example.test/private',
+          snapshotTakenAt: 'not-a-date-value',
+        }}
+      />
+    );
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(screen.getByTestId('data-view-attribution').textContent).toContain('not-a-date');
+    expect(screen.getByTestId('data-view-attribution').textContent).toContain('Own data');
+  });
+
+  it('formats dates when no UI language is resolved', () => {
+    translationState.language = undefined;
+    render(
+      <DataViewAttribution
+        source={{
+          provider: 'EUROSTAT',
+          publisher: 'Different publisher',
+          sourceUrl: null,
+          snapshotTakenAt: '2026-01-02T00:00:00.000Z',
+        }}
+      />
+    );
+    expect(screen.getByTestId('data-view-attribution').textContent).toContain(
+      'Different publisher'
+    );
   });
 });

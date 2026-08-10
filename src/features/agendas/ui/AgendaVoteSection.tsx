@@ -238,6 +238,8 @@ export function AgendaVoteSection({
             {isInteractive && onOpenNamedResults ? (
               <BadgeControl asChild tone="info" className="cursor-pointer gap-1">
                 <button
+                  data-action-id="agendas.vote.named-results.open"
+                  data-action-kind="interaction"
                   type="button"
                   onClick={onOpenNamedResults}
                   aria-label={openNamedResultsLabel}

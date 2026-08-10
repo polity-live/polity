@@ -165,7 +165,11 @@ export function MembershipStatusTable({
         }
 
         return (
-          <SmartLink href={entityHref} className="block hover:underline">
+          <SmartLink
+            href={entityHref}
+            className="block hover:underline"
+            data-action-id="users.membership.entity.open"
+          >
             {content}
           </SmartLink>
         );
@@ -234,6 +238,7 @@ export function MembershipStatusTable({
                   entityName: getEntityName(getEntityData(row.original)),
                 })
               }
+              data-action-id="users.membership.leave.open"
             >
               <Trash2 className="h-4 w-4" />
               <span className="ml-2">{translateText('generated.inline.1197_leave_7e3520a9')}</span>
@@ -250,6 +255,7 @@ export function MembershipStatusTable({
                   entityName: getEntityName(getEntityData(row.original)),
                 })
               }
+              data-action-id="users.membership.withdraw.open"
             >
               <Trash2 className="h-4 w-4" />
               <span className="ml-2">

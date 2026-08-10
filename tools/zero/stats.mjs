@@ -1,8 +1,10 @@
 import postgres from 'postgres';
 
-const statzURL = process.env.ZERO_STATZ_URL ?? 'http://127.0.0.1:4848/statz';
+import { runCliIfMain } from '../shared/run-cli-if-main.mjs';
 
-function extractJSON(source, label) {
+const DEFAULT_STATZ_URL = 'http://127.0.0.1:4848/statz';
+
+export function extractJSON(source, label) {
   const labelIndex = source.indexOf(`${label}:`);
   if (labelIndex < 0) return undefined;
 
@@ -32,18 +34,25 @@ function extractJSON(source, label) {
   return undefined;
 }
 
-function scalarCount(source, label) {
+export function scalarCount(source, label) {
   return Number(extractJSON(source, label)?.[0]?.c ?? 0);
 }
 
-async function readProfileStats() {
-  const connectionString = process.env.ZERO_CVR_DB ?? process.env.ZERO_UPSTREAM_DB;
+function errorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+export async function readProfileStats(options = {}) {
+  const env = options.env ?? process.env;
+  const connectionString = env.ZERO_CVR_DB ?? env.ZERO_UPSTREAM_DB;
   if (!connectionString) return undefined;
 
-  const appID = process.env.ZERO_APP_ID ?? 'zero';
-  const shard = process.env.ZERO_SHARD_NUM ?? '0';
+  const appID = env.ZERO_APP_ID ?? 'zero';
+  const shard = env.ZERO_SHARD_NUM ?? '0';
   const schema = `${appID}_${shard}/cvr`;
-  const sql = postgres(connectionString, {
+  const createClient = options.postgresFactory ?? postgres;
+  const logger = options.logger ?? console;
+  const sql = createClient(connectionString, {
     max: 1,
     connect_timeout: 3,
     idle_timeout: 1,
@@ -58,31 +67,50 @@ async function readProfileStats() {
     `;
     return row;
   } catch (error) {
-    console.warn(`Profilstatistik nicht verfügbar: ${error.message}`);
+    logger.warn(`Profilstatistik nicht verfügbar: ${errorMessage(error)}`);
     return undefined;
   } finally {
     await sql.end({ timeout: 1 });
   }
 }
 
-try {
-  const response = await fetch(statzURL, { signal: AbortSignal.timeout(5_000) });
+export async function collectZeroStats(options = {}) {
+  const env = options.env ?? process.env;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const statzURL = env.ZERO_STATZ_URL ?? DEFAULT_STATZ_URL;
+  const response = await fetchImpl(statzURL, { signal: AbortSignal.timeout(5_000) });
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
   const source = await response.text();
   const groupRows = extractJSON(source, 'totalActiveQueriesPerClientAndClientGroup') ?? [];
-  const profileStats = await readProfileStats();
+  const profileStats = await readProfileStats({
+    env,
+    postgresFactory: options.postgresFactory,
+    logger: options.logger,
+  });
 
-  console.table([
-    {
-      activeQueries: scalarCount(source, 'numActiveQueries'),
-      uniqueQueryHashes: scalarCount(source, 'numUniqueQueryHashes'),
-      queryGroups: groupRows.length,
-      clients: groupRows.reduce((sum, row) => sum + Number(row.num_clients ?? 0), 0),
-      activeCVRGroups: profileStats?.groups ?? 'n/a',
-      profiles: profileStats?.profiles ?? 'n/a',
-    },
-  ]);
-} catch (error) {
-  console.error(`Zero-Statistik konnte nicht geladen werden: ${error.message}`);
-  process.exitCode = 1;
+  return {
+    activeQueries: scalarCount(source, 'numActiveQueries'),
+    uniqueQueryHashes: scalarCount(source, 'numUniqueQueryHashes'),
+    queryGroups: groupRows.length,
+    clients: groupRows.reduce((sum, row) => sum + Number(row.num_clients ?? 0), 0),
+    activeCVRGroups: profileStats?.groups ?? 'n/a',
+    profiles: profileStats?.profiles ?? 'n/a',
+  };
 }
+
+export async function runZeroStatsCli(options = {}) {
+  const logger = options.logger ?? console;
+  const processState = options.processState ?? process;
+  const collect = options.collect ?? collectZeroStats;
+  try {
+    const stats = await collect(options);
+    logger.table([stats]);
+    return stats;
+  } catch (error) {
+    logger.error(`Zero-Statistik konnte nicht geladen werden: ${errorMessage(error)}`);
+    processState.exitCode = 1;
+    return undefined;
+  }
+}
+
+await runCliIfMain(import.meta.url, runZeroStatsCli);

@@ -25,6 +25,19 @@ describe('contextAttachments', () => {
     ).toHaveLength(1);
   });
 
+  it('rejects a malformed legacy attachment collection at the parser boundary', () => {
+    expect(
+      parseContextAttachments(
+        JSON.stringify([
+          null,
+          'not-an-object',
+          { entityType: 'group', entityId: 'group-1' },
+          { entityType: 'group', entityId: 'group-1', title: 'Group' },
+        ])
+      )
+    ).toEqual([]);
+  });
+
   it('treats non-skill attachments as renderable output cards', () => {
     expect(
       hasRenderableContextCards(
@@ -81,5 +94,12 @@ describe('contextAttachments', () => {
 
     expect(isAssistantErrorContext(contextJson)).toBe(true);
     expect(parseContextAttachments(contextJson)).toEqual([]);
+  });
+
+  it('rejects absent, malformed, array, and unrelated error contexts', () => {
+    expect(isAssistantErrorContext()).toBe(false);
+    expect(isAssistantErrorContext('{')).toBe(false);
+    expect(isAssistantErrorContext('[]')).toBe(false);
+    expect(isAssistantErrorContext(JSON.stringify({ kind: 'other' }))).toBe(false);
   });
 });

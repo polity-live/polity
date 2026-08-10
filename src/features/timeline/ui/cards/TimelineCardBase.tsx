@@ -17,6 +17,7 @@ import { type LucideIcon } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export interface TimelineCardBaseProps {
+  'data-action-id'?: string;
   contentType: ContentType;
   className?: string;
   children: ReactNode;
@@ -33,6 +34,7 @@ export interface TimelineCardBaseProps {
  * interactive descendants such as buttons and nested links.
  */
 export function TimelineCardBase({
+  'data-action-id': actionId,
   contentType,
   className,
   children,
@@ -58,6 +60,8 @@ export function TimelineCardBase({
   if (href) {
     return (
       <LinkSurface
+        data-action-id={actionId}
+        data-action-scope="presentation"
         href={href}
         mode="overlay"
         label={t('common.accessibility.openNamed', {
@@ -73,6 +77,8 @@ export function TimelineCardBase({
 
   return (
     <div
+      data-action-id={actionId}
+      data-action-scope="presentation"
       className={cardStyles}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
@@ -130,6 +136,8 @@ export function TimelineCardHeader({
             <h3 className="truncate text-base leading-tight font-semibold">
               {href ? (
                 <SmartLink
+                  data-action-id="timeline.card.header.title.open"
+                  data-action-kind="navigation"
                   href={href}
                   onClick={e => e.stopPropagation()}
                   className="hover:underline"
@@ -143,6 +151,8 @@ export function TimelineCardHeader({
             {subtitle &&
               (subtitleHref ? (
                 <SmartLink
+                  data-action-id="timeline.card.header.subtitle.open"
+                  data-action-kind="navigation"
                   href={subtitleHref}
                   onClick={e => e.stopPropagation()}
                   className="text-muted-foreground hover:text-foreground mt-0.5 block truncate text-xs hover:underline"
@@ -203,6 +213,7 @@ export function TimelineCardActions({ className, children }: TimelineCardActions
 }
 
 export interface TimelineCardActionButtonProps {
+  'data-action-id'?: string;
   icon?: LucideIcon;
   label: string;
   onClick?: (e?: React.MouseEvent) => void;
@@ -216,6 +227,7 @@ export interface TimelineCardActionButtonProps {
  * Standard action button for timeline cards
  */
 export function TimelineCardActionButton({
+  'data-action-id': actionId,
   icon: Icon,
   label,
   onClick,
@@ -226,6 +238,8 @@ export function TimelineCardActionButton({
 }: TimelineCardActionButtonProps) {
   return (
     <Button
+      data-action-id={actionId}
+      data-action-scope="presentation"
       variant={variant}
       size={size}
       onClick={onClick}

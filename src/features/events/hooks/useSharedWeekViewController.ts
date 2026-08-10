@@ -46,7 +46,8 @@ export function useSharedWeekViewController({
   const [selection, setSelection] = useState<WeekSelectionState | null>(null);
 
   const weekDays = useMemo(() => getWeekGridDays(selectedDate), [selectedDate]);
-  const weekStartKey = weekDays[0]?.getTime() ?? 0;
+  // getWeekGridDays always returns the complete seven-day grid.
+  const weekStartKey = weekDays[0].getTime();
   const weekEventLayout = useMemo(() => buildWeekEventLayout(events, weekDays), [events, weekDays]);
   const dayLayouts = useMemo(
     () =>

@@ -61,7 +61,7 @@ export function parseLocalDateInput(value?: string | null): Date | undefined {
 
   const date = new Date(parts.year, parts.month - 1, parts.day);
   date.setHours(0, 0, 0, 0);
-  return Number.isNaN(date.getTime()) ? undefined : date;
+  return date;
 }
 
 export function formatLocalDateInput(value?: Date | number | string | null): string {
@@ -125,7 +125,7 @@ export function toLocalTimestamp(
     0
   );
 
-  return Number.isNaN(date.getTime()) ? null : date.getTime();
+  return date.getTime();
 }
 
 export function toLocalDateTimeTimestamp(value?: string | null): number | null {
@@ -144,7 +144,7 @@ export function toLocalEndOfDayTimestamp(dateInput?: string | null): number | nu
   }
 
   const date = new Date(dateParts.year, dateParts.month - 1, dateParts.day, 23, 59, 59, 999);
-  return Number.isNaN(date.getTime()) ? null : date.getTime();
+  return date.getTime();
 }
 
 export function toLocalDayTimestamp(value?: Date | number | string | null): number | null {

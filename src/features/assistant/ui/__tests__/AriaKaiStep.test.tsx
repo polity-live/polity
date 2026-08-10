@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ARIA_KAI_AVATAR_URL } from '../../constants';
@@ -74,5 +74,19 @@ describe('AriaKaiStep', () => {
     expect(screen.getByText(/In Polity begleiten wir dich/)).toBeTruthy();
     expect(screen.queryByText('Lerne Assistent Aria & Kai kennen')).toBeNull();
     expect(screen.queryByRole('checkbox')).toBeNull();
+  });
+
+  it('continues onboarding through a stable keyboard-focusable action', () => {
+    const onNext = vi.fn();
+    const { container } = render(<AriaKaiStep onNext={onNext} />);
+    const action = container.querySelector<HTMLElement>(
+      '[data-action-id="assistant.onboarding.continue"]'
+    );
+    expect(action).toBeTruthy();
+    action!.focus();
+    expect(document.activeElement).toBe(action);
+    fireEvent.keyDown(action!, { key: 'Enter' });
+    fireEvent.click(action!);
+    expect(onNext).toHaveBeenCalledOnce();
   });
 });

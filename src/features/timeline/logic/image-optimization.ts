@@ -34,13 +34,13 @@ export interface ImageOptimizationOptions {
 /**
  * Default image optimization options
  */
-const DEFAULT_OPTIONS: ImageOptimizationOptions = {
+const DEFAULT_OPTIONS = {
   widths: [320, 640, 960, 1280, 1920],
   maxWidth: 1920,
   quality: 80,
   withPlaceholder: true,
   format: 'auto',
-};
+} satisfies Required<ImageOptimizationOptions>;
 
 /**
  * Card size presets for timeline images
@@ -162,7 +162,7 @@ export async function getImageDimensions(url: string): Promise<ImageDimensions |
  */
 export function optimizeImage(url: string, options: ImageOptimizationOptions = {}): OptimizedImage {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  const widths = opts.widths ?? DEFAULT_OPTIONS.widths ?? [];
+  const widths = options.widths ?? DEFAULT_OPTIONS.widths;
 
   return {
     src: url,

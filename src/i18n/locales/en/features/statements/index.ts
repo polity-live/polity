@@ -9,6 +9,8 @@ export const statementsTranslations = {
   carousel: {
     title: 'Statements',
     viewerTitle: 'Statement',
+    previous: 'Previous statement',
+    next: 'Next statement',
   },
   form: {
     title: 'Headline',

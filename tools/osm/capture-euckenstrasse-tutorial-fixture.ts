@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import type { CityDesignOsmSnapshot } from '../../src/features/amendments/city-design/types';
 import {
   APP_TUTORIAL_CITY_DESIGN_BBOX,
@@ -11,6 +11,7 @@ import {
   validateAppTutorialCityDesignFixtureDocument,
 } from '../../src/features/app-tutorial/city-design-fixture-document';
 import { fetchOverpassSnapshot } from '../../src/server/overpass-street-scene';
+import { runCliIfMain } from '../shared/run-cli-if-main.mjs';
 
 const ADDRESS_LABEL = 'Euckenstraße 38, München';
 const NOMINATIM_SEARCH_URL = new URL('https://nominatim.openstreetmap.org/search');
@@ -135,15 +136,20 @@ export function serializeEuckenstrasseTutorialFixture(
   )}\n`;
 }
 
-async function main() {
-  const document = await captureEuckenstrasseTutorialFixture();
-  await writeFile(DEFAULT_OUTPUT_PATH, serializeEuckenstrasseTutorialFixture(document), 'utf8');
-  console.info(
-    `Captured ${document.snapshot.features?.length ?? 0} OSM features in ${DEFAULT_OUTPUT_PATH}`
-  );
+export async function runCaptureEuckenstrasseFixtureCli(options: {
+  capture?: typeof captureEuckenstrasseTutorialFixture;
+  write?: typeof writeFile;
+  outputPath?: string;
+  logger?: Pick<Console, 'info'>;
+} = {}) {
+  const capture = options.capture ?? captureEuckenstrasseTutorialFixture;
+  const write = options.write ?? writeFile;
+  const outputPath = options.outputPath ?? DEFAULT_OUTPUT_PATH;
+  const logger = options.logger ?? console;
+  const document = await capture();
+  await write(outputPath, serializeEuckenstrasseTutorialFixture(document), 'utf8');
+  logger.info(`Captured ${document.snapshot.features?.length ?? 0} OSM features in ${outputPath}`);
+  return document;
 }
 
-const invokedPath = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : '';
-if (import.meta.url === invokedPath) {
-  await main();
-}
+await runCliIfMain(import.meta.url, runCaptureEuckenstrasseFixtureCli);

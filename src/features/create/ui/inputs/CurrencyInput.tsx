@@ -14,7 +14,12 @@ export function CurrencyInput({
   return (
     <div className="space-y-2">
       <FormControlLabel>{t('pages.create.payment.currency')}</FormControlLabel>
-      <CurrencySelect value={value} onChange={onChange} />
+      <CurrencySelect
+        data-action-id="create.currency.select"
+        value={value}
+        onChange={onChange}
+        ariaLabel={t('pages.create.payment.currency')}
+      />
     </div>
   );
 }

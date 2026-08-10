@@ -1,15 +1,7 @@
 import { isIP } from 'node:net';
 
-function parseIPv4(hostname: string) {
-  const parts = hostname.split('.');
-  if (parts.length !== 4) return null;
-  const bytes = parts.map(part => Number(part));
-  return bytes.every(byte => Number.isInteger(byte) && byte >= 0 && byte <= 255) ? bytes : null;
-}
-
 function isBlockedIPv4(hostname: string) {
-  const bytes = parseIPv4(hostname);
-  if (!bytes) return false;
+  const bytes = hostname.split('.').map(Number);
   const [first, second] = bytes;
 
   return (
@@ -26,8 +18,17 @@ function isBlockedIPv4(hostname: string) {
   );
 }
 
+function getCanonicalMappedIPv4(hostname: string) {
+  const match = /^::ffff:([\da-f]{1,4}):([\da-f]{1,4})$/.exec(hostname);
+  if (!match) return null;
+  const high = Number.parseInt(match[1], 16);
+  const low = Number.parseInt(match[2], 16);
+  return `${high >> 8}.${high & 0xff}.${low >> 8}.${low & 0xff}`;
+}
+
 function isBlockedIPv6(hostname: string) {
   const normalized = hostname.toLowerCase();
+  const mappedIPv4 = getCanonicalMappedIPv4(normalized);
   return (
     normalized === '::' ||
     normalized === '::1' ||
@@ -39,9 +40,7 @@ function isBlockedIPv6(hostname: string) {
     normalized.startsWith('feb') ||
     normalized.startsWith('ff') ||
     normalized.startsWith('2001:db8') ||
-    normalized.startsWith('::ffff:127.') ||
-    normalized.startsWith('::ffff:10.') ||
-    normalized.startsWith('::ffff:192.168.')
+    (mappedIPv4 !== null && isBlockedIPv4(mappedIPv4))
   );
 }
 
@@ -61,7 +60,7 @@ export function assertSafePublicHttpUrl(rawUrl: string) {
     .replace(/^\[|\]$/g, '')
     .replace(/\.$/, '')
     .toLowerCase();
-  if (!hostname || hostname === 'localhost' || hostname.endsWith('.localhost')) {
+  if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
     throw new Error('GovData resource URL is not public');
   }
   if (!hostname.includes('.') && isIP(hostname) === 0) {

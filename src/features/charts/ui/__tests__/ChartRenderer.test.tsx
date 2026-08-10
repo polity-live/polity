@@ -1,7 +1,11 @@
+/* @vitest-environment jsdom */
+
 import { renderToStaticMarkup } from 'react-dom/server';
+import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { ChartRenderer } from '../ChartRenderer';
 import type { ChartType } from '../../types';
+import { useChartRendererController } from '../../hooks/useChartRendererController';
 
 const points = [
   { x: '2024', value: 12, series: 'North' },
@@ -53,5 +57,20 @@ describe('ChartRenderer', () => {
 
     expect(html).toContain('<svg');
     expect(html).not.toContain('NaN');
+  });
+
+  it('exposes hover state only for interactive charts', () => {
+    const staticController = renderHook(() => useChartRendererController(true));
+    expect(staticController.result.current).toEqual({
+      hoverTooltip: null,
+      onHoverChange: undefined,
+    });
+
+    const interactiveController = renderHook(() => useChartRendererController(false));
+    const tooltip = { items: [{ name: 'Value', value: '12' }], label: '2024', x: 10, y: 20 };
+    act(() => interactiveController.result.current.onHoverChange?.(tooltip));
+    expect(interactiveController.result.current.hoverTooltip).toEqual(tooltip);
+    act(() => interactiveController.result.current.onHoverChange?.(null));
+    expect(interactiveController.result.current.hoverTooltip).toBeNull();
   });
 });

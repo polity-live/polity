@@ -126,10 +126,8 @@ function changeRequestRecordOrder(
 
   const leftRow = left.changeRequest;
   const rightRow = right.changeRequest;
-  if (leftRow && rightRow) {
-    const byCreatedAt = (leftRow.created_at ?? 0) - (rightRow.created_at ?? 0);
-    if (byCreatedAt !== 0) return byCreatedAt;
-  }
+  const byCreatedAt = (leftRow?.created_at ?? 0) - (rightRow?.created_at ?? 0);
+  if (byCreatedAt !== 0) return byCreatedAt;
 
   return left.displayTitle.localeCompare(right.displayTitle);
 }
@@ -492,7 +490,10 @@ export async function repairInternalChangeRequestResolution({
     discussions,
     changeRequests: changeRequests.filter(isResolvedInternalVoteChangeRequest),
   })
-    .filter(record => !!record.changeRequest)
+    .filter(
+      (record): record is typeof record & { changeRequest: InternalChangeRequestRow } =>
+        record.changeRequest != null
+    )
     .sort(changeRequestRecordOrder);
 
   if (canonicalRecords.length === 0) {
@@ -507,9 +508,6 @@ export async function repairInternalChangeRequestResolution({
 
   for (const record of canonicalRecords) {
     const changeRequest = record.changeRequest;
-    if (!changeRequest) {
-      continue;
-    }
 
     const voteResult = getVoteResultFromStatus(changeRequest.status);
     const status = getChangeRequestResolutionStatus(voteResult);
@@ -640,7 +638,10 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
     discussions,
     changeRequests: openInternalChangeRequests,
   })
-    .filter(record => !!record.changeRequest)
+    .filter(
+      (record): record is typeof record & { changeRequest: InternalChangeRequestRow } =>
+        record.changeRequest != null
+    )
     .sort(changeRequestRecordOrder);
 
   if (canonicalRecords.length === 0) {
@@ -660,13 +661,17 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
   let eligibleUserIds: Set<string> | null = null;
 
   const ensureDocumentVersion = async () => {
-    if (!document || !document.content || documentVersionCreated) {
+    if (documentVersionCreated) {
       return;
     }
 
+    // Every non-CityDesign caller passes the document/content guard below before
+    // reaching this closure, so the document cannot disappear between both steps.
+    const versionDocument = document as NonNullable<typeof document>;
+
     const latestVersion = await tx.run(
       zql.document_version
-        .where('document_id', document.id)
+        .where('document_id', versionDocument.id)
         .orderBy('version_number', 'desc')
         .limit(1)
         .one()
@@ -675,10 +680,10 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
 
     await tx.mutate.document_version.insert({
       id: crypto.randomUUID(),
-      document_id: document.id,
+      document_id: versionDocument.id,
       amendment_id: amendmentId,
       blog_id: null,
-      content: document.content as ReadonlyJSONValue,
+      content: versionDocument.content as ReadonlyJSONValue,
       version_number: nextVersionNumber,
       change_summary: INTERNAL_EVENT_PHASE_VERSION_SUMMARY,
       author_id: ctx.userID,
@@ -692,9 +697,6 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
 
   for (const record of canonicalRecords) {
     const changeRequest = record.changeRequest;
-    if (!changeRequest) {
-      continue;
-    }
 
     if (isCityDesignSourceType((changeRequest as { source_type?: string | null }).source_type)) {
       if (!eligibleUserIds) {
@@ -762,7 +764,7 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
     );
     documentContentChanged = true;
 
-    if (matchingDiscussion && nextDiscussions.length > 0) {
+    if (nextDiscussions.length > 0) {
       const discussionIndex = nextDiscussions.findIndex(
         discussion => discussion.id === matchingDiscussion.id
       );

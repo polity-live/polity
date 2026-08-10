@@ -43,12 +43,13 @@ export function buildPaymentConversions(
   );
   const next: Record<string, CurrencyConversionResult> = {};
   for (const payment of payments) {
-    if (!Number.isFinite(payment.amount)) continue;
+    const amount = payment.amount;
+    if (typeof amount !== 'number' || !Number.isFinite(amount)) continue;
     const base = payment.currency || 'EUR';
     const date = paymentRateDate(payment.created_at);
     const rate = byRequest.get(requestKey(base, targetCurrency, date));
     if (base === targetCurrency) {
-      next[payment.id] = convertCurrency(payment.amount ?? 0, {
+      next[payment.id] = convertCurrency(amount, {
         baseCurrency: base,
         quoteCurrency: targetCurrency,
         requestedDate: date,
@@ -57,7 +58,7 @@ export function buildPaymentConversions(
         source: 'frankfurter',
         cacheStatus: 'identity',
       });
-    } else if (rate) next[payment.id] = convertCurrency(payment.amount ?? 0, rate);
+    } else if (rate) next[payment.id] = convertCurrency(amount, rate);
   }
   return next;
 }
@@ -97,11 +98,16 @@ export function usePaymentConversions(
     });
     const missingPayments = isLoading
       ? []
-      : payments.filter(payment => Number.isFinite(payment.amount) && !conversions[payment.id]);
+      : payments.filter(
+          (payment): payment is GroupPaymentRow & { amount: number } =>
+            typeof payment.amount === 'number' &&
+            Number.isFinite(payment.amount) &&
+            !conversions[payment.id]
+        );
     const missingOriginalTotals = missingPayments.reduce<Record<string, number>>(
       (totals, payment) => {
         const currency = payment.currency || 'EUR';
-        totals[currency] = (totals[currency] ?? 0) + (payment.amount ?? 0);
+        totals[currency] = (totals[currency] ?? 0) + payment.amount;
         return totals;
       },
       {}

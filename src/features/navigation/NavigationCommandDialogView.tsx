@@ -66,6 +66,7 @@ function NavigationCommandItem({
 
   return (
     <CommandItem
+      data-action-id="navigation.command.item.select"
       key={item.id}
       aria-keyshortcuts={resolvedShortcut?.ariaKeyShortcuts}
       onSelect={() => onSelect(item)}
@@ -100,6 +101,7 @@ function NavigationGroupCommandItem({
   const href = `/group/${group.id}`;
   return (
     <CommandItem
+      data-action-id="navigation.command.group.select"
       key={group.id}
       value={['group', group.name, group.id].filter(Boolean).join(' ')}
       onSelect={() => onSelect(group)}
@@ -136,6 +138,7 @@ function NavigationEventCommandItem({
 
   return (
     <CommandItem
+      data-action-id="navigation.command.event.select"
       key={event.key}
       value={['event', title, event.groupName, event.locationName, String(event.start_date)]
         .filter(Boolean)
@@ -151,7 +154,7 @@ function NavigationEventCommandItem({
       <Calendar className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
       <span className="min-w-0 flex-1">
         <span className="block truncate">{title}</span>
-        {meta ? <span className="text-muted-foreground block truncate text-xs">{meta}</span> : null}
+        <span className="text-muted-foreground block truncate text-xs">{meta}</span>
       </span>
     </CommandItem>
   );
@@ -173,6 +176,7 @@ function NavigationAmendmentCommandItem({
 
   return (
     <CommandItem
+      data-action-id="navigation.command.amendment.select"
       key={amendment.id}
       value={[
         'amendment',

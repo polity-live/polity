@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { VariantProps } from 'class-variance-authority';
-import type { PlateContentProps } from 'platejs/react';
+import type { PlateContentProps, RenderPlaceholderProps } from 'platejs/react';
 
 import { cva } from 'class-variance-authority';
 import { PlateContainer, PlateContent } from 'platejs/react';
@@ -57,7 +57,7 @@ const editorVariants = cva(
     'group/editor',
     'relative w-full cursor-text overflow-x-hidden break-words whitespace-pre-wrap select-text',
     'rounded-md ring-offset-background focus-visible:outline-none',
-    'placeholder:text-muted-foreground/80 **:data-slate-placeholder:!top-1/2 **:data-slate-placeholder:-translate-y-1/2 **:data-slate-placeholder:text-muted-foreground/80 **:data-slate-placeholder:opacity-100!',
+    'placeholder:text-muted-foreground **:data-slate-placeholder:!top-1/2 **:data-slate-placeholder:-translate-y-1/2',
     '[&_strong]:font-bold'
   ),
   {
@@ -88,11 +88,44 @@ const editorVariants = cva(
 
 export type EditorProps = PlateContentProps & VariantProps<typeof editorVariants>;
 
+function AccessibleEditorPlaceholder({ attributes, children }: RenderPlaceholderProps) {
+  return (
+    <span
+      {...attributes}
+      style={{
+        ...attributes.style,
+        color: 'var(--muted-foreground)',
+        opacity: 1,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
 export const Editor = React.forwardRef<HTMLDivElement, EditorProps>(
-  ({ className, disabled, focused, variant, ...props }, ref) => {
+  (
+    {
+      'aria-label': ariaLabel,
+      'aria-labelledby': ariaLabelledBy,
+      className,
+      disabled,
+      focused,
+      renderPlaceholder = AccessibleEditorPlaceholder,
+      variant,
+      ...props
+    },
+    ref
+  ) => {
+    const placeholderLabel =
+      typeof props.placeholder === 'string' && props.placeholder.trim()
+        ? props.placeholder
+        : undefined;
     return (
       <PlateContent
         ref={ref}
+        aria-label={ariaLabel ?? (ariaLabelledBy ? undefined : placeholderLabel)}
+        aria-labelledby={ariaLabelledBy}
         className={cn(
           editorVariants({
             disabled,
@@ -103,6 +136,7 @@ export const Editor = React.forwardRef<HTMLDivElement, EditorProps>(
         )}
         disabled={disabled}
         disableDefaultStyles
+        renderPlaceholder={renderPlaceholder}
         {...props}
       />
     );

@@ -212,6 +212,7 @@ export function NetworkFlowBaseView<T extends Node = Node>({
             onClick={() => onFullscreenChange(!isFullscreen)}
             title={fullscreenLabel}
             aria-label={fullscreenLabel}
+            data-action-id="network.flow.fullscreen.toggle"
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </ControlButton>

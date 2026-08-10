@@ -55,14 +55,11 @@ function selectPrimaryRole(roles: readonly NonNullable<NormalizedMembership['rol
 }
 
 function normalizeMemberships(
-  memberships:
-    | readonly (MembershipWithCompositionSource & {
-        membership_roles?: readonly MembershipRoleLinkLike[] | null;
-      })[]
-    | null
-    | undefined
+  memberships: readonly (MembershipWithCompositionSource & {
+    membership_roles?: readonly MembershipRoleLinkLike[] | null;
+  })[]
 ): NormalizedMembership[] {
-  return (memberships || []).map(membership => {
+  return memberships.map(membership => {
     const roles =
       membership.membership_roles
         ?.map(link => link.role)
@@ -218,7 +215,7 @@ function resolvePartGroupIdForBase(args: {
   }
 
   const path = paths[0];
-  return path[path.length - 2] ?? args.baseGroupId;
+  return path[path.length - 2];
 }
 
 function buildOfflineBucketRootResolver(args: {

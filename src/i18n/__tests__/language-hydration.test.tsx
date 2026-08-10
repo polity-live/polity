@@ -102,4 +102,26 @@ describe('language hydration', () => {
 
     expect(useLanguageStore.getState().language).toBe('de');
   });
+
+  it('falls back to English when navigator has no language', async () => {
+    vi.spyOn(window.navigator, 'language', 'get').mockReturnValue('');
+    await hydrateLanguageStore();
+    expect(useLanguageStore.getState().language).toBe('en');
+  });
+
+  it('falls back to English when navigator is unavailable', async () => {
+    const savedNavigator = navigator;
+    vi.stubGlobal('navigator', undefined);
+    await hydrateLanguageStore();
+    vi.stubGlobal('navigator', savedNavigator);
+    expect(useLanguageStore.getState().language).toBe('en');
+  });
+
+  it('returns immediately when hydration runs without a browser window', async () => {
+    const savedWindow = window;
+    vi.stubGlobal('window', undefined);
+    await hydrateLanguageStore();
+    vi.stubGlobal('window', savedWindow);
+    expect(useLanguageStore.getState().language).toBe('en');
+  });
 });

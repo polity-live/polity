@@ -10,9 +10,11 @@ export const SuggestionBreakCleanupPlugin = createPlatePlugin({
       const isSuggesting = editor.getOption(BaseSuggestionPlugin, 'isSuggesting');
       const result = insertBreak();
 
-      if (isSuggesting || !editor.selection) return result;
+      if (isSuggesting) return result;
 
-      const leafEntry = editor.api.leaf(editor.selection);
+      const selection = editor.selection;
+      if (!selection) return result;
+      const leafEntry = editor.api.leaf(selection);
       if (!leafEntry) return result;
 
       const [leaf, path] = leafEntry;
@@ -20,7 +22,7 @@ export const SuggestionBreakCleanupPlugin = createPlatePlugin({
 
       const suggestionKeys = getSuggestionKeys(leaf);
       const hasLeafSuggestion = Boolean(leaf[KEYS.suggestion]) || suggestionKeys.length > 0;
-      const blockEntry = editor.api.above({ at: editor.selection });
+      const blockEntry = editor.api.above({ at: selection });
       const hasInheritedLineBreakSuggestion =
         blockEntry &&
         ElementApi.isElement(blockEntry[0]) &&

@@ -120,7 +120,7 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
     submitConflictLoading;
 
   const triggerButton = (
-    <Button disabled={disabled}>
+    <Button data-action-id="groups.invitations.open.members-dialog" disabled={disabled}>
       <UserPlus className="mr-2 h-4 w-4" />
       {triggerLabel}
     </Button>

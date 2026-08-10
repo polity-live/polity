@@ -93,7 +93,13 @@ export function TimelineHeader({
           </div>
 
           {onSettingsClick && (
-            <Button variant="ghost" size="icon" onClick={onSettingsClick}>
+            <Button
+              data-action-id="timeline.header.settings.open"
+              data-action-kind="interaction"
+              variant="ghost"
+              size="icon"
+              onClick={onSettingsClick}
+            >
               <Settings className="h-5 w-5" />
               <span className="sr-only">
                 {t('features.timeline.header.settings', { defaultValue: 'Settings' })}
@@ -121,7 +127,14 @@ export function TimelineHeader({
         <div className="flex items-center gap-2">
           {/* Filter button - hidden in Decisions mode */}
           {!isDecisionsMode && onFilterClick && (
-            <Button variant="outline" size="sm" onClick={onFilterClick} className="relative">
+            <Button
+              data-action-id="timeline.header.filters.open"
+              data-action-kind="interaction"
+              variant="outline"
+              size="sm"
+              onClick={onFilterClick}
+              className="relative"
+            >
               <SlidersHorizontal className="mr-2 h-4 w-4" />
               {t('features.timeline.header.filter', { defaultValue: 'Filter' })}
 
@@ -142,7 +155,12 @@ export function TimelineHeader({
           {!isDecisionsMode && showSort && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button
+                  data-action-id="timeline.header.sort.open"
+                  data-action-kind="interaction"
+                  variant="outline"
+                  size="sm"
+                >
                   <ArrowUpDown className="mr-2 h-4 w-4" />
                   {t(`features.timeline.sort.${sortBy}`, { defaultValue: 'Sort' })}
                 </Button>
@@ -150,6 +168,8 @@ export function TimelineHeader({
               <DropdownMenuContent align="end">
                 {SORT_OPTIONS.map(option => (
                   <DropdownMenuItem
+                    data-action-id="timeline.header.sort.select"
+                    data-action-kind="selection"
                     key={option.value}
                     onClick={() => onSortChange(option.value)}
                     className={cn(sortBy === option.value && 'bg-accent')}

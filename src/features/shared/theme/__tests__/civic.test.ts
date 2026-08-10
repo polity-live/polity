@@ -36,7 +36,9 @@ describe('civic theme helpers', () => {
 
   it('exposes table, typeahead, Plate, and motion presets', () => {
     expect(getTableTagToneClasses('event')).toContain('--entity-event-bg');
+    expect(getTableTagToneClasses('danger')).toContain('--badge-danger-bg');
     expect(getTypeaheadRowToneClasses('user')).toContain('--entity-user-bg');
+    expect(getTypeaheadRowToneClasses('success')).toContain('--badge-success-bg');
     expect(getPlateSurfaceClasses('toolbar')).toContain('--surface-overlay');
     expect(getMotionPreset('hoverLift')).toBe('civic-motion-hover-lift');
   });

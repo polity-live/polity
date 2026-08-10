@@ -3,12 +3,34 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
+import { Dialog } from '@/features/shared/ui/ui/dialog';
 
-import { AgendaContentHeader, AgendaContextTabs, AgendaVotingWorkspace } from '../AgendaUiSystem';
+import {
+  AgendaContentHeader,
+  AgendaContextTabs,
+  AgendaDialogContent,
+  AgendaSection,
+  AgendaSectionHeading,
+  AgendaSurface,
+  AgendaVotingWorkspace,
+} from '../AgendaUiSystem';
 
 afterEach(cleanup);
 
 describe('AgendaUiSystem', () => {
+  it('renders reusable agenda surfaces and composed sections', () => {
+    const { rerender } = render(<AgendaSurface className="surface">Standalone</AgendaSurface>);
+    expect(screen.getByText('Standalone').className).toContain('surface');
+
+    rerender(
+      <AgendaSection title="Section" className="section" contentClassName="content">
+        Body
+      </AgendaSection>
+    );
+    expect(screen.getByRole('heading', { name: 'Section' })).toBeTruthy();
+    expect(screen.getByText('Body').className).toContain('content');
+  });
+
   it('keeps the compact content header separate from the fixed agenda controls', () => {
     render(
       <AgendaContentHeader
@@ -23,6 +45,30 @@ describe('AgendaUiSystem', () => {
     expect(screen.getByRole('heading', { name: 'Budget' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Fullscreen' })).toBeTruthy();
     expect(screen.queryByLabelText('Agenda controls')).toBeNull();
+  });
+
+  it('omits optional heading and header regions when they are absent', () => {
+    const { rerender } = render(<AgendaSectionHeading title="Agenda" />);
+    expect(screen.getByRole('heading', { name: 'Agenda' })).toBeTruthy();
+    expect(document.querySelector('.shrink-0')).toBeNull();
+
+    rerender(<AgendaContentHeader title="Agenda" />);
+    expect(screen.getByRole('heading', { name: 'Agenda' })).toBeTruthy();
+    expect(document.querySelector('header .shrink-0')).toBeNull();
+  });
+
+  it('renders every optional section-heading region', () => {
+    render(
+      <AgendaSectionHeading
+        title="Agenda"
+        eyebrow="Current"
+        description="Description"
+        action={<button type="button">Act</button>}
+      />
+    );
+    expect(screen.getByText('Current')).toBeTruthy();
+    expect(screen.getByText('Description')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Act' })).toBeTruthy();
   });
 
   it('uses the same voting workspace contract in every agenda mode', () => {
@@ -45,6 +91,36 @@ describe('AgendaUiSystem', () => {
     expect(document.querySelector('[data-agenda-voting-workspace="fullscreen"]')).toBeTruthy();
   });
 
+  it('renders an explicit or empty voting-workspace fallback', () => {
+    const { container, rerender } = render(
+      <AgendaVotingWorkspace mode="detail" title="Voting" emptyState={<div>No ballot</div>} />
+    );
+    expect(screen.getByText('No ballot')).toBeTruthy();
+
+    rerender(<AgendaVotingWorkspace mode="detail" title="Voting" />);
+    expect(container.querySelector('[data-agenda-voting-workspace]')?.textContent).toBe('Voting');
+  });
+
+  it('uses standard dialog sizing by default and accepts an explicit size', () => {
+    const { rerender } = render(
+      <Dialog open>
+        <AgendaDialogContent>Body</AgendaDialogContent>
+      </Dialog>
+    );
+    expect(document.querySelector('[data-slot="dialog-content"]')?.className).toContain(
+      'sm:max-w-xl'
+    );
+
+    rerender(
+      <Dialog open>
+        <AgendaDialogContent size="wide">Body</AgendaDialogContent>
+      </Dialog>
+    );
+    expect(document.querySelector('[data-slot="dialog-content"]')?.className).toContain(
+      'sm:max-w-3xl'
+    );
+  });
+
   it('switches between details and speaker list without rendering both as active', () => {
     function TestTabs() {
       const [value, setValue] = useState<'details' | 'speakers'>('details');
@@ -63,7 +139,12 @@ describe('AgendaUiSystem', () => {
     render(<TestTabs />);
     expect(screen.getByText('Amendment context')).toBeTruthy();
 
+    const detailsTab = screen.getByRole('tab', { name: 'Details' });
     const speakerTab = screen.getByRole('tab', { name: 'Speaker list' });
+    expect(detailsTab.getAttribute('data-action-id')).toBe('agendas.context.details.select');
+    expect(speakerTab.getAttribute('data-action-id')).toBe('agendas.context.speakers.select');
+    speakerTab.focus();
+    expect(document.activeElement).toBe(speakerTab);
     fireEvent.mouseDown(speakerTab, { button: 0 });
     expect(screen.getByText('Speaker queue')).toBeTruthy();
   });

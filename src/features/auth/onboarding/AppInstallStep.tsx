@@ -20,11 +20,23 @@ export function AppInstallStep({ onNext, onBack, isLoading }: AppInstallStepProp
     <OnboardingStepShell
       actions={
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
-          <Button type="button" variant="outline" onClick={onBack} disabled={isLoading}>
+          <Button
+            type="button"
+            data-action-id="auth.onboarding.app-install.back"
+            variant="outline"
+            onClick={onBack}
+            disabled={isLoading}
+          >
             <ArrowLeft className="h-4 w-4" />
             {t('common.goBack')}
           </Button>
-          <Button type="button" onClick={onNext} disabled={isLoading} size="lg">
+          <Button
+            type="button"
+            data-action-id="auth.onboarding.app-install.continue"
+            onClick={onNext}
+            disabled={isLoading}
+            size="lg"
+          >
             {t('onboarding.appInstallStep.continue')}
             <ArrowRight className="h-4 w-4" />
           </Button>

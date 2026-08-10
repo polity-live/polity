@@ -1,118 +1,130 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { Browser } from '@playwright/test';
+import { expect, type Browser } from '@playwright/test';
 
 import { db, e2eBaseUrl, type E2EDatabase } from './db';
+import { waitForAppReady } from './readiness';
+import { actorAuthStatePath, e2eActorId } from './run';
 
 export const E2E_PASSWORD = 'e2e-password-123456';
 
-export interface E2EWorkerUser {
+function authTimeoutMs() {
+  const configured = Number(process.env.E2E_AUTH_TIMEOUT_MS);
+  return Number.isFinite(configured) && configured > 0 ? configured : 90_000;
+}
+
+export interface E2EActorUser {
+  actor: string;
   id: string;
   email: string;
+  namespace: string;
   password: string;
   storageStatePath: string;
 }
 
-function workerUserId(workerIndex: number) {
-  return `00000000-0000-4000-a000-${(workerIndex + 1).toString(16).padStart(12, '0')}`;
+export type E2EWorkerUser = E2EActorUser;
+
+function emailToken(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
-function workerHandle(workerIndex: number) {
-  return `e2e-create-worker-${workerIndex}`;
+function actorHandle(userId: string) {
+  return `e2e-${userId.slice(0, 8)}`;
 }
 
-export function workerUser(workerIndex: number): E2EWorkerUser {
+export function actorUser(testNamespace: string, actor = 'primary'): E2EActorUser {
+  const namespaceToken = emailToken(testNamespace);
+  const actorToken = emailToken(actor).slice(0, 12);
+  if (!namespaceToken || !actorToken) {
+    throw new Error('E2E actor identity requires a non-empty namespace and actor.');
+  }
+  const id = e2eActorId(testNamespace, actor);
+  const actorIdentity = `${actorToken}-${id.replaceAll('-', '').slice(0, 12)}`;
+  const namespaceBudget = 58 - actorIdentity.length - 1;
+  const localPart = `${namespaceToken.slice(0, namespaceBudget)}-${actorIdentity}`;
   return {
-    id: workerUserId(workerIndex),
-    email: `e2e-create-flow-worker-${workerIndex}@polity.local`,
+    actor,
+    id,
+    email: `${localPart}@polity.local`,
+    namespace: testNamespace,
     password: E2E_PASSWORD,
-    storageStatePath: path.join(process.cwd(), 'e2e', '.auth', `worker-${workerIndex}.json`),
+    storageStatePath: actorAuthStatePath(testNamespace, actor),
   };
 }
 
-export async function ensureE2EAuthUser(user: E2EWorkerUser, createFormStyle = 'one_page') {
+function supabaseAdminConfig() {
+  const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceRoleKey) {
+    throw new Error('E2E auth provisioning requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+  }
+  return { serviceRoleKey, url: url.replace(/\/$/, '') };
+}
+
+async function provisionAuthUser(user: E2EActorUser, handle: string) {
+  const { url, serviceRoleKey } = supabaseAdminConfig();
+  const headers = {
+    apikey: serviceRoleKey,
+    authorization: `Bearer ${serviceRoleKey}`,
+    'content-type': 'application/json',
+  };
+  const attributes = {
+    email: user.email,
+    password: user.password,
+    email_confirm: true,
+    user_metadata: {
+      first_name: 'E2E',
+      last_name: 'Test Actor',
+      handle,
+      e2e_actor: user.actor,
+      e2e_prefix: user.namespace,
+    },
+  };
+  const existing = await fetch(`${url}/auth/v1/admin/users/${user.id}`, {
+    headers,
+  });
+  if (!existing.ok && existing.status !== 404) {
+    throw new Error(`Local Supabase admin user lookup failed with HTTP ${existing.status}.`);
+  }
+
+  const response = await fetch(`${url}/auth/v1/admin/users${existing.ok ? `/${user.id}` : ''}`, {
+    method: existing.ok ? 'PUT' : 'POST',
+    headers,
+    body: JSON.stringify(existing.ok ? attributes : { id: user.id, ...attributes }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Local Supabase admin user provisioning failed with HTTP ${response.status}.`);
+  }
+}
+
+async function assertPasswordCredentials(user: E2EActorUser) {
+  const { url, serviceRoleKey } = supabaseAdminConfig();
+  const response = await fetch(`${url}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { apikey: serviceRoleKey, 'content-type': 'application/json' },
+    body: JSON.stringify({ email: user.email, password: user.password }),
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Provisioned E2E password credentials failed verification with HTTP ${response.status}.`
+    );
+  }
+}
+
+export async function ensureE2EAuthUser(user: E2EActorUser, createFormStyle = 'one_page') {
   const sql = db();
-  const handle = workerHandle(Number(user.email.match(/worker-(\d+)/)?.[1] ?? 0));
+  const handle = actorHandle(user.id);
+
+  await provisionAuthUser(user, handle);
 
   await sql`
-    insert into auth.users (
-      instance_id,
-      id,
-      aud,
-      role,
-      email,
-      encrypted_password,
-      email_confirmed_at,
-      last_sign_in_at,
-      raw_app_meta_data,
-      raw_user_meta_data,
-      created_at,
-      updated_at,
-      confirmation_token,
-      email_change,
-      email_change_token_new,
-      recovery_token
-    )
-    values (
-      '00000000-0000-0000-0000-000000000000',
-      ${user.id}::uuid,
-      'authenticated',
-      'authenticated',
-      ${user.email},
-      crypt(${user.password}, gen_salt('bf')),
-      now(),
-      now(),
-      '{"provider":"email","providers":["email"]}'::jsonb,
-      jsonb_build_object(
-        'first_name', 'E2E',
-        'last_name', 'Create Worker',
-        'handle', ${handle}::text,
-        'e2e_worker', true
-      ),
-      now() - interval '1 day',
-      now(),
-      '',
-      '',
-      '',
-      ''
-    )
-    on conflict (id) do update
-    set email = excluded.email,
-        encrypted_password = excluded.encrypted_password,
-        email_confirmed_at = excluded.email_confirmed_at,
-        raw_app_meta_data = excluded.raw_app_meta_data,
-        raw_user_meta_data = excluded.raw_user_meta_data,
-        created_at = excluded.created_at,
-        updated_at = excluded.updated_at;
-  `;
-
-  await sql`
-    insert into auth.identities (
-      id,
-      user_id,
-      identity_data,
-      provider,
-      provider_id,
-      last_sign_in_at,
-      created_at,
-      updated_at
-    )
-    values (
-      ${user.id}::uuid,
-      ${user.id}::uuid,
-      jsonb_build_object(
-        'sub', ${user.id}::text,
-        'email', ${user.email}::text,
-        'email_verified', true,
-        'phone_verified', false
-      ),
-      'email',
-      ${user.email},
-      now(),
-      now(),
-      now()
-    )
-    on conflict do nothing;
+    update auth.users
+    set created_at = now() - interval '1 day'
+    where id = ${user.id}::uuid;
   `;
 
   await sql`
@@ -132,8 +144,8 @@ export async function ensureE2EAuthUser(user: E2EWorkerUser, createFormStyle = '
       ${user.email},
       ${handle},
       'E2E',
-      'Create Worker',
-      'E2E worker auth user',
+      'Test Actor',
+      ${`${user.namespace} actor ${user.actor}`},
       'public',
       now(),
       now()
@@ -149,6 +161,7 @@ export async function ensureE2EAuthUser(user: E2EWorkerUser, createFormStyle = '
   `;
 
   await ensureUserDefaults(sql, user.id, createFormStyle);
+  await assertPasswordCredentials(user);
 }
 
 export async function ensureUserDefaults(
@@ -192,29 +205,101 @@ export async function ensureUserDefaults(
   `;
 }
 
-export async function authenticateWorker(browser: Browser, workerIndex: number) {
-  const user = workerUser(workerIndex);
+export async function authenticateActor(browser: Browser, user: E2EActorUser) {
   await ensureE2EAuthUser(user);
   await fs.mkdir(path.dirname(user.storageStatePath), { recursive: true });
 
   const context = await browser.newContext({ baseURL: e2eBaseUrl() });
   const page = await context.newPage();
+  const browserErrors: string[] = [];
+  const authTraffic: string[] = [];
+  page.on('pageerror', error => browserErrors.push(error.message));
+  page.on('console', message => {
+    if (message.type() === 'error' || message.type() === 'warning') {
+      browserErrors.push(`${message.type()}: ${message.text()}`);
+    }
+  });
+  page.on('requestfailed', request =>
+    browserErrors.push(`${request.method()} ${request.url()}: ${request.failure()?.errorText}`)
+  );
+  page.on('request', request => {
+    if (request.url().includes('/auth/v1/')) {
+      let credentialMatch = '';
+      if (request.url().includes('/token') && request.postData()) {
+        try {
+          const body = request.postDataJSON() as {
+            email?: string;
+            password?: string;
+          };
+          credentialMatch = ` emailMatch=${body.email === user.email} passwordMatch=${body.password === user.password}`;
+        } catch {
+          credentialMatch = ' unreadableBody=true';
+        }
+      }
+      authTraffic.push(
+        `${request.method()} ${new URL(request.url()).origin}${new URL(request.url()).pathname}${credentialMatch}`
+      );
+    }
+  });
+  page.on('response', response => {
+    if (response.url().includes('/auth/v1/')) {
+      authTraffic.push(`${response.status()} ${new URL(response.url()).pathname}`);
+    }
+  });
 
-  await page.goto('/auth/sign-in');
+  await page.goto('/auth/sign-in', { waitUntil: 'domcontentloaded' });
+  try {
+    await expect(page.getByTestId('app-hydration')).toHaveAttribute('data-state', 'hydrated', {
+      timeout: 60_000,
+    });
+  } catch (error) {
+    throw new Error(
+      `App did not hydrate before ${user.actor} actor sign-in: ${browserErrors.join(' | ') || 'no browser error captured'}`,
+      {
+        cause: error,
+      }
+    );
+  }
   await page.locator('#email').fill(user.email);
   await page.locator('#password').fill(user.password);
-  await Promise.all([
-    page.waitForURL(url => url.pathname === '/home', { timeout: 40_000 }),
-    page.locator('form button[type="submit"]').click(),
-  ]);
-  await page.goto('/create');
-  await page.locator('[data-create-action="open-create-flow"]').first().waitFor({
-    state: 'visible',
-    timeout: 40_000,
-  });
+  const submit = page.locator('form button[type="submit"]');
+  await expect(submit).toBeEnabled();
+  await page.locator('form').evaluate(form => (form as HTMLFormElement).requestSubmit());
+  try {
+    await expect
+      .poll(() => new URL(page.url()).pathname, { timeout: authTimeoutMs() })
+      .toBe('/home');
+  } catch (error) {
+    const visibleError = await page
+      .getByRole('alert')
+      .allTextContents()
+      .catch(() => []);
+    const formState = await page
+      .locator('form')
+      .evaluate(form => ({
+        valid: (form as HTMLFormElement).checkValidity(),
+        submitDisabled: Boolean(
+          form.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled
+        ),
+        emailLength: form.querySelector<HTMLInputElement>('#email')?.value.length ?? -1,
+        passwordLength: form.querySelector<HTMLInputElement>('#password')?.value.length ?? -1,
+      }))
+      .catch(() => null);
+    throw new Error(
+      `${user.actor} actor sign-in did not reach /home (current URL: ${page.url()}, alerts: ${visibleError.join(' | ') || 'none'}, browser errors: ${browserErrors.join(' | ') || 'none'}, auth traffic: ${authTraffic.join(' | ') || 'none'}, form: ${JSON.stringify(formState)}).`,
+      { cause: error }
+    );
+  }
+
+  await page.goto('/create', { waitUntil: 'domcontentloaded' });
+  await waitForAppReady(page, 120_000);
 
   await context.storageState({ path: user.storageStatePath });
   await context.close();
 
   return user;
+}
+
+export async function removeActorAuthState(user: E2EActorUser) {
+  await fs.rm(user.storageStatePath, { force: true });
 }

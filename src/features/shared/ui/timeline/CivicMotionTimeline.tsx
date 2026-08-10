@@ -30,10 +30,6 @@ interface CivicMotionTimelineProps {
 }
 
 function getBoundedActiveIndex(items: CivicMotionTimelineItem[], activeIndex?: number) {
-  if (items.length === 0) {
-    return 0;
-  }
-
   const explicitIndex =
     typeof activeIndex === 'number' ? activeIndex : items.findIndex(item => item.isActive);
 
@@ -50,10 +46,6 @@ function getBoundedActiveIndex(items: CivicMotionTimelineItem[], activeIndex?: n
 }
 
 function getNodeCenterPositionPercent(index: number, itemCount: number) {
-  if (itemCount <= 0) {
-    return 50;
-  }
-
   return ((index + 0.5) / itemCount) * 100;
 }
 

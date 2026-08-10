@@ -20,8 +20,8 @@ function offsetLocalPoints(points: CityDesignLocalPoint[], offsetMeters?: number
   if (!offsetMeters || points.length < 2) return points;
 
   return points.map((point, index) => {
-    const previous = points[Math.max(index - 1, 0)] ?? point;
-    const next = points[Math.min(index + 1, points.length - 1)] ?? point;
+    const previous = points[Math.max(index - 1, 0)];
+    const next = points[Math.min(index + 1, points.length - 1)];
     const dx = next.x - previous.x;
     const dz = next.z - previous.z;
     const length = Math.hypot(dx, dz) || 1;
@@ -162,7 +162,7 @@ export function convertCityDesignOsmFeature(args: {
           type,
           geometry: createPathCorridorGeometry(
             corridorPoints,
-            feature.widthMeters ?? definition.defaultWidth ?? 2.5
+            feature.widthMeters ?? (definition.defaultWidth as number)
           ),
           properties: { ...definition.defaultProperties, ...properties },
           cost: {
@@ -188,3 +188,11 @@ export function convertCityDesignOsmFeature(args: {
     ),
   ];
 }
+
+export const cityDesignOsmConversionInternals = {
+  center,
+  localFeaturePoints,
+  offsetLocalPoints,
+  samplePath,
+  withProvenance,
+};

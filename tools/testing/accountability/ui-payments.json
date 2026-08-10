@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/payments/ui/PricingPageView.tsx#payments.pricing-page.auth": [
+      {
+        "file": "src/features/payments/ui/__tests__/PricingPageView.actions.test.tsx",
+        "project": "component",
+        "caseId": "opens the enterprise contact surface through a stable action",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/payments/ui/PricingPageView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/payments/ui/PricingPageView.tsx#payments.pricing-page.frankfurter": [
+      {
+        "file": "src/features/payments/ui/__tests__/PricingPageView.actions.test.tsx",
+        "project": "component",
+        "caseId": "opens the enterprise contact surface through a stable action",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/payments/ui/PricingPageView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/payments/ui/SubscriptionPlansGridView.tsx#payments.subscription-plans-grid.https-frankfurter-dev": [
+      {
+        "file": "src/features/payments/ui/__tests__/SubscriptionPlansGridView.pending-free.test.tsx",
+        "project": "component",
+        "caseId": "dispatches all plan transitions through stable disabled-aware actions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/payments/ui/SubscriptionPlansGridView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {}
+}

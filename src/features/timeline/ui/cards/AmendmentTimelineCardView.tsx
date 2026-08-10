@@ -317,6 +317,8 @@ export function AmendmentTimelineCardView({
         <Popover open={collaborationOpen} onOpenChange={setCollaborationOpen}>
           <PopoverTrigger asChild onClick={e => e.stopPropagation()}>
             <Button
+              data-action-id="timeline.amendment.collaboration.menu.open"
+              data-action-kind="selection"
               variant={getCollaborationVariant()}
               size="sm"
               loading={collaborationLoading}
@@ -331,6 +333,8 @@ export function AmendmentTimelineCardView({
             <div className="flex flex-col gap-1">
               {isCollaborator && (
                 <Button
+                  data-action-id="timeline.amendment.collaboration.leave"
+                  data-action-kind="async-action"
                   variant="ghost"
                   size="sm"
                   onClick={e => {
@@ -348,6 +352,8 @@ export function AmendmentTimelineCardView({
               {isInvited && (
                 <>
                   <Button
+                    data-action-id="timeline.amendment.invitation.accept"
+                    data-action-kind="async-action"
                     variant="ghost"
                     size="sm"
                     onClick={e => {
@@ -362,6 +368,8 @@ export function AmendmentTimelineCardView({
                     {t('features.timeline.cards.amendment.acceptInvitation')}
                   </Button>
                   <Button
+                    data-action-id="timeline.amendment.invitation.reject"
+                    data-action-kind="async-action"
                     variant="ghost"
                     size="sm"
                     onClick={e => {
@@ -379,6 +387,8 @@ export function AmendmentTimelineCardView({
               )}
               {hasRequested && (
                 <Button
+                  data-action-id="timeline.amendment.request.withdraw"
+                  data-action-kind="async-action"
                   variant="ghost"
                   size="sm"
                   onClick={e => {
@@ -395,6 +405,8 @@ export function AmendmentTimelineCardView({
               )}
               {!isCollaborator && !isInvited && !hasRequested && (
                 <Button
+                  data-action-id="timeline.amendment.collaboration.request"
+                  data-action-kind="async-action"
                   variant="ghost"
                   size="sm"
                   onClick={e => {
@@ -416,6 +428,8 @@ export function AmendmentTimelineCardView({
         {/* Discuss Button (links to discussion page) */}
         <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
           <Link
+            data-action-id="timeline.amendment.discussion.open"
+            data-action-kind="navigation"
             to="/amendment/$id/discussions"
             params={{ id: amendment.id }}
             onClick={e => e.stopPropagation()}
@@ -427,6 +441,8 @@ export function AmendmentTimelineCardView({
 
         {/* Subscribe Button */}
         <Button
+          data-action-id="timeline.amendment.subscription.toggle"
+          data-action-kind="async-action"
           variant={(amendment.isSubscribed ?? subscription.isSubscribed) ? 'outline' : 'ghost'}
           size="sm"
           onClick={e => {
@@ -448,6 +464,7 @@ export function AmendmentTimelineCardView({
         {/* Share Button */}
         <div onClick={e => e.stopPropagation()}>
           <ShareButton
+            data-action-id="timeline.amendment.share"
             url={amendmentHref}
             title={amendment.title}
             description={amendmentDescription || ''}

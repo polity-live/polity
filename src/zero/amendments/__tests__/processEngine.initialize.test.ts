@@ -175,7 +175,7 @@ function createTx(
   return tx;
 }
 
-function createTxForMissingEvent() {
+function createTxForMissingEvent(firstStepIsMerge = false) {
   const state: {
     branch?: Record<string, unknown>;
     stepRun?: Record<string, unknown>;
@@ -214,10 +214,28 @@ function createTxForMissingEvent() {
         case 11:
           return state.stepRun ? [state.stepRun] : [];
         case 12:
-          return state.branch ? [state.branch] : [];
+          return firstStepIsMerge ? (state.stepRun ?? null) : state.branch ? [state.branch] : [];
         case 13:
-          return state.stepRun ? [state.stepRun] : [];
+          return firstStepIsMerge
+            ? state.branch
+              ? [state.branch]
+              : []
+            : state.stepRun
+              ? [state.stepRun]
+              : [];
         case 14:
+          return firstStepIsMerge
+            ? state.stepRun
+              ? [state.stepRun]
+              : []
+            : state.branch
+              ? [state.branch]
+              : [];
+        case 15:
+          return state.branch ? [state.branch] : [];
+        case 16:
+          return state.stepRun ? [state.stepRun] : [];
+        case 17:
           return state.branch ? [state.branch] : [];
         default:
           return [];
@@ -291,9 +309,130 @@ function createTxForMissingEvent() {
   return tx;
 }
 
+function createTxForExistingRun(existingBranchHasStartGroup = true) {
+  const state: {
+    branch?: Record<string, unknown>;
+    stepRun?: Record<string, unknown>;
+    pathSegment?: Record<string, unknown>;
+  } = {};
+  let runCall = 0;
+  const existingBranch = {
+    id: 'branch-existing',
+    process_run_id: 'run-existing',
+    document_version_id: 'version-base',
+    status: 'scheduled',
+    created_at: 1,
+  };
+
+  const tx = {
+    run: vi.fn(async () => {
+      runCall += 1;
+      switch (runCall) {
+        case 1:
+          return {
+            id: 'amendment-1',
+            origin_amendment_id: 'origin-amendment',
+            clone_source_id: null,
+          };
+        case 2:
+          return [
+            {
+              id: 'run-existing',
+              amendment_id: 'origin-amendment',
+              selected_target_group_id: 'group-target',
+              selected_target_workflow_id: 'workflow-1',
+              status: 'scheduled',
+            },
+          ];
+        case 3:
+          return [
+            {
+              id: 'step-existing',
+              branch_id: 'branch-existing',
+              order_index: 0,
+              target_group_id: existingBranchHasStartGroup ? 'group-existing-start' : null,
+              source_group_id: existingBranchHasStartGroup ? 'group-existing-start' : null,
+            },
+          ];
+        case 4:
+          return [existingBranch];
+        case 5:
+          return {
+            id: 'version-base',
+            content: [{ type: 'p', children: [{ text: 'Existing base' }] }],
+          };
+        case 6:
+          return state.stepRun ? [state.stepRun] : [];
+        case 7:
+          return state.pathSegment ? [state.pathSegment] : [];
+        case 8:
+          return state.stepRun ? [state.stepRun] : [];
+        case 9:
+          return [existingBranch, state.branch].filter(Boolean);
+        case 10:
+          return state.stepRun ? [state.stepRun] : [];
+        case 11:
+          return [existingBranch, state.branch].filter(Boolean);
+        default:
+          return [];
+      }
+    }),
+    mutate: {
+      amendment_process_run: {
+        insert: vi.fn(async () => null),
+        update: vi.fn(async () => null),
+      },
+      amendment_process_branch: {
+        insert: vi.fn(async (args: Record<string, unknown>) => {
+          state.branch = args;
+        }),
+        update: vi.fn(async (args: Record<string, unknown>) => {
+          state.branch = { ...state.branch, ...args };
+        }),
+      },
+      amendment_path: { insert: vi.fn(async () => null) },
+      amendment_process_step_run: {
+        insert: vi.fn(async (args: Record<string, unknown>) => {
+          state.stepRun = args;
+        }),
+        update: vi.fn(async (args: Record<string, unknown>) => {
+          state.stepRun = { ...state.stepRun, ...args };
+        }),
+      },
+      amendment_path_segment: {
+        insert: vi.fn(async (args: Record<string, unknown>) => {
+          state.pathSegment = args;
+        }),
+        update: vi.fn(async (args: Record<string, unknown>) => {
+          state.pathSegment = { ...state.pathSegment, ...args };
+        }),
+      },
+      document: { insert: vi.fn(async () => null) },
+      document_version: { insert: vi.fn(async () => null) },
+      amendment: { update: vi.fn(async () => null) },
+    },
+  };
+
+  return tx;
+}
+
 describe('initializeAmendmentProcessPath', () => {
   beforeEach(() => {
     fireNotificationMock.mockReset();
+  });
+
+  it('declines an empty process path without touching the transaction', async () => {
+    const tx = { run: vi.fn(), mutate: {} };
+
+    await expect(
+      initializeAmendmentProcessPath(tx as never, 'user-1', {
+        amendment_id: 'amendment-empty',
+        amendment_title: 'Empty path',
+        amendment_reason: null,
+        enriched_path: [],
+      })
+    ).resolves.toEqual({ handled: false });
+    expect(tx.run).not.toHaveBeenCalled();
   });
 
   it('creates the process run before attaching its active branch id', async () => {
@@ -480,6 +619,45 @@ describe('initializeAmendmentProcessPath', () => {
     );
   });
 
+  it('moves an orphaned main-scope change request without inventing a suggestion id', async () => {
+    const tx = createTx(null, {
+      mainChangeRequests: [
+        {
+          id: 'change-request-orphan',
+          amendment_id: 'amendment-1',
+          process_branch_id: null,
+          suggestion_id: null,
+          title: 'Orphaned request',
+          created_at: 1,
+        },
+      ],
+    });
+
+    await initializeAmendmentProcessPath(tx as never, 'user-1', {
+      amendment_id: 'amendment-1',
+      amendment_title: 'Budget Reform',
+      amendment_reason: null,
+      enriched_path: [
+        {
+          groupId: 'group-start',
+          groupName: 'Budget Circle',
+          eventId: 'event-1',
+          eventTitle: 'Budget Assembly',
+          eventStartDate: Date.now() + 60_000,
+          agendaItemId: null,
+          amendmentVoteId: null,
+          forwardingStatus: 'forward_confirmed',
+        },
+      ],
+    });
+
+    const update = tx.mutate.change_request.update.mock.calls[0]?.[0];
+    expect(update).toEqual(
+      expect.objectContaining({ id: 'change-request-orphan', title: 'Orphaned request' })
+    );
+    expect(update).not.toHaveProperty('suggestion_id');
+  });
+
   it('repairs even legacy numbering while moving four change requests into the first branch', async () => {
     const discussions = [2, 4, 6, 8].map((crNumber, index) => ({
       id: `suggestion-${index + 1}`,
@@ -592,6 +770,91 @@ describe('initializeAmendmentProcessPath', () => {
     );
   });
 
+  it('waits for a sibling branch before scheduling an initial merge vote', async () => {
+    const tx = createTxForMissingEvent(true);
+
+    await expect(
+      initializeAmendmentProcessPath(tx as never, 'user-1', {
+        amendment_id: 'amendment-2',
+        amendment_title: 'Pending merge',
+        amendment_reason: null,
+        source_group_id: 'group-start',
+        path_mode: 'workflow',
+        enriched_path: [
+          {
+            groupId: 'group-merge',
+            groupName: 'Merge Assembly',
+            eventId: null,
+            eventTitle: 'Pending merge event',
+            eventStartDate: null,
+            workflowStepId: 'workflow-merge',
+            stepKind: 'merge_vote',
+            agendaItemId: null,
+            amendmentVoteId: null,
+            forwardingStatus: 'previous_decision_outstanding',
+          },
+        ],
+      })
+    ).resolves.toMatchObject({ handled: true, branchStatus: 'pending_event' });
+
+    expect(tx.mutate.process_task.insert).toHaveBeenCalledTimes(1);
+    expect(tx.mutate.agenda_item.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.vote.insert).not.toHaveBeenCalled();
+  });
+
+  it('persists explicit workflow task metadata and evaluation settings', async () => {
+    const tx = createTxForMissingEvent();
+
+    await initializeAmendmentProcessPath(tx as never, 'user-1', {
+      amendment_id: 'amendment-2',
+      amendment_title: 'Workflow metadata',
+      amendment_reason: null,
+      workflow_id: 'workflow-1',
+      path_mode: 'workflow',
+      evaluation_mode: 'fixed_date',
+      evaluation_date: 123_456,
+      evaluation_offset_months: 2,
+      evaluation_offset_years: 1,
+      enriched_path: [
+        {
+          groupId: 'group-later',
+          groupName: 'Later Assembly',
+          eventId: null,
+          eventTitle: 'Pending event',
+          eventStartDate: null,
+          workflowStepId: 'workflow-step-1',
+          stepKind: 'workflow_handoff',
+          selectionMode: 'explicit_workflow',
+          mergeStrategy: 'winner_continues',
+          eventRule: 'next_open_event',
+          targetWorkflowId: 'workflow-child',
+          agendaItemId: null,
+          amendmentVoteId: null,
+          forwardingStatus: 'previous_decision_outstanding',
+        },
+      ],
+    });
+
+    expect(tx.mutate.process_task.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          requiredAfter: null,
+          requiredBefore: null,
+          workflowId: 'workflow-1',
+          workflowStepId: 'workflow-step-1',
+          stepKind: 'workflow_handoff',
+          selectionMode: 'explicit_workflow',
+          mergeStrategy: 'winner_continues',
+          eventRule: 'next_open_event',
+          autoTaskOnMissingEvent: true,
+          targetWorkflowId: 'workflow-child',
+          evaluationMode: 'fixed_date',
+          evaluationDueAt: 123_456,
+        }),
+      })
+    );
+  });
+
   it('rejects adding another branch from an already used start group', async () => {
     const tx = {
       run: vi
@@ -608,10 +871,17 @@ describe('initializeAmendmentProcessPath', () => {
         ])
         .mockResolvedValueOnce([
           {
+            id: 'step-existing-later',
+            branch_id: 'branch-existing',
+            order_index: 1,
+            target_group_id: 'group-later',
+            source_group_id: 'group-start',
+          },
+          {
             id: 'step-existing',
             branch_id: 'branch-existing',
             order_index: 0,
-            target_group_id: 'group-start',
+            target_group_id: null,
             source_group_id: 'group-start',
           },
         ]),
@@ -647,6 +917,53 @@ describe('initializeAmendmentProcessPath', () => {
     expect(tx.mutate.amendment_process_branch.insert).not.toHaveBeenCalled();
   });
 
+  it('adds a new start branch to the matching active target run', async () => {
+    const tx = createTxForExistingRun(false);
+
+    await expect(
+      initializeAmendmentProcessPath(tx as never, 'user-2', {
+        amendment_id: 'amendment-1',
+        amendment_title: 'Second branch',
+        amendment_reason: null,
+        source_group_id: 'group-new-start',
+        workflow_id: 'workflow-1',
+        path_mode: 'workflow',
+        enriched_path: [
+          {
+            groupId: 'group-target',
+            groupName: 'Target group',
+            eventId: null,
+            eventTitle: 'Event to schedule',
+            eventStartDate: null,
+            agendaItemId: null,
+            amendmentVoteId: null,
+            forwardingStatus: 'forward_confirmed',
+            autoTaskOnMissingEvent: false,
+          },
+        ],
+      })
+    ).resolves.toEqual(
+      expect.objectContaining({
+        handled: true,
+        processRunId: 'run-existing',
+        branchStatus: 'pending_event',
+        runStatus: 'scheduled',
+      })
+    );
+
+    expect(tx.mutate.amendment_process_run.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.document_version.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.document.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: [{ type: 'p', children: [{ text: 'Existing base' }] }],
+      })
+    );
+    expect(tx.mutate.amendment_process_branch.insert).toHaveBeenCalledOnce();
+    expect(tx.mutate.amendment.update).toHaveBeenCalledWith(
+      expect.not.objectContaining({ discussions: [] })
+    );
+  });
+
   it('rejects creating a new target run while another active run exists', async () => {
     const tx = {
       run: vi
@@ -656,7 +973,7 @@ describe('initializeAmendmentProcessPath', () => {
           {
             id: 'run-existing',
             amendment_id: 'amendment-1',
-            selected_target_group_id: 'group-other-target',
+            selected_target_group_id: null,
             selected_target_workflow_id: null,
             status: 'scheduled',
           },
@@ -691,5 +1008,57 @@ describe('initializeAmendmentProcessPath', () => {
     ).rejects.toThrow('active process target');
 
     expect(tx.mutate.amendment_process_branch.insert).not.toHaveBeenCalled();
+  });
+
+  it('repairs a missing amendment origin before validating active process targets', async () => {
+    const tx = {
+      run: vi
+        .fn()
+        .mockResolvedValueOnce({
+          id: 'amendment-clone',
+          origin_amendment_id: null,
+          clone_source_id: 'amendment-origin',
+        })
+        .mockResolvedValueOnce([
+          { id: 'run-completed', status: 'completed' },
+          {
+            id: 'run-active',
+            selected_target_group_id: 'group-other-target',
+            selected_target_workflow_id: null,
+            status: 'scheduled',
+          },
+        ]),
+      mutate: {
+        amendment: { update: vi.fn(async () => null) },
+        amendment_process_branch: { insert: vi.fn(async () => null) },
+      },
+    };
+
+    await expect(
+      initializeAmendmentProcessPath(tx as never, 'user-1', {
+        amendment_id: 'amendment-clone',
+        amendment_title: 'Clone process',
+        amendment_reason: null,
+        enriched_path: [
+          {
+            groupId: 'group-target',
+            groupName: 'Target',
+            eventId: null,
+            eventTitle: 'Pending event',
+            eventStartDate: null,
+            agendaItemId: null,
+            amendmentVoteId: null,
+            forwardingStatus: 'previous_decision_outstanding',
+          },
+        ],
+      })
+    ).rejects.toThrow('active process target');
+
+    expect(tx.mutate.amendment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'amendment-clone',
+        origin_amendment_id: 'amendment-origin',
+      })
+    );
   });
 });

@@ -73,6 +73,10 @@ describe('useCreateRecoveryActions', () => {
   });
 
   it.each([
+    ['group', '/create/group', 'groups.createFull'],
+    ['event', '/create/event', 'events.createFull'],
+    ['amendment', '/create/amendment', 'amendments.createFull'],
+    ['blog', '/create/blog', 'blogs.createFull'],
     ['statement', '/create/statement', 'statements.createFull'],
     ['todo', '/create/todo', 'todos.createFull'],
     ['agenda_item', '/create/agenda-item', 'agendas.createFull'],
@@ -137,5 +141,63 @@ describe('useCreateRecoveryActions', () => {
     });
 
     expect(mutate).not.toHaveBeenCalled();
+  });
+
+  it('keeps null and unsupported drafts inert', () => {
+    const { result, rerender } = renderHook(({ draft }) => useCreateRecoveryActions(draft), {
+      initialProps: { draft: null as CreateRecoveryDraft | null },
+    });
+
+    expect(result.current.canRetry).toBe(false);
+    act(() => {
+      result.current.retry();
+      result.current.restore();
+      result.current.discard();
+    });
+
+    rerender({ draft: createDraft({ entityType: 'user' as any }) });
+    expect(result.current.canRetry).toBe(false);
+    act(() => result.current.retry());
+    expect(mutate).not.toHaveBeenCalled();
+  });
+
+  it('settles retry state when a mutation has no client promise', async () => {
+    mutate.mockReturnValueOnce({ server: new Promise(() => undefined) });
+    const { result } = renderHook(() =>
+      useCreateRecoveryActions(createDraft({ entityType: 'group' }))
+    );
+
+    act(() => result.current.retry());
+    expect(result.current.isRetrying).toBe(true);
+    await act(async () => Promise.resolve());
+    expect(result.current.isRetrying).toBe(false);
+  });
+
+  it('restores and discards a saved draft', () => {
+    const draft = createDraft({ createPath: '#restored' });
+    const browserWindow = window;
+    const assign = vi.fn();
+    const { result } = renderHook(() => useCreateRecoveryActions(draft));
+
+    vi.stubGlobal('window', {
+      sessionStorage: browserWindow.sessionStorage,
+      dispatchEvent: browserWindow.dispatchEvent.bind(browserWindow),
+      location: { assign },
+    });
+    act(() => result.current.restore());
+    expect(assign).toHaveBeenCalledWith('#restored');
+    expect(browserWindow.sessionStorage.getItem('polity:create:restore')).not.toBeNull();
+
+    act(() => result.current.discard());
+    expect(browserWindow.sessionStorage.getItem(`polity:create:recovery:${draft.id}`)).toBeNull();
+    vi.stubGlobal('window', browserWindow);
+  });
+
+  it('does not restore outside a browser runtime', () => {
+    const browserWindow = window;
+    const { result } = renderHook(() => useCreateRecoveryActions(createDraft({})));
+    vi.stubGlobal('window', undefined);
+    act(() => result.current.restore());
+    vi.stubGlobal('window', browserWindow);
   });
 });

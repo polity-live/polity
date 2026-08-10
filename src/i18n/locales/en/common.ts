@@ -1,5 +1,6 @@
 export const commonTranslations = {
   done: 'Done',
+  remove: 'Remove',
   enabled: 'Enabled',
   attached: 'Attached',
   unknown: 'Unknown',
@@ -69,6 +70,7 @@ export const commonTranslations = {
     voteProgress: 'Vote submission progress',
     guidePagination: 'Guide pagination',
     removeAttachment: 'Remove attachment',
+    insertEdgeBendPoint: 'Insert edge bend point',
     moveEdgeBendPoint: 'Move edge bend point',
     carousel: 'carousel',
     slide: 'slide',
@@ -77,6 +79,11 @@ export const commonTranslations = {
     removeNamed: 'Remove {{name}}',
     openNamed: 'Open {{name}}',
     openAgendaItem: 'Open agenda item {{title}}',
+    selectNamed: 'Select {{name}}',
+  },
+  pagination: {
+    previous: 'Previous',
+    next: 'Next',
   },
   days: {
     monday: 'Monday',

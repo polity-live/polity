@@ -1,12 +1,13 @@
 /* @vitest-environment jsdom */
 
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { RolesPermissionsTable } from '../RolesPermissionsTable';
 
 describe('RolesPermissionsTable', () => {
   it('renders grouped section tables for action rights', () => {
-    render(
+    const onTogglePermission = vi.fn();
+    const { container } = render(
       <RolesPermissionsTable
         roles={[
           {
@@ -16,7 +17,7 @@ describe('RolesPermissionsTable', () => {
             action_rights: [],
           },
         ]}
-        onTogglePermission={vi.fn()}
+        onTogglePermission={onTogglePermission}
       />
     );
 
@@ -41,5 +42,15 @@ describe('RolesPermissionsTable', () => {
     expect(matrixSurface).toBeTruthy();
     expect(matrixSurface?.className).toContain('rounded-md');
     expect(matrixSurface?.className).toContain('shadow-[var(--shadow-panel)]');
+    const permission = container.querySelector<HTMLElement>(
+      '[data-action-id="groups.roles.permissions.toggle"]'
+    )!;
+    fireEvent.click(permission);
+    expect(onTogglePermission).toHaveBeenCalledWith(
+      'role-1',
+      expect.any(String),
+      expect.any(String),
+      false
+    );
   });
 });

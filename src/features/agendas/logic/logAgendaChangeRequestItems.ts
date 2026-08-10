@@ -38,5 +38,5 @@ export function logAgendaChangeRequestItems(
     pendingDisplayItems?: readonly AgendaChangeRequestLogItem[];
   }
 ) {
-  if (!import.meta.env.DEV) return;
+  // Intentionally retained as a no-op compatibility hook for former development logging.
 }

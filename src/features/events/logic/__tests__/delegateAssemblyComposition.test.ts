@@ -188,9 +188,104 @@ describe('buildDelegateAssemblyCompositionRows', () => {
       percentage: 100,
     });
   });
+
+  it('covers sparse groups, legacy seat metadata, event timing, labels, and all sort tie-breakers', () => {
+    const rows = buildDelegateAssemblyCompositionRows({
+      targetEventId: 'target-event',
+      metric: 'scheduled',
+      referenceTime: REFERENCE_TIME,
+      allocations: [
+        { group_id: null, group: null, allocated_seats: 5 },
+        { group: { id: 'from-group', name: null }, allocated_seats: -2 },
+        { group_id: 'a', group: { id: 'a', name: null }, allocated_seats: 2 },
+        { group_id: 'a', group: { id: 'a', name: 'Alpha' }, allocated_seats: null },
+        { group_id: 'b', group: { id: 'b', name: 'Beta' }, allocated_seats: 2 },
+      ],
+      delegates: [
+        { status: 'confirmed', group: { id: 'a', name: 'Ignored label' }, seat_count: 0 },
+        { status: 'confirmed', group_id: null, group: null, seat_count: 2 },
+        { status: 'pending', group_id: 'b', seat_count: 9 },
+      ],
+      scheduledElections: [
+        { description: null, agenda_item: null },
+        {
+          description: delegateElectionDescription({ sourceGroupId: 'no-event' }),
+          agenda_item: null,
+        },
+        {
+          description: delegateElectionDescription({ sourceGroupId: '', allSeatRoleIds: [] }),
+          agenda_item: { event: { status: 'planned', end_date: REFERENCE_TIME + 1 } },
+        },
+        {
+          description: delegateElectionDescription({
+            sourceGroupId: 'a',
+            seatRoleIds: ['legacy-seat'],
+            allSeatRoleIds: [],
+          }),
+          agenda_item: { event: { status: 'planned', end_date: REFERENCE_TIME + 1 } },
+        },
+        {
+          description: delegateElectionDescription({ sourceGroupId: 'b' }),
+          agenda_item: { event: { status: 'planned', end_date: REFERENCE_TIME - 1 } },
+        },
+        {
+          description: delegateElectionDescription({ sourceGroupId: 'b' }),
+          agenda_item: { event: { status: 'planned', start_date: null, end_date: null } },
+        },
+      ],
+    });
+    expect(rows.find(row => row.groupId === 'a')).toMatchObject({
+      label: 'Alpha',
+      scheduledSeatCount: 1,
+      value: 1,
+    });
+    expect(rows.some(row => row.groupId === 'from-group')).toBe(false);
+
+    const zeroMetric = buildDelegateAssemblyCompositionRows({
+      targetEventId: 'target-event',
+      metric: 'elected',
+      allocations: [
+        { group_id: 'b', group: { id: 'b', name: 'Beta' }, allocated_seats: 1 },
+        { group_id: 'a', group: { id: 'a', name: 'Alpha' }, allocated_seats: 2 },
+        { group_id: 'c', group: { id: 'c', name: 'Charlie' }, allocated_seats: 2 },
+      ],
+      delegates: [],
+      scheduledElections: [],
+      referenceTime: REFERENCE_TIME,
+    });
+    expect(zeroMetric.every(row => row.percentage === 0)).toBe(true);
+
+    const tiedSections = buildDelegateAssemblyCompositionSections({
+      targetEventId: 'target-event',
+      allocations: [
+        { group_id: 'z', group: { id: 'z', name: 'Zulu' }, allocated_seats: 1 },
+        { group_id: 'a', group: { id: 'a', name: 'Alpha' }, allocated_seats: 1 },
+      ],
+      delegates: [],
+      scheduledElections: [],
+      referenceTime: REFERENCE_TIME,
+    });
+    expect(tiedSections[0].rows.map(row => row.label)).toEqual(['Alpha', 'Zulu']);
+  });
 });
 
 describe('buildDelegateAssemblyCompositionSections', () => {
+  it('returns three empty sections without remainder rows', () => {
+    const sections = buildDelegateAssemblyCompositionSections({
+      targetEventId: 'target-event',
+      allocations: [],
+      delegates: [],
+      scheduledElections: [],
+      referenceTime: REFERENCE_TIME,
+    });
+    expect(
+      sections.map(section => ({ id: section.id, total: section.total, rows: section.rows }))
+    ).toEqual([
+      { id: 'planned', total: 0, rows: [] },
+      { id: 'scheduled', total: 0, rows: [] },
+      { id: 'elected', total: 0, rows: [] },
+    ]);
+  });
   it('builds planned chart rows from allocated subgroup seats only', () => {
     const sections = buildDelegateAssemblyCompositionSections({
       targetEventId: 'target-event',

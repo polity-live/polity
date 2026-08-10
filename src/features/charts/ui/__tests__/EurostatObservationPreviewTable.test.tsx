@@ -47,4 +47,22 @@ describe('EurostatObservationPreviewTable', () => {
     expect(screen.getByText('OBS_STATUS: A')).toBeTruthy();
     expect(screen.queryByText('105')).toBeNull();
   });
+
+  it('renders unlabeled dimensions, missing values, missing attributes, and loading copy', () => {
+    const { unmount } = render(
+      <EurostatObservationPreviewTable
+        dimensions={[{ id: 'geo', label: '', position: 0, values: [] }]}
+        rows={[
+          { id: 'with-attribute', value: 1, dimensions: {}, attributes: { STATUS: 'A' } },
+          { id: 'without-attribute', value: 2, dimensions: {}, attributes: {} },
+        ]}
+      />
+    );
+    expect(screen.getByText('geo')).toBeTruthy();
+    expect(screen.getAllByText('-').length).toBeGreaterThan(1);
+
+    unmount();
+    render(<EurostatObservationPreviewTable dimensions={[]} rows={[]} loading />);
+    expect(screen.queryAllByTestId('eurostat-observation-preview-row')).toHaveLength(5);
+  });
 });

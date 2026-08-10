@@ -6,7 +6,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EditorViewShell } from '../EditorViewShell';
 
 vi.mock('@/features/shared/ui/action-buttons/ShareButton.tsx', () => ({
-  ShareButton: () => <button type="button">Share</button>,
+  ShareButton: ({ 'data-action-id': actionId }: any) => (
+    <button type="button" data-action-id={actionId}>
+      Share
+    </button>
+  ),
 }));
 
 vi.mock('@/features/shared/ui/kit-platejs/plate-editor', () => ({
@@ -135,6 +139,8 @@ describe('EditorViewShell action toolbar', () => {
   it('keeps the toolbar available when the caller permits it', () => {
     render(<EditorViewShell model={model(true)} />);
 
-    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Share' }).dataset.actionId).toBe(
+      'editor.shell.share.open'
+    );
   });
 });

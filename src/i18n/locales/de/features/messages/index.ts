@@ -66,6 +66,7 @@ export const messagesTranslations = {
     send: 'Senden',
     cancel: 'Abbrechen',
     sending: 'Wird gesendet...',
+    removeAttachment: 'Anhang entfernen',
   },
   conversation: {
     title: 'Unterhaltung',
@@ -121,6 +122,7 @@ export const messagesTranslations = {
     information: 'Hinweise zur KI-Nutzung',
     searchSettings: 'Tools und Skills durchsuchen…',
     noSettingsFound: 'Keine passenden Tools oder Skills gefunden.',
+    removeSkill: 'Skill entfernen',
     openResult: 'Öffnen',
     showMoreResults: '{{count}} weitere anzeigen',
     showFewerResults: 'Weniger anzeigen',

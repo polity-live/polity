@@ -21,7 +21,7 @@ test.describe('create/dashboard', () => {
     await clearCreateRecoverySessionStateForPage(page);
   });
 
-  test('dashboard cards navigate to every create route @smoke', async ({ page }) => {
+  test('dashboard cards navigate to every create route @nightly', async ({ page }) => {
     for (const route of createRoutes) {
       await page.goto('/create');
       await waitForCreateDashboardReady(page);
@@ -30,7 +30,7 @@ test.describe('create/dashboard', () => {
     }
   });
 
-  test('auto layout preference renders a create flow @smoke', async ({ createFlowPage }) => {
+  test('auto layout preference renders a create flow @nightly', async ({ createFlowPage }) => {
     await createFlowPage.goto('/create/group', 'auto');
     await createFlowPage.expectLoaded('group');
   });

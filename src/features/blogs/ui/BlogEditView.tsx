@@ -72,7 +72,11 @@ export function BlogEditView({
             {t('features.blogs.editPage.notFoundDescription')}
           </p>
           <div className="mt-6">
-            <Button onClick={() => navigate({ to: '/home' })} variant="default">
+            <Button
+              data-action-id="blogs.edit.back-to-blogs"
+              onClick={() => navigate({ to: '/home' })}
+              variant="default"
+            >
               {t('features.blogs.editPage.backToBlogs')}
             </Button>
           </div>
@@ -88,7 +92,11 @@ export function BlogEditView({
       description={t('features.blogs.editPage.description')}
       size="wide"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form
+        data-action-id="blogs.edit.save.form-submit"
+        onSubmit={handleSubmit}
+        className="space-y-6"
+      >
         <SettingsTabs
           value={activeTab}
           onValueChange={onTabChange}
@@ -174,10 +182,16 @@ export function BlogEditView({
 
         {/* Action Buttons */}
         <SettingsActionBar className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button type="button" variant="outline" onClick={navigateToBlog} disabled={isSubmitting}>
+          <Button
+            data-action-id="blogs.edit.cancel"
+            type="button"
+            variant="outline"
+            onClick={navigateToBlog}
+            disabled={isSubmitting}
+          >
             {t('features.blogs.editPage.cancel')}
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button data-action-id="blogs.edit.save" type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
