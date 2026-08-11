@@ -139,37 +139,6 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser-component
 
-  coverage-tests:
-    name: Coverage Ratchet
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm install --global npm@${NPM_VERSION}
-      - run: npm ci
-      - name: Run instrumented coverage suite
-        run: npm run test:coverage
-      - name: Enforce repository and changed-code coverage
-        run: |
-          node tools/testing/check-coverage-ratchet.mjs
-          npm run test:coverage:branches:check
-          npm run test:coverage:changed
-          npm run test:accountability:coverage
-      - name: Upload coverage diagnostics
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: coverage-${{ github.run_attempt }}
-          if-no-files-found: error
-          retention-days: 14
-          path: coverage/
-
   coverage-shards:
     name: Coverage Shard ${{ matrix.shard }} of 4
     runs-on: ubuntu-latest
@@ -209,24 +178,30 @@ jobs:
           retention-days: 14
           path: ${{ runner.temp }}/polity-coverage-shards/${{ matrix.shard }}-of-4/
 
-  merge-coverage-shards:
-    name: Merge Coverage Shards and Verify Parity
-    needs: [coverage-tests, coverage-shards]
+  coverage-ratchet:
+    name: Coverage Ratchet
+    if: always()
+    needs: coverage-shards
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Require successful coverage shards
+        env:
+          COVERAGE_SHARDS_RESULT: ${{ needs.coverage-shards.result }}
+        run: |
+          if [[ "$COVERAGE_SHARDS_RESULT" != "success" ]]; then
+            echo "Coverage shards did not all succeed: $COVERAGE_SHARDS_RESULT"
+            exit 1
+          fi
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm install --global npm@${NPM_VERSION}
       - run: npm ci
-      - name: Download monolithic coverage baseline
-        uses: actions/download-artifact@v7
-        with:
-          name: coverage-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/coverage-baseline
       - name: Download coverage blobs
         uses: actions/download-artifact@v7
         with:
@@ -240,33 +215,27 @@ jobs:
             echo "Expected four coverage blobs, received $blob_count"
             exit 1
           fi
-      - name: Merge into an isolated candidate directory
+      - name: Merge coverage shards
         run: |
           npx vitest \
             --config vitest.coverage.config.ts \
             --merge-reports "$RUNNER_TEMP/coverage-blobs" \
             --coverage \
-            "--coverage.reportsDirectory=$RUNNER_TEMP/coverage-merged"
-      - name: Compare merged coverage with the monolithic report
+            "--coverage.reportsDirectory=coverage"
+      - name: Enforce repository and changed-code coverage
         run: |
-          baseline="$(find "$RUNNER_TEMP/coverage-baseline" -type f -name coverage-final.json -print -quit)"
-          candidate="$RUNNER_TEMP/coverage-merged/coverage-final.json"
-          if [[ -z "$baseline" || ! -f "$candidate" ]]; then
-            echo "Coverage baseline or merged candidate is missing"
-            exit 1
-          fi
-          node tools/testing/compare-coverage-reports.mjs \
-            --baseline "$baseline" \
-            --candidate "$candidate" \
-            --manifest tools/testing/coverage-manifest.json
-      - name: Upload merged coverage candidate
+          node tools/testing/check-coverage-ratchet.mjs
+          npm run test:coverage:branches:check
+          npm run test:coverage:changed
+          npm run test:accountability:coverage
+      - name: Upload merged coverage diagnostics
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: coverage-merged-${{ github.run_attempt }}
-          if-no-files-found: error
+          name: coverage-${{ github.run_attempt }}
+          if-no-files-found: ignore
           retention-days: 14
-          path: ${{ runner.temp }}/coverage-merged/
+          path: coverage/
 
   security-tests:
     name: Security Contracts

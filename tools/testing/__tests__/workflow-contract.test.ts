@@ -30,8 +30,9 @@ describe('GitHub workflow contracts', () => {
     expect(ci).toContain('run: npm run build:e2e');
   });
 
-  it('runs four isolated coverage shards and compares a temp merge with the monolithic report', () => {
+  it('runs four isolated coverage shards and gates the merged report', () => {
     const ci = workflow('ci.yml');
+    const ratchet = ci.slice(ci.indexOf('  coverage-ratchet:'), ci.indexOf('  security-tests:'));
 
     expect(ci).toContain('coverage-shards:');
     expect(ci).toContain('shard: [1, 2, 3, 4]');
@@ -39,10 +40,21 @@ describe('GitHub workflow contracts', () => {
     expect(ci).not.toContain('COVERAGE_SHARD_ARTIFACT_DIR: ${{ runner.temp }}');
     expect(ci).toContain('npm run test:coverage:shard -- "${{ matrix.shard }}/4"');
     expect(ci).toContain('path: .vitest-reports/blob-${{ matrix.shard }}-4.json');
-    expect(ci).toContain('needs: [coverage-tests, coverage-shards]');
-    expect(ci).toContain('--merge-reports "$RUNNER_TEMP/coverage-blobs"');
-    expect(ci).toContain('"--coverage.reportsDirectory=$RUNNER_TEMP/coverage-merged"');
-    expect(ci).toContain('--candidate "$candidate"');
+    expect(ci).not.toContain('\n  coverage-tests:');
+    expect(ratchet).toContain('name: Coverage Ratchet');
+    expect(ratchet).toContain('if: always()');
+    expect(ratchet).toContain('needs: coverage-shards');
+    expect(ratchet).toContain('COVERAGE_SHARDS_RESULT: ${{ needs.coverage-shards.result }}');
+    expect(ratchet).toContain('if [[ "$COVERAGE_SHARDS_RESULT" != "success" ]]');
+    expect(ratchet).toContain('fetch-depth: 0');
+    expect(ratchet).toContain('--merge-reports "$RUNNER_TEMP/coverage-blobs"');
+    expect(ratchet).toContain('"--coverage.reportsDirectory=coverage"');
+    expect(ratchet).toContain('node tools/testing/check-coverage-ratchet.mjs');
+    expect(ratchet).toContain('npm run test:coverage:branches:check');
+    expect(ratchet).toContain('npm run test:coverage:changed');
+    expect(ratchet).toContain('npm run test:accountability:coverage');
+    expect(ratchet).not.toContain('coverage-baseline');
+    expect(ratchet).not.toContain('compare-coverage-reports.mjs');
   });
 
   it('fails closed when the recent successful PR pipeline P95 exceeds 15 minutes', () => {
