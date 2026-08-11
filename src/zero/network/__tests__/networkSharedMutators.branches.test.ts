@@ -274,11 +274,16 @@ describe('networkSharedMutators full branch contract', () => {
         args: { id: 'step-client', group_id: 'group-explicit' },
       });
       const serverTx = createTx();
-      serverTx.run.mockResolvedValueOnce({ group_id: 'group-fallback' }).mockResolvedValueOnce(null);
+      serverTx.run
+        .mockResolvedValueOnce({ group_id: 'group-fallback' })
+        .mockResolvedValueOnce(null);
       await (networkSharedMutators[name].fn as any)({
         tx: serverTx,
         ctx,
-        args: { id: 'step-server', group_id: name === 'updateWorkflowStep' ? 'group-explicit' : undefined },
+        args: {
+          id: 'step-server',
+          group_id: name === 'updateWorkflowStep' ? 'group-explicit' : undefined,
+        },
       });
       await (networkSharedMutators[name].fn as any)({
         tx: serverTx,

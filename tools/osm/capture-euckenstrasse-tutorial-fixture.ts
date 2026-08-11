@@ -136,12 +136,14 @@ export function serializeEuckenstrasseTutorialFixture(
   )}\n`;
 }
 
-export async function runCaptureEuckenstrasseFixtureCli(options: {
-  capture?: typeof captureEuckenstrasseTutorialFixture;
-  write?: typeof writeFile;
-  outputPath?: string;
-  logger?: Pick<Console, 'info'>;
-} = {}) {
+export async function runCaptureEuckenstrasseFixtureCli(
+  options: {
+    capture?: typeof captureEuckenstrasseTutorialFixture;
+    write?: typeof writeFile;
+    outputPath?: string;
+    logger?: Pick<Console, 'info'>;
+  } = {}
+) {
   const capture = options.capture ?? captureEuckenstrasseTutorialFixture;
   const write = options.write ?? writeFile;
   const outputPath = options.outputPath ?? DEFAULT_OUTPUT_PATH;

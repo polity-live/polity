@@ -103,10 +103,9 @@ describe('search state normalization helpers', () => {
   });
 
   it('deduplicates by first occurrence', () => {
-    expect(dedupeSearchItemsById([{ id: 'a', value: 1 }, { id: 'a', value: 2 }, { id: 'b' }])).toEqual([
-      { id: 'a', value: 1 },
-      { id: 'b' },
-    ]);
+    expect(
+      dedupeSearchItemsById([{ id: 'a', value: 1 }, { id: 'a', value: 2 }, { id: 'b' }])
+    ).toEqual([{ id: 'a', value: 1 }, { id: 'b' }]);
   });
 });
 
@@ -225,7 +224,9 @@ describe('useSearchState facade contract', () => {
       elections: [{ id: 'election-1' }],
       allHashtags: [{ id: 'hashtag-1' }],
     });
-    expect(mocks.calls.find(call => call.key === 'search.searchableTodosByGroups')?.args).toMatchObject({
+    expect(
+      mocks.calls.find(call => call.key === 'search.searchableTodosByGroups')?.args
+    ).toMatchObject({
       group_ids: ['group-1', 'group-2', 'group-3', 'group-4'],
       limit: 7,
       query: 'needle',

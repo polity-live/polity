@@ -167,10 +167,10 @@ describe('vote server eligibility and tally helpers', () => {
       voteId: 'vote-1',
       userId: 'user-1',
     });
-    await api.assertOnlineVoteAllowed(
-      txWith([{ agenda_item_id: 'agenda-1' }, null]) as never,
-      { voteId: 'vote-1', userId: 'user-1' }
-    );
+    await api.assertOnlineVoteAllowed(txWith([{ agenda_item_id: 'agenda-1' }, null]) as never, {
+      voteId: 'vote-1',
+      userId: 'user-1',
+    });
     await api.assertOnlineVoteAllowed(
       txWith([{ agenda_item_id: 'agenda-1' }, { event_id: 'event-1' }]) as never,
       { voteId: 'vote-1', userId: 'user-1' }
@@ -199,9 +199,9 @@ describe('vote server eligibility and tally helpers', () => {
       nextChoiceId: 'choice-1',
       nextCount: 1,
     };
-    await expect(api.assertOfflineVoteTallyWithinCap(txWith([null]) as never, args)).rejects.toThrow(
-      /not linked/i
-    );
+    await expect(
+      api.assertOfflineVoteTallyWithinCap(txWith([null]) as never, args)
+    ).rejects.toThrow(/not linked/i);
 
     await api.assertOfflineVoteTallyWithinCap(
       txWith([
@@ -282,7 +282,9 @@ describe('vote server change-request sequencing helpers', () => {
   });
 
   it('finds process branches from links, choices, and agenda step fallbacks', async () => {
-    expect(await api.findProcessBranchIdForAgendaItem(txWith([null]) as never, 'agenda-1')).toBeNull();
+    expect(
+      await api.findProcessBranchIdForAgendaItem(txWith([null]) as never, 'agenda-1')
+    ).toBeNull();
     expect(
       await api.findProcessBranchIdForAgendaItem(
         txWith([{ branch_id: 'branch-1' }]) as never,
@@ -306,11 +308,7 @@ describe('vote server change-request sequencing helpers', () => {
 
     expect(
       await api.findProcessBranchIdsForVote(
-        txWith([
-          null,
-          null,
-          [{ branch_id: 'branch-3' }, { branch_id: null }],
-        ]) as never,
+        txWith([null, null, [{ branch_id: 'branch-3' }, { branch_id: null }]]) as never,
         { id: 'vote-1', agenda_item_id: 'agenda-1' }
       )
     ).toEqual(['branch-3']);
@@ -323,10 +321,10 @@ describe('vote server change-request sequencing helpers', () => {
     ).toEqual([]);
 
     expect(
-      await api.findProcessBranchIdsForVote(
-        txWith([null, [], null]) as never,
-        { id: 'vote-1', agenda_item_id: 'agenda-1' }
-      )
+      await api.findProcessBranchIdsForVote(txWith([null, [], null]) as never, {
+        id: 'vote-1',
+        agenda_item_id: 'agenda-1',
+      })
     ).toEqual([]);
   });
 
@@ -347,9 +345,7 @@ describe('vote server change-request sequencing helpers', () => {
 
     await expect(
       api.assertNoOpenChangeRequestsBeforeFinalVote(
-        txWith([
-          [{ id: 'variant', purpose: 'merge_variant', status: 'indicative' }],
-        ]) as never,
+        txWith([[{ id: 'variant', purpose: 'merge_variant', status: 'indicative' }]]) as never,
         { id: 'vote-1', agenda_item_id: 'agenda-1', purpose: 'change_request' }
       )
     ).rejects.toThrow(/variant final vote/i);
@@ -549,11 +545,7 @@ describe('vote server result and lifecycle helpers', () => {
           { id: 'voter-2', user_id: 'user-2', participation_channel: 'offline' },
           { id: null, user_id: 'invalid', participation_channel: 'online' },
         ],
-        [
-          { voter_id: 'voter-1' },
-          { voter_id: 'voter-2' },
-          { voter_id: 'missing' },
-        ],
+        [{ voter_id: 'voter-1' }, { voter_id: 'voter-2' }, { voter_id: 'missing' }],
         [
           { phase: 'indicative', count: 9 },
           { phase: 'final', count: -2 },
@@ -613,16 +605,18 @@ describe('vote server result and lifecycle helpers', () => {
 
   it('auto-closes only when a final vote has a complete nonempty electorate', async () => {
     const updateSpy = vi.spyOn(voteServerMutators.updateVote, 'fn').mockResolvedValue(undefined);
-    await api.maybeCloseVoteWhenAllFinalVotersVoted(txWith([null]) as never, ctx as never, 'vote-1');
+    await api.maybeCloseVoteWhenAllFinalVotersVoted(
+      txWith([null]) as never,
+      ctx as never,
+      'vote-1'
+    );
     await api.maybeCloseVoteWhenAllFinalVotersVoted(
       txWith([{ id: 'vote-1', status: 'indicative' }]) as never,
       ctx as never,
       'vote-1'
     );
     await api.maybeCloseVoteWhenAllFinalVotersVoted(
-      txWith([
-        { id: 'vote-1', status: 'final', agenda_item_id: null },
-      ]) as never,
+      txWith([{ id: 'vote-1', status: 'final', agenda_item_id: null }]) as never,
       ctx as never,
       'vote-1'
     );
@@ -647,13 +641,7 @@ describe('vote server result and lifecycle helpers', () => {
 
   it('synchronizes unique mutable process branches and skips terminal or unchanged branches', async () => {
     await api.syncVoteEventEditingMode(txWith() as never, ctx, null, ['branch-1'], 'suggest_event');
-    await api.syncVoteEventEditingMode(
-      txWith() as never,
-      ctx,
-      'amendment-1',
-      [],
-      'suggest_event'
-    );
+    await api.syncVoteEventEditingMode(txWith() as never, ctx, 'amendment-1', [], 'suggest_event');
     const tx = txWith([
       null,
       { id: 'branch-passed', editing_mode: 'passed' },
@@ -706,10 +694,11 @@ describe('vote server result and lifecycle helpers', () => {
     );
     expect(fallback).toEqual(expect.objectContaining({ acceptVotes: 0, rejectVotes: 0 }));
 
-    const empty = await api.summarizeFinalVoteResult(
-      txWith([[], [], [], []]) as never,
-      { id: 'vote-1', majority_type: 'two_thirds', offline_electorate_size: 0 }
-    );
+    const empty = await api.summarizeFinalVoteResult(txWith([[], [], [], []]) as never, {
+      id: 'vote-1',
+      majority_type: 'two_thirds',
+      offline_electorate_size: 0,
+    });
     expect(empty).toEqual(expect.objectContaining({ acceptVotes: 0, rejectVotes: 0 }));
   });
 
@@ -718,13 +707,11 @@ describe('vote server result and lifecycle helpers', () => {
     expect(await api.materializeFinalVoteTiming(txWith() as never, {}, explicit)).toBe(explicit);
     expect(
       await api.materializeFinalVoteTiming(txWith() as never, {}, { closing_duration_seconds: 2.9 })
-    ).toEqual(expect.objectContaining({ closing_duration_seconds: 2, closing_end_time: expect.any(Number) }));
+    ).toEqual(
+      expect.objectContaining({ closing_duration_seconds: 2, closing_end_time: expect.any(Number) })
+    );
     expect(
-      await api.materializeFinalVoteTiming(
-        txWith() as never,
-        { closing_duration_seconds: 3.9 },
-        {}
-      )
+      await api.materializeFinalVoteTiming(txWith() as never, { closing_duration_seconds: 3.9 }, {})
     ).toEqual(expect.objectContaining({ closing_duration_seconds: 3 }));
     expect(
       await api.materializeFinalVoteTiming(
@@ -734,7 +721,11 @@ describe('vote server result and lifecycle helpers', () => {
       )
     ).toEqual(expect.objectContaining({ closing_duration_seconds: 4 }));
     expect(
-      await api.materializeFinalVoteTiming(txWith([null]) as never, { agenda_item_id: 'agenda-1' }, {})
+      await api.materializeFinalVoteTiming(
+        txWith([null]) as never,
+        { agenda_item_id: 'agenda-1' },
+        {}
+      )
     ).toEqual({});
     expect(
       await api.materializeFinalVoteTiming(
@@ -756,7 +747,13 @@ describe('vote server result and lifecycle helpers', () => {
 
   it('marks absent, tied, linked, and standalone timeline results', async () => {
     expect(
-      await api.markTimelineVoteResult(txWith([null]) as never, ctx as never, { id: 'vote-1' }, 'passed', 1)
+      await api.markTimelineVoteResult(
+        txWith([null]) as never,
+        ctx as never,
+        { id: 'vote-1' },
+        'passed',
+        1
+      )
     ).toBeNull();
     const tied = txWith([{ id: 'link-1' }]);
     await api.markTimelineVoteResult(tied as never, ctx as never, { id: 'vote-1' }, 'tie', 1);
@@ -767,20 +764,20 @@ describe('vote server result and lifecycle helpers', () => {
     await api.markTimelineVoteResult(linked as never, ctx as never, { id: 'vote-1' }, 'passed', 1);
     expect(mocks.resolveChangeRequestByVoteResult).toHaveBeenCalled();
     const closing = txWith([{ id: 'link-2', change_request_id: null }]);
-    await api.markTimelineVoteResult(closing as never, ctx as never, { id: 'vote-2' }, 'rejected', 1);
+    await api.markTimelineVoteResult(
+      closing as never,
+      ctx as never,
+      { id: 'vote-2' },
+      'rejected',
+      1
+    );
     expect(closing.mutate.agenda_item_change_request.update).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'completed' })
     );
   });
 
   it('closes sparse, process-linked, and non-notifying expired votes', async () => {
-    const sparse = txWith([
-      [],
-      [],
-      [],
-      [],
-      null,
-    ]);
+    const sparse = txWith([[], [], [], [], null]);
     await api.closeExpiredFinalVote(
       sparse as never,
       ctx as never,
@@ -829,11 +826,7 @@ describe('vote server result and lifecycle helpers', () => {
       },
       100
     );
-    expect(mocks.materializeCurrentVoting).toHaveBeenCalledWith(
-      processVote,
-      ctx,
-      'branch-1'
-    );
+    expect(mocks.materializeCurrentVoting).toHaveBeenCalledWith(processVote, ctx, 'branch-1');
     expect(mocks.fireNotification).toHaveBeenCalledWith(
       'notifyVotingCompleted',
       expect.objectContaining({ agendaItemTitle: 'Agenda item' })
@@ -902,7 +895,9 @@ describe('vote server public mutator edge branches', () => {
       args: { vote_id: 'vote-1', phase: 'indicative' } as never,
     });
     expect(updateSpy).toHaveBeenLastCalledWith(
-      expect.objectContaining({ args: expect.not.objectContaining({ closing_end_time: expect.anything() }) })
+      expect.objectContaining({
+        args: expect.not.objectContaining({ closing_end_time: expect.anything() }),
+      })
     );
     await voteServerMutators.startVote.fn({
       tx: txWith([{ id: 'vote-1' }]) as never,
@@ -972,9 +967,9 @@ describe('vote server public mutator edge branches', () => {
   });
 
   it('enforces final snapshot membership, channels, choices, and idempotency', async () => {
-    await expect(
-      submit([{ ...baseVote, status: 'final' }], { phase: 'final' })
-    ).rejects.toThrow(/not been snapshotted/i);
+    await expect(submit([{ ...baseVote, status: 'final' }], { phase: 'final' })).rejects.toThrow(
+      /not been snapshotted/i
+    );
     const finalVote = { ...baseVote, status: 'final', electorate_snapshotted_at: 1 };
     await expect(submit([finalVote, null], { phase: 'final' })).rejects.toThrow(/not part/i);
     await expect(
@@ -983,10 +978,9 @@ describe('vote server public mutator edge branches', () => {
       })
     ).rejects.toThrow(/offline tally flow/i);
     await expect(
-      submit(
-        [finalVote, { id: 'voter-1', participation_channel: 'online' }, [{ id: 'other' }]],
-        { phase: 'final' }
-      )
+      submit([finalVote, { id: 'voter-1', participation_channel: 'online' }, [{ id: 'other' }]], {
+        phase: 'final',
+      })
     ).rejects.toThrow(/choice not found/i);
 
     await submit(

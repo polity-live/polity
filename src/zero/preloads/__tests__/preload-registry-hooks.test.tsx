@@ -21,9 +21,7 @@ describe('preload registry hooks', () => {
     expect(mocks.preload).not.toHaveBeenCalled();
     empty.unmount();
 
-    const populated = renderHook(() =>
-      useZeroPreloads([{ key: 'one', query: { id: 'one' } }])
-    );
+    const populated = renderHook(() => useZeroPreloads([{ key: 'one', query: { id: 'one' } }]));
     expect(mocks.preload).toHaveBeenCalledOnce();
     populated.unmount();
     expect(mocks.cleanup).toHaveBeenCalledOnce();

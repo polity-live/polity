@@ -359,10 +359,25 @@ describe('group server membership effects', () => {
 
   it('emits every leave notification and handles direct/derived/absent membership effects', async () => {
     const variants = [
-      { user_id: 'actor', status: 'requested', source: 'direct', event: 'notifyGroupRequestWithdrawn' },
-      { user_id: 'actor', status: 'invited', source: 'direct', event: 'notifyGroupInvitationDeclined' },
+      {
+        user_id: 'actor',
+        status: 'requested',
+        source: 'direct',
+        event: 'notifyGroupRequestWithdrawn',
+      },
+      {
+        user_id: 'actor',
+        status: 'invited',
+        source: 'direct',
+        event: 'notifyGroupInvitationDeclined',
+      },
       { user_id: 'actor', status: 'active', source: 'direct', event: 'notifyMembershipWithdrawn' },
-      { user_id: 'other', status: 'requested', source: 'hierarchy', event: 'notifyMembershipRejected' },
+      {
+        user_id: 'other',
+        status: 'requested',
+        source: 'hierarchy',
+        event: 'notifyMembershipRejected',
+      },
       { user_id: 'other', status: 'active', source: 'hierarchy', event: 'notifyMembershipRemoved' },
     ];
     const absent = createTx();
@@ -382,8 +397,20 @@ describe('group server membership effects', () => {
     await mutators.updateMembership.fn({ tx: absent, ctx, args: { id: 'membership' } });
 
     const variants = [
-      { old: 'requested', next: 'active', user: 'actor', group: { group_type: 'base' }, event: 'notifyGroupInvitationAccepted' },
-      { old: 'invited', next: 'active', user: 'other', group: { group_type: 'sibling' }, event: 'notifyMembershipApproved' },
+      {
+        old: 'requested',
+        next: 'active',
+        user: 'actor',
+        group: { group_type: 'base' },
+        event: 'notifyGroupInvitationAccepted',
+      },
+      {
+        old: 'invited',
+        next: 'active',
+        user: 'other',
+        group: { group_type: 'sibling' },
+        event: 'notifyMembershipApproved',
+      },
       { old: 'active', next: 'admin', user: 'other', group: null, event: 'notifyAdminPromoted' },
       { old: 'admin', next: 'active', user: 'other', group: null, event: 'notifyAdminDemoted' },
       { old: 'active', next: 'inactive', user: 'other', group: { group_type: 'base' } },
@@ -401,9 +428,13 @@ describe('group server membership effects', () => {
       await mutators.updateMembership.fn({
         tx,
         ctx,
-        args: { id: 'membership', ...(variant.next === undefined ? {} : { status: variant.next }) } as never,
+        args: {
+          id: 'membership',
+          ...(variant.next === undefined ? {} : { status: variant.next }),
+        } as never,
       });
-      if (variant.event) expect(mocks.notify).toHaveBeenCalledWith(variant.event, expect.anything());
+      if (variant.event)
+        expect(mocks.notify).toHaveBeenCalledWith(variant.event, expect.anything());
     }
   });
 });
@@ -456,7 +487,11 @@ describe('group server guest access effects', () => {
   });
 
   it('runs absent and present guest role notification wrappers', async () => {
-    for (const method of [mutators.addGuestRole, mutators.removeGuestRole, mutators.syncGuestRoles]) {
+    for (const method of [
+      mutators.addGuestRole,
+      mutators.removeGuestRole,
+      mutators.syncGuestRoles,
+    ]) {
       const absent = createTx();
       absent.run.mockResolvedValueOnce(null);
       await method.fn({
@@ -466,7 +501,12 @@ describe('group server guest access effects', () => {
       });
       const present = createTx();
       present.run
-        .mockResolvedValueOnce({ id: 'guest', group_id: 'group', user_id: 'user', status: 'inactive' })
+        .mockResolvedValueOnce({
+          id: 'guest',
+          group_id: 'group',
+          user_id: 'user',
+          status: 'inactive',
+        })
         .mockResolvedValueOnce([{ role_id: 'old' }]);
       await method.fn({
         tx: present,
@@ -479,7 +519,11 @@ describe('group server guest access effects', () => {
 
 describe('group server profile, role, right, and history notifications', () => {
   it('updates group profiles with explicit and loaded names', async () => {
-    await mutators.update.fn({ tx: createTx(), ctx, args: { id: 'group', name: 'Explicit' } as never });
+    await mutators.update.fn({
+      tx: createTx(),
+      ctx,
+      args: { id: 'group', name: 'Explicit' } as never,
+    });
     await mutators.update.fn({ tx: createTx(), ctx, args: { id: 'group' } as never });
     expect(mocks.groupName).toHaveBeenCalled();
   });
@@ -491,13 +535,19 @@ describe('group server profile, role, right, and history notifications', () => {
       args: { id: 'role', name: 'Role', group_id: 'group' } as never,
     });
     const blogCreate = createTx();
-    blogCreate.run.mockResolvedValueOnce({ group_id: 'group' }).mockResolvedValueOnce({ user_id: 'owner' });
+    blogCreate.run
+      .mockResolvedValueOnce({ group_id: 'group' })
+      .mockResolvedValueOnce({ user_id: 'owner' });
     await mutators.createRole.fn({
       tx: blogCreate,
       ctx,
       args: { id: 'role', name: 'Role', blog_id: 'blog' } as never,
     });
-    await mutators.createRole.fn({ tx: createTx(), ctx, args: { id: 'role', name: 'Role' } as never });
+    await mutators.createRole.fn({
+      tx: createTx(),
+      ctx,
+      args: { id: 'role', name: 'Role' } as never,
+    });
 
     mocks.roleInfo.group = { name: 'Group role', groupId: 'group' };
     await mutators.deleteRole.fn({ tx: createTx(), ctx, args: { id: 'group' } });
@@ -586,9 +636,18 @@ describe('group server profile, role, right, and history notifications', () => {
       args: { id: 'history', end_date: 1 } as never,
     });
     for (const pair of [
-      [{ id: 'history', role_id: 'role', end_date: 1 }, { id: 'history', end_date: 2 }],
-      [{ id: 'history', role_id: null, end_date: null }, { id: 'history', end_date: 2 }],
-      [{ id: 'history', role_id: 'role', end_date: null }, { id: 'history', end_date: 0 }],
+      [
+        { id: 'history', role_id: 'role', end_date: 1 },
+        { id: 'history', end_date: 2 },
+      ],
+      [
+        { id: 'history', role_id: null, end_date: null },
+        { id: 'history', end_date: 2 },
+      ],
+      [
+        { id: 'history', role_id: 'role', end_date: null },
+        { id: 'history', end_date: 0 },
+      ],
     ]) {
       const tx = createTx();
       tx.run.mockResolvedValueOnce(pair[0]);

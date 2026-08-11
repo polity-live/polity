@@ -21,13 +21,17 @@ describe('deployment default prompt boundary', () => {
 
     prompt.question.mockResolvedValue('n');
     await expect(
-      runDeployCli({ args: [], inputIsTTY: true, reporter: {
-        error: vi.fn(),
-        info: vi.fn(),
-        step: vi.fn(),
-        success: vi.fn(),
-        warn: vi.fn(),
-      } })
+      runDeployCli({
+        args: [],
+        inputIsTTY: true,
+        reporter: {
+          error: vi.fn(),
+          info: vi.fn(),
+          step: vi.fn(),
+          success: vi.fn(),
+          warn: vi.fn(),
+        },
+      })
     ).resolves.toMatchObject({ deployed: false, reason: 'no-targets' });
   });
 });

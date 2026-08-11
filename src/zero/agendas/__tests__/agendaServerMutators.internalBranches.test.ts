@@ -37,7 +37,9 @@ vi.mock('../../groups/server-mutators', () => ({
 vi.mock('../../votes/server-mutators', () => ({
   voteServerMutators: { createVote: { fn: mocks.createVote } },
 }));
-vi.mock('../../ballot-eligibility', () => ({ snapshotVoteElectorate: mocks.snapshotVoteElectorate }));
+vi.mock('../../ballot-eligibility', () => ({
+  snapshotVoteElectorate: mocks.snapshotVoteElectorate,
+}));
 vi.mock('../../server-helpers', () => ({
   eventTitle: mocks.eventTitle,
   recomputeEventCounters: mocks.recomputeEventCounters,
@@ -123,7 +125,9 @@ describe('agenda server helper branches', () => {
   });
 
   it('allows absent, closing, current, and completed timeline records but rejects later items', async () => {
-    expect(await api.assertCurrentChangeRequestTimelineItem(txWith([null]) as never, 'link-1')).toBeNull();
+    expect(
+      await api.assertCurrentChangeRequestTimelineItem(txWith([null]) as never, 'link-1')
+    ).toBeNull();
     const closing = { id: 'closing', is_closing_vote: true };
     expect(
       await api.assertCurrentChangeRequestTimelineItem(txWith([closing]) as never, 'closing')
@@ -176,11 +180,7 @@ describe('agenda server helper branches', () => {
     mocks.can.mockRejectedValueOnce(unexpected);
     mocks.isPermissionError.mockReturnValueOnce(false);
     await expect(
-      api.assertCanManageAgendaVoteFlow(
-        txWith([{ event_id: 'event-1' }]) as never,
-        ctx,
-        'agenda-1'
-      )
+      api.assertCanManageAgendaVoteFlow(txWith([{ event_id: 'event-1' }]) as never, ctx, 'agenda-1')
     ).rejects.toBe(unexpected);
 
     mocks.can.mockRejectedValueOnce(eventPermission).mockRejectedValueOnce(unexpected);
@@ -216,11 +216,10 @@ describe('agenda server helper branches', () => {
 
   it('accepts active voters, vote managers, and amendment managers for suggestion votes', async () => {
     await expect(
-      api.assertCanEnsureEventSuggestionChangeRequestVotes(
-        txWith([null]) as never,
-        ctx,
-        { agenda_item_id: 'agenda-1', amendment_id: 'amendment-1' }
-      )
+      api.assertCanEnsureEventSuggestionChangeRequestVotes(txWith([null]) as never, ctx, {
+        agenda_item_id: 'agenda-1',
+        amendment_id: 'amendment-1',
+      })
     ).rejects.toThrow(/not linked/i);
     await expect(
       api.assertCanEnsureEventSuggestionChangeRequestVotes(
@@ -340,7 +339,11 @@ describe('agenda server helper branches', () => {
       null,
       'suggest_event'
     );
-    for (const branch of [null, { id: 'passed', editing_mode: 'passed' }, { id: 'rejected', editing_mode: 'rejected' }]) {
+    for (const branch of [
+      null,
+      { id: 'passed', editing_mode: 'passed' },
+      { id: 'rejected', editing_mode: 'rejected' },
+    ]) {
       await api.syncBranchEditingMode(
         txWith([branch]) as never,
         ctx,
@@ -422,9 +425,9 @@ describe('agenda server public mutator edge branches', () => {
   }
 
   it('rejects a mismatched amendment during internal materialization', async () => {
-    await expect(
-      initialize([{ amendment_id: 'other-amendment' }])
-    ).rejects.toThrow(/different amendment/i);
+    await expect(initialize([{ amendment_id: 'other-amendment' }])).rejects.toThrow(
+      /different amendment/i
+    );
   });
 
   it('materializes sparse non-event data and starts an untimed closing vote', async () => {
@@ -620,12 +623,7 @@ describe('agenda server public mutator edge branches', () => {
 
   it('handles explicit and inferred suggestion-branch edge cases', async () => {
     await agendaServerMutators.ensureEventSuggestionChangeRequestVotes.fn({
-      tx: txWith([
-        { event_id: 'event-1', amendment_id: 'amendment-1' },
-        null,
-        null,
-        null,
-      ]) as never,
+      tx: txWith([{ event_id: 'event-1', amendment_id: 'amendment-1' }, null, null, null]) as never,
       ctx,
       args: {
         amendment_id: 'amendment-1',
@@ -839,7 +837,9 @@ describe('agenda server public mutator edge branches', () => {
       args: { id: 'agenda-1' } as never,
     });
     await agendaServerMutators.updateAgendaItem.fn({
-      tx: txWith([{ id: 'agenda-2', event_id: null, status: 'pending', type: 'discussion' }]) as never,
+      tx: txWith([
+        { id: 'agenda-2', event_id: null, status: 'pending', type: 'discussion' },
+      ]) as never,
       ctx,
       args: { id: 'agenda-2', event_id: 'event-2', status: 'pending' } as never,
     });

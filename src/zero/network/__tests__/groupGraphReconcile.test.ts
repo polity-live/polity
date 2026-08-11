@@ -640,7 +640,11 @@ describe('group graph hierarchy membership projection', () => {
         },
       ],
       membershipRoles: [
-        { id: 'existing-role-link', group_membership_id: 'derived-top-user-1', role_id: 'top-member' },
+        {
+          id: 'existing-role-link',
+          group_membership_id: 'derived-top-user-1',
+          role_id: 'top-member',
+        },
       ],
       existingHierarchyPaths: [{ id: 'old-path' }],
       existingRights: [{ id: 'old-right' }],

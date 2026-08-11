@@ -35,7 +35,12 @@ function key(name: string, args: unknown) {
   return `${name}:${JSON.stringify(args)}`;
 }
 
-function setResult(name: string, args: unknown, value: unknown, type: 'unknown' | 'complete' = 'complete') {
+function setResult(
+  name: string,
+  args: unknown,
+  value: unknown,
+  type: 'unknown' | 'complete' = 'complete'
+) {
   mocks.results.set(key(name, args), [value, { type }]);
 }
 
@@ -43,7 +48,9 @@ beforeEach(() => {
   mocks.results.clear();
   mocks.useQuery.mockReset();
   mocks.useQuery.mockImplementation((query?: { key: string }) =>
-    query ? (mocks.results.get(query.key) ?? [undefined, { type: 'complete' }]) : [undefined, { type: 'complete' }]
+    query
+      ? (mocks.results.get(query.key) ?? [undefined, { type: 'complete' }])
+      : [undefined, { type: 'complete' }]
   );
 });
 
@@ -63,18 +70,14 @@ describe('useMessageState', () => {
   });
 
   it('returns all query data, reverses message windows, and removes empty unread rows', () => {
-    setResult(
-      'messages',
-      { conversation_id: 'conversation-1', limit: 25 },
-      [{ id: 'newest' }, { id: 'oldest' }]
-    );
+    setResult('messages', { conversation_id: 'conversation-1', limit: 25 }, [
+      { id: 'newest' },
+      { id: 'oldest' },
+    ]);
     setResult('conversation', { id: 'conversation-1' }, { id: 'conversation-1' });
     setResult('unread', { conversation_id: 'conversation-1' }, [{ count: 2 }]);
     setResult('relations', { limit: 5 }, [{ id: 'relations-1' }]);
-    setResult('for-unread', {}, [
-      { conversation: { id: 'unread-1' } },
-      { conversation: null },
-    ]);
+    setResult('for-unread', {}, [{ conversation: { id: 'unread-1' } }, { conversation: null }]);
     setResult('by-user', { user_id: 'user-1' }, [{ id: 'user-conversation-1' }]);
     setResult('by-group', { group_id: 'group-1' }, { id: 'group-conversation-1' });
 
@@ -120,16 +123,16 @@ describe('useMessageState', () => {
   });
 
   it.each([
-    ['messages', { conversationId: 'conversation-1' }, { conversation_id: 'conversation-1', limit: 80 }],
+    [
+      'messages',
+      { conversationId: 'conversation-1' },
+      { conversation_id: 'conversation-1', limit: 80 },
+    ],
     ['conversation', { conversationId: 'conversation-1' }, { id: 'conversation-1' }],
     ['unread', { conversationId: 'conversation-1' }, { conversation_id: 'conversation-1' }],
     ['relations', { includeRelations: true }, { limit: undefined }],
     ['for-unread', { includeForUnread: true }, {}],
-    [
-      'by-user',
-      { includeConversationsByUser: true, userId: 'user-1' },
-      { user_id: 'user-1' },
-    ],
+    ['by-user', { includeConversationsByUser: true, userId: 'user-1' }, { user_id: 'user-1' }],
     ['by-group', { groupId: 'group-1' }, { group_id: 'group-1' }],
   ] as const)('reports the %s loading boundary', (name, options, args) => {
     setResult(name, args, undefined, 'unknown');

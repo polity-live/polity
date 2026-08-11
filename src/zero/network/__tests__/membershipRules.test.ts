@@ -47,9 +47,9 @@ describe('network membership rule normalization', () => {
       required_source_role_id: 'role',
       eligible_origin_group_ids: [],
     });
-    expect(
-      normalizeMembershipRule({ ...baseRule, membership_mode: 'role_members' })
-    ).toMatchObject({ required_source_role_id: null });
+    expect(normalizeMembershipRule({ ...baseRule, membership_mode: 'role_members' })).toMatchObject(
+      { required_source_role_id: null }
+    );
   });
 
   it('deduplicates valid direct and related selected-source origins', () => {
@@ -86,9 +86,9 @@ describe('network membership rule normalization', () => {
     expect(hasActiveMembershipRules(baseRule)).toBe(true);
     expect(hasActiveMembershipRules(null)).toBe(false);
     expect(sameMembershipRules(baseRule, { ...baseRule })).toBe(true);
-    expect(
-      sameMembershipRules(baseRule, { ...baseRule, membership_mode: 'role_members' })
-    ).toBe(false);
+    expect(sameMembershipRules(baseRule, { ...baseRule, membership_mode: 'role_members' })).toBe(
+      false
+    );
     expect(sameMembershipRules(null, undefined)).toBe(true);
   });
 

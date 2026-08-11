@@ -101,7 +101,9 @@ describe('agenda timing calculation', () => {
       calculated_start_time: 4_000_000,
       calculated_end_time: 4_300_000,
     });
-    expect(calculated.find(item => item.id === 'no-event-id')?.calculated_start_time).toBeUndefined();
+    expect(
+      calculated.find(item => item.id === 'no-event-id')?.calculated_start_time
+    ).toBeUndefined();
     expect(calculated.find(item => item.id === 'no-start')?.calculated_start_time).toBeUndefined();
   });
 
@@ -128,7 +130,9 @@ describe('agenda state hook contracts', () => {
     mocks.results.set('agendas.byEventIds', [
       { id: 'multi', event_id: 'event-2', duration: 1, event: { start_date: 200 } },
     ]);
-    expect(renderHook(() => useAgendaState({ eventIds: ['event-2'] })).result.current).toMatchObject({
+    expect(
+      renderHook(() => useAgendaState({ eventIds: ['event-2'] })).result.current
+    ).toMatchObject({
       agendaItems: [{ id: 'multi', calculated_start_time: 200 }],
       isLoading: false,
     });
@@ -147,18 +151,18 @@ describe('agenda state hook contracts', () => {
     );
     mocks.statuses.delete('agendas.byEvent');
     mocks.statuses.set('agendas.byEventIds', 'unknown');
-    expect(renderHook(() => useAgendaState({ eventIds: ['event-2'] })).result.current.isLoading).toBe(
-      true
-    );
+    expect(
+      renderHook(() => useAgendaState({ eventIds: ['event-2'] })).result.current.isLoading
+    ).toBe(true);
   });
 
   it('supports timing and optional timeline projections', () => {
     mocks.results.set('agendas.timingByEventIds', [
       { id: 'timing', event_id: 'event-1', event: { start_date: 100 } },
     ]);
-    expect(renderHook(() => useAgendaTimingState(['event-1'])).result.current.agendaItems).toHaveLength(
-      1
-    );
+    expect(
+      renderHook(() => useAgendaTimingState(['event-1'])).result.current.agendaItems
+    ).toHaveLength(1);
     expect(renderHook(() => useAgendaTimingState()).result.current).toEqual({
       agendaItems: [],
       isLoading: false,
@@ -181,9 +185,9 @@ describe('agenda state hook contracts', () => {
       isLoading: false,
     });
     mocks.statuses.set('agendas.timelineByEventIds', 'unknown');
-    expect(renderHook(() => useAgendaTimelineState(['event-1'], true)).result.current.isLoading).toBe(
-      true
-    );
+    expect(
+      renderHook(() => useAgendaTimelineState(['event-1'], true)).result.current.isLoading
+    ).toBe(true);
   });
 
   it('partitions change-request timeline states and annotates vote steps', () => {
@@ -207,7 +211,10 @@ describe('agenda state hook contracts', () => {
       progress: 0.25,
       isLoading: false,
     });
-    expect(current.crTimeline[0]).toHaveProperty('_voteStepKind', AGENDA_VOTE_STEP_KIND.mergeVariant);
+    expect(current.crTimeline[0]).toHaveProperty(
+      '_voteStepKind',
+      AGENDA_VOTE_STEP_KIND.mergeVariant
+    );
     expect(current.crTimeline[2]).toHaveProperty('_voteStepKind', AGENDA_VOTE_STEP_KIND.closing);
 
     expect(renderHook(() => useAgendaItemCRTimeline(undefined)).result.current).toMatchObject({
@@ -220,7 +227,9 @@ describe('agenda state hook contracts', () => {
       isLoading: false,
     });
     mocks.statuses.set('agendas.changeRequestTimeline', 'unknown');
-    expect(renderHook(() => useAgendaItemCRTimeline('agenda-1')).result.current.isLoading).toBe(true);
+    expect(renderHook(() => useAgendaItemCRTimeline('agenda-1')).result.current.isLoading).toBe(
+      true
+    );
   });
 
   it('returns the first agenda item for an amendment', () => {

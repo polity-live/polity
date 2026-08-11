@@ -327,11 +327,7 @@ describe('amendment query nested authorization', () => {
 
     amendmentQueries.threads.fn({ args: { amendment_id: 'amendment-1' }, ctx: anonymousCtx });
     const threadCalls = lastQuery('thread').calls;
-    expect(relatedCalls(threadCalls, 'votes')).toContainEqual([
-      'where',
-      'id',
-      '__unauthorized__',
-    ]);
+    expect(relatedCalls(threadCalls, 'votes')).toContainEqual(['where', 'id', '__unauthorized__']);
     expect(relatedCalls(relatedCalls(threadCalls, 'comments'), 'votes')).toContainEqual([
       'where',
       'id',
@@ -366,10 +362,14 @@ describe('amendment query nested authorization', () => {
     });
     const filtered = lastQuery('amendment').calls;
     expect(filtered).toContainEqual(['orderBy', 'created_at', 'asc']);
-    expect(filtered).toContainEqual(['start', { id: 'start', created_at: 1 }, { inclusive: false }]);
-    expect(filtered.some(call => call[0] === 'whereExists' && call[1] === 'amendment_hashtags')).toBe(
-      true
-    );
+    expect(filtered).toContainEqual([
+      'start',
+      { id: 'start', created_at: 1 },
+      { inclusive: false },
+    ]);
+    expect(
+      filtered.some(call => call[0] === 'whereExists' && call[1] === 'amendment_hashtags')
+    ).toBe(true);
 
     amendmentQueries.groupAmendmentPage.fn({
       args: {
@@ -451,7 +451,10 @@ describe('amendment query nested authorization', () => {
       call => call[0] === 'where' && typeof call[1] === 'function'
     );
     expect(predicateCalls(collaborationPredicate?.[1])).toEqual(
-      expect.arrayContaining([['cmp', 'user_id', '__anon__'], ['exists', 'amendment']])
+      expect.arrayContaining([
+        ['cmp', 'user_id', '__anon__'],
+        ['exists', 'amendment'],
+      ])
     );
 
     amendmentQueries.collaborationPageByUser.fn({

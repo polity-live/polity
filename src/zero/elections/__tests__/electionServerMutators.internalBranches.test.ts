@@ -258,9 +258,9 @@ describe('election server internal branch contracts', () => {
     [[{ id: 'first', assignee_kind: 'member' }], 'first'],
     [[{ id: 'guest', default_invite_role: true, assignee_kind: 'guest' }], null],
   ])('selects the appropriate default participant role', async (roles, expected) => {
-    expect(await api.resolveDefaultActiveParticipantRoleId(txWith([roles]) as never, 'event-1')).toBe(
-      expected
-    );
+    expect(
+      await api.resolveDefaultActiveParticipantRoleId(txWith([roles]) as never, 'event-1')
+    ).toBe(expected);
   });
 
   it('creates, reactivates, and preserves active event participants', async () => {
@@ -386,13 +386,7 @@ describe('election server internal branch contracts', () => {
     });
     expect(removals.mutate.event_participant_role.delete).toHaveBeenCalledWith({ id: 'old' });
 
-    const additions = txWith([
-      [],
-      { id: 'participant-1', status: 'active' },
-      null,
-      [],
-      null,
-    ]);
+    const additions = txWith([[], { id: 'participant-1', status: 'active' }, null, [], null]);
     await api.syncUsersToEventRole(additions as never, {
       roleId: 'role-1',
       eventId: 'event-1',
@@ -478,9 +472,9 @@ describe('election server internal branch contracts', () => {
     const noWinner = txWith([
       { id: 'election-1', role: { id: 'role-1', scope: 'group' }, candidates: [] },
     ]);
-    expect(await api.applyElectionAssignments(noWinner as never, { electionId: 'election-1' })).toEqual(
-      expect.objectContaining({ outcome: 'no_winner' })
-    );
+    expect(
+      await api.applyElectionAssignments(noWinner as never, { electionId: 'election-1' })
+    ).toEqual(expect.objectContaining({ outcome: 'no_winner' }));
 
     const runoff = txWith([
       {
@@ -490,9 +484,9 @@ describe('election server internal branch contracts', () => {
         final_selections: [{ candidate_id: 'one' }, { candidate_id: 'two' }],
       },
     ]);
-    expect(await api.applyElectionAssignments(runoff as never, { electionId: 'election-1' })).toEqual(
-      expect.objectContaining({ outcome: 'runoff_required' })
-    );
+    expect(
+      await api.applyElectionAssignments(runoff as never, { electionId: 'election-1' })
+    ).toEqual(expect.objectContaining({ outcome: 'runoff_required' }));
     expect(runoff.mutate.election.update).toHaveBeenCalled();
 
     const group = txWith([
@@ -506,9 +500,9 @@ describe('election server internal branch contracts', () => {
       { id: 'role-1' },
       [],
     ]);
-    expect(await api.applyElectionAssignments(group as never, { electionId: 'election-1' })).toEqual(
-      expect.objectContaining({ outcome: 'applied' })
-    );
+    expect(
+      await api.applyElectionAssignments(group as never, { electionId: 'election-1' })
+    ).toEqual(expect.objectContaining({ outcome: 'applied' }));
     expect(group.mutate.role.update).toHaveBeenCalled();
 
     const event = txWith([
@@ -526,9 +520,9 @@ describe('election server internal branch contracts', () => {
       [],
       null,
     ]);
-    expect(await api.applyElectionAssignments(event as never, { electionId: 'election-1' })).toEqual(
-      expect.objectContaining({ outcome: 'applied' })
-    );
+    expect(
+      await api.applyElectionAssignments(event as never, { electionId: 'election-1' })
+    ).toEqual(expect.objectContaining({ outcome: 'applied' }));
 
     const metadata = {
       mode: 'list',
@@ -631,7 +625,9 @@ describe('election server public mutator edge branches', () => {
       args: { election_id: 'election-1', phase: 'indicative' } as never,
     });
     expect(mocks.updateElection).toHaveBeenLastCalledWith(
-      expect.objectContaining({ args: expect.not.objectContaining({ closing_end_time: expect.anything() }) })
+      expect.objectContaining({
+        args: expect.not.objectContaining({ closing_end_time: expect.anything() }),
+      })
     );
 
     await electionServerMutators.startElection.fn({
@@ -860,7 +856,10 @@ describe('election server public mutator edge branches', () => {
       args: { id: 'election-1', status: 'pending' } as never,
     });
     await electionServerMutators.updateElection.fn({
-      tx: txWith([{ id: 'election-1', status: 'pending', agenda_item_id: 'agenda-1' }, null]) as never,
+      tx: txWith([
+        { id: 'election-1', status: 'pending', agenda_item_id: 'agenda-1' },
+        null,
+      ]) as never,
       ctx,
       args: { id: 'election-1', status: 'pending' } as never,
     });
@@ -883,7 +882,11 @@ describe('election server public mutator edge branches', () => {
       ['castFinalElectionVote', { election_id: 'election-1' }],
       ['castFinalElectionVoteFull', { participation: { election_id: 'election-1' } }],
     ] as const) {
-      await electionServerMutators[name].fn({ tx: txWith([null]) as never, ctx, args: args as never });
+      await electionServerMutators[name].fn({
+        tx: txWith([null]) as never,
+        ctx,
+        args: args as never,
+      });
     }
     expect(mocks.castIndicative).toHaveBeenCalled();
     expect(mocks.replaceIndicative).toHaveBeenCalled();

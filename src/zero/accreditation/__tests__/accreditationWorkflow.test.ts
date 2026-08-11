@@ -141,7 +141,12 @@ describe('accreditation workflow', () => {
     mocks.verifyPassword.mockResolvedValueOnce(false);
     await expect(
       accreditationServerMutators.requestAccreditation.fn({
-        tx: createTx([agendaItem, { id: 'participant-1' }, { password_hash: 'hash' }, null]) as never,
+        tx: createTx([
+          agendaItem,
+          { id: 'participant-1' },
+          { password_hash: 'hash' },
+          null,
+        ]) as never,
         ctx: { userID: 'user-1' } as never,
         args,
       })
@@ -191,7 +196,11 @@ describe('accreditation workflow', () => {
       args: { accreditation_id: 'accreditation-1', reason: 'Incomplete' },
     });
     expect(rejected.mutate.accreditation.update).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'rejected', confirmed_at: null, decision_reason: 'Incomplete' })
+      expect.objectContaining({
+        status: 'rejected',
+        confirmed_at: null,
+        decision_reason: 'Incomplete',
+      })
     );
 
     const revoked = createTx([

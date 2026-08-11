@@ -114,7 +114,10 @@ describe('change request vote ordering branches', () => {
       orderChangeRequestsForVoting(
         tx,
         'amendment-1',
-        [{ id: 'a', process_branch_id: null }, { id: 'b', process_branch_id: null }],
+        [
+          { id: 'a', process_branch_id: null },
+          { id: 'b', process_branch_id: null },
+        ],
         'text_position'
       )
     ).resolves.toEqual([
@@ -172,37 +175,53 @@ describe('change request vote ordering branches', () => {
       { id: 'missing-id', change_request_id: null, change_request: { id: 'x' } },
       { id: 'missing-row', change_request_id: 'x', change_request: null },
       {
-        id: 'closing', change_request_id: 'closing', change_request: { id: 'closing' },
+        id: 'closing',
+        change_request_id: 'closing',
+        change_request: { id: 'closing' },
         is_closing_vote: true,
       },
       {
-        id: 'merge', change_request_id: 'merge', change_request: { id: 'merge' },
+        id: 'merge',
+        change_request_id: 'merge',
+        change_request: { id: 'merge' },
         step_kind: 'merge_variant',
       },
       {
-        id: 'completed', change_request_id: 'completed', change_request: { id: 'completed' },
+        id: 'completed',
+        change_request_id: 'completed',
+        change_request: { id: 'completed' },
         status: 'completed',
       },
       {
-        id: 'final', change_request_id: 'final', change_request: { id: 'final' },
+        id: 'final',
+        change_request_id: 'final',
+        change_request: { id: 'final' },
         vote: { status: 'final' },
       },
       {
-        id: 'closed', change_request_id: 'closed', change_request: { id: 'closed' },
+        id: 'closed',
+        change_request_id: 'closed',
+        change_request: { id: 'closed' },
         vote: { status: 'closed' },
       },
       {
-        id: 'a', change_request_id: 'a', order_index: 1,
+        id: 'a',
+        change_request_id: 'a',
+        order_index: 1,
         change_request: { id: 'a', changed_character_count: 30, process_branch_id: null },
         vote: { status: 'indicative' },
       },
       {
-        id: 'b', change_request_id: 'b', order_index: 0,
+        id: 'b',
+        change_request_id: 'b',
+        order_index: 0,
         change_request: { id: 'b', changed_character_count: 20, process_branch_id: null },
         vote: { status: 'pending' },
       },
       {
-        id: 'c', change_request_id: 'c', order_index: null,
+        id: 'c',
+        change_request_id: 'c',
+        order_index: null,
         change_request: { id: 'c', changed_character_count: 10, process_branch_id: null },
         vote: { status: null },
       },
@@ -227,11 +246,15 @@ describe('change request vote ordering branches', () => {
   it('leaves already sorted open steps unchanged', async () => {
     const links = [
       {
-        id: 'a', change_request_id: 'a', order_index: 0,
+        id: 'a',
+        change_request_id: 'a',
+        order_index: 0,
         change_request: { id: 'a', changed_character_count: 30 },
       },
       {
-        id: 'b', change_request_id: 'b', order_index: 1,
+        id: 'b',
+        change_request_id: 'b',
+        order_index: 1,
         change_request: { id: 'b', changed_character_count: 20 },
       },
     ];

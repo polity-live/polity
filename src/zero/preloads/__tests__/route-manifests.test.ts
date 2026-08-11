@@ -33,9 +33,7 @@ describe('prioritized preload route manifests', () => {
     expect(recent.key).not.toBe(trending.key);
     expect(firstConversation.key).not.toBe(secondConversation.key);
     expect(createMessagesPreloadTask().key).toContain('primary:messages');
-    expect(createCreateEventPreloadTask('user-1', 'group/one').route.href).toContain(
-      'group%2Fone'
-    );
+    expect(createCreateEventPreloadTask('user-1', 'group/one').route.href).toContain('group%2Fone');
   });
 
   it('keeps home narrow and defers search viewer state until after paint', () => {
@@ -56,7 +54,9 @@ describe('prioritized preload route manifests', () => {
     expect(searchKeys).toContain('"limit":19');
     expect(createPrimaryIdleTasks('user-1')).toHaveLength(7);
     expect(
-      createBlogPreloadTasks('blog-1', '/blog/blog-1')[0].entries.map(entry => entry.key).join('|')
+      createBlogPreloadTasks('blog-1', '/blog/blog-1')[0]
+        .entries.map(entry => entry.key)
+        .join('|')
     ).not.toContain('queries.rbac.viewerMemberships');
   });
 
@@ -97,9 +97,7 @@ describe('prioritized preload route manifests', () => {
     expect(createIntentTaskForHref('/create', 'user-1')?.key).toBe('primary:create');
     expect(createIntentTaskForHref('/calendar', 'user-1')?.key).toBe('primary:calendar');
     expect(createIntentTaskForHref('/todos', 'user-1')?.key).toBe('primary:todos');
-    expect(createIntentTaskForHref('/notifications', 'user-1')?.key).toBe(
-      'primary:notifications'
-    );
+    expect(createIntentTaskForHref('/notifications', 'user-1')?.key).toBe('primary:notifications');
     expect(createIntentTaskForHref('/create/event', 'user-1')?.key).toBe('create:event');
     expect(createIntentTaskForHref('/create/group/details', 'user-1')?.route.href).toBe(
       '/create/group/details'
@@ -125,9 +123,7 @@ describe('prioritized preload route manifests', () => {
     expect(createIntentTaskForHref('/user/user-1/notifications', 'user-1')?.key).toBe(
       'user:user-1:settings'
     );
-    expect(createIntentTaskForHref('/user/user-2', 'user-1')?.key).toBe(
-      'user:user-2:profile'
-    );
+    expect(createIntentTaskForHref('/user/user-2', 'user-1')?.key).toBe('user:user-2:profile');
   });
 
   it('matches the exact cold-render query contracts of all wiki roots', () => {

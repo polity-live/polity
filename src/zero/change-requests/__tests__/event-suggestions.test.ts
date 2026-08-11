@@ -102,16 +102,18 @@ describe('discardPendingEventSuggestionsFromState', () => {
   });
 
   it('classifies only pending confirmations and preserves null content', () => {
-    expect(isPendingUnconfirmedEventSuggestion({ id: 'pending', confirmationStatus: 'pending' })).toBe(
-      true
-    );
-    expect(isPendingUnconfirmedEventSuggestion({ id: 'confirmed', confirmationStatus: 'confirmed' })).toBe(
-      false
-    );
+    expect(
+      isPendingUnconfirmedEventSuggestion({ id: 'pending', confirmationStatus: 'pending' })
+    ).toBe(true);
+    expect(
+      isPendingUnconfirmedEventSuggestion({ id: 'confirmed', confirmationStatus: 'confirmed' })
+    ).toBe(false);
     expect(
       discardPendingEventSuggestionsFromState({
         content: undefined,
-        discussions: [{ id: 'pending', confirmationStatus: 'pending', changeRequestEntityId: null }],
+        discussions: [
+          { id: 'pending', confirmationStatus: 'pending', changeRequestEntityId: null },
+        ],
       })
     ).toMatchObject({ changed: true, removedCount: 1, content: null, discussions: [] });
   });

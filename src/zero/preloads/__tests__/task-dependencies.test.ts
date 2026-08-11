@@ -33,8 +33,18 @@ describe('wiki preload dependencies', () => {
     const groupTask = createGroupPreloadTasks('group-1', 'viewer-1')[0];
     expect(withWikiTaskDependencies(groupTask, { run: vi.fn() })).toBe(groupTask);
 
-    for (const value of [[], [null], 'invalid', { connected_group_id: '' }, { connected_group_id: 42 }]) {
-      const task = withWikiTaskDependencies(groupTask, { run: vi.fn().mockResolvedValue(value) }, 'viewer-1');
+    for (const value of [
+      [],
+      [null],
+      'invalid',
+      { connected_group_id: '' },
+      { connected_group_id: 42 },
+    ]) {
+      const task = withWikiTaskDependencies(
+        groupTask,
+        { run: vi.fn().mockResolvedValue(value) },
+        'viewer-1'
+      );
       await expect(task.resolveAfterComplete?.()).resolves.toEqual([]);
     }
   });

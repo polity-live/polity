@@ -279,17 +279,16 @@ export function augmentGroupWithDerivedNetworkMeta<TGroup extends GroupNetworkMe
     group_type:
       (group.group_type as DerivedGroupNetworkMeta['group_type'] | null) ?? networkMeta.group_type,
     has_hierarchy_children: group.has_hierarchy_children ?? networkMeta.has_hierarchy_children,
-    has_sibling_connections:
-      group.has_sibling_connections ?? networkMeta.has_sibling_connections,
+    has_sibling_connections: group.has_sibling_connections ?? networkMeta.has_sibling_connections,
     connected_group_id: group.connected_group_id ?? networkMeta.connected_group_id,
     primary_sibling_membership_mode:
       (group.primary_sibling_membership_mode as
-        | DerivedGroupNetworkMeta['primary_sibling_membership_mode']
-        | null) ?? networkMeta.primary_sibling_membership_mode,
+        DerivedGroupNetworkMeta['primary_sibling_membership_mode'] | null) ??
+      networkMeta.primary_sibling_membership_mode,
     sibling_membership_mode:
       (group.sibling_membership_mode as
-        | DerivedGroupNetworkMeta['sibling_membership_mode']
-        | null) ?? networkMeta.sibling_membership_mode,
+        DerivedGroupNetworkMeta['sibling_membership_mode'] | null) ??
+      networkMeta.sibling_membership_mode,
     sibling_role_id: group.sibling_role_id ?? networkMeta.sibling_role_id,
   };
   const relationshipRows = deriveNormalizedGroupRelationships(relevantConnections);

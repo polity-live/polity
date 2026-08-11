@@ -301,7 +301,9 @@ describe('amendment shared runtime defaults', () => {
     ];
     for (const explicit of [false, true]) {
       const state = createTx();
-      const args = Object.fromEntries(optionalKeys.map(key => [key, explicit ? `${key}-value` : undefined]));
+      const args = Object.fromEntries(
+        optionalKeys.map(key => [key, explicit ? `${key}-value` : undefined])
+      );
       await amendmentSharedMutators.createProcessRun.fn({
         tx: state.tx as never,
         ctx,
@@ -361,7 +363,11 @@ describe('amendment shared runtime defaults', () => {
     });
     expect(full.tx.run).not.toHaveBeenCalled();
     expect(full.operations[0].value).toEqual(
-      expect.objectContaining({ ...values, discussions: [{ id: 'discussion-1' }], editing_mode: 'suggest_internal' })
+      expect.objectContaining({
+        ...values,
+        discussions: [{ id: 'discussion-1' }],
+        editing_mode: 'suggest_internal',
+      })
     );
   });
 
@@ -383,11 +389,18 @@ describe('amendment shared runtime defaults', () => {
     ];
     for (const explicit of [false, true]) {
       const state = createTx();
-      const values = Object.fromEntries(optionalKeys.map(key => [key, explicit ? `${key}-value` : undefined]));
+      const values = Object.fromEntries(
+        optionalKeys.map(key => [key, explicit ? `${key}-value` : undefined])
+      );
       await amendmentSharedMutators.createProcessStepRun.fn({
         tx: state.tx as never,
         ctx,
-        args: { id: `step-${explicit}`, process_run_id: 'run-1', order_index: 0, ...values } as never,
+        args: {
+          id: `step-${explicit}`,
+          process_run_id: 'run-1',
+          order_index: 0,
+          ...values,
+        } as never,
       });
       for (const key of optionalKeys) {
         expect(state.operations[0].value).toHaveProperty(key, explicit ? `${key}-value` : null);
@@ -412,11 +425,19 @@ describe('amendment shared runtime defaults', () => {
     ];
     for (const explicit of [false, true]) {
       const state = createTx();
-      const values = Object.fromEntries(optionalKeys.map(key => [key, explicit ? `${key}-value` : undefined]));
+      const values = Object.fromEntries(
+        optionalKeys.map(key => [key, explicit ? `${key}-value` : undefined])
+      );
       await amendmentSharedMutators.createProcessTask.fn({
         tx: state.tx as never,
         ctx,
-        args: { id: `task-${explicit}`, process_run_id: 'run-1', task_type: 'schedule_event', status: 'open', ...values } as never,
+        args: {
+          id: `task-${explicit}`,
+          process_run_id: 'run-1',
+          task_type: 'schedule_event',
+          status: 'open',
+          ...values,
+        } as never,
       });
       for (const key of optionalKeys) {
         expect(state.operations[0].value).toHaveProperty(key, explicit ? `${key}-value` : null);

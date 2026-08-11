@@ -28,9 +28,7 @@
     {
       "id": "A01",
       "context": "Shared Plate plugins: suggestion, AI, slash and browser interaction states.",
-      "allowedTestPrefixes": [
-        "src/features/shared/ui/ui-platejs/"
-      ],
+      "allowedTestPrefixes": ["src/features/shared/ui/ui-platejs/"],
       "allowedExistingTests": [],
       "totals": {
         "branches": 0,
@@ -44,10 +42,7 @@
     {
       "id": "A02",
       "context": "Shared Plate plugins: discussions, comments, tables and navigation debt.",
-      "allowedTestPrefixes": [
-        "src/features/shared/",
-        "src/features/navigation/"
-      ],
+      "allowedTestPrefixes": ["src/features/shared/", "src/features/navigation/"],
       "allowedExistingTests": [],
       "totals": {
         "branches": 0,
@@ -121,10 +116,7 @@
     {
       "id": "A06",
       "context": "Messages and Search hooks, controllers and logic.",
-      "allowedTestPrefixes": [
-        "src/features/messages/",
-        "src/features/search/"
-      ],
+      "allowedTestPrefixes": ["src/features/messages/", "src/features/search/"],
       "allowedExistingTests": [],
       "totals": {
         "branches": 0,

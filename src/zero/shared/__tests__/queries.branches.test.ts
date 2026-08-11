@@ -98,7 +98,11 @@ import { searchQueries } from '../queries';
 const authenticated = { userID: 'user-1' };
 const anonymous = { userID: '' };
 
-function invoke(name: keyof typeof searchQueries, args: Record<string, unknown>, ctx = authenticated) {
+function invoke(
+  name: keyof typeof searchQueries,
+  args: Record<string, unknown>,
+  ctx = authenticated
+) {
   return (searchQueries[name] as any).fn({ args, ctx });
 }
 
@@ -173,14 +177,8 @@ describe('shared query branch contracts', () => {
     ['searchableAmendments', { limit: 10, query: ' amendment ' }],
     ['searchableEvents', { limit: 10, query: ' event ' }],
     ['searchableTodos', { limit: 10, query: ' todo ' }],
-    [
-      'searchableTodosByCreator',
-      { limit: 10, query: ' creator todo ', user_id: 'target-user' },
-    ],
-    [
-      'searchableTodosByGroups',
-      { group_ids: ['group-1'], limit: 10, query: ' group todo ' },
-    ],
+    ['searchableTodosByCreator', { limit: 10, query: ' creator todo ', user_id: 'target-user' }],
+    ['searchableTodosByGroups', { group_ids: ['group-1'], limit: 10, query: ' group todo ' }],
   ] as const)('covers populated and blank search for %s', (name, populatedArgs) => {
     invoke(name, populatedArgs as any, authenticated);
     invoke(name, { ...populatedArgs, query: '' } as any, anonymous);

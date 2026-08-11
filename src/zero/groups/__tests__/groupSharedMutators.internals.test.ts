@@ -214,9 +214,9 @@ describe('shared group mutator policy helpers', () => {
   it('validates member and guest role assignment boundaries', async () => {
     const memberGuest = createTx();
     memberGuest.run.mockResolvedValueOnce({ id: 'guest', assignee_kind: 'guest' });
-    await expect(
-      helpers.assertRolesAssignableToMembers(memberGuest, ['guest'])
-    ).rejects.toThrow('Guest roles');
+    await expect(helpers.assertRolesAssignableToMembers(memberGuest, ['guest'])).rejects.toThrow(
+      'Guest roles'
+    );
 
     const memberWrongGroup = createTx();
     memberWrongGroup.run.mockResolvedValueOnce({
@@ -472,9 +472,9 @@ describe('shared group default-role and offline-member helpers', () => {
     invited.run.mockResolvedValueOnce([
       { id: 'invite', assignee_kind: 'member', default_invite_role: true },
     ]);
-    await expect(
-      helpers.resolveDefaultMembershipRoleId(invited, 'group', 'invited')
-    ).resolves.toBe('invite');
+    await expect(helpers.resolveDefaultMembershipRoleId(invited, 'group', 'invited')).resolves.toBe(
+      'invite'
+    );
 
     const fallback = createTx();
     fallback.run.mockResolvedValueOnce([
@@ -496,7 +496,9 @@ describe('shared group default-role and offline-member helpers', () => {
     await expect(
       helpers.resolveDefaultGuestRoleId(explicit, 'group', 'requested', 'explicit')
     ).resolves.toBe('explicit');
-    await expect(helpers.resolveDefaultGuestRoleId(explicit, 'group', 'active')).resolves.toBeNull();
+    await expect(
+      helpers.resolveDefaultGuestRoleId(explicit, 'group', 'active')
+    ).resolves.toBeNull();
 
     const requested = createTx();
     requested.run.mockResolvedValueOnce([
@@ -520,7 +522,9 @@ describe('shared group default-role and offline-member helpers', () => {
     );
     const first = createTx();
     first.run.mockResolvedValueOnce([{ id: 'first', assignee_kind: 'guest', name: 'Other' }]);
-    await expect(helpers.resolveDefaultGuestRoleId(first, 'group', 'invited')).resolves.toBe('first');
+    await expect(helpers.resolveDefaultGuestRoleId(first, 'group', 'invited')).resolves.toBe(
+      'first'
+    );
     const none = createTx();
     none.run.mockResolvedValueOnce([]);
     await expect(helpers.resolveDefaultGuestRoleId(none, 'group', 'invited')).resolves.toBeNull();
@@ -537,9 +541,7 @@ describe('shared group default-role and offline-member helpers', () => {
 
     const withDefault = createTx();
     withDefault.run
-      .mockResolvedValueOnce([
-        { id: 'invite', assignee_kind: 'member', default_invite_role: true },
-      ])
+      .mockResolvedValueOnce([{ id: 'invite', assignee_kind: 'member', default_invite_role: true }])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce(null);
     await helpers.assignDefaultInviteRoleToOfflineMembership(withDefault, {

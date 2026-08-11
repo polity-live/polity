@@ -35,13 +35,17 @@ vi.mock('@/zero/preferences/usePreferenceActions', () => ({
 }));
 
 vi.mock('@/features/shared/global-state/theme.store', () => ({
-  useThemeStore: (selector: (state: { setAppearanceTheme: typeof mocks.setAppearanceTheme }) => unknown) =>
-    selector({ setAppearanceTheme: mocks.setAppearanceTheme }),
+  useThemeStore: (
+    selector: (state: { setAppearanceTheme: typeof mocks.setAppearanceTheme }) => unknown
+  ) => selector({ setAppearanceTheme: mocks.setAppearanceTheme }),
 }));
 
 vi.mock('@/features/shared/appearance-theme', () => ({
   appearanceThemeDefinitionSchema: { safeParse: mocks.safeParse },
-  BUILTIN_THEMES: [{ id: 'polity', name: 'Polity' }, { id: 'contrast', name: 'Contrast' }],
+  BUILTIN_THEMES: [
+    { id: 'polity', name: 'Polity' },
+    { id: 'contrast', name: 'Contrast' },
+  ],
   POLITY_THEME: { id: 'polity', name: 'Polity' },
   getBuiltinTheme: () => mocks.builtin,
 }));

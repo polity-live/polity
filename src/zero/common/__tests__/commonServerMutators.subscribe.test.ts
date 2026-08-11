@@ -227,7 +227,9 @@ describe('commonServerMutators.subscribe notifications', () => {
       args: { id: 'link-2', group_id: null } as never,
     });
 
-    const deleteTx = { run: vi.fn().mockResolvedValueOnce({ group_id: 'group-1' }).mockResolvedValueOnce(null) };
+    const deleteTx = {
+      run: vi.fn().mockResolvedValueOnce({ group_id: 'group-1' }).mockResolvedValueOnce(null),
+    };
     await commonServerMutators.deleteLink.fn({
       tx: deleteTx as never,
       ctx: { userID: 'sender', email: '' },

@@ -14,8 +14,7 @@ vi.mock('../network/derived', () => ({
   buildDerivedGroupNetworkMetaMap: (...args: unknown[]) => mocks.networkMeta(...args),
 }));
 vi.mock('../groups/offline-membership-helpers', () => ({
-  loadEffectiveOfflineMembershipsForGroup: (...args: unknown[]) =>
-    mocks.effectiveOffline(...args),
+  loadEffectiveOfflineMembershipsForGroup: (...args: unknown[]) => mocks.effectiveOffline(...args),
   buildOfflineMembershipPersonKey: (...args: unknown[]) => mocks.personKey(...args),
 }));
 vi.mock('../groups/membership-helpers', () => ({
@@ -57,7 +56,11 @@ beforeEach(() => {
   mocks.hierarchy.mockResolvedValue([]);
   mocks.effectiveOffline.mockResolvedValue([]);
   mocks.personKey.mockImplementation(({ offlineMemberId, connectedUserId }: any) =>
-    connectedUserId ? `user:${connectedUserId}` : offlineMemberId ? `offline:${offlineMemberId}` : null
+    connectedUserId
+      ? `user:${connectedUserId}`
+      : offlineMemberId
+        ? `offline:${offlineMemberId}`
+        : null
   );
   mocks.attendanceMode.mockImplementation((event: any) => event.mode);
 });
@@ -160,9 +163,9 @@ describe('offline roster source resolution', () => {
     expect(tx.run).toHaveBeenCalledTimes(5);
 
     const assemblyTx = networkTx([{ id: 'base-1', group_type: 'base' }], [rows]);
-    await expect(
-      getOfflineRosterMembersForGeneralAssembly(assemblyTx, 'base-1')
-    ).resolves.toEqual(rows);
+    await expect(getOfflineRosterMembersForGeneralAssembly(assemblyTx, 'base-1')).resolves.toEqual(
+      rows
+    );
   });
 });
 
@@ -195,7 +198,10 @@ describe('offline event participation', () => {
       getDefaultOfflineParticipationChannel({ attendanceMode: 'hybrid', connectedUserId: null })
     ).toBe('offline');
     expect(
-      getDefaultOfflineParticipationChannel({ attendanceMode: 'offline', connectedUserId: 'user-1' })
+      getDefaultOfflineParticipationChannel({
+        attendanceMode: 'offline',
+        connectedUserId: 'user-1',
+      })
     ).toBe('offline');
   });
 
@@ -274,7 +280,9 @@ describe('offline event participation', () => {
         .mockResolvedValueOnce({ mode: 'hybrid' })
         .mockResolvedValueOnce([{ participation_channel: 'online' }]),
     } as any;
-    await expect(isUserForcedOfflineForEvent(hybridFalse, 'event-1', 'user-1')).resolves.toBe(false);
+    await expect(isUserForcedOfflineForEvent(hybridFalse, 'event-1', 'user-1')).resolves.toBe(
+      false
+    );
 
     const hybridTrue = {
       run: vi

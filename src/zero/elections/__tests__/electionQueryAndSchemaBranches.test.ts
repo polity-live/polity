@@ -21,12 +21,22 @@ describe('election query and schema branches', () => {
     }));
     const { electionQueries } = await import('../queries');
     const empty = {
-      status: undefined, statuses: undefined, groupIds: undefined, query: ' ', limit: 20,
-      start: null, dir: 'forward',
+      status: undefined,
+      statuses: undefined,
+      groupIds: undefined,
+      query: ' ',
+      limit: 20,
+      start: null,
+      dir: 'forward',
     };
     const full = {
-      status: 'final', statuses: ['final', 'closed'], groupIds: ['group-1'], query: ' chair ',
-      limit: 20, start: { id: 'election-1', created_at: 1 }, dir: 'backward',
+      status: 'final',
+      statuses: ['final', 'closed'],
+      groupIds: ['group-1'],
+      query: ' chair ',
+      limit: 20,
+      start: { id: 'election-1', created_at: 1 },
+      dir: 'backward',
     };
 
     electionQueries.decisionOverviewPage.fn({ args: empty, ctx: { userID: undefined } } as never);
@@ -42,16 +52,32 @@ describe('election query and schema branches', () => {
     );
     electionQueries.decisionPage.fn({ args: empty, ctx: { userID: undefined } } as never);
     electionQueries.decisionPage.fn({ args: full, ctx: { userID: 'user-1' } } as never);
-    electionQueries.viewerDecisionState.fn({ args: { ids: [] }, ctx: { userID: undefined } } as never);
     electionQueries.viewerDecisionState.fn({
-      args: { ids: ['election-1'] }, ctx: { userID: 'user-1' },
+      args: { ids: [] },
+      ctx: { userID: undefined },
+    } as never);
+    electionQueries.viewerDecisionState.fn({
+      args: { ids: ['election-1'] },
+      ctx: { userID: 'user-1' },
     } as never);
 
     const broadArgs = {
-      id: 'id-1', ids: ['id-1'], event_id: 'event-1', event_ids: ['event-1'],
-      agenda_item_id: 'agenda-1', agendaItemIds: ['agenda-1'], amendment_id: 'amendment-1',
-      user_id: 'user-1', election_id: 'election-1', limit: 20, start: null,
-      status: undefined, statuses: [], groupIds: [], query: '', dir: 'forward',
+      id: 'id-1',
+      ids: ['id-1'],
+      event_id: 'event-1',
+      event_ids: ['event-1'],
+      agenda_item_id: 'agenda-1',
+      agendaItemIds: ['agenda-1'],
+      amendment_id: 'amendment-1',
+      user_id: 'user-1',
+      election_id: 'election-1',
+      limit: 20,
+      start: null,
+      status: undefined,
+      statuses: [],
+      groupIds: [],
+      query: '',
+      dir: 'forward',
     };
     for (const query of Object.values(electionQueries)) {
       query.fn({ args: broadArgs, ctx: { userID: undefined } } as never);
@@ -64,15 +90,28 @@ describe('election query and schema branches', () => {
     vi.doUnmock('../../schema');
     const { createElectionSchema } = await import('../schema');
     const base = {
-      id: 'election-1', agenda_item_id: null, role_id: null, title: null, description: null,
-      status: null, majority_type: null, closing_type: null, closing_duration_seconds: null,
-      closing_end_time: null, visibility: 'public', max_votes: 1,
+      id: 'election-1',
+      agenda_item_id: null,
+      role_id: null,
+      title: null,
+      description: null,
+      status: null,
+      majority_type: null,
+      closing_type: null,
+      closing_duration_seconds: null,
+      closing_end_time: null,
+      visibility: 'public',
+      max_votes: 1,
     };
     expect(createElectionSchema.parse(base)).toEqual(
       expect.objectContaining({ ballot_visibility: 'secret', offline_electorate_size: 0 })
     );
     expect(
-      createElectionSchema.parse({ ...base, ballot_visibility: 'named', offline_electorate_size: 4 })
+      createElectionSchema.parse({
+        ...base,
+        ballot_visibility: 'named',
+        offline_electorate_size: 4,
+      })
     ).toEqual(expect.objectContaining({ ballot_visibility: 'named', offline_electorate_size: 4 }));
   });
 });

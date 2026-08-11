@@ -132,7 +132,9 @@ describe('group server mutator internals', () => {
 
     const membershipTx = createTx();
     membershipTx.run.mockResolvedValueOnce([{ role_id: 'a' }, { role_id: '' }, { role_id: null }]);
-    await expect(helpers.groupMembershipRoleIds(membershipTx, 'membership')).resolves.toEqual(['a']);
+    await expect(helpers.groupMembershipRoleIds(membershipTx, 'membership')).resolves.toEqual([
+      'a',
+    ]);
     const guestTx = createTx();
     guestTx.run.mockResolvedValueOnce([{ role_id: 'g' }, { role_id: null }]);
     await expect(helpers.groupGuestRoleIds(guestTx, 'guest')).resolves.toEqual(['g']);
@@ -229,9 +231,7 @@ describe('group server mutator internals', () => {
       ['', 'base', 'base'],
       'actor'
     );
-    expect([...hierarchy]).toEqual(
-      expect.arrayContaining(['graph', 'offline'])
-    );
+    expect([...hierarchy]).toEqual(expect.arrayContaining(['graph', 'offline']));
 
     const sibling = await helpers.recomputeSiblingMembershipsForGroups(
       tx,
@@ -245,9 +245,7 @@ describe('group server mutator internals', () => {
       ['', 'group'],
       null
     );
-    expect([...expanded]).toEqual(
-      expect.arrayContaining(['group', 'sibling', 'offline-sibling'])
-    );
+    expect([...expanded]).toEqual(expect.arrayContaining(['group', 'sibling', 'offline-sibling']));
 
     await helpers.recomputeGroupCountersForGroups(tx, ['', 'group', 'group']);
     expect(mocks.groupCounter).toHaveBeenCalledOnce();

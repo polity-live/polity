@@ -28,7 +28,10 @@ import {
   type WorkflowDraftStepInput,
 } from '../workflow-mutator-helpers';
 
-function step(groupId: string, overrides: Partial<WorkflowDraftStepInput> = {}): WorkflowDraftStepInput {
+function step(
+  groupId: string,
+  overrides: Partial<WorkflowDraftStepInput> = {}
+): WorkflowDraftStepInput {
   return {
     id: `${groupId}-step`,
     group_id: groupId,
@@ -44,7 +47,9 @@ function step(groupId: string, overrides: Partial<WorkflowDraftStepInput> = {}):
   };
 }
 
-function definition(overrides: Partial<SaveWorkflowDefinitionInput> = {}): SaveWorkflowDefinitionInput {
+function definition(
+  overrides: Partial<SaveWorkflowDefinitionInput> = {}
+): SaveWorkflowDefinitionInput {
   return {
     id: 'workflow-1',
     editing_group_id: 'start-group',
@@ -97,11 +102,13 @@ beforeEach(() => {
 describe('workflow mutator helpers', () => {
   it('creates a default workflow, clears siblings, replaces children, and preserves step order', async () => {
     const tx = createTx({
-      group: [[
-        { id: 'start-group', name: ' Start ' },
-        { id: 'middle-group', name: '   ' },
-        { id: 'final-group', name: null },
-      ]],
+      group: [
+        [
+          { id: 'start-group', name: ' Start ' },
+          { id: 'middle-group', name: '   ' },
+          { id: 'final-group', name: null },
+        ],
+      ],
       group_connection: [[]],
       group_right_grant: [[]],
       group_membership_rule: [[]],
@@ -181,7 +188,12 @@ describe('workflow mutator helpers', () => {
     ).rejects.toThrow('at least one step');
 
     const nonParticipantTx = createTx({
-      group: [[{ id: 'start-group', name: 'Start' }, { id: 'final-group', name: 'Final' }]],
+      group: [
+        [
+          { id: 'start-group', name: 'Start' },
+          { id: 'final-group', name: 'Final' },
+        ],
+      ],
     });
     await expect(
       saveWorkflowDefinition(
@@ -197,9 +209,9 @@ describe('workflow mutator helpers', () => {
       group_right_grant: [[]],
       group_membership_rule: [[]],
     });
-    await expect(
-      saveWorkflowDefinition(disconnectedTx as never, definition())
-    ).rejects.toThrow('No direct amendment-right transition');
+    await expect(saveWorkflowDefinition(disconnectedTx as never, definition())).rejects.toThrow(
+      'No direct amendment-right transition'
+    );
   });
 
   it('validates every explicit workflow handoff constraint and accepts a matching target', async () => {
@@ -209,7 +221,12 @@ describe('workflow mutator helpers', () => {
       target_workflow_id: null,
     });
     const commonResponses = () => ({
-      group: [[{ id: 'start-group', name: 'Start' }, { id: 'final-group', name: 'Final' }]],
+      group: [
+        [
+          { id: 'start-group', name: 'Start' },
+          { id: 'final-group', name: 'Final' },
+        ],
+      ],
       group_connection: [[]],
       group_right_grant: [[]],
       group_membership_rule: [[]],

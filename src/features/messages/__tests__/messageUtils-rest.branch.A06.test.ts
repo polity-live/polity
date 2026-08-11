@@ -108,8 +108,10 @@ describe('message display branch remainder', () => {
   it('formats current and historic timestamps through both locale paths', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-09T12:00:00Z'));
+    const timeFormatter = vi.spyOn(Date.prototype, 'toLocaleTimeString').mockReturnValue('12:30');
     expect(formatTime('2026-08-09T10:30:00Z')).toMatch(/12:30/);
     expect(formatTime('2026-08-08T10:30:00Z')).toMatch(/Aug 8/);
+    timeFormatter.mockRestore();
     vi.useRealTimers();
   });
 });

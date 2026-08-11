@@ -89,7 +89,11 @@ const fullArgs = {
   archive: 'archived',
 };
 
-function run(name: keyof typeof groupQueries, args: any = fullArgs, userID: string | undefined = 'viewer') {
+function run(
+  name: keyof typeof groupQueries,
+  args: any = fullArgs,
+  userID: string | undefined = 'viewer'
+) {
   return (groupQueries[name] as any).fn({
     args,
     ctx: { userID, email: userID ? 'viewer@example.com' : undefined },

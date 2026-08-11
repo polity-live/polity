@@ -167,7 +167,11 @@ describe('Zero statistics command', () => {
     expect(processState).not.toHaveProperty('exitCode');
 
     await expect(
-      runZeroStatsCli({ collect: vi.fn().mockRejectedValue(new Error('network')), logger, processState })
+      runZeroStatsCli({
+        collect: vi.fn().mockRejectedValue(new Error('network')),
+        logger,
+        processState,
+      })
     ).resolves.toBeUndefined();
     expect(processState.exitCode).toBe(1);
     expect(logger.error).toHaveBeenLastCalledWith(
@@ -183,10 +187,7 @@ describe('Zero statistics command', () => {
   it('runs entirely through default CLI dependencies with a stubbed global fetch', async () => {
     const table = vi.spyOn(console, 'table').mockImplementation(() => undefined);
     defaultPostgres.mockReturnValue(postgresClient());
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({ ok: true, text: async () => '' })
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, text: async () => '' }));
 
     await expect(runZeroStatsCli()).resolves.toMatchObject({
       activeQueries: 0,

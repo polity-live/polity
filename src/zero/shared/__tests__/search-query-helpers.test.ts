@@ -45,9 +45,11 @@ describe('search query helpers', () => {
       created_at: 2,
       id: '1',
     });
-    expect(
-      searchStartRow({ id: '1', created_at: 2, engagement_score: 3 }, 'engagement')
-    ).toEqual({ engagement_score: 3, created_at: 2, id: '1' });
+    expect(searchStartRow({ id: '1', created_at: 2, engagement_score: 3 }, 'engagement')).toEqual({
+      engagement_score: 3,
+      created_at: 2,
+      id: '1',
+    });
     expect(searchStartRow({ id: '1', created_at: 2 }, 'trending')).toEqual({
       trending_score: 0,
       created_at: 2,

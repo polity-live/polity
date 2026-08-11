@@ -74,7 +74,8 @@ describe('email template CLI contracts', () => {
     expect(() => assertUniqueAlias(new Set(['newsletter']), 'newsletter')).toThrow(
       'Duplicate template alias'
     );
-    expect(() => assertUniqueAuthField(new Set(['mailer_subjects_invite']), 'mailer_subjects_invite'))
-      .toThrow('Duplicate Management API field');
+    expect(() =>
+      assertUniqueAuthField(new Set(['mailer_subjects_invite']), 'mailer_subjects_invite')
+    ).toThrow('Duplicate Management API field');
   });
 });

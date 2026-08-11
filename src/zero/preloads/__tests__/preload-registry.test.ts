@@ -90,10 +90,7 @@ describe('Zero preload registry', () => {
     const failure = Promise.reject(new Error('offline'));
     const preload = vi.fn(() => ({ cleanup, complete: failure }));
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    const retained = retainZeroPreloadHandle(
-      { preload },
-      { key: 'ttl', query: {}, ttl: '10m' }
-    );
+    const retained = retainZeroPreloadHandle({ preload }, { key: 'ttl', query: {}, ttl: '10m' });
     await expect(retained.complete).rejects.toThrow('offline');
     await Promise.resolve();
     expect(preload).toHaveBeenCalledWith({}, { ttl: '10m' });

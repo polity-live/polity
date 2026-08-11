@@ -44,9 +44,7 @@ function query(table: string): Query {
 function read(value: Query) {
   const rows = (mocks.tables.get(value.table) ?? []).filter(row =>
     value.filters.every(([field, operator, expected]) =>
-      operator === 'IN'
-        ? (expected as unknown[]).includes(row[field])
-        : row[field] === expected
+      operator === 'IN' ? (expected as unknown[]).includes(row[field]) : row[field] === expected
     )
   );
   return value.single ? (rows[0] ?? null) : rows;
@@ -145,7 +143,9 @@ describe('server helper status and voting guards', () => {
   });
 
   it('allows missing or recently verified optional voting PINs and rejects stale PINs', async () => {
-    await expect(requireRecentVotingPasswordVerification(tx as never, 'user-1')).resolves.toBeUndefined();
+    await expect(
+      requireRecentVotingPasswordVerification(tx as never, 'user-1')
+    ).resolves.toBeUndefined();
     setRows('voting_password', [{ user_id: 'user-1', last_verified_at: null }]);
     await expect(requireRecentVotingPasswordVerification(tx as never, 'user-1')).rejects.toThrow(
       'verify your voting PIN'
@@ -178,19 +178,31 @@ describe('server helper status and voting guards', () => {
 describe('tutorial ownership and display-name lookups', () => {
   it('validates every tutorial agenda ownership boundary and active or paused runs', async () => {
     await expect(isOwnedAppTutorialAgendaItem(tx as never, null, 'user-1')).resolves.toBe(false);
-    await expect(isOwnedAppTutorialAgendaItem(tx as never, 'missing', 'user-1')).resolves.toBe(false);
+    await expect(isOwnedAppTutorialAgendaItem(tx as never, 'missing', 'user-1')).resolves.toBe(
+      false
+    );
     setRows('agenda_item', [{ id: 'agenda-1', event_id: null }]);
-    await expect(isOwnedAppTutorialAgendaItem(tx as never, 'agenda-1', 'user-1')).resolves.toBe(false);
+    await expect(isOwnedAppTutorialAgendaItem(tx as never, 'agenda-1', 'user-1')).resolves.toBe(
+      false
+    );
     setRows('agenda_item', [{ id: 'agenda-1', event_id: 'event-1' }]);
     setRows('event', [{ id: 'event-1', tutorial_run_id: null }]);
-    await expect(isOwnedAppTutorialAgendaItem(tx as never, 'agenda-1', 'user-1')).resolves.toBe(false);
+    await expect(isOwnedAppTutorialAgendaItem(tx as never, 'agenda-1', 'user-1')).resolves.toBe(
+      false
+    );
     setRows('event', [{ id: 'event-1', tutorial_run_id: 'run-1' }]);
     setRows('app_tutorial_run', [{ id: 'run-1', user_id: 'user-1', status: 'completed' }]);
-    await expect(isOwnedAppTutorialAgendaItem(tx as never, 'agenda-1', 'user-1')).resolves.toBe(false);
+    await expect(isOwnedAppTutorialAgendaItem(tx as never, 'agenda-1', 'user-1')).resolves.toBe(
+      false
+    );
     setRows('app_tutorial_run', [{ id: 'run-1', user_id: 'user-1', status: 'active' }]);
-    await expect(isOwnedAppTutorialAgendaItem(tx as never, 'agenda-1', 'user-1')).resolves.toBe(true);
+    await expect(isOwnedAppTutorialAgendaItem(tx as never, 'agenda-1', 'user-1')).resolves.toBe(
+      true
+    );
     setRows('app_tutorial_run', [{ id: 'run-1', user_id: 'user-1', status: 'paused' }]);
-    await expect(isOwnedAppTutorialAgendaItem(tx as never, 'agenda-1', 'user-1')).resolves.toBe(true);
+    await expect(isOwnedAppTutorialAgendaItem(tx as never, 'agenda-1', 'user-1')).resolves.toBe(
+      true
+    );
   });
 
   it('returns entity titles and their fallbacks', async () => {
@@ -211,12 +223,21 @@ describe('tutorial ownership and display-name lookups', () => {
   it('formats user names and role scope fallbacks', async () => {
     setRows('user', [{ id: 'full', first_name: 'Ada', last_name: 'Lovelace' }]);
     await expect(userName(tx as never, 'full')).resolves.toBe('Ada Lovelace');
-    setRows('user', [{ id: 'email', first_name: null, last_name: null, email: 'ada@example.test' }]);
+    setRows('user', [
+      { id: 'email', first_name: null, last_name: null, email: 'ada@example.test' },
+    ]);
     await expect(userName(tx as never, 'email')).resolves.toBe('ada');
     await expect(userName(tx as never, 'missing')).resolves.toBe('A user');
 
     setRows('role', [
-      { id: 'role-1', name: 'Chair', group_id: 'group-1', event_id: 'event-1', amendment_id: 'amendment-1', blog_id: 'blog-1' },
+      {
+        id: 'role-1',
+        name: 'Chair',
+        group_id: 'group-1',
+        event_id: 'event-1',
+        amendment_id: 'amendment-1',
+        blog_id: 'blog-1',
+      },
     ]);
     await expect(roleName(tx as never, 'role-1')).resolves.toEqual({
       name: 'Chair',
@@ -248,8 +269,15 @@ describe('conversation creation and participant synchronization', () => {
       name: '  Group chat  ',
       createdAt: 123,
     });
-    expect(lastMutation('conversation', 'insert')).toMatchObject({ name: 'Group chat', created_at: 123 });
-    await ensureGroupConversation(tx as never, { groupId: 'group-3', requestedById: 'user-1', name: ' ' });
+    expect(lastMutation('conversation', 'insert')).toMatchObject({
+      name: 'Group chat',
+      created_at: 123,
+    });
+    await ensureGroupConversation(tx as never, {
+      groupId: 'group-3',
+      requestedById: 'user-1',
+      name: ' ',
+    });
     expect(lastMutation('conversation', 'insert')).toMatchObject({ name: 'Group Chat' });
 
     setRows('conversation', [{ id: 'event-existing', event_id: 'event-1', type: 'event' }]);
@@ -263,7 +291,10 @@ describe('conversation creation and participant synchronization', () => {
       name: ' Event chat ',
       createdAt: 456,
     });
-    expect(lastMutation('conversation', 'insert')).toMatchObject({ name: 'Event chat', created_at: 456 });
+    expect(lastMutation('conversation', 'insert')).toMatchObject({
+      name: 'Event chat',
+      created_at: 456,
+    });
     await ensureEventConversation(tx as never, { eventId: 'event-3', requestedById: 'user-1' });
     expect(lastMutation('conversation', 'insert')).toMatchObject({ name: 'Event Chat' });
   });
@@ -277,13 +308,23 @@ describe('conversation creation and participant synchronization', () => {
     setRows('group_guest_access', []);
     setRows('conversation_participant', []);
     await syncUserWithGroupConversation(tx as never, { groupId: 'group-1', userId: 'user-1' });
-    expect(lastMutation('conversation_participant', 'insert')).toMatchObject({ user_id: 'user-1', left_at: null });
+    expect(lastMutation('conversation_participant', 'insert')).toMatchObject({
+      user_id: 'user-1',
+      left_at: null,
+    });
 
-    setRows('conversation_participant', [{ id: 'participant-1', conversation_id: 'conversation-1', user_id: 'user-1', left_at: 123 }]);
+    setRows('conversation_participant', [
+      { id: 'participant-1', conversation_id: 'conversation-1', user_id: 'user-1', left_at: 123 },
+    ]);
     await syncUserWithGroupConversation(tx as never, { groupId: 'group-1', userId: 'user-1' });
-    expect(lastMutation('conversation_participant')).toEqual({ id: 'participant-1', left_at: null });
+    expect(lastMutation('conversation_participant')).toEqual({
+      id: 'participant-1',
+      left_at: null,
+    });
 
-    setRows('conversation_participant', [{ id: 'participant-1', conversation_id: 'conversation-1', user_id: 'user-1', left_at: null }]);
+    setRows('conversation_participant', [
+      { id: 'participant-1', conversation_id: 'conversation-1', user_id: 'user-1', left_at: null },
+    ]);
     await syncUserWithGroupConversation(tx as never, { groupId: 'group-1', userId: 'user-1' });
 
     setRows('group_membership', [{ group_id: 'group-1', user_id: 'user-1', status: 'inactive' }]);
@@ -293,7 +334,9 @@ describe('conversation creation and participant synchronization', () => {
     expect(lastMutation('conversation_participant', 'insert')).toBeTruthy();
 
     setRows('group_guest_access', []);
-    setRows('conversation_participant', [{ id: 'participant-1', conversation_id: 'conversation-1', user_id: 'user-1' }]);
+    setRows('conversation_participant', [
+      { id: 'participant-1', conversation_id: 'conversation-1', user_id: 'user-1' },
+    ]);
     await syncUserWithGroupConversation(tx as never, { groupId: 'group-1', userId: 'user-1' });
     expect(lastMutation('conversation_participant', 'delete')).toEqual({ id: 'participant-1' });
     setRows('conversation_participant', []);
@@ -308,7 +351,9 @@ describe('conversation creation and participant synchronization', () => {
     await syncUserWithEventConversation(tx as never, { eventId: 'event-1', userId: 'user-1' });
     expect(lastMutation('conversation_participant', 'insert')).toBeTruthy();
     setRows('event_participant', [{ event_id: 'event-1', user_id: 'user-1', status: 'cancelled' }]);
-    setRows('conversation_participant', [{ id: 'participant-1', conversation_id: 'conversation-1', user_id: 'user-1' }]);
+    setRows('conversation_participant', [
+      { id: 'participant-1', conversation_id: 'conversation-1', user_id: 'user-1' },
+    ]);
     await syncUserWithEventConversation(tx as never, { eventId: 'event-1', userId: 'user-1' });
     expect(lastMutation('conversation_participant', 'delete')).toEqual({ id: 'participant-1' });
   });
@@ -324,13 +369,24 @@ describe('counter recomputation', () => {
     ]);
     setRows('amendment', [{ created_by_id: 'user-1' }]);
     await recomputeUserCounters(tx as never, 'user-1');
-    expect(lastMutation('user')).toMatchObject({ subscriber_count: 2, group_count: 1, amendment_count: 1 });
+    expect(lastMutation('user')).toMatchObject({
+      subscriber_count: 2,
+      group_count: 1,
+      amendment_count: 1,
+    });
 
     setRows('subscriber', [{ group_id: 'group-1' }]);
-    setRows('event', [{ group_id: 'group-1', status: 'scheduled' }, { group_id: 'group-1', status: 'cancelled' }]);
+    setRows('event', [
+      { group_id: 'group-1', status: 'scheduled' },
+      { group_id: 'group-1', status: 'cancelled' },
+    ]);
     setRows('amendment', [{ group_id: 'group-1' }]);
     await recomputeGroupCounters(tx as never, 'group-1');
-    expect(lastMutation('group')).toMatchObject({ member_count: 3, signed_up_member_count: 2, event_count: 1 });
+    expect(lastMutation('group')).toMatchObject({
+      member_count: 3,
+      signed_up_member_count: 2,
+      event_count: 1,
+    });
   });
 
   it('projects event end dates from configured, default, completed and explicit end times', async () => {
@@ -355,7 +411,11 @@ describe('counter recomputation', () => {
     setRows('subscriber', [{ event_id: 'event-1' }]);
     setRows('agenda_item', []);
     await recomputeEventCounters(tx as never, 'event-1');
-    expect(lastMutation('event')).toMatchObject({ election_count: 0, amendment_count: 0, open_change_request_count: 0 });
+    expect(lastMutation('event')).toMatchObject({
+      election_count: 0,
+      amendment_count: 0,
+      open_change_request_count: 0,
+    });
 
     setRows('agenda_item', [
       { id: 'agenda-1', event_id: 'event-1', amendment_id: 'amendment-1' },
@@ -366,10 +426,19 @@ describe('counter recomputation', () => {
       { amendment_id: 'amendment-1', status: null, obsolete_at: null, obsolete_reason: null },
       { amendment_id: 'amendment-1', status: 'open', obsolete_at: 1, obsolete_reason: null },
       { amendment_id: 'amendment-1', status: 'closed', obsolete_at: null, obsolete_reason: null },
-      { amendment_id: 'amendment-1', status: 'open', obsolete_at: null, obsolete_reason: 'duplicate' },
+      {
+        amendment_id: 'amendment-1',
+        status: 'open',
+        obsolete_at: null,
+        obsolete_reason: 'duplicate',
+      },
     ]);
     await recomputeEventCounters(tx as never, 'event-1');
-    expect(lastMutation('event')).toMatchObject({ election_count: 1, amendment_count: 2, open_change_request_count: 1 });
+    expect(lastMutation('event')).toMatchObject({
+      election_count: 1,
+      amendment_count: 2,
+      open_change_request_count: 1,
+    });
   });
 
   it('recomputes amendment and blog vote, collaborator and comment counters', async () => {
@@ -387,10 +456,18 @@ describe('counter recomputation', () => {
       { amendment_id: 'amendment-1', vote: 0 },
     ]);
     await recomputeAmendmentCounters(tx as never, 'amendment-1');
-    expect(lastMutation('amendment')).toMatchObject({ upvotes: 2, downvotes: 1, collaborator_count: 1 });
+    expect(lastMutation('amendment')).toMatchObject({
+      upvotes: 2,
+      downvotes: 1,
+      collaborator_count: 1,
+    });
 
     setRows('subscriber', [{ blog_id: 'blog-1' }]);
-    setRows('blog_support_vote', [{ blog_id: 'blog-1', vote: null }, { blog_id: 'blog-1', vote: 1 }, { blog_id: 'blog-1', vote: -1 }]);
+    setRows('blog_support_vote', [
+      { blog_id: 'blog-1', vote: null },
+      { blog_id: 'blog-1', vote: 1 },
+      { blog_id: 'blog-1', vote: -1 },
+    ]);
     setRows('thread', []);
     await recomputeBlogCounters(tx as never, 'blog-1');
     expect(lastMutation('blog')).toMatchObject({ supporter_count: 1, comment_count: 0 });

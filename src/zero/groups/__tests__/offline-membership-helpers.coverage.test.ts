@@ -76,7 +76,9 @@ describe('offline membership primitives', () => {
   it('normalizes identities, sources, contexts, statuses, modes, and keys', () => {
     expect(helpers.normalizeSourceGroupId(undefined)).toBeNull();
     expect(helpers.normalizeSourceGroupId('source')).toBe('source');
-    expect(buildOfflineMembershipPersonKey({ connectedUserId: 'user', offlineMemberId: 'off' })).toBeNull();
+    expect(
+      buildOfflineMembershipPersonKey({ connectedUserId: 'user', offlineMemberId: 'off' })
+    ).toBeNull();
     expect(buildOfflineMembershipPersonKey({ offlineMemberId: 'off' })).toBe('offline:off');
     expect(buildOfflineMembershipPersonKey({})).toBeNull();
     expect(isManualOfflineMembershipSource('direct')).toBe(true);
@@ -93,7 +95,9 @@ describe('offline membership primitives', () => {
         group_offline_member: { connected_user_id: 'user' },
       })
     ).toBe(false);
-    expect(helpers.getDirectionalMembershipContexts({ group_a_id: 'a', group_b_id: 'b' }, null)).toEqual([]);
+    expect(
+      helpers.getDirectionalMembershipContexts({ group_a_id: 'a', group_b_id: 'b' }, null)
+    ).toEqual([]);
     expect(
       helpers.getDirectionalMembershipContexts(
         { group_a_id: 'a', group_b_id: 'b' },
@@ -127,14 +131,21 @@ describe('offline membership primitives', () => {
     expect(none.run).not.toHaveBeenCalled();
 
     const many = createTx();
-    many.run.mockResolvedValueOnce([activeMembership('active'), { ...activeMembership('inactive'), status: 'inactive' }]);
-    await expect(loadEffectiveOfflineMembershipsByGroupIds(many, ['group', 'group'])).resolves.toHaveLength(1);
+    many.run.mockResolvedValueOnce([
+      activeMembership('active'),
+      { ...activeMembership('inactive'), status: 'inactive' },
+    ]);
+    await expect(
+      loadEffectiveOfflineMembershipsByGroupIds(many, ['group', 'group'])
+    ).resolves.toHaveLength(1);
   });
 
   it('filters role-linked memberships by link, group, status, and connected user', async () => {
     const none = createTx();
     none.run.mockResolvedValueOnce([]);
-    await expect(helpers.getActiveOfflineMembersForGroupRole(none, 'group', 'role')).resolves.toEqual([]);
+    await expect(
+      helpers.getActiveOfflineMembersForGroupRole(none, 'group', 'role')
+    ).resolves.toEqual([]);
 
     const linked = createTx();
     linked.run
@@ -155,9 +166,9 @@ describe('offline membership primitives', () => {
         { ...activeMembership('wrong-group', 'other'), id: 'wrong-group' },
         { ...activeMembership('unlinked'), id: 'unlinked' },
       ]);
-    await expect(helpers.getActiveOfflineMembersForGroupRole(linked, 'group', 'role')).resolves.toEqual([
-      expect.objectContaining({ id: 'valid' }),
-    ]);
+    await expect(
+      helpers.getActiveOfflineMembersForGroupRole(linked, 'group', 'role')
+    ).resolves.toEqual([expect.objectContaining({ id: 'valid' })]);
   });
 });
 
@@ -206,7 +217,10 @@ describe('offline membership upserts and sibling derivation', () => {
 
     const direct = createTx();
     direct.run.mockResolvedValueOnce(null);
-    await ensureOfflineDirectMembership(direct, { groupId: 'group', groupOfflineMemberId: 'direct' });
+    await ensureOfflineDirectMembership(direct, {
+      groupId: 'group',
+      groupOfflineMemberId: 'direct',
+    });
     const derived = createTx();
     derived.run.mockResolvedValueOnce(null);
     await helpers.upsertHierarchyDerivedOfflineMembership(derived, {
@@ -233,8 +247,17 @@ describe('offline membership upserts and sibling derivation', () => {
 
     const tx = createTx();
     tx.run
-      .mockResolvedValueOnce([activeMembership('one'), activeMembership('ambiguous'), activeMembership('existing')])
-      .mockResolvedValueOnce([activeMembership('one'), activeMembership('ambiguous'), activeMembership('outside'), activeMembership('existing')])
+      .mockResolvedValueOnce([
+        activeMembership('one'),
+        activeMembership('ambiguous'),
+        activeMembership('existing'),
+      ])
+      .mockResolvedValueOnce([
+        activeMembership('one'),
+        activeMembership('ambiguous'),
+        activeMembership('outside'),
+        activeMembership('existing'),
+      ])
       .mockResolvedValueOnce([activeMembership('ambiguous')]);
     const desired = new Map([
       ['existing', { source: 'sibling_all_members' as const, sourceGroupId: 'connected' }],
@@ -300,7 +323,9 @@ describe('offline membership upserts and sibling derivation', () => {
       .mockResolvedValueOnce([activeMembership('selected-user')])
       .mockResolvedValueOnce([activeMembership('selected-user')]);
     const desired = await helpers.getDesiredOfflineGroupConnectionMembershipSources(tx, 'target');
-    expect([...desired.keys()]).toEqual(expect.arrayContaining(['all-user', 'role-user', 'selected-user']));
+    expect([...desired.keys()]).toEqual(
+      expect.arrayContaining(['all-user', 'role-user', 'selected-user'])
+    );
   });
 });
 
@@ -322,25 +347,66 @@ describe('offline membership reconciliation', () => {
     tx.run
       .mockResolvedValueOnce([
         { id: 'manual', group_offline_member_id: 'manual', source: 'direct' },
-        { id: 'keep', group_offline_member_id: 'keep', source: 'sibling_all_members', source_group_id: 'source', status: 'active', visibility: 'public' },
-        { id: 'missing', group_offline_member_id: 'missing', source: 'sibling_elected', source_group_id: 'source', status: 'active' },
-        { id: 'wrong-source', group_offline_member_id: 'keep', source: 'sibling_elected', source_group_id: 'source', status: 'active' },
-        { id: 'wrong-group', group_offline_member_id: 'keep', source: 'sibling_all_members', source_group_id: 'other', status: 'active' },
-        { id: 'inactive', group_offline_member_id: 'keep', source: 'sibling_all_members', source_group_id: 'source', status: 'inactive' },
+        {
+          id: 'keep',
+          group_offline_member_id: 'keep',
+          source: 'sibling_all_members',
+          source_group_id: 'source',
+          status: 'active',
+          visibility: 'public',
+        },
+        {
+          id: 'missing',
+          group_offline_member_id: 'missing',
+          source: 'sibling_elected',
+          source_group_id: 'source',
+          status: 'active',
+        },
+        {
+          id: 'wrong-source',
+          group_offline_member_id: 'keep',
+          source: 'sibling_elected',
+          source_group_id: 'source',
+          status: 'active',
+        },
+        {
+          id: 'wrong-group',
+          group_offline_member_id: 'keep',
+          source: 'sibling_all_members',
+          source_group_id: 'other',
+          status: 'active',
+        },
+        {
+          id: 'inactive',
+          group_offline_member_id: 'keep',
+          source: 'sibling_all_members',
+          source_group_id: 'source',
+          status: 'inactive',
+        },
       ])
       .mockResolvedValueOnce([{ id: 'connection', status: 'active', created_at: 1 }])
-      .mockResolvedValueOnce([{
-        id: 'rule',
-        connection_id: 'connection',
-        member_source_group_id: 'source',
-        member_target_group_id: 'target',
-        membership_mode: 'all_members',
-      }])
+      .mockResolvedValueOnce([
+        {
+          id: 'rule',
+          connection_id: 'connection',
+          member_source_group_id: 'source',
+          member_target_group_id: 'target',
+          membership_mode: 'all_members',
+        },
+      ])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([activeMembership('keep'), activeMembership('new')])
-      .mockResolvedValueOnce({ id: 'keep', status: 'active', visibility: 'public', source: 'sibling_all_members', source_group_id: 'source' })
+      .mockResolvedValueOnce({
+        id: 'keep',
+        status: 'active',
+        visibility: 'public',
+        source: 'sibling_all_members',
+        source_group_id: 'source',
+      })
       .mockResolvedValueOnce(null);
-    await expect(recomputeOfflineSiblingGroupMemberships(tx, 'target')).resolves.toEqual(new Set(['target']));
+    await expect(recomputeOfflineSiblingGroupMemberships(tx, 'target')).resolves.toEqual(
+      new Set(['target'])
+    );
     expect(tx.mutate.group_offline_membership.delete).toHaveBeenCalledTimes(4);
     expect(tx.mutate.group_offline_membership.insert).toHaveBeenCalledOnce();
   });
@@ -350,34 +416,55 @@ describe('offline membership reconciliation', () => {
     source.run.mockResolvedValue([]);
     source.run
       .mockResolvedValueOnce([{ id: 'connection' }])
-      .mockResolvedValueOnce([{
-        id: 'rule', connection_id: 'connection', member_source_group_id: 'source',
-        member_target_group_id: 'target', membership_mode: 'all_members',
-      }])
+      .mockResolvedValueOnce([
+        {
+          id: 'rule',
+          connection_id: 'connection',
+          member_source_group_id: 'source',
+          member_target_group_id: 'target',
+          membership_mode: 'all_members',
+        },
+      ])
       .mockResolvedValueOnce([]);
-    await expect(recomputeOfflineSiblingMembershipsForGroup(source, 'source')).resolves.toEqual(new Set(['target']));
+    await expect(recomputeOfflineSiblingMembershipsForGroup(source, 'source')).resolves.toEqual(
+      new Set(['target'])
+    );
 
     const disconnected = createTx();
     disconnected.run.mockResolvedValue([]);
     disconnected.run
       .mockResolvedValueOnce([{ id: 'connection' }])
-      .mockResolvedValueOnce([{
-        id: 'rule', connection_id: 'connection', member_source_group_id: 'x',
-        member_target_group_id: 'y', membership_mode: 'all_members',
-      }])
+      .mockResolvedValueOnce([
+        {
+          id: 'rule',
+          connection_id: 'connection',
+          member_source_group_id: 'x',
+          member_target_group_id: 'y',
+          membership_mode: 'all_members',
+        },
+      ])
       .mockResolvedValueOnce([]);
-    await expect(recomputeOfflineSiblingMembershipsForGroup(disconnected, 'group')).resolves.toEqual(new Set());
+    await expect(
+      recomputeOfflineSiblingMembershipsForGroup(disconnected, 'group')
+    ).resolves.toEqual(new Set());
 
     const origin = createTx();
     origin.run.mockResolvedValue([]);
     origin.run
       .mockResolvedValueOnce([{ id: 'connection' }])
-      .mockResolvedValueOnce([{
-        id: 'rule', connection_id: 'connection', member_source_group_id: 'source',
-        member_target_group_id: 'target', membership_mode: 'selected_source_groups',
-      }])
+      .mockResolvedValueOnce([
+        {
+          id: 'rule',
+          connection_id: 'connection',
+          member_source_group_id: 'source',
+          member_target_group_id: 'target',
+          membership_mode: 'selected_source_groups',
+        },
+      ])
       .mockResolvedValueOnce([{ membership_rule_id: 'rule', eligible_origin_group_id: 'origin' }]);
-    await expect(recomputeOfflineSiblingMembershipsForGroup(origin, 'origin')).resolves.toEqual(new Set(['target']));
+    await expect(recomputeOfflineSiblingMembershipsForGroup(origin, 'origin')).resolves.toEqual(
+      new Set(['target'])
+    );
   });
 
   it('reconciles hierarchy removals, retained rows, and new projections', async () => {
@@ -401,8 +488,6 @@ describe('offline membership reconciliation', () => {
     expect(tx.mutate.group_offline_membership.insert).toHaveBeenCalledWith(
       expect.objectContaining({ group_id: 'ancestor-b', group_offline_member_id: 'direct' })
     );
-    expect(result.affectedGroupIds).toEqual(
-      new Set(['ancestor-a', 'ancestor-b', 'old-ancestor'])
-    );
+    expect(result.affectedGroupIds).toEqual(new Set(['ancestor-a', 'ancestor-b', 'old-ancestor']));
   });
 });

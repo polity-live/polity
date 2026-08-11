@@ -134,9 +134,7 @@ describe('event agenda preloads', () => {
     const first = discoverEventAgendaPreloadDependencies([{ id: 'agenda-1' }]);
     const same = { ...first, agendaItemIds: [...first.agendaItemIds] };
     const different = { ...first, agendaItemIds: ['agenda-2'] };
-    expect(eventAgendaPreloadDependenciesKey(first)).toBe(
-      eventAgendaPreloadDependenciesKey(same)
-    );
+    expect(eventAgendaPreloadDependenciesKey(first)).toBe(eventAgendaPreloadDependenciesKey(same));
     expect(areEventAgendaPreloadDependenciesEqual(first, same)).toBe(true);
     expect(areEventAgendaPreloadDependenciesEqual(first, different)).toBe(false);
   });

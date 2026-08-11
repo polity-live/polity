@@ -494,9 +494,9 @@ describe('amendmentSharedMutators.createChangeRequest numbering', () => {
       expect(tx.mutate.change_request.insert).not.toHaveBeenCalled();
     }
 
-    await expect(
-      assertChangeRequestProcessBranch(createTx(), null, 'branch-1')
-    ).rejects.toThrow('Amendment not found');
+    await expect(assertChangeRequestProcessBranch(createTx(), null, 'branch-1')).rejects.toThrow(
+      'Amendment not found'
+    );
   });
 
   it('rejects a missing amendment before resolving a main-scope request', async () => {
@@ -750,9 +750,7 @@ describe('amendmentSharedMutators.createChangeRequest numbering', () => {
     });
     expect(pending.mutate.amendment.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        discussions: [
-          expect.objectContaining({ confirmationStatus: 'pending', confirmedAt: 321 }),
-        ],
+        discussions: [expect.objectContaining({ confirmationStatus: 'pending', confirmedAt: 321 })],
       })
     );
   });

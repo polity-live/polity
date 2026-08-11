@@ -95,7 +95,10 @@ describe('Supabase auth template deployment CLI', () => {
 
   it('accepts and rejects answers from an injected interactive prompt and always closes it', async () => {
     const close = vi.fn();
-    const createReadline = vi.fn(() => ({ question: vi.fn().mockResolvedValue(' expected '), close }));
+    const createReadline = vi.fn(() => ({
+      question: vi.fn().mockResolvedValue(' expected '),
+      close,
+    }));
     await expect(
       confirmProduction('expected', undefined, {
         createReadline: createReadline as never,

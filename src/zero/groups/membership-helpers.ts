@@ -593,9 +593,7 @@ export async function recomputeSiblingMembershipsForGroup(
         if (
           directionalContext.recipientGroupId === currentGroupId ||
           directionalContext.connectedGroupId === currentGroupId ||
-          directionalContext.membershipRule.eligible_origin_group_ids.includes(
-            currentGroupId
-          )
+          directionalContext.membershipRule.eligible_origin_group_ids.includes(currentGroupId)
         ) {
           recipientGroupIds.add(directionalContext.recipientGroupId);
         }

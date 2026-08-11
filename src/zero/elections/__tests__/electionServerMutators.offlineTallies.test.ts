@@ -46,10 +46,7 @@ describe('election server winner resolution offline tallies', () => {
 
   it('ignores declined candidates, empty selections, indicative tallies, and negative counts', () => {
     const result = electionWinnerResolutionTestApi.tallyCandidateVotes(
-      [
-        { id: 'alice' },
-        { id: 'declined', status: 'declined' },
-      ],
+      [{ id: 'alice' }, { id: 'declined', status: 'declined' }],
       [{ candidate_id: null }, { candidate_id: 'alice' }, { candidate_id: 'write-in' }],
       [
         { phase: 'indicative', candidate_id: 'alice', count: 9 },

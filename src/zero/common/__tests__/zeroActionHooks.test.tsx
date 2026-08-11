@@ -136,7 +136,14 @@ describe('Zero action hooks', () => {
       result.current.createTimelineEvent({ id: 'timeline' } as never);
     });
 
-    for (const entityType of ['user', 'group', 'amendment', 'event', 'blog', 'statement'] as const) {
+    for (const entityType of [
+      'user',
+      'group',
+      'amendment',
+      'event',
+      'blog',
+      'statement',
+    ] as const) {
       act(() => {
         result.current.linkHashtag(entityType, {
           id: `link-${entityType}`,

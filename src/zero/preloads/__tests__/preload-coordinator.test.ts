@@ -248,7 +248,9 @@ describe('PreloadCoordinator', () => {
     const coordinator = new PreloadCoordinator(fake.zero, vi.fn());
     coordinator.activate({
       ...preloadTask('base-cancelled'),
-      resolveAfterComplete: vi.fn(() => dependent.promise.then(() => [preloadTask('late').entries[0]])),
+      resolveAfterComplete: vi.fn(() =>
+        dependent.promise.then(() => [preloadTask('late').entries[0]])
+      ),
     });
     fake.pending.get('base-cancelled')?.resolve();
     await flush();
@@ -275,7 +277,10 @@ describe('PreloadCoordinator', () => {
     const cancelIdleCallback = vi.fn();
     vi.stubGlobal('window', { requestIdleCallback, cancelIdleCallback });
     vi.stubGlobal('document', { visibilityState: 'visible' });
-    vi.stubGlobal('navigator', { onLine: true, connection: { saveData: false, effectiveType: '4g' } });
+    vi.stubGlobal('navigator', {
+      onLine: true,
+      connection: { saveData: false, effectiveType: '4g' },
+    });
     const coordinator = new PreloadCoordinator(fake.zero, vi.fn());
     coordinator.setIdleTasks('idle-api', [preloadTask('window-idle')], 2);
     expect(requestIdleCallback).toHaveBeenCalled();

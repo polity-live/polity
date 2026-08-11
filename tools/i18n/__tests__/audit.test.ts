@@ -155,11 +155,17 @@ describe('source i18n audit', () => {
     expect(findings.filter(item => item.kind === 'jsx-text').map(item => item.value)).toEqual(
       expect.arrayContaining(['Visible child copy', 'Inline child copy'])
     );
-    expect(findings.filter(item => item.kind === 'accessibility-copy').map(item => item.value)).toEqual(
-      expect.arrayContaining(['Open settings', 'Primary tip', 'Fallback tip'])
-    );
+    expect(
+      findings.filter(item => item.kind === 'accessibility-copy').map(item => item.value)
+    ).toEqual(expect.arrayContaining(['Open settings', 'Primary tip', 'Fallback tip']));
     expect(findings.filter(item => item.kind === 'copy-prop').map(item => item.value)).toEqual(
-      expect.arrayContaining(['Visible title', 'First option', 'Second option', 'Array copy', 'Logical copy'])
+      expect.arrayContaining([
+        'Visible title',
+        'First option',
+        'Second option',
+        'Array copy',
+        'Logical copy',
+      ])
     );
     expect(findings.filter(item => item.kind === 'helper-return').map(item => item.value)).toEqual(
       expect.arrayContaining(['Helpful return copy', 'Dynamic helper ${…}'])
@@ -260,8 +266,8 @@ describe('German orthography audit', () => {
     );
 
     const findings = auditGermanOrthography(root);
-    expect(findings.map(item => item.file)).toEqual(
-      expect.arrayContaining(['src\\index.ts', 'emails\\message.ts', 'public\\manifest.de.json'])
+    expect(findings.map(item => item.file.replaceAll('\\', '/'))).toEqual(
+      expect.arrayContaining(['src/index.ts', 'emails/message.ts', 'public/manifest.de.json'])
     );
     expect(findings).toEqual(
       [...findings].sort(
@@ -279,12 +285,24 @@ describe('repository i18n audit', () => {
     const root = temporaryRoot();
     write(root, 'src/components/Visible.tsx', `export const View = () => <div>Visible copy</div>;`);
     write(root, 'src/components/Words.ts', `export const text = 'Fuer Gaeste';`);
-    write(root, 'src/__tests__/ignored.test.tsx', `export const View = () => <div>Ignored copy</div>;`);
+    write(
+      root,
+      'src/__tests__/ignored.test.tsx',
+      `export const View = () => <div>Ignored copy</div>;`
+    );
     write(root, 'src/fixtures/ignored.ts', `export const text = 'Fuer Gaeste';`);
     write(root, 'src/generated/ignored.ts', `export const text = 'Fuer Gaeste';`);
-    write(root, 'src/components/ignored.stories.tsx', `export const View = () => <div>Ignored copy</div>;`);
+    write(
+      root,
+      'src/components/ignored.stories.tsx',
+      `export const View = () => <div>Ignored copy</div>;`
+    );
     write(root, 'src/components/generated.ts', `export const text = 'Fuer Gaeste';`);
-    write(root, 'src/features/docs/content/ignored.tsx', `export const View = () => <div>Ignored copy</div>;`);
+    write(
+      root,
+      'src/features/docs/content/ignored.tsx',
+      `export const View = () => <div>Ignored copy</div>;`
+    );
     write(root, 'src/i18n/locales/de/ignored.ts', `export const text = 'Fuer Gaeste';`);
     write(root, 'src/example.d.ts', `export interface Example { value: string }`);
     write(root, 'src/example.css', `.example { color: red; }`);

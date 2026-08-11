@@ -22,9 +22,7 @@ const common = vi.hoisted(() => {
 
 vi.mock('../../mutators', () => ({
   mutators: {
-    common: Object.fromEntries(
-      Object.entries(common).map(([name, fn]) => [name, { fn }])
-    ),
+    common: Object.fromEntries(Object.entries(common).map(([name, fn]) => [name, { fn }])),
   },
 }));
 
@@ -48,35 +46,38 @@ describe('server hashtag branch parity', () => {
     ['amendment', 'linkAmendmentHashtag'],
     ['blog', 'linkBlogHashtag'],
     ['statement', 'linkStatementHashtag'],
-  ] as const)('creates canonical rows and %s junctions only when absent', async (entityType, linkName) => {
-    const tx = { run: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(null) };
-    await syncEntityHashtagsForCreate(
-      tx as never,
-      { userID: 'user-1' } as never,
-      entityType,
-      `${entityType}-1`,
-      ['new']
-    );
-    expect(common.addHashtag).toHaveBeenCalledOnce();
-    expect(common[linkName]).toHaveBeenCalledOnce();
+  ] as const)(
+    'creates canonical rows and %s junctions only when absent',
+    async (entityType, linkName) => {
+      const tx = { run: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(null) };
+      await syncEntityHashtagsForCreate(
+        tx as never,
+        { userID: 'user-1' } as never,
+        entityType,
+        `${entityType}-1`,
+        ['new']
+      );
+      expect(common.addHashtag).toHaveBeenCalledOnce();
+      expect(common[linkName]).toHaveBeenCalledOnce();
 
-    vi.clearAllMocks();
-    const existingTx = {
-      run: vi
-        .fn()
-        .mockResolvedValueOnce({ id: 'existing-hashtag', tag: 'existing' })
-        .mockResolvedValueOnce({ id: 'existing-link' }),
-    };
-    await syncEntityHashtagsForCreate(
-      existingTx as never,
-      { userID: 'user-1' } as never,
-      entityType,
-      `${entityType}-1`,
-      ['existing']
-    );
-    expect(common.addHashtag).not.toHaveBeenCalled();
-    expect(common[linkName]).not.toHaveBeenCalled();
-  });
+      vi.clearAllMocks();
+      const existingTx = {
+        run: vi
+          .fn()
+          .mockResolvedValueOnce({ id: 'existing-hashtag', tag: 'existing' })
+          .mockResolvedValueOnce({ id: 'existing-link' }),
+      };
+      await syncEntityHashtagsForCreate(
+        existingTx as never,
+        { userID: 'user-1' } as never,
+        entityType,
+        `${entityType}-1`,
+        ['existing']
+      );
+      expect(common.addHashtag).not.toHaveBeenCalled();
+      expect(common[linkName]).not.toHaveBeenCalled();
+    }
+  );
 
   it.each([
     ['group', 'unlinkGroupHashtag'],

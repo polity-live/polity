@@ -11,7 +11,10 @@ const mocks = vi.hoisted(() => {
     new Proxy(
       {},
       {
-        get: (_target, property: string) => (args: unknown) => ({ key: `${name}.${property}`, args }),
+        get: (_target, property: string) => (args: unknown) => ({
+          key: `${name}.${property}`,
+          args,
+        }),
       }
     );
   return {
@@ -91,10 +94,7 @@ function peerConnection(overrides: Record<string, unknown> = {}) {
       member_target_group_id: 'group-a',
       membership_mode: 'selected_source_groups',
       required_source_role_id: 'role-member',
-      origins: [
-        { eligible_origin_group_id: 'group-source' },
-        { eligible_origin_group_id: null },
-      ],
+      origins: [{ eligible_origin_group_id: 'group-source' }, { eligible_origin_group_id: null }],
     },
     ...overrides,
   };
@@ -111,11 +111,7 @@ describe('group state normalization helpers', () => {
   it('selects the highest sorted role and handles absent sort orders', () => {
     expect(subject.selectPrimaryGroupRole([])).toBeNull();
     expect(
-      subject.selectPrimaryGroupRole([
-        { id: 'none', sort_order: null },
-        memberRole,
-        boardRole,
-      ])
+      subject.selectPrimaryGroupRole([{ id: 'none', sort_order: null }, memberRole, boardRole])
     ).toBe(boardRole);
     expect(
       subject.selectPrimaryGroupRole([
@@ -215,9 +211,10 @@ describe('group state normalization helpers', () => {
     expect(subject.isActiveConnectionStatus('active')).toBe(true);
     expect(subject.isActiveConnectionStatus('pending')).toBe(false);
     expect(subject.isActiveConnectionStatus(undefined)).toBe(false);
-    expect(
-      subject.uniqueById([{ id: 'a' }, { id: 'a' }, { id: null }, {}, { id: 'b' }])
-    ).toEqual([{ id: 'a' }, { id: 'b' }]);
+    expect(subject.uniqueById([{ id: 'a' }, { id: 'a' }, { id: null }, {}, { id: 'b' }])).toEqual([
+      { id: 'a' },
+      { id: 'b' },
+    ]);
   });
 });
 
@@ -333,9 +330,11 @@ describe('derived network augmentation', () => {
         []
       )
     ).toMatchObject({ connected_group: null, sibling_groups: [], sibling_sources: [] });
-    expect(
-      subject.augmentGroupWithDerivedNetworkMeta({ id: 'isolated' }, [], [])
-    ).toMatchObject({ connected_group: null, sibling_groups: [], sibling_sources: [] });
+    expect(subject.augmentGroupWithDerivedNetworkMeta({ id: 'isolated' }, [], [])).toMatchObject({
+      connected_group: null,
+      sibling_groups: [],
+      sibling_sources: [],
+    });
   });
 
   it('uses lookup fallbacks and excludes inactive or unrelated sibling candidates', () => {
@@ -598,9 +597,9 @@ describe('focused group query hooks', () => {
     });
 
     mocks.results.set('groups.amendmentsByGroup', [{ id: 'amendment' }]);
-    expect(renderHook(() => subject.useGroupAmendments('group-a')).result.current.amendments).toEqual(
-      [{ id: 'amendment' }]
-    );
+    expect(
+      renderHook(() => subject.useGroupAmendments('group-a')).result.current.amendments
+    ).toEqual([{ id: 'amendment' }]);
     mocks.results.set('groups.amendmentEventStepRunsByEventIds', [{ id: 'run' }]);
     expect(
       renderHook(() => subject.useGroupAmendmentEventStepRuns(['event-a'])).result.current.stepRuns
@@ -610,10 +609,12 @@ describe('focused group query hooks', () => {
       { title: 'Amendment', documents: [{ id: 'doc-a' }, { id: 'doc-b' }] },
       { title: 'Empty', documents: null },
     ]);
-    expect(renderHook(() => subject.useGroupDocuments('group-a')).result.current.documents).toEqual([
-      { id: 'doc-a', title: 'Amendment' },
-      { id: 'doc-b', title: 'Amendment' },
-    ]);
+    expect(renderHook(() => subject.useGroupDocuments('group-a')).result.current.documents).toEqual(
+      [
+        { id: 'doc-a', title: 'Amendment' },
+        { id: 'doc-b', title: 'Amendment' },
+      ]
+    );
 
     mocks.results.set('groups.roleManagementProjection', [
       {
@@ -678,23 +679,21 @@ describe('focused group query hooks', () => {
 
     mocks.results.set('groups.paymentsReceivedByGroup', [{ id: 'same' }, { id: 'received' }]);
     mocks.results.set('groups.paymentsPaidByGroup', [{ id: 'same' }, { id: 'paid' }]);
-    expect(renderHook(() => subject.useGroupPaymentsData('group-a')).result.current.payments).toEqual([
-      { id: 'same' },
-      { id: 'received' },
-      { id: 'paid' },
-    ]);
+    expect(
+      renderHook(() => subject.useGroupPaymentsData('group-a')).result.current.payments
+    ).toEqual([{ id: 'same' }, { id: 'received' }, { id: 'paid' }]);
   });
 
   it('returns active, assignable, and offline member projections', () => {
     mocks.results.set('groups.activeMembersByGroup', [{ id: 'active' }]);
-    expect(renderHook(() => subject.useGroupActiveMembers('group-a')).result.current.members).toEqual(
-      [{ id: 'active' }]
-    );
+    expect(
+      renderHook(() => subject.useGroupActiveMembers('group-a')).result.current.members
+    ).toEqual([{ id: 'active' }]);
 
     mocks.results.set('groups.assignableActiveMembersByGroupIds', [{ id: 'assignable' }]);
     expect(
-      renderHook(() => subject.useAssignableGroupMembersByGroupIds(['group-a', 'group-a']))
-        .result.current.members
+      renderHook(() => subject.useAssignableGroupMembersByGroupIds(['group-a', 'group-a'])).result
+        .current.members
     ).toEqual([{ id: 'assignable' }]);
 
     mocks.results.set('groups.offlineMembersByGroup', [{ id: 'offline' }]);
@@ -726,13 +725,15 @@ describe('focused group query hooks', () => {
       { id: 'grace', first_name: 'Grace', last_name: 'Hopper', handle: null },
       { id: 'linus', first_name: null, last_name: null, handle: 'torvalds' },
     ]);
-    expect(renderHook(() => subject.useUserSearch('  ADA ', ['grace'])).result.current.users).toEqual([
-      expect.objectContaining({ id: 'ada' }),
-    ]);
+    expect(
+      renderHook(() => subject.useUserSearch('  ADA ', ['grace'])).result.current.users
+    ).toEqual([expect.objectContaining({ id: 'ada' })]);
     expect(renderHook(() => subject.useUserSearch('torv')).result.current.users).toEqual([
       expect.objectContaining({ id: 'linus' }),
     ]);
-    expect(renderHook(() => subject.useUserSearch('', ['ada'])).result.current.users).toHaveLength(2);
+    expect(renderHook(() => subject.useUserSearch('', ['ada'])).result.current.users).toHaveLength(
+      2
+    );
 
     mocks.results.set('groups.publicGroups', [{ id: 'public' }]);
     expect(renderHook(() => subject.usePublicGroups()).result.current.groups).toEqual([
@@ -824,9 +825,9 @@ describe('focused group query hooks', () => {
       group: null,
       relationships: [],
     });
-    expect(renderHook(() => subject.useGroupAmendments('group-a')).result.current.amendments).toEqual(
-      []
-    );
+    expect(
+      renderHook(() => subject.useGroupAmendments('group-a')).result.current.amendments
+    ).toEqual([]);
     expect(
       renderHook(() => subject.useGroupAmendmentEventStepRuns([])).result.current
     ).toMatchObject({ stepRuns: [], isLoading: false });
@@ -843,12 +844,12 @@ describe('focused group query hooks', () => {
       archivedTodos: [],
     });
     expect(renderHook(() => subject.useGroupLinks('group-a')).result.current.links).toEqual([]);
-    expect(renderHook(() => subject.useGroupPaymentsData('group-a')).result.current.payments).toEqual(
-      []
-    );
-    expect(renderHook(() => subject.useGroupActiveMembers('group-a')).result.current.members).toEqual(
-      []
-    );
+    expect(
+      renderHook(() => subject.useGroupPaymentsData('group-a')).result.current.payments
+    ).toEqual([]);
+    expect(
+      renderHook(() => subject.useGroupActiveMembers('group-a')).result.current.members
+    ).toEqual([]);
     expect(
       renderHook(() => subject.useAssignableGroupMembersByGroupIds()).result.current
     ).toMatchObject({ members: [], isLoading: false });
@@ -865,13 +866,15 @@ describe('focused group query hooks', () => {
     ).toMatchObject({ offlineMemberships: [], isLoading: false });
     expect(renderHook(() => subject.useUserSearch('')).result.current.users).toEqual([]);
     expect(renderHook(() => subject.usePublicGroups()).result.current.groups).toEqual([]);
-    expect(renderHook(() => subject.useUserGroupSubscriptions()).result.current.memberships).toEqual(
-      []
-    );
+    expect(
+      renderHook(() => subject.useUserGroupSubscriptions()).result.current.memberships
+    ).toEqual([]);
     expect(
       renderHook(() => subject.useCurrentUserActiveGroupIds()).result.current.activeGroupIds
     ).toEqual(new Set());
-    expect(renderHook(() => subject.useCurrentUserActiveGroups()).result.current.groups).toEqual([]);
+    expect(renderHook(() => subject.useCurrentUserActiveGroups()).result.current.groups).toEqual(
+      []
+    );
     expect(
       renderHook(() => subject.useUserGroupsWithManageEvents()).result.current.manageEventGroupIds
     ).toEqual(new Set());
@@ -879,7 +882,9 @@ describe('focused group query hooks', () => {
 
   it('uses focused hook fallbacks after their parent rows have loaded', () => {
     mocks.results.set('groups.wikiOverview', [{ id: 'group-a' }]);
-    expect(renderHook(() => subject.useGroupWikiData('group-a')).result.current.group).toMatchObject({
+    expect(
+      renderHook(() => subject.useGroupWikiData('group-a')).result.current.group
+    ).toMatchObject({
       id: 'group-a',
       roles: [],
     });
@@ -934,10 +939,7 @@ describe('focused group query hooks', () => {
     );
     expectLoading('groups.roleOptionProjection', () => subject.useGroupRoleOptions('group-a'));
     mocks.statuses.set('groups.todosByGroup:{"groupId":"group-a","archive":"active"}', 'complete');
-    mocks.statuses.set(
-      'groups.todosByGroup:{"groupId":"group-a","archive":"archived"}',
-      'unknown'
-    );
+    mocks.statuses.set('groups.todosByGroup:{"groupId":"group-a","archive":"archived"}', 'unknown');
     expect(renderHook(() => subject.useGroupTodos('group-a')).result.current.isLoading).toBe(true);
     mocks.statuses.clear();
     expectLoading('groups.paymentsPaidByGroup', () => subject.useGroupPaymentsData('group-a'));
@@ -963,9 +965,7 @@ describe('aggregate useGroupState contract', () => {
     mocks.results.set('network.allGroupConnections', [peerConnection()]);
     mocks.results.set('groups.membershipsByUser', [membership('by-user')]);
     mocks.results.set('groups.search', [{ id: 'group-a' }, { id: 'group-b' }]);
-    mocks.results.set('groups.byUser', [
-      { ...membership('user-group'), group: { id: 'group-b' } },
-    ]);
+    mocks.results.set('groups.byUser', [{ ...membership('user-group'), group: { id: 'group-b' } }]);
     mocks.results.set('groups.membershipsWithUsers', [membership('with-users')]);
     mocks.results.set('groups.currentUserMembershipsWithGroups', [
       { ...membership('current'), group: { id: 'group-a' } },

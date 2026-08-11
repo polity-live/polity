@@ -16,7 +16,9 @@ vi.mock('@rocicorp/zero/react', () => ({ useQuery: mocks.useQuery }));
 
 vi.mock('@/features/elections/logic/electionAssignmentMetadata', () => ({
   parseDelegateElectionMetadata: (description?: string | null) =>
-    description === 'delegate-meta' ? { mode: 'role_based', seatRoleIds: ['role-1', 'role-2'] } : null,
+    description === 'delegate-meta'
+      ? { mode: 'role_based', seatRoleIds: ['role-1', 'role-2'] }
+      : null,
 }));
 
 vi.mock('@/features/elections/logic/electionMode', () => ({
@@ -49,7 +51,12 @@ function key(name: string, args: unknown) {
   return `${name}:${JSON.stringify(args)}`;
 }
 
-function setResult(name: string, args: unknown, value: unknown, type: 'unknown' | 'complete' = 'complete') {
+function setResult(
+  name: string,
+  args: unknown,
+  value: unknown,
+  type: 'unknown' | 'complete' = 'complete'
+) {
   mocks.results.set(key(name, args), [value, { type }]);
 }
 
@@ -57,7 +64,9 @@ beforeEach(() => {
   mocks.results.clear();
   mocks.useQuery.mockReset();
   mocks.useQuery.mockImplementation((query?: { key: string }) =>
-    query ? (mocks.results.get(query.key) ?? [undefined, { type: 'complete' }]) : [undefined, { type: 'complete' }]
+    query
+      ? (mocks.results.get(query.key) ?? [undefined, { type: 'complete' }])
+      : [undefined, { type: 'complete' }]
   );
   mocks.resolveMode.mockReset();
   mocks.resolveMode.mockReturnValue('single');
@@ -72,14 +81,30 @@ describe('normalizeElectionRow', () => {
   });
 
   it('normalizes legacy fields without delegate metadata', () => {
-    const row = { id: 'election-1', description: null, election_mode: null, seat_count: 2, max_votes: 3 };
+    const row = {
+      id: 'election-1',
+      description: null,
+      election_mode: null,
+      seat_count: 2,
+      max_votes: 3,
+    };
     expect(normalizeElectionRow(row)).toEqual({ ...row, election_mode: 'single', seat_count: 1 });
-    expect(mocks.resolveMode).toHaveBeenCalledWith(expect.objectContaining({ delegateAssignmentMode: null }));
-    expect(mocks.resolveSeats).toHaveBeenCalledWith(expect.objectContaining({ fallbackSeatCount: null }));
+    expect(mocks.resolveMode).toHaveBeenCalledWith(
+      expect.objectContaining({ delegateAssignmentMode: null })
+    );
+    expect(mocks.resolveSeats).toHaveBeenCalledWith(
+      expect.objectContaining({ fallbackSeatCount: null })
+    );
   });
 
   it('attaches parsed delegate metadata and its seat fallback', () => {
-    const row = { id: 'election-1', description: 'delegate-meta', election_mode: null, seat_count: null, max_votes: null };
+    const row = {
+      id: 'election-1',
+      description: 'delegate-meta',
+      election_mode: null,
+      seat_count: null,
+      max_votes: null,
+    };
     expect(normalizeElectionRow(row)).toMatchObject({
       delegate_assignment_meta: { mode: 'role_based', seatRoleIds: ['role-1', 'role-2'] },
       election_mode: 'single',
@@ -125,12 +150,21 @@ describe('useElectionState', () => {
   });
 
   it('prioritizes an explicit election and returns every opt-in query', () => {
-    const election = { id: 'election-1', description: 'delegate-meta', candidates: undefined, electors: undefined };
+    const election = {
+      id: 'election-1',
+      description: 'delegate-meta',
+      candidates: undefined,
+      electors: undefined,
+    };
     setResult('agenda', { agenda_item_id: 'agenda-1' }, [{ id: 'agenda-election' }]);
     setResult('id', { id: 'election-1' }, election);
     setResult('candidates', { election_id: 'election-1' }, [{ id: 'candidate-1' }]);
     setResult('electors', { election_id: 'election-1' }, [{ id: 'elector-1' }]);
-    setResult('indicative', { election_id: 'election-1', elector_id: 'user-1' }, { id: 'indicative-1' });
+    setResult(
+      'indicative',
+      { election_id: 'election-1', elector_id: 'user-1' },
+      { id: 'indicative-1' }
+    );
     setResult('final', { election_id: 'election-1', elector_id: 'user-1' }, { id: 'final-1' });
     setResult('details', {}, [{ id: 'detailed-1' }]);
     setResult('search', {}, [{ id: 'search-1' }]);
@@ -176,8 +210,16 @@ describe('useElectionState', () => {
     ['id', { electionId: 'election-1' }, { id: 'election-1' }],
     ['candidates', { electionId: 'election-1' }, { election_id: 'election-1' }],
     ['electors', { electionId: 'election-1' }, { election_id: 'election-1' }],
-    ['indicative', { electionId: 'election-1', electorId: 'user-1' }, { election_id: 'election-1', elector_id: 'user-1' }],
-    ['final', { electionId: 'election-1', electorId: 'user-1' }, { election_id: 'election-1', elector_id: 'user-1' }],
+    [
+      'indicative',
+      { electionId: 'election-1', electorId: 'user-1' },
+      { election_id: 'election-1', elector_id: 'user-1' },
+    ],
+    [
+      'final',
+      { electionId: 'election-1', electorId: 'user-1' },
+      { election_id: 'election-1', elector_id: 'user-1' },
+    ],
     ['details', { includeElectionsWithDetails: true }, {}],
     ['search', { includeElectionsForSearch: true }, {}],
     ['pending', { includePendingElections: true }, {}],

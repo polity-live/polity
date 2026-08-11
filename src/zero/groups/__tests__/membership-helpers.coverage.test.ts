@@ -97,9 +97,9 @@ describe('membership helper primitives', () => {
       ).map(item => item.id)
     ).toEqual(['base', 'missing-source']);
 
-    expect(helpers.getDirectionalMembershipContexts({ group_a_id: 'a', group_b_id: 'b' }, null)).toEqual(
-      []
-    );
+    expect(
+      helpers.getDirectionalMembershipContexts({ group_a_id: 'a', group_b_id: 'b' }, null)
+    ).toEqual([]);
     expect(
       helpers.getDirectionalMembershipContexts(
         { group_a_id: 'a', group_b_id: 'b' },
@@ -112,12 +112,11 @@ describe('membership helper primitives', () => {
     ).toHaveLength(1);
     expect(helpers.isActiveGroupConnectionStatus('active')).toBe(true);
     expect(helpers.isActiveGroupConnectionStatus('accepted')).toBe(false);
-    expect(['all_members', 'role_members', 'selected_source_groups', 'none'].map(helpers.getNetworkMembershipSourceForMode)).toEqual([
-      'sibling_all_members',
-      'sibling_elected',
-      'sibling_parliament',
-      null,
-    ]);
+    expect(
+      ['all_members', 'role_members', 'selected_source_groups', 'none'].map(
+        helpers.getNetworkMembershipSourceForMode
+      )
+    ).toEqual(['sibling_all_members', 'sibling_elected', 'sibling_parliament', null]);
   });
 
   it('loads filtered/all groups and normalizes persisted or default metadata', async () => {
@@ -163,7 +162,12 @@ describe('membership helper primitives', () => {
     mocks.derivedRelationships = [
       { id: 'hierarchy', relationship_type: 'parent', group_id: 'base', related_group_id: 'other' },
       { id: 'peer', relationship_type: 'sibling', group_id: 'base', related_group_id: 'other' },
-      { id: 'sibling-endpoint', relationship_type: 'parent', group_id: 'base', related_group_id: 'sibling' },
+      {
+        id: 'sibling-endpoint',
+        relationship_type: 'parent',
+        group_id: 'base',
+        related_group_id: 'sibling',
+      },
     ];
     const tx = createTx();
     tx.run.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
@@ -271,7 +275,9 @@ describe('automatic sibling membership derivation', () => {
         { user_id: 'existing', status: 'active' },
       ])
       .mockResolvedValueOnce([{ user_id: 'ambiguous', status: 'active' }]);
-    const desired = new Map([['existing', { source: 'sibling_all_members', sourceGroupId: 'connected' }]]);
+    const desired = new Map([
+      ['existing', { source: 'sibling_all_members', sourceGroupId: 'connected' }],
+    ]);
     await helpers.addSelectedSourceGroupMembershipSources(
       tx,
       [{ connectedGroupId: 'connected', selectedSourceGroupIds: ['source-a', 'source-b'] }],
@@ -397,8 +403,20 @@ describe('automatic sibling membership derivation', () => {
     recompute.run
       .mockResolvedValueOnce([
         { id: 'manual', user_id: 'manual', source: 'direct' },
-        { id: 'keep', user_id: 'keep', source: 'sibling_all_members', status: 'active', source_group_id: 'source' },
-        { id: 'remove', user_id: 'remove', source: 'sibling_elected', status: 'inactive', source_group_id: 'source' },
+        {
+          id: 'keep',
+          user_id: 'keep',
+          source: 'sibling_all_members',
+          status: 'active',
+          source_group_id: 'source',
+        },
+        {
+          id: 'remove',
+          user_id: 'remove',
+          source: 'sibling_elected',
+          status: 'inactive',
+          source_group_id: 'source',
+        },
       ])
       .mockResolvedValueOnce([{ id: 'connection', status: 'active', created_at: 1 }])
       .mockResolvedValueOnce([
@@ -431,9 +449,7 @@ describe('automatic sibling membership derivation', () => {
 
     const traversal = createTx();
     traversal.run
-      .mockResolvedValueOnce([
-        { id: 'connection' },
-      ])
+      .mockResolvedValueOnce([{ id: 'connection' }])
       .mockResolvedValueOnce([
         {
           id: 'rule',
@@ -482,9 +498,7 @@ describe('automatic sibling membership derivation', () => {
           membership_mode: 'selected_source_groups',
         },
       ])
-      .mockResolvedValueOnce([
-        { membership_rule_id: 'rule', eligible_origin_group_id: 'origin' },
-      ]);
+      .mockResolvedValueOnce([{ membership_rule_id: 'rule', eligible_origin_group_id: 'origin' }]);
     await expect(recomputeSiblingMembershipsForGroup(originTraversal, 'origin')).resolves.toEqual(
       new Set(['target'])
     );

@@ -32,7 +32,12 @@ function key(name: string, args: unknown) {
   return `${name}:${JSON.stringify(args)}`;
 }
 
-function setResult(name: string, args: unknown, value: unknown, type: 'unknown' | 'complete' = 'complete') {
+function setResult(
+  name: string,
+  args: unknown,
+  value: unknown,
+  type: 'unknown' | 'complete' = 'complete'
+) {
   mocks.results.set(key(name, args), [value, { type }]);
 }
 
@@ -40,7 +45,9 @@ beforeEach(() => {
   mocks.results.clear();
   mocks.useQuery.mockReset();
   mocks.useQuery.mockImplementation((query?: { key: string }) =>
-    query ? (mocks.results.get(query.key) ?? [undefined, { type: 'complete' }]) : [undefined, { type: 'complete' }]
+    query
+      ? (mocks.results.get(query.key) ?? [undefined, { type: 'complete' }])
+      : [undefined, { type: 'complete' }]
   );
 });
 
@@ -88,11 +95,7 @@ describe('useTodoState', () => {
     ];
     setResult('all', { archive: 'active' }, active);
     setResult('all', { archive: 'archived' }, [{ id: 'archived' }]);
-    setResult(
-      'group',
-      { group_id: 'group-1', archive: 'active' },
-      [{ id: 'group-todo' }]
-    );
+    setResult('group', { group_id: 'group-1', archive: 'active' }, [{ id: 'group-todo' }]);
     setResult('id', { id: 'todo-1' }, { id: 'todo-1' });
     setResult('assignments', { todo_id: 'todo-1' }, [{ id: 'assignment-1' }]);
 

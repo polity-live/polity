@@ -35,9 +35,7 @@ export async function runPolityTemplateDeployCli(
     getDefinition?: typeof getPolityTemplateDefinition;
     render?: typeof renderPolityTemplate;
     confirm?: typeof confirmProduction;
-    createClient?: (
-      apiKey: string
-    ) => Parameters<typeof deployPolityTemplate>[0]['client'];
+    createClient?: (apiKey: string) => Parameters<typeof deployPolityTemplate>[0]['client'];
     deploy?: typeof deployPolityTemplate;
   } = {}
 ) {

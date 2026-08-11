@@ -316,7 +316,9 @@ describe('vote action hooks route indicative replacement', () => {
     act(() => {
       voteActions.result.current.castIndicativeVote(voteParticipation, [], { silent: true });
       voteActions.result.current.castFinalVote(voteParticipation, [], { silent: true });
-      electionActions.result.current.castIndicativeVote(electionParticipation, [], { silent: true });
+      electionActions.result.current.castIndicativeVote(electionParticipation, [], {
+        silent: true,
+      });
       electionActions.result.current.castFinalVote(electionParticipation, [], { silent: true });
       agendaActions.result.current.initializeChangeRequestVoting(
         { amendment_id: 'amendment-1', agenda_item_id: 'agenda-1' },

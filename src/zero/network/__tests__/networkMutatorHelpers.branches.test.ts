@@ -100,13 +100,17 @@ describe('network mutator helper branch parity', () => {
 
   it('removes omitted children and an existing membership rule and origins', async () => {
     const tx = createTx({
-      group_right_grant: [[{ id: 'old-grant', right_key: 'info', holder_group_id: 'A', scope_group_id: 'B' }]],
+      group_right_grant: [
+        [{ id: 'old-grant', right_key: 'info', holder_group_id: 'A', scope_group_id: 'B' }],
+      ],
       group_membership_rule: [{ id: 'old-rule' }],
       group_membership_rule_origin: [[{ id: 'old-origin' }]],
     });
     await syncGroupConnectionChildren(tx as never, { connectionId: 'connection-1' });
     expect(tx.mutate.group_right_grant.delete).toHaveBeenCalledWith({ id: 'old-grant' });
-    expect(tx.mutate.group_membership_rule_origin.delete).toHaveBeenCalledWith({ id: 'old-origin' });
+    expect(tx.mutate.group_membership_rule_origin.delete).toHaveBeenCalledWith({
+      id: 'old-origin',
+    });
     expect(tx.mutate.group_membership_rule.delete).toHaveBeenCalledWith({ id: 'old-rule' });
 
     const emptyTx = createTx({ group_right_grant: [[]], group_membership_rule: [null] });
@@ -146,7 +150,11 @@ describe('network mutator helper branch parity', () => {
       },
     });
     expect(tx.mutate.group_right_grant.update).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'existing-grant', status: 'requested', initiator_group_id: 'A' })
+      expect.objectContaining({
+        id: 'existing-grant',
+        status: 'requested',
+        initiator_group_id: 'A',
+      })
     );
     expect(tx.mutate.group_right_grant.insert).toHaveBeenCalledTimes(2);
     expect(tx.mutate.group_membership_rule.update).toHaveBeenCalledWith(
@@ -206,11 +214,13 @@ describe('network mutator helper branch parity', () => {
 
   it('deletes requests that reference a connection from either side', async () => {
     const tx = createTx({
-      group_connection_request: [[
-        { id: 'active', active_connection_id: 'connection-1', proposed_connection_id: 'other' },
-        { id: 'proposed', active_connection_id: null, proposed_connection_id: 'connection-1' },
-        { id: 'unrelated', active_connection_id: 'other', proposed_connection_id: 'other' },
-      ]],
+      group_connection_request: [
+        [
+          { id: 'active', active_connection_id: 'connection-1', proposed_connection_id: 'other' },
+          { id: 'proposed', active_connection_id: null, proposed_connection_id: 'connection-1' },
+          { id: 'unrelated', active_connection_id: 'other', proposed_connection_id: 'other' },
+        ],
+      ],
     });
     await deleteGroupConnectionAndRequests(tx as never, 'connection-1');
     expect(tx.mutate.group_connection_request.delete).toHaveBeenCalledTimes(2);
@@ -270,11 +280,19 @@ describe('network mutator helper branch parity', () => {
 
   it('throws for missing approvals and creates/normalizes a requested connection', async () => {
     await expect(
-      approveGroupConnectionRequest(createTx({ group_connection_request: [null] }) as never, 'missing')
+      approveGroupConnectionRequest(
+        createTx({ group_connection_request: [null] }) as never,
+        'missing'
+      )
     ).rejects.toThrow('not found');
 
     const grants = [
-      { id: 'remove-existing', operation: 'remove', existing_grant_id: 'grant-old', status: 'pending' },
+      {
+        id: 'remove-existing',
+        operation: 'remove',
+        existing_grant_id: 'grant-old',
+        status: 'pending',
+      },
       { id: 'remove-missing', operation: 'remove', existing_grant_id: null, status: 'pending' },
       {
         id: 'update-existing',
@@ -351,8 +369,18 @@ describe('network mutator helper branch parity', () => {
       updated_at: 3,
     };
     const stale = { id: 'membership-stale', status: 'pending', updated_at: 1 };
-    const undatedA = { id: 'membership-undated-a', status: 'pending', updated_at: null, created_at: null };
-    const undatedB = { id: 'membership-undated-b', status: 'pending', updated_at: null, created_at: null };
+    const undatedA = {
+      id: 'membership-undated-a',
+      status: 'pending',
+      updated_at: null,
+      created_at: null,
+    };
+    const undatedB = {
+      id: 'membership-undated-b',
+      status: 'pending',
+      updated_at: null,
+      created_at: null,
+    };
     const tx = createTx({
       group_connection_request: [request()],
       group_connection: [{ id: 'connection-1' }],
@@ -403,7 +431,10 @@ describe('network mutator helper branch parity', () => {
 
   it('throws for missing rejection and rejects selected/all pending child requests', async () => {
     await expect(
-      rejectGroupConnectionRequest(createTx({ group_connection_request: [null] }) as never, 'missing')
+      rejectGroupConnectionRequest(
+        createTx({ group_connection_request: [null] }) as never,
+        'missing'
+      )
     ).rejects.toThrow('not found');
 
     const grantRows = [

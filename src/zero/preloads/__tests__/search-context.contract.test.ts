@@ -1,10 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ALL_CONTENT_TYPES } from '@/features/timeline/hooks/useTimelineFilters';
 
-import {
-  createSearchDocumentPageArgs,
-  SEARCH_INITIAL_PAGE_LIMIT,
-} from '../search-context';
+import { createSearchDocumentPageArgs, SEARCH_INITIAL_PAGE_LIMIT } from '../search-context';
 
 describe('search preload argument normalization', () => {
   beforeEach(() => vi.useFakeTimers().setSystemTime(new Date('2026-08-09T12:00:00Z')));

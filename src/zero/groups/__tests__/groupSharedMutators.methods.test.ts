@@ -163,7 +163,11 @@ describe('shared group CRUD and offline-member mutators', () => {
 
   it('updates every optional offline-member field or preserves omitted values', async () => {
     const omitted = createTx();
-    omitted.run.mockResolvedValueOnce({ id: 'offline', group_id: 'group', connected_user_id: null });
+    omitted.run.mockResolvedValueOnce({
+      id: 'offline',
+      group_id: 'group',
+      connected_user_id: null,
+    });
     await mutators.updateOfflineMember.fn({ tx: omitted, ctx, args: { id: 'offline' } as never });
     expect(omitted.mutate.group_offline_member.update).toHaveBeenCalledWith(
       expect.not.objectContaining({ first_name: expect.anything() })
@@ -194,7 +198,11 @@ describe('shared group CRUD and offline-member mutators', () => {
     );
 
     const explicitNull = createTx();
-    explicitNull.run.mockResolvedValueOnce({ id: 'offline', group_id: 'group', connected_user_id: 'old' });
+    explicitNull.run.mockResolvedValueOnce({
+      id: 'offline',
+      group_id: 'group',
+      connected_user_id: 'old',
+    });
     await mutators.updateOfflineMember.fn({
       tx: explicitNull,
       ctx,
@@ -246,7 +254,12 @@ describe('shared membership and guest-access mutators', () => {
 
     const explicit = createTx();
     explicit.run
-      .mockResolvedValueOnce({ id: 'role', assignee_kind: 'member', group_id: 'group', scope: 'group' })
+      .mockResolvedValueOnce({
+        id: 'role',
+        assignee_kind: 'member',
+        group_id: 'group',
+        scope: 'group',
+      })
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce(null);
     await mutators.joinGroup.fn({
@@ -330,20 +343,36 @@ describe('shared membership and guest-access mutators', () => {
   it('guards tutorial, automatic, self, and managed membership leaves', async () => {
     const tutorial = createTx();
     tutorial.run
-      .mockResolvedValueOnce({ id: 'membership', status: 'requested', user_id: 'actor', group_id: 'group', source: 'direct' })
+      .mockResolvedValueOnce({
+        id: 'membership',
+        status: 'requested',
+        user_id: 'actor',
+        group_id: 'group',
+        source: 'direct',
+      })
       .mockResolvedValueOnce({ tutorial_run_id: 'tutorial' });
     await mutators.leaveGroup.fn({ tx: tutorial, ctx, args: { id: 'membership' } });
     expect(tutorial.mutate.group_membership.delete).not.toHaveBeenCalled();
 
     const requestedNormal = createTx();
     requestedNormal.run
-      .mockResolvedValueOnce({ id: 'membership', status: 'requested', user_id: 'actor', group_id: 'group', source: 'direct' })
+      .mockResolvedValueOnce({
+        id: 'membership',
+        status: 'requested',
+        user_id: 'actor',
+        group_id: 'group',
+        source: 'direct',
+      })
       .mockResolvedValueOnce({ tutorial_run_id: null });
     await mutators.leaveGroup.fn({ tx: requestedNormal, ctx, args: { id: 'membership' } });
     expect(requestedNormal.mutate.group_membership.delete).toHaveBeenCalled();
 
     const automatic = createTx();
-    automatic.run.mockResolvedValueOnce({ user_id: 'actor', group_id: 'group', source: 'hierarchy' });
+    automatic.run.mockResolvedValueOnce({
+      user_id: 'actor',
+      group_id: 'group',
+      source: 'hierarchy',
+    });
     await expect(
       mutators.leaveGroup.fn({ tx: automatic, ctx, args: { id: 'membership' } })
     ).rejects.toThrow('direct memberships');
@@ -377,7 +406,12 @@ describe('shared membership and guest-access mutators', () => {
 
     const role = createTx();
     role.run
-      .mockResolvedValueOnce({ id: 'role', assignee_kind: 'member', group_id: 'group', scope: 'group' })
+      .mockResolvedValueOnce({
+        id: 'role',
+        assignee_kind: 'member',
+        group_id: 'group',
+        scope: 'group',
+      })
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce(null);
     await mutators.inviteMember.fn({
@@ -395,7 +429,11 @@ describe('shared membership and guest-access mutators', () => {
       mutators.acceptInvitation.fn({ tx: missing, ctx, args: { id: 'membership' } })
     ).rejects.toThrow('Membership not found');
     const automatic = createTx();
-    automatic.run.mockResolvedValueOnce({ user_id: 'actor', group_id: 'group', source: 'hierarchy' });
+    automatic.run.mockResolvedValueOnce({
+      user_id: 'actor',
+      group_id: 'group',
+      source: 'hierarchy',
+    });
     await expect(
       mutators.acceptInvitation.fn({ tx: automatic, ctx, args: { id: 'membership' } })
     ).rejects.toThrow('Automatic');
@@ -448,7 +486,12 @@ describe('shared guest invitation and role-link mutators', () => {
 
     const existing = createTx();
     existing.run
-      .mockResolvedValueOnce({ id: 'guest-role', group_id: 'group', scope: 'group', assignee_kind: 'guest' })
+      .mockResolvedValueOnce({
+        id: 'guest-role',
+        group_id: 'group',
+        scope: 'group',
+        assignee_kind: 'guest',
+      })
       .mockResolvedValueOnce({ id: 'existing' })
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce(null);
@@ -461,7 +504,12 @@ describe('shared guest invitation and role-link mutators', () => {
 
     const created = createTx();
     created.run
-      .mockResolvedValueOnce({ id: 'guest-role', group_id: 'group', scope: 'group', assignee_kind: 'guest' })
+      .mockResolvedValueOnce({
+        id: 'guest-role',
+        group_id: 'group',
+        scope: 'group',
+        assignee_kind: 'guest',
+      })
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce(null);
@@ -563,7 +611,12 @@ describe('shared guest invitation and role-link mutators', () => {
     const guestSync = createTx();
     guestSync.run
       .mockResolvedValueOnce({ id: 'guest', group_id: 'group' })
-      .mockResolvedValueOnce({ id: 'role', assignee_kind: 'guest', group_id: 'group', scope: 'group' })
+      .mockResolvedValueOnce({
+        id: 'role',
+        assignee_kind: 'guest',
+        group_id: 'group',
+        scope: 'group',
+      })
       .mockResolvedValueOnce([{ id: 'keep', role_id: 'role' }]);
     await mutators.syncGuestRoles.fn({
       tx: guestSync,
@@ -651,16 +704,18 @@ describe('shared role, right, and holder-history mutators', () => {
         default_invite_role: false,
       })
       .mockResolvedValueOnce([]);
-    await mutators.updateRole.fn({
-      tx: groupRole,
-      ctx,
-      args: {
-        id: 'role',
-        assignee_kind: 'guest',
-        default_request_role: true,
-        default_invite_role: true,
-      } as never,
-    }).catch(() => undefined);
+    await mutators.updateRole
+      .fn({
+        tx: groupRole,
+        ctx,
+        args: {
+          id: 'role',
+          assignee_kind: 'guest',
+          default_request_role: true,
+          default_invite_role: true,
+        } as never,
+      })
+      .catch(() => undefined);
 
     const compatibleGroupRole = createTx();
     compatibleGroupRole.run.mockResolvedValueOnce({
@@ -733,7 +788,11 @@ describe('shared role, right, and holder-history mutators', () => {
 
     for (const action of ['active_voting', 'passive_voting']) {
       const guestVote = createTx();
-      guestVote.run.mockResolvedValueOnce({ id: 'role', event_id: 'event', assignee_kind: 'guest' });
+      guestVote.run.mockResolvedValueOnce({
+        id: 'role',
+        event_id: 'event',
+        assignee_kind: 'guest',
+      });
       await expect(
         mutators.assignActionRight.fn({
           tx: guestVote,

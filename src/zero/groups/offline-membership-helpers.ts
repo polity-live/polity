@@ -616,9 +616,7 @@ export async function recomputeOfflineSiblingMembershipsForGroup(
         if (
           directionalContext.recipientGroupId === currentGroupId ||
           directionalContext.connectedGroupId === currentGroupId ||
-          directionalContext.membershipRule.eligible_origin_group_ids.includes(
-            currentGroupId
-          )
+          directionalContext.membershipRule.eligible_origin_group_ids.includes(currentGroupId)
         ) {
           siblingGroupIds.add(directionalContext.recipientGroupId);
         }

@@ -53,15 +53,28 @@ describe('vote query branches', () => {
     voteQueries.decisionPage.fn({ args: empty, ctx: { userID: undefined } } as never);
     voteQueries.decisionPage.fn({ args: full, ctx: { userID: 'user-1' } } as never);
     voteQueries.viewerDecisionState.fn({ args: { ids: [] }, ctx: { userID: undefined } } as never);
-    voteQueries.viewerDecisionState.fn(
-      { args: { ids: ['vote-1'] }, ctx: { userID: 'user-1' } } as never
-    );
+    voteQueries.viewerDecisionState.fn({
+      args: { ids: ['vote-1'] },
+      ctx: { userID: 'user-1' },
+    } as never);
 
     const broadArgs = {
-      id: 'id-1', ids: ['id-1'], event_id: 'event-1', event_ids: ['event-1'],
-      agenda_item_id: 'agenda-1', agendaItemIds: ['agenda-1'], amendment_id: 'amendment-1',
-      user_id: 'user-1', vote_id: 'vote-1', limit: 20, start: null, status: undefined,
-      statuses: [], groupIds: [], query: '', dir: 'forward',
+      id: 'id-1',
+      ids: ['id-1'],
+      event_id: 'event-1',
+      event_ids: ['event-1'],
+      agenda_item_id: 'agenda-1',
+      agendaItemIds: ['agenda-1'],
+      amendment_id: 'amendment-1',
+      user_id: 'user-1',
+      vote_id: 'vote-1',
+      limit: 20,
+      start: null,
+      status: undefined,
+      statuses: [],
+      groupIds: [],
+      query: '',
+      dir: 'forward',
     };
     for (const query of Object.values(voteQueries)) {
       query.fn({ args: broadArgs, ctx: { userID: undefined } } as never);

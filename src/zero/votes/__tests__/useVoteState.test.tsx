@@ -34,7 +34,12 @@ function key(name: string, args: unknown) {
   return `${name}:${JSON.stringify(args)}`;
 }
 
-function setResult(name: string, args: unknown, value: unknown, type: 'unknown' | 'complete' = 'complete') {
+function setResult(
+  name: string,
+  args: unknown,
+  value: unknown,
+  type: 'unknown' | 'complete' = 'complete'
+) {
   mocks.results.set(key(name, args), [value, { type }]);
 }
 
@@ -42,7 +47,9 @@ beforeEach(() => {
   mocks.results.clear();
   mocks.useQuery.mockReset();
   mocks.useQuery.mockImplementation((query?: { key: string }) =>
-    query ? (mocks.results.get(query.key) ?? [undefined, { type: 'complete' }]) : [undefined, { type: 'complete' }]
+    query
+      ? (mocks.results.get(query.key) ?? [undefined, { type: 'complete' }])
+      : [undefined, { type: 'complete' }]
   );
 });
 
@@ -63,16 +70,11 @@ describe('useVoteState', () => {
   it('resolves a vote from an agenda item and falls back to its embedded choices', () => {
     const agendaVote = { id: 'vote-agenda', choices: [{ id: 'embedded-choice' }] };
     setResult('agenda', { agenda_item_id: 'agenda-1' }, [agendaVote]);
-    setResult(
-      'indicative',
-      { vote_id: 'vote-agenda', voter_id: 'user-1' },
-      { id: 'indicative-1' }
-    );
+    setResult('indicative', { vote_id: 'vote-agenda', voter_id: 'user-1' }, { id: 'indicative-1' });
     setResult('final', { vote_id: 'vote-agenda', voter_id: 'user-1' }, { id: 'final-1' });
 
-    const state = renderHook(() =>
-      useVoteState({ agendaItemId: 'agenda-1', voterId: 'user-1' })
-    ).result.current;
+    const state = renderHook(() => useVoteState({ agendaItemId: 'agenda-1', voterId: 'user-1' }))
+      .result.current;
 
     expect(state).toMatchObject({
       vote: agendaVote,

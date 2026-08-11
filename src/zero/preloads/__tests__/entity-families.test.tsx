@@ -73,8 +73,7 @@ vi.mock('@/zero/queries', () => ({
     },
     amendments: {
       documentById: (args: unknown) => mocks.query('amendments.documentById', args),
-      documentsByAmendment: (args: unknown) =>
-        mocks.query('amendments.documentsByAmendment', args),
+      documentsByAmendment: (args: unknown) => mocks.query('amendments.documentsByAmendment', args),
     },
     documents: {
       threads: (args: unknown) => mocks.query('documents.threads', args),
@@ -137,8 +136,9 @@ beforeEach(() => {
 describe('entity family normalization contracts', () => {
   it('normalizes only object rows and sorted unique string ids', () => {
     expect(rows(undefined)).toEqual([]);
-    expect(rows([null, false, 3, 'row', { id: 'b' }, { id: 2 }, { id: 'a' }, { id: 'b' }]))
-      .toEqual([{ id: 'b' }, { id: 2 }, { id: 'a' }, { id: 'b' }]);
+    expect(rows([null, false, 3, 'row', { id: 'b' }, { id: 2 }, { id: 'a' }, { id: 'b' }])).toEqual(
+      [{ id: 'b' }, { id: 2 }, { id: 'a' }, { id: 'b' }]
+    );
     expect(idRows([{ id: 'b' }, { id: 2 }, { id: 'a' }, { id: 'b' }])).toEqual(['a', 'b']);
   });
 
@@ -343,10 +343,12 @@ describe('entity family hook contracts', () => {
     const activeTask = mocks.active.mock.calls.at(-1)?.[0];
     await expect(activeTask.resolveAfterComplete()).resolves.toHaveLength(4);
     const idleTasks = mocks.idle.mock.calls.at(-1)?.[1];
-    expect(idleTasks.find((item: { key: string }) => item.key === 'amendment-1:text'))
-      .toHaveProperty('resolveAfterComplete');
-    expect(idleTasks.find((item: { key: string }) => item.key === 'amendment-1:settings'))
-      .not.toHaveProperty('resolveAfterComplete');
+    expect(
+      idleTasks.find((item: { key: string }) => item.key === 'amendment-1:text')
+    ).toHaveProperty('resolveAfterComplete');
+    expect(
+      idleTasks.find((item: { key: string }) => item.key === 'amendment-1:settings')
+    ).not.toHaveProperty('resolveAfterComplete');
   });
 
   it('uses empty amendment families for missing actors and ids', () => {

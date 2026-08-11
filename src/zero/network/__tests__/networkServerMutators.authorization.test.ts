@@ -1034,9 +1034,7 @@ describe('networkServerMutators authorization', () => {
         eligible_origin_group_ids: [],
       },
     };
-    tx.run
-      .mockResolvedValueOnce([{ id: 'group-a' }, { id: 'group-b' }])
-      .mockResolvedValueOnce([]);
+    tx.run.mockResolvedValueOnce([{ id: 'group-a' }, { id: 'group-b' }]).mockResolvedValueOnce([]);
 
     await networkServerMutators.proposeGroupConnectionChange.fn({
       tx: tx as never,
@@ -1054,12 +1052,10 @@ describe('networkServerMutators authorization', () => {
 
   it('ignores empty affected group sets and absent relationship group ids', async () => {
     const tx = createTx('server');
-    tx.run
-      .mockResolvedValueOnce([{ id: 'group-a' }, { id: 'group-b' }])
-      .mockResolvedValueOnce([
-        { ...connection(), id: 'connection-new' },
-        { ...connection(), id: 'other-connection' },
-      ]);
+    tx.run.mockResolvedValueOnce([{ id: 'group-a' }, { id: 'group-b' }]).mockResolvedValueOnce([
+      { ...connection(), id: 'connection-new' },
+      { ...connection(), id: 'other-connection' },
+    ]);
     const args = {
       id: 'request-no-initiator',
       active_connection_id: null,

@@ -8,9 +8,7 @@ import {
 } from '../connectionValidation';
 import type { GroupConnectionRowLike } from '../derived';
 
-function connection(
-  overrides: Partial<GroupConnectionShape> = {}
-): GroupConnectionShape {
+function connection(overrides: Partial<GroupConnectionShape> = {}): GroupConnectionShape {
   return {
     id: 'connection',
     group_a_id: 'a',

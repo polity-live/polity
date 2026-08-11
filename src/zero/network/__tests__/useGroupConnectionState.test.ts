@@ -41,7 +41,9 @@ beforeEach(() => {
   mocks.results.clear();
   mocks.useQuery.mockReset();
   mocks.useQuery.mockImplementation((query?: { key: string }) =>
-    query ? (mocks.results.get(query.key) ?? [undefined, { type: 'complete' }]) : [undefined, { type: 'complete' }]
+    query
+      ? (mocks.results.get(query.key) ?? [undefined, { type: 'complete' }])
+      : [undefined, { type: 'complete' }]
   );
 });
 

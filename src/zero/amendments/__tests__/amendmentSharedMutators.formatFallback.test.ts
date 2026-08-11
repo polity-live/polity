@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/features/change-requests/logic/changeRequestNumbering', async importOriginal => {
-  const actual = await importOriginal<
-    typeof import('@/features/change-requests/logic/changeRequestNumbering')
-  >();
+  const actual =
+    await importOriginal<
+      typeof import('@/features/change-requests/logic/changeRequestNumbering')
+    >();
   return {
     ...actual,
     formatChangeRequestCrId: vi.fn(() => null),

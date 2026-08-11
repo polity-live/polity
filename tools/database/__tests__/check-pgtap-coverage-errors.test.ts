@@ -41,7 +41,7 @@ const fixture = vi.hoisted(() => {
     'database_coverage.json': JSON.stringify(matrix),
     '01.sql': schema,
     '02.sql': '-- intentionally unassigned',
-    '34_scheduled_jobs.sql': 'SELECT cron.schedule(\'real-job\', \'* * * * *\', \'select 1\');',
+    '34_scheduled_jobs.sql': "SELECT cron.schedule('real-job', '* * * * *', 'select 1');",
     'cron_jobs.sql': '-- embedded DDL deliberately absent',
     'catalog.sql': '-- catalog marker deliberately absent',
     'security.sql': '-- security marker deliberately absent',

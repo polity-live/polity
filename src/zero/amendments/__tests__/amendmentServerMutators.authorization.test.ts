@@ -70,8 +70,12 @@ vi.mock('../../mutators', () => ({
       voteOnChangeRequest: { fn: (...args: unknown[]) => voteOnChangeRequestMock(...args) },
       updateChangeRequest: { fn: (...args: unknown[]) => updateChangeRequestMock(...args) },
       deleteChangeRequest: { fn: (...args: unknown[]) => changeRequestDeleteMock(...args) },
-      createSupportConfirmation: { fn: (...args: unknown[]) => createSupportConfirmationMock(...args) },
-      updateSupportConfirmation: { fn: (...args: unknown[]) => updateSupportConfirmationMock(...args) },
+      createSupportConfirmation: {
+        fn: (...args: unknown[]) => createSupportConfirmationMock(...args),
+      },
+      updateSupportConfirmation: {
+        fn: (...args: unknown[]) => updateSupportConfirmationMock(...args),
+      },
       updateProcessBranch: { fn: (...args: unknown[]) => sharedUpdateProcessBranchMock(...args) },
       createProcessTask: { fn: (...args: unknown[]) => createProcessTaskMock(...args) },
       supportAmendment: { fn: (...args: unknown[]) => supportAmendmentMock(...args) },
@@ -1986,9 +1990,12 @@ describe('amendmentServerMutators authorization', () => {
   });
 
   it('covers process-task title selection and required row loaders', async () => {
-    expect(amendmentServerMutatorInternals.getProcessTaskNotificationTitle('schedule_event', '  Custom  ')).toBe(
-      'Custom'
-    );
+    expect(
+      amendmentServerMutatorInternals.getProcessTaskNotificationTitle(
+        'schedule_event',
+        '  Custom  '
+      )
+    ).toBe('Custom');
     expect(
       amendmentServerMutatorInternals.getProcessTaskNotificationTitle('implementation_evaluation')
     ).toBeTruthy();
@@ -2013,9 +2020,12 @@ describe('amendmentServerMutators authorization', () => {
     const missingRun = createTx();
     missingRun.run.mockResolvedValueOnce(null);
     await expect(
-      amendmentServerMutatorInternals.loadProcessRunForBranch(missingRun as never, {
-        process_run_id: 'missing',
-      } as never)
+      amendmentServerMutatorInternals.loadProcessRunForBranch(
+        missingRun as never,
+        {
+          process_run_id: 'missing',
+        } as never
+      )
     ).rejects.toThrow('Process run not found');
   });
 
@@ -2108,10 +2118,12 @@ describe('amendmentServerMutators authorization', () => {
 
   it('covers source-group and replan lookup edge cases', async () => {
     const noRoles = createTx();
-    noRoles.run.mockResolvedValueOnce(null).mockResolvedValueOnce([
-      { membership_roles: null },
-      { membership_roles: [{ role_id: null }] },
-    ]);
+    noRoles.run
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce([
+        { membership_roles: null },
+        { membership_roles: [{ role_id: null }] },
+      ]);
     await expect(
       amendmentServerMutatorInternals.assertCanUseAmendmentPathSourceGroup(
         noRoles as never,
@@ -2152,9 +2164,12 @@ describe('amendmentServerMutators authorization', () => {
       .mockResolvedValueOnce([{ id: 'agenda-first', status: 'pending' }])
       .mockResolvedValueOnce({ id: 'agenda-linked', status: 'active' });
     await expect(
-      amendmentServerMutatorInternals.loadFirstProcessBranchAgendaItemState(tx as never, {
-        id: 'branch-1',
-      } as never)
+      amendmentServerMutatorInternals.loadFirstProcessBranchAgendaItemState(
+        tx as never,
+        {
+          id: 'branch-1',
+        } as never
+      )
     ).resolves.toEqual({ hasProcess: true, firstAgendaItemStarted: true });
   });
 
@@ -2372,9 +2387,9 @@ describe('amendmentServerMutators authorization', () => {
       'votes_against',
       'votes_abstain',
     ]) {
-      expect(amendmentServerMutatorInternals.changeRequestUpdateNeedsManage({ [field]: null })).toBe(
-        true
-      );
+      expect(
+        amendmentServerMutatorInternals.changeRequestUpdateNeedsManage({ [field]: null })
+      ).toBe(true);
     }
   });
 
@@ -2561,8 +2576,18 @@ describe('amendmentServerMutators authorization', () => {
         { id: 'branch-link', agenda_item_id: 'agenda-2', process_branch_id: null, order_index: 0 },
       ])
       .mockResolvedValueOnce([
-        { id: 'vote-2', agenda_item_id: 'agenda-2', amendment_id: 'amendment-1', purpose: 'closing' },
-        { id: 'vote-1', agenda_item_id: 'agenda-1', amendment_id: 'amendment-1', purpose: 'closing' },
+        {
+          id: 'vote-2',
+          agenda_item_id: 'agenda-2',
+          amendment_id: 'amendment-1',
+          purpose: 'closing',
+        },
+        {
+          id: 'vote-1',
+          agenda_item_id: 'agenda-1',
+          amendment_id: 'amendment-1',
+          purpose: 'closing',
+        },
       ])
       .mockResolvedValueOnce({ id: 'event-2', change_request_vote_order: 'creation' });
 
@@ -2590,8 +2615,18 @@ describe('amendmentServerMutators authorization', () => {
         { id: 'branch-link', agenda_item_id: 'agenda-2', process_branch_id: null, order_index: 0 },
       ])
       .mockResolvedValueOnce([
-        { id: 'vote-1', agenda_item_id: 'agenda-1', amendment_id: 'amendment-1', purpose: 'closing' },
-        { id: 'vote-2', agenda_item_id: 'agenda-2', amendment_id: 'amendment-1', purpose: 'closing' },
+        {
+          id: 'vote-1',
+          agenda_item_id: 'agenda-1',
+          amendment_id: 'amendment-1',
+          purpose: 'closing',
+        },
+        {
+          id: 'vote-2',
+          agenda_item_id: 'agenda-2',
+          amendment_id: 'amendment-1',
+          purpose: 'closing',
+        },
       ]);
     await amendmentServerMutatorInternals.appendEventChangeRequestVoteStepIfNeeded({
       tx: reverseComparator as never,
@@ -2612,8 +2647,18 @@ describe('amendmentServerMutators authorization', () => {
         ])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([
-          { id: 'vote-2', agenda_item_id: 'agenda-2', amendment_id: 'amendment-1', purpose: 'closing' },
-          { id: 'vote-1', agenda_item_id: 'agenda-1', amendment_id: 'amendment-1', purpose: 'closing' },
+          {
+            id: 'vote-2',
+            agenda_item_id: 'agenda-2',
+            amendment_id: 'amendment-1',
+            purpose: 'closing',
+          },
+          {
+            id: 'vote-1',
+            agenda_item_id: 'agenda-1',
+            amendment_id: 'amendment-1',
+            purpose: 'closing',
+          },
         ]);
 
       const OriginalMap = globalThis.Map;
@@ -2679,7 +2724,9 @@ describe('amendmentServerMutators authorization', () => {
     expect(amendmentServerMutatorInternals.isAmendmentOwnerLikeRole(null)).toBe(false);
     expect(amendmentServerMutatorInternals.isAmendmentOwnerLikeRole({ name: 'Author' })).toBe(true);
     expect(amendmentServerMutatorInternals.isAmendmentOwnerLikeRole({ name: 'Owner' })).toBe(true);
-    expect(amendmentServerMutatorInternals.isAmendmentOwnerLikeRole({ name: 'Editor' })).toBe(false);
+    expect(amendmentServerMutatorInternals.isAmendmentOwnerLikeRole({ name: 'Editor' })).toBe(
+      false
+    );
     expect(
       amendmentServerMutatorInternals.isAmendmentOwnerLikeRole({
         name: 'Editor',
@@ -2959,7 +3006,11 @@ describe('amendmentServerMutators authorization', () => {
         args[preceding] = preceding === 'title' ? 'Existing' : base[preceding];
       }
       args[field] = field === 'visibility' ? 'private' : `changed-${field}`;
-      await amendmentServerMutators.update.fn({ tx: tx as never, ctx: createCtx(), args: args as never });
+      await amendmentServerMutators.update.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: args as never,
+      });
       expect(fireNotificationMock).toHaveBeenCalledWith(
         'notifyAmendmentProfileUpdated',
         expect.anything()
@@ -2993,7 +3044,11 @@ describe('amendmentServerMutators authorization', () => {
       if (args.event_id) {
         tx.run.mockResolvedValueOnce({ id: args.event_id, amendment_deadline: null });
       }
-      await amendmentServerMutators.update.fn({ tx: tx as never, ctx: createCtx(), args: args as never });
+      await amendmentServerMutators.update.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: args as never,
+      });
       expect(fireNotificationMock).toHaveBeenCalledWith(
         'notifyAmendmentTargetSet',
         expect.anything()
@@ -3036,8 +3091,16 @@ describe('amendmentServerMutators authorization', () => {
     ).rejects.toThrow('Amendment collaborator not found');
 
     const cases = [
-      { user_id: 'user-1', status: 'requested', notification: 'notifyCollaborationRequestWithdrawn' },
-      { user_id: 'user-1', status: 'invited', notification: 'notifyCollaborationInvitationDeclined' },
+      {
+        user_id: 'user-1',
+        status: 'requested',
+        notification: 'notifyCollaborationRequestWithdrawn',
+      },
+      {
+        user_id: 'user-1',
+        status: 'invited',
+        notification: 'notifyCollaborationInvitationDeclined',
+      },
       { user_id: 'user-1', status: 'member', notification: 'notifyCollaborationWithdrawn' },
       { user_id: 'user-2', status: 'requested', notification: 'notifyCollaborationRejected' },
       { user_id: 'user-2', status: 'member', notification: 'notifyCollaborationRemoved' },
@@ -3195,7 +3258,9 @@ describe('amendmentServerMutators authorization', () => {
         source_type: 'city_design_object',
       }),
     });
-    expect(documentIntegrityMocks.assertPersistedDocumentChangeRequestIntegrity).not.toHaveBeenCalled();
+    expect(
+      documentIntegrityMocks.assertPersistedDocumentChangeRequestIntegrity
+    ).not.toHaveBeenCalled();
 
     createChangeRequestMock.mockResolvedValueOnce(false);
     const document = createTx();
@@ -3205,9 +3270,9 @@ describe('amendmentServerMutators authorization', () => {
       ctx: createCtx(),
       args: createChangeRequestArgs({ process_branch_id: undefined, source_type: null }),
     });
-    expect(documentIntegrityMocks.assertPersistedDocumentChangeRequestIntegrity).toHaveBeenCalledWith(
-      expect.objectContaining({ processBranchId: null })
-    );
+    expect(
+      documentIntegrityMocks.assertPersistedDocumentChangeRequestIntegrity
+    ).toHaveBeenCalledWith(expect.objectContaining({ processBranchId: null }));
   });
 
   it('short-circuits or completes document change-request creation after integrity checks', async () => {
@@ -3558,7 +3623,9 @@ describe('amendmentServerMutators authorization', () => {
         ctx: createCtx(),
         args: {
           id: `cr-skip-${index}`,
-          ...(testCase.nextStatus === undefined ? { description: 'updated' } : { status: testCase.nextStatus }),
+          ...(testCase.nextStatus === undefined
+            ? { description: 'updated' }
+            : { status: testCase.nextStatus }),
         } as never,
       });
     }
@@ -3618,7 +3685,9 @@ describe('amendmentServerMutators authorization', () => {
       ctx: createCtx(),
       args: { id: 'branch-1', editing_mode: 'vote_internal' },
     });
-    expect(internalVotingMocks.initializeInternalChangeRequestVotingForAmendment).toHaveBeenCalledOnce();
+    expect(
+      internalVotingMocks.initializeInternalChangeRequestVotingForAmendment
+    ).toHaveBeenCalledOnce();
   });
 
   it('persists both minimal and extended event-mode transitions when the workflow authorizes them', async () => {

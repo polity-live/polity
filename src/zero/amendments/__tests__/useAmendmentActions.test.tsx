@@ -78,14 +78,8 @@ describe('useAmendmentActions branch contracts', () => {
     result.current.updateSupportConfirmation({ id: 'three', status: 'pending' } as never);
 
     expect(mocks.success).toHaveBeenCalledTimes(2);
-    expect(mocks.success).toHaveBeenNthCalledWith(
-      1,
-      'features.amendments.toasts.supportConfirmed'
-    );
-    expect(mocks.success).toHaveBeenNthCalledWith(
-      2,
-      'features.amendments.toasts.supportDeclined'
-    );
+    expect(mocks.success).toHaveBeenNthCalledWith(1, 'features.amendments.toasts.supportConfirmed');
+    expect(mocks.success).toHaveBeenNthCalledWith(2, 'features.amendments.toasts.supportDeclined');
     expect(mocks.onServerError).toHaveBeenCalledTimes(3);
   });
 });
