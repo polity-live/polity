@@ -177,7 +177,6 @@ jobs:
       matrix:
         shard: [1, 2, 3, 4]
     env:
-      COVERAGE_SHARD_ARTIFACT_DIR: ${{ runner.temp }}/polity-coverage-shards
       COVERAGE_SHARD_MAX_WORKERS: "2"
     steps:
       - uses: actions/checkout@v7
@@ -188,7 +187,9 @@ jobs:
       - run: npm install --global npm@${NPM_VERSION}
       - run: npm ci
       - name: Run isolated instrumented shard
-        run: npm run test:coverage:shard -- "${{ matrix.shard }}/4"
+        run: >-
+          COVERAGE_SHARD_ARTIFACT_DIR="$RUNNER_TEMP/polity-coverage-shards"
+          npm run test:coverage:shard -- "${{ matrix.shard }}/4"
       - name: Upload coverage blob
         if: always()
         uses: actions/upload-artifact@v6

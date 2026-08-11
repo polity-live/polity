@@ -33,6 +33,8 @@ describe('GitHub workflow contracts', () => {
 
     expect(ci).toContain('coverage-shards:');
     expect(ci).toContain('shard: [1, 2, 3, 4]');
+    expect(ci).toContain('COVERAGE_SHARD_ARTIFACT_DIR="$RUNNER_TEMP/polity-coverage-shards"');
+    expect(ci).not.toContain('COVERAGE_SHARD_ARTIFACT_DIR: ${{ runner.temp }}');
     expect(ci).toContain('npm run test:coverage:shard -- "${{ matrix.shard }}/4"');
     expect(ci).toContain('path: .vitest-reports/blob-${{ matrix.shard }}-4.json');
     expect(ci).toContain('needs: [coverage-tests, coverage-shards]');
