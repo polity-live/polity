@@ -393,7 +393,18 @@ jobs:
       - name: Start and reset isolated Supabase stack
         run: |
           supabase start
-          supabase db reset --local --no-seed
+          for attempt in 1 2 3; do
+            if supabase db reset --local --no-seed; then
+              break
+            fi
+            if [[ "$attempt" -eq 3 ]]; then
+              echo "Supabase reset failed after $attempt attempts"
+              exit 1
+            fi
+            delay_seconds=$(( attempt * 10 ))
+            echo "Supabase reset attempt $attempt failed; retrying in ${delay_seconds}s"
+            sleep "$delay_seconds"
+          done
       - name: Export isolated stack environment
         run: |
           eval "$(supabase status -o env)"

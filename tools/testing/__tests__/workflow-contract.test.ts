@@ -41,6 +41,9 @@ describe('GitHub workflow contracts', () => {
     expect(ci).toContain('E2E_APP_COMMAND: npm run start:e2e');
     expect(ci).toContain('run: npm run build:e2e');
     expect(e2e).toContain('timeout-minutes: 25');
+    expect(e2e).toContain('for attempt in 1 2 3; do');
+    expect(e2e).toContain('if supabase db reset --local --no-seed; then');
+    expect(e2e).toContain('Supabase reset failed after $attempt attempts');
     expect(e2e).toContain('name: Upload shard blob report');
     expect(e2e).toContain('if-no-files-found: ignore');
     expect(merge).toContain('name: Validate E2E blob reports');
