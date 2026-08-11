@@ -6,6 +6,8 @@ settings:
 
 overrides:
   '@opentelemetry/propagator-jaeger': 2.9.0
+  xmlbuilder2@3.1.1>js-yaml: 3.15.1
+  xmlbuilder2@4.0.3>js-yaml: 4.3.1
 
 importers:
 
@@ -6232,8 +6234,8 @@ packages:
     resolution: {integrity: sha512-3Q2eIqG6s1KEBBmkj9tGM9lef8LJbuRyTVBdI3GpTnrvtytunjLPO0wqABp5qhtMzfA32jYn1FlnIV7GH1RAHQ==}
     engines: {node: '>=18.0.0'}
 
-  js-yaml@3.14.1:
-    resolution: {integrity: sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==}
+  js-yaml@3.15.1:
+    resolution: {integrity: sha512-S99WuO3HlhO3XN41EtYUNl9zzXjoJx7QvmipxsJVxtCBT0YHEFy+iOJhjSvrmV12nYhWpZaM8lPHkJm0yUMbag==}
     hasBin: true
 
   js-yaml@4.3.1:
@@ -14717,7 +14719,7 @@ snapshots:
 
   js-xxhash@4.0.0: {}
 
-  js-yaml@3.14.1:
+  js-yaml@3.15.1:
     dependencies:
       argparse: 1.0.10
       esprima: 4.0.1
@@ -17593,7 +17595,7 @@ snapshots:
       '@oozcitak/dom': 1.15.10
       '@oozcitak/infra': 1.0.8
       '@oozcitak/util': 8.3.8
-      js-yaml: 3.14.1
+      js-yaml: 3.15.1
 
   xmlbuilder2@4.0.3:
     dependencies:
