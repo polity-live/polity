@@ -62,7 +62,7 @@ describe('useSearchPage result totals', () => {
     let searchURLState = makeSearchURLState('K1');
     mockUseSearchURL.mockImplementation(() => searchURLState);
 
-    const { result, rerender } = renderHook(() => useSearchPage());
+    const { result, rerender, unmount } = renderHook(() => useSearchPage());
 
     act(() => result.current.setTotalResults(12));
     expect(result.current.totalResults).toBe(12);
@@ -71,5 +71,6 @@ describe('useSearchPage result totals', () => {
     rerender();
 
     expect(result.current.totalResults).toBeNull();
+    unmount();
   });
 });
