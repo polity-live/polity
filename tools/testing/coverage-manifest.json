@@ -108992,6 +108992,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/__tests__/zero-readiness.test.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/build-provenance.mjs",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
