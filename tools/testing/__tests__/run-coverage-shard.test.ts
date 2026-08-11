@@ -87,6 +87,7 @@ describe('coverage shard runner contracts', () => {
         'component',
         'integration',
         '--coverage',
+        '--passWithNoTests',
         '--reporter=blob',
         '--shard=4/4',
         '--maxWorkers=2',

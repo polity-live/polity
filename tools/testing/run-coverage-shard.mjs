@@ -99,6 +99,7 @@ export function buildVitestShardArguments({ shard, maxWorkers, reportsDirectory 
     '--project',
     'integration',
     '--coverage',
+    '--passWithNoTests',
     '--reporter=blob',
     `--shard=${shard}`,
     `--maxWorkers=${maxWorkers}`,
