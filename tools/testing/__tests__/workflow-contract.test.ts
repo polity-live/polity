@@ -11,11 +11,13 @@ function workflow(name: string) {
 describe('GitHub workflow contracts', () => {
   it('uses valid Supabase startup syntax and the published dependency-review ref', () => {
     const ci = workflow('ci.yml');
+    const staticAnalysis = ci.slice(ci.indexOf('  static-analysis:'), ci.indexOf('  unit-tests:'));
 
     expect(ci).not.toContain('supabase db start');
     expect(ci).toContain('run: supabase start');
     expect(ci).toContain('actions/dependency-review-action@v5.0.0');
     expect(ci).not.toContain('actions/dependency-review-action@v5\n');
+    expect(staticAnalysis).toContain('fetch-depth: 0');
   });
 
   it('keeps three isolated desktop shards and one mobile PR job', () => {
