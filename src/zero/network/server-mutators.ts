@@ -365,10 +365,8 @@ async function assertCanManageConnectionRequestCounterparty(
     permissionError = error;
   }
 
-  const endpointGroups =
-    (endpointGroupIds.length > 0
-      ? await tx.run(zql.group.where('id', 'IN', endpointGroupIds))
-      : []) ?? [];
+  // Reaching this fallback means at least one endpoint permission check failed.
+  const endpointGroups = (await tx.run(zql.group.where('id', 'IN', endpointGroupIds))) ?? [];
   const tutorialRunIds = [
     ...new Set(
       endpointGroups.map(group => group.tutorial_run_id).filter((id): id is string => Boolean(id))

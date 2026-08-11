@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { createRef } from 'react';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { SearchDocument } from '../../types/search-document.types';
@@ -89,5 +89,31 @@ describe('VirtualSearchGridView', () => {
     expect(positionWrapper?.dataset.searchCardMode).toBe('preview');
     expect(container.querySelector('.civic-load-card-reveal')).toBeNull();
     expect(container.querySelector('.civic-page-reveal')).toBeNull();
+  });
+
+  it('jumps to newly available results through a stable focusable action', () => {
+    const onJumpToTop = vi.fn();
+
+    render(
+      <VirtualSearchGridView
+        parentRef={createRef<HTMLDivElement>()}
+        cells={[]}
+        totalHeight={0}
+        showNewResults
+        rowsEmpty={false}
+        isComplete={false}
+        newResultsLabel="New results"
+        emptyLabel="No results"
+        onJumpToTop={onJumpToTop}
+      />
+    );
+
+    const action = screen.getByRole('button', { name: 'New results' });
+    expect(action.getAttribute('data-action-id')).toBe('search.virtual-grid.jump-to-top');
+    action.focus();
+    expect(document.activeElement).toBe(action);
+    fireEvent.click(action);
+
+    expect(onJumpToTop).toHaveBeenCalledTimes(1);
   });
 });

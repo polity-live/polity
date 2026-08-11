@@ -150,8 +150,9 @@ function enrichAmendmentDiscussionsWithChangeRequests(
   amendment: RawEntity,
   processBranches: readonly RawEntity[] = []
 ): TDiscussion[] {
-  const discussions = (amendment.discussions || []) as TDiscussion[];
-  const changeRequests = Array.isArray(amendment.change_requests) ? amendment.change_requests : [];
+  // The private caller normalizes both collections in withBranchChangeRequestContext.
+  const discussions = amendment.discussions as TDiscussion[];
+  const changeRequests = amendment.change_requests as RawEntity[];
   const activeCollaborators = getAmendmentRoleCollaborators(amendment).filter(
     isActiveAmendmentCollaborator
   );
@@ -296,7 +297,7 @@ function withBranchChangeRequestContext(
 
   return {
     ...amendment,
-    discussions: Array.isArray(sourceDiscussions) ? sourceDiscussions : [],
+    discussions: sourceDiscussions,
     change_requests: scopedChangeRequests,
   };
 }
@@ -382,18 +383,16 @@ export function adaptAmendmentToEntity(
     });
   }
 
-  if (Array.isArray(amendmentContext.change_requests)) {
-    const knownUserIds = new Set<string>([
-      ...(owner?.id ? [owner.id] : []),
-      ...collaborators.map(collaborator => collaborator.user.id),
-    ]);
+  const knownUserIds = new Set<string>([
+    ...(owner?.id ? [owner.id] : []),
+    ...collaborators.map(collaborator => collaborator.user.id),
+  ]);
 
-    amendmentContext.change_requests.forEach((changeRequest: RawEntity) => {
-      if (!changeRequest.user?.id || knownUserIds.has(changeRequest.user.id)) return;
-      knownUserIds.add(changeRequest.user.id);
-      extraUsers.push(buildEditorUser(changeRequest.user, 'Participant'));
-    });
-  }
+  amendmentContext.change_requests.forEach((changeRequest: RawEntity) => {
+    if (!changeRequest.user?.id || knownUserIds.has(changeRequest.user.id)) return;
+    knownUserIds.add(changeRequest.user.id);
+    extraUsers.push(buildEditorUser(changeRequest.user, 'Participant'));
+  });
 
   const datasetRights = getGroupDatasetRights(amendment.group, userId);
   const metadata: EditorEntityMetadata = {
@@ -417,7 +416,7 @@ export function adaptAmendmentToEntity(
       : DEFAULT_EDITOR_CONTENT;
   const content = applyResolvedSuggestionsToContent(
     storedContent,
-    Array.isArray(amendmentContext.change_requests) ? amendmentContext.change_requests : []
+    amendmentContext.change_requests
   );
   const permissionFlags = getAmendmentPermissionFlags(amendmentContext, userId);
   const isBranchReadonly = isReadonlyProcessBranch(processBranch);

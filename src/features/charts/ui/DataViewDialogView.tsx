@@ -115,6 +115,7 @@ function ResultRow({
 
   return (
     <button
+      data-action-id="charts.data-view.select-result"
       type="button"
       data-testid="dataset-result"
       aria-pressed={selected}
@@ -165,7 +166,12 @@ function ProviderFilter({ model }: DataViewDialogViewProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button type="button" variant="outline" size="sm">
+        <Button
+          data-action-id="charts.data-view.sources.open"
+          type="button"
+          variant="outline"
+          size="sm"
+        >
           <SlidersHorizontalIcon className="size-4" />
           {t('plateJs.dataView.sources')}
           {model.providers.length < PROVIDERS.length ? (
@@ -181,6 +187,7 @@ function ProviderFilter({ model }: DataViewDialogViewProps) {
           {PROVIDERS.map(provider => (
             <label key={provider} className="flex items-center gap-2 text-sm">
               <InlineCheckbox
+                data-action-id="charts.data-view.sources.toggle-provider"
                 id={`data-view-provider-${provider}`}
                 checked={model.providers.includes(provider)}
                 onCheckedChange={checked =>
@@ -199,6 +206,7 @@ function ProviderFilter({ model }: DataViewDialogViewProps) {
         </div>
         <div className="mt-3 flex gap-2 border-t pt-3">
           <Button
+            data-action-id="charts.data-view.sources.select-all"
             type="button"
             variant="ghost"
             size="sm"
@@ -206,7 +214,13 @@ function ProviderFilter({ model }: DataViewDialogViewProps) {
           >
             {t('plateJs.dataView.allSources')}
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={() => model.setProviders([])}>
+          <Button
+            data-action-id="charts.data-view.sources.clear"
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => model.setProviders([])}
+          >
             {t('plateJs.dataView.clear')}
           </Button>
         </div>
@@ -230,6 +244,7 @@ function DatasetDetails({ model }: DataViewDialogViewProps) {
     <div className="flex h-full flex-col">
       <div className="flex-1 space-y-5 overflow-y-auto p-5">
         <Button
+          data-action-id="charts.data-view.back-to-results"
           type="button"
           variant="ghost"
           size="sm"
@@ -289,6 +304,7 @@ function DatasetDetails({ model }: DataViewDialogViewProps) {
       </div>
       <div className="border-t p-4">
         <Button
+          data-action-id="charts.data-view.use-dataset"
           type="button"
           className="w-full"
           disabled={model.preparing || (result.byteSize ?? 0) > 50 * 1024 * 1024}
@@ -343,6 +359,7 @@ function Finder({ model }: DataViewDialogViewProps) {
           <div className="mt-3 flex flex-wrap gap-2">
             {suggestions.map(suggestion => (
               <Button
+                data-action-id="charts.data-view.search.use-suggestion"
                 key={suggestion}
                 type="button"
                 variant="outline"
@@ -385,7 +402,12 @@ function Finder({ model }: DataViewDialogViewProps) {
             <div className="text-muted-foreground flex min-h-64 flex-col items-center justify-center gap-4 px-8 text-center text-sm">
               <span>{t('plateJs.dataView.noResults')}</span>
               {model.canUploadDatasets ? (
-                <Button type="button" variant="outline" onClick={() => model.setUploadOpen(true)}>
+                <Button
+                  data-action-id="charts.data-view.upload.open.no-results"
+                  type="button"
+                  variant="outline"
+                  onClick={() => model.setUploadOpen(true)}
+                >
                   <FileUpIcon className="size-4" />
                   {t('plateJs.dataView.addDataset')}
                 </Button>
@@ -398,7 +420,12 @@ function Finder({ model }: DataViewDialogViewProps) {
               {model.canUploadDatasets ? (
                 <div className="flex flex-col items-center gap-2">
                   <span>{t('plateJs.dataView.or')}</span>
-                  <Button type="button" variant="outline" onClick={() => model.setUploadOpen(true)}>
+                  <Button
+                    data-action-id="charts.data-view.upload.open.empty"
+                    type="button"
+                    variant="outline"
+                    onClick={() => model.setUploadOpen(true)}
+                  >
                     <FileUpIcon className="size-4" />
                     {t('plateJs.dataView.addDataset')}
                   </Button>
@@ -493,7 +520,12 @@ function FilterPopover({ model }: DataViewDialogViewProps) {
   return (
     <Popover onOpenChange={opened => opened && void model.loadFilterValues()}>
       <PopoverTrigger asChild>
-        <Button type="button" variant="outline" className="self-end">
+        <Button
+          data-action-id="charts.data-view.filters.open"
+          type="button"
+          variant="outline"
+          className="self-end"
+        >
           <SlidersHorizontalIcon className="size-4" />
           {t('plateJs.dataView.filters')}
           {model.activeFilterCount > 0 ? (
@@ -545,6 +577,7 @@ function FilterPopover({ model }: DataViewDialogViewProps) {
         </div>
         {model.activeFilterCount > 0 ? (
           <Button
+            data-action-id="charts.data-view.filters.clear"
             type="button"
             variant="ghost"
             size="sm"
@@ -559,11 +592,15 @@ function FilterPopover({ model }: DataViewDialogViewProps) {
   );
 }
 
-function AggregationSelect({ model }: DataViewDialogViewProps) {
+function AggregationSelect({
+  model,
+  'data-action-id': actionId,
+}: DataViewDialogViewProps & { 'data-action-id': string }) {
   const { t } = useTranslation();
   const aggregations: DataAggregation[] = ['sum', 'mean', 'median', 'min', 'max', 'count'];
   return (
     <SelectField
+      data-action-id={actionId}
       label={t('plateJs.dataView.aggregation')}
       value={model.query.aggregation}
       onValueChange={value =>
@@ -617,7 +654,7 @@ function ChartOptions({ model }: DataViewDialogViewProps) {
       ...current,
       layout,
       valueColumns,
-      measureColumn: valueColumns[0] ?? current.measureColumn,
+      measureColumn: valueColumns[0],
       seriesColumn: null,
     }));
     if (valueColumns.length > 1 && model.chartType === 'pie') model.setChartType('bar');
@@ -630,6 +667,7 @@ function ChartOptions({ model }: DataViewDialogViewProps) {
           <div className="mb-2 flex items-center justify-between gap-3">
             <p className="text-sm font-medium">{t('plateJs.dataView.valueColumns')}</p>
             <Button
+              data-action-id="charts.data-view.chart.reset-values"
               type="button"
               variant="ghost"
               size="sm"
@@ -639,7 +677,7 @@ function ChartOptions({ model }: DataViewDialogViewProps) {
                   ...current,
                   layout,
                   valueColumns: availableValueColumns,
-                  measureColumn: availableValueColumns[0] ?? current.measureColumn,
+                  measureColumn: availableValueColumns[0],
                   seriesColumn: null,
                 }));
                 if (availableValueColumns.length > 1 && model.chartType === 'pie') {
@@ -658,6 +696,7 @@ function ChartOptions({ model }: DataViewDialogViewProps) {
               return (
                 <div key={profile.name} className="flex items-center gap-2 text-sm">
                   <InlineCheckbox
+                    data-action-id="charts.data-view.chart.toggle-value"
                     id={checkboxId}
                     checked={selectedValueColumns.has(profile.name)}
                     disabled={isOnlySelected}
@@ -674,7 +713,7 @@ function ChartOptions({ model }: DataViewDialogViewProps) {
           </div>
         </div>
       ) : null}
-      <AggregationSelect model={model} />
+      <AggregationSelect data-action-id="charts.data-view.chart.aggregation" model={model} />
       {model.query.layout === 'long' ? (
         <SelectField
           label={t('plateJs.dataView.series')}
@@ -698,6 +737,7 @@ function ChartOptions({ model }: DataViewDialogViewProps) {
         >
           {chartTypes.map(option => (
             <ToggleGroupItem
+              data-action-id="charts.data-view.chart.select-type"
               key={option.value}
               value={option.value}
               aria-label={option.label}
@@ -746,6 +786,7 @@ function TableOptions({ model }: DataViewDialogViewProps) {
         <div className="mb-2 flex items-center justify-between gap-3">
           <p className="text-sm font-medium">{t('plateJs.dataView.visibleColumns')}</p>
           <Button
+            data-action-id="charts.data-view.table.reset-columns"
             type="button"
             variant="ghost"
             size="sm"
@@ -766,6 +807,7 @@ function TableOptions({ model }: DataViewDialogViewProps) {
             return (
               <div key={profile.name} className="flex items-center gap-2 text-sm">
                 <InlineCheckbox
+                  data-action-id="charts.data-view.table.toggle-column"
                   id={checkboxId}
                   checked={selected.has(profile.name)}
                   disabled={isOnlyVisibleColumn}
@@ -816,8 +858,12 @@ function TableOptions({ model }: DataViewDialogViewProps) {
           }
         >
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="asc">{t('plateJs.dataView.ascending')}</TabsTrigger>
-            <TabsTrigger value="desc">{t('plateJs.dataView.descending')}</TabsTrigger>
+            <TabsTrigger data-action-id="charts.data-view.table.sort.ascending" value="asc">
+              {t('plateJs.dataView.ascending')}
+            </TabsTrigger>
+            <TabsTrigger data-action-id="charts.data-view.table.sort.descending" value="desc">
+              {t('plateJs.dataView.descending')}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       ) : null}
@@ -830,7 +876,12 @@ function AdvancedOptions({ model }: DataViewDialogViewProps) {
   return (
     <Collapsible>
       <CollapsibleTrigger asChild>
-        <Button type="button" variant="ghost" className="w-full justify-between px-0">
+        <Button
+          data-action-id="charts.data-view.options.toggle"
+          type="button"
+          variant="ghost"
+          className="w-full justify-between px-0"
+        >
           {t('plateJs.dataView.moreOptions')}
           <ChevronDownIcon className="size-4" />
         </Button>
@@ -891,6 +942,7 @@ function AdvancedOptions({ model }: DataViewDialogViewProps) {
           <div className="grid gap-2">
             <label className="flex items-center gap-2 text-sm">
               <InlineCheckbox
+                data-action-id="charts.data-view.chart.toggle-legend"
                 id="data-view-legend"
                 checked={model.presentation.showLegend !== false}
                 onCheckedChange={checked =>
@@ -904,6 +956,7 @@ function AdvancedOptions({ model }: DataViewDialogViewProps) {
             {model.chartType !== 'pie' ? (
               <label className="flex items-center gap-2 text-sm">
                 <InlineCheckbox
+                  data-action-id="charts.data-view.chart.toggle-grid"
                   id="data-view-grid"
                   checked={model.presentation.showGrid !== false}
                   onCheckedChange={checked =>
@@ -1049,7 +1102,13 @@ function Builder({ model }: DataViewDialogViewProps) {
             </p>
           </div>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={model.changeDataset}>
+        <Button
+          data-action-id="charts.data-view.change-dataset"
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={model.changeDataset}
+        >
           {t('plateJs.dataView.changeDataset')}
         </Button>
       </div>
@@ -1062,15 +1121,27 @@ function Builder({ model }: DataViewDialogViewProps) {
               onValueChange={value => model.setView(value as 'chart' | 'table' | 'stat')}
             >
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="chart" onClick={() => model.setView('chart')}>
+                <TabsTrigger
+                  data-action-id="charts.data-view.view.chart"
+                  value="chart"
+                  onClick={() => model.setView('chart')}
+                >
                   <ChartNoAxesCombinedIcon className="size-4" />
                   {t('plateJs.dataView.chart')}
                 </TabsTrigger>
-                <TabsTrigger value="table" onClick={() => model.setView('table')}>
+                <TabsTrigger
+                  data-action-id="charts.data-view.view.table"
+                  value="table"
+                  onClick={() => model.setView('table')}
+                >
                   <Table2Icon className="size-4" />
                   {t('plateJs.dataView.table')}
                 </TabsTrigger>
-                <TabsTrigger value="stat" onClick={() => model.setView('stat')}>
+                <TabsTrigger
+                  data-action-id="charts.data-view.view.stat"
+                  value="stat"
+                  onClick={() => model.setView('stat')}
+                >
                   <SigmaIcon className="size-4" />
                   {t('plateJs.dataView.stat')}
                 </TabsTrigger>
@@ -1079,7 +1150,9 @@ function Builder({ model }: DataViewDialogViewProps) {
             <DataSentence model={model} />
             {model.view === 'chart' ? <ChartOptions model={model} /> : null}
             {model.view === 'table' ? <TableOptions model={model} /> : null}
-            {model.view === 'stat' ? <AggregationSelect model={model} /> : null}
+            {model.view === 'stat' ? (
+              <AggregationSelect data-action-id="charts.data-view.stat.aggregation" model={model} />
+            ) : null}
             <AdvancedOptions model={model} />
           </div>
           <div className="min-w-0 p-5 lg:p-6">
@@ -1135,6 +1208,7 @@ function UploadSheet({ model }: DataViewDialogViewProps) {
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger
+                data-action-id="charts.data-view.upload.mode.file"
                 value="file"
                 disabled={model.uploading}
                 onClick={() => model.setUploadMode('file')}
@@ -1143,6 +1217,7 @@ function UploadSheet({ model }: DataViewDialogViewProps) {
                 {t('plateJs.dataView.uploadFile')}
               </TabsTrigger>
               <TabsTrigger
+                data-action-id="charts.data-view.upload.mode.manual"
                 value="manual"
                 disabled={model.uploading}
                 onClick={() => model.setUploadMode('manual')}
@@ -1220,6 +1295,7 @@ function UploadSheet({ model }: DataViewDialogViewProps) {
                     </p>
                   </div>
                   <Button
+                    data-action-id="charts.data-view.upload.remove-file"
                     type="button"
                     variant="ghost"
                     size="icon"
@@ -1252,6 +1328,7 @@ function UploadSheet({ model }: DataViewDialogViewProps) {
         </div>
         <SheetFooter>
           <Button
+            data-action-id="charts.data-view.upload.cancel"
             type="button"
             variant="outline"
             disabled={model.uploading}
@@ -1260,6 +1337,7 @@ function UploadSheet({ model }: DataViewDialogViewProps) {
             {t('plateJs.dataView.cancel')}
           </Button>
           <Button
+            data-action-id="charts.data-view.upload.submit"
             type="button"
             disabled={
               model.uploading || model.uploadGroupsLoading || model.uploadGroups.length === 0
@@ -1316,7 +1394,12 @@ export function DataViewDialogView({ model }: DataViewDialogViewProps) {
 
         {model.stage === 'build' ? (
           <DialogFooter separator surface="background" className="px-5 py-3">
-            <Button type="button" disabled={!model.canInsert} onClick={model.save}>
+            <Button
+              data-action-id="charts.data-view.save"
+              type="button"
+              disabled={!model.canInsert}
+              onClick={model.save}
+            >
               {model.projectionLoading ? <Loader2Icon className="size-4 animate-spin" /> : null}
               {insertLabel}
             </Button>

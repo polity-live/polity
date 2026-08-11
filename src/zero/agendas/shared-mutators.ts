@@ -65,8 +65,6 @@ async function assertAgendaItemAccess(
 }
 
 async function ensureDefaultEventSpeakerRights(tx: AgendaTx, eventId: string) {
-  if (tx.location === 'client') return;
-
   const roles = await tx.run(
     zql.role.where('event_id', eventId).where('scope', 'event').related('action_rights')
   );
@@ -124,7 +122,6 @@ async function assertCanManageSpeakersForAgendaItem(
   ctx: AgendaCtx,
   agendaItemId: string
 ) {
-  if (tx.location === 'client') return;
   const agendaItem = await loadAgendaItem(tx, agendaItemId);
   if (!agendaItem.event_id) {
     await assertAgendaItemAccess(tx, ctx, agendaItem, 'manage');
@@ -160,40 +157,38 @@ async function assertCanAddSpeaker(
   agendaItem: { event_id?: string | null },
   speakerUserId: string | null | undefined
 ) {
-  if (tx.location === 'client') return;
-
   requireAuthenticated(tx, ctx, { action: 'speak', resource: 'events' });
 
   if (!agendaItem.event_id) {
     throw new PermissionError('speak', 'events', 'event required');
   }
+  const eventId = agendaItem.event_id;
 
-  await ensureDefaultEventSpeakerRights(tx, agendaItem.event_id);
+  await ensureDefaultEventSpeakerRights(tx, eventId);
 
-  if (speakerUserId === ctx.userID && agendaItem.event_id) {
+  if (speakerUserId === ctx.userID) {
     for (const action of ['speak', 'manage_speakers', 'active_voting', 'passive_voting'] as const) {
-      if (await hasEventPermission(tx, ctx, agendaItem.event_id, action)) {
-        return;
+      if (await hasEventPermission(tx, ctx, eventId, action)) {
+        return eventId;
       }
     }
 
-    throw new PermissionError('speak', 'events', `event:${agendaItem.event_id}`);
+    throw new PermissionError('speak', 'events', `event:${eventId}`);
   }
 
   await can(tx, ctx, {
     action: 'manage_speakers',
     resource: 'events',
-    eventId: agendaItem.event_id,
+    eventId,
   });
+  return eventId;
 }
 
 async function assertSpeakerGenderQuota(
   tx: AgendaTx,
-  agendaItem: { id: string; event_id?: string | null },
-  speakerUserId: string | null | undefined
+  agendaItem: { id: string; event_id: string },
+  speakerUserId: string
 ) {
-  if (tx.location === 'client' || !agendaItem.event_id || !speakerUserId) return;
-
   const event = await tx.run(zql.event.where('id', agendaItem.event_id).one());
   if (!event?.gender_quota_enabled) return;
 
@@ -219,8 +214,6 @@ async function assertCanRemoveSpeaker(
   agendaItem: { event_id?: string | null },
   speakerUserId: string | null | undefined
 ) {
-  if (tx.location === 'client') return;
-
   requireAuthenticated(tx, ctx, { action: 'speak', resource: 'events' });
 
   if (!agendaItem.event_id) {
@@ -286,8 +279,8 @@ export const agendaSharedMutators = {
   addSpeaker: defineMutator(createSpeakerListSchema, async ({ tx, ctx, args }) => {
     if (tx.location !== 'client') {
       const agendaItem = await loadAgendaItem(tx, args.agenda_item_id);
-      await assertCanAddSpeaker(tx, ctx, agendaItem, args.user_id);
-      await assertSpeakerGenderQuota(tx, agendaItem, args.user_id);
+      const eventId = await assertCanAddSpeaker(tx, ctx, agendaItem, args.user_id);
+      await assertSpeakerGenderQuota(tx, { id: agendaItem.id, event_id: eventId }, args.user_id);
     }
 
     const now = Date.now();

@@ -261,12 +261,14 @@ export function buildDerivedGroupNetworkMetaMap(args: {
         connection,
         rule: normalizeMembershipRule(rulesByConnectionId.get(connection.id)),
       }));
-      const primaryIncomingContext =
-        peerMembershipContexts.find(context => context.rule?.member_target_group_id === groupId) ??
-        null;
-      const primaryOutgoingContext =
-        peerMembershipContexts.find(context => context.rule?.member_source_group_id === groupId) ??
-        null;
+      const primaryIncomingRule =
+        peerMembershipContexts
+          .map(context => context.rule)
+          .find(rule => rule?.member_target_group_id === groupId) ?? null;
+      const primaryOutgoingRule =
+        peerMembershipContexts
+          .map(context => context.rule)
+          .find(rule => rule?.member_source_group_id === groupId) ?? null;
       const incomingParliamentSourceGroupIds = uniqueStrings(
         peerMembershipContexts.flatMap(context =>
           context.rule?.member_target_group_id === groupId &&
@@ -292,22 +294,16 @@ export function buildDerivedGroupNetworkMetaMap(args: {
         peerConnection.group_a_id === groupId
           ? peerConnection.group_b_id
           : peerConnection.group_a_id;
-      meta.primary_incoming_sibling_membership_mode = primaryIncomingContext
-        ? (primaryIncomingContext.rule?.membership_mode ?? 'none')
-        : 'none';
-      meta.primary_outgoing_sibling_membership_mode = primaryOutgoingContext
-        ? (primaryOutgoingContext.rule?.membership_mode ?? 'none')
-        : 'none';
+      meta.primary_incoming_sibling_membership_mode =
+        primaryIncomingRule?.membership_mode ?? 'none';
+      meta.primary_outgoing_sibling_membership_mode =
+        primaryOutgoingRule?.membership_mode ?? 'none';
       meta.primary_sibling_membership_mode = meta.primary_incoming_sibling_membership_mode;
       meta.sibling_membership_mode = toSiblingMembershipKind(
         meta.primary_incoming_sibling_membership_mode
       );
-      meta.incoming_sibling_role_id = primaryIncomingContext
-        ? (primaryIncomingContext.rule?.required_source_role_id ?? null)
-        : null;
-      meta.outgoing_sibling_role_id = primaryOutgoingContext
-        ? (primaryOutgoingContext.rule?.required_source_role_id ?? null)
-        : null;
+      meta.incoming_sibling_role_id = primaryIncomingRule?.required_source_role_id ?? null;
+      meta.outgoing_sibling_role_id = primaryOutgoingRule?.required_source_role_id ?? null;
       meta.sibling_role_id = meta.incoming_sibling_role_id;
       meta.incoming_parliament_source_group_ids = incomingParliamentSourceGroupIds;
       meta.outgoing_parliament_source_group_ids = outgoingParliamentSourceGroupIds;

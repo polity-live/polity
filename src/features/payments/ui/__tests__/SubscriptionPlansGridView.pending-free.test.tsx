@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SubscriptionPlansGridView } from '../SubscriptionPlansGridView';
@@ -82,5 +82,64 @@ describe('SubscriptionPlansGridView pending Free change', () => {
     expect(
       (screen.getByRole('button', { name: 'Switch to Free' }) as HTMLButtonElement).disabled
     ).toBe(false);
+  });
+
+  it('dispatches all plan transitions through stable disabled-aware actions', () => {
+    const onSubscribe = vi.fn();
+    const onCancel = vi.fn();
+    const onCustomSubmit = vi.fn();
+    const props = {
+      pendingChange: null,
+      isLoading: false,
+      onSubscribe,
+      onCancel,
+      hasCustomPlan: false,
+      customAmount: '5',
+      customAmountValue: '5',
+      onAmountChange: vi.fn(),
+      onCustomSubmit,
+    };
+    const { container, rerender } = render(
+      <SubscriptionPlansGridView
+        {...props}
+        activeAmount={0}
+        isPlanActive={amount => amount === 0}
+      />
+    );
+
+    const free = container.querySelector(
+      '[data-action-id="payments.plan.free.select"]'
+    ) as HTMLButtonElement;
+    const running = container.querySelector(
+      '[data-action-id="payments.plan.running.select"]'
+    ) as HTMLButtonElement;
+    const development = container.querySelector(
+      '[data-action-id="payments.plan.development.select"]'
+    ) as HTMLButtonElement;
+    const custom = container.querySelector(
+      '[data-action-id="payments.plan.custom.select"]'
+    ) as HTMLButtonElement;
+
+    expect(free.disabled).toBe(true);
+    running.focus();
+    expect(document.activeElement).toBe(running);
+    fireEvent.click(running);
+    fireEvent.click(development);
+    fireEvent.click(custom);
+    expect(onSubscribe).toHaveBeenNthCalledWith(1, 'running');
+    expect(onSubscribe).toHaveBeenNthCalledWith(2, 'development');
+    expect(onCustomSubmit).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <SubscriptionPlansGridView
+        {...props}
+        activeAmount={200}
+        isPlanActive={amount => amount === 200}
+      />
+    );
+    fireEvent.click(
+      container.querySelector('[data-action-id="payments.plan.free.select"]') as HTMLButtonElement
+    );
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });

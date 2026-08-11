@@ -87,6 +87,7 @@ export function DateTimeRangeInput({
               </FormControlLabel>
               {selectedStartDate ? (
                 <Button
+                  data-action-id="create.date-time.start-date.clear"
                   type="button"
                   variant="ghost"
                   size="sm"
@@ -125,6 +126,7 @@ export function DateTimeRangeInput({
                 </FormControlLabel>
                 {selectedEndDate ? (
                   <Button
+                    data-action-id="create.date-time.end-date.clear"
                     type="button"
                     variant="ghost"
                     size="sm"

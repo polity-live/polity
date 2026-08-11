@@ -69,7 +69,11 @@ export function DocsTopicView({
       <Panel>
         <PanelContent className="flex flex-col gap-5 p-6 lg:p-10">
           <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm">
-            <Link to="/docs" className="hover:text-foreground">
+            <Link
+              to="/docs"
+              data-action-id="docs.topic-view.home.open"
+              className="hover:text-foreground"
+            >
               {copy.navLabel}
             </Link>
             <span>/</span>
@@ -156,7 +160,12 @@ export function DocsTopicView({
             className="bg-card text-card-foreground rounded-lg border px-6 shadow-xs"
           >
             <AccordionItem value="watch-for">
-              <AccordionTrigger className="text-base">{copy.watchFor}</AccordionTrigger>
+              <AccordionTrigger
+                className="text-base"
+                data-action-id="docs.topic-view.watch-for.toggle"
+              >
+                {copy.watchFor}
+              </AccordionTrigger>
               <AccordionContent>
                 <ul className="text-muted-foreground space-y-3 text-sm leading-6">
                   {watchFor.map((item: any) => (
@@ -169,7 +178,12 @@ export function DocsTopicView({
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="states">
-              <AccordionTrigger className="text-base">{copy.statesLabel}</AccordionTrigger>
+              <AccordionTrigger
+                className="text-base"
+                data-action-id="docs.topic-view.states.toggle"
+              >
+                {copy.statesLabel}
+              </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-3">
                   {states.map((state: any) => (
@@ -198,8 +212,13 @@ export function DocsTopicView({
                   asChild
                   variant="outline"
                   className="w-full justify-start"
+                  data-action-id="docs.topic-view.related.open"
                 >
-                  <Link to="/docs/$topic" params={{ topic: relatedTopic.slug }}>
+                  <Link
+                    to="/docs/$topic"
+                    params={{ topic: relatedTopic.slug }}
+                    data-action-id="docs.topic-view.related.open"
+                  >
                     {copy.relatedTopicLabels[relatedTopic.slug]}
                   </Link>
                 </Button>

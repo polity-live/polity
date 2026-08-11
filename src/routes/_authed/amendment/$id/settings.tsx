@@ -47,7 +47,7 @@ function AmendmentSettingsPage() {
       amendmentId={id}
       amendment={amendment}
       amendmentProcess={amendmentProcess}
-      currentUserId={user?.id || ''}
+      currentUserId={user.id}
       isLoading={isLoading}
       mode="edit"
       agendaItemId={agendaItemId}

@@ -3,8 +3,11 @@ import {
   buildDelegateElectionAssignments,
   buildOpenAssignments,
   buildRoleRenewalAssignments,
+  getNextRoleElectionEvent,
+  getRemainingSeatCount,
 } from '../openAssignments';
 import { buildDelegateElectionDescription } from '@/features/elections/logic/electionAssignmentMetadata';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
 const REFERENCE_TIME = new Date('2026-05-28T10:00:00Z').getTime();
 
@@ -90,6 +93,68 @@ function role(
 }
 
 describe('open assignments', () => {
+  it('normalizes remaining seats and future/ongoing role-election candidates', () => {
+    expect(getRemainingSeatCount({ remainingSeatCount: -2, seatCount: 5 })).toBe(0);
+    expect(getRemainingSeatCount({ remainingSeatCount: undefined, seatCount: 3 })).toBe(3);
+    expect(getRemainingSeatCount({})).toBe(0);
+
+    const ongoingWithoutStart = {
+      ...eventSummary('ongoing-without-start'),
+      start_date: null,
+      end_date: REFERENCE_TIME + 10,
+    };
+    const secondWithoutStart = {
+      ...eventSummary('second-without-start'),
+      start_date: null,
+      end_date: REFERENCE_TIME + 20,
+    };
+    const next = getNextRoleElectionEvent(
+      {
+        elections: [
+          { id: 'missing-agenda', agenda_item: null },
+          { id: 'missing-event', agenda_item: {} },
+          { id: 'missing-id', agenda_item: { event: { id: '' } } },
+          {
+            id: 'cancelled',
+            agenda_item: { event: eventSummary('cancelled', { status: 'cancelled' }) },
+          },
+          {
+            id: 'past',
+            agenda_item: {
+              event: eventSummary('past', {
+                start_date: REFERENCE_TIME - 20,
+                end_date: REFERENCE_TIME - 10,
+              }),
+            },
+          },
+          { id: 'ongoing', agenda_item: { event: ongoingWithoutStart } },
+          { id: 'second', agenda_item: { event: secondWithoutStart } },
+          {
+            id: 'start-only',
+            agenda_item: {
+              event: {
+                ...eventSummary('start-only'),
+                end_date: null,
+                start_date: REFERENCE_TIME + 30,
+              },
+            },
+          },
+          {
+            id: 'no-dates',
+            agenda_item: {
+              event: { ...eventSummary('no-dates'), end_date: null, start_date: null },
+            },
+          },
+        ],
+      },
+      REFERENCE_TIME
+    );
+
+    expect(next?.id).toBe('start-only');
+    expect(getNextRoleElectionEvent({ elections: null }, REFERENCE_TIME)).toBeNull();
+    expect(getNextRoleElectionEvent({ elections: [] })).toBeNull();
+  });
+
   it('keeps delegate allocations open until a subgroup event is actually linked', () => {
     const [assignment] = buildDelegateElectionAssignments({
       currentGroupId: 'local-group',
@@ -190,6 +255,162 @@ describe('open assignments', () => {
     expect(assignment.linkedEvent?.id).toBe('local-assembly');
   });
 
+  it('deduplicates scheduled seats, chooses the earliest linked event, and counts delegates', () => {
+    const metadata = buildDelegateElectionDescription({
+      meta: {
+        kind: 'delegate_election',
+        targetEventId: 'target-event',
+        targetGroupId: 'target-group',
+        sourceGroupId: 'local-group',
+        seatRoleIds: ['seat-1'],
+        allSeatRoleIds: ['seat-1', 'seat-2'],
+        mode: 'single',
+      },
+    });
+    const earlier = eventSummary('earlier', { start_date: REFERENCE_TIME + 10 });
+    const later = eventSummary('later', { start_date: REFERENCE_TIME + 20 });
+    const target = {
+      ...eventSummary('target-event', { title: '' }),
+      group: null,
+      delegates: [
+        { group_id: 'local-group', status: 'confirmed', seat_count: null },
+        { group_id: 'local-group', status: 'confirmed', seat_count: 0 },
+        { group_id: 'local-group', status: 'pending', seat_count: 5 },
+        { group_id: 'other-group', status: 'confirmed', seat_count: 5 },
+      ],
+    };
+    const [assignment] = buildDelegateElectionAssignments({
+      currentGroupId: 'local-group',
+      allocations: [
+        {
+          ...allocation('completed', { allocated_seats: 2, event: target as any }),
+          group: null,
+        } as any,
+      ],
+      roles: [
+        role('no-elections', { elections: [] }),
+        role('mixed', {
+          elections: [
+            { id: 'invalid', description: 'not metadata', agenda_item: { event: earlier } },
+            {
+              id: 'other-source',
+              description: buildDelegateElectionDescription({
+                meta: {
+                  kind: 'delegate_election',
+                  targetEventId: 'target-event',
+                  targetGroupId: 'target-group',
+                  sourceGroupId: 'other-group',
+                  seatRoleIds: ['seat-1'],
+                  allSeatRoleIds: ['seat-1'],
+                  mode: 'single',
+                },
+              }),
+              agenda_item: { event: earlier },
+            },
+            {
+              id: 'cancelled',
+              description: metadata,
+              agenda_item: { event: eventSummary('c', { status: 'cancelled' }) },
+            },
+            { id: 'later', description: metadata, agenda_item: { event: later } },
+            { id: 'earlier', description: metadata, agenda_item: { event: earlier } },
+            { id: 'later-again', description: metadata, agenda_item: { event: later } },
+          ],
+        }),
+      ],
+      referenceTime: REFERENCE_TIME,
+    });
+
+    expect(assignment).toMatchObject({
+      status: 'completed',
+      completedSeatCount: 2,
+      scheduledSeatCount: 2,
+      remainingSeatCount: 0,
+      linkedEvent: { id: 'earlier' },
+      sourceGroup: null,
+      targetGroup: null,
+    });
+    expect(assignment.title).toContain('Ziel-Event');
+    expect(assignment.description).toContain('Diese Untergruppe');
+  });
+
+  it('filters empty allocations and sorts open, scheduled, and completed assignments', () => {
+    const scheduledMetadata = buildDelegateElectionDescription({
+      meta: {
+        kind: 'delegate_election',
+        targetEventId: 'scheduled-target',
+        targetGroupId: 'target-group',
+        sourceGroupId: 'local-group',
+        seatRoleIds: ['seat'],
+        allSeatRoleIds: ['seat'],
+        mode: 'single',
+      },
+    });
+    const assignments = buildDelegateElectionAssignments({
+      currentGroupId: 'local-group',
+      allocations: [
+        { id: 'zero', allocated_seats: 0, event: eventSummary('zero') },
+        { id: 'null-seats', allocated_seats: null as any, event: eventSummary('null-seats') },
+        { id: 'missing-event', allocated_seats: 1, event: null },
+        allocation('open-early', {
+          event: eventSummary('open-early', { start_date: REFERENCE_TIME + 20 }),
+        }),
+        allocation('open-late', {
+          event: { ...eventSummary('open-late'), start_date: null as any },
+        }),
+        allocation('scheduled', { event: eventSummary('scheduled-target') }),
+        allocation('completed', {
+          allocated_seats: 1,
+          event: {
+            ...eventSummary('completed-target'),
+            delegates: [{ group_id: 'local-group', status: 'confirmed', seat_count: 1 }],
+          },
+        }),
+      ],
+      roles: [
+        { ...role('null-elections'), elections: null },
+        role('seat', {
+          elections: [
+            {
+              id: 'valid-metadata-without-event',
+              description: scheduledMetadata,
+              agenda_item: null,
+            },
+            {
+              id: 'scheduled-election',
+              description: scheduledMetadata,
+              agenda_item: { event: eventSummary('linked') },
+            },
+          ],
+        }),
+      ],
+      referenceTime: REFERENCE_TIME,
+    });
+
+    expect(assignments.map(item => item.id)).toEqual([
+      'delegate:open-early',
+      'delegate:open-late',
+      'delegate:scheduled',
+      'delegate:completed',
+    ]);
+
+    expect(
+      buildDelegateElectionAssignments({
+        currentGroupId: 'local-group',
+        allocations: [
+          allocation('open-without-date', {
+            event: { ...eventSummary('open-without-date'), start_date: null as any },
+          }),
+          allocation('open-with-date', {
+            event: eventSummary('open-with-date', { start_date: REFERENCE_TIME + 10 }),
+          }),
+        ],
+        roles: [],
+        referenceTime: REFERENCE_TIME,
+      }).map(item => item.id)
+    ).toEqual(['delegate:open-with-date', 'delegate:open-without-date']);
+  });
+
   it('exposes the next linked renewal event for recurring roles', () => {
     const linkedEvent = eventSummary('renewal-event');
 
@@ -270,6 +491,119 @@ describe('open assignments', () => {
     expect(assignments.map(assignment => assignment.id)).toEqual(['role:chairperson']);
   });
 
+  it('filters ineligible roles and covers due-date, title, language, and event sorting fallbacks', () => {
+    const previousLanguage = useLanguageStore.getState().language;
+    const metadata = buildDelegateElectionDescription({
+      meta: {
+        kind: 'delegate_election',
+        targetEventId: 'target',
+        targetGroupId: 'target-group',
+        sourceGroupId: 'local-group',
+        seatRoleIds: ['seat-role'],
+        allSeatRoleIds: ['seat-role', 'seat-role-extra'],
+        mode: 'single',
+      },
+    });
+
+    try {
+      useLanguageStore.getState().setLanguage('de');
+      const german = buildRoleRenewalAssignments({
+        roles: [
+          { ...role('wrong-scope', { scope: 'event' }), elections: null },
+          role('wrong-mode', { assignment_mode: 'assigned' }),
+          role('seat-role', { elections: [{ id: 'seat-election', description: metadata }] }),
+          role('named', {
+            title: '' as never,
+            scheduled_revote_date: REFERENCE_TIME + 1000,
+            elections: [
+              { id: 'missing', agenda_item: null },
+              {
+                id: 'no-start-a',
+                agenda_item: {
+                  event: {
+                    ...eventSummary('no-start-a'),
+                    start_date: null as any,
+                    end_date: REFERENCE_TIME + 5000,
+                  },
+                },
+              },
+              {
+                id: 'no-start-b',
+                agenda_item: {
+                  event: {
+                    ...eventSummary('no-start-b'),
+                    start_date: null as any,
+                    end_date: REFERENCE_TIME + 6000,
+                  },
+                },
+              },
+            ],
+          }),
+          { ...role('fallback-title', { title: '' as never }), name: null },
+        ],
+        referenceTime: REFERENCE_TIME,
+      });
+
+      expect(german.map(item => item.id)).toEqual(['role:fallback-title', 'role:named']);
+      expect(german[0]?.title).toBeTruthy();
+      expect(german[1]?.description).toContain('2026');
+
+      useLanguageStore.getState().setLanguage('en');
+      const english = buildRoleRenewalAssignments({
+        roles: [role('english', { scheduled_revote_date: REFERENCE_TIME + 1000 })],
+        referenceTime: REFERENCE_TIME,
+      });
+      expect(english[0]?.description).toContain('2026');
+
+      const sortedScheduled = buildRoleRenewalAssignments({
+        roles: [
+          role('scheduled-no-date-a', {
+            elections: [
+              {
+                id: 'a',
+                agenda_item: {
+                  event: {
+                    ...eventSummary('a'),
+                    start_date: null as any,
+                    end_date: REFERENCE_TIME + 100,
+                  },
+                },
+              },
+            ],
+          }),
+          role('scheduled-date', {
+            elections: [
+              {
+                id: 'dated',
+                agenda_item: {
+                  event: eventSummary('dated', { start_date: REFERENCE_TIME + 10 }),
+                },
+              },
+            ],
+          }),
+          role('scheduled-no-date-b', {
+            elections: [
+              {
+                id: 'b',
+                agenda_item: {
+                  event: {
+                    ...eventSummary('b'),
+                    start_date: null as any,
+                    end_date: REFERENCE_TIME + 200,
+                  },
+                },
+              },
+            ],
+          }),
+        ],
+        referenceTime: REFERENCE_TIME,
+      });
+      expect(sortedScheduled[0]?.id).toBe('role:scheduled-date');
+    } finally {
+      useLanguageStore.getState().setLanguage(previousLanguage);
+    }
+  });
+
   it('combines delegate and role-renewal assignments into one sorted list', () => {
     const assignments = buildOpenAssignments({
       currentGroupId: 'local-group',
@@ -290,6 +624,14 @@ describe('open assignments', () => {
       'delegate_election',
       'role_renewal',
     ]);
+
+    expect(
+      buildOpenAssignments({
+        currentGroupId: 'local-group',
+        allocations: [],
+        roles: [role('open-a'), role('open-b')],
+      }).map(item => item.id)
+    ).toEqual(['role:open-a', 'role:open-b']);
   });
 
   it('keeps completed schedule-event process tasks visible as completed assignments', () => {
@@ -339,5 +681,96 @@ describe('open assignments', () => {
         },
       },
     ]);
+  });
+
+  it('builds generated process-task titles, descriptions, statuses, metadata, and fallbacks', () => {
+    const assignments = buildOpenAssignments({
+      currentGroupId: 'local-group',
+      allocations: [],
+      roles: [],
+      processTasks: [
+        {
+          id: 'implementation',
+          task_type: 'implementation_evaluation',
+          status: 'open',
+          title: ' ',
+          description: '',
+          process_run_id: null,
+          step_run_id: null,
+          due_at: REFERENCE_TIME + 30,
+          metadata: { source: 'test' },
+          target_group: null,
+          support_confirmation: {
+            id: 'confirmation',
+            amendment: { id: 'amendment-support', title: null },
+          },
+        },
+        {
+          id: 'support',
+          task_type: 'support_confirmation',
+          status: 'open',
+          title: null,
+          description: null,
+          agenda_item: { id: 'agenda-item' },
+          target_group: { id: 'target', name: 'Target Group' },
+          process_run: { amendment: { id: 'amendment-process', title: 'Process amendment' } },
+        },
+        {
+          id: 'default-step-event',
+          task_type: 'schedule_event',
+          status: 'open',
+          title: null,
+          description: null,
+          step_run: { event: eventSummary('step-event') },
+          target_group: { id: 'step-target', name: 'Step Target' },
+          process_run: { amendment: { id: '', title: '' } },
+        },
+        {
+          id: 'default-open',
+          task_type: null,
+          status: null,
+          title: null,
+          description: null,
+          due_at: null,
+          process_run: null,
+          support_confirmation: null,
+        },
+      ],
+      referenceTime: REFERENCE_TIME,
+    });
+
+    expect(assignments.map(item => item.id)).toEqual([
+      'process-task:implementation',
+      'process-task:default-open',
+      'process-task:default-step-event',
+      'process-task:support',
+    ]);
+    expect(assignments[1]).toMatchObject({
+      status: 'open',
+      processTaskType: null,
+      processRunId: null,
+      stepRunId: null,
+      amendment: null,
+      amendmentId: null,
+      dueAt: null,
+    });
+    expect(assignments[0]).toMatchObject({
+      title: expect.stringContaining('Änderungsantrag'),
+      description: expect.stringContaining('zustandige Gruppe'),
+      amendment: { id: 'amendment-support', title: 'Änderungsantrag' },
+      processTaskMetadata: { source: 'test' },
+    });
+    expect(assignments[3]).toMatchObject({
+      status: 'scheduled',
+      title: expect.stringContaining('Process amendment'),
+      description: expect.stringContaining('erneut'),
+    });
+    expect(assignments[2]).toMatchObject({
+      status: 'scheduled',
+      linkedEvent: { id: 'step-event' },
+      description: expect.stringContaining('Step Target'),
+      amendment: null,
+      amendmentId: '',
+    });
   });
 });

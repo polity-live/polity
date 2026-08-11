@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@tanstack/react-router', () => ({
@@ -20,5 +20,27 @@ describe('HashtagDisplay', () => {
     expect(screen.getByRole('link', { name: /democracy/i }).getAttribute('href')).toBe(
       '/search?hashtag=democracy'
     );
+  });
+
+  it('renders nothing without hashtags', () => {
+    expect(render(<HashtagDisplay hashtags={[]} />).container.firstChild).toBeNull();
+  });
+
+  it('renders centered, titled, non-clickable badges with custom classes', () => {
+    cleanup();
+    const { container } = render(
+      <HashtagDisplay
+        hashtags={[{ id: 'tag-1', tag: 'civic design' }]}
+        title="Topics"
+        clickable={false}
+        centered
+        className="custom"
+        badgeClassName="badge-custom"
+      />
+    );
+    expect(screen.getByText('Topics')).toBeTruthy();
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(container.firstElementChild?.className).toContain('items-center');
+    expect(container.querySelector('.badge-custom')).toBeTruthy();
   });
 });

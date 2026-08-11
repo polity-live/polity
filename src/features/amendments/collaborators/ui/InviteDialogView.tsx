@@ -53,7 +53,7 @@ export function InviteDialogView({
   return (
     <Dialog open={inviteDialogOpen} onOpenChange={onInviteDialogOpenChange}>
       <DialogTrigger asChild>
-        <Button>
+        <Button data-action-id="amendments.collaborators.open.invite-dialog">
           <UserPlus className="mr-2 h-4 w-4" />
           {translateText('generated.inline.0109_invite_collaborator_aea80de5')}
         </Button>
@@ -99,6 +99,7 @@ export function InviteDialogView({
 
             <DialogFooter>
               <Button
+                data-action-id="amendments.collaborators.cancel.invite"
                 variant="outline"
                 onClick={() => onInviteDialogOpenChange(false)}
                 disabled={isInviting}
@@ -106,6 +107,7 @@ export function InviteDialogView({
                 {translateText('generated.inline.0065_cancel_77dfd213')}
               </Button>
               <Button
+                data-action-id="amendments.collaborators.submit.invite"
                 onClick={onInviteUsersClick}
                 disabled={selectedUsers.length === 0 || isInviting}
               >

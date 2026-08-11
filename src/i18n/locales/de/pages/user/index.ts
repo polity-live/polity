@@ -1,4 +1,9 @@
 export const userPageTranslations = {
+  ai: {
+    credentials: {
+      delete: 'Zugangsdaten löschen',
+    },
+  },
   settings: 'Einstellungen',
   settingsDescription: 'Verwalte dein Profil, Einstellungen und Abonnement',
   settingsTabs: {

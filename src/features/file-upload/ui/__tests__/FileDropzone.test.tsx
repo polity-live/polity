@@ -29,7 +29,7 @@ function renderDropzone(overrides: Partial<ComponentProps<typeof FileDropzone>> 
 
 describe('FileDropzone', () => {
   it('accepts one CSV through drag and drop', () => {
-    const { onFilesSelected } = renderDropzone();
+    const { container, onFilesSelected } = renderDropzone();
     const file = new File(['year,value\n2025,42'], 'data.csv', { type: 'text/csv' });
     const dropzone = screen.getByTestId('file-dropzone');
 
@@ -38,6 +38,12 @@ describe('FileDropzone', () => {
     fireEvent.drop(dropzone, { dataTransfer: { files: [file] } });
 
     expect(onFilesSelected).toHaveBeenCalledWith([file]);
+    const browse = container.querySelector<HTMLElement>(
+      '[data-action-id="file-upload.dropzone.browse"]'
+    );
+    expect(browse).toBeTruthy();
+    browse!.focus();
+    fireEvent.keyDown(browse!, { key: 'Enter' });
   });
 
   it('validates type, size and file count for both input paths', () => {

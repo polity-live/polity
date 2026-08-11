@@ -10,11 +10,15 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { renderToString } from 'react-dom/server';
 
 import {
+  initPwaInstallListener,
   PwaInstallProvider,
   resetPwaInstallStateForTests,
+  triggerPwaInstall,
   usePwaInstall,
+  usePwaInstallPrompt,
 } from '../hooks/usePwaInstallPrompt.ts';
 import { PwaInstallPanel } from '../ui/PwaInstallPanel.tsx';
 
@@ -149,7 +153,7 @@ function mockServiceWorkerContainer({
     addEventListener: vi.fn((type: string, listener: EventListener) => {
       listeners.set(type, listener);
     }),
-    dispatchControllerChange(nextController = {} as ServiceWorker) {
+    dispatchControllerChange(nextController: ServiceWorker | null = {} as ServiceWorker) {
       currentController = nextController;
       listeners.get('controllerchange')?.(new Event('controllerchange'));
     },
@@ -178,6 +182,8 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   resetPwaInstallStateForTests();
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
@@ -270,6 +276,18 @@ describe('usePwaInstall', () => {
     expect(result.current.canPrompt).toBe(false);
   });
 
+  it('detects Android and tolerates missing navigator identification strings', async () => {
+    mockNavigator({ userAgent: 'Mozilla/5.0 (Linux; Android 15)', platform: 'Linux armv8l' });
+    const android = renderHook(() => usePwaInstall());
+    await waitFor(() => expect(android.result.current.platform).toBe('android'));
+    android.unmount();
+
+    resetPwaInstallStateForTests();
+    mockNavigator({ userAgent: '', platform: '' });
+    const unidentified = renderHook(() => usePwaInstall());
+    await waitFor(() => expect(unidentified.result.current.platform).toBe('desktop'));
+  });
+
   it('registers the PWA service worker from the provider', async () => {
     const serviceWorker = mockServiceWorkerContainer();
 
@@ -328,6 +346,34 @@ describe('usePwaInstall', () => {
     expect(result.current.status).toBe('unavailable');
   });
 
+  it('keeps the prior service-worker status when controllerchange has no controller', async () => {
+    const registration = { installing: null } as ServiceWorkerRegistration;
+    const serviceWorker = mockServiceWorkerContainer({
+      getRegistration: vi.fn().mockResolvedValue(registration),
+      ready: Promise.resolve(registration),
+    });
+    const { result } = renderHook(() => usePwaInstall());
+    await waitFor(() => expect(result.current.serviceWorkerStatus).toBe('ready'));
+
+    act(() => serviceWorker.dispatchControllerChange(null));
+
+    expect(result.current.serviceWorkerStatus).toBe('ready');
+    expect(result.current.isControlledByServiceWorker).toBe(false);
+  });
+
+  it('finishes registration as controlled when the page already has a controller', async () => {
+    const registration = { installing: null } as ServiceWorkerRegistration;
+    mockServiceWorkerContainer({
+      controller: {} as ServiceWorker,
+      getRegistration: vi.fn().mockResolvedValue(registration),
+      ready: Promise.resolve(registration),
+    });
+    const { result } = renderHook(() => usePwaInstall());
+
+    await waitFor(() => expect(result.current.serviceWorkerStatus).toBe('controlled'));
+    expect(result.current.isControlledByServiceWorker).toBe(true);
+  });
+
   it('keeps running when service worker registration fails', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     mockServiceWorkerContainer({
@@ -343,6 +389,225 @@ describe('usePwaInstall', () => {
       );
     });
   });
+
+  it('stringifies non-Error service-worker registration failures', async () => {
+    mockServiceWorkerContainer({ register: vi.fn().mockRejectedValue('registration rejected') });
+    const { result } = renderHook(() => usePwaInstall());
+
+    await waitFor(() => expect(result.current.serviceWorkerStatus).toBe('error'));
+    expect(result.current.lastError).toBe('registration rejected');
+  });
+
+  it('returns unavailable when no deferred prompt exists, including during SSR', async () => {
+    await expect(triggerPwaInstall()).resolves.toBe('unavailable');
+
+    vi.stubGlobal('window', undefined);
+    await expect(triggerPwaInstall()).resolves.toBe('unavailable');
+    expect(initPwaInstallListener()).toBeNull();
+  });
+
+  it('handles dismissed prompts and prompt failures', async () => {
+    const { result } = renderHook(() => usePwaInstall());
+    dispatchBeforeInstallPrompt('dismissed');
+    await waitFor(() => expect(result.current.canPrompt).toBe(true));
+
+    await act(async () => {
+      await expect(result.current.install()).resolves.toBe('dismissed');
+    });
+    expect(result.current.outcome).toBe('dismissed');
+    expect(result.current.isInstalling).toBe(false);
+
+    const error = new Error('prompt rejected');
+    const { event } = createBeforeInstallPromptEvent();
+    event.prompt = vi.fn().mockRejectedValue(error);
+    act(() => window.dispatchEvent(event));
+    await act(async () => {
+      await expect(result.current.install()).rejects.toBe(error);
+    });
+    expect(result.current.isInstalling).toBe(false);
+  });
+
+  it('falls back to the early captured prompt for an invalid custom-event payload', async () => {
+    const { event, prompt } = createBeforeInstallPromptEvent();
+    window.__polityPwaInstallPromptEvent = event;
+    const { result } = renderHook(() => usePwaInstall());
+    await waitFor(() => expect(result.current.canPrompt).toBe(true));
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('polity:pwa-install-prompt-captured', {
+          detail: { promptEvent: 'not-an-event' },
+        })
+      );
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    await act(async () => result.current.install());
+    expect(prompt).toHaveBeenCalledOnce();
+  });
+
+  it('ignores an invalid captured-prompt event when no early prompt exists', () => {
+    renderHook(() => usePwaInstall());
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('polity:pwa-install-prompt-captured', {
+          detail: { promptEvent: 'invalid' },
+        })
+      );
+    });
+  });
+
+  it('handles captured listener callbacks after the browser global disappears', () => {
+    const browserWindow = window;
+    initPwaInstallListener();
+    vi.stubGlobal('window', undefined);
+
+    browserWindow.dispatchEvent(
+      new CustomEvent('polity:pwa-install-prompt-captured', {
+        detail: { promptEvent: null },
+      })
+    );
+    browserWindow.dispatchEvent(new Event('appinstalled'));
+
+    vi.unstubAllGlobals();
+  });
+
+  it('supports legacy media-query listeners and removes all listeners on reset', () => {
+    const addListener = vi.fn();
+    const removeListener = vi.fn();
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: vi.fn(() => ({ matches: false, addListener, removeListener })),
+    });
+    const serviceWorker = mockServiceWorkerContainer({
+      getRegistration: vi.fn().mockReturnValue(new Promise(() => undefined)),
+    });
+
+    const cleanupListener = initPwaInstallListener();
+    expect(initPwaInstallListener()).toBe(cleanupListener);
+    expect(addListener).toHaveBeenCalledOnce();
+
+    cleanupListener?.();
+    initPwaInstallListener();
+
+    resetPwaInstallStateForTests();
+    expect(removeListener).toHaveBeenCalledTimes(2);
+    expect(serviceWorker.removeEventListener).toHaveBeenCalledWith(
+      'controllerchange',
+      expect.any(Function)
+    );
+  });
+
+  it.each(['activated', 'redundant'] as const)(
+    'waits for an installing worker that becomes %s',
+    async finalState => {
+      let state: ServiceWorkerState = finalState === 'activated' ? 'activated' : 'installing';
+      let stateChange: (() => void) | undefined;
+      const installing = {
+        get state() {
+          return state;
+        },
+        addEventListener: vi.fn((_type: string, listener: () => void) => {
+          stateChange = listener;
+        }),
+      } as unknown as ServiceWorker;
+      const registration = { installing } as ServiceWorkerRegistration;
+      mockServiceWorkerContainer({
+        getRegistration: vi.fn().mockResolvedValue(registration),
+        ready: Promise.resolve(registration),
+      });
+
+      const { result } = renderHook(() => usePwaInstall());
+      if (finalState === 'redundant') {
+        await waitFor(() => expect(installing.addEventListener).toHaveBeenCalledOnce());
+        act(() => {
+          stateChange?.();
+          state = 'redundant';
+          stateChange?.();
+        });
+      }
+
+      await waitFor(() => expect(result.current.serviceWorkerStatus).toBe('ready'));
+    }
+  );
+
+  it('uses service-worker activation and readiness timeouts as graceful fallbacks', async () => {
+    vi.useFakeTimers();
+    const installing = {
+      state: 'installing',
+      addEventListener: vi.fn(),
+    } as unknown as ServiceWorker;
+    const registration = { installing } as ServiceWorkerRegistration;
+    mockServiceWorkerContainer({
+      getRegistration: vi.fn().mockResolvedValue(registration),
+      ready: new Promise(() => undefined),
+    });
+
+    const { result } = renderHook(() => usePwaInstall());
+    await act(async () => vi.advanceTimersByTimeAsync(6_000));
+    expect(result.current.serviceWorkerStatus).toBe('ready');
+  });
+
+  it('covers the server snapshot and the legacy install-prompt facade', async () => {
+    function ServerProbe() {
+      const state = usePwaInstall();
+      return <span>{state.status}</span>;
+    }
+    expect(renderToString(<ServerProbe />)).toContain('checking');
+
+    const { result } = renderHook(() => usePwaInstallPrompt());
+    dispatchBeforeInstallPrompt('accepted');
+    await waitFor(() => expect(result.current.isVisible).toBe(true));
+    act(() => result.current.handleDismiss());
+    expect(result.current.isVisible).toBe(false);
+
+    await act(async () => result.current.handleInstall());
+  });
+
+  it('keeps a newer deferred prompt when an older prompt finishes', async () => {
+    const { result } = renderHook(() => usePwaInstall());
+    const newer = createBeforeInstallPromptEvent('dismissed');
+    const older = createBeforeInstallPromptEvent('accepted');
+    older.event.prompt = vi.fn().mockImplementation(async () => {
+      window.dispatchEvent(newer.event);
+    });
+    act(() => window.dispatchEvent(older.event));
+    await waitFor(() => expect(result.current.canPrompt).toBe(true));
+
+    await act(async () => result.current.install());
+
+    await act(async () => expect(result.current.install()).resolves.toBe('dismissed'));
+  });
+
+  it('works without matchMedia and skips unavailable media-query cleanup APIs', () => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: undefined,
+    });
+    initPwaInstallListener();
+    resetPwaInstallStateForTests();
+  });
+
+  it('exposes reload and detects navigator standalone plus touch Mac iOS', async () => {
+    const { result, unmount } = renderHook(() => usePwaInstall());
+    expect(() => result.current.reload()).not.toThrow();
+    const reloadWithoutWindow = result.current.reload;
+    unmount();
+    vi.stubGlobal('window', undefined);
+    expect(() => reloadWithoutWindow()).not.toThrow();
+    vi.unstubAllGlobals();
+
+    resetPwaInstallStateForTests();
+    mockNavigator({ platform: 'MacIntel', maxTouchPoints: 5 });
+    const touchMac = renderHook(() => usePwaInstall());
+    await waitFor(() => expect(touchMac.result.current.platform).toBe('ios'));
+    touchMac.unmount();
+
+    resetPwaInstallStateForTests();
+    mockNavigator({ standalone: true });
+    const standalone = renderHook(() => usePwaInstall());
+    await waitFor(() => expect(standalone.result.current.status).toBe('installed'));
+  });
 });
 
 describe('PwaInstallPanel', () => {
@@ -351,6 +616,9 @@ describe('PwaInstallPanel', () => {
     const prompt = dispatchBeforeInstallPrompt('accepted');
 
     const installButton = await screen.findByRole('button', { name: /Install Polity/i });
+    expect(installButton.getAttribute('data-action-id')).toBe('pwa.install-panel.install');
+    installButton.focus();
+    fireEvent.keyDown(installButton, { key: 'Enter' });
     fireEvent.click(installButton);
 
     await waitFor(() => expect(prompt).toHaveBeenCalledTimes(1));
@@ -389,7 +657,48 @@ describe('PwaInstallPanel', () => {
 
     render(<PwaInstallPanel surface="settings" />);
 
-    expect(await screen.findByRole('button', { name: /Reload page/i })).toBeTruthy();
+    const reload = await screen.findByRole('button', { name: /Reload page/i });
+    expect(reload.getAttribute('data-action-id')).toBe('pwa.install-panel.reload');
     expect(screen.queryByRole('button', { name: /Install Polity/i })).toBeNull();
+  });
+
+  it('dismisses the onboarding install panel through a stable focusable action', async () => {
+    const onDismiss = vi.fn();
+    render(<PwaInstallPanel surface="onboarding" onDismiss={onDismiss} />);
+    const action = await screen.findByRole('button', { name: /Dismiss/i });
+    expect(action.getAttribute('data-action-id')).toBe('pwa.install-panel.dismiss');
+    action.focus();
+    fireEvent.keyDown(action, { key: 'Enter' });
+    fireEvent.click(action);
+    expect(onDismiss).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('button', { name: /Dismiss/i })).toBeNull();
+  });
+
+  it('logs browser prompt failures without rejecting the panel click', async () => {
+    const error = new Error('prompt failed');
+    const event = new Event('beforeinstallprompt') as Event & {
+      prompt: () => Promise<void>;
+      userChoice: Promise<{ outcome: 'accepted' }>;
+    };
+    event.prompt = vi.fn().mockRejectedValue(error);
+    event.userChoice = Promise.resolve({ outcome: 'accepted' });
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    render(<PwaInstallPanel surface="settings" />);
+    act(() => window.dispatchEvent(event));
+    fireEvent.click(await screen.findByRole('button', { name: /Install Polity/i }));
+    await waitFor(() =>
+      expect(consoleError).toHaveBeenCalledWith('Failed to trigger PWA install:', error)
+    );
+  });
+
+  it('shows a dismissed outcome only on the settings surface', async () => {
+    const settings = render(<PwaInstallPanel surface="settings" />);
+    dispatchBeforeInstallPrompt('dismissed');
+    fireEvent.click(await screen.findByRole('button', { name: /Install Polity/i }));
+    expect(await screen.findByText('The install dialog was dismissed.')).toBeTruthy();
+    settings.unmount();
+
+    render(<PwaInstallPanel surface="onboarding" />);
+    expect(screen.queryByText('The install dialog was dismissed.')).toBeNull();
   });
 });

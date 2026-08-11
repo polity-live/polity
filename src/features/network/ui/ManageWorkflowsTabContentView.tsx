@@ -394,7 +394,7 @@ export function ManageWorkflowsTabContentView({
   const renderWorkflowDeleteAction = (workflow: WorkflowWithStepsRow) => (
     <DangerConfirmDialog
       trigger={
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" data-action-id="network.workflow.delete.open">
           <Trash2 className="h-4 w-4" />
           <span className="sr-only">{t('common.actions.delete')}</span>
         </Button>
@@ -495,6 +495,7 @@ export function ManageWorkflowsTabContentView({
             size="sm"
             disabled={approvalSubmission.isActive}
             onClick={() => handleApproveWorkflow(row.original.workflow, row.original.approval)}
+            data-action-id="network.workflow.approval.accept"
           >
             {t('common.actions.confirm')}
           </Button>
@@ -502,6 +503,7 @@ export function ManageWorkflowsTabContentView({
             size="sm"
             variant="outline"
             disabled={approvalSubmission.isActive}
+            data-action-id="network.workflow.approval.reject"
             onClick={() => handleRejectWorkflow(row.original.workflow, row.original.approval)}
           >
             {t('common.actions.reject')}
@@ -567,6 +569,7 @@ export function ManageWorkflowsTabContentView({
                   variant="ghost"
                   size="icon"
                   onClick={() => onOpenEditWorkflow(row.original)}
+                  data-action-id="network.workflow.pending.edit"
                 >
                   <Pencil className="h-4 w-4" />
                   <span className="sr-only">{t('features.network.workflows.edit')}</span>
@@ -681,7 +684,12 @@ export function ManageWorkflowsTabContentView({
       cell: ({ row }) =>
         canManageWorkflows ? (
           <div className="flex items-center justify-end gap-1">
-            <Button variant="ghost" size="icon" onClick={() => onOpenEditWorkflow(row.original)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenEditWorkflow(row.original)}
+              data-action-id="network.workflow.active.edit"
+            >
               <Pencil className="h-4 w-4" />
               <span className="sr-only">{t('features.network.workflows.edit')}</span>
             </Button>
@@ -707,7 +715,7 @@ export function ManageWorkflowsTabContentView({
           </p>
         </div>
         {canManageWorkflows ? (
-          <Button onClick={onOpenNewWorkflow}>
+          <Button onClick={onOpenNewWorkflow} data-action-id="network.workflow.create.open">
             <Plus className="mr-2 h-4 w-4" />
             {t('features.network.workflows.create')}
           </Button>
@@ -742,6 +750,7 @@ export function ManageWorkflowsTabContentView({
                 key={filter}
                 value={filter}
                 aria-label={statusFilterLabels[filter]}
+                data-action-id="network.workflow.status-filter.select"
               >
                 {statusFilterLabels[filter]}
               </FilterToggleGroupItem>

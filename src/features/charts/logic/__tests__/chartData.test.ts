@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { buildChartPoints, inferChartMapping, parseChartCsv } from '../chartData';
-import { MAX_CHART_POINTS, MAX_MANUAL_CSV_BYTES } from '../../types';
+import {
+  buildChartPoints,
+  createEmptyChartTable,
+  getChartMappingValueColumns,
+  inferChartMapping,
+  parseChartCsv,
+} from '../chartData';
+import {
+  MAX_CHART_POINTS,
+  MAX_MANUAL_CHART_COLUMNS,
+  MAX_MANUAL_CHART_ROWS,
+  MAX_MANUAL_CSV_BYTES,
+} from '../../types';
 
 describe('chart data', () => {
   it('parses quoted CSV values and infers a numeric column', () => {
@@ -94,5 +105,165 @@ describe('chart data', () => {
     expect(() => buildChartPoints(rows, { xColumn: 'x', valueColumn: 'value' })).toThrow(
       'CHART_HAS_TOO_MANY_POINTS'
     );
+  });
+
+  it('normalizes blank and duplicate headers and missing cells', () => {
+    expect(parseChartCsv(' ,Value,Value\n A , 1 , 2\nB,3,')).toEqual({
+      columns: ['Column 1', 'Value', 'Value_1'],
+      rows: [
+        { 'Column 1': 'A', Value: '1', Value_1: '2' },
+        { 'Column 1': 'B', Value: '3', Value_1: '' },
+      ],
+    });
+    expect(() => parseChartCsv('')).toThrow('CSV_HAS_NO_COLUMNS');
+    expect(() =>
+      parseChartCsv(
+        Array.from({ length: MAX_MANUAL_CHART_COLUMNS + 1 }, (_, i) => `c${i}`).join(',')
+      )
+    ).toThrow('CSV_HAS_TOO_MANY_COLUMNS');
+  });
+
+  it('rejects malformed CSV and too many nonempty rows', () => {
+    expect(() => parseChartCsv('a,b\n"unterminated')).toThrow();
+    const csv = `x,value\n${Array.from(
+      { length: MAX_MANUAL_CHART_ROWS + 1 },
+      (_, index) => `${index},${index}`
+    ).join('\n')}`;
+    expect(() => parseChartCsv(csv)).toThrow('CSV_HAS_TOO_MANY_ROWS');
+  });
+
+  it('parses international and formatted numeric values', () => {
+    const rows = [
+      { x: 'percent', value: ' 12 % ' },
+      { x: 'decimal-comma', value: '1,5' },
+      { x: 'european', value: '1.234,5' },
+      { x: 'english', value: '1,234.5' },
+      { x: 'grouped-comma', value: '1,234,567' },
+      { x: 'spaced', value: '1 234' },
+    ];
+    expect(
+      buildChartPoints(rows, { xColumn: 'x', valueColumn: 'value' }).map(point => point.value)
+    ).toEqual([12, 1.5, 1234.5, 1234.5, 1234567, 1234]);
+  });
+
+  it('validates every incomplete or empty point representation', () => {
+    expect(() => buildChartPoints([], { xColumn: '', valueColumn: 'value' })).toThrow(
+      'CHART_MAPPING_INCOMPLETE'
+    );
+    expect(() => buildChartPoints([], { xColumn: 'x', valueColumn: '' })).toThrow(
+      'CHART_MAPPING_INCOMPLETE'
+    );
+    expect(() =>
+      buildChartPoints([{ x: '', value: '1' }], { xColumn: 'x', valueColumn: 'value' })
+    ).toThrow('CHART_INVALID_NUMBER');
+    expect(() =>
+      buildChartPoints([{ x: 'A', value: '' }], { xColumn: 'x', valueColumn: 'value' })
+    ).toThrow('CHART_INVALID_NUMBER');
+    expect(() =>
+      buildChartPoints([{ x: 'A', value: 'invalid' }], { xColumn: 'x', valueColumn: 'value' })
+    ).toThrow('CHART_INVALID_NUMBER');
+    expect(() =>
+      buildChartPoints([{ x: '', value: '', series: '' }], {
+        xColumn: 'x',
+        valueColumn: 'value',
+        seriesColumn: 'series',
+      })
+    ).toThrow('CHART_HAS_NO_POINTS');
+    expect(() => buildChartPoints([{}], { xColumn: 'x', valueColumn: 'value' })).toThrow(
+      'CHART_HAS_NO_POINTS'
+    );
+    expect(
+      buildChartPoints([{ x: 'A', value: '1' }], {
+        xColumn: 'x',
+        valueColumn: 'value',
+        seriesColumn: 'series',
+      })
+    ).toEqual([{ x: 'A', value: 1, series: null }]);
+  });
+
+  it('selects explicit and inferred mapping columns', () => {
+    const table = {
+      columns: ['label', 'value', 'other'],
+      rows: [{ label: 'A', value: '1', other: 'text' }],
+    };
+    expect(
+      getChartMappingValueColumns(table, {
+        xColumn: 'label',
+        valueColumn: 'value',
+        valueColumns: ['missing', 'value'],
+      })
+    ).toEqual(['value']);
+    expect(
+      getChartMappingValueColumns(table, {
+        xColumn: 'label',
+        valueColumn: 'value',
+        valueColumns: ['missing'],
+      })
+    ).toEqual(['value']);
+    expect(getChartMappingValueColumns(table, { xColumn: 'label', valueColumn: 'value' })).toEqual([
+      'value',
+    ]);
+    expect(
+      getChartMappingValueColumns(
+        { columns: ['label', 'missing'], rows: [{ label: 'A' }] },
+        { xColumn: 'label', valueColumn: 'missing' }
+      )
+    ).toEqual([]);
+  });
+
+  it('infers wide tables from three numeric columns and handles minimal tables', () => {
+    expect(
+      inferChartMapping({
+        columns: ['label', 'a', 'b', 'c'],
+        rows: [{ label: 'row', a: '1', b: '2', c: '3' }],
+      })
+    ).toMatchObject({ tableMode: 'rowsAsSeries', valueColumns: ['a', 'b', 'c'] });
+    expect(inferChartMapping({ columns: [], rows: [] })).toMatchObject({
+      xColumn: '',
+      valueColumn: '',
+      tableMode: 'columnMapping',
+    });
+    expect(inferChartMapping({ columns: ['label', 'fallback'], rows: [] })).toMatchObject({
+      valueColumn: 'fallback',
+    });
+  });
+
+  it('builds wide points while skipping blank rows and values', () => {
+    expect(() =>
+      buildChartPoints([], {
+        xColumn: '',
+        valueColumn: 'v',
+        valueColumns: ['v'],
+        tableMode: 'rowsAsSeries',
+      })
+    ).toThrow('CHART_MAPPING_INCOMPLETE');
+    expect(() =>
+      buildChartPoints([], {
+        xColumn: 'x',
+        valueColumn: 'v',
+        valueColumns: [],
+        tableMode: 'rowsAsSeries',
+      })
+    ).toThrow('CHART_MAPPING_INCOMPLETE');
+    expect(
+      buildChartPoints(
+        [
+          { label: '', '*2025': '1', '2026': '2' },
+          { label: 'Series', '2026': '2' },
+          { '*2025': '3', '2026': '4' },
+        ],
+        {
+          xColumn: 'label',
+          valueColumn: '*2025',
+          valueColumns: ['*2025', '2026'],
+          tableMode: 'rowsAsSeries',
+        }
+      )
+    ).toEqual([{ x: '2026', value: 2, series: 'Series' }]);
+  });
+
+  it('returns a valid starter chart table', () => {
+    const table = createEmptyChartTable();
+    expect(buildChartPoints(table.rows, inferChartMapping(table))).toHaveLength(3);
   });
 });

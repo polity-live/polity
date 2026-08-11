@@ -280,7 +280,8 @@ function resolveLayoutCollisions(layout: DecisionTerminalGridLayoutItem[], prior
     adjusted.set(item.i, item);
   }
 
-  return layout.map(item => adjusted.get(item.i) ?? { ...item });
+  // Every input id is inserted into adjusted before this projection.
+  return layout.map(item => adjusted.get(item.i) as DecisionTerminalGridLayoutItem);
 }
 
 export function applyWidgetSizePreset(

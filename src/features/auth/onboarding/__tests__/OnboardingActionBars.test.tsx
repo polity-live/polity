@@ -54,8 +54,11 @@ describe('onboarding action bars', () => {
 
     const actionBar = container.querySelector('[data-slot="onboarding-action-bar"]');
     const continueButton = screen.getByRole('button', { name: 'Continue' });
+    const form = container.querySelector('[data-action-id="auth.onboarding.name.form.submit"]');
 
     expect(actionBar?.contains(continueButton)).toBe(true);
+    expect(continueButton.getAttribute('data-action-id')).toBe('auth.onboarding.name.continue');
+    expect(form).not.toBeNull();
     fireEvent.click(continueButton);
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
@@ -82,6 +85,9 @@ describe('onboarding action bars', () => {
     expect(actionBar?.contains(confirmButton)).toBe(true);
     expect(actionBar?.contains(declineButton)).toBe(true);
     expect(actionBar?.contains(backButton)).toBe(true);
+    expect(confirmButton.getAttribute('data-action-id')).toBe('auth.onboarding.membership.confirm');
+    expect(declineButton.getAttribute('data-action-id')).toBe('auth.onboarding.membership.decline');
+    expect(backButton.getAttribute('data-action-id')).toBe('auth.onboarding.membership.back');
 
     fireEvent.click(confirmButton);
     await waitFor(() => expect(onConfirm).toHaveBeenCalledTimes(1));
@@ -89,5 +95,25 @@ describe('onboarding action bars', () => {
     fireEvent.click(backButton);
     expect(onDecline).toHaveBeenCalledTimes(1);
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('continues without a request through the stable no-selection action', () => {
+    const onDecline = vi.fn();
+    const { container } = render(
+      <MembershipConfirmStep
+        groups={[]}
+        requestedGroupIds={[]}
+        onConfirm={vi.fn().mockResolvedValue(undefined)}
+        onDecline={onDecline}
+        onBack={vi.fn()}
+      />
+    );
+
+    const button = container.querySelector<HTMLElement>(
+      '[data-action-id="auth.onboarding.membership.continue-without-selection"]'
+    );
+    expect(button).not.toBeNull();
+    fireEvent.click(button!);
+    expect(onDecline).toHaveBeenCalledTimes(1);
   });
 });

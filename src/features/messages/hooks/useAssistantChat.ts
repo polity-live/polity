@@ -400,7 +400,8 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         return false;
       }
 
-      if (!selectedModel && !options?.requestOverride) {
+      const requestOverride = options?.requestOverride;
+      if (!selectedModel && !requestOverride) {
         toast.error(t('features.messages.ai.modelRequired'));
         return false;
       }
@@ -415,11 +416,11 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
       setAwaitingPersistenceText(null);
       setStreamError(null);
 
-      const attachmentsForRequest: AiChatAttachment[] = options?.requestOverride
-        ? [...options.requestOverride.attachments]
+      const attachmentsForRequest: AiChatAttachment[] = requestOverride
+        ? [...requestOverride.attachments]
         : [...attachmentComposer.selectedAttachments];
 
-      if (!options?.requestOverride) {
+      if (!requestOverride) {
         for (const selectedSkill of selectedSkills) {
           attachmentsForRequest.push({
             entityType: 'skill',
@@ -432,26 +433,25 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
       }
 
       const contextJson = JSON.stringify(attachmentsForRequest);
-      const requestPayload: AssistantChatRequestPayload | null =
-        options?.requestOverride ??
-        (selectedModel
-          ? {
-              conversationId: conversation.id,
-              content,
-              model: {
-                provider: selectedModel.provider,
-                id: selectedModel.id,
-              },
-              reasoningEffort,
-              skillSlugs: selectedSkills.map(skill => skill.slug),
-              toolNames: selectedToolNames,
-              attachments: attachmentsForRequest,
-              timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-            }
-          : null);
-
-      if (!requestPayload) {
-        return false;
+      let requestPayload: AssistantChatRequestPayload;
+      if (requestOverride) {
+        requestPayload = requestOverride;
+      } else {
+        // The prerequisite guard above proves a model exists whenever there is no override.
+        const modelForRequest = selectedModel as AiCatalogModel;
+        requestPayload = {
+          conversationId: conversation.id,
+          content,
+          model: {
+            provider: modelForRequest.provider,
+            id: modelForRequest.id,
+          },
+          reasoningEffort,
+          skillSlugs: selectedSkills.map(skill => skill.slug),
+          toolNames: selectedToolNames,
+          attachments: attachmentsForRequest,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        };
       }
 
       try {

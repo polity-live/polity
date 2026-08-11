@@ -101,7 +101,12 @@ export function AgendaSpeakerListSectionView({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" presentation="transparentGhost">
+              <Button
+                data-action-id="agendas.speakers.section.toggle"
+                data-action-kind="selection"
+                variant="ghost"
+                presentation="transparentGhost"
+              >
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Mic className="h-5 w-5" />
                   {t('features.events.agenda.speakerList')} ({speakers.length})
@@ -176,6 +181,8 @@ export function AgendaSpeakerListSectionView({
                         </Link>
                         {canManageSpeakers && speaker.isCurrent && onMarkCompleted ? (
                           <Button
+                            data-action-id="agendas.speakers.current.complete"
+                            data-action-kind="async-action"
                             size="icon"
                             variant="outline"
                             onClick={() => onMarkCompleted(speaker.id)}
@@ -259,6 +266,8 @@ export function AgendaSpeakerListSectionView({
 
                                 {canManageSpeakers && speaker.isCurrent && onMarkCompleted && (
                                   <Button
+                                    data-action-id="agendas.speakers.current.complete"
+                                    data-action-kind="async-action"
                                     size="icon"
                                     variant="outline"
                                     className="h-8 w-8 shrink-0"
@@ -344,6 +353,8 @@ export function AgendaSpeakerListSectionView({
 
                   {onRemoveFromSpeakerList && (
                     <Button
+                      data-action-id="agendas.speakers.membership.leave"
+                      data-action-kind="async-action"
                       onClick={onRemoveFromSpeakerList}
                       loading={isRemovingSpeaker}
                       loadingLabel={t('features.events.agenda.leavingSpeakerList')}
@@ -357,6 +368,8 @@ export function AgendaSpeakerListSectionView({
               </div>
             ) : onAddToSpeakerList ? (
               <Button
+                data-action-id="agendas.speakers.membership.join"
+                data-action-kind="async-action"
                 onClick={onAddToSpeakerList}
                 disabled={!userId}
                 loading={isAddingSpeaker}

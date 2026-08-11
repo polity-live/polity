@@ -246,6 +246,7 @@ export function CityDesignToolbarView({
         </div>
         <div className="grid grid-cols-3 gap-2">
           <Button
+            data-action-id="amendments.city-toolbar.select.mode-place"
             type="button"
             variant="outline"
             size="sm"
@@ -260,6 +261,7 @@ export function CityDesignToolbarView({
             {t('features.amendments.cityDesign.modes.place')}
           </Button>
           <Button
+            data-action-id="amendments.city-toolbar.select.mode-select"
             type="button"
             variant="outline"
             size="sm"
@@ -273,6 +275,7 @@ export function CityDesignToolbarView({
             {t('features.amendments.cityDesign.modes.select')}
           </Button>
           <Button
+            data-action-id="amendments.city-toolbar.select.mode-camera"
             type="button"
             variant="outline"
             size="sm"
@@ -305,6 +308,7 @@ export function CityDesignToolbarView({
           </div>
           <CollapsibleTrigger asChild>
             <Button
+              data-action-id="amendments.city-toolbar.toggle.existing-section"
               type="button"
               variant="ghost"
               size="icon"
@@ -336,6 +340,7 @@ export function CityDesignToolbarView({
 
               return (
                 <Button
+                  data-action-id="amendments.city-toolbar.toggle.osm-layer"
                   key={section.layer}
                   type="button"
                   variant="outline"
@@ -361,6 +366,7 @@ export function CityDesignToolbarView({
               );
             })}
             <Button
+              data-action-id="amendments.city-toolbar.toggle.street-markings"
               type="button"
               variant="outline"
               size="sm"
@@ -408,6 +414,7 @@ export function CityDesignToolbarView({
           </div>
           <CollapsibleTrigger asChild>
             <Button
+              data-action-id="amendments.city-toolbar.toggle.elements-section"
               type="button"
               variant="ghost"
               size="icon"
@@ -456,6 +463,7 @@ export function CityDesignToolbarView({
 
                       return (
                         <Button
+                          data-action-id="amendments.city-toolbar.select.placement-tool"
                           key={tool.id}
                           type="button"
                           variant="outline"
@@ -505,6 +513,7 @@ export function CityDesignToolbarView({
           </div>
           <CollapsibleTrigger asChild>
             <Button
+              data-action-id="amendments.city-toolbar.toggle.added-section"
               type="button"
               variant="ghost"
               size="icon"
@@ -539,7 +548,7 @@ export function CityDesignToolbarView({
                 const categoryLabel = getCategoryLabel(group.category);
                 const isCategoryHidden = hiddenCategorySet.has(group.category);
                 const isCategoryOpen = openAddedCategories.includes(group.category);
-                const firstObject = group.objects[0] ?? null;
+                const firstObject = group.objects[0] as CityDesignObject;
 
                 return (
                   <Collapsible
@@ -558,6 +567,7 @@ export function CityDesignToolbarView({
                     >
                       <CollapsibleTrigger asChild>
                         <Button
+                          data-action-id="amendments.city-toolbar.toggle.object-category"
                           type="button"
                           variant="ghost"
                           size="icon"
@@ -581,10 +591,11 @@ export function CityDesignToolbarView({
                       </CollapsibleTrigger>
                       <TooltipHint content={getActionLabel('select', categoryLabel)}>
                         <button
+                          data-action-id="amendments.city-toolbar.select.object-category"
                           type="button"
                           aria-label={getActionLabel('select', categoryLabel)}
                           className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
-                          onClick={() => onObjectSelect(firstObject?.id ?? null)}
+                          onClick={() => onObjectSelect(firstObject.id)}
                         >
                           <span className="flex min-w-0 items-center gap-2">
                             <CategoryIcon className="size-4 flex-none" />
@@ -603,6 +614,7 @@ export function CityDesignToolbarView({
                       </TooltipHint>
                       <div className="-mr-1 flex flex-none items-center gap-1">
                         <Button
+                          data-action-id="amendments.city-toolbar.toggle.object-category-visibility"
                           type="button"
                           variant="ghost"
                           size="icon"
@@ -619,6 +631,7 @@ export function CityDesignToolbarView({
                           )}
                         </Button>
                         <Button
+                          data-action-id="amendments.city-toolbar.delete.object-category"
                           type="button"
                           variant="ghost"
                           size="icon"
@@ -655,6 +668,7 @@ export function CityDesignToolbarView({
                             >
                               <TooltipHint content={getActionLabel('select', objectLabel)}>
                                 <button
+                                  data-action-id="amendments.city-toolbar.select.object"
                                   type="button"
                                   aria-label={getActionLabel('select', objectLabel)}
                                   className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
@@ -673,6 +687,7 @@ export function CityDesignToolbarView({
                                 </button>
                               </TooltipHint>
                               <Button
+                                data-action-id="amendments.city-toolbar.toggle.object-visibility"
                                 type="button"
                                 variant="ghost"
                                 size="icon"
@@ -690,6 +705,7 @@ export function CityDesignToolbarView({
                                 )}
                               </Button>
                               <Button
+                                data-action-id="amendments.city-toolbar.delete.object"
                                 type="button"
                                 variant="ghost"
                                 size="icon"
@@ -715,3 +731,7 @@ export function CityDesignToolbarView({
     </aside>
   );
 }
+
+export const cityDesignToolbarInternals = {
+  isSectionToolSelected,
+};

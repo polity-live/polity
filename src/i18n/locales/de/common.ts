@@ -1,5 +1,6 @@
 export const commonTranslations = {
   done: 'Fertig',
+  remove: 'Entfernen',
   enabled: 'Aktiviert',
   attached: 'Angehängt',
   unknown: 'Unbekannt',
@@ -69,6 +70,7 @@ export const commonTranslations = {
     voteProgress: 'Fortschritt der Stimmabgabe',
     guidePagination: 'Seitennavigation des Leitfadens',
     removeAttachment: 'Anhang entfernen',
+    insertEdgeBendPoint: 'Knickpunkt in Verbindung einfügen',
     moveEdgeBendPoint: 'Knickpunkt der Verbindung verschieben',
     carousel: 'Karussell',
     slide: 'Folie',
@@ -77,6 +79,11 @@ export const commonTranslations = {
     removeNamed: '{{name}} entfernen',
     openNamed: '{{name}} öffnen',
     openAgendaItem: 'Tagesordnungspunkt {{title}} öffnen',
+    selectNamed: '{{name}} auswählen',
+  },
+  pagination: {
+    previous: 'Zurück',
+    next: 'Weiter',
   },
   days: {
     monday: 'Montag',

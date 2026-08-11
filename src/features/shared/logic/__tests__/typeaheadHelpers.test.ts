@@ -4,7 +4,10 @@ import {
   ALL_TYPEAHEAD_ENTITY_TYPES,
   DEFAULT_TYPEAHEAD_SEARCH_KEYS,
   filterItems,
+  getTypeaheadEntityGroupLabel,
+  getTypeaheadEntityLabel,
   groupResultsByType,
+  highlightMatch,
   removeTypeaheadValue,
   sortByRelevance,
   TYPEAHEAD_ENTITY_ORDER,
@@ -52,6 +55,25 @@ describe('typeaheadHelpers', () => {
     const filtered = filterItems(items, 'budget', DEFAULT_TYPEAHEAD_SEARCH_KEYS);
 
     expect(filtered.map(item => item.id)).toEqual(['group-1', 'agenda-1', 'blog-1']);
+
+    expect(filterItems(items, '  ', DEFAULT_TYPEAHEAD_SEARCH_KEYS)).toEqual(items);
+    expect(
+      filterItems([{ mixed: [42, 'No match', 'Hit here'] }, { mixed: { nested: 'Hit' } }], 'hit', [
+        'mixed',
+      ])
+    ).toEqual([{ mixed: [42, 'No match', 'Hit here'] }]);
+  });
+
+  it('translates singular and group labels and highlights repeated matches', () => {
+    expect(getTypeaheadEntityLabel('user')).toBeTruthy();
+    expect(getTypeaheadEntityGroupLabel('group')).toBeTruthy();
+    expect(highlightMatch('Budget budgetary', 'budget')).toEqual([
+      { start: 0, end: 6 },
+      { start: 7, end: 13 },
+    ]);
+    expect(highlightMatch('Text', ' ')).toEqual([]);
+    expect(highlightMatch('', 'text')).toEqual([]);
+    expect(highlightMatch('Text', 'missing')).toEqual([]);
   });
 
   it('sorts by relevance and uses entity order as a tie-breaker', () => {
@@ -64,6 +86,42 @@ describe('typeaheadHelpers', () => {
     const sorted = sortByRelevance(queryItems, 'budget');
 
     expect(sorted.map(item => item.id)).toEqual(['user-1', 'group-1', 'blog-1']);
+    expect(sortByRelevance(items, ' ')).toEqual(items);
+
+    const base: TypeaheadItem = { id: 'base', entityType: 'blog', label: 'Nothing' };
+    const variants: TypeaheadItem[] = [
+      { id: 'label-contains', entityType: 'blog', label: 'A budget item' },
+      { id: 'secondary-prefix', entityType: 'blog', label: 'Nothing', secondaryLabel: 'Budget' },
+      {
+        id: 'secondary-contains',
+        entityType: 'blog',
+        label: 'Nothing',
+        secondaryLabel: 'A budget',
+      },
+      { id: 'secondary-none', entityType: 'blog', label: 'Nothing', secondaryLabel: 'Other' },
+      { id: 'description-prefix', entityType: 'blog', label: 'Nothing', description: 'Budget' },
+      { id: 'description-contains', entityType: 'blog', label: 'Nothing', description: 'A budget' },
+      { id: 'description-none', entityType: 'blog', label: 'Nothing', description: 'Other' },
+      { id: 'keyword-prefix', entityType: 'blog', label: 'Nothing', keywords: ['Budget'] },
+      { id: 'keyword-contains', entityType: 'blog', label: 'Nothing', keywords: ['A budget'] },
+      { id: 'keyword-none', entityType: 'blog', label: 'Nothing', keywords: ['Other'] },
+      { id: 'hashtag-prefix', entityType: 'blog', label: 'Nothing', hashtags: ['Budget'] },
+      { id: 'hashtag-contains', entityType: 'blog', label: 'Nothing', hashtags: ['A budget'] },
+      { id: 'hashtag-none', entityType: 'blog', label: 'Nothing', hashtags: ['Other'] },
+    ];
+    for (const variant of variants) {
+      expect(sortByRelevance([base, variant], 'bud')).toHaveLength(2);
+    }
+
+    expect(
+      sortByRelevance(
+        [
+          { id: 'z', entityType: 'blog', label: 'Same z' },
+          { id: 'a', entityType: 'blog', label: 'Same a' },
+        ],
+        'same'
+      ).map(item => item.id)
+    ).toEqual(['a', 'z']);
   });
 
   it('groups results with the shared mixed-entity ordering and excludes role from the mixed constant', () => {

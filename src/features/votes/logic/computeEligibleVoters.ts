@@ -53,32 +53,36 @@ function getParticipantUserId(participant: Participant) {
   return participant.user?.id ?? participant.user_id ?? null;
 }
 
-function getParticipantRoles(participant: Participant) {
-  const roles: Role[] = [];
-
+function* getParticipantRoles(participant: Participant): Iterable<Role> {
   if (participant.roles?.length) {
-    roles.push(...participant.roles);
+    yield* participant.roles;
   }
 
   if (participant.role) {
-    roles.push(participant.role);
+    yield participant.role;
   }
 
-  for (const roleLink of participant.participant_roles ?? []) {
-    if (roleLink.role) {
-      roles.push(roleLink.role);
+  if (participant.participant_roles) {
+    for (const roleLink of participant.participant_roles) {
+      if (roleLink.role) {
+        yield roleLink.role;
+      }
     }
   }
-
-  return roles;
 }
 
 export function participantHasActiveVotingRight(participant: Participant) {
-  return getParticipantRoles(participant).some(role =>
-    role.action_rights?.some(
-      actionRight => actionRight.action === 'active_voting' && actionRight.resource === 'events'
-    )
-  );
+  for (const role of getParticipantRoles(participant)) {
+    if (
+      role.action_rights?.some(
+        actionRight => actionRight.action === 'active_voting' && actionRight.resource === 'events'
+      )
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export function getHybridOfflineOverrideUserIds(
@@ -86,7 +90,9 @@ export function getHybridOfflineOverrideUserIds(
 ) {
   const userIds = new Set<string>();
 
-  for (const participant of offlineParticipants ?? []) {
+  if (!offlineParticipants) return userIds;
+
+  for (const participant of offlineParticipants) {
     if (participant.connected_user_id && participant.participation_channel === 'offline') {
       userIds.add(participant.connected_user_id);
     }
@@ -100,7 +106,9 @@ export function countConfirmedOfflineAttendees(
 ) {
   const personIds = new Set<string>();
 
-  for (const participant of offlineParticipants ?? []) {
+  if (!offlineParticipants) return 0;
+
+  for (const participant of offlineParticipants) {
     if (
       participant.attendance_status !== 'confirmed' ||
       participant.participation_channel !== 'offline'
@@ -128,11 +136,14 @@ export function computeEligibleFinalVoterCount({
   const forcedOfflineUserIds = getHybridOfflineOverrideUserIds(offlineParticipants);
   const eligibleOnlineUserIds = new Set<string>();
 
-  for (const participant of participants ?? []) {
+  if (!participants) return countConfirmedOfflineAttendees(offlineParticipants);
+
+  for (const participant of participants) {
     const userId = getParticipantUserId(participant);
     if (
       userId &&
-      ACTIVE_EVENT_PARTICIPANT_STATUSES.has(participant.status ?? '') &&
+      participant.status &&
+      ACTIVE_EVENT_PARTICIPANT_STATUSES.has(participant.status) &&
       !forcedOfflineUserIds.has(userId) &&
       participantHasActiveVotingRight(participant)
     ) {

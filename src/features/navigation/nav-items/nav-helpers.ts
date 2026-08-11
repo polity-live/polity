@@ -17,11 +17,7 @@ interface RouteParts {
   hash: string;
 }
 
-function getRouteParts(route?: string): RouteParts {
-  if (!route) {
-    return { path: '', hash: '' };
-  }
-
+function getRouteParts(route: string): RouteParts {
   const [routeWithoutHash, hash = ''] = route.split('#');
   const [path = ''] = routeWithoutHash.split('?');
 

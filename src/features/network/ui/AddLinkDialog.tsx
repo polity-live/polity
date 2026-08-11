@@ -8,6 +8,7 @@ import { useAddLinkDialogController } from '../hooks/useAddLinkDialogController'
 import { AddLinkDialogView } from './AddLinkDialogView';
 
 interface AddLinkDialogProps {
+  'data-action-scope'?: 'presentation';
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: { label: string; url: string }) => unknown | Promise<unknown>;

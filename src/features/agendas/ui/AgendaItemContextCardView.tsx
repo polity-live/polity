@@ -309,6 +309,8 @@ export function AgendaItemContextCardView({
   return (
     <Card className={cn('border-border/70 overflow-hidden rounded-xl shadow-none', className)}>
       <div
+        data-action-id="agendas.context-card.detail.navigate"
+        data-action-kind="navigation"
         className={cn(
           'border-border/60 bg-muted/20 border-b p-4 sm:p-5',
           hasAgendaDetailLink ? 'hover:bg-muted/35 cursor-pointer transition-colors' : undefined
@@ -336,6 +338,8 @@ export function AgendaItemContextCardView({
               <h2 className="text-base leading-snug font-semibold sm:text-lg">
                 {hasAgendaDetailLink && agendaDetailLink ? (
                   <Link
+                    data-action-id="agendas.context-card.detail.navigate"
+                    data-action-kind="navigation"
                     to="/event/$id/agenda/$agendaItemId"
                     params={{
                       id: agendaDetailLink.eventId,
@@ -347,6 +351,8 @@ export function AgendaItemContextCardView({
                   </Link>
                 ) : amendment?.id ? (
                   <Link
+                    data-action-id="agendas.context-card.amendment.navigate"
+                    data-action-kind="navigation"
                     to="/amendment/$id"
                     params={{ id: amendment.id }}
                     className="hover:underline"
@@ -592,3 +598,10 @@ export function AgendaItemContextCardView({
     </Card>
   );
 }
+
+export const agendaItemContextCardViewTestApi = {
+  formatAgendaDateTime,
+  isValidAgendaDate,
+  mergeAgendaTimelineItems,
+  getAgendaTimelineActiveIndex,
+};

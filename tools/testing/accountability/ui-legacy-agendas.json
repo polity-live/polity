@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/agendas/ui/AgendaSpeakerListSectionView.tsx#/user/$id": [
+      {
+        "file": "src/features/agendas/ui/__tests__/AgendaElectionSection.test.tsx",
+        "project": "component",
+        "caseId": "defaults list elections to one seat and shows candidate loading",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/agendas/ui/AgendaSpeakerListSectionView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/agendas/ui/AgendaSpeakerListSectionView.tsx#/user/$id-2": [
+      {
+        "file": "src/features/agendas/ui/__tests__/AgendaElectionSection.test.tsx",
+        "project": "component",
+        "caseId": "defaults list elections to one seat and shows candidate loading",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/agendas/ui/AgendaSpeakerListSectionView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/agendas/ui/EventStreamSectionView.tsx#/event/$id/agenda/$agendaItemId": [
+      {
+        "file": "src/features/agendas/ui/__tests__/AgendaElectionSection.test.tsx",
+        "project": "component",
+        "caseId": "hides the event role assignment note before close or without resolved winners",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/agendas/ui/EventStreamSectionView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {
+    "src/features/agendas/ui/AgendaSpeakerListSectionView.tsx#/user/$id": {
+      "actionId": "agendas.agenda-speaker-list-section-view.navigate.user-id"
+    },
+    "src/features/agendas/ui/AgendaSpeakerListSectionView.tsx#/user/$id-2": {
+      "actionId": "agendas.agenda-speaker-list-section-view.navigate.user-id-2"
+    },
+    "src/features/agendas/ui/EventStreamSectionView.tsx#/event/$id/agenda/$agendaItemId": {
+      "actionId": "agendas.event-stream-section-view.navigate.event-id-agenda-agenda-item-id"
+    }
+  }
+}

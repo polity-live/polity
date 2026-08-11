@@ -5,6 +5,17 @@ import {
 } from '@/features/create/logic/createAmendmentSearch';
 
 describe('createAmendmentSearch', () => {
+  it('keeps both target aliases absent when no group is selected', () => {
+    expect(normalizeCreateAmendmentSearch({})).toMatchObject({
+      groupId: undefined,
+      targetGroupId: undefined,
+      pathMode: 'hierarchy',
+      evaluationMode: 'none',
+      evaluationOffsetMonths: 0,
+      evaluationOffsetYears: 0,
+    });
+  });
+
   it('keeps legacy groupId readable as targetGroupId', () => {
     const parsed = createAmendmentSearchSchema.parse({
       groupId: 'target-1',

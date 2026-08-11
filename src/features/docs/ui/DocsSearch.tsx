@@ -112,6 +112,7 @@ export function DocsSearchProvider({ children }: { children: ReactNode }) {
             <CommandGroup heading={t('pages.docs.hub.searchResults')}>
               {matches.map(match => (
                 <CommandItem
+                  data-action-id="docs.search.result.select"
                   key={`${match.page.slug}:${match.section?.id ?? 'page'}`}
                   value={`${match.page.title} ${match.section?.title ?? ''} ${match.excerpt}`}
                   onSelect={() => selectMatch(match)}
@@ -136,7 +137,12 @@ export function DocsSearchProvider({ children }: { children: ReactNode }) {
         </CommandList>
         {query.trim() && (
           <div className="border-t p-2">
-            <Button variant="ghost" className="w-full justify-between" onClick={openAllResults}>
+            <Button
+              variant="ghost"
+              className="w-full justify-between"
+              data-action-id="docs.search.results.open-all"
+              onClick={openAllResults}
+            >
               <span>{t('pages.docs.hub.searchResults')}</span>
               <span className="text-muted-foreground text-xs">{query.trim()}</span>
             </Button>
@@ -154,9 +160,11 @@ export function useDocsSearch() {
 }
 
 export function DocsSearchTrigger({
+  'data-action-id': actionId,
   className,
   prominent = false,
 }: {
+  'data-action-id'?: string;
   className?: string;
   prominent?: boolean;
 }) {
@@ -165,6 +173,7 @@ export function DocsSearchTrigger({
   return (
     <button
       type="button"
+      data-action-id={actionId}
       onClick={() => openSearch()}
       className={cn(
         'bg-card text-muted-foreground hover:border-ring hover:text-foreground focus-visible:ring-ring flex w-full items-center gap-3 rounded-lg border text-left shadow-sm transition focus-visible:ring-2 focus-visible:outline-none',
@@ -200,9 +209,15 @@ export function DocsSearchField({
   };
 
   return (
-    <form onSubmit={submit} role="search" className="relative">
+    <form
+      onSubmit={submit}
+      role="search"
+      className="relative"
+      data-action-id="docs.search-field.submit"
+    >
       <Search className="text-muted-foreground absolute top-1/2 left-4 size-5 -translate-y-1/2" />
       <input
+        data-action-id="docs.search-field.query.change"
         value={query}
         onChange={event => {
           setQuery(event.target.value);
@@ -214,6 +229,7 @@ export function DocsSearchField({
       />
       {query && (
         <Button
+          data-action-id="docs.search-field.clear"
           type="button"
           variant="ghost"
           size="icon"

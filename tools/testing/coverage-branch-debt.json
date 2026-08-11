@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "baseline": {
+    "totalAlternatives": 77751,
+    "coveredAlternatives": 77751,
+    "uncoveredAlternatives": 0,
+    "exceptionAlternatives": 0
+  },
+  "byType": {},
+  "byDomain": {},
+  "files": []
+}

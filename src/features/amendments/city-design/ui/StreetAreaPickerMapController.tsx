@@ -226,3 +226,9 @@ function disableMapSelectionConflictingGestures(map: MapWithSelectionGestures) {
 function isMapGestureHandler(handler: MapGestureHandler | undefined): handler is MapGestureHandler {
   return handler != null;
 }
+
+export const streetAreaPickerMapInternals = {
+  disableMapSelectionConflictingGestures,
+  isMapGestureHandler,
+  stopLeafletGestureEvent,
+};

@@ -242,9 +242,6 @@ export async function saveWorkflowDefinition(
 
   const sortedSteps = sortDraftSteps(args.steps);
   const finalGroupId = getDerivedFinalGroupId(sortedSteps);
-  if (!finalGroupId) {
-    throw new Error('Workflow requires at least one step.');
-  }
 
   const now = Date.now();
   const existingWorkflow = await tx.run(zql.group_workflow.where('id', args.id).one());
@@ -288,7 +285,7 @@ export async function saveWorkflowDefinition(
       name: args.name,
       description: args.description,
       is_default_entry: args.is_default_entry,
-      status: nextStatus ?? 'pending_approval',
+      status: nextStatus,
       updated_at: now,
     });
   } else {
@@ -299,7 +296,7 @@ export async function saveWorkflowDefinition(
       name: args.name,
       description: args.description,
       is_default_entry: args.is_default_entry,
-      status: nextStatus ?? 'pending_approval',
+      status: nextStatus,
       updated_at: now,
     });
   }

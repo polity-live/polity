@@ -160,6 +160,13 @@ function toProvenanceGroupReference(
   };
 }
 
+export const groupMembershipsContentInternals = {
+  isOfflineMembershipParticipant,
+  toMembershipCompositionGroup,
+  toOfflineRosterGroupReference,
+  toProvenanceGroupReference,
+};
+
 export function GroupMembershipsContentContainer({
   groupId,
   canManageMembers,
@@ -558,9 +565,7 @@ export function GroupMembershipsContentContainer({
   };
 
   const [offlineMembersData, offlineMembersResult] = useQuery(
-    compositionGroupIds.length > 0
-      ? queries.groups.offlineMembersByGroupIds({ groupIds: compositionGroupIds })
-      : undefined
+    queries.groups.offlineMembersByGroupIds({ groupIds: compositionGroupIds })
   );
   const { offlineMemberships: offlineMembershipsData, isLoading: offlineMembershipsIsLoading } =
     useGroupOfflineMembershipsByGroupIds(compositionGroupIds);
@@ -701,7 +706,7 @@ export function GroupMembershipsContentContainer({
         offlineMember?.connected_user?.first_name,
         offlineMember?.connected_user?.last_name,
         offlineMember?.connected_user?.handle,
-        ...(membership.roles ?? []).map(role => role.name),
+        ...membership.roles.map(role => role.name),
       ]
         .filter(Boolean)
         .join(' ')

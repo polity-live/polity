@@ -52,7 +52,7 @@ export function ConvertedCurrencyAmount({
               : ''}
           </span>
         </TooltipHint>
-      ) : differs && !state.isLoading ? (
+      ) : differs && !state.conversion && !state.isLoading ? (
         <span className={cn('text-muted-foreground text-xs font-normal', secondaryClassName)}>
           {t('pages.create.payment.conversionUnavailable', 'Conversion unavailable')}
         </span>

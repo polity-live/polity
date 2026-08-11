@@ -1,6 +1,7 @@
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import {
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuSub,
@@ -71,21 +72,27 @@ export function LanguageToggleView({
   if (variant === 'dropdown') {
     return (
       <DropdownMenuSub>
-        <DropdownMenuSubTrigger>
+        <DropdownMenuSubTrigger data-action-id="navigation.language.dropdown.open">
           <p>
             <LanguageDisplay lang={language} labels={labels} size={size} />
           </p>
         </DropdownMenuSubTrigger>
         <DropdownMenuPortal>
           <DropdownMenuSubContent>
-            <DropdownMenuItem onClick={() => onLanguageChange('en')}>
+            <DropdownMenuItem
+              onClick={() => onLanguageChange('en')}
+              data-action-id="navigation.language.dropdown.english"
+            >
               <LanguageDisplay lang="en" labels={labels} size={size} />
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onLanguageChange('de')}>
+            <DropdownMenuItem
+              onClick={() => onLanguageChange('de')}
+              data-action-id="navigation.language.dropdown.german"
+            >
               <LanguageDisplay lang="de" labels={labels} size={size} />
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem disabled>{labels.moreLanguages}</DropdownMenuItem>
+            <DropdownMenuLabel>{labels.moreLanguages}</DropdownMenuLabel>
           </DropdownMenuSubContent>
         </DropdownMenuPortal>
       </DropdownMenuSub>
@@ -101,6 +108,8 @@ export function LanguageToggleView({
           className={cn('h-8 w-8', size === 'small' && 'h-6 w-6', className)}
           title={labels.title}
           onMouseEnter={onPopoverTriggerMouseEnter}
+          aria-label={labels.title}
+          data-action-id="navigation.language.popover.open"
         >
           <span className={cn('text-sm', size === 'small' && 'text-xs')}>
             {language === 'en' ? '🇺🇸' : '🇩🇪'}
@@ -119,6 +128,7 @@ export function LanguageToggleView({
             size="sm"
             className="h-8 justify-start gap-2"
             onClick={() => onLanguageChange('en', true)}
+            data-action-id="navigation.language.popover.english"
           >
             <span className="text-base">🇺🇸</span>
             <span className="text-sm">
@@ -130,6 +140,7 @@ export function LanguageToggleView({
             size="sm"
             className="h-8 justify-start gap-2"
             onClick={() => onLanguageChange('de', true)}
+            data-action-id="navigation.language.popover.german"
           >
             <span className="text-base">🇩🇪</span>
             <span className="text-sm">

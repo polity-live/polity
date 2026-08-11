@@ -241,6 +241,8 @@ export function AssistantMessageInputView({
                     size="icon"
                     className="h-5 w-5 rounded-md"
                     onClick={() => assistantChat.setSkillSelection(skill.slug, false)}
+                    aria-label={t('features.messages.ai.removeSkill')}
+                    data-action-id="messages.assistant.skill.remove"
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -267,6 +269,8 @@ export function AssistantMessageInputView({
                     onClick={() =>
                       assistantChat.removeAttachment(attachment.entityType, attachment.entityId)
                     }
+                    aria-label={t('features.messages.compose.removeAttachment')}
+                    data-action-id="messages.assistant.attachment.remove"
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -284,6 +288,7 @@ export function AssistantMessageInputView({
 
           <div className="relative">
             <FormControlTextarea
+              data-action-id="messages.assistant.prompt.change"
               ref={textareaRef}
               placeholder={t('features.messages.ai.placeholder')}
               value={messageText}
@@ -355,6 +360,7 @@ export function AssistantMessageInputView({
                             type="button"
                             variant="ghost"
                             onClick={() => handleToolSelect(tool.name)}
+                            data-action-id="messages.assistant.suggestion.tool.select"
                             className="h-auto w-full items-start justify-start gap-3 px-2 py-2 text-left whitespace-normal"
                           >
                             <Wrench className="text-muted-foreground mt-0.5 h-4 w-4" />
@@ -386,6 +392,7 @@ export function AssistantMessageInputView({
                             type="button"
                             variant="ghost"
                             onClick={() => handleSkillSelect(skill.slug)}
+                            data-action-id="messages.assistant.suggestion.skill.select"
                             className="h-auto w-full items-start justify-start gap-3 px-2 py-2 text-left whitespace-normal"
                           >
                             <Slash className="text-muted-foreground mt-0.5 h-4 w-4" />
@@ -420,6 +427,7 @@ export function AssistantMessageInputView({
                             type="button"
                             variant="ghost"
                             onClick={() => handleAttachmentTypeSelect(option.entityType)}
+                            data-action-id="messages.assistant.suggestion.attachment-type.select"
                             className="h-auto w-full justify-start gap-3 px-2 py-2 text-left whitespace-normal"
                           >
                             <AtSign className="text-muted-foreground h-4 w-4" />
@@ -445,6 +453,7 @@ export function AssistantMessageInputView({
                             type="button"
                             variant="ghost"
                             onClick={() => handleAttachmentSelect(option)}
+                            data-action-id="messages.assistant.suggestion.attachment.select"
                             className="h-auto w-full items-start justify-start gap-3 px-2 py-2 text-left whitespace-normal"
                           >
                             <Bot className="text-muted-foreground mt-0.5 h-4 w-4" />
@@ -477,8 +486,12 @@ export function AssistantMessageInputView({
                 <FormControlSelect
                   value={assistantChat.selectedModelKey}
                   onValueChange={assistantChat.setSelectedModelKey}
+                  data-action-id="messages.assistant.model.select"
                 >
-                  <FormControlSelectTrigger className="bg-muted/60 h-8 gap-2 rounded-md border-0 shadow-none">
+                  <FormControlSelectTrigger
+                    className="bg-muted/60 h-8 gap-2 rounded-md border-0 shadow-none"
+                    data-action-id="messages.assistant.model.select"
+                  >
                     <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
                       <span
                         className={`min-w-0 flex-1 truncate text-left ${assistantChat.selectedModel ? 'text-foreground' : 'text-muted-foreground'}`}
@@ -536,6 +549,7 @@ export function AssistantMessageInputView({
                           value={modelKey}
                           textValue={displayLabel}
                           className="py-2"
+                          data-action-id="messages.assistant.model.option"
                         >
                           <div className="flex w-full min-w-0 items-center justify-between gap-2">
                             <span className="truncate font-medium">{displayLabel}</span>
@@ -580,6 +594,7 @@ export function AssistantMessageInputView({
                   assistantChat.setReasoningEffort(value as AiReasoningEffort)
                 }
                 disabled={!assistantChat.selectedModel?.supports_reasoning_effort}
+                data-action-id="messages.assistant.reasoning.select"
               >
                 <TooltipHint content={t('features.messages.ai.reasoning')}>
                   <span
@@ -589,6 +604,7 @@ export function AssistantMessageInputView({
                     <FormControlSelectTrigger
                       className="hover:bg-muted/60 h-8 w-8 justify-center rounded-md border-0 bg-transparent px-0 shadow-none [&>svg:last-child]:hidden"
                       aria-label={t('features.messages.ai.reasoning')}
+                      data-action-id="messages.assistant.reasoning.select"
                     >
                       {(() => {
                         const selectedOption =
@@ -621,7 +637,11 @@ export function AssistantMessageInputView({
                     className={featureThemeClassName('messageAssistantMessageInputNeutralBorder')}
                   />
                   {REASONING_OPTIONS.map((option: any) => (
-                    <FormControlSelectItem key={option.value} value={option.value}>
+                    <FormControlSelectItem
+                      key={option.value}
+                      value={option.value}
+                      data-action-id="messages.assistant.reasoning.option"
+                    >
                       <div className="flex items-center gap-2">
                         <span
                           className={`inline-flex h-6 w-6 items-center justify-center rounded-md ${option.gradientClass}`}
@@ -643,6 +663,7 @@ export function AssistantMessageInputView({
                   variant="ghost"
                   size="sm"
                   className="hidden h-8 px-2 sm:inline-flex"
+                  data-action-id="messages.assistant.settings.popover.open"
                 >
                   <Settings2 className="mr-1 h-3.5 w-3.5" />
                   {t('features.messages.ai.settings')}
@@ -665,6 +686,7 @@ export function AssistantMessageInputView({
                             value={`${tool.label} ${tool.name} ${tool.description}`}
                             disabled={tool.alwaysActive}
                             onSelect={() => assistantChat.setToolSelection(tool.name, !selected)}
+                            data-action-id="messages.assistant.tool.search.toggle"
                           >
                             {tool.alwaysActive ? (
                               <Lock className="opacity-70" />
@@ -689,6 +711,7 @@ export function AssistantMessageInputView({
                             key={tool.name}
                             value={`${tool.label} ${tool.name} ${tool.description}`}
                             onSelect={() => assistantChat.setToolSelection(tool.name, !selected)}
+                            data-action-id="messages.assistant.tool.create.toggle"
                           >
                             <Check className={selected ? 'opacity-100' : 'opacity-0'} />
                             <span className="min-w-0 flex-1 truncate">{tool.label}</span>
@@ -704,6 +727,7 @@ export function AssistantMessageInputView({
                             key={tool.name}
                             value={`${tool.label} ${tool.name} ${tool.description}`}
                             onSelect={() => assistantChat.setToolSelection(tool.name, !selected)}
+                            data-action-id="messages.assistant.tool.update.toggle"
                           >
                             <Check className={selected ? 'opacity-100' : 'opacity-0'} />
                             <span className="min-w-0 flex-1 truncate">{tool.label}</span>
@@ -720,6 +744,7 @@ export function AssistantMessageInputView({
                             key={skill.slug}
                             value={`${skill.name} ${skill.slug} ${skill.aliases.join(' ')}`}
                             onSelect={() => assistantChat.setSkillSelection(skill.slug, !selected)}
+                            data-action-id="messages.assistant.skill.toggle"
                           >
                             <Check className={selected ? 'opacity-100' : 'opacity-0'} />
                             <span className="min-w-0 flex-1">
@@ -731,7 +756,11 @@ export function AssistantMessageInputView({
                           </CommandItem>
                         );
                       })}
-                      <CommandItem value="create-skill" onSelect={() => setCreateSkillOpen(true)}>
+                      <CommandItem
+                        value="create-skill"
+                        onSelect={() => setCreateSkillOpen(true)}
+                        data-action-id="messages.assistant.skill.create.open"
+                      >
                         <Plus />
                         {t('features.messages.ai.createSkill')}
                       </CommandItem>
@@ -748,11 +777,14 @@ export function AssistantMessageInputView({
               className="h-8 w-8 rounded-md sm:hidden"
               onClick={() => setAssistantSettingsOpen(true)}
               title={t('features.messages.ai.settings')}
+              aria-label={t('features.messages.ai.settings')}
+              data-action-id="messages.assistant.settings.drawer.open"
             >
               <Settings2 className="h-4 w-4" />
             </Button>
 
             <FileUploadTrigger
+              data-action-id="messages.assistant.file.upload"
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-md"
@@ -789,6 +821,7 @@ export function AssistantMessageInputView({
               onClick={() => {
                 void handleSubmit();
               }}
+              data-action-id="messages.assistant.send"
             >
               {assistantChat.isSending ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -831,6 +864,7 @@ export function AssistantMessageInputView({
                           className="h-auto justify-start gap-3 px-2 py-2 text-left"
                           disabled={tool.alwaysActive}
                           onClick={() => assistantChat.setToolSelection(tool.name, !selected)}
+                          data-action-id="messages.assistant.drawer.tool.toggle"
                         >
                           <span className="flex h-5 w-5 items-center justify-center rounded border">
                             {tool.alwaysActive ? (
@@ -871,6 +905,7 @@ export function AssistantMessageInputView({
                       variant="ghost"
                       className="h-auto justify-start gap-3 px-2 py-2 text-left"
                       onClick={() => assistantChat.setSkillSelection(skill.slug, !selected)}
+                      data-action-id="messages.assistant.drawer.skill.toggle"
                     >
                       <span className="flex h-5 w-5 items-center justify-center rounded border">
                         {selected ? <Check className="h-3.5 w-3.5" /> : null}
@@ -891,6 +926,7 @@ export function AssistantMessageInputView({
                   setAssistantSettingsOpen(false);
                   setCreateSkillOpen(true);
                 }}
+                data-action-id="messages.assistant.drawer.skill-create.open"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 {t('features.messages.ai.createSkill')}
@@ -948,10 +984,19 @@ export function AssistantMessageInputView({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setCreateSkillOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCreateSkillOpen(false)}
+              data-action-id="messages.assistant.skill-dialog.cancel"
+            >
               {t('common.cancel')}
             </Button>
-            <Button type="button" onClick={handleCreateSkill}>
+            <Button
+              type="button"
+              onClick={handleCreateSkill}
+              data-action-id="messages.assistant.skill-dialog.create"
+            >
               {t('common.create')}
             </Button>
           </DialogFooter>

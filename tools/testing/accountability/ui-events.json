@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/events/EventWikiContentView.tsx#events.event-wiki-content.group-id": [
+      {
+        "file": "src/features/events/__tests__/EventWikiContentView.test.tsx",
+        "project": "component",
+        "caseId": "keeps event actions visible to authenticated users",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/events/EventWikiContentView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/events/ui/CancelledEventBanner.tsx#events.cancelled-event-banner.event-id": [
+      {
+        "file": "src/features/events/ui/__tests__/CancelledEventBanner.coverage.test.tsx",
+        "project": "component",
+        "caseId": "renders sparse English and complete German cancellation metadata",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/events/ui/CancelledEventBanner.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/events/ui/DelegateAssemblyCompositionPanel.tsx#events.delegate-assembly-composition-panel.group-id": [
+      {
+        "file": "src/features/events/ui/__tests__/DelegateAssemblyCompositionPanel.test.tsx",
+        "project": "component",
+        "caseId": "renders a section skeleton while delegate composition loads",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/events/ui/DelegateAssemblyCompositionPanel.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {}
+}

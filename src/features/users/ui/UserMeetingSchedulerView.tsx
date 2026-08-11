@@ -179,7 +179,7 @@ export function UserMeetingSchedulerView({
         }
         actions={
           isOwner ? (
-            <Button onClick={openCreateEventFlow}>
+            <Button onClick={openCreateEventFlow} data-action-id="users.meet.offer.create">
               <Plus className="mr-2 h-4 w-4" />
               {translateText('generated.inline.1206_offer_a_meeting_815bf49a')}
             </Button>
@@ -243,11 +243,11 @@ export function UserMeetingSchedulerView({
         <Tabs defaultValue={isOwner ? 'manage' : 'bookings'} className="mt-6 space-y-6">
           <TabsList>
             {isOwner && (
-              <TabsTrigger value="manage">
+              <TabsTrigger value="manage" data-action-id="users.meet.tab.manage">
                 {translateText('generated.inline.1207_meeting_offers_86d14c14')}
               </TabsTrigger>
             )}
-            <TabsTrigger value="bookings">
+            <TabsTrigger value="bookings" data-action-id="users.meet.tab.bookings">
               {isOwner
                 ? translateText('generated.inline.0151_booked_with_you_0111015e')
                 : translateText('generated.inline.0152_my_booked_meetings_ecb1cc54')}
@@ -270,7 +270,10 @@ export function UserMeetingSchedulerView({
                 <CardContent>
                   {meetings.length === 0 && (
                     <div className="mb-4">
-                      <Button onClick={openCreateEventFlow}>
+                      <Button
+                        onClick={openCreateEventFlow}
+                        data-action-id="users.meet.offer.create"
+                      >
                         <Plus className="mr-2 h-4 w-4" />
                         {translateText('generated.inline.1210_offer_a_meeting_3aa52ce6')}
                       </Button>
@@ -381,6 +384,7 @@ export function UserMeetingSchedulerView({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-primary inline-flex items-center gap-1 text-sm underline-offset-4 hover:underline"
+                        data-action-id="users.meet.online.open"
                       >
                         <Video className="h-4 w-4" />
                         {translateText('generated.inline.1162_open_online_meeting_link_ec74dc3b')}
@@ -398,7 +402,11 @@ export function UserMeetingSchedulerView({
               </div>
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsBookingDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsBookingDialogOpen(false)}
+                data-action-id="users.meet.booking.cancel"
+              >
                 {translateText('generated.inline.0065_cancel_77dfd213')}
               </Button>
               <Button
@@ -408,6 +416,7 @@ export function UserMeetingSchedulerView({
                   selectedInstance.isBookedByMe ||
                   selectedInstance.bookingCount >= selectedInstance.maxBookings
                 }
+                data-action-id="users.meet.booking.confirm"
               >
                 {translateText('generated.inline.1215_confirm_booking_eb9e1e0e')}
               </Button>
@@ -447,6 +456,7 @@ export function UserMeetingSchedulerView({
                       variant={editType === 'one-on-one' ? 'default' : 'outline'}
                       className="flex-1"
                       onClick={() => setEditType('one-on-one')}
+                      data-action-id="users.meet.edit-type.one-on-one"
                     >
                       {translateText('generated.inline.1219_1_on_1_offer_747789b9')}
                     </Button>
@@ -455,6 +465,7 @@ export function UserMeetingSchedulerView({
                       variant={editType === 'public-meeting' ? 'default' : 'outline'}
                       className="flex-1"
                       onClick={() => setEditType('public-meeting')}
+                      data-action-id="users.meet.edit-type.public"
                     >
                       <Users className="mr-2 h-4 w-4" />
                       {translateText('generated.inline.1220_public_session_ecb9bdca')}
@@ -575,10 +586,15 @@ export function UserMeetingSchedulerView({
                   onClick={() => {
                     handleEditDialogOpenChange(false);
                   }}
+                  data-action-id="users.meet.edit.cancel"
                 >
                   {translateText('generated.inline.0065_cancel_77dfd213')}
                 </Button>
-                <Button onClick={handleSubmitEdit} disabled={!canSaveMeeting}>
+                <Button
+                  onClick={handleSubmitEdit}
+                  disabled={!canSaveMeeting}
+                  data-action-id="users.meet.edit.save"
+                >
                   {translateText('generated.inline.1226_save_meeting_78284a44')}
                 </Button>
               </DialogFooter>

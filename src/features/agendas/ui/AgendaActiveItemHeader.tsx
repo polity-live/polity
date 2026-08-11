@@ -52,8 +52,8 @@ function toValidDate(value: AgendaHeaderDate) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function isDistinctTime(first: Date | null, second: Date | null) {
-  if (!first || !second) return Boolean(first || second);
+function isDistinctTime(first: Date, second: Date | null) {
+  if (!second) return true;
   return Math.abs(first.getTime() - second.getTime()) > 60_000;
 }
 

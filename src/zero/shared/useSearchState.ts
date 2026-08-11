@@ -15,15 +15,17 @@ interface SearchMembershipRoleLinkLike<TRole extends SearchGroupRoleLike = Searc
   role?: TRole | null;
 }
 
-function selectPrimaryGroupRole<TRole extends SearchGroupRoleLike>(roles: readonly TRole[]) {
+export function selectPrimarySearchGroupRole<TRole extends SearchGroupRoleLike>(
+  roles: readonly TRole[]
+) {
   if (roles.length === 0) return null;
 
-  return (
-    [...roles].sort((left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1))[0] ?? null
-  );
+  return [...roles].sort(
+    (left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1)
+  )[0] as TRole;
 }
 
-function normalizeGroupMemberships<
+export function normalizeSearchGroupMemberships<
   TMembership extends {
     membership_roles?: readonly SearchMembershipRoleLinkLike<TRole>[] | null;
     role?: TRole | null;
@@ -38,12 +40,12 @@ function normalizeGroupMemberships<
     return {
       ...membership,
       roles,
-      role: selectPrimaryGroupRole(roles) ?? membership.role ?? null,
+      role: selectPrimarySearchGroupRole(roles) ?? membership.role ?? null,
     };
   });
 }
 
-function normalizeSearchableGroup<
+export function normalizeSearchableGroup<
   TGroup extends {
     memberships?: readonly unknown[] | null;
   },
@@ -58,11 +60,11 @@ function normalizeSearchableGroup<
 
   return {
     ...group,
-    memberships: normalizeGroupMemberships(memberships),
+    memberships: normalizeSearchGroupMemberships(memberships),
   };
 }
 
-function hasActiveGroupMembership(
+export function hasActiveSearchGroupMembership(
   membership:
     | {
         status?: string | null;
@@ -79,7 +81,7 @@ function hasActiveGroupMembership(
   );
 }
 
-function dedupeById<T extends { id: string }>(items: readonly T[]) {
+export function dedupeSearchItemsById<T extends { id: string }>(items: readonly T[]) {
   const seen = new Set<string>();
   return items.filter(item => {
     if (seen.has(item.id)) {
@@ -139,7 +141,7 @@ export function useSearchState(options: SearchOptions = {}) {
   );
 
   const normalizedGroupMemberships = useMemo(
-    () => normalizeGroupMemberships(groupMemberships),
+    () => normalizeSearchGroupMemberships(groupMemberships),
     [groupMemberships]
   );
 
@@ -147,7 +149,7 @@ export function useSearchState(options: SearchOptions = {}) {
   const memberGroupIds = useMemo(
     () =>
       normalizedGroupMemberships
-        .filter(hasActiveGroupMembership)
+        .filter(hasActiveSearchGroupMembership)
         .map(m => m.group?.id)
         .filter((groupId): groupId is string => !!groupId),
     [normalizedGroupMemberships]
@@ -216,7 +218,7 @@ export function useSearchState(options: SearchOptions = {}) {
       assignment.todo ? [assignment.todo] : []
     );
 
-    const rawTodos = dedupeById([
+    const rawTodos = dedupeSearchItemsById([
       ...(publicTodos ?? []),
       ...(createdTodos ?? []),
       ...(groupTodos ?? []),
@@ -236,7 +238,7 @@ export function useSearchState(options: SearchOptions = {}) {
 
   // Agenda items inherit visibility from their parent event
   const visibleAgendaItems = useMemo(
-    () => (agendaItems ?? []).filter(ai => visibleEventIds.has(ai.event_id ?? '')),
+    () => agendaItems.filter(ai => visibleEventIds.has(ai.event_id ?? '')),
     [agendaItems, visibleEventIds]
   );
 
@@ -254,7 +256,7 @@ export function useSearchState(options: SearchOptions = {}) {
     todos: visibleTodos,
     timelineEvents: timelineEvents ?? [],
     agendaItems: visibleAgendaItems,
-    elections: elections ?? [],
+    elections,
     eventVotingSessions: [] as readonly { readonly id: string }[],
     allHashtags: allHashtags ?? [],
     isLoading: false,

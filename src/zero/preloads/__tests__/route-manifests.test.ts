@@ -5,9 +5,11 @@ import {
   createBlogPreloadTasks,
   createGroupPreloadTasks,
   createHomePreloadTask,
+  createCreateEventPreloadTask,
   createIntentTaskForHref,
   createMessagesPreloadTask,
   createNotificationsPreloadTask,
+  createPrimaryIdleTasks,
   createSearchPreloadTask,
   createUserPreloadTasks,
 } from '../route-manifests';
@@ -30,6 +32,8 @@ describe('prioritized preload route manifests', () => {
 
     expect(recent.key).not.toBe(trending.key);
     expect(firstConversation.key).not.toBe(secondConversation.key);
+    expect(createMessagesPreloadTask().key).toContain('primary:messages');
+    expect(createCreateEventPreloadTask('user-1', 'group/one').route.href).toContain('group%2Fone');
   });
 
   it('keeps home narrow and defers search viewer state until after paint', () => {
@@ -48,6 +52,12 @@ describe('prioritized preload route manifests', () => {
     expect(searchKeys).not.toContain('queries.amendments.viewerCollaborations');
     expect(searchKeys).not.toContain('queries.events.viewerDelegations');
     expect(searchKeys).toContain('"limit":19');
+    expect(createPrimaryIdleTasks('user-1')).toHaveLength(7);
+    expect(
+      createBlogPreloadTasks('blog-1', '/blog/blog-1')[0]
+        .entries.map(entry => entry.key)
+        .join('|')
+    ).not.toContain('queries.rbac.viewerMemberships');
   });
 
   it('assigns expensive amendment queries only to their consuming subpages', () => {
@@ -77,8 +87,24 @@ describe('prioritized preload route manifests', () => {
   });
 
   it('resolves concrete primary and entity intent targets without preloading every entity', () => {
+    expect(createIntentTaskForHref('/home')).toBeUndefined();
+    expect(createIntentTaskForHref('/?from=home', 'user-1')).toBeUndefined();
     expect(createIntentTaskForHref('/home', 'user-1')?.key).toBe('primary:home');
+    expect(createIntentTaskForHref('/messages?conversation=one', 'user-1')?.key).toContain(
+      'primary:messages'
+    );
+    expect(createIntentTaskForHref('/search#results', 'user-1')?.key).toContain('primary:search');
+    expect(createIntentTaskForHref('/create', 'user-1')?.key).toBe('primary:create');
+    expect(createIntentTaskForHref('/calendar', 'user-1')?.key).toBe('primary:calendar');
+    expect(createIntentTaskForHref('/todos', 'user-1')?.key).toBe('primary:todos');
+    expect(createIntentTaskForHref('/notifications', 'user-1')?.key).toBe('primary:notifications');
     expect(createIntentTaskForHref('/create/event', 'user-1')?.key).toBe('create:event');
+    expect(createIntentTaskForHref('/create/group/details', 'user-1')?.route.href).toBe(
+      '/create/group/details'
+    );
+    expect(createIntentTaskForHref('/blog/blog-1/editor', 'user-1')?.key).toBe(
+      'blog:blog-1:editor'
+    );
     expect(createIntentTaskForHref('/group/group-1', 'user-1')?.key).toBe('group:group-1:overview');
     expect(createIntentTaskForHref('/event/event-1/agenda', 'user-1')?.key).toBe(
       'event:event-1:agenda'
@@ -97,6 +123,7 @@ describe('prioritized preload route manifests', () => {
     expect(createIntentTaskForHref('/user/user-1/notifications', 'user-1')?.key).toBe(
       'user:user-1:settings'
     );
+    expect(createIntentTaskForHref('/user/user-2', 'user-1')?.key).toBe('user:user-2:profile');
   });
 
   it('matches the exact cold-render query contracts of all wiki roots', () => {

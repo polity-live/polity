@@ -192,6 +192,8 @@ export function UserTimelineCardView({
         ) : (
           <>
             <Button
+              data-action-id="timeline.user.subscription.toggle"
+              data-action-kind="async-action"
               variant={subscription.isSubscribed ? 'outline' : 'ghost'}
               size="sm"
               onClick={e => {
@@ -206,6 +208,8 @@ export function UserTimelineCardView({
             </Button>
             <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
               <Link
+                data-action-id="timeline.user.message.open"
+                data-action-kind="navigation"
                 to="/messages"
                 search={{ userId: user.id, name: user.name }}
                 onClick={e => {
@@ -218,6 +222,7 @@ export function UserTimelineCardView({
             </Button>
             <div onClick={e => e.preventDefault()}>
               <ShareButton
+                data-action-id="timeline.user.share"
                 url={userHref}
                 title={user.name}
                 description={user.bio || ''}

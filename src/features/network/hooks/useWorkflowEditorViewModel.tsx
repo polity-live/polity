@@ -154,7 +154,7 @@ export function useWorkflowEditorViewModel({
     () =>
       draftSteps.map((step, index) => ({
         index,
-        sourceGroupId: index === 0 ? draftStartGroupId : (draftSteps[index - 1]?.group_id ?? ''),
+        sourceGroupId: index === 0 ? draftStartGroupId : draftSteps[index - 1].group_id,
         targetGroupId: step.group_id,
         step,
       })),
@@ -166,7 +166,7 @@ export function useWorkflowEditorViewModel({
       return draftStartGroupId;
     }
 
-    return draftSteps[draftSteps.length - 1]?.group_id ?? '';
+    return draftSteps[draftSteps.length - 1].group_id;
   }, [draftStartGroupId, draftSteps]);
 
   const getDirectTargetGroups = useCallback(

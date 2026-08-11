@@ -130,10 +130,6 @@ export function compressConversationHistory(
       const compressedMessages = initialMessages.slice(0, -recentMessageCount);
       const recentMessages = initialMessages.slice(-recentMessageCount);
 
-      if (compressedMessages.length === 0) {
-        continue;
-      }
-
       const summaryMessage = buildCompressedHistoryMessage(compressedMessages, maxCharsPerMessage);
       const candidateMessages = [summaryMessage, ...recentMessages];
       const estimatedTokens = estimateConversationTokens(systemPrompt, candidateMessages);

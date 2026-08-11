@@ -101,11 +101,24 @@ export function GroupConnectionsInput({
         />
 
         <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={onAdd} disabled={addDisabled}>
+          <Button
+            data-action-id="create.group-connections.add"
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onAdd}
+            disabled={addDisabled}
+          >
             <Link2 className="mr-1 h-4 w-4" />
             {addLabel}
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+          <Button
+            data-action-id="create.group-connections.cancel"
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onCancel}
+          >
             {cancelLabel}
           </Button>
         </div>
@@ -165,11 +178,13 @@ export function GroupConnectionsInput({
                 />
               </div>
               <Button
+                data-action-id="create.group-connections.remove"
                 type="button"
                 variant="ghost"
                 size="sm"
                 className="h-6 w-6 p-0"
                 onClick={() => onRemove(linkedGroup.groupId)}
+                aria-label={`${cancelLabel} ${linkedGroup.groupName}`}
               >
                 <X className="h-3 w-3" />
               </Button>

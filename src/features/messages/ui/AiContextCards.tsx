@@ -163,6 +163,7 @@ function EntityResultCard({
   return attachment.href ? (
     <SmartLink
       href={attachment.href}
+      data-action-id="messages.ai-context.entity.open"
       data-tutorial-anchor={tutorialAnchor}
       className="focus-visible:ring-ring block h-full rounded-xl focus-visible:ring-2 focus-visible:outline-none"
     >
@@ -200,6 +201,7 @@ function UploadContextCard({
           <div className="mt-2 flex items-center gap-3 text-xs font-medium">
             <a
               href={cardPayload.fileUrl}
+              data-action-id="messages.ai-context.attachment.open"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary inline-flex items-center gap-1"
@@ -209,6 +211,7 @@ function UploadContextCard({
             </a>
             <a
               href={downloadUrl}
+              data-action-id="messages.ai-context.attachment.download"
               download={cardPayload.fileName}
               className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
             >
@@ -279,6 +282,7 @@ function ContextCardSection({
       {hiddenCount > 0 ? (
         <div className="border-border/60 border-t px-3 py-2">
           <Button
+            data-action-id="messages.ai-context.expand.toggle"
             type="button"
             variant="ghost"
             size="sm"

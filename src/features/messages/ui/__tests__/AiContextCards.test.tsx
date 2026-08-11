@@ -31,10 +31,48 @@ describe('AiContextCards', () => {
     expect(screen.getByRole('link', { name: /Group result/ }).getAttribute('href')).toBe(
       '/group/1'
     );
+    expect(screen.getByRole('link', { name: /Group result/ }).getAttribute('data-action-id')).toBe(
+      'messages.ai-context.entity.open'
+    );
     expect(screen.queryByRole('link', { name: /Event result/ })).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: /1|more|weitere/i }));
+    const expandAction = screen.getByRole('button', { name: /1|more|weitere/i });
+    expect(expandAction.getAttribute('data-action-id')).toBe('messages.ai-context.expand.toggle');
+    expandAction.focus();
+    expect(document.activeElement).toBe(expandAction);
+    fireEvent.click(expandAction);
     expect(screen.getByText('Blog result')).toBeTruthy();
+  });
+
+  it('opens and downloads uploaded context attachments through distinct stable actions', () => {
+    render(
+      <AiContextCards
+        attachments={[
+          {
+            entityType: 'document',
+            entityId: 'upload-1',
+            title: 'agenda.pdf',
+            card_data_json: JSON.stringify({
+              kind: 'upload',
+              fileUrl: 'https://files.example/agenda.pdf',
+              fileName: 'agenda.pdf',
+              fileType: 'application/pdf',
+              fileSize: 1024,
+              previewType: 'file',
+            }),
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: /open|öffnen/i }).getAttribute('data-action-id')).toBe(
+      'messages.ai-context.attachment.open'
+    );
+    const download = screen.getByRole('link', {
+      name: /download|herunterladen/i,
+    });
+    expect(download.getAttribute('data-action-id')).toBe('messages.ai-context.attachment.download');
+    expect(download.getAttribute('download')).toBe('agenda.pdf');
   });
 
   it('separates assistant output and update results into independent context sections', () => {

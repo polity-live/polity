@@ -25,13 +25,14 @@ export function ConversationItem({
   onSelect,
   onDelete,
 }: ConversationItemProps) {
-  const { language } = useTranslation();
+  const { language, t } = useTranslation();
   const displayConversation = resolveAppTutorialFixtureValue(conversation, {
     tutorialRunId: conversation.tutorial_run_id,
     language,
   });
   const display = getConversationDisplay(displayConversation, currentUserId);
   const lastMessage = displayConversation.messages[displayConversation.messages.length - 1];
+  const lastMessageContent = lastMessage?.content ?? '';
   const unreadCount = getUnreadCount(conversation, currentUserId);
   const canDelete =
     conversation.type !== 'group' &&
@@ -41,6 +42,7 @@ export function ConversationItem({
   return (
     <div className="group flex items-start gap-2">
       <Button
+        data-action-id="messages.conversation.select"
         data-tutorial-anchor={
           conversation.tutorial_run_id ? 'tutorial-assistant-conversation' : undefined
         }
@@ -86,9 +88,9 @@ export function ConversationItem({
           <div className="flex items-center justify-between gap-2">
             {lastMessage && (
               <p className="text-muted-foreground min-w-0 flex-1 truncate text-sm">
-                {(lastMessage.content ?? '').length > 40
-                  ? `${(lastMessage.content ?? '').substring(0, 40)}...`
-                  : lastMessage.content}
+                {lastMessageContent.length > 40
+                  ? `${lastMessageContent.substring(0, 40)}...`
+                  : lastMessageContent}
               </p>
             )}
             {unreadCount > 0 && (
@@ -105,6 +107,7 @@ export function ConversationItem({
 
       {canDelete && onDelete && (
         <Button
+          data-action-id="messages.conversation.delete.open"
           type="button"
           variant="ghost"
           size="icon"
@@ -114,6 +117,7 @@ export function ConversationItem({
             event.stopPropagation();
             onDelete(conversation.id);
           }}
+          aria-label={t('features.messages.conversation.delete')}
         >
           <Trash2 className="h-4 w-4" />
         </Button>

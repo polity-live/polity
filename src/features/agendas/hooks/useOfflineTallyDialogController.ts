@@ -15,17 +15,6 @@ interface UseOfflineTallyDialogControllerOptions<TValue> {
   onSubmit: (args: { password: string; counts: Record<string, number> }) => Promise<void>;
 }
 
-function areDraftsEqual(left: Record<string, string>, right: Record<string, string>) {
-  const leftKeys = Object.keys(left);
-  const rightKeys = Object.keys(right);
-
-  if (leftKeys.length !== rightKeys.length) {
-    return false;
-  }
-
-  return rightKeys.every(key => left[key] === right[key]);
-}
-
 function buildDraftSeed<TValue>({
   entries,
   tallies,
@@ -78,7 +67,7 @@ export function useOfflineTallyDialogController<TValue>({
     }
 
     seededDraftSignatureRef.current = seed.signature;
-    setDraft(current => (areDraftsEqual(current, seed.draft) ? current : seed.draft));
+    setDraft(seed.draft);
   }, [entries, getTallyCount, getTallyEntryId, open, tallies]);
 
   const normalizedCounts = useMemo(() => {

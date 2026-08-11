@@ -31,12 +31,16 @@ function GroupEventsPage() {
         headingMode="sr-only"
         actions={
           canCreateEvents ? (
-            <Link to="/create/event" search={{ groupId: id }}>
-              <Button size="sm">
+            <Button asChild size="sm" data-action-id="routes.group-events.event.create">
+              <Link
+                to="/create/event"
+                search={{ groupId: id }}
+                data-action-id="routes.group-events.event.create"
+              >
                 <Plus className="mr-1 h-4 w-4" />
                 {gp.t('features.calendar.actions.createEvent')}
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           ) : null
         }
       />

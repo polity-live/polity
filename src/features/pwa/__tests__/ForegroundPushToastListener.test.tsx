@@ -140,6 +140,21 @@ describe('ForegroundPushToastListener', () => {
     });
   });
 
+  it('allows a toast without a deduplication id or navigation action', () => {
+    const browser = installServiceWorkerMessages();
+    render(<ForegroundPushToastListener />);
+
+    browser.getListener()?.({
+      data: foregroundMessage({ title: 'Nur eine Nachricht' }),
+      ports: [acknowledgementPort() as unknown as MessagePort],
+    } as unknown as MessageEvent);
+
+    expect(mocks.toastInfo).toHaveBeenCalledWith(
+      'Nur eine Nachricht',
+      expect.objectContaining({ id: undefined, action: undefined })
+    );
+  });
+
   it('does not acknowledge when the gated toast was not created', () => {
     mocks.toastInfo.mockReturnValue(undefined);
     const browser = installServiceWorkerMessages();
@@ -206,5 +221,6 @@ describe('foreground push message validation', () => {
     expect(sameOriginPushPath(`${window.location.origin}/events/event-1`)).toBe('/events/event-1');
     expect(sameOriginPushPath('https://attacker.example/notifications')).toBeNull();
     expect(sameOriginPushPath('javascript:alert(1)')).toBeNull();
+    expect(sameOriginPushPath('http://[')).toBeNull();
   });
 });

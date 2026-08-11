@@ -1,14 +1,26 @@
 import { cp, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
+import { runCliIfMain } from '../shared/run-cli-if-main.mjs';
 
-const sourceDir = path.resolve('.vinxi/build/client/_build');
-const targetDirs = [
-  path.resolve('public/_build'),
-  path.resolve('.output/public/_build'),
-];
+export async function syncVinxiAssets(options = {}) {
+  const workspace = path.resolve(options.workspace ?? '.');
+  const sourceDir = path.resolve(
+    options.sourceDir ?? path.join(workspace, '.vinxi/build/client/_build')
+  );
+  const targetDirs = options.targetDirs ?? [
+    path.join(workspace, 'public/_build'),
+    path.join(workspace, '.output/public/_build'),
+  ];
 
-for (const targetDir of targetDirs) {
-  await rm(targetDir, { recursive: true, force: true });
-  await mkdir(path.dirname(targetDir), { recursive: true });
-  await cp(sourceDir, targetDir, { recursive: true });
+  for (const target of targetDirs) {
+    const targetDir = path.resolve(target);
+    if (targetDir === workspace || !targetDir.startsWith(`${workspace}${path.sep}`)) {
+      throw new Error(`Refusing to replace asset target outside workspace: ${targetDir}`);
+    }
+    await rm(targetDir, { recursive: true, force: true });
+    await mkdir(path.dirname(targetDir), { recursive: true });
+    await cp(sourceDir, targetDir, { recursive: true });
+  }
 }
+
+await runCliIfMain(import.meta.url, syncVinxiAssets);

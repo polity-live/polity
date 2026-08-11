@@ -62,7 +62,7 @@ export function AccountEmailSectionView({
           className="bg-muted"
         />
 
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4" data-action-id="users.account.email.submit">
           {requiresInitialPassword ? (
             <p className="text-muted-foreground text-sm">{copy.initialPasswordRequired}</p>
           ) : null}
@@ -89,7 +89,11 @@ export function AccountEmailSectionView({
 
           {error ? <InlineNotice variant="destructive">{error}</InlineNotice> : null}
 
-          <FormButton type="submit" disabled={!isValid || isBusy}>
+          <FormButton
+            type="submit"
+            disabled={!isValid || isBusy}
+            data-action-id="users.account.email.submit"
+          >
             {isBusy ? <Spinner className="mr-2" /> : null}
             {isBusy ? copy.updating : copy.update}
           </FormButton>

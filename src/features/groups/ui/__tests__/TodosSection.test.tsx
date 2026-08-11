@@ -81,4 +81,26 @@ describe('TodosSection', () => {
     expect(screen.queryByTestId('todo-list')).not.toBeNull();
     expect(screen.queryByTestId('kanban-board')).toBeNull();
   });
+
+  it('dispatches archive and view-mode changes through stable actions', () => {
+    const onViewModeChange = vi.fn();
+    const { container } = render(
+      <TodosSection {...baseProps} onViewModeChange={onViewModeChange} canManageTodos />
+    );
+
+    const kanban = container.querySelector<HTMLElement>(
+      '[data-action-id="groups.todos.select.kanban"]'
+    )!;
+    const list = container.querySelector<HTMLElement>(
+      '[data-action-id="groups.todos.select.list"]'
+    )!;
+    kanban.focus();
+    expect(document.activeElement).toBe(kanban);
+    fireEvent.click(list);
+    fireEvent.click(kanban);
+    fireEvent.click(container.querySelector('[data-action-id="groups.todos.toggle.archive"]')!);
+
+    expect(onViewModeChange.mock.calls).toEqual([['list'], ['kanban']]);
+    expect(screen.queryByTestId('todo-list')).not.toBeNull();
+  });
 });

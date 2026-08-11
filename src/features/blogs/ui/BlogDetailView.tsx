@@ -171,7 +171,9 @@ export function BlogDetailView({
     );
   }
 
-  const bloggerDirectoryItems: WikiParticipationItem[] = (bloggers ?? [])
+  const bloggerDirectoryItems: (WikiParticipationItem & {
+    roles: WikiParticipationRole[];
+  })[] = (bloggers ?? [])
     .filter(blogger => isVisibleWikiParticipationStatus(blogger.status))
     .filter(blogger => blogger.user?.id)
     .map(blogger => {
@@ -196,7 +198,7 @@ export function BlogDetailView({
       };
     });
   const bloggerRoles = bloggerDirectoryItems
-    .flatMap(item => item.roles ?? [])
+    .flatMap(item => item.roles)
     .filter(
       (role, index, allRoles) => allRoles.findIndex(candidate => candidate.id === role.id) === index
     );
@@ -227,9 +229,7 @@ export function BlogDetailView({
               </Avatar>
               <div className="text-left">
                 <p className="text-sm font-medium">
-                  {t
-                    ? t('components.labels.createdBy')
-                    : translateText('generated.inline.0037_created_by_5d73cc30')}{' '}
+                  {t('components.labels.createdBy')}{' '}
                   {author.name || translateText('generated.inline.0031_unknown_bc7819b3')}
                 </p>
                 {author.handle ? (
@@ -270,6 +270,7 @@ export function BlogDetailView({
           {currentUserId ? (
             <>
               <SubscribeButton
+                data-action-id="blogs.detail.subscribe"
                 entityType="blog"
                 entityId={blogId}
                 isSubscribed={isSubscribed}
@@ -287,6 +288,7 @@ export function BlogDetailView({
             </>
           ) : null}
           <ShareButton
+            data-action-id="blogs.detail.share"
             url={viewUrl}
             title={title}
             description=""
@@ -378,15 +380,26 @@ export function BlogDetailView({
             </div>
             <div className="flex gap-2">
               {canEdit ? (
-                <Link to={editorUrl}>
-                  <Button variant="outline" size="sm">
+                <Button
+                  data-action-scope="presentation"
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  data-action-id="blogs.detail.edit.wrapper"
+                >
+                  <Link data-action-id="blogs.detail.edit" to={editorUrl}>
                     <Edit className="mr-2 h-4 w-4" />
                     {t('features.blogs.detail.editContent')}
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               ) : null}
               {canDelete ? (
-                <Button variant="destructive" size="sm" onClick={() => onDeleteOpenChange(true)}>
+                <Button
+                  data-action-id="blogs.detail.delete"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => onDeleteOpenChange(true)}
+                >
                   <Trash2 className="mr-2 h-4 w-4" />
                   {t('features.blogs.delete')}
                 </Button>
@@ -400,12 +413,18 @@ export function BlogDetailView({
               <div className="text-muted-foreground py-8 text-center">
                 <p>{t('features.blogs.detail.noContentAvailable')}</p>
                 {canEdit ? (
-                  <Link to={editorUrl}>
-                    <Button variant="outline" className="mt-4">
+                  <Button
+                    data-action-scope="presentation"
+                    asChild
+                    variant="outline"
+                    className="mt-4"
+                    data-action-id="blogs.detail.start-writing.wrapper"
+                  >
+                    <Link data-action-id="blogs.detail.start-writing" to={editorUrl}>
                       <Edit className="mr-2 h-4 w-4" />
                       {t('features.blogs.detail.startWriting')}
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 ) : null}
               </div>
             )}
@@ -431,6 +450,7 @@ export function BlogDetailView({
             <AlertDialogFooter>
               <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
               <AlertDialogAction
+                data-action-id="blogs.detail.confirm-delete"
                 variant="destructive"
                 onClick={async () => {
                   onDeleteOpenChange(false);

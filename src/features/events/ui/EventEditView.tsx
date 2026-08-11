@@ -138,7 +138,11 @@ export function EventEditView({
             {t('features.events.editPage.notFoundDescription')}
           </p>
           <div className="mt-6">
-            <Button onClick={() => navigate({ to: `/calendar` })} variant="default">
+            <Button
+              data-action-id="events.edit.back-to-calendar"
+              onClick={() => navigate({ to: `/calendar` })}
+              variant="default"
+            >
               {t('features.events.backToCalendar')}
             </Button>
           </div>
@@ -203,10 +207,19 @@ export function EventEditView({
             )}
           </CreateReviewCard>
           <div className="mt-6 flex gap-3">
-            <Button variant="outline" onClick={() => setShowReview(false)}>
+            <Button
+              data-action-id="events.edit.review.previous"
+              variant="outline"
+              onClick={() => setShowReview(false)}
+            >
               {t('pages.create.previous')}
             </Button>
-            <Button onClick={confirmCreate} disabled={isSubmitting} className="flex-1">
+            <Button
+              data-action-id="events.edit.review.confirm"
+              onClick={confirmCreate}
+              disabled={isSubmitting}
+              className="flex-1"
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -233,7 +246,12 @@ export function EventEditView({
       headingMode={isCreating ? 'visible' : 'sr-only'}
       size={isCreating ? 'default' : 'wide'}
     >
-      <form ref={formRef} onSubmit={onFormSubmit} className="space-y-6">
+      <form
+        data-action-id="events.edit.save.form-submit"
+        ref={formRef}
+        onSubmit={onFormSubmit}
+        className="space-y-6"
+      >
         <SettingsTabs
           value={activeTab}
           onValueChange={onTabChange}
@@ -538,6 +556,7 @@ export function EventEditView({
                 description={t('features.events.cancel.description')}
               >
                 <Button
+                  data-action-id="events.edit.cancel-event.open"
                   type="button"
                   variant="destructive"
                   onClick={() => setCancelDialogOpen(true)}
@@ -684,6 +703,7 @@ export function EventEditView({
         {/* Action Buttons */}
         <SettingsActionBar className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
+            data-action-id="events.edit.close"
             type="button"
             variant="outline"
             onClick={() => navigate({ to: isCreating ? '/create' : `/event/${eventId}` })}
@@ -692,7 +712,7 @@ export function EventEditView({
             {t('features.events.cancelLabel')}
           </Button>
 
-          <Button type="submit" disabled={isSubmitting}>
+          <Button data-action-id="events.edit.save" type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

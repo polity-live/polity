@@ -92,6 +92,25 @@ function toEditorState(row: ThemeRow): EditorState | null {
   };
 }
 
+function isSuccessfulThemeParse(
+  parsedTheme: ReturnType<typeof appearanceThemeDefinitionSchema.safeParse> | null
+) {
+  return Boolean(parsedTheme?.success);
+}
+
+function canPublishParsedTheme(
+  parsedTheme: ReturnType<typeof appearanceThemeDefinitionSchema.safeParse> | null,
+  issues: readonly unknown[]
+) {
+  return isSuccessfulThemeParse(parsedTheme) && issues.length === 0;
+}
+
+export const groupThemeSettingsInternals = {
+  toEditorState,
+  isSuccessfulThemeParse,
+  canPublishParsedTheme,
+};
+
 function ThemePreview({ state, mode }: { state: EditorState; mode: 'light' | 'dark' }) {
   const { t } = useTranslation();
   const palette = state[mode];
@@ -281,18 +300,20 @@ export function GroupThemeSettings({ groupId }: { groupId: string }) {
   };
 
   const saveDraft = () => {
-    if (!editor || !parsedTheme?.success) return null;
+    if (!editor || !isSuccessfulThemeParse(parsedTheme)) return null;
+    const currentEditor = editor;
+    const parsed = parsedTheme as Extract<NonNullable<typeof parsedTheme>, { success: true }>;
     const mutation = zero.mutate(
       mutators.appearanceThemes.updateDraft({
-        id: editor.themeId,
-        revision_id: editor.draftId,
-        theme_id: editor.themeId,
-        version: editor.nextVersion,
-        name: editor.name,
-        description: editor.description || null,
-        light_palette: parsedTheme.data.light,
-        dark_palette: parsedTheme.data.dark,
-        fonts: parsedTheme.data.fonts,
+        id: currentEditor.themeId,
+        revision_id: currentEditor.draftId,
+        theme_id: currentEditor.themeId,
+        version: currentEditor.nextVersion,
+        name: currentEditor.name,
+        description: currentEditor.description || null,
+        light_palette: parsed.data.light,
+        dark_palette: parsed.data.dark,
+        fonts: parsed.data.fonts,
       })
     );
     setSaved(true);
@@ -302,13 +323,14 @@ export function GroupThemeSettings({ groupId }: { groupId: string }) {
   };
 
   const publish = () => {
-    if (!editor || !parsedTheme?.success || issues.length > 0) return;
+    if (!editor || !canPublishParsedTheme(parsedTheme, issues)) return;
+    const currentEditor = editor;
     const draftMutation = saveDraft();
     if (!draftMutation) return;
     const mutation = zero.mutate(
       mutators.appearanceThemes.publish({
-        theme_id: editor.themeId,
-        revision_id: editor.draftId,
+        theme_id: currentEditor.themeId,
+        revision_id: currentEditor.draftId,
       })
     );
     onServerError(mutation, message => console.error('Theme publication failed:', message));
@@ -329,7 +351,12 @@ export function GroupThemeSettings({ groupId }: { groupId: string }) {
               {t('pages.group.themes.editorDescription')}
             </p>
           </div>
-          <Button type="button" variant="outline" onClick={() => setEditor(null)}>
+          <Button
+            data-action-id="groups.themes.editor.back"
+            type="button"
+            variant="outline"
+            onClick={() => setEditor(null)}
+          >
             {t('pages.group.themes.back')}
           </Button>
         </div>
@@ -365,6 +392,7 @@ export function GroupThemeSettings({ groupId }: { groupId: string }) {
             <div key={role} className="space-y-1.5">
               <Label htmlFor={`theme-font-${role}`}>{t(`pages.group.themes.fonts.${role}`)}</Label>
               <select
+                data-action-id="groups.themes.font.select"
                 id={`theme-font-${role}`}
                 value={editor.fonts[role]}
                 onChange={event =>
@@ -411,11 +439,18 @@ export function GroupThemeSettings({ groupId }: { groupId: string }) {
         )}
 
         <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="outline" onClick={saveDraft} disabled={hasInvalidValues}>
+          <Button
+            data-action-id="groups.themes.draft.save"
+            type="button"
+            variant="outline"
+            onClick={saveDraft}
+            disabled={hasInvalidValues}
+          >
             {saved && <CheckCircle2 />}
             {saved ? t('pages.group.themes.saved') : t('pages.group.themes.saveDraft')}
           </Button>
           <Button
+            data-action-id="groups.themes.draft.publish"
             type="button"
             onClick={publish}
             disabled={hasInvalidValues || issues.length > 0 || !editor.name.trim()}
@@ -454,6 +489,7 @@ export function GroupThemeSettings({ groupId }: { groupId: string }) {
                 </div>
                 <div className="flex gap-1">
                   <Button
+                    data-action-id="groups.themes.existing.edit"
                     type="button"
                     size="sm"
                     variant="outline"
@@ -464,6 +500,7 @@ export function GroupThemeSettings({ groupId }: { groupId: string }) {
                     {t('pages.group.themes.edit')}
                   </Button>
                   <Button
+                    data-action-id="groups.themes.existing.delete"
                     type="button"
                     size="icon"
                     variant="ghost"
@@ -492,6 +529,7 @@ export function GroupThemeSettings({ groupId }: { groupId: string }) {
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {BUILTIN_THEMES.map(theme => (
             <Button
+              data-action-id="groups.themes.preset.create"
               key={theme.id}
               type="button"
               variant="outline"

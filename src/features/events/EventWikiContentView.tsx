@@ -176,7 +176,9 @@ export function EventWikiContentView({
     });
   const participantRoles = dedupeWikiParticipationRoles([
     ...eventRoles,
-    ...participantDirectoryItems.flatMap(item => item.roles ?? []),
+    ...participantDirectoryItems
+      .flatMap(item => item.roles)
+      .filter((role): role is WikiParticipationRole => Boolean(role)),
   ]);
   const delegateRatioInfo = getDelegateMembersPerSeatInfo(event);
 
@@ -320,6 +322,7 @@ export function EventWikiContentView({
         {user ? (
           <>
             <SubscribeButton
+              data-action-id="events.wiki.subscribe"
               entityType="event"
               entityId={eventId}
               isSubscribed={isSubscribed}
@@ -328,6 +331,7 @@ export function EventWikiContentView({
               compactOnMobile
             />
             <MembershipButton
+              data-action-id="events.wiki.participation"
               actionType="participate"
               status={participation.status as MembershipStatus | null}
               isMember={participation.isParticipant}
@@ -343,6 +347,7 @@ export function EventWikiContentView({
             />
             {elections.length > 0 ? (
               <Button
+                data-action-id="events.wiki.candidacy.open"
                 variant="outline"
                 onClick={() => setElectionsDialogOpen(true)}
                 className={compactActionButtonClassName}
@@ -358,6 +363,7 @@ export function EventWikiContentView({
           </>
         ) : null}
         <ShareButton
+          data-action-id="events.wiki.share"
           url={`/event/${eventId}`}
           title={event.title ?? ''}
           description={eventDescription ?? ''}
@@ -510,49 +516,56 @@ export function EventWikiContentView({
               const existingCandidacy = getUserCandidacy(election);
 
               return (
-                <Card
+                <button
+                  data-action-id="events.wiki.candidacy.select-election"
+                  type="button"
                   key={election.id}
-                  className={`cursor-pointer overflow-hidden ${ELECTION_CARD_SURFACE} ${existingCandidacy ? 'opacity-60' : ''}`}
-                  onClick={() => !existingCandidacy && handleElectionClick(election)}
+                  className="w-full rounded-lg text-left"
+                  disabled={Boolean(existingCandidacy)}
+                  onClick={() => handleElectionClick(election)}
                 >
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{election.title}</span>
-                      {existingCandidacy && (
-                        <BadgeControl variant="secondary" size="xs">
-                          {translateText('generated.inline.0435_bereits_kandidat_ef4a51da')}
-                        </BadgeControl>
+                  <Card
+                    className={`overflow-hidden ${ELECTION_CARD_SURFACE} ${existingCandidacy ? 'opacity-60' : ''}`}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>{election.title}</span>
+                        {existingCandidacy && (
+                          <BadgeControl variant="secondary" size="xs">
+                            {translateText('generated.inline.0435_bereits_kandidat_ef4a51da')}
+                          </BadgeControl>
+                        )}
+                      </CardTitle>
+                      {election.description && (
+                        <CardDescription>{election.description}</CardDescription>
                       )}
-                    </CardTitle>
-                    {election.description && (
-                      <CardDescription>{election.description}</CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    {election.role && (
-                      <div className="bg-background/50 rounded-md border p-3">
-                        <div className="text-sm font-medium">{election.role.title}</div>
-                        {election.role.description && (
-                          <div className="text-muted-foreground mt-1 text-xs">
-                            {election.role.description}
-                          </div>
+                    </CardHeader>
+                    <CardContent>
+                      {election.role && (
+                        <div className="bg-background/50 rounded-md border p-3">
+                          <div className="text-sm font-medium">{election.role.title}</div>
+                          {election.role.description && (
+                            <div className="text-muted-foreground mt-1 text-xs">
+                              {election.role.description}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div className="text-muted-foreground mt-3 flex items-center justify-between text-sm">
+                        <span>
+                          {translateText('features.events.wiki.candidatesCount', {
+                            count: election.candidates?.length ?? 0,
+                          })}
+                        </span>
+                        {election.majority_type && (
+                          <BadgeControl variant="outline" size="xs">
+                            {election.majority_type}
+                          </BadgeControl>
                         )}
                       </div>
-                    )}
-                    <div className="text-muted-foreground mt-3 flex items-center justify-between text-sm">
-                      <span>
-                        {translateText('features.events.wiki.candidatesCount', {
-                          count: election.candidates?.length ?? 0,
-                        })}
-                      </span>
-                      {election.majority_type && (
-                        <BadgeControl variant="outline" size="xs">
-                          {election.majority_type}
-                        </BadgeControl>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </button>
               );
             })}
           </div>
@@ -560,6 +573,7 @@ export function EventWikiContentView({
       </Dialog>
 
       <CandidacyPasswordDialog
+        data-action-id="events.wiki.candidacy.confirm"
         open={confirmDialogOpen}
         onOpenChange={setConfirmDialogOpen}
         mode="become"

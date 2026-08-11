@@ -50,7 +50,7 @@ export function LinkPreviewCardView({
 }: LinkPreviewCardViewProps) {
   return (
     <Card asChild interactive="accent" className={cn(accentClassName, className)}>
-      <SmartLink href={href} target={target} rel={rel}>
+      <SmartLink href={href} target={target} rel={rel} data-action-id="messages.link-preview.open">
         <CardContent className="flex items-center gap-3 p-3">
           <div className={cn('flex-shrink-0', iconContainerClassName)}>{icon}</div>
           {avatar ? (

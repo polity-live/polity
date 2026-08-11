@@ -69,6 +69,7 @@ export function VirtualSearchGridView({
       {showNewResults ? (
         <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center">
           <Button
+            data-action-id="search.virtual-grid.jump-to-top"
             presentation="floatingShadow"
             className="pointer-events-auto"
             size="sm"

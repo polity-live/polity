@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   currentUserMembershipsWithGroups: [] as unknown[],
   userEventParticipations: [] as unknown[],
   openNavigationAmendments: [] as unknown[],
+  authUser: { id: 'user-1', email: 'ada@example.com' } as any,
 }));
 
 vi.mock('@tanstack/react-router', () => ({
@@ -25,7 +26,7 @@ vi.mock('@/features/shared/hooks/use-translation.ts', () => ({
 
 vi.mock('@/providers/auth-provider.tsx', () => ({
   useAuth: () => ({
-    user: { id: 'user-1', email: 'ada@example.com' },
+    user: mocks.authUser,
     signOut: mocks.signOut,
   }),
 }));
@@ -60,6 +61,7 @@ beforeEach(() => {
   mocks.currentUserMembershipsWithGroups = [];
   mocks.userEventParticipations = [];
   mocks.openNavigationAmendments = [];
+  mocks.authUser = { id: 'user-1', email: 'ada@example.com' };
 });
 
 describe('useUserMenuController', () => {
@@ -172,6 +174,64 @@ describe('useUserMenuController', () => {
     const { result } = renderHook(() => useUserMenuController({ user: null }));
 
     expect(result.current?.showAmendmentSearch).toBe(false);
+  });
+
+  it('filters groups and covers absent auth and profile fallbacks', () => {
+    mocks.currentUserMembershipsWithGroups = [
+      {
+        group: { id: 'alpha', name: 'Alpha Group', image_url: null },
+        role: { id: 'role-alpha' },
+        status: 'active',
+      },
+      {
+        group: { id: 'beta', name: 'Beta Group', image_url: null },
+        role: { id: 'role-beta' },
+        status: 'active',
+      },
+    ];
+    const view = renderHook(({ user }) => useUserMenuController({ user }), {
+      initialProps: { user: { first_name: null, last_name: null, avatar: null } as any },
+    });
+    act(() => view.result.current?.onGroupSearchChange('beta'));
+    expect(view.result.current?.groups.map(group => group.id)).toEqual(['beta']);
+
+    mocks.authUser = { id: 'user-1', email: null };
+    view.rerender({ user: { first_name: null, last_name: null, avatar: null } });
+    expect(view.result.current?.displayName).toBe('User');
+    expect(view.result.current?.displayEmail).toBe('');
+    expect(view.result.current?.userInitials).toBe('U');
+    mocks.authUser = null;
+    view.rerender({ user: null });
+    expect(view.result.current).toBeNull();
+  });
+
+  it('clears searches, focuses their inputs, and handles logout success and failure', async () => {
+    const view = renderHook(() => useUserMenuController({ user: null }));
+    const groupFocus = vi.fn();
+    const eventFocus = vi.fn();
+    const amendmentFocus = vi.fn();
+    view.result.current!.groupSearchInputRef.current = { focus: groupFocus } as any;
+    view.result.current!.eventSearchInputRef.current = { focus: eventFocus } as any;
+    view.result.current!.amendmentSearchInputRef.current = { focus: amendmentFocus } as any;
+    act(() => {
+      view.result.current!.onGroupSearchChange('g');
+      view.result.current!.onEventSearchChange('e');
+      view.result.current!.onAmendmentSearchChange('a');
+      view.result.current!.onClearGroupSearch();
+      view.result.current!.onClearEventSearch();
+      view.result.current!.onClearAmendmentSearch();
+    });
+    expect(groupFocus).toHaveBeenCalled();
+    expect(eventFocus).toHaveBeenCalled();
+    expect(amendmentFocus).toHaveBeenCalled();
+    await act(async () => view.result.current!.onLogout());
+    expect(mocks.navigate).toHaveBeenCalled();
+    expect(mocks.signOut).toHaveBeenCalled();
+
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    mocks.navigate.mockRejectedValueOnce(new Error('navigation failed'));
+    await act(async () => view.result.current!.onLogout());
+    expect(error).toHaveBeenCalled();
   });
 });
 

@@ -1,0 +1,284 @@
+name: E2E Stability Acceptance
+
+on:
+  schedule:
+    - cron: "23 3 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24.x"
+  NPM_VERSION: "11.18.0"
+  VITE_APP_URL: http://localhost:3000
+  VITE_ZERO_CACHE_URL: http://127.0.0.1:4848
+  ZERO_UPSTREAM_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+  E2E_APP_COMMAND: npm run start:e2e
+  E2E_REUSE_SERVER: "0"
+
+jobs:
+  critical-repeat:
+    name: Critical repetition shard ${{ matrix.shard }}/4
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm install --global npm@${NPM_VERSION}
+      - run: npm ci
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.110.0
+      - run: npx playwright install --with-deps chromium
+      - name: Build and provision the isolated shard stack
+        run: |
+          supabase start
+          supabase db reset --local --no-seed
+          eval "$(supabase status -o env)"
+          {
+            echo "VITE_SUPABASE_URL=$API_URL"
+            echo "VITE_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "E2E_DATABASE_URL=$DB_URL"
+          } >> "$GITHUB_ENV"
+          export VITE_SUPABASE_URL="$API_URL"
+          export VITE_SUPABASE_ANON_KEY="$ANON_KEY"
+          export SUPABASE_URL="$API_URL"
+          export SUPABASE_ANON_KEY="$ANON_KEY"
+          export SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"
+          export E2E_DATABASE_URL="$DB_URL"
+          npm run build:e2e
+      - name: Run five independent critical repetitions without retries
+        env:
+          CI: "1"
+          ACCEPTANCE_SHARD: ${{ matrix.shard }}
+          EVIDENCE_FILE: acceptance-evidence/critical-repeat-${{ matrix.shard }}.json
+        run: |
+          set -u
+          first_iteration=$(( (ACCEPTANCE_SHARD - 1) * 5 + 1 ))
+          last_iteration=$(( first_iteration + 4 ))
+          stack_run_id="critical-stack-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${ACCEPTANCE_SHARD}"
+
+          for iteration in $(seq "$first_iteration" "$last_iteration"); do
+            iteration_run_id="critical-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${iteration}"
+            started_at_ms="$(node -e 'process.stdout.write(String(Date.now()))')"
+            set +e
+            E2E_RUN_ID="$iteration_run_id" \
+              E2E_SHARD="critical-${iteration}" \
+              PLAYWRIGHT_OUTPUT_DIR="test-results/critical-${iteration}" \
+              PLAYWRIGHT_REPORT_DIR="playwright-report/critical-${iteration}" \
+              npx playwright test --project=chromium-desktop --grep '@pr' --workers=1 --retries=0
+            exit_code=$?
+            set -e
+            completed_at_ms="$(node -e 'process.stdout.write(String(Date.now()))')"
+            status=passed
+            if (( exit_code != 0 )); then status=failed; fi
+
+            node tools/testing/e2e-acceptance-evidence.mjs record \
+              --file "$EVIDENCE_FILE" \
+              --suite critical-repeat \
+              --iteration "$iteration" \
+              --run-id "$iteration_run_id" \
+              --stack-run-id "$stack_run_id" \
+              --commit-sha "$GITHUB_SHA" \
+              --status "$status" \
+              --started-at-ms "$started_at_ms" \
+              --completed-at-ms "$completed_at_ms" \
+              --fresh-stack false \
+              --repository "$GITHUB_REPOSITORY" \
+              --workflow-run-id "$GITHUB_RUN_ID" \
+              --workflow-run-attempt "$GITHUB_RUN_ATTEMPT"
+
+            if (( exit_code != 0 )); then exit "$exit_code"; fi
+          done
+      - name: Upload critical repetition evidence and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: critical-repeat-shard-${{ matrix.shard }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 90
+          path: |
+            acceptance-evidence/
+            playwright-report/
+            test-results/
+      - name: Stop critical shard stack
+        if: always()
+        run: supabase stop --no-backup || true
+
+  verify-critical-repeat:
+    name: Verify exactly 20 critical repetitions
+    if: always()
+    needs: critical-repeat
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: critical-repeat-shard-*-${{ github.run_attempt }}
+          path: downloaded-evidence
+          merge-multiple: true
+      - name: Fail closed unless all 20 independent repetitions passed
+        run: |
+          node tools/testing/e2e-acceptance-evidence.mjs verify \
+            --input downloaded-evidence/acceptance-evidence \
+            --output acceptance-proof/critical-repeat.json \
+            --suite critical-repeat \
+            --commit-sha "$GITHUB_SHA"
+      - name: Persist validated 20-run proof
+        uses: actions/upload-artifact@v6
+        with:
+          name: critical-repeat-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 90
+          path: acceptance-proof/critical-repeat.json
+
+  cold-stack:
+    name: Cold-stack shard ${{ matrix.shard }}/5
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        shard: [1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm install --global npm@${NPM_VERSION}
+      - run: npm ci
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.110.0
+      - run: npx playwright install --with-deps chromium
+      - name: Build once against a disposable local stack
+        run: |
+          supabase start
+          supabase db reset --local --no-seed
+          eval "$(supabase status -o env)"
+          export VITE_SUPABASE_URL="$API_URL"
+          export VITE_SUPABASE_ANON_KEY="$ANON_KEY"
+          export SUPABASE_URL="$API_URL"
+          export SUPABASE_ANON_KEY="$ANON_KEY"
+          export SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"
+          export E2E_DATABASE_URL="$DB_URL"
+          npm run build:e2e
+          supabase stop --no-backup
+      - name: Provision and test six fully fresh stacks
+        env:
+          CI: "1"
+          ACCEPTANCE_SHARD: ${{ matrix.shard }}
+          EVIDENCE_FILE: acceptance-evidence/cold-stack-${{ matrix.shard }}.json
+        run: |
+          set -u
+          first_iteration=$(( (ACCEPTANCE_SHARD - 1) * 6 + 1 ))
+          last_iteration=$(( first_iteration + 5 ))
+
+          run_cold_iteration() {
+            local iteration="$1"
+            local iteration_run_id="$2"
+            supabase start || return
+            supabase db reset --local --no-seed || return
+            eval "$(supabase status -o env)" || return
+            node tools/zero/clean-dev-cache.mjs || return
+            E2E_RUN_ID="$iteration_run_id" \
+              E2E_SHARD="cold-${iteration}" \
+              PLAYWRIGHT_OUTPUT_DIR="test-results/cold-${iteration}" \
+              PLAYWRIGHT_REPORT_DIR="playwright-report/cold-${iteration}" \
+              VITE_SUPABASE_URL="$API_URL" \
+              VITE_SUPABASE_ANON_KEY="$ANON_KEY" \
+              SUPABASE_URL="$API_URL" \
+              SUPABASE_ANON_KEY="$ANON_KEY" \
+              SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+              E2E_DATABASE_URL="$DB_URL" \
+              npx playwright test --project=chromium-desktop --grep '@pr' --workers=1 --retries=0
+          }
+
+          for iteration in $(seq "$first_iteration" "$last_iteration"); do
+            iteration_run_id="cold-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${iteration}"
+            started_at_ms="$(node -e 'process.stdout.write(String(Date.now()))')"
+            set +e
+            run_cold_iteration "$iteration" "$iteration_run_id"
+            exit_code=$?
+            supabase stop --no-backup
+            stop_code=$?
+            set -e
+            if (( exit_code == 0 && stop_code != 0 )); then exit_code=$stop_code; fi
+            completed_at_ms="$(node -e 'process.stdout.write(String(Date.now()))')"
+            status=passed
+            if (( exit_code != 0 )); then status=failed; fi
+
+            node tools/testing/e2e-acceptance-evidence.mjs record \
+              --file "$EVIDENCE_FILE" \
+              --suite cold-stack \
+              --iteration "$iteration" \
+              --run-id "$iteration_run_id" \
+              --stack-run-id "$iteration_run_id" \
+              --commit-sha "$GITHUB_SHA" \
+              --status "$status" \
+              --started-at-ms "$started_at_ms" \
+              --completed-at-ms "$completed_at_ms" \
+              --fresh-stack true \
+              --repository "$GITHUB_REPOSITORY" \
+              --workflow-run-id "$GITHUB_RUN_ID" \
+              --workflow-run-attempt "$GITHUB_RUN_ATTEMPT"
+
+            if (( exit_code != 0 )); then exit "$exit_code"; fi
+          done
+      - name: Upload cold-stack evidence and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cold-stack-shard-${{ matrix.shard }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 90
+          path: |
+            acceptance-evidence/
+            playwright-report/
+            test-results/
+      - name: Stop any remaining cold stack
+        if: always()
+        run: supabase stop --no-backup || true
+
+  verify-cold-stack:
+    name: Verify exactly 30 independent cold stacks
+    if: always()
+    needs: cold-stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: cold-stack-shard-*-${{ github.run_attempt }}
+          path: downloaded-evidence
+          merge-multiple: true
+      - name: Fail closed unless all 30 fresh stacks passed
+        run: |
+          node tools/testing/e2e-acceptance-evidence.mjs verify \
+            --input downloaded-evidence/acceptance-evidence \
+            --output acceptance-proof/cold-stack.json \
+            --suite cold-stack \
+            --commit-sha "$GITHUB_SHA"
+      - name: Persist validated 30-stack proof
+        uses: actions/upload-artifact@v6
+        with:
+          name: cold-stack-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 90
+          path: acceptance-proof/cold-stack.json

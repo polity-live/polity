@@ -36,11 +36,11 @@ interface ResultSnapshotEntry {
   tone: DecisionLiveDeltaTone;
 }
 
-function formatInt(value: number | null | undefined) {
+export function formatInt(value: number | null | undefined) {
   return Math.round(value ?? 0).toString();
 }
 
-function normalizePercent(value: number | null | undefined) {
+export function normalizePercent(value: number | null | undefined) {
   if (!Number.isFinite(value ?? 0)) {
     return 0;
   }
@@ -48,11 +48,14 @@ function normalizePercent(value: number | null | undefined) {
   return Math.max(0, Math.min(100, value ?? 0));
 }
 
-function formatCountPercent(count: number | null | undefined, percent: number | null | undefined) {
+export function formatCountPercent(
+  count: number | null | undefined,
+  percent: number | null | undefined
+) {
   return `${Math.round(count ?? 0)} · ${normalizePercent(percent).toFixed(0)}%`;
 }
 
-function getInitials(name: string) {
+export function getInitials(name: string) {
   return (
     name
       .split(/\s+/)
@@ -63,19 +66,21 @@ function getInitials(name: string) {
   );
 }
 
-function normalizeContextText(value?: string | null) {
+export function normalizeContextText(value?: string | null) {
   return value?.trim().replace(/\s+/g, ' ').toLowerCase() ?? '';
 }
 
-function hasHref(href?: string | null): href is string {
+export function hasHref(href?: string | null): href is string {
   return Boolean(href && href !== '#');
 }
 
 function DecisionLink({
+  'data-action-id': actionId,
   href,
   children,
   className,
 }: {
+  'data-action-id'?: string;
   href?: string | null;
   children: ReactNode;
   className?: string;
@@ -85,19 +90,23 @@ function DecisionLink({
   }
 
   return (
-    <SmartLink href={href} className={cn('hover:text-primary hover:underline', className)}>
+    <SmartLink
+      href={href}
+      data-action-id={actionId}
+      className={cn('hover:text-primary hover:underline', className)}
+    >
       {children}
     </SmartLink>
   );
 }
 
-function getVoteData(decision: DecisionItem) {
+export function getVoteData(decision: DecisionItem) {
   if (decision.type !== 'vote') return null;
   if (decision.isIndicationPhase && decision.indicationVotes) return decision.indicationVotes;
   return decision.votes ?? null;
 }
 
-function getDecisionTotal(decision: DecisionItem) {
+export function getDecisionTotal(decision: DecisionItem) {
   if (typeof decision.votedCount === 'number') return Math.round(decision.votedCount);
 
   const votes = getVoteData(decision);
@@ -117,7 +126,7 @@ function getDecisionTotal(decision: DecisionItem) {
   return 0;
 }
 
-function getResultSnapshot(decision: DecisionItem): ResultSnapshotEntry[] {
+export function getResultSnapshot(decision: DecisionItem): ResultSnapshotEntry[] {
   if (decision.type === 'election') {
     return (decision.candidates ?? []).map(candidate => ({
       key: `candidate:${candidate.id}`,
@@ -230,7 +239,7 @@ function useDecisionLiveDeltas(decisions: DecisionItem[]) {
   return deltas;
 }
 
-function getDelta(deltas: DecisionLiveDelta[] | undefined, key: string) {
+export function getDelta(deltas: DecisionLiveDelta[] | undefined, key: string) {
   return deltas?.find(delta => delta.key === key);
 }
 
@@ -271,12 +280,20 @@ function DecisionContextLinks({ decision }: { decision: DecisionItem }) {
     <div className="text-muted-foreground mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
       {body ? <span className="truncate">{body}</span> : null}
       {decision.entity ? (
-        <DecisionLink href={decision.entity.href} className="truncate">
+        <DecisionLink
+          href={decision.entity.href}
+          data-action-id="decision-terminal.widget.entity.open"
+          className="truncate"
+        >
           {decision.entity.name}
         </DecisionLink>
       ) : null}
       {shouldShowAgendaItem && agendaItem ? (
-        <DecisionLink href={agendaItem.href} className="truncate">
+        <DecisionLink
+          href={agendaItem.href}
+          data-action-id="decision-terminal.widget.agenda-item.open"
+          className="truncate"
+        >
           {agendaItem.name}
         </DecisionLink>
       ) : null}
@@ -312,7 +329,7 @@ function DecisionMetricsLine({ decision }: { decision: DecisionItem }) {
   return <div className="text-muted-foreground mt-2 text-xs">{parts.join(' · ')}</div>;
 }
 
-function getVoteResultBarTone(
+export function getVoteResultBarTone(
   decision: DecisionItem,
   row: ResultSnapshotEntry,
   rows: ResultSnapshotEntry[]
@@ -329,7 +346,7 @@ function getVoteResultBarTone(
   return decision.status === 'passed' ? 'success' : 'danger';
 }
 
-function getResultBarClassName(tone: DecisionLiveDeltaTone) {
+export function getResultBarClassName(tone: DecisionLiveDeltaTone) {
   switch (tone) {
     case 'success':
       return 'bg-[var(--badge-success-fg)]';
@@ -402,7 +419,7 @@ function VoteChoiceRows({
   );
 }
 
-function getElectionCandidateRows(decision: DecisionItem) {
+export function getElectionCandidateRows(decision: DecisionItem) {
   if (decision.type !== 'election' || !decision.candidates?.length) {
     return [];
   }
@@ -602,7 +619,11 @@ function DecisionPanelRow({
               <Icon className="h-4 w-4" />
             </span>
             <div className="min-w-0">
-              <DecisionLink href={decision.href} className="block truncate text-sm font-semibold">
+              <DecisionLink
+                href={decision.href}
+                data-action-id="decision-terminal.widget.decision.open"
+                className="block truncate text-sm font-semibold"
+              >
                 {decision.title}
               </DecisionLink>
               <DecisionContextLinks decision={decision} />

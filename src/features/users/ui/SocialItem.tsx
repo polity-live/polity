@@ -11,7 +11,13 @@ export interface SocialItemProps {
 export const SocialItem: React.FC<SocialItemProps> = ({ href, label, icon, className }) => (
   <Tooltip>
     <TooltipTrigger asChild>
-      <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+        data-action-id="users.social.external.open"
+      >
         {icon}
         <span className="sr-only">{label}</span>
       </a>

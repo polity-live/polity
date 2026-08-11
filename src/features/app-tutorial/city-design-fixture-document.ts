@@ -116,9 +116,8 @@ function doesSegmentIntersectBbox(
 function isPointInsidePolygon(point: CityDesignGeoPoint, polygon: CityDesignGeoPoint[]) {
   let inside = false;
   for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index++) {
-    const currentPoint = polygon[index];
-    const previousPoint = polygon[previous];
-    if (!currentPoint || !previousPoint) continue;
+    const currentPoint = polygon[index] as CityDesignGeoPoint;
+    const previousPoint = polygon[previous] as CityDesignGeoPoint;
     const crossesLatitude = currentPoint.lat > point.lat !== previousPoint.lat > point.lat;
     if (
       crossesLatitude &&
@@ -159,8 +158,8 @@ function doesFeatureIntersectBbox(
   );
 }
 
-function normalizeGermanText(value: string | undefined) {
-  return (value ?? '')
+function normalizeGermanText(value: string) {
+  return value
     .trim()
     .toLocaleLowerCase('de')
     .replaceAll('ß', 'ss')
@@ -237,7 +236,7 @@ export function validateAppTutorialCityDesignFixtureDocument(
       feature =>
         feature.kind === 'road' &&
         feature.source === 'osm' &&
-        normalizeGermanText(feature.tags?.name ?? feature.label) === 'euckenstrasse'
+        normalizeGermanText(feature.tags?.name ?? feature.label ?? '') === 'euckenstrasse'
     )
   ) {
     throw new Error('The tutorial OSM fixture does not contain Euckenstraße.');

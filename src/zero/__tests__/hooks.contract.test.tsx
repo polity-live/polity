@@ -34,6 +34,28 @@ const hookMocks = vi.hoisted(() => {
       ),
       searchableUsers: vi.fn((args: unknown) => token('queries.users.searchableUsers', args)),
     },
+    paymentQueries: {
+      byUser: vi.fn((args: unknown) => token('queries.payments.byUser', args)),
+      subscriptionStatus: vi.fn((args: unknown) =>
+        token('queries.payments.subscriptionStatus', args)
+      ),
+      subscriptionStatusByUser: vi.fn((args: unknown) =>
+        token('queries.payments.subscriptionStatusByUser', args)
+      ),
+    },
+    pqlQueries: {
+      byScope: vi.fn((args: unknown) => token('queries.pql.byScope', args)),
+    },
+    votingPasswordQueries: {
+      userHasVotingPassword: vi.fn((args: unknown) =>
+        token('queries.votingPassword.userHasVotingPassword', args)
+      ),
+    },
+    pqlMutators: {
+      create: vi.fn((args: unknown) => token('mutators.pql.create', args)),
+      update: vi.fn((args: unknown) => token('mutators.pql.update', args)),
+      delete: vi.fn((args: unknown) => token('mutators.pql.delete', args)),
+    },
   };
 });
 
@@ -45,12 +67,16 @@ vi.mock('@rocicorp/zero/react', () => ({
 vi.mock('../queries', () => ({
   queries: {
     users: hookMocks.userQueries,
+    payments: hookMocks.paymentQueries,
+    pql: hookMocks.pqlQueries,
+    votingPassword: hookMocks.votingPasswordQueries,
   },
 }));
 
 vi.mock('../mutators', () => ({
   mutators: {
     users: hookMocks.userMutators,
+    pql: hookMocks.pqlMutators,
   },
 }));
 
@@ -71,7 +97,12 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 }));
 
 import { useUserActions } from '../users/useUserActions';
+import { useUserBasicState } from '../users/useUserBasicState';
 import { useUserState } from '../users/useUserState';
+import { usePaymentState, useSubscriptionStatusByUser } from '../payments/usePaymentState';
+import { usePqlFilterActions } from '../pql/usePqlFilterActions';
+import { usePqlFilterState } from '../pql/usePqlFilterState';
+import { useVotingPasswordState } from '../voting-password/useVotingPasswordState';
 
 const complete = { type: 'complete' };
 
@@ -114,6 +145,17 @@ beforeEach(() => {
         ],
         complete,
       ];
+    }
+    if (query.key === 'queries.payments.byUser') return [[{ id: 'payment-1' }], complete];
+    if (query.key === 'queries.payments.subscriptionStatus') {
+      return [[{ id: 'subscription-1' }], complete];
+    }
+    if (query.key === 'queries.payments.subscriptionStatusByUser') {
+      return [[{ id: 'subscription-2' }], complete];
+    }
+    if (query.key === 'queries.pql.byScope') return [[{ id: 'filter-1' }], complete];
+    if (query.key === 'queries.votingPassword.userHasVotingPassword') {
+      return [[{ id: 'password-1' }], complete];
     }
 
     return [[], complete];
@@ -192,5 +234,128 @@ describe('Zero React hook contracts', () => {
 
     expect(hookMocks.userMutators.updateProfile).toHaveBeenCalledWith({ last_name: 'Lovelace' });
     expect(hookMocks.waitForClientApply).toHaveBeenCalledWith(mutationResult);
+  });
+
+  it('enables the focused user query only when an id is present', () => {
+    const absent = renderHook(() => useUserBasicState()).result;
+    expect(absent.current).toEqual({ user: undefined, isLoading: false });
+
+    const present = renderHook(() => useUserBasicState('user-2')).result;
+    expect(hookMocks.userQueries.byId).toHaveBeenCalledWith({ id: 'user-2' });
+    expect(present.current).toEqual({ user: [], isLoading: false });
+
+    hookMocks.useQuery.mockReturnValueOnce([[], { type: 'unknown' }]);
+    expect(renderHook(() => useUserBasicState('user-3')).result.current.isLoading).toBe(true);
+  });
+
+  it('combines payment query states and supports focused subscription reads', () => {
+    const paymentState = renderHook(() => usePaymentState()).result.current;
+    expect(paymentState).toEqual({
+      payments: [{ id: 'payment-1' }],
+      subscriptionStatus: [{ id: 'subscription-1' }],
+      isLoading: false,
+    });
+
+    hookMocks.useQuery
+      .mockReturnValueOnce([[], { type: 'unknown' }])
+      .mockReturnValueOnce([[], complete]);
+    expect(renderHook(() => usePaymentState()).result.current.isLoading).toBe(true);
+    hookMocks.useQuery
+      .mockReturnValueOnce([[], complete])
+      .mockReturnValueOnce([[], { type: 'unknown' }]);
+    expect(renderHook(() => usePaymentState()).result.current.isLoading).toBe(true);
+
+    expect(renderHook(() => useSubscriptionStatusByUser()).result.current).toEqual({
+      subscriptionStatus: undefined,
+      isLoading: false,
+    });
+    hookMocks.useQuery.mockReturnValueOnce([[], { type: 'unknown' }]);
+    expect(renderHook(() => useSubscriptionStatusByUser('user-2')).result.current.isLoading).toBe(
+      true
+    );
+    expect(hookMocks.paymentQueries.subscriptionStatusByUser).toHaveBeenCalledWith({
+      userId: 'user-2',
+    });
+  });
+
+  it('derives voting-password state for disabled, present and loading queries', () => {
+    expect(renderHook(() => useVotingPasswordState()).result.current).toEqual({
+      hasVotingPassword: false,
+      isLoading: false,
+    });
+    expect(renderHook(() => useVotingPasswordState({ userId: 'user-1' })).result.current).toEqual({
+      hasVotingPassword: true,
+      isLoading: false,
+    });
+    hookMocks.useQuery.mockReturnValueOnce([undefined, { type: 'unknown' }]);
+    expect(renderHook(() => useVotingPasswordState({ userId: 'user-2' })).result.current).toEqual({
+      hasVotingPassword: false,
+      isLoading: true,
+    });
+  });
+
+  it('normalizes disabled and scoped PQL filter reads', () => {
+    expect(renderHook(() => usePqlFilterState()).result.current).toEqual({
+      filters: [],
+      isLoading: false,
+    });
+    expect(renderHook(() => usePqlFilterState({ storage_key: 'timeline' })).result.current).toEqual(
+      { filters: [{ id: 'filter-1' }], isLoading: false }
+    );
+    expect(hookMocks.pqlQueries.byScope).toHaveBeenCalledWith({
+      storage_key: 'timeline',
+      group_id: null,
+    });
+    hookMocks.useQuery.mockReturnValueOnce([undefined, { type: 'unknown' }]);
+    expect(
+      renderHook(() => usePqlFilterState({ storage_key: 'group', group_id: 'group-1' })).result
+        .current
+    ).toEqual({ filters: [], isLoading: true });
+  });
+
+  it('routes PQL create, update and delete through Zero with error observers', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    hookMocks.onServerError.mockImplementation((_result, callback) => callback('conflict'));
+    const { result } = renderHook(() => usePqlFilterActions());
+
+    act(() => {
+      result.current.createFilter({
+        id: 'filter-1',
+        storage_key: 'timeline',
+        label: 'Mine',
+        query: 'author:me',
+        is_active: true,
+      });
+      result.current.createFilter({
+        id: 'filter-2',
+        storage_key: 'group',
+        group_id: 'group-1',
+        label: 'Group',
+        query: '',
+        is_active: false,
+      });
+      result.current.updateFilter({ id: 'filter-1', label: 'Updated' });
+      result.current.deleteFilter('filter-2');
+    });
+
+    expect(hookMocks.pqlMutators.create).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        id: 'filter-1',
+        group_id: null,
+      })
+    );
+    expect(hookMocks.pqlMutators.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        id: 'filter-2',
+        group_id: 'group-1',
+      })
+    );
+    expect(hookMocks.pqlMutators.update).toHaveBeenCalledWith({ id: 'filter-1', label: 'Updated' });
+    expect(hookMocks.pqlMutators.delete).toHaveBeenCalledWith({ id: 'filter-2' });
+    expect(hookMocks.zeroMutate).toHaveBeenCalledTimes(4);
+    expect(hookMocks.onServerError).toHaveBeenCalledTimes(4);
+    expect(error).toHaveBeenCalledTimes(4);
   });
 });

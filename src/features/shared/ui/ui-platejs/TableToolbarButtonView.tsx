@@ -52,12 +52,22 @@ function TablePicker() {
     });
   };
 
+  const insertTable = () => {
+    tf.insert.table(tablePicker.size, { select: true });
+    editor.tf.focus();
+  };
+
   return (
     <div
       className="m-0 flex! flex-col p-0"
-      onClick={() => {
-        tf.insert.table(tablePicker.size, { select: true });
-        editor.tf.focus();
+      role="button"
+      tabIndex={0}
+      onClick={insertTable}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          insertTable();
+        }
       }}
     >
       <div className="grid size-[130px] grid-cols-8 gap-0.5 p-1">

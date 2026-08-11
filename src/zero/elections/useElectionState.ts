@@ -7,7 +7,7 @@ import {
 } from '@/features/elections/logic/electionMode';
 import { queries } from '../queries';
 
-function normalizeElectionRow<
+export function normalizeElectionRow<
   TElection extends {
     description?: string | null;
     election_mode?: string | null;
@@ -75,7 +75,7 @@ export function useElectionState(
     electionId ? queries.elections.byId({ id: electionId }) : undefined
   );
 
-  const resolvedElectionId = electionId ?? electionById?.id ?? electionsByAgendaItem?.[0]?.id;
+  const resolvedElectionId = electionId ?? electionsByAgendaItem?.[0]?.id;
 
   // ── Candidates for the election ───────────────────────────────────
   const [candidates, candidatesResult] = useQuery(

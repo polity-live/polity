@@ -1,4 +1,5 @@
 const generatedInlineTranslations: Record<string, string> = {
+  '0167_delete_6d432a50': 'Löschen',
   '9001_neuer_auftrag_5f7c1b2a': 'Neuer Auftrag',
   '9002_in_groupname_wartet_ein_neuer_auftrag_tasktitle_63c4f1b8':
     'In {{groupName}} wartet ein neuer Auftrag: {{taskTitle}}',

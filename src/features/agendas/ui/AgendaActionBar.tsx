@@ -170,7 +170,8 @@ export function AgendaActionBar({
       : defaultVoteTooltip;
   const showStartFinalVoteButton =
     isVotable && !isClosed && isIndicationPhase && isCurrentItemActive && Boolean(onStartFinalVote);
-  const showVoteButton = isVotable && isFinalVotePhase && Boolean(onVoteClick);
+  const showVoteButton =
+    isVotable && (isIndicationPhase || isFinalVotePhase) && Boolean(onVoteClick);
   return (
     <AgendaActionBarView
       eventId={eventId}

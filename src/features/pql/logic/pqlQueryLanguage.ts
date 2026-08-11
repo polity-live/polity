@@ -23,7 +23,7 @@ type PqlTokenType =
   | 'paren'
   | 'comma';
 
-interface PqlToken {
+export interface PqlToken {
   type: PqlTokenType;
   value: string;
   start: number;
@@ -40,7 +40,7 @@ type PqlCursorState =
   | 'EXPECT_IN_SEPARATOR'
   | 'EXPECT_LOGICAL_OR_END';
 
-interface PqlCursorContext<TItem, TFieldKey extends string> {
+export interface PqlCursorContext<TItem, TFieldKey extends string> {
   state: PqlCursorState;
   partial: string;
   partialStart: number;
@@ -71,7 +71,7 @@ export interface PqlParseResult<TFieldKey extends string> {
 
 const COMPARISON_OPERATORS = ['==', '!=', '<=', '>=', '~=', '<', '>'] as const;
 
-function getOperatorLabel(operator: PqlOperator): string {
+export function getOperatorLabel(operator: PqlOperator): string {
   switch (operator) {
     case 'eq':
       return '==';
@@ -96,11 +96,11 @@ function getOperatorLabel(operator: PqlOperator): string {
   }
 }
 
-function formatSuggestionValue(value: string): string {
+export function formatSuggestionValue(value: string): string {
   return /^[A-Za-z0-9_.:-]+$/.test(value) ? value : JSON.stringify(value);
 }
 
-function tokenizePql(input: string): PqlToken[] {
+export function tokenizePql(input: string): PqlToken[] {
   const tokens: PqlToken[] = [];
   let index = 0;
 
@@ -179,10 +179,6 @@ function tokenizePql(input: string): PqlToken[] {
       endIndex += 1;
     }
 
-    if (endIndex === index) {
-      endIndex += 1;
-    }
-
     const tokenValue = input.slice(index, endIndex);
     const upperValue = tokenValue.toUpperCase();
 
@@ -210,13 +206,13 @@ function tokenizePql(input: string): PqlToken[] {
   return tokens;
 }
 
-function decodeQuotedString(value: string): string {
+export function decodeQuotedString(value: string): string {
   const quote = value[0];
   const unwrappedValue = value.endsWith(quote) ? value.slice(1, -1) : value.slice(1);
   return unwrappedValue.replace(/\\([\\"'])/g, '$1');
 }
 
-function comparisonTokenToOperator(tokenValue: string): PqlOperator | null {
+export function comparisonTokenToOperator(tokenValue: string): PqlOperator | null {
   switch (tokenValue) {
     case '==':
       return 'eq';
@@ -237,7 +233,7 @@ function comparisonTokenToOperator(tokenValue: string): PqlOperator | null {
   }
 }
 
-function coerceTokenValue<TItem, TFieldKey extends string>(
+export function coerceTokenValue<TItem, TFieldKey extends string>(
   token: PqlToken,
   field: PqlFieldDefinition<TItem, TFieldKey>
 ): PqlScalar | null {
@@ -260,10 +256,18 @@ function coerceTokenValue<TItem, TFieldKey extends string>(
   }
 
   if (field.kind === 'date') {
-    const parsedValue = /^\d{4}-\d{2}-\d{2}$/.test(rawValue)
-      ? toLocalTimestamp(rawValue)
-      : Date.parse(rawValue);
-    if (parsedValue === null) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
+      const [year, month, day] = rawValue.split('-').map(Number);
+      const localTimestamp = toLocalTimestamp(rawValue) as number;
+      const localDate = new Date(localTimestamp);
+      return localDate.getFullYear() === year &&
+        localDate.getMonth() + 1 === month &&
+        localDate.getDate() === day
+        ? localTimestamp
+        : null;
+    }
+
+    const parsedValue = Date.parse(rawValue);
     return Number.isNaN(parsedValue) ? null : parsedValue;
   }
 
@@ -282,7 +286,7 @@ function coerceTokenValue<TItem, TFieldKey extends string>(
   return rawValue;
 }
 
-function buildFieldLookup<TItem, TFieldKey extends string>(
+export function buildFieldLookup<TItem, TFieldKey extends string>(
   fields: readonly PqlFieldDefinition<TItem, TFieldKey>[]
 ): ReadonlyMap<string, PqlFieldDefinition<TItem, TFieldKey>> {
   return new Map(fields.map(field => [field.key.toLowerCase(), field]));
@@ -305,11 +309,9 @@ class PqlParser<TItem, TFieldKey extends string> {
   parse(): PqlParseResult<TFieldKey> {
     const expression = this.parseOrExpression();
 
-    if (this.peek()) {
-      const token = this.peek();
-      if (token) {
-        this.pushIssue('Unexpected token', token.start, token.end);
-      }
+    const unexpectedToken = this.peek();
+    if (unexpectedToken) {
+      this.pushIssue('Unexpected token', unexpectedToken.start, unexpectedToken.end);
     }
 
     return {
@@ -401,21 +403,14 @@ class PqlParser<TItem, TFieldKey extends string> {
 
     if (this.matchType('comparison')) {
       const comparisonToken = this.previous();
-      const operator = comparisonTokenToOperator(comparisonToken?.value ?? '');
-      if (!operator) {
-        this.pushIssue(
-          'Unsupported operator',
-          comparisonToken?.start ?? fieldToken.end,
-          comparisonToken?.end ?? fieldToken.end
-        );
-        return null;
-      }
+      // Comparison tokens are produced exclusively from COMPARISON_OPERATORS.
+      const operator = comparisonTokenToOperator(comparisonToken.value) as PqlOperator;
 
       if (field && !field.operators.includes(operator)) {
         this.pushIssue(
           `${field.label} does not support ${getOperatorLabel(operator)}`,
-          comparisonToken?.start ?? fieldToken.end,
-          comparisonToken?.end ?? fieldToken.end
+          comparisonToken.start,
+          comparisonToken.end
         );
       }
 
@@ -437,8 +432,8 @@ class PqlParser<TItem, TFieldKey extends string> {
       if (field && !field.operators.includes('contains')) {
         this.pushIssue(
           `${field.label} does not support CONTAINS`,
-          operatorToken?.start ?? fieldToken.end,
-          operatorToken?.end ?? fieldToken.end
+          operatorToken.start,
+          operatorToken.end
         );
       }
 
@@ -460,8 +455,8 @@ class PqlParser<TItem, TFieldKey extends string> {
       if (field && !field.operators.includes('in')) {
         this.pushIssue(
           `${field.label} does not support IN`,
-          operatorToken?.start ?? fieldToken.end,
-          operatorToken?.end ?? fieldToken.end
+          operatorToken.start,
+          operatorToken.end
         );
       }
 
@@ -497,8 +492,8 @@ class PqlParser<TItem, TFieldKey extends string> {
       if (field && !field.operators.includes('is_set')) {
         this.pushIssue(
           `${field.label} does not support IS SET`,
-          isToken?.start ?? fieldToken.end,
-          this.previous()?.end ?? fieldToken.end
+          isToken.start,
+          this.previous().end
         );
       }
 
@@ -525,7 +520,8 @@ class PqlParser<TItem, TFieldKey extends string> {
   ): PqlScalar | null {
     const token = this.advance();
     if (!token) {
-      this.pushIssue(message, this.previous()?.end ?? 0, this.previous()?.end ?? 0);
+      const previousEnd = this.previous().end;
+      this.pushIssue(message, previousEnd, previousEnd);
       return null;
     }
 
@@ -635,8 +631,10 @@ class PqlParser<TItem, TFieldKey extends string> {
     return this.tokens[this.tokenIndex] ?? null;
   }
 
-  private previous(): PqlToken | null {
-    return this.tokens[this.tokenIndex - 1] ?? null;
+  private previous(): PqlToken {
+    // Every call follows a successful match/consume, or a missing value after
+    // an already consumed operator.
+    return this.tokens[this.tokenIndex - 1] as PqlToken;
   }
 
   private pushIssue(message: string, start: number, end: number) {
@@ -648,7 +646,7 @@ class PqlParser<TItem, TFieldKey extends string> {
   }
 }
 
-function stripPartialToken(token: PqlToken): string {
+export function stripPartialToken(token: PqlToken): string {
   if (token.type === 'string') {
     return decodeQuotedString(token.value);
   }
@@ -656,7 +654,7 @@ function stripPartialToken(token: PqlToken): string {
   return token.value;
 }
 
-function getCursorContext<TItem, TFieldKey extends string>(
+export function getCursorContext<TItem, TFieldKey extends string>(
   input: string,
   cursor: number,
   fields: readonly PqlFieldDefinition<TItem, TFieldKey>[]
@@ -752,8 +750,6 @@ function getCursorContext<TItem, TFieldKey extends string>(
           lastField = undefined;
         }
         break;
-      default:
-        break;
     }
   }
 
@@ -765,7 +761,7 @@ function getCursorContext<TItem, TFieldKey extends string>(
   };
 }
 
-function filterByPartial<T>(
+export function filterByPartial<T>(
   items: readonly T[],
   getLabel: (item: T) => string,
   partial: string

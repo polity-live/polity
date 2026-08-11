@@ -9,6 +9,7 @@ export function CurrencyPreferenceControl() {
   const setDisplayCurrency = useDisplayCurrencyStore(state => state.setDisplayCurrency);
   return (
     <CurrencySelect
+      data-action-id="users.preferences.currency.select"
       value={displayCurrency}
       onChange={currency => {
         setDisplayCurrency(currency);

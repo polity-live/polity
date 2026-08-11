@@ -690,7 +690,6 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
     const changeRequestVotesWereSkipped =
       effectiveClosingVoteItem?.vote?.status === VOTE_PHASE.final ||
-      effectiveClosingVoteItem?.vote?.status === 'final' ||
       effectiveClosingVoteItem?.vote?.status === 'closed';
 
     return {
@@ -1070,7 +1069,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         agendaTitle: streamAgendaItem?.title ?? null,
         amendmentTitle: streamAgendaItemAmendment?.title ?? null,
         branchLabelsById: streamBranchLabelsById,
-        fallbackTarget: selectedCRTitle ?? null,
+        fallbackTarget: selectedCRTitle as string,
       })
     : null;
   const startVoteTooltip = isCRToolbarActive
@@ -1090,10 +1089,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       : t('features.agendas.crTimeline.castIndicative')
     : undefined;
   const castFinalVoteTooltip = isCRToolbarActive
-    ? (selectedFinalVoteActionLabels?.castFinal ??
-      (isSelectedClosingVote
-        ? t('features.events.agenda.actions.castFinalVote')
-        : t('features.agendas.crTimeline.castFinal')))
+    ? (selectedFinalVoteActionLabels as { castFinal: string }).castFinal
     : undefined;
 
   const indicativeSelections = useMemo(
@@ -1239,22 +1235,19 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         setSequenceVotingLoading(itemId);
         try {
           if (closingJump.shouldInitialize) {
-            if (!streamAgendaItem?.amendment_id || !streamAgendaItem?.id) {
-              throw new Error('Missing amendment agenda item context.');
-            }
-
+            const finalVoteAgendaItem = streamAgendaItem as NonNullable<typeof streamAgendaItem> & {
+              amendment_id: string;
+            };
             await waitForClientApply(
               initializeChangeRequestVoting({
-                amendment_id: streamAgendaItem.amendment_id,
-                agenda_item_id: streamAgendaItem.id,
+                amendment_id: finalVoteAgendaItem.amendment_id,
+                agenda_item_id: finalVoteAgendaItem.id,
                 start_final_vote_if_no_change_requests: false,
               })
             );
           }
 
-          if (closingJump.targetItemId) {
-            setSelectedCRToolbarItemId(closingJump.targetItemId);
-          }
+          setSelectedCRToolbarItemId(closingJump.targetItemId as string);
         } catch (error) {
           console.error('Failed to jump to final vote:', error);
           toast.error(t('features.agendas.crTimeline.jumpToFinalVoteFailed'));
@@ -1284,9 +1277,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
         await crVoting.startFinalPhase(itemId);
       } catch (error) {
-        if (finalStartableSequenceItem?.id) {
-          setSelectedCRToolbarItemId(finalStartableSequenceItem.id);
-        }
+        // Reaching this catch requires the item to have matched finalStartableSequenceItem.
+        setSelectedCRToolbarItemId(
+          (finalStartableSequenceItem as NonNullable<typeof finalStartableSequenceItem>).id
+        );
         toast.error(
           error instanceof Error
             ? error.message
@@ -1322,8 +1316,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
   const handleToolbarStartFinalVote = useCallback(() => {
     if (isCRToolbarActive) {
-      if (!activeCRToolbarItem) return;
-      void handleStartSequenceFinalVote(activeCRToolbarItem.id);
+      void handleStartSequenceFinalVote(
+        (activeCRToolbarItem as NonNullable<typeof activeCRToolbarItem>).id
+      );
       return;
     }
 
@@ -1331,14 +1326,14 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   }, [actionBarHook, activeCRToolbarItem, handleStartSequenceFinalVote, isCRToolbarActive]);
   const handleToolbarCloseVote = useCallback(() => {
     if (isCRToolbarActive) {
-      if (!activeCRToolbarItem) return;
-      if ((activeCRToolbarItem as { _voteStepKind?: string })._voteStepKind) {
-        if (activeCRToolbarItem.vote?.id) {
-          void updateAgendaVote({ id: activeCRToolbarItem.vote.id, status: 'closed' });
+      const toolbarItem = activeCRToolbarItem as NonNullable<typeof activeCRToolbarItem>;
+      if ((toolbarItem as { _voteStepKind?: string })._voteStepKind) {
+        if (toolbarItem.vote?.id) {
+          void updateAgendaVote({ id: toolbarItem.vote.id, status: 'closed' });
         }
         return;
       }
-      void crVoting.closeVoting(activeCRToolbarItem.id);
+      void crVoting.closeVoting(toolbarItem.id);
       return;
     }
 
@@ -1395,7 +1390,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
         const correlationId = `${toolbarOfflineTallyEntity.kind}-offline-tally:${crypto.randomUUID()}`;
         const existingCountByChoiceId = new Map(
-          toolbarOfflineTallyEntity.tallies.map(tally => [tally.id, tally.count ?? 0])
+          toolbarOfflineTallyEntity.tallies.map(tally => [tally.id, tally.count])
         );
         const updates = toolbarOfflineTallyEntity.choices
           .map(choice => {
@@ -1509,7 +1504,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
       const maxOrder =
         streamSpeakerListData.length > 0
-          ? Math.max(...streamSpeakerListData.map(speaker => speaker.order || 0))
+          ? Math.max(...streamSpeakerListData.map(speaker => speaker.order))
           : 0;
 
       await waitForClientApply(
@@ -1589,12 +1584,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const loweredSearchQuery = searchQuery.trim().toLowerCase();
   const normalizedSearchQuery = normalizeSearchToken(searchQuery);
   const filteredAgendaItems = orderedAgendaItems.filter(item => {
-    const topNumber = topNumberByAgendaItemId.get(item.id);
-    const topLabel =
-      typeof topNumber === translateText('generated.inline.0008_number_53b0a1b2')
-        ? `top-${topNumber}`
-        : '';
-    const topLabelCompact = typeof topNumber === 'number' ? `top${topNumber}` : '';
+    // Every filtered item originates from orderedAgendaItems, which built this map.
+    const topNumber = topNumberByAgendaItemId.get(item.id) as number;
+    const topLabel = `top-${topNumber}`;
+    const topLabelCompact = `top${topNumber}`;
     const normalizedTopLabel = normalizeSearchToken(topLabel);
 
     const matchesTopSearch =

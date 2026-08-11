@@ -104,6 +104,8 @@ function AssignmentFilterBadgeGroup<TValue extends string>({
 
         return (
           <FilterButton
+            data-action-id="groups.assignments.filter.change"
+            data-action-kind="selection"
             key={option.value}
             active={selected}
             onClick={() => onValueChange(option.value)}
@@ -313,19 +315,27 @@ function formatDateTime(timestamp: number | null | undefined, locale: string) {
   });
 }
 
-function EventTag({
+function EventTagLink({
   event,
   label,
+  'data-action-id': actionId,
 }: {
   event:
     | AvailableEventLike
     | NonNullable<GroupOpenAssignment['targetEvent']>
     | NonNullable<GroupOpenAssignment['linkedEvent']>;
   label: string;
+  'data-action-id': string;
+  'data-action-kind'?: 'navigation';
 }) {
   return (
     <EntityBadge asChild tone="info" className="max-w-full hover:opacity-90">
-      <a href={`/event/${event.id}`} className="inline-flex">
+      <a
+        href={`/event/${event.id}`}
+        data-action-id={actionId}
+        data-action-scope="presentation"
+        className="inline-flex"
+      >
         <span className="truncate">
           {label}: {event.title || translateText('generated.inline.0102_veranstaltung_e6fdb4cc')}
         </span>
@@ -334,10 +344,22 @@ function EventTag({
   );
 }
 
-function AmendmentTag({ amendment }: { amendment: NonNullable<GroupOpenAssignment['amendment']> }) {
+function AmendmentTagLink({
+  amendment,
+  'data-action-id': actionId,
+}: {
+  amendment: NonNullable<GroupOpenAssignment['amendment']>;
+  'data-action-id': string;
+  'data-action-kind'?: 'navigation';
+}) {
   return (
     <EntityBadge asChild tone="accent" className="max-w-full hover:opacity-90">
-      <a href={`/amendment/${amendment.id}`} className="inline-flex">
+      <a
+        href={`/amendment/${amendment.id}`}
+        data-action-id={actionId}
+        data-action-scope="presentation"
+        className="inline-flex"
+      >
         <span className="truncate">{amendment.title}</span>
       </a>
     </EntityBadge>
@@ -347,9 +369,12 @@ function AmendmentTag({ amendment }: { amendment: NonNullable<GroupOpenAssignmen
 function GroupInlineLink({
   group,
   fallback,
+  'data-action-id': actionId,
 }: {
   group?: GroupOpenAssignment['sourceGroup'] | GroupOpenAssignment['targetGroup'];
   fallback: string;
+  'data-action-id': string;
+  'data-action-kind'?: 'navigation';
 }) {
   const label = group?.name || fallback;
 
@@ -359,7 +384,12 @@ function GroupInlineLink({
 
   return (
     <TooltipHint content={label}>
-      <a href={`/group/${group.id}`} className="text-primary underline-offset-4 hover:underline">
+      <a
+        href={`/group/${group.id}`}
+        data-action-id={actionId}
+        data-action-scope="presentation"
+        className="text-primary underline-offset-4 hover:underline"
+      >
         {label}
       </a>
     </TooltipHint>
@@ -378,14 +408,25 @@ function DelegateAssignmentDescription({ assignment }: { assignment: GroupOpenAs
 
   return (
     <p className="text-muted-foreground text-sm">
-      <GroupInlineLink group={assignment.sourceGroup} fallback={sourceGroupFallback} />{' '}
+      <GroupInlineLink
+        group={assignment.sourceGroup}
+        fallback={sourceGroupFallback}
+        data-action-id="groups.assignments.source-group.open"
+        data-action-kind="navigation"
+      />{' '}
       {t('features.groups.memberships.openAssignments.delegateDescription.hasCurrently')}{' '}
       {seatCount.toLocaleString()}{' '}
       {t('features.groups.memberships.openAssignments.delegateDescription.seats', {
         count: seatCount,
       })}{' '}
       {t('features.groups.memberships.openAssignments.delegateDescription.for')}{' '}
-      <GroupInlineLink group={assignment.targetGroup} fallback={targetGroupFallback} />.
+      <GroupInlineLink
+        group={assignment.targetGroup}
+        fallback={targetGroupFallback}
+        data-action-id="groups.assignments.target-group.open"
+        data-action-kind="navigation"
+      />
+      .
     </p>
   );
 }
@@ -402,7 +443,12 @@ function DelegateElectionHelp({
   return (
     <p className="text-muted-foreground text-sm">
       {t('features.groups.memberships.openAssignments.delegateElectionHelpBeforeGroup')}{' '}
-      <GroupInlineLink group={assignment.sourceGroup} fallback={fallbackGroupName} />{' '}
+      <GroupInlineLink
+        group={assignment.sourceGroup}
+        fallback={fallbackGroupName}
+        data-action-id="groups.assignments.source-group.open"
+        data-action-kind="navigation"
+      />{' '}
       {t('features.groups.memberships.openAssignments.delegateElectionHelpAfterGroup')}
     </p>
   );
@@ -442,6 +488,22 @@ function matchesAssignmentDecisionFilter(
 
   return assignment.kind === 'process_task' && assignment.processTaskType === 'schedule_event';
 }
+
+export const openAssignmentsPanelInternals = {
+  getStatusBadge,
+  getAssignmentTypeBadge,
+  getDefaultEventId,
+  buildProcessTaskScheduleSource,
+  getEligibleEventsForAssignment,
+  getAssignmentSchedulingWindowLabel,
+  buildCreateEventSearchForAssignment,
+  formatDateTime,
+  EventTagLink,
+  GroupInlineLink,
+  DelegateAssignmentDescription,
+  getAssignmentSearchFlow,
+  matchesAssignmentDecisionFilter,
+};
 
 export function OpenAssignmentsPanel({
   groupId,
@@ -727,7 +789,11 @@ export function OpenAssignmentsPanel({
       cell: ({ row }) =>
         row.original.assignment.amendment ? (
           <div className="flex flex-wrap gap-2">
-            <AmendmentTag amendment={row.original.assignment.amendment} />
+            <AmendmentTagLink
+              amendment={row.original.assignment.amendment}
+              data-action-id="groups.assignments.amendment.open"
+              data-action-kind="navigation"
+            />
           </div>
         ) : (
           <span className="text-muted-foreground text-sm">
@@ -744,15 +810,19 @@ export function OpenAssignmentsPanel({
         return (
           <div className="flex flex-wrap gap-2">
             {assignment.targetEvent?.id ? (
-              <EventTag
+              <EventTagLink
                 event={assignment.targetEvent}
                 label={t('features.groups.memberships.openAssignments.targetEventLabel')}
+                data-action-id="groups.assignments.target-event.open"
+                data-action-kind="navigation"
               />
             ) : null}
             {assignment.linkedEvent?.id ? (
-              <EventTag
+              <EventTagLink
                 event={assignment.linkedEvent}
                 label={t('features.groups.memberships.openAssignments.linkedEventLabel')}
+                data-action-id="groups.assignments.linked-event.open"
+                data-action-kind="navigation"
               />
             ) : null}
             {!assignment.targetEvent?.id && !assignment.linkedEvent?.id ? (
@@ -790,6 +860,7 @@ export function OpenAssignmentsPanel({
               </div>
               {showAgendaPreviewButton ? (
                 <Button
+                  data-action-id="groups.assignments.agenda-preview.open"
                   variant="outline"
                   className="w-full justify-center"
                   onClick={() => setAgendaPreviewAssignmentId(assignment.id)}
@@ -798,8 +869,16 @@ export function OpenAssignmentsPanel({
                 </Button>
               ) : null}
               {assignment.kind === 'delegate_election' && assignment.linkedEvent?.id ? (
-                <Button asChild variant="outline" className="w-full justify-center">
-                  <a href={`/event/${assignment.linkedEvent.id}`}>
+                <Button
+                  asChild
+                  data-action-scope="presentation"
+                  variant="outline"
+                  className="w-full justify-center"
+                >
+                  <a
+                    href={`/event/${assignment.linkedEvent.id}`}
+                    data-action-id="groups.assignments.scheduled-election.open"
+                  >
                     <Vote className="mr-2 h-4 w-4" />
                     {t('features.groups.memberships.openAssignments.toScheduledElection')}
                   </a>
@@ -827,10 +906,16 @@ export function OpenAssignmentsPanel({
               {schedulingWindowLabel ? (
                 <p className="text-muted-foreground text-xs">{schedulingWindowLabel}</p>
               ) : null}
-              <Button asChild variant="outline" className="w-full justify-center">
+              <Button
+                asChild
+                data-action-scope="presentation"
+                variant="outline"
+                className="w-full justify-center"
+              >
                 <Link
                   to="/create/event"
                   search={buildCreateEventSearchForAssignment(assignment, groupId)}
+                  data-action-id="groups.assignments.event.create-for-assignment"
                 >
                   <CalendarPlus2 className="mr-2 h-4 w-4" />
                   {t('features.groups.memberships.openAssignments.createEvent')}
@@ -838,6 +923,7 @@ export function OpenAssignmentsPanel({
               </Button>
               {showAgendaPreviewButton ? (
                 <Button
+                  data-action-id="groups.assignments.agenda-preview.open"
                   variant="outline"
                   className="w-full justify-center"
                   onClick={() => setAgendaPreviewAssignmentId(assignment.id)}
@@ -868,6 +954,8 @@ export function OpenAssignmentsPanel({
                 <RoleRenewalHelp assignment={assignment} />
               )}
               <Button
+                data-action-id="groups.assignments.event-dialog.open"
+                data-action-kind="interaction"
                 className="w-full justify-center"
                 disabled={isScheduling}
                 onClick={() => openEventDialog(assignment)}
@@ -890,6 +978,7 @@ export function OpenAssignmentsPanel({
                   {t('features.groups.memberships.openAssignments.selectEventLabel')}
                 </FormControlLabel>
                 <FormControlSelect
+                  data-action-scope="presentation"
                   value={selectedEventId}
                   onValueChange={value =>
                     setSelectedEventIds(current => ({
@@ -898,7 +987,10 @@ export function OpenAssignmentsPanel({
                     }))
                   }
                 >
-                  <FormControlSelectTrigger>
+                  <FormControlSelectTrigger
+                    data-action-id="groups.assignments.event.select"
+                    data-action-kind="selection"
+                  >
                     <FormControlSelectValue
                       placeholder={t(
                         'features.groups.memberships.openAssignments.selectEventPlaceholder'
@@ -907,7 +999,12 @@ export function OpenAssignmentsPanel({
                   </FormControlSelectTrigger>
                   <FormControlSelectContent>
                     {eligibleEvents.map(event => (
-                      <FormControlSelectItem key={event.id} value={event.id}>
+                      <FormControlSelectItem
+                        key={event.id}
+                        value={event.id}
+                        data-action-id="groups.assignments.event.select"
+                        data-action-kind="selection"
+                      >
                         {event.title ||
                           t('features.groups.memberships.openAssignments.eventFallback')}
                       </FormControlSelectItem>
@@ -918,6 +1015,7 @@ export function OpenAssignmentsPanel({
 
               <div className="flex items-end">
                 <Button
+                  data-action-id="groups.assignments.process-task.schedule"
                   className="w-full justify-center"
                   disabled={!selectedEventId || isScheduling}
                   onClick={() => void onScheduleProcessTask(assignment, selectedEventId)}
@@ -934,6 +1032,7 @@ export function OpenAssignmentsPanel({
 
             {showAgendaPreviewButton ? (
               <Button
+                data-action-id="groups.assignments.agenda-preview.open"
                 variant="outline"
                 className="w-full justify-center"
                 onClick={() => setAgendaPreviewAssignmentId(assignment.id)}

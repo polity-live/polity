@@ -6,7 +6,10 @@ import {
 } from '@/features/groups/logic/hierarchy';
 import { isActiveGroupRelationshipStatus } from './networkRelationshipHelpers';
 import type { NormalizedGroupRelationship } from '../types/network.types';
-import { getHierarchyRelationshipPair } from './groupRelationshipOrientation';
+import {
+  getHierarchyRelationshipPair,
+  type HierarchyRelationshipPair,
+} from './groupRelationshipOrientation';
 
 /** All rights that can link two groups (parent → child). */
 export const GROUP_LINK_RIGHT_TYPES = [
@@ -53,14 +56,10 @@ function toRelationshipRow(rel: NormalizedGroupRelationship): HierarchyRelations
     group_id: rel.group_id,
     related_group_id: rel.related_group_id,
     relationship_type:
-      rel.relationship_type ??
-      (rel.connection_type === 'peer'
-        ? 'sibling'
-        : rel.parent_group_id === rel.group_id
-          ? 'parent'
-          : 'child'),
+      rel.relationship_type ?? (rel.parent_group_id === rel.group_id ? 'parent' : 'child'),
     with_right: rel.with_right ?? null,
-    status: rel.status ?? null,
+    // Callers pass only relationships already proven active.
+    status: rel.status,
     initiator_group_id: rel.initiator_group_id ?? null,
     created_at: rel.created_at ?? 0,
     connection_type: rel.connection_type,
@@ -123,11 +122,8 @@ function dedupeHierarchyRows(rows: HierarchyRelationshipRow[]) {
   const deduped = new Map<string, HierarchyRelationshipRow>();
 
   for (const row of rows) {
-    const pair = getHierarchyRelationshipPair(row);
-    if (!pair) {
-      continue;
-    }
-
+    // Every caller filters to structural hierarchy rows before deduplication.
+    const pair = getHierarchyRelationshipPair(row) as HierarchyRelationshipPair;
     const key = `${pair.parentGroupId}:${pair.childGroupId}`;
     if (!deduped.has(key)) {
       deduped.set(key, row);
@@ -180,15 +176,10 @@ export function getHierarchyLinkConflictUserIds(
   allRelationships: NormalizedGroupRelationship[],
   directMemberships: DirectMembershipShape[]
 ): string[] {
-  if (getHierarchyRelationshipPair(relationship) == null) {
-    return [];
-  }
-
   const pair = getHierarchyRelationshipPair(relationship);
-  if (!pair) {
+  if (pair == null) {
     return [];
   }
-
   const pvrRelationships = buildPvrRelationshipsForConflictCheck(allRelationships, relationship);
 
   const activeParentChildLinks = buildActiveParentChildLinksForConflictCheck(

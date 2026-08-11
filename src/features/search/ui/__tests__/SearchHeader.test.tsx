@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useLanguageStore } from '@/features/shared/global-state/language.store';
@@ -98,5 +98,54 @@ describe('SearchHeader command box promotion', () => {
     const input = screen.getByPlaceholderText('Search groups, events, amendments, users...');
     expect(input.getAttribute('aria-keyshortcuts')).toBe('Meta+K');
     expect(screen.getByText('⌘ K')).toBeTruthy();
+  });
+});
+
+describe('SearchHeader actions', () => {
+  it('exposes stable selectable view, filter, and personal-topic actions', () => {
+    const onViewChange = vi.fn();
+    const setShowFilters = vi.fn();
+    const onTopicToggle = vi.fn();
+
+    render(
+      <KeyboardPlatformProvider platform="windows">
+        <SearchHeader
+          searchQuery=""
+          setSearchQuery={vi.fn()}
+          showFilters={false}
+          setShowFilters={setShowFilters}
+          activeTopics={[]}
+          personalTopics={['climate']}
+          onTopicToggle={onTopicToggle}
+          totalResults={null}
+          queryParam=""
+          view="list"
+          onViewChange={onViewChange}
+        />
+      </KeyboardPlatformProvider>
+    );
+
+    const listView = screen.getByRole('button', { name: 'List view' });
+    const spatialView = screen.getByRole('button', { name: 'Spatial view' });
+    const filters = screen.getByRole('button', { name: 'Filters' });
+    const topic = screen.getByRole('button', { name: '#climate' });
+
+    expect(listView.getAttribute('data-action-id')).toBe('search.header.view.list');
+    expect(listView.getAttribute('aria-pressed')).toBe('true');
+    expect(spatialView.getAttribute('data-action-id')).toBe('search.header.view.spatial');
+    expect(spatialView.getAttribute('aria-pressed')).toBe('false');
+    expect(filters.getAttribute('data-action-id')).toBe('search.header.filters.toggle');
+    expect(topic.getAttribute('data-action-id')).toBe('search.header.topic.toggle');
+
+    spatialView.focus();
+    expect(document.activeElement).toBe(spatialView);
+    fireEvent.click(spatialView);
+    fireEvent.click(filters);
+    topic.focus();
+    fireEvent.click(topic);
+
+    expect(onViewChange).toHaveBeenCalledWith('spatial');
+    expect(setShowFilters).toHaveBeenCalledWith(true);
+    expect(onTopicToggle).toHaveBeenCalledWith('climate');
   });
 });

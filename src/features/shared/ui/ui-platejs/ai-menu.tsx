@@ -140,7 +140,7 @@ export function AIMenu() {
       <PopoverContent
         className="border-none bg-transparent p-0 shadow-none"
         style={{
-          width: anchorElement?.offsetWidth,
+          width: anchorElement.offsetWidth,
         }}
         onEscapeKeyDown={e => {
           e.preventDefault();
@@ -391,7 +391,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       filterItems?: boolean;
       items?: { label: string; value: string }[];
       shortcut?: string;
-      onSelect?: ({ aiEditor, editor }: { aiEditor: SlateEditor; editor: PlateEditor }) => void;
+      onSelect: ({ aiEditor, editor }: { aiEditor: SlateEditor; editor: PlateEditor }) => void;
     }
   >;
 
@@ -457,9 +457,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
   }, [menuState]);
 
   React.useEffect(() => {
-    if (menuGroups.length > 0 && menuGroups[0].items.length > 0) {
-      setValue(menuGroups[0].items[0].value);
-    }
+    setValue(menuGroups[0].items[0].value);
   }, [menuGroups, setValue]);
 
   if (!aiEditor) return null;
@@ -474,7 +472,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
               className="[&_svg]:text-muted-foreground"
               value={menuItem.value}
               onSelect={() => {
-                menuItem.onSelect?.({
+                menuItem.onSelect({
                   aiEditor,
                   editor: editor,
                 });

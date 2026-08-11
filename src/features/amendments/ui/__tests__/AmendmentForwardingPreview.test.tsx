@@ -75,4 +75,37 @@ describe('AmendmentForwardingPreview', () => {
     expect(screen.getByText(description, { exact: false })).toBeTruthy();
     expect(container.firstElementChild?.className).toContain(color);
   });
+
+  it('renders compact unlinked destinations without optional group and date data', () => {
+    const { container, rerender } = render(
+      <AmendmentForwardingPreview
+        compact
+        nextEventId={null}
+        nextEventTitle="Unscheduled event"
+        nextGroupName={null}
+        nextEventStartDate={null}
+      />
+    );
+    expect(screen.getByText('Unscheduled event')).toBeTruthy();
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(container.firstElementChild?.className).toContain('space-y-2');
+
+    rerender(
+      <AmendmentForwardingPreview
+        nextEventId={null}
+        nextEventTitle="Unlinked event"
+        nextGroupName="Group"
+      />
+    );
+    expect(screen.getByText('Unlinked event · Group')).toBeTruthy();
+
+    rerender(
+      <AmendmentForwardingPreview
+        nextEventId="linked"
+        nextEventTitle="Linked event"
+        nextGroupName={null}
+      />
+    );
+    expect(screen.getByRole('link', { name: 'Linked event' })).toBeTruthy();
+  });
 });

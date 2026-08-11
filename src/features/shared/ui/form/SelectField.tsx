@@ -16,6 +16,7 @@ interface SelectFieldOption {
 }
 
 interface SelectFieldProps extends Omit<ComponentProps<typeof Select>, 'value' | 'onValueChange'> {
+  'data-action-id'?: string;
   label?: ReactNode;
   labelAction?: ReactNode;
   description?: ReactNode;
@@ -35,6 +36,7 @@ interface SelectFieldProps extends Omit<ComponentProps<typeof Select>, 'value' |
 }
 
 export function SelectField({
+  'data-action-id': actionId,
   label,
   labelAction,
   description,
@@ -69,6 +71,7 @@ export function SelectField({
       {({ id, describedBy, invalid }) => (
         <Select value={value} onValueChange={onValueChange} {...props}>
           <SelectTrigger
+            data-action-id={actionId}
             id={id}
             aria-describedby={describedBy}
             aria-invalid={invalid || undefined}

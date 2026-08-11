@@ -1,7 +1,35 @@
 import { describe, expect, it } from 'vitest';
-import { computeVoteResultSummary } from '../computeVoteResults';
+import { computeVoteResultSummary, tallyFinalChoiceResults } from '../computeVoteResults';
 
 describe('computeVoteResultSummary', () => {
+  it('handles empty choices and ignored or unknown ballot data', () => {
+    expect(
+      tallyFinalChoiceResults(
+        [],
+        [{ choice_id: 'unknown' }],
+        [
+          { phase: 'indicative', choice_id: 'unknown', count: 10 },
+          { phase: 'final', choice_id: null, count: 10 },
+          { phase: 'final', choice_id: 'unknown', count: null },
+        ]
+      )
+    ).toEqual([]);
+    expect(
+      tallyFinalChoiceResults([], [], [{ phase: 'final', choice_id: 'unknown', count: null }])
+    ).toEqual([]);
+
+    expect(computeVoteResultSummary([], [], 0, 'simple')).toEqual({
+      result: 'tie',
+      choiceTallies: [],
+      totalEligible: 0,
+      totalVoted: 0,
+      winningChoiceId: null,
+      winningLabel: null,
+      winningPercent: null,
+      majorityType: 'simple',
+    });
+  });
+
   it('resolves an offline-only accept tally as passed instead of tie', () => {
     const summary = computeVoteResultSummary(
       [

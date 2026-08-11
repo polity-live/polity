@@ -3,7 +3,9 @@ import {
   EXTENDED_GRADIENTS,
   getGradientByIndex,
   getGradientByEntityId,
+  getHashtagGradient,
   getGradientForContentType,
+  getCardShadowClasses,
   getTimelineCardGradient,
 } from '../../logic/gradient-assignment';
 
@@ -140,6 +142,24 @@ describe('gradient-assignment', () => {
     it('should handle missing entity ID', () => {
       const cardGradient = getTimelineCardGradient('group', undefined, true);
       expect(typeof cardGradient).toBe('string');
+    });
+
+    it('falls back to the first gradient without a default or entity ID', () => {
+      expect(getTimelineCardGradient('group', undefined, false)).toBe(EXTENDED_GRADIENTS[0]);
+    });
+  });
+
+  describe('getCardShadowClasses', () => {
+    it('builds default and elevated shadow class contracts', () => {
+      expect(getCardShadowClasses()).toContain('shadow-sm');
+      expect(getCardShadowClasses(true)).toContain('shadow-md');
+    });
+  });
+
+  describe('getHashtagGradient', () => {
+    it('returns the stable badge gradient for empty and populated tags', () => {
+      expect(getHashtagGradient('')).toBe(getHashtagGradient('climate'));
+      expect(getHashtagGradient('climate')).toContain('var(--');
     });
   });
 });

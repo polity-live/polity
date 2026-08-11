@@ -132,7 +132,11 @@ export function AmendmentEditContentView({
             {t('features.amendments.editContent.noDataExists')}
           </p>
           <div className="mt-6">
-            <Button onClick={() => navigate({ to: `/` })} variant="default">
+            <Button
+              data-action-id="amendments.edit.navigate.home"
+              onClick={() => navigate({ to: `/` })}
+              variant="default"
+            >
               {t('features.amendments.editContent.backToHome')}
             </Button>
           </div>
@@ -181,10 +185,19 @@ export function AmendmentEditContentView({
             ) : null}
           </CreateReviewCard>
           <div className="mt-6 flex gap-3">
-            <Button variant="outline" onClick={() => setShowReview(false)}>
+            <Button
+              data-action-id="amendments.edit.review.previous"
+              variant="outline"
+              onClick={() => setShowReview(false)}
+            >
               {t('pages.create.previous')}
             </Button>
-            <Button onClick={confirmCreate} disabled={isSubmitting} className="flex-1">
+            <Button
+              data-action-id="amendments.edit.review.confirm"
+              onClick={confirmCreate}
+              disabled={isSubmitting}
+              className="flex-1"
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -217,7 +230,12 @@ export function AmendmentEditContentView({
       headingMode={isCreating ? 'visible' : 'sr-only'}
       size={isCreating ? 'default' : 'wide'}
     >
-      <form ref={formRef} onSubmit={onFormSubmit} className="space-y-6">
+      <form
+        ref={formRef}
+        data-action-id="amendments.edit.submit.form"
+        onSubmit={onFormSubmit}
+        className="space-y-6"
+      >
         <SettingsTabs
           value={activeTab}
           onValueChange={onTabChange}
@@ -377,10 +395,15 @@ export function AmendmentEditContentView({
                       })}
                     </FormControlLabel>
                     <Select
+                      data-action-id="amendments.edit.select.workflow-branch"
                       value={selectedWorkflowBranchId ?? ''}
                       onValueChange={setSelectedWorkflowBranchId}
                     >
-                      <SelectTrigger id="workflowBranch" className="w-full">
+                      <SelectTrigger
+                        data-action-id="amendments.edit.select.workflow-branch"
+                        id="workflowBranch"
+                        className="w-full"
+                      >
                         <span className="flex min-w-0 items-center gap-2">
                           <GitBranch className="text-muted-foreground h-4 w-4 shrink-0" />
                           <span className="truncate">
@@ -393,7 +416,12 @@ export function AmendmentEditContentView({
                       </SelectTrigger>
                       <SelectContent>
                         {workflowBranchOptions.map((branch: any) => (
-                          <SelectItem key={branch.id} value={branch.id} textValue={branch.label}>
+                          <SelectItem
+                            data-action-id="amendments.edit.select.workflow-branch-option"
+                            key={branch.id}
+                            value={branch.id}
+                            textValue={branch.label}
+                          >
                             <span className="truncate">{branch.label}</span>
                           </SelectItem>
                         ))}
@@ -408,6 +436,8 @@ export function AmendmentEditContentView({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
+                        data-action-id="amendments.edit.open.workflow-status"
+                        type="button"
                         variant="outline"
                         className="w-full justify-between"
                         disabled={
@@ -482,6 +512,7 @@ export function AmendmentEditContentView({
                       const selected = formData.internalCRVotingCloseTrigger === option.value;
                       return (
                         <button
+                          data-action-id="amendments.edit.select.cr-voting-close-trigger"
                           key={option.value}
                           type="button"
                           className={`rounded-md border p-3 text-left transition-colors ${
@@ -566,6 +597,7 @@ export function AmendmentEditContentView({
                       const selected = formData.internalCRResolutionVisibility === option.value;
                       return (
                         <button
+                          data-action-id="amendments.edit.select.cr-resolution-visibility"
                           key={option.value}
                           type="button"
                           className={`rounded-md border p-3 text-left transition-colors ${
@@ -611,6 +643,7 @@ export function AmendmentEditContentView({
 
         <SettingsActionBar className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
+            data-action-id="amendments.edit.cancel.form"
             type="button"
             variant="outline"
             onClick={() => navigate({ to: isCreating ? '/create' : `/amendment/${amendmentId}` })}
@@ -618,7 +651,11 @@ export function AmendmentEditContentView({
           >
             {t('features.amendments.editContent.cancel')}
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            data-action-id="amendments.edit.submit.form"
+            type="submit"
+            disabled={isSubmitting}
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

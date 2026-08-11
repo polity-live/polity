@@ -31,10 +31,10 @@ export const SubscriberStatsBar: React.FC<SubscriberStatsBarProps> = ({
   const formatNumberWithUnit = (num: number): { value: number; unit: string } => {
     if (num >= 1000000) {
       return { value: +(num / 1000000).toFixed(1), unit: 'M' };
-    } else if (num >= 1000) {
-      return { value: +(num / 1000).toFixed(1), unit: 'k' };
     }
-    return { value: num, unit: '' };
+
+    // Every call site first narrows the count to values of at least 1,000.
+    return { value: +(num / 1000).toFixed(1), unit: 'k' };
   };
 
   const displayStats: StatsBarItem[] = [];

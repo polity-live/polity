@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/amendments/AmendmentWikiView.tsx#amendments.amendment-wiki.event-id": [
+      {
+        "file": "src/features/amendments/__tests__/AmendmentWiki.a04.test.tsx",
+        "project": "component",
+        "caseId": "renders loading when neither amendment nor recovery exists",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/AmendmentWikiView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/AmendmentWikiView.tsx#amendments.amendment-wiki.event-id-agenda-agenda-item-id": [
+      {
+        "file": "src/features/amendments/__tests__/AmendmentWiki.a04.test.tsx",
+        "project": "component",
+        "caseId": "renders loading when neither amendment nor recovery exists",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/AmendmentWikiView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/ui/AmendmentForwardingNotice.tsx#amendments.amendment-forwarding-notice.event-id-agenda": [
+      {
+        "file": "src/features/amendments/ui/__tests__/AmendmentForwardingPreview.test.tsx",
+        "project": "component",
+        "caseId": "renders compact unlinked destinations without optional group and date data",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/ui/AmendmentForwardingNotice.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/ui/AmendmentForwardingPreview.tsx#amendments.amendment-forwarding-preview.event-id-agenda": [
+      {
+        "file": "src/features/amendments/logic/__tests__/amendmentForwardingPreview.test.ts",
+        "project": "unit",
+        "caseId": "requires an amendment and event and defaults optional destination fields",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/ui/AmendmentForwardingPreview.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/ui/AmendmentProcessFlowView.tsx#amendments.amendment-process-flow.event-id-agenda": [
+      {
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.lsf.A04.test.tsx",
+        "project": "component",
+        "caseId": "routes group and event visualization selections",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/ui/AmendmentProcessFlowView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {}
+}

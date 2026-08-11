@@ -34,6 +34,7 @@ describe('SectionProgressTopBar', () => {
     );
 
     expect(screen.getByText('Setup')).toBeTruthy();
+    expect(screen.getByRole('progressbar', { name: 'Setup' })).toBeTruthy();
     expect(screen.getByText('2/3')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Details' }).getAttribute('aria-current')).toBe(
       'step'
@@ -43,7 +44,7 @@ describe('SectionProgressTopBar', () => {
     expect(container.querySelector('ol')?.className).toContain('scrollbar-hide');
   });
 
-  it('selects only enabled items', () => {
+  it('selects enabled items with keyboard and focus while blocking disabled items', () => {
     const onItemSelect = vi.fn();
 
     render(
@@ -59,11 +60,24 @@ describe('SectionProgressTopBar', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Two' }));
+    const one = screen.getByRole<HTMLButtonElement>('button', { name: 'One' });
+    const two = screen.getByRole<HTMLButtonElement>('button', { name: 'Two' });
+    const three = screen.getByRole<HTMLButtonElement>('button', { name: 'Three' });
+
+    expect(screen.getByRole('progressbar', { name: 'Action progress' })).toBeTruthy();
+    expect(one.getAttribute('aria-current')).toBe('step');
+    expect(two.getAttribute('aria-current')).toBeNull();
+    one.focus();
+    expect(document.activeElement).toBe(one);
+    two.focus();
+    expect(document.activeElement).toBe(two);
+    fireEvent.keyDown(two, { key: 'Enter' });
+    fireEvent.click(two);
     fireEvent.click(screen.getByRole('button', { name: 'Three' }));
 
     expect(onItemSelect).toHaveBeenCalledTimes(1);
     expect(onItemSelect).toHaveBeenCalledWith('two');
+    expect(three.disabled).toBe(true);
   });
 
   it('scrolls the active item into view when activeId changes', () => {

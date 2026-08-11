@@ -79,6 +79,10 @@ function buildEventCard(
     />
   );
 }
+
+export const openAssignmentsPanelViewInternals = {
+  buildEventCard,
+};
 export interface OpenAssignmentsPanelViewProps {
   groupId: any;
   groupName: any;
@@ -351,12 +355,17 @@ export function OpenAssignmentsPanelView({
           ) : null}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => closeEventDialog(false)}>
+            <Button
+              data-action-id="groups.assignments.event-dialog.cancel"
+              variant="outline"
+              onClick={() => closeEventDialog(false)}
+            >
               {activeEventAssignment?.kind === 'role_renewal'
                 ? t('features.groups.memberships.openAssignments.roleRenewalDialog.cancel')
                 : t('features.groups.memberships.openAssignments.delegateDialog.cancel')}
             </Button>
             <Button
+              data-action-id="groups.assignments.event-dialog.create-election"
               disabled={!eventDialogEventId || isScheduling}
               onClick={() => void handleCreateAssignmentElection()}
             >

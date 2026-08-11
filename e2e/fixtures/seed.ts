@@ -1,6 +1,6 @@
-import crypto from 'node:crypto';
 import { db, type E2EDatabase } from './db';
 import { ensureUserDefaults } from './auth';
+import { deterministicE2EUuid } from './run';
 
 export interface SeedData {
   userId: string;
@@ -26,8 +26,8 @@ export interface SeedData {
   electionTitle: string;
 }
 
-function id() {
-  return crypto.randomUUID();
+function fixtureId(scope: string) {
+  return deterministicE2EUuid(`fixture:${scope}`);
 }
 
 function handleFromPrefix(prefix: string, suffix: string) {
@@ -42,25 +42,25 @@ export async function seedCreatePrerequisites(prefix: string, userId: string): P
 
   const seed: SeedData = {
     userId,
-    extraUserId: id(),
-    groupId: id(),
+    extraUserId: fixtureId(`${prefix}:extra-user`),
+    groupId: fixtureId(`${prefix}:group`),
     groupName: `${prefix} Base Group`,
-    linkedGroupId: id(),
+    linkedGroupId: fixtureId(`${prefix}:linked-group`),
     linkedGroupName: `${prefix} Linked Group`,
-    hierarchicalGroupId: id(),
+    hierarchicalGroupId: fixtureId(`${prefix}:hierarchical-group`),
     hierarchicalGroupName: `${prefix} Hierarchical Group`,
-    roleId: id(),
+    roleId: fixtureId(`${prefix}:candidate-role`),
     roleName: `${prefix} Candidate Role`,
-    eventRoleId: id(),
+    eventRoleId: fixtureId(`${prefix}:event-role`),
     eventRoleName: `${prefix} Event Organizer`,
-    eventParticipantId: id(),
-    eventId: id(),
+    eventParticipantId: fixtureId(`${prefix}:event-participant`),
+    eventId: fixtureId(`${prefix}:event`),
     eventTitle: `${prefix} Assembly Event`,
-    amendmentId: id(),
+    amendmentId: fixtureId(`${prefix}:amendment`),
     amendmentTitle: `${prefix} Seed Amendment`,
-    agendaItemId: id(),
+    agendaItemId: fixtureId(`${prefix}:agenda-item`),
     agendaItemTitle: `${prefix} Seed Election Agenda`,
-    electionId: id(),
+    electionId: fixtureId(`${prefix}:election`),
     electionTitle: `${prefix} Seed Election`,
   };
 
@@ -86,6 +86,7 @@ export async function seedCreatePrerequisites(prefix: string, userId: string): P
     seed.eventId,
     userId
   );
+  await insertAmendmentCollaborator(sql, seed.amendmentId, userId);
   await insertAgendaItem(sql, seed.agendaItemId, seed.agendaItemTitle, seed.eventId, userId);
   await insertElection(sql, seed.electionId, seed.electionTitle, seed.agendaItemId, seed.roleId);
 
@@ -141,7 +142,7 @@ async function insertVotingPassword(sql: E2EDatabase, userId: string) {
       updated_at
     )
     values (
-      ${id()}::uuid,
+      ${fixtureId(`voting-password:${userId}`)}::uuid,
       ${userId}::uuid,
       'e2e-voting-pin-hash',
       now(),
@@ -219,7 +220,7 @@ async function insertGroups(sql: E2EDatabase, prefix: string, seed: SeedData) {
 }
 
 async function insertMembership(sql: E2EDatabase, groupId: string, userId: string) {
-  const membershipId = id();
+  const membershipId = fixtureId(`group-membership:${groupId}:${userId}`);
 
   await sql`
     insert into public.group_membership (
@@ -237,7 +238,7 @@ async function insertMembership(sql: E2EDatabase, groupId: string, userId: strin
       ${membershipId}::uuid,
       ${groupId}::uuid,
       ${userId}::uuid,
-      'active',
+      'admin',
       'public',
       'direct',
       'direct',
@@ -435,13 +436,14 @@ async function insertEventOrganizerRole(
 
 async function insertEventActionRights(sql: E2EDatabase, roleId: string, eventId: string) {
   const rights = [
-    { id: id(), resource: 'events', action: 'manage' },
-    { id: id(), resource: 'events', action: 'manage_votes' },
-    { id: id(), resource: 'events', action: 'active_voting' },
-    { id: id(), resource: 'events', action: 'passive_voting' },
-    { id: id(), resource: 'agendaItems', action: 'create' },
-    { id: id(), resource: 'agendaItems', action: 'manage' },
-    { id: id(), resource: 'elections', action: 'manage' },
+    { resource: 'events', action: 'manage' },
+    { resource: 'events', action: 'manage_votes' },
+    { resource: 'events', action: 'manage_participants' },
+    { resource: 'events', action: 'active_voting' },
+    { resource: 'events', action: 'passive_voting' },
+    { resource: 'agendaItems', action: 'create' },
+    { resource: 'agendaItems', action: 'manage' },
+    { resource: 'elections', action: 'manage' },
   ];
 
   for (const right of rights) {
@@ -455,7 +457,7 @@ async function insertEventActionRights(sql: E2EDatabase, roleId: string, eventId
         created_at
       )
       values (
-        ${right.id}::uuid,
+        ${fixtureId(`action-right:${roleId}:${right.resource}:${right.action}`)}::uuid,
         ${right.resource},
         ${right.action},
         ${roleId}::uuid,
@@ -487,7 +489,7 @@ async function insertEventParticipantRole(
       created_at
     )
     values (
-      ${id()}::uuid,
+      ${fixtureId(`event-participant-role:${participantId}:${roleId}`)}::uuid,
       ${participantId}::uuid,
       ${roleId}::uuid,
       now(),
@@ -542,6 +544,24 @@ async function insertAmendment(
         event_id = excluded.event_id,
         visibility = excluded.visibility,
         updated_at = excluded.updated_at;
+  `;
+}
+
+async function insertAmendmentCollaborator(sql: E2EDatabase, amendmentId: string, userId: string) {
+  await sql`
+    insert into public.amendment_collaborator (
+      id, amendment_id, user_id, status, visibility, created_at
+    ) values (
+      ${fixtureId(`amendment-collaborator:${amendmentId}:${userId}`)}::uuid,
+      ${amendmentId}::uuid,
+      ${userId}::uuid,
+      'admin',
+      'authenticated',
+      now()
+    )
+    on conflict (id) do update
+    set status = excluded.status,
+        visibility = excluded.visibility;
   `;
 }
 

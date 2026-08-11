@@ -11,6 +11,48 @@ vi.mock('@/features/editor/ui/OnlineCollaboratorAvatars', () => ({
   OnlineCollaboratorAvatars: () => null,
 }));
 
+vi.mock('@/features/shared/ui/ui/not-found', () => ({
+  NotFound: () => <div>Not found</div>,
+}));
+
+vi.mock('@/features/shared/ui/ui/alert-dialog', () => {
+  const Container = ({ children }: { children?: ReactNode }) => <>{children}</>;
+  return {
+    AlertDialog: ({
+      children,
+      onOpenChange,
+    }: {
+      children?: ReactNode;
+      onOpenChange: (open: boolean) => void;
+    }) => (
+      <div>
+        <button type="button" onClick={() => onOpenChange(true)}>
+          Signal dialog open
+        </button>
+        <button type="button" onClick={() => onOpenChange(false)}>
+          Signal dialog closed
+        </button>
+        {children}
+      </div>
+    ),
+    AlertDialogAction: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+      <button type="button" {...props}>
+        {children}
+      </button>
+    ),
+    AlertDialogCancel: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+      <button type="button" {...props}>
+        {children}
+      </button>
+    ),
+    AlertDialogContent: Container,
+    AlertDialogDescription: Container,
+    AlertDialogFooter: Container,
+    AlertDialogHeader: Container,
+    AlertDialogTitle: Container,
+  };
+});
+
 vi.mock('../StreetAreaPicker', () => ({
   StreetAreaPicker: ({ onLoadOsm }: { onLoadOsm: () => void }) => (
     <button type="button" onClick={onLoadOsm}>
@@ -46,12 +88,45 @@ vi.mock('../CityDesignTopBarView', () => ({
       {areaPickerOpen ? areaPickerContent : null}
     </div>
   ),
-  CityDesignSecondaryActionBarView: () => <div data-testid="city-design-secondary-action-bar" />,
+  CityDesignSecondaryActionBarView: ({
+    onChangeRequestSelect,
+    onChangeRequestColorModeChange,
+  }: {
+    onChangeRequestSelect: (id: string | null) => void;
+    onChangeRequestColorModeChange: (mode: 'natural') => void;
+  }) => (
+    <div data-testid="city-design-secondary-action-bar">
+      <button type="button" onClick={() => onChangeRequestSelect('cr-1')}>
+        Select CR
+      </button>
+      <button type="button" onClick={() => onChangeRequestSelect(null)}>
+        Clear CR
+      </button>
+      <button type="button" onClick={() => onChangeRequestColorModeChange('natural')}>
+        Set natural colors
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock('../StreetSceneCanvasView', () => ({
-  StreetSceneCanvasView: ({ initialLegendOpen }: { initialLegendOpen: boolean }) => (
-    <div data-testid="street-scene-canvas" data-initial-legend-open={String(initialLegendOpen)} />
+  StreetSceneCanvasView: ({
+    initialLegendOpen,
+    onOsmWayImport,
+    onOsmImportUndo,
+  }: {
+    initialLegendOpen: boolean;
+    onOsmWayImport: (id: string) => void;
+    onOsmImportUndo: (id: string) => void;
+  }) => (
+    <div data-testid="street-scene-canvas" data-initial-legend-open={String(initialLegendOpen)}>
+      <button type="button" onClick={() => onOsmWayImport('osm-1')}>
+        Import OSM
+      </button>
+      <button type="button" onClick={() => onOsmImportUndo('osm-1')}>
+        Undo OSM import
+      </button>
+    </div>
   ),
 }));
 
@@ -98,12 +173,18 @@ describe('CityDesignPageView', () => {
     const helpButton = screen.getByRole('button', {
       name: 'Show City Design navigation help',
     });
+    expect(helpButton.getAttribute('data-action-id')).toBe(
+      'amendments.city-design.open.navigation-help'
+    );
     fireEvent.click(helpButton);
 
     expect(screen.getByText('Navigation help')).toBeTruthy();
     const touchTab = screen.getByRole('tab', { name: 'Touch' });
     const mouseTab = screen.getByRole('tab', { name: 'Mouse' });
     const keyboardTab = screen.getByRole('tab', { name: 'Keyboard' });
+    for (const tab of [touchTab, mouseTab, keyboardTab]) {
+      expect(tab.getAttribute('data-action-id')).toBe('amendments.city-design.select.help-tab');
+    }
     expect(touchTab.getAttribute('data-state')).toBe('active');
     expect(screen.getByText('Select')).toBeTruthy();
     expect(screen.getByText('Place')).toBeTruthy();
@@ -176,8 +257,65 @@ describe('CityDesignPageView', () => {
 
     expect(onDeleteObjectCategory).not.toHaveBeenCalled();
     expect(screen.getByText(/2 separate change requests/)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /Create 2 change requests/ }));
+    const confirmDelete = screen.getByRole('button', { name: /Create 2 change requests/ });
+    expect(confirmDelete.getAttribute('data-action-id')).toBe(
+      'amendments.city-design.confirm.category-delete'
+    );
+    fireEvent.click(confirmDelete);
     expect(onDeleteObjectCategory).toHaveBeenCalledWith('greenery');
+  });
+
+  it('renders loading and missing-amendment fallbacks', () => {
+    const { rerender, container } = render(
+      <CityDesignPageView {...createPageProps({ isLoading: true })} />
+    );
+    expect(container.querySelector('[data-slot="settings-page-skeleton"]')).toBeTruthy();
+    rerender(<CityDesignPageView {...createPageProps({ amendment: null, isLoading: false })} />);
+    expect(screen.getByText(/not found/i)).toBeTruthy();
+  });
+
+  it('uses the default title and optional callback defaults', () => {
+    const pageProps = createPageProps({ amendment: {} });
+    delete (pageProps as Partial<typeof pageProps>).onChangeRequestColorModeChange;
+    delete (pageProps as Partial<typeof pageProps>).onOsmWayImport;
+    delete (pageProps as Partial<typeof pageProps>).onOsmImportUndo;
+    render(<CityDesignPageView {...pageProps} />);
+    expect(screen.getByText('City Design')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Set natural colors' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Import OSM' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Undo OSM import' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Signal dialog open' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Signal dialog closed' }));
+    fireEvent.click(screen.getByRole('button', { name: /create 0 change requests/i }));
+  });
+
+  it('deletes categories directly in edit mode and selects and clears change requests', () => {
+    const onDeleteObjectCategory = vi.fn();
+    const onObjectSelect = vi.fn();
+    const onOsmWaySelect = vi.fn();
+    render(
+      <CityDesignPageView
+        {...createPageProps({ onDeleteObjectCategory, onObjectSelect, onOsmWaySelect })}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Delete greenery' }));
+    expect(onDeleteObjectCategory).toHaveBeenCalledWith('greenery');
+    fireEvent.click(screen.getByRole('button', { name: 'Select CR' }));
+    expect(onObjectSelect).toHaveBeenCalledWith(null);
+    expect(onOsmWaySelect).toHaveBeenCalledWith(null);
+    fireEvent.click(screen.getByRole('button', { name: 'Clear CR' }));
+  });
+
+  it('dismisses a pending category deletion without confirming it', () => {
+    const onDeleteObjectCategory = vi.fn();
+    render(
+      <CityDesignPageView
+        {...createPageProps({ mode: 'suggest_internal', onDeleteObjectCategory })}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Delete greenery' }));
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    expect(onDeleteObjectCategory).not.toHaveBeenCalled();
   });
 });
 

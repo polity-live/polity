@@ -120,7 +120,7 @@ export function normalizeGovDataText(value: unknown) {
   const addBreak = (count = 1) => {
     if (!output) return;
     output = output.replace(/[^\S\n]+$/g, '');
-    const currentCount = output.match(/\n*$/)?.[0].length ?? 0;
+    const currentCount = (output.match(/\n*$/) as RegExpMatchArray)[0].length;
     if (currentCount < count) output += '\n'.repeat(count - currentCount);
   };
   const parser = new Parser(
@@ -155,8 +155,8 @@ function nullableGovDataText(value: unknown) {
 
 function lastUriSegment(value: string) {
   const trimmed = value.trim();
-  const withoutHash = trimmed.split('#').pop() ?? trimmed;
-  const withoutSlash = withoutHash.split('/').pop() ?? withoutHash;
+  const withoutHash = trimmed.split('#').pop() as string;
+  const withoutSlash = withoutHash.split('/').pop() as string;
   return withoutSlash.trim();
 }
 

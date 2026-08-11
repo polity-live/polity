@@ -15,6 +15,7 @@ export const editor = {
     saveFailed: 'Speichern fehlgeschlagen',
     unsavedChanges: 'Ungespeicherte Änderungen',
     allSaved: 'Alle Änderungen gespeichert',
+    editTitle: 'Titel bearbeiten',
   },
 
   // Navigation
@@ -75,6 +76,9 @@ export const editor = {
     restoreFailed: 'Version konnte nicht wiederhergestellt werden',
     titleUpdated: 'Versionsname aktualisiert',
     titleUpdateFailed: 'Versionsname konnte nicht aktualisiert werden',
+    saveTitle: 'Titel speichern',
+    cancelTitle: 'Titelbearbeitung abbrechen',
+    editTitle: 'Versionsname bearbeiten',
     versionRestored: 'Version erfolgreich wiederhergestellt',
     versionDeleted: 'Version gelöscht',
     updateFailed: 'Version konnte nicht aktualisiert werden',
@@ -127,6 +131,7 @@ export const editor = {
     invitedOne: 'Mitarbeiter erfolgreich eingeladen',
     invitedMultiple: '{{count}} Mitarbeiter erfolgreich eingeladen',
     inviteFailed: 'Einladung der Mitarbeiter fehlgeschlagen',
+    removeSelection: 'Auswahl entfernen',
   },
 
   // Suggestion View Toggle

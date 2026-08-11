@@ -3,13 +3,21 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const mocks = vi.hoisted(() => ({ session: { access_token: 'session-token' } as any }));
+
 vi.mock('@/providers/auth-provider', () => ({
   useAuth: () => ({
-    session: { access_token: 'session-token' },
+    session: mocks.session,
   }),
 }));
 
-import { buildEditorCommandBody, getAppendText, toUiMessage, useChat } from '../use-chat';
+import {
+  buildEditorCommandBody,
+  getAppendText,
+  getMessageTextContent,
+  toUiMessage,
+  useChat,
+} from '../use-chat';
 
 const originalFetch = globalThis.fetch;
 
@@ -29,6 +37,7 @@ function createChatStreamResponse(text = 'Done'): Response {
 
 describe('editor AI chat adapter', () => {
   beforeEach(() => {
+    mocks.session = { access_token: 'session-token' };
     globalThis.fetch = vi.fn(async () => createChatStreamResponse());
   });
 
@@ -77,12 +86,38 @@ describe('editor AI chat adapter', () => {
     });
   });
 
+  it('handles invalid system bodies and non-text legacy parts', () => {
+    expect(buildEditorCommandBody([], null)).toEqual({ messages: [] });
+    expect(buildEditorCommandBody([], { system: 42 })).toEqual({ messages: [] });
+    expect(buildEditorCommandBody([], { system: '   ' })).toEqual({ messages: [] });
+    expect(getMessageTextContent({ role: 'user', content: [{ type: 'image' }] })).toBe('');
+    expect(getMessageTextContent({ role: 'assistant', parts: [{ type: 'file' } as any] })).toBe('');
+    expect(getMessageTextContent({ role: 'user' })).toBe('');
+    expect(toUiMessage({ role: 'system', content: 'System' }, 0).role).toBe('system');
+  });
+
   it('normalizes append input without unsafe message casts', () => {
+    expect(getAppendText()).toBe('');
     expect(getAppendText({ text: 'Direct text' })).toBe('Direct text');
     expect(getAppendText({ role: 'user', content: [{ type: 'text', text: 'Legacy text' }] })).toBe(
       'Legacy text'
     );
     expect(getAppendText({ text: undefined })).toBe('');
+  });
+
+  it('supports signed-out headers, functional messages, empty appends, and form submission', async () => {
+    mocks.session = undefined;
+    const preventDefault = vi.fn();
+    const { result } = renderHook(() => useChat());
+    await act(async () => result.current.append());
+    act(() => result.current.setMessages(current => [...current]));
+    act(() => result.current.handleSubmit({ preventDefault }));
+    expect(preventDefault).toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+
+    act(() => result.current.handleInputChange({ target: { value: '  Submit me  ' } } as any));
+    act(() => result.current.handleSubmit());
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
   });
 
   it('sends authenticated editor requests and appends streamed responses', async () => {

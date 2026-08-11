@@ -2,7 +2,16 @@
 
 import type { ReactNode } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const mocks = vi.hoisted(() => ({
+  preloadContext: undefined as
+    { beginIntent: ReturnType<typeof vi.fn>; cancelIntent: ReturnType<typeof vi.fn> } | undefined,
+}));
+
+vi.mock('@/zero/preloads', () => ({
+  usePreloadCoordinator: () => mocks.preloadContext,
+}));
 
 import { NavigationCommandDialogView } from '../NavigationCommandDialogView';
 import type { NavigationItem } from '../types/navigation.types';
@@ -28,13 +37,20 @@ vi.mock('@/features/shared/ui/ui/command.tsx', () => ({
     onSelect,
     value,
     'aria-keyshortcuts': ariaKeyShortcuts,
+    ...props
   }: {
     children: ReactNode;
     onSelect?: () => void;
     value?: string;
     'aria-keyshortcuts'?: string;
+    'data-action-id'?: string;
   }) => (
-    <button data-value={value} aria-keyshortcuts={ariaKeyShortcuts} onClick={() => onSelect?.()}>
+    <button
+      data-value={value}
+      aria-keyshortcuts={ariaKeyShortcuts}
+      onClick={() => onSelect?.()}
+      {...props}
+    >
       {children}
     </button>
   ),
@@ -43,6 +59,13 @@ vi.mock('@/features/shared/ui/ui/command.tsx', () => ({
 }));
 
 afterEach(cleanup);
+
+beforeEach(() => {
+  mocks.preloadContext = {
+    beginIntent: vi.fn(),
+    cancelIntent: vi.fn(),
+  };
+});
 
 const primaryNavItems: NavigationItem[] = [
   {
@@ -141,6 +164,18 @@ describe('NavigationCommandDialogView', () => {
     expect(screen.getByText(/Berlin/)).toBeTruthy();
     expect(screen.getByText('Open Motion')).toBeTruthy();
     expect(screen.getByText(/Policy Board/)).toBeTruthy();
+    expect(
+      document.querySelector('[data-action-id="navigation.command.item.select"]')
+    ).toBeTruthy();
+    expect(
+      document.querySelector('[data-action-id="navigation.command.group.select"]')
+    ).toBeTruthy();
+    expect(
+      document.querySelector('[data-action-id="navigation.command.event.select"]')
+    ).toBeTruthy();
+    expect(
+      document.querySelector('[data-action-id="navigation.command.amendment.select"]')
+    ).toBeTruthy();
 
     fireEvent.click(screen.getByText('Working Circle'));
     fireEvent.click(screen.getByText('Future Assembly'));
@@ -188,6 +223,121 @@ describe('NavigationCommandDialogView', () => {
     expect(screen.queryByRole('region', { name: 'Groups' })).toBeNull();
     expect(screen.queryByRole('region', { name: 'Events' })).toBeNull();
     expect(screen.queryByRole('region', { name: 'Amendments' })).toBeNull();
+  });
+
+  it('covers every entity fallback, preload event, badge, user section, and loading state', () => {
+    const onSelectPrimaryItem = vi.fn();
+    const onSelectUserItem = vi.fn();
+    const onSelectGroupItem = vi.fn();
+    const onSelectEventItem = vi.fn();
+    const onSelectAmendmentItem = vi.fn();
+    const items: NavigationItem[] = [
+      {
+        badge: 3,
+        href: '/fallback',
+        icon: 'Home',
+        id: 'home',
+        label: 'Home',
+        preloadTarget: { href: '/preloaded' },
+      },
+      { icon: 'Home', id: 'unknown-item', label: 'Unknown' },
+    ];
+
+    render(
+      <NavigationCommandDialogView
+        open
+        onOpenChange={vi.fn()}
+        copy={copy}
+        primaryNavItems={items}
+        userNavItems={[{ icon: 'Home', id: 'profile', label: 'Profile', href: '/profile' }]}
+        groupItems={[
+          { id: 'named-group', name: 'Circle', image_url: 'circle.png' },
+          { id: 'anonymous-group', name: null, image_url: null } as any,
+        ]}
+        eventItems={[
+          {
+            id: 'fallback-event',
+            key: 'fallback-event:key',
+            locationName: null,
+            groupName: null,
+            start_date: 0,
+            title: null,
+          } as any,
+        ]}
+        amendmentItems={[
+          {
+            code: null,
+            eventTitle: null,
+            groupName: null,
+            id: 'fallback-amendment',
+            targetGroupName: null,
+            title: null,
+          } as any,
+        ]}
+        navigationEntitiesLoading
+        onSelectPrimaryItem={onSelectPrimaryItem}
+        onSelectUserItem={onSelectUserItem}
+        onSelectGroupItem={onSelectGroupItem}
+        onSelectEventItem={onSelectEventItem}
+        onSelectAmendmentItem={onSelectAmendmentItem}
+      />
+    );
+
+    expect(screen.getByRole('status').textContent).toBe('Loading...');
+    expect(screen.getByText('3')).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'User Navigation' })).toBeTruthy();
+    expect(screen.getByText('Event')).toBeTruthy();
+    expect(screen.getByText('Amendment')).toBeTruthy();
+
+    const primaryItems = document.querySelectorAll(
+      '[data-action-id="navigation.command.item.select"]'
+    );
+    fireEvent.click(primaryItems[0]);
+    fireEvent.click(screen.getByText('Profile'));
+    expect(onSelectPrimaryItem).toHaveBeenCalledWith(items[0]);
+    expect(onSelectUserItem).toHaveBeenCalled();
+
+    for (const element of document.querySelectorAll<HTMLElement>('[data-action-id]')) {
+      fireEvent.mouseEnter(element);
+      fireEvent.mouseLeave(element);
+      fireEvent.focus(element);
+      fireEvent.blur(element);
+      fireEvent.touchStart(element);
+    }
+    expect(mocks.preloadContext?.beginIntent).toHaveBeenCalledWith('/preloaded');
+    expect(mocks.preloadContext?.cancelIntent).toHaveBeenCalledWith('/preloaded');
+    expect(mocks.preloadContext?.beginIntent).toHaveBeenCalledWith('/group/named-group');
+    expect(mocks.preloadContext?.beginIntent).toHaveBeenCalledWith('/event/fallback-event');
+    expect(mocks.preloadContext?.beginIntent).toHaveBeenCalledWith('/amendment/fallback-amendment');
+  });
+
+  it('keeps preload handlers safe without a coordinator', () => {
+    mocks.preloadContext = undefined;
+    render(
+      <NavigationCommandDialogView
+        open
+        onOpenChange={vi.fn()}
+        copy={copy}
+        primaryNavItems={primaryNavItems}
+        userNavItems={[]}
+        groupItems={[{ id: 'group-1', name: 'Circle', image_url: null }]}
+        eventItems={[]}
+        amendmentItems={[]}
+        navigationEntitiesLoading={false}
+        onSelectPrimaryItem={vi.fn()}
+        onSelectUserItem={vi.fn()}
+        onSelectGroupItem={vi.fn()}
+        onSelectEventItem={vi.fn()}
+        onSelectAmendmentItem={vi.fn()}
+      />
+    );
+    for (const element of document.querySelectorAll<HTMLElement>('[data-action-id]')) {
+      fireEvent.mouseEnter(element);
+      fireEvent.mouseLeave(element);
+      fireEvent.focus(element);
+      fireEvent.blur(element);
+      fireEvent.touchStart(element);
+    }
   });
 
   it.each([

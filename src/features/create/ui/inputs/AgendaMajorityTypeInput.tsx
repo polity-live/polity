@@ -30,20 +30,33 @@ export function AgendaMajorityTypeInput({
     <div className="space-y-2">
       <FormControlLabel>{label}</FormControlLabel>
       <FormControlSelect
+        data-action-id="create.agenda-majority.select"
         value={value}
         onValueChange={nextValue => onChange(nextValue as MajorityType)}
       >
-        <FormControlSelectTrigger>
+        <FormControlSelectTrigger data-action-id="create.agenda-majority.select">
           <FormControlSelectValue />
         </FormControlSelectTrigger>
         <FormControlSelectContent>
-          <FormControlSelectItem value="simple" data-create-option="simple">
+          <FormControlSelectItem
+            data-action-id="create.agenda-majority.option.simple"
+            value="simple"
+            data-create-option="simple"
+          >
             {options.simple}
           </FormControlSelectItem>
-          <FormControlSelectItem value="absolute" data-create-option="absolute">
+          <FormControlSelectItem
+            data-action-id="create.agenda-majority.option.absolute"
+            value="absolute"
+            data-create-option="absolute"
+          >
             {options.absolute}
           </FormControlSelectItem>
-          <FormControlSelectItem value="two_thirds" data-create-option="two_thirds">
+          <FormControlSelectItem
+            data-action-id="create.agenda-majority.option.two-thirds"
+            value="two_thirds"
+            data-create-option="two_thirds"
+          >
             {options.twoThirds}
           </FormControlSelectItem>
         </FormControlSelectContent>

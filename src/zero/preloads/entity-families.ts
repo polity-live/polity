@@ -25,13 +25,13 @@ interface RunnableZero {
   ) => Promise<unknown>;
 }
 
-function rows(value: unknown): Record<string, unknown>[] {
+export function rows(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value)
     ? value.filter((row): row is Record<string, unknown> => Boolean(row) && typeof row === 'object')
     : [];
 }
 
-function idRows(value: unknown): string[] {
+export function idRows(value: unknown): string[] {
   return [
     ...new Set(
       rows(value)
@@ -41,11 +41,11 @@ function idRows(value: unknown): string[] {
   ].sort();
 }
 
-function taskBySuffix(tasks: readonly PreloadTask[], suffix: string) {
+export function taskBySuffix(tasks: readonly PreloadTask[], suffix: string) {
   return tasks.find(task => task.key.endsWith(`:${suffix}`));
 }
 
-function rotateAfter(tasks: readonly PreloadTask[], active?: PreloadTask) {
+export function rotateAfter(tasks: readonly PreloadTask[], active?: PreloadTask) {
   if (!active) return [];
   const index = tasks.findIndex(task => task.key === active.key);
   if (index < 0) return tasks;
@@ -59,7 +59,7 @@ function useEntityTaskFamily(scope: string, tasks: readonly PreloadTask[], activ
   useIdlePreloadTasks(scope, active ? rotateAfter(tasks, active) : [], 2, true);
 }
 
-function selectGroupTask(tasks: readonly PreloadTask[], groupId: string, pathname: string) {
+export function selectGroupTask(tasks: readonly PreloadTask[], groupId: string, pathname: string) {
   const base = `/group/${groupId}`;
   if (pathname === base || pathname === `${base}/`) return taskBySuffix(tasks, 'overview');
   if (pathname.startsWith(`${base}/operation`)) return taskBySuffix(tasks, 'operation');
@@ -114,7 +114,7 @@ export function useGroupRouteFamilyPreloads(groupId?: string) {
   useEntityTaskFamily(groupId ? `group:${groupId}` : 'group:none', tasks, active);
 }
 
-function selectEventTask(tasks: readonly PreloadTask[], eventId: string, pathname: string) {
+export function selectEventTask(tasks: readonly PreloadTask[], eventId: string, pathname: string) {
   const base = `/event/${eventId}`;
   if (pathname === base || pathname === `${base}/`) return taskBySuffix(tasks, 'overview');
   if (pathname.startsWith(`${base}/agenda`)) return taskBySuffix(tasks, 'agenda');
@@ -178,14 +178,18 @@ export function useEventRouteFamilyPreloads(eventId?: string) {
   useEntityTaskFamily(eventId ? `event:${eventId}` : 'event:none', tasks, active);
 }
 
-function selectAmendmentTask(tasks: readonly PreloadTask[], amendmentId: string, pathname: string) {
+export function selectAmendmentTask(
+  tasks: readonly PreloadTask[],
+  amendmentId: string,
+  pathname: string
+) {
   const base = `/amendment/${amendmentId}`;
   if (pathname === base || pathname === `${base}/`) return taskBySuffix(tasks, 'wiki');
   const page = pathname.slice(base.length + 1).split('/')[0];
   return page ? taskBySuffix(tasks, page) : undefined;
 }
 
-function amendmentDocumentEntries(
+export function amendmentDocumentEntries(
   page: string,
   documentIds: readonly string[]
 ): ZeroPreloadEntry[] {
@@ -230,7 +234,7 @@ export function useAmendmentRouteFamilyPreloads(amendmentId?: string) {
   const tasks = useMemo(() => {
     if (!user?.id || !amendmentId) return [];
     return createAmendmentPreloadTasks(amendmentId, user.id).map<PreloadTask>(item => {
-      const page = item.key.split(':').at(-1) ?? '';
+      const page = item.key.slice(item.key.lastIndexOf(':') + 1);
       if (!['text', 'change-requests', 'discussions'].includes(page)) return item;
       return {
         ...item,
@@ -248,7 +252,7 @@ export function useAmendmentRouteFamilyPreloads(amendmentId?: string) {
   useEntityTaskFamily(amendmentId ? `amendment:${amendmentId}` : 'amendment:none', tasks, active);
 }
 
-function selectUserTask(tasks: readonly PreloadTask[], userId: string, pathname: string) {
+export function selectUserTask(tasks: readonly PreloadTask[], userId: string, pathname: string) {
   const base = `/user/${userId}`;
   if (pathname === base || pathname === `${base}/`) return taskBySuffix(tasks, 'profile');
   if (pathname.startsWith(`${base}/blog/`)) return undefined;

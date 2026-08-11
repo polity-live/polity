@@ -126,6 +126,7 @@ export function StatementDetail({ model }: StatementDetailProps) {
                 ) : null}
                 {group ? <span>·</span> : null}
                 <UserIdentityLink
+                  data-action-id="statements.detail.author.open"
                   userId={authorId}
                   avatarUrl={author?.avatar}
                   name={labels.authorByline}
@@ -208,12 +209,13 @@ export function StatementDetail({ model }: StatementDetailProps) {
 
               <div className="border-t pt-2">
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" presentation="mutedTiny">
+                  <span className="text-muted-foreground inline-flex items-center text-xs">
                     <MessageSquare className="mr-1 h-4 w-4" />
                     {computedCommentCount} {labels.comments}
-                  </Button>
+                  </span>
 
                   <ShareButton
+                    data-action-id="statements.detail.share.open"
                     url={`${typeof window !== 'undefined' ? window.location.origin : ''}/statement/${statementId}`}
                     title={model.displayTitle}
                     variant="ghost"
@@ -223,6 +225,7 @@ export function StatementDetail({ model }: StatementDetailProps) {
                   {model.isOwner ? (
                     <>
                       <Button
+                        data-action-id="statements.detail.edit.open"
                         variant="ghost"
                         size="sm"
                         className="text-muted-foreground text-xs"
@@ -232,6 +235,7 @@ export function StatementDetail({ model }: StatementDetailProps) {
                         {labels.edit}
                       </Button>
                       <Button
+                        data-action-id="statements.detail.delete.open"
                         variant="ghost"
                         size="sm"
                         className="text-destructive text-xs"
@@ -268,7 +272,11 @@ export function StatementDetail({ model }: StatementDetailProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{labels.cancel}</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={model.onConfirmDelete}>
+            <AlertDialogAction
+              variant="destructive"
+              data-action-id="statements.detail.delete.confirm"
+              onClick={model.onConfirmDelete}
+            >
               {labels.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -360,6 +368,7 @@ export function StatementDetail({ model }: StatementDetailProps) {
                 ))}
                 {editDialog.editSurveyOptions.length < 4 ? (
                   <Button
+                    data-action-id="statements.detail.survey-option.add"
                     type="button"
                     variant="link"
                     className="h-auto p-0"
@@ -379,7 +388,12 @@ export function StatementDetail({ model }: StatementDetailProps) {
                   />
                 </div>
                 {survey ? (
-                  <Button variant="destructive" size="sm" onClick={model.onRemoveSurvey}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    data-action-id="statements.detail.survey.remove"
+                    onClick={model.onRemoveSurvey}
+                  >
                     {labels.removeSurvey}
                   </Button>
                 ) : null}
@@ -387,10 +401,18 @@ export function StatementDetail({ model }: StatementDetailProps) {
             </div>
           </div>
           <DialogFooter className="bg-background shrink-0 border-t px-4 py-3 sm:px-6">
-            <Button variant="outline" onClick={model.onCloseEdit}>
+            <Button
+              variant="outline"
+              data-action-id="statements.detail.edit.cancel"
+              onClick={model.onCloseEdit}
+            >
               {labels.cancel}
             </Button>
-            <Button disabled={!model.canSaveEdit} onClick={model.onSaveEdit}>
+            <Button
+              disabled={!model.canSaveEdit}
+              data-action-id="statements.detail.edit.save"
+              onClick={model.onSaveEdit}
+            >
               {labels.save}
             </Button>
           </DialogFooter>

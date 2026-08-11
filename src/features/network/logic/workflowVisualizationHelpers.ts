@@ -20,7 +20,7 @@ export function getDefaultWorkflowId(
     return selectedWorkflowId;
   }
 
-  return workflows[0]?.id ?? '';
+  return workflows[0].id;
 }
 
 export function toWorkflowVisualizationWorkflow(
@@ -32,7 +32,7 @@ export function toWorkflowVisualizationWorkflow(
     startGroup: workflow.start_group_id
       ? {
           id: workflow.start_group?.id ?? workflow.start_group_id,
-          name: workflow.start_group?.name ?? workflow.start_group_id ?? null,
+          name: workflow.start_group?.name ?? workflow.start_group_id,
         }
       : null,
     approvalState: workflow.status === 'active' ? 'accepted' : 'pending',

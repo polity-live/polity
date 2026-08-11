@@ -163,14 +163,26 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
     {
       id: 'user',
       header: () => (
-        <SortButton label={userColumnLabel} field="user" sort={sort} onSortChange={onSortChange} />
+        <SortButton
+          data-action-id="groups.members.active.sort-user"
+          label={userColumnLabel}
+          field="user"
+          sort={sort}
+          onSortChange={onSortChange}
+        />
       ),
       cell: ({ row }) => <UserTableCell user={row.original.user} />,
     },
     {
       id: 'role',
       header: () => (
-        <SortButton label={roleColumnLabel} field="role" sort={sort} onSortChange={onSortChange} />
+        <SortButton
+          data-action-id="groups.members.active.sort-role"
+          label={roleColumnLabel}
+          field="role"
+          sort={sort}
+          onSortChange={onSortChange}
+        />
       ),
       cell: ({ row }) => {
         const membership = row.original;
@@ -220,12 +232,14 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
         return (
           <div className="flex justify-end gap-2">
             <TableActionIconButton
+              data-action-id="groups.members.active.view-rights"
               label={rightsLabel}
               icon={<Eye className="h-4 w-4" />}
               onClick={() => onOpenRightsDialog(membership)}
             />
             {!effectiveReadOnly ? (
               <TableActionIconButton
+                data-action-id="groups.members.active.change-role"
                 label={resolvedManageRolesLabel}
                 icon={<ArrowUpDown className="h-4 w-4" />}
                 variant="outline"
@@ -234,6 +248,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
             ) : null}
             {membership.source !== 'derived' && !effectiveReadOnly && userId ? (
               <TableActionIconButton
+                data-action-id="groups.members.active.remove"
                 label={resolvedRemoveLabel}
                 icon={<Trash2 className="h-4 w-4" />}
                 destructive
@@ -279,17 +294,26 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
 }
 
 interface SortButtonProps {
+  'data-action-id': string;
   label: string;
   field: MembershipSortField;
   sort: MembershipSort;
   onSortChange: (field: MembershipSortField) => void;
 }
 
-function SortButton({ label, field, sort, onSortChange }: SortButtonProps) {
+function SortButton({
+  'data-action-id': actionId,
+  label,
+  field,
+  sort,
+  onSortChange,
+}: SortButtonProps) {
   const Icon = sort.field !== field ? ArrowUpDown : sort.direction === 'asc' ? ArrowUp : ArrowDown;
 
   return (
     <Button
+      data-action-id={actionId}
+      data-action-scope="presentation"
       type="button"
       variant="ghost"
       size="sm"

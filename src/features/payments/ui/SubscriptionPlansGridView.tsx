@@ -121,6 +121,7 @@ export function SubscriptionPlansGridView({
               </p>
             ) : null}
             <Button
+              data-action-id="payments.plan.free.select"
               type="button"
               variant={activeAmount === 0 ? 'default' : 'outline'}
               size="sm"
@@ -171,6 +172,7 @@ export function SubscriptionPlansGridView({
             </p>
             <PendingFreeHint show={isPlanActive(200) && !!pendingFreeDate} />
             <Button
+              data-action-id="payments.plan.running.select"
               type="button"
               variant={isPlanActive(200) ? 'default' : 'outline'}
               size="sm"
@@ -223,6 +225,7 @@ export function SubscriptionPlansGridView({
             </p>
             <PendingFreeHint show={isPlanActive(1000) && !!pendingFreeDate} />
             <Button
+              data-action-id="payments.plan.development.select"
               type="button"
               size="sm"
               className="w-full"
@@ -297,6 +300,7 @@ export function SubscriptionPlansGridView({
             </p>
             <PendingFreeHint show={hasCustomPlan && !!pendingFreeDate} />
             <Button
+              data-action-id="payments.plan.custom.select"
               type="button"
               variant={hasCustomPlan ? 'default' : 'outline'}
               size="sm"

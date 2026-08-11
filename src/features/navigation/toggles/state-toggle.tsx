@@ -25,6 +25,7 @@ export function StateToggle({
   return (
     <div className={cn('flex gap-1', className)}>
       <NavigationIconToggleButton
+        data-action-id="navigation.view.as-button.select"
         value="asButton"
         currentValue={currentState}
         onClick={() => onStateChange('asButton')}
@@ -33,6 +34,7 @@ export function StateToggle({
         size={size}
       />
       <NavigationIconToggleButton
+        data-action-id="navigation.view.as-button-list.select"
         value="asButtonList"
         currentValue={currentState}
         onClick={() => onStateChange('asButtonList')}
@@ -41,6 +43,7 @@ export function StateToggle({
         size={size}
       />
       <NavigationIconToggleButton
+        data-action-id="navigation.view.labeled-button-list.select"
         value="asLabeledButtonList"
         currentValue={currentState}
         onClick={() => onStateChange('asLabeledButtonList')}

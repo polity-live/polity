@@ -517,10 +517,6 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   // Persist content via Zero
   const saveContent = useCallback(
     async (newContent: Value) => {
-      if (readOnly) {
-        return;
-      }
-
       setSaveStatus('saving');
       try {
         const result =

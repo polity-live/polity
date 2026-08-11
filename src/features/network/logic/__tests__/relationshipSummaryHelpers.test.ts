@@ -2,48 +2,49 @@ import { describe, expect, it } from 'vitest';
 
 import { buildActiveRelationshipSummaries } from '../relationshipSummaryHelpers';
 
-describe('buildActiveRelationshipSummaries', () => {
-  it('maps parent entries to a current-group child relationship', () => {
-    const summaries = buildActiveRelationshipSummaries({
-      parents: [
-        {
-          group: { id: 'h2', name: 'H2' },
-          rights: ['informationRight'],
-        },
-      ],
-      children: [],
-      siblings: [],
-    });
+const group = (id: string) => ({ id, name: id }) as any;
 
-    expect(summaries).toEqual([
+describe('buildActiveRelationshipSummaries', () => {
+  it('maps parent and child perspectives and normalizes absent sibling metadata', () => {
+    expect(
+      buildActiveRelationshipSummaries({
+        parents: [{ group: group('parent'), rights: ['view'] }],
+        children: [{ group: group('child'), rights: ['manage'] }],
+        siblings: [{ group: group('sibling'), rights: [] }],
+      })
+    ).toEqual([
+      { group: group('parent'), rights: ['view'], type: 'child', membershipMode: null },
+      { group: group('child'), rights: ['manage'], type: 'parent', membershipMode: null },
       {
-        group: { id: 'h2', name: 'H2' },
-        rights: ['informationRight'],
-        type: 'child',
+        group: group('sibling'),
+        rights: [],
+        type: 'sibling',
         membershipMode: null,
+        requiredSourceRoleId: null,
+        requiredSourceRoleName: null,
       },
     ]);
   });
 
-  it('maps child entries to a current-group parent relationship', () => {
-    const summaries = buildActiveRelationshipSummaries({
-      parents: [],
-      children: [
-        {
-          group: { id: 'b2', name: 'B2' },
-          rights: ['informationRight'],
-        },
-      ],
-      siblings: [],
+  it('preserves explicit sibling membership and role metadata', () => {
+    expect(
+      buildActiveRelationshipSummaries({
+        parents: [],
+        children: [],
+        siblings: [
+          {
+            group: group('sibling'),
+            rights: ['vote'],
+            membershipMode: 'automatic' as any,
+            requiredSourceRoleId: 'role-1',
+            requiredSourceRoleName: 'Delegate',
+          },
+        ],
+      })[0]
+    ).toMatchObject({
+      membershipMode: 'automatic',
+      requiredSourceRoleId: 'role-1',
+      requiredSourceRoleName: 'Delegate',
     });
-
-    expect(summaries).toEqual([
-      {
-        group: { id: 'b2', name: 'B2' },
-        rights: ['informationRight'],
-        type: 'parent',
-        membershipMode: null,
-      },
-    ]);
   });
 });

@@ -13,12 +13,7 @@ export function useAuthGuardController({ requireAuth, redirectTo }: UseAuthGuard
   const { pathname } = useLocation();
   const { user, loading: isLoading } = useAuth();
   const isAuthenticated = Boolean(user);
-  const [isMounted, setIsMounted] = useState(false);
   const [authInitialized, setAuthInitialized] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     if (authInitialized) return;
@@ -39,7 +34,7 @@ export function useAuthGuardController({ requireAuth, redirectTo }: UseAuthGuard
   }, [isLoading, user, authInitialized]);
 
   useEffect(() => {
-    if (!authInitialized || !isMounted) return;
+    if (!authInitialized) return;
 
     if (requireAuth && !isAuthenticated) {
       const destination = redirectTo || `/auth?redirect=${encodeURIComponent(pathname)}`;
@@ -48,10 +43,10 @@ export function useAuthGuardController({ requireAuth, redirectTo }: UseAuthGuard
       const destination = redirectTo || '/';
       navigate({ to: destination });
     }
-  }, [isAuthenticated, authInitialized, requireAuth, navigate, pathname, redirectTo, isMounted]);
+  }, [isAuthenticated, authInitialized, requireAuth, navigate, pathname, redirectTo]);
 
   return {
-    isReady: authInitialized && isMounted,
+    isReady: authInitialized,
     isAllowed: requireAuth ? isAuthenticated : !isAuthenticated,
   };
 }

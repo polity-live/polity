@@ -72,7 +72,7 @@ export function ToolbarSeparator({
 
 // From toggleVariants
 const toolbarButtonVariants = cva(
-  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-[var(--motion-duration-fast)] outline-none hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-checked:bg-success aria-checked:text-success-foreground aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-[color,background-color,box-shadow,transform] duration-[var(--motion-duration-fast)] outline-none hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-pressed:bg-success aria-pressed:text-success-foreground aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     defaultVariants: {
       size: 'default',
@@ -110,7 +110,7 @@ const dropdownArrowVariants = cva(
       },
       variant: {
         default:
-          'bg-transparent hover:bg-muted hover:text-muted-foreground aria-checked:bg-success aria-checked:text-success-foreground',
+          'bg-transparent hover:bg-muted hover:text-muted-foreground aria-pressed:bg-success aria-pressed:text-success-foreground',
         outline:
           'border border-l-0 border-input bg-transparent hover:bg-accent hover:text-accent-foreground',
       },
@@ -181,36 +181,34 @@ export const ToolbarButton = withTooltip(function ToolbarButton({
   });
 
   return typeof pressed === 'boolean' ? (
-    <ToolbarToggleGroup disabled={loading || disabled} value="single" type="single">
-      <ToolbarToggleItem
-        className={cn(
-          toolbarButtonVariants({
-            size,
-            variant,
-          }),
-          showStatus && 'relative',
-          isDropdown && 'justify-between gap-1 pr-1',
-          className
-        )}
-        value={pressed ? 'single' : ''}
-        disabled={loading || disabled}
-        aria-busy={loading || undefined}
-        data-loading={loading ? 'true' : undefined}
-        data-success={successState ? 'true' : undefined}
-        {...props}
-      >
-        {isDropdown ? (
-          <>
-            <div className="flex flex-1 items-center gap-2 whitespace-nowrap">{content}</div>
-            <div>
-              <ChevronDown className="text-muted-foreground size-3.5" data-icon />
-            </div>
-          </>
-        ) : (
-          content
-        )}
-      </ToolbarToggleItem>
-    </ToolbarToggleGroup>
+    <ToolbarPrimitive.Button
+      className={cn(
+        toolbarButtonVariants({
+          size,
+          variant,
+        }),
+        showStatus && 'relative',
+        isDropdown && 'justify-between gap-1 pr-1',
+        className
+      )}
+      disabled={loading || disabled}
+      aria-pressed={pressed}
+      aria-busy={loading || undefined}
+      data-loading={loading ? 'true' : undefined}
+      data-success={successState ? 'true' : undefined}
+      {...props}
+    >
+      {isDropdown ? (
+        <>
+          <div className="flex flex-1 items-center gap-2 whitespace-nowrap">{content}</div>
+          <div>
+            <ChevronDown className="text-muted-foreground size-3.5" data-icon />
+          </div>
+        </>
+      ) : (
+        content
+      )}
+    </ToolbarPrimitive.Button>
   ) : (
     <ToolbarPrimitive.Button
       className={cn(
@@ -236,31 +234,33 @@ export const ToolbarButton = withTooltip(function ToolbarButton({
 
 export function ToolbarSplitButton({
   className,
+  pressed,
   ...props
-}: React.ComponentPropsWithoutRef<typeof ToolbarButton>) {
+}: React.ComponentPropsWithoutRef<'div'> & { pressed?: boolean }) {
   return (
-    <ToolbarButton
-      className={cn('group flex gap-0 px-0 hover:bg-transparent', className)}
+    <div
+      role="group"
+      data-pressed={pressed ? 'true' : 'false'}
+      className={cn('group flex gap-0 px-0', className)}
       {...props}
     />
   );
 }
 
-type ToolbarSplitButtonPrimaryProps = Omit<
-  React.ComponentPropsWithoutRef<typeof ToolbarToggleItem>,
-  'value'
-> &
+type ToolbarSplitButtonPrimaryProps = React.ComponentPropsWithoutRef<'button'> &
   VariantProps<typeof toolbarButtonVariants>;
 
 export function ToolbarSplitButtonPrimary({
   children,
   className,
   size = 'sm',
+  type = 'button',
   variant,
   ...props
 }: ToolbarSplitButtonPrimaryProps) {
   return (
-    <span
+    <button
+      type={type}
       className={cn(
         toolbarButtonVariants({
           size,
@@ -273,18 +273,20 @@ export function ToolbarSplitButtonPrimary({
       {...props}
     >
       {children}
-    </span>
+    </button>
   );
 }
 
 export function ToolbarSplitButtonSecondary({
   className,
   size,
+  type = 'button',
   variant,
   ...props
-}: React.ComponentPropsWithoutRef<'span'> & VariantProps<typeof dropdownArrowVariants>) {
+}: React.ComponentPropsWithoutRef<'button'> & VariantProps<typeof dropdownArrowVariants>) {
   return (
-    <span
+    <button
+      type={type}
       className={cn(
         dropdownArrowVariants({
           size,
@@ -294,11 +296,10 @@ export function ToolbarSplitButtonSecondary({
         className
       )}
       onClick={e => e.stopPropagation()}
-      role="button"
       {...props}
     >
       <ChevronDown className="text-muted-foreground size-3.5" data-icon />
-    </span>
+    </button>
   );
 }
 
@@ -419,21 +420,35 @@ function ToolbarTooltipWrapperView<T extends React.ElementType>({
   tooltipProps,
   tooltipTriggerProps,
 }: ToolbarTooltipWrapperViewProps<T>) {
-  const component = <Component {...componentProps} />;
   const { disabled, loading } = componentProps as { disabled?: boolean; loading?: boolean };
-  const trigger =
-    disabled || loading ? (
-      <span
-        className="inline-flex"
-        tabIndex={0}
-        aria-disabled="true"
-        aria-label={typeof tooltip === 'string' ? tooltip : undefined}
-      >
-        {component}
-      </span>
-    ) : (
-      component
-    );
+  const ariaProps = componentProps as Record<string, unknown>;
+  const accessibleName =
+    typeof ariaProps['aria-label'] === 'string'
+      ? ariaProps['aria-label']
+      : typeof tooltip === 'string' && !ariaProps['aria-labelledby']
+        ? tooltip
+        : undefined;
+  const usesDisabledTooltipTrigger = Boolean((disabled || loading) && tooltip && mounted);
+  const namedComponentProps = {
+    ...componentProps,
+    ...(accessibleName ? { 'aria-label': accessibleName } : {}),
+    ...(usesDisabledTooltipTrigger ? { 'aria-hidden': true, tabIndex: -1 } : {}),
+  } as React.ComponentProps<T>;
+  const component = <Component {...namedComponentProps} />;
+  const trigger = usesDisabledTooltipTrigger ? (
+    <span
+      className="inline-flex"
+      role="button"
+      tabIndex={0}
+      aria-disabled="true"
+      aria-busy={loading || undefined}
+      aria-label={accessibleName}
+    >
+      {component}
+    </span>
+  ) : (
+    component
+  );
 
   if (tooltip && mounted) {
     return (

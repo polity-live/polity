@@ -70,6 +70,7 @@ export function VoteControlsView({
       )}
       <div className="flex gap-2">
         <Button
+          data-action-id="votes.change-request.vote.accept"
           onClick={() => handleVote('accept')}
           disabled={isVoting}
           variant="default"
@@ -79,6 +80,7 @@ export function VoteControlsView({
           {t('features.amendments.voteControls.accept')}
         </Button>
         <Button
+          data-action-id="votes.change-request.vote.reject"
           onClick={() => handleVote('reject')}
           disabled={isVoting}
           variant="destructive"
@@ -88,6 +90,7 @@ export function VoteControlsView({
           {t('features.amendments.voteControls.reject')}
         </Button>
         <Button
+          data-action-id="votes.change-request.vote.abstain"
           onClick={() => handleVote('abstain')}
           disabled={isVoting}
           variant="outline"

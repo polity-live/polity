@@ -41,9 +41,7 @@ export function assertTemplateEnvironment(
   configured: string | undefined
 ) {
   if (configured && configured !== requested) {
-    throw new Error(
-      `NEWSLETTER_ENVIRONMENT must be ${requested}; received ${configured ?? 'undefined'}`
-    );
+    throw new Error(`NEWSLETTER_ENVIRONMENT must be ${requested}; received ${configured}`);
   }
 }
 

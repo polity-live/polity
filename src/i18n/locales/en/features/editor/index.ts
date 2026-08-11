@@ -15,6 +15,7 @@ export const editor = {
     saveFailed: 'Save failed',
     unsavedChanges: 'Unsaved changes',
     allSaved: 'All changes saved',
+    editTitle: 'Edit title',
   },
 
   // Navigation
@@ -74,6 +75,9 @@ export const editor = {
     restoreFailed: 'Failed to restore version',
     titleUpdated: 'Version title updated',
     titleUpdateFailed: 'Failed to update version title',
+    saveTitle: 'Save title',
+    cancelTitle: 'Cancel title editing',
+    editTitle: 'Edit version title',
     versionRestored: 'Version restored successfully',
     versionDeleted: 'Version deleted',
     updateFailed: 'Failed to update version',
@@ -126,6 +130,7 @@ export const editor = {
     invitedOne: 'Collaborator invited successfully',
     invitedMultiple: '{{count}} collaborators invited successfully',
     inviteFailed: 'Failed to invite collaborators',
+    removeSelection: 'Remove selection',
   },
 
   // Suggestion View Toggle

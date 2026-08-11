@@ -29,11 +29,9 @@ export const DEFAULT_CITY_DESIGN_OSM_LAYER_VISIBILITY: CityDesignOsmLayerVisibil
 
 function hasClosedRing(feature: CityDesignOsmFeature) {
   const points = feature.points ?? [];
-  const first = points[0];
-  const last = points[points.length - 1];
-  return (
-    points.length >= 4 && Boolean(first && last && first.lat === last.lat && first.lon === last.lon)
-  );
+  const first = points[0] as (typeof points)[number];
+  const last = points[points.length - 1] as (typeof points)[number];
+  return points.length >= 4 && Boolean(first.lat === last.lat && first.lon === last.lon);
 }
 
 export function getCityDesignOsmFeatureLayer(

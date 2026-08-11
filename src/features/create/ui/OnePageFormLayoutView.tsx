@@ -79,6 +79,7 @@ export function OnePageFormLayoutView({
           <CreateSubmitInvalidNotice reason={invalidReason} className="mb-3" />
         ) : null}
         <Button
+          data-action-id="create.one-page.submit"
           onClick={onSubmit}
           disabled={isSubmitting || !allStepsValid}
           data-create-action="submit"

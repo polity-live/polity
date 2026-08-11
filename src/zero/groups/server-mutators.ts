@@ -326,13 +326,30 @@ async function reconcileMembershipDrivenEventsForGroups(
   });
 }
 
+export const groupServerMutatorInternals = {
+  addGroupMembershipRoleLink,
+  syncGroupMembershipRoleLinks,
+  sameStringSet,
+  groupMembershipRoleIds,
+  groupGuestRoleIds,
+  roleSummary,
+  notifyActiveMembershipRoleChange,
+  notifyActiveGuestAccessRoleChange,
+  loadBlogRoleNotificationContext,
+  reconcileBaseGroupHierarchyMemberships,
+  recomputeSiblingMembershipsForGroups,
+  expandAffectedGroupsWithSiblingMemberships,
+  recomputeGroupCountersForGroups,
+  reconcileMembershipDrivenEventsForGroups,
+};
+
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const groupServerMutators = {
   create: defineMutator(groupCreateSchema, async ({ tx, ctx, args }) => {
     await mutators.groups.create.fn({ tx, ctx, args });
 
     const now = Date.now();
-    let adminRoleId: string | null = null;
+    const adminRoleIds: string[] = [];
     const totalRoles = DEFAULT_GROUP_ROLES.length;
 
     for (let index = 0; index < totalRoles; index++) {
@@ -340,7 +357,7 @@ export const groupServerMutators = {
       const roleId = crypto.randomUUID();
 
       if (roleDef.name === 'Admin') {
-        adminRoleId = roleId;
+        adminRoleIds.push(roleId);
       }
 
       await tx.mutate.role.insert({
@@ -384,30 +401,24 @@ export const groupServerMutators = {
       }
     }
 
-    const shouldCreateCreatorMembership = true;
+    const creatorMembershipId = crypto.randomUUID();
 
-    if (shouldCreateCreatorMembership) {
-      const creatorMembershipId = crypto.randomUUID();
+    await tx.mutate.group_membership.insert({
+      id: creatorMembershipId,
+      group_id: args.id,
+      user_id: ctx.userID,
+      status: 'active',
+      visibility: 'public',
+      source: 'direct',
+      source_group_id: null,
+      created_at: now,
+    });
 
-      await tx.mutate.group_membership.insert({
-        id: creatorMembershipId,
-        group_id: args.id,
-        user_id: ctx.userID,
-        status: 'active',
-        visibility: 'public',
-        source: 'direct',
-        source_group_id: null,
-        created_at: now,
-      });
-
-      if (adminRoleId) {
-        await syncGroupMembershipRoleLinks(tx, {
-          group_membership_id: creatorMembershipId,
-          role_ids: [adminRoleId],
-          assigned_by_id: ctx.userID,
-        });
-      }
-    }
+    await syncGroupMembershipRoleLinks(tx, {
+      group_membership_id: creatorMembershipId,
+      role_ids: adminRoleIds,
+      assigned_by_id: ctx.userID,
+    });
 
     await ensureGroupConversation(tx, {
       groupId: args.id,
@@ -415,12 +426,10 @@ export const groupServerMutators = {
       requestedById: ctx.userID,
       createdAt: now,
     });
-    if (shouldCreateCreatorMembership) {
-      await syncUserWithGroupConversation(tx, {
-        groupId: args.id,
-        userId: ctx.userID,
-      });
-    }
+    await syncUserWithGroupConversation(tx, {
+      groupId: args.id,
+      userId: ctx.userID,
+    });
 
     await recomputeGroupCounters(tx, args.id);
     await recomputeUserCounters(tx, ctx.userID);

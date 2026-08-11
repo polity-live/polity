@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { toLocalDeadlineTimestamp } from '@/features/shared/logic/localDateTime';
 import {
   formatTodoDate,
+  formatTodoDateTime,
+  formatTodoTime,
   isOverdue,
   resolveTodoDeadlineTimestamp,
   todoDeadlineToFormValues,
@@ -62,9 +64,38 @@ describe('todo deadline formatting', () => {
 
     expect(formatTodoDate(dueAt.toISOString(), reference)).toContain('Today');
     expect(isOverdue(dueAt.toISOString(), 'pending', reference)).toBe(false);
+    expect(formatTodoDate(String(dueAt.getTime()), reference)).toContain('Today');
+    expect(formatTodoDateTime(dueAt.getTime())).toBe(dueAt.toLocaleString());
+  });
+
+  it('formats tomorrow, nearby future and past dates, and distant dates', () => {
+    const reference = new Date(2026, 6, 19, 9, 0).getTime();
+    expect(formatTodoDate(new Date(2026, 6, 20, 23, 59, 59, 999).getTime(), reference)).toBe(
+      'Tomorrow'
+    );
+    expect(formatTodoDate(new Date(2026, 6, 22, 23, 59, 59, 999).getTime(), reference)).toContain(
+      'features.todos.dueDate.inDays:3'
+    );
+    expect(formatTodoDate(new Date(2026, 6, 16, 23, 59, 59, 999).getTime(), reference)).toContain(
+      'features.todos.dueDate.daysAgo:3'
+    );
+    expect(formatTodoDate(new Date(2026, 7, 19, 23, 59, 59, 999).getTime(), reference)).toContain(
+      '2026'
+    );
+  });
+
+  it('returns no time for end-of-day and formats explicit times', () => {
+    expect(formatTodoTime(new Date(2026, 6, 19, 23, 59, 59, 999))).toBeNull();
+    expect(formatTodoTime(new Date(2026, 6, 19, 12, 30))).toBe(
+      new Date(2026, 6, 19, 12, 30).toLocaleTimeString(undefined, {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    );
   });
 
   it('never marks completed todos overdue', () => {
+    expect(isOverdue(undefined, 'pending', Date.now())).toBe(false);
     expect(isOverdue(1, 'completed', Date.now())).toBe(false);
   });
 
@@ -73,5 +104,14 @@ describe('todo deadline formatting', () => {
     const form = todoDeadlineToFormValues(original);
 
     expect(resolveTodoDeadlineTimestamp(original, form.dueDate, form.dueTime)).toBe(original);
+  });
+
+  it('rebuilds changed and cleared form deadlines', () => {
+    const original = new Date(2026, 6, 19, 17, 0).getTime();
+    expect(resolveTodoDeadlineTimestamp(original, '2026-07-20', '18:00')).toBe(
+      toLocalDeadlineTimestamp('2026-07-20', '18:00')
+    );
+    expect(resolveTodoDeadlineTimestamp(original, '', '')).toBeNull();
+    expect(resolveTodoDeadlineTimestamp(null, '', '')).toBeNull();
   });
 });

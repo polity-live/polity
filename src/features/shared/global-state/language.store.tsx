@@ -34,8 +34,6 @@ function getPersistedLanguage(value: unknown): Language | null {
 }
 
 function readPersistedLanguage(): Language | null {
-  if (typeof window === 'undefined') return null;
-
   try {
     const storedValue = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
     if (!storedValue) return null;

@@ -3,21 +3,8 @@ import { parseAiMessageContext, type AiPresentationBlock } from '@/lib/ai/messag
 
 const ASSISTANT_ERROR_CONTEXT_KIND = 'assistant-error';
 
-function isAiChatAttachment(value: unknown): value is AiChatAttachment {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const record = value as Record<string, unknown>;
-  return (
-    typeof record.entityType === 'string' &&
-    typeof record.entityId === 'string' &&
-    typeof record.title === 'string'
-  );
-}
-
 export function parseContextAttachments(contextJson?: string | null): AiChatAttachment[] {
-  return parseAiMessageContext(contextJson).attachments.filter(isAiChatAttachment);
+  return parseAiMessageContext(contextJson).attachments;
 }
 
 export function parseContextPresentations(contextJson?: string | null): AiPresentationBlock[] {

@@ -20,6 +20,7 @@ import {
   cleanupTutorial,
   loadTutorialRun,
   pauseTutorial,
+  restartTutorial,
   startTutorial,
 } from '../api';
 import { activateAppTutorialSession, isAppTutorialSessionActive } from '../events';
@@ -96,5 +97,31 @@ describe('app tutorial API tab lifecycle', () => {
     mocks.fetch.mockResolvedValueOnce(jsonResponse({ ok: true }));
     await cleanupTutorial(0);
     expect(isAppTutorialSessionActive()).toBe(false);
+  });
+
+  it('rejects missing sessions and preserves the tab for non-auth API failures', async () => {
+    activateAppTutorialSession();
+    mocks.getSession.mockResolvedValueOnce({ data: { session: null } });
+    await expect(loadTutorialRun()).rejects.toBeTruthy();
+    expect(isAppTutorialSessionActive()).toBe(false);
+
+    activateAppTutorialSession();
+    mocks.fetch.mockResolvedValueOnce(
+      jsonResponse({ error: { version: 1, code: 'tutorial_operation_failed' } }, 500)
+    );
+    await expect(loadTutorialRun()).rejects.toBeTruthy();
+    expect(isAppTutorialSessionActive()).toBe(true);
+  });
+
+  it('sends restart and keeps an unfinished advance active', async () => {
+    mocks.fetch
+      .mockResolvedValueOnce(jsonResponse({ run }))
+      .mockResolvedValueOnce(jsonResponse({ completed: false, route: '/next', run }));
+    await restartTutorial();
+    expect(JSON.parse(String((mocks.fetch.mock.calls[0][1] as RequestInit).body))).toMatchObject({
+      action: 'restart',
+    });
+    await advanceTutorial(0, 'primary-navigation', { type: 'acknowledge' });
+    expect(isAppTutorialSessionActive()).toBe(true);
   });
 });

@@ -160,7 +160,7 @@ export function useWorkflowEditor(groupId: string) {
           is_default_entry: draftIsDefaultEntry,
           created_by_id: createdById,
           steps: draftSteps.map((step, index) => ({
-            id: step.id ?? crypto.randomUUID(),
+            id: step.id,
             group_id: step.group_id,
             order_index: index,
             label: step.label,

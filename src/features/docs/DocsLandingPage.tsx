@@ -27,7 +27,11 @@ export function DocsLandingPage() {
           <p className="text-muted-foreground mx-auto mt-5 max-w-3xl text-lg leading-8">
             {t('pages.docs.overview.subtitle')}
           </p>
-          <DocsSearchTrigger prominent className="mx-auto mt-9 max-w-3xl" />
+          <DocsSearchTrigger
+            data-action-id="docs.landing.search.open"
+            prominent
+            className="mx-auto mt-9 max-w-3xl"
+          />
         </div>
       </section>
 
@@ -49,6 +53,7 @@ export function DocsLandingPage() {
             {starterPages.map((page, index) => (
               <li key={page.slug}>
                 <Link
+                  data-action-id="docs.landing.getting-started.open"
                   to={page.route as never}
                   className="bg-card hover:border-ring group flex h-full min-h-48 flex-col rounded-lg border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
                 >
@@ -87,6 +92,7 @@ export function DocsLandingPage() {
               const Icon = getIconComponent(page.icon);
               return (
                 <Link
+                  data-action-id="docs.landing.featured-guide.open"
                   key={page.slug}
                   to={page.route as never}
                   className="bg-card hover:border-ring group rounded-lg border p-5 transition-colors"
@@ -123,6 +129,7 @@ export function DocsLandingPage() {
                 <div className="grid gap-x-8 gap-y-1 border-t md:grid-cols-2 xl:grid-cols-3">
                   {group.pages.map(page => (
                     <Link
+                      data-action-id="docs.landing.catalog-page.open"
                       key={page.slug}
                       to={page.route as never}
                       className="hover:text-primary flex items-center justify-between gap-3 border-b py-3 text-sm font-medium transition-colors"

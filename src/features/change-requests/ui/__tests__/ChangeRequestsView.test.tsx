@@ -18,6 +18,11 @@ const changeRequestCardsListMock = vi.hoisted(() =>
     );
   })
 );
+const branchSelectorMock = vi.hoisted(() =>
+  vi.fn((_props: Record<string, unknown>) => (
+    <div data-testid="amendment-branch-selector-section" />
+  ))
+);
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -61,7 +66,7 @@ vi.mock('@/features/agendas/ui/ChangeRequestCardsList', () => ({
 }));
 
 vi.mock('@/features/amendments/ui/AmendmentBranchSelectorSection', () => ({
-  AmendmentBranchSelectorSection: () => <div data-testid="amendment-branch-selector-section" />,
+  AmendmentBranchSelectorSection: branchSelectorMock,
 }));
 
 afterEach(() => {
@@ -127,6 +132,33 @@ describe('ChangeRequestsView branch sections', () => {
         containerVariant: 'frameless',
       })
     );
+
+    const listProps = changeRequestCardsListMock.mock.calls[0]?.[0] as Record<string, any>;
+    expect(listProps.hasUserVoted({ change_request: null })).toBe(false);
+    expect(listProps.hasUserVoted({ change_request: { id: 'without-vote' } })).toBe(false);
+    expect(listProps.hasUserVoted({ change_request: { user_vote: 'accept' } })).toBe(true);
+    expect(
+      listProps.getUserSelectedChoiceIds({
+        change_request_id: 'cr-accept',
+        change_request: { user_vote: 'accept' },
+      })
+    ).toEqual(['mock-choice-yes-cr-accept']);
+    expect(
+      listProps.getUserSelectedChoiceIds({
+        change_request_id: 'cr-reject',
+        change_request: { user_vote: 'reject' },
+      })
+    ).toEqual(['mock-choice-no-cr-reject']);
+    expect(
+      listProps.getUserSelectedChoiceIds({
+        change_request_id: 'cr-abstain',
+        change_request: { user_vote: 'abstain' },
+      })
+    ).toEqual(['mock-choice-abstain-cr-abstain']);
+    expect(listProps.getUserSelectedChoiceIds({ change_request: null })).toEqual([]);
+    expect(listProps.getUserSelectedChoiceIds({ change_request: { user_vote: 'accept' } })).toEqual(
+      []
+    );
   });
 
   it('keeps a signed-out viewer read-only while rendering the change requests', () => {
@@ -155,6 +187,13 @@ describe('ChangeRequestsView branch sections', () => {
 
     expect(document.querySelector('[data-slot="entity-page-skeleton"]')).toBeTruthy();
     expect(screen.queryByText('generated.inline.0283_loading_change_requests_83649539')).toBeNull();
+  });
+
+  it('renders the not-found state when the amendment is absent', () => {
+    render(<ChangeRequestsView {...baseProps()} hasAmendment={false} />);
+
+    expect(screen.getByText('generated.inline.0066_amendment_not_found_3cea3d4d')).toBeTruthy();
+    expect(screen.queryByTestId('change-request-cards-list')).toBeNull();
   });
 
   it('renders the selected process branch and passes branch-specific data when switching', () => {
@@ -316,6 +355,173 @@ describe('ChangeRequestsView branch sections', () => {
         showAgendaDetailsVoteActions: true,
       })
     );
+  });
+
+  it('uses non-voting and final-event contracts plus editing-mode fallbacks', () => {
+    const onBranchChange = vi.fn();
+    const branches = [{ id: 'branch-1', created_at: 1 }] as any;
+    const sections: ChangeRequestBranchSection[] = [
+      {
+        id: 'event-final',
+        branchId: 'branch-event',
+        title: 'Event final',
+        editingMode: 'event_final_closing_vote',
+        totalCount: 1,
+        openCount: 1,
+        approvedCount: 0,
+        declinedCount: 0,
+        timelineItems: [timelineItem('event-final-cr')],
+        diffMap: {},
+        discussions: [],
+      },
+      {
+        id: 'plain',
+        branchId: null,
+        title: 'Plain',
+        editingMode: 'view',
+        totalCount: 1,
+        openCount: 1,
+        approvedCount: 0,
+        declinedCount: 0,
+        timelineItems: [timelineItem('plain-cr')],
+        diffMap: {},
+        discussions: [],
+      },
+    ];
+
+    render(
+      <ChangeRequestsView
+        {...baseProps()}
+        editingMode={undefined}
+        branchSections={sections}
+        branchSelectorBranches={branches}
+        branchDiffCandidates={[]}
+        defaultBranchDiffRightCandidateId={undefined}
+        onBranchChange={onBranchChange}
+        canVoteEvent
+        hasUserVotedOnEventCR={vi.fn()}
+        getEventCRSelectedChoiceIds={vi.fn()}
+        onCastEventCRVote={vi.fn()}
+        onOpenEventCRVoteDialog={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('amendment-branch-selector-section')).toBeTruthy();
+    expect(branchSelectorMock.mock.calls.at(-1)?.[0]).toMatchObject({
+      defaultDiffRightCandidateId: null,
+      onBranchChange,
+    });
+    expect(changeRequestCardsListMock.mock.calls[0]?.[0]).toMatchObject({
+      editingMode: 'event_final_closing_vote',
+      canVote: true,
+      hideInlineVotingControls: true,
+    });
+    expect(changeRequestCardsListMock.mock.calls[1]?.[0]).toMatchObject({
+      editingMode: 'view',
+      canVote: false,
+      hasUserVoted: undefined,
+      getUserSelectedChoiceIds: undefined,
+      onCastVote: undefined,
+      onOpenVoteDialog: undefined,
+      onFinalizeInternalVote: undefined,
+    });
+    expect(screen.getAllByTestId('change-request-branch-section')[1].dataset.branchId).toBe('main');
+  });
+
+  it('falls back to edit mode when neither a section nor the page provides a mode', () => {
+    render(<ChangeRequestsView {...baseProps()} editingMode={undefined} />);
+
+    expect(changeRequestCardsListMock.mock.calls[0]?.[0]).toMatchObject({
+      editingMode: 'edit',
+      isVotingActive: false,
+    });
+  });
+
+  it('does not render the selector when branches exist without a change handler', () => {
+    render(
+      <ChangeRequestsView
+        {...baseProps()}
+        branchSelectorBranches={[{ id: 'branch-1' }] as any}
+        onBranchChange={undefined}
+      />
+    );
+
+    expect(screen.queryByTestId('amendment-branch-selector-section')).toBeNull();
+  });
+
+  it('merges obsolete-only branches, skips duplicates, and renders obsolete data', () => {
+    const current: ChangeRequestBranchSection = {
+      id: 'current',
+      branchId: 'branch-current',
+      title: 'Current',
+      editingMode: null,
+      totalCount: 0,
+      openCount: 0,
+      approvedCount: 0,
+      declinedCount: 0,
+      timelineItems: [],
+      diffMap: {},
+      discussions: [],
+    };
+    const obsoleteItem = timelineItem('obsolete-cr');
+    const obsoleteDuplicate: ChangeRequestBranchSection = {
+      ...current,
+      id: 'obsolete-duplicate',
+      timelineItems: [obsoleteItem],
+      diffMap: { obsolete: { changeType: 'remove' } },
+    };
+    const obsoleteOnly: ChangeRequestBranchSection = {
+      ...obsoleteDuplicate,
+      id: 'obsolete-only',
+      branchId: 'branch-obsolete',
+      title: 'Obsolete only',
+    };
+
+    render(
+      <ChangeRequestsView
+        {...baseProps()}
+        branchSections={[current]}
+        obsoleteBranchSections={[obsoleteDuplicate, obsoleteOnly]}
+        selectedBranchId="missing-branch"
+      />
+    );
+
+    expect(screen.getAllByTestId('change-request-branch-section')).toHaveLength(2);
+    expect(changeRequestCardsListMock).toHaveBeenCalledTimes(2);
+    expect(changeRequestCardsListMock.mock.calls[0]?.[0]).toMatchObject({
+      items: [],
+      obsoleteItems: [obsoleteItem],
+      diffMap: { obsolete: { changeType: 'remove' } },
+      documentContent: baseProps().documentContent,
+      discussions: baseProps().discussions,
+    });
+  });
+
+  it('renders an empty branch message when neither current nor obsolete requests exist', () => {
+    const emptySection: ChangeRequestBranchSection = {
+      id: 'empty',
+      branchId: 'empty-branch',
+      title: 'Empty',
+      totalCount: 0,
+      openCount: 0,
+      approvedCount: 0,
+      declinedCount: 0,
+      timelineItems: [],
+      diffMap: {},
+      discussions: [],
+    };
+    render(
+      <ChangeRequestsView
+        {...baseProps()}
+        branchSections={[emptySection]}
+        obsoleteBranchSections={[]}
+      />
+    );
+
+    expect(
+      screen.getByText('generated.inline.0290_no_change_requests_for_this_branch_4fd98d30')
+    ).toBeTruthy();
+    expect(screen.queryByTestId('change-request-cards-list')).toBeNull();
   });
 
   it('falls back to the original flat list when there are no process branches', () => {

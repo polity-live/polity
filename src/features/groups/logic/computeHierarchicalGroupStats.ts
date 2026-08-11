@@ -47,14 +47,13 @@ export function computeHierarchicalGroupStats(
 
   // BFS to find all descendant groups (including nested hierarchical subgroups)
   const allDescendantIds = new Set<string>();
+  const visitedIds = new Set<string>([groupId]);
   const queue = [...directChildIds];
   while (queue.length > 0) {
-    const current = queue.shift();
-    if (current == null) {
-      continue;
-    }
+    const current = queue.shift() as string;
 
-    if (allDescendantIds.has(current)) continue;
+    if (visitedIds.has(current)) continue;
+    visitedIds.add(current);
     allDescendantIds.add(current);
 
     for (const rel of relationships) {
@@ -64,9 +63,9 @@ export function computeHierarchicalGroupStats(
       if (!isPvr) continue;
 
       if (rel.group_id === current && rel.direction === 'parent_to_child') {
-        if (!allDescendantIds.has(rel.related_group_id)) queue.push(rel.related_group_id);
+        if (!visitedIds.has(rel.related_group_id)) queue.push(rel.related_group_id);
       } else if (rel.related_group_id === current && rel.direction === 'child_to_parent') {
-        if (!allDescendantIds.has(rel.group_id)) queue.push(rel.group_id);
+        if (!visitedIds.has(rel.group_id)) queue.push(rel.group_id);
       }
     }
   }

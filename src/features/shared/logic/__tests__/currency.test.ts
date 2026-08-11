@@ -1,12 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   convertCurrency,
   formatCurrencyMajor,
   formatCurrencyMinorAudit,
   getCurrencyFractionDigits,
+  getLocalizedCurrencyName,
   majorToMinor,
   minorToMajor,
 } from '../currency';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 describe('currency', () => {
   it('uses ISO 4217 precision from Intl', () => {
@@ -53,5 +59,29 @@ describe('currency', () => {
   it('formats localized UI values and locale-neutral audit values', () => {
     expect(formatCurrencyMajor(1234.5, 'EUR', 'de')).toContain('1.234,50');
     expect(formatCurrencyMinorAudit(123456, 'CLF')).toBe('12.3456 CLF');
+  });
+
+  it('falls back for unavailable currency metadata APIs', async () => {
+    const supportedValuesOfDescriptor = Object.getOwnPropertyDescriptor(Intl, 'supportedValuesOf');
+    Object.defineProperty(Intl, 'supportedValuesOf', { configurable: true, value: undefined });
+    vi.resetModules();
+    const fallbackModule = await import('../currency');
+    expect(fallbackModule.SUPPORTED_CURRENCY_CODES).toContain('EUR');
+    Object.defineProperty(Intl, 'supportedValuesOf', supportedValuesOfDescriptor!);
+
+    vi.spyOn(Intl, 'NumberFormat').mockImplementation(function MockNumberFormat() {
+      return { resolvedOptions: () => ({}) } as Intl.NumberFormat;
+    });
+    expect(getCurrencyFractionDigits('EUR')).toBe(2);
+  });
+
+  it('localizes currency names and falls back for missing or failing display names', () => {
+    expect(getLocalizedCurrencyName('EUR', 'de')).toBeTruthy();
+    vi.spyOn(Intl.DisplayNames.prototype, 'of').mockReturnValueOnce(undefined);
+    expect(getLocalizedCurrencyName('EUR', 'en')).toBe('EUR');
+    vi.spyOn(Intl, 'DisplayNames').mockImplementation(() => {
+      throw new Error('unsupported');
+    });
+    expect(getLocalizedCurrencyName('EUR', 'en')).toBe('EUR');
   });
 });

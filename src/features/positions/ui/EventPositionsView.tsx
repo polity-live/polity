@@ -61,8 +61,8 @@ export function EventPositionsView({
       {/* Add Role Button */}
       <div className="mb-6 flex justify-end">
         <Dialog open={dialogs.add.open} onOpenChange={dialogs.add.setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={form.reset}>
+          <DialogTrigger asChild data-action-id="positions.event-role.add.open">
+            <Button onClick={form.reset} data-action-id="positions.event-role.add.open">
               <Plus className="mr-2 h-4 w-4" />
               {translateText('generated.inline.0125_add_role_82d0afcc')}
             </Button>
@@ -82,10 +82,19 @@ export function EventPositionsView({
             {renderRoleFormFields('create')}
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => dialogs.add.setOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => dialogs.add.setOpen(false)}
+                data-action-id="positions.event-role.add.cancel"
+              >
                 {translateText('generated.inline.0065_cancel_77dfd213')}
               </Button>
-              <Button type="button" onClick={actions.add}>
+              <Button
+                type="button"
+                onClick={actions.add}
+                data-action-id="positions.event-role.add.submit"
+              >
                 {translateText('generated.inline.0132_create_role_5bea05a8')}
               </Button>
             </DialogFooter>
@@ -106,10 +115,19 @@ export function EventPositionsView({
           {renderRoleFormFields('edit')}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => dialogs.edit.setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => dialogs.edit.setOpen(false)}
+              data-action-id="positions.event-role.edit.cancel"
+            >
               {translateText('generated.inline.0065_cancel_77dfd213')}
             </Button>
-            <Button type="button" onClick={actions.edit}>
+            <Button
+              type="button"
+              onClick={actions.edit}
+              data-action-id="positions.event-role.edit.submit"
+            >
               {translateText('generated.inline.1046_save_changes_fa2984b3')}
             </Button>
           </DialogFooter>

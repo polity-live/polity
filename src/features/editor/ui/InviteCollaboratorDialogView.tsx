@@ -54,7 +54,7 @@ export function InviteCollaboratorDialogView({ model }: InviteCollaboratorDialog
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" data-action-id="editor.collaborator-invite.open">
           <UserPlus className="mr-2 h-4 w-4" />
           {t('features.editor.inviteDialog.invite')}
         </Button>
@@ -100,8 +100,10 @@ export function InviteCollaboratorDialogView({ model }: InviteCollaboratorDialog
                         translateText('generated.inline.0066_user_9f8a2389')}
                     </span>
                     <Button
+                      data-action-id="editor.collaborator-invite.selection.remove"
                       variant="ghost"
                       size="sm"
+                      aria-label={t('features.editor.inviteDialog.removeSelection', 'Remove user')}
                       className={featureThemeClassName('editorInviteCollaboratorDialogThemedPanel')}
                       onClick={() => toggleUserSelection(userId)}
                     >
@@ -132,6 +134,7 @@ export function InviteCollaboratorDialogView({ model }: InviteCollaboratorDialog
 
                       return (
                         <CommandItem
+                          data-action-id="editor.collaborator-invite.user.toggle"
                           key={user.id}
                           value={user.id}
                           onSelect={() => toggleUserSelection(user.id)}
@@ -175,10 +178,18 @@ export function InviteCollaboratorDialogView({ model }: InviteCollaboratorDialog
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button
+            variant="outline"
+            data-action-id="editor.collaborator-invite.cancel"
+            onClick={() => setOpen(false)}
+          >
             {t('common.cancel')}
           </Button>
-          <Button onClick={handleInvite} disabled={selectedUsers.length === 0 || isInviting}>
+          <Button
+            data-action-id="editor.collaborator-invite.submit"
+            onClick={handleInvite}
+            disabled={selectedUsers.length === 0 || isInviting}
+          >
             {isInviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {t('features.editor.inviteDialog.invite')} ({selectedUsers.length})
           </Button>

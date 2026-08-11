@@ -191,6 +191,7 @@ export function AiSettingsTab() {
             checked={isEnabled}
             onCheckedChange={checked => ai.toggleBuiltInToolEnabled(tool.name, checked)}
             aria-label={t('pages.user.ai.tools.toggle')}
+            data-action-id="users.ai.built-in-tool.toggle"
           />
         );
       },
@@ -273,6 +274,7 @@ export function AiSettingsTab() {
             checked={isEnabled}
             onCheckedChange={checked => ai.toggleBuiltInSkillEnabled(row.original.slug, checked)}
             aria-label={t('pages.user.ai.skills.toggle')}
+            data-action-id="users.ai.built-in-skill.toggle"
           />
         );
       },
@@ -307,6 +309,7 @@ export function AiSettingsTab() {
           size="sm"
           variant="outline"
           onClick={() => ai.startEditBuiltInSkill(row.original.slug)}
+          data-action-id="users.ai.built-in-skill.edit"
         >
           <Pencil className="mr-1 h-3.5 w-3.5" />
           {t('common.actions.edit')}
@@ -339,6 +342,7 @@ export function AiSettingsTab() {
           checked={row.original.enabled}
           onCheckedChange={checked => ai.toggleCustomSkillEnabled(row.original.id, checked)}
           aria-label={t('pages.user.ai.skills.toggle')}
+          data-action-id="users.ai.custom-skill.toggle"
         />
       ),
     },
@@ -355,6 +359,7 @@ export function AiSettingsTab() {
             variant="outline"
             size="sm"
             onClick={() => ai.startEditSkill(row.original.id)}
+            data-action-id="users.ai.custom-skill.edit"
           >
             <Pencil className="mr-1 h-3.5 w-3.5" />
             {t('common.actions.edit')}
@@ -364,6 +369,8 @@ export function AiSettingsTab() {
             variant="outline"
             size="sm"
             onClick={() => ai.requestDeleteSkill(row.original.id)}
+            aria-label={t('common.actions.delete')}
+            data-action-id="users.ai.custom-skill.delete"
           >
             <Trash2 className="h-4 w-4" />
           </Button>

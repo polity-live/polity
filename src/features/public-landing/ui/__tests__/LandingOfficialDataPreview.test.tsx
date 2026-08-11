@@ -80,6 +80,8 @@ const labels: Record<string, string> = {
   'pages.home.publicLanding.officialDataPreview.views.chart': 'Chart',
   'pages.home.publicLanding.officialDataPreview.views.table': 'Table',
   'pages.home.publicLanding.officialDataPreview.views.stat': 'Statistic',
+  'pages.home.publicLanding.officialDataPreview.chartTypes.bar': 'Bar',
+  'pages.home.publicLanding.officialDataPreview.chartTypes.line': 'Line',
   'pages.home.publicLanding.officialDataPreview.aggregation': 'Aggregation',
   'pages.home.publicLanding.officialDataPreview.aggregations.mean': 'Mean',
   'pages.home.publicLanding.officialDataPreview.aggregations.sum': 'Sum',
@@ -93,6 +95,7 @@ const labels: Record<string, string> = {
 };
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string) => key,
   useTranslation: () => ({
     t: (key: string, options?: Record<string, string>) => {
       if (key === 'pages.home.publicLanding.officialDataPreview.sourceAttribution') {
@@ -108,7 +111,17 @@ afterEach(cleanup);
 
 describe('LandingOfficialDataPreview', () => {
   it('filters local results and builds chart, table, and statistic views', () => {
-    render(<LandingOfficialDataPreview />);
+    const { container } = render(<LandingOfficialDataPreview />);
+
+    const stableActions = [
+      'public-landing.official-data.search.change',
+      'public-landing.official-data.provider.toggle',
+      'public-landing.official-data.sample-csv.select',
+      'public-landing.official-data.dataset.select',
+    ];
+    for (const actionId of stableActions) {
+      expect(container.querySelector(`[data-action-id="${actionId}"]`), actionId).not.toBeNull();
+    }
 
     expect(screen.getAllByTestId('landing-dataset-result')).toHaveLength(4);
     fireEvent.click(screen.getByRole('button', { name: 'Eurostat' }));
@@ -121,6 +134,9 @@ describe('LandingOfficialDataPreview', () => {
     fireEvent.click(screen.getByText('Commuter flows by municipality'));
     expect(screen.getByTestId('landing-dataset-details')).toBeTruthy();
 
+    expect(
+      container.querySelector('[data-action-id="public-landing.official-data.dataset.use"]')
+    ).not.toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Use dataset' }));
     expect(screen.getByTestId('landing-data-builder')).toBeTruthy();
     expect(screen.getByTestId('landing-data-chart-preview')).toBeTruthy();
@@ -130,6 +146,12 @@ describe('LandingOfficialDataPreview', () => {
 
     fireEvent.change(screen.getByLabelText('Measure'), { target: { value: 'share' } });
     fireEvent.change(screen.getByLabelText('Dimension'), { target: { value: 'area' } });
+    expect(
+      container.querySelector('[data-action-id="public-landing.official-data.measure.select"]')
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-action-id="public-landing.official-data.dimension.select"]')
+    ).not.toBeNull();
     expect(screen.getByText('32')).toBeTruthy();
     expect(screen.getByText('City centre')).toBeTruthy();
 
@@ -138,8 +160,14 @@ describe('LandingOfficialDataPreview', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Statistic' }));
     expect(screen.getByTestId('landing-data-stat-preview')).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Aggregation'), { target: { value: 'max' } });
+    expect(
+      container.querySelector('[data-action-id="public-landing.official-data.aggregation.select"]')
+    ).not.toBeNull();
     expect(screen.getByText('60')).toBeTruthy();
 
+    expect(
+      container.querySelector('[data-action-id="public-landing.official-data.dataset.change"]')
+    ).not.toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Change dataset' }));
     expect((screen.getByLabelText('Search datasets') as HTMLInputElement).value).toBe('commuter');
   });
@@ -150,5 +178,27 @@ describe('LandingOfficialDataPreview', () => {
     expect(screen.getByTestId('landing-dataset-details').textContent).toContain(
       'Project team mobility count'
     );
+  });
+
+  it('exposes stable selectable view and chart-type variants', () => {
+    const { container } = render(<LandingOfficialDataPreview />);
+    fireEvent.click(screen.getAllByTestId('landing-dataset-result')[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Use dataset' }));
+
+    const view = container.querySelector<HTMLElement>(
+      '[data-action-id="public-landing.official-data.view.select"]'
+    );
+    const chartType = container.querySelector<HTMLElement>(
+      '[data-action-id="public-landing.official-data.chart-type.select"]'
+    );
+    expect(view).not.toBeNull();
+    expect(chartType).not.toBeNull();
+    view!.focus();
+    expect(document.activeElement).toBe(view);
+    fireEvent.click(screen.getByRole('button', { name: 'Table' }));
+    expect(screen.getByTestId('landing-data-table-preview')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Chart' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Line' }));
+    expect(screen.getByTestId('landing-data-chart-preview')).toBeTruthy();
   });
 });

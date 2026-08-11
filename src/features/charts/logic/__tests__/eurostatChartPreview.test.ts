@@ -8,9 +8,13 @@ import {
   createEurostatChartPresetRoles,
   createEurostatEditableTable,
   createEurostatPreviewRows,
+  createEurostatPreviewTable,
   createEurostatProjectionPreviewKey,
   formatEurostatDimensionValue,
   getDefaultEurostatXDimension,
+  getEurostatValueFields,
+  getRequiredEurostatFilterIds,
+  normalizeEurostatJsonRecord,
   normalizeEurostatProjectionFilters,
 } from '../eurostatChartPreview';
 
@@ -42,6 +46,22 @@ describe('eurostatChartPreview', () => {
   it('formats value IDs with labels and falls back to the ID', () => {
     expect(formatEurostatDimensionValue(dimensions[0], 'DE')).toBe('DE · Germany');
     expect(formatEurostatDimensionValue(dimensions[1], 'PC_GDP')).toBe('PC_GDP');
+    expect(formatEurostatDimensionValue(dimensions[0], null)).toBe('');
+    expect(
+      formatEurostatDimensionValue(
+        { ...dimensions[0], values: [{ id: 'DE', label: '   ' }] },
+        ' DE '
+      )
+    ).toBe('DE');
+  });
+
+  it('normalizes record-shaped JSON values and rejects arrays and primitives', () => {
+    expect(normalizeEurostatJsonRecord(null)).toEqual({});
+    expect(normalizeEurostatJsonRecord([])).toEqual({});
+    expect(normalizeEurostatJsonRecord('value')).toEqual({});
+    expect(
+      normalizeEurostatJsonRecord({ zero: 0, no: false, empty: '', nil: null, missing: undefined })
+    ).toEqual({ zero: '0', no: 'false' });
   });
 
   it('creates a five-row preview with dimension labels and compact attributes', () => {
@@ -64,6 +84,46 @@ describe('eurostatChartPreview', () => {
     expect(preview[0].attributesText).toBe('OBS_STATUS: A');
   });
 
+  it('uses positional preview IDs and tolerates malformed dimension and attribute records', () => {
+    expect(
+      createEurostatPreviewRows(
+        [{ value: 42, dimensions: ['invalid'], attributes: 'invalid' }],
+        dimensions
+      )
+    ).toEqual([
+      {
+        id: '0',
+        dimensionValues: { geo: '', unit: '', TIME_PERIOD: '' },
+        value: '42',
+        attributesText: '',
+      },
+    ]);
+  });
+
+  it('creates labeled preview tables with optional attributes and empty dimension values', () => {
+    const table = createEurostatPreviewTable(
+      [
+        {
+          value: 1,
+          dimensions: { geo: 'DE' },
+          attributes: { OBS_STATUS: 'A' },
+        },
+      ],
+      [dimensions[0], { ...dimensions[1], label: '' }]
+    );
+    expect(table.columns).toEqual(['geo · Geography', 'unit', 'OBS_VALUE', 'Attributes']);
+    expect(table.rows[0]).toEqual({
+      'geo · Geography': 'DE · Germany',
+      unit: '',
+      OBS_VALUE: '1',
+      Attributes: 'OBS_STATUS: A',
+    });
+
+    expect(createEurostatPreviewTable([{ value: 2, dimensions: {} }], []).columns).toEqual([
+      'OBS_VALUE',
+    ]);
+  });
+
   it('defaults X to TIME_PERIOD and fills all non-X filters', () => {
     const xDimension = getDefaultEurostatXDimension(dimensions);
     const filters = createDefaultEurostatFilters(dimensions, xDimension, null);
@@ -72,6 +132,10 @@ describe('eurostatChartPreview', () => {
     expect(filters).toEqual({ geo: 'DE', unit: 'PC_GDP' });
     expect(countMissingEurostatFilters(dimensions, xDimension, null, filters)).toBe(0);
     expect(countMissingEurostatFilters(dimensions, xDimension, null, { geo: 'DE' })).toBe(1);
+    expect(getRequiredEurostatFilterIds(dimensions, 'geo', 'unit')).toEqual(['TIME_PERIOD']);
+    expect(getDefaultEurostatXDimension(dimensions.slice(0, 2))).toBe('unit');
+    expect(getDefaultEurostatXDimension([])).toBe('');
+    expect(getEurostatValueFields()).toContain('OBS_VALUE');
   });
 
   it('removes role dimensions from filters while preserving remaining values', () => {
@@ -82,6 +146,13 @@ describe('eurostatChartPreview', () => {
     });
 
     expect(filters).toEqual({ unit: 'PC_GDP', TIME_PERIOD: '2024' });
+    expect(createDefaultEurostatFilters(dimensions, 'geo', null, { unit: 'CUSTOM' })).toEqual({
+      unit: 'CUSTOM',
+      TIME_PERIOD: '2024',
+    });
+    expect(
+      createDefaultEurostatFilters([{ ...dimensions[0], values: [] }], 'missing', null, {})
+    ).toEqual({ geo: '' });
   });
 
   it('creates stable preview keys and includes chart type for staleness', () => {
@@ -117,6 +188,15 @@ describe('eurostatChartPreview', () => {
     expect(barKey).toContain('"valueField":"OBS_VALUE"');
     expect(barKey).not.toBe(lineKey);
     expect(barKey).not.toBe(otherValueKey);
+
+    const defaults = createEurostatProjectionPreviewKey({
+      datasetId: null,
+      filters: { empty: '' },
+      xDimension: '',
+      chartType: 'pie',
+    });
+    expect(defaults).toContain('"seriesDimension":null');
+    expect(defaults).toContain('"valueField":"OBS_VALUE"');
   });
 
   it('creates shortcut role presets for country comparison and country time series', () => {
@@ -135,6 +215,20 @@ describe('eurostatChartPreview', () => {
       xDimension: 'TIME_PERIOD',
       seriesDimension: null,
       filters: { geo: 'DE', unit: 'PC_GDP' },
+    });
+
+    expect(canApplyEurostatChartPreset(dimensions.slice(1), 'compareCountriesInYear')).toBe(false);
+    expect(canApplyEurostatChartPreset(dimensions.slice(0, 2), 'showTimeSeriesForCountry')).toBe(
+      false
+    );
+    expect(
+      createEurostatChartPresetRoles(dimensions.slice(0, 2), 'showTimeSeriesForCountry', {
+        geo: 'FR',
+      })
+    ).toEqual({
+      xDimension: 'unit',
+      seriesDimension: null,
+      filters: { geo: 'FR' },
     });
   });
 
@@ -156,5 +250,24 @@ describe('eurostatChartPreview', () => {
         { TIME_PERIOD: '2021', OBS_VALUE: '110', geo: 'DE' },
       ],
     });
+
+    expect(
+      createEurostatEditableTable({
+        points: [{ x: '2024', value: 5 }],
+        xDimension: 'TIME_PERIOD',
+        valueField: '',
+        seriesDimension: '',
+      })
+    ).toEqual({
+      columns: ['TIME_PERIOD', 'OBS_VALUE'],
+      rows: [{ TIME_PERIOD: '2024', OBS_VALUE: '5' }],
+    });
+    expect(
+      createEurostatEditableTable({
+        points: [{ x: '2024', value: 5, series: undefined }],
+        xDimension: 'TIME_PERIOD',
+        seriesDimension: 'geo',
+      }).rows[0]?.geo
+    ).toBe('');
   });
 });

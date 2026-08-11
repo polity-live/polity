@@ -348,8 +348,12 @@ describe('electionServerMutators.updateElection notifications', () => {
       })
       .mockResolvedValueOnce({
         id: 'election-1',
-        role: null,
+        role: { id: 'role-1', scope: 'group' },
+        candidates: [{ id: 'candidate-1', user_id: 'candidate-user-1' }],
+        final_selections: [{ candidate_id: 'candidate-1' }],
+        offline_tallies: [],
       })
+      .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({
         id: 'agenda-1',
         event_id: 'event-1',
@@ -369,6 +373,11 @@ describe('electionServerMutators.updateElection notifications', () => {
       eventId: 'event-1',
       eventTitle: 'Event One',
       electionTitle: 'Election One',
+    });
+    expect(fireNotificationMock).toHaveBeenCalledWith('notifyElectionResult', {
+      senderId: 'user-1',
+      eventId: 'event-1',
+      electionId: 'election-1',
     });
   });
 

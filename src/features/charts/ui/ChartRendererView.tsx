@@ -16,7 +16,7 @@ export const CHART_PALETTE = [
   featureThemeValue('chartChartRendererInfoColorBeta'),
   featureThemeValue('chartChartRendererDangerColor'),
 ] as const;
-function HoverValueTooltip({ state }: { state: HoverTooltipState | null }) {
+export function HoverValueTooltip({ state }: { state: HoverTooltipState | null }) {
   if (!state) return null;
 
   return (
@@ -46,7 +46,7 @@ function HoverValueTooltip({ state }: { state: HoverTooltipState | null }) {
     </div>
   );
 }
-function AxisLabelFrame({
+export function AxisLabelFrame({
   chartType,
   presentation,
   children,

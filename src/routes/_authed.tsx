@@ -5,6 +5,31 @@ import { useAuth } from '@/providers/auth-provider';
 import { AppBootLoadingState } from '@/features/shared/ui/feedback';
 import { isGuestAccessibleEntityPath } from '@/features/auth/logic/guestEntityRouteAccess';
 
+interface EditorCurrentUser {
+  avatar?: string | null;
+  first_name?: string | null;
+  handle?: string | null;
+  id: string;
+  last_name?: string | null;
+}
+
+export function mapEditorUserRecord(
+  currentUser: EditorCurrentUser | null | undefined,
+  email: string | null | undefined
+) {
+  if (!currentUser) return undefined;
+
+  return {
+    id: currentUser.id,
+    name:
+      [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ') ||
+      currentUser.handle ||
+      '',
+    email: email ?? undefined,
+    avatar: currentUser.avatar ?? undefined,
+  };
+}
+
 export const Route = createFileRoute('/_authed')({
   component: AuthedLayout,
 });

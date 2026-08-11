@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getDesktopNavigationVisibilityClasses,
   getListNavigationContainerClasses,
+  getListNavigationContentClasses,
   getMobileNavigationVisibilityClasses,
 } from '../responsive-navigation-layout';
 
@@ -46,5 +47,36 @@ describe('responsive navigation layout', () => {
     expect(desktop).not.toContain('md:');
     expect(desktop).toContain('w-64');
     expect(desktop).toContain('border-l');
+  });
+
+  it('covers every forced visibility and container orientation', () => {
+    expect(getMobileNavigationVisibilityClasses('mobile')).toBe('flex');
+    expect(getMobileNavigationVisibilityClasses('desktop')).toBe('hidden');
+    expect(getDesktopNavigationVisibilityClasses('mobile')).toBe('hidden');
+    expect(getDesktopNavigationVisibilityClasses('desktop')).toBe('flex');
+
+    for (const screenType of ['mobile', 'desktop', 'automatic'] as const) {
+      for (const navigationType of ['primary', 'secondary'] as const) {
+        for (const navigationView of ['asButtonList', 'asLabeledButtonList'] as const) {
+          expect(
+            getListNavigationContainerClasses({
+              navigationType,
+              navigationView,
+              screenType,
+            })
+          ).toContain('bg-background');
+        }
+      }
+    }
+  });
+
+  it('covers content sizing for every screen and list view', () => {
+    for (const screenType of ['mobile', 'desktop', 'automatic'] as const) {
+      for (const navigationView of ['asButtonList', 'asLabeledButtonList'] as const) {
+        expect(getListNavigationContentClasses({ navigationView, screenType })).toContain(
+          screenType === 'mobile' ? 'overflow-hidden' : 'overflow-y-auto'
+        );
+      }
+    }
   });
 });

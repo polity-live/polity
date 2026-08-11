@@ -22,6 +22,12 @@ export function db() {
       connect_timeout: 10,
       prepare: false,
       onnotice: () => undefined,
+      connection: {
+        application_name: 'polity-e2e',
+        statement_timeout: 10_000,
+        lock_timeout: 3_000,
+        idle_in_transaction_session_timeout: 10_000,
+      },
     });
     sql = wrapSqlForCleanupScripts(raw) as E2EDatabase;
   }

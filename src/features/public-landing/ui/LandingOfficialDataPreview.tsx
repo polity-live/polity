@@ -106,12 +106,12 @@ export function LandingOfficialDataPreview() {
   );
   const previewValues = measure === 'share' ? [32, 38, 44, 51, 60] : chartValues;
   const previewLabels = dimension === 'area' ? areaLabels : chartLabels;
-  const previewRows = previewLabels.map((label, index) => [
+  const previewRows: [string, string, string][] = previewLabels.map((label, index) => [
     label,
     selected?.publisher ?? '',
     String(previewValues[index] ?? ''),
   ]);
-  const previewColumns = [
+  const previewColumns: [string, string, string] = [
     t(`pages.home.publicLanding.officialDataPreview.options.${dimension}`),
     t('pages.home.publicLanding.officialDataPreview.sourceColumn'),
     t(`pages.home.publicLanding.officialDataPreview.options.${measure}`),
@@ -163,6 +163,7 @@ export function LandingOfficialDataPreview() {
               </span>
               <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
               <input
+                data-action-id="public-landing.official-data.search.change"
                 value={query}
                 onChange={event => {
                   setQuery(event.target.value);
@@ -180,6 +181,7 @@ export function LandingOfficialDataPreview() {
                 <Button
                   key={provider}
                   type="button"
+                  data-action-id="public-landing.official-data.provider.toggle"
                   size="sm"
                   variant={enabledProviders.includes(provider) ? 'secondary' : 'outline'}
                   aria-pressed={enabledProviders.includes(provider)}
@@ -193,7 +195,13 @@ export function LandingOfficialDataPreview() {
                   {t(`pages.home.publicLanding.officialDataPreview.providers.${provider}`)}
                 </Button>
               ))}
-              <Button type="button" size="sm" variant="outline" onClick={useOwnData}>
+              <Button
+                type="button"
+                data-action-id="public-landing.official-data.sample-csv.select"
+                size="sm"
+                variant="outline"
+                onClick={useOwnData}
+              >
                 <FileSpreadsheet className="h-4 w-4" />
                 {t('pages.home.publicLanding.officialDataPreview.useSampleCsv')}
               </Button>
@@ -207,6 +215,7 @@ export function LandingOfficialDataPreview() {
                   <button
                     key={dataset.id}
                     type="button"
+                    data-action-id="public-landing.official-data.dataset.select"
                     data-testid="landing-dataset-result"
                     aria-pressed={selectedId === dataset.id}
                     className={cn(
@@ -283,7 +292,12 @@ export function LandingOfficialDataPreview() {
                     </dl>
                   </div>
                   <div className="border-t p-4">
-                    <Button type="button" className="w-full" onClick={() => setStage('build')}>
+                    <Button
+                      type="button"
+                      data-action-id="public-landing.official-data.dataset.use"
+                      className="w-full"
+                      onClick={() => setStage('build')}
+                    >
                       {t('pages.home.publicLanding.officialDataPreview.useDataset')}
                     </Button>
                   </div>
@@ -306,7 +320,13 @@ export function LandingOfficialDataPreview() {
                 {selected?.publisher} · {selected?.snapshot}
               </p>
             </div>
-            <Button type="button" size="sm" variant="outline" onClick={() => setStage('find')}>
+            <Button
+              type="button"
+              data-action-id="public-landing.official-data.dataset.change"
+              size="sm"
+              variant="outline"
+              onClick={() => setStage('find')}
+            >
               {t('pages.home.publicLanding.officialDataPreview.changeDataset')}
             </Button>
           </div>
@@ -320,6 +340,7 @@ export function LandingOfficialDataPreview() {
                     <Button
                       key={item}
                       type="button"
+                      data-action-id="public-landing.official-data.view.select"
                       size="sm"
                       variant={view === item ? 'secondary' : 'ghost'}
                       aria-pressed={view === item}
@@ -333,6 +354,7 @@ export function LandingOfficialDataPreview() {
               </div>
 
               <DemoSelect
+                data-action-id="public-landing.official-data.measure.select"
                 label={t('pages.home.publicLanding.officialDataPreview.measure')}
                 value={measure}
                 onChange={setMeasure}
@@ -343,6 +365,7 @@ export function LandingOfficialDataPreview() {
               />
               {view !== 'stat' ? (
                 <DemoSelect
+                  data-action-id="public-landing.official-data.dimension.select"
                   label={t('pages.home.publicLanding.officialDataPreview.dimension')}
                   value={dimension}
                   onChange={setDimension}
@@ -353,6 +376,7 @@ export function LandingOfficialDataPreview() {
                 />
               ) : null}
               <DemoSelect
+                data-action-id="public-landing.official-data.aggregation.select"
                 label={t('pages.home.publicLanding.officialDataPreview.aggregation')}
                 value={aggregation}
                 onChange={value => setAggregation(value as DemoAggregation)}
@@ -371,6 +395,7 @@ export function LandingOfficialDataPreview() {
                       <Button
                         key={item}
                         type="button"
+                        data-action-id="public-landing.official-data.chart-type.select"
                         variant={chartType === item ? 'secondary' : 'outline'}
                         aria-pressed={chartType === item}
                         onClick={() => setChartType(item)}
@@ -453,11 +478,13 @@ export function LandingOfficialDataPreview() {
 }
 
 function DemoSelect({
+  'data-action-id': actionId,
   label,
   value,
   onChange,
   options,
 }: {
+  'data-action-id': string;
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -467,6 +494,7 @@ function DemoSelect({
     <label className="grid gap-1.5 text-sm font-medium">
       {label}
       <select
+        data-action-id={actionId}
         className="border-input bg-background h-10 rounded-md border px-3 text-sm"
         value={value}
         onChange={event => onChange(event.target.value)}
@@ -481,7 +509,13 @@ function DemoSelect({
   );
 }
 
-function DemoTable({ columns, rows }: { columns: string[]; rows: string[][] }) {
+function DemoTable({
+  columns,
+  rows,
+}: {
+  columns: [string, string, string];
+  rows: [string, string, string][];
+}) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-left text-sm">
@@ -499,7 +533,7 @@ function DemoTable({ columns, rows }: { columns: string[]; rows: string[][] }) {
             <tr key={rowIndex} className="border-b last:border-0">
               {columns.map((column, columnIndex) => (
                 <td key={`${column}-${columnIndex}`} className="px-3 py-2">
-                  {row[columnIndex] ?? ''}
+                  {row[columnIndex]}
                 </td>
               ))}
             </tr>

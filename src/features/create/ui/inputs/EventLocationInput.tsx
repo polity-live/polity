@@ -73,6 +73,7 @@ export function EventLocationInput({
         <div className="flex flex-wrap gap-2">
           {(['online', 'hybrid', 'offline'] as const).map(mode => (
             <Button
+              data-action-id="create.event-location.attendance.select"
               key={mode}
               type="button"
               variant={attendanceMode === mode ? 'default' : 'outline'}

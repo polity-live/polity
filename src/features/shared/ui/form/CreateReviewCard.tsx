@@ -175,6 +175,17 @@ export function SummaryField({ label, value, className }: SummaryFieldProps) {
   );
 }
 
+function SummaryDefinitionField({ label, value }: ReviewCardField) {
+  return (
+    <div className="border-border/60 bg-background/70 grid gap-1.5 rounded-xl border px-3 py-3 sm:grid-cols-[minmax(110px,150px)_1fr] sm:items-start sm:gap-3">
+      <dt className="text-muted-foreground text-[11px] font-semibold tracking-[0.18em] uppercase">
+        {label}
+      </dt>
+      <dd className="text-foreground min-w-0 font-medium">{renderFieldValue(value)}</dd>
+    </div>
+  );
+}
+
 export function SummaryPillList({ items, className }: { items: string[]; className?: string }) {
   if (!items.length) {
     return null;
@@ -227,7 +238,11 @@ function ReviewCardSectionBlock({
       {hasFields && (
         <dl className={cn('grid gap-3', columns === 2 ? 'md:grid-cols-2' : 'grid-cols-1')}>
           {fields.map((field, index) => (
-            <SummaryField key={`${field.label}-${index}`} label={field.label} value={field.value} />
+            <SummaryDefinitionField
+              key={`${field.label}-${index}`}
+              label={field.label}
+              value={field.value}
+            />
           ))}
         </dl>
       )}

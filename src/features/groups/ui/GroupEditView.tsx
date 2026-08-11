@@ -56,7 +56,11 @@ export function GroupEditView({
             {t('features.groups.editPage.notFoundDescription')}
           </p>
           <div className="mt-6">
-            <Button onClick={() => navigate({ to: '/home' })} variant="default">
+            <Button
+              data-action-id="groups.edit.navigate.home"
+              onClick={() => navigate({ to: '/home' })}
+              variant="default"
+            >
               {t('features.groups.backToGroups')}
             </Button>
           </div>

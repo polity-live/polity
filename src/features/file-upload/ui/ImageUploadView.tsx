@@ -69,6 +69,7 @@ export function ImageUploadView({
                 className="h-48 w-full rounded-lg object-cover"
               />
               <Button
+                data-action-id="file-upload.image.remove"
                 type="button"
                 variant="destructive"
                 size="icon"
@@ -79,6 +80,7 @@ export function ImageUploadView({
                 <X className="h-4 w-4" />
               </Button>
               <Button
+                data-action-id="file-upload.image.edit.open"
                 type="button"
                 variant="secondary"
                 size="sm"

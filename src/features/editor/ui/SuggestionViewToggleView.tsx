@@ -1,4 +1,3 @@
-import { FormControlCheckbox } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
 import {
@@ -71,7 +70,12 @@ export function SuggestionViewToggleView({
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant={isFiltered ? 'default' : 'outline'} size="sm" className="gap-2">
+        <Button
+          variant={isFiltered ? 'default' : 'outline'}
+          size="sm"
+          className="gap-2"
+          data-action-id="editor.suggestion-filter.open"
+        >
           {isFiltered ? <Filter className="h-4 w-4" /> : <Layers className="h-4 w-4" />}
           {buttonLabel}
         </Button>
@@ -85,10 +89,18 @@ export function SuggestionViewToggleView({
             size="sm"
             className="w-full"
           >
-            <ToggleGroupItem value="select" className="flex-1 text-xs">
+            <ToggleGroupItem
+              value="select"
+              className="flex-1 text-xs"
+              data-action-id="editor.suggestion-filter.mode.select"
+            >
               {labels.selectMode}
             </ToggleGroupItem>
-            <ToggleGroupItem value="choice" className="flex-1 text-xs">
+            <ToggleGroupItem
+              value="choice"
+              className="flex-1 text-xs"
+              data-action-id="editor.suggestion-filter.mode.choice"
+            >
               {labels.choiceMode}
             </ToggleGroupItem>
           </ToggleGroup>
@@ -100,13 +112,20 @@ export function SuggestionViewToggleView({
             <CommandList>
               <CommandEmpty>{labels.noResults}</CommandEmpty>
               <CommandGroup>
-                <CommandItem onSelect={() => onSelectCr(null)}>
+                <CommandItem
+                  data-action-id="editor.suggestion-filter.selection.clear"
+                  onSelect={() => onSelectCr(null)}
+                >
                   <Layers className="mr-2 h-4 w-4" />
                   {labels.allSuggestions}
                   {selectedCrIds === null && <Check className="ml-auto h-4 w-4" />}
                 </CommandItem>
                 {crOptions.map(option => (
-                  <CommandItem key={option.crId} onSelect={() => onSelectCr(option.crId)}>
+                  <CommandItem
+                    key={option.crId}
+                    data-action-id="editor.suggestion-filter.selection.select"
+                    onSelect={() => onSelectCr(option.crId)}
+                  >
                     <Filter className="mr-2 h-4 w-4" />
                     <div className="flex flex-col">
                       <span className="font-mono text-sm">{option.displayCrId ?? option.crId}</span>
@@ -128,15 +147,32 @@ export function SuggestionViewToggleView({
             <CommandList>
               <CommandEmpty>{labels.noResults}</CommandEmpty>
               <CommandGroup>
-                <CommandItem onSelect={allSelected ? onDeselectAll : onSelectAll}>
-                  <FormControlCheckbox checked={allSelected} className="mr-2" tabIndex={-1} />
+                <CommandItem
+                  data-action-id="editor.suggestion-filter.choice.toggle-all"
+                  onSelect={allSelected ? onDeselectAll : onSelectAll}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="border-primary mr-2 inline-flex size-4 items-center justify-center rounded border"
+                  >
+                    {allSelected ? <Check className="size-3" /> : null}
+                  </span>
                   {allSelected ? labels.deselectAll : labels.selectAll}
                 </CommandItem>
                 {crOptions.map(option => {
                   const isChecked = isOptionSelected(selectedCrIds, option);
                   return (
-                    <CommandItem key={option.crId} onSelect={() => onToggleCr(option.crId)}>
-                      <FormControlCheckbox checked={isChecked} className="mr-2" tabIndex={-1} />
+                    <CommandItem
+                      key={option.crId}
+                      data-action-id="editor.suggestion-filter.choice.toggle"
+                      onSelect={() => onToggleCr(option.crId)}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="border-primary mr-2 inline-flex size-4 items-center justify-center rounded border"
+                      >
+                        {isChecked ? <Check className="size-3" /> : null}
+                      </span>
                       <div className="flex flex-col">
                         <span className="font-mono text-sm">
                           {option.displayCrId ?? option.crId}

@@ -131,8 +131,7 @@ export function useGroupEditController({ groupId }: GroupEditProps) {
           primarySiblingConnection?.membership_rule?.origins
             ?.map(origin => origin.eligible_origin_group_id)
             .filter((id): id is string => Boolean(id)) ??
-          (group.sibling_sources ?? []).map(sourceLink => sourceLink.source_group_id) ??
-          [],
+          (group.sibling_sources ?? []).map(sourceLink => sourceLink.source_group_id),
         connectedRelationshipDirections: connectedRelationshipDirections,
       } as Partial<GroupFormData>)
     : undefined;

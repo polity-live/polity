@@ -137,9 +137,7 @@ export function useSwipeNavigation({
       position: { x: number; y: number }
     ) => {
       const startPosition = startPositionRef.current;
-      if (!isActive || !startPosition) {
-        return;
-      }
+      if (!startPosition) return;
 
       const deltaX = position.x - startPosition.x;
       const deltaY = position.y - startPosition.y;

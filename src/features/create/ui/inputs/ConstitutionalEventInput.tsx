@@ -28,6 +28,7 @@ export function ConstitutionalEventInput({ value, onChange }: ConstitutionalEven
           {t('pages.create.group.createConstitutionalEvent')}
         </FormControlLabel>
         <FormControlSwitch
+          data-action-id="create.constitutional-event.toggle"
           id="create-event"
           checked={value.enabled}
           onCheckedChange={checked => update({ enabled: checked })}

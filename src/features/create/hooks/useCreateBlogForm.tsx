@@ -127,7 +127,7 @@ export function useCreateBlogForm(): CreateFormConfig {
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!user?.id || !title.trim()) return createBlockedSubmitOutcome();
     if (!selectedGroupIsValid) {
-      toast.error(groupPermissionInvalidReason ?? t('pages.create.error.createFailed'));
+      toast.error(groupPermissionInvalidReason);
       return createBlockedSubmitOutcome();
     }
     setIsSubmitting(true);

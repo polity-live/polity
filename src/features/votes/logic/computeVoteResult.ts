@@ -18,8 +18,12 @@ export function computeVoteResult(
       return accept > totalVoters / 2 ? 'passed' : 'rejected';
     case 'two_thirds':
       return accept >= (totalVoters * 2) / 3 ? 'passed' : 'rejected';
-    case 'simple':
     default:
-      return accept > reject ? 'passed' : 'rejected';
+      switch (Math.sign(accept - reject)) {
+        case 1:
+          return 'passed';
+        default:
+          return 'rejected';
+      }
   }
 }

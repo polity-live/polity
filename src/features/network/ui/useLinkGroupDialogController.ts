@@ -79,9 +79,7 @@ function getRequestRelationshipType(
   currentGroupId: string
 ): GroupRelationshipType | null {
   if (request.desired_connection_type === 'peer') {
-    return request.group_a_id === currentGroupId || request.group_b_id === currentGroupId
-      ? 'sibling'
-      : null;
+    return 'sibling';
   }
 
   if (request.desired_parent_group_id === currentGroupId) {
@@ -152,11 +150,10 @@ export function useLinkGroupDialogController({
   });
 
   const availableGroups = (availableGroupsRaw || []).filter(group => group.id !== currentGroupId);
-  const displayCurrentGroupName =
-    resolveAppTutorialFixtureText(currentGroupName, {
-      tutorialRunId: currentGroup?.tutorial_run_id,
-      language,
-    }) ?? currentGroupName;
+  const displayCurrentGroupName = resolveAppTutorialFixtureText(currentGroupName, {
+    tutorialRunId: currentGroup?.tutorial_run_id,
+    language,
+  });
 
   const composer = useGroupConnectionComposer();
 
@@ -252,18 +249,18 @@ export function useLinkGroupDialogController({
       return null;
     }
 
-    return (
-      [...pairConnectionRequests]
-        .filter(request =>
-          matchesRequestSelection({
-            currentGroupId,
-            otherGroupId: value.selectedGroupId,
-            relationshipType: value.relationshipType,
-            request,
-          })
-        )
-        .sort((left, right) => (right.updated_at ?? 0) - (left.updated_at ?? 0))[0] ?? null
-    );
+    const matchingRequests = [...pairConnectionRequests]
+      .filter(request =>
+        matchesRequestSelection({
+          currentGroupId,
+          otherGroupId: value.selectedGroupId,
+          relationshipType: value.relationshipType,
+          request,
+        })
+      )
+      .sort((left, right) => (right.updated_at ?? 0) - (left.updated_at ?? 0));
+
+    return matchingRequests.length > 0 ? matchingRequests[0] : null;
   }, [currentGroupId, pairConnectionRequests, value.relationshipType, value.selectedGroupId]);
 
   const relevantRelationships = useMemo(() => {
@@ -445,7 +442,7 @@ export function useLinkGroupDialogController({
       ])
     );
     if (isRequest) {
-      for (const request of source.grant_requests ?? []) {
+      for (const request of source.grant_requests) {
         const key = `${request.right_key}:${request.holder_group_id}:${request.scope_group_id}`;
         if (request.operation === 'remove') {
           grantsByKey.delete(key);
@@ -459,7 +456,7 @@ export function useLinkGroupDialogController({
       connection: { grants: isRequest ? [...grantsByKey.values()] : source.grants },
       includePending: isRequest,
     }) as typeof value.rightDirections;
-    const membershipRequests = isRequest ? (source.membership_rule_requests ?? []) : [];
+    const membershipRequests = isRequest ? source.membership_rule_requests : [];
     const membershipRequest =
       membershipRequests.length <= 1
         ? (membershipRequests[0] ?? null)
@@ -478,7 +475,8 @@ export function useLinkGroupDialogController({
       membershipRule,
     });
     const relationshipType = isRequest
-      ? (getRequestRelationshipType(source, currentGroupId) ?? value.relationshipType)
+      ? // `currentPrimaryRequest` is selected by matchesRequestSelection, which proves orientation.
+        (getRequestRelationshipType(source, currentGroupId) as GroupRelationshipType)
       : source.connection_type === 'peer'
         ? 'sibling'
         : source.parent_group_id === currentGroupId

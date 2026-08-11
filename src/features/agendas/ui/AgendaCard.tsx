@@ -126,12 +126,15 @@ export function AgendaCard({
             {dragHandle}
             {showMoveButton && onMoveClick && (
               <Button
+                data-action-id="agendas.card.move-event.open"
+                data-action-kind="interaction"
                 variant="outline"
                 size="sm"
                 onClick={e => {
                   e.preventDefault();
                   onMoveClick();
                 }}
+                aria-label={t('features.events.agenda.moveToEvent')}
                 title={t('features.events.agenda.moveToEvent')}
               >
                 <ArrowRight className="h-4 w-4" />
@@ -164,12 +167,12 @@ export function AgendaCard({
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={creatorAvatar} />
                     <AvatarFallback className="text-xs">
-                      {creatorName?.[0]?.toUpperCase() || '?'}
+                      {creatorName.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <span className="truncate">
                     {t('features.events.agenda.by', {
-                      name: creatorName || t('features.events.agenda.unspecified'),
+                      name: creatorName,
                     })}
                   </span>
                 </div>

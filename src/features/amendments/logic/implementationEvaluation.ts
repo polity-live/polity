@@ -66,7 +66,7 @@ function normalizeDateInput(value: number | string) {
   }
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return parseLocalDateInput(value) ?? new Date(Number.NaN);
+    return parseLocalDateInput(value) as Date;
   }
 
   return new Date(value);
@@ -284,8 +284,8 @@ export function resolveImplementationReviewVoteOutcome(
     tallyByChoiceId.set(tally.choice_id, (tallyByChoiceId.get(tally.choice_id) ?? 0) + tally.count);
   }
 
-  const yesCount = tallyByChoiceId.get(yesChoice.id) ?? 0;
-  const noCount = tallyByChoiceId.get(noChoice.id) ?? 0;
+  const yesCount = tallyByChoiceId.get(yesChoice.id) as number;
+  const noCount = tallyByChoiceId.get(noChoice.id) as number;
   const totalEligible = Math.max(
     vote.voters?.length ?? 0,
     (vote.final_participations?.length ?? 0) +

@@ -399,6 +399,7 @@ export function AmendmentWikiView({
         {user ? (
           <>
             <SubscribeButton
+              data-action-id="amendments.wiki.toggle.subscription"
               entityType="amendment"
               entityId={amendmentId}
               isSubscribed={isSubscribed}
@@ -407,6 +408,7 @@ export function AmendmentWikiView({
               compactOnMobile
             />
             <MembershipButton
+              data-action-id="amendments.wiki.manage.collaboration"
               actionType="collaborate"
               status={collaboration.status}
               isMember={collaboration.isCollaborator}
@@ -427,6 +429,7 @@ export function AmendmentWikiView({
               presentation="surface"
             />
             <Button
+              data-action-id="amendments.wiki.clone.current"
               variant="outline"
               size="default"
               onClick={handleClone}
@@ -439,6 +442,7 @@ export function AmendmentWikiView({
           </>
         ) : null}
         <ShareButton
+          data-action-id="amendments.wiki.open.share"
           url={`/amendment/${amendmentId}`}
           title={amendment.title ?? ''}
           description={amendment.preamble || amendment.code || ''}
@@ -450,7 +454,7 @@ export function AmendmentWikiView({
             createdAt: new Date(),
             status: primaryBranchMode,
             groupName: targetGroup?.name,
-            collaboratorCount: collaborators.length,
+            collaboratorCount: (collaborators ?? []).length,
             supportingGroupsCount: supportingGroupCount,
             tags:
               amendment.amendment_hashtags

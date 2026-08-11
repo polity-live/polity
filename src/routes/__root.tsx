@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-r
 import '@/font-faces.css';
 import { AuthProvider } from '@/providers/auth-provider';
 import { AppRuntime } from '@/runtime/app-runtime';
+import { AppHydrationMarker } from '@/runtime/AppHydrationMarker';
 import { AppShell } from '@/layout/app-shell';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
 import { MotionProvider } from '@/features/shared/motion';
@@ -15,7 +16,11 @@ import {
   APPEARANCE_THEME_STYLE_ID,
 } from '@/features/shared/appearance-theme';
 
-const stylesHref = import.meta.env.DEV ? '/src/styles.css?direct' : stylesAssetHref;
+export function resolveStylesHref(isDevelopment: boolean, assetHref: string) {
+  return isDevelopment ? '/src/styles.css?direct' : assetHref;
+}
+
+const stylesHref = resolveStylesHref(import.meta.env.DEV, stylesAssetHref);
 export const earlyPwaInstallPromptCaptureScript = `(function(){try{if(window.__polityPwaInstallPromptCaptureReady)return;window.__polityPwaInstallPromptCaptureReady=true;window.addEventListener('beforeinstallprompt',function(event){event.preventDefault();window.__polityPwaInstallPromptEvent=event;window.__polityPwaInstallPromptCapturedAt=Date.now();window.dispatchEvent(new CustomEvent('polity:pwa-install-prompt-captured',{detail:{promptEvent:event,capturedAt:window.__polityPwaInstallPromptCapturedAt}}));});}catch(error){console.warn('Failed to initialize PWA install prompt capture:',error);}})()`;
 
 export const Route = createRootRoute({
@@ -61,7 +66,7 @@ export const Route = createRootRoute({
   component: RootLayout,
 });
 
-function RootLayout() {
+export function RootLayout() {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -79,6 +84,7 @@ function RootLayout() {
             __html: earlyPwaInstallPromptCaptureScript,
           }}
         />
+        <AppHydrationMarker />
         <MotionProvider>
           <KeyboardPlatformProvider>
             <TooltipProvider delayDuration={250} skipDelayDuration={300}>

@@ -201,6 +201,39 @@ function renderComposerView(
 }
 
 describe('GroupConnectionComposerView', () => {
+  it('dispatches composer modes, presets, membership directions, and modes as stable intents', () => {
+    const onActiveTabChange = vi.fn();
+    const onValueChange = vi.fn();
+    renderComposerView({ onActiveTabChange, onValueChange });
+
+    fireEvent.mouseDown(
+      document.querySelector('[data-action-id="network.connection-composer.mode.advanced"]')!,
+      { button: 0, ctrlKey: false }
+    );
+    fireEvent.mouseDown(
+      document.querySelector('[data-action-id="network.connection-composer.mode.preset"]')!,
+      { button: 0, ctrlKey: false }
+    );
+    fireEvent.click(document.querySelector('#preset-child')!);
+    expect(onActiveTabChange.mock.calls).toEqual([['advanced']]);
+    expect(onValueChange).toHaveBeenCalled();
+
+    cleanup();
+    const setActiveMembershipDirection = vi.fn();
+    const updateMembershipRule = vi.fn();
+    renderComposerView({
+      activeTab: 'advanced',
+      setActiveMembershipDirection,
+      updateMembershipRule,
+    });
+    fireEvent.click(document.querySelector('#membership-direction-current_members_to_partner')!);
+    fireEvent.click(
+      document.querySelector('#advanced-membership-mode-partner_members_to_current-role_members')!
+    );
+    expect(setActiveMembershipDirection).toHaveBeenCalled();
+    expect(updateMembershipRule).toHaveBeenCalled();
+  });
+
   it('exposes only the group selector as the opened-dialog spotlight target', () => {
     const { container } = renderComposerView();
 

@@ -117,14 +117,16 @@ describe('OnlineCollaboratorAvatars', () => {
   it('opens the profile popup on click with name details and a real profile link', async () => {
     renderAvatars();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Tobias Hassebrock' }));
+    const presence = screen.getByRole('button', { name: 'Tobias Hassebrock' });
+    expect(presence.dataset.actionId).toBe('editor.presence.collaborator.open');
+    fireEvent.click(presence);
 
     expect(await screen.findByText('First name')).toBeTruthy();
     expect(screen.getByText('Tobias')).toBeTruthy();
     expect(screen.getByText('Hassebrock')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Open profile' }).getAttribute('href')).toBe(
-      '/user/user-online'
-    );
+    const profile = screen.getByRole('link', { name: 'Open profile' });
+    expect(profile.dataset.actionId).toBe('editor.presence.profile.open');
+    expect(profile.getAttribute('href')).toBe('/user/user-online');
   });
 
   it('opens the profile popup on hover', async () => {

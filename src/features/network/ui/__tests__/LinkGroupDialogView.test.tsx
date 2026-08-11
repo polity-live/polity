@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ComponentProps, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,6 +8,10 @@ import { LinkGroupDialogView } from '../LinkGroupDialogView';
 
 const dialogMocks = vi.hoisted(() => ({
   modal: vi.fn(),
+  contentProps: null as Record<string, any> | null,
+  dialogProps: null as Record<string, any> | null,
+  overlayProps: null as Record<string, any> | null,
+  composerProps: null as Record<string, any> | null,
 }));
 
 vi.mock('@/features/shared/ui/dialog', () => ({
@@ -20,11 +24,17 @@ vi.mock('@/features/shared/ui/dialog', () => ({
     children: ReactNode;
     onInteractOutside?: unknown;
     showCloseButton?: boolean;
-  }) => (
-    <div data-slot="management-dialog-content" {...props}>
-      {children}
-    </div>
-  ),
+  }) => {
+    dialogMocks.contentProps = {
+      onInteractOutside: _onInteractOutside,
+      showCloseButton: _showCloseButton,
+    };
+    return (
+      <div data-slot="management-dialog-content" {...props}>
+        {children}
+      </div>
+    );
+  },
   ManagementDialogHeader: ({ children, ...props }: ComponentProps<'header'>) => (
     <header data-slot="management-dialog-header" {...props}>
       {children}
@@ -43,8 +53,9 @@ vi.mock('@/features/shared/ui/dialog', () => ({
 }));
 
 vi.mock('@/features/shared/ui/ui/dialog', () => ({
-  Dialog: ({ children, modal }: { children: ReactNode; modal?: boolean }) => {
+  Dialog: ({ children, modal, ...props }: { children: ReactNode; modal?: boolean }) => {
     dialogMocks.modal(modal);
+    dialogMocks.dialogProps = props;
     return <div>{children}</div>;
   },
   DialogDescription: ({ children, ...props }: ComponentProps<'p'>) => <p {...props}>{children}</p>,
@@ -53,16 +64,26 @@ vi.mock('@/features/shared/ui/ui/dialog', () => ({
 }));
 
 vi.mock('@/features/shared/ui/action-submission', () => ({
-  ActionSubmissionOverlay: () => null,
+  ActionSubmissionOverlay: (props: Record<string, unknown>) => {
+    dialogMocks.overlayProps = props;
+    return <div data-testid="submission-overlay" />;
+  },
 }));
 
 vi.mock('../GroupConnectionComposer', () => ({
-  GroupConnectionComposer: () => <div data-testid="group-connection-composer" />,
+  GroupConnectionComposer: (props: Record<string, unknown>) => {
+    dialogMocks.composerProps = props;
+    return <div data-testid="group-connection-composer" />;
+  },
 }));
 
 afterEach(() => {
   cleanup();
   document.body.removeAttribute('data-app-tutorial-active');
+  dialogMocks.contentProps = null;
+  dialogMocks.dialogProps = null;
+  dialogMocks.overlayProps = null;
+  dialogMocks.composerProps = null;
   vi.clearAllMocks();
 });
 
@@ -72,24 +93,46 @@ function renderDialog({
   pairConnectionsLoading = false,
   pairConnectionRequestsLoading = false,
   preflight = { blocking: false, isLoading: false, response: { blocking: false } },
+  trigger = null,
+  selectedGroupId = 'partner',
+  membershipMode = 'role_members',
+  membershipDirection = 'partner_members_to_current',
+  hasRight = true,
+  isEditMode = false,
+  isSubmitting = false,
+  groupStateLoading = false,
+  submissionActive = false,
+  currentGroupName = 'Current group',
+  availableGroups = [{ id: 'partner', name: 'Partner group' }],
 }: {
   open?: boolean;
   roleId?: string;
   pairConnectionsLoading?: boolean;
   pairConnectionRequestsLoading?: boolean;
   preflight?: { blocking: boolean; isLoading: boolean; response: { blocking: boolean } };
+  trigger?: ReactNode;
+  selectedGroupId?: string;
+  membershipMode?: string;
+  membershipDirection?: string | null;
+  hasRight?: boolean;
+  isEditMode?: boolean;
+  isSubmitting?: boolean;
+  groupStateLoading?: boolean;
+  submissionActive?: boolean;
+  currentGroupName?: string;
+  availableGroups?: { id: string; name: string | null }[];
 } = {}) {
   const value = {
-    selectedGroupId: 'partner',
+    selectedGroupId,
     relationshipType: 'sibling',
-    membershipDirection: 'partner_members_to_current',
+    membershipDirection,
     membershipRule: {
-      membershipMode: 'role_members',
+      membershipMode,
       roleId,
       sourceGroupIds: [],
     },
     rightDirections: {
-      informationRight: 'current_grants_right_to_partner',
+      informationRight: hasRight ? 'current_grants_right_to_partner' : 'none',
       amendmentRight: 'none',
       rightToSpeak: 'none',
       activeVotingRight: 'none',
@@ -98,12 +141,23 @@ function renderDialog({
     preset: 'elected',
   };
 
-  return render(
+  const setOpen = vi.fn();
+  const handleSubmit = vi.fn();
+  const actionSubmission = {
+    isActive: submissionActive,
+    status: 'idle',
+    progressSteps: [],
+    error: null,
+    reset: vi.fn(),
+    retry: vi.fn(),
+  };
+
+  const rendered = render(
     <LinkGroupDialogView
       {...({
         currentGroupId: 'current',
-        currentGroupName: 'Current group',
-        trigger: null,
+        currentGroupName,
+        trigger,
         t: (key: string, paramsOrFallback?: string) =>
           ({
             'common.actions.cancel': 'Cancel',
@@ -118,6 +172,10 @@ function renderDialog({
               'Resolve the conflict before creating this link.',
             'common.network.linkGroupLoadingGroups': 'Groups are still loading.',
             'common.network.linkGroupSavingStatus': 'Saving the link request.',
+            'common.network.saving': 'Saving...',
+            'common.network.saveChanges': 'Save changes',
+            'common.network.editRelationship': 'Edit relationship',
+            'common.network.editRelationshipDescription': 'Edit relationship description',
             'common.network.linkGroupSelectRightsOrMembership':
               'Select at least one right or configure membership.',
             'common.network.linkGroupSelectRole': 'Select a role to continue.',
@@ -126,35 +184,48 @@ function renderDialog({
             'components.actionBar.linkGroup': 'Link group',
           })[key] ?? (typeof paramsOrFallback === 'string' ? paramsOrFallback : key),
         open,
-        setOpen: vi.fn(),
-        actionSubmission: {
-          isActive: false,
-          status: 'idle',
-          progressSteps: [],
-          error: null,
-          reset: vi.fn(),
-          retry: vi.fn(),
-        },
-        isEditMode: false,
-        groupStateLoading: false,
-        availableGroups: [{ id: 'partner', name: 'Partner group' }],
+        setOpen,
+        actionSubmission,
+        isEditMode,
+        groupStateLoading,
+        availableGroups,
         value,
         setValue: vi.fn(),
         activeTab: 'preset',
         setActiveTab: vi.fn(),
-        isSubmitting: false,
+        isSubmitting,
         pairConnectionsLoading,
         pairConnectionRequestsLoading,
         existingRightStatuses: new Map(),
         selectableRolesByDirection: {},
         preflight,
-        handleSubmit: vi.fn(),
+        handleSubmit,
       } as any)}
     />
   );
+
+  return { ...rendered, setOpen, handleSubmit, actionSubmission };
 }
 
 describe('LinkGroupDialogView', () => {
+  it('opens, cancels, and submits group links through canonical actions', () => {
+    const { setOpen, handleSubmit } = renderDialog({ roleId: 'role-1' });
+
+    expect(document.querySelector('[data-action-id="network.link-group.open"]')).toBeTruthy();
+    fireEvent.click(document.querySelector('[data-action-id="network.link-group.cancel"]')!);
+    fireEvent.click(document.querySelector('[data-action-id="network.link-group.submit"]')!);
+
+    expect(setOpen).toHaveBeenCalledWith(false);
+    expect(handleSubmit).toHaveBeenCalledOnce();
+  });
+
+  it('renders a caller-provided trigger instead of the default link button', () => {
+    renderDialog({ trigger: <button type="button">Custom link trigger</button> });
+
+    expect(screen.getByRole('button', { name: 'Custom link trigger' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Link group' })).toBeNull();
+  });
+
   it('keeps the tutorial controls interactive while the link dialog is open', () => {
     document.body.setAttribute('data-app-tutorial-active', '');
 
@@ -225,5 +296,92 @@ describe('LinkGroupDialogView', () => {
       screen.getByRole<HTMLButtonElement>('button', { name: /Checking connection/ }).disabled
     ).toBe(true);
     expect(screen.getByText('Possible conflicts are being checked.')).not.toBeNull();
+  });
+
+  it('reports all remaining submit gates and edit-mode labels', () => {
+    renderDialog({ roleId: 'role-1', isSubmitting: true });
+    expect(screen.getByText('Saving the link request.')).toBeTruthy();
+    cleanup();
+
+    renderDialog({ selectedGroupId: '' });
+    expect(screen.getByText('Select a group to continue.')).toBeTruthy();
+    cleanup();
+
+    renderDialog({ roleId: 'role-1', groupStateLoading: true });
+    expect(screen.getByText('Groups are still loading.')).toBeTruthy();
+    cleanup();
+
+    renderDialog({ roleId: 'role-1', pairConnectionRequestsLoading: true });
+    expect(screen.getByText('Existing links and open requests are being checked.')).toBeTruthy();
+    cleanup();
+
+    renderDialog({
+      roleId: 'role-1',
+      preflight: { blocking: true, isLoading: false, response: { blocking: true } },
+    });
+    expect(screen.getByText('Resolve the conflict before creating this link.')).toBeTruthy();
+    cleanup();
+
+    renderDialog({
+      membershipMode: 'none',
+      membershipDirection: null,
+      hasRight: false,
+    });
+    expect(screen.getByText('Select at least one right or configure membership.')).toBeTruthy();
+    cleanup();
+
+    renderDialog({
+      roleId: 'role-1',
+      isEditMode: true,
+      currentGroupName: '',
+    });
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeTruthy();
+    expect(dialogMocks.composerProps?.disableGroupSelection).toBe(true);
+  });
+
+  it('guards tutorial outside interactions and leaves ordinary interactions untouched', () => {
+    const regular = renderDialog({ roleId: 'role-1' });
+    const regularPrevent = vi.fn();
+    dialogMocks.contentProps!.onInteractOutside({
+      target: document.createElement('div'),
+      preventDefault: regularPrevent,
+    });
+    expect(regularPrevent).not.toHaveBeenCalled();
+    regular.unmount();
+
+    document.body.setAttribute('data-app-tutorial-active', '');
+    renderDialog({ roleId: 'role-1' });
+    const outsideHandler = dialogMocks.contentProps!.onInteractOutside;
+    outsideHandler({ target: {}, preventDefault: vi.fn() });
+    outsideHandler({ target: document.createElement('div'), preventDefault: vi.fn() });
+
+    const spotlight = document.createElement('div');
+    spotlight.dataset.testid = 'app-tutorial-spotlight';
+    const child = document.createElement('span');
+    spotlight.append(child);
+    const preventDefault = vi.fn();
+    outsideHandler({ target: child, preventDefault });
+    expect(preventDefault).toHaveBeenCalledOnce();
+  });
+
+  it('locks the dialog during submission and wires overlay completion and retry actions', () => {
+    const { setOpen, actionSubmission } = renderDialog({
+      submissionActive: true,
+      selectedGroupId: '',
+      currentGroupName: '',
+      availableGroups: [],
+    });
+
+    expect(dialogMocks.dialogProps?.onOpenChange).toBeUndefined();
+    expect(dialogMocks.contentProps?.showCloseButton).toBe(false);
+    expect(screen.queryByTestId('group-connection-composer')).toBeNull();
+
+    dialogMocks.overlayProps!.target.onClick();
+    dialogMocks.overlayProps!.onBack();
+    dialogMocks.overlayProps!.onRetry();
+
+    expect(actionSubmission.reset).toHaveBeenCalledTimes(2);
+    expect(actionSubmission.retry).toHaveBeenCalledOnce();
+    expect(setOpen).toHaveBeenCalledWith(false);
   });
 });

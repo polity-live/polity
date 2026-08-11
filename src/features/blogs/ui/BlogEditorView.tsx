@@ -38,7 +38,7 @@ export function BlogEditorView({
         <h1 className="text-3xl font-bold">
           {translateText('generated.inline.0267_blog_editor_b05a0e7d')}
         </h1>
-        <Button onClick={onSave} disabled={isSaving}>
+        <Button data-action-id="blogs.editor.save" onClick={onSave} disabled={isSaving}>
           {isSaving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -38,14 +38,11 @@ interface BloggerUserLike extends Pick<User, 'first_name' | 'last_name'> {
 }
 
 function BloggerUserCell({ user }: { user?: BloggerUserLike | null }) {
+  const userIdentifier = user?.handle || user?.email;
   return (
     <EntityCell
       title={displayName(user)}
-      description={
-        user?.handle || user?.email
-          ? `@${user.handle || user.email || translateText('generated.inline.0025_unknown_50d8b4a9')}`
-          : undefined
-      }
+      description={userIdentifier ? `@${userIdentifier}` : undefined}
       leading={
         <Avatar>
           <AvatarImage src={user?.avatar || ''} />
@@ -335,7 +332,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
       meta: { headerClassName: 'text-right', cellClassName: 'text-right' },
       cell: ({ row }) =>
         canManageBloggers ? (
-          <Button variant="ghost" size="sm" onClick={() => handleRemoveBlogger(row.original.id)}>
+          <Button
+            data-action-id="blogs.bloggers.invitation.cancel"
+            variant="ghost"
+            size="sm"
+            onClick={() => handleRemoveBlogger(row.original.id)}
+          >
             <UserX className="h-4 w-4" />
             <span className="ml-2">{translateText('generated.inline.0065_cancel_77dfd213')}</span>
           </Button>
@@ -355,6 +357,10 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
       cell: ({ row }) =>
         canManageBloggers && row.original.user?.id !== currentUserId ? (
           <NativeSelect
+            data-action-id="blogs.bloggers.active.update-role"
+            aria-label={translateText('features.blogs.bloggers.updateRole', {
+              user: displayName(row.original.user),
+            })}
             value={row.original.role?.id ?? ''}
             className="w-[180px]"
             onChange={event => void handleUpdateRole(row.original.id, event.target.value)}
@@ -392,7 +398,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
       meta: { headerClassName: 'text-right', cellClassName: 'text-right' },
       cell: ({ row }) =>
         canManageBloggers && row.original.user?.id !== currentUserId ? (
-          <Button variant="ghost" size="sm" onClick={() => handleRemoveBlogger(row.original.id)}>
+          <Button
+            data-action-id="blogs.bloggers.active.remove"
+            variant="ghost"
+            size="sm"
+            onClick={() => handleRemoveBlogger(row.original.id)}
+          >
             <UserX className="h-4 w-4" />
             <span className="ml-2">{translateText('generated.inline.0096_remove_e963907d')}</span>
           </Button>
@@ -433,6 +444,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
         canManageBloggers ? (
           <div className="flex justify-end gap-2">
             <Button
+              data-action-id="blogs.bloggers.request.accept"
               variant="default"
               size="sm"
               onClick={() => {
@@ -448,6 +460,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
               {translateText('generated.inline.0121_accept_bb54db51')}
             </Button>
             <Button
+              data-action-id="blogs.bloggers.request.decline"
               variant="outline"
               size="sm"
               onClick={() => handleRemoveBlogger(row.original.id)}

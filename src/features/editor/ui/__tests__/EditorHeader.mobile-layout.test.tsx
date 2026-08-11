@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EditorHeader } from '../EditorHeader';
 
@@ -11,6 +11,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
       (
         ({
           'features.editor.header.allSaved': 'All changes saved',
+          'features.editor.header.editTitle': 'Edit title',
           'features.editor.header.untitled': 'Untitled',
         }) as Record<string, string>
       )[key] ?? key,
@@ -20,6 +21,28 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 afterEach(cleanup);
 
 describe('EditorHeader mobile layout', () => {
+  it('opens title editing through its stable accessible intent', () => {
+    const setIsEditingTitle = vi.fn();
+    render(
+      <EditorHeader
+        title="Editable title"
+        onTitleChange={vi.fn()}
+        isEditingTitle={false}
+        setIsEditingTitle={setIsEditingTitle}
+        isSavingTitle={false}
+        saveStatus="saved"
+        hasUnsavedChanges={false}
+      />
+    );
+
+    const edit = screen.getByRole('button', { name: 'Edit title' });
+    expect(edit.dataset.actionId).toBe('editor.header.title.edit');
+    edit.focus();
+    expect(document.activeElement).toBe(edit);
+    fireEvent.click(edit);
+    expect(setIsEditingTitle).toHaveBeenCalledWith(true);
+  });
+
   it('allows long titles to wrap and gives the saved status its own mobile row', () => {
     render(
       <EditorHeader

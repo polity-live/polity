@@ -85,11 +85,21 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
 
       <Tabs defaultValue="all">
         <ScrollableTabsList>
-          <TabsTrigger value="all">{t('pages.user.all.title')}</TabsTrigger>
-          <TabsTrigger value="amendments">{t('pages.user.amendments.title')}</TabsTrigger>
-          <TabsTrigger value="blogs">{t('pages.user.blogs.title')}</TabsTrigger>
-          <TabsTrigger value="groups">{t('pages.user.groups.title')}</TabsTrigger>
-          <TabsTrigger value="statements">{t('pages.user.statements.title')}</TabsTrigger>
+          <TabsTrigger value="all" data-action-id="users.content-tab.all">
+            {t('pages.user.all.title')}
+          </TabsTrigger>
+          <TabsTrigger value="amendments" data-action-id="users.content-tab.amendments">
+            {t('pages.user.amendments.title')}
+          </TabsTrigger>
+          <TabsTrigger value="blogs" data-action-id="users.content-tab.blogs">
+            {t('pages.user.blogs.title')}
+          </TabsTrigger>
+          <TabsTrigger value="groups" data-action-id="users.content-tab.groups">
+            {t('pages.user.groups.title')}
+          </TabsTrigger>
+          <TabsTrigger value="statements" data-action-id="users.content-tab.statements">
+            {t('pages.user.statements.title')}
+          </TabsTrigger>
         </ScrollableTabsList>
 
         <TabsContent value="all" className="mt-4 space-y-4">

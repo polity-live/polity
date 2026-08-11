@@ -102,7 +102,7 @@ describe('SpatialSearchResultsList', () => {
 
   it('selects the document when a result card is clicked', () => {
     const onDocumentSelect = vi.fn();
-    const document = makeDocument('group:2', 'Clickable Group');
+    const searchDocument = makeDocument('group:2', 'Clickable Group');
 
     render(
       <SpatialSearchResultsList
@@ -111,7 +111,7 @@ describe('SpatialSearchResultsList', () => {
           {
             key: 'cell-1',
             index: 1,
-            document,
+            document: searchDocument,
           },
         ]}
         spaceBefore={0}
@@ -124,9 +124,20 @@ describe('SpatialSearchResultsList', () => {
       />
     );
 
-    fireEvent.click(screen.getByText('Clickable Group'));
+    const action = screen.getByRole('button');
 
-    expect(onDocumentSelect).toHaveBeenCalledWith(document);
+    expect(action.getAttribute('data-action-id')).toBe('search.spatial-result.select');
+    expect(action.getAttribute('aria-pressed')).toBe('false');
+    action.focus();
+    expect(document.activeElement).toBe(action);
+    fireEvent.keyDown(action, { key: 'Enter' });
+    fireEvent.keyDown(action, { key: ' ' });
+    fireEvent.click(action);
+
+    expect(onDocumentSelect).toHaveBeenCalledTimes(3);
+    expect(onDocumentSelect).toHaveBeenNthCalledWith(1, searchDocument);
+    expect(onDocumentSelect).toHaveBeenNthCalledWith(2, searchDocument);
+    expect(onDocumentSelect).toHaveBeenNthCalledWith(3, searchDocument);
     expect(
       screen
         .getByTestId('spatial-search-results-list')
@@ -139,5 +150,31 @@ describe('SpatialSearchResultsList', () => {
           .querySelector('[data-zero-virtual-spacer="after"]') as HTMLElement
       ).style.height
     ).toBe('120px');
+  });
+
+  it('renders an inert skeleton cell while its document is unavailable', () => {
+    const onDocumentSelect = vi.fn();
+    const { container } = render(
+      <SpatialSearchResultsList
+        parentRef={createRef<HTMLDivElement>()}
+        cells={[{ key: 'skeleton-0', index: 0, document: null }]}
+        spaceBefore={0}
+        spaceAfter={0}
+        rowsEmpty={false}
+        isComplete={false}
+        emptyLabel="No results"
+        activeDocumentId={null}
+        onDocumentSelect={onDocumentSelect}
+      />
+    );
+
+    const skeleton = container.querySelector(
+      '[data-action-id="search.spatial-result.select"]'
+    ) as HTMLElement;
+    expect(skeleton.getAttribute('tabindex')).toBe('-1');
+    expect(skeleton.getAttribute('data-search-document-id')).toBeNull();
+    fireEvent.keyDown(skeleton, { key: 'Enter' });
+    fireEvent.click(skeleton);
+    expect(onDocumentSelect).not.toHaveBeenCalled();
   });
 });

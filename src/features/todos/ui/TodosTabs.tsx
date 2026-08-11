@@ -24,27 +24,51 @@ export function TodosTabs({ selectedTab, setSelectedTab, statusCounts, children 
   return (
     <Tabs value={selectedTab} onValueChange={v => setSelectedTab(v as typeof selectedTab)}>
       <ScrollableTabsList className="mb-6">
-        <TabsTrigger value="all" className="flex items-center gap-2">
+        <TabsTrigger
+          value="all"
+          className="flex items-center gap-2"
+          data-action-id="todos.tabs.status.all"
+        >
           <CheckSquare className="h-4 w-4" />
           {t('features.todos.status.all')} ({statusCounts.all})
         </TabsTrigger>
-        <TabsTrigger value="pending" className="flex items-center gap-2">
+        <TabsTrigger
+          value="pending"
+          className="flex items-center gap-2"
+          data-action-id="todos.tabs.status.pending"
+        >
           <Circle className="h-4 w-4" />
           {t('features.todos.status.pending')} ({statusCounts.pending})
         </TabsTrigger>
-        <TabsTrigger value="in_progress" className="flex items-center gap-2">
+        <TabsTrigger
+          value="in_progress"
+          className="flex items-center gap-2"
+          data-action-id="todos.tabs.status.in-progress"
+        >
           <Clock className="h-4 w-4" />
           {t('features.todos.status.in_progress')} ({statusCounts.in_progress})
         </TabsTrigger>
-        <TabsTrigger value="completed" className="flex items-center gap-2">
+        <TabsTrigger
+          value="completed"
+          className="flex items-center gap-2"
+          data-action-id="todos.tabs.status.completed"
+        >
           <CheckCircle2 className="h-4 w-4" />
           {t('features.todos.status.completed')} ({statusCounts.completed})
         </TabsTrigger>
-        <TabsTrigger value="cancelled" className="flex items-center gap-2">
+        <TabsTrigger
+          value="cancelled"
+          className="flex items-center gap-2"
+          data-action-id="todos.tabs.status.cancelled"
+        >
           <XCircle className="h-4 w-4" />
           {t('features.todos.status.cancelled')} ({statusCounts.cancelled})
         </TabsTrigger>
-        <TabsTrigger value="archived" className="flex items-center gap-2">
+        <TabsTrigger
+          value="archived"
+          className="flex items-center gap-2"
+          data-action-id="todos.tabs.status.archived"
+        >
           <Archive className="h-4 w-4" />
           {t('features.todos.status.archived')} ({statusCounts.archived})
         </TabsTrigger>

@@ -42,5 +42,20 @@ describe('getBranchPreservingAmendmentNavTarget', () => {
         branchId: 'branch-1',
       })
     ).toBeNull();
+
+    expect(
+      getBranchPreservingAmendmentNavTarget({
+        itemId: 'text',
+        amendmentId: null,
+        branchId: 'branch-1',
+      })
+    ).toBeNull();
+    expect(
+      getBranchPreservingAmendmentNavTarget({
+        itemId: 'text',
+        amendmentId: 'amendment-1',
+        branchId: null,
+      })
+    ).toBeNull();
   });
 });

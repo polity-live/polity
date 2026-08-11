@@ -64,4 +64,35 @@ describe('SuggestionForeignInsertPlugin', () => {
       userId: 'simulated-user',
     });
   });
+
+  it('uses ordinary insertion outside suggestion mode or without a selection', () => {
+    const editor = createSuggestionEditor('current-user');
+    editor.setOption(BaseSuggestionPlugin, 'isSuggesting', false);
+    editor.tf.insertText(' ordinary');
+    expect(editor.api.string([])).toContain(' ordinary');
+
+    editor.setOption(BaseSuggestionPlugin, 'isSuggesting', true);
+    editor.selection = null;
+    editor.tf.insertText(' appended');
+    expect(editor.api.string([])).toContain('appended');
+  });
+
+  it('uses ordinary insertion when no leaf exists at the selection', () => {
+    const editor = createSuggestionEditor('current-user');
+    editor.selection = {
+      anchor: { path: [9, 0], offset: 0 },
+      focus: { path: [9, 0], offset: 0 },
+    };
+
+    expect(() => editor.tf.insertText('ignored')).not.toThrow();
+  });
+
+  it('uses ordinary insertion when the selected node is not text', () => {
+    const editor = createSuggestionEditor('current-user');
+    editor.api.leaf = () => [{ children: [], type: 'p' }, [0]] as any;
+
+    editor.tf.insertText(' ordinary');
+
+    expect(editor.api.string([])).toContain(' ordinary');
+  });
 });

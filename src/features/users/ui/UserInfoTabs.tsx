@@ -24,10 +24,10 @@ interface UserInfoTabsProps {
 export const UserInfoTabs: React.FC<UserInfoTabsProps> = ({ about, contact }) => (
   <Tabs defaultValue="about" className="mb-12">
     <ScrollableTabsList>
-      <TabsTrigger value="about">
+      <TabsTrigger value="about" data-action-id="users.info-tab.about">
         {translateText('generated.inline.1203_about_6b21fb79')}
       </TabsTrigger>
-      <TabsTrigger value="contact">
+      <TabsTrigger value="contact" data-action-id="users.info-tab.contact">
         {translateText('generated.inline.1204_contact_b37456c4')}
       </TabsTrigger>
     </ScrollableTabsList>

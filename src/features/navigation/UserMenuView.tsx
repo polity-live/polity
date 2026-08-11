@@ -157,10 +157,11 @@ export function UserMenuView({
 
   return (
     <>
-      <DropdownMenu open={open} onOpenChange={onOpenChange}>
+      <DropdownMenu open={open} onOpenChange={onOpenChange} modal={false}>
         <DropdownMenuTrigger asChild>
           <Button
             data-user-menu-trigger
+            data-action-id="navigation.user-menu.open"
             variant="ghost"
             className={cn(
               'hover:bg-accent h-10 w-10 rounded-md p-0',
@@ -190,6 +191,7 @@ export function UserMenuView({
 
           <DropdownMenuItem asChild className="shrink-0">
             <Link
+              data-action-id="navigation.user-menu.profile.open"
               to={profileHref}
               preload="intent"
               className="flex w-full items-center"
@@ -202,6 +204,7 @@ export function UserMenuView({
 
           <DropdownMenuItem asChild className="shrink-0">
             <Link
+              data-action-id="navigation.user-menu.settings.open"
               to={settingsHref}
               preload="intent"
               className="flex w-full items-center"
@@ -218,6 +221,7 @@ export function UserMenuView({
               onOpenChange?.(false);
               setDocumentationDialogOpen(true);
             }}
+            data-action-id="navigation.user-menu.docs-dialog.open"
           >
             <BookOpen className="mr-2 h-4 w-4" />
             {labels.docs}
@@ -226,13 +230,14 @@ export function UserMenuView({
           {navigationEntitiesLoading ? (
             <>
               <DropdownMenuSeparator className="shrink-0" />
-              <DropdownMenuLabel
-                role="status"
+              <DropdownMenuItem
+                aria-live="polite"
+                disabled
                 data-testid="user-menu-navigation-loading"
-                className="text-muted-foreground text-xs font-normal"
+                className="text-muted-foreground text-xs font-normal data-[disabled]:opacity-100"
               >
                 {labels.loading}
-              </DropdownMenuLabel>
+              </DropdownMenuItem>
             </>
           ) : hasGroups || hasEvents || hasAmendments ? (
             <div
@@ -249,7 +254,10 @@ export function UserMenuView({
                 >
                   <AccordionItem value="groups" className="border-0">
                     <DropdownMenuSeparator className="shrink-0" />
-                    <AccordionTrigger className="text-muted-foreground min-w-0 px-2 py-1.5 text-xs font-semibold hover:no-underline">
+                    <AccordionTrigger
+                      className="text-muted-foreground min-w-0 px-2 py-1.5 text-xs font-semibold hover:no-underline"
+                      data-action-id="navigation.user-menu.groups.toggle"
+                    >
                       {labels.groups}
                     </AccordionTrigger>
                     <AccordionContent className="pb-1">
@@ -275,6 +283,7 @@ export function UserMenuView({
                                 onClick={onClearGroupSearch}
                                 className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2"
                                 aria-label={labels.clear}
+                                data-action-id="navigation.user-menu.groups-search.clear"
                               >
                                 <X className="h-3 w-3" />
                               </Button>
@@ -326,7 +335,10 @@ export function UserMenuView({
                 >
                   <AccordionItem value="events" className="border-0">
                     <DropdownMenuSeparator className="shrink-0" />
-                    <AccordionTrigger className="text-muted-foreground min-w-0 px-2 py-1.5 text-xs font-semibold hover:no-underline">
+                    <AccordionTrigger
+                      className="text-muted-foreground min-w-0 px-2 py-1.5 text-xs font-semibold hover:no-underline"
+                      data-action-id="navigation.user-menu.events.toggle"
+                    >
                       {labels.events}
                     </AccordionTrigger>
                     <AccordionContent className="pb-1">
@@ -351,6 +363,7 @@ export function UserMenuView({
                                 onClick={onClearEventSearch}
                                 className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2"
                                 aria-label={labels.clear}
+                                data-action-id="navigation.user-menu.events-search.clear"
                               >
                                 <X className="h-3 w-3" />
                               </Button>
@@ -397,7 +410,10 @@ export function UserMenuView({
                 >
                   <AccordionItem value="amendments" className="border-0">
                     <DropdownMenuSeparator className="shrink-0" />
-                    <AccordionTrigger className="text-muted-foreground min-w-0 px-2 py-1.5 text-xs font-semibold hover:no-underline">
+                    <AccordionTrigger
+                      className="text-muted-foreground min-w-0 px-2 py-1.5 text-xs font-semibold hover:no-underline"
+                      data-action-id="navigation.user-menu.amendments.toggle"
+                    >
                       {labels.amendments}
                     </AccordionTrigger>
                     <AccordionContent className="pb-1">
@@ -422,6 +438,7 @@ export function UserMenuView({
                                 onClick={onClearAmendmentSearch}
                                 className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2"
                                 aria-label={labels.clear}
+                                data-action-id="navigation.user-menu.amendments-search.clear"
                               >
                                 <X className="h-3 w-3" />
                               </Button>
@@ -465,6 +482,7 @@ export function UserMenuView({
 
           <DropdownMenuItem
             onClick={() => onLogoutDialogOpenChange(true)}
+            data-action-id="navigation.user-menu.logout-dialog.open"
             className={cn('shrink-0', featureThemeClassName('navigationUserMenuDangerText'))}
           >
             <LogOut className="mr-2 h-4 w-4" />
@@ -502,6 +520,7 @@ export function UserMenuView({
             </Link>
             <Link
               to={docsHref}
+              data-action-id="navigation.user-menu.documentation.open"
               preload="intent"
               className={documentationCardClassName}
               onClick={() => setDocumentationDialogOpen(false)}
@@ -531,7 +550,12 @@ export function UserMenuView({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{labels.cancel}</AlertDialogCancel>
-            <AlertDialogAction onClick={onLogout}>{labels.logout}</AlertDialogAction>
+            <AlertDialogAction
+              onClick={onLogout}
+              data-action-id="navigation.user-menu.logout.confirm"
+            >
+              {labels.logout}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </ScrollableAlertDialogContent>
       </AlertDialog>

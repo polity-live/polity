@@ -116,8 +116,16 @@ function VirtualBlogGrid({
           />
           {canManage ? (
             <div className="absolute top-2 right-2 flex gap-1">
-              <Link to={getEditorUrl(blog.id)}>
-                <Button variant="ghost" size="icon" className="bg-background/80 h-7 w-7">
+              <Link
+                to={getEditorUrl(blog.id)}
+                data-action-id="content.blogs-and-statements.blog.edit"
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="bg-background/80 h-7 w-7"
+                  data-action-id="content.blogs-and-statements.blog.edit"
+                >
                   <Edit className="h-3.5 w-3.5" />
                 </Button>
               </Link>
@@ -126,6 +134,7 @@ function VirtualBlogGrid({
                 size="icon"
                 className="bg-background/80 text-destructive h-7 w-7"
                 onClick={() => onDeleteBlog(blog.id, blog.title ?? '')}
+                data-action-id="content.blogs-and-statements.blog.delete"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -246,6 +255,7 @@ export function BlogsAndStatementsView({
               key={f.value}
               active={filter === f.value}
               onClick={() => setFilter(f.value)}
+              data-action-id="content.blogs-and-statements.filter.select"
             >
               {f.label}
             </FilterButton>
@@ -254,16 +264,28 @@ export function BlogsAndStatementsView({
         {canCreateBlog || canCreateStatement ? (
           <div className="flex shrink-0 gap-2">
             {canCreateBlog ? (
-              <Link to="/create/blog-entry" search={{ groupId }}>
-                <Button size="sm">
+              <Link
+                to="/create/blog-entry"
+                search={{ groupId }}
+                data-action-id="content.blogs-and-statements.blog.create"
+              >
+                <Button size="sm" data-action-id="content.blogs-and-statements.blog.create">
                   <Plus className="mr-1 h-4 w-4" />
                   {translateText('generated.inline.0297_blog_0b9d2b23')}
                 </Button>
               </Link>
             ) : null}
             {canCreateStatement ? (
-              <Link to="/create/statement" search={{ groupId }}>
-                <Button size="sm" variant="outline">
+              <Link
+                to="/create/statement"
+                search={{ groupId }}
+                data-action-id="content.blogs-and-statements.statement.create"
+              >
+                <Button
+                  size="sm"
+                  variant="outline"
+                  data-action-id="content.blogs-and-statements.statement.create"
+                >
                   <Plus className="mr-1 h-4 w-4" />
                   {translateText('generated.inline.0298_statement_a72ca256')}
                 </Button>

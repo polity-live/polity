@@ -484,8 +484,10 @@ export function EventParticipants({
       activePlatformParticipants
         .map(participant => participant.user)
         .filter(
-          (user): user is NonNullable<(typeof activePlatformParticipants)[number]['user']> =>
-            Boolean(user?.id) && !offlineConnectedUserIds.has(user?.id ?? '')
+          (user): user is NonNullable<(typeof activePlatformParticipants)[number]['user']> => {
+            if (!user?.id) return false;
+            return !offlineConnectedUserIds.has(user.id);
+          }
         ),
     [activePlatformParticipants, offlineConnectedUserIds]
   );

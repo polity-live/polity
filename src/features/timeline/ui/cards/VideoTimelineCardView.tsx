@@ -41,7 +41,7 @@ export interface VideoTimelineCardProps {
 /**
  * Format duration from seconds to MM:SS or HH:MM:SS
  */
-function formatDuration(seconds: number): string {
+export function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
@@ -55,7 +55,7 @@ function formatDuration(seconds: number): string {
 /**
  * Format view count for display
  */
-function formatViews(views: number): string {
+export function formatViews(views: number): string {
   if (views >= 1000000) {
     return `${(views / 1000000).toFixed(1)}M`;
   }
@@ -102,12 +102,23 @@ export function VideoTimelineCardView({
     <TimelineCardBase contentType="video" className={className} href={targetHref}>
       {/* Video Thumbnail */}
       <div
+        data-action-id="timeline.video.play"
+        data-action-kind="interaction"
+        role="button"
+        tabIndex={0}
         className="group bg-muted relative aspect-video shrink-0 cursor-pointer"
         data-timeline-card-media
         onClick={e => {
           e.preventDefault();
           setPlayerOpen(true);
           onPlay?.();
+        }}
+        onKeyDown={event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setPlayerOpen(true);
+            onPlay?.();
+          }
         }}
       >
         {video.thumbnailUrl ? (
@@ -160,6 +171,8 @@ export function VideoTimelineCardView({
         <h3 className="mb-2 line-clamp-2 text-sm font-semibold">
           {targetHref ? (
             <SmartLink
+              data-action-id="timeline.video.open"
+              data-action-kind="navigation"
               href={targetHref}
               onClick={event => event.stopPropagation()}
               className="hover:underline"
@@ -216,6 +229,7 @@ export function VideoTimelineCardView({
 
       <TimelineCardActions>
         <TimelineCardActionButton
+          data-action-id="timeline.video.play"
           icon={Play}
           label={t('features.timeline.cards.play')}
           onClick={e => {
@@ -227,6 +241,7 @@ export function VideoTimelineCardView({
         />
         <div onClick={e => e.preventDefault()}>
           <ShareButton
+            data-action-id="timeline.video.share"
             url={targetHref || `/video/${video.id}`}
             title={video.title}
             description={video.sourceName || ''}

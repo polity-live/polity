@@ -193,6 +193,64 @@ describe('MembershipsByRoleTables', () => {
     expectIconOnlyButton('components.membershipTables.remove');
   });
 
+  it('dispatches role-member management through stable actions', () => {
+    const onOpenRightsDialog = vi.fn();
+    const onSecondaryAction = vi.fn();
+    const onRemoveRole = vi.fn();
+    const { container } = render(
+      <MembershipsByRoleTables
+        roles={[{ id: 'role-1', name: 'Chair', description: 'Chairs the group.' }]}
+        members={[member]}
+        onOpenRightsDialog={onOpenRightsDialog}
+        onSecondaryAction={onSecondaryAction}
+        onRemoveRole={onRemoveRole}
+      />
+    );
+
+    for (const actionId of [
+      'groups.members.by-role.view-rights',
+      'groups.members.by-role.secondary-action',
+      'groups.members.by-role.remove-role',
+    ]) {
+      fireEvent.click(container.querySelector(`[data-action-id="${actionId}"]`)!);
+    }
+
+    expect(onOpenRightsDialog).toHaveBeenCalledWith(member);
+    expect(onSecondaryAction).toHaveBeenCalledWith(member);
+    expect(onRemoveRole).toHaveBeenCalledWith(member, 'role-1');
+  });
+
+  it('dispatches active-member sorting and management through stable actions', () => {
+    const onSortChange = vi.fn();
+    const onOpenRightsDialog = vi.fn();
+    const onOpenChangeRoleDialog = vi.fn();
+    const onRemove = vi.fn();
+    const { container } = render(
+      <ActiveMembersTable
+        members={[member]}
+        sort={{ field: 'user', direction: 'asc' }}
+        onSortChange={onSortChange}
+        onOpenRightsDialog={onOpenRightsDialog}
+        onOpenChangeRoleDialog={onOpenChangeRoleDialog}
+        onRemove={onRemove}
+      />
+    );
+
+    const click = (actionId: string) =>
+      fireEvent.click(container.querySelector(`[data-action-id="${actionId}"]`)!);
+
+    click('groups.members.active.sort-user');
+    click('groups.members.active.sort-role');
+    click('groups.members.active.view-rights');
+    click('groups.members.active.change-role');
+    click('groups.members.active.remove');
+
+    expect(onSortChange.mock.calls).toEqual([['user'], ['role']]);
+    expect(onOpenRightsDialog).toHaveBeenCalledWith(member);
+    expect(onOpenChangeRoleDialog).toHaveBeenCalledWith(member);
+    expect(onRemove).toHaveBeenCalledWith('membership-1', 'user-1');
+  });
+
   it('keeps disabled derived role removal accessible as an icon action', () => {
     render(
       <MembershipsByRoleTables
@@ -387,10 +445,17 @@ describe('MembershipsByRoleTables', () => {
   });
 
   it('renders pending invitation headers outside the table card surface', () => {
-    render(<PendingInvitationsTable invitations={[member]} onWithdraw={vi.fn()} />);
+    const onWithdraw = vi.fn();
+    const { container } = render(
+      <PendingInvitationsTable invitations={[member]} onWithdraw={onWithdraw} />
+    );
 
     expectStandaloneTableSurface();
     expectIconOnlyButton('generated.inline.0105_withdraw_invitation_0beb2d10');
+    fireEvent.click(
+      container.querySelector('[data-action-id="groups.invitations.withdraw.pending"]')!
+    );
+    expect(onWithdraw).toHaveBeenCalledWith('membership-1', 'user-1');
   });
 
   it('shows the base group column in pending requests', () => {
@@ -435,12 +500,14 @@ describe('MembershipsByRoleTables', () => {
   });
 
   it('shows the base group column in guests', () => {
-    render(
+    const onApprove = vi.fn();
+    const onRevoke = vi.fn();
+    const { container } = render(
       <GuestsTable
         guests={[
           {
             id: 'guest-1',
-            status: 'active',
+            status: 'requested',
             user: {
               id: 'user-1',
               first_name: 'Ada',
@@ -451,6 +518,8 @@ describe('MembershipsByRoleTables', () => {
             baseGroup: { id: 'base-group-id', name: 'Base Group Name' },
           },
         ]}
+        onApprove={onApprove}
+        onRevoke={onRevoke}
         showBaseGroupColumn
       />
     );
@@ -459,5 +528,9 @@ describe('MembershipsByRoleTables', () => {
     expect(screen.getByText('Base Group Name').closest('a')?.getAttribute('href')).toBe(
       '/group/base-group-id'
     );
+    fireEvent.click(container.querySelector('[data-action-id="groups.guests.approve.request"]')!);
+    fireEvent.click(container.querySelector('[data-action-id="groups.guests.revoke.access"]')!);
+    expect(onApprove).toHaveBeenCalledWith('guest-1');
+    expect(onRevoke).toHaveBeenCalledWith('guest-1');
   });
 });

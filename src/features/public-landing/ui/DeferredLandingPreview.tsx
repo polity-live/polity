@@ -70,7 +70,13 @@ export function DeferredLandingPreview({ load, minHeight, label }: DeferredLandi
         >
           <div className="space-y-3 p-6 text-center">
             <p className="text-muted-foreground text-sm">{label}</p>
-            <Button type="button" variant="outline" size="sm" onClick={requestComponent}>
+            <Button
+              type="button"
+              data-action-id="public-landing.deferred-preview.retry"
+              variant="outline"
+              size="sm"
+              onClick={requestComponent}
+            >
               {translateText('common.loading.appBoot.retry')}
             </Button>
           </div>
@@ -78,6 +84,7 @@ export function DeferredLandingPreview({ load, minHeight, label }: DeferredLandi
       ) : (
         <div
           className="bg-muted/20 h-full min-h-[inherit] animate-pulse rounded-lg border"
+          role="status"
           aria-label={label}
         />
       )}

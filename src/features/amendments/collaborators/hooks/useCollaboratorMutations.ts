@@ -220,5 +220,5 @@ function pickPrimaryRoleId(roleIds: string[], roles: Role[]) {
     );
   });
 
-  return sortedByPriority[0] ?? null;
+  return sortedByPriority[0];
 }

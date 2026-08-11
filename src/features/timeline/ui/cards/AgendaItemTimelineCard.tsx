@@ -29,7 +29,7 @@ export interface AgendaItemTimelineCardProps {
   className?: string;
 }
 
-function formatLabel(value?: string | null): string | null {
+export function formatAgendaItemLabel(value?: string | null): string | null {
   const normalized = value?.trim();
   if (!normalized) {
     return null;
@@ -38,7 +38,7 @@ function formatLabel(value?: string | null): string | null {
   return normalized.replace(/[_-]/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 }
 
-function formatDateTime(value?: string | Date | null): string | null {
+export function formatAgendaItemDateTime(value?: string | Date | null): string | null {
   if (!value) {
     return null;
   }
@@ -54,7 +54,7 @@ function formatDateTime(value?: string | Date | null): string | null {
   }).format(parsed);
 }
 
-function getStatusBadgeTone(status?: string | null): BadgeTone {
+export function getAgendaItemStatusBadgeTone(status?: string | null): BadgeTone {
   switch (status) {
     case 'active':
     case 'in-progress':
@@ -77,10 +77,10 @@ export function AgendaItemTimelineCard({
   const { t } = useTranslation();
   const eventHref =
     href ?? (agendaItem.eventId ? `/event/${agendaItem.eventId}/agenda` : undefined);
-  const typeLabel = formatLabel(agendaItem.type);
-  const statusLabel = formatLabel(agendaItem.status);
-  const scheduledTimeLabel = formatDateTime(agendaItem.scheduledTime);
-  const createdAtLabel = formatDateTime(agendaItem.createdAt);
+  const typeLabel = formatAgendaItemLabel(agendaItem.type);
+  const statusLabel = formatAgendaItemLabel(agendaItem.status);
+  const scheduledTimeLabel = formatAgendaItemDateTime(agendaItem.scheduledTime);
+  const createdAtLabel = formatAgendaItemDateTime(agendaItem.createdAt);
   const description = normalizeTimelineText(agendaItem.description);
 
   return (
@@ -104,7 +104,10 @@ export function AgendaItemTimelineCard({
           )}
 
           {statusLabel && (
-            <StatusBadge status={agendaItem.status} tone={getStatusBadgeTone(agendaItem.status)}>
+            <StatusBadge
+              status={agendaItem.status}
+              tone={getAgendaItemStatusBadgeTone(agendaItem.status)}
+            >
               {statusLabel}
             </StatusBadge>
           )}

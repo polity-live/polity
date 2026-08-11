@@ -484,7 +484,7 @@ export function createCorridorCityDesignObject(args: {
     geometry: createCorridorGeometry(
       args.start,
       args.end,
-      args.width ?? definition.defaultWidth ?? 2
+      args.width ?? (definition.defaultWidth as number)
     ),
     properties: createObjectProperties(definition, args.overrides?.properties),
     cost: createBaseObjectCost(
@@ -517,7 +517,7 @@ export function createPathCorridorCityDesignObject(args: {
     type: args.type,
     geometry: createPathCorridorGeometry(
       args.points,
-      args.width ?? ('defaultWidth' in definition ? definition.defaultWidth : undefined) ?? 2
+      args.width ?? (definition.defaultWidth as number)
     ),
     properties: createObjectProperties(definition, args.overrides?.properties),
     cost: createBaseObjectCost(

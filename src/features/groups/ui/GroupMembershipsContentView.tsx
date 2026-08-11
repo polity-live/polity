@@ -126,6 +126,15 @@ export interface GroupMembershipsContentViewProps {
   updateOfflineMember: any;
 }
 
+function compareDisplayRoles(left: any, right: any) {
+  return (
+    (right.sort_order ?? -1) - (left.sort_order ?? -1) ||
+    (left.name ?? '').localeCompare(right.name ?? '', undefined, { sensitivity: 'base' })
+  );
+}
+
+export const groupMembershipsContentViewInternals = { compareDisplayRoles };
+
 export function GroupMembershipsContentView({
   accessRoles,
   activeGuestAccesses,
@@ -243,11 +252,7 @@ export function GroupMembershipsContentView({
       getParticipationDisplayRoles(membership).forEach(addRole)
     );
 
-    return [...roleById.values()].sort(
-      (left, right) =>
-        (right.sort_order ?? -1) - (left.sort_order ?? -1) ||
-        (left.name ?? '').localeCompare(right.name ?? '', undefined, { sensitivity: 'base' })
-    );
+    return [...roleById.values()].sort(compareDisplayRoles);
   }, [activeMembers, memberRoles, membershipsByRoleMembers]);
   const roleFilterRoles = useMemo(
     () => (activeTab === 'guests' ? [...guestRoles] : [...displayMemberRoles]),
@@ -717,10 +722,13 @@ export function GroupMembershipsContentView({
             className="space-y-4"
           >
             <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="roles">
+              <TabsTrigger data-action-id="groups.members.roles.select-definitions" value="roles">
                 {translateText('features.groups.roleConfiguration.rolesTab', 'Roles')}
               </TabsTrigger>
-              <TabsTrigger value="actionRights">
+              <TabsTrigger
+                data-action-id="groups.members.roles.select-action-rights"
+                value="actionRights"
+              >
                 {translateText(
                   'features.groups.roleConfiguration.actionRightsTab',
                   'Action rights'
@@ -742,7 +750,11 @@ export function GroupMembershipsContentView({
                   })
                 }
                 addRoleButton={
-                  <Button type="button" onClick={() => setAddRoleOpen(true)}>
+                  <Button
+                    data-action-id="groups.members.roles.open-create-from-definitions"
+                    type="button"
+                    onClick={() => setAddRoleOpen(true)}
+                  >
                     <Plus className="mr-2 h-4 w-4" />
                     {translateText('generated.inline.0125_add_role_82d0afcc')}
                   </Button>
@@ -756,6 +768,7 @@ export function GroupMembershipsContentView({
                 onReorderRoles={reorderRoles}
                 addRoleButton={
                   <Button
+                    data-action-id="groups.members.roles.open-create-from-rights"
                     type="button"
                     variant="outline"
                     size="icon"
@@ -774,6 +787,7 @@ export function GroupMembershipsContentView({
       />
 
       <AddRoleDialog
+        data-action-id="groups.members.roles.create-submit"
         isOpen={addRoleOpen}
         onOpenChange={setAddRoleOpen}
         form={newRoleForm}
@@ -809,6 +823,7 @@ export function GroupMembershipsContentView({
       />
 
       <AddRoleDialog
+        data-action-id="groups.members.roles.edit-submit"
         isOpen={editRoleOpen}
         onOpenChange={open => {
           setEditRoleOpen(open);

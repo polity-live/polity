@@ -60,7 +60,7 @@ function AmendmentNotificationsPage() {
     amendment: amendmentForPermissions,
   });
 
-  if (amendmentIsLoading || isLoading || (amendment && !amendmentForPermissions)) {
+  if (amendmentIsLoading || isLoading) {
     return <PageSkeleton />;
   }
 

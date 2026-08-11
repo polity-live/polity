@@ -133,6 +133,7 @@ export function PwaInstallPanel({ surface, onDismiss, className }: PwaInstallPan
       <div className="flex flex-none items-center gap-2 sm:justify-end">
         {showInstallAction && (
           <Button
+            data-action-id="pwa.install-panel.install"
             type="button"
             onClick={() => {
               void install().catch(error => {
@@ -148,7 +149,12 @@ export function PwaInstallPanel({ surface, onDismiss, className }: PwaInstallPan
         )}
 
         {showReloadAction && (
-          <Button type="button" variant="outline" onClick={reload}>
+          <Button
+            data-action-id="pwa.install-panel.reload"
+            type="button"
+            variant="outline"
+            onClick={reload}
+          >
             <RotateCw className="h-4 w-4" />
             {t('common.pwa.installPanel.reloadAction')}
           </Button>
@@ -156,6 +162,7 @@ export function PwaInstallPanel({ surface, onDismiss, className }: PwaInstallPan
 
         {surface === 'onboarding' && onDismiss && (
           <Button
+            data-action-id="pwa.install-panel.dismiss"
             type="button"
             variant="ghost"
             size="icon"

@@ -234,9 +234,11 @@ describe('DecisionTerminal dashboard', () => {
   it('renders every default terminal widget when no dashboard preference exists', () => {
     render(<DecisionTerminal decisions={[decision()]} />);
 
-    expect(screen.getAllByTestId('decision-widget-drag-handle')).toHaveLength(
-      createDefaultDecisionTerminalDashboardConfig().widgets.length
-    );
+    const dragHandles = screen.getAllByTestId('decision-widget-drag-handle');
+    expect(dragHandles).toHaveLength(createDefaultDecisionTerminalDashboardConfig().widgets.length);
+    expect(
+      dragHandles.every(handle => handle.dataset.actionId === 'decision-terminal.widget.drag')
+    ).toBe(true);
   });
 
   it('enables basic drag and southeast resize without edit mode', () => {
@@ -292,7 +294,9 @@ describe('DecisionTerminal dashboard', () => {
   it('resets back to the full basic default layout', () => {
     render(<DecisionTerminal decisions={[decision()]} />);
 
-    fireEvent.click(screen.getByTestId('decision-terminal-reset-layout'));
+    const reset = screen.getByTestId('decision-terminal-reset-layout');
+    expect(reset.dataset.actionId).toBe('decision-terminal.dashboard.layout.reset');
+    fireEvent.click(reset);
 
     expect(saveDecisionTerminalDashboard).toHaveBeenCalledWith(
       createDefaultDecisionTerminalDashboardConfig()
@@ -303,13 +307,20 @@ describe('DecisionTerminal dashboard', () => {
     render(<DecisionTerminal decisions={[decision()]} />);
 
     const titleLink = screen.getAllByRole('link', { name: 'Indicative budget vote' })[0];
+    expect(titleLink.dataset.actionId).toBe('decision-terminal.widget.decision.open');
     expect(titleLink.getAttribute('href')).toBe('/event/event-1/agenda/agenda-1');
     expect(screen.getAllByRole('link', { name: 'Budget Amendment' })[0].getAttribute('href')).toBe(
       '/amendment/amendment-1'
     );
+    expect(screen.getAllByRole('link', { name: 'Budget Amendment' })[0].dataset.actionId).toBe(
+      'decision-terminal.widget.entity.open'
+    );
     expect(
       screen.getAllByRole('link', { name: 'Budget vote agenda item' })[0].getAttribute('href')
     ).toBe('/event/event-1/agenda/agenda-1');
+    expect(
+      screen.getAllByRole('link', { name: 'Budget vote agenda item' })[0].dataset.actionId
+    ).toBe('decision-terminal.widget.agenda-item.open');
 
     expect(fireEvent.contextMenu(titleLink)).toBe(true);
     const row = screen.getAllByTestId('vote-row')[0];
@@ -439,7 +450,9 @@ describe('DecisionTerminal dashboard', () => {
     expect(screen.queryByText('features.timeline.terminal.voteSupport')).toBeNull();
     expect(screen.queryByText('features.timeline.terminal.voteOppose')).toBeNull();
 
-    fireEvent.click(screen.getAllByRole('button', { name: /^Vote$/ })[0]);
+    const vote = screen.getAllByRole('button', { name: /^Vote$/ })[0];
+    expect(vote.dataset.actionId).toBe('decision-terminal.vote.cast');
+    fireEvent.click(vote);
 
     expect(screen.getByTestId('vote-dialog').textContent).toContain('Indicative budget vote');
   });
@@ -473,6 +486,7 @@ describe('DecisionTerminal dashboard', () => {
     expect(screen.getAllByText('Invited only vote').length).toBeGreaterThan(0);
 
     for (const toggle of screen.getAllByRole('button', { name: 'My event roles' })) {
+      expect(toggle.dataset.actionId).toBe('decision-terminal.dashboard.event-role-filter.toggle');
       fireEvent.click(toggle);
     }
 

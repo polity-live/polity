@@ -59,11 +59,7 @@ const PROVIDER_CONFIG: Record<
   },
 };
 
-function formatTimestamp(value?: string | null): string | null {
-  if (!value) {
-    return null;
-  }
-
+function formatTimestamp(value: string): string {
   return new Date(value).toLocaleString();
 }
 function inputStateClass(value: string, error: string | null, hasBeenEvaluated: boolean): string {
@@ -164,7 +160,12 @@ export function AiSettingsTabView({
               <CardTitle className="text-lg">{t('pages.user.ai.customSkills')}</CardTitle>
               <CardDescription>{t('pages.user.ai.customSkillsDescription')}</CardDescription>
             </div>
-            <Button type="button" variant="outline" onClick={ai.startCreateSkill}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={ai.startCreateSkill}
+              data-action-id="users.ai.custom-skill.create"
+            >
               <Sparkles className="mr-2 h-4 w-4" />
               {t('pages.user.ai.newSkill')}
             </Button>
@@ -238,6 +239,7 @@ export function AiSettingsTabView({
                         }}
                         disabled={isSaving}
                         className="flex-1"
+                        data-action-id="users.ai.credential.save"
                       >
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {summary.has_key
@@ -251,6 +253,8 @@ export function AiSettingsTabView({
                           void ai.deleteCredential(provider);
                         }}
                         disabled={!summary.has_key || isDeleting}
+                        aria-label={t('pages.user.ai.credentials.delete')}
+                        data-action-id="users.ai.credential.delete"
                       >
                         {isDeleting ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -393,10 +397,20 @@ export function AiSettingsTabView({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={ai.cancelSkillEdit}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={ai.cancelSkillEdit}
+              data-action-id="users.ai.skill-dialog.cancel"
+            >
               {t('common.cancel')}
             </Button>
-            <Button type="button" onClick={ai.saveSkill} disabled={!ai.isSkillFormValid}>
+            <Button
+              type="button"
+              onClick={ai.saveSkill}
+              disabled={!ai.isSkillFormValid}
+              data-action-id="users.ai.skill-dialog.save"
+            >
               {ai.editingSkillId || isEditingBuiltIn
                 ? t('pages.user.ai.skills.update')
                 : t('pages.user.ai.skills.create')}

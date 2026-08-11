@@ -64,27 +64,25 @@ function isRejectChoiceLabel(label: string): boolean {
 export function tallyFinalChoiceResults(
   choices: readonly ChoiceInfo[],
   decisions: readonly ChoiceDecision[],
-  offlineTallies: readonly ChoiceOfflineTally[] = []
+  offlineTallies?: readonly ChoiceOfflineTally[]
 ): ChoiceTally[] {
   const countsByChoiceId = new Map<string, number>();
-
-  for (const choice of choices) {
-    countsByChoiceId.set(choice.id, 0);
-  }
 
   for (const decision of decisions) {
     countsByChoiceId.set(decision.choice_id, (countsByChoiceId.get(decision.choice_id) ?? 0) + 1);
   }
 
-  for (const tally of offlineTallies) {
-    if (tally.phase !== 'final' || !tally.choice_id) {
-      continue;
-    }
+  if (offlineTallies) {
+    for (const tally of offlineTallies) {
+      if (tally.phase !== 'final' || !tally.choice_id) {
+        continue;
+      }
 
-    countsByChoiceId.set(
-      tally.choice_id,
-      (countsByChoiceId.get(tally.choice_id) ?? 0) + (tally.count ?? 0)
-    );
+      countsByChoiceId.set(
+        tally.choice_id,
+        (countsByChoiceId.get(tally.choice_id) ?? 0) + (tally.count ?? 0)
+      );
+    }
   }
 
   const total = [...countsByChoiceId.values()].reduce((sum, count) => sum + count, 0) || 1;
@@ -111,16 +109,20 @@ export function computeVoteResult(
   totalEligible: number,
   majorityType: MajorityType
 ): VoteResult {
-  if (acceptCount === rejectCount) return 'tie';
-
   switch (majorityType) {
-    case 'absolute':
+    case 'absolute': {
+      if (acceptCount === rejectCount) return 'tie';
       return acceptCount > totalEligible / 2 ? 'passed' : 'rejected';
-    case 'two_thirds':
+    }
+    case 'two_thirds': {
+      if (acceptCount === rejectCount) return 'tie';
       return acceptCount >= (totalEligible * 2) / 3 ? 'passed' : 'rejected';
-    case 'simple':
-    default:
-      return acceptCount > rejectCount ? 'passed' : 'rejected';
+    }
+    default: {
+      if (acceptCount > rejectCount) return 'passed';
+      if (acceptCount < rejectCount) return 'rejected';
+      return 'tie';
+    }
   }
 }
 
@@ -132,7 +134,7 @@ export function computeVoteResultSummary(
   decisions: readonly ChoiceDecision[],
   totalEligible: number,
   majorityType: MajorityType,
-  offlineTallies: readonly ChoiceOfflineTally[] = []
+  offlineTallies?: readonly ChoiceOfflineTally[]
 ): VoteResultSummary {
   const tallies = tallyFinalChoiceResults(choices, decisions, offlineTallies);
 

@@ -10,6 +10,7 @@ export type MembershipStatus = 'invited' | 'requested' | 'member' | 'admin' | 'c
 export type MembershipAction = 'join' | 'participate' | 'collaborate';
 
 interface MembershipButtonProps {
+  'data-action-id'?: string;
   actionType: MembershipAction;
   status: MembershipStatus | null;
   isMember: boolean;
@@ -29,6 +30,7 @@ interface MembershipButtonProps {
 }
 
 export function MembershipButton({
+  'data-action-id': actionId,
   actionType,
   status,
   isMember,
@@ -63,6 +65,7 @@ export function MembershipButton({
 
   return (
     <MembershipButtonView
+      actionId={actionId}
       isMember={isMember}
       hasRequested={hasRequested}
       isInvited={isInvited}

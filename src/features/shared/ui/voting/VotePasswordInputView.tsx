@@ -8,6 +8,7 @@ import { cn } from '@/features/shared/utils/utils';
 const NO_VOTING_PASSWORD_ERROR = 'No voting password set. Please set your voting PIN first.';
 
 interface VotePasswordInputViewProps {
+  'data-action-id'?: string;
   digits: string[];
   inputRefs: RefObject<(HTMLInputElement | null)[]>;
   onChange: (index: number, value: string) => void;
@@ -20,6 +21,7 @@ interface VotePasswordInputViewProps {
 }
 
 export function VotePasswordInputView({
+  'data-action-id': actionId,
   digits,
   inputRefs,
   onChange,
@@ -35,7 +37,7 @@ export function VotePasswordInputView({
     error === NO_VOTING_PASSWORD_ERROR && Boolean(noVotingPasswordSettingsHref);
 
   return (
-    <div className={cn('space-y-3', className)}>
+    <div data-action-id={actionId} className={cn('space-y-3', className)}>
       <p className="text-muted-foreground text-center text-sm">
         {t('features.events.voting.enterPin')}
       </p>

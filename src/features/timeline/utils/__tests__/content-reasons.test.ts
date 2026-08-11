@@ -65,6 +65,15 @@ describe('content-reasons', () => {
       expect(reason.context).toBe('climate');
     });
 
+    it('ignores non-matching topics', () => {
+      const reason = getContentReason(
+        createMockContent({ topics: ['climate'] }),
+        createMockUserContext({ followedTopics: ['transport'] })
+      );
+
+      expect(reason.priority).toBe(0);
+    });
+
     it('should identify similar groups', () => {
       const content = createMockContent({
         groupId: 'unsubscribed-group',
@@ -130,6 +139,12 @@ describe('content-reasons', () => {
     it('should format similar_groups reason', () => {
       const result = formatReasonString({ category: 'similar_groups', priority: 40 });
       expect(result).toBe('Similar to groups you follow');
+    });
+
+    it('falls back for a defensive unknown reason category', () => {
+      expect(formatReasonString({ category: 'unknown', priority: 0 } as never)).toBe(
+        'Recommended for you'
+      );
     });
   });
 

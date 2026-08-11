@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const notificationHelperMock = vi.fn();
 
 vi.mock('@/features/notifications/utils/notification-helpers.ts', () => ({
+  missingNotificationHelper: undefined,
   testNotificationHelper: (...args: unknown[]) => notificationHelperMock(...args),
 }));
 
@@ -50,6 +51,21 @@ describe('fireNotification', () => {
       'testNotificationHelper failed:',
       error
     );
+
+    consoleError.mockRestore();
+  });
+
+  it('logs an unknown helper without dispatching notification work', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await expect(
+      fireNotification('missingNotificationHelper', { recipientUserId: 'user-2' })
+    ).resolves.toBeUndefined();
+    expect(consoleError).toHaveBeenCalledWith(
+      '[ServerNotify]',
+      'Unknown helper: missingNotificationHelper'
+    );
+    expect(notificationHelperMock).not.toHaveBeenCalled();
 
     consoleError.mockRestore();
   });

@@ -7,6 +7,8 @@ import { useEditorOperations } from '../useEditorOperations';
 
 const mocks = vi.hoisted(() => ({
   createDocumentChangeRequest: vi.fn(),
+  createVersion: vi.fn(),
+  finalizeInternalChangeRequestVote: vi.fn(),
   reportAppTutorialAction: vi.fn(),
   voteOnChangeRequest: vi.fn(),
 }));
@@ -17,7 +19,7 @@ vi.mock('@/features/app-tutorial/events', () => ({
 
 vi.mock('@/zero/documents/useDocumentActions', () => ({
   useDocumentActions: () => ({
-    createVersion: vi.fn(),
+    createVersion: mocks.createVersion,
   }),
 }));
 
@@ -32,7 +34,7 @@ vi.mock('@/zero/amendments/useAmendmentActions', () => ({
     createChangeRequest: vi.fn(),
     createDocumentChangeRequest: mocks.createDocumentChangeRequest,
     deleteChangeRequest: vi.fn(),
-    finalizeInternalChangeRequestVote: vi.fn(),
+    finalizeInternalChangeRequestVote: mocks.finalizeInternalChangeRequestVote,
     updateChangeRequest: vi.fn(),
     voteOnChangeRequest: mocks.voteOnChangeRequest,
   }),
@@ -43,6 +45,42 @@ afterEach(() => {
 });
 
 describe('useEditorOperations', () => {
+  it.each([
+    ['accepted', 'handleSuggestionAccepted'],
+    ['declined', 'handleSuggestionDeclined'],
+  ] as const)('creates a default-titled version when a suggestion is %s', async (_, handler) => {
+    const { result } = renderHook(() => useEditorOperations('amendment', 'document-1'));
+
+    await act(async () => {
+      await result.current[handler]('user-1', [] as any, [], {});
+    });
+
+    expect(mocks.createVersion).toHaveBeenCalledWith({
+      id: expect.any(String),
+      content: [],
+      version_number: 1,
+      change_summary: expect.any(String),
+      document_id: 'document-1',
+      amendment_id: null,
+      blog_id: null,
+    });
+  });
+
+  it.each([
+    ['accepted', 'handleSuggestionAccepted', 'CR-7'],
+    ['declined', 'handleSuggestionDeclined', 'CR-8'],
+  ] as const)('creates a CR-titled version when a suggestion is %s', async (_, handler, crId) => {
+    const { result } = renderHook(() => useEditorOperations('amendment', 'document-1'));
+
+    await act(async () => {
+      await result.current[handler]('user-1', [] as any, [], { crId });
+    });
+
+    expect(mocks.createVersion).toHaveBeenLastCalledWith(
+      expect.objectContaining({ change_summary: expect.stringContaining(crId) })
+    );
+  });
+
   it('reports a normally created text suggestion to the tutorial', async () => {
     mocks.createDocumentChangeRequest.mockReturnValue({
       client: Promise.resolve(),
@@ -93,6 +131,55 @@ describe('useEditorOperations', () => {
       type: 'action',
       event: 'change-request.created',
       value: 'Am Knotenpunkt wird eine barrierefreie, schattige Querung ergänzt.',
+    });
+  });
+
+  it('removes persisted block markers from tutorial evidence', async () => {
+    mocks.createDocumentChangeRequest.mockReturnValue({
+      client: Promise.resolve(),
+      server: Promise.resolve({ type: 'success' }),
+    });
+    const { result } = renderHook(() => useEditorOperations('amendment', 'document-1'));
+
+    await act(async () => {
+      await result.current.handleSuggestionCreated({
+        id: 'change-request-1',
+        crId: 'CR-3',
+        amendmentId: 'amendment-1',
+        new_text: '__block__An accessible, shaded crossing is added at the intersection.',
+        documentContent: [] as any,
+        discussions: [],
+      });
+    });
+
+    expect(mocks.reportAppTutorialAction).toHaveBeenCalledWith({
+      type: 'action',
+      event: 'change-request.created',
+      value: 'An accessible, shaded crossing is added at the intersection.',
+    });
+  });
+
+  it('reports empty tutorial evidence when a non-text suggestion is created', async () => {
+    mocks.createDocumentChangeRequest.mockReturnValue({
+      client: Promise.resolve(),
+      server: Promise.resolve({ type: 'success' }),
+    });
+    const { result } = renderHook(() => useEditorOperations('amendment', 'document-1'));
+
+    await act(async () => {
+      await result.current.handleSuggestionCreated({
+        id: 'change-request-1',
+        crId: 'CR-4',
+        amendmentId: 'amendment-1',
+        documentContent: [] as any,
+        discussions: [],
+      });
+    });
+
+    expect(mocks.reportAppTutorialAction).toHaveBeenCalledWith({
+      type: 'action',
+      event: 'change-request.created',
+      value: '',
     });
   });
 
@@ -166,6 +253,21 @@ describe('useEditorOperations', () => {
     expect(mocks.reportAppTutorialAction).toHaveBeenCalledWith({
       type: 'mutation',
       event: 'change-request.voted',
+    });
+  });
+
+  it('finalizes an internal vote for the persisted change request', async () => {
+    const { result } = renderHook(() => useEditorOperations('amendment', 'document-1'));
+
+    await act(async () => {
+      await result.current.handleFinalizeInternalVoteOnSuggestion(
+        [{ id: 'suggestion-1', changeRequestEntityId: 'change-request-1' }] as any,
+        { suggestionId: 'suggestion-1' }
+      );
+    });
+
+    expect(mocks.finalizeInternalChangeRequestVote).toHaveBeenCalledWith({
+      change_request_id: 'change-request-1',
     });
   });
 });

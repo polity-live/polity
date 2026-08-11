@@ -65,7 +65,6 @@ export function getCreateSelectableEventIds(
     events
       .filter(event => isCreateSelectableEvent(event, activeGroupIds, participatingEventIds))
       .map(event => event.id)
-      .filter((eventId): eventId is string => Boolean(eventId))
   );
 }
 

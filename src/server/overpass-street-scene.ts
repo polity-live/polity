@@ -269,8 +269,6 @@ function classifyWay(tags: Record<string, string> | undefined): CityDesignOsmFea
   ) {
     return 'traffic';
   }
-  if (highway === 'bus_stop') return 'transit';
-
   if (
     highway === 'footway' ||
     highway === 'pedestrian' ||
@@ -318,7 +316,7 @@ function stitchRelationSegments(segments: CityDesignGeoPoint[][]) {
   const rings: CityDesignGeoPoint[][] = [];
 
   while (remaining.length > 0) {
-    let ring = remaining.shift() ?? [];
+    let ring = remaining.shift() as CityDesignGeoPoint[];
     let changed = true;
 
     while (changed) {
@@ -894,7 +892,7 @@ export function normalizeOverpassPayload(
     if (hasPointGeometry(element)) {
       const kind = classifyPoint(tags);
       if (!kind) return;
-      const semanticUse = kind === 'building' ? getBuildingSemanticUse(tags) : undefined;
+      const semanticUse = undefined;
       const layerIndex = getFeatureLayerIndex(tags);
       const structureKind = getFeatureStructureKind(kind, tags);
       const clearanceMeters = getFeatureClearanceMeters(tags);
@@ -916,7 +914,7 @@ export function normalizeOverpassPayload(
           point: { lat: element.lat, lon: element.lon },
           subkind: getFeatureSubkind(kind, tags),
           semanticUse,
-          renderColor: kind === 'building' ? getBuildingRenderColor(semanticUse) : undefined,
+          renderColor: undefined,
           renderVariant: tags.crossing ?? tags.traffic_calming ?? tags.public_transport,
           level: getFeatureLevel(tags),
           access: getFeatureAccess(tags),
@@ -1147,3 +1145,46 @@ export const overpassStreetSceneFn = createServerFn({ method: 'POST' })
     assertSmallBoundingBox(data.bbox);
     return fetchOverpassSnapshot(data.bbox);
   });
+
+export const overpassStreetSceneInternals = {
+  assertSmallBoundingBox,
+  classifyPoint,
+  classifyWay,
+  collectCyclewaySides,
+  collectLoadingZoneSides,
+  collectParkingSides,
+  collectSideValues,
+  createDerivedStreetSideFeature,
+  createDerivedStreetSideFeatures,
+  createFallbackSnapshot,
+  getBuildingRenderColor,
+  getBuildingSemanticUse,
+  getElementGeometryPoints,
+  getFeatureAccess,
+  getFeatureBaseElevationMeters,
+  getFeatureClearanceMeters,
+  getFeatureDeckElevationMeters,
+  getFeatureElevationSource,
+  getFeatureGeometryKind,
+  getFeatureLabel,
+  getFeatureLayerIndex,
+  getFeatureLevel,
+  getFeatureRenderColor,
+  getFeatureStepCount,
+  getFeatureStructureKind,
+  getFeatureSubkind,
+  getFeatureWidthMeters,
+  getOverpassEndpointsForRequest,
+  hasLoadingZoneTags,
+  hasPointGeometry,
+  isClosedRing,
+  isPresentSideValue,
+  isSameGeoPoint,
+  isTruthyOsmTag,
+  logOverpassAttempt,
+  parseFiniteNumber,
+  parseInteger,
+  shouldRetryOverpassStatus,
+  stitchRelationSegments,
+  toGeoPoints,
+};

@@ -22,7 +22,6 @@ import {
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 import {
   buildSuggestionDocumentOrder,
-  DEFAULT_CHANGE_REQUEST_VOTE_ORDER,
   normalizeChangeRequestVoteOrder,
   sortChangeRequestsByVoteOrder,
   type ChangeRequestVoteOrder,
@@ -161,9 +160,7 @@ export function useChangeRequestCardsListController({
   const [activeTab, setActiveTab] = useState<TabValue>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const normalizedDefaultSortMode = normalizeChangeRequestVoteOrder(defaultSortMode);
-  const [sortMode, setSortMode] = useState<ChangeRequestSortMode>(
-    normalizedDefaultSortMode ?? DEFAULT_CHANGE_REQUEST_VOTE_ORDER
-  );
+  const [sortMode, setSortMode] = useState<ChangeRequestSortMode>(normalizedDefaultSortMode);
 
   useEffect(() => {
     setSortMode(normalizedDefaultSortMode);

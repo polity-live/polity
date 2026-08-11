@@ -46,19 +46,16 @@ export function applyResolvedSuggestionsToContent(
 ): Value {
   return [...changeRequests]
     .filter(
-      changeRequest =>
+      (changeRequest): changeRequest is ResolvedSuggestionDecision & { suggestion_id: string } =>
         changeRequest.voting_status === 'completed' &&
         Boolean(changeRequest.suggestion_id) &&
         ['accepted', 'approved', 'rejected', 'declined'].includes(changeRequest.status ?? '')
     )
     .sort((left, right) => (left.created_at ?? 0) - (right.created_at ?? 0))
     .reduce((nextContent, changeRequest) => {
-      const suggestionId = changeRequest.suggestion_id;
-      if (!suggestionId) return nextContent;
-
       return applySuggestionToContent(
         nextContent,
-        suggestionId,
+        changeRequest.suggestion_id,
         changeRequest.status === 'accepted' || changeRequest.status === 'approved'
           ? 'accept'
           : 'reject'
@@ -157,7 +154,7 @@ function processNode(
 }
 
 function findBlockSuggestion(node: Descendant, suggestionId: string): SuggestionMark | null {
-  if (!node || typeof node !== 'object' || !('suggestion' in node)) return null;
+  if (!('suggestion' in node)) return null;
 
   const mark = (node as Record<string, unknown>).suggestion;
   if (!mark || typeof mark !== 'object' || Array.isArray(mark)) return null;
@@ -190,8 +187,6 @@ function resolveBlockSuggestion(
 }
 
 function findSuggestionKey(node: Descendant, suggestionId: string): string | null {
-  if (!node || typeof node !== 'object') return null;
-
   const keys = Object.keys(node).filter(k => k.startsWith('suggestion_'));
   for (const key of keys) {
     const mark = (node as Record<string, unknown>)[key] as SuggestionMark;

@@ -3,10 +3,17 @@ import {
   getCreateSelectableEventIds,
   getElectionEventId,
   getParticipatingEventIds,
+  isActiveCreateParticipationStatus,
+  isCreateSelectableEvent,
   isCreateSelectableElection,
 } from '../createEligibility';
 
 describe('create eligibility helpers', () => {
+  it('normalizes active and absent participation statuses', () => {
+    expect(isActiveCreateParticipationStatus('member')).toBe(true);
+    expect(isActiveCreateParticipationStatus(null)).toBe(false);
+  });
+
   it('collects only active user event participations', () => {
     const eventIds = getParticipatingEventIds([
       { event_id: 'event-active', status: 'active' },
@@ -15,6 +22,22 @@ describe('create eligibility helpers', () => {
     ]);
 
     expect([...eventIds].sort()).toEqual(['event-active', 'event-confirmed']);
+  });
+
+  it('ignores active participations without an event identifier', () => {
+    expect([...getParticipatingEventIds([{ status: 'active' }])]).toEqual([]);
+  });
+
+  it('rejects missing event ids and supports direct group eligibility', () => {
+    expect(isCreateSelectableEvent({}, new Set(['group-1']), new Set())).toBe(false);
+    expect(isCreateSelectableEvent({ id: 'event-1' }, new Set(['group-1']), new Set())).toBe(false);
+    expect(
+      isCreateSelectableEvent(
+        { id: 'event-1', group_id: 'group-1' },
+        new Set(['group-1']),
+        new Set()
+      )
+    ).toBe(true);
   });
 
   it('allows events the user participates in or whose group the user belongs to', () => {
@@ -40,5 +63,7 @@ describe('create eligibility helpers', () => {
     expect(getElectionEventId(relatedEventElection)).toBe('event-2');
     expect(isCreateSelectableElection(directEventElection, selectableEventIds)).toBe(false);
     expect(isCreateSelectableElection(relatedEventElection, selectableEventIds)).toBe(true);
+    expect(getElectionEventId({})).toBeNull();
+    expect(isCreateSelectableElection({}, selectableEventIds)).toBe(false);
   });
 });

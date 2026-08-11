@@ -66,7 +66,7 @@ interface PresentHolderRow {
 interface PastHolderPeriod {
   key: string;
   startDate: number | null;
-  endDate: number | null;
+  endDate: number;
   entries: {
     id: string;
     user: HolderHistoryUserLike | null | undefined;
@@ -98,8 +98,8 @@ export function HolderHistoryDialog<TRole extends HolderHistoryRoleLike>({
   role,
   labels,
 }: HolderHistoryDialogProps<TRole>) {
-  const roleTitle = role?.title ?? role?.name ?? '';
-  const historyEntries = [...(role?.holder_history ?? [])].sort(
+  const roleTitle = role.title ?? role.name ?? '';
+  const historyEntries = [...(role.holder_history ?? [])].sort(
     (a, b) => (b.start_date ?? 0) - (a.start_date ?? 0)
   );
   const presentHolders = buildPresentHolders(role, historyEntries);
@@ -417,7 +417,7 @@ function buildPastPeriods(historyEntries: HolderHistoryEntryLike[]) {
       continue;
     }
 
-    const key = `${entry.start_date ?? 'unknown'}-${entry.end_date ?? 'unknown'}`;
+    const key = `${entry.start_date ?? 'unknown'}-${entry.end_date}`;
     const existingPeriod = periods.get(key);
 
     if (existingPeriod) {
@@ -432,7 +432,7 @@ function buildPastPeriods(historyEntries: HolderHistoryEntryLike[]) {
     periods.set(key, {
       key,
       startDate: entry.start_date ?? null,
-      endDate: entry.end_date ?? null,
+      endDate: entry.end_date,
       entries: [
         {
           id: entry.id,
@@ -452,25 +452,22 @@ function buildPastPeriods(historyEntries: HolderHistoryEntryLike[]) {
         })
       ),
     }))
-    .sort(
-      (left, right) =>
-        (right.endDate ?? right.startDate ?? 0) - (left.endDate ?? left.startDate ?? 0)
-    );
+    .sort((left, right) => right.endDate - left.endDate);
 }
 
-function formatDateRange(startDate: number | null, endDate: number | null) {
+function formatDateRange(startDate: number | null, endDate: number) {
   const formattedStartDate = startDate
     ? format(new Date(startDate), 'MMM d, yyyy', { locale: currentDateLocale() })
     : translateText('common.holderHistory.unknownStart');
-  const formattedEndDate = endDate
-    ? format(new Date(endDate), 'MMM d, yyyy', { locale: currentDateLocale() })
-    : translateText('common.holderHistory.present');
+  const formattedEndDate = format(new Date(endDate), 'MMM d, yyyy', {
+    locale: currentDateLocale(),
+  });
 
   return `${formattedStartDate} -> ${formattedEndDate}`;
 }
 
-function formatPeriodDuration(startDate: number | null, endDate: number | null) {
-  if (!startDate || !endDate) {
+function formatPeriodDuration(startDate: number | null, endDate: number) {
+  if (!startDate) {
     return translateText('common.holderHistory.durationUnavailable');
   }
 

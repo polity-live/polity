@@ -55,22 +55,22 @@ const REASON_FALLBACKS: Record<CivicTimelineReason, string> = {
   urgent_decision: 'Urgent',
 };
 
-function formatDateTime(value: Date) {
+export function formatDateTime(value: Date) {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(value);
 }
 
-function getItemTime(item: CivicTimelineItem) {
+export function getItemTime(item: CivicTimelineItem) {
   return item.startDate ?? item.timestamp;
 }
 
-function getTypeIcon(item: CivicTimelineItem) {
+export function getTypeIcon(item: CivicTimelineItem) {
   return CONTENT_TYPE_CONFIG[item.type]?.icon ?? Radio;
 }
 
-function getReasonLabel(
+export function getReasonLabel(
   item: CivicTimelineItem,
   t: (
     key: string,
@@ -133,6 +133,7 @@ function TimelineArticle({
 
   return (
     <article
+      data-action-scope="presentation"
       data-timeline-item-id={item.id}
       className={cn(
         'bg-background civic-load-card-reveal relative rounded-lg border p-4 shadow-sm transition-colors',
@@ -198,6 +199,8 @@ function TimelineArticle({
           >
             <h3 className="mt-2 text-base leading-snug font-semibold break-words">
               <SmartLink
+                data-action-id="timeline.rail.item.open"
+                data-action-kind="navigation"
                 href={item.href}
                 onClick={() => onItemSelect?.(item)}
                 className="hover:underline"
@@ -209,6 +212,8 @@ function TimelineArticle({
               <div className="text-muted-foreground mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                 {item.sourceName ? (
                   <SmartLink
+                    data-action-id="timeline.rail.source.open"
+                    data-action-kind="navigation"
                     href={item.sourceHref ?? item.href}
                     className="hover:text-foreground min-w-0 break-words hover:underline"
                   >
@@ -266,6 +271,8 @@ function TimelineArticle({
           asChild
         >
           <SmartLink
+            data-action-id="timeline.rail.item.open"
+            data-action-kind="navigation"
             href={item.href}
             aria-label={item.primaryActionLabel ?? t('features.timeline.cards.viewDetails')}
           >

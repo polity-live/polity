@@ -67,6 +67,7 @@ export function ThreadCardView({
       <article className="min-w-0 rounded-lg bg-[var(--surface)] p-3 shadow-none sm:p-4">
         <div className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
           <UserIdentityLink
+            data-action-id="discussions.thread.author.open"
             userId={thread.user?.id ?? thread.user_id}
             avatarUrl={thread.user?.avatar}
             name={authorName}
@@ -105,6 +106,7 @@ export function ThreadCardView({
           </span>
           {userId && !isCommenting ? (
             <Button
+              data-action-id="discussions.thread.comment.open"
               variant="ghost"
               size="sm"
               presentation="mutedTiny"
@@ -128,13 +130,19 @@ export function ThreadCardView({
             />
             <div className="flex gap-2">
               <Button
+                data-action-id="discussions.thread.comment.submit"
                 size="sm"
                 onClick={handleAddComment}
                 disabled={isSubmitting || !commentText.trim()}
               >
                 {translateText('generated.inline.0398_post_comment_54cc0b90')}
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setIsCommenting(false)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                data-action-id="discussions.thread.comment.cancel"
+                onClick={() => setIsCommenting(false)}
+              >
                 {translateText('generated.inline.0065_cancel_77dfd213')}
               </Button>
             </div>

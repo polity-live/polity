@@ -2,6 +2,7 @@ import { UserMenu } from '@/features/navigation/UserMenu.tsx';
 import type { NavigationView } from '@/features/navigation/types/navigation.types.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
+import { Button } from '@/features/shared/ui/ui/button';
 
 interface NavUserAvatarViewProps {
   navigationView: NavigationView;
@@ -32,20 +33,23 @@ export function NavUserAvatarView({
 }: NavUserAvatarViewProps) {
   if (navigationView === 'asButton') {
     return (
-      <div
+      <Button
+        type="button"
+        variant="ghost"
         data-tutorial-anchor="primary-avatar"
         className={cn(
           'flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-80',
           className
         )}
         onClick={onAsButtonClick}
+        data-action-id="navigation.avatar.overlay.open"
       >
         <Avatar className="h-8 w-8">
           <AvatarImage src={displayAvatar || undefined} alt={displayName} />
           <AvatarFallback>{userInitials}</AvatarFallback>
         </Avatar>
         <span className="truncate text-sm font-medium">{displayName}</span>
-      </div>
+      </Button>
     );
   }
 
@@ -82,9 +86,14 @@ export function NavUserAvatarView({
         onOpenChange={onDropdownOpenChange}
         user={user}
       />
-      <span className="cursor-pointer truncate text-sm font-medium" onClick={onNameClick}>
+      <button
+        type="button"
+        className="cursor-pointer truncate text-sm font-medium"
+        onClick={onNameClick}
+        data-action-id="navigation.avatar.name.open"
+      >
         {displayName}
-      </span>
+      </button>
     </div>
   );
 }

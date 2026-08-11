@@ -40,6 +40,27 @@ function item(overrides: Partial<ChangeRequestTimelineRow>): ChangeRequestTimeli
 }
 
 describe('change request document preview helpers', () => {
+  it('ignores empty discussion ids and inactive vote result resolvers', () => {
+    const map = buildCrIdToDiscussionId([
+      discussion({ id: '' as any, crId: 'CR-empty' }),
+      discussion({ id: 'discussion-1', crId: 'CR-1' }),
+    ]);
+    expect(map.has('')).toBe(false);
+
+    const resolutions = buildSuggestionPreviewResolutions({
+      items: [
+        item({
+          status: 'completed',
+          change_request: { id: 'cr-1', cr_id: 'CR-1' } as any,
+        }),
+      ],
+      crIdToDiscussionId: map,
+      isVotingActive: false,
+      getVoteResult: () => 'rejected',
+    });
+    expect(resolutions.get('discussion-1')).toBe('accept');
+  });
+
   it('prefers the technical suggestion id over branch-local display ids', () => {
     const crIdToDiscussionId = buildCrIdToDiscussionId([
       discussion({ id: 'suggestion-real', crId: 'Global CR-4' }),

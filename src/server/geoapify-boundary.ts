@@ -62,6 +62,8 @@ interface GeoapifyBoundaryFeature {
   bbox?: [number, number, number, number] | number[];
 }
 
+type PolygonBoundaryFeature = GeoapifyBoundaryFeature & { geometry: GeoJsonGeometry };
+
 interface GeoapifyBoundaryResponse {
   type?: 'FeatureCollection';
   features?: GeoapifyBoundaryFeature[];
@@ -104,6 +106,8 @@ const FIELD_BOUNDARY_REQUESTS: Partial<Record<GeoAddressField, BoundaryRequest>>
   },
 };
 
+type BoundaryAddressField = 'post_code' | 'city' | 'region' | 'country';
+
 function getGeoapifyApiKey(): string {
   const apiKey = process.env.GEOAPIFY_API_KEY ?? process.env.VITE_GEOAPIFY_API_KEY;
 
@@ -121,7 +125,7 @@ function normalize(value: unknown): string {
 }
 
 function extractTargetValue(
-  field: GeoAddressField,
+  field: BoundaryAddressField,
   values: GeoAddressValues,
   resolvedAddress?: GeoResolvedAddress | null
 ): string {
@@ -137,15 +141,11 @@ function extractTargetValue(
     return resolvedAddress?.state ?? values.region;
   }
 
-  if (field === 'country') {
-    return resolvedAddress?.country ?? values.country;
-  }
-
-  return '';
+  return resolvedAddress?.country ?? values.country;
 }
 
 function getNamedPropertyCandidates(
-  field: GeoAddressField,
+  field: BoundaryAddressField,
   properties?: Record<string, unknown>
 ): unknown[] {
   if (!properties) {
@@ -170,42 +170,17 @@ function getNamedPropertyCandidates(
     return [properties.state, properties.region, properties.province, properties.name];
   }
 
-  if (field === 'country') {
-    return [properties.country, properties.name];
-  }
-
-  return [];
-}
-
-function getContextPropertyCandidates(
-  field: GeoAddressField,
-  properties?: Record<string, unknown>
-): unknown[] {
-  if (!properties) {
-    return [];
-  }
-
-  if (field === 'post_code') {
-    return [properties.postcode, properties.post_code];
-  }
-
-  if (field === 'city') {
-    return [properties.city, properties.town, properties.village, properties.municipality];
-  }
-
-  if (field === 'region') {
-    return [properties.state, properties.region, properties.province];
-  }
-
-  if (field === 'country') {
-    return [properties.country];
-  }
-
-  return [];
+  return [properties.country, properties.name];
 }
 
 function isPolygonGeometry(geometry?: GeoJsonGeometry | null): geometry is GeoJsonGeometry {
   return geometry?.type === 'Polygon' || geometry?.type === 'MultiPolygon';
+}
+
+function isPolygonBoundaryFeature(
+  feature: GeoapifyBoundaryFeature
+): feature is PolygonBoundaryFeature {
+  return isPolygonGeometry(feature.geometry);
 }
 
 function boundsFromBbox(bbox?: number[]): GeoLocationBounds | null {
@@ -264,19 +239,6 @@ function visitCoordinates(
 function boundsFromGeometry(geometry: GeoJsonGeometry): GeoLocationBounds | null {
   let bounds: GeoLocationBounds | null = null;
 
-  if (geometry.type === 'GeometryCollection') {
-    for (const child of geometry.geometries ?? []) {
-      const childBounds = boundsFromGeometry(child);
-      if (!childBounds) {
-        continue;
-      }
-
-      bounds = extendBounds(bounds, childBounds.west, childBounds.south);
-      bounds = extendBounds(bounds, childBounds.east, childBounds.north);
-    }
-    return bounds;
-  }
-
   visitCoordinates(geometry.coordinates, (longitude, latitude) => {
     bounds = extendBounds(bounds, longitude, latitude);
   });
@@ -294,7 +256,7 @@ function boundsArea(bounds?: GeoLocationBounds | null): number {
 
 function getFeatureTargetScore(
   feature: GeoapifyBoundaryFeature,
-  field: GeoAddressField,
+  field: BoundaryAddressField,
   targetValue: string
 ): number {
   const normalizedTarget = normalize(targetValue);
@@ -310,25 +272,19 @@ function getFeatureTargetScore(
     return 2;
   }
 
-  return getContextPropertyCandidates(field, feature.properties).some(
-    candidate => normalize(candidate) === normalizedTarget
-  )
-    ? 1
-    : 0;
+  return 0;
 }
 
 function selectBoundaryFeature(
   features: GeoapifyBoundaryFeature[],
-  field: GeoAddressField,
+  field: BoundaryAddressField,
   targetValue: string
-): GeoapifyBoundaryFeature | null {
-  const polygonFeatures = features.filter(feature => isPolygonGeometry(feature.geometry));
+): PolygonBoundaryFeature | null {
+  const polygonFeatures = features.filter(isPolygonBoundaryFeature);
   const scoredFeatures = polygonFeatures.map(feature => ({
     feature,
     score: getFeatureTargetScore(feature, field, targetValue),
-    bounds:
-      boundsFromBbox(feature.bbox) ??
-      (feature.geometry ? boundsFromGeometry(feature.geometry) : null),
+    bounds: boundsFromBbox(feature.bbox) ?? boundsFromGeometry(feature.geometry),
   }));
   const highestScore = Math.max(0, ...scoredFeatures.map(feature => feature.score));
   const candidates =
@@ -418,11 +374,12 @@ export const geoapifyBoundaryFn = createServerFn({ method: 'POST' })
     }
 
     const payload = (await response.json()) as GeoapifyBoundaryResponse;
-    const targetValue = extractTargetValue(data.field, data.values, data.resolvedAddress);
-    const feature = selectBoundaryFeature(payload.features ?? [], data.field, targetValue);
-    const geometry = isPolygonGeometry(feature?.geometry) ? feature.geometry : null;
+    const boundaryField = data.field as BoundaryAddressField;
+    const targetValue = extractTargetValue(boundaryField, data.values, data.resolvedAddress);
+    const feature = selectBoundaryFeature(payload.features ?? [], boundaryField, targetValue);
+    const geometry = feature?.geometry ?? null;
     const bounds = feature
-      ? (boundsFromBbox(feature.bbox) ?? (geometry ? boundsFromGeometry(geometry) : null))
+      ? (boundsFromBbox(feature.bbox) ?? boundsFromGeometry(feature.geometry))
       : null;
 
     return {

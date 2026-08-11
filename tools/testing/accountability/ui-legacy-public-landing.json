@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/public-landing/ui/PublicLandingPage.tsx#/#features": [
+      {
+        "file": "src/features/public-landing/ui/__tests__/LandingCityDesignPreview.branch.A07.test.tsx",
+        "project": "component",
+        "caseId": "covers fallback map, placement boundaries and read-only map interactions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/public-landing/ui/PublicLandingPage.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/public-landing/ui/PublicLandingPage.tsx#/auth": [
+      {
+        "file": "src/features/public-landing/ui/__tests__/LandingCityDesignPreview.branch.A07.test.tsx",
+        "project": "component",
+        "caseId": "covers fallback map, placement boundaries and read-only map interactions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/public-landing/ui/PublicLandingPage.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {
+    "src/features/public-landing/ui/PublicLandingPage.tsx#/#features": {
+      "actionId": "public-landing.public-landing-page.navigate.action"
+    },
+    "src/features/public-landing/ui/PublicLandingPage.tsx#/auth": {
+      "actionId": "public-landing.public-landing-page.navigate.auth"
+    }
+  }
+}

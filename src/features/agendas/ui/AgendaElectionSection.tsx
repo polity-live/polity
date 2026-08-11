@@ -145,14 +145,15 @@ function getWinningCandidateIds(args: {
   }
 
   if (args.electionMode !== 'list') {
-    const winner = positiveVoteCandidates[0];
+    // The empty case returned above, so index zero is present by construction.
+    const winner = positiveVoteCandidates[0] as (typeof positiveVoteCandidates)[number];
     const runnerUp = positiveVoteCandidates[1];
 
-    if (winner && runnerUp && winner.finalCount === runnerUp.finalCount) {
+    if (runnerUp && winner.finalCount === runnerUp.finalCount) {
       return [];
     }
 
-    return winner ? [winner.candidate.id] : [];
+    return [winner.candidate.id];
   }
 
   const resolvedSeatCount = Math.max(1, args.seatCount ?? 1);
@@ -354,6 +355,8 @@ export function AgendaElectionSection({
                   size="xs"
                 >
                   <button
+                    data-action-id="agendas.election.indication-results.toggle"
+                    data-action-kind="selection"
                     type="button"
                     onClick={() => setShowIndicationResults(current => !current)}
                   >
@@ -368,7 +371,12 @@ export function AgendaElectionSection({
               ) : null}
               {isInteractive && onOpenNamedResults ? (
                 <BadgeControl asChild tone="accent" size="xs" className="cursor-pointer gap-1">
-                  <button type="button" onClick={onOpenNamedResults}>
+                  <button
+                    data-action-id="agendas.election.named-results.open"
+                    data-action-kind="interaction"
+                    type="button"
+                    onClick={onOpenNamedResults}
+                  >
                     <Expand className="h-3 w-3" />
                     {openNamedResultsLabel}
                   </button>
@@ -380,6 +388,8 @@ export function AgendaElectionSection({
           {visibleCandidates.length === 0 ? (
             isInteractive && onOpenNamedResults ? (
               <button
+                data-action-id="agendas.election.named-results.open"
+                data-action-kind="interaction"
                 type="button"
                 onClick={onOpenNamedResults}
                 className="group focus-visible:ring-ring w-full rounded-lg border border-dashed border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] p-6 text-center text-[var(--badge-info-fg)] transition-[color,background-color,border-color,box-shadow] hover:border-[var(--badge-info-border)] hover:bg-[var(--badge-info-bg)] hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
@@ -401,18 +411,17 @@ export function AgendaElectionSection({
             <div className="space-y-3">
               {visibleCandidates.map(candidate => {
                 const stats = candidateStats.find(s => s.candidate.id === candidate.id);
+                if (!stats) return null;
                 const isLeading = winningCandidateIds.includes(candidate.id);
                 const isSelected = isInteractive && userSelectedCandidateIds.includes(candidate.id);
                 const shouldFrameCandidate = isSelected || (isLeading && isClosed);
                 const displayName = getCandidateDisplayName(candidate);
-                const visibleCount = isIndicationPhase
-                  ? (stats?.indicativeCount ?? 0)
-                  : (stats?.finalCount ?? 0);
+                const visibleCount = isIndicationPhase ? stats.indicativeCount : stats.finalCount;
                 const visiblePercent = isIndicationPhase
-                  ? (stats?.indicativePercentage ?? 0)
-                  : (stats?.finalPercentage ?? 0);
-                const indicationCount = stats?.indicativeCount ?? 0;
-                const indicationPercent = stats?.indicativePercentage ?? 0;
+                  ? stats.indicativePercentage
+                  : stats.finalPercentage;
+                const indicationCount = stats.indicativeCount;
+                const indicationPercent = stats.indicativePercentage;
 
                 return (
                   <div
@@ -439,7 +448,7 @@ export function AgendaElectionSection({
                             .map(part => part[0])
                             .join('')
                             .slice(0, 2)
-                            .toUpperCase() || '??'}
+                            .toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
@@ -534,6 +543,8 @@ export function AgendaElectionSection({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  data-action-id="agendas.election.candidacy.become"
+                  data-action-kind="async-action"
                   variant="outline"
                   onClick={isCandidateActionBlocked ? undefined : onBecomeCandidate}
                   disabled={isCandidateLoading}
@@ -561,6 +572,8 @@ export function AgendaElectionSection({
         {!isClosed && isUserCandidate && onWithdrawCandidacy && (
           <div className="flex justify-center pt-4">
             <Button
+              data-action-id="agendas.election.candidacy.withdraw"
+              data-action-kind="async-action"
               variant="ghost"
               className="text-destructive hover:bg-destructive/10"
               onClick={onWithdrawCandidacy}

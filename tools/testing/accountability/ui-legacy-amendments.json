@@ -1,0 +1,212 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/amendments/AmendmentWikiView.tsx#/amendment/$id": [
+      {
+        "file": "src/features/amendments/__tests__/AmendmentWiki.a04.test.tsx",
+        "project": "component",
+        "caseId": "renders loading when neither amendment nor recovery exists",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/AmendmentWikiView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/AmendmentWikiView.tsx#/amendment/$id-2": [
+      {
+        "file": "src/features/amendments/__tests__/AmendmentWiki.a04.test.tsx",
+        "project": "component",
+        "caseId": "renders loading when neither amendment nor recovery exists",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/AmendmentWikiView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx#/amendment/$id": [
+      {
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.test.tsx",
+        "project": "component",
+        "caseId": "renders a populated default panel from the first process branch",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx#/amendment/$id-2": [
+      {
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.test.tsx",
+        "project": "component",
+        "caseId": "renders a populated default panel from the first process branch",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx#/group/$id": [
+      {
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.test.tsx",
+        "project": "component",
+        "caseId": "falls back to amendment editing mode and renders a group name without an id",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx#/group/$id-2": [
+      {
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.test.tsx",
+        "project": "component",
+        "caseId": "falls back to amendment editing mode and renders a group name without an id",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/amendment/$id/text": [
+      {
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.test.tsx",
+        "project": "component",
+        "caseId": "dispatches process management and replan actions through stable intents",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/ui/AmendmentProcessFlowView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id": [
+      {
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.test.tsx",
+        "project": "component",
+        "caseId": "hides the source group from the summary and shows process stats",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/ui/AmendmentProcessFlowView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id-2": [
+      {
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.test.tsx",
+        "project": "component",
+        "caseId": "hides the source group from the summary and shows process stats",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/ui/AmendmentProcessFlowView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id-3": [
+      {
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.test.tsx",
+        "project": "component",
+        "caseId": "hides the source group from the summary and shows process stats",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/ui/AmendmentProcessFlowView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id-4": [
+      {
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.test.tsx",
+        "project": "component",
+        "caseId": "hides the source group from the summary and shows process stats",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/ui/AmendmentProcessFlowView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id-5": [
+      {
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.test.tsx",
+        "project": "component",
+        "caseId": "hides the source group from the summary and shows process stats",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/amendments/ui/AmendmentProcessFlowView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {
+    "src/features/amendments/AmendmentWikiView.tsx#/amendment/$id": {
+      "actionId": "amendments.amendment-wiki-view.navigate.amendment-id"
+    },
+    "src/features/amendments/AmendmentWikiView.tsx#/amendment/$id-2": {
+      "actionId": "amendments.amendment-wiki-view.navigate.amendment-id-2"
+    },
+    "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx#/amendment/$id": {
+      "actionId": "amendments.amendment-process-details-panel-view.navigate.amendment-id"
+    },
+    "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx#/amendment/$id-2": {
+      "actionId": "amendments.amendment-process-details-panel-view.navigate.amendment-id-2"
+    },
+    "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx#/group/$id": {
+      "actionId": "amendments.amendment-process-details-panel-view.navigate.group-id"
+    },
+    "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx#/group/$id-2": {
+      "actionId": "amendments.amendment-process-details-panel-view.navigate.group-id-2"
+    },
+    "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/amendment/$id/text": {
+      "actionId": "amendments.amendment-process-flow-view.navigate.amendment-id-text"
+    },
+    "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id": {
+      "actionId": "amendments.amendment-process-flow-view.navigate.group-id"
+    },
+    "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id-2": {
+      "actionId": "amendments.amendment-process-flow-view.navigate.group-id-2"
+    },
+    "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id-3": {
+      "actionId": "amendments.amendment-process-flow-view.navigate.group-id-3"
+    },
+    "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id-4": {
+      "actionId": "amendments.amendment-process-flow-view.navigate.group-id-4"
+    },
+    "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id-5": {
+      "actionId": "amendments.amendment-process-flow-view.navigate.group-id-5"
+    }
+  }
+}

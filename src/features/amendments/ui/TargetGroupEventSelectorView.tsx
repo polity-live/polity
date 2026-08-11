@@ -279,11 +279,19 @@ export function TargetGroupEventSelectorView({
       ) : allWorkflows.length > 0 ? (
         <Tabs value={pathMode} onValueChange={onPathModeValueChange}>
           <TabsList className="w-full">
-            <TabsTrigger value="hierarchy" className="flex-1">
+            <TabsTrigger
+              data-action-id="amendments.target-path.select.hierarchy"
+              value="hierarchy"
+              className="flex-1"
+            >
               <GitBranch className="mr-2 h-4 w-4" />
               {translateText('generated.inline.0181_hierarchie_b73f9b95')}
             </TabsTrigger>
-            <TabsTrigger value="workflow" className="flex-1">
+            <TabsTrigger
+              data-action-id="amendments.target-path.select.workflow"
+              value="workflow"
+              className="flex-1"
+            >
               <Workflow className="mr-2 h-4 w-4" />
               {translateText('generated.inline.0182_workflow_d7a48414')}
             </TabsTrigger>
@@ -326,17 +334,22 @@ export function TargetGroupEventSelectorView({
                   {translateText('generated.inline.0186_route_4999528e')}
                 </FormControlLabel>
                 <FormControlSelect
+                  data-action-id="amendments.target-path.select.hierarchy-path"
                   value={selectedHierarchyPathId}
                   onValueChange={onHierarchyPathValueChange}
                 >
-                  <FormControlSelectTrigger>
+                  <FormControlSelectTrigger data-action-id="amendments.target-path.select.hierarchy-path">
                     <FormControlSelectValue
                       placeholder={translateText('generated.inline.0187_pfad_auswaehlen_42ca323f')}
                     />
                   </FormControlSelectTrigger>
                   <FormControlSelectContent>
                     {availableHierarchyPaths.map(pathOption => (
-                      <FormControlSelectItem key={pathOption.id} value={pathOption.id}>
+                      <FormControlSelectItem
+                        data-action-id="amendments.target-path.select.hierarchy-path-option"
+                        key={pathOption.id}
+                        value={pathOption.id}
+                      >
                         {formatPathOptionLabel(pathOption, displayNetworkGroups)}
                       </FormControlSelectItem>
                     ))}

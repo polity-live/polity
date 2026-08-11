@@ -48,7 +48,7 @@ export function GroupAmendmentsPageView({
           actions={
             canCreate('amendments') ? (
               <Link to="/create/amendment" search={{ groupId }}>
-                <Button size="sm">
+                <Button data-action-id="groups.amendments.navigate.create" size="sm">
                   <Plus className="mr-1 h-4 w-4" />
                   {t('features.groups.amendments.createAmendment')}
                 </Button>

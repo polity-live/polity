@@ -74,6 +74,7 @@ export function GroupRelationshipsInputView({
             <FormControlLabel>{t('pages.create.group.relationshipType')}</FormControlLabel>
             <div className="grid grid-cols-2 gap-2">
               <Button
+                data-action-id="create.group-relationships.type.parent"
                 type="button"
                 variant={relationshipType === 'isParent' ? 'default' : 'outline'}
                 onClick={() => onRelationshipTypeChange('isParent')}
@@ -81,6 +82,7 @@ export function GroupRelationshipsInputView({
                 {t('pages.create.group.theyAreParent')}
               </Button>
               <Button
+                data-action-id="create.group-relationships.type.child"
                 type="button"
                 variant={relationshipType === 'isChild' ? 'default' : 'outline'}
                 onClick={() => onRelationshipTypeChange('isChild')}
@@ -95,6 +97,7 @@ export function GroupRelationshipsInputView({
             <div className="grid grid-cols-2 gap-2">
               {rightKeys.map((right: any) => (
                 <Button
+                  data-action-id="create.group-relationships.right.toggle"
                   key={right}
                   type="button"
                   variant="outline"
@@ -114,6 +117,7 @@ export function GroupRelationshipsInputView({
           </div>
 
           <Button
+            data-action-id="create.group-relationships.add"
             type="button"
             onClick={onAdd}
             disabled={selectedRights.size === 0}
@@ -150,11 +154,13 @@ export function GroupRelationshipsInputView({
                     </div>
                   </div>
                   <Button
+                    data-action-id="create.group-relationships.remove"
                     type="button"
                     onClick={() => onRemove(link.groupId)}
                     variant="ghost"
                     size="icon"
                     className="hover:bg-destructive/10 hover:text-destructive h-7 w-7 rounded-md"
+                    aria-label={`${t('common.remove')} ${link.groupName}`}
                   >
                     <X className="h-4 w-4" />
                   </Button>

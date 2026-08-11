@@ -129,4 +129,14 @@ describe('groupRelationshipDisplay', () => {
     expect(getRequestRightDirectionForCurrentGroup(relationship, 'someone-else')).toBeNull();
     expect(getCurrentGroupRelationshipDisplay(relationship, 'someone-else')).toBeNull();
   });
+
+  it('returns null when the matching partner relation is not hydrated', () => {
+    const currentIsGroup = rel({ id: 'missing-related' });
+    const currentIsRelated = rel({ id: 'missing-group' });
+    currentIsGroup.related_group = null;
+    currentIsRelated.group = null;
+
+    expect(getRelationshipPartnerGroup(currentIsGroup, 'base')).toBeNull();
+    expect(getRelationshipPartnerGroup(currentIsRelated, 'hier')).toBeNull();
+  });
 });

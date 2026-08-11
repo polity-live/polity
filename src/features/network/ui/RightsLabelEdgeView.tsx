@@ -105,6 +105,7 @@ export function RightsLabelEdgeView({
             interaction={edgeEditingEnabled ? 'drag' : 'click'}
             onMouseDown={event => startSegmentDrag(event, middleSegmentIndex)}
             onClick={handleLabelClick}
+            data-action-id="network.edge.relationship.open"
           >
             <GraphEdgeLabelSurface>
               {displayRights.length > 0
@@ -154,6 +155,7 @@ export function RightsLabelEdgeView({
                   event.stopPropagation();
                 }}
                 onKeyDown={event => handleBendPointKeyDown(event, bendPointIndex)}
+                data-action-id="network.edge.bend-point.move"
               />
               <GraphBendPointDeleteButton
                 aria-label={removeBendPointLabel}
@@ -166,6 +168,7 @@ export function RightsLabelEdgeView({
                   event.stopPropagation();
                   removeBendPoint(bendPointIndex);
                 }}
+                data-action-id="network.edge.bend-point.remove"
               />
             </GraphBendPointContainer>
           </EdgeLabelRenderer>

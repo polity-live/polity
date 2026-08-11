@@ -64,7 +64,9 @@ function renderButtonList(
   items = navigationItems,
   navigationView: NavigationView = 'asButtonList',
   platform: KeyboardPlatform = 'windows',
-  screenType: ScreenType = isMobile ? 'mobile' : 'desktop'
+  screenType: ScreenType = isMobile ? 'mobile' : 'desktop',
+  loadingItem: string | null = null,
+  handleItemClick = vi.fn()
 ) {
   return render(
     <KeyboardPlatformProvider platform={platform}>
@@ -79,15 +81,47 @@ function renderButtonList(
         isRouterPending={false}
         normalizedHash=""
         currentRoute="/home"
-        loadingItem={null}
+        loadingItem={loadingItem}
         setLoadingItem={vi.fn()}
-        handleItemClick={vi.fn()}
+        handleItemClick={handleItemClick}
       />
     </KeyboardPlatformProvider>
   );
 }
 
 describe('NavItemListView', () => {
+  it('maps every navigation layout to one stable semantic link action', () => {
+    renderButtonList(false, true, navigationItems, 'asButton');
+    let link = screen.getByRole('link', { name: 'Home' });
+    expect(link.getAttribute('data-action-id')).toBe('navigation.item.overlay.compact.open');
+    expect(link.querySelector('button')).toBeNull();
+    cleanup();
+
+    renderButtonList(
+      false,
+      true,
+      Array.from({ length: 5 }, (_, index) => ({
+        id: `item-${index}`,
+        icon: 'Home',
+        label: `Item ${index}`,
+        href: `/item-${index}`,
+      })),
+      'asButton'
+    );
+    link = screen.getByRole('link', { name: 'Item 0' });
+    expect(link.getAttribute('data-action-id')).toBe('navigation.item.overlay.grid.open');
+    cleanup();
+
+    renderButtonList(false, true, navigationItems, 'asButtonList');
+    link = screen.getByRole('link', { name: 'Home' });
+    expect(link.getAttribute('data-action-id')).toBe('navigation.item.icon.open');
+    cleanup();
+
+    renderButtonList(false, true, navigationItems, 'asLabeledButtonList');
+    link = screen.getByRole('link', { name: 'Home' });
+    expect(link.getAttribute('data-action-id')).toBe('navigation.item.labeled.open');
+  });
+
   it.each([
     ['asButton mobile', 'asButton', true],
     ['asButton desktop', 'asButton', false],
@@ -399,5 +433,137 @@ describe('NavItemListView', () => {
 
     fireEvent.click(screen.getByRole('link', { name: 'Home' }));
     expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it('handles compact and grid overlay fallbacks, custom actions, and loading guards', () => {
+    const compactAction = vi.fn();
+    const handleCompact = vi.fn(item => item.onClick?.());
+    const compact: NavigationItem[] = [
+      { id: 'compact', icon: 'Home', label: 'Compact', onClick: compactAction },
+    ];
+    const view = renderButtonList(
+      false,
+      true,
+      compact,
+      'asButton',
+      'windows',
+      'desktop',
+      null,
+      handleCompact
+    );
+    const compactLink = screen.getByRole('link', { name: 'Compact' });
+    expect(compactLink.getAttribute('href')).toBe('#');
+    fireEvent.click(compactLink);
+    expect(handleCompact).toHaveBeenCalledWith(compact[0]);
+    expect(compactAction).toHaveBeenCalledOnce();
+
+    view.rerender(
+      <KeyboardPlatformProvider platform="windows">
+        <NavItemListView
+          navigationItems={compact}
+          isMobile={false}
+          isPrimary
+          navigationView="asButton"
+          screenType="desktop"
+          pathname="/home"
+          hash=""
+          isRouterPending={false}
+          normalizedHash=""
+          currentRoute="/home"
+          loadingItem="compact"
+          setLoadingItem={vi.fn()}
+          handleItemClick={handleCompact}
+        />
+      </KeyboardPlatformProvider>
+    );
+    fireEvent.click(screen.getByRole('link', { name: 'Compact' }));
+    expect(handleCompact).toHaveBeenCalledTimes(1);
+
+    view.unmount();
+    const gridAction = vi.fn();
+    const handleGrid = vi.fn(item => item.onClick?.());
+    const grid: NavigationItem[] = Array.from({ length: 5 }, (_, index) => ({
+      id: `grid-${index}`,
+      icon: 'Home',
+      label: `Grid ${index}`,
+      href: index === 0 ? undefined : index === 1 ? '/home' : `/grid-${index}`,
+      onClick: index === 0 ? gridAction : undefined,
+    }));
+    const gridView = renderButtonList(
+      false,
+      true,
+      grid,
+      'asButton',
+      'windows',
+      'desktop',
+      null,
+      handleGrid
+    );
+    const gridLink = screen.getByRole('link', { name: 'Grid 0' });
+    expect(gridLink.getAttribute('href')).toBe('#');
+    fireEvent.click(gridLink);
+    expect(handleGrid).toHaveBeenCalledWith(grid[0]);
+    expect(gridAction).toHaveBeenCalledOnce();
+
+    gridView.rerender(
+      <KeyboardPlatformProvider platform="windows">
+        <NavItemListView
+          navigationItems={grid}
+          isMobile={false}
+          isPrimary
+          navigationView="asButton"
+          screenType="desktop"
+          pathname="/home"
+          hash=""
+          isRouterPending={false}
+          normalizedHash=""
+          currentRoute="/home"
+          loadingItem="grid-0"
+          setLoadingItem={vi.fn()}
+          handleItemClick={handleGrid}
+        />
+      </KeyboardPlatformProvider>
+    );
+    fireEvent.click(screen.getByRole('link', { name: 'Grid 0' }));
+    expect(handleGrid).toHaveBeenCalledTimes(1);
+
+    gridView.unmount();
+    renderButtonList(false, true, compact, 'asLabeledButtonList');
+    expect(screen.getByRole('link', { name: 'Compact' }).getAttribute('href')).toBe('#');
+  });
+
+  it('covers navigation click fallthroughs and unsupported layouts', () => {
+    const plain: NavigationItem[] = [{ id: 'plain', icon: 'Home', label: 'Plain', href: '/plain' }];
+
+    let view = renderButtonList(false, true, plain, 'asButton');
+    fireEvent.click(screen.getByRole('link', { name: 'Plain' }));
+    view.unmount();
+
+    const grid: NavigationItem[] = Array.from({ length: 5 }, (_, index) => ({
+      id: `plain-${index}`,
+      icon: 'Home',
+      label: `Plain ${index}`,
+      href: `/plain-${index}`,
+    }));
+    view = renderButtonList(false, true, grid, 'asButton');
+    fireEvent.click(screen.getByRole('link', { name: 'Plain 0' }));
+    view.unmount();
+
+    view = renderButtonList(false, true, plain, 'asButtonList');
+    fireEvent.click(screen.getByRole('link', { name: 'Plain' }));
+    view.unmount();
+
+    view = renderButtonList(false, true, plain, 'asLabeledButtonList');
+    fireEvent.click(screen.getByRole('link', { name: 'Plain' }));
+    view.unmount();
+
+    const onClick = vi.fn();
+    view = renderButtonList(false, true, [{ ...plain[0], onClick }], 'asLabeledButtonList');
+    fireEvent.click(screen.getByRole('link', { name: 'Plain' }));
+    expect(onClick).toHaveBeenCalledOnce();
+    view.unmount();
+
+    const unsupported = renderButtonList(false, true, plain, 'full' as NavigationView);
+    expect(unsupported.container.firstChild).toBeNull();
   });
 });

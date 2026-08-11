@@ -67,10 +67,14 @@ export function TutorialLauncherPage() {
             <p className="text-muted-foreground mt-2 text-sm">{error}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => void launch()}>
+            <Button data-action-id="app-tutorial.launcher.retry" onClick={() => void launch()}>
               {t('features.appTutorial.launcher.retry')}
             </Button>
-            <Button variant="outline" onClick={() => void rebuild()}>
+            <Button
+              data-action-id="app-tutorial.launcher.restart"
+              variant="outline"
+              onClick={() => void rebuild()}
+            >
               <RotateCw className="h-4 w-4" />
               {t('features.appTutorial.launcher.restart')}
             </Button>

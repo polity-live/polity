@@ -74,7 +74,12 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
         ) : (
           <div className="space-y-3">
             {!showPasswordInput ? (
-              <Button onClick={handleConfirmClick} className="w-full">
+              <Button
+                data-action-id="agendas.accreditation.attendance.confirm"
+                data-action-kind="async-action"
+                onClick={handleConfirmClick}
+                className="w-full"
+              >
                 <ShieldCheck className="mr-2 h-4 w-4" />
                 {t('features.events.agenda.accreditation.confirmAttendance')}
               </Button>
@@ -84,6 +89,7 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
                   {t('features.events.agenda.accreditation.enterPassword')}
                 </p>
                 <VotePasswordInput
+                  data-action-scope="presentation"
                   onSubmit={handlePasswordSubmit}
                   error={passwordError}
                   noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
@@ -119,6 +125,8 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
                   {canManageAccreditations && acc.status === 'pending' ? (
                     <>
                       <Button
+                        data-action-id="agendas.accreditation.request.approve"
+                        data-action-kind="async-action"
                         size="sm"
                         variant="outline"
                         onClick={() => approveAccreditation({ accreditation_id: acc.id })}
@@ -126,6 +134,8 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
                         <CheckCircle2 className="h-3 w-3" />
                       </Button>
                       <Button
+                        data-action-id="agendas.accreditation.request.reject"
+                        data-action-kind="async-action"
                         size="sm"
                         variant="outline"
                         onClick={() => rejectAccreditation({ accreditation_id: acc.id })}
@@ -136,6 +146,8 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
                   ) : null}
                   {canManageAccreditations && acc.status === 'approved' ? (
                     <Button
+                      data-action-id="agendas.accreditation.approval.revoke"
+                      data-action-kind="async-action"
                       size="sm"
                       variant="outline"
                       onClick={() => revokeAccreditation({ accreditation_id: acc.id })}

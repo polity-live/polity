@@ -23,11 +23,7 @@ export function useImportToolbarButtonController() {
       return nodes;
     }
 
-    if (type === 'markdown') {
-      return editor.getApi(MarkdownPlugin).markdown.deserialize(text);
-    }
-
-    return [];
+    return editor.getApi(MarkdownPlugin).markdown.deserialize(text);
   };
 
   const { openFilePicker: openMdFilePicker } = useFilePicker({

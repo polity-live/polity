@@ -61,16 +61,16 @@ const STATIC_CHART_WIDTH = 700;
 const STATIC_CHART_HEIGHT = 380;
 const STATIC_CHART_MARGIN = { top: 24, right: 24, bottom: 44, left: 56 };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+export function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object';
 }
 
-function getSeries(points: readonly ChartPoint[]) {
+export function getSeries(points: readonly ChartPoint[]) {
   const values = [...new Set(points.map(point => point.series || 'value'))];
   return values.length > 0 ? values : ['value'];
 }
 
-function toCartesianRows(points: readonly ChartPoint[]) {
+export function toCartesianRows(points: readonly ChartPoint[]) {
   const rows = new Map<string, CartesianRow>();
   for (const point of points) {
     const row = rows.get(point.x) ?? { x: point.x };
@@ -80,7 +80,7 @@ function toCartesianRows(points: readonly ChartPoint[]) {
   return [...rows.values()];
 }
 
-function getChartConfig(series: readonly string[]): ChartConfig {
+export function getChartConfig(series: readonly string[]): ChartConfig {
   return Object.fromEntries(
     series.map((name, index) => [
       name,
@@ -92,12 +92,12 @@ function getChartConfig(series: readonly string[]): ChartConfig {
   );
 }
 
-function getPointValue(value: unknown) {
+export function getPointValue(value: unknown) {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : null;
 }
 
-function formatTooltipValue(
+export function formatTooltipValue(
   value: unknown,
   point: ChartPoint,
   valueFormatter?: ChartRendererProps['valueFormatter']
@@ -107,11 +107,11 @@ function formatTooltipValue(
   return valueFormatter ? valueFormatter(numberValue, point) : numberValue.toLocaleString();
 }
 
-function getPayloadColor(item: Record<string, unknown>) {
+export function getPayloadColor(item: Record<string, unknown>) {
   return String(item.color || item.fill || item.stroke || '');
 }
 
-function createCartesianHoverTooltipState(
+export function createCartesianHoverTooltipState(
   event: unknown,
   valueFormatter?: ChartRendererProps['valueFormatter']
 ): HoverTooltipState | null {
@@ -143,7 +143,7 @@ function createCartesianHoverTooltipState(
   return items.length > 0 ? { items, label, x, y } : null;
 }
 
-function getRelativePointerPosition(event: unknown) {
+export function getRelativePointerPosition(event: unknown) {
   if (!isRecord(event)) return null;
   const clientX = Number(event.clientX);
   const clientY = Number(event.clientY);
@@ -158,7 +158,7 @@ function getRelativePointerPosition(event: unknown) {
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-function createPieHoverTooltipState(
+export function createPieHoverTooltipState(
   entry: unknown,
   event: unknown,
   valueFormatter?: ChartRendererProps['valueFormatter']
@@ -185,7 +185,7 @@ function createPieHoverTooltipState(
   };
 }
 
-function getStaticYDomain(rows: readonly CartesianRow[], series: readonly string[]) {
+export function getStaticYDomain(rows: readonly CartesianRow[], series: readonly string[]) {
   const values = rows.flatMap(row =>
     series.map(name => getPointValue(row[name])).filter((value): value is number => value !== null)
   );
@@ -198,7 +198,7 @@ function getStaticYDomain(rows: readonly CartesianRow[], series: readonly string
   return { min, max };
 }
 
-function getStaticPlotFrame() {
+export function getStaticPlotFrame() {
   const left = STATIC_CHART_MARGIN.left;
   const top = STATIC_CHART_MARGIN.top;
   const right = STATIC_CHART_WIDTH - STATIC_CHART_MARGIN.right;
@@ -213,7 +213,7 @@ function getStaticPlotFrame() {
   };
 }
 
-function StaticCartesianChartSvg({
+export function StaticCartesianChartSvg({
   chartType,
   rows,
   series,
@@ -337,14 +337,14 @@ function StaticCartesianChartSvg({
   );
 }
 
-function getArcPoint(cx: number, cy: number, radius: number, angle: number) {
+export function getArcPoint(cx: number, cy: number, radius: number, angle: number) {
   return {
     x: cx + radius * Math.cos(angle),
     y: cy + radius * Math.sin(angle),
   };
 }
 
-function getPieSlicePath(
+export function getPieSlicePath(
   cx: number,
   cy: number,
   radius: number,
@@ -376,7 +376,7 @@ function getPieSlicePath(
   ].join(' ');
 }
 
-function StaticPieChartSvg({
+export function StaticPieChartSvg({
   points,
   presentation,
 }: {
@@ -422,7 +422,7 @@ function StaticPieChartSvg({
   );
 }
 
-function StaticChartSvg({
+export function StaticChartSvg({
   chartType,
   points,
   rows,
@@ -447,7 +447,7 @@ function StaticChartSvg({
   );
 }
 
-function CartesianChartContent({
+export function CartesianChartContent({
   chartType,
   rows,
   series,
@@ -503,10 +503,9 @@ function CartesianChartContent({
           <Legend />
         ) : (
           <ChartLegend
-            content={({ ref: legendRef, ...props }) => {
-              void legendRef;
-              return <ChartLegendContent {...props} />;
-            }}
+            content={({ payload, verticalAlign }) => (
+              <ChartLegendContent payload={payload} verticalAlign={verticalAlign} />
+            )}
           />
         )
       ) : null}
@@ -581,7 +580,7 @@ function CartesianChartContent({
   );
 }
 
-function PieChartContent({
+export function PieChartContent({
   points,
   presentation,
   staticMode,

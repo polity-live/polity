@@ -56,6 +56,7 @@ export const generateRecurringInstances = (
 
   return expandWithRRule(
     event,
+    event.recurrence_rule,
     eventStart,
     duration,
     rangeStart,
@@ -67,6 +68,7 @@ export const generateRecurringInstances = (
 
 function expandWithRRule(
   event: RecurringEvent,
+  rawRule: string,
   eventStart: Date,
   duration: number,
   rangeStart: Date,
@@ -74,7 +76,8 @@ function expandWithRRule(
   cancelledDates: Set<string>,
   modifiedDates: Map<string, EventException>
 ): RecurringEventInstance[] {
-  const rawRule = event.recurrence_rule ?? '';
+  // generateRecurringInstances rejects missing rules before expansion, so this
+  // helper never receives a nullable rule.
   const rruleStr = rawRule.startsWith('RRULE:') ? rawRule : `RRULE:${rawRule}`;
 
   const rule = RRule.fromString(rruleStr);

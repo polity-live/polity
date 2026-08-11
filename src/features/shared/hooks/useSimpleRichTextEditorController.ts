@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Value } from 'platejs';
 import { usePlateEditor } from 'platejs/react';
 
-import { EMPTY_RICH_TEXT_VALUE, toRichTextValue } from '@/features/shared/logic/richText';
+import { toRichTextValue } from '@/features/shared/logic/richText';
 import { EditorKit } from '@/features/shared/ui/kit-platejs/editor-kit';
 
 const SIMPLE_EDITOR_KIT = EditorKit.filter(plugin => {
@@ -32,7 +32,7 @@ export function useSimpleRichTextEditorController({
 
   const editor = usePlateEditor({
     plugins: SIMPLE_EDITOR_KIT,
-    value: initialValueRef.current.length > 0 ? initialValueRef.current : EMPTY_RICH_TEXT_VALUE,
+    value: initialValueRef.current,
   });
 
   useEffect(() => {

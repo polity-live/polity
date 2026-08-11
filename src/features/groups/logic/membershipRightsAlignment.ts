@@ -249,10 +249,6 @@ function addExpectedActionRight(
   action: ActionType
 ) {
   const key = getActionRightKey(resource, action);
-  if (rightsByKey.has(key)) {
-    return;
-  }
-
   rightsByKey.set(key, {
     resource,
     action,

@@ -175,6 +175,7 @@ export function NetworkControlPanel({
               variant="outline"
               onClick={filter.onToggle}
               disabled={filter.disabled}
+              data-action-id="network.control.filter.toggle"
               className={cn(
                 filter.active
                   ? (filter.activeClassName ??
@@ -220,6 +221,7 @@ export function NetworkControlPanel({
           aria-label={title}
           aria-expanded={!renderedPanelCollapsed}
           aria-controls={panelContentId}
+          data-action-id="network.control.panel.toggle"
           onClick={() => {
             const nextCollapsed = !renderedPanelCollapsed;
             setRenderedPanelCollapsed(nextCollapsed);
@@ -255,6 +257,7 @@ export function NetworkControlPanel({
                     size="sm"
                     variant={isInteractive ? 'outline' : 'default'}
                     onClick={() => onInteractiveChange(!isInteractive)}
+                    data-action-id="network.control.interaction.toggle"
                   >
                     {isInteractive ? lockLabel : unlockLabel}
                   </Button>
@@ -273,7 +276,7 @@ export function NetworkControlPanel({
             <div className={featureThemeClassName('networkNetworkControlPanelInfoPanel')}>
               <span className="font-medium">{filteredByPrefix}:</span>{' '}
               <span className={featureThemeClassName('networkNetworkControlPanelInfoText')}>
-                {getRightLabel(filterRight, (key, fallback) => t(key) || fallback || key)}
+                {getRightLabel(filterRight, (key, fallback) => t(key, fallback))}
               </span>
             </div>
           ) : null}
@@ -285,6 +288,7 @@ export function NetworkControlPanel({
               size="sm"
               aria-expanded={!renderedLegendCollapsed}
               aria-controls={legendContentId}
+              data-action-id="network.control.legend.toggle"
               onClick={() => {
                 const nextCollapsed = !renderedLegendCollapsed;
                 setRenderedLegendCollapsed(nextCollapsed);
@@ -405,11 +409,9 @@ export function NetworkControlPanel({
                       className={featureThemeClassName('networkUseGroupNetworkFlowNeutralBorder')}
                     />
                     <div className="space-y-2">
-                      {relationshipStatusFiltersLabel ? (
-                        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                          {relationshipStatusFiltersLabel}
-                        </div>
-                      ) : null}
+                      <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                        {relationshipStatusFiltersLabel}
+                      </div>
                     </div>
                   </>
                 ) : null}
@@ -422,9 +424,7 @@ export function NetworkControlPanel({
                     {NETWORK_FLOW_FILTER_TYPES.map(right => (
                       <div key={right} className="flex items-center gap-2">
                         <div className={`h-3 w-6 rounded-sm ${RIGHT_GRADIENTS[right]}`}></div>
-                        <span>
-                          {getRightLabel(right, (key, fallback) => t(key) || fallback || key)}
-                        </span>
+                        <span>{getRightLabel(right, (key, fallback) => t(key, fallback))}</span>
                       </div>
                     ))}
                   </>

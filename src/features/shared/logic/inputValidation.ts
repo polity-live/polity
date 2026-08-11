@@ -10,10 +10,6 @@ const HOUSE_NUMBER_REGEX = /^\d+[A-Za-z0-9/-]*$/;
 function normalizeUrlCandidate(value: string): string {
   const trimmedValue = value.trim();
 
-  if (!trimmedValue) {
-    return trimmedValue;
-  }
-
   if (URL_PROTOCOL_REGEX.test(trimmedValue)) {
     return trimmedValue;
   }
@@ -43,6 +39,16 @@ export function isValidUrlLike(value: string): boolean {
   const trimmedValue = value.trim();
 
   if (!trimmedValue) {
+    return false;
+  }
+
+  const hasExplicitProtocol = URL_PROTOCOL_REGEX.test(trimmedValue);
+  const inputAuthority = trimmedValue.split('/')[0];
+  if (
+    !hasExplicitProtocol &&
+    !inputAuthority.includes('.') &&
+    !/^localhost(?::\d+)?$/i.test(inputAuthority)
+  ) {
     return false;
   }
 

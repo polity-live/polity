@@ -39,7 +39,7 @@ export function LoginFormView({
       description={copy.description}
       icon={<Mail className={featureThemeClassName('authForgotPasswordFormInfoIcon')} />}
     >
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form data-action-id="auth.login.submit.code" onSubmit={onSubmit} className="space-y-4">
         <TextField
           id="email"
           type="email"
@@ -54,7 +54,12 @@ export function LoginFormView({
 
         {error ? <InlineNotice variant="destructive">{error}</InlineNotice> : null}
 
-        <FormButton type="submit" className="w-full" disabled={isSending || !email}>
+        <FormButton
+          data-action-id="auth.login.submit.code"
+          type="submit"
+          className="w-full"
+          disabled={isSending || !email}
+        >
           {isSending ? (
             <>
               <Spinner className="mr-2" />

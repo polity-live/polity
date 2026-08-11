@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/auth/onboarding/SummaryStep.tsx#/messages?openAriaKai=true": [
+      {
+        "file": "src/features/auth/onboarding/__tests__/SummaryStepDestinations.test.tsx",
+        "project": "component",
+        "caseId": "offers exactly the three onboarding paths and marks the guided path recommended",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/auth/onboarding/SummaryStep.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/auth/onboarding/SummaryStep.tsx#/onboarding": [
+      {
+        "file": "src/features/auth/onboarding/__tests__/SummaryStepDestinations.test.tsx",
+        "project": "component",
+        "caseId": "offers exactly the three onboarding paths and marks the guided path recommended",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/auth/onboarding/SummaryStep.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/auth/onboarding/SummaryStep.tsx#/search": [
+      {
+        "file": "src/features/auth/onboarding/__tests__/SummaryStepDestinations.test.tsx",
+        "project": "component",
+        "caseId": "offers exactly the three onboarding paths and marks the guided path recommended",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/auth/onboarding/SummaryStep.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {
+    "src/features/auth/onboarding/SummaryStep.tsx#/messages?openAriaKai=true": {
+      "actionId": "auth.summary-step.navigate.messages-open-aria-kai-true"
+    },
+    "src/features/auth/onboarding/SummaryStep.tsx#/onboarding": {
+      "actionId": "auth.summary-step.navigate.onboarding"
+    },
+    "src/features/auth/onboarding/SummaryStep.tsx#/search": {
+      "actionId": "auth.summary-step.navigate.search"
+    }
+  }
+}

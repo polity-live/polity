@@ -32,9 +32,8 @@ export function useConversationSelection(
       hasHandledAriaKaiIntentRef.current = true;
       setSelectedConversationId(ariaKaiConversation.id);
 
-      if (typeof window !== 'undefined') {
-        window.history.replaceState({}, '', window.location.pathname);
-      }
+      // This runs in a useEffect of a client hook; React never executes effects during SSR.
+      window.history.replaceState({}, '', window.location.pathname);
     }
   }, [conversations, openAriaKai]);
 

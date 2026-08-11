@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "metrics": {
+    "lines": {
+      "covered": 79023,
+      "total": 79023
+    },
+    "statements": {
+      "covered": 84712,
+      "total": 84712
+    },
+    "functions": {
+      "covered": 23596,
+      "total": 23596
+    },
+    "branches": {
+      "covered": 77763,
+      "total": 77763
+    }
+  }
+}

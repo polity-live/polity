@@ -36,30 +36,43 @@ export function TodoDetailEdit({
             <FormControlSelect
               value={formData.status}
               onValueChange={(v: TodoStatus) => onUpdate({ status: v })}
+              data-action-id="todos.detail-edit.status.select"
             >
-              <FormControlSelectTrigger>
+              <FormControlSelectTrigger data-action-id="todos.detail-edit.status.select">
                 <FormControlSelectValue />
               </FormControlSelectTrigger>
               <FormControlSelectContent>
-                <FormControlSelectItem value="pending">
+                <FormControlSelectItem
+                  value="pending"
+                  data-action-id="todos.detail-edit.status.pending"
+                >
                   <div className="flex items-center gap-2">
                     <Circle className="h-4 w-4" />
                     {translateText('generated.inline.0370_pending_96f608c1')}
                   </div>
                 </FormControlSelectItem>
-                <FormControlSelectItem value="in_progress">
+                <FormControlSelectItem
+                  value="in_progress"
+                  data-action-id="todos.detail-edit.status.in-progress"
+                >
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
                     {translateText('generated.inline.1168_in_progress_f61eadaf')}
                   </div>
                 </FormControlSelectItem>
-                <FormControlSelectItem value="completed">
+                <FormControlSelectItem
+                  value="completed"
+                  data-action-id="todos.detail-edit.status.completed"
+                >
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4" />
                     {translateText('generated.inline.0057_completed_1798b3ba')}
                   </div>
                 </FormControlSelectItem>
-                <FormControlSelectItem value="cancelled">
+                <FormControlSelectItem
+                  value="cancelled"
+                  data-action-id="todos.detail-edit.status.cancelled"
+                >
                   <div className="flex items-center gap-2">
                     <XCircle className="h-4 w-4" />
                     {translateText('generated.inline.1169_cancelled_a1bf92ef')}
@@ -77,18 +90,22 @@ export function TodoDetailEdit({
           <FormControlSelect
             value={formData.priority}
             onValueChange={(v: TodoPriority) => onUpdate({ priority: v })}
+            data-action-id="todos.detail-edit.priority.select"
           >
-            <FormControlSelectTrigger>
+            <FormControlSelectTrigger data-action-id="todos.detail-edit.priority.select">
               <FormControlSelectValue />
             </FormControlSelectTrigger>
             <FormControlSelectContent>
-              <FormControlSelectItem value="low">
+              <FormControlSelectItem value="low" data-action-id="todos.detail-edit.priority.low">
                 <div className="flex items-center gap-2">
                   <Flag className={featureThemeClassName('eventCancelEventDialogInfoIcon')} />
                   {translateText('generated.inline.0638_low_a124947c')}
                 </div>
               </FormControlSelectItem>
-              <FormControlSelectItem value="medium">
+              <FormControlSelectItem
+                value="medium"
+                data-action-id="todos.detail-edit.priority.medium"
+              >
                 <div className="flex items-center gap-2">
                   <Flag
                     className={featureThemeClassName('agendaAgendaElectionSectionWarningIcon')}
@@ -96,13 +113,16 @@ export function TodoDetailEdit({
                   {translateText('generated.inline.0639_medium_d404968e')}
                 </div>
               </FormControlSelectItem>
-              <FormControlSelectItem value="high">
+              <FormControlSelectItem value="high" data-action-id="todos.detail-edit.priority.high">
                 <div className="flex items-center gap-2">
                   <Flag className={featureThemeClassName('positionPositionsTableWarningIcon')} />
                   {translateText('generated.inline.0640_high_b1a5954a')}
                 </div>
               </FormControlSelectItem>
-              <FormControlSelectItem value="urgent">
+              <FormControlSelectItem
+                value="urgent"
+                data-action-id="todos.detail-edit.priority.urgent"
+              >
                 <div className="flex items-center gap-2">
                   <AlertCircle
                     className={featureThemeClassName('paymentSubscriptionStatusDangerIcon')}

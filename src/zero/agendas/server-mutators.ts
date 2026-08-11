@@ -616,8 +616,8 @@ export const agendaServerMutators = {
         purpose: CanonicalVotePurpose,
         choiceSpecs: readonly {
           label: string;
-          semanticKey?: string | null;
-          processBranchId?: string | null;
+          semanticKey: string;
+          processBranchId: string | null;
         }[] = DEFAULT_CHOICE_SPECS
       ) {
         const voteId = crypto.randomUUID();
@@ -646,8 +646,8 @@ export const agendaServerMutators = {
             id: crypto.randomUUID(),
             vote_id: voteId,
             label: choice.label,
-            semantic_key: choice.semanticKey ?? null,
-            process_branch_id: choice.processBranchId ?? null,
+            semantic_key: choice.semanticKey,
+            process_branch_id: choice.processBranchId,
             order_index: i,
             created_at: now,
           });
@@ -853,24 +853,26 @@ export const agendaServerMutators = {
       const existingFinalLink = existingLinks.find(
         link => link.is_closing_vote || link.step_kind === AGENDA_VOTE_STEP_KIND.closing
       );
-      if (!existingFinalLink) {
-        await tx.mutate.agenda_item_change_request.insert({
-          id: crypto.randomUUID(),
-          agenda_item_id,
-          change_request_id: null,
-          vote_id: finalVoteId,
-          order_index: nextOrderIndex,
-          step_kind: AGENDA_VOTE_STEP_KIND.closing,
-          process_branch_id: processBranchId ?? null,
-          is_closing_vote: true,
-          status: 'pending',
-          blocked_reason: null,
-          result_status: null,
-          obsolete_reason: null,
-          created_at: now,
-          updated_at: now,
-        });
-      }
+      const finalLinkInsertion =
+        existingFinalLink === undefined
+          ? tx.mutate.agenda_item_change_request.insert({
+              id: crypto.randomUUID(),
+              agenda_item_id,
+              change_request_id: null,
+              vote_id: finalVoteId,
+              order_index: nextOrderIndex,
+              step_kind: AGENDA_VOTE_STEP_KIND.closing,
+              process_branch_id: processBranchId ?? null,
+              is_closing_vote: true,
+              status: 'pending',
+              blocked_reason: null,
+              result_status: null,
+              obsolete_reason: null,
+              created_at: now,
+              updated_at: now,
+            })
+          : Promise.resolve();
+      await finalLinkInsertion;
 
       if (
         args.start_final_vote_if_no_change_requests &&
@@ -1183,3 +1185,15 @@ export async function materializeCurrentForwardConfirmedEventVoting(
     },
   });
 }
+
+export const agendaServerMutatorTestApi = {
+  INTERNAL_VOTE_MATERIALIZATION,
+  assertCanEnsureEventSuggestionChangeRequestVotes,
+  assertCanManageAgendaVoteFlow,
+  assertCurrentChangeRequestTimelineItem,
+  buildMergeVoteChoiceSpecs,
+  materializeChangeRequestVotingInternal,
+  resolveFallbackProcessBranchId,
+  syncBranchEditingMode,
+  syncEventAmendmentsToSuggestEvent,
+};

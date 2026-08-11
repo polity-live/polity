@@ -166,8 +166,9 @@ export async function applyOptionalMediaUrl(page: Page, fieldKey: string, prefix
 
   const input = field
     .locator('input[type="url"], input[placeholder*="http"], input:not([type="hidden"])')
-    .first();
+    .filter({ visible: true });
   if (!(await input.count())) return false;
+  await expect(input).toHaveCount(1);
 
   await input.fill(mediaUrl(prefix));
   return true;
@@ -177,12 +178,14 @@ export async function applyOptionalVideoUrl(page: Page, fieldKey: string, prefix
   const field = page.locator(`[data-create-field="${fieldKey}"]`);
   if (!(await field.count())) return false;
 
-  const videoTab = field.getByRole('tab', { name: /video/i }).first();
+  const videoTab = field.getByRole('tab', { name: /video/i }).filter({ visible: true });
   if (!(await videoTab.count())) return false;
+  await expect(videoTab).toHaveCount(1);
   await videoTab.click();
 
-  const input = field.locator('input[type="url"]').first();
+  const input = field.locator('input[type="url"]').filter({ visible: true });
   if (!(await input.count())) return false;
+  await expect(input).toHaveCount(1);
 
   await input.fill(`https://example.test/${encodeURIComponent(prefix)}.mp4`);
   return true;

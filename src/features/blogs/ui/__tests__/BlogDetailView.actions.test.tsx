@@ -1,13 +1,17 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import type { ComponentProps, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { BlogDetailView } from '../BlogDetailView';
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ children }: { children: ReactNode }) => <a href="/">{children}</a>,
+  Link: ({ children, to, ...props }: { children: ReactNode; to: string }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock('@/layout/page-wrapper', () => ({
@@ -25,11 +29,25 @@ vi.mock('@/features/shared/ui/layout', () => ({
 }));
 
 vi.mock('@/features/shared/ui/action-buttons', () => ({
-  SubscribeButton: () => <button type="button">subscribe</button>,
+  SubscribeButton: ({
+    'data-action-id': actionId,
+    onToggleSubscribe,
+  }: {
+    'data-action-id'?: string;
+    onToggleSubscribe: () => void;
+  }) => (
+    <button type="button" data-action-id={actionId} onClick={onToggleSubscribe}>
+      subscribe
+    </button>
+  ),
 }));
 
 vi.mock('@/features/shared/ui/action-buttons/ShareButton.tsx', () => ({
-  ShareButton: () => <button type="button">share</button>,
+  ShareButton: ({ 'data-action-id': actionId }: { 'data-action-id'?: string }) => (
+    <button type="button" data-action-id={actionId}>
+      share
+    </button>
+  ),
 }));
 
 vi.mock('@/features/shared/ui/hashtags', () => ({
@@ -59,7 +77,8 @@ afterEach(cleanup);
 function renderBlogDetail(
   currentUserId?: string,
   hashtags: { id: string; tag: string }[] = [],
-  title = 'Public blog'
+  title = 'Public blog',
+  overrides: Partial<ComponentProps<typeof BlogDetailView>> = {}
 ) {
   return render(
     <BlogDetailView
@@ -98,6 +117,7 @@ function renderBlogDetail(
       title={title}
       upvotes={0}
       viewUrl="/blog/blog-1"
+      {...overrides}
     />
   );
 }
@@ -112,11 +132,58 @@ describe('BlogDetailView actions', () => {
   });
 
   it('keeps blog actions visible to authenticated users', () => {
-    renderBlogDetail('user-1');
+    const onSubscribeToggle = vi.fn();
+    renderBlogDetail('user-1', [], 'Public blog', { onSubscribeToggle });
 
-    expect(screen.getByRole('button', { name: 'subscribe' })).toBeTruthy();
+    const subscribe = screen.getByRole('button', { name: 'subscribe' });
+    expect(subscribe.getAttribute('data-action-id')).toBe('blogs.detail.subscribe');
+    expect(screen.getByRole('button', { name: 'share' }).getAttribute('data-action-id')).toBe(
+      'blogs.detail.share'
+    );
+    fireEvent.click(subscribe);
+    expect(onSubscribeToggle).toHaveBeenCalledOnce();
     expect(screen.getByTestId('vote-buttons')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'share' })).toBeTruthy();
+  });
+
+  it('routes edit actions and confirms deletion through stable user intentions', async () => {
+    const onDeleteOpenChange = vi.fn();
+    const onConfirmDelete = vi.fn();
+    renderBlogDetail('user-1', [], 'Public blog', {
+      canDelete: true,
+      canEdit: true,
+      onConfirmDelete,
+      onDeleteOpenChange,
+    });
+
+    expect(
+      screen
+        .getByRole('link', { name: 'features.blogs.detail.editContent' })
+        .getAttribute('data-action-id')
+    ).toBe('blogs.detail.edit');
+    expect(
+      screen
+        .getByRole('link', { name: 'features.blogs.detail.startWriting' })
+        .getAttribute('data-action-id')
+    ).toBe('blogs.detail.start-writing');
+
+    const deleteButton = screen.getByRole('button', { name: 'features.blogs.delete' });
+    expect(deleteButton.getAttribute('data-action-id')).toBe('blogs.detail.delete');
+    fireEvent.click(deleteButton);
+    expect(onDeleteOpenChange).toHaveBeenCalledWith(true);
+
+    cleanup();
+    renderBlogDetail('user-1', [], 'Public blog', {
+      canDelete: true,
+      deleteOpen: true,
+      onConfirmDelete,
+      onDeleteOpenChange,
+    });
+
+    const confirm = screen.getByRole('button', { name: 'common.actions.delete' });
+    expect(confirm.getAttribute('data-action-id')).toBe('blogs.detail.confirm-delete');
+    fireEvent.click(confirm);
+    expect(onDeleteOpenChange).toHaveBeenCalledWith(false);
+    expect(onConfirmDelete).toHaveBeenCalledOnce();
   });
 
   it('places mobile hashtags below a constrained title and keeps the desktop position', () => {

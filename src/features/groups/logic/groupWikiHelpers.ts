@@ -63,11 +63,7 @@ interface RelatedGroupEntry {
   rights: string[];
 }
 
-function getRelationshipGroupById(rel: RelationshipRow, groupId: string | null | undefined) {
-  if (!groupId) {
-    return null;
-  }
-
+function getRelationshipGroupById(rel: RelationshipRow, groupId: string) {
   if (rel.group?.id === groupId) {
     return rel.group;
   }
@@ -155,8 +151,8 @@ export function groupWikiRelatedGroupsByOrientation(
       return;
     }
 
-    const parentGroupId = rel.parent_group_id ?? null;
-    const childGroupId = rel.child_group_id ?? null;
+    const parentGroupId = rel.parent_group_id;
+    const childGroupId = rel.child_group_id;
 
     if (!parentGroupId || !childGroupId || parentGroupId === childGroupId) {
       return;

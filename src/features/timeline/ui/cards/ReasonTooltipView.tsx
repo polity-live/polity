@@ -37,6 +37,8 @@ export function ReasonTooltipView({
       <Tooltip open={open} onOpenChange={onOpenChange}>
         <TooltipTrigger asChild>
           <Button
+            data-action-id="timeline.reason.open"
+            data-action-kind="selection"
             type="button"
             variant="ghost"
             size="icon"

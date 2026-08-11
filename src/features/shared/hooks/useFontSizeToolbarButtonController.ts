@@ -5,6 +5,7 @@ import { FontSizePlugin } from '@platejs/basic-styles/react';
 import type { TElement } from 'platejs';
 import { KEYS } from 'platejs';
 import { useEditorPlugin, useEditorSelector } from 'platejs/react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 const DEFAULT_FONT_SIZE = '16';
 
@@ -35,6 +36,7 @@ export function useFontSizeToolbarButtonController() {
   const [inputValue, setInputValue] = React.useState(DEFAULT_FONT_SIZE);
   const [isFocused, setIsFocused] = React.useState(false);
   const { editor, tf } = useEditorPlugin(FontSizePlugin);
+  const { t } = useTranslation();
 
   const cursorFontSize = useEditorSelector(editor => {
     const fontSize = editor.api.marks()?.[KEYS.fontSize];
@@ -84,6 +86,7 @@ export function useFontSizeToolbarButtonController() {
     displayValue,
     fontSizes: FONT_SIZES,
     isFocused,
+    label: t('plateJs.toolbar.fontSize'),
     onBlur: () => {
       setIsFocused(false);
       handleInputChange();

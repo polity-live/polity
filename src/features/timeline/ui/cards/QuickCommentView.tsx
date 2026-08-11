@@ -24,6 +24,7 @@ export interface QuickCommentProps {
   className?: string;
 }
 export interface QuickCommentViewProps {
+  'data-action-scope'?: 'presentation';
   className: any;
   comment: any;
   commentCount: any;
@@ -47,6 +48,7 @@ export interface QuickCommentViewProps {
 }
 
 export function QuickCommentView({
+  'data-action-scope': _actionScope,
   className,
   comment,
   commentCount,
@@ -64,11 +66,14 @@ export function QuickCommentView({
   setIsExpanded,
   t,
 }: QuickCommentViewProps) {
+  void _actionScope;
   return (
     <div className={cn('relative', className)}>
       {/* Collapsed state - simple input */}
       {!isExpanded && (
         <Button
+          data-action-id="timeline.quick-comment.open"
+          data-action-kind="interaction"
           type="button"
           variant="ghost"
           size="sm"
@@ -111,11 +116,24 @@ export function QuickCommentView({
               {t('features.timeline.comments.ctrlEnterSubmit')}
             </span>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={handleCancel} disabled={isSubmitting}>
+              <Button
+                data-action-id="timeline.quick-comment.cancel"
+                data-action-kind="interaction"
+                variant="ghost"
+                size="sm"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+              >
                 <X className="mr-1 h-4 w-4" />
                 {t('common.cancel')}
               </Button>
-              <Button size="sm" onClick={handleSubmit} disabled={!comment.trim() || isSubmitting}>
+              <Button
+                data-action-id="timeline.quick-comment.submit"
+                data-action-kind="async-action"
+                size="sm"
+                onClick={handleSubmit}
+                disabled={!comment.trim() || isSubmitting}
+              >
                 {isSubmitting ? (
                   <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                 ) : (

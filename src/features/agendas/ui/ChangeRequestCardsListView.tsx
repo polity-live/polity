@@ -63,6 +63,10 @@ import { PolityLocalListView } from '@/features/shared/virtualization';
 
 type TabValue = 'all' | 'open' | 'accepted' | 'rejected' | 'obsolete';
 
+function isChangeRequestSortMode(value: string): value is ChangeRequestSortMode {
+  return value === 'text_position' || value === 'changed_character_count' || value === 'cr_number';
+}
+
 function canFinalizeInternalChangeRequest(item: any) {
   const cr = item.change_request;
   if (!cr || item.is_closing_vote) return false;
@@ -259,7 +263,7 @@ export function ChangeRequestCardsListView({
       <div data-testid="change-request-sequence-interstitial">{sequenceInterstitial}</div>
     ) : null;
   const handleSortModeChange = (value: string) => {
-    if (value === 'text_position' || value === 'changed_character_count' || value === 'cr_number') {
+    if (isChangeRequestSortMode(value)) {
       setSortMode(value);
     }
   };
@@ -419,7 +423,11 @@ export function ChangeRequestCardsListView({
             <div className="flex justify-end">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="outline">
+                  <Button
+                    data-action-id="agendas.change-request-list.internal-vote.close-open"
+                    size="sm"
+                    variant="outline"
+                  >
                     <CheckCircle2 className="mr-2 h-4 w-4" />
                     {closeInternalVoteLabel}
                   </Button>
@@ -444,6 +452,8 @@ export function ChangeRequestCardsListView({
                   <AlertDialogFooter>
                     <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
                     <AlertDialogAction
+                      data-action-id="agendas.change-request-list.internal-vote.close-confirm"
+                      data-action-kind="async-action"
                       onClick={() => {
                         void onFinalizeInternalVote(item.change_request_id ?? item.id);
                       }}
@@ -521,7 +531,7 @@ export function ChangeRequestCardsListView({
         {showSharedTextPreview && (
           <div className="bg-muted/20 space-y-2 rounded-lg border p-3">
             <CREditorPreview
-              documentContent={documentContent ?? ([] as Value)}
+              documentContent={documentContent as Value}
               suggestionIds={selectedPreviewSuggestionIds}
               allowInteractiveEditor
               editingMode={editingMode}
@@ -560,6 +570,8 @@ export function ChangeRequestCardsListView({
           <Accordion type="single" collapsible>
             <AccordionItem value="city-design-preview" className="border-b-0">
               <AccordionTrigger
+                data-action-id="agendas.change-request-list.city-preview.toggle"
+                data-action-kind="selection"
                 className="hover:bg-muted/50 rounded-md px-2 py-2 text-sm font-medium hover:no-underline"
                 data-testid="city-design-preview-accordion-trigger"
               >
@@ -583,7 +595,11 @@ export function ChangeRequestCardsListView({
             className="max-w-full overflow-x-auto"
           >
             <TabsList className="w-max">
-              <TabsTrigger value="all" className="gap-1.5">
+              <TabsTrigger
+                value="all"
+                data-action-id="agendas.change-request-list.tab.all"
+                className="gap-1.5"
+              >
                 {t('features.agendas.crTimeline.tabAll')}
                 <BadgeControl variant="secondary" size="xs" className="ml-0.5">
                   {sequenceItemCount || searchedItems.length}
@@ -591,13 +607,21 @@ export function ChangeRequestCardsListView({
               </TabsTrigger>
               {shouldShowCRCategoryTabs && (
                 <>
-                  <TabsTrigger value="open" className="gap-1.5">
+                  <TabsTrigger
+                    value="open"
+                    data-action-id="agendas.change-request-list.tab.open"
+                    className="gap-1.5"
+                  >
                     {t('features.agendas.crTimeline.tabOpen')}
                     <BadgeControl variant="secondary" size="xs" className="ml-0.5">
                       {categorized.open.length}
                     </BadgeControl>
                   </TabsTrigger>
-                  <TabsTrigger value="accepted" className="gap-1.5">
+                  <TabsTrigger
+                    value="accepted"
+                    data-action-id="agendas.change-request-list.tab.accepted"
+                    className="gap-1.5"
+                  >
                     {t('features.agendas.crTimeline.tabAccepted')}
                     <BadgeControl
                       variant="outline"
@@ -608,13 +632,21 @@ export function ChangeRequestCardsListView({
                       {categorized.accepted.length}
                     </BadgeControl>
                   </TabsTrigger>
-                  <TabsTrigger value="rejected" className="gap-1.5">
+                  <TabsTrigger
+                    value="rejected"
+                    data-action-id="agendas.change-request-list.tab.rejected"
+                    className="gap-1.5"
+                  >
                     {t('features.agendas.crTimeline.tabRejected')}
                     <BadgeControl variant="secondary" size="xs" className="ml-0.5">
                       {categorized.rejected.length}
                     </BadgeControl>
                   </TabsTrigger>
-                  <TabsTrigger value="obsolete" className="gap-1.5">
+                  <TabsTrigger
+                    value="obsolete"
+                    data-action-id="agendas.change-request-list.tab.obsolete"
+                    className="gap-1.5"
+                  >
                     {t('features.agendas.crTimeline.tabObsolete', 'Obsolete')}
                     <BadgeControl variant="secondary" size="xs" className="ml-0.5">
                       {categorized.obsolete?.length ?? 0}
@@ -637,6 +669,8 @@ export function ChangeRequestCardsListView({
               )}
             >
               <FilterToggleGroupItem
+                data-action-id="agendas.change-request-list.sort.text-position"
+                data-action-kind="selection"
                 value="text_position"
                 size="sm"
                 className="h-8 px-2"
@@ -650,6 +684,8 @@ export function ChangeRequestCardsListView({
                 <span className="font-mono text-xs font-semibold">A-Z</span>
               </FilterToggleGroupItem>
               <FilterToggleGroupItem
+                data-action-id="agendas.change-request-list.sort.changed-characters"
+                data-action-kind="selection"
                 value="changed_character_count"
                 size="sm"
                 className="h-8 px-2"
@@ -668,6 +704,8 @@ export function ChangeRequestCardsListView({
                 </span>
               </FilterToggleGroupItem>
               <FilterToggleGroupItem
+                data-action-id="agendas.change-request-list.sort.cr-number"
+                data-action-kind="selection"
                 value="cr_number"
                 size="sm"
                 className="h-8 px-2"
@@ -725,3 +763,12 @@ export function ChangeRequestCardsListView({
     </Container>
   );
 }
+
+export const changeRequestCardsListViewTestApi = {
+  isChangeRequestSortMode,
+  canFinalizeInternalChangeRequest,
+  isVoteSequencePlaceholder,
+  isChangeRequestVotesPlaceholder,
+  getCityDesignChangeRequestFromTimelineItem,
+  hasCityDesignMapSelection,
+};

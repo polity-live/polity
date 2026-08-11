@@ -128,5 +128,6 @@ describe('app tutorial City Design fixture', () => {
         houseNumber: '39',
       })
     ).toBe(false);
+    expect(isAppTutorialCityDesignAddress(undefined)).toBe(false);
   });
 });

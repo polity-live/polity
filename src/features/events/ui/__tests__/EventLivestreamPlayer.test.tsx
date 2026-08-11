@@ -15,6 +15,17 @@ describe('EventLivestreamPlayer', () => {
     expect(iframe.getAttribute('src')).toContain('parent=localhost');
   });
 
+  it('uses the translated iframe title and forwards container classes', () => {
+    const { container } = render(
+      <EventLivestreamPlayer
+        streamUrl="https://youtube.com/watch?v=dQw4w9WgXcQ"
+        containerClassName="custom-player"
+      />
+    );
+    expect(container.querySelector('.custom-player')).toBeTruthy();
+    expect(document.querySelector('iframe')?.getAttribute('title')).toBe('Event Live Stream');
+  });
+
   it('renders a secure external link for unsupported providers', () => {
     render(<EventLivestreamPlayer streamUrl="https://video.example/live" />);
 
@@ -22,6 +33,7 @@ describe('EventLivestreamPlayer', () => {
     expect(link?.getAttribute('href')).toBe('https://video.example/live');
     expect(link?.getAttribute('target')).toBe('_blank');
     expect(link?.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(link?.getAttribute('data-action-id')).toBe('events.livestream.open-external');
     expect(document.querySelector('iframe')).toBeNull();
   });
 

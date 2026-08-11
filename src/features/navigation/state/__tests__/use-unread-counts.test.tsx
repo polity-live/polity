@@ -3,9 +3,16 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { countUnreadMessageSummaries, useUnreadNotificationsCount } from '../use-unread-counts';
+import {
+  countUnreadMessageSummaries,
+  countUnreadNotifications,
+  useUnreadMessagesCount,
+  useUnreadNotificationsCount,
+} from '../use-unread-counts';
 
 const mocks = vi.hoisted(() => ({
+  user: { id: 'user-1' } as { id: string } | null,
+  resultType: 'complete',
   rows: [] as {
     viewer_state?: {
       read_at?: number | null;
@@ -16,17 +23,20 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/providers/auth-provider.tsx', () => ({
-  useAuth: () => ({ user: { id: 'user-1' } }),
+  useAuth: () => ({ user: mocks.user }),
 }));
 
 vi.mock('@rocicorp/zero/react', () => ({
-  useQuery: () => [mocks.rows, { type: 'complete' }],
+  useQuery: () => [mocks.rows, { type: mocks.resultType }],
 }));
 
 vi.mock('@/zero/queries', () => ({
   queries: {
     notifications: {
       countProjection: (args: unknown) => args,
+    },
+    messages: {
+      unreadSummary: (args: unknown) => args,
     },
   },
 }));
@@ -45,6 +55,8 @@ function row(read: boolean, dismissed = false) {
 
 describe('useUnreadNotificationsCount', () => {
   beforeEach(() => {
+    mocks.user = { id: 'user-1' };
+    mocks.resultType = 'complete';
     mocks.rows = [row(false), row(false)];
   });
 
@@ -65,6 +77,19 @@ describe('useUnreadNotificationsCount', () => {
     mocks.rows = [row(false, true), row(false)];
     const { result } = renderHook(() => useUnreadNotificationsCount());
     expect(result.current.count).toBe(1);
+  });
+
+  it('supports missing rows and reports loading only for an authenticated unknown query', () => {
+    expect(countUnreadNotifications(undefined)).toBe(0);
+    mocks.rows = [];
+    mocks.resultType = 'unknown';
+    const authenticated = renderHook(() => useUnreadNotificationsCount());
+    expect(authenticated.result.current.isLoading).toBe(true);
+    authenticated.unmount();
+
+    mocks.user = null;
+    const anonymous = renderHook(() => useUnreadNotificationsCount());
+    expect(anonymous.result.current).toEqual({ count: 0, isLoading: false });
   });
 });
 
@@ -119,5 +144,47 @@ describe('countUnreadMessageSummaries', () => {
     }));
 
     expect(countUnreadMessageSummaries(rows, 'user-1')).toBe(0);
+  });
+
+  it('handles missing users, rows, conversations, and zero creation timestamps', () => {
+    expect(countUnreadMessageSummaries([], undefined)).toBe(0);
+    expect(countUnreadMessageSummaries(undefined, 'user-1')).toBe(0);
+    expect(
+      countUnreadMessageSummaries(
+        [
+          { conversation: null },
+          {
+            conversation: {
+              type: 'direct',
+              status: 'pending',
+              requested_by_id: 'user-2',
+              created_at: 0,
+            },
+          },
+          {
+            conversation: {
+              type: 'direct',
+              status: 'pending',
+              requested_by_id: 'user-2',
+              created_at: 20,
+            },
+          },
+        ],
+        'user-1'
+      )
+    ).toBe(1);
+  });
+
+  it('reports message loading state for authenticated and anonymous users', () => {
+    mocks.rows = [];
+    mocks.resultType = 'unknown';
+    mocks.user = { id: 'user-1' };
+    const authenticated = renderHook(() => useUnreadMessagesCount());
+    expect(authenticated.result.current.isLoading).toBe(true);
+    authenticated.unmount();
+
+    mocks.user = null;
+    const anonymous = renderHook(() => useUnreadMessagesCount());
+    expect(anonymous.result.current).toEqual({ count: 0, isLoading: false });
   });
 });

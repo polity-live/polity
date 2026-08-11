@@ -2,6 +2,7 @@ import { FormControlLabel, FormControlSwitch } from '@/features/shared/ui/form';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface SettingItemProps {
+  'data-action-id': string;
   label: string;
   description?: string;
   checked: boolean;
@@ -11,6 +12,7 @@ interface SettingItemProps {
 }
 
 export function SettingItem({
+  'data-action-id': actionId,
   label,
   description,
   checked,
@@ -33,7 +35,12 @@ export function SettingItem({
         </FormControlLabel>
         {description && <p className="text-muted-foreground text-xs">{description}</p>}
       </div>
-      <FormControlSwitch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
+      <FormControlSwitch
+        data-action-id={actionId}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        disabled={disabled}
+      />
     </div>
   );
 }

@@ -91,7 +91,7 @@ const STATUS_CONFIG: Record<
 /**
  * Format date for display
  */
-function formatDate(date: Date | string): string {
+export function formatElectionDate(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
@@ -99,7 +99,7 @@ function formatDate(date: Date | string): string {
 /**
  * Get initials from name
  */
-function getInitials(name: string): string {
+export function getElectionInitials(name: string): string {
   return name
     .split(' ')
     .map(n => n[0])
@@ -108,7 +108,7 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-function normalizePercent(percent: number | null | undefined) {
+export function normalizeElectionPercent(percent: number | null | undefined) {
   if (!Number.isFinite(percent ?? 0)) {
     return 0;
   }
@@ -116,8 +116,11 @@ function normalizePercent(percent: number | null | undefined) {
   return Math.max(0, Math.min(100, percent ?? 0));
 }
 
-function formatCountPercent(count: number | null | undefined, percent: number | null | undefined) {
-  return `${Math.round(count ?? 0)} · ${normalizePercent(percent).toFixed(0)}%`;
+export function formatElectionCountPercent(
+  count: number | null | undefined,
+  percent: number | null | undefined
+) {
+  return `${Math.round(count ?? 0)} · ${normalizeElectionPercent(percent).toFixed(0)}%`;
 }
 
 /**
@@ -128,7 +131,7 @@ type ElectionPhase = 'nomination' | 'voting' | 'results';
 /**
  * Get current phase from status
  */
-function getCurrentPhase(status: string): ElectionPhase {
+export function getElectionCurrentPhase(status: string): ElectionPhase {
   if (status === 'nominations_open') return 'nomination';
   if (status === 'voting_open') return 'voting';
   return 'results';
@@ -212,6 +215,8 @@ function CandidateAvatars({
         <div className="flex justify-end">
           <BadgeControl asChild variant={showIndicationResults ? 'secondary' : 'outline'} size="xs">
             <button
+              data-action-id="timeline.election.indication-results.toggle"
+              data-action-kind="selection"
               type="button"
               onClick={event => {
                 event.preventDefault();
@@ -258,7 +263,7 @@ function CandidateAvatars({
                     featureThemeClassName('timelineElectionTimelineCardDangerBackgroundBeta')
                   )}
                 >
-                  {getInitials(candidate.name)}
+                  {getElectionInitials(candidate.name)}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
@@ -273,7 +278,7 @@ function CandidateAvatars({
                 </div>
               </div>
               <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
-                {formatCountPercent(visibleCount, visiblePercentage)}
+                {formatElectionCountPercent(visibleCount, visiblePercentage)}
               </span>
             </div>
             <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
@@ -290,11 +295,16 @@ function CandidateAvatars({
                 <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
                   <div
                     className="bg-brand/35 h-full rounded-full"
-                    style={{ width: `${normalizePercent(candidate.indicationPercentage)}%` }}
+                    style={{
+                      width: `${normalizeElectionPercent(candidate.indicationPercentage)}%`,
+                    }}
                   />
                 </div>
                 <span className="text-muted-foreground text-xs tabular-nums">
-                  {formatCountPercent(candidate.indicationCount, candidate.indicationPercentage)}
+                  {formatElectionCountPercent(
+                    candidate.indicationCount,
+                    candidate.indicationPercentage
+                  )}
                 </span>
               </div>
             ) : null}
@@ -337,7 +347,7 @@ function WinnerDisplay({
           <AvatarFallback
             className={featureThemeClassName('timelineElectionTimelineCardDangerBackgroundGamma')}
           >
-            {getInitials(name)}
+            {getElectionInitials(name)}
           </AvatarFallback>
         </Avatar>
         <Crown
@@ -379,8 +389,8 @@ export function ElectionTimelineCard({
   className,
 }: ElectionTimelineCardProps) {
   const { t } = useTranslation();
-  const statusConfig = STATUS_CONFIG[election.status];
-  const currentPhase = getCurrentPhase(election.status);
+  const statusConfig = STATUS_CONFIG[election.status] ?? STATUS_CONFIG.closed;
+  const currentPhase = getElectionCurrentPhase(election.status);
   const isWinnerAnnounced = election.status === 'winner_announced';
   const isVotingOpen = election.status === 'voting_open';
   const isNominationsOpen = election.status === 'nominations_open';
@@ -410,10 +420,10 @@ export function ElectionTimelineCard({
   // Get date display text
   const getDateText = () => {
     if (isNominationsOpen && election.nominationsEndDate) {
-      return `${t('features.timeline.cards.election.submitBy')} ${formatDate(election.nominationsEndDate)}`;
+      return `${t('features.timeline.cards.election.submitBy')} ${formatElectionDate(election.nominationsEndDate)}`;
     }
     if (isVotingOpen && election.votingEndDate) {
-      return `${t('features.timeline.cards.election.endsOn')} ${formatDate(election.votingEndDate)}`;
+      return `${t('features.timeline.cards.election.endsOn')} ${formatElectionDate(election.votingEndDate)}`;
     }
     return null;
   };
@@ -517,6 +527,7 @@ export function ElectionTimelineCard({
         {/* Primary action based on status */}
         {isNominationsOpen && onNominate && (
           <TimelineCardActionButton
+            data-action-id="timeline.election.nomination.open"
             onClick={e => {
               e?.preventDefault();
               onNominate?.();
@@ -528,6 +539,7 @@ export function ElectionTimelineCard({
         )}
         {isVotingOpen && onCastVote && (
           <TimelineCardActionButton
+            data-action-id="timeline.election.ballot.open"
             onClick={e => {
               e?.preventDefault();
               onCastVote?.();
@@ -539,6 +551,7 @@ export function ElectionTimelineCard({
         )}
         {(election.status === 'closed' || isWinnerAnnounced) && onViewResults && (
           <TimelineCardActionButton
+            data-action-id="timeline.election.results.open"
             onClick={e => {
               e?.preventDefault();
               onViewResults?.();
@@ -552,6 +565,7 @@ export function ElectionTimelineCard({
         {/* View candidates */}
         {onViewCandidates && !isWinnerAnnounced && (
           <TimelineCardActionButton
+            data-action-id="timeline.election.candidates.open"
             onClick={e => {
               e?.preventDefault();
               onViewCandidates?.();
@@ -563,6 +577,7 @@ export function ElectionTimelineCard({
         )}
         <div onClick={e => e.preventDefault()}>
           <ShareButton
+            data-action-id="timeline.election.share"
             url={electionHref || `/election/${election.id}`}
             title={election.title}
             description={election.roleName}

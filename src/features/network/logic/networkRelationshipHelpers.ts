@@ -354,14 +354,9 @@ function isBetterPlacement(next: TraversalPlacement, existing: TraversalPlacemen
 function createHierarchyEntry(
   group: NetworkGroupEntity,
   placement: TraversalPlacement
-): RelationshipEntry | null {
-  if (
-    placement.placementType !== 'hierarchy' ||
-    (placement.branch !== 'parent' && placement.branch !== 'child')
-  ) {
-    return null;
-  }
-
+): RelationshipEntry {
+  // Called only for hierarchy traversal steps, whose branch is parent or child.
+  const branch = placement.branch as 'parent' | 'child';
   return {
     group,
     rights: [],
@@ -373,19 +368,19 @@ function createHierarchyEntry(
     memberTargetGroupId: null,
     membershipDirection: null,
     level: placement.level,
-    childId: placement.branch === 'parent' ? placement.hierarchyConnectionId : undefined,
-    parentId: placement.branch === 'child' ? placement.hierarchyConnectionId : undefined,
+    childId: branch === 'parent' ? placement.hierarchyConnectionId : undefined,
+    parentId: branch === 'child' ? placement.hierarchyConnectionId : undefined,
   };
 }
 
 function createSiblingAttachmentEntry(
   group: NetworkGroupEntity,
   placement: TraversalPlacement
-): SiblingAttachmentEntry | null {
-  if (placement.placementType !== 'sibling' || !placement.anchorId || placement.branch === 'root') {
-    return null;
+): SiblingAttachmentEntry {
+  // Called only for sibling steps, which always carry their anchor and a non-root branch.
+  if (!placement.anchorId || placement.branch === 'root') {
+    throw new Error('Sibling traversal placement requires an anchor and non-root branch.');
   }
-
   return {
     group,
     rights: [],
@@ -416,7 +411,7 @@ function pushTraversalStep(
 
 function createEmptyRelationshipEntry(
   group: NetworkGroupEntity,
-  extra?: Partial<
+  extra: Partial<
     Pick<RelationshipEntry, 'level' | 'childId' | 'parentId' | 'sourceRelationshipType'>
   >
 ): RelationshipEntry {
@@ -425,14 +420,14 @@ function createEmptyRelationshipEntry(
     rights: [],
     relationshipKinds: [],
     rightRelationshipKinds: {},
-    sourceRelationshipType: extra?.sourceRelationshipType ?? null,
+    sourceRelationshipType: extra.sourceRelationshipType,
     membershipMode: null,
     memberSourceGroupId: null,
     memberTargetGroupId: null,
     membershipDirection: null,
-    level: extra?.level,
-    childId: extra?.childId,
-    parentId: extra?.parentId,
+    level: extra.level,
+    childId: extra.childId,
+    parentId: extra.parentId,
   };
 }
 
@@ -488,22 +483,9 @@ function upsertRightScopeEntry({
     );
   }
 
-  const entry = targetMap.get(scopeEntity.id);
-  if (!entry) {
-    return null;
-  }
-
+  // The entry is either pre-existing or inserted in the block immediately above.
+  const entry = targetMap.get(scopeEntity.id) as RelationshipEntry;
   applyRelationshipToEntry(entry, relationship, currentGroupId);
-
-  if (level !== undefined) {
-    entry.level = entry.level ?? level;
-  }
-
-  if (placement.branch === 'parent') {
-    entry.childId = entry.childId ?? holderGroupId;
-  } else {
-    entry.parentId = entry.parentId ?? holderGroupId;
-  }
 
   return entry;
 }
@@ -522,7 +504,7 @@ export function buildDirectRelationships(
   const childrenMap = new Map<string, RelationshipEntry>();
 
   relationships.forEach(rel => {
-    if (filterRight && (rel.with_right ?? '') !== filterRight) {
+    if (filterRight && rel.with_right !== filterRight) {
       return;
     }
 
@@ -570,10 +552,9 @@ export function buildDirectRelationships(
           membershipDirection: null,
         });
       }
-      const parentEntry = parentsMap.get(parentId);
-      if (parentEntry) {
-        applyRelationshipToEntry(parentEntry, rel, currentGroupId);
-      }
+      // The entry is either pre-existing or inserted in the block immediately above.
+      const entry = parentsMap.get(parentId) as RelationshipEntry;
+      applyRelationshipToEntry(entry, rel, currentGroupId);
     }
 
     if (pair.parentGroupId === targetGroupId) {
@@ -594,10 +575,9 @@ export function buildDirectRelationships(
           membershipDirection: null,
         });
       }
-      const childEntry = childrenMap.get(childId);
-      if (childEntry) {
-        applyRelationshipToEntry(childEntry, rel, currentGroupId);
-      }
+      // The entry is either pre-existing or inserted in the block immediately above.
+      const entry = childrenMap.get(childId) as RelationshipEntry;
+      applyRelationshipToEntry(entry, rel, currentGroupId);
     }
   });
 
@@ -665,7 +645,7 @@ export function buildIndirectRelationships(
 
         const findScopesForRight = (holderId: string, level: number) => {
           relationships.forEach(rel => {
-            if ((rel.with_right ?? '') !== right) return;
+            if (rel.with_right !== right) return;
             if (!rel.grant_id || rel.group_id !== holderId || visited.has(rel.related_group_id)) {
               return;
             }
@@ -724,13 +704,13 @@ export function buildIndirectRelationships(
 
       const findParentsForRight = (id: string, level: number) => {
         relationships.forEach(rel => {
-          if (filterRight && (rel.with_right ?? '') !== filterRight) return;
+          if (filterRight && rel.with_right !== filterRight) return;
           const pair = getHierarchyRelationshipPair(rel);
           if (!pair) return;
 
           if (
             pair.childGroupId === id &&
-            (rel.with_right ?? '') === right &&
+            rel.with_right === right &&
             !visited.has(pair.parentGroupId)
           ) {
             const parentId = pair.parentGroupId;
@@ -755,10 +735,7 @@ export function buildIndirectRelationships(
               });
             }
             const entry = parentsMap.get(parentId);
-            if (!entry) {
-              return;
-            }
-
+            if (!entry) return;
             applyRelationshipToEntry(entry, rel, currentGroupId);
 
             findParentsForRight(parentId, level + 1);
@@ -793,13 +770,13 @@ export function buildIndirectRelationships(
 
       const findChildrenForRight = (id: string, level: number, currentParentId: string) => {
         relationships.forEach(rel => {
-          if (filterRight && (rel.with_right ?? '') !== filterRight) return;
+          if (filterRight && rel.with_right !== filterRight) return;
           const pair = getHierarchyRelationshipPair(rel);
           if (!pair) return;
 
           if (
             pair.parentGroupId === id &&
-            (rel.with_right ?? '') === right &&
+            rel.with_right === right &&
             !visited.has(pair.childGroupId)
           ) {
             const childId = pair.childGroupId;
@@ -824,10 +801,7 @@ export function buildIndirectRelationships(
               });
             }
             const entry = childrenMap.get(childId);
-            if (!entry) {
-              return;
-            }
-
+            if (!entry) return;
             applyRelationshipToEntry(entry, rel, currentGroupId);
 
             findChildrenForRight(childId, level + 1, childId);
@@ -859,7 +833,7 @@ export function buildMixedRelationshipGraph(
   const adjacency = new Map<string, TraversalStep[]>();
 
   relationships.forEach(relationship => {
-    if (filterRight && (relationship.with_right ?? '') !== filterRight) {
+    if (filterRight && relationship.with_right !== filterRight) {
       return;
     }
 
@@ -965,9 +939,6 @@ export function buildMixedRelationshipGraph(
 
     if (placement.placementType === 'hierarchy') {
       const entry = createHierarchyEntry(group, placement);
-      if (!entry) {
-        return;
-      }
       applyRelationshipToEntry(entry, relationship, currentGroupId);
       if (placement.branch === 'parent') {
         parentsMap.set(groupId, entry);
@@ -977,14 +948,10 @@ export function buildMixedRelationshipGraph(
       return;
     }
 
-    if (placement.placementType === 'sibling') {
-      const entry = createSiblingAttachmentEntry(group, placement);
-      if (!entry) {
-        return;
-      }
-      applyRelationshipToEntry(entry, relationship, currentGroupId);
-      siblingAttachmentsMap.set(groupId, entry);
-    }
+    // Every non-hierarchy placement passed here originates from a sibling step.
+    const entry = createSiblingAttachmentEntry(group, placement);
+    applyRelationshipToEntry(entry, relationship, currentGroupId);
+    siblingAttachmentsMap.set(groupId, entry);
   };
 
   const mergeIntoPlacementEntry = (
@@ -995,18 +962,15 @@ export function buildMixedRelationshipGraph(
     if (placement.placementType === 'hierarchy') {
       const entry =
         placement.branch === 'parent' ? parentsMap.get(groupId) : childrenMap.get(groupId);
-      if (entry) {
-        applyRelationshipToEntry(entry, relationship, currentGroupId);
-      }
+      if (!entry) return;
+      applyRelationshipToEntry(entry, relationship, currentGroupId);
       return;
     }
 
-    if (placement.placementType === 'sibling') {
-      const entry = siblingAttachmentsMap.get(groupId);
-      if (entry) {
-        applyRelationshipToEntry(entry, relationship, currentGroupId);
-      }
-    }
+    // Every non-hierarchy placement passed here originates from a sibling step.
+    const entry = siblingAttachmentsMap.get(groupId);
+    if (!entry) return;
+    applyRelationshipToEntry(entry, relationship, currentGroupId);
   };
 
   const rootPlacement: TraversalPlacement = {
@@ -1020,14 +984,7 @@ export function buildMixedRelationshipGraph(
 
   while (deque.length > 0) {
     const current = deque.shift();
-    if (!current) {
-      continue;
-    }
-
-    const bestPlacement = placements.get(current.groupId);
-    if (!bestPlacement || !isSamePlacement(bestPlacement, current.placement)) {
-      continue;
-    }
+    if (!current) continue;
 
     const steps = adjacency.get(current.groupId) ?? [];
 

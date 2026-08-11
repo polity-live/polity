@@ -37,7 +37,7 @@ function getSpeakerOrderValue(speaker: SpeakerListGenderQuotaSpeaker) {
   return speaker.order_index ?? speaker.order ?? 0;
 }
 
-function getSpeakerCreatedValue(speaker: SpeakerListGenderQuotaSpeaker) {
+export function getSpeakerCreatedValue(speaker: SpeakerListGenderQuotaSpeaker) {
   const createdAt = speaker.created_at;
   if (typeof createdAt === 'number') return createdAt;
   if (typeof createdAt === 'string') {

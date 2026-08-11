@@ -22,10 +22,6 @@ function hasAcknowledgedAlphaWarning() {
     return true;
   }
 
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
   try {
     return (
       window.sessionStorage.getItem(ALPHA_WARNING_SESSION_KEY) === ALPHA_WARNING_ACKNOWLEDGED_VALUE
@@ -37,10 +33,6 @@ function hasAcknowledgedAlphaWarning() {
 
 function acknowledgeAlphaWarning() {
   hasAcknowledgedAlphaWarningInMemory = true;
-
-  if (typeof window === 'undefined') {
-    return;
-  }
 
   try {
     window.sessionStorage.setItem(ALPHA_WARNING_SESSION_KEY, ALPHA_WARNING_ACKNOWLEDGED_VALUE);

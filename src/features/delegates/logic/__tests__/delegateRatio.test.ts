@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { getDelegateMembersPerSeatInfo } from '../delegateRatio';
 
 describe('getDelegateMembersPerSeatInfo', () => {
+  it('ignores absent and non-delegate events', () => {
+    expect(getDelegateMembersPerSeatInfo(null)).toBeNull();
+    expect(getDelegateMembersPerSeatInfo({ event_type: 'meeting' })).toBeNull();
+  });
+
   it('returns the exact members-per-delegate ratio for ratio-based delegate assemblies', () => {
     expect(
       getDelegateMembersPerSeatInfo({
@@ -21,6 +26,25 @@ describe('getDelegateMembersPerSeatInfo', () => {
         event_type: 'delegate_assembly',
         delegate_seat_allocation_type: 'members_per_delegate',
         main_group_delegate_allocation_mode: 'not-a-number',
+      })
+    ).toEqual({
+      count: 50,
+      translationKey: 'features.delegates.ratio.members',
+    });
+    expect(
+      getDelegateMembersPerSeatInfo({
+        event_type: 'delegate_assembly',
+        delegate_seat_allocation_type: 'members_per_delegate',
+        main_group_delegate_allocation_mode: '0',
+      })
+    ).toEqual({
+      count: 50,
+      translationKey: 'features.delegates.ratio.members',
+    });
+    expect(
+      getDelegateMembersPerSeatInfo({
+        event_type: 'delegate_assembly',
+        delegate_seat_allocation_type: 'members_per_delegate',
       })
     ).toEqual({
       count: 50,

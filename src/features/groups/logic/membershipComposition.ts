@@ -198,7 +198,7 @@ export function buildMembershipCompositionBuckets<
   return rows
     .map(row => ({
       ...row,
-      memberPercentage: totalMembers > 0 ? (row.memberCount / totalMembers) * 100 : 0,
+      memberPercentage: (row.memberCount / totalMembers) * 100,
       leadershipPercentage:
         totalLeadershipAssignments > 0
           ? (row.leadershipAssignmentCount / totalLeadershipAssignments) * 100
@@ -255,12 +255,13 @@ function resolveSingleMembershipProvenance<
     return createFallbackProvenance();
   }
 
-  const rootGroup =
-    resolveGroupReference(groupsById, rootGroupId, membership.source_group) ||
-    normalizeGroup(groupsById.get(rootGroupId), rootGroupId);
-  if (!rootGroup) {
-    return createFallbackProvenance();
-  }
+  // A non-empty rootGroupId is always materialized by resolveGroupReference,
+  // even when neither lookup nor embedded group data exists.
+  const rootGroup = resolveGroupReference(
+    groupsById,
+    rootGroupId,
+    membership.source_group
+  ) as ResolvedMembershipCompositionGroup;
 
   if (rootGroup.group_type === 'base') {
     return createDirectProvenance(rootGroup);
@@ -358,25 +359,23 @@ function resolveSiblingSourceProvenance<
     activeRootMembershipByKey,
     activeRootMemberships,
   } = args;
-  const normalizedSourceGroup = normalizeGroup(sourceGroup, sourceGroup.id);
-
-  if (!normalizedSourceGroup) {
-    return createFallbackProvenance();
-  }
+  const normalizedSourceGroup = sourceGroup;
 
   let baseGroup: MembershipProvenanceGroup = normalizedSourceGroup;
   const nestedSourceGroupId = sourceMembership?.source_group_id;
 
   if (nestedSourceGroupId && nestedSourceGroupId !== sourceGroup.id) {
+    // A non-empty nestedSourceGroupId is also resolveGroupReference's fallback id, so
+    // normalization always produces a group even when the lookup and embedded row are absent.
     const nestedSourceGroup = resolveGroupReference(
       groupsById,
       nestedSourceGroupId,
       sourceMembership?.source_group
-    );
+    ) as ResolvedMembershipCompositionGroup;
 
-    if (nestedSourceGroup?.group_type === 'base') {
+    if (nestedSourceGroup.group_type === 'base') {
       baseGroup = nestedSourceGroup;
-    } else if (nestedSourceGroup && isHierarchicalGroup(nestedSourceGroup)) {
+    } else if (isHierarchicalGroup(nestedSourceGroup)) {
       const nestedMembership =
         activeRootMembershipByKey.get(getRootMembershipKey(nestedSourceGroup.id, userId)) ||
         findCompatibleRootMembership({
@@ -395,7 +394,7 @@ function resolveSiblingSourceProvenance<
         : null;
 
       baseGroup = nestedProvenance?.baseGroup ?? nestedSourceGroup;
-    } else if (nestedSourceGroup?.group_type === 'sibling') {
+    } else {
       baseGroup = nestedSourceGroup;
     }
   }
@@ -422,10 +421,6 @@ function findCompatibleRootMembership<
       return false;
     }
 
-    if (rootMembership.group_id === rootGroupId) {
-      return true;
-    }
-
     if (!rootMembership.source_group_id) {
       return false;
     }
@@ -445,22 +440,12 @@ function resolveProvenanceWithinRootGroup(
   activeRelationships: readonly MembershipCompositionRelationshipLike[],
   groupsById: Map<string, ResolvedMembershipCompositionGroup>
 ): MembershipProvenanceFields {
-  if (rootGroup.group_type === 'base') {
-    return createDirectProvenance(rootGroup);
-  }
-
-  if (!isHierarchicalGroup(rootGroup)) {
-    return createFallbackProvenance();
-  }
-
   const baseGroupId = membership.source_group_id;
   if (!baseGroupId) {
     return createFallbackProvenance();
   }
 
-  const baseGroup =
-    resolveGroupReference(groupsById, baseGroupId, membership.source_group) ||
-    normalizeGroup(groupsById.get(baseGroupId), baseGroupId);
+  const baseGroup = resolveGroupReference(groupsById, baseGroupId, membership.source_group);
   const partGroup = resolvePartGroupForBase({
     rootGroupId: rootGroup.id,
     baseGroupId,
@@ -468,7 +453,7 @@ function resolveProvenanceWithinRootGroup(
     groupsById,
   });
 
-  if (!baseGroup || !partGroup) {
+  if (!partGroup) {
     return createFallbackProvenance();
   }
 
@@ -515,10 +500,10 @@ function resolvePartGroupForBase(args: {
 
   const path = paths[0];
   const partGroupId = path[path.length - 2];
-  return partGroupId ? normalizeGroup(groupsById.get(partGroupId), partGroupId) : null;
+  return normalizeGroup(groupsById.get(partGroupId), partGroupId);
 }
 
-function collectPathsFromBaseToTarget(
+export function collectPathsFromBaseToTarget(
   baseGroupId: string,
   targetGroupId: string,
   relationships: readonly MembershipCompositionRelationshipLike[]
@@ -619,10 +604,8 @@ function applyRelationshipDerivedGroupTypes(
       continue;
     }
 
-    if (relationship.connection_type === 'peer' || relationship.relationship_type === 'sibling') {
-      peerGroupIds.add(relationship.group_id);
-      peerGroupIds.add(relationship.related_group_id);
-    }
+    peerGroupIds.add(relationship.group_id);
+    peerGroupIds.add(relationship.related_group_id);
   }
 
   for (const [groupId, group] of groupsById) {
@@ -651,7 +634,22 @@ function addGroupToLookup(
     return;
   }
 
-  groupsById.set(normalizedGroup.id, normalizedGroup);
+  const existingGroup = groupsById.get(normalizedGroup.id);
+  if (!existingGroup) {
+    groupsById.set(normalizedGroup.id, normalizedGroup);
+    return;
+  }
+
+  const incomingHasDisplayName = normalizedGroup.name !== normalizedGroup.id;
+  groupsById.set(normalizedGroup.id, {
+    ...existingGroup,
+    ...normalizedGroup,
+    name: incomingHasDisplayName ? normalizedGroup.name : existingGroup.name,
+    group_type: normalizedGroup.group_type ?? existingGroup.group_type,
+    connected_group_id: normalizedGroup.connected_group_id ?? existingGroup.connected_group_id,
+    sibling_membership_mode:
+      normalizedGroup.sibling_membership_mode ?? existingGroup.sibling_membership_mode,
+  });
 }
 
 function normalizeGroup(
@@ -686,17 +684,13 @@ function resolveGroupReference(
     return normalizedGroup;
   }
 
-  if (!normalizedGroup) {
-    return lookupGroup;
-  }
-
   return {
     ...lookupGroup,
     ...normalizedGroup,
-    group_type: lookupGroup.group_type ?? normalizedGroup.group_type,
-    connected_group_id: normalizedGroup.connected_group_id ?? lookupGroup.connected_group_id,
+    group_type: lookupGroup.group_type,
+    connected_group_id: normalizedGroup?.connected_group_id ?? lookupGroup.connected_group_id,
     sibling_membership_mode:
-      normalizedGroup.sibling_membership_mode ?? lookupGroup.sibling_membership_mode,
+      normalizedGroup?.sibling_membership_mode ?? lookupGroup.sibling_membership_mode,
   };
 }
 

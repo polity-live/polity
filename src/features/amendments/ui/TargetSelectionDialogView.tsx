@@ -67,10 +67,18 @@ export function TargetSelectionDialogView({
         </div>
 
         <DialogFooter separator className="pt-4">
-          <Button variant="outline" onClick={onCancel}>
+          <Button
+            data-action-id="amendments.target-selection.cancel.dialog"
+            variant="outline"
+            onClick={onCancel}
+          >
             {cancelText}
           </Button>
-          <Button onClick={onConfirmClick} disabled={isSaving}>
+          <Button
+            data-action-id="amendments.target-selection.confirm.target"
+            onClick={onConfirmClick}
+            disabled={isSaving}
+          >
             {confirmText}
           </Button>
         </DialogFooter>

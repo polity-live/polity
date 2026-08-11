@@ -73,7 +73,10 @@ export function StreamingBubble({
           streamingAssistantMessage.isCompressing ||
           streamingAssistantMessage.isToolCalling) && (
           <Collapsible className="group/activity text-muted-foreground text-sm">
-            <CollapsibleTrigger className="hover:text-foreground flex items-center gap-2 transition-colors">
+            <CollapsibleTrigger
+              data-action-id="messages.assistant.activity.toggle"
+              className="hover:text-foreground flex items-center gap-2 transition-colors"
+            >
               {streamingAssistantMessage.isToolCalling ? (
                 <Wrench className="h-4 w-4 animate-[wiggle_1.2s_ease-in-out_infinite]" />
               ) : streamingAssistantMessage.isCompressing ? (
@@ -110,6 +113,7 @@ export function StreamingBubble({
             <span className="min-w-0 flex-1">{streamingAssistantMessage.errorMessage}</span>
             {streamingAssistantMessage.canRetry && streamingAssistantMessage.onRetry && (
               <Button
+                data-action-id="messages.assistant.retry"
                 type="button"
                 variant="outline"
                 size="sm"
@@ -171,6 +175,7 @@ export function MessageListView({
       {hasNewMessages && (
         <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center">
           <Button
+            data-action-id="messages.conversation.new-messages.scroll"
             presentation="floatingShadow"
             className="pointer-events-auto"
             size="sm"
@@ -253,6 +258,7 @@ export function MessageListView({
                               </p>
                               <div className="flex gap-2">
                                 <Button
+                                  data-action-id="messages.conversation-request.accept"
                                   onClick={() => onAcceptConversation(conversation)}
                                   variant="default"
                                   size="sm"
@@ -261,6 +267,7 @@ export function MessageListView({
                                   {t('features.messages.conversation.accept')}
                                 </Button>
                                 <Button
+                                  data-action-id="messages.conversation-request.reject"
                                   onClick={() => onRejectConversation(conversation)}
                                   variant="outline"
                                   size="sm"

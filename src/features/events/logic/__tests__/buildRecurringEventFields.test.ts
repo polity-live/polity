@@ -44,6 +44,21 @@ describe('buildRecurringEventFields', () => {
     expect(formatLocalTimeInput(result.recurrence_end_date)).toBe('23:59');
   });
 
+  it('does not persist weekday data for a non-weekly series', () => {
+    const result = buildRecurringEventFields({
+      isRecurring: true,
+      recurrence: {
+        pattern: 'daily',
+        interval: 1,
+        weekdays: [],
+        endDate: '2026-12-31',
+      },
+    });
+
+    expect(result.is_recurring).toBe(true);
+    expect(result.recurrence_days).toBeNull();
+  });
+
   it('fails closed for invalid weekly series without weekdays', () => {
     expect(
       buildRecurringEventFields({

@@ -83,6 +83,7 @@ vi.mock('../../schema', () => {
 import { amendmentQueries } from '../queries';
 
 const ctx = { userID: 'user-1', email: 'user@example.com' };
+const anonymousCtx = { userID: undefined, email: undefined } as never;
 
 function lastQuery(table: string): FakeQuery {
   const query = queryState.byTable[table]?.at(-1);
@@ -277,5 +278,307 @@ describe('amendment query nested authorization', () => {
     });
 
     expect(lastQuery('comment').calls).toContainEqual(['where', 'parent_id', 'IS', 'comment-1']);
+  });
+
+  it('fail-closes every private amendment relation for an anonymous caller', () => {
+    amendmentQueries.byIdWithRelations.fn({ args: { id: 'amendment-1' }, ctx: anonymousCtx });
+    expect(relatedCalls(lastQuery('amendment').calls, 'collaborators')).toContainEqual([
+      'where',
+      'id',
+      '__unauthorized__',
+    ]);
+
+    amendmentQueries.byIdFull.fn({ args: { id: 'amendment-1' }, ctx: anonymousCtx });
+    const supportVoteCalls = relatedCalls(lastQuery('amendment').calls, 'support_votes');
+    expect(supportVoteCalls).toContainEqual(['where', 'id', '__unauthorized__']);
+    const wikiChangeRequests = relatedCalls(lastQuery('amendment').calls, 'change_requests');
+    expect(relatedCalls(wikiChangeRequests, 'votes')).toContainEqual([
+      'where',
+      'user_id',
+      '__anon__',
+    ]);
+
+    amendmentQueries.byIdWithDocsAndCollabs.fn({
+      args: { id: 'amendment-1' },
+      ctx: anonymousCtx,
+    });
+    const editorCalls = lastQuery('amendment').calls;
+    const editorGroupCalls = relatedCalls(editorCalls, 'group');
+    expect(relatedCalls(editorGroupCalls, 'memberships')).toContainEqual([
+      'where',
+      'user_id',
+      '__anon__',
+    ]);
+    expect(relatedCalls(editorGroupCalls, 'guest_accesses')).toContainEqual([
+      'where',
+      'user_id',
+      '__anon__',
+    ]);
+
+    amendmentQueries.changeRequestsWithVotes.fn({
+      args: { amendment_id: 'amendment-1' },
+      ctx: anonymousCtx,
+    });
+    expect(relatedCalls(lastQuery('change_request').calls, 'votes')).toContainEqual([
+      'where',
+      'id',
+      '__unauthorized__',
+    ]);
+
+    amendmentQueries.threads.fn({ args: { amendment_id: 'amendment-1' }, ctx: anonymousCtx });
+    const threadCalls = lastQuery('thread').calls;
+    expect(relatedCalls(threadCalls, 'votes')).toContainEqual(['where', 'id', '__unauthorized__']);
+    expect(relatedCalls(relatedCalls(threadCalls, 'comments'), 'votes')).toContainEqual([
+      'where',
+      'id',
+      '__unauthorized__',
+    ]);
+
+    amendmentQueries.collaborators.fn({
+      args: { amendment_id: 'amendment-1' },
+      ctx: anonymousCtx,
+    });
+    expect(lastQuery('amendment_collaborator').calls).toContainEqual([
+      'where',
+      'id',
+      '__unauthorized__',
+    ]);
+  });
+
+  it('applies every group amendment filter and both paging directions', () => {
+    amendmentQueries.groupAmendmentPage.fn({
+      args: {
+        groupId: 'group-1',
+        status: 'active',
+        displayStatus: 'accepted',
+        statuses: [],
+        hashtag: 'mobility',
+        query: ' streets ',
+        limit: 25,
+        start: { id: 'start', created_at: 1 },
+        dir: 'backward',
+      },
+      ctx,
+    });
+    const filtered = lastQuery('amendment').calls;
+    expect(filtered).toContainEqual(['orderBy', 'created_at', 'asc']);
+    expect(filtered).toContainEqual([
+      'start',
+      { id: 'start', created_at: 1 },
+      { inclusive: false },
+    ]);
+    expect(
+      filtered.some(call => call[0] === 'whereExists' && call[1] === 'amendment_hashtags')
+    ).toBe(true);
+
+    amendmentQueries.groupAmendmentPage.fn({
+      args: {
+        groupId: 'group-1',
+        statuses: [],
+        query: ' ',
+        limit: 10,
+        start: null,
+        dir: 'forward',
+      },
+      ctx,
+    });
+    expect(lastQuery('amendment').calls).toContainEqual(['orderBy', 'created_at', 'desc']);
+  });
+
+  it('covers collaborator, collaboration, and change-request page filters', () => {
+    amendmentQueries.collaboratorPage.fn({
+      args: {
+        amendmentId: 'amendment-1',
+        status: 'member',
+        statuses: ['admin'],
+        roleId: 'role-1',
+        roleIds: ['role-2'],
+        query: ' Alice ',
+        limit: 25,
+        start: { id: 'start', created_at: 1 },
+        dir: 'backward',
+      },
+      ctx,
+    });
+    let calls = lastQuery('amendment_collaborator').calls;
+    expect(calls).toEqual(
+      expect.arrayContaining([
+        ['where', 'status', 'member'],
+        ['where', 'status', 'IN', ['admin']],
+        ['where', 'role_id', 'role-1'],
+        ['where', 'role_id', 'IN', ['role-2']],
+        ['start', { id: 'start', created_at: 1 }, { inclusive: false }],
+      ])
+    );
+
+    amendmentQueries.collaboratorPage.fn({
+      args: {
+        amendmentId: 'amendment-1',
+        status: undefined,
+        statuses: [],
+        roleId: undefined,
+        roleIds: [],
+        query: ' ',
+        limit: 10,
+        start: null,
+        dir: 'forward',
+      },
+      ctx,
+    });
+
+    amendmentQueries.collaborationPageByUser.fn({
+      args: {
+        userId: 'user-1',
+        status: 'member',
+        statuses: ['admin'],
+        query: ' Streets ',
+        limit: 25,
+        start: { id: 'start', created_at: 1 },
+        dir: 'backward',
+      },
+      ctx: anonymousCtx,
+    });
+    calls = lastQuery('amendment_collaborator').calls;
+    expect(calls).toEqual(
+      expect.arrayContaining([
+        ['where', 'status', 'member'],
+        ['where', 'status', 'IN', ['admin']],
+        ['orderBy', 'created_at', 'asc'],
+        ['start', { id: 'start', created_at: 1 }, { inclusive: false }],
+      ])
+    );
+    const collaborationPredicate = calls.find(
+      call => call[0] === 'where' && typeof call[1] === 'function'
+    );
+    expect(predicateCalls(collaborationPredicate?.[1])).toEqual(
+      expect.arrayContaining([
+        ['cmp', 'user_id', '__anon__'],
+        ['exists', 'amendment'],
+      ])
+    );
+
+    amendmentQueries.collaborationPageByUser.fn({
+      args: {
+        userId: 'user-1',
+        status: undefined,
+        statuses: [],
+        query: ' ',
+        limit: 10,
+        start: null,
+        dir: 'forward',
+      },
+      ctx,
+    });
+
+    amendmentQueries.changeRequestPage.fn({
+      args: {
+        amendmentId: 'amendment-1',
+        branchId: 'branch-1',
+        status: 'open',
+        limit: 25,
+        start: { id: 'start', created_at: 1 },
+        dir: 'backward',
+      },
+      ctx,
+    });
+    calls = lastQuery('change_request').calls;
+    expect(calls).toEqual(
+      expect.arrayContaining([
+        ['where', 'process_branch_id', 'branch-1'],
+        ['where', 'status', 'open'],
+        ['orderBy', 'created_at', 'asc'],
+        ['start', { id: 'start', created_at: 1 }, { inclusive: false }],
+      ])
+    );
+    amendmentQueries.changeRequestPage.fn({
+      args: {
+        amendmentId: 'amendment-1',
+        branchId: undefined,
+        status: undefined,
+        limit: 10,
+        start: null,
+        dir: 'forward',
+      },
+      ctx,
+    });
+  });
+
+  it('covers discussion sorting, cursors, and user visibility boundaries', () => {
+    amendmentQueries.discussionThreadPage.fn({
+      args: {
+        amendmentId: 'amendment-1',
+        sort: 'time',
+        limit: 25,
+        start: { id: 'start', created_at: 1, upvotes: 2, downvotes: 1 },
+        dir: 'backward',
+      },
+      ctx,
+    });
+    expect(lastQuery('thread').calls).toEqual(
+      expect.arrayContaining([
+        ['orderBy', 'created_at', 'asc'],
+        ['start', { id: 'start', created_at: 1, upvotes: 2, downvotes: 1 }, { inclusive: false }],
+      ])
+    );
+
+    amendmentQueries.discussionThreadPage.fn({
+      args: {
+        amendmentId: 'amendment-1',
+        sort: 'votes',
+        limit: 25,
+        start: null,
+        dir: 'backward',
+      },
+      ctx,
+    });
+    expect(lastQuery('thread').calls).toContainEqual(['orderBy', 'downvotes', 'desc']);
+
+    amendmentQueries.discussionThreadPage.fn({
+      args: { amendmentId: 'amendment-1', sort: 'votes', limit: 25, start: null, dir: 'forward' },
+      ctx,
+    });
+    expect(lastQuery('thread').calls).toEqual(
+      expect.arrayContaining([
+        ['orderBy', 'upvotes', 'desc'],
+        ['orderBy', 'downvotes', 'asc'],
+      ])
+    );
+
+    amendmentQueries.discussionCommentPage.fn({
+      args: {
+        threadId: 'thread-1',
+        parentId: null,
+        limit: 25,
+        start: { id: 'start', created_at: 1 },
+        dir: 'backward',
+      },
+      ctx,
+    });
+    expect(lastQuery('comment').calls).toEqual(
+      expect.arrayContaining([
+        ['orderBy', 'created_at', 'desc'],
+        ['start', { id: 'start', created_at: 1 }, { inclusive: false }],
+      ])
+    );
+
+    amendmentQueries.allUsers.fn({ args: {}, ctx: anonymousCtx });
+    expect(lastQuery('user').calls).toContainEqual(['where', 'visibility', 'public']);
+    amendmentQueries.allUsers.fn({ args: {}, ctx });
+    expect(lastQuery('user').calls.some(call => typeof call[1] === 'function')).toBe(true);
+
+    amendmentQueries.usersByIds.fn({ args: { ids: [] }, ctx: anonymousCtx });
+    expect(lastQuery('user').calls).toContainEqual(['where', 'id', '__none__']);
+    amendmentQueries.usersByIds.fn({ args: { ids: ['user-1'] }, ctx });
+    expect(lastQuery('user').calls).toContainEqual(['where', 'id', 'IN', ['user-1']]);
+
+    amendmentQueries.userById.fn({ args: { id: 'user-1' }, ctx: anonymousCtx });
+    expect(lastQuery('user').calls).toContainEqual(['where', 'visibility', 'public']);
+    amendmentQueries.userById.fn({ args: { id: 'user-1' }, ctx });
+    expect(lastQuery('user').calls.some(call => typeof call[1] === 'function')).toBe(true);
+
+    amendmentQueries.currentUserOpenNavigationAmendments.fn({ args: {}, ctx: anonymousCtx });
+    expect(lastQuery('amendment').calls).toContainEqual(['where', 'id', '__unauthorized__']);
+    amendmentQueries.currentUserOpenNavigationAmendments.fn({ args: {}, ctx });
+    expect(lastQuery('amendment').calls.some(call => typeof call[1] === 'function')).toBe(true);
   });
 });

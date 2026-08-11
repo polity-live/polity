@@ -37,6 +37,7 @@ export function showVotingPasswordErrorToast(value: unknown, userId?: string | n
     description:
       isMissingPassword && settingsHref ? (
         <Link
+          data-action-id="notifications.voting-pin.navigate.settings"
           to={settingsHref}
           className="pointer-events-auto cursor-pointer font-medium underline underline-offset-4 select-text"
           onPointerDown={event => event.stopPropagation()}

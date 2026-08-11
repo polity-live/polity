@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/offline-roster/ui/OfflineRosterCard.tsx#offline-roster.offline-roster-card.group-id": [
+      {
+        "file": "src/features/offline-roster/ui/__tests__/OfflineRosterCard.test.tsx",
+        "project": "component",
+        "caseId": "can show only the base group provenance column",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/offline-roster/ui/OfflineRosterCard.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/offline-roster/ui/OfflineRosterCard.tsx#offline-roster.offline-roster-card.user-id": [
+      {
+        "file": "src/features/offline-roster/ui/__tests__/OfflineRosterCard.test.tsx",
+        "project": "component",
+        "caseId": "shows submit and success status before closing after a single offline user is added",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/offline-roster/ui/OfflineRosterCard.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {}
+}

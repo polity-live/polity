@@ -2,9 +2,10 @@
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { PqlToolbar } from '@/features/pql/ui/PqlToolbar';
+import { PqlToolbarView } from '@/features/pql/ui/PqlToolbarView';
 import { Card } from '@/features/shared/ui/ui/card';
 
 type FieldKey = 'assignee_ids' | 'status';
@@ -175,5 +176,75 @@ describe('PqlToolbar', () => {
     expect(surface?.className).not.toContain('bg-card');
     expect(surface?.className).not.toContain('rounded-lg');
     expect(surface?.className).not.toContain('shadow-[var(--shadow-panel)]');
+  });
+
+  it('dispatches every toolbar command through a distinct stable action', () => {
+    const handlers = {
+      onBuilderOpenChange: vi.fn(),
+      onCustomFilterDelete: vi.fn(),
+      onCustomFilterToggle: vi.fn(),
+      onEditFilter: vi.fn(),
+      onFieldFiltersOpenChange: vi.fn(),
+      onQuickFilterClear: vi.fn(),
+      onQuickFilterToggle: vi.fn(),
+    };
+    const filter = { id: 'saved-1', label: 'Open work', query: 'status = open' };
+    const { container } = render(
+      <PqlToolbarView
+        activeBadges={[{ id: 'status', label: 'Status: Open', onClear: vi.fn() }]}
+        activeCustomFilterIds={[]}
+        activeQuickBadgeCount={1}
+        builderOpen={false}
+        customFiltersOpen
+        editingFilter={null}
+        fieldFiltersOpen
+        fields={[
+          {
+            key: 'status',
+            label: 'Status',
+            kind: 'enum',
+            operators: ['eq'],
+            options: [{ value: 'open', label: 'Open' }],
+            getValue: () => 'open',
+          },
+        ]}
+        onCustomFilterSave={vi.fn()}
+        onCustomFiltersOpenChange={vi.fn()}
+        onQuickFilterValuesChange={vi.fn()}
+        onSearchQueryChange={vi.fn()}
+        quickFilters={[{ fieldKey: 'status', label: 'Status' }]}
+        quickFilterValues={{ status: ['open'] }}
+        savedFilters={[filter]}
+        searchPlaceholder="Search"
+        searchQuery=""
+        {...handlers}
+      />
+    );
+
+    const ids = [
+      'pql.toolbar.active-badge.clear',
+      'pql.toolbar.field-filters.toggle',
+      'pql.toolbar.quick-filter.clear',
+      'pql.toolbar.quick-filter.toggle',
+      'pql.toolbar.custom-filters.toggle',
+      'pql.toolbar.custom-filter.add',
+      'pql.toolbar.custom-filter.card.toggle',
+      'pql.toolbar.custom-filter.apply.toggle',
+      'pql.toolbar.custom-filter.edit',
+      'pql.toolbar.custom-filter.delete',
+    ];
+    for (const id of ids) {
+      const button = container.querySelector<HTMLElement>(`[data-action-id="${id}"]`);
+      expect(button, id).not.toBeNull();
+      fireEvent.click(button!);
+    }
+
+    expect(handlers.onQuickFilterClear).toHaveBeenCalledWith('status');
+    expect(handlers.onQuickFilterToggle).toHaveBeenCalledWith('status', 'open');
+    expect(handlers.onCustomFilterToggle).toHaveBeenCalledTimes(2);
+    expect(handlers.onCustomFilterDelete).toHaveBeenCalledWith('saved-1');
+    expect(handlers.onEditFilter).toHaveBeenCalledWith(null);
+    expect(handlers.onEditFilter).toHaveBeenCalledWith(filter);
+    expect(handlers.onBuilderOpenChange).toHaveBeenCalledWith(true);
   });
 });

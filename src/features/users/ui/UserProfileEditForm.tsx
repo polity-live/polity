@@ -111,7 +111,7 @@ export function UserProfileEditForm({
       <SettingsTabs tabs={tabs} value={resolvedTab} onValueChange={onTabChange}>
         {/* Basic Information Tab */}
         <TabsContent value="basic-info">
-          <form onSubmit={onSubmit} className="space-y-6">
+          <form onSubmit={onSubmit} className="space-y-6" data-action-id="users.profile.save">
             <MediaUpload
               currentImage={formData.avatar}
               onImageChange={url => onFieldChange('avatar', url)}
@@ -300,6 +300,7 @@ export function UserProfileEditForm({
                   variant="outline"
                   onClick={onManageBilling}
                   disabled={isCheckoutLoading}
+                  data-action-id="users.profile.billing.manage"
                 >
                   {isCheckoutLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

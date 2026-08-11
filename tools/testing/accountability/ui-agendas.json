@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/agendas/ui/AgendaActiveItemHeader.tsx#agendas.agenda-active-item-header.amendment-id": [
+      {
+        "file": "src/features/agendas/ui/__tests__/AgendaActiveItemHeader.test.tsx",
+        "project": "component",
+        "caseId": "deduplicates voting times that match agenda start and end",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/agendas/ui/AgendaActiveItemHeader.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/agendas/ui/AgendaActiveItemHeader.tsx#agendas.agenda-active-item-header.group-id": [
+      {
+        "file": "src/features/agendas/ui/__tests__/AgendaActiveItemHeader.test.tsx",
+        "project": "component",
+        "caseId": "deduplicates voting times that match agenda start and end",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/agendas/ui/AgendaActiveItemHeader.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/agendas/ui/AgendaElectionSection.tsx#agendas.agenda-election-section.event-id": [
+      {
+        "file": "src/features/agendas/ui/__tests__/AgendaElectionSection.test.tsx",
+        "project": "component",
+        "caseId": "keeps the election role badge as text when no delegate target event is present",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/agendas/ui/AgendaElectionSection.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/agendas/ui/ElectionDetailsSectionView.tsx#agendas.election-details-section.group-id": [
+      {
+        "file": "src/features/agendas/ui/__tests__/AgendaElectionSection.test.tsx",
+        "project": "component",
+        "caseId": "keeps the election role badge as text when no delegate target event is present",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/agendas/ui/ElectionDetailsSectionView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/agendas/ui/EventAgendaItemDetailView.tsx#agendas.event-agenda-item-detail.event-id-agenda": [
+      {
+        "file": "src/features/agendas/ui/__tests__/AgendaActiveItemHeader.test.tsx",
+        "project": "component",
+        "caseId": "deduplicates voting times that match agenda start and end",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/agendas/ui/EventAgendaItemDetailView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/agendas/ui/NamedBallotResultsDialog.tsx#agendas.named-ballot-results-dialog.user-id": [
+      {
+        "file": "src/features/agendas/ui/__tests__/AgendaElectionSection.test.tsx",
+        "project": "component",
+        "caseId": "filters withdrawn candidates from the empty named-results state",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/agendas/ui/NamedBallotResultsDialog.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {}
+}

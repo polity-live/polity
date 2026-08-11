@@ -20,6 +20,13 @@ const mocks = vi.hoisted(() => ({
     updateVote: vi.fn(),
   },
   can: vi.fn(),
+  authUser: { id: 'user-1' } as { id: string } | null,
+  waitForClientApply: vi.fn(async (value: unknown) => value),
+  trackServerFinalization: vi.fn(),
+  tutorial: vi.fn(),
+  toastError: vi.fn(),
+  localize: vi.fn(() => 'localized error'),
+  logError: vi.fn(),
 }));
 
 function mutationResult() {
@@ -42,7 +49,25 @@ vi.mock('@/zero/rbac', () => ({
 }));
 
 vi.mock('@/providers/auth-provider', () => ({
-  useAuth: () => ({ user: { id: 'user-1' } }),
+  useAuth: () => ({ user: mocks.authUser }),
+}));
+vi.mock('@/zero/mutate-with-server-check', () => ({
+  waitForClientApply: mocks.waitForClientApply,
+  trackServerFinalization: mocks.trackServerFinalization,
+}));
+vi.mock('@/features/app-tutorial/events', () => ({
+  reportAppTutorialAction: mocks.tutorial,
+}));
+vi.mock('@/features/notifications/utils/gated-toast', () => ({
+  gatedToast: { error: mocks.toastError },
+}));
+vi.mock('@/features/shared/errors/app-error', () => ({
+  localizeAppError: mocks.localize,
+}));
+vi.mock('@/features/elections/logic/electionFlowLogging', () => ({
+  createElectionFlowCorrelationId: (kind: string) => `correlation-${kind}`,
+  logElectionFlowClient: vi.fn(),
+  logElectionFlowClientError: mocks.logError,
 }));
 
 function createProgressRecorder() {
@@ -58,7 +83,10 @@ function createProgressRecorder() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.authUser = { id: 'user-1' };
   mocks.can.mockReturnValue(true);
+  mocks.waitForClientApply.mockImplementation(async value => value);
+  mocks.localize.mockReturnValue('localized error');
   mocks.electionActions.castIndicativeVote.mockReturnValue(mutationResult());
   mocks.electionActions.castFinalVote.mockReturnValue(mutationResult());
   mocks.voteActions.castIndicativeVote.mockReturnValue(mutationResult());
@@ -174,5 +202,175 @@ describe('useVoteCasting submission progress', () => {
         }),
       }
     );
+  });
+
+  it('derives every phase and permission summary', () => {
+    const statuses = [
+      ['internal', 'internal'],
+      ['final', 'final'],
+      ['closed', 'closed'],
+      ['completed', 'closed'],
+      ['pending', 'indication'],
+      [null, 'indication'],
+    ] as const;
+    const { result, rerender } = renderHook(
+      ({ status }) => useVoteCasting({ agendaItemId: 'agenda-1', status }),
+      { initialProps: { status: statuses[0][0] as string | null } }
+    );
+    for (const [status, phase] of statuses) {
+      rerender({ status });
+      expect(result.current.phase).toBe(phase);
+    }
+    mocks.can.mockReturnValue(false);
+    rerender({ status: 'final' });
+    expect(result.current).toEqual(
+      expect.objectContaining({
+        userCanVote: false,
+        userCanBeCandidate: false,
+        canManageVoting: false,
+      })
+    );
+  });
+
+  it('silently rejects missing identity, permission, or ballot identifiers', async () => {
+    mocks.authUser = null;
+    const anonymous = renderHook(() =>
+      useVoteCasting({ agendaItemId: 'agenda-1', electionId: 'election-1', voteId: 'vote-1' })
+    );
+    await act(() => anonymous.result.current.castElectionVote(['candidate-1']));
+    await act(() => anonymous.result.current.castAmendmentVote('choice-1'));
+
+    mocks.authUser = { id: 'user-1' };
+    mocks.can.mockReturnValue(false);
+    const denied = renderHook(() =>
+      useVoteCasting({ agendaItemId: 'agenda-1', electionId: 'election-1', voteId: 'vote-1' })
+    );
+    await act(() => denied.result.current.castElectionVote(['candidate-1']));
+    await act(() => denied.result.current.castAmendmentVote('choice-1'));
+
+    mocks.can.mockReturnValue(true);
+    const missingIds = renderHook(() => useVoteCasting({ agendaItemId: 'agenda-1' }));
+    await act(() => missingIds.result.current.castElectionVote(['candidate-1']));
+    await act(() => missingIds.result.current.castAmendmentVote('choice-1'));
+    expect(mocks.electionActions.castIndicativeVote).not.toHaveBeenCalled();
+    expect(mocks.voteActions.castIndicativeVote).not.toHaveBeenCalled();
+  });
+
+  it('records named participation and tracks server-confirmed election and vote mutations', async () => {
+    const trackServerResult = vi.fn().mockResolvedValue(undefined);
+    const context = { ...createProgressRecorder().context, trackServerResult };
+    const election = renderHook(() =>
+      useVoteCasting({
+        agendaItemId: 'agenda-1',
+        electionId: 'election-1',
+        status: 'internal',
+        ballotVisibility: 'named',
+      })
+    );
+    await act(() => election.result.current.castElectionVote(['a', 'b'], context));
+    const electionArgs = mocks.electionActions.castIndicativeVote.mock.calls[0];
+    expect(electionArgs[1]).toHaveLength(2);
+    expect(electionArgs[1][0].elector_participation_id).toBe(electionArgs[0].id);
+
+    const vote = renderHook(() =>
+      useVoteCasting({
+        agendaItemId: 'agenda-1',
+        voteId: 'vote-1',
+        status: 'final',
+        ballotVisibility: 'named',
+      })
+    );
+    await act(() => vote.result.current.castAmendmentVote('choice-1', context));
+    const voteArgs = mocks.voteActions.castFinalVote.mock.calls[0];
+    expect(voteArgs[1][0].voter_participation_id).toBe(voteArgs[0].id);
+    expect(trackServerResult).toHaveBeenCalledTimes(2);
+    expect(mocks.tutorial).toHaveBeenCalledWith({
+      type: 'mutation',
+      event: 'agenda-election.voted',
+    });
+    expect(mocks.tutorial).toHaveBeenCalledWith({
+      type: 'mutation',
+      event: 'agenda-amendment.voted',
+    });
+  });
+
+  it('tracks background finalization success and localized failure callbacks', async () => {
+    const election = renderHook(() =>
+      useVoteCasting({ agendaItemId: 'agenda-1', electionId: 'election-1', status: 'final' })
+    );
+    await act(() => election.result.current.castElectionVote(['candidate-1']));
+    const electionOptions = mocks.trackServerFinalization.mock.calls[0][1];
+    electionOptions.onSuccess();
+    electionOptions.onError(new Error('server election'));
+
+    const vote = renderHook(() =>
+      useVoteCasting({ agendaItemId: 'agenda-1', voteId: 'vote-1', status: 'final' })
+    );
+    await act(() => vote.result.current.castAmendmentVote('choice-1'));
+    const voteOptions = mocks.trackServerFinalization.mock.calls[1][1];
+    voteOptions.onSuccess();
+    voteOptions.onError(new Error('server vote'));
+    expect(mocks.tutorial).toHaveBeenCalledTimes(2);
+    expect(mocks.toastError).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports and rethrows election and amendment failures for Error and non-Error values', async () => {
+    const electionFailure = new Error('election failed');
+    mocks.waitForClientApply.mockRejectedValueOnce(electionFailure);
+    const electionProgress = createProgressRecorder();
+    const election = renderHook(() =>
+      useVoteCasting({ agendaItemId: 'agenda-1', electionId: 'election-1', status: 'final' })
+    );
+    await expect(
+      act(() => election.result.current.castElectionVote(['candidate-1'], electionProgress.context))
+    ).rejects.toBe(electionFailure);
+    expect(electionProgress.progress).toContain('sync:error');
+
+    mocks.waitForClientApply.mockRejectedValueOnce('vote failed');
+    const vote = renderHook(() =>
+      useVoteCasting({ agendaItemId: 'agenda-1', voteId: 'vote-1', status: 'final' })
+    );
+    await expect(act(() => vote.result.current.castAmendmentVote('choice-1'))).rejects.toBe(
+      'vote failed'
+    );
+
+    mocks.waitForClientApply.mockRejectedValueOnce('election string failure');
+    await expect(act(() => election.result.current.castElectionVote(['candidate-1']))).rejects.toBe(
+      'election string failure'
+    );
+    const voteError = new Error('vote error failure');
+    mocks.waitForClientApply.mockRejectedValueOnce(voteError);
+    await expect(act(() => vote.result.current.castAmendmentVote('choice-1'))).rejects.toBe(
+      voteError
+    );
+    expect(mocks.logError).toHaveBeenCalledTimes(4);
+  });
+
+  it('advances election and vote phases only when manageable and identified', async () => {
+    mocks.electionActions.updateElection.mockReturnValue(mutationResult());
+    mocks.voteActions.updateVote.mockReturnValue(mutationResult());
+    const allowed = renderHook(() =>
+      useVoteCasting({ agendaItemId: 'agenda-1', electionId: 'election-1', voteId: 'vote-1' })
+    );
+    await act(() => allowed.result.current.advanceElectionPhase('closed'));
+    await act(() => allowed.result.current.advanceVotePhase('closed'));
+    expect(mocks.electionActions.updateElection).toHaveBeenCalledWith({
+      id: 'election-1',
+      status: 'closed',
+    });
+    expect(mocks.voteActions.updateVote).toHaveBeenCalledWith({ id: 'vote-1', status: 'closed' });
+
+    mocks.can.mockReturnValue(false);
+    const denied = renderHook(() =>
+      useVoteCasting({ agendaItemId: 'agenda-1', electionId: 'election-1', voteId: 'vote-1' })
+    );
+    await act(() => denied.result.current.advanceElectionPhase('final'));
+    await act(() => denied.result.current.advanceVotePhase('final'));
+    mocks.can.mockReturnValue(true);
+    const missing = renderHook(() => useVoteCasting({ agendaItemId: 'agenda-1' }));
+    await act(() => missing.result.current.advanceElectionPhase('final'));
+    await act(() => missing.result.current.advanceVotePhase('final'));
+    expect(mocks.electionActions.updateElection).toHaveBeenCalledTimes(1);
+    expect(mocks.voteActions.updateVote).toHaveBeenCalledTimes(1);
   });
 });

@@ -189,6 +189,7 @@ export function UserNetworkFlowContentView({
             size="sm"
             variant="outline"
             onClick={handleSaveLayout}
+            data-action-id="network.user-layout.save"
             disabled={isLayoutLoading || !hasLayoutChanges}
           >
             {t('common.network.saveLayout')}
@@ -197,6 +198,7 @@ export function UserNetworkFlowContentView({
             size="sm"
             variant="outline"
             onClick={handleResetLayout}
+            data-action-id="network.user-layout.reset"
             disabled={isLayoutLoading || (!hasSavedLayout && !hasLayoutChanges)}
           >
             {t('common.network.resetLayout')}

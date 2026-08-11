@@ -88,5 +88,12 @@ describe('VideoUpload dropzone', () => {
       target: { value: 'https://example.test/next.webm' },
     });
     expect(onVideoChange).toHaveBeenCalledWith('https://example.test/next.webm');
+    const remove = document.querySelector<HTMLElement>(
+      '[data-action-id="file-upload.video.remove"]'
+    )!;
+    remove.focus();
+    fireEvent.keyDown(remove, { key: 'Enter' });
+    fireEvent.click(remove);
+    expect(onVideoChange).toHaveBeenCalledWith('');
   });
 });

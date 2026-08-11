@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/events/EventWikiContentView.tsx#/user/$id": [
+      {
+        "file": "src/features/events/__tests__/EventWikiContentView.test.tsx",
+        "project": "component",
+        "caseId": "keeps event actions visible to authenticated users",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/events/EventWikiContentView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/events/EventWikiContentView.tsx#/user/$id-2": [
+      {
+        "file": "src/features/events/__tests__/EventWikiContentView.test.tsx",
+        "project": "component",
+        "caseId": "keeps event actions visible to authenticated users",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/events/EventWikiContentView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/events/ui/EventStreamView.tsx#/event/$id/agenda/$agendaItemId": [
+      {
+        "file": "src/features/events/ui/__tests__/EventStreamView.actions.test.tsx",
+        "project": "component",
+        "caseId": "returns to the event when no active agenda item exists",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/events/ui/EventStreamView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {
+    "src/features/events/EventWikiContentView.tsx#/user/$id": {
+      "actionId": "events.event-wiki-content-view.navigate.user-id"
+    },
+    "src/features/events/EventWikiContentView.tsx#/user/$id-2": {
+      "actionId": "events.event-wiki-content-view.navigate.user-id-2"
+    },
+    "src/features/events/ui/EventStreamView.tsx#/event/$id/agenda/$agendaItemId": {
+      "actionId": "events.event-stream-view.navigate.event-id-agenda-agenda-item-id"
+    }
+  }
+}

@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
+
 interface ClickableBaseEdgeProps {
   id: string;
   path: string;
@@ -34,13 +36,27 @@ const ClickableBaseEdge = ({
       />
       {interactionWidth && (
         <path
+          data-action-id="flow-editor.edge-path.insert-bend"
           d={path}
           fill="none"
           strokeOpacity={0}
           strokeWidth={interactionWidth}
           className="react-flow__edge-interaction"
+          role="button"
+          tabIndex={0}
+          aria-label={translateText('common.accessibility.insertEdgeBendPoint')}
           onClick={onClick}
           onDoubleClick={onDoubleClick}
+          onKeyDown={event => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+
+            event.preventDefault();
+            if (onDoubleClick) {
+              onDoubleClick(event as unknown as React.MouseEvent);
+            } else {
+              onClick?.(event as unknown as React.MouseEvent);
+            }
+          }}
         />
       )}
     </>

@@ -123,6 +123,7 @@ export function ChangeRequestSummaryItem({
   if (shouldRenderAsButton) {
     return (
       <button
+        data-action-id="change-requests.summary.select"
         type="button"
         className={classes}
         data-change-type={changeType ?? undefined}

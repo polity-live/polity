@@ -85,7 +85,9 @@ function countMutators(registry: Record<string, unknown>): number {
 
 describe('Zero mutator contracts', () => {
   it('loads shared and server mutator registries without a database', async () => {
-    const { mutators, serverMutators } = await loadMutatorContext({ includeRegistries: true });
+    const { mutators, serverMutators } = await loadMutatorContext({
+      includeRegistries: true,
+    });
 
     expect(Object.keys(mutators)).toEqual(
       expect.arrayContaining(['users', 'groups', 'events', 'amendments', 'network'])
@@ -217,7 +219,10 @@ describe('Zero mutator contracts', () => {
       tx,
       createCtx(),
       'user-1',
-      expect.objectContaining({ action: 'delete', resource: 'calendarSubscriptions' })
+      expect.objectContaining({
+        action: 'delete',
+        resource: 'calendarSubscriptions',
+      })
     );
     expect(mutation('calendar_subscription', 'delete')).toHaveBeenCalledWith({
       id: 'subscription-1',
@@ -243,7 +248,11 @@ describe('Zero mutator contracts', () => {
     expect(canMock).toHaveBeenCalledWith(
       tx,
       createCtx(),
-      expect.objectContaining({ action: 'view', resource: 'groups', groupId: 'group-1' })
+      expect.objectContaining({
+        action: 'view',
+        resource: 'groups',
+        groupId: 'group-1',
+      })
     );
     expect(mutation('pql_filter', 'insert')).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -256,5 +265,290 @@ describe('Zero mutator contracts', () => {
     );
 
     globals.restore();
+  });
+
+  it('stamps user ownership on follows and checks it before unfollowing', async () => {
+    const globals = installDeterministicGlobals({ now: 1_700_000_001_000 });
+    const { userSharedMutators, requireAuthenticatedMock, requireOwnerMock } =
+      await loadMutatorContext();
+    const { tx, queueRunResults, mutation } = createTxHarness();
+
+    await userSharedMutators.follow.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'follow-1', followee_id: 'user-2' },
+    });
+    queueRunResults({ id: 'follow-1', follower_id: 'user-1' });
+    await userSharedMutators.unfollow.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'follow-1' },
+    });
+
+    expect(requireAuthenticatedMock).toHaveBeenCalledWith(
+      tx,
+      createCtx(),
+      expect.objectContaining({ action: 'create', resource: 'follows' })
+    );
+    expect(mutation('follow', 'insert')).toHaveBeenCalledWith({
+      id: 'follow-1',
+      followee_id: 'user-2',
+      follower_id: 'user-1',
+      created_at: 1_700_000_001_000,
+    });
+    expect(requireOwnerMock).toHaveBeenCalledWith(
+      tx,
+      createCtx(),
+      'user-1',
+      expect.objectContaining({ action: 'delete', resource: 'follows' })
+    );
+    expect(mutation('follow', 'delete')).toHaveBeenCalledWith({
+      id: 'follow-1',
+    });
+    globals.restore();
+  });
+
+  it('skips the ownership lookup for optimistic client unfollows', async () => {
+    const { userSharedMutators, requireOwnerMock } = await loadMutatorContext();
+    const { tx, mutation } = createTxHarness({ location: 'client' });
+
+    await userSharedMutators.unfollow.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'follow-1' },
+    });
+
+    expect(tx.run).not.toHaveBeenCalled();
+    expect(requireOwnerMock).not.toHaveBeenCalled();
+    expect(mutation('follow', 'delete')).toHaveBeenCalledWith({
+      id: 'follow-1',
+    });
+  });
+
+  it('covers the complete AI skill and tool ownership lifecycle', async () => {
+    const globals = installDeterministicGlobals({ now: 1_700_000_001_100 });
+    const { aiSharedMutators, requireAuthenticatedMock, requireOwnerMock } =
+      await loadMutatorContext();
+    const { tx, queueRunResults, mutation } = createTxHarness();
+
+    await aiSharedMutators.createTool.fn({
+      tx,
+      ctx: createCtx(),
+      args: {
+        id: 'tool-1',
+        name: 'Search',
+        description: 'Search',
+        type: 'http',
+        config: {},
+      },
+    });
+    queueRunResults(
+      { id: 'skill-1', user_id: 'user-1' },
+      { id: 'skill-1', user_id: 'user-1' },
+      { id: 'tool-1', user_id: 'user-1' }
+    );
+    await aiSharedMutators.updateSkill.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'skill-1', name: 'Updated' },
+    });
+    await aiSharedMutators.deleteSkill.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'skill-1' },
+    });
+    await aiSharedMutators.updateTool.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'tool-1', enabled: false },
+    });
+    expect(requireAuthenticatedMock).toHaveBeenCalledWith(
+      tx,
+      createCtx(),
+      expect.objectContaining({ action: 'create', resource: 'aiTools' })
+    );
+    expect(mutation('ai_tool', 'insert')).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'tool-1',
+        enabled: true,
+        user_id: 'user-1',
+        created_at: 1_700_000_001_100,
+      })
+    );
+    expect(requireOwnerMock).toHaveBeenCalledTimes(3);
+    expect(mutation('ai_skill', 'update')).toHaveBeenCalledWith({
+      id: 'skill-1',
+      name: 'Updated',
+      updated_at: 1_700_000_001_100,
+    });
+    expect(mutation('ai_skill', 'delete')).toHaveBeenCalledWith({
+      id: 'skill-1',
+    });
+    expect(mutation('ai_tool', 'update')).toHaveBeenCalledWith({
+      id: 'tool-1',
+      enabled: false,
+      updated_at: 1_700_000_001_100,
+    });
+    globals.restore();
+  });
+
+  it('skips AI ownership lookups only for optimistic client updates', async () => {
+    const globals = installDeterministicGlobals({ now: 1_700_000_001_200 });
+    const { aiSharedMutators, requireOwnerMock } = await loadMutatorContext();
+    const { tx, mutation } = createTxHarness({ location: 'client' });
+
+    await aiSharedMutators.updateSkill.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'skill-1', enabled: false },
+    });
+    await aiSharedMutators.updateTool.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'tool-1', enabled: false },
+    });
+    await aiSharedMutators.deleteSkill.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'skill-1' },
+    });
+
+    expect(tx.run).not.toHaveBeenCalled();
+    expect(requireOwnerMock).not.toHaveBeenCalled();
+    expect(mutation('ai_skill', 'update')).toHaveBeenCalledOnce();
+    expect(mutation('ai_tool', 'update')).toHaveBeenCalledOnce();
+    expect(mutation('ai_skill', 'delete')).toHaveBeenCalledOnce();
+    globals.restore();
+  });
+
+  it('covers calendar subscription create, update and delete contracts', async () => {
+    const globals = installDeterministicGlobals({ now: 1_700_000_001_300 });
+    const { calendarSubscriptionSharedMutators, requireAuthenticatedMock, requireOwnerMock } =
+      await loadMutatorContext();
+    const { tx, queueRunResults, mutation } = createTxHarness();
+
+    await calendarSubscriptionSharedMutators.subscribe.fn({
+      tx,
+      ctx: createCtx(),
+      args: {
+        id: 'subscription-1',
+        target_type: 'group',
+        target_group_id: 'group-1',
+        target_user_id: null,
+        is_visible: true,
+        color: null,
+      },
+    });
+    queueRunResults(
+      { id: 'subscription-1', user_id: 'user-1' },
+      { id: 'subscription-1', user_id: 'user-1' }
+    );
+    await calendarSubscriptionSharedMutators.update.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'subscription-1', color: '#123456' },
+    });
+    await calendarSubscriptionSharedMutators.unsubscribe.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'subscription-1' },
+    });
+
+    expect(requireAuthenticatedMock).toHaveBeenCalledOnce();
+    expect(requireOwnerMock).toHaveBeenCalledTimes(2);
+    expect(mutation('calendar_subscription', 'insert')).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: 'user-1',
+        created_at: 1_700_000_001_300,
+      })
+    );
+    expect(mutation('calendar_subscription', 'update')).toHaveBeenCalledWith({
+      id: 'subscription-1',
+      color: '#123456',
+    });
+    expect(mutation('calendar_subscription', 'delete')).toHaveBeenCalledWith({
+      id: 'subscription-1',
+    });
+    globals.restore();
+  });
+
+  it('covers PQL update and delete ownership contracts', async () => {
+    const globals = installDeterministicGlobals({ now: 1_700_000_001_400 });
+    const { pqlSharedMutators, requireOwnerMock } = await loadMutatorContext();
+    const { tx, queueRunResults, mutation } = createTxHarness();
+    queueRunResults({ id: 'filter-1', user_id: 'user-1' }, { id: 'filter-1', user_id: 'user-1' });
+
+    await pqlSharedMutators.update.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'filter-1', label: 'Updated' },
+    });
+    await pqlSharedMutators.delete.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'filter-1' },
+    });
+
+    expect(requireOwnerMock).toHaveBeenCalledTimes(2);
+    expect(mutation('pql_filter', 'update')).toHaveBeenCalledWith({
+      id: 'filter-1',
+      label: 'Updated',
+      updated_at: 1_700_000_001_400,
+    });
+    expect(mutation('pql_filter', 'delete')).toHaveBeenCalledWith({
+      id: 'filter-1',
+    });
+    globals.restore();
+  });
+
+  it('recovers preference creation after a parallel unique-key race', async () => {
+    const globals = installDeterministicGlobals({ now: 1_700_000_001_500 });
+    const { preferenceSharedMutators } = await loadMutatorContext();
+    const { tx, queueRunResults, mutation } = createTxHarness();
+    queueRunResults(undefined, {
+      id: 'preference-existing',
+      user_id: 'user-1',
+    });
+    mutation('user_preference', 'insert').mockRejectedValueOnce(
+      new Error('user_preference_user_id_key user_preference_user_id_key')
+    );
+
+    await preferenceSharedMutators.create.fn({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'preference-new', locale: 'de', theme: 'dark' },
+    });
+
+    expect(mutation('user_preference', 'update')).toHaveBeenCalledWith({
+      id: 'preference-existing',
+      locale: 'de',
+      theme: 'dark',
+      updated_at: 1_700_000_001_500,
+    });
+    globals.restore();
+  });
+
+  it('rejects unavailable group appearance themes before updating preferences', async () => {
+    const { preferenceSharedMutators } = await loadMutatorContext();
+    const { tx, queueRunResults, mutation } = createTxHarness();
+    queueRunResults(
+      { id: 'preference-1', user_id: 'user-1' },
+      {
+        id: 'theme-1',
+        kind: 'group',
+        group_id: 'group-1',
+        current_revision_id: 'revision-1',
+      },
+      undefined
+    );
+
+    await expect(
+      preferenceSharedMutators.update.fn({
+        tx,
+        ctx: createCtx(),
+        args: { id: 'preference-1', appearance_theme_id: 'theme-1' },
+      })
+    ).rejects.toThrow('Appearance theme is not published');
+    expect(mutation('user_preference', 'update')).not.toHaveBeenCalled();
   });
 });

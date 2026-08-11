@@ -5,7 +5,7 @@ import type { LatLngBounds } from 'leaflet';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { APP_TUTORIAL_ACTION_EVENT } from '@/features/app-tutorial/events';
-import { StreetAreaPickerView } from '../StreetAreaPickerView';
+import { StreetAreaPickerView, streetAreaPickerViewInternals } from '../StreetAreaPickerView';
 
 afterEach(cleanup);
 
@@ -33,7 +33,10 @@ describe('StreetAreaPickerView', () => {
     const { map, reactLeafletModule } = createReactLeafletFixture();
     const initialBounds = createBounds('initial-bounds');
     const changedBounds = createBounds('changed-bounds');
-    const props = createPickerProps({ reactLeafletModule, bounds: initialBounds });
+    const props = createPickerProps({
+      reactLeafletModule,
+      bounds: initialBounds,
+    });
     const { rerender } = render(<StreetAreaPickerView {...props} />);
 
     rerender(
@@ -97,12 +100,18 @@ describe('StreetAreaPickerView', () => {
     markerEventHandlers.resize.ne.dragstart(createLeafletEvent({ lat: 52.521, lng: 13.406 }));
     markerEventHandlers.resize.ne.drag(createLeafletEvent({ lat: 52.521, lng: 13.406 }));
     markerEventHandlers.resize.ne.dragend(createLeafletEvent({ lat: 52.521, lng: 13.406 }));
-    expect(onBboxResize).toHaveBeenCalledWith('ne', { lat: 52.521, lon: 13.406 });
+    expect(onBboxResize).toHaveBeenCalledWith('ne', {
+      lat: 52.521,
+      lon: 13.406,
+    });
 
     markerEventHandlers.rotate.dragstart(createLeafletEvent({ lat: 52.522, lng: 13.405 }));
     markerEventHandlers.rotate.drag(createLeafletEvent({ lat: 52.522, lng: 13.405 }));
     markerEventHandlers.rotate.dragend(createLeafletEvent({ lat: 52.522, lng: 13.405 }));
-    expect(onSelectionRotate).toHaveBeenCalledWith({ lat: 52.522, lon: 13.405 });
+    expect(onSelectionRotate).toHaveBeenCalledWith({
+      lat: 52.522,
+      lon: 13.405,
+    });
   });
 
   it('stops pointer starts on selection handles from reaching the map', () => {
@@ -121,14 +130,10 @@ describe('StreetAreaPickerView', () => {
 
   it('renders location search fields and forwards reset actions', () => {
     const onLocationSearchReset = vi.fn();
+    const onLoadOsm = vi.fn();
 
-    const { container } = render(
-      <StreetAreaPickerView
-        {...createPickerProps({
-          onLocationSearchReset,
-        })}
-      />
-    );
+    const props = createPickerProps({ onLocationSearchReset, onLoadOsm });
+    const { container, rerender } = render(<StreetAreaPickerView {...props} />);
 
     const cityInput = within(container).getByPlaceholderText('City');
     expect(cityInput).toBeInstanceOf(HTMLInputElement);
@@ -142,9 +147,25 @@ describe('StreetAreaPickerView', () => {
         .getByRole('button', { name: 'Load OSM' })
         .getAttribute('data-tutorial-anchor')
     ).toBe('city-design-load-osm');
+    const searchAnchor = container.querySelector(
+      '[data-tutorial-anchor="city-design-location-search"]'
+    );
+    expect(searchAnchor?.getAttribute('data-location-search-ready')).toBe('false');
 
-    fireEvent.click(within(container).getByRole('button', { name: 'Reset search' }));
+    rerender(<StreetAreaPickerView {...props} locationSearchResetKey={1} />);
+    expect(searchAnchor?.getAttribute('data-location-search-ready')).toBe('true');
 
+    const loadOsm = within(container).getByRole('button', { name: 'Load OSM' });
+    const resetSearch = within(container).getByRole('button', { name: 'Reset search' });
+    expect(loadOsm.getAttribute('data-action-id')).toBe('amendments.street-area.load.osm');
+    expect(resetSearch.getAttribute('data-action-id')).toBe(
+      'amendments.street-area.reset.location-search'
+    );
+
+    fireEvent.click(loadOsm);
+    fireEvent.click(resetSearch);
+
+    expect(onLoadOsm).toHaveBeenCalledTimes(1);
     expect(onLocationSearchReset).toHaveBeenCalledTimes(1);
   });
 
@@ -196,7 +217,12 @@ describe('StreetAreaPickerView', () => {
   it('collapses and expands the map section body', () => {
     const { container } = render(<StreetAreaPickerView {...createPickerProps()} />);
 
-    const trigger = within(container).getByRole('button', { name: 'Map section' });
+    const trigger = within(container).getByRole('button', {
+      name: 'Map section',
+    });
+    expect(trigger.getAttribute('data-action-id')).toBe(
+      'amendments.street-area.toggle.map-section'
+    );
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
     expect(within(container).getByPlaceholderText('City')).toBeInstanceOf(HTMLInputElement);
 
@@ -211,7 +237,10 @@ describe('StreetAreaPickerView', () => {
     const { map, reactLeafletModule } = createReactLeafletFixture();
     const initialBounds = createBounds('initial-bounds');
     const changedBounds = createBounds('changed-bounds');
-    const props = createPickerProps({ reactLeafletModule, bounds: initialBounds });
+    const props = createPickerProps({
+      reactLeafletModule,
+      bounds: initialBounds,
+    });
     const { rerender } = render(<StreetAreaPickerView {...props} />);
 
     rerender(<StreetAreaPickerView {...props} bounds={changedBounds} />);
@@ -225,6 +254,128 @@ describe('StreetAreaPickerView', () => {
       padding: [18, 18],
       maxZoom: 18,
     });
+  });
+
+  it('accepts finite dimensions and ignores invalid numeric input', () => {
+    const onWidthMetersChange = vi.fn();
+    const onHeightMetersChange = vi.fn();
+    const onRotationDegreesChange = vi.fn();
+    render(
+      <StreetAreaPickerView
+        {...createPickerProps({
+          onWidthMetersChange,
+          onHeightMetersChange,
+          onRotationDegreesChange,
+        })}
+      />
+    );
+    const inputs = screen.getAllByRole('spinbutton');
+    fireEvent.change(inputs[0], { target: { value: '120' } });
+    fireEvent.change(inputs[1], { target: { value: '130' } });
+    fireEvent.change(inputs[2], { target: { value: '15' } });
+    expect(onWidthMetersChange).toHaveBeenCalledWith(120);
+    expect(onHeightMetersChange).toHaveBeenCalledWith(130);
+    expect(onRotationDegreesChange).toHaveBeenCalledWith(15);
+    streetAreaPickerViewInternals.applyFiniteMapDimension(Number.NaN, onWidthMetersChange);
+    streetAreaPickerViewInternals.applyFiniteMapDimension(Number.NaN, onHeightMetersChange);
+    streetAreaPickerViewInternals.applyFiniteMapDimension(Number.NaN, onRotationDegreesChange);
+    expect(onWidthMetersChange).toHaveBeenCalledTimes(1);
+    expect(onHeightMetersChange).toHaveBeenCalledTimes(1);
+    expect(onRotationDegreesChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders panel loading and error states', () => {
+    const { container, rerender } = render(
+      <StreetAreaPickerView
+        {...createPickerProps({ variant: 'panel', mapLoading: true, isLoadingOsm: true })}
+      />
+    );
+    expect(screen.getByText(/loading map/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /loading/i }).hasAttribute('disabled')).toBe(true);
+    expect(container.querySelector('section')?.className).toContain('rounded-none');
+    rerender(
+      <StreetAreaPickerView
+        {...createPickerProps({
+          reactLeafletModule: createReactLeafletFixture().reactLeafletModule,
+          selectionCorners: [],
+          osmError: 'Overpass failed',
+        })}
+      />
+    );
+    expect(screen.getByText('Overpass failed')).toBeTruthy();
+  });
+
+  it('ignores non-tutorial and mismatched tutorial option interactions', () => {
+    const actionHandler = vi.fn();
+    window.addEventListener(APP_TUTORIAL_ACTION_EVENT, actionHandler);
+    const { container, rerender } = render(<StreetAreaPickerView {...createPickerProps()} />);
+    const anchor = container.querySelector('[data-tutorial-anchor="city-design-location-search"]')!;
+    fireEvent.mouseDown(anchor);
+
+    rerender(
+      <StreetAreaPickerView
+        {...createPickerProps({
+          tutorialActive: true,
+          locationSearchValues: {
+            country: '',
+            region: '',
+            city: '',
+            post_code: '',
+            street: 'Different street',
+            house_number: '',
+          },
+        })}
+      />
+    );
+    const listbox = document.createElement('div');
+    listbox.id = 'mismatched-list';
+    listbox.setAttribute('role', 'listbox');
+    const option = document.createElement('button');
+    option.setAttribute('role', 'option');
+    listbox.append(option);
+    anchor.append(listbox);
+    fireEvent.mouseDown(option);
+    within(container)
+      .getByPlaceholderText('House number')
+      .setAttribute('aria-controls', listbox.id);
+    fireEvent.mouseDown(option);
+    expect(actionHandler).not.toHaveBeenCalled();
+    window.removeEventListener(APP_TUTORIAL_ACTION_EVENT, actionHandler);
+  });
+
+  it('guards read-only map clicks and forwards editable map clicks', () => {
+    let clickHandler: ((event: { latlng: { lat: number; lng: number } }) => void) | undefined;
+    const fixture = createReactLeafletFixture();
+    fixture.reactLeafletModule.useMapEvents = vi.fn(handlers => {
+      clickHandler = handlers.click;
+    });
+    const onBboxMove = vi.fn();
+    const onBboxMoveEnd = vi.fn();
+    const { rerender } = render(
+      <StreetAreaPickerView
+        {...createPickerProps({
+          reactLeafletModule: fixture.reactLeafletModule,
+          readOnly: true,
+          onBboxMove,
+          onBboxMoveEnd,
+        })}
+      />
+    );
+    clickHandler?.({ latlng: { lat: 1, lng: 2 } });
+    expect(onBboxMove).not.toHaveBeenCalled();
+    rerender(
+      <StreetAreaPickerView
+        {...createPickerProps({
+          reactLeafletModule: fixture.reactLeafletModule,
+          readOnly: false,
+          onBboxMove,
+          onBboxMoveEnd,
+        })}
+      />
+    );
+    clickHandler?.({ latlng: { lat: 3, lng: 4 } });
+    expect(onBboxMove).toHaveBeenCalledWith({ lat: 3, lon: 4 });
+    expect(onBboxMoveEnd).toHaveBeenCalledWith({ lat: 3, lon: 4 });
   });
 });
 

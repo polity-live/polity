@@ -45,6 +45,7 @@ export function MeetingActions({
         <>
           {!isOwner && !hasBooked && isAvailable && onBook ? (
             <Button
+              data-action-id="meet.actions.booking.create"
               onClick={onBook}
               className={compactActionButtonClassName}
               aria-label={t('features.meet.page.bookMeeting')}
@@ -59,6 +60,7 @@ export function MeetingActions({
 
           {hasBooked && !isPast && onCancelBooking ? (
             <Button
+              data-action-id="meet.actions.booking.cancel"
               variant="outline"
               onClick={onCancelBooking}
               className={compactActionButtonClassName}
@@ -73,6 +75,7 @@ export function MeetingActions({
           ) : null}
 
           <Button
+            data-action-id="meet.actions.calendar.open"
             variant="outline"
             onClick={onNavigateCalendar}
             className={compactActionButtonClassName}
@@ -86,7 +89,13 @@ export function MeetingActions({
           </Button>
 
           {isOwner ? (
-            <Button variant="outline" size="icon" onClick={onNavigateEdit}>
+            <Button
+              data-action-id="meet.actions.edit.open"
+              variant="outline"
+              size="icon"
+              aria-label={t('common.actions.edit')}
+              onClick={onNavigateEdit}
+            >
               <Settings className="h-4 w-4" />
             </Button>
           ) : null}
@@ -94,6 +103,7 @@ export function MeetingActions({
       ) : null}
 
       <ShareButton
+        data-action-id="meet.actions.share.open"
         url={`/event/${meetingId}`}
         title={title}
         description={description}

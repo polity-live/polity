@@ -339,22 +339,20 @@ export async function processEurostatImportStep(datasetId: string) {
 
       for (let offset = 0; offset < observations.length; offset += 1000) {
         const batch = observations.slice(offset, offset + 1000);
-        if (batch.length > 0) {
-          await transaction`
-            INSERT INTO eurostat_observation ${transaction(
-              batch,
-              'id',
-              'dataset_id',
-              'observation_key',
-              'time_period',
-              'value',
-              'dimensions',
-              'attributes',
-              'sort_key'
-            )}
-            ON CONFLICT (dataset_id, observation_key) DO NOTHING
-          `;
-        }
+        await transaction`
+          INSERT INTO eurostat_observation ${transaction(
+            batch,
+            'id',
+            'dataset_id',
+            'observation_key',
+            'time_period',
+            'value',
+            'dimensions',
+            'attributes',
+            'sort_key'
+          )}
+          ON CONFLICT (dataset_id, observation_key) DO NOTHING
+        `;
       }
       await transaction`
         UPDATE eurostat_import_partition
@@ -394,3 +392,12 @@ export async function processEurostatImportStep(datasetId: string) {
   const updated = await readDataset(datasetId);
   return toProgress(updated ?? dataset);
 }
+
+export const eurostatImporterContracts = {
+  toProgress,
+  claimNextPartition,
+  findNestedValue,
+  resolvePartitionResponse,
+  parseObservations,
+  readDataset,
+};

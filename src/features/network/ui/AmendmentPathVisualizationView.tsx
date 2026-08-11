@@ -164,7 +164,7 @@ function buildGroupProcessNodeStyle({
     outlineOffset: 3,
     boxShadow:
       state === 'active-next'
-        ? `0 0 0 5px color-mix(in oklab, ${status.borderColor} 18%, transparent), ${baseStyle.boxShadow ?? 'var(--shadow-panel)'}`
+        ? `0 0 0 5px color-mix(in oklab, ${status.borderColor} 18%, transparent), ${baseStyle.boxShadow}`
         : baseStyle.boxShadow,
   };
 }
@@ -335,7 +335,7 @@ export function AmendmentPathVisualizationView({
     });
 
     if (index < segments.length - 1) {
-      const nextState = segments[index + 1]?.visualState ?? 'pending';
+      const nextState = segments[index + 1].visualState;
       edges.push({
         id: `process-event-group-${index}`,
         source: eventNodeId,

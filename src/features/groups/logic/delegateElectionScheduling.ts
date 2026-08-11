@@ -70,8 +70,8 @@ export function buildCreateEventSearchFromDelegateElectionAssignment(args: {
 
   return {
     groupId: args.groupId,
-    minStartDate: formatLocalDateInput(window.minStartAt) || undefined,
-    minStartTime: formatLocalTimeInput(window.minStartAt) || undefined,
+    minStartDate: formatLocalDateInput(window.minStartAt),
+    minStartTime: formatLocalTimeInput(window.minStartAt),
     maxStartDate: maxStartDate || undefined,
     maxStartTime: maxStartTime || undefined,
     returnTo: args.returnTo ?? undefined,

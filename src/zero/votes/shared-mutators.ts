@@ -71,8 +71,6 @@ async function assertVoteManagerForScope(
   ctx: VoteCtx,
   scope: { eventId?: string | null; amendmentId?: string | null }
 ) {
-  if (tx.location === 'client') return;
-
   if (scope.eventId) {
     try {
       await can(tx, ctx, { action: 'manage_votes', resource: 'events', eventId: scope.eventId });
@@ -124,7 +122,6 @@ async function assertVoteManager(tx: VoteTx, ctx: VoteCtx, voteId: string) {
 }
 
 async function assertActiveVotingRightForVote(tx: VoteTx, ctx: VoteCtx, voteId: string) {
-  if (tx.location === 'client') return;
   const { eventId } = await loadVoteScope(tx, voteId);
   if (!eventId) throw new PermissionError('active_voting', 'events', 'event required');
   await can(tx, ctx, { action: 'active_voting', resource: 'events', eventId });
@@ -240,7 +237,6 @@ async function assertSecretChoiceDecisionOwner(
   voteId: string,
   phase: 'indicative' | 'final'
 ) {
-  if (tx.location === 'client') return;
   const { eventId } = await loadVoteScope(tx, voteId);
   if (!eventId) {
     throw new PermissionError('active_voting', 'events', 'event required');
@@ -267,7 +263,11 @@ async function assertSecretChoiceDecisionOwner(
           );
         })();
 
-  if (!participation) throw new Error('Vote participation not found');
+  if (participation) {
+    return;
+  } else {
+    throw new Error('Vote participation not found');
+  }
 }
 
 async function assertSecretChoiceDecisionOwnerOrManager(
@@ -420,19 +420,17 @@ export const voteSharedMutators = {
     if (!participation.voter_id && !voter) {
       throw new Error('Voter is required for the legacy indicative mutator.');
     }
-    let resolvedParticipation = participation;
+    let voterId = participation.voter_id;
     if (voter) {
       if (voter.id !== participation.voter_id || voter.vote_id !== participation.vote_id) {
         throw new Error('Voter does not match indicative vote participation.');
       }
-      resolvedParticipation = {
-        ...participation,
-        voter_id: await ensureVoterRow(tx, ctx, voter),
-      };
+      voterId = await ensureVoterRow(tx, ctx, voter);
     }
-    if (!resolvedParticipation.voter_id) {
+    if (!voterId) {
       throw new Error('Voter is required for the legacy indicative mutator.');
     }
+    const resolvedParticipation = { ...participation, voter_id: voterId };
     await assertVoterOwner(tx, ctx, resolvedParticipation.voter_id, resolvedParticipation.vote_id);
 
     const vote = await loadVote(tx, resolvedParticipation.vote_id);
@@ -578,26 +576,26 @@ export const voteSharedMutators = {
               .one()
           );
 
-    if (existingTally) {
+    if (!existingTally) {
+      await tx.mutate.vote_offline_tally.insert({
+        id: tallyArgs.id ?? crypto.randomUUID(),
+        vote_id: tallyArgs.vote_id,
+        phase: tallyArgs.phase,
+        choice_id: tallyArgs.choice_id,
+        count: tallyArgs.count,
+        updated_by_id: ctx.userID,
+        created_at: now,
+        updated_at: now,
+      });
+      return;
+    } else {
       await tx.mutate.vote_offline_tally.update({
         id: existingTally.id,
         count: tallyArgs.count,
         updated_by_id: ctx.userID,
         updated_at: now,
       });
-      return;
     }
-
-    await tx.mutate.vote_offline_tally.insert({
-      id: tallyArgs.id ?? crypto.randomUUID(),
-      vote_id: tallyArgs.vote_id,
-      phase: tallyArgs.phase,
-      choice_id: tallyArgs.choice_id,
-      count: tallyArgs.count,
-      updated_by_id: ctx.userID,
-      created_at: now,
-      updated_at: now,
-    });
   }),
 
   deleteOfflineTally: defineMutator(deleteVoteOfflineTallySchema, async ({ tx, ctx, args }) => {

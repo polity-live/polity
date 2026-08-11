@@ -301,7 +301,7 @@ async function addSelectedSourceGroupMembershipSources(
 
     desiredMembershipSources.set(userId, {
       source: SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE,
-      sourceGroupId: [...userSourceGroupIds][0] ?? null,
+      sourceGroupId: [...userSourceGroupIds][0],
     });
   }
 }
@@ -407,7 +407,7 @@ async function getDesiredGroupConnectionMembershipSources(
       }
 
       const selectedSourceGroupIds = [
-        ...new Set(directionalContext.membershipRule.eligible_origin_group_ids ?? []),
+        ...new Set(directionalContext.membershipRule.eligible_origin_group_ids),
       ].filter(Boolean);
       if (selectedSourceGroupIds.length === 0) {
         continue;
@@ -593,9 +593,7 @@ export async function recomputeSiblingMembershipsForGroup(
         if (
           directionalContext.recipientGroupId === currentGroupId ||
           directionalContext.connectedGroupId === currentGroupId ||
-          (directionalContext.membershipRule.eligible_origin_group_ids ?? []).includes(
-            currentGroupId
-          )
+          directionalContext.membershipRule.eligible_origin_group_ids.includes(currentGroupId)
         ) {
           recipientGroupIds.add(directionalContext.recipientGroupId);
         }
@@ -733,3 +731,18 @@ export async function syncSiblingSourceGroups(
   void groupId;
   void sourceGroupIds;
 }
+
+export const groupMembershipHelperInternals = {
+  asServerHelperTx,
+  getDirectionalMembershipContexts,
+  addGroupMembershipRoleLink,
+  getMemberRoleId,
+  ensureMemberRoleLink,
+  getActiveUserIdsForGroup,
+  getActiveUsersForGroupRole,
+  isActiveGroupConnectionStatus,
+  getNetworkMembershipSourceForMode,
+  addSelectedSourceGroupMembershipSources,
+  getDesiredGroupConnectionMembershipSources,
+  upsertAutomaticSiblingMembership,
+};

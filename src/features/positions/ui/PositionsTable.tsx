@@ -124,6 +124,7 @@ export function PositionsTable({
                   size="sm"
                   onClick={() => onViewHistory(position)}
                   title={translateText('generated.inline.0726_view_history_8bc3b1ed')}
+                  data-action-id="positions.table.history.open"
                 >
                   <History className="h-4 w-4" />
                 </Button>
@@ -134,6 +135,7 @@ export function PositionsTable({
                       size="sm"
                       onClick={() => handleRemoveHolderClick(position)}
                       title={translateText('generated.inline.1076_remove_holder_af2745c3')}
+                      data-action-id="positions.table.holder.remove-request"
                     >
                       <UserPlus
                         className={featureThemeClassName('positionPositionsTableWarningIcon')}
@@ -151,6 +153,7 @@ export function PositionsTable({
                         ? translateText('common.accessibility.useElectionForElectedRoles')
                         : translateText('common.accessibility.assignHolder')
                     }
+                    data-action-id="positions.table.holder.assign"
                   >
                     <UserPlus className="h-4 w-4" />
                   </Button>
@@ -160,6 +163,7 @@ export function PositionsTable({
                   size="sm"
                   onClick={() => onCreateElection(position.id)}
                   title={translateText('generated.inline.0728_create_election_678ef240')}
+                  data-action-id="positions.table.election.create"
                 >
                   <Vote className="h-4 w-4" />
                 </Button>
@@ -168,6 +172,7 @@ export function PositionsTable({
                   size="sm"
                   onClick={() => onEdit(position)}
                   title={translateText('generated.inline.1077_edit_position_90312b49')}
+                  data-action-id="positions.table.position.edit"
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -176,6 +181,7 @@ export function PositionsTable({
                   size="sm"
                   onClick={() => handleDeleteClick(position)}
                   title={translateText('generated.inline.1078_delete_position_92ae3714')}
+                  data-action-id="positions.table.position.delete-request"
                 >
                   <Trash2 className="text-destructive h-4 w-4" />
                 </Button>

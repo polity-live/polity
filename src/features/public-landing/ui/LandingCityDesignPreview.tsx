@@ -195,52 +195,47 @@ export function LandingCityDesignPreview() {
   const canFinishPathPlacement =
     placementDraft?.mode === 'path' && placementDraft.points.length >= 2;
 
-  const loadOsm = useCallback(
-    async ({ dirty, closePicker }: { dirty: boolean; closePicker: boolean }) => {
-      const requestId = ++loadRequestId.current;
-      setIsLoadingOsm(true);
-      setOsmError(null);
-      try {
-        const useStoredSnapshot = isDefaultLandingMapSelection(selectedMapSelection);
-        const snapshot = useStoredSnapshot
-          ? createAppTutorialOsmSnapshot()
-          : await overpassStreetSceneFn({ data: { bbox: selectedBbox } });
-        if (requestId !== loadRequestId.current) return;
-        const nextSelectionAddress = useStoredSnapshot
-          ? { ...defaultLandingAddress }
-          : editor.design.selectionAddress;
-        const nextAddressLabel = useStoredSnapshot
-          ? defaultLandingAddress.formatted
-          : selectionAddressLabel;
-        const nextDesign: CityDesignStateV1 = {
-          ...editor.design,
-          origin: {
-            ...selectedCenter,
-            label: nextAddressLabel,
-          },
-          mapSelection: selectedMapSelection,
-          selectionAddress: nextSelectionAddress,
-          osmSnapshot: snapshot,
-          hiddenOsmWayIds: [],
-          hiddenOsmFeatureIds: [],
-          comparisonMode: 'overlay',
-        };
-        editor.replaceDesign(nextDesign, dirty);
-        if (!dirty) setBaseDesign(nextDesign);
-        if (closePicker) setAreaPickerOpen(false);
-      } catch (error) {
-        if (requestId !== loadRequestId.current) return;
-        setOsmError(
-          error instanceof Error
-            ? error.message
-            : t('pages.home.publicLanding.cityDesignPreview.osmError')
-        );
-      } finally {
-        if (requestId === loadRequestId.current) setIsLoadingOsm(false);
-      }
-    },
-    [editor, selectedBbox, selectedCenter, selectedMapSelection, selectionAddressLabel, t]
-  );
+  const loadOsm = useCallback(async () => {
+    const requestId = ++loadRequestId.current;
+    setIsLoadingOsm(true);
+    setOsmError(null);
+    try {
+      const useStoredSnapshot = isDefaultLandingMapSelection(selectedMapSelection);
+      const snapshot = useStoredSnapshot
+        ? createAppTutorialOsmSnapshot()
+        : await overpassStreetSceneFn({ data: { bbox: selectedBbox } });
+      if (requestId !== loadRequestId.current) return;
+      const nextSelectionAddress = useStoredSnapshot
+        ? { ...defaultLandingAddress }
+        : editor.design.selectionAddress;
+      const nextAddressLabel = useStoredSnapshot
+        ? defaultLandingAddress.formatted
+        : selectionAddressLabel;
+      const nextDesign: CityDesignStateV1 = {
+        ...editor.design,
+        origin: {
+          ...selectedCenter,
+          label: nextAddressLabel,
+        },
+        mapSelection: selectedMapSelection,
+        selectionAddress: nextSelectionAddress,
+        osmSnapshot: snapshot,
+        hiddenOsmWayIds: [],
+        hiddenOsmFeatureIds: [],
+        comparisonMode: 'overlay',
+      };
+      editor.replaceDesign(nextDesign, true);
+    } catch (error) {
+      if (requestId !== loadRequestId.current) return;
+      setOsmError(
+        error instanceof Error
+          ? error.message
+          : t('pages.home.publicLanding.cityDesignPreview.osmError')
+      );
+    } finally {
+      if (requestId === loadRequestId.current) setIsLoadingOsm(false);
+    }
+  }, [editor, selectedBbox, selectedCenter, selectedMapSelection, selectionAddressLabel, t]);
 
   const modeDisabledReasons = useMemo(() => {
     if (!editor.state.isDirty) return {};
@@ -282,7 +277,7 @@ export function LandingCityDesignPreview() {
         }));
         if (nextRequests.length > 0) {
           setChangeRequests(current => [...current, ...nextRequests]);
-          setSelectedChangeRequestId(nextRequests[0]?.id ?? null);
+          setSelectedChangeRequestId(nextRequests[0].id);
           setShowChangeRequests(true);
         }
         editor.replaceDesign(baseDesign, false);
@@ -312,9 +307,9 @@ export function LandingCityDesignPreview() {
       current.map(request => {
         if (request.id !== changeRequestId) return request;
         const counts = {
-          accept: request.votes_for ?? 0,
-          reject: request.votes_against ?? 0,
-          abstain: request.votes_abstain ?? 0,
+          accept: request.votes_for as number,
+          reject: request.votes_against as number,
+          abstain: request.votes_abstain as number,
         };
         if (previousVote) counts[previousVote] = Math.max(0, counts[previousVote] - 1);
         counts[vote] += 1;
@@ -350,7 +345,7 @@ export function LandingCityDesignPreview() {
       }}
       onLoadOsm={() => {
         setAreaPickerOpen(false);
-        void loadOsm({ dirty: true, closePicker: false });
+        void loadOsm();
       }}
     />
   );
@@ -427,7 +422,7 @@ export function LandingCityDesignPreview() {
       onComparisonModeChange={editor.setComparisonMode}
       onAreaPickerOpenChange={setAreaPickerOpen}
       onCostSummaryOpenChange={setCostSummaryOpen}
-      onLoadOsm={() => void loadOsm({ dirty: true, closePicker: false })}
+      onLoadOsm={() => void loadOsm()}
       onOsmWayHide={editor.hideOsmWay}
     />
   );

@@ -61,4 +61,23 @@ describe('ZeroAppProvider identity', () => {
     });
     expect(mocks.zeroProps?.auth).toBe('access-token');
   });
+
+  it('requires both Zero and application URLs', () => {
+    vi.stubEnv('VITE_ZERO_CACHE_URL', '');
+    expect(() => render(<ZeroAppProvider>content</ZeroAppProvider>)).toThrow(
+      'VITE_ZERO_CACHE_URL is not defined'
+    );
+
+    vi.stubEnv('VITE_ZERO_CACHE_URL', 'https://zero.example.test');
+    vi.stubEnv('VITE_APP_URL', '');
+    expect(() => render(<ZeroAppProvider>content</ZeroAppProvider>)).toThrow(
+      'VITE_APP_URL is not defined'
+    );
+  });
+
+  it('uses an empty email for authenticated sessions without one', () => {
+    mocks.session = { access_token: 'token', user: { id: 'user-1' } };
+    render(<ZeroAppProvider>content</ZeroAppProvider>);
+    expect(mocks.zeroProps?.context).toEqual({ userID: 'user-1', email: '' });
+  });
 });

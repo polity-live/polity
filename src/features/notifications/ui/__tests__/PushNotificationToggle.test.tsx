@@ -42,6 +42,7 @@ vi.mock('@/features/pwa/push-api', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation.ts', () => ({
+  translate: (key: string) => key,
   useTranslation: () => ({
     t: (key: string) =>
       ({
@@ -66,6 +67,12 @@ describe('PushNotificationToggle', () => {
     mocks.pushState.isSubscribed = false;
     mocks.pushState.isLoading = false;
     mocks.pushState.error = null;
+    mocks.pushState.isSupported = true;
+    mocks.pushState.permission = 'granted';
+    mocks.pushState.deviceId = 'test-device-id';
+    mocks.pushState.serviceWorkerReady = true;
+    mocks.pushState.serverSynchronized = true;
+    mocks.pushState.requiresIosInstall = false;
     mocks.subscribe.mockResolvedValue(undefined);
     mocks.unsubscribe.mockResolvedValue(undefined);
   });
@@ -164,5 +171,109 @@ describe('PushNotificationToggle', () => {
       method: 'POST',
     });
     expect(screen.getByText('Test sent')).toBeTruthy();
+  });
+
+  it('reports structured and unknown subscription failures through localized fallbacks', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    mocks.subscribe.mockRejectedValueOnce({
+      version: 1,
+      code: 'push_operation_failed',
+    });
+    const { rerender } = render(<PushNotificationToggle variant="minimal" />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Activate notifications' }));
+    });
+    expect(mocks.toastError).toHaveBeenLastCalledWith('common.appErrors.push_operation_failed');
+
+    mocks.subscribe.mockRejectedValueOnce(42);
+    rerender(<PushNotificationToggle variant="minimal" />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Activate notifications' }));
+    });
+    expect(mocks.toastError).toHaveBeenLastCalledWith('components.pushNotifications.error');
+  });
+
+  it('guards test delivery until both a device and subscription exist', async () => {
+    mocks.pushState.isSubscribed = true;
+    mocks.pushState.deviceId = null as unknown as string;
+    const { rerender } = render(<PushNotificationToggle variant="settings" showDiagnostics />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send test' }));
+    });
+    expect(mocks.pushApiFetch).not.toHaveBeenCalled();
+
+    mocks.pushState.deviceId = 'test-device-id';
+    mocks.pushState.isSubscribed = false;
+    rerender(<PushNotificationToggle variant="settings" showDiagnostics />);
+    const button = screen.getByRole('button', { name: 'Send test' }) as HTMLButtonElement;
+    button.disabled = false;
+    await act(async () => {
+      fireEvent.click(button);
+    });
+    expect(mocks.pushApiFetch).not.toHaveBeenCalled();
+  });
+
+  it('polls pending test jobs again and converts polling failures into failed state', async () => {
+    vi.useFakeTimers();
+    mocks.pushState.isSubscribed = true;
+    mocks.pushApiFetch
+      .mockResolvedValueOnce({ jobId: 'pending-job', status: 'pending' })
+      .mockResolvedValueOnce({ jobId: 'pending-job', status: 'pending' })
+      .mockResolvedValueOnce({ jobId: 'pending-job', status: 'sent' });
+    const { unmount } = render(<PushNotificationToggle variant="settings" showDiagnostics />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send test' }));
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(7000);
+    });
+    expect(mocks.pushApiFetch).toHaveBeenCalledTimes(3);
+    unmount();
+
+    mocks.pushApiFetch
+      .mockResolvedValueOnce({ jobId: 'failed-job', status: 'pending' })
+      .mockRejectedValueOnce({ version: 1, code: 'push_operation_failed' });
+    render(<PushNotificationToggle variant="settings" showDiagnostics />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send test' }));
+      await vi.advanceTimersByTimeAsync(5500);
+    });
+    expect(document.body.textContent).toContain('components.pushNotifications.test.status.failed');
+  });
+
+  it('reports scheduling errors and refreshes a visible job with GET', async () => {
+    mocks.pushState.isSubscribed = true;
+    mocks.pushApiFetch.mockRejectedValueOnce(new Error('schedule failed'));
+    const { rerender } = render(<PushNotificationToggle variant="settings" showDiagnostics />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send test' }));
+    });
+    expect(mocks.toastError).toHaveBeenCalledWith('common.appErrors.unknown');
+
+    mocks.pushApiFetch
+      .mockResolvedValueOnce({ jobId: 'visible-job', status: 'pending' })
+      .mockResolvedValueOnce({ jobId: 'visible-job', status: 'sent' });
+    rerender(<PushNotificationToggle variant="settings" showDiagnostics />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send test' }));
+    });
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(mocks.pushApiFetch).toHaveBeenLastCalledWith('/api/push/test/visible-job', {
+      method: 'GET',
+    });
+
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(mocks.pushApiFetch).toHaveBeenCalledTimes(3);
+
+    mocks.pushApiFetch.mockRejectedValueOnce(new Error('refresh failed'));
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(mocks.pushApiFetch).toHaveBeenCalledTimes(4);
   });
 });

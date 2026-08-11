@@ -31,7 +31,14 @@ export function FormControlLabel(props: ComponentProps<typeof Label>) {
   return <Label data-slot="form-control-label" {...props} />;
 }
 
-export function FormControlSelect(props: ComponentProps<typeof Select>) {
+type FormControlSelectProps = ComponentProps<typeof Select> & {
+  'data-action-id'?: string;
+};
+
+export function FormControlSelect({
+  'data-action-id': _actionId,
+  ...props
+}: FormControlSelectProps) {
   return <Select data-slot="form-control-select" {...props} />;
 }
 

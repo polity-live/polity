@@ -5,7 +5,7 @@
  * voting phase, and result calculation.
  */
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useEventWithVoting } from '@/zero/events/useEventState';
 import { useAgendaActions } from '@/zero/agendas';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
@@ -31,9 +31,6 @@ interface VotingSession {
   votingType: VotingType;
   startedAt?: number;
   endedAt?: number;
-  timeLimit?: number;
-  autoCloseOnAllVoted?: boolean;
-  autoCloseOnTimeout?: boolean;
   majorityType: MajorityType;
   result?: VoteResult;
   targetEntityType: string;
@@ -77,7 +74,6 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
   const { createVote, updateVote, castFinalVote: doCastFinalVote } = useVoteActions();
   const { can } = usePermissions({ eventId });
   const [isLoading, setIsLoading] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 
   const canManageVoting = can('manage', 'agendaItems');
   const hasActiveVotingRight = can('active_voting', 'events');
@@ -109,7 +105,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
 
     return {
       id: agendaItem.id,
-      phase: (agendaItem.voting_phase || 'introduction') as VotingPhase,
+      phase: agendaItem.voting_phase as VotingPhase,
       votingType: (agendaItem.type || 'amendment') as VotingType,
       startedAt: agendaItem.start_time ?? undefined,
       endedAt: agendaItem.end_time ?? undefined,
@@ -183,59 +179,6 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
       abstain: votes.filter(v => v.vote === 'abstain').length,
     };
   }, [currentSession?.votes]);
-
-  // Timer for voting phase
-  useEffect(() => {
-    if (!currentSession || currentSession.phase !== 'voting' || !currentSession.startedAt) {
-      setTimeRemaining(null);
-      return;
-    }
-
-    if (!currentSession.timeLimit) {
-      setTimeRemaining(null);
-      return;
-    }
-
-    const endTime = currentSession.startedAt + currentSession.timeLimit * 1000;
-
-    const updateTimer = () => {
-      const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-      setTimeRemaining(remaining);
-
-      if (remaining === 0 && currentSession.autoCloseOnTimeout) {
-        closeVoting(currentSession.id);
-      }
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-
-    return () => clearInterval(interval);
-  }, [
-    currentSession?.id,
-    currentSession?.phase,
-    currentSession?.startedAt,
-    currentSession?.timeLimit,
-  ]);
-
-  // Auto-close when all voted
-  useEffect(() => {
-    if (
-      currentSession?.phase === 'voting' &&
-      currentSession.autoCloseOnAllVoted &&
-      votedCount === totalVoters &&
-      totalVoters > 0 &&
-      canManageVoting
-    ) {
-      closeVoting(currentSession.id);
-    }
-  }, [
-    currentSession?.phase,
-    currentSession?.autoCloseOnAllVoted,
-    votedCount,
-    totalVoters,
-    canManageVoting,
-  ]);
 
   const startIntroductionPhase = useCallback(
     async (params: StartVotingParams): Promise<string> => {
@@ -479,7 +422,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
     userVote,
     voteResults,
     isLoading: isLoading || queryLoading,
-    timeRemaining,
+    timeRemaining: null,
     startIntroductionPhase,
     startVotingPhase,
     closeVoting,

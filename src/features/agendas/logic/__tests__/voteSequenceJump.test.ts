@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveClosingJumpTarget } from '../voteSequenceJump';
+import { getVoteStepKind, resolveClosingJumpTarget } from '../voteSequenceJump';
 
 describe('resolveClosingJumpTarget', () => {
+  it('returns no step kind for a missing sequence item', () => {
+    expect(getVoteStepKind(null)).toBeNull();
+  });
+
   it('selects an existing final vote item without initialization', () => {
     const result = resolveClosingJumpTarget({
       item: {
@@ -59,6 +63,24 @@ describe('resolveClosingJumpTarget', () => {
       isClosingJump: true,
       shouldInitialize: true,
       targetItemId: 'placeholder-final',
+    });
+  });
+
+  it('initializes without a target when the closing placeholder is not present yet', () => {
+    expect(
+      resolveClosingJumpTarget({
+        item: {
+          id: 'placeholder-crs',
+          _votePlaceholder: true,
+          _voteStepKind: 'change_request_votes_placeholder',
+        },
+        nonFinalItemCount: 0,
+        sequenceItems: [],
+      })
+    ).toEqual({
+      isClosingJump: true,
+      shouldInitialize: true,
+      targetItemId: null,
     });
   });
 

@@ -51,7 +51,13 @@ export function TodoArchiveAction({
 
   if (archived) {
     return (
-      <Button variant="outline" size="sm" disabled={isPending} onClick={onUnarchive}>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={isPending}
+        onClick={onUnarchive}
+        data-action-id="todos.archive.restore"
+      >
         <ArchiveRestore className="mr-2 h-4 w-4" />
         {t('features.todos.actions.unarchive')}
       </Button>
@@ -61,7 +67,12 @@ export function TodoArchiveAction({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={isPending}>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={isPending}
+          data-action-id="todos.archive.open"
+        >
           <Archive className="mr-2 h-4 w-4" />
           {t('features.todos.actions.archive')}
         </Button>
@@ -75,7 +86,7 @@ export function TodoArchiveAction({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>{t('features.todos.archive.cancel')}</AlertDialogCancel>
-          <AlertDialogAction onClick={onArchive}>
+          <AlertDialogAction onClick={onArchive} data-action-id="todos.archive.confirm">
             {t('features.todos.actions.archive')}
           </AlertDialogAction>
         </AlertDialogFooter>

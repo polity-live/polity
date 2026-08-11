@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/groups/ui/ActiveMembersTable.tsx#/group/$id": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddRoleDialog.coverage.test.tsx",
+        "project": "component",
+        "caseId": "executes every group form callback and both recurring-pattern paths",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/ActiveMembersTable.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/ActiveMembersTable.tsx#/group/$id-2": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddRoleDialog.coverage.test.tsx",
+        "project": "component",
+        "caseId": "executes every group form callback and both recurring-pattern paths",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/ActiveMembersTable.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/MembershipsByRoleTables.tsx#/group/$id": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddRoleDialog.actions.test.tsx",
+        "project": "component",
+        "caseId": "opens, cancels, and submits role editing through stable actions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/MembershipsByRoleTables.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/MembershipsByRoleTables.tsx#/group/$id-2": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddRoleDialog.actions.test.tsx",
+        "project": "component",
+        "caseId": "opens, cancels, and submits role editing through stable actions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/MembershipsByRoleTables.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/PaymentsSectionView.tsx#/create/payment": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddPaymentDialogView.actions.test.tsx",
+        "project": "component",
+        "caseId": "edits and submits payments through stable actions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/PaymentsSectionView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/groups/ui/PaymentsSectionView.tsx#/create/payment-2": [
+      {
+        "file": "src/features/groups/ui/__tests__/AddPaymentDialogView.actions.test.tsx",
+        "project": "component",
+        "caseId": "edits and submits payments through stable actions",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/groups/ui/PaymentsSectionView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {
+    "src/features/groups/ui/ActiveMembersTable.tsx#/group/$id": {
+      "actionId": "groups.active-members-table.navigate.group-id"
+    },
+    "src/features/groups/ui/ActiveMembersTable.tsx#/group/$id-2": {
+      "actionId": "groups.active-members-table.navigate.group-id-2"
+    },
+    "src/features/groups/ui/MembershipsByRoleTables.tsx#/group/$id": {
+      "actionId": "groups.memberships-by-role-tables.navigate.group-id"
+    },
+    "src/features/groups/ui/MembershipsByRoleTables.tsx#/group/$id-2": {
+      "actionId": "groups.memberships-by-role-tables.navigate.group-id-2"
+    },
+    "src/features/groups/ui/PaymentsSectionView.tsx#/create/payment": {
+      "actionId": "groups.payments-section-view.navigate.create-payment"
+    },
+    "src/features/groups/ui/PaymentsSectionView.tsx#/create/payment-2": {
+      "actionId": "groups.payments-section-view.navigate.create-payment-2"
+    }
+  }
+}

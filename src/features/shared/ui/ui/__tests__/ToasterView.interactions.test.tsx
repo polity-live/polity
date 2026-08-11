@@ -30,5 +30,17 @@ describe('ToasterView interactions', () => {
     expect(props.toastOptions.classNames.toast).toContain('pointer-events-auto');
     expect(props.toastOptions.classNames.toast).toContain('!select-text');
     expect(props.toastOptions.classNames.closeButton).toContain('pointer-events-auto');
+    expect(props.toastOptions.classNames.success).toBe('!text-success');
+  });
+
+  it('allows callers to override the accessible success color deliberately', () => {
+    render(
+      <ToasterView theme="light" toastOptions={{ classNames: { success: '!text-foreground' } }} />
+    );
+
+    const props = toasterProps.current as {
+      toastOptions: { classNames: Record<string, string> };
+    };
+    expect(props.toastOptions.classNames.success).toBe('!text-foreground');
   });
 });

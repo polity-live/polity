@@ -6,14 +6,19 @@ import { gatedToast } from '@/features/notifications/utils/gated-toast';
 import {
   clearCreateRecoveryDraft,
   consumeCreateRestoreDraft,
+  getCreateFinalizationEntityKind,
   getCreateRecoveryDraft,
   getCreateRecoveryDraftForEntity,
+  isCreateRecoveryDraftExpired,
   markCreateRecoveryDraftFailed,
   pruneExpiredCreateRecoveryDrafts,
+  routeForCreateTarget,
   saveCreateRecoveryDraft,
   setCreateRestoreDraft,
+  subscribeCreateRecoveryDrafts,
   trackCreateFinalization,
   useCreateRecoveryDraft,
+  waitForOptimisticCreate,
   type CreateRecoveryDraft,
 } from '../createFinalization';
 import { parseAppError } from '@/features/shared/errors';
@@ -63,6 +68,33 @@ describe('create recovery drafts', () => {
     });
   });
 
+  it('rejects incomplete entity identities', () => {
+    expect(getCreateRecoveryDraftForEntity(null, 'group-1')).toBeNull();
+    expect(getCreateRecoveryDraftForEntity('group', undefined)).toBeNull();
+
+    const { result } = renderHook(() => useCreateRecoveryDraft(undefined, 'group-1'));
+    expect(result.current).toBeNull();
+  });
+
+  it('invalidates corrupt and expired storage records when read', () => {
+    window.sessionStorage.setItem('polity:create:recovery:corrupt', '{');
+    expect(getCreateRecoveryDraft('corrupt')).toBeNull();
+    expect(window.sessionStorage.getItem('polity:create:recovery:corrupt')).toBeNull();
+
+    const expired = createDraft({ id: 'expired', submittedAt: 1 });
+    window.sessionStorage.setItem('polity:create:recovery:expired', JSON.stringify(expired));
+    expect(getCreateRecoveryDraft('expired')).toBeNull();
+    expect(window.sessionStorage.getItem('polity:create:recovery:expired')).toBeNull();
+  });
+
+  it('reuses a cached snapshot while raw storage is unchanged', () => {
+    const draft = createDraft();
+    saveCreateRecoveryDraft(draft);
+    const first = getCreateRecoveryDraft(draft.id);
+    const second = getCreateRecoveryDraft(draft.id);
+    expect(second).toBe(first);
+  });
+
   it('marks drafts as failed with the server error message', () => {
     const draft = createDraft();
     saveCreateRecoveryDraft(draft);
@@ -75,6 +107,20 @@ describe('create recovery drafts', () => {
     expect(parseAppError(getCreateRecoveryDraft(draft.id)?.errorMessage)).toMatchObject({
       code: 'mutation_server_failed',
     });
+  });
+
+  it('ignores missing failures and normalizes string and unknown errors', () => {
+    markCreateRecoveryDraftFailed('missing', 'ignored');
+    expect(getCreateRecoveryDraft('missing')).toBeNull();
+
+    const draft = createDraft();
+    saveCreateRecoveryDraft(draft);
+    markCreateRecoveryDraftFailed(draft.id, 'server text');
+    expect(getCreateRecoveryDraft(draft.id)?.status).toBe('failed');
+
+    saveCreateRecoveryDraft(draft);
+    markCreateRecoveryDraftFailed(draft.id, { reason: 'unknown' });
+    expect(getCreateRecoveryDraft(draft.id)?.status).toBe('failed');
   });
 
   it('clears drafts', () => {
@@ -98,6 +144,12 @@ describe('create recovery drafts', () => {
     expect(consumeCreateRestoreDraft('group')).toBeNull();
   });
 
+  it('removes a corrupt restore record', () => {
+    window.sessionStorage.setItem('polity:create:restore', '{');
+    expect(consumeCreateRestoreDraft('group')).toBeNull();
+    expect(window.sessionStorage.getItem('polity:create:restore')).toBeNull();
+  });
+
   it('keeps restore drafts available when another create form asks first', () => {
     const draft = createDraft();
 
@@ -118,6 +170,34 @@ describe('create recovery drafts', () => {
     expect(getCreateRecoveryDraft(draft.id)).toBeNull();
   });
 
+  it('prunes null and corrupt recovery values while preserving valid and unrelated entries', () => {
+    const now = Date.now();
+    const valid = createDraft({ id: 'valid', submittedAt: now });
+    window.sessionStorage.setItem('unrelated', 'value');
+    window.sessionStorage.setItem('polity:create:recovery:null', 'null');
+    window.sessionStorage.setItem('polity:create:recovery:corrupt', '{');
+    window.sessionStorage.setItem('polity:create:recovery:valid', JSON.stringify(valid));
+
+    pruneExpiredCreateRecoveryDrafts(now + 1, 100);
+
+    expect(window.sessionStorage.getItem('unrelated')).toBe('value');
+    expect(window.sessionStorage.getItem('polity:create:recovery:null')).toBeNull();
+    expect(window.sessionStorage.getItem('polity:create:recovery:corrupt')).toBeNull();
+    expect(getCreateRecoveryDraft('valid')).toMatchObject({ id: 'valid' });
+  });
+
+  it('leaves storage untouched when nothing is expired', () => {
+    const event = vi.fn();
+    window.addEventListener('polity:create:recovery-drafts-changed', event);
+    window.sessionStorage.setItem(
+      'polity:create:recovery:valid-only',
+      JSON.stringify(createDraft({ id: 'valid-only', submittedAt: 20_000 }))
+    );
+    pruneExpiredCreateRecoveryDrafts(20_001, 100);
+    expect(event).not.toHaveBeenCalled();
+    window.removeEventListener('polity:create:recovery-drafts-changed', event);
+  });
+
   it('notifies same-tab subscribers when drafts change', () => {
     const { result } = renderHook(() => useCreateRecoveryDraft('group', 'group-1'));
 
@@ -134,6 +214,94 @@ describe('create recovery drafts', () => {
     });
 
     expect(result.current).toBeNull();
+  });
+
+  it('reacts only to relevant cross-tab storage events', () => {
+    const { result } = renderHook(() => useCreateRecoveryDraft('group', 'group-1'));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'unrelated' }));
+    expect(result.current).toBeNull();
+
+    act(() => {
+      window.sessionStorage.setItem(
+        'polity:create:recovery:group:group-1',
+        JSON.stringify(createDraft())
+      );
+      window.dispatchEvent(
+        new StorageEvent('storage', { key: 'polity:create:recovery:group:group-1' })
+      );
+    });
+    expect(result.current).toMatchObject({ id: 'group:group-1' });
+
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: 'polity:create:restore' }));
+    });
+    expect(result.current).toMatchObject({ id: 'group:group-1' });
+  });
+
+  it('treats the exact expiry boundary as valid', () => {
+    expect(isCreateRecoveryDraftExpired({ submittedAt: 100 }, 200, 100)).toBe(false);
+    expect(isCreateRecoveryDraftExpired({ submittedAt: 99 }, 200, 100)).toBe(true);
+  });
+
+  it('keeps every storage operation inert when browser storage is unavailable', () => {
+    const browserWindow = window;
+    vi.stubGlobal('window', undefined);
+    try {
+      expect(getCreateRecoveryDraft('missing')).toBeNull();
+      expect(consumeCreateRestoreDraft('group')).toBeNull();
+      expect(subscribeCreateRecoveryDrafts(vi.fn())).toEqual(expect.any(Function));
+      pruneExpiredCreateRecoveryDrafts();
+      saveCreateRecoveryDraft(createDraft());
+      clearCreateRecoveryDraft('missing');
+      setCreateRestoreDraft(createDraft());
+    } finally {
+      vi.stubGlobal('window', browserWindow);
+    }
+  });
+
+  it('builds external and encoded internal recovery routes', () => {
+    expect(
+      routeForCreateTarget({
+        kind: 'external',
+        entityType: 'group',
+        href: 'https://example.test/return',
+      })
+    ).toBe('https://example.test/return');
+    expect(
+      routeForCreateTarget({
+        kind: 'route',
+        entityType: 'group',
+        to: '/group/$id/member/{member}',
+        params: { id: 'a/b', member: 'Ada Lovelace' },
+        search: { tab: 'members', page: 2, empty: '', absent: undefined, nil: null },
+        hash: 'public notes',
+      })
+    ).toBe('/group/a%2Fb/member/Ada%20Lovelace?tab=members&page=2&empty=#public%20notes');
+    expect(routeForCreateTarget({ kind: 'route', entityType: 'group', to: '/groups' })).toBe(
+      '/groups'
+    );
+  });
+
+  it('waits for present and absent optimistic client promises', async () => {
+    const client = vi.fn();
+    await waitForOptimisticCreate({ client: Promise.resolve().then(client) } as never);
+    expect(client).toHaveBeenCalledOnce();
+    await expect(waitForOptimisticCreate({} as never)).resolves.toBeUndefined();
+  });
+
+  it.each([
+    ['agenda_item', 'agendaItem'],
+    ['election', 'candidate'],
+    ['group', 'group'],
+    ['event', 'event'],
+    ['amendment', 'amendment'],
+    ['blog', 'blog'],
+    ['statement', 'statement'],
+    ['todo', 'todo'],
+    ['payment', 'payment'],
+    ['user', 'document'],
+  ] as const)('maps %s finalization to %s', (entityType, expected) => {
+    expect(getCreateFinalizationEntityKind(createDraft({ entityType } as any))).toBe(expected);
   });
 });
 
@@ -206,6 +374,32 @@ describe('create finalization tracking', () => {
       })
     );
     expect(gatedToast.finalizationSuccess).not.toHaveBeenCalled();
+
+    const errorOptions = vi.mocked(gatedToast.finalizationError).mock.calls.at(-1)?.[1] as any;
+    errorOptions.action.onClick();
+    expect(consumeCreateRestoreDraft('group')).toMatchObject({ id: draft.id });
+    clearCreateRecoveryDraft(draft.id);
+    errorOptions.action.onClick();
+    expect(consumeCreateRestoreDraft('group')).toMatchObject({ id: draft.id });
+    errorOptions.cancel.onClick();
+    expect(retry).toHaveBeenCalledOnce();
+  });
+
+  it('omits the retry action when no retry callback is supplied', async () => {
+    const draft = createDraft({ id: 'group:without-retry' });
+    trackCreateFinalization({
+      result: {
+        server: Promise.resolve({
+          type: 'error',
+          error: { type: 'server', message: 'Rejected' },
+        }),
+      },
+      draft,
+    });
+
+    await vi.waitFor(() => expect(gatedToast.finalizationError).toHaveBeenCalled());
+    const errorOptions = vi.mocked(gatedToast.finalizationError).mock.calls.at(-1)?.[1] as any;
+    expect(errorOptions.cancel).toBeUndefined();
   });
 
   it('uses an entity-specific candidate message', async () => {

@@ -362,6 +362,7 @@ export function StreetSceneCanvasViewView({
             {positionedChangeRequestMarkers.map(marker => (
               <TooltipHint key={marker.id} content={marker.label}>
                 <button
+                  data-action-id="amendments.city-canvas.select.change-request-marker"
                   type="button"
                   className={cn(
                     'focus-visible:ring-ring pointer-events-auto absolute flex min-h-8 max-w-52 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-semibold shadow-lg backdrop-blur transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none',
@@ -411,7 +412,7 @@ export function StreetSceneCanvasViewView({
                     cameraPose,
                     canvasSize,
                     layerOffsetX: designLayerOffsetX,
-                  }) ?? getCanvasAnchorFromLocalPoint({ x: 0, z: 0 }))
+                  }) as CanvasAnchor)
             }
           >
             <CityDesignChangeRequestPanel
@@ -502,6 +503,7 @@ export function StreetSceneCanvasViewView({
           </CollapsibleContent>
           <CollapsibleTrigger asChild>
             <Button
+              data-action-id="amendments.city-canvas.toggle.legend"
               type="button"
               variant="ghost"
               size="sm"
@@ -546,6 +548,7 @@ export function StreetSceneCanvasViewView({
             </p>
           </div>
           <Button
+            data-action-id="amendments.city-canvas.finish.path-placement"
             type="button"
             size="sm"
             className="h-8 px-2 text-xs"
@@ -555,6 +558,7 @@ export function StreetSceneCanvasViewView({
             {t('common.done')}
           </Button>
           <Button
+            data-action-id="amendments.city-canvas.cancel.path-placement"
             type="button"
             size="sm"
             variant="outline"
@@ -618,7 +622,7 @@ function CanvasSelectionPopover({
   );
 }
 
-function CityDesignObjectPopover({
+export function CityDesignObjectPopover({
   object,
   costLine,
   isHidden,
@@ -671,6 +675,7 @@ function CityDesignObjectPopover({
           <p className="text-muted-foreground font-mono text-[11px]">{object.id.slice(0, 8)}</p>
         </div>
         <Button
+          data-action-id="amendments.city-object-popover.close.details"
           type="button"
           variant="ghost"
           size="icon"
@@ -746,6 +751,7 @@ function CityDesignObjectPopover({
             return (
               <label key={field.key} className="flex items-center gap-2 text-sm">
                 <input
+                  data-action-id="amendments.city-object-popover.toggle.object-property"
                   type="checkbox"
                   checked={Boolean(value)}
                   disabled={readOnly}
@@ -761,16 +767,24 @@ function CityDesignObjectPopover({
               <div key={field.key} className="space-y-1">
                 <Label className="text-xs">{t(field.labelKey)}</Label>
                 <Select
+                  data-action-id="amendments.city-object-popover.select.object-property"
                   value={asInputValue(value)}
                   disabled={readOnly}
                   onValueChange={nextValue => onPropertyChange(object.id, field.key, nextValue)}
                 >
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger
+                    data-action-id="amendments.city-object-popover.select.object-property"
+                    className="h-9"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {(field.options ?? []).map(option => (
-                      <SelectItem key={option.value} value={option.value}>
+                      <SelectItem
+                        key={option.value}
+                        data-action-id="amendments.city-object-popover.select.object-property-option"
+                        value={option.value}
+                      >
                         {t(option.labelKey)}
                       </SelectItem>
                     ))}
@@ -867,6 +881,7 @@ function CityDesignObjectPopover({
           </p>
           {object.cost.customUnitCostMinor != null ? (
             <Button
+              data-action-id="amendments.city-object-popover.reset.unit-cost"
               type="button"
               variant="ghost"
               size="sm"
@@ -882,6 +897,7 @@ function CityDesignObjectPopover({
         <div className="flex flex-wrap items-center justify-end gap-2">
           {object.provenance?.source === 'osm' ? (
             <Button
+              data-action-id="amendments.city-object-popover.undo.osm-import"
               type="button"
               size="sm"
               variant="outline"
@@ -894,6 +910,7 @@ function CityDesignObjectPopover({
             </Button>
           ) : null}
           <Button
+            data-action-id="amendments.city-object-popover.toggle.visibility"
             type="button"
             size="sm"
             variant="outline"
@@ -907,6 +924,7 @@ function CityDesignObjectPopover({
             })}
           </Button>
           <Button
+            data-action-id="amendments.city-object-popover.delete.object"
             type="button"
             size="sm"
             variant="destructive"
@@ -962,6 +980,7 @@ export function CityDesignOsmPopover({
           </p>
         </div>
         <Button
+          data-action-id="amendments.city-osm-popover.close.details"
           type="button"
           variant="ghost"
           size="icon"
@@ -1046,6 +1065,7 @@ export function CityDesignOsmPopover({
       <div className="mt-4 flex flex-wrap justify-end gap-2">
         {osmWay.mappedObjectType && osmWay.mappingConfidence !== 'generic' ? (
           <Button
+            data-action-id="amendments.city-osm-popover.import.as-planned"
             type="button"
             size="sm"
             className="h-8 gap-2 text-xs"
@@ -1057,6 +1077,7 @@ export function CityDesignOsmPopover({
           </Button>
         ) : null}
         <Button
+          data-action-id="amendments.city-osm-popover.remove.from-map"
           type="button"
           size="sm"
           variant="outline"
@@ -1188,8 +1209,9 @@ export function projectLocalPointToCanvasAnchor(
 
   const right = normalizeVector3(crossVector3(forward, { x: 0, y: 1, z: 0 }));
   if (!right) return null;
-  const up = normalizeVector3(crossVector3(right, forward));
-  if (!up) return null;
+  const up = normalizeVector3(crossVector3(right, forward)) as NonNullable<
+    ReturnType<typeof normalizeVector3>
+  >;
 
   const cameraToPoint = {
     x: worldPoint.x - cameraPosition.x,
@@ -1229,14 +1251,12 @@ function getCanvasAnchorFromOsmWay(
   );
 
   const localPoint = projectGeoPointToLocal(averagePoint, design.origin);
-  return (
-    getTrackedCanvasAnchorFromLocalPoint({
-      point: localPoint,
-      cameraPose,
-      canvasSize,
-      layerOffsetX,
-    }) ?? getCanvasAnchorFromLocalPoint(localPoint)
-  );
+  return getTrackedCanvasAnchorFromLocalPoint({
+    point: localPoint,
+    cameraPose,
+    canvasSize,
+    layerOffsetX,
+  }) as CanvasAnchor;
 }
 
 function isCanvasAnchorOutside(anchor: CanvasAnchor, paddingPercent: number) {
@@ -1879,3 +1899,27 @@ function getLegendStringProperty(entry: CityDesignLegendEntry, key: string, fall
   const value = entry.properties?.[key];
   return typeof value === 'string' && value.length > 0 ? value : fallback;
 }
+
+export const streetSceneCanvasViewInternals = {
+  useCanvasElementSize,
+  getCanvasElementSize,
+  getCanvasAnchorFromLocalPoint,
+  getTrackedCanvasAnchorFromLocalPoint,
+  getCanvasAnchorFromOsmWay,
+  isCanvasAnchorOutside,
+  dotVector3,
+  crossVector3,
+  normalizeVector3,
+  asInputValue,
+  sanitizeDomId,
+  getOsmLayerLabelKey,
+  getRelevantOsmTags,
+  isFiniteNumber,
+  formatMeters,
+  clamp,
+  getStackedChangeRequestMarkers,
+  getChangeRequestMarkerClassName,
+  getLegendPreviewKind,
+  getLegendTreeSpecies,
+  getLegendStringProperty,
+};

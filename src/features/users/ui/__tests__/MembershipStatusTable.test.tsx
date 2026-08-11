@@ -150,6 +150,8 @@ describe('MembershipStatusTable', () => {
     );
 
     fireEvent.click(screen.getByText('generated.inline.1197_leave_7e3520a9'));
+    expect(document.querySelector('[data-action-id="users.membership.leave.open"]')).toBeTruthy();
+    expect(document.querySelector('[data-action-id="users.membership.entity.open"]')).toBeTruthy();
     expect(onLeave).not.toHaveBeenCalled();
     expect(screen.getByText('pages.user.memberships.confirmations.leaveTitle')).toBeTruthy();
 
@@ -182,6 +184,9 @@ describe('MembershipStatusTable', () => {
     );
 
     fireEvent.click(screen.getByText('generated.inline.1198_withdraw_request_898cc3e4'));
+    expect(
+      document.querySelector('[data-action-id="users.membership.withdraw.open"]')
+    ).toBeTruthy();
     expect(onWithdraw).not.toHaveBeenCalled();
     fireEvent.click(screen.getByText('pages.user.memberships.confirmations.withdrawConfirm'));
     expect(onWithdraw).toHaveBeenCalledWith('request-1');

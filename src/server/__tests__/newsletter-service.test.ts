@@ -5,9 +5,11 @@ import {
   executeNewsletterSync,
   handleResendWebhook,
   NewsletterHttpError,
+  newsletterServiceContracts,
   type NewsletterSyncJob,
 } from '@/server/newsletter-service';
 import { handleResendWebhookRequest } from '@/server/newsletter-routes';
+import { handleNewsletterSyncRequest } from '@/server/newsletter-routes';
 
 type Row = Record<string, any>;
 
@@ -83,7 +85,10 @@ function createFakeSupabase(input: { subscriptions?: Row[]; jobs?: NewsletterSyn
   const events: Row[] = [];
 
   const client = {
-    rpc: vi.fn(async () => ({ data: jobs, error: null })),
+    rpc: vi.fn(async (): Promise<{ data: Row[] | null; error: any }> => ({
+      data: jobs,
+      error: null,
+    })),
     from: (name: string) => {
       if (name === 'newsletter_subscription') return new FakeQuery(subscriptions);
       if (name === 'newsletter_sync_outbox') return new FakeQuery(jobs);
@@ -101,6 +106,15 @@ function createFakeSupabase(input: { subscriptions?: Row[]; jobs?: NewsletterSyn
   };
 
   return { client, subscriptions, jobs, events };
+}
+
+function terminalQuery(result: { data?: any; error?: any }) {
+  const query: any = {};
+  for (const method of ['select', 'update', 'delete', 'eq']) query[method] = vi.fn(() => query);
+  query.maybeSingle = vi.fn(async () => result);
+  query.insert = vi.fn(async () => result);
+  query.then = (resolve: (value: unknown) => unknown) => Promise.resolve(result).then(resolve);
+  return query;
 }
 
 function createFakeResend() {
@@ -544,8 +558,353 @@ describe('newsletter sync', () => {
   });
 });
 
+describe('newsletter service boundary contracts', () => {
+  const c = newsletterServiceContracts;
+
+  beforeEach(() => {
+    vi.unstubAllEnvs();
+    vi.stubEnv('RESEND_API_KEY', 're_env');
+    vi.stubEnv('RESEND_WEBHOOK_SECRET', ' whsec_env ');
+    vi.stubEnv('RESEND_SEGMENT_ID_DE', 'segment-de');
+    vi.stubEnv('RESEND_SEGMENT_ID_EN', 'segment-en');
+    vi.stubEnv('RESEND_TOPIC_ID', 'topic');
+    vi.stubEnv('NEWSLETTER_SYNC_SECRET', ' sync-env ');
+    vi.stubEnv('NEWSLETTER_SYNC_ENABLED', 'TRUE');
+    vi.stubEnv('NEWSLETTER_ALLOWED_RECIPIENTS', ' Person@Example.com, @Example.org, ');
+  });
+
+  it('reads, normalizes, overrides, and validates every configuration field', () => {
+    expect(c.readConfig()).toEqual({
+      apiKey: 're_env',
+      webhookSecret: 'whsec_env',
+      segmentIdDe: 'segment-de',
+      segmentIdEn: 'segment-en',
+      topicId: 'topic',
+      syncSecret: 'sync-env',
+      environment: 'development',
+      syncEnabled: true,
+      allowedRecipients: ['person@example.com', '@example.org'],
+    });
+    expect(c.readConfig(config)).toMatchObject(config);
+    vi.stubEnv('NEWSLETTER_ENVIRONMENT', 'preview');
+    expect(() => c.readConfig()).toThrow('development or production');
+    vi.stubEnv('NEWSLETTER_ENVIRONMENT', 'production');
+    expect(c.readConfig().environment).toBe('production');
+    vi.stubEnv('RESEND_API_KEY', '');
+    expect(() => c.readConfig()).toThrow('RESEND_API_KEY is not defined');
+
+    vi.stubEnv('RESEND_API_KEY', 're_env');
+    delete process.env.RESEND_WEBHOOK_SECRET;
+    delete process.env.NEWSLETTER_SYNC_SECRET;
+    delete process.env.RESEND_SEGMENT_ID_DE;
+    delete process.env.NEWSLETTER_ALLOWED_RECIPIENTS;
+    expect(c.readConfig()).toMatchObject({
+      webhookSecret: '',
+      syncSecret: '',
+      segmentIdDe: '',
+      allowedRecipients: [],
+    });
+  });
+
+  it('validates segments, recipients, languages, duplicate codes, and Resend error shapes', () => {
+    expect(() =>
+      c.assertNewsletterSegmentsConfigured({
+        ...config,
+        environment: 'development',
+        segmentIdEn: '',
+      })
+    ).toThrow('RESEND_SEGMENT_ID_EN');
+    c.assertNewsletterSegmentsConfigured({
+      ...config,
+      environment: 'development',
+      segmentIdDe: '',
+    });
+    expect(c.recipientAllowed('anything@example.com', config)).toBe(true);
+    const development = {
+      ...config,
+      environment: 'development' as const,
+      allowedRecipients: ['person@example.com', '@allowed.test'],
+    };
+    expect(c.recipientAllowed('PERSON@EXAMPLE.COM', development)).toBe(true);
+    expect(c.recipientAllowed('one@allowed.test', development)).toBe(true);
+    expect(c.recipientAllowed('blocked@example.net', development)).toBe(false);
+    expect(c.normalizeNewsletterLanguage('de')).toBe('de');
+    expect(c.normalizeNewsletterLanguage('fr')).toBe('en');
+    expect(c.isDuplicateDatabaseError({ code: '23505' })).toBe(true);
+    expect(c.isDuplicateDatabaseError(null)).toBe(false);
+    expect(c.messageFromResendError({ message: 'failure' })).toBe('failure');
+    expect(c.messageFromResendError('failure')).toBe('resend_request_failed');
+    expect(c.isNotFound(null)).toBe(false);
+    expect(c.isNotFound({ statusCode: 404 })).toBe(true);
+    expect(c.isNotFound({ status: 404 })).toBe(true);
+    expect(c.isNotFound({ name: 'not_found' })).toBe(true);
+    expect(c.isNotFound({ status: 500 })).toBe(false);
+  });
+
+  it('finds contacts and tolerates only not-found removal failures', async () => {
+    const api = createFakeResend();
+    await expect(c.findContact(api.resend as any, 'missing@example.com')).resolves.toBeNull();
+    api.contacts.set('contact-1', { id: 'contact-1', email: 'person@example.com' });
+    await expect(c.findContact(api.resend as any, 'person@example.com')).resolves.toMatchObject({
+      id: 'contact-1',
+    });
+    (api.resend.contacts.remove as any).mockResolvedValueOnce({
+      error: { status: 404, message: 'gone' },
+    });
+    await expect(c.removeContact(api.resend as any, { id: 'missing' })).resolves.toBeUndefined();
+    (api.resend.contacts.remove as any).mockResolvedValueOnce({
+      error: { status: 500, message: 'down' },
+    });
+    await expect(c.removeContact(api.resend as any, { id: 'broken' })).rejects.toThrow('down');
+  });
+
+  it('constructs default and injected Supabase and Resend clients', () => {
+    vi.stubEnv('SUPABASE_URL', 'https://supabase.example');
+    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'service-role');
+    expect(c.getSupabase({})).toBeTruthy();
+    expect(c.getResend({}, config)).toBeTruthy();
+    const supabase = {} as any;
+    const resend = {} as any;
+    expect(c.getSupabase({ supabase })).toBe(supabase);
+    expect(c.getResend({ resend }, config)).toBe(resend);
+  });
+
+  it('reuses contacts by email and applies opt-out topic updates', async () => {
+    const api = createFakeResend();
+    api.contacts.set('contact-1', {
+      id: 'contact-1',
+      email: 'person@example.com',
+      unsubscribed: false,
+    });
+    api.topicMembership.set('contact-1', 'opt_in');
+    const result = await c.ensureContact(api.resend as any, config, {
+      user_id: 'user-1',
+      email: 'person@example.com',
+      subscribed: false,
+      resend_contact_id: null,
+      language: 'en',
+    });
+    expect(result).toEqual({ contactId: 'contact-1', subscribed: false });
+    expect(api.resend.contacts.topics.update).toHaveBeenCalledWith({
+      id: 'contact-1',
+      topics: [{ id: 'topic', subscription: 'opt_out' }],
+    });
+  });
+
+  it.each([
+    ['update', 'contacts.update'],
+    ['segments-list', 'contacts.segments.list'],
+    ['segments-add', 'contacts.segments.add'],
+    ['topics-list', 'contacts.topics.list'],
+    ['topics-update', 'contacts.topics.update'],
+  ])('surfaces the %s Resend boundary error', async kind => {
+    const api = createFakeResend();
+    api.contacts.set('contact-1', {
+      id: 'contact-1',
+      email: 'person@example.com',
+      unsubscribed: false,
+    });
+    api.topicMembership.set('contact-1', kind === 'topics-update' ? 'opt_in' : 'opt_out');
+    const target =
+      kind === 'update'
+        ? api.resend.contacts.update
+        : kind === 'segments-list'
+          ? api.resend.contacts.segments.list
+          : kind === 'segments-add'
+            ? api.resend.contacts.segments.add
+            : kind === 'topics-list'
+              ? api.resend.contacts.topics.list
+              : api.resend.contacts.topics.update;
+    (target as any).mockResolvedValueOnce({ error: { message: `${kind} failed` } });
+    await expect(
+      c.ensureContact(api.resend as any, config, {
+        user_id: 'user-1',
+        email: 'person@example.com',
+        subscribed: kind === 'topics-update' ? false : true,
+        resend_contact_id: 'contact-1',
+        language: 'de',
+      })
+    ).rejects.toThrow(`${kind} failed`);
+  });
+
+  it('completes delete-by-email, missing-user, missing-subscription, and replace-by-email jobs', async () => {
+    const jobs = [
+      job({ id: 1, operation: 'delete', resend_contact_id: null }),
+      job({ id: 2, user_id: null }),
+      job({ id: 3, user_id: 'missing' }),
+      job({
+        id: 4,
+        operation: 'replace_email',
+        previous_email: 'old@example.com',
+        resend_contact_id: null,
+      }),
+    ];
+    const db = createFakeSupabase({
+      jobs,
+      subscriptions: [
+        {
+          user_id: 'user-1',
+          email: 'person@example.com',
+          subscribed: true,
+          resend_contact_id: null,
+          language: 'en',
+        },
+      ],
+    });
+    const api = createFakeResend();
+    await expect(
+      executeNewsletterSync({ supabase: db.client as any, resend: api.resend as any, config })
+    ).resolves.toEqual({ enabled: true, processed: 4, failed: 0 });
+    expect(api.resend.contacts.remove).toHaveBeenCalledWith({ email: 'person@example.com' });
+    expect(api.resend.contacts.remove).toHaveBeenCalledWith({ email: 'old@example.com' });
+  });
+
+  it('handles null job claims, claim errors, and non-Error retry messages', async () => {
+    const api = createFakeResend();
+    const empty = createFakeSupabase();
+    empty.client.rpc.mockResolvedValueOnce({ data: null, error: null });
+    await expect(
+      executeNewsletterSync({ supabase: empty.client as any, resend: api.resend as any, config })
+    ).resolves.toEqual({ enabled: true, processed: 0, failed: 0 });
+    empty.client.rpc.mockResolvedValueOnce({ data: null, error: { message: 'claim failed' } });
+    await expect(
+      executeNewsletterSync({ supabase: empty.client as any, resend: api.resend as any, config })
+    ).rejects.toThrow('claim failed');
+
+    const failing = createFakeSupabase({
+      subscriptions: [
+        {
+          user_id: 'user-1',
+          email: 'person@example.com',
+          subscribed: true,
+          resend_contact_id: null,
+        },
+      ],
+      jobs: [job({ attempt_count: 20 })],
+    });
+    (api.resend.contacts.create as any).mockRejectedValueOnce('plain failure');
+    await executeNewsletterSync({
+      supabase: failing.client as any,
+      resend: api.resend as any,
+      config,
+    });
+    expect(failing.jobs[0].last_error).toBe('plain failure');
+  });
+
+  it('surfaces subscription, completion, failure, and subscription-update database errors', async () => {
+    await expect(
+      c.loadSubscription(
+        { from: () => terminalQuery({ error: { message: 'load failed' } }) } as any,
+        'user-1'
+      )
+    ).rejects.toThrow('load failed');
+    await expect(
+      c.completeJob(
+        { from: () => terminalQuery({ error: { message: 'complete failed' } }) } as any,
+        1
+      )
+    ).rejects.toThrow('complete failed');
+    await expect(
+      c.failJob(
+        { from: () => terminalQuery({ error: { message: 'fail update' } }) } as any,
+        job(),
+        new Error('job failed')
+      )
+    ).rejects.toThrow('fail update');
+
+    let call = 0;
+    const client = {
+      from: () => {
+        call += 1;
+        return terminalQuery(
+          call === 1
+            ? {
+                data: {
+                  user_id: 'user-1',
+                  email: 'person@example.com',
+                  subscribed: true,
+                  resend_contact_id: null,
+                  language: 'en',
+                },
+                error: null,
+              }
+            : { error: { message: 'subscription update' } }
+        );
+      },
+    };
+    await expect(
+      c.processJob(job(), client as any, createFakeResend().resend as any, config)
+    ).rejects.toThrow('subscription update');
+  });
+
+  it('recovers a create conflict and covers missing segment data and removal failures', async () => {
+    const conflict = createFakeResend();
+    (conflict.resend.contacts.get as any)
+      .mockResolvedValueOnce({ data: null, error: { statusCode: 404 } })
+      .mockResolvedValueOnce({ data: { id: 'contact-conflict' }, error: null });
+    (conflict.resend.contacts.create as any).mockResolvedValueOnce({
+      data: null,
+      error: { message: 'duplicate' },
+    });
+    await expect(
+      c.ensureContact(conflict.resend as any, config, {
+        user_id: 'user-1',
+        email: 'person@example.com',
+        subscribed: true,
+        resend_contact_id: null,
+        language: 'en',
+      })
+    ).resolves.toMatchObject({ contactId: 'contact-conflict' });
+
+    const missingSegments = createFakeResend();
+    missingSegments.contacts.set('contact-1', {
+      id: 'contact-1',
+      email: 'person@example.com',
+      unsubscribed: false,
+    });
+    (missingSegments.resend.contacts.segments.list as any).mockResolvedValueOnce({
+      data: null,
+      error: null,
+    });
+    await expect(
+      c.ensureContact(missingSegments.resend as any, config, {
+        user_id: 'user-1',
+        email: 'person@example.com',
+        subscribed: true,
+        resend_contact_id: 'contact-1',
+        language: 'en',
+      })
+    ).resolves.toMatchObject({ contactId: 'contact-1' });
+
+    const removal = createFakeResend();
+    removal.contacts.set('contact-1', {
+      id: 'contact-1',
+      email: 'person@example.com',
+      unsubscribed: false,
+    });
+    removal.segmentMembership.set('contact-1', new Set(['segment-en']));
+    (removal.resend.contacts.segments.remove as any).mockResolvedValueOnce({
+      error: { message: 'remove failed' },
+    });
+    await expect(
+      c.ensureContact(removal.resend as any, config, {
+        user_id: 'user-1',
+        email: 'person@example.com',
+        subscribed: true,
+        resend_contact_id: 'contact-1',
+        language: 'de',
+      })
+    ).rejects.toThrow('remove failed');
+  });
+});
+
 describe('newsletter endpoints and webhooks', () => {
   it('protects the sync endpoint with its bearer secret', () => {
+    expect(() =>
+      authorizeNewsletterSync(new Request('https://polity.live/api/newsletter/sync'), {
+        config: { ...config, syncSecret: '' },
+      })
+    ).toThrow('not configured');
     expect(() =>
       authorizeNewsletterSync(
         new Request('https://polity.live/api/newsletter/sync', {
@@ -566,10 +925,50 @@ describe('newsletter endpoints and webhooks', () => {
   });
 
   it('rejects webhook requests without signature headers', async () => {
-    const response = await handleResendWebhookRequest(
-      new Request('https://polity.live/api/resend/webhook', { method: 'POST', body: '{}' })
+    const headerCases: HeadersInit[] = [
+      {},
+      { 'svix-id': 'id' },
+      { 'svix-id': 'id', 'svix-timestamp': 'time' },
+    ];
+    for (const headers of headerCases) {
+      const response = await handleResendWebhookRequest(
+        new Request('https://polity.live/api/resend/webhook', {
+          method: 'POST',
+          headers,
+          body: '{}',
+        })
+      );
+      expect(response.status).toBe(400);
+    }
+  });
+
+  it('maps injected sync success, typed authorization, and non-Error failures to HTTP', async () => {
+    const unauthorized = await handleNewsletterSyncRequest(
+      new Request('https://polity.live/api/newsletter/sync'),
+      { config }
     );
-    expect(response.status).toBe(400);
+    expect(unauthorized.status).toBe(401);
+
+    const disabled = await handleNewsletterSyncRequest(
+      new Request('https://polity.live/api/newsletter/sync', {
+        headers: { authorization: 'Bearer sync-secret' },
+      }),
+      { config: { ...config, syncEnabled: false } }
+    );
+    await expect(disabled.json()).resolves.toEqual({ enabled: false, processed: 0, failed: 0 });
+
+    const plainFailure = await handleNewsletterSyncRequest(
+      new Request('https://polity.live/api/newsletter/sync', {
+        headers: { authorization: 'Bearer sync-secret' },
+      }),
+      {
+        config,
+        supabase: { rpc: vi.fn().mockRejectedValue('plain failure') } as any,
+        resend: createFakeResend().resend as any,
+      }
+    );
+    expect(plainFailure.status).toBe(500);
+    await expect(plainFailure.text()).resolves.toBe('Newsletter sync failed');
   });
 
   it('records an unsubscribe once and treats a replay as a duplicate', async () => {
@@ -630,5 +1029,207 @@ describe('newsletter endpoints and webhooks', () => {
       )
     ).rejects.toMatchObject({ status: 400 });
     expect(db.events).toHaveLength(0);
+  });
+
+  it('returns webhook JSON and maps typed signature failures through the route', async () => {
+    const db = createFakeSupabase();
+    const api = createFakeResend();
+    api.setEvent({
+      type: 'email.delivered',
+      created_at: '2026-01-01T00:00:00.000Z',
+      data: { id: 'email-1' },
+    });
+    const request = () =>
+      new Request('https://polity.live/api/resend/webhook', {
+        method: 'POST',
+        headers: {
+          'svix-id': 'event-route',
+          'svix-timestamp': '123',
+          'svix-signature': 'signature',
+        },
+        body: '{}',
+      });
+    const response = await handleResendWebhookRequest(request(), {
+      supabase: db.client as any,
+      resend: api.resend as any,
+      config,
+    });
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ duplicate: false, type: 'email.delivered' });
+
+    api.rejectSignatures();
+    const invalid = await handleResendWebhookRequest(request(), {
+      supabase: db.client as any,
+      resend: api.resend as any,
+      config,
+    });
+    expect(invalid.status).toBe(400);
+  });
+
+  it('processes contact updates, opt-ins, deletions, missing subscriptions, and database errors', async () => {
+    const api = createFakeResend();
+    const missing = createFakeSupabase();
+    await expect(
+      newsletterServiceContracts.processContactWebhook(
+        { type: 'contact.updated', data: { id: 'missing', unsubscribed: false } } as any,
+        missing.client as any,
+        api.resend as any,
+        config
+      )
+    ).resolves.toBeUndefined();
+
+    await expect(
+      newsletterServiceContracts.processContactWebhook(
+        { type: 'contact.updated', data: { id: 'contact-1' } } as any,
+        { from: () => terminalQuery({ error: { message: 'lookup failed' } }) } as any,
+        api.resend as any,
+        config
+      )
+    ).rejects.toThrow('lookup failed');
+
+    const updated = createFakeSupabase({
+      subscriptions: [
+        {
+          user_id: 'user-1',
+          resend_contact_id: 'contact-1',
+          subscribed: false,
+        },
+      ],
+    });
+    api.topicMembership.set('contact-1', 'opt_in');
+    await newsletterServiceContracts.processContactWebhook(
+      { type: 'contact.updated', data: { id: 'contact-1', unsubscribed: false } } as any,
+      updated.client as any,
+      api.resend as any,
+      config
+    );
+    expect(updated.subscriptions[0]).toMatchObject({ subscribed: true, sync_status: 'synced' });
+
+    (api.resend.contacts.topics.list as any).mockResolvedValueOnce({ data: null, error: null });
+    await newsletterServiceContracts.processContactWebhook(
+      { type: 'contact.updated', data: { id: 'contact-1', unsubscribed: false } } as any,
+      updated.client as any,
+      api.resend as any,
+      config
+    );
+    expect(updated.subscriptions[0]).toMatchObject({ subscribed: false });
+
+    const topicsError = createFakeResend();
+    (topicsError.resend.contacts.topics.list as any).mockResolvedValue({
+      error: { message: 'topics failed' },
+    });
+    await expect(
+      newsletterServiceContracts.processContactWebhook(
+        { type: 'contact.updated', data: { id: 'contact-1', unsubscribed: false } } as any,
+        updated.client as any,
+        topicsError.resend as any,
+        config
+      )
+    ).rejects.toThrow('topics failed');
+
+    const deleted = createFakeSupabase({
+      subscriptions: [{ user_id: 'user-1', resend_contact_id: 'contact-1', subscribed: true }],
+    });
+    await newsletterServiceContracts.processContactWebhook(
+      { type: 'contact.deleted', data: { id: 'contact-1' } } as any,
+      deleted.client as any,
+      api.resend as any,
+      config
+    );
+    expect(deleted.subscriptions[0]).toMatchObject({
+      subscribed: false,
+      sync_status: 'deleted',
+      resend_contact_id: null,
+    });
+
+    let calls = 0;
+    const deleteFailure = {
+      from: () => {
+        calls += 1;
+        return terminalQuery(
+          calls === 1
+            ? { data: { user_id: 'user-1', resend_contact_id: 'contact-1' }, error: null }
+            : { error: { message: 'delete update failed' } }
+        );
+      },
+    };
+    await expect(
+      newsletterServiceContracts.processContactWebhook(
+        { type: 'contact.deleted', data: { id: 'contact-1' } } as any,
+        deleteFailure as any,
+        api.resend as any,
+        config
+      )
+    ).rejects.toThrow('delete update failed');
+
+    calls = 0;
+    const contactUpdateFailure = {
+      from: () => {
+        calls += 1;
+        return terminalQuery(
+          calls === 1
+            ? {
+                data: {
+                  user_id: 'user-1',
+                  resend_contact_id: 'contact-1',
+                  subscribed: false,
+                },
+                error: null,
+              }
+            : { error: { message: 'contact update failed' } }
+        );
+      },
+    };
+    await expect(
+      newsletterServiceContracts.processContactWebhook(
+        { type: 'contact.updated', data: { id: 'contact-1', unsubscribed: true } } as any,
+        contactUpdateFailure as any,
+        api.resend as any,
+        config
+      )
+    ).rejects.toThrow('contact update failed');
+  });
+
+  it('rejects missing webhook configuration and nonduplicate insert errors and rolls back failures', async () => {
+    const api = createFakeResend();
+    await expect(
+      handleResendWebhook(
+        { rawBody: '{}', svixId: 'id', svixTimestamp: 'time', svixSignature: 'sig' },
+        { config: { ...config, webhookSecret: '' } }
+      )
+    ).rejects.toMatchObject({ status: 503 });
+
+    api.setEvent({ type: 'email.delivered', created_at: 'now', data: { id: 'email' } });
+    await expect(
+      handleResendWebhook(
+        { rawBody: '{}', svixId: 'id', svixTimestamp: 'time', svixSignature: 'sig' },
+        {
+          config,
+          resend: api.resend as any,
+          supabase: {
+            from: () => terminalQuery({ error: { code: 'XX', message: 'insert failed' } }),
+          } as any,
+        }
+      )
+    ).rejects.toThrow('insert failed');
+
+    const rollback = createFakeSupabase({
+      subscriptions: [{ user_id: 'user-1', resend_contact_id: 'contact-1', subscribed: true }],
+    });
+    api.setEvent({
+      type: 'contact.updated',
+      created_at: 'now',
+      data: { id: 'contact-1', unsubscribed: false },
+    });
+    (api.resend.contacts.topics.list as any).mockResolvedValueOnce({
+      error: { message: 'processing failed' },
+    });
+    await expect(
+      handleResendWebhook(
+        { rawBody: '{}', svixId: 'rollback', svixTimestamp: 'time', svixSignature: 'sig' },
+        { config, resend: api.resend as any, supabase: rollback.client as any }
+      )
+    ).rejects.toThrow('processing failed');
+    expect(rollback.events).toHaveLength(0);
   });
 });

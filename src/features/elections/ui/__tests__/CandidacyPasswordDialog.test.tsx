@@ -74,6 +74,7 @@ afterEach(() => {
 
 describe('CandidacyPasswordDialog', () => {
   it('renders become-candidacy confirmation details', () => {
+    const onOpenChange = vi.fn();
     render(
       <CandidacyPasswordDialog
         open
@@ -83,7 +84,7 @@ describe('CandidacyPasswordDialog', () => {
         roleTitle="Chair"
         candidatesCount={2}
         majorityType="simple"
-        onOpenChange={vi.fn()}
+        onOpenChange={onOpenChange}
         onSubmit={vi.fn()}
       />
     );
@@ -96,6 +97,13 @@ describe('CandidacyPasswordDialog', () => {
     expect(screen.getByText('Chair')).toBeTruthy();
     expect(screen.getByText('2')).toBeTruthy();
     expect(screen.getByText('simple')).toBeTruthy();
+    const cancel = document.querySelector<HTMLElement>(
+      '[data-action-id="elections.candidacy.cancel"]'
+    )!;
+    cancel.focus();
+    fireEvent.keyDown(cancel, { key: 'Enter' });
+    fireEvent.click(cancel);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it('submits the entered voting PIN after four digits', async () => {
@@ -120,6 +128,7 @@ describe('CandidacyPasswordDialog', () => {
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('1234'));
     expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('[data-action-id="elections.candidacy.submit"]')).toBeTruthy();
   });
 
   it('renders withdraw-candidacy copy and password errors', () => {
@@ -183,5 +192,14 @@ describe('CandidacyPasswordDialog', () => {
       document.querySelectorAll('[data-slot="candidacy-submission-steps"] .animate-pulse')
     ).toHaveLength(3);
     expect(document.querySelectorAll('input')).toHaveLength(0);
+  });
+
+  it('omits optional election details when none are available', () => {
+    render(
+      <CandidacyPasswordDialog open mode="become" onOpenChange={vi.fn()} onSubmit={vi.fn()} />
+    );
+
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(screen.queryByText('Board election')).toBeNull();
   });
 });

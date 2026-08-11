@@ -288,6 +288,8 @@ export function CreateAgendaItemFormView({ controller }: CreateAgendaItemFormVie
           <div className="mt-4 flex justify-center gap-2">
             {[0, 1, 2, 3].map((index: any) => (
               <Button
+                data-action-id="agendas.create.step.select"
+                data-action-kind="selection"
                 key={index}
                 type="button"
                 variant="ghost"
@@ -306,6 +308,8 @@ export function CreateAgendaItemFormView({ controller }: CreateAgendaItemFormVie
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button
+            data-action-id="agendas.create.step.previous"
+            data-action-kind="selection"
             type="button"
             variant="outline"
             onClick={() => carouselApi?.scrollPrev()}
@@ -315,6 +319,8 @@ export function CreateAgendaItemFormView({ controller }: CreateAgendaItemFormVie
           </Button>
           {currentStep < 3 ? (
             <Button
+              data-action-id="agendas.create.step.next"
+              data-action-kind="selection"
               type="button"
               onClick={() => carouselApi?.scrollNext()}
               disabled={currentStep === 0 && !formData.title}
@@ -322,7 +328,13 @@ export function CreateAgendaItemFormView({ controller }: CreateAgendaItemFormVie
               {translateText('generated.inline.0047_next_bc981983')}
             </Button>
           ) : (
-            <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+            <Button
+              data-action-id="agendas.create.submit"
+              data-action-kind="async-action"
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
               {isSubmitting
                 ? translateText('generated.inline.0013_creating_28ea7667')
                 : translateText('generated.inline.0014_create_agenda_item_8fa636c7')}

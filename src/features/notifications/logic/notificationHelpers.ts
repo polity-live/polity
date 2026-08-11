@@ -38,8 +38,7 @@ function buildMessagesHref(search: MessageNavigationSearch): string {
     }
   }
 
-  const query = params.toString();
-  return query ? `/messages?${query}` : '/messages';
+  return `/messages?${params.toString()}`;
 }
 
 /**
@@ -58,8 +57,7 @@ export function getDisplayName(
 }
 
 function getSearchParamValue(searchParams: URLSearchParams, key: keyof MessageNavigationSearch) {
-  const value = searchParams.get(key);
-  return value && value.length > 0 ? value : undefined;
+  return searchParams.get(key) || undefined;
 }
 
 function isActiveAmendmentCollaboratorForUser(

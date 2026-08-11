@@ -47,7 +47,7 @@ export function useAmendmentPathVisualizationController({
       (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
     );
 
-    if (!segments || segments.length === 0) {
+    if (segments.length === 0) {
       setNodes([]);
       setEdges([]);
       return;

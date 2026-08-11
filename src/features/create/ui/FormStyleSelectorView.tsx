@@ -25,6 +25,7 @@ export function FormStyleSelectorView({
     <div className="flex items-center gap-1">
       {STYLE_OPTIONS.map(({ value, icon: Icon, labelKey }) => (
         <Button
+          data-action-id="create.form-style.select"
           key={value}
           type="button"
           variant="ghost"
@@ -35,6 +36,7 @@ export function FormStyleSelectorView({
           )}
           onClick={() => onStyleChange(value)}
           title={t(labelKey)}
+          aria-label={t(labelKey)}
           data-create-action="set-form-style"
           data-create-option={value}
         >

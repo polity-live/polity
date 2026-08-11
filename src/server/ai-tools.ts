@@ -425,7 +425,11 @@ function clampLimit(value: number | undefined, fallback: number, min = 1, max = 
     return fallback;
   }
 
-  return Math.min(max, Math.max(min, Math.floor(value ?? fallback)));
+  return Math.min(max, Math.max(min, Math.floor(value as number)));
+}
+
+function asRows<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
 }
 
 function toSearchPattern(query: string): string {
@@ -460,7 +464,7 @@ function formatDate(value: number | null | undefined): string | null {
   return new Intl.DateTimeFormat('de-DE', {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(new Date(value ?? 0));
+  }).format(new Date(value as number));
 }
 
 function formatCurrency(
@@ -471,11 +475,11 @@ function formatCurrency(
     return null;
   }
 
-  return formatCurrencyMajor(value ?? 0, currency, 'de', { currencyDisplay: 'code' });
+  return formatCurrencyMajor(value as number, currency, 'de', { currencyDisplay: 'code' });
 }
 
 function toOptionalDate(value: number | null | undefined): Date | undefined {
-  return Number.isFinite(value) ? new Date(value ?? 0) : undefined;
+  return Number.isFinite(value) ? new Date(value as number) : undefined;
 }
 
 function toRequiredDate(...values: (number | null | undefined)[]): Date {
@@ -816,13 +820,13 @@ async function loadRelationshipSets(userId: string): Promise<RelationshipSets> {
     ]);
 
     return {
-      groupIds: new Set(((groupsData ?? []) as { group_id: string }[]).map(row => row.group_id)),
-      eventIds: new Set(((eventsData ?? []) as { event_id: string }[]).map(row => row.event_id)),
-      todoIds: new Set(((todosData ?? []) as { todo_id: string }[]).map(row => row.todo_id)),
+      groupIds: new Set(asRows<{ group_id: string }>(groupsData).map(row => row.group_id)),
+      eventIds: new Set(asRows<{ event_id: string }>(eventsData).map(row => row.event_id)),
+      todoIds: new Set(asRows<{ todo_id: string }>(todosData).map(row => row.todo_id)),
       amendmentIds: new Set(
-        ((amendmentsData ?? []) as { amendment_id: string }[]).map(row => row.amendment_id)
+        asRows<{ amendment_id: string }>(amendmentsData).map(row => row.amendment_id)
       ),
-      blogIds: new Set(((blogsData ?? []) as { blog_id: string }[]).map(row => row.blog_id)),
+      blogIds: new Set(asRows<{ blog_id: string }>(blogsData).map(row => row.blog_id)),
     };
   });
 }
@@ -893,7 +897,7 @@ async function searchUsers(
         .limit(limit)
     );
 
-    return ((data ?? []) as UserSearchRow[])
+    return asRows<UserSearchRow>(data)
       .filter(row => checkEntityAccess(row.visibility, true, row.id === userId))
       .map(buildUserAttachment);
   });
@@ -909,7 +913,7 @@ async function searchGroups(
   return executeZeroRead(async tx => {
     const data = await tx.run(zql.group.where('name', 'ILIKE', pattern).limit(limit));
 
-    return ((data ?? []) as GroupSearchRow[])
+    return asRows<GroupSearchRow>(data)
       .filter(row => checkEntityAccess(row.visibility, true, relationships.groupIds.has(row.id)))
       .map(buildGroupAttachment);
   });
@@ -925,7 +929,7 @@ async function searchStatements(
   return executeZeroRead(async tx => {
     const data = await tx.run(zql.statement.where('text', 'ILIKE', pattern).limit(limit));
 
-    return ((data ?? []) as StatementSearchRow[])
+    return asRows<StatementSearchRow>(data)
       .filter(row => checkEntityAccess(row.visibility, true, row.user_id === userId))
       .map(buildStatementAttachment);
   });
@@ -947,7 +951,7 @@ async function searchBlogs(
         .limit(limit)
     );
 
-    return ((data ?? []) as BlogSearchRow[])
+    return asRows<BlogSearchRow>(data)
       .filter(row => checkEntityAccess(row.visibility, true, relationships.blogIds.has(row.id)))
       .map(buildBlogAttachment);
   });
@@ -973,7 +977,7 @@ async function searchAmendments(
         .limit(limit)
     );
 
-    return ((data ?? []) as AmendmentSearchRow[])
+    return asRows<AmendmentSearchRow>(data)
       .filter(row =>
         checkEntityAccess(row.visibility, true, relationships.amendmentIds.has(row.id))
       )
@@ -997,7 +1001,7 @@ async function searchEvents(
         .limit(limit)
     );
 
-    return ((data ?? []) as EventSearchRow[])
+    return asRows<EventSearchRow>(data)
       .filter(row => checkEntityAccess(row.visibility, true, relationships.eventIds.has(row.id)))
       .map(buildEventAttachment);
   });
@@ -1020,7 +1024,7 @@ async function searchTodos(
         .limit(limit)
     );
 
-    return ((data ?? []) as TodoSearchRow[])
+    return asRows<TodoSearchRow>(data)
       .filter(row =>
         checkEntityAccess(
           row.visibility,
@@ -1044,7 +1048,7 @@ async function searchElections(query: string, limit: number): Promise<AiChatAtta
         .limit(limit)
     );
 
-    return ((data ?? []) as ElectionSearchRow[])
+    return asRows<ElectionSearchRow>(data)
       .filter(row => checkEntityAccess(row.visibility, true, false))
       .map(buildElectionAttachment);
   });
@@ -1062,7 +1066,7 @@ async function searchVotes(query: string, limit: number): Promise<AiChatAttachme
         .limit(limit)
     );
 
-    return ((data ?? []) as VoteSearchRow[])
+    return asRows<VoteSearchRow>(data)
       .filter(row => checkEntityAccess(row.visibility, true, false))
       .map(buildVoteAttachment);
   });
@@ -1082,16 +1086,17 @@ async function findMyTodos(
     ]);
 
     const assignedIds = dedupeStrings(
-      ((assignedIdsData ?? []) as { todo_id: string }[]).map(row => row.todo_id)
+      asRows<{ todo_id: string }>(assignedIdsData).map(row => row.todo_id)
     );
-    const createdRows = (createdData ?? []) as TodoSearchRow[];
+    const createdRows = asRows<TodoSearchRow>(createdData);
     const existingIds = new Set(createdRows.map(row => row.id));
     const missingAssignedIds = assignedIds.filter(id => !existingIds.has(id));
 
     const assignedRows =
       missingAssignedIds.length > 0
-        ? (((await tx.run(zql.todo.where('id', 'IN', missingAssignedIds).limit(totalLimit * 2))) ??
-            []) as TodoSearchRow[])
+        ? asRows<TodoSearchRow>(
+            await tx.run(zql.todo.where('id', 'IN', missingAssignedIds).limit(totalLimit * 2))
+          )
         : [];
 
     const requestedStatus = status?.trim();
@@ -1133,18 +1138,18 @@ async function findMyCalendar(
     ]);
 
     const participantIds = dedupeStrings(
-      ((participantIdsData ?? []) as { event_id: string }[]).map(row => row.event_id)
+      asRows<{ event_id: string }>(participantIdsData).map(row => row.event_id)
     );
-    const createdRows = (createdData ?? []) as EventSearchRow[];
+    const createdRows = asRows<EventSearchRow>(createdData);
     const missingParticipantIds = participantIds.filter(
       eventId => !createdRows.some(row => row.id === eventId)
     );
 
     const participantRows =
       missingParticipantIds.length > 0
-        ? (((await tx.run(
-            zql.event.where('id', 'IN', missingParticipantIds).limit(totalLimit * 2)
-          )) ?? []) as EventSearchRow[])
+        ? asRows<EventSearchRow>(
+            await tx.run(zql.event.where('id', 'IN', missingParticipantIds).limit(totalLimit * 2))
+          )
         : [];
 
     const uniqueRows = new Map<string, EventSearchRow>();
@@ -1167,7 +1172,7 @@ async function findMyCalendar(
       })
       .sort((left, right) => {
         if (timeframe === 'past') {
-          return (right.start_date ?? 0) - (left.start_date ?? 0);
+          return Number(right.start_date) - Number(left.start_date);
         }
 
         return (
@@ -1188,16 +1193,18 @@ async function findMyGroups(
   const totalLimit = clampLimit(limit, 6);
 
   return executeZeroRead(async tx => {
-    const membershipRows = ((await tx.run(
-      zql.group_membership.where('user_id', userId).orderBy('created_at', 'desc')
-    )) ?? []) as GroupMembershipRoleRow[];
+    const membershipRows = asRows<GroupMembershipRoleRow>(
+      await tx.run(zql.group_membership.where('user_id', userId).orderBy('created_at', 'desc'))
+    );
 
     const membershipIds = membershipRows.map(row => row.id);
     const roleRows =
       membershipIds.length > 0
-        ? (((await tx.run(
-            zql.group_membership_role.where('group_membership_id', 'IN', membershipIds)
-          )) ?? []) as GroupMembershipRoleLinkRow[])
+        ? asRows<GroupMembershipRoleLinkRow>(
+            await tx.run(
+              zql.group_membership_role.where('group_membership_id', 'IN', membershipIds)
+            )
+          )
         : [];
     const membershipIdsWithRoles = new Set(roleRows.map(row => row.group_membership_id));
     const groupIds = dedupeStrings(
@@ -1208,8 +1215,7 @@ async function findMyGroups(
       return [];
     }
 
-    const groupRows = ((await tx.run(zql.group.where('id', 'IN', groupIds))) ??
-      []) as GroupSearchRow[];
+    const groupRows = asRows<GroupSearchRow>(await tx.run(zql.group.where('id', 'IN', groupIds)));
     const groupsById = new Map(groupRows.map(row => [row.id, row]));
 
     const attachments = groupIds
@@ -1230,9 +1236,11 @@ async function findMyAmendments(
   const totalLimit = clampLimit(limit, 6);
 
   return executeZeroRead(async tx => {
-    const collaboratorRows = ((await tx.run(
-      zql.amendment_collaborator.where('user_id', userId).orderBy('created_at', 'desc')
-    )) ?? []) as AmendmentCollaboratorRoleRow[];
+    const collaboratorRows = asRows<AmendmentCollaboratorRoleRow>(
+      await tx.run(
+        zql.amendment_collaborator.where('user_id', userId).orderBy('created_at', 'desc')
+      )
+    );
 
     const amendmentIds = dedupeStrings(
       collaboratorRows.filter(row => Boolean(row.role_id)).map(row => row.amendment_id)
@@ -1242,8 +1250,9 @@ async function findMyAmendments(
       return [];
     }
 
-    const amendmentRows = ((await tx.run(zql.amendment.where('id', 'IN', amendmentIds))) ??
-      []) as AmendmentSearchRow[];
+    const amendmentRows = asRows<AmendmentSearchRow>(
+      await tx.run(zql.amendment.where('id', 'IN', amendmentIds))
+    );
     const amendmentsById = new Map(amendmentRows.map(row => [row.id, row]));
 
     const attachments = amendmentIds
@@ -1264,16 +1273,18 @@ async function findMyRoleEvents(
   const totalLimit = clampLimit(limit, 6);
 
   return executeZeroRead(async tx => {
-    const participantRows = ((await tx.run(
-      zql.event_participant.where('user_id', userId).orderBy('created_at', 'desc')
-    )) ?? []) as EventParticipantRoleRow[];
+    const participantRows = asRows<EventParticipantRoleRow>(
+      await tx.run(zql.event_participant.where('user_id', userId).orderBy('created_at', 'desc'))
+    );
 
     const participantIds = participantRows.map(row => row.id);
     const roleRows =
       participantIds.length > 0
-        ? (((await tx.run(
-            zql.event_participant_role.where('event_participant_id', 'IN', participantIds)
-          )) ?? []) as EventParticipantRoleLinkRow[])
+        ? asRows<EventParticipantRoleLinkRow>(
+            await tx.run(
+              zql.event_participant_role.where('event_participant_id', 'IN', participantIds)
+            )
+          )
         : [];
     const participantIdsWithRoles = new Set(roleRows.map(row => row.event_participant_id));
     const eventIds = dedupeStrings(
@@ -1284,8 +1295,7 @@ async function findMyRoleEvents(
       return [];
     }
 
-    const eventRows = ((await tx.run(zql.event.where('id', 'IN', eventIds))) ??
-      []) as EventSearchRow[];
+    const eventRows = asRows<EventSearchRow>(await tx.run(zql.event.where('id', 'IN', eventIds)));
     const eventsById = new Map(eventRows.map(row => [row.id, row]));
 
     const attachments = eventIds
@@ -1306,9 +1316,9 @@ async function findMyBlogs(
   const totalLimit = clampLimit(limit, 6);
 
   return executeZeroRead(async tx => {
-    const bloggerRows = ((await tx.run(
-      zql.blog_blogger.where('user_id', userId).orderBy('created_at', 'desc')
-    )) ?? []) as BlogBloggerRoleRow[];
+    const bloggerRows = asRows<BlogBloggerRoleRow>(
+      await tx.run(zql.blog_blogger.where('user_id', userId).orderBy('created_at', 'desc'))
+    );
 
     const blogIds = dedupeStrings(
       bloggerRows.filter(row => Boolean(row.role_id)).map(row => row.blog_id)
@@ -1318,7 +1328,7 @@ async function findMyBlogs(
       return [];
     }
 
-    const blogRows = ((await tx.run(zql.blog.where('id', 'IN', blogIds))) ?? []) as BlogSearchRow[];
+    const blogRows = asRows<BlogSearchRow>(await tx.run(zql.blog.where('id', 'IN', blogIds)));
     const blogsById = new Map(blogRows.map(row => [row.id, row]));
 
     const attachments = blogIds
@@ -1379,7 +1389,7 @@ async function findGroupResources(
       );
 
       attachments.push(
-        ...((data ?? []) as PaymentRow[]).map(row => {
+        ...asRows<PaymentRow>(data).map(row => {
           const direction =
             row.receiver_group_id === groupId
               ? 'income'
@@ -1397,7 +1407,7 @@ async function findGroupResources(
               formatDate(row.created_at),
             ]
               .filter(Boolean)
-              .join(' · ') || null,
+              .join(' · '),
             group.name ? `Gruppe: ${group.name}` : null,
             {
               id: row.id,
@@ -1421,7 +1431,7 @@ async function findGroupResources(
         zql.todo.where('group_id', groupId).orderBy('updated_at', 'desc').limit(fetchLimit)
       );
 
-      attachments.push(...((data ?? []) as GroupTodoRow[]).map(buildTodoAttachment));
+      attachments.push(...asRows<GroupTodoRow>(data).map(buildTodoAttachment));
     }
 
     if (resourceTypes.includes('links')) {
@@ -1430,7 +1440,7 @@ async function findGroupResources(
       );
 
       attachments.push(
-        ...((data ?? []) as LinkRow[]).map(row =>
+        ...asRows<LinkRow>(data).map(row =>
           buildAttachment(
             'link',
             row.id,
@@ -1447,7 +1457,7 @@ async function findGroupResources(
         zql.amendment.where('group_id', groupId).orderBy('updated_at', 'desc').limit(fetchLimit)
       );
 
-      const amendments = (amendmentData ?? []) as GroupAmendmentRow[];
+      const amendments = asRows<GroupAmendmentRow>(amendmentData);
 
       if (resourceTypes.includes('amendments')) {
         attachments.push(...amendments.map(buildAmendmentAttachment));
@@ -1475,7 +1485,7 @@ async function findGroupResources(
           );
 
           attachments.push(
-            ...((documentData ?? []) as DocumentRow[]).map(row => {
+            ...asRows<DocumentRow>(documentData).map(row => {
               const amendment = amendmentByDocumentId.get(row.id);
               return buildAttachment(
                 'document',
@@ -1499,7 +1509,7 @@ async function findGroupResources(
         zql.event.where('group_id', groupId).orderBy('start_date', 'asc').limit(fetchLimit)
       );
 
-      attachments.push(...((data ?? []) as GroupEventRow[]).map(buildEventAttachment));
+      attachments.push(...asRows<GroupEventRow>(data).map(buildEventAttachment));
     }
 
     if (resourceTypes.includes('blogs')) {
@@ -1507,7 +1517,7 @@ async function findGroupResources(
         zql.blog.where('group_id', groupId).orderBy('updated_at', 'desc').limit(fetchLimit)
       );
 
-      attachments.push(...((data ?? []) as GroupBlogRow[]).map(buildBlogAttachment));
+      attachments.push(...asRows<GroupBlogRow>(data).map(buildBlogAttachment));
     }
 
     return filterAttachmentsByQuery(dedupeAttachments(attachments), query).slice(
@@ -1533,7 +1543,7 @@ async function findEventResources(
       zql.agenda_item.where('event_id', eventId).orderBy('order_index', 'asc').limit(fetchLimit)
     );
 
-    const agendaItems = (agendaData ?? []) as AgendaItemRow[];
+    const agendaItems = asRows<AgendaItemRow>(agendaData);
 
     if (resourceTypes.includes('agenda_items')) {
       attachments.push(
@@ -1584,9 +1594,10 @@ async function findEventResources(
       ]);
 
       attachments.push(
-        ...([...(eventAmendments ?? []), ...(agendaAmendments ?? [])] as EventAmendmentRow[]).map(
-          buildAmendmentAttachment
-        )
+        ...[
+          ...asRows<EventAmendmentRow>(eventAmendments),
+          ...asRows<EventAmendmentRow>(agendaAmendments),
+        ].map(buildAmendmentAttachment)
       );
     }
 
@@ -1600,7 +1611,7 @@ async function findEventResources(
           .limit(fetchLimit)
       );
 
-      attachments.push(...((data ?? []) as EventElectionRow[]).map(buildElectionAttachment));
+      attachments.push(...asRows<EventElectionRow>(data).map(buildElectionAttachment));
     }
 
     if (resourceTypes.includes('votes') && agendaItemIds.length > 0) {
@@ -1611,7 +1622,7 @@ async function findEventResources(
           .limit(fetchLimit)
       );
 
-      attachments.push(...((data ?? []) as EventVoteRow[]).map(buildVoteAttachment));
+      attachments.push(...asRows<EventVoteRow>(data).map(buildVoteAttachment));
     }
 
     const filtered = filterAttachmentsByQuery(dedupeAttachments(attachments), query).slice(

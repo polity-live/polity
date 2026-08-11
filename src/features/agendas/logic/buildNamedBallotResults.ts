@@ -163,7 +163,7 @@ interface ElectionLike {
   offline_tallies?: readonly ElectionOfflineTallyLike[] | null;
 }
 
-function resolveResultsPhase(status?: string | null): {
+export function resolveResultsPhase(status?: string | null): {
   phase: NamedBallotResultsPhase;
   isClosed: boolean;
 } {
@@ -268,13 +268,8 @@ function finalizeGroups(
         .filter(summary => summary.count > 0),
     }))
     .sort((left, right) => {
-      if (left.key === 'all' || right.key === 'all') {
-        return left.key === 'all' ? -1 : 1;
-      }
-
-      if (left.key === 'group:unknown' || right.key === 'group:unknown') {
-        return left.key === 'group:unknown' ? 1 : -1;
-      }
+      if (left.key === 'group:unknown') return 1;
+      if (right.key === 'group:unknown') return -1;
 
       return left.label.localeCompare(right.label, undefined, { sensitivity: 'base' });
     });

@@ -124,4 +124,22 @@ describe('useAlphaWarningDialogController', () => {
 
     await waitFor(() => expect(warningMock).toHaveBeenCalledTimes(2));
   });
+
+  it('falls back to memory when session storage is unavailable', async () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(key => {
+      if (key === ALPHA_WARNING_SESSION_KEY) throw new Error('blocked');
+      return null;
+    });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+      throw new Error('blocked');
+    });
+
+    await renderAlphaWarningController();
+    await waitFor(() => expect(warningMock).toHaveBeenCalledTimes(1));
+
+    expect(() => latestToastOptions()?.action?.onClick()).not.toThrow();
+    warningMock.mockClear();
+    await renderAlphaWarningController();
+    expect(warningMock).not.toHaveBeenCalled();
+  });
 });

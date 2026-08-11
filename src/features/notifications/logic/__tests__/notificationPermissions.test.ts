@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { Notification } from '../../types/notification.types';
 import { canManageEntityNotification } from '../notificationPermissions';
@@ -266,5 +266,121 @@ describe('canManageEntityNotification', () => {
         isLoading: true,
       })
     ).toBe(false);
+    expect(
+      canManageEntityNotification(notification(), {
+        ...evaluator({ ownedGroupIds: ['group-1'] }),
+        userId: undefined,
+      })
+    ).toBe(false);
+    expect(
+      canManageEntityNotification(notification({ recipient_entity_id: null }), evaluator())
+    ).toBe(false);
+    expect(
+      canManageEntityNotification(notification({ recipient_entity_type: 'unknown' }), evaluator())
+    ).toBe(false);
+    expect(
+      canManageEntityNotification(notification({ recipient_event_id: 'event-1' }), evaluator())
+    ).toBe(false);
+  });
+
+  it('rejects missing and mismatched amendment relations', () => {
+    const base = {
+      recipient_entity_id: 'amendment-1',
+      recipient_entity_type: 'amendment',
+      recipient_group_id: null,
+      recipient_amendment_id: 'amendment-1',
+    };
+    expect(canManageEntityNotification(notification(base), evaluator())).toBe(false);
+    expect(
+      canManageEntityNotification(
+        notification({ ...base, recipient_amendment: { id: 'other' } }),
+        evaluator()
+      )
+    ).toBe(false);
+  });
+
+  it('maps optional amendment owners, groups, collaborators, roles, and action scopes', () => {
+    const can = vi.fn(() => false);
+    const customEvaluator: PermissionEvaluator = {
+      userId: USER_ID,
+      isLoading: false,
+      can,
+    };
+    canManageEntityNotification(
+      notification({
+        recipient_entity_id: 'amendment-1',
+        recipient_entity_type: 'amendment',
+        recipient_group_id: null,
+        recipient_amendment_id: 'amendment-1',
+        recipient_amendment: {
+          id: 'amendment-1',
+          created_by_id: null,
+          group_id: 'group-1',
+          collaborators: [
+            {
+              id: 'collaborator',
+              user_id: null,
+              status: null,
+              role: {
+                id: 'role',
+                name: null,
+                description: 'Description',
+                scope: null,
+                action_rights: [
+                  {
+                    id: null,
+                    resource: 'notifications',
+                    action: 'manageNotifications',
+                    group_id: 'group-1',
+                    event_id: 'event-1',
+                    amendment_id: 'amendment-1',
+                    blog_id: 'blog-1',
+                  },
+                  {
+                    id: 'unscoped',
+                    resource: 'notifications',
+                    action: 'viewNotifications',
+                    group_id: null,
+                    event_id: null,
+                    amendment_id: null,
+                    blog_id: null,
+                  },
+                ],
+              },
+            },
+            {
+              id: 'empty-role',
+              user_id: 'user-2',
+              role: { id: 'empty-role', action_rights: undefined },
+            },
+            { id: 'no-role', user_id: 'user-3', role: null },
+          ],
+        },
+      }),
+      customEvaluator
+    );
+
+    expect(can).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amendment: expect.objectContaining({
+          owner: undefined,
+          user: undefined,
+          group: { id: 'group-1' },
+        }),
+      }),
+      'manageNotifications',
+      'notifications'
+    );
+
+    canManageEntityNotification(
+      notification({
+        recipient_entity_id: 'amendment-2',
+        recipient_entity_type: 'amendment',
+        recipient_group_id: null,
+        recipient_amendment_id: 'amendment-2',
+        recipient_amendment: { id: 'amendment-2', collaborators: undefined },
+      }),
+      customEvaluator
+    );
   });
 });

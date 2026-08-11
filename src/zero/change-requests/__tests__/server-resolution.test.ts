@@ -12,7 +12,13 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (_key: string, _params?: unknown, fallback?: string) => fallback ?? 'Change Request',
 }));
 
-import { resolveChangeRequestByVoteResult } from '../server-resolution';
+import {
+  applyChangeRequestVoteResultToContent,
+  findChangeRequestDiscussion,
+  getChangeRequestResolutionStatus,
+  isCityDesignSourceType,
+  resolveChangeRequestByVoteResult,
+} from '../server-resolution';
 
 function createTx(rows: unknown[]) {
   const remainingRows = [...rows];
@@ -74,6 +80,7 @@ describe('resolveChangeRequestByVoteResult', () => {
             crId: 'CR-1',
             changeRequestEntityId: 'cr-1',
           },
+          { id: 'other-suggestion', crId: 'CR-99' },
         ],
       },
       {
@@ -109,7 +116,10 @@ describe('resolveChangeRequestByVoteResult', () => {
     expect(tx.mutate.amendment.update).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'amendment-1',
-        discussions: [expect.objectContaining({ id: 'suggestion-1', status: 'accepted' })],
+        discussions: expect.arrayContaining([
+          expect.objectContaining({ id: 'suggestion-1', status: 'accepted' }),
+          expect.objectContaining({ id: 'other-suggestion' }),
+        ]),
       })
     );
     expect(tx.mutate.change_request.update).toHaveBeenCalledWith(
@@ -209,7 +219,7 @@ describe('resolveChangeRequestByVoteResult', () => {
       {
         id: 'amendment-1',
         document_id: 'doc-1',
-        discussions: [],
+        discussions: { malformed: true },
       },
       {
         id: 'doc-1',
@@ -240,6 +250,212 @@ describe('resolveChangeRequestByVoteResult', () => {
         voting_status: 'completed',
       })
     );
+  });
+
+  it('covers status, discussion lookup, content action, and CityDesign source contracts', () => {
+    expect(getChangeRequestResolutionStatus('passed')).toBe('accepted');
+    expect(getChangeRequestResolutionStatus('rejected')).toBe('rejected');
+    expect(getChangeRequestResolutionStatus('tie')).toBe('rejected');
+
+    const discussions = [
+      { id: 'suggestion', crId: 'CR-1' },
+      { id: 'entity-discussion', changeRequestEntityId: 'entity' },
+      { id: 'title-cr-id', crId: 'Title' },
+      { id: 'title-title', title: 'Other title' },
+    ];
+    expect(
+      findChangeRequestDiscussion(discussions, {
+        id: 'row',
+        suggestion_id: 'suggestion',
+      })?.id
+    ).toBe('suggestion');
+    expect(findChangeRequestDiscussion(discussions, { id: 'entity' })?.id).toBe(
+      'entity-discussion'
+    );
+    expect(findChangeRequestDiscussion(discussions, { id: 'row', title: 'Title' })?.id).toBe(
+      'title-cr-id'
+    );
+    expect(findChangeRequestDiscussion(discussions, { id: 'row', title: 'Other title' })?.id).toBe(
+      'title-title'
+    );
+    expect(findChangeRequestDiscussion([], { id: 'row' })).toBeUndefined();
+    expect(findChangeRequestDiscussion([], { id: 'row', suggestion_id: 'durable' })).toEqual({
+      id: 'durable',
+    });
+
+    applyChangeRequestVoteResultToContent([] as never, 'suggestion', 'tie');
+    expect(applySuggestionToContentMock).toHaveBeenLastCalledWith([], 'suggestion', 'reject');
+
+    for (const type of [
+      'city_design_object',
+      'CITY_DESIGN_SCENE',
+      ' city_design_area ',
+      'city_design_layer',
+      'city_design_custom',
+    ]) {
+      expect(isCityDesignSourceType(type)).toBe(true);
+    }
+    expect(isCityDesignSourceType('document')).toBe(false);
+    expect(isCityDesignSourceType(null)).toBe(false);
+  });
+
+  it('returns null when the change request no longer exists', async () => {
+    const tx = createTx([null]);
+
+    await expect(
+      resolveChangeRequestByVoteResult({
+        tx: tx as never,
+        ctx: { userID: 'user-1' },
+        changeRequestId: 'missing',
+        voteResult: 'passed',
+      })
+    ).resolves.toBeNull();
+    expect(tx.mutate.change_request.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects a missing main document, linked suggestion, or document content', async () => {
+    const cases = [
+      {
+        rows: [
+          { id: 'cr', amendment_id: 'amendment', title: null },
+          { id: 'amendment', document_id: null, discussions: [] },
+        ],
+        message: 'document not found',
+      },
+      {
+        rows: [
+          { id: 'cr', amendment_id: 'amendment', title: 'CR-1' },
+          { id: 'amendment', document_id: 'doc', discussions: [] },
+        ],
+        message: 'linked document suggestion not found',
+      },
+      {
+        rows: [
+          {
+            id: 'cr',
+            amendment_id: 'amendment',
+            suggestion_id: 'suggestion',
+            title: 'CR-1',
+          },
+          { id: 'amendment', document_id: 'doc', discussions: [] },
+          { id: 'doc', content: null },
+        ],
+        message: 'document content not found',
+      },
+    ];
+
+    for (const testCase of cases) {
+      const tx = createTx(testCase.rows);
+      await expect(
+        resolveChangeRequestByVoteResult({
+          tx: tx as never,
+          ctx: { userID: 'user-1' },
+          changeRequestId: 'cr',
+          voteResult: 'passed',
+          now: 1,
+        })
+      ).rejects.toThrow(testCase.message);
+      expect(tx.mutate.change_request.update).not.toHaveBeenCalled();
+    }
+  });
+
+  it('rejects missing and foreign process branches', async () => {
+    const missingBranch = createTx([
+      { id: 'cr', amendment_id: 'amendment', process_branch_id: 'missing' },
+      { id: 'amendment', clone_source_id: 'origin' },
+      null,
+    ]);
+    await expect(
+      resolveChangeRequestByVoteResult({
+        tx: missingBranch as never,
+        ctx: { userID: 'user' },
+        changeRequestId: 'cr',
+        voteResult: 'passed',
+      })
+    ).rejects.toThrow('Process branch not found');
+
+    for (const processRun of [null, { id: 'run', amendment_id: 'other' }]) {
+      const foreignBranch = createTx([
+        { id: 'cr', amendment_id: 'amendment', process_branch_id: 'branch' },
+        { id: 'amendment', clone_source_id: 'origin' },
+        { id: 'branch', process_run_id: 'run' },
+        processRun,
+      ]);
+      await expect(
+        resolveChangeRequestByVoteResult({
+          tx: foreignBranch as never,
+          ctx: { userID: 'user' },
+          changeRequestId: 'cr',
+          voteResult: 'passed',
+        })
+      ).rejects.toThrow('does not belong');
+    }
+  });
+
+  it('rejects a valid branch without a document', async () => {
+    const tx = createTx([
+      { id: 'cr', amendment_id: 'amendment', process_branch_id: 'branch' },
+      { id: 'amendment' },
+      { id: 'branch', process_run_id: 'run', document_id: null, discussions: [] },
+      { id: 'run', amendment_id: 'amendment' },
+    ]);
+
+    await expect(
+      resolveChangeRequestByVoteResult({
+        tx: tx as never,
+        ctx: { userID: 'user' },
+        changeRequestId: 'cr',
+        voteResult: 'passed',
+      })
+    ).rejects.toThrow('document not found');
+  });
+
+  it('uses branch and version fallbacks with explicit internal-vote metadata', async () => {
+    const content = [
+      {
+        type: 'p',
+        children: [{ text: 'new', suggestion_insert: { id: 'durable', type: 'insert' } }],
+      },
+    ];
+    const tx = createTx([
+      {
+        id: 'cr',
+        amendment_id: 'amendment',
+        process_branch_id: 'branch',
+        suggestion_id: 'durable',
+        title: null,
+      },
+      { id: 'amendment' },
+      { id: 'branch', process_run_id: 'run', document_id: 'doc', discussions: null },
+      { id: 'run', amendment_id: 'amendment' },
+      { id: 'doc', content },
+      null,
+    ]);
+
+    await resolveChangeRequestByVoteResult({
+      tx: tx as never,
+      ctx: { userID: 'user' },
+      changeRequestId: 'cr',
+      voteResult: 'passed',
+      now: 5,
+      resolutionMethod: 'internal_vote',
+      visibilityScope: 'collaborators',
+    });
+
+    expect(tx.mutate.document_version.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version_number: 1,
+        change_summary: 'Change Request accepted by vote',
+      })
+    );
+    expect(tx.mutate.change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resolved_in_mode: 'vote_internal',
+        resolution_method: 'internal_vote',
+        visibility_scope: 'collaborators',
+      })
+    );
+    expect(tx.mutate.amendment_process_branch.update).not.toHaveBeenCalled();
   });
 
   it('applies a branch-scoped change request only to the branch document and discussions', async () => {

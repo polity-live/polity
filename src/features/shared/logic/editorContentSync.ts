@@ -101,6 +101,7 @@ function resolveLogicalEditorPoint(
 
   for (const [node, path] of textNodes) {
     if (!TextApi.isText(node)) continue;
+
     const isWithinLeaf = remainingOffset < node.text.length;
     const isAtPreferredBoundary =
       remainingOffset === node.text.length && !logicalPoint.preferNextAtBoundary;

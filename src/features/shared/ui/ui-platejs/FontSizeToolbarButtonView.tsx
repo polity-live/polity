@@ -8,6 +8,7 @@ interface FontSizeToolbarButtonViewProps {
   displayValue: string;
   fontSizes: readonly string[];
   isFocused: boolean;
+  label: string;
   onBlur: () => void;
   onDecrease: () => void;
   onFocus: () => void;
@@ -21,6 +22,7 @@ export function FontSizeToolbarButtonView({
   displayValue,
   fontSizes,
   isFocused,
+  label,
   onBlur,
   onDecrease,
   onFocus,
@@ -31,7 +33,7 @@ export function FontSizeToolbarButtonView({
 }: FontSizeToolbarButtonViewProps) {
   return (
     <div className="bg-muted/60 flex h-7 items-center gap-1 rounded-md p-0">
-      <ToolbarButton onClick={onDecrease}>
+      <ToolbarButton onClick={onDecrease} tooltip={`${label} - 1`}>
         <Minus />
       </ToolbarButton>
 
@@ -52,6 +54,10 @@ export function FontSizeToolbarButtonView({
               }
             }}
             data-plate-focus="true"
+            aria-label={label}
+            role="combobox"
+            aria-autocomplete="list"
+            inputMode="numeric"
             type="text"
           />
         </PopoverTrigger>
@@ -75,7 +81,7 @@ export function FontSizeToolbarButtonView({
         </PopoverContent>
       </Popover>
 
-      <ToolbarButton onClick={onIncrease}>
+      <ToolbarButton onClick={onIncrease} tooltip={`${label} + 1`}>
         <Plus />
       </ToolbarButton>
     </div>

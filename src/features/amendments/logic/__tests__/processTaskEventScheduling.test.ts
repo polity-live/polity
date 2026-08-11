@@ -6,6 +6,7 @@ import {
   getSchedulingWindowDisplayLabel,
   getSchedulingWindowValidationMessage,
   isEventWithinSchedulingWindow,
+  parseProcessTaskScheduleMetadata,
 } from '../processTaskEventScheduling';
 
 describe('processTaskEventScheduling', () => {
@@ -115,5 +116,51 @@ describe('processTaskEventScheduling', () => {
         maxStartTime: '18:00',
       })
     ).toBe('Allowed time for this task: 2026-06-10 09:00 to 2026-06-12 18:00.');
+  });
+
+  it('formats date-only, earliest-only, latest-only, and empty windows', () => {
+    expect(getSchedulingWindowDisplayLabel({ minStartDate: '2026-06-10' })).toContain('2026-06-10');
+    expect(getSchedulingWindowDisplayLabel({ maxStartDate: '2026-06-12' })).toContain('2026-06-12');
+    expect(getSchedulingWindowDisplayLabel({})).toBeNull();
+  });
+
+  it('parses workflow and relative evaluation metadata and rejects invalid metadata', () => {
+    expect(parseProcessTaskScheduleMetadata(null)).toBeNull();
+    expect(parseProcessTaskScheduleMetadata('invalid')).toBeNull();
+    expect(parseProcessTaskScheduleMetadata([])).toBeNull();
+    expect(
+      parseProcessTaskScheduleMetadata({
+        amendmentId: 7,
+        pathMode: 'workflow',
+        evaluationMode: 'relative_to_vote',
+      })
+    ).toEqual(
+      expect.objectContaining({
+        amendmentId: undefined,
+        pathMode: 'workflow',
+        evaluationMode: 'relative_to_vote',
+      })
+    );
+    expect(
+      parseProcessTaskScheduleMetadata({ pathMode: 'invalid', evaluationMode: 'invalid' })
+    ).toEqual(expect.objectContaining({ pathMode: null, evaluationMode: null }));
+  });
+
+  it('rejects events after the maximum and events without dates', () => {
+    expect(
+      isEventWithinSchedulingWindow({ start_date: 20 }, { minStartAt: null, maxStartAt: 10 })
+    ).toBe(false);
+    expect(
+      isEventWithinSchedulingWindow({ start_date: null }, { minStartAt: null, maxStartAt: null })
+    ).toBe(false);
+  });
+
+  it('omits absent process and step run ids from create-event search', () => {
+    expect(
+      buildCreateEventSearchFromProcessTask({
+        task: { id: 'task', metadata: null },
+        groupId: 'group',
+      })
+    ).toEqual(expect.objectContaining({ processRunId: undefined, stepRunId: undefined }));
   });
 });

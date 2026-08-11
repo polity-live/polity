@@ -45,6 +45,11 @@ export interface ActionActor {
   avatarUrl?: string;
 }
 
+type ActionActorNameTranslator = (
+  key: string,
+  params?: Record<string, string | number | undefined | null>
+) => string;
+
 export interface ActionEntity {
   id: string;
   type: 'group' | 'event' | 'amendment' | 'election' | 'user';
@@ -136,13 +141,31 @@ const ACTION_CONFIG: Record<
 /**
  * Get initials from name
  */
-function getInitials(name: string): string {
+export function getActionActorInitials(name: string): string {
   return name
     .split(' ')
     .map(n => n[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
+}
+
+export function formatActionActorNames(
+  actors: ActionActor[],
+  translate: ActionActorNameTranslator
+): string {
+  if (actors.length === 0) return '';
+  if (actors.length === 1) return actors[0].name;
+  if (actors.length === 2) {
+    return translate('features.timeline.cards.action.actorPair', {
+      first: actors[0].name,
+      second: actors[1].name,
+    });
+  }
+  return translate('features.timeline.cards.action.actorOthers', {
+    first: actors[0].name,
+    count: actors.length - 1,
+  });
 }
 
 /**
@@ -160,7 +183,7 @@ function ActorAvatars({ actors, maxDisplay = 3 }: { actors: ActionActor[]; maxDi
           <AvatarFallback
             className={featureThemeClassName('timelineActionTimelineCardNeutralBackground')}
           >
-            {getInitials(actor.name)}
+            {getActionActorInitials(actor.name)}
           </AvatarFallback>
         </Avatar>
       ))}
@@ -176,7 +199,14 @@ function ActorAvatars({ actors, maxDisplay = 3 }: { actors: ActionActor[]; maxDi
 /**
  * Entity link component
  */
-function EntityLink({ entity }: { entity: ActionEntity }) {
+function EntityLink({
+  entity,
+  actionId,
+}: {
+  'data-action-id'?: string;
+  entity: ActionEntity;
+  actionId: string;
+}) {
   const iconMap = {
     group: <Users className="h-3.5 w-3.5" />,
     event: <Calendar className="h-3.5 w-3.5" />,
@@ -187,6 +217,8 @@ function EntityLink({ entity }: { entity: ActionEntity }) {
 
   return (
     <Link
+      data-action-id={actionId}
+      data-action-scope="presentation"
       to={entity.url}
       className={featureThemeClassName('timelineActionTimelineCardNeutralPanel')}
       onClick={e => e.stopPropagation()}
@@ -212,7 +244,7 @@ function EntityLink({ entity }: { entity: ActionEntity }) {
  */
 export function ActionTimelineCard({ action, onViewDetails, className }: ActionTimelineCardProps) {
   const { t } = useTranslation();
-  const config = ACTION_CONFIG[action.type];
+  const config = ACTION_CONFIG[action.type] ?? ACTION_CONFIG.group_created;
   const gradient = getContentTypeGradient('action');
   const timestamp =
     typeof action.timestamp === 'string' ? new Date(action.timestamp) : action.timestamp;
@@ -220,14 +252,7 @@ export function ActionTimelineCard({ action, onViewDetails, className }: ActionT
 
   // Build action message based on type
   const getActionMessage = () => {
-    const actorNames =
-      action.actors.length > 0
-        ? action.actors.length === 1
-          ? action.actors[0].name
-          : action.actors.length === 2
-            ? `${action.actors[0].name} and ${action.actors[1].name}`
-            : `${action.actors[0].name} and ${action.actors.length - 1} others`
-        : '';
+    const actorNames = formatActionActorNames(action.actors, t);
 
     switch (action.type) {
       case 'user_joined_group':
@@ -314,11 +339,23 @@ export function ActionTimelineCard({ action, onViewDetails, className }: ActionT
 
             {/* Entity links */}
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              {action.sourceEntity && <EntityLink entity={action.sourceEntity} />}
+              {action.sourceEntity && (
+                <EntityLink
+                  data-action-id="timeline.action.source.open"
+                  entity={action.sourceEntity}
+                  actionId="timeline.action.source.open"
+                />
+              )}
               {action.sourceEntity && action.targetEntity && (
                 <ArrowRight className="text-muted-foreground h-3.5 w-3.5" />
               )}
-              {action.targetEntity && <EntityLink entity={action.targetEntity} />}
+              {action.targetEntity && (
+                <EntityLink
+                  data-action-id="timeline.action.target.open"
+                  entity={action.targetEntity}
+                  actionId="timeline.action.target.open"
+                />
+              )}
             </div>
 
             {/* Forwarding metadata */}
@@ -360,6 +397,7 @@ export function ActionTimelineCard({ action, onViewDetails, className }: ActionT
       <TimelineCardActions>
         {onViewDetails && (
           <TimelineCardActionButton
+            data-action-id="timeline.action.details.open"
             onClick={e => {
               e?.preventDefault();
               onViewDetails?.();
@@ -371,6 +409,7 @@ export function ActionTimelineCard({ action, onViewDetails, className }: ActionT
         )}
         <div onClick={e => e.preventDefault()}>
           <ShareButton
+            data-action-id="timeline.action.share"
             url={shareUrl}
             title={
               action.sourceEntity?.name ||

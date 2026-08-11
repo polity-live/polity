@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../CreateProgressIndicator', () => ({
@@ -26,6 +26,90 @@ const steps: CreateFormStep[] = [
 ];
 
 describe('create form submit layouts', () => {
+  it('dispatches carousel and one-page navigation and submit actions through stable intents', () => {
+    const onScrollPrev = vi.fn();
+    const onScrollNext = vi.fn();
+    const onCarouselSubmit = vi.fn();
+    const { rerender } = render(
+      <CarouselFormLayoutView
+        steps={steps}
+        currentStep={0}
+        onSubmit={onCarouselSubmit}
+        isSubmitting={false}
+        canScrollNext
+        canScrollPrev
+        currentStepValid
+        emblaRef={vi.fn()}
+        isLastStep={false}
+        labels={{
+          creating: 'Creating',
+          createButton: 'Create',
+          next: 'Next',
+          previous: 'Previous',
+        }}
+        stepLabels={['Review']}
+        validSteps={[true]}
+        onScrollNext={onScrollNext}
+        onScrollPrev={onScrollPrev}
+        onStepClick={vi.fn()}
+      />
+    );
+    fireEvent.click(document.querySelector('[data-action-id="create.carousel.previous"]')!);
+    fireEvent.click(document.querySelector('[data-action-id="create.carousel.next"]')!);
+    expect(onScrollPrev).toHaveBeenCalledOnce();
+    expect(onScrollNext).toHaveBeenCalledOnce();
+
+    rerender(
+      <CarouselFormLayoutView
+        steps={steps}
+        currentStep={0}
+        onSubmit={onCarouselSubmit}
+        isSubmitting={false}
+        canScrollNext={false}
+        canScrollPrev
+        currentStepValid
+        emblaRef={vi.fn()}
+        isLastStep
+        labels={{
+          creating: 'Creating',
+          createButton: 'Create',
+          next: 'Next',
+          previous: 'Previous',
+        }}
+        stepLabels={['Review']}
+        validSteps={[true]}
+        onScrollNext={onScrollNext}
+        onScrollPrev={onScrollPrev}
+        onStepClick={vi.fn()}
+      />
+    );
+    fireEvent.click(document.querySelector('[data-action-id="create.carousel.submit"]')!);
+    expect(onCarouselSubmit).toHaveBeenCalledOnce();
+
+    const onOnePageSubmit = vi.fn();
+    rerender(
+      <OnePageFormLayoutView
+        steps={steps}
+        activeSection={0}
+        allStepsValid
+        sectionRefs={{ current: [] }}
+        stepLabels={['Review']}
+        onStepClick={vi.fn()}
+        onSubmit={onOnePageSubmit}
+        isSubmitting={false}
+        creatingLabel="Creating"
+        createButtonLabel="Create"
+      />
+    );
+    const submit = document.querySelector(
+      '[data-action-id="create.one-page.submit"]'
+    ) as HTMLElement;
+    submit.focus();
+    expect(document.activeElement).toBe(submit);
+    fireEvent.click(submit);
+    expect(onOnePageSubmit).toHaveBeenCalledOnce();
+  });
+
   it('keeps the carousel submit button spinner-free while submitting', () => {
     const { container } = render(
       <CarouselFormLayoutView

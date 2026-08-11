@@ -57,13 +57,13 @@ export function AddTodoDialogView({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button size="sm">
+        <Button data-action-id="groups.todos.open.create-dialog" size="sm">
           <Plus className="mr-2 h-4 w-4" />
           {translateText('generated.inline.0632_add_task_44e578a5')}
         </Button>
       </DialogTrigger>
       <ScrollableDialogContent>
-        <form onSubmit={onSubmit}>
+        <form data-action-scope="presentation" onSubmit={onSubmit}>
           <DialogHeader>
             <DialogTitle>
               {translateText('generated.inline.0633_add_new_task_23c82a1c')}
@@ -103,21 +103,40 @@ export function AddTodoDialogView({
               <FormControlLabel htmlFor="todo-priority">
                 {translateText('generated.inline.0637_priority_886cbff9')}
               </FormControlLabel>
-              <FormControlSelect value={priority} onValueChange={onPriorityChange}>
-                <FormControlSelectTrigger id="todo-priority">
+              <FormControlSelect
+                data-action-scope="presentation"
+                value={priority}
+                onValueChange={onPriorityChange}
+              >
+                <FormControlSelectTrigger
+                  data-action-id="groups.todos.priority.open"
+                  id="todo-priority"
+                >
                   <FormControlSelectValue />
                 </FormControlSelectTrigger>
                 <FormControlSelectContent>
-                  <FormControlSelectItem value="low">
+                  <FormControlSelectItem
+                    data-action-id="groups.todos.priority.choose-low"
+                    value="low"
+                  >
                     {translateText('generated.inline.0638_low_a124947c')}
                   </FormControlSelectItem>
-                  <FormControlSelectItem value="medium">
+                  <FormControlSelectItem
+                    data-action-id="groups.todos.priority.choose-medium"
+                    value="medium"
+                  >
                     {translateText('generated.inline.0639_medium_d404968e')}
                   </FormControlSelectItem>
-                  <FormControlSelectItem value="high">
+                  <FormControlSelectItem
+                    data-action-id="groups.todos.priority.choose-high"
+                    value="high"
+                  >
                     {translateText('generated.inline.0640_high_b1a5954a')}
                   </FormControlSelectItem>
-                  <FormControlSelectItem value="urgent">
+                  <FormControlSelectItem
+                    data-action-id="groups.todos.priority.choose-urgent"
+                    value="urgent"
+                  >
                     {translateText('generated.inline.0641_urgent_ecb26f46')}
                   </FormControlSelectItem>
                 </FormControlSelectContent>
@@ -133,7 +152,7 @@ export function AddTodoDialogView({
             />
           </div>
           <DialogFooter>
-            <Button type="submit">
+            <Button data-action-id="groups.todos.create.submit" type="submit">
               {translateText('generated.inline.0632_add_task_44e578a5')}
             </Button>
           </DialogFooter>

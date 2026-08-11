@@ -60,34 +60,34 @@ export type PqlFieldRegistry<TItem, TFieldKey extends string = string> = Readonl
   PqlFieldDefinition<TItem, TFieldKey>
 >;
 
-function isScalar(value: PqlValue): value is PqlScalar {
+export function isPqlScalar(value: PqlValue): value is PqlScalar {
   return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
 }
 
-function normalizeScalar(value: PqlValue): PqlScalar | null {
+export function normalizePqlScalar(value: PqlValue): PqlScalar | null {
   if (value instanceof Date) {
     return value.getTime();
   }
 
-  return isScalar(value) ? value : null;
+  return isPqlScalar(value) ? value : null;
 }
 
-function normalizeValues(value: PqlFieldValue): readonly PqlScalar[] {
+export function normalizePqlFieldValues(value: PqlFieldValue): readonly PqlScalar[] {
   if (Array.isArray(value)) {
     return value.flatMap(entry => {
-      const normalizedEntry = normalizeScalar(entry);
+      const normalizedEntry = normalizePqlScalar(entry);
       return normalizedEntry === null ? [] : [normalizedEntry];
     });
   }
 
-  const normalizedValue = normalizeScalar(value as PqlValue);
+  const normalizedValue = normalizePqlScalar(value as PqlValue);
   return normalizedValue === null ? [] : [normalizedValue];
 }
 
-function normalizeRuleScalar<TItem, TFieldKey extends string>(
+export function normalizePqlRuleScalar<TItem, TFieldKey extends string>(
   field: PqlFieldDefinition<TItem, TFieldKey>,
   value: PqlScalar
-): PqlScalar | null {
+): PqlScalar {
   if (typeof value !== 'string') {
     return value;
   }
@@ -100,10 +100,18 @@ function normalizeRuleScalar<TItem, TFieldKey extends string>(
   }
 
   if (field.kind === 'date') {
-    const parsedValue = /^\d{4}-\d{2}-\d{2}$/.test(trimmedValue)
-      ? toLocalTimestamp(trimmedValue)
-      : Date.parse(trimmedValue);
-    if (parsedValue === null) return value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmedValue)) {
+      const [year, month, day] = trimmedValue.split('-').map(Number);
+      const localTimestamp = toLocalTimestamp(trimmedValue) as number;
+      const localDate = new Date(localTimestamp);
+      return localDate.getFullYear() === year &&
+        localDate.getMonth() + 1 === month &&
+        localDate.getDate() === day
+        ? localTimestamp
+        : value;
+    }
+
+    const parsedValue = Date.parse(trimmedValue);
     return Number.isNaN(parsedValue) ? value : parsedValue;
   }
 
@@ -129,50 +137,53 @@ function normalizeRuleScalar<TItem, TFieldKey extends string>(
   return matchingOption?.value ?? trimmedValue;
 }
 
-function normalizeRuleValues<TItem, TFieldKey extends string>(
+export function normalizePqlRuleValues<TItem, TFieldKey extends string>(
   field: PqlFieldDefinition<TItem, TFieldKey>,
   value: PqlRule<TFieldKey>['value']
 ): readonly PqlScalar[] {
   const rawValues = Array.isArray(value) ? value : value === null ? [] : [value];
 
-  return rawValues.flatMap(entry => {
-    const normalizedEntry = normalizeRuleScalar(field, entry);
-    return normalizedEntry === null ? [] : [normalizedEntry];
-  });
+  return rawValues.map(entry => normalizePqlRuleScalar(field, entry));
 }
 
-function toSearchableString(value: PqlScalar): string {
+export function toPqlSearchableString(value: PqlScalar): string {
   return String(value).trim().toLowerCase();
 }
 
-function hasValue(values: readonly PqlScalar[]): boolean {
+export function hasPqlValue(values: readonly PqlScalar[]): boolean {
   return values.length > 0;
 }
 
-function matchesEq(fieldValues: readonly PqlScalar[], ruleValues: readonly PqlScalar[]): boolean {
-  if (!hasValue(fieldValues) || !hasValue(ruleValues)) {
+export function matchesPqlEq(
+  fieldValues: readonly PqlScalar[],
+  ruleValues: readonly PqlScalar[]
+): boolean {
+  if (!hasPqlValue(fieldValues) || !hasPqlValue(ruleValues)) {
     return false;
   }
 
   return fieldValues.some(fieldValue => ruleValues.some(ruleValue => fieldValue === ruleValue));
 }
 
-function matchesContains(
+export function matchesPqlContains(
   fieldValues: readonly PqlScalar[],
   ruleValues: readonly PqlScalar[]
 ): boolean {
-  if (!hasValue(fieldValues) || !hasValue(ruleValues)) {
+  if (!hasPqlValue(fieldValues) || !hasPqlValue(ruleValues)) {
     return false;
   }
 
   return fieldValues.some(fieldValue => {
-    const haystack = toSearchableString(fieldValue);
-    return ruleValues.some(ruleValue => haystack.includes(toSearchableString(ruleValue)));
+    const haystack = toPqlSearchableString(fieldValue);
+    return ruleValues.some(ruleValue => haystack.includes(toPqlSearchableString(ruleValue)));
   });
 }
 
-function matchesIn(fieldValues: readonly PqlScalar[], ruleValues: readonly PqlScalar[]): boolean {
-  if (!hasValue(fieldValues) || !hasValue(ruleValues)) {
+export function matchesPqlIn(
+  fieldValues: readonly PqlScalar[],
+  ruleValues: readonly PqlScalar[]
+): boolean {
+  if (!hasPqlValue(fieldValues) || !hasPqlValue(ruleValues)) {
     return false;
   }
 
@@ -180,19 +191,19 @@ function matchesIn(fieldValues: readonly PqlScalar[], ruleValues: readonly PqlSc
   return fieldValues.some(fieldValue => allowedValues.has(fieldValue));
 }
 
-function matchesComparable(
+export function matchesPqlComparable(
   fieldValues: readonly PqlScalar[],
   ruleValues: readonly PqlScalar[],
   compare: (left: number, right: number) => boolean
 ): boolean {
-  if (!hasValue(fieldValues) || !hasValue(ruleValues)) {
+  if (!hasPqlValue(fieldValues) || !hasPqlValue(ruleValues)) {
     return false;
   }
 
   const comparableRuleValues = ruleValues.filter(
     (value): value is number => typeof value === 'number'
   );
-  if (!hasValue(comparableRuleValues)) {
+  if (!hasPqlValue(comparableRuleValues)) {
     return false;
   }
 
@@ -205,13 +216,13 @@ function matchesComparable(
   });
 }
 
-function isExpressionCondition<TFieldKey extends string>(
+export function isPqlExpressionCondition<TFieldKey extends string>(
   expression: PqlExpression<TFieldKey>
 ): expression is PqlExpressionCondition<TFieldKey> {
   return expression.type === 'condition';
 }
 
-function getQueryOperatorToken(operator: PqlOperator): string {
+export function getPqlQueryOperatorToken(operator: PqlOperator): string {
   switch (operator) {
     case 'eq':
       return '==';
@@ -236,20 +247,20 @@ function getQueryOperatorToken(operator: PqlOperator): string {
   }
 }
 
-function needsQuotedString(value: string): boolean {
+export function needsQuotedPqlString(value: string): boolean {
   return !/^[A-Za-z0-9_.:-]+$/.test(value);
 }
 
-function serializeExpressionWithParentheses<TFieldKey extends string>(
+export function serializePqlExpressionWithParentheses<TFieldKey extends string>(
   expression: PqlExpression<TFieldKey>,
   parentCombinator?: PqlCombinator
 ): string {
-  if (isExpressionCondition(expression)) {
+  if (isPqlExpressionCondition(expression)) {
     return serializePqlRule(expression.rule);
   }
 
   const serializedChildren = expression.children.map(child =>
-    serializeExpressionWithParentheses(child, expression.combinator)
+    serializePqlExpressionWithParentheses(child, expression.combinator)
   );
 
   const serializedExpression = serializedChildren.join(` ${expression.combinator.toUpperCase()} `);
@@ -293,28 +304,28 @@ export function matchesPqlRule<TItem, TFieldKey extends string>(
     return false;
   }
 
-  const fieldValues = normalizeValues(field.getValue(item));
-  const ruleValues = normalizeRuleValues(field, rule.value);
+  const fieldValues = normalizePqlFieldValues(field.getValue(item));
+  const ruleValues = normalizePqlRuleValues(field, rule.value);
 
   switch (rule.operator) {
     case 'eq':
-      return matchesEq(fieldValues, ruleValues);
+      return matchesPqlEq(fieldValues, ruleValues);
     case 'neq':
-      return !matchesEq(fieldValues, ruleValues);
+      return !matchesPqlEq(fieldValues, ruleValues);
     case 'contains':
-      return matchesContains(fieldValues, ruleValues);
+      return matchesPqlContains(fieldValues, ruleValues);
     case 'in':
-      return matchesIn(fieldValues, ruleValues);
+      return matchesPqlIn(fieldValues, ruleValues);
     case 'gt':
-      return matchesComparable(fieldValues, ruleValues, (left, right) => left > right);
+      return matchesPqlComparable(fieldValues, ruleValues, (left, right) => left > right);
     case 'gte':
-      return matchesComparable(fieldValues, ruleValues, (left, right) => left >= right);
+      return matchesPqlComparable(fieldValues, ruleValues, (left, right) => left >= right);
     case 'lt':
-      return matchesComparable(fieldValues, ruleValues, (left, right) => left < right);
+      return matchesPqlComparable(fieldValues, ruleValues, (left, right) => left < right);
     case 'lte':
-      return matchesComparable(fieldValues, ruleValues, (left, right) => left <= right);
+      return matchesPqlComparable(fieldValues, ruleValues, (left, right) => left <= right);
     case 'is_set':
-      return hasValue(fieldValues);
+      return hasPqlValue(fieldValues);
     default:
       return false;
   }
@@ -325,7 +336,7 @@ export function matchesPqlExpression<TItem, TFieldKey extends string>(
   expression: PqlExpression<TFieldKey>,
   fields: PqlFieldRegistry<TItem, TFieldKey>
 ): boolean {
-  if (isExpressionCondition(expression)) {
+  if (isPqlExpressionCondition(expression)) {
     return matchesPqlRule(item, expression.rule, fields);
   }
 
@@ -378,12 +389,12 @@ export function countPqlRules<TFieldKey extends string>(
     return 0;
   }
 
-  if (isExpressionCondition(expression)) {
+  if (isPqlExpressionCondition(expression)) {
     return 1;
   }
 
   return expression.children.reduce((count, child) => {
-    if (isExpressionCondition(child)) {
+    if (isPqlExpressionCondition(child)) {
       return count + 1;
     }
 
@@ -400,7 +411,7 @@ export function countPqlRules<TFieldKey extends string>(
 
 export function formatPqlScalar(value: PqlScalar): string {
   if (typeof value === 'string') {
-    return needsQuotedString(value) ? JSON.stringify(value) : value;
+    return needsQuotedPqlString(value) ? JSON.stringify(value) : value;
   }
 
   return String(value);
@@ -408,7 +419,7 @@ export function formatPqlScalar(value: PqlScalar): string {
 
 export function serializePqlRule<TFieldKey extends string>(rule: PqlRule<TFieldKey>): string {
   if (rule.operator === 'is_set') {
-    return `${rule.fieldKey} ${getQueryOperatorToken(rule.operator)}`;
+    return `${rule.fieldKey} ${getPqlQueryOperatorToken(rule.operator)}`;
   }
 
   if (rule.operator === 'in') {
@@ -417,7 +428,7 @@ export function serializePqlRule<TFieldKey extends string>(rule: PqlRule<TFieldK
   }
 
   const value = Array.isArray(rule.value) ? rule.value[0] : rule.value;
-  return `${rule.fieldKey} ${getQueryOperatorToken(rule.operator)} ${
+  return `${rule.fieldKey} ${getPqlQueryOperatorToken(rule.operator)} ${
     value === null ? 'null' : formatPqlScalar(value)
   }`;
 }
@@ -425,7 +436,7 @@ export function serializePqlRule<TFieldKey extends string>(rule: PqlRule<TFieldK
 export function serializePqlExpression<TFieldKey extends string>(
   expression: PqlExpression<TFieldKey>
 ): string {
-  return serializeExpressionWithParentheses(expression);
+  return serializePqlExpressionWithParentheses(expression);
 }
 
 export function serializePqlFilter<TFieldKey extends string>(filter: PqlFilter<TFieldKey>): string {

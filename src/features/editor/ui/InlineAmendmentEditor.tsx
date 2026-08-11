@@ -286,33 +286,35 @@ export function InlineAmendmentEditor({
             discussions,
           });
 
-      if (!submitted) {
+      if (submitted) {
+        await setDiscussions(
+          discussions.map(d =>
+            d.id === discussion.id
+              ? {
+                  ...d,
+                  crId,
+                  changeRequestEntityId,
+                  confirmationStatus: 'confirmed',
+                  changeRequestStatus: 'open',
+                  confirmedAt: Date.now(),
+                }
+              : d
+          )
+        );
+        toast.success(
+          translateText(
+            'features.amendments.eventSuggestions.confirmed',
+            'Change request submitted.'
+          )
+        );
+      } else {
         toast.error(
           translateText(
             'features.amendments.eventSuggestions.confirmFailed',
             'Failed to submit change request.'
           )
         );
-        return;
       }
-
-      await setDiscussions(
-        discussions.map(d =>
-          d.id === discussion.id
-            ? {
-                ...d,
-                crId,
-                changeRequestEntityId,
-                confirmationStatus: 'confirmed',
-                changeRequestStatus: 'open',
-                confirmedAt: Date.now(),
-              }
-            : d
-        )
-      );
-      toast.success(
-        translateText('features.amendments.eventSuggestions.confirmed', 'Change request submitted.')
-      );
     },
     [
       amendmentIdFromEntity,

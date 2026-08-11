@@ -114,4 +114,101 @@ describe('useSuggestionIdAssignment', () => {
     expect(onChangeRequestCreate).toHaveBeenCalledTimes(2);
     expect(onDiscussionsUpdate).not.toHaveBeenCalled();
   });
+
+  it('returns early when disabled, missing a document, or given no discussions', async () => {
+    const onDiscussionsUpdate = vi.fn();
+    const onChangeRequestCreate = vi.fn();
+    const { result, rerender } = renderHook(
+      (props: { enabled: boolean; documentId: string; discussions: TDiscussion[] }) =>
+        useSuggestionIdAssignment({
+          ...props,
+          onDiscussionsUpdate,
+          onChangeRequestCreate,
+        }),
+      {
+        initialProps: {
+          enabled: false,
+          documentId: 'document-1',
+          discussions: [baseDiscussion],
+        },
+      }
+    );
+
+    await act(async () => result.current.assignMissingIds());
+    rerender({ enabled: true, documentId: '', discussions: [baseDiscussion] });
+    await act(async () => result.current.assignMissingIds());
+    rerender({ enabled: true, documentId: 'document-1', discussions: [] });
+    await act(async () => result.current.assignMissingIds());
+
+    expect(onDiscussionsUpdate).not.toHaveBeenCalled();
+    expect(onChangeRequestCreate).not.toHaveBeenCalled();
+  });
+
+  it('assigns missing internal IDs chronologically without an entity callback', async () => {
+    const onDiscussionsUpdate = vi.fn();
+    const later = { ...baseDiscussion, id: 'later', createdAt: new Date(2) };
+    const earlier = { ...baseDiscussion, id: 'earlier', createdAt: new Date(1) };
+    const { result } = renderHook(() =>
+      useSuggestionIdAssignment({
+        documentId: 'document-1',
+        discussions: [later, earlier],
+        onDiscussionsUpdate,
+      })
+    );
+
+    await waitFor(() => expect(onDiscussionsUpdate).toHaveBeenCalledOnce());
+    expect(onDiscussionsUpdate).toHaveBeenCalledWith([
+      expect.objectContaining({ id: 'later', crId: 'CR-2' }),
+      expect.objectContaining({ id: 'earlier', crId: 'CR-1' }),
+    ]);
+
+    await act(async () => result.current.assignMissingIds());
+    expect(onDiscussionsUpdate).toHaveBeenCalledOnce();
+  });
+
+  it('normalizes event confirmation state and preserves already normalized discussions', async () => {
+    const onDiscussionsUpdate = vi.fn();
+    const onChangeRequestCreate = vi.fn();
+    const { rerender } = renderHook(
+      ({ discussion }: { discussion: TDiscussion }) =>
+        useSuggestionIdAssignment({
+          confirmationMode: 'event_suggestion',
+          documentId: 'document-1',
+          discussions: [discussion],
+          onDiscussionsUpdate,
+          onChangeRequestCreate,
+        }),
+      {
+        initialProps: {
+          discussion: {
+            ...baseDiscussion,
+            crId: 'CR-1',
+            changeRequestEntityId: 'entity-1',
+          },
+        },
+      }
+    );
+
+    await waitFor(() => expect(onDiscussionsUpdate).toHaveBeenCalledOnce());
+    expect(onDiscussionsUpdate).toHaveBeenCalledWith([
+      expect.objectContaining({
+        confirmationStatus: 'pending',
+        changeRequestStatus: 'pending_submission',
+      }),
+    ]);
+
+    onDiscussionsUpdate.mockClear();
+    rerender({
+      discussion: {
+        ...baseDiscussion,
+        crId: 'CR-1',
+        changeRequestEntityId: 'entity-1',
+        confirmationStatus: 'pending',
+        changeRequestStatus: 'pending_submission',
+      },
+    });
+    await act(async () => Promise.resolve());
+    expect(onDiscussionsUpdate).not.toHaveBeenCalled();
+    expect(onChangeRequestCreate).not.toHaveBeenCalled();
+  });
 });

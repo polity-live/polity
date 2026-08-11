@@ -228,28 +228,18 @@ export function useGroupNetwork(groupId: string) {
             ({
               group: entry.group,
               rights: entry.rights,
-              level: entry.level ?? 1,
+              level: entry.level,
               childId: entry.childId,
-            }) satisfies {
-              group: NetworkGroupEntity;
-              rights: string[];
-              level: number;
-              childId?: string;
-            }
+            }) satisfies ParentNetworkItem
         ),
         children: indirectHierarchy.children.map(
           entry =>
             ({
               group: entry.group,
               rights: entry.rights,
-              level: entry.level ?? 1,
+              level: entry.level,
               parentId: entry.parentId,
-            }) satisfies {
-              group: NetworkGroupEntity;
-              rights: string[];
-              level: number;
-              parentId?: string;
-            }
+            }) satisfies ChildNetworkItem
         ),
         siblings: getDirectRelationships(targetGroupId).siblings,
       };

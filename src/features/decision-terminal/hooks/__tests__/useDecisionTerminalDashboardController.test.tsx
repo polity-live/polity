@@ -74,5 +74,12 @@ describe('useDecisionTerminalDashboardController', () => {
         widgets: createDefaultDecisionTerminalDashboardConfig().widgets,
       })
     );
+
+    act(() => result.current.handleVoteDecision(decision({ id: 'V-4' })));
+    expect(result.current.voteDialogOpen).toBe(true);
+    act(() => result.current.handleVoteDialogOpenChange(true));
+    expect(result.current.voteTarget?.id).toBe('V-4');
+    act(() => result.current.handleVoteDialogOpenChange(false));
+    expect(result.current.voteTarget).toBeNull();
   });
 });

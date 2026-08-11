@@ -28,8 +28,10 @@ describe('GroupDocumentCard', () => {
       />
     );
 
-    expect(screen.getByRole('link', { name: /document one/i }).getAttribute('href')).toBe(
-      '/group/group-1/editor/doc-1'
-    );
+    const link = screen.getByRole('link', { name: /document one/i });
+    expect(link.getAttribute('href')).toBe('/group/group-1/editor/doc-1');
+    expect(link.getAttribute('data-action-id')).toBe('documents.card.open');
+    link.focus();
+    expect(document.activeElement).toBe(link);
   });
 });

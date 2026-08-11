@@ -58,6 +58,7 @@ export function PqlQueryEditorView<TItem, TFieldKey extends string>({
     <div className={cn('space-y-3', className)}>
       <div className="relative">
         <FormControlTextarea
+          data-action-id="pql.query-editor.query.change"
           ref={textareaRef}
           value={value}
           placeholder={placeholder}
@@ -78,6 +79,7 @@ export function PqlQueryEditorView<TItem, TFieldKey extends string>({
               <Button
                 key={`${suggestion.kind}-${suggestion.label}-${suggestion.insertText}`}
                 type="button"
+                data-action-id="pql.query-editor.suggestion.select"
                 variant="ghost"
                 className={cn(
                   'h-auto w-full justify-start rounded-sm px-3 py-2 text-left text-sm whitespace-normal',

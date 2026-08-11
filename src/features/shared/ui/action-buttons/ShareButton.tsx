@@ -4,6 +4,7 @@ import { type ReactNode } from 'react';
 import { compactActionButtonClassName } from '@/features/shared/ui/layout/ActionBar';
 import { cn } from '@/features/shared/utils/utils';
 interface ShareButtonProps {
+  'data-action-id'?: string;
   url: string;
   title: string;
   description?: string;
@@ -26,6 +27,7 @@ import { useShareButtonController } from './useShareButtonController';
 import { ShareButtonView } from './ShareButtonView';
 
 export function ShareButton({
+  'data-action-id': actionId,
   url,
   title,
   description,
@@ -49,5 +51,5 @@ export function ShareButton({
     className: cn(compactOnMobile && compactActionButtonClassName, className),
   });
 
-  return <ShareButtonView {...viewProps} compactOnMobile={compactOnMobile} />;
+  return <ShareButtonView {...viewProps} actionId={actionId} compactOnMobile={compactOnMobile} />;
 }

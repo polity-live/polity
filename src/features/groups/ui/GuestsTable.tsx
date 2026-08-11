@@ -170,11 +170,12 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
       header: translateText('generated.inline.0689_roles_47dcc27d'),
       cell: ({ row }) => {
         const guest = row.original;
+        const roles = guest.roles ?? [];
 
         return (
           <div className="flex flex-wrap gap-2">
-            {(guest.roles ?? []).length > 0 ? (
-              (guest.roles ?? []).map(role => (
+            {roles.length > 0 ? (
+              roles.map(role => (
                 <RoleTag
                   key={role.id ?? `${guest.id}-${role.name ?? 'role'}`}
                   roleId={role.id}
@@ -209,6 +210,7 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
           <div className="flex justify-end gap-2">
             {guest.status === 'requested' && onApprove ? (
               <TableActionIconButton
+                data-action-id="groups.guests.approve.request"
                 label={translateText('generated.inline.0691_approve_7b2c7f14')}
                 icon={<Check className="h-4 w-4" />}
                 variant="default"
@@ -217,6 +219,7 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
             ) : null}
             {onRevoke ? (
               <TableActionIconButton
+                data-action-id="groups.guests.revoke.access"
                 label={revokeLabel}
                 icon={<Trash2 className="h-4 w-4" />}
                 destructive

@@ -9,6 +9,7 @@ import { cn } from '@/features/shared/utils/utils';
 export type EntityType = 'group' | 'blog' | 'amendment' | 'event' | 'user';
 
 interface SubscribeButtonProps {
+  'data-action-id'?: string;
   entityType: EntityType;
   entityId: string;
   isSubscribed: boolean;
@@ -23,6 +24,7 @@ interface SubscribeButtonProps {
  * Handles only display and click, not state.
  */
 export function SubscribeButton({
+  'data-action-id': actionId,
   isSubscribed,
   isLoading = false,
   onToggleSubscribe,
@@ -36,6 +38,7 @@ export function SubscribeButton({
 
   return (
     <Button
+      data-action-id={actionId}
       data-tutorial-anchor="subscribe"
       variant={isSubscribed ? 'outline' : 'default'}
       onClick={onToggleSubscribe}

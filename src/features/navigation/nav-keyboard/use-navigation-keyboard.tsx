@@ -41,21 +41,21 @@ export function useNavigationKeyboard({
       if (matchedItem) {
         e.preventDefault();
         onNavigate(matchedItem.id);
-        onClose?.();
+        onClose();
         return;
       }
 
-      if (isShortcutMatch(e, 'theme', platform) && onThemeToggle) {
+      if (isShortcutMatch(e, 'theme', platform)) {
         e.preventDefault();
         onThemeToggle();
-        onClose?.();
+        onClose();
         return;
       }
 
-      if (isShortcutMatch(e, 'keyboard', platform) && onKeyboardShortcutsOpen) {
+      if (isShortcutMatch(e, 'keyboard', platform)) {
         e.preventDefault();
         onKeyboardShortcutsOpen();
-        onClose?.();
+        onClose();
       }
     };
 

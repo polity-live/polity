@@ -66,6 +66,7 @@ export function EventRolesView({
         onCreateElection={roleId => void createElectionForRole(roleId)}
         addRoleButton={
           <AddRoleDialog
+            data-action-id="roles.event-role.add.submit"
             isOpen={addRoleOpen}
             onOpenChange={open => {
               setAddRoleOpen(open);
@@ -103,6 +104,7 @@ export function EventRolesView({
       />
 
       <AddRoleDialog
+        data-action-id="roles.event-role.edit.submit"
         isOpen={editRoleOpen}
         onOpenChange={open => {
           setEditRoleOpen(open);

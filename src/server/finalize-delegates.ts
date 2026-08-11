@@ -66,10 +66,11 @@ export const finalizeDelegatesFn = createServerFn({ method: 'POST' })
         .eq('connection_type', 'hierarchy')
         .eq('parent_group_id', parentGroupId)
         .eq('status', 'active');
+      const connections = hierarchyConnections ?? [];
 
       const childGroupIds = [
         ...new Set(
-          (hierarchyConnections || [])
+          connections
             .map(connection => connection.child_group_id)
             .filter((id): id is string => Boolean(id))
         ),
@@ -78,8 +79,8 @@ export const finalizeDelegatesFn = createServerFn({ method: 'POST' })
         childGroupIds.length > 0
           ? await supabase.from('group').select('id, name, member_count').in('id', childGroupIds)
           : { data: [] };
-      const childGroupsById = new Map((childGroups || []).map(group => [group.id, group]));
-      const groupRelationships = (hierarchyConnections || [])
+      const childGroupsById = new Map((childGroups ?? []).map(group => [group.id, group]));
+      const groupRelationships = connections
         .filter((connection): connection is typeof connection & { child_group_id: string } =>
           Boolean(connection.child_group_id)
         )
@@ -94,7 +95,7 @@ export const finalizeDelegatesFn = createServerFn({ method: 'POST' })
         }));
 
       // Attach delegates to event for business logic compatibility
-      const event = { ...eventRow, delegates: delegates || [] };
+      const event = { ...eventRow, delegates: delegates ?? [] };
 
       // --- Business logic (mirrors buildFinalizeDelegatesTransactions) ---
 
@@ -106,7 +107,7 @@ export const finalizeDelegatesFn = createServerFn({ method: 'POST' })
         throw new Error('Delegates already finalized for this event');
       }
 
-      const subgroups = getDirectSubgroups(parentGroupId, groupRelationships || []);
+      const subgroups = getDirectSubgroups(parentGroupId, groupRelationships);
 
       if (subgroups.length === 0) {
         throw new Error('No subgroups found for this group');
@@ -120,7 +121,7 @@ export const finalizeDelegatesFn = createServerFn({ method: 'POST' })
         totalDelegates
       );
 
-      const nominations = event.delegates || [];
+      const nominations = event.delegates;
 
       const finalizedDelegates = finalizeDelegateSelection(
         nominations.map(

@@ -19,10 +19,12 @@ function hasHref(href?: string | null): href is string {
   return Boolean(href && href !== '#');
 }
 function DecisionLink({
+  'data-action-id': actionId,
   href,
   children,
   className,
 }: {
+  'data-action-id'?: string;
   href?: string | null;
   children: ReactNode;
   className?: string;
@@ -32,7 +34,11 @@ function DecisionLink({
   }
 
   return (
-    <SmartLink href={href} className={cn('hover:text-primary hover:underline', className)}>
+    <SmartLink
+      href={href}
+      data-action-id={actionId}
+      className={cn('hover:text-primary hover:underline', className)}
+    >
       {children}
     </SmartLink>
   );
@@ -41,12 +47,20 @@ function DecisionContextLinks({ decision }: { decision: DecisionItem }) {
   return (
     <div className={featureThemeClassName('decisionterminalDecisionRowThemedText')}>
       {decision.entity ? (
-        <DecisionLink href={decision.entity.href} className="truncate">
+        <DecisionLink
+          href={decision.entity.href}
+          data-action-id="decision-terminal.row.entity.open"
+          className="truncate"
+        >
           {decision.entity.name}
         </DecisionLink>
       ) : null}
       {decision.agendaItem ? (
-        <DecisionLink href={decision.agendaItem.href} className="truncate">
+        <DecisionLink
+          href={decision.agendaItem.href}
+          data-action-id="decision-terminal.row.agenda-item.open"
+          className="truncate"
+        >
           {decision.agendaItem.name}
         </DecisionLink>
       ) : null}
@@ -94,6 +108,7 @@ export function DecisionRowView({
         <Icon className="text-muted-foreground h-3.5 w-3.5" />
         <DecisionLink
           href={decision.href}
+          data-action-id="decision-terminal.row.decision.open"
           className={featureThemeClassName('decisionterminalDecisionRowThemedTextAlpha')}
         >
           {decision.id}
@@ -102,7 +117,11 @@ export function DecisionRowView({
 
       {/* Title */}
       <div className="min-w-0">
-        <DecisionLink href={decision.href} className="block truncate text-xs font-medium">
+        <DecisionLink
+          href={decision.href}
+          data-action-id="decision-terminal.row.decision.open"
+          className="block truncate text-xs font-medium"
+        >
           {decision.title}
         </DecisionLink>
         <DecisionContextLinks decision={decision} />

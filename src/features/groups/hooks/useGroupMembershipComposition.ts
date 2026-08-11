@@ -26,9 +26,7 @@ function selectPrimaryGroupRole(roles: readonly GroupAccessRoleWithRightsRow[]) 
     return null;
   }
 
-  return (
-    [...roles].sort((left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1))[0] ?? null
-  );
+  return [...roles].sort((left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1))[0];
 }
 
 function normalizeMemberships(
@@ -51,13 +49,18 @@ function normalizeMemberships(
   });
 }
 
+export const groupMembershipCompositionInternals = {
+  selectPrimaryGroupRole,
+  normalizeMemberships,
+};
+
 export function useGroupMembershipComposition<TMembership extends MembershipWithCompositionSource>(
   group: MembershipCompositionGroupLike | null | undefined,
   memberships: readonly TMembership[]
 ) {
   const showComposition = supportsMembershipComposition(group);
   const sourceGroupIds = useMemo(() => {
-    if (!showComposition || group?.group_type !== 'sibling') {
+    if (!group || !showComposition || group.group_type !== 'sibling') {
       return [];
     }
 
@@ -89,12 +92,12 @@ export function useGroupMembershipComposition<TMembership extends MembershipWith
       (sourceGroupIds.length > 0 && rootMembershipsResult.type === 'unknown'));
 
   const membershipsWithProvenance = useMemo(() => {
-    if (!showComposition || !group || isLoading) {
+    if (!group || !showComposition || isLoading) {
       return memberships as (TMembership & MembershipProvenanceFields)[];
     }
 
     return resolveMembershipProvenance({
-      group,
+      group: group,
       memberships,
       relationships: deriveNormalizedGroupRelationships(
         (relationshipLinks ?? []) as readonly GroupConnectionListRow[]

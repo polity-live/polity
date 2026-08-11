@@ -34,6 +34,25 @@ function renderManageableRoster(overrides: Partial<Parameters<typeof OfflineRost
   );
 }
 
+const offlineRow = {
+  id: 'offline-1',
+  kind: 'offline' as const,
+  firstName: 'Fabian',
+  lastName: 'Hassebrock',
+  isActiveUser: false,
+  roles: [{ id: 'role-1', name: 'Member' }],
+  connectedUser: null,
+  reasonNotSignedUp: 'No account',
+  attendanceStatus: 'listed' as const,
+  participationChannel: 'offline' as const,
+};
+
+function stableAction(container: HTMLElement, id: string) {
+  const element = container.querySelector<HTMLElement>(`[data-action-id="${id}"]`);
+  expect(element, id).not.toBeNull();
+  return element!;
+}
+
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
@@ -210,10 +229,150 @@ describe('OfflineRosterCard', () => {
     expect(screen.queryByText('Connect')).toBeNull();
   });
 
-  it('renders the manage dialog in the fullscreen centered shell', () => {
-    renderManageableRoster();
+  it('dispatches stable immediate row actions with the exact row transition', async () => {
+    const onOpenRightsDialog = vi.fn();
+    const onOpenChangeRoleDialog = vi.fn();
+    const onSetParticipationStatus = vi.fn().mockResolvedValue(undefined);
+    const onToggleChannel = vi.fn().mockResolvedValue(undefined);
+    const onDelete = vi.fn().mockResolvedValue(undefined);
+    const { container } = render(
+      <OfflineRosterCard
+        title="All users"
+        description="Roster"
+        rows={[
+          {
+            ...offlineRow,
+            canViewRights: true,
+            canManageRoles: true,
+            canConfirmParticipation: true,
+            canWithdrawParticipation: true,
+            canToggleChannel: true,
+            canDelete: true,
+          },
+        ]}
+        manageDialogTitle="Manage"
+        manageDialogDescription="Manage roster"
+        onOpenRightsDialog={onOpenRightsDialog}
+        onOpenChangeRoleDialog={onOpenChangeRoleDialog}
+        onSetParticipationStatus={onSetParticipationStatus}
+        onToggleChannel={onToggleChannel}
+        onDelete={onDelete}
+      />
+    );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Manage offline users' }));
+    for (const id of [
+      'offline-roster.row.rights.open',
+      'offline-roster.row.roles.open',
+      'offline-roster.row.participation.confirm',
+      'offline-roster.row.participation.withdraw',
+      'offline-roster.row.channel.toggle',
+      'offline-roster.row.delete',
+    ]) {
+      const button = stableAction(container, id);
+      button.focus();
+      expect(document.activeElement).toBe(button);
+      fireEvent.click(button);
+    }
+
+    expect(onOpenRightsDialog).toHaveBeenCalledWith(expect.objectContaining({ id: 'offline-1' }));
+    expect(onOpenChangeRoleDialog).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'offline-1' })
+    );
+    await waitFor(() => {
+      expect(onSetParticipationStatus).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'offline-1' }),
+        'confirmed',
+        expect.stringMatching(/^offline-roster-confirm-participation:/)
+      );
+      expect(onSetParticipationStatus).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'offline-1' }),
+        'listed',
+        expect.stringMatching(/^offline-roster-withdraw-participation-confirmation:/)
+      );
+      expect(onToggleChannel).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'offline-1' }),
+        'online',
+        expect.stringMatching(/^offline-roster-toggle-channel:/)
+      );
+      expect(onDelete).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'offline-1' }),
+        expect.stringMatching(/^offline-roster-delete:/)
+      );
+    });
+  });
+
+  it('connects and cancels through stable connection dialog actions', async () => {
+    const onConnect = vi.fn().mockResolvedValue(undefined);
+    const { container } = render(
+      <OfflineRosterCard
+        title="All users"
+        description="Roster"
+        rows={[{ ...offlineRow, canConnect: true }]}
+        manageDialogTitle="Manage"
+        manageDialogDescription="Manage roster"
+        connectedUserCandidates={[
+          { id: 'user-2', first_name: 'Grace', last_name: 'Hopper', handle: 'grace' },
+        ]}
+        onConnect={onConnect}
+      />
+    );
+
+    fireEvent.click(stableAction(container, 'offline-roster.row.connection.open'));
+    const search = screen.getByPlaceholderText(/Search active users/);
+    fireEvent.focus(search);
+    fireEvent.click(screen.getByRole('button', { name: /Grace Hopper/ }));
+    const submit = stableAction(document.body, 'offline-roster.connection.submit');
+    expect((submit as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(submit);
+    await waitFor(() =>
+      expect(onConnect).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'offline-1' }),
+        'user-2',
+        expect.stringMatching(/^offline-roster-connect:/)
+      )
+    );
+
+    fireEvent.click(stableAction(container, 'offline-roster.row.connection.open'));
+    fireEvent.click(stableAction(document.body, 'offline-roster.connection.cancel'));
+    expect(
+      document.querySelector('[data-action-id="offline-roster.connection.submit"]')
+    ).toBeNull();
+  });
+
+  it('saves and cancels edits through stable edit dialog actions', async () => {
+    const onEdit = vi.fn().mockResolvedValue(undefined);
+    const { container } = render(
+      <OfflineRosterCard
+        title="All users"
+        description="Roster"
+        rows={[{ ...offlineRow, canEdit: true }]}
+        manageDialogTitle="Manage"
+        manageDialogDescription="Manage roster"
+        onEdit={onEdit}
+      />
+    );
+
+    fireEvent.click(stableAction(container, 'offline-roster.row.edit.open'));
+    fireEvent.change(screen.getByLabelText('Firstname'), { target: { value: '  Ada ' } });
+    fireEvent.change(screen.getByLabelText('Lastname'), { target: { value: ' Lovelace ' } });
+    fireEvent.click(stableAction(document.body, 'offline-roster.edit.submit'));
+    await waitFor(() =>
+      expect(onEdit).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'offline-1' }),
+        expect.objectContaining({ firstName: 'Ada', lastName: 'Lovelace' }),
+        expect.stringMatching(/^offline-roster-edit:/)
+      )
+    );
+
+    fireEvent.click(stableAction(container, 'offline-roster.row.edit.open'));
+    fireEvent.click(stableAction(document.body, 'offline-roster.edit.cancel'));
+    expect(screen.queryByText('Edit offline user')).toBeNull();
+  });
+
+  it('renders the manage dialog in the fullscreen centered shell', () => {
+    const { container } = renderManageableRoster();
+
+    fireEvent.click(stableAction(container, 'offline-roster.manage.open'));
 
     const dialogContent = document.querySelector('[data-slot="dialog-content"]');
     const centeredShell = document.querySelector(
@@ -253,7 +412,7 @@ describe('OfflineRosterCard', () => {
     fireEvent.change(screen.getByLabelText('Reason why not signed up'), {
       target: { value: ' No account yet ' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+    fireEvent.click(stableAction(document.body, 'offline-roster.manage.submit'));
 
     expect(onCreate).toHaveBeenCalledWith(
       {
@@ -299,6 +458,9 @@ describe('OfflineRosterCard', () => {
       button: 0,
       ctrlKey: false,
     });
+    expect(stableAction(document.body, 'offline-roster.manage.tab.single')).toBeTruthy();
+    expect(stableAction(document.body, 'offline-roster.manage.tab.csv')).toBeTruthy();
+    expect(stableAction(document.body, 'offline-roster.manage.csv.choose')).toBeTruthy();
 
     const dropZone = screen.getByText('Upload CSV').closest('div');
     const csvFile = {
@@ -321,5 +483,12 @@ describe('OfflineRosterCard', () => {
       document.querySelector('[data-slot="offline-roster-manage-centered-shell"]')
     ).toBeTruthy();
     expect(preview?.className).toContain('h-[min(40vh,24rem)]');
+  });
+
+  it('closes management through the stable cancel action while idle', () => {
+    const { container } = renderManageableRoster();
+    fireEvent.click(stableAction(container, 'offline-roster.manage.open'));
+    fireEvent.click(stableAction(document.body, 'offline-roster.manage.cancel'));
+    expect(screen.queryByText('Manage roster')).toBeNull();
   });
 });

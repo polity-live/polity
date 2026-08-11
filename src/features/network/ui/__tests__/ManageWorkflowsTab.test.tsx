@@ -6,6 +6,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ManageWorkflowsTab } from '../ManageWorkflowsTab';
 
+vi.mock('@/features/shared/ui/action-submission', () => ({
+  ActionSubmissionOverlay: () => null,
+  useActionSubmission: () => ({
+    error: null,
+    isActive: false,
+    progressSteps: [],
+    reset: vi.fn(),
+    retry: vi.fn(),
+    runActionWithSubmission: async (action: (context: object) => unknown) =>
+      action({ completeSuccess: vi.fn() }),
+    status: 'idle',
+  }),
+}));
+
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
     children,
@@ -103,6 +117,7 @@ describe('ManageWorkflowsTab', () => {
       (_id: string, context?: { completeSuccess?: () => void }) => context?.completeSuccess?.()
     );
     const onOpenEditWorkflow = vi.fn();
+    const onOpenNewWorkflow = vi.fn();
 
     const incomingWorkflow = buildWorkflow('incoming-workflow', {
       status: 'pending_approval',
@@ -186,7 +201,7 @@ describe('ManageWorkflowsTab', () => {
         workflowDraftSteps={[]}
         availableGroups={[]}
         availableWorkflows={[]}
-        onOpenNewWorkflow={vi.fn()}
+        onOpenNewWorkflow={onOpenNewWorkflow}
         onOpenEditWorkflow={onOpenEditWorkflow}
         onCloseWorkflowEditor={vi.fn()}
         onAddWorkflowStep={vi.fn()}
@@ -218,11 +233,20 @@ describe('ManageWorkflowsTab', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
     await waitFor(() => expect(onApproveWorkflowApproval.mock.calls[0]?.[0]).toBe('approval-1'));
+    fireEvent.click(document.querySelector('[data-action-id="network.workflow.approval.reject"]')!);
+    await waitFor(() =>
+      expect(onRejectWorkflowApproval).toHaveBeenCalledWith('approval-1', expect.anything())
+    );
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit Workflow' })[1]);
+    fireEvent.click(document.querySelector('[data-action-id="network.workflow.create.open"]')!);
 
     expect(onOpenEditWorkflow).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'outgoing-workflow' })
     );
+    expect(onOpenNewWorkflow).toHaveBeenCalledOnce();
+    expect(document.querySelector('[data-action-id="network.workflow.delete.open"]')).toBeTruthy();
+    expect(document.querySelector('[data-action-id="network.workflow.pending.edit"]')).toBeTruthy();
+    expect(document.querySelector('[data-action-id="network.workflow.active.edit"]')).toBeTruthy();
   });
 
   it('hides management actions when workflow management is read-only', () => {

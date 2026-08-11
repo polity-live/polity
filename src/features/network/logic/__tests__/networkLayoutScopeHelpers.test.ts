@@ -14,6 +14,12 @@ const SAMPLE_LAYOUT: GroupNetworkLayout = {
 };
 
 describe('networkLayoutScopeHelpers', () => {
+  it('returns the stored layout for an existing scope', () => {
+    expect(getPersistedNetworkLayout({ 'group:group-123': SAMPLE_LAYOUT }, 'group:group-123')).toBe(
+      SAMPLE_LAYOUT
+    );
+  });
+
   it('returns null when the scoped layout key is missing', () => {
     const layouts: GroupNetworkLayouts = {
       'group-123': SAMPLE_LAYOUT,

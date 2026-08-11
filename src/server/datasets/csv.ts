@@ -33,7 +33,7 @@ function normalizeHeaderRow(headerRow: readonly string[]): string[] {
   const seen = new Map<string, number>();
 
   return headerRow.map((header, index) => {
-    const baseName = String(header ?? '').trim() || `Column ${index + 1}`;
+    const baseName = header.trim() || `Column ${index + 1}`;
     const previousCount = seen.get(baseName) ?? 0;
     seen.set(baseName, previousCount + 1);
     return previousCount === 0 ? baseName : `${baseName}_${previousCount}`;
@@ -119,7 +119,6 @@ export function parseDatasetNumber(rawValue: string) {
 
 function isDateValue(value: string) {
   const normalized = value.trim();
-  if (!normalized) return false;
   if (/^(?:19|20)\d{2}$/.test(normalized)) return true;
   if (
     /^(?:19|20)\d{2}[-/.](?:0?[1-9]|1[0-2])(?:[-/.](?:0?[1-9]|[12]\d|3[01]))?$/.test(normalized)
@@ -203,13 +202,13 @@ export function profileDatasetColumns(table: DatasetTable): DatasetColumnProfile
       distinctCount: distinctValues.size,
       min:
         type === 'number'
-          ? (sortedNumericValues[0] ?? null)
+          ? sortedNumericValues[0]
           : type === 'date'
             ? (sortedTextValues[0] ?? null)
             : undefined,
       max:
         type === 'number'
-          ? (sortedNumericValues[sortedNumericValues.length - 1] ?? null)
+          ? sortedNumericValues[sortedNumericValues.length - 1]
           : type === 'date'
             ? (sortedTextValues[sortedTextValues.length - 1] ?? null)
             : undefined,
@@ -225,11 +224,11 @@ export function aggregateDatasetValues(values: readonly number[], aggregation: D
 
   if (aggregation === 'sum') return sum;
   if (aggregation === 'mean') return sum / sorted.length;
-  if (aggregation === 'min') return sorted[0] ?? null;
-  if (aggregation === 'max') return sorted[sorted.length - 1] ?? null;
+  if (aggregation === 'min') return sorted[0];
+  if (aggregation === 'max') return sorted[sorted.length - 1];
   return sorted.length % 2 === 1
-    ? (sorted[(sorted.length - 1) / 2] ?? null)
-    : ((sorted[sorted.length / 2 - 1] ?? 0) + (sorted[sorted.length / 2] ?? 0)) / 2;
+    ? sorted[(sorted.length - 1) / 2]
+    : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
 }
 
 function getChartMappingValueColumns(table: DatasetTable, mapping: ChartMapping) {
@@ -328,7 +327,7 @@ export function getDescriptiveStats(table: DatasetTable, column: string) {
   const median =
     values.length % 2 === 1
       ? values[(values.length - 1) / 2]
-      : ((values[values.length / 2 - 1] ?? 0) + (values[values.length / 2] ?? 0)) / 2;
+      : (values[values.length / 2 - 1] + values[values.length / 2]) / 2;
 
   return {
     column,

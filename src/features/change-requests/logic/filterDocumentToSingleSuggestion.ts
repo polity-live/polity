@@ -70,7 +70,7 @@ function processNode(
     cleaned = resolved;
   }
 
-  const allSuggestionKeys = findAllSuggestionKeys(cleaned as Descendant);
+  const allSuggestionKeys = findAllSuggestionKeys(cleaned);
 
   if (allSuggestionKeys.length === 0) {
     // Not a suggestion node — recurse into children
@@ -218,7 +218,6 @@ function stripBlockSuggestion(node: Record<string, unknown>): Record<string, unk
   return stripSuggestionFlagIfResolved(cleaned);
 }
 
-function findAllSuggestionKeys(node: Descendant): string[] {
-  if (!node || typeof node !== 'object') return [];
+function findAllSuggestionKeys(node: Record<string, unknown>): string[] {
   return Object.keys(node).filter(k => k.startsWith('suggestion_'));
 }

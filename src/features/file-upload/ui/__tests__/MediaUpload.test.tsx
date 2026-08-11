@@ -11,7 +11,11 @@ afterEach(cleanup);
 vi.mock('@/features/shared/ui/ui/tabs', () => ({
   Tabs: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TabsList: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  TabsTrigger: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  TabsTrigger: ({ children, ...props }: { children: ReactNode }) => (
+    <button type="button" {...props}>
+      {children}
+    </button>
+  ),
   TabsContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
@@ -96,5 +100,7 @@ describe('MediaUpload', () => {
     );
 
     expect(screen.getByTestId('custom-image-upload').textContent).toBe('true');
+    expect(document.querySelector('[data-action-id="file-upload.media-tab.image"]')).toBeTruthy();
+    expect(document.querySelector('[data-action-id="file-upload.media-tab.video"]')).toBeTruthy();
   });
 });

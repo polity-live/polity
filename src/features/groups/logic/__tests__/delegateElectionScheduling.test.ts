@@ -107,5 +107,51 @@ describe('delegateElectionScheduling', () => {
       minStartAt: new Date(2026, 5, 19, 10, 31, 0).getTime(),
       maxStartAt: null,
     });
+
+    expect(
+      buildCreateEventSearchFromDelegateElectionAssignment({
+        assignment: assignmentWithTargetStart(null),
+        groupId: 'source-group',
+        referenceTime,
+      })
+    ).toEqual({
+      groupId: 'source-group',
+      minStartDate: '2026-06-19',
+      minStartTime: '10:31',
+      maxStartDate: undefined,
+      maxStartTime: undefined,
+      returnTo: undefined,
+    });
   });
+
+  it('rejects events without a start date and accepts an unbounded future event', () => {
+    const referenceTime = new Date(2026, 5, 19, 10, 30, 20).getTime();
+    const assignment = assignmentWithTargetStart(null);
+
+    expect(isEventWithinDelegateElectionSchedulingWindow({}, assignment, referenceTime)).toBe(
+      false
+    );
+    expect(
+      isEventWithinDelegateElectionSchedulingWindow(
+        eventAt(new Date(2026, 5, 30, 12, 0, 0).getTime()),
+        assignment,
+        referenceTime
+      )
+    ).toBe(true);
+  });
+
+  it.each([undefined, 0, Number.NaN, Number.POSITIVE_INFINITY])(
+    'treats a non-positive or non-finite target start (%s) as unbounded',
+    targetStart => {
+      const referenceTime = new Date(2026, 5, 19, 10, 30, 20).getTime();
+      const assignment = {
+        targetEvent:
+          targetStart === undefined
+            ? undefined
+            : { id: 'target-event', title: 'Target', start_date: targetStart },
+      };
+
+      expect(getDelegateElectionSchedulingWindow(assignment, referenceTime).maxStartAt).toBeNull();
+    }
+  );
 });

@@ -80,6 +80,7 @@ export function CommentTreeView({
         <div className="min-w-0 flex-1">
           <div className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
             <UserIdentityLink
+              data-action-id="discussions.comment.author.open"
               userId={comment.user?.id ?? comment.user_id}
               avatarUrl={comment.user?.avatar}
               name={authorName}
@@ -112,6 +113,7 @@ export function CommentTreeView({
               >
                 {userId ? (
                   <Button
+                    data-action-id="discussions.comment.reply.toggle"
                     variant="ghost"
                     size="sm"
                     presentation="mutedTiny"
@@ -135,13 +137,19 @@ export function CommentTreeView({
                   />
                   <div className="flex gap-2">
                     <Button
+                      data-action-id="discussions.comment.reply.submit"
                       size="sm"
                       onClick={handleReply}
                       disabled={isSubmitting || !replyText.trim()}
                     >
                       {translateText('generated.inline.0379_post_reply_bb8ad002')}
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setIsReplying(false)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      data-action-id="discussions.comment.reply.cancel"
+                      onClick={() => setIsReplying(false)}
+                    >
                       {translateText('generated.inline.0065_cancel_77dfd213')}
                     </Button>
                   </div>

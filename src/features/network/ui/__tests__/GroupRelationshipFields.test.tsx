@@ -4,13 +4,26 @@ import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+const state = vi.hoisted(() => ({ translations: {} as Record<string, string> }));
+
 import {
   GroupRelationshipConnector,
   GroupRelationshipDirectionSentence,
   GroupRelationshipMembershipModeDescription,
+  GroupRelationshipMembershipModeSummary,
   GroupRelationshipNameTag,
+  GroupRelationshipRightSentenceList,
+  GroupRelationshipRightsSummary,
   GroupRelationshipRightsSelector,
+  GroupRelationshipTypePreview,
+  GroupRelationshipTypeSelect,
+  GroupRelationshipTypeSummary,
   SiblingMembershipModeDescription,
+  getCurrentGroupRelationshipLabel,
+  getGroupRelationshipDirectionOptions,
+  getGroupRelationshipRightLabel,
+  getGroupRelationshipTypeLabel,
+  invertGroupRelationshipType,
 } from '../GroupRelationshipFields';
 
 vi.mock('@tanstack/react-router', () => ({
@@ -72,6 +85,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'common.unspecified': 'Unbekannt',
       };
       const template =
+        state.translations[key] ??
         templates[key] ??
         (typeof paramsOrFallback === 'string' ? paramsOrFallback : fallback) ??
         key;
@@ -88,6 +102,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  state.translations = {};
 });
 
 describe('SiblingMembershipModeDescription', () => {
@@ -269,5 +284,326 @@ describe('GroupRelationshipRightsSelector', () => {
     expect(description.className).toContain('text-muted-foreground');
     expect(container.innerHTML).toContain('var(--badge-info-bg)');
     expect(container.innerHTML).not.toContain('text-white');
+  });
+});
+
+describe('GroupRelationshipFields branch contracts', () => {
+  const t = (key: string, params?: unknown) =>
+    typeof params === 'object' && params !== null ? `${key}:${JSON.stringify(params)}` : key;
+
+  it('covers all pure relationship label and inversion decisions', () => {
+    expect(getGroupRelationshipDirectionOptions(t)).toHaveLength(3);
+    expect(
+      ['parent', 'child', 'sibling'].map(value => invertGroupRelationshipType(value as any))
+    ).toEqual(['child', 'parent', 'sibling']);
+    expect(
+      ['parent', 'child', 'sibling'].map(value => getGroupRelationshipTypeLabel(value as any, t))
+    ).toEqual(['common.network.parent', 'common.network.child', 'common.network.sibling']);
+    expect(getGroupRelationshipRightLabel('informationRight', t)).toBe('common.network.rightInfo');
+    expect(getGroupRelationshipRightLabel('customRight' as any, t)).toBe('customRight');
+    for (const relationshipType of ['parent', 'child', 'sibling'] as const) {
+      expect(
+        getCurrentGroupRelationshipLabel({
+          relationshipType,
+          currentGroupName: relationshipType === 'parent' ? ' ' : 'Current',
+          selectedGroupName: relationshipType === 'child' ? ' ' : 'Selected',
+          siblingMembershipMode: 'open',
+          t,
+        })
+      ).toBeTruthy();
+    }
+  });
+
+  it('covers name tags, connector modes, previews, and summaries', () => {
+    const { rerender, container } = render(
+      <GroupRelationshipNameTag name="" kind="current" caseStyle="embedded" groupId="group-1" />
+    );
+    expect(container.querySelector('a')).toBeTruthy();
+    rerender(
+      <GroupRelationshipNameTag
+        name="Selected"
+        kind="selected"
+        displayMode="name-only"
+        groupId="group-2"
+      />
+    );
+    rerender(<GroupRelationshipNameTag name="" kind="selected" />);
+
+    for (const relationshipType of ['parent', 'child', 'sibling'] as const) {
+      for (const mode of ['selection', 'statement', 'role'] as const) {
+        rerender(
+          <GroupRelationshipConnector
+            relationshipType={relationshipType}
+            mode={mode}
+            siblingMembershipMode={mode === 'role' ? 'elected' : null}
+            className="custom"
+          />
+        );
+      }
+    }
+    rerender(
+      <GroupRelationshipConnector
+        relationshipType="sibling"
+        mode="role"
+        siblingMembershipMode="parliament"
+      />
+    );
+    rerender(
+      <GroupRelationshipConnector
+        relationshipType="sibling"
+        mode="role"
+        siblingMembershipMode="open"
+      />
+    );
+    rerender(
+      <GroupRelationshipTypePreview
+        relationshipType="parent"
+        currentGroupName=""
+        selectedGroupName=""
+        currentGroupId="current"
+        selectedGroupId="selected"
+      />
+    );
+    rerender(
+      <GroupRelationshipTypeSummary
+        label="Summary"
+        relationshipType="sibling"
+        siblingMembershipMode="open"
+        currentGroupName="Current"
+        selectedGroupName="Selected"
+      />
+    );
+  });
+
+  it('covers every membership description mode and canonical endpoint shape', () => {
+    const common = {
+      currentGroupName: '',
+      selectedGroupName: '',
+      currentGroupId: 'current',
+      selectedGroupId: 'selected',
+    };
+    const { rerender } = render(
+      <GroupRelationshipMembershipModeDescription
+        {...common}
+        membershipMode="all_members"
+        direction="partner_members_to_current"
+      />
+    );
+    rerender(
+      <GroupRelationshipMembershipModeDescription
+        {...common}
+        membershipMode="all_members"
+        direction="current_members_to_partner"
+      />
+    );
+    rerender(
+      <GroupRelationshipMembershipModeDescription
+        {...common}
+        membershipMode="role_members"
+        direction="current_members_to_partner"
+        requiredSourceRoleId="role-1"
+        requiredSourceRoleName={null}
+      />
+    );
+    rerender(
+      <GroupRelationshipMembershipModeDescription
+        {...common}
+        membershipMode="selected_source_groups"
+        direction="current_members_to_partner"
+      />
+    );
+    rerender(
+      <GroupRelationshipMembershipModeDescription
+        {...common}
+        membershipMode="selected_source_groups"
+        direction="partner_members_to_current"
+      />
+    );
+    rerender(
+      <GroupRelationshipMembershipModeDescription
+        {...common}
+        membershipMode="none"
+        direction="current_members_to_partner"
+      />
+    );
+    rerender(
+      <SiblingMembershipModeDescription
+        siblingMembershipMode="open"
+        currentGroupName="Current"
+        selectedGroupName="Selected"
+        currentGroupId="current"
+        selectedGroupId="selected"
+        linkGroups={false}
+      />
+    );
+    state.translations['common.network.siblingMembershipExplanationParliamentAfterSource'] = '.';
+    rerender(
+      <SiblingMembershipModeDescription
+        siblingMembershipMode="parliament"
+        currentGroupName="Current"
+        selectedGroupName="Selected"
+      />
+    );
+
+    rerender(
+      <GroupRelationshipMembershipModeSummary
+        label="Membership"
+        membershipMode="all_members"
+        membershipDirection={null}
+        currentGroupName="Current"
+        selectedGroupName="Selected"
+      />
+    );
+    rerender(
+      <GroupRelationshipMembershipModeSummary
+        label="Membership"
+        membershipMode="role_members"
+        membershipDirection="partner_members_to_current"
+        currentGroupName="Current"
+        selectedGroupName="Selected"
+        membershipSourceGroupName="Source"
+        membershipTargetGroupName="Target"
+      />
+    );
+    rerender(
+      <GroupRelationshipMembershipModeSummary
+        label="Membership"
+        membershipMode="all_members"
+        currentGroupName="Current"
+        selectedGroupName="Selected"
+        membershipSourceGroupId="source-id"
+        membershipTargetGroupId="target-id"
+      />
+    );
+  });
+
+  it('covers type selection, direction sentences, right lists, summaries, and selectors', () => {
+    const onValueChange = vi.fn();
+    const { rerender } = render(
+      <GroupRelationshipTypeSelect
+        label="Type"
+        value="parent"
+        currentGroupName="Current"
+        selectedGroupName="Selected"
+        onValueChange={onValueChange}
+        helperText="Help"
+        disabled
+        disabledOptions={{ parent: true, child: false, sibling: true }}
+      />
+    );
+    rerender(
+      <GroupRelationshipTypeSelect
+        label="Type"
+        value="sibling"
+        currentGroupName="Current"
+        selectedGroupName="Selected"
+        onValueChange={onValueChange}
+      />
+    );
+
+    rerender(
+      <GroupRelationshipDirectionSentence
+        direction="mutual"
+        right="informationRight"
+        currentGroupName=""
+        selectedGroupName=""
+        currentGroupId="current"
+        selectedGroupId="selected"
+      />
+    );
+    rerender(
+      <GroupRelationshipRightSentenceList currentGroupName="Current" selectedGroupName="Selected" />
+    );
+    rerender(
+      <GroupRelationshipRightSentenceList
+        rights={['informationRight', 'amendmentRight', 'speakingRight'] as never}
+        rightDirections={
+          {
+            informationRight: 'none',
+            amendmentRight: 'mutual',
+            speakingRight: 'partner_grants_right_to_current',
+          } as never
+        }
+        currentGroupName="Current"
+        selectedGroupName="Selected"
+        className="list"
+        itemClassName="item"
+        linkGroups={false}
+      />
+    );
+
+    rerender(
+      <GroupRelationshipRightsSummary
+        label="Rights"
+        selectedRights={[]}
+        currentGroupName="Current"
+        selectedGroupName="Selected"
+      />
+    );
+    rerender(
+      <GroupRelationshipRightsSummary
+        label="Rights"
+        helperText="Help"
+        selectedRights={[
+          'informationRight',
+          'amendmentRight',
+          'rightToSpeak',
+          'activeVotingRight',
+          'passiveVotingRight',
+        ]}
+        existingRightStatuses={
+          new Map([
+            ['informationRight', 'accepted'],
+            ['amendmentRight', 'incoming'],
+            ['rightToSpeak', 'outgoing'],
+            ['activeVotingRight', 'custom' as any],
+          ])
+        }
+        rightDirections={{
+          informationRight: 'none',
+          amendmentRight: 'mutual',
+        }}
+        currentGroupName="Current"
+        selectedGroupName="Selected"
+      />
+    );
+    rerender(
+      <GroupRelationshipRightsSummary
+        label="Rights"
+        selectedRights={['informationRight']}
+        currentGroupName="Current"
+        selectedGroupName="Selected"
+      />
+    );
+
+    rerender(
+      <GroupRelationshipRightsSelector
+        label="Rights"
+        tutorialAnchor="anchor"
+        tutorialInputValues={['one']}
+        selectedRights={new Set()}
+        onToggleRight={vi.fn()}
+        helperText="Help"
+        disabled
+        optionsContainerClassName="options"
+      />
+    );
+    rerender(
+      <GroupRelationshipRightsSelector
+        label="Rights"
+        tutorialInputValues={[]}
+        selectedRights={new Set(['informationRight', 'amendmentRight'])}
+        onToggleRight={vi.fn()}
+        existingRightStatuses={
+          new Map([
+            ['informationRight', 'accepted'],
+            ['amendmentRight', 'incoming'],
+          ])
+        }
+        rightDirections={{ informationRight: 'none' }}
+        currentGroupName="Current"
+        selectedGroupName="Selected"
+      />
+    );
   });
 });

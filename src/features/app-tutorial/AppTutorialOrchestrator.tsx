@@ -39,7 +39,6 @@ import {
   localizeAppTutorialExpectedInput,
   localizeAppTutorialText,
   matchesAppTutorialExpectedInput,
-  matchesTutorialInput,
   type AppTutorialCheckpointId,
   type AppTutorialCompletion,
 } from './catalog';
@@ -51,6 +50,7 @@ import {
   requestAppTutorialNetworkApproval,
   requestAppTutorialTargetRecovery,
 } from './events';
+import { tutorialRouteMatches } from './logic/tutorialRoute';
 
 const SPOTLIGHT_PADDING = 6;
 const SPOTLIGHT_ANIMATION_TRACKING_FRAMES = 30;
@@ -66,7 +66,18 @@ const MOBILE_CITY_DESIGN_TREES_ANCHOR = 'city-design-trees-menu';
 const MOBILE_CITY_DESIGN_SAVE_ANCHOR = 'city-design-save';
 const TUTORIAL_SEARCH_RESULT_ANCHOR = 'tutorial-search-result';
 const LINK_SURFACE_PRIMARY_SELECTOR = '[data-link-surface-primary]';
+const CURRENT_TUTORIAL_TARGET_ATTRIBUTE = 'data-tutorial-current-target';
 const TUTORIAL_INPUT_VALUES_ATTRIBUTE = 'data-tutorial-input-values';
+
+function tutorialNavigationOptions(route: string) {
+  const url = new URL(route, 'https://polity.local');
+  return {
+    to: url.pathname as never,
+    search: Object.fromEntries(url.searchParams) as never,
+    replace: true,
+  } as const;
+}
+
 const SPOTLIGHT_DROPDOWN_ANCHORS = new Set([
   'network-group-search',
   'city-design-location-search',
@@ -150,7 +161,7 @@ export function tutorialSpotlightRectFor(element: HTMLElement | null, anchor = '
 }
 
 type SpotlightRect = ReturnType<typeof tutorialSpotlightRectFor>;
-type TutorialMoveResult = 'advanced' | 'busy' | 'failed' | 'pending';
+type TutorialMoveResult = 'advanced' | 'failed' | 'pending';
 
 function spotlightRectsAreEqual(left: SpotlightRect, right: SpotlightRect) {
   if (left === right) return true;
@@ -185,7 +196,7 @@ function visibleTutorialDropdownsFor(element: HTMLElement | null, anchor: string
 }
 
 function SpotlightSurfaces({ rect }: { rect: NonNullable<SpotlightRect> }) {
-  const surface = 'fixed z-[2147483000] bg-black/40 backdrop-blur-[1px]';
+  const surface = 'pointer-events-none fixed z-[2147483000] bg-black/40 backdrop-blur-[1px]';
   return (
     <>
       <div className={surface} style={{ inset: `0 0 auto 0`, height: rect.top }} />
@@ -240,9 +251,7 @@ function matchesCompletionInput(
   actual: string,
   completion: Extract<AppTutorialCompletion, { type: 'input' }>
 ): boolean {
-  return completion.expectedInputKey
-    ? matchesAppTutorialExpectedInput(actual, completion.expectedInputKey)
-    : matchesTutorialInput(actual, completion.expected);
+  return matchesAppTutorialExpectedInput(actual, completion.expectedInputKey);
 }
 
 function matchesCompletionActionValue(
@@ -252,7 +261,7 @@ function matchesCompletionActionValue(
   if (completion.expectedInputKey) {
     return matchesAppTutorialExpectedInput(actual, completion.expectedInputKey);
   }
-  return completion.expected ? matchesTutorialInput(actual, completion.expected) : true;
+  return true;
 }
 
 export function tutorialInputValuesFor(target: HTMLElement): readonly string[] {
@@ -338,10 +347,14 @@ export function tutorialCardStyle(
   }
   const below = rect.bottom + 12;
   const availableBelow = window.innerHeight - below;
-  const top =
+  const preferredTop =
     availableBelow >= estimatedHeight
       ? below
       : Math.max(12, rect.top - estimatedHeight - horizontalGap);
+  const top = Math.min(
+    Math.max(12, preferredTop),
+    Math.max(12, window.innerHeight - estimatedHeight - 12)
+  );
   const left = Math.min(
     Math.max(12, rect.left + rect.width / 2 - width / 2),
     window.innerWidth - width - 12
@@ -409,7 +422,7 @@ function TutorialCoachCard({
       data-testid="app-tutorial-coach-card"
       data-tutorial-overlay-allowed
       className={cn(
-        'fixed z-[2147483100] [scrollbar-gutter:stable] overflow-y-auto shadow-2xl',
+        'pointer-events-auto fixed z-[2147483100] [scrollbar-gutter:stable] overflow-y-auto shadow-2xl',
         isMobile && 'min-w-0 overflow-x-hidden'
       )}
       style={tutorialCardStyle(positionRect, checkpointId, isMobile, collapsed)}
@@ -423,7 +436,7 @@ function TutorialCoachCard({
   );
 }
 
-function horizontalScrollerFor(target: HTMLElement) {
+export function horizontalScrollerFor(target: HTMLElement) {
   const explicitScroller = target.matches(PRIMARY_NAVIGATION_SCROLLER_SELECTOR)
     ? target
     : target.querySelector<HTMLElement>(PRIMARY_NAVIGATION_SCROLLER_SELECTOR);
@@ -449,7 +462,7 @@ function mobileHorizontalScrollerSelector(anchor: string) {
   return null;
 }
 
-function centerMobileTutorialTarget(target: HTMLElement, anchor: string, isMobile: boolean) {
+export function centerMobileTutorialTarget(target: HTMLElement, anchor: string, isMobile: boolean) {
   if (!isMobile) return false;
 
   const scrollerSelector = mobileHorizontalScrollerSelector(anchor);
@@ -505,7 +518,7 @@ export function visibleTutorialTarget(anchor: string) {
   );
 }
 
-function tutorialTargetIsLoading(anchor: string) {
+export function tutorialTargetIsLoading(anchor: string) {
   const explicitLoadingTarget = document.querySelector(
     `[data-tutorial-loading-anchor="${CSS.escape(anchor)}"]`
   );
@@ -547,7 +560,7 @@ function useSpotlightTarget(
       const element = visibleTutorialTarget(anchor);
       if (element) return { anchor, element };
     }
-    return { anchor: anchorCandidates[0] ?? '', element: null };
+    return { anchor: anchorCandidates[0] as string, element: null };
   }, [anchorCandidates]);
 
   const publishTarget = useCallback((element: HTMLElement | null, anchor: string) => {
@@ -794,8 +807,6 @@ export function AppTutorialOrchestrator() {
   } | null>(null);
   const advancingRef = useRef(false);
   const advanceRequestRef = useRef<{
-    checkpointId: AppTutorialCheckpointId;
-    token: object;
     promise: Promise<TutorialMoveResult>;
   } | null>(null);
 
@@ -826,6 +837,16 @@ export function AppTutorialOrchestrator() {
     href,
     isMobileScreen
   );
+
+  useEffect(() => {
+    if (!checkpoint || !target || !enabled) return;
+    target.setAttribute(CURRENT_TUTORIAL_TARGET_ATTRIBUTE, checkpoint.id);
+    return () => {
+      if (target.getAttribute(CURRENT_TUTORIAL_TARGET_ATTRIBUTE) === checkpoint.id) {
+        target.removeAttribute(CURRENT_TUTORIAL_TARGET_ATTRIBUTE);
+      }
+    };
+  }, [checkpoint?.id, enabled, target]);
 
   useEffect(() => {
     if (!checkpoint) return;
@@ -893,35 +914,31 @@ export function AppTutorialOrchestrator() {
       checkpointId: AppTutorialCheckpointId,
       evidence: Parameters<typeof advanceTutorial>[2]
     ): Promise<TutorialMoveResult> => {
-      if (!run) return 'busy';
       const activeRequest = advanceRequestRef.current;
-      if (activeRequest) {
-        return activeRequest.checkpointId === checkpointId ? activeRequest.promise : 'busy';
-      }
+      if (activeRequest) return activeRequest.promise;
 
-      const token = {};
+      const activeRun = run as PublicAppTutorialRun;
       advancingRef.current = true;
       setAdvancing(true);
       setError(null);
 
       const promise = (async (): Promise<TutorialMoveResult> => {
         try {
-          const result = await advanceTutorial(run.revision, checkpointId, evidence);
+          const result = await advanceTutorial(activeRun.revision, checkpointId, evidence);
           if (result.pending) return 'pending';
           if (result.completed) {
             setRun(null);
-            await navigate({ to: '/home', replace: true });
+            await navigate(tutorialNavigationOptions('/home'));
             return 'advanced';
           }
-          if (result.run) {
-            if (href !== result.route) {
-              await navigate({ to: result.route as never, replace: true });
-            }
-            // Keep the current checkpoint active until the destination route
-            // and its loaders have settled. Otherwise the next target's retry
-            // timer starts on the page we are leaving.
-            setRun(result.run);
+          const nextRun = result.run as PublicAppTutorialRun;
+          if (!tutorialRouteMatches(href, result.route)) {
+            await navigate(tutorialNavigationOptions(result.route));
           }
+          // Keep the current checkpoint active until the destination route
+          // and its loaders have settled. Otherwise the next target's retry
+          // timer starts on the page we are leaving.
+          setRun(nextRun);
           return 'advanced';
         } catch (advanceError) {
           const message = localizeAppError(advanceError);
@@ -932,14 +949,12 @@ export function AppTutorialOrchestrator() {
           }
           return 'failed';
         } finally {
-          if (advanceRequestRef.current?.token === token) {
-            advanceRequestRef.current = null;
-            advancingRef.current = false;
-            setAdvancing(false);
-          }
+          advanceRequestRef.current = null;
+          advancingRef.current = false;
+          setAdvancing(false);
         }
       })();
-      advanceRequestRef.current = { checkpointId, token, promise };
+      advanceRequestRef.current = { promise };
       return promise;
     },
     [href, navigate, run, text.conflict]
@@ -971,22 +986,23 @@ export function AppTutorialOrchestrator() {
   useEffect(() => {
     if (!checkpoint || !target || !enabled || !waitingForSimulation) return;
     let active = true;
-    let timeout: number | null = null;
+    let timeout: number;
 
     const attempt = async () => {
       const result = await moveTo(checkpoint.id, {
         type: 'view',
         anchor: checkpoint.anchor,
       });
-      if (active && (result === 'pending' || result === 'busy')) {
+      if (active && result === 'pending') {
         timeout = window.setTimeout(() => void attempt(), 650);
       }
     };
 
     timeout = window.setTimeout(() => void attempt(), 250);
+
     return () => {
       active = false;
-      if (timeout !== null) window.clearTimeout(timeout);
+      window.clearTimeout(timeout);
     };
   }, [checkpoint, enabled, moveTo, target, waitingForSimulation]);
 
@@ -994,36 +1010,44 @@ export function AppTutorialOrchestrator() {
     if (!checkpoint || !target || !enabled) return;
     const completion = checkpoint.completion;
 
-    const onClick = (event: MouseEvent) => {
-      if (
-        completion.type === 'click' &&
-        (event.target === target || target.contains(event.target as Node))
-      ) {
-        window.setTimeout(() => {
-          void moveTo(checkpoint.id, {
-            type: 'click',
-            anchor: checkpoint.anchor,
+    if (completion.type === 'click') {
+      const onClick = (event: MouseEvent) => {
+        if (event.target === target || target.contains(event.target as Node)) {
+          window.setTimeout(() => {
+            void moveTo(checkpoint.id, {
+              type: 'click',
+              anchor: checkpoint.anchor,
+            });
           });
-        });
-      }
-    };
-    const onInput = (event: Event) => {
-      if (
-        completion.type === 'input' &&
-        event.target instanceof HTMLInputElement &&
-        matchesCompletionInput(event.target.value, completion)
-      ) {
-        // Search proceeds when its result becomes available. Message sending
-        // reports the same evidence explicitly after the send succeeds.
-        if (checkpoint.id === 'search-initiative') {
-          void moveTo(checkpoint.id, { type: 'input', value: event.target.value });
         }
-      }
-    };
-    const scrollTarget =
-      completion.type === 'horizontal-scroll' ? horizontalScrollerFor(target) : target;
-    const isDesktopHorizontalScroll =
-      completion.type === 'horizontal-scroll' && window.matchMedia('(min-width: 768px)').matches;
+      };
+      window.addEventListener('click', onClick, true);
+      return () => window.removeEventListener('click', onClick, true);
+    }
+
+    if (completion.type === 'input') {
+      const onInput = (event: Event) => {
+        if (
+          event.target instanceof HTMLInputElement &&
+          matchesCompletionInput(event.target.value, completion) &&
+          checkpoint.id === 'search-initiative'
+        ) {
+          // Search proceeds when its result becomes available. Message sending
+          // reports the same evidence explicitly after the send succeeds.
+          void moveTo(checkpoint.id, {
+            type: 'input',
+            value: event.target.value,
+          });
+        }
+      };
+      target.addEventListener('input', onInput);
+      return () => target.removeEventListener('input', onInput);
+    }
+
+    if (completion.type !== 'horizontal-scroll') return;
+
+    const scrollTarget = horizontalScrollerFor(target);
+    const isDesktopHorizontalScroll = window.matchMedia('(min-width: 768px)').matches;
     let previousScrollLeft = scrollTarget.scrollLeft;
     let accumulatedScrollPixels = 0;
     let swipe:
@@ -1037,7 +1061,6 @@ export function AppTutorialOrchestrator() {
     const scrollRangePixels = () =>
       Math.max(0, scrollTarget.scrollWidth - scrollTarget.clientWidth);
     const completeHorizontalScroll = (scrollPixels: number) => {
-      if (completion.type !== 'horizontal-scroll') return;
       const range = scrollRangePixels();
       const requiredPixels =
         range > 0 ? Math.min(completion.minimumPixels, range) : completion.minimumPixels;
@@ -1056,14 +1079,7 @@ export function AppTutorialOrchestrator() {
       completeHorizontalScroll(accumulatedScrollPixels);
     };
     const completeHorizontalSwipe = (event: PointerEvent) => {
-      if (
-        completion.type !== 'horizontal-scroll' ||
-        !swipe ||
-        swipe.pointerId !== event.pointerId ||
-        scrollRangePixels() > 0
-      ) {
-        return;
-      }
+      if (!swipe || swipe.pointerId !== event.pointerId || scrollRangePixels() > 0) return;
       const horizontalPixels = Math.abs(event.clientX - swipe.startX);
       const verticalPixels = Math.abs(event.clientY - swipe.startY);
       if (horizontalPixels >= completion.minimumPixels && horizontalPixels > verticalPixels) {
@@ -1071,13 +1087,7 @@ export function AppTutorialOrchestrator() {
       }
     };
     const onPointerDown = (event: PointerEvent) => {
-      if (
-        completion.type !== 'horizontal-scroll' ||
-        isDesktopHorizontalScroll ||
-        scrollRangePixels() > 0
-      ) {
-        return;
-      }
+      if (isDesktopHorizontalScroll || scrollRangePixels() > 0) return;
       swipe = {
         pointerId: event.pointerId,
         startX: event.clientX,
@@ -1095,16 +1105,14 @@ export function AppTutorialOrchestrator() {
       if (swipe?.pointerId === event.pointerId) swipe = undefined;
     };
 
-    window.addEventListener('click', onClick, true);
-    target.addEventListener('input', onInput);
     scrollTarget.addEventListener('scroll', onScroll, { passive: true });
     target.addEventListener('pointerdown', onPointerDown, { passive: true });
     target.addEventListener('pointermove', onPointerMove, { passive: true });
     target.addEventListener('pointerup', onPointerUp, { passive: true });
-    target.addEventListener('pointercancel', onPointerCancel, { passive: true });
+    target.addEventListener('pointercancel', onPointerCancel, {
+      passive: true,
+    });
     return () => {
-      window.removeEventListener('click', onClick, true);
-      target.removeEventListener('input', onInput);
       scrollTarget.removeEventListener('scroll', onScroll);
       target.removeEventListener('pointerdown', onPointerDown);
       target.removeEventListener('pointermove', onPointerMove);
@@ -1192,10 +1200,10 @@ export function AppTutorialOrchestrator() {
 
   useEffect(() => {
     if (!loaded || !run || run.status !== 'active' || advancingRef.current) return;
-    if (pathname === '/onboarding' || href === run.route) return;
+    if (pathname === '/onboarding' || tutorialRouteMatches(href, run.route)) return;
     const timeout = window.setTimeout(() => {
       if (!advancingRef.current) {
-        void navigate({ to: run.route as never, replace: true });
+        void navigate(tutorialNavigationOptions(run.route));
       }
     }, 700);
     return () => window.clearTimeout(timeout);
@@ -1252,10 +1260,10 @@ export function AppTutorialOrchestrator() {
   }, [dropdownVisible, enabled, target, targetAnchor]);
 
   const leave = async () => {
-    if (!run) return;
+    const activeRun = run as PublicAppTutorialRun;
     setAdvancing(true);
     try {
-      const result = await pauseTutorial(run.revision);
+      const result = await pauseTutorial(activeRun.revision);
       setRun(result.run);
     } finally {
       setAdvancing(false);
@@ -1268,7 +1276,7 @@ export function AppTutorialOrchestrator() {
     try {
       const result = await restartTutorial();
       setRun(result.run);
-      await navigate({ to: result.run.route as never, replace: true });
+      await navigate(tutorialNavigationOptions(result.run.route));
     } catch (restartError) {
       setError(localizeAppError(restartError));
     } finally {
@@ -1278,11 +1286,12 @@ export function AppTutorialOrchestrator() {
 
   const retryTarget = () => {
     retry();
-    if (checkpoint && RECOVERABLE_VOTING_ANCHORS.has(checkpoint.anchor)) {
-      requestAppTutorialTargetRecovery(checkpoint.anchor);
+    const activeCheckpoint = checkpoint as NonNullable<typeof checkpoint>;
+    if (RECOVERABLE_VOTING_ANCHORS.has(activeCheckpoint.anchor)) {
+      requestAppTutorialTargetRecovery(activeCheckpoint.anchor);
       return;
     }
-    if (run) window.location.assign(run.route);
+    window.location.assign((run as PublicAppTutorialRun).route);
   };
 
   const copyCheckpointText = async (copyText: string) => {
@@ -1296,32 +1305,32 @@ export function AppTutorialOrchestrator() {
   };
 
   const confirmCurrentCheckpoint = async () => {
-    if (!checkpoint) return;
+    const activeCheckpoint = checkpoint as NonNullable<typeof checkpoint>;
     const result = await moveTo(
-      checkpoint.id,
-      checkpoint.completion.type === 'view'
+      activeCheckpoint.id,
+      activeCheckpoint.completion.type === 'view'
         ? {
             type: 'view',
-            anchor: checkpoint.anchor,
+            anchor: activeCheckpoint.anchor,
           }
         : {
             type: 'acknowledge',
-            desktopAcknowledged: checkpoint.completion.type === 'horizontal-scroll',
+            desktopAcknowledged: activeCheckpoint.completion.type === 'horizontal-scroll',
           }
     );
-    if (result === 'advanced' && checkpoint.id === 'view-network-pending') {
+    if (result === 'advanced' && activeCheckpoint.id === 'view-network-pending') {
       requestAppTutorialNetworkApproval();
     }
     if (result === 'pending') {
-      setPendingEffectCheckpointId(checkpoint.id);
+      setPendingEffectCheckpointId(activeCheckpoint.id);
     }
   };
 
   const triggerCardAction = async () => {
-    if (!checkpoint || checkpoint.completion.type !== 'click') return;
-    await moveTo(checkpoint.id, {
+    const activeCheckpoint = checkpoint as NonNullable<typeof checkpoint>;
+    await moveTo(activeCheckpoint.id, {
       type: 'click',
-      anchor: checkpoint.anchor,
+      anchor: activeCheckpoint.anchor,
     });
   };
 
@@ -1356,7 +1365,11 @@ export function AppTutorialOrchestrator() {
   const multipleCheckpointCopyTexts = checkpointCopyTexts.length > 1;
 
   return createPortal(
-    <div data-testid="app-tutorial-spotlight" data-tutorial-checkpoint={checkpoint.id}>
+    <div
+      data-testid="app-tutorial-spotlight"
+      data-tutorial-checkpoint={checkpoint.id}
+      data-tutorial-route={run?.route}
+    >
       {rect && <SpotlightSurfaces rect={rect} />}
       {rect && <SpotlightTargetOutline rect={rect} />}
       {rect && (
@@ -1379,10 +1392,11 @@ export function AppTutorialOrchestrator() {
                 mobileCollapsed && 'h-full'
               )}
               open={!isMobileScreen || mobileDetailsOpen}
-              onOpenChange={open => {
-                if (!isMobileScreen) return;
-                setMobileDetailsState({ checkpointId: checkpoint.id, open });
-              }}
+              onOpenChange={
+                isMobileScreen
+                  ? open => setMobileDetailsState({ checkpointId: checkpoint.id, open })
+                  : undefined
+              }
             >
               <div
                 className={cn(
@@ -1414,6 +1428,7 @@ export function AppTutorialOrchestrator() {
                 {isMobileScreen && (
                   <div className="flex shrink-0 items-center gap-1">
                     <Button
+                      data-action-id="app-tutorial.coach.instruction.toggle"
                       type="button"
                       size="sm"
                       variant="ghost"
@@ -1439,6 +1454,7 @@ export function AppTutorialOrchestrator() {
                     {!mobileCollapsed && (
                       <CollapsibleTrigger asChild>
                         <Button
+                          data-action-id="app-tutorial.coach.details.toggle"
                           type="button"
                           size="sm"
                           variant="ghost"
@@ -1497,6 +1513,7 @@ export function AppTutorialOrchestrator() {
                         const showValue = checkpointCopyTexts.length > 1;
                         return (
                           <Button
+                            data-action-id="app-tutorial.coach.checkpoint-copy.copy"
                             key={copyText}
                             type="button"
                             size="sm"
@@ -1556,7 +1573,13 @@ export function AppTutorialOrchestrator() {
                       <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                       {text.osmLoadFailed}
                     </p>
-                    <Button type="button" size="sm" disabled={advancing} onClick={retryOsmLoading}>
+                    <Button
+                      data-action-id="app-tutorial.coach.osm.retry"
+                      type="button"
+                      size="sm"
+                      disabled={advancing}
+                      onClick={retryOsmLoading}
+                    >
                       <RotateCw className="h-4 w-4" />
                       {text.retryOsm}
                     </Button>
@@ -1571,6 +1594,7 @@ export function AppTutorialOrchestrator() {
                 <div className="flex flex-wrap items-center gap-2">
                   {checkpoint.cardAction && checkpoint.completion.type === 'click' && (
                     <Button
+                      data-action-id="app-tutorial.coach.card-action.execute"
                       type="button"
                       className="shadow-sm"
                       data-tutorial-anchor={checkpoint.anchor}
@@ -1585,8 +1609,10 @@ export function AppTutorialOrchestrator() {
                   )}
                   {acknowledge && (
                     <Button
+                      data-action-id="app-tutorial.coach.checkpoint.confirm"
                       type="button"
                       className="shadow-sm"
+                      data-testid="app-tutorial-continue"
                       disabled={advancing}
                       loading={advancing}
                       loadingLabel={
@@ -1603,6 +1629,7 @@ export function AppTutorialOrchestrator() {
                     </Button>
                   )}
                   <Button
+                    data-action-id="app-tutorial.coach.leave"
                     type="button"
                     size="sm"
                     variant="ghost"
@@ -1628,14 +1655,24 @@ export function AppTutorialOrchestrator() {
                 <p className="text-muted-foreground mt-2 text-sm">{text.missingBody}</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" onClick={retryTarget}>
+                <Button
+                  data-action-id="app-tutorial.missing-target.retry"
+                  size="sm"
+                  onClick={retryTarget}
+                >
                   <RotateCw className="h-4 w-4" />
                   {text.retry}
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => void leave()}>
+                <Button
+                  data-action-id="app-tutorial.missing-target.leave"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void leave()}
+                >
                   {text.leave}
                 </Button>
                 <Button
+                  data-action-id="app-tutorial.missing-target.restart"
                   size="sm"
                   variant="ghost"
                   className={cn('text-destructive')}
@@ -1669,6 +1706,7 @@ export function AppTutorialOrchestrator() {
               </div>
               <div className="flex justify-end">
                 <Button
+                  data-action-id="app-tutorial.loading.leave"
                   size="sm"
                   variant="ghost"
                   className="text-muted-foreground h-8 px-2 text-xs font-normal opacity-70"

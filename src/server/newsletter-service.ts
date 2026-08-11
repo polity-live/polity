@@ -37,7 +37,7 @@ interface NewsletterConfig {
   allowedRecipients: string[];
 }
 
-interface NewsletterServiceDeps {
+export interface NewsletterServiceDeps {
   supabase?: SupabaseClient;
   resend?: Resend;
   config?: Partial<NewsletterConfig>;
@@ -343,7 +343,7 @@ async function processJob(
   if (job.operation === 'replace_email' && (job.resend_contact_id || job.previous_email)) {
     const previousContact = job.resend_contact_id
       ? { id: job.resend_contact_id }
-      : { email: job.previous_email ?? job.email };
+      : { email: String(job.previous_email) };
     await removeContact(resend, previousContact);
   }
 
@@ -496,3 +496,23 @@ export async function handleResendWebhook(
 
   return { duplicate: false, type: event.type };
 }
+
+export const newsletterServiceContracts = {
+  assertNewsletterSegmentsConfigured,
+  completeJob,
+  ensureContact,
+  failJob,
+  findContact,
+  getResend,
+  getSupabase,
+  isDuplicateDatabaseError,
+  isNotFound,
+  loadSubscription,
+  messageFromResendError,
+  normalizeNewsletterLanguage,
+  processContactWebhook,
+  processJob,
+  readConfig,
+  recipientAllowed,
+  removeContact,
+};

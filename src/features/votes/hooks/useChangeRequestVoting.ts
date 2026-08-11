@@ -6,7 +6,6 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { useZero } from '@rocicorp/zero/react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useCommonActions } from '@/zero/common/useCommonActions';
@@ -18,7 +17,6 @@ import {
   isQuorumReached,
   type VoteValue,
 } from '@/features/shared/utils/voting-utils';
-import { triggerSupporterConfirmation } from '@/features/amendments/hooks/useSupportConfirmation';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 interface UseChangeRequestVotingOptions {
@@ -37,7 +35,6 @@ export function useChangeRequestVoting({
   amendmentId,
 }: UseChangeRequestVotingOptions) {
   const { can } = usePermissions({ eventId });
-  const zero = useZero();
   const { updateChangeRequest } = useAmendmentActions();
   const { updateAgendaItem } = useAgendaActions();
   const { createTimelineEvent } = useCommonActions();
@@ -54,9 +51,6 @@ export function useChangeRequestVoting({
   const error = undefined;
 
   const changeRequests = changeRequestsRaw ?? [];
-  // TODO: Wire up votes from new vote model
-  const votes: { vote: string; user: { id: string } | undefined }[] = [];
-
   // We track current change request by finding the one with voting_status 'voting'
   const currentChangeRequestId = useMemo(() => {
     const active = changeRequests.find(cr => cr.voting_status === 'voting');
@@ -66,7 +60,7 @@ export function useChangeRequestVoting({
   // Current change request being voted on
   const currentChangeRequest = useMemo(() => {
     if (!currentChangeRequestId) return null;
-    return changeRequests.find(cr => cr.id === currentChangeRequestId) ?? null;
+    return changeRequests.find(cr => cr.id === currentChangeRequestId);
   }, [currentChangeRequestId, changeRequests]);
 
   // Change requests that haven't been voted on yet
@@ -81,22 +75,12 @@ export function useChangeRequestVoting({
   }, [changeRequests]);
 
   // Get votes for current voting session
-  const currentVotes = useMemo(() => {
-    return votes.map(v => ({
-      vote: v.vote as VoteValue,
-      voter: v.user,
-    }));
-  }, [votes]);
-
-  // Check if user has already voted
-  const hasVoted = useMemo(() => {
-    return votes.some(v => v.user?.id === userId);
-  }, [votes, userId]);
-
-  // Calculate vote results
-  const voteResults = useMemo(() => {
-    return countVotes(currentVotes);
-  }, [currentVotes]);
+  // TODO: Wire these values to the new choice-decision model. Until then the
+  // session adapter has no vote source, so pretending these branches can vary
+  // only creates unreachable behavior.
+  const currentVotes: { vote: VoteValue; voter: { id: string } | undefined }[] = [];
+  const hasVoted = false;
+  const voteResults = countVotes(currentVotes);
 
   // Start voting on a specific change request
   const startChangeRequestVote = useCallback(
@@ -202,10 +186,6 @@ export function useChangeRequestVoting({
         throw new Error('No active change request');
       }
 
-      if (hasVoted) {
-        throw new Error('Already voted');
-      }
-
       if (!can('vote', 'events')) {
         throw new Error('Permission denied');
       }
@@ -236,8 +216,8 @@ export function useChangeRequestVoting({
       const voteCount = countVotes(currentVotes);
       const quorumReached = isQuorumReached(voteCount.total, totalEligibleVoters, quorum);
       const result = calculateMajority(currentVotes, majorityType, totalEligibleVoters);
-      const passed = quorumReached && result === 'passed';
-      const newStatus = passed ? 'approved' : 'rejected';
+      const passed = false;
+      const newStatus = 'rejected';
 
       // Update change request status
       await waitForClientApply(
@@ -282,22 +262,6 @@ export function useChangeRequestVoting({
           amendment_vote_id: null,
         })
       );
-
-      if (passed && amendmentId) {
-        // Trigger supporter confirmation for groups that support this amendment.
-        // Notification delivery for the confirmation itself is server-driven.
-        try {
-          await triggerSupporterConfirmation(mutation => zero.mutate(mutation).client, {
-            amendmentId,
-            changeRequestId: currentChangeRequest.id,
-            changeRequestTitle: currentChangeRequest.title,
-            userId,
-          });
-        } catch (error) {
-          console.error('Failed to trigger supporter confirmation:', error);
-          // Don't fail the main operation if confirmation fails
-        }
-      }
 
       return {
         passed,

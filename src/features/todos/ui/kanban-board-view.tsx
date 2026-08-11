@@ -153,6 +153,7 @@ export function KanbanBoardView({
               query={virtualQuery.query}
               renderTodo={todo => (
                 <TodoKanbanCardView
+                  data-action-id="todos.kanban.card.virtual.interact"
                   key={todo.id}
                   canManageTodos={canManageTodos}
                   todo={todo}
@@ -174,6 +175,7 @@ export function KanbanBoardView({
               className="max-h-[38rem] min-h-96 overflow-y-auto"
               renderItem={todo => (
                 <TodoKanbanCardView
+                  data-action-id="todos.kanban.card.interact"
                   canManageTodos={canManageTodos}
                   todo={todo}
                   isDragging={draggedTodoId === todo.id}
@@ -193,6 +195,7 @@ export function KanbanBoardView({
 }
 
 interface TodoKanbanCardViewProps {
+  'data-action-id'?: string;
   canManageTodos: boolean;
   todo: Todo;
   onMouseDown: (todo: Todo) => void;
@@ -204,6 +207,7 @@ interface TodoKanbanCardViewProps {
 }
 
 export function TodoKanbanCardView({
+  'data-action-id': actionId,
   canManageTodos,
   todo,
   onMouseDown,
@@ -215,6 +219,7 @@ export function TodoKanbanCardView({
 }: TodoKanbanCardViewProps) {
   return (
     <div
+      data-action-id={actionId}
       draggable={canManageTodos}
       onMouseDown={() => onMouseDown(todo)}
       onDragStart={canManageTodos ? () => onDragStart(todo) : undefined}

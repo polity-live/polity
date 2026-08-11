@@ -124,7 +124,12 @@ export function AmendmentVotingQueue({
   };
 
   const updateVotingOrder = async (newOrder: ChangeRequest[]) => {
-    setLocalChangeRequests(newOrder);
+    setLocalChangeRequests(
+      newOrder.map((changeRequest, index) => ({
+        ...changeRequest,
+        votingOrder: index,
+      }))
+    );
     toast.success(
       translateText('generated.inline.1256_abstimmungsreihenfolge_aktualisiert_4e6d6850')
     );

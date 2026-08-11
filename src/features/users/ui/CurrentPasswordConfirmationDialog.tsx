@@ -48,7 +48,11 @@ export function CurrentPasswordConfirmationDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <ScrollableDialogContent className="sm:max-w-md">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+          data-action-id="users.security-confirmation.submit"
+        >
           <DialogHeader>
             <DialogTitle>
               {mode === 'code'
@@ -106,6 +110,7 @@ export function CurrentPasswordConfirmationDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
+              data-action-id="users.security-confirmation.cancel"
             >
               {t('common.actions.cancel')}
             </Button>
@@ -114,6 +119,7 @@ export function CurrentPasswordConfirmationDialog({
               disabled={
                 (mode === 'code' ? code.length !== 6 : password.length === 0) || isSubmitting
               }
+              data-action-id="users.security-confirmation.submit"
             >
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {isSubmitting

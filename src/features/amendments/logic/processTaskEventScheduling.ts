@@ -151,14 +151,14 @@ export function getSchedulingWindowValidationMessage(args: {
 
   const minStartAt = toLocalTimestamp(args.minStartDate, args.minStartTime);
   if (minStartAt != null && eventStartAt < minStartAt) {
-    return windowLabel ?? translate('features.amendments.process.schedulingAfterPrevious');
+    return windowLabel as string;
   }
 
   const maxStartAt =
     toLocalTimestamp(args.maxStartDate, args.maxStartTime) ??
     toLocalEndOfDayTimestamp(args.maxStartDate);
   if (maxStartAt != null && eventStartAt > maxStartAt) {
-    return windowLabel ?? translate('features.amendments.process.schedulingOutsideTaskWindow');
+    return windowLabel as string;
   }
 
   return null;

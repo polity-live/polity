@@ -582,7 +582,7 @@ export function cityDesignReducer(
         }
 
         const points = [...state.placementDraft.points, placementPoint];
-        const finalPoint = points[points.length - 1] ?? placementPoint;
+        const finalPoint = points[points.length - 1] as CityDesignLocalPoint;
         return {
           ...state,
           design: {
@@ -636,7 +636,7 @@ export function cityDesignReducer(
         };
       }
 
-      if (definition.geometryKind === 'corridor') {
+      {
         if (!state.placementDraft) {
           return {
             ...state,
@@ -683,8 +683,6 @@ export function cityDesignReducer(
           isDirty: true,
         };
       }
-
-      return state;
     }
 
     case 'scene_pointer_move':
@@ -817,7 +815,7 @@ export function cityDesignReducer(
 
     case 'import_osm_feature': {
       if (action.objects.length === 0) return state;
-      const firstObject = action.objects[0];
+      const firstObject = action.objects[0] as CityDesignObject;
 
       return {
         ...state,
@@ -825,11 +823,9 @@ export function cityDesignReducer(
           ...state.design,
           objects: [...state.design.objects, ...action.objects],
         },
-        selectedObjectId: firstObject?.id ?? null,
+        selectedObjectId: firstObject.id,
         selectedOsmWayId: null,
-        selectedObjectFocusRequestKey: firstObject
-          ? state.selectedObjectFocusRequestKey + 1
-          : state.selectedObjectFocusRequestKey,
+        selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
         interactionMode: 'select',
         isDirty: true,
       };
@@ -957,3 +953,20 @@ export function parseStoredCityDesignState(value: unknown): CityDesignStateV1 | 
 
   return normalizeCityDesignStateV1(candidate as CityDesignStateV1);
 }
+
+export const cityDesignReducerInternals = {
+  updateObject,
+  getObjectCategory,
+  showObjectCategory,
+  getCorridorDefaultWidth,
+  updateCityDesignObjectProperties,
+  createPlacementSettings,
+  getPlacementOverrides,
+  resetPlacementSettings,
+  updatePlacementDraftWidth,
+  getCityDesignObjectEndpoints,
+  snapPointToSameTypeEndpoint,
+  addFinishedPlacementObject,
+  finishPathPlacementDraft,
+  finishCurrentPlacementDraft,
+};

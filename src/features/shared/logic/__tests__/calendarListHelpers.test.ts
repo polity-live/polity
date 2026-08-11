@@ -16,10 +16,15 @@ describe('calendarListHelpers', () => {
     expect(
       getListAnchorDateKey(['2026-06-10', '2026-06-15', '2026-06-20'], new Date(2026, 5, 14))
     ).toBe('2026-06-15');
+    expect(getListAnchorDateKey([], new Date(2026, 5, 14))).toBeNull();
+    expect(getListAnchorDateKey(['2026-06-10', '2026-06-15'], new Date(2026, 5, 20))).toBe(
+      '2026-06-15'
+    );
   });
 
   it('places a marker before the first date greater than or equal to it', () => {
     expect(getMarkerInsertionIndex(['2026-06-10', '2026-06-20'], new Date(2026, 5, 14))).toBe(1);
+    expect(getMarkerInsertionIndex(['2026-06-10'], new Date(2026, 5, 14))).toBe(1);
   });
 
   it('reports marker viewport position', () => {

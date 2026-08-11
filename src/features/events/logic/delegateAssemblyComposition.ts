@@ -228,7 +228,8 @@ function finalizeSection(
     total,
     rows: rowsWithoutShares.map(row => ({
       ...row,
-      share: total > 0 ? (row.value / total) * 100 : 0,
+      // Non-empty sections always contain at least one positive group or remainder row.
+      share: (row.value / total) * 100,
     })),
   };
 }

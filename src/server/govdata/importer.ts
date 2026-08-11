@@ -132,9 +132,6 @@ export async function createGovDataCsvSnapshot(
     snapshotKey,
     columns: table.columns,
     rows: table.rows,
-    provenance: {
-      ...provenance,
-      importedAt: provenance.importedAt || new Date().toISOString(),
-    },
+    provenance,
   };
 }

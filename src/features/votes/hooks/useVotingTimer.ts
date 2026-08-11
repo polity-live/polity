@@ -67,9 +67,7 @@ export function useVotingTimer(options: UseVotingTimerOptions = {}): UseVotingTi
       }, 1000);
 
       return () => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-        }
+        if (intervalRef.current) clearInterval(intervalRef.current);
       };
     }
   }, [isRunning, timeRemaining]);
@@ -168,9 +166,7 @@ export function useSyncedVotingTimer(
       }, 1000);
 
       return () => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-        }
+        if (intervalRef.current) clearInterval(intervalRef.current);
       };
     }
   }, [isRunning, timeRemaining]);

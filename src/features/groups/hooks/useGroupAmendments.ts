@@ -105,7 +105,7 @@ export function useGroupAmendments(
     [amendments]
   );
 
-  const eventStepRunItems = useMemo<GroupAmendmentListItem[]>(
+  const eventStepRunItems = useMemo<(GroupAmendmentListItem & { process_step_run_id: string })[]>(
     () =>
       (stepRuns as GroupAmendmentEventStepRunRow[])
         .map((stepRun): GroupAmendmentListItem | null => {
@@ -137,7 +137,9 @@ export function useGroupAmendments(
             branchStatuses: mapAmendmentBranchStatusChips(branches),
           };
         })
-        .filter(isGroupAmendmentListItem),
+        .filter(isGroupAmendmentListItem) as (GroupAmendmentListItem & {
+        process_step_run_id: string;
+      })[],
     [stepRuns]
   );
 
@@ -154,12 +156,9 @@ export function useGroupAmendments(
     }
 
     for (const item of eventStepRunItems) {
-      if (item.process_step_run_id) {
-        if (!dedupedByStepRunId.has(item.process_step_run_id)) {
-          dedupedByStepRunId.set(item.process_step_run_id, item);
-        }
-      } else {
-        withoutStepRun.push(item);
+      const stepRunId = item.process_step_run_id;
+      if (!dedupedByStepRunId.has(stepRunId)) {
+        dedupedByStepRunId.set(stepRunId, item);
       }
     }
 

@@ -27,7 +27,11 @@ describe('AiFindingsCardGroup', () => {
     expect(screen.getByText('Finding 4')).toBeTruthy();
     expect(screen.queryByText('Finding 5')).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: /2|more|weitere/i }));
+    const expandAction = screen.getByRole('button', { name: /2|more|weitere/i });
+    expect(expandAction.getAttribute('data-action-id')).toBe('messages.ai-findings.expand.toggle');
+    expandAction.focus();
+    expect(document.activeElement).toBe(expandAction);
+    fireEvent.click(expandAction);
     expect(screen.getByText('Finding 5')).toBeTruthy();
     expect(screen.getByText('Finding 6')).toBeTruthy();
   });

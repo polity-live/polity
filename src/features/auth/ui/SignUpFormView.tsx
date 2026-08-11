@@ -115,11 +115,16 @@ export function SignUpFormView({
       >
         <InlineNotice variant="info">{copy.confirmationPendingInstructions}</InlineNotice>
 
-        <FormButton className="w-full" onClick={onGoToSignIn}>
+        <FormButton
+          data-action-id="auth.sign-up.navigate.sign-in"
+          className="w-full"
+          onClick={onGoToSignIn}
+        >
           {copy.signInLink}
         </FormButton>
 
         <FormButton
+          data-action-id="auth.sign-up.change.email"
           type="button"
           variant="outline"
           className="w-full"
@@ -137,7 +142,7 @@ export function SignUpFormView({
       description={copy.description}
       icon={<UserPlus className={featureThemeClassName('authForgotPasswordFormInfoIcon')} />}
     >
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form data-action-id="auth.sign-up.submit.password" onSubmit={onSubmit} className="space-y-4">
         <TextField
           id="email"
           type="email"
@@ -194,7 +199,12 @@ export function SignUpFormView({
 
         {displayError ? <InlineNotice variant="destructive">{displayError}</InlineNotice> : null}
 
-        <FormButton type="submit" className="w-full" disabled={isLoading || !isFormValid}>
+        <FormButton
+          data-action-id="auth.sign-up.submit.password"
+          type="submit"
+          className="w-full"
+          disabled={isLoading || !isFormValid}
+        >
           {isSigningUp ? (
             <>
               <Spinner className="mr-2" />
@@ -210,6 +220,7 @@ export function SignUpFormView({
       </form>
 
       <FormButton
+        data-action-id="auth.sign-up.authenticate.google"
         type="button"
         className={featureThemeClassName('authSignInFormContrastBadge')}
         onClick={onGoogleAuth}
@@ -229,6 +240,7 @@ export function SignUpFormView({
       </div>
 
       <FormButton
+        data-action-id="auth.sign-up.authenticate.magic-link"
         type="button"
         variant="outline"
         className="w-full"
@@ -243,6 +255,7 @@ export function SignUpFormView({
         <p>
           {copy.hasAccount}{' '}
           <FormButton
+            data-action-id="auth.sign-up.navigate.sign-in"
             type="button"
             variant="link"
             className="h-auto p-0 font-medium"

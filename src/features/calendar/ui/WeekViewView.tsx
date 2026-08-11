@@ -83,6 +83,7 @@ export const WeekViewView = ({
                         variant="ghost"
                         className="hover:bg-accent block h-auto w-full rounded border p-1.5 text-left text-xs whitespace-normal transition-colors"
                         onClick={() => onEventOpen(event.id)}
+                        data-action-id="calendar.week-view.event.open"
                       >
                         <span className="block truncate font-medium">
                           {event.isMeeting && '📅 '}

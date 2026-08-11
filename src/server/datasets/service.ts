@@ -392,7 +392,7 @@ export async function createDatasetProjection(
   }
   const filteredRows = Object.entries(request.filters ?? {}).reduce(
     (rows, [column, value]) =>
-      value ? rows.filter(row => String(row[column] ?? '') === String(value)) : rows,
+      value ? rows.filter(row => String(row[column]) === String(value)) : rows,
     table.rows
   );
   const filteredTable = { ...table, rows: filteredRows };
@@ -421,8 +421,8 @@ export async function createDatasetProjection(
       const sort = request.sort;
       const direction = sort.direction === 'desc' ? -1 : 1;
       sortedRows.sort((left, right) => {
-        const leftValue = String(left[sort.column] ?? '');
-        const rightValue = String(right[sort.column] ?? '');
+        const leftValue = String(left[sort.column]);
+        const rightValue = String(right[sort.column]);
         const leftNumber = parseDatasetNumber(leftValue);
         const rightNumber = parseDatasetNumber(rightValue);
         if (Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) {
@@ -438,7 +438,7 @@ export async function createDatasetProjection(
       columns,
       rows: sortedRows
         .slice(0, limit)
-        .map(row => Object.fromEntries(columns.map(column => [column, String(row[column] ?? '')]))),
+        .map(row => Object.fromEntries(columns.map(column => [column, String(row[column])]))),
       rowCount: filteredRows.length,
     } satisfies DataViewProjection;
   }
@@ -453,7 +453,7 @@ export async function createDatasetProjection(
       .map(row =>
         request.aggregation === 'count'
           ? 1
-          : parseDatasetNumber(String(row[measureColumn ?? ''] ?? ''))
+          : parseDatasetNumber(String(row[measureColumn as string]))
       )
       .filter(Number.isFinite);
     const value = aggregateDatasetValues(values, request.aggregation);
@@ -461,7 +461,7 @@ export async function createDatasetProjection(
     return {
       view: 'stat',
       snapshotId: snapshot.id,
-      label: request.aggregation === 'count' ? 'Count' : (measureColumn ?? 'Value'),
+      label: request.aggregation === 'count' ? 'Count' : (measureColumn as string),
       value,
       aggregation: request.aggregation,
       rowCount: filteredRows.length,
@@ -500,10 +500,10 @@ export async function createDatasetProjection(
     const valueColumns = (request.valueColumns ?? []).filter(column => columnSet.has(column));
     if (valueColumns.length === 0) throw new Error('Choose at least one value column');
     for (const row of filteredRows) {
-      const rowLabel = String(row[dimensionColumn] ?? '').trim();
+      const rowLabel = String(row[dimensionColumn]).trim();
       if (!rowLabel) continue;
       for (const valueColumn of valueColumns) {
-        const value = parseDatasetNumber(String(row[valueColumn] ?? ''));
+        const value = parseDatasetNumber(String(row[valueColumn]));
         if (!Number.isFinite(value)) continue;
         const key = `${valueColumn}\u0000${rowLabel}`;
         const group = groups.get(key) ?? { x: valueColumn, series: rowLabel, values: [] };
@@ -513,13 +513,13 @@ export async function createDatasetProjection(
     }
   } else {
     for (const row of filteredRows) {
-      const x = String(row[dimensionColumn] ?? '').trim();
+      const x = String(row[dimensionColumn]).trim();
       if (!x) continue;
-      const series = request.seriesColumn ? String(row[request.seriesColumn] ?? '').trim() : '';
+      const series = request.seriesColumn ? String(row[request.seriesColumn]).trim() : '';
       const value =
         request.aggregation === 'count'
           ? 1
-          : parseDatasetNumber(String(row[measureColumn ?? ''] ?? ''));
+          : parseDatasetNumber(String(row[measureColumn as string]));
       if (!Number.isFinite(value)) continue;
       const key = `${x}\u0000${series}`;
       const group = groups.get(key) ?? { x, series, values: [] };
@@ -527,12 +527,11 @@ export async function createDatasetProjection(
       groups.set(key, group);
     }
   }
-  const points = [...groups.values()].flatMap(group => {
+  const points = [...groups.values()].map(group => {
     const value = aggregateDatasetValues(group.values, request.aggregation);
-    return value == null ? [] : [{ x: group.x, value, series: group.series || null }];
+    return { x: group.x, value: value as number, series: group.series || null };
   });
   if (points.length === 0) throw new Error('No values match the selected configuration');
-  if (points.length > 5_000) throw new Error('The selected view contains too many points');
 
   return {
     view: 'chart',
@@ -561,7 +560,7 @@ export async function getDatasetColumnValues({
   const values = new Set<string>();
 
   for (const row of table.rows) {
-    const value = String(row[column] ?? '').trim();
+    const value = String(row[column]).trim();
     if (!value || (normalizedQuery && !value.toLocaleLowerCase().includes(normalizedQuery))) {
       continue;
     }

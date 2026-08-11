@@ -1,9 +1,10 @@
 /* @vitest-environment jsdom */
 
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCreateElectionCandidateForm } from '../useCreateElectionCandidateForm';
 import type { CreateFormFieldDescriptor } from '../../types/create-form.types';
+import { setCreateRestoreDraft } from '../../logic/createFinalization';
 
 const addCandidate = vi.fn();
 let electionsForSearch: {
@@ -115,6 +116,11 @@ describe('useCreateElectionCandidateForm', () => {
           event: { id: 'event-unrelated', group_id: 'group-2' },
         },
       },
+      {
+        id: 'election-without-event',
+        title: 'Election without event',
+        agenda_item: null,
+      },
     ];
   });
 
@@ -187,5 +193,79 @@ describe('useCreateElectionCandidateForm', () => {
         params: { id: 'event-member', agendaItemId: 'agenda-member' },
       },
     });
+  });
+
+  it('blocks submission until an eligible election is selected', async () => {
+    const { result } = renderHook(() => useCreateElectionCandidateForm());
+    await expect(result.current.onSubmit?.()).resolves.toEqual({ status: 'blocked' });
+    expect(addCandidate).not.toHaveBeenCalled();
+  });
+
+  it('restores candidate fields and falls back to the create route without an agenda item id', async () => {
+    electionsForSearch = [
+      {
+        id: 'election-fallback',
+        title: '',
+        agenda_item: { event: { id: 'event-member', group_id: 'group-1' } },
+      },
+    ];
+    setCreateRestoreDraft({
+      id: 'election:restored',
+      entityType: 'election',
+      entityId: 'restored',
+      createPath: '/create/election-candidate',
+      formState: {
+        electionId: 'election-fallback',
+        statement: 'Restored statement',
+        imageURL: 'https://example.com/candidate.jpg',
+      },
+      mutationPayload: {},
+      target: null,
+      submittedAt: Date.now(),
+      status: 'failed',
+    } as any);
+
+    const { result } = renderHook(() => useCreateElectionCandidateForm());
+    await waitFor(() => expect(result.current.steps[0].isValid()).toBe(true));
+    const review = result.current.steps[2].fields?.[0];
+    expect(review?.kind).toBe('customComponent');
+    expect((review as any).props).toMatchObject({ subtitle: 'Restored statement' });
+
+    const outcome = await result.current.onSubmit?.();
+    expect(outcome).toMatchObject({ status: 'success', target: { to: '/create' } });
+  });
+
+  it('ignores restore drafts for other election create paths', () => {
+    setCreateRestoreDraft({
+      id: 'election:wrong',
+      entityType: 'election',
+      entityId: 'wrong',
+      createPath: '/create/election',
+      formState: { electionId: 'election-member' },
+      mutationPayload: {},
+      target: null,
+      submittedAt: Date.now(),
+      status: 'failed',
+    } as any);
+    const { result } = renderHook(() => useCreateElectionCandidateForm());
+    expect(result.current.steps[0].isValid()).toBe(false);
+  });
+
+  it('defaults missing fields in a matching restore draft', async () => {
+    setCreateRestoreDraft({
+      id: 'election:empty-restore',
+      entityType: 'election',
+      entityId: 'empty-restore',
+      createPath: '/create/election-candidate',
+      formState: {},
+      mutationPayload: {},
+      target: null,
+      submittedAt: Date.now(),
+      status: 'failed',
+    } as any);
+    const { result } = renderHook(() => useCreateElectionCandidateForm());
+    await waitFor(() => expect(result.current.steps[0].isValid()).toBe(false));
+    const statement = findField(result.current.steps[1].fields ?? [], 'statement', 'text');
+    expect(statement.value).toBe('');
   });
 });

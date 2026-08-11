@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import { FormControlLabel, FormControlSwitch } from '@/features/shared/ui/form';
 
 interface ConstitutionalEventToggleInputProps {
@@ -15,12 +17,19 @@ export function ConstitutionalEventToggleInput({
   checked,
   onCheckedChange,
 }: ConstitutionalEventToggleInputProps) {
+  const switchId = useId();
+
   return (
     <div className="space-y-4">
       <p className="text-muted-foreground text-xs">{hint}</p>
       <div className="flex items-center gap-3">
-        <FormControlSwitch checked={checked} onCheckedChange={onCheckedChange} />
-        <FormControlLabel>{label}</FormControlLabel>
+        <FormControlSwitch
+          id={switchId}
+          data-action-id="create.constitutional-event-toggle.change"
+          checked={checked}
+          onCheckedChange={onCheckedChange}
+        />
+        <FormControlLabel htmlFor={switchId}>{label}</FormControlLabel>
       </div>
       {checked ? (
         <p className="text-muted-foreground rounded-md border p-4 text-xs">{description}</p>

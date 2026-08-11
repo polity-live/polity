@@ -29,8 +29,6 @@ export function useSubscriptionTimeline() {
 
   // Get all entity IDs we're subscribed to
   const subscribedEntityIds = useMemo(() => {
-    if (!subscriptionsData?.subscribers) return null;
-
     return {
       users: subscriptionsData.subscribers
         .filter((sub): sub is typeof sub & { user: NonNullable<typeof sub.user> } => !!sub.user)
@@ -56,7 +54,6 @@ export function useSubscriptionTimeline() {
   // Fetch timeline events for subscribed entities
   // Build a flat list of entity IDs to query timeline events
   const timelineEntityIds = useMemo(() => {
-    if (!subscribedEntityIds) return [];
     return [
       ...subscribedEntityIds.users,
       ...subscribedEntityIds.groups,
@@ -84,8 +81,6 @@ export function useSubscriptionTimeline() {
 
   // Sort timeline events by date (most recent first)
   const sortedEvents = useMemo(() => {
-    if (!timelineData?.timelineEvents) return [];
-
     return [...timelineData.timelineEvents].sort(
       (a, b) => (b.created_at ?? 0) - (a.created_at ?? 0)
     );

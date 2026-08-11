@@ -617,7 +617,7 @@ export function EventAgendaItemDetailView({
           forwardingPreview={agendaForwardingPreview}
           defaultSortMode={event?.change_request_vote_order ?? null}
           discussions={amendmentDiscussions}
-          amendmentId={agendaItem.amendment_id ?? undefined}
+          amendmentId={agendaItem.amendment_id}
           agendaItemId={agendaItemId}
           showCityDesignPreviewAccordion
           userRecord={userRecord}
@@ -840,6 +840,7 @@ export function EventAgendaItemDetailView({
       <div className="h-10" />
 
       <OfflineTallyDialog
+        data-action-scope="presentation"
         open={offlineTallyDialogOpen}
         onOpenChange={handleOfflineTallyDialogOpenChange}
         title={getOfflineTallyDialogTitle(offlineTallyPhase ?? 'indicative')}

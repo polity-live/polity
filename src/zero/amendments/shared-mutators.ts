@@ -297,7 +297,7 @@ function getAmendmentOriginId(amendment: {
   return amendment.origin_amendment_id ?? amendment.clone_source_id ?? amendment.id;
 }
 
-async function assertChangeRequestProcessBranch(
+export async function assertChangeRequestProcessBranch(
   tx: Parameters<typeof denyPublicApiMutation>[0],
   amendment: {
     id: string;

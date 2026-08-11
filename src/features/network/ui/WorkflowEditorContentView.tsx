@@ -257,7 +257,10 @@ export function WorkflowEditorContentView({
                   className="rounded-lg border"
                 >
                   <AccordionItem value="step-config" className="border-b-0">
-                    <AccordionTrigger className="px-4">
+                    <AccordionTrigger
+                      className="px-4"
+                      data-action-id="network.workflow-editor.step-config.toggle"
+                    >
                       {t('features.network.workflows.stepConfig')}
                     </AccordionTrigger>
                     <AccordionContent className="space-y-4 px-4 pb-4">
@@ -266,10 +269,18 @@ export function WorkflowEditorContentView({
                         onValueChange={value => setBuilderTab(value as 'type' | 'graph')}
                       >
                         <TabsList className="w-full">
-                          <TabsTrigger value="type" className="flex-1">
+                          <TabsTrigger
+                            value="type"
+                            className="flex-1"
+                            data-action-id="network.workflow-editor.builder.type.select"
+                          >
                             {t('features.network.workflows.byType')}
                           </TabsTrigger>
-                          <TabsTrigger value="graph" className="flex-1">
+                          <TabsTrigger
+                            value="graph"
+                            className="flex-1"
+                            data-action-id="network.workflow-editor.builder.graph.select"
+                          >
                             {t('features.network.workflows.byGraph')}
                           </TabsTrigger>
                         </TabsList>
@@ -332,6 +343,7 @@ export function WorkflowEditorContentView({
                                 size="sm"
                                 variant={graphSelectionMode === 'start' ? 'default' : 'outline'}
                                 onClick={() => setGraphSelectionMode('start')}
+                                data-action-id="network.workflow-editor.graph.start.select"
                               >
                                 <MapPinned className="mr-2 h-4 w-4" />
                                 {t('features.network.workflows.pickStart')}
@@ -342,6 +354,7 @@ export function WorkflowEditorContentView({
                                 variant={graphSelectionMode === 'target' ? 'default' : 'outline'}
                                 disabled={!draftStartGroupId}
                                 onClick={() => setGraphSelectionMode('target')}
+                                data-action-id="network.workflow-editor.graph.target.select"
                               >
                                 <ArrowRight className="mr-2 h-4 w-4" />
                                 {t('features.network.workflows.pickTarget')}
@@ -426,6 +439,7 @@ export function WorkflowEditorContentView({
                           type="button"
                           onClick={handleAddPendingStep}
                           disabled={!isPendingStepValid}
+                          data-action-id="network.workflow-editor.step.add"
                         >
                           <Plus className="mr-2 h-4 w-4" />
                           {t('features.network.workflows.addStep')}
@@ -437,7 +451,10 @@ export function WorkflowEditorContentView({
 
                 <Accordion type="single" collapsible className="rounded-lg border">
                   <AccordionItem value="workflow-settings" className="border-b-0">
-                    <AccordionTrigger className="px-4">
+                    <AccordionTrigger
+                      className="px-4"
+                      data-action-id="network.workflow-editor.settings.toggle"
+                    >
                       {t('features.network.workflows.workflowSettings')}
                     </AccordionTrigger>
                     <AccordionContent className="space-y-4 px-4 pb-4">
@@ -469,6 +486,7 @@ export function WorkflowEditorContentView({
                           id="workflow-default-entry"
                           checked={draftIsDefaultEntry}
                           onCheckedChange={setDraftIsDefaultEntry}
+                          data-action-id="network.workflow-editor.default-entry.toggle"
                         />
                       </div>
                     </AccordionContent>
@@ -532,11 +550,17 @@ export function WorkflowEditorContentView({
                     </div>
 
                     <TabsList className="self-start">
-                      <TabsTrigger value="graph">
+                      <TabsTrigger
+                        value="graph"
+                        data-action-id="network.workflow-editor.preview.graph.select"
+                      >
                         <Network className="mr-2 h-4 w-4" />
                         {t('features.network.workflows.networkGraph')}
                       </TabsTrigger>
-                      <TabsTrigger value="list">
+                      <TabsTrigger
+                        value="list"
+                        data-action-id="network.workflow-editor.preview.list.select"
+                      >
                         <List className="mr-2 h-4 w-4" />
                         {t('features.network.workflows.list')}
                       </TabsTrigger>
@@ -570,7 +594,7 @@ export function WorkflowEditorContentView({
                     ) : (
                       draftSteps.map((step: any, index: number) => {
                         const sourceGroupId =
-                          index === 0 ? draftStartGroupId : (draftSteps[index - 1]?.group_id ?? '');
+                          index === 0 ? draftStartGroupId : draftSteps[index - 1].group_id;
                         const targetOptions = getDirectTargetGroups(sourceGroupId);
                         const isInvalidTransition = invalidTransitionIndexes.includes(index);
 
@@ -603,6 +627,7 @@ export function WorkflowEditorContentView({
                                   size="icon"
                                   disabled={index === 0}
                                   onClick={() => onMoveStep(index, index - 1)}
+                                  data-action-id="network.workflow-editor.step.move-up"
                                 >
                                   <ChevronUp className="h-4 w-4" />
                                 </Button>
@@ -612,6 +637,7 @@ export function WorkflowEditorContentView({
                                   size="icon"
                                   disabled={index === draftSteps.length - 1}
                                   onClick={() => onMoveStep(index, index + 1)}
+                                  data-action-id="network.workflow-editor.step.move-down"
                                 >
                                   <ChevronDown className="h-4 w-4" />
                                 </Button>
@@ -620,6 +646,7 @@ export function WorkflowEditorContentView({
                                   variant="destructive"
                                   size="icon"
                                   onClick={() => onRemoveStep(index)}
+                                  data-action-id="network.workflow-editor.step.remove"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -657,8 +684,9 @@ export function WorkflowEditorContentView({
                                 <FormControlSelect
                                   value={step.group_id}
                                   onValueChange={value => handleRowTargetChange(index, value)}
+                                  data-action-id="network.workflow-editor.step.target.select"
                                 >
-                                  <FormControlSelectTrigger>
+                                  <FormControlSelectTrigger data-action-id="network.workflow-editor.step.target.select">
                                     <FormControlSelectValue
                                       placeholder={t(
                                         'features.network.workflows.listTargetPlaceholder'
@@ -667,7 +695,11 @@ export function WorkflowEditorContentView({
                                   </FormControlSelectTrigger>
                                   <FormControlSelectContent>
                                     {targetOptions.map((group: any) => (
-                                      <FormControlSelectItem key={group.id} value={group.id}>
+                                      <FormControlSelectItem
+                                        key={group.id}
+                                        value={group.id}
+                                        data-action-id="network.workflow-editor.step.target.option"
+                                      >
                                         {group.name ?? group.id}
                                       </FormControlSelectItem>
                                     ))}
@@ -708,10 +740,18 @@ export function WorkflowEditorContentView({
             </ManagementDialogBody>
 
             <ManagementDialogFooter>
-              <Button variant="outline" onClick={onClose}>
+              <Button
+                variant="outline"
+                onClick={onClose}
+                data-action-id="network.workflow-editor.close"
+              >
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleSaveWithSubmission} disabled={!canSave}>
+              <Button
+                onClick={handleSaveWithSubmission}
+                disabled={!canSave}
+                data-action-id="network.workflow-editor.save"
+              >
                 {editingWorkflow ? t('common.save') : t('features.network.workflows.create')}
               </Button>
             </ManagementDialogFooter>

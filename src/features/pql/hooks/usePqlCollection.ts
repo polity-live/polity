@@ -62,10 +62,7 @@ function normalizeSearchValue(value: PqlSearchValue): readonly string[] {
 function readPersistedState<TFieldKey extends string>(
   storageKey: string
 ): PqlPersistedState<TFieldKey> | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
+  // Called only from useEffect, which React never executes during server rendering.
   const rawValue = window.localStorage.getItem(storageKey);
   if (!rawValue) {
     return null;
@@ -83,10 +80,7 @@ function readPersistedState<TFieldKey extends string>(
 }
 
 function clearPersistedState(storageKey: string) {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
+  // Called only from useEffect, which React never executes during server rendering.
   window.localStorage.removeItem(storageKey);
 }
 
@@ -194,7 +188,8 @@ export function usePqlCollection<TItem, TFieldKey extends string>({
           operator,
           value:
             definition.serializeValue?.(values) ??
-            (operator === 'in' ? values : (values[0] ?? null)),
+            // The empty-values case returns above, so the scalar value is guaranteed.
+            (operator === 'in' ? values : (values[0] as string)),
         }),
       ];
     });

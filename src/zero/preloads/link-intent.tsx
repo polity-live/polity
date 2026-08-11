@@ -24,7 +24,7 @@ function closestAnchor(target: EventTarget | null): HTMLAnchorElement | null {
 
 export function isPreloadableAppRoute(router: AnyRouter, pathname: string): boolean {
   if (pathname.startsWith('/api/')) return false;
-  const { foundRoute, routeParams } = router.getMatchedRoutes(pathname);
+  const { routeParams, foundRoute } = router.getMatchedRoutes(pathname);
   return Boolean(foundRoute && foundRoute.id !== '/$' && !routeParams['**']);
 }
 
@@ -90,7 +90,7 @@ export function installInternalLinkIntentDelegation(
     if (existing?.href === href) {
       existing.sources.add(source);
       if (delay === 0 && !existing.started) {
-        if (existing.timer) clearTimeout(existing.timer);
+        clearTimeout(existing.timer as ReturnType<typeof setTimeout>);
         existing.timer = null;
         existing.started = true;
         callbacks.beginIntent(href);

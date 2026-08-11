@@ -81,7 +81,7 @@ export function SignInFormView({
       description={copy.description}
       icon={<LogIn className="text-brand h-12 w-12" />}
     >
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form data-action-id="auth.sign-in.submit.password" onSubmit={onSubmit} className="space-y-4">
         <TextField
           id="email"
           type="email"
@@ -114,6 +114,7 @@ export function SignInFormView({
           autoComplete="current-password"
           labelAction={
             <FormButton
+              data-action-id="auth.sign-in.navigate.forgot-password"
               type="button"
               variant="link"
               className="text-muted-foreground hover:text-primary h-auto p-0 text-xs"
@@ -129,6 +130,7 @@ export function SignInFormView({
         {magicLinkSent ? <InlineNotice variant="success">{copy.magicLinkSent}</InlineNotice> : null}
 
         <FormButton
+          data-action-id="auth.sign-in.submit.password"
           type="submit"
           className="w-full"
           disabled={isLoading || !trimmedEmail || !password || !emailIsValid}
@@ -148,6 +150,7 @@ export function SignInFormView({
       </form>
 
       <FormButton
+        data-action-id="auth.sign-in.authenticate.google"
         type="button"
         className={featureThemeClassName('authSignInFormContrastBadge')}
         onClick={onGoogleAuth}
@@ -167,6 +170,7 @@ export function SignInFormView({
       </div>
 
       <FormButton
+        data-action-id="auth.sign-in.authenticate.magic-link"
         variant="outline"
         className="w-full"
         onClick={onMagicLink}
@@ -180,6 +184,7 @@ export function SignInFormView({
         <p>
           {copy.noAccount}{' '}
           <FormButton
+            data-action-id="auth.sign-in.navigate.sign-up"
             type="button"
             variant="link"
             className="h-auto p-0 font-medium"

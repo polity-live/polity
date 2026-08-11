@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   detectKeyboardPlatform,
@@ -29,6 +29,12 @@ const differentPerPlatform: KeyboardShortcutDefinition = {
 };
 
 describe('keyboard platform detection', () => {
+  it('defaults to Windows when browser signals are unavailable', () => {
+    vi.stubGlobal('navigator', undefined);
+    expect(detectKeyboardPlatform()).toBe('windows');
+    vi.unstubAllGlobals();
+  });
+
   it.each([
     [{ userAgentDataPlatform: 'macOS' }, 'macos'],
     [{ platform: 'MacIntel' }, 'macos'],
@@ -57,6 +63,12 @@ describe('keyboard platform detection', () => {
 });
 
 describe('keyboard shortcut resolution', () => {
+  const everyModifier: KeyboardShortcutDefinition = {
+    macos: { modifiers: ['mod', 'control', 'meta', 'alt', 'shift'], key: 'Enter' },
+    windows: { modifiers: ['mod', 'control', 'meta', 'alt', 'shift'], key: 'Enter' },
+    linux: { modifiers: ['mod'], key: 'Enter' },
+  };
+
   it('supports different modifiers and keys for every platform', () => {
     expect(resolveKeyboardShortcut(differentPerPlatform, 'macos').key).toBe('m');
     expect(resolveKeyboardShortcut(differentPerPlatform, 'windows').key).toBe('w');
@@ -92,6 +104,15 @@ describe('keyboard shortcut resolution', () => {
     expect(getPlateHotkey(commandShortcut, 'macos')).toBe('meta+k');
     expect(getPlateHotkey(commandShortcut, 'windows')).toBe('ctrl+k');
     expect(getPlateHotkey(differentPerPlatform, 'linux')).toBe('alt+l');
+  });
+
+  it('formats Mod, explicit Control, Meta, Alt, Shift, and named keys', () => {
+    expect(formatKeyboardShortcut(everyModifier, { platform: 'macos' })).toBe('⌘ ⌃ ⌘ ⌥ ⇧ Enter');
+    expect(formatKeyboardShortcut(everyModifier, { platform: 'windows' })).toBe(
+      'Ctrl Ctrl Meta Alt ⇧ Enter'
+    );
+    expect(getAriaKeyShortcuts(calendarShortcut, 'windows')).toBe('Alt+Shift+C');
+    expect(getPlateHotkey(everyModifier, 'linux')).toBe('ctrl+enter');
   });
 });
 

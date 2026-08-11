@@ -2,9 +2,17 @@ import { describe, expect, it } from 'vitest';
 
 import {
   countAcceptedMemberships,
+  formatRight,
   groupRelationshipsByGroup,
   groupWikiRelatedGroupsByOrientation,
 } from '../groupWikiHelpers';
+
+describe('formatRight', () => {
+  it('formats known and forward-compatible right names', () => {
+    expect(formatRight('informationRight')).toBe('Informationsrecht');
+    expect(formatRight('customVotingRight')).toBe('custom Voting Right');
+  });
+});
 
 describe('countAcceptedMemberships', () => {
   it('counts only accepted membership statuses', () => {
@@ -18,6 +26,8 @@ describe('countAcceptedMemberships', () => {
         { id: 'unknown', status: null },
       ])
     ).toBe(3);
+    expect(countAcceptedMemberships(null)).toBe(0);
+    expect(countAcceptedMemberships(undefined)).toBe(0);
   });
 });
 
@@ -79,6 +89,30 @@ describe('groupRelationshipsByGroup', () => {
         rights: ['rightToSpeak'],
       },
     ]);
+  });
+
+  it('ignores sibling endpoints and missing targets while retaining groups without rights', () => {
+    const plainGroup = { id: 'plain', name: 'Plain' };
+
+    expect(
+      groupRelationshipsByGroup(
+        [
+          {
+            status: 'active',
+            group: { id: 'sibling-parent', group_type: 'sibling' },
+            related_group: plainGroup,
+          },
+          {
+            status: 'active',
+            group: plainGroup,
+            related_group: { id: 'sibling-child', group_type: 'sibling' },
+          },
+          { status: 'active', group: null, related_group: null },
+          { status: 'active', group: plainGroup, related_group: plainGroup, with_right: null },
+        ],
+        'parent'
+      )
+    ).toEqual([{ group: plainGroup, rights: [] }]);
   });
 });
 
@@ -218,5 +252,134 @@ describe('groupWikiRelatedGroupsByOrientation', () => {
       parentGroups: [{ group: parentGroup, rights: ['rightToSpeak'] }],
       childGroups: [{ group: childGroup, rights: ['amendmentRight'] }],
     });
+  });
+
+  it('ignores malformed structures and rights and deduplicates repeated structure rows', () => {
+    const current = { id: 'current', name: 'Current' };
+    const child = { id: 'child', name: 'Child' };
+    const parent = { id: 'parent', name: 'Parent' };
+    const structureRows = [
+      {
+        request_item_kind: 'structure',
+        connection_type: 'hierarchy',
+        relationship_type: 'parent',
+        status: 'active',
+        parent_group_id: 'current',
+        child_group_id: 'child',
+        group: current,
+        related_group: child,
+      },
+      {
+        request_item_kind: 'structure',
+        connection_type: 'hierarchy',
+        relationship_type: 'child',
+        status: 'active',
+        parent_group_id: 'parent',
+        child_group_id: 'current',
+        group: parent,
+        related_group: current,
+      },
+    ];
+
+    const result = groupWikiRelatedGroupsByOrientation(
+      [
+        ...structureRows,
+        ...structureRows,
+        {
+          request_item_kind: 'structure',
+          connection_type: 'hierarchy',
+          status: 'active',
+          parent_group_id: undefined,
+          child_group_id: 'child',
+          group: current,
+          related_group: child,
+        },
+        {
+          request_item_kind: 'structure',
+          connection_type: 'hierarchy',
+          status: 'active',
+          parent_group_id: 'current',
+          child_group_id: 'current',
+          group: current,
+          related_group: current,
+        },
+        {
+          request_item_kind: 'right',
+          connection_type: 'hierarchy',
+          status: 'active',
+          parent_group_id: undefined,
+          child_group_id: 'child',
+          with_right: 'informationRight',
+          group: current,
+          related_group: child,
+        },
+        {
+          request_item_kind: 'right',
+          connection_type: 'hierarchy',
+          status: 'active',
+          parent_group_id: 'current',
+          child_group_id: undefined,
+          with_right: 'informationRight',
+          group: current,
+          related_group: child,
+        },
+        {
+          request_item_kind: 'right',
+          connection_type: 'hierarchy',
+          status: 'active',
+          parent_group_id: 'current',
+          child_group_id: 'current',
+          with_right: 'informationRight',
+          group: current,
+          related_group: current,
+        },
+        {
+          request_item_kind: 'right',
+          connection_type: 'hierarchy',
+          status: 'active',
+          parent_group_id: 'current',
+          child_group_id: 'child',
+          with_right: null,
+          group: current,
+          related_group: child,
+        },
+      ],
+      'current'
+    );
+
+    expect(result).toEqual({
+      parentGroups: [{ group: parent, rights: [] }],
+      childGroups: [{ group: child, rights: [] }],
+    });
+  });
+
+  it('does not create entries when an oriented endpoint cannot be resolved', () => {
+    const current = { id: 'current', name: 'Current' };
+
+    expect(
+      groupWikiRelatedGroupsByOrientation(
+        [
+          {
+            request_item_kind: 'structure',
+            connection_type: 'hierarchy',
+            status: 'active',
+            parent_group_id: 'current',
+            child_group_id: 'missing-child',
+            group: current,
+            related_group: null,
+          },
+          {
+            request_item_kind: 'structure',
+            connection_type: 'hierarchy',
+            status: 'active',
+            parent_group_id: 'missing-parent',
+            child_group_id: 'current',
+            group: current,
+            related_group: null,
+          },
+        ],
+        'current'
+      )
+    ).toEqual({ parentGroups: [], childGroups: [] });
   });
 });

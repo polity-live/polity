@@ -71,6 +71,34 @@ afterEach(() => {
 });
 
 describe('NamedBallotResultsDialog', () => {
+  it.each([
+    ['missing model', null],
+    [
+      'empty groups',
+      {
+        phase: 'indicative',
+        isClosed: false,
+        groupedBySourceGroup: false,
+        groups: [],
+        totalOptionSummaries: [],
+        totalEligibleCount: 0,
+        totalRecordedCount: 0,
+        totalOfflineAggregatedCount: 0,
+      } satisfies NamedBallotResultsModel,
+    ],
+  ])('renders the unavailable state for a %s', (_label, model) => {
+    render(
+      <NamedBallotResultsDialog
+        open
+        onOpenChange={() => undefined}
+        title="Results"
+        description="Details"
+        model={model}
+      />
+    );
+    expect(screen.getByText('features.events.agenda.namedResults.unavailable')).toBeTruthy();
+  });
+
   it('renders total option summaries above named result rows', () => {
     const model: NamedBallotResultsModel = {
       phase: 'final',
@@ -198,5 +226,128 @@ describe('NamedBallotResultsDialog', () => {
     expect(screen.getByText('No: 0')).toBeTruthy();
     expect(screen.queryByText(/accept/)).toBeNull();
     expect(screen.queryByText(/reject/)).toBeNull();
+  });
+
+  it('renders indicative grouped fallbacks, empty selections, and every decision tone', () => {
+    const model: NamedBallotResultsModel = {
+      phase: 'indicative',
+      isClosed: false,
+      groupedBySourceGroup: true,
+      groups: [
+        {
+          key: 'group-1',
+          label: 'Working group',
+          rows: [
+            {
+              id: 'offline',
+              displayName: '   ',
+              userId: 'user-1',
+              userHandle: null,
+              avatar: null,
+              selectionIds: [],
+              selections: [],
+              kind: 'participant',
+              status: 'offline_aggregated',
+              statusLabel: 'Offline',
+              isStruckThrough: true,
+            },
+            {
+              id: 'missing',
+              displayName: 'Anonymous User',
+              userId: null,
+              userHandle: 'anonymous',
+              avatar: null,
+              selectionIds: [],
+              selections: [],
+              kind: 'participant',
+              status: 'missing' as unknown as 'recorded',
+              statusLabel: 'Missing',
+              isStruckThrough: true,
+            },
+            {
+              id: 'decisions',
+              displayName: 'Decision User',
+              userId: null,
+              userHandle: null,
+              avatar: null,
+              selectionIds: ['reject', 'abstain', 'custom'],
+              selections: ['reject', 'abstain', 'custom'],
+              kind: 'participant',
+              status: 'recorded',
+              statusLabel: 'Recorded',
+              isStruckThrough: false,
+            },
+          ],
+          optionSummaries: [
+            { id: 'reject', label: 'reject', count: 0 },
+            { id: 'abstain', label: 'abstain', count: 0 },
+            { id: 'custom', label: 'custom', count: 0 },
+          ],
+          eligibleCount: 3,
+          recordedCount: 1,
+          offlineAggregatedCount: 1,
+        },
+      ],
+      totalOptionSummaries: [
+        { id: 'reject', label: 'reject', namedCount: 0, offlineCount: 0, totalCount: 0 },
+        { id: 'abstain', label: 'abstain', namedCount: 0, offlineCount: 0, totalCount: 0 },
+        { id: 'custom', label: 'custom', namedCount: 0, offlineCount: 0, totalCount: 0 },
+      ],
+      totalEligibleCount: 3,
+      totalRecordedCount: 1,
+      totalOfflineAggregatedCount: 1,
+    };
+
+    const { container } = render(
+      <NamedBallotResultsDialog
+        open
+        onOpenChange={() => undefined}
+        title="Indicative results"
+        description="Details"
+        model={model}
+      />
+    );
+
+    expect(screen.getByText('Indication')).toBeTruthy();
+    expect(screen.getAllByText(/offline aggregated/).length).toBeGreaterThan(0);
+    expect(screen.getByText('Offline')).toBeTruthy();
+    expect(screen.getByText('Missing')).toBeTruthy();
+    expect(screen.getByText('@anonymous')).toBeTruthy();
+    expect(screen.getByText('U')).toBeTruthy();
+    expect(container.querySelectorAll('.line-through')).toHaveLength(2);
+    expect(container.querySelectorAll('[style="width: 0%;"]')).toHaveLength(3);
+  });
+
+  it('omits the total summary strip when a populated model has no summaries', () => {
+    const model: NamedBallotResultsModel = {
+      phase: 'final',
+      isClosed: true,
+      groupedBySourceGroup: false,
+      groups: [
+        {
+          key: 'all',
+          label: 'All',
+          rows: [],
+          optionSummaries: [],
+          eligibleCount: 0,
+          recordedCount: 0,
+          offlineAggregatedCount: 0,
+        },
+      ],
+      totalOptionSummaries: [],
+      totalEligibleCount: 0,
+      totalRecordedCount: 0,
+      totalOfflineAggregatedCount: 0,
+    };
+    render(
+      <NamedBallotResultsDialog
+        open
+        onOpenChange={() => undefined}
+        title="Results"
+        description="Details"
+        model={model}
+      />
+    );
+    expect(screen.queryByText('Gesamtergebnis')).toBeNull();
   });
 });

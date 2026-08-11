@@ -49,6 +49,14 @@ describe('Frankfurter exchange-rate service', () => {
     vi.useRealTimers();
   });
 
+  it('validates optional ISO exchange-rate dates', async () => {
+    const { validateExchangeRateDate } = await import('../frankfurter');
+    expect(validateExchangeRateDate()).toBeUndefined();
+    expect(validateExchangeRateDate('2026-07-19')).toBe('2026-07-19');
+    expect(() => validateExchangeRateDate('19.07.2026')).toThrow('Invalid exchange-rate date');
+    expect(() => validateExchangeRateDate('9999-99-99')).toThrow('Invalid exchange-rate date');
+  });
+
   it('batches quotes sharing base and date into one upstream request', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       jsonResponse([
@@ -135,6 +143,132 @@ describe('Frankfurter exchange-rate service', () => {
     expect(rate.rate).toBe(1);
     expect(rate.cacheStatus).toBe('identity');
     expect(fetchMock).not.toHaveBeenCalled();
+
+    const [latest] = await getExchangeRates([{ base: 'EUR', quote: 'EUR' }]);
+    expect(latest.rateDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('uses historical cache entries regardless of age', async () => {
+    state.cache.set('EUR:USD:2026-07-19', {
+      base_currency: 'EUR',
+      quote_currency: 'USD',
+      requested_date: '2026-07-19',
+      rate_date: '2026-07-18T00:00:00.000Z',
+      rate: 1.14,
+      fetched_at: new Date('2020-01-01T00:00:00Z'),
+    });
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    const { getExchangeRates } = await import('../frankfurter');
+    await expect(
+      getExchangeRates([{ base: 'EUR', quote: 'USD', date: '2026-07-19' }])
+    ).resolves.toMatchObject([
+      {
+        requestedDate: '2026-07-19',
+        rateDate: '2026-07-18',
+        cacheStatus: 'cached',
+      },
+    ]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses a still-safe stale cache entry when a successful response omits the quote', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-19T00:00:00Z'));
+    state.cache.set('EUR:USD:latest', {
+      base_currency: 'EUR',
+      quote_currency: 'USD',
+      requested_date: 'latest',
+      rate_date: '2026-07-18',
+      rate: 1.14,
+      fetched_at: new Date('2026-07-18T12:00:00Z'),
+    });
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse([]));
+    const { getExchangeRates } = await import('../frankfurter');
+    await expect(getExchangeRates([{ base: 'EUR', quote: 'USD' }])).resolves.toMatchObject([
+      { cacheStatus: 'stale', rate: 1.14 },
+    ]);
+  });
+
+  it('omits absent and over-age cache fallbacks after a malformed successful response', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-19T00:00:00Z'));
+    state.cache.set('EUR:GBP:latest', {
+      base_currency: 'EUR',
+      quote_currency: 'GBP',
+      requested_date: 'latest',
+      rate_date: '2026-07-01',
+      rate: 0.8,
+      fetched_at: new Date('2026-07-01T00:00:00Z'),
+    });
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ rates: [] }));
+    const { getExchangeRates } = await import('../frankfurter');
+    await expect(
+      getExchangeRates([
+        { base: 'EUR', quote: 'USD' },
+        { base: 'EUR', quote: 'GBP' },
+      ])
+    ).resolves.toEqual([]);
+  });
+
+  it('filters malformed rate rows and future historical rows', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      jsonResponse([
+        null,
+        'invalid',
+        { date: 1, base: 'EUR', quote: 'USD', rate: 1 },
+        { date: '2026-07-18', base: 1, quote: 'USD', rate: 1 },
+        { date: '2026-07-18', base: 'EUR', quote: 1, rate: 1 },
+        { date: '2026-07-18', base: 'EUR', quote: 'USD', rate: '1' },
+        { date: '2026-07-18', base: 'EUR', quote: 'USD', rate: Number.NaN },
+        { date: '2026-07-18', base: 'EUR', quote: 'USD', rate: 0 },
+        { date: '2026-07-20', base: 'EUR', quote: 'USD', rate: 2 },
+        { date: '2026-07-18', base: 'EUR', quote: 'USD', rate: 1.14 },
+      ])
+    );
+    const { getExchangeRates } = await import('../frankfurter');
+    const [rate] = await getExchangeRates([{ base: 'EUR', quote: 'USD', date: '2026-07-19' }]);
+    expect(rate.rate).toBe(1.14);
+  });
+
+  it.each([400, 429, 503])('rejects exhausted or non-retryable HTTP %s responses', async status => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({}, status));
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { getExchangeRates } = await import('../frankfurter');
+    await expect(getExchangeRates([{ base: 'EUR', quote: 'USD' }])).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(status === 400 ? 1 : 2);
+    errorSpy.mockRestore();
+  });
+
+  it('loads, normalizes, caches, and validates the currency catalogue', async () => {
+    const { frankfurterContracts, getFrankfurterCurrencies } = await import('../frankfurter');
+    frankfurterContracts.resetCatalogCache();
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(
+        jsonResponse([
+          null,
+          'USD',
+          {},
+          { iso_code: ' usd ' },
+          { iso_code: 'EUR' },
+          { iso_code: 'bad' },
+        ])
+      );
+    await expect(getFrankfurterCurrencies()).resolves.toEqual(['EUR', 'USD']);
+    await expect(getFrankfurterCurrencies()).resolves.toEqual(['EUR', 'USD']);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    frankfurterContracts.resetCatalogCache();
+    fetchMock.mockResolvedValueOnce(jsonResponse({ currencies: [] }));
+    await expect(getFrankfurterCurrencies()).rejects.toThrow(
+      'Frankfurter returned no supported currencies'
+    );
+
+    frankfurterContracts.resetCatalogCache();
+    fetchMock.mockResolvedValueOnce(jsonResponse([{}, { iso_code: 'invalid' }]));
+    await expect(getFrankfurterCurrencies()).rejects.toThrow(
+      'Frankfurter returned no supported currencies'
+    );
   });
 
   it('aborts an upstream request after five seconds without retrying', async () => {

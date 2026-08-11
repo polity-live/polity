@@ -14,30 +14,30 @@ export async function selectTypeahead(
   const field = fieldLocator(page, fieldKey);
   if (options.optional && !(await field.count())) return false;
 
-  const input = field.locator('input:not([type="hidden"])').first();
+  const input = field.locator('input:not([type="hidden"]):visible');
   if (options.optional && !(await input.count())) return false;
 
   await expect(input).toBeVisible();
   await input.fill(label);
 
-  const byType = options.entityType
+  const result = options.entityType
     ? page.locator(
-        `[data-typeahead-entity-type="${cssAttr(options.entityType)}"][data-typeahead-result]`
+        `[data-typeahead-entity-type="${cssAttr(options.entityType)}"][data-typeahead-result="${cssAttr(label)}"]`
       )
-    : page.locator('[data-typeahead-result]');
-  const result = byType.filter({ hasText: label }).first();
+    : page.locator(`[data-typeahead-result="${cssAttr(label)}"]`);
+  const visibleResult = result.filter({ visible: true });
 
   if (options.optional) {
     try {
-      await expect(result).toBeVisible({ timeout: 5_000 });
+      await expect(visibleResult).toHaveCount(1, { timeout: 5_000 });
     } catch {
       return false;
     }
-    await result.click();
+    await visibleResult.click();
     return true;
   }
 
-  await expect(result).toBeVisible({ timeout: 10_000 });
-  await result.click();
+  await expect(visibleResult).toHaveCount(1, { timeout: 10_000 });
+  await visibleResult.click();
   return true;
 }

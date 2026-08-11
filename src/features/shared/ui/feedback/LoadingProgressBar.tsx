@@ -66,9 +66,7 @@ function useAsymptoticProgress(enabled: boolean) {
     frameRef.current = window.requestAnimationFrame(updateProgress);
 
     return () => {
-      if (frameRef.current !== null) {
-        window.cancelAnimationFrame(frameRef.current);
-      }
+      if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
       frameRef.current = null;
       startedAtRef.current = null;
     };
@@ -208,7 +206,7 @@ export function LoadingProgressBar({
         <div
           data-slot="loading-progress-indicator"
           className={cn('bg-primary h-full rounded-full transition-[width]', indicatorClassName)}
-          style={{ width: `${resolvedValue ?? 0}%` }}
+          style={{ width: `${resolvedValue}%` }}
         />
       </div>
     );

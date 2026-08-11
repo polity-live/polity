@@ -39,17 +39,17 @@ interface AgendaCalculableItem {
   event?: { start_date?: number | null } | null;
 }
 
-function getAgendaDurationMinutes(item: { duration?: number | null }) {
+export function getAgendaDurationMinutes(item: { duration?: number | null }) {
   return typeof item.duration === 'number' && item.duration > 0
     ? item.duration
     : DEFAULT_AGENDA_DURATION_MINUTES;
 }
 
-function getValidTimestamp(value: number | null | undefined) {
+export function getValidTimestamp(value: number | null | undefined) {
   return typeof value === 'number' && value > 0 ? value : undefined;
 }
 
-function withCalculatedAgendaTimes<T extends AgendaCalculableItem>(
+export function withCalculatedAgendaTimes<T extends AgendaCalculableItem>(
   items: T[]
 ): (T & {
   calculated_start_time?: number;

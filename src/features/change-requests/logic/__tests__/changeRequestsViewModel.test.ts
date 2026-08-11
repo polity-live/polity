@@ -4,11 +4,14 @@ import type { ChangeRequest } from '../../hooks/useChangeRequests';
 import {
   buildChangeRequestBranchSections,
   getAllChangeRequests,
+  getChangeRequestBranchLabel,
   isVotingEditingMode,
   mapChangeRequestsToDiffMap,
   mapChangeRequestsToDiscussions,
+  mapRawDiscussionsToDiscussions,
   mapChangeRequestsToSummaries,
   mapChangeRequestsToTimelineItems,
+  sortChangeRequestsByDisplayOrder,
 } from '../changeRequestsViewModel';
 
 function changeRequest(overrides: Partial<ChangeRequest>): ChangeRequest {
@@ -479,5 +482,425 @@ describe('change request view model helpers', () => {
     expect(isVotingEditingMode('event_final_closing_vote')).toBe(true);
     expect(isVotingEditingMode('vote_internal')).toBe(true);
     expect(isVotingEditingMode('suggest_event')).toBe(false);
+  });
+
+  it('sorts malformed and tied display numbers with deterministic date and label fallbacks', () => {
+    const requests = [
+      changeRequest({ id: 'z-id', title: '', crId: '', crNumber: Number.NaN, createdAt: 0 }),
+      changeRequest({
+        id: 'by-cr-id',
+        title: '',
+        crId: 'CR-2',
+        crNumber: Number.NaN,
+        createdAt: 0,
+      }),
+      changeRequest({
+        id: 'by-title-b',
+        title: 'B title',
+        crId: 'CR-2',
+        crNumber: 2,
+        createdAt: 20,
+      }),
+      changeRequest({
+        id: 'by-title-a',
+        title: 'A title',
+        crId: 'CR-2',
+        crNumber: 2,
+        createdAt: 20,
+      }),
+      changeRequest({
+        id: 'earlier',
+        title: 'Earlier',
+        crId: 'CR-2',
+        crNumber: 2,
+        createdAt: 10,
+      }),
+    ];
+
+    expect(sortChangeRequestsByDisplayOrder(requests).map(request => request.id)).toEqual([
+      'z-id',
+      'by-cr-id',
+      'earlier',
+      'by-title-a',
+      'by-title-b',
+    ]);
+    for (const pair of [
+      [requests[0], requests[1]],
+      [requests[1], requests[0]],
+      [
+        changeRequest({ id: 'left-id', title: '', crId: '', crNumber: 1, createdAt: 0 }),
+        changeRequest({ id: 'right-id', title: '', crId: '', crNumber: 1, createdAt: 0 }),
+      ],
+      [
+        changeRequest({ id: 'left-cr', title: '', crId: 'CR-1', crNumber: 1, createdAt: 0 }),
+        changeRequest({ id: 'right-cr', title: '', crId: 'CR-1', crNumber: 1, createdAt: 0 }),
+      ],
+    ]) {
+      expect(sortChangeRequestsByDisplayOrder(pair)).toHaveLength(2);
+    }
+  });
+
+  it('maps every summary, diff, and discussion fallback without inventing content', () => {
+    const aliased = changeRequest({
+      id: 'row-id',
+      logicalKey: 'logical-key',
+      crId: 'CR-9',
+      displayCrId: 'Branch 2 CR-1',
+      title: '',
+      description: '',
+      type: 'insert',
+      text: '',
+      newText: 'Added',
+      properties: {},
+      newProperties: {},
+      justification: '',
+      suggestionId: 'suggestion-id',
+      discussionId: null,
+      changeRequestEntityId: 'entity-id',
+      confirmationStatus: null,
+      changeRequestStatus: null,
+    });
+    const propertyOnly = changeRequest({
+      id: 'property-only',
+      crId: 'CR-10',
+      type: 'update',
+      text: '',
+      newText: '',
+      properties: {},
+      newProperties: { align: 'center' },
+      suggestionId: null,
+      discussionId: null,
+      changeRequestEntityId: undefined,
+    });
+    const withoutCrId = changeRequest({
+      id: 'without-cr-id',
+      crId: '',
+      title: '',
+      discussionId: null,
+      suggestionId: null,
+    });
+    const accepted = changeRequest({ resolution: 'accepted', isResolved: true });
+    const declined = changeRequest({ resolution: 'rejected', isResolved: true });
+    const obsolete = changeRequest({ isObsolete: true, resolution: null });
+
+    expect(
+      mapChangeRequestsToSummaries([accepted, declined, obsolete]).map(row => row.status)
+    ).toEqual(['approved', 'declined', 'obsolete']);
+    const diffMap = mapChangeRequestsToDiffMap([
+      aliased,
+      propertyOnly,
+      withoutCrId,
+      changeRequest({
+        id: 'empty',
+        type: 'insert',
+        text: '',
+        newText: '',
+        properties: {},
+        newProperties: {},
+      }),
+      changeRequest({ id: 'unknown', type: 'unknown', properties: { value: 'x' } }),
+    ]);
+    expect(Object.keys(diffMap)).toEqual(
+      expect.arrayContaining(['row-id', 'logical-key', 'CR-9', 'suggestion-id', 'entity-id'])
+    );
+    expect(diffMap['row-id']).toMatchObject({ originalText: undefined, newText: 'Added' });
+    expect(diffMap['property-only']).toMatchObject({ newProperties: { align: 'center' } });
+    expect(diffMap['empty']).toBeUndefined();
+    expect(diffMap['unknown']).toBeUndefined();
+
+    const discussions = mapChangeRequestsToDiscussions([aliased, propertyOnly, withoutCrId]);
+    expect(discussions).toHaveLength(2);
+    expect(discussions[0]).toMatchObject({
+      id: 'suggestion-id',
+      displayCrId: 'Branch 2 CR-1',
+      confirmationStatus: undefined,
+      changeRequestStatus: null,
+    });
+    expect(discussions[1].id).toBe('property-only');
+  });
+
+  it('normalizes defensive raw discussion inputs, dates, statuses, and optional fields', () => {
+    expect(mapRawDiscussionsToDiscussions(null)).toEqual([]);
+    const now = new Date('2026-01-01T00:00:00.000Z');
+    const discussions = mapRawDiscussionsToDiscussions(
+      [
+        null,
+        'invalid',
+        {},
+        {
+          id: 1,
+          crId: 'CR-1',
+          displayCrId: 'Branch 1 CR-1',
+          branchDisplayNumber: 1,
+          branchScopedCrNumber: 2,
+          branchSequenceNumber: 3,
+          title: 'Title',
+          userId: 'user-1',
+          comments: [{ text: 'comment' }],
+          createdAt: now,
+          isResolved: true,
+          status: 'pending',
+          confirmationStatus: 'pending',
+          changeRequestStatus: 'open',
+          changeRequestEntityId: 'entity-1',
+        },
+        { id: 'number-date', createdAt: 100, status: 'accepted', confirmationStatus: 'confirmed' },
+        { id: 'valid-date', createdAt: '2026-02-01T00:00:00Z', status: 'rejected' },
+        {
+          id: 'invalid-date',
+          createdAt: 'not-a-date',
+          status: 'other',
+          confirmationStatus: 'other',
+        },
+        {
+          id: 'fallbacks',
+          crId: 1,
+          displayCrId: 2,
+          branchDisplayNumber: '1',
+          branchScopedCrNumber: '2',
+          branchSequenceNumber: '3',
+          title: 4,
+          userId: 5,
+          comments: 'none',
+          createdAt: {},
+          changeRequestStatus: 6,
+          changeRequestEntityId: 7,
+        },
+      ],
+      'branch-1'
+    );
+
+    expect(discussions).toHaveLength(5);
+    expect(discussions[0]).toMatchObject({
+      id: '1',
+      createdAt: now,
+      status: 'pending',
+      confirmationStatus: 'pending',
+      processBranchId: 'branch-1',
+    });
+    expect(discussions[1].createdAt).toEqual(new Date(100));
+    expect(discussions[2].createdAt).toEqual(new Date('2026-02-01T00:00:00Z'));
+    expect(discussions[3].createdAt).toEqual(new Date(0));
+    expect(discussions[4]).toMatchObject({
+      crId: undefined,
+      userId: '',
+      comments: [],
+      createdAt: new Date(0),
+      status: undefined,
+      confirmationStatus: undefined,
+      changeRequestStatus: null,
+      changeRequestEntityId: undefined,
+    });
+  });
+
+  it('builds labels and branch metadata from every ordered fallback source', () => {
+    expect(
+      getChangeRequestBranchLabel({
+        id: 'branch-labels',
+        step_runs: [
+          { order_index: 3 },
+          { order_index: 2, workflow_step: { label: 'Workflow' } },
+          { order_index: 1, source_group: { name: 'Source' } },
+          { order_index: 0, target_group: { name: 'Target' } },
+          { order_index: null },
+          { order_index: null },
+        ],
+      })
+    ).toContain('Target -> Source -> Workflow');
+    expect(getChangeRequestBranchLabel({ id: 'branch-title', title: 'Explicit title' })).toBe(
+      'Explicit title'
+    );
+    expect(getChangeRequestBranchLabel({ id: 'branch-default' })).toBeTruthy();
+
+    const sections = buildChangeRequestBranchSections({
+      branches: [
+        {
+          id: 'invalid-date',
+          created_at: 'not-a-date',
+          document_version: { content: [{ type: 'p', children: [{ text: 'Version' }] }] },
+          step_runs: [{ order_index: null, event: { id: 'event-nested', title: 'Nested event' } }],
+        },
+        { id: 'missing-date', created_at: null },
+        { id: 'valid-date', created_at: '2026-01-01T00:00:00Z' },
+      ],
+      changeRequests: [],
+    });
+
+    expect(sections.map(section => section.branchId)).toEqual([
+      'invalid-date',
+      'missing-date',
+      'valid-date',
+    ]);
+    expect(sections[0]).toMatchObject({
+      eventId: 'event-nested',
+      eventTitle: 'Nested event',
+    });
+    expect(sections[0].documentContent).toEqual([{ type: 'p', children: [{ text: 'Version' }] }]);
+  });
+
+  it('matches branch discussions by every supported identity and applies live suggestion content', () => {
+    const requests = [
+      changeRequest({
+        id: 'request-by-id',
+        changeRequestEntityId: 'other-entity',
+        discussionId: null,
+        suggestionId: null,
+        crId: 'CR-11',
+        title: 'Request by id',
+        processBranchId: 'branch-1',
+      }),
+      changeRequest({
+        id: 'request-by-entity',
+        changeRequestEntityId: 'entity-match',
+        discussionId: null,
+        suggestionId: null,
+        crId: 'CR-12',
+        title: 'Request by entity',
+        processBranchId: 'branch-1',
+      }),
+      changeRequest({
+        id: 'request-by-discussion',
+        changeRequestEntityId: undefined,
+        discussionId: 'discussion-match',
+        suggestionId: null,
+        crId: 'CR-13',
+        title: 'Request by discussion',
+        processBranchId: 'branch-1',
+      }),
+      changeRequest({
+        id: 'request-by-suggestion',
+        changeRequestEntityId: undefined,
+        discussionId: null,
+        suggestionId: 'suggestion-match',
+        crId: 'CR-14',
+        title: 'Request by suggestion',
+        processBranchId: 'branch-1',
+      }),
+      changeRequest({
+        id: 'request-by-cr-id',
+        changeRequestEntityId: undefined,
+        discussionId: null,
+        suggestionId: null,
+        crId: 'CR-15',
+        title: 'Different title',
+        processBranchId: 'branch-1',
+      }),
+      changeRequest({
+        id: 'request-by-cr-title',
+        changeRequestEntityId: undefined,
+        discussionId: null,
+        suggestionId: null,
+        crId: 'CR-16',
+        title: 'CR-title-match',
+        processBranchId: 'branch-1',
+      }),
+      changeRequest({
+        id: 'request-by-title',
+        changeRequestEntityId: undefined,
+        discussionId: null,
+        suggestionId: null,
+        crId: 'CR-17',
+        title: 'Title match',
+        processBranchId: 'branch-1',
+      }),
+      changeRequest({
+        id: 'request-unmatched',
+        discussionId: null,
+        suggestionId: null,
+        changeRequestEntityId: undefined,
+        crId: 'CR-18',
+        title: 'Unmatched',
+        processBranchId: 'branch-1',
+      }),
+    ];
+    const suggestion = (id: string, type: 'insert' | 'remove', text: string) => ({
+      text,
+      suggestion: true,
+      [`suggestion_${id}`]: { id, type },
+    });
+    const sections = buildChangeRequestBranchSections({
+      branches: [
+        {
+          id: 'branch-1',
+          created_at: 1,
+          document: {
+            content: [
+              {
+                type: 'p',
+                children: [
+                  suggestion('discussion-by-id', 'remove', 'Removed'),
+                  suggestion('discussion-match', 'insert', 'Inserted'),
+                ],
+              },
+            ],
+          },
+          discussions: [
+            { id: 'discussion-by-id', changeRequestEntityId: 'request-by-id' },
+            { id: 'discussion-by-entity', changeRequestEntityId: 'entity-match' },
+            { id: 'discussion-match', crId: 'legacy-discussion' },
+            { id: 'suggestion-match', crId: 'legacy-suggestion' },
+            { id: 'discussion-by-cr', crId: 'CR-15' },
+            { id: 'discussion-by-cr-title', crId: 'CR-title-match' },
+            { id: 'discussion-by-title', title: 'Title match', crId: 'legacy-title' },
+            { id: 'fallback-unrepresented', crId: 'CR-19', confirmationStatus: 'confirmed' },
+            { id: 'fallback-accepted', crId: 'CR-20', status: 'accepted' },
+            { id: 'fallback-rejected', crId: 'CR-21', status: 'rejected' },
+            { id: 'entity-only', changeRequestEntityId: 'entity-only-row' },
+            { id: 'orphan-only' },
+          ],
+        },
+      ],
+      changeRequests: requests,
+    });
+
+    expect(sections[0].timelineItems).toHaveLength(12);
+    expect(sections[0].diffMap['request-by-id']).toMatchObject({
+      originalText: 'Removed',
+      newText: undefined,
+    });
+    expect(sections[0].diffMap['request-by-discussion']).toMatchObject({
+      originalText: undefined,
+      newText: 'Inserted',
+    });
+    expect(
+      sections[0].discussions.some(discussion => discussion.id === 'fallback-unrepresented')
+    ).toBe(true);
+  });
+
+  it('sorts multiple historical branches and ignores unscoped requests when no branch exists', () => {
+    expect(
+      buildChangeRequestBranchSections({
+        branches: [],
+        changeRequests: [changeRequest({ id: 'main', processBranchId: null })],
+      })
+    ).toEqual([]);
+
+    const sections = buildChangeRequestBranchSections({
+      branches: [{ id: 'current', created_at: 1 }],
+      changeRequests: [
+        changeRequest({ id: 'historical-b', processBranchId: 'historical-b', createdAt: 20 }),
+        changeRequest({ id: 'historical-a2', processBranchId: 'historical-a', createdAt: 10 }),
+        changeRequest({ id: 'historical-a1', processBranchId: 'historical-a', createdAt: 10 }),
+        changeRequest({ id: 'historical-c', processBranchId: 'historical-c', createdAt: 20 }),
+        changeRequest({
+          id: 'historical-d',
+          processBranchId: 'historical-d',
+          createdAt: undefined as unknown as number,
+        }),
+        changeRequest({
+          id: 'historical-e',
+          processBranchId: 'historical-e',
+          createdAt: undefined as unknown as number,
+        }),
+      ],
+    });
+    expect(sections.map(section => section.branchId)).toEqual([
+      'current',
+      'historical-d',
+      'historical-e',
+      'historical-a',
+      'historical-b',
+      'historical-c',
+    ]);
   });
 });

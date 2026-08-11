@@ -19,7 +19,7 @@ import { formatTodoDate, formatTodoTime } from '@/features/todos/utils/todoForma
 function getUrgencyConfig(dueDate: Date): TodoTimelineUrgency {
   const daysUntilDue = differenceInCalendarDays(dueDate, new Date());
   const timeLabel = formatTodoTime(dueDate);
-  const withTime = (label: string) => (timeLabel ? `${label} · ${timeLabel}` : label);
+  const withTime = (label: string) => [label, timeLabel].filter(Boolean).join(' · ');
 
   if (isPast(dueDate)) {
     return {

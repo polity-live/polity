@@ -18,7 +18,12 @@ export function EventSubscribeButtonView({
   handleClick,
 }: EventSubscribeButtonViewProps) {
   return (
-    <Button onClick={handleClick} disabled={isLoading} variant="outline">
+    <Button
+      data-action-id="events.subscribe.toggle"
+      onClick={handleClick}
+      disabled={isLoading}
+      variant="outline"
+    >
       {isSubscribed ? (
         <>
           <BellOff className="mr-2 h-4 w-4" />

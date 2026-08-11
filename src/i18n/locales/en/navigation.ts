@@ -107,6 +107,9 @@ export const navigationTranslations = {
       asButton: 'Button view',
       asButtonList: 'Button list view',
       asLabeledButtonList: 'Labeled button list view',
+      moreOptions: 'More navigation options',
+      toggleNavigation: 'Toggle navigation',
+      closeNavigation: 'Close navigation',
     },
   },
   userMenu: {

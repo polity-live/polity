@@ -114,7 +114,7 @@ export function useEditableNetworkLayout<
           return {
             ...edge,
             data: {
-              ...(edge.data ?? {}),
+              ...edge.data,
               bendPoints,
             },
           };

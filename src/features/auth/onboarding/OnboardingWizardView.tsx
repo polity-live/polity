@@ -217,6 +217,7 @@ export function OnboardingWizardView({
                   >
                     <button
                       type="button"
+                      data-action-id="auth.onboarding.wizard.step.select"
                       disabled={disabled}
                       aria-current={isActive ? 'step' : undefined}
                       aria-label={t(`onboarding.shell.steps.${item}.label`)}

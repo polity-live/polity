@@ -9,7 +9,7 @@ export type ContactLinkKey =
   | 'snapchat'
   | 'tiktok';
 
-const URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:/i;
+const HTTP_URL_PATTERN = /^https?:\/\//i;
 const PROTOCOL_RELATIVE_PATTERN = /^\/\//;
 
 function normalizeValue(value?: string | null): string | null {
@@ -18,7 +18,7 @@ function normalizeValue(value?: string | null): string | null {
 }
 
 function ensureExternalUrl(value: string): string {
-  if (URL_SCHEME_PATTERN.test(value)) {
+  if (HTTP_URL_PATTERN.test(value)) {
     return value;
   }
 
@@ -30,7 +30,7 @@ function ensureExternalUrl(value: string): string {
 }
 
 function normalizeHandle(value: string): string {
-  return value.trim().replace(/^@/, '').replace(/^\/+/, '').replace(/\/+$/, '');
+  return value.trim().replace(/^\/+/, '').replace(/^@/, '').replace(/\/+$/, '');
 }
 
 function normalizePath(value: string): string {
@@ -48,7 +48,7 @@ export function buildContactLinkHref(key: ContactLinkKey, value?: string | null)
     case 'website':
       return ensureExternalUrl(normalizedValue);
     case 'youtube': {
-      if (URL_SCHEME_PATTERN.test(normalizedValue)) {
+      if (HTTP_URL_PATTERN.test(normalizedValue)) {
         return normalizedValue;
       }
 
@@ -60,7 +60,7 @@ export function buildContactLinkHref(key: ContactLinkKey, value?: string | null)
       return `https://www.youtube.com/@${normalizeHandle(path)}`;
     }
     case 'linkedin': {
-      if (URL_SCHEME_PATTERN.test(normalizedValue)) {
+      if (HTTP_URL_PATTERN.test(normalizedValue)) {
         return normalizedValue;
       }
 
@@ -73,7 +73,7 @@ export function buildContactLinkHref(key: ContactLinkKey, value?: string | null)
     }
     case 'whatsapp': {
       if (
-        URL_SCHEME_PATTERN.test(normalizedValue) ||
+        HTTP_URL_PATTERN.test(normalizedValue) ||
         PROTOCOL_RELATIVE_PATTERN.test(normalizedValue)
       ) {
         return ensureExternalUrl(normalizedValue);
@@ -83,23 +83,23 @@ export function buildContactLinkHref(key: ContactLinkKey, value?: string | null)
       return digits ? `https://wa.me/${digits}` : ensureExternalUrl(normalizedValue);
     }
     case 'instagram':
-      return URL_SCHEME_PATTERN.test(normalizedValue)
+      return HTTP_URL_PATTERN.test(normalizedValue)
         ? normalizedValue
         : `https://instagram.com/${normalizeHandle(normalizedValue)}`;
     case 'twitter':
-      return URL_SCHEME_PATTERN.test(normalizedValue)
+      return HTTP_URL_PATTERN.test(normalizedValue)
         ? normalizedValue
         : `https://x.com/${normalizeHandle(normalizedValue)}`;
     case 'facebook':
-      return URL_SCHEME_PATTERN.test(normalizedValue)
+      return HTTP_URL_PATTERN.test(normalizedValue)
         ? normalizedValue
         : `https://facebook.com/${normalizeHandle(normalizedValue)}`;
     case 'snapchat':
-      return URL_SCHEME_PATTERN.test(normalizedValue)
+      return HTTP_URL_PATTERN.test(normalizedValue)
         ? normalizedValue
         : `https://snapchat.com/add/${normalizeHandle(normalizedValue)}`;
     case 'tiktok': {
-      if (URL_SCHEME_PATTERN.test(normalizedValue)) {
+      if (HTTP_URL_PATTERN.test(normalizedValue)) {
         return normalizedValue;
       }
 

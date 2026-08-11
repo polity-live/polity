@@ -1,0 +1,2891 @@
+{
+  "version": 2,
+  "description": "Generated structural catalog for every TanStack route and API handler. Behavioral evidence is resolved separately from explicit source accountability.",
+  "routes": [
+    {
+      "file": "src/routes/__root.tsx",
+      "routePath": "__root__",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed.tsx",
+      "routePath": "/_authed",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/amendment/$id.tsx",
+      "routePath": "/_authed/amendment/$id",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/amendment/$id/change-requests.tsx",
+      "routePath": "/_authed/amendment/$id/change-requests",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/amendment/$id/citydesign.tsx",
+      "routePath": "/_authed/amendment/$id/citydesign",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/amendment/$id/collaborators.tsx",
+      "routePath": "/_authed/amendment/$id/collaborators",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/amendment/$id/discussions.tsx",
+      "routePath": "/_authed/amendment/$id/discussions",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/amendment/$id/index.tsx",
+      "routePath": "/_authed/amendment/$id/",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/amendment/$id/notifications.tsx",
+      "routePath": "/_authed/amendment/$id/notifications",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/amendment/$id/process.tsx",
+      "routePath": "/_authed/amendment/$id/process",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/amendment/$id/settings.tsx",
+      "routePath": "/_authed/amendment/$id/settings",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/amendment/$id/text.tsx",
+      "routePath": "/_authed/amendment/$id/text",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/blog/$id.tsx",
+      "routePath": "/_authed/blog/$id",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/blog/$id/edit.tsx",
+      "routePath": "/_authed/blog/$id/edit",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/blog/$id/index.tsx",
+      "routePath": "/_authed/blog/$id/",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/blog/$id/notifications.tsx",
+      "routePath": "/_authed/blog/$id/notifications",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/calendar.tsx",
+      "routePath": "/_authed/calendar",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/create/agenda-item.tsx",
+      "routePath": "/_authed/create/agenda-item",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/create/amendment.tsx",
+      "routePath": "/_authed/create/amendment",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/create/blog-entry.tsx",
+      "routePath": "/_authed/create/blog-entry",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/create/election-candidate.tsx",
+      "routePath": "/_authed/create/election-candidate",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/create/event.tsx",
+      "routePath": "/_authed/create/event",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/create/group.tsx",
+      "routePath": "/_authed/create/group",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/create/index.tsx",
+      "routePath": "/_authed/create/",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/create/payment.tsx",
+      "routePath": "/_authed/create/payment",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/create/statement.tsx",
+      "routePath": "/_authed/create/statement",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/create/todo.tsx",
+      "routePath": "/_authed/create/todo",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/event/$id.tsx",
+      "routePath": "/_authed/event/$id",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/event/$id/agenda.tsx",
+      "routePath": "/_authed/event/$id/agenda",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/event/$id/agenda/$agendaItemId.tsx",
+      "routePath": "/_authed/event/$id/agenda/$agendaItemId",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/event/$id/agenda/index.tsx",
+      "routePath": "/_authed/event/$id/agenda/",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/event/$id/index.tsx",
+      "routePath": "/_authed/event/$id/",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/event/$id/network.tsx",
+      "routePath": "/_authed/event/$id/network",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/event/$id/notifications.tsx",
+      "routePath": "/_authed/event/$id/notifications",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/event/$id/participants.tsx",
+      "routePath": "/_authed/event/$id/participants",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/event/$id/roles.tsx",
+      "routePath": "/_authed/event/$id/roles",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/event/$id/settings.tsx",
+      "routePath": "/_authed/event/$id/settings",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/event/$id/stream.tsx",
+      "routePath": "/_authed/event/$id/stream",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id.tsx",
+      "routePath": "/_authed/group/$id",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/amendments.tsx",
+      "routePath": "/_authed/group/$id/amendments",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/blog.tsx",
+      "routePath": "/_authed/group/$id/blog",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/blog/$entryId.tsx",
+      "routePath": "/_authed/group/$id/blog/$entryId",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/blog/$entryId/edit.tsx",
+      "routePath": "/_authed/group/$id/blog/$entryId/edit",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/blog/$entryId/editor.tsx",
+      "routePath": "/_authed/group/$id/blog/$entryId/editor",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/blog/$entryId/index.tsx",
+      "routePath": "/_authed/group/$id/blog/$entryId/",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/blog/$entryId/notifications.tsx",
+      "routePath": "/_authed/group/$id/blog/$entryId/notifications",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/blog/index.tsx",
+      "routePath": "/_authed/group/$id/blog/",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/blogs-and-statements.tsx",
+      "routePath": "/_authed/group/$id/blogs-and-statements",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/editor.tsx",
+      "routePath": "/_authed/group/$id/editor",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/editor/$docId.tsx",
+      "routePath": "/_authed/group/$id/editor/$docId",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/editor/index.tsx",
+      "routePath": "/_authed/group/$id/editor/",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/events.tsx",
+      "routePath": "/_authed/group/$id/events",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/index.tsx",
+      "routePath": "/_authed/group/$id/",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/memberships.tsx",
+      "routePath": "/_authed/group/$id/memberships",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/network.tsx",
+      "routePath": "/_authed/group/$id/network",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/notifications.tsx",
+      "routePath": "/_authed/group/$id/notifications",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/operation.tsx",
+      "routePath": "/_authed/group/$id/operation",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/relationships.tsx",
+      "routePath": "/_authed/group/$id/relationships",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/group/$id/settings.tsx",
+      "routePath": "/_authed/group/$id/settings",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/home.tsx",
+      "routePath": "/_authed/home",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/messages.tsx",
+      "routePath": "/_authed/messages",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/notifications.tsx",
+      "routePath": "/_authed/notifications",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/onboarding.tsx",
+      "routePath": "/_authed/onboarding",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/search.tsx",
+      "routePath": "/_authed/search",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/statement/$id.tsx",
+      "routePath": "/_authed/statement/$id",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/todos.tsx",
+      "routePath": "/_authed/todos",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/todos/$id.tsx",
+      "routePath": "/_authed/todos/$id",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id.tsx",
+      "routePath": "/_authed/user/$id",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/blog.tsx",
+      "routePath": "/_authed/user/$id/blog",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/blog/$entryId.tsx",
+      "routePath": "/_authed/user/$id/blog/$entryId",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/blog/$entryId/edit.tsx",
+      "routePath": "/_authed/user/$id/blog/$entryId/edit",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/blog/$entryId/editor.tsx",
+      "routePath": "/_authed/user/$id/blog/$entryId/editor",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/blog/$entryId/index.tsx",
+      "routePath": "/_authed/user/$id/blog/$entryId/",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/blog/$entryId/notifications.tsx",
+      "routePath": "/_authed/user/$id/blog/$entryId/notifications",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/editor.tsx",
+      "routePath": "/_authed/user/$id/editor",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/editor/$docId.tsx",
+      "routePath": "/_authed/user/$id/editor/$docId",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/index.tsx",
+      "routePath": "/_authed/user/$id/",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/meet.tsx",
+      "routePath": "/_authed/user/$id/meet",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/memberships.tsx",
+      "routePath": "/_authed/user/$id/memberships",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/network.tsx",
+      "routePath": "/_authed/user/$id/network",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/notification-settings.tsx",
+      "routePath": "/_authed/user/$id/notification-settings",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/notifications.tsx",
+      "routePath": "/_authed/user/$id/notifications",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/settings.tsx",
+      "routePath": "/_authed/user/$id/settings",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/user/$id/subscriptions.tsx",
+      "routePath": "/_authed/user/$id/subscriptions",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/$.tsx",
+      "routePath": "/$",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/ai/catalog.ts",
+      "routePath": "/api/ai/catalog",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/ai/chat.ts",
+      "routePath": "/api/ai/chat",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/ai/command.ts",
+      "routePath": "/api/ai/command",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/ai/copilot.ts",
+      "routePath": "/api/ai/copilot",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/ai/credentials.ts",
+      "routePath": "/api/ai/credentials",
+      "access": "public",
+      "actions": [
+        {
+          "id": "delete-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        },
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/currency/currencies.ts",
+      "routePath": "/api/currency/currencies",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/currency/rates.ts",
+      "routePath": "/api/currency/rates",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/datasets/$datasetId/details.ts",
+      "routePath": "/api/datasets/$datasetId/details",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/datasets/$snapshotId/projection.ts",
+      "routePath": "/api/datasets/$snapshotId/projection",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/datasets/$snapshotId/values.ts",
+      "routePath": "/api/datasets/$snapshotId/values",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/datasets/archive.ts",
+      "routePath": "/api/datasets/archive",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/datasets/search.ts",
+      "routePath": "/api/datasets/search",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/datasets/snapshots.ts",
+      "routePath": "/api/datasets/snapshots",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/datasets/upload.ts",
+      "routePath": "/api/datasets/upload",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/debug/group-general-assemblies.ts",
+      "routePath": "/api/debug/group-general-assemblies",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/eurostat/catalogue.ts",
+      "routePath": "/api/eurostat/catalogue",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/eurostat/details.ts",
+      "routePath": "/api/eurostat/details",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/eurostat/import-step.ts",
+      "routePath": "/api/eurostat/import-step",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/eurostat/import.ts",
+      "routePath": "/api/eurostat/import",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/eurostat/projection.ts",
+      "routePath": "/api/eurostat/projection",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/govdata/catalogue.ts",
+      "routePath": "/api/govdata/catalogue",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/govdata/import.ts",
+      "routePath": "/api/govdata/import",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/mutate.ts",
+      "routePath": "/api/mutate",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/newsletter/sync.ts",
+      "routePath": "/api/newsletter/sync",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/push/process.ts",
+      "routePath": "/api/push/process",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/push/subscription.ts",
+      "routePath": "/api/push/subscription",
+      "access": "public",
+      "actions": [
+        {
+          "id": "delete-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        },
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        },
+        {
+          "id": "put-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/push/test.ts",
+      "routePath": "/api/push/test",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/push/test/$jobId.ts",
+      "routePath": "/api/push/test/$jobId",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        },
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/query.ts",
+      "routePath": "/api/query",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/resend/webhook.ts",
+      "routePath": "/api/resend/webhook",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/stripe/webhook.ts",
+      "routePath": "/api/stripe/webhook",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/tutorial.ts",
+      "routePath": "/api/tutorial",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        },
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/tutorial/cleanup.ts",
+      "routePath": "/api/tutorial/cleanup",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/auth.tsx",
+      "routePath": "/auth",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/auth/callback.tsx",
+      "routePath": "/auth/callback",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/auth/forgot-password.tsx",
+      "routePath": "/auth/forgot-password",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/auth/index.tsx",
+      "routePath": "/auth/",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/auth/reset-password.tsx",
+      "routePath": "/auth/reset-password",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/auth/sign-in.tsx",
+      "routePath": "/auth/sign-in",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/auth/sign-up.tsx",
+      "routePath": "/auth/sign-up",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/auth/verify.tsx",
+      "routePath": "/auth/verify",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/docs.tsx",
+      "routePath": "/docs",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/docs/$topic.tsx",
+      "routePath": "/docs/$topic",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/docs/getting-started/$slug.tsx",
+      "routePath": "/docs/getting-started/$slug",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/docs/guides/$slug.tsx",
+      "routePath": "/docs/guides/$slug",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/docs/index.tsx",
+      "routePath": "/docs/",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/docs/search.tsx",
+      "routePath": "/docs/search",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/features.tsx",
+      "routePath": "/features",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/imprint.tsx",
+      "routePath": "/imprint",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/index.tsx",
+      "routePath": "/",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/pricing.tsx",
+      "routePath": "/pricing",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/privacy-policy.tsx",
+      "routePath": "/privacy-policy",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/solutions.tsx",
+      "routePath": "/solutions",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/support.tsx",
+      "routePath": "/support",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/terms-and-conditions.tsx",
+      "routePath": "/terms-and-conditions",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/unauthorized.tsx",
+      "routePath": "/unauthorized",
+      "access": "public",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

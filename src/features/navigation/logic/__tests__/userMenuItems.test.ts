@@ -225,4 +225,94 @@ describe('user menu item builders', () => {
       eventTitle: 'Zeta Assembly',
     });
   });
+
+  it('sorts unnamed groups and events and handles zero-duration recurring instances', () => {
+    const groups = buildUserMenuGroups([
+      { status: 'active', group: { id: 'b' }, roles: [{ id: 'role-b' }] },
+      { status: 'active', group: { id: 'a', name: null }, roles: [{ id: 'role-a' }] },
+    ]);
+    expect(groups.map(group => group.id)).toEqual(['b', 'a']);
+
+    const events = buildUserMenuEvents(
+      [
+        {
+          status: 'active',
+          roles: [{ id: 'role-base' }],
+          event: { id: 'base', title: undefined, start_date: FUTURE, city: 'Berlin' },
+        },
+        {
+          id: 'later',
+          status: 'active',
+          role: { id: 'role-later' },
+          event: {
+            id: 'later',
+            title: undefined,
+            start_date: FUTURE + 1,
+            location_name: 'Hall',
+          },
+        },
+        {
+          id: 'zero-duration',
+          status: 'active',
+          instance_date: FUTURE + 2,
+          role: { id: 'role-zero' },
+          event: {
+            id: 'zero-duration',
+            title: 'Zero duration',
+            start_date: PAST,
+            end_date: PAST,
+          },
+        },
+      ],
+      NOW
+    );
+
+    expect(events[0]).toMatchObject({ key: 'base:base', locationName: 'Berlin' });
+    expect(events[1]).toMatchObject({ key: 'later:later', locationName: 'Hall' });
+    expect(events[2]).toMatchObject({
+      key: `zero-duration:${FUTURE + 2}`,
+      start_date: FUTURE + 2,
+      end_date: FUTURE + 2,
+    });
+  });
+
+  it('covers amendment target fallbacks, decision mismatches, and stable tie sorting', () => {
+    const amendments = buildUserMenuAmendments([
+      { title: 'Missing id' },
+      {
+        id: 'selected-group-object',
+        title: 'Selected object',
+        current_process_run: {
+          status: 'active',
+          selected_target_group_id: null,
+          selected_target_group: { id: 'object-target', name: 'Object target' },
+        },
+      },
+      {
+        id: 'group-object',
+        title: 'Group object',
+        group_id: null,
+        group: { id: 'group-target', name: 'Group target' },
+        group_decisions: [
+          { group_id: 'different', status: 'accepted' },
+          { group_id: 'group-target', status: null },
+        ],
+      },
+      { id: 'no-target', title: 'No target', group_id: null, group: null },
+      { id: 'tie-b', title: null, code: null },
+      { id: 'tie-a', title: null, code: null },
+      { id: 'code-b', title: 'Same', code: 'B' },
+      { id: 'code-a', title: 'Same', code: 'A' },
+    ]);
+
+    expect(amendments.map(amendment => amendment.id)).toEqual([
+      'tie-a',
+      'tie-b',
+      'group-object',
+      'no-target',
+      'code-a',
+      'code-b',
+      'selected-group-object',
+    ]);
+  });
 });

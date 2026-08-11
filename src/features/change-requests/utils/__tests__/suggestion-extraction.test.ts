@@ -3,7 +3,10 @@ import {
   countChangedCharacters,
   countChangedCharactersForSuggestion,
   createChangeRequestDiffSnapshot,
+  createChangeRequestDiffSnapshotFromContent,
   extractSuggestionContent,
+  hasRenderableSuggestionContent,
+  isRenderableSuggestionType,
   suggestionContentFromChangeRequestSnapshot,
 } from '../suggestion-extraction';
 import { splitSuggestionPreviewText } from '../../logic/suggestionBlockLabels';
@@ -38,6 +41,75 @@ const lineBreakSuggestion = (type: 'insert' | 'remove', id = 'discussion-1') => 
 });
 
 describe('suggestion extraction changed character counts', () => {
+  it('classifies renderable types and every kind of non-empty diff content', () => {
+    expect(isRenderableSuggestionType(undefined)).toBe(false);
+    expect(isRenderableSuggestionType('unknown')).toBe(false);
+    for (const type of ['insert', 'remove', 'delete', 'replace', 'update']) {
+      expect(isRenderableSuggestionType(type)).toBe(true);
+    }
+
+    expect(
+      hasRenderableSuggestionContent({
+        type: 'insert',
+        text: 'old',
+        newText: '',
+        properties: {},
+        newProperties: {},
+      })
+    ).toBe(true);
+    expect(
+      hasRenderableSuggestionContent({
+        type: 'insert',
+        text: '',
+        newText: 'new',
+        properties: {},
+        newProperties: {},
+      })
+    ).toBe(true);
+    expect(
+      hasRenderableSuggestionContent({
+        type: 'update',
+        text: '',
+        newText: '',
+        properties: { align: 'left' },
+        newProperties: {},
+      })
+    ).toBe(true);
+    expect(
+      hasRenderableSuggestionContent({
+        type: 'update',
+        text: '',
+        newText: '',
+        properties: {},
+        newProperties: { align: 'right' },
+      })
+    ).toBe(true);
+    expect(
+      hasRenderableSuggestionContent({
+        type: 'insert',
+        text: '',
+        newText: '',
+        properties: {},
+        newProperties: {},
+      })
+    ).toBe(false);
+    expect(
+      hasRenderableSuggestionContent({
+        type: 'unknown',
+        text: 'ignored',
+        newText: '',
+        properties: {},
+        newProperties: {},
+      })
+    ).toBe(false);
+  });
+
+  it('returns empty content for absent or malformed documents', () => {
+    const empty = { type: 'unknown', text: '', newText: '', properties: {}, newProperties: {} };
+    expect(extractSuggestionContent('discussion-1', undefined)).toEqual(empty);
+    expect(extractSuggestionContent('discussion-1', {} as any)).toEqual(empty);
+  });
+
   it('counts inserted and removed suggestion text for one discussion', () => {
     const content = [
       {
@@ -88,6 +160,86 @@ describe('suggestion extraction changed character counts', () => {
 
     expect(suggestion.newText).toBe('Title');
     expect(countChangedCharacters(suggestion)).toBe(25);
+  });
+
+  it('handles non-text nodes, unmatched marks, and every inline suggestion variant', () => {
+    const suggestion = extractSuggestionContent('discussion-1', [
+      null,
+      'primitive',
+      { type: 'void', children: 'not-an-array' },
+      {
+        type: 'p',
+        suggestion: { id: 'discussion-1' },
+        children: [
+          {
+            text: 'replacement',
+            suggestion_other: { id: 'other', type: 'insert' },
+            suggestion_replace: { id: 'discussion-1', type: 'replace' },
+          },
+          {
+            text: '',
+            suggestion_update: { id: 'discussion-1', type: 'update' },
+          },
+          {
+            text: 'ignored',
+            suggestion_unknown: { id: 'discussion-1', type: 'unknown' },
+            suggestion_no_type: { id: 'discussion-1' },
+          },
+          { text: 'plain', suggestion_missing: undefined },
+        ],
+      },
+    ] as any);
+
+    expect(suggestion).toEqual({
+      type: 'replace',
+      text: '',
+      newText: 'replacement',
+      properties: {},
+      newProperties: {},
+    });
+  });
+
+  it('extracts block replace/delete marks and ignores unrelated block marks', () => {
+    const suggestion = extractSuggestionContent('discussion-1', [
+      { type: 'p', children: [{ text: '' }], suggestion: { id: 'other', type: 'insert' } },
+      { type: 'p', children: [{ text: '' }], suggestion: { id: 'discussion-1', type: 'replace' } },
+      { type: 'p', children: [{ text: '' }], suggestion: { id: 'discussion-1', type: 'delete' } },
+      { type: 'p', children: [{ text: '' }], suggestion: { id: 'discussion-1', type: 'update' } },
+    ] as any);
+
+    expect(suggestion.type).toBe('replace');
+    expect(suggestion.newText).toBe('__block__Text');
+    expect(suggestion.text).toBe('__block__Text');
+  });
+
+  it('merges update properties independently and counts null-valued keys', () => {
+    const suggestion = extractSuggestionContent('discussion-1', [
+      {
+        type: 'p',
+        children: [
+          {
+            text: 'a',
+            suggestion_first: {
+              id: 'discussion-1',
+              type: 'update',
+              properties: { nullable: null },
+            },
+          },
+          {
+            text: 'b',
+            suggestion_second: {
+              id: 'discussion-1',
+              type: 'update',
+              newProperties: { enabled: true },
+            },
+          },
+        ],
+      },
+    ] as any);
+
+    expect(suggestion.properties).toEqual({ nullable: null });
+    expect(suggestion.newProperties).toEqual({ enabled: true });
+    expect(countChangedCharacters(suggestion)).toBe(21);
   });
 
   it('infers replace when one suggestion has removed and inserted text', () => {
@@ -150,6 +302,71 @@ describe('suggestion extraction changed character counts', () => {
       text: '',
       newText: 'Wird hinzugefügt',
     });
+  });
+
+  it('normalizes persisted snapshot properties and empty diff fields', () => {
+    expect(
+      createChangeRequestDiffSnapshotFromContent({
+        type: 'unknown',
+        text: '',
+        newText: '',
+        properties: {},
+        newProperties: {},
+      })
+    ).toEqual({
+      change_type: null,
+      original_text: null,
+      new_text: null,
+      original_properties: null,
+      new_properties: null,
+    });
+
+    expect(
+      createChangeRequestDiffSnapshotFromContent({
+        type: 'update',
+        text: '',
+        newText: '',
+        properties: { align: 'left' },
+        newProperties: { align: 'center' },
+      })
+    ).toMatchObject({
+      original_properties: { align: 'left' },
+      new_properties: { align: 'center' },
+    });
+
+    expect(
+      suggestionContentFromChangeRequestSnapshot({
+        change_type: null,
+        original_text: null,
+        new_text: null,
+        original_properties: ['invalid'],
+        new_properties: {
+          string: 'value',
+          number: 1,
+          boolean: false,
+          nil: null,
+          nested: { ignored: true },
+        },
+      })
+    ).toEqual({
+      type: 'unknown',
+      text: '',
+      newText: '',
+      properties: {},
+      newProperties: {
+        string: 'value',
+        number: 1,
+        boolean: false,
+        nil: null,
+      },
+    });
+
+    expect(
+      suggestionContentFromChangeRequestSnapshot({
+        original_properties: 'invalid',
+        new_properties: null,
+      })
+    ).toMatchObject({ properties: {}, newProperties: {} });
   });
 
   it('extracts inserted chart block suggestions as block labels', () => {

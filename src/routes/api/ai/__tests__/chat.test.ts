@@ -11,9 +11,11 @@ const mocks = vi.hoisted(() => ({
   enrichAiAttachmentsForPrompt: vi.fn(),
   enrichAiAttachmentsFromContextJson: vi.fn(),
   buildCurrentUserScopePrompt: vi.fn(),
+  compressHistory: vi.fn(),
   isAssistantSender: vi.fn(),
   stepCountIs: vi.fn(),
   streamText: vi.fn(),
+  touchAiCredential: vi.fn(),
   persistAssistantMessage: vi.fn(),
   setAssistantConversationTitle: vi.fn(),
   buildAiTools: vi.fn(() => ({ present_findings: {} })),
@@ -44,11 +46,14 @@ vi.mock('@/server/ai-db', () => ({
   isAssistantSender: mocks.isAssistantSender,
   persistAssistantMessage: mocks.persistAssistantMessage,
   setAssistantConversationTitle: mocks.setAssistantConversationTitle,
-  touchAiCredential: vi.fn(),
+  touchAiCredential: mocks.touchAiCredential,
 }));
 vi.mock('@/server/ai-tools', () => ({
   buildAiTools: mocks.buildAiTools,
   buildCurrentUserScopePrompt: mocks.buildCurrentUserScopePrompt,
+}));
+vi.mock('@/lib/ai/historyCompression', () => ({
+  compressConversationHistory: (input: Record<string, any>) => mocks.compressHistory(input),
 }));
 
 import { handleAiChatRequest } from '../chat';
@@ -73,6 +78,8 @@ function chatRequest(body: unknown) {
 
 function mockSuccessfulChatSetup(options?: {
   conversationName?: string;
+  contextWindow?: number | null;
+  tutorialRunId?: string | null;
   history?: {
     id: string;
     sender_id: string;
@@ -87,7 +94,7 @@ function mockSuccessfulChatSetup(options?: {
     id: 'conversation-1',
     assistant_for_user_id: 'user-1',
     name: options?.conversationName ?? null,
-    tutorial_run_id: null,
+    tutorial_run_id: options?.tutorialRunId ?? null,
   });
   mocks.getAiCatalog.mockResolvedValue({
     credentials: [],
@@ -99,7 +106,7 @@ function mockSuccessfulChatSetup(options?: {
         source: 'app',
         free: true,
         supports_reasoning_effort: true,
-        context_window: 200000,
+        context_window: options?.contextWindow === undefined ? 200000 : options.contextWindow,
       },
     ],
   });
@@ -128,6 +135,11 @@ describe('AI chat route setup errors', () => {
     mocks.buildCurrentUserScopePrompt.mockResolvedValue('Current user: user-1');
     mocks.isAssistantSender.mockImplementation(senderId => senderId === 'assistant-1');
     mocks.setAssistantConversationTitle.mockResolvedValue(true);
+    mocks.compressHistory.mockImplementation(input => ({
+      messages: input.messages,
+      wasCompressed: false,
+      compressedMessageCount: 0,
+    }));
   });
 
   it('returns a structured 401 response', async () => {
@@ -487,5 +499,144 @@ describe('AI chat route setup errors', () => {
       attachments: [attachment, finalAttachment],
       presentations: [presentation],
     });
+  });
+
+  it('adds tutorial skills and tools while filtering disabled and unknown skills', async () => {
+    mockSuccessfulChatSetup({
+      contextWindow: null,
+      tutorialRunId: 'tutorial-1',
+      history: [
+        {
+          id: 'assistant-null',
+          sender_id: 'assistant-1',
+          content: null as unknown as string,
+          context_json: '[]',
+          created_at: '2026-07-26T10:00:00.000Z',
+        },
+        {
+          id: 'user-null',
+          sender_id: 'user-1',
+          content: null as unknown as string,
+          context_json: '[]',
+          created_at: '2026-07-26T10:01:00.000Z',
+        },
+      ],
+    });
+    mocks.getAiSkillsBySlugs.mockResolvedValue([
+      {
+        slug: 'custom-enabled',
+        name: 'Enabled skill',
+        system_prompt: 'Enabled prompt',
+        enabled: true,
+      },
+      {
+        slug: 'custom-disabled',
+        name: 'Disabled skill',
+        system_prompt: 'Disabled prompt',
+        enabled: false,
+      },
+    ]);
+    mocks.getAiToolsByNames.mockResolvedValue([{ tool_name: 'create_todo', enabled: true }]);
+    mocks.buildAiTools.mockReturnValueOnce({ present_findings: {}, create_todo: {} } as any);
+    let streamOptions: any;
+    mocks.streamText.mockImplementation(options => {
+      streamOptions = options;
+      return {
+        fullStream: (async function* () {
+          yield* [];
+        })(),
+      };
+    });
+
+    const response = await handleAiChatRequest(
+      chatRequest({
+        ...validBody,
+        skillSlugs: ['custom-enabled', 'custom-disabled', 'unknown', 'live-tutorial'],
+        toolNames: ['create_todo'],
+      })
+    );
+    await response.text();
+
+    expect(mocks.getAiSkillsBySlugs).toHaveBeenCalledWith('user-1', [
+      'custom-enabled',
+      'custom-disabled',
+      'unknown',
+      'live-tutorial',
+    ]);
+    expect(mocks.getAiToolsByNames).toHaveBeenCalledWith('user-1', ['create_todo']);
+    expect(streamOptions.system).toContain('Enabled prompt');
+    expect(streamOptions.system).not.toContain('Disabled prompt');
+    expect(streamOptions.activeTools).toContain('create_todo');
+  });
+
+  it('streams compression, public tool events, errors and ignored stream parts', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const fullStream = (async function* () {
+      yield { type: 'tool-call', toolName: 'create_todo', input: { title: 'Task' } };
+      yield { type: 'tool-result', toolName: 'create_todo' };
+      yield { type: 'finish-step' };
+      yield { type: 'error', error: new Error('provider failed') };
+    })();
+    mockSuccessfulChatSetup({ fullStream });
+    mocks.compressHistory.mockImplementation(input => ({
+      messages: input.messages,
+      wasCompressed: true,
+      compressedMessageCount: 3,
+    }));
+
+    const response = await handleAiChatRequest(chatRequest(validBody));
+    const text = await response.text();
+    expect(text).toContain('"type":"compression-start"');
+    expect(text).toContain('"type":"tool-call"');
+    expect(text).toContain('"type":"tool-result"');
+    expect(text).toContain('"type":"error"');
+    errorSpy.mockRestore();
+  });
+
+  it('persists attachment-only output, touches credentials and isolates finish hooks', async () => {
+    mockSuccessfulChatSetup();
+    mocks.resolveLanguageModelForUser.mockResolvedValue({
+      model: { modelId: 'openrouter/free' },
+      credentialProvider: 'openrouter',
+    });
+    let streamOptions: any;
+    mocks.streamText.mockImplementation(options => {
+      streamOptions = options;
+      return {
+        fullStream: (async function* () {
+          yield* [];
+        })(),
+      };
+    });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const response = await handleAiChatRequest(chatRequest(validBody));
+    await response.text();
+
+    await streamOptions.onFinish({ text: '   ', toolResults: [] });
+    expect(mocks.persistAssistantMessage).not.toHaveBeenCalled();
+
+    await streamOptions.onFinish({
+      text: '   ',
+      toolResults: [
+        {
+          output: {
+            attachments: [{ entityType: 'group', entityId: 'group-1', title: 'Group' }],
+          },
+        },
+      ],
+    });
+    expect(mocks.persistAssistantMessage).toHaveBeenCalled();
+    expect(mocks.touchAiCredential).toHaveBeenCalledWith('user-1', 'openrouter');
+
+    await streamOptions.onStepFinish({ toolResults: undefined });
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Failed to collect AI tool attachments:',
+      expect.any(Error)
+    );
+
+    mocks.persistAssistantMessage.mockRejectedValueOnce(new Error('database failed'));
+    await streamOptions.onFinish({ text: 'answer', toolResults: [] });
+    expect(errorSpy).toHaveBeenCalledWith('Failed to persist AI chat response:', expect.any(Error));
+    errorSpy.mockRestore();
   });
 });

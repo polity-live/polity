@@ -383,10 +383,8 @@ export function BlockSuggestionCard({
       acceptSuggestion(editor, suggestion);
     });
 
-    // Call the callback if provided
-    if (onSuggestionAccepted) {
-      onSuggestionAccepted(suggestion);
-    }
+    // The only caller is rendered behind the onSuggestionAccepted guard below.
+    (onSuggestionAccepted as NonNullable<typeof onSuggestionAccepted>)(suggestion);
   };
 
   const reject = (suggestion: ResolvedSuggestion) => {
@@ -394,10 +392,8 @@ export function BlockSuggestionCard({
       rejectSuggestion(editor, suggestion);
     });
 
-    // Call the callback if provided
-    if (onSuggestionDeclined) {
-      onSuggestionDeclined(suggestion);
-    }
+    // The only caller is rendered behind the onSuggestionDeclined guard below.
+    (onSuggestionDeclined as NonNullable<typeof onSuggestionDeclined>)(suggestion);
   };
 
   const [hovering, setHovering] = React.useState(false);
@@ -976,9 +972,9 @@ export const useResolveSuggestion = (
 
     const res: ResolvedSuggestion[] = [];
 
-    suggestionIds.forEach(id => {
-      if (!id) return;
-
+    suggestionIds.forEach(rawId => {
+      // filter(Boolean) above guarantees every retained identifier is a string.
+      const id = rawId as string;
       const path = map.get(id);
 
       if (!path || !PathApi.isPath(path)) return;
@@ -1242,8 +1238,8 @@ export const useResolveSuggestion = (
         if (suggestion.crId) continue; // Already has CR ID
 
         // Find or create discussion for this suggestion
-        const discussionId =
-          suggestion.keyId?.replace('suggestion_', '') || suggestion.suggestionId;
+        // Every resolved suggestion is created above with getSuggestionKey(id).
+        const discussionId = suggestion.keyId.replace('suggestion_', '');
         const discussion = updatedDiscussions.find((d: TDiscussion) => d.id === discussionId);
 
         if (!discussion) {
@@ -1256,7 +1252,7 @@ export const useResolveSuggestion = (
             const newDiscussion: TDiscussion = {
               id: discussionId,
               comments: [],
-              createdAt: suggestion.createdAt || new Date(),
+              createdAt: suggestion.createdAt,
               isResolved: false,
               userId: suggestion.userId,
               crId,

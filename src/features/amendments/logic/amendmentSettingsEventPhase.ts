@@ -21,23 +21,8 @@ export interface SettingsControllingEvent {
   title: string | null;
 }
 
-const TERMINAL_STEP_STATUSES = new Set([
-  'approved',
-  'accepted',
-  'supported',
-  'merged',
-  'completed',
-  'rejected',
-  'withdrawn',
-]);
-
 function hasEvent(step: SettingsProcessStep) {
   return Boolean(step.event_id || step.event?.id);
-}
-
-function isTerminalStep(step: SettingsProcessStep) {
-  const status = step.decision_status ?? step.status ?? null;
-  return Boolean(status && TERMINAL_STEP_STATUSES.has(status));
 }
 
 function normalizeEventTitle(title: string | null | undefined) {
@@ -58,18 +43,14 @@ export function deriveControllingEventForSettings(
     .filter(hasEvent)
     .sort((left, right) => (left.order_index ?? 0) - (right.order_index ?? 0));
 
-  const selectedStep =
-    findLikelyActiveAmendmentStep(eventSteps) ??
-    eventSteps.find(step => !isTerminalStep(step)) ??
-    eventSteps[0] ??
-    null;
+  const selectedStep = findLikelyActiveAmendmentStep(eventSteps) ?? eventSteps[0] ?? null;
 
   if (!selectedStep) {
     return null;
   }
 
   return {
-    id: selectedStep.event?.id ?? selectedStep.event_id ?? null,
+    id: selectedStep.event?.id ?? (selectedStep.event_id as string),
     title: normalizeEventTitle(selectedStep.event?.title),
   };
 }

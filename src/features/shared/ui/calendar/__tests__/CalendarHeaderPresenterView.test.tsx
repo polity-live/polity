@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CalendarHeaderPresenterView } from '../CalendarHeaderPresenterView';
@@ -50,5 +50,33 @@ describe('CalendarHeaderPresenterView', () => {
 
     renderHeader('none');
     expect(screen.queryByRole('heading', { name: 'Calendar' })).toBeNull();
+  });
+
+  it('uses explicit and fallback icons and reports view changes without optional chrome', () => {
+    const setViewMode = vi.fn();
+    const Icon = (props: { className?: string }) => <span {...props}>Custom icon</span>;
+    render(
+      <CalendarHeaderPresenterView
+        viewMode="custom"
+        setViewMode={setViewMode}
+        currentViewTitle="Custom"
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
+        onToday={vi.fn()}
+        resolvedViews={[
+          { value: 'custom', label: 'Custom', Icon: Icon as never },
+          { value: 'unknown', label: 'Unknown' },
+        ]}
+        resolvedTodayLabel="Today"
+        resolvedPreviousLabel="Previous"
+        resolvedNextLabel="Next"
+      />
+    );
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Unknown' }), {
+      button: 0,
+      ctrlKey: false,
+    });
+    expect(setViewMode).toHaveBeenCalledWith('unknown');
+    expect(screen.getByText('Custom icon')).toBeTruthy();
   });
 });

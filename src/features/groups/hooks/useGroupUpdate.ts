@@ -19,7 +19,6 @@ import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 import { RIGHT_TYPES, type RightType } from '@/features/shared/ui/status';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import {
-  EMPTY_RICH_TEXT_VALUE,
   richTextToPlainText,
   toRichTextValue,
   toZeroRichTextValue,
@@ -97,44 +96,91 @@ interface UseGroupUpdateResult {
   resetForm: () => void;
 }
 
-const initialFormState: GroupFormData = {
-  name: '',
-  description: '',
-  descriptionContent: EMPTY_RICH_TEXT_VALUE,
-  email: '',
-  country: '',
-  region: '',
-  post_code: '',
-  city: '',
-  street: '',
-  house_number: '',
-  latitude: null,
-  longitude: null,
-  location_kind: null,
-  location_place_id: null,
-  location_boundary_source: null,
-  location_geometry: null,
-  location_bounds: null,
-  imageURL: '',
-  videoURL: '',
-  visibility: 'public' as Visibility,
-  website: '',
-  youtube: '',
-  linkedin: '',
-  whatsapp: '',
-  instagram: '',
-  twitter: '',
-  facebook: '',
-  snapchat: '',
-  tiktok: '',
-  hashtags: [],
-  connected_group_id: null,
-  siblingMembershipDirection: null,
-  sibling_membership_mode: null,
-  sibling_role_id: null,
-  parliament_source_group_ids: [],
-  connectedRelationshipDirections: INITIAL_CONNECTED_RELATIONSHIP_DIRECTIONS,
-};
+export function buildGroupFormData(
+  initialData: Partial<GroupFormData> = {},
+  fallbackHashtags: string[] = []
+): GroupFormData {
+  const descriptionContent = toRichTextValue(
+    initialData.descriptionContent ?? initialData.description ?? ''
+  );
+
+  return {
+    name: initialData.name || '',
+    description: richTextToPlainText(descriptionContent),
+    descriptionContent,
+    email: initialData.email || '',
+    country: initialData.country || '',
+    region: initialData.region || '',
+    post_code: initialData.post_code || '',
+    city: initialData.city || '',
+    street: initialData.street || '',
+    house_number: initialData.house_number || '',
+    latitude: initialData.latitude ?? null,
+    longitude: initialData.longitude ?? null,
+    location_kind: initialData.location_kind ?? null,
+    location_place_id: initialData.location_place_id ?? null,
+    location_boundary_source: initialData.location_boundary_source ?? null,
+    location_geometry: initialData.location_geometry ?? null,
+    location_bounds: initialData.location_bounds ?? null,
+    imageURL: initialData.imageURL || '',
+    videoURL: initialData.videoURL || '',
+    visibility: initialData.visibility ?? 'public',
+    website: initialData.website || '',
+    youtube: initialData.youtube || '',
+    linkedin: initialData.linkedin || '',
+    whatsapp: initialData.whatsapp || '',
+    instagram: initialData.instagram || '',
+    twitter: initialData.twitter || '',
+    facebook: initialData.facebook || '',
+    snapchat: initialData.snapchat || '',
+    tiktok: initialData.tiktok || '',
+    hashtags: initialData.hashtags || fallbackHashtags,
+    connected_group_id: initialData.connected_group_id ?? null,
+    siblingMembershipDirection: initialData.siblingMembershipDirection ?? null,
+    sibling_membership_mode: initialData.sibling_membership_mode ?? null,
+    sibling_role_id: initialData.sibling_role_id ?? null,
+    parliament_source_group_ids: initialData.parliament_source_group_ids ?? [],
+    connectedRelationshipDirections: initialData.connectedRelationshipDirections ?? {
+      ...INITIAL_CONNECTED_RELATIONSHIP_DIRECTIONS,
+    },
+  };
+}
+
+export function buildGroupMutationFields(formData: GroupFormData, isCreating: boolean) {
+  return {
+    name: formData.name,
+    description: formData.description ? toZeroRichTextValue(formData.descriptionContent) : null,
+    email: formData.email || null,
+    country: formData.country || null,
+    region: formData.region || null,
+    post_code: formData.post_code || null,
+    city: formData.city || null,
+    street: formData.street || null,
+    house_number: formData.house_number || null,
+    latitude: formData.latitude,
+    longitude: formData.longitude,
+    location_kind: formData.location_kind,
+    location_place_id: formData.location_place_id,
+    location_boundary_source: formData.location_boundary_source,
+    location_geometry: formData.location_geometry,
+    location_bounds: formData.location_bounds,
+    image_url: formData.imageURL || null,
+    video_url: formData.videoURL || null,
+    x: isCreating ? formData.twitter || null : formData.twitter,
+    website: formData.website || null,
+    youtube: formData.youtube || null,
+    linkedin: formData.linkedin || null,
+    whatsapp: formData.whatsapp || null,
+    instagram: formData.instagram || null,
+    twitter: formData.twitter || null,
+    facebook: formData.facebook || null,
+    snapchat: formData.snapchat || null,
+    tiktok: formData.tiktok || null,
+    visibility: formData.visibility,
+  };
+}
+
+const initialFormState = buildGroupFormData();
 
 /**
  * Hook for managing group update form state and mutations
@@ -196,49 +242,7 @@ export function useGroupUpdate(
   useEffect(() => {
     if (initialData && !initializedRef.current) {
       initializedRef.current = true;
-      const descriptionContent = toRichTextValue(
-        initialData.descriptionContent ?? initialData.description ?? ''
-      );
-      const newFormData = {
-        name: initialData.name || '',
-        description: richTextToPlainText(descriptionContent),
-        descriptionContent,
-        email: initialData.email || '',
-        country: initialData.country || '',
-        region: initialData.region || '',
-        post_code: initialData.post_code || '',
-        city: initialData.city || '',
-        street: initialData.street || '',
-        house_number: initialData.house_number || '',
-        latitude: initialData.latitude ?? null,
-        longitude: initialData.longitude ?? null,
-        location_kind: initialData.location_kind ?? null,
-        location_place_id: initialData.location_place_id ?? null,
-        location_boundary_source: initialData.location_boundary_source ?? null,
-        location_geometry: initialData.location_geometry ?? null,
-        location_bounds: initialData.location_bounds ?? null,
-        imageURL: initialData.imageURL || '',
-        videoURL: initialData.videoURL || '',
-        visibility: initialData.visibility ?? 'public',
-        website: initialData.website || '',
-        youtube: initialData.youtube || '',
-        linkedin: initialData.linkedin || '',
-        whatsapp: initialData.whatsapp || '',
-        instagram: initialData.instagram || '',
-        twitter: initialData.twitter || '',
-        facebook: initialData.facebook || '',
-        snapchat: initialData.snapchat || '',
-        tiktok: initialData.tiktok || '',
-        hashtags: initialData.hashtags || existingTags,
-        connected_group_id: initialData.connected_group_id ?? null,
-        siblingMembershipDirection: initialData.siblingMembershipDirection ?? null,
-        sibling_membership_mode: initialData.sibling_membership_mode ?? null,
-        sibling_role_id: initialData.sibling_role_id ?? null,
-        parliament_source_group_ids: initialData.parliament_source_group_ids ?? [],
-        connectedRelationshipDirections: initialData.connectedRelationshipDirections ?? {
-          ...INITIAL_CONNECTED_RELATIONSHIP_DIRECTIONS,
-        },
-      };
+      const newFormData = buildGroupFormData(initialData, existingTags);
       setFormData(newFormData);
       setOriginalName(initialData.name || '');
     }
@@ -284,50 +288,7 @@ export function useGroupUpdate(
    */
   const resetForm = () => {
     if (initialData) {
-      const descriptionContent = toRichTextValue(
-        initialData.descriptionContent ?? initialData.description ?? ''
-      );
-      const resetData = {
-        name: initialData.name || '',
-        description: richTextToPlainText(descriptionContent),
-        descriptionContent,
-        email: initialData.email || '',
-        country: initialData.country || '',
-        region: initialData.region || '',
-        post_code: initialData.post_code || '',
-        city: initialData.city || '',
-        street: initialData.street || '',
-        house_number: initialData.house_number || '',
-        latitude: initialData.latitude ?? null,
-        longitude: initialData.longitude ?? null,
-        location_kind: initialData.location_kind ?? null,
-        location_place_id: initialData.location_place_id ?? null,
-        location_boundary_source: initialData.location_boundary_source ?? null,
-        location_geometry: initialData.location_geometry ?? null,
-        location_bounds: initialData.location_bounds ?? null,
-        imageURL: initialData.imageURL || '',
-        videoURL: initialData.videoURL || '',
-        visibility: initialData.visibility ?? 'public',
-        website: initialData.website || '',
-        youtube: initialData.youtube || '',
-        linkedin: initialData.linkedin || '',
-        whatsapp: initialData.whatsapp || '',
-        instagram: initialData.instagram || '',
-        twitter: initialData.twitter || '',
-        facebook: initialData.facebook || '',
-        snapchat: initialData.snapchat || '',
-        tiktok: initialData.tiktok || '',
-        hashtags: existingTags,
-        connected_group_id: initialData.connected_group_id ?? null,
-        siblingMembershipDirection: initialData.siblingMembershipDirection ?? null,
-        sibling_membership_mode: initialData.sibling_membership_mode ?? null,
-        sibling_role_id: initialData.sibling_role_id ?? null,
-        parliament_source_group_ids: initialData.parliament_source_group_ids ?? [],
-        connectedRelationshipDirections: initialData.connectedRelationshipDirections ?? {
-          ...INITIAL_CONNECTED_RELATIONSHIP_DIRECTIONS,
-        },
-      };
-      setFormData(resetData);
+      setFormData(buildGroupFormData({ ...initialData, hashtags: existingTags }, existingTags));
     } else {
       setFormData(initialFormState);
     }
@@ -359,11 +320,6 @@ export function useGroupUpdate(
     }
 
     if (!nextConnectedGroupId) {
-      if (!partnerChanged && previousConnection) {
-        await waitForClientApply(
-          deleteGroupConnection({ id: previousConnection.id, acting_group_id: groupId })
-        );
-      }
       return;
     }
 
@@ -506,37 +462,7 @@ export function useGroupUpdate(
 
         const createGroupResult = createGroup({
           id: groupId,
-          name: formData.name,
-          description: formData.description
-            ? toZeroRichTextValue(formData.descriptionContent)
-            : null,
-          email: formData.email || null,
-          country: formData.country || null,
-          region: formData.region || null,
-          post_code: formData.post_code || null,
-          city: formData.city || null,
-          street: formData.street || null,
-          house_number: formData.house_number || null,
-          latitude: formData.latitude,
-          longitude: formData.longitude,
-          location_kind: formData.location_kind,
-          location_place_id: formData.location_place_id,
-          location_boundary_source: formData.location_boundary_source,
-          location_geometry: formData.location_geometry,
-          location_bounds: formData.location_bounds,
-          image_url: formData.imageURL || null,
-          video_url: formData.videoURL || null,
-          x: formData.twitter || null,
-          website: formData.website || null,
-          youtube: formData.youtube || null,
-          linkedin: formData.linkedin || null,
-          whatsapp: formData.whatsapp || null,
-          instagram: formData.instagram || null,
-          twitter: formData.twitter || null,
-          facebook: formData.facebook || null,
-          snapchat: formData.snapchat || null,
-          tiktok: formData.tiktok || null,
-          visibility: formData.visibility,
+          ...buildGroupMutationFields(formData, true),
           group_type: options.groupType,
           owner_id: null,
         });
@@ -548,37 +474,7 @@ export function useGroupUpdate(
         await waitForClientApply(
           updateGroup({
             id: groupId,
-            name: formData.name,
-            description: formData.description
-              ? toZeroRichTextValue(formData.descriptionContent)
-              : null,
-            email: formData.email || null,
-            country: formData.country || null,
-            region: formData.region || null,
-            post_code: formData.post_code || null,
-            city: formData.city || null,
-            street: formData.street || null,
-            house_number: formData.house_number || null,
-            latitude: formData.latitude,
-            longitude: formData.longitude,
-            location_kind: formData.location_kind,
-            location_place_id: formData.location_place_id,
-            location_boundary_source: formData.location_boundary_source,
-            location_geometry: formData.location_geometry,
-            location_bounds: formData.location_bounds,
-            image_url: formData.imageURL || null,
-            video_url: formData.videoURL || null,
-            x: formData.twitter,
-            website: formData.website || null,
-            youtube: formData.youtube || null,
-            linkedin: formData.linkedin || null,
-            whatsapp: formData.whatsapp || null,
-            instagram: formData.instagram || null,
-            twitter: formData.twitter || null,
-            facebook: formData.facebook || null,
-            snapchat: formData.snapchat || null,
-            tiktok: formData.tiktok || null,
-            visibility: formData.visibility,
+            ...buildGroupMutationFields(formData, false),
           })
         );
 

@@ -31,8 +31,13 @@ export function EventLivestreamPlayer({
         <p className="text-muted-foreground text-sm">
           {t('features.events.stream.externalStreamDescription')}
         </p>
-        <Button asChild variant="outline">
-          <a href={source.externalUrl} target="_blank" rel="noopener noreferrer">
+        <Button asChild variant="outline" data-action-id="events.livestream.open-external.wrapper">
+          <a
+            data-action-id="events.livestream.open-external"
+            href={source.externalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <ExternalLink className="mr-2 h-4 w-4" />
             {t('features.events.stream.openStream')}
           </a>

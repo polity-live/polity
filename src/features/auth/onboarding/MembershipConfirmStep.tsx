@@ -57,7 +57,12 @@ export function MembershipConfirmStep({
     <OnboardingStepShell
       actions={
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-          <Button variant="outline" onClick={onBack} disabled={isLoading}>
+          <Button
+            data-action-id="auth.onboarding.membership.back"
+            variant="outline"
+            onClick={onBack}
+            disabled={isLoading}
+          >
             <ArrowLeft className="h-4 w-4" />
             {t('common.goBack')}
           </Button>
@@ -65,7 +70,12 @@ export function MembershipConfirmStep({
           <div className="flex flex-col gap-2 sm:flex-row">
             {pendingCount > 0 ? (
               <>
-                <Button onClick={handleConfirm} disabled={isLoading} size="lg">
+                <Button
+                  data-action-id="auth.onboarding.membership.confirm"
+                  onClick={handleConfirm}
+                  disabled={isLoading}
+                  size="lg"
+                >
                   {isLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -81,13 +91,24 @@ export function MembershipConfirmStep({
                   )}
                 </Button>
 
-                <Button variant="outline" onClick={onDecline} disabled={isLoading} size="lg">
+                <Button
+                  data-action-id="auth.onboarding.membership.decline"
+                  variant="outline"
+                  onClick={onDecline}
+                  disabled={isLoading}
+                  size="lg"
+                >
                   <X className="h-4 w-4" />
                   {t('onboarding.confirmStep.no')}
                 </Button>
               </>
             ) : (
-              <Button onClick={onDecline} disabled={isLoading} size="lg">
+              <Button
+                data-action-id="auth.onboarding.membership.continue-without-selection"
+                onClick={onDecline}
+                disabled={isLoading}
+                size="lg"
+              >
                 <Check className="h-4 w-4" />
                 {t('onboarding.groupStep.continue')}
               </Button>

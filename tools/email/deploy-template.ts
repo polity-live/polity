@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
+import { runCliIfMain } from '../shared/run-cli-if-main.mjs';
 
 import { config as loadEnvFile } from 'dotenv';
 import { Resend } from 'resend';
@@ -16,7 +17,7 @@ import {
   deployPolityTemplate,
 } from '../../src/server/resend-template-deployment';
 
-interface CliOptions {
+export interface CliOptions {
   confirmAlias?: string;
   dryRun: boolean;
   environment: PolityTemplateEnvironment;
@@ -24,41 +25,68 @@ interface CliOptions {
   slug: string;
 }
 
-async function main() {
-  const options = parseOptions(process.argv.slice(2));
-  if (!isPolityTemplateSlug(options.slug)) {
+export async function runPolityTemplateDeployCli(
+  dependencies: {
+    args?: string[];
+    env?: NodeJS.ProcessEnv;
+    isTemplateSlug?: typeof isPolityTemplateSlug;
+    load?: typeof loadEnvironment;
+    assertEnvironment?: typeof assertTemplateEnvironment;
+    getDefinition?: typeof getPolityTemplateDefinition;
+    render?: typeof renderPolityTemplate;
+    confirm?: typeof confirmProduction;
+    createClient?: (apiKey: string) => Parameters<typeof deployPolityTemplate>[0]['client'];
+    deploy?: typeof deployPolityTemplate;
+  } = {}
+) {
+  const env = dependencies.env ?? process.env;
+  const options = parseOptions(dependencies.args ?? process.argv.slice(2), env);
+  if (!(dependencies.isTemplateSlug ?? isPolityTemplateSlug)(options.slug)) {
     throw new Error(`Unknown template "${options.slug}". Use newsletter or product-update.`);
   }
 
-  loadEnvironment(options.environment);
-  assertTemplateEnvironment(options.environment, process.env.NEWSLETTER_ENVIRONMENT);
+  (dependencies.load ?? loadEnvironment)(options.environment);
+  (dependencies.assertEnvironment ?? assertTemplateEnvironment)(
+    options.environment,
+    env.NEWSLETTER_ENVIRONMENT
+  );
 
-  const definition = getPolityTemplateDefinition(options.slug, options.environment, options.locale);
-  const rendered = await renderPolityTemplate(definition);
+  const definition = (dependencies.getDefinition ?? getPolityTemplateDefinition)(
+    options.slug,
+    options.environment,
+    options.locale
+  );
+  const rendered = await (dependencies.render ?? renderPolityTemplate)(definition);
 
   if (options.environment === 'production' && !options.dryRun) {
-    await confirmProduction(definition.alias, options.confirmAlias);
+    await (dependencies.confirm ?? confirmProduction)(definition.alias, options.confirmAlias);
   }
 
-  const apiKey = options.dryRun ? 'dry-run' : requireEnv('RESEND_API_KEY');
-  const resend = new Resend(apiKey);
-  await deployPolityTemplate({
-    client: resend.templates,
+  const apiKey = options.dryRun ? 'dry-run' : requireEnv('RESEND_API_KEY', env);
+  const client = dependencies.createClient
+    ? dependencies.createClient(apiKey)
+    : new Resend(apiKey).templates;
+  await (dependencies.deploy ?? deployPolityTemplate)({
+    client,
     definition,
     dryRun: options.dryRun,
     rendered,
   });
+  return { alias: definition.alias, dryRun: options.dryRun };
 }
 
-function parseOptions(args: string[]): CliOptions {
-  let confirmAlias = process.env.npm_config_confirm_alias;
-  let dryRun = process.env.npm_config_dry_run === 'true';
+export async function main() {
+  await runPolityTemplateDeployCli();
+}
+
+export function parseOptions(args: string[], env: NodeJS.ProcessEnv = process.env): CliOptions {
+  let confirmAlias = env.npm_config_confirm_alias;
+  let dryRun = env.npm_config_dry_run === 'true';
   let environment: PolityTemplateEnvironment =
-    process.env.npm_config_environment === 'production' ||
-    process.env.npm_config_environment === 'development'
-      ? process.env.npm_config_environment
+    env.npm_config_environment === 'production' || env.npm_config_environment === 'development'
+      ? env.npm_config_environment
       : 'development';
-  let locale: PolityTemplateLocale = process.env.npm_config_locale === 'en' ? 'en' : 'de';
+  let locale: PolityTemplateLocale = env.npm_config_locale === 'en' ? 'en' : 'de';
   let slug: string | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
@@ -124,21 +152,21 @@ function parseOptions(args: string[]): CliOptions {
   return { confirmAlias, dryRun, environment, locale, slug };
 }
 
-function parseEnvironment(value: string): PolityTemplateEnvironment {
+export function parseEnvironment(value: string): PolityTemplateEnvironment {
   if (value !== 'development' && value !== 'production') {
     throw new Error(`Invalid environment "${value}". Use development or production.`);
   }
   return value;
 }
 
-function parseLocale(value: string): PolityTemplateLocale {
+export function parseLocale(value: string): PolityTemplateLocale {
   if (value !== 'de' && value !== 'en') {
     throw new Error(`Invalid locale "${value}". Use de or en.`);
   }
   return value;
 }
 
-function loadEnvironment(environment: PolityTemplateEnvironment) {
+export function loadEnvironment(environment: PolityTemplateEnvironment) {
   loadEnvFile({
     path: resolve(`.env.${environment}.local`),
     override: false,
@@ -147,7 +175,15 @@ function loadEnvironment(environment: PolityTemplateEnvironment) {
   loadEnvFile({ path: resolve('.env'), override: false, quiet: true });
 }
 
-async function confirmProduction(alias: string, providedAlias?: string) {
+export async function confirmProduction(
+  alias: string,
+  providedAlias?: string,
+  options: {
+    createReadline?: typeof createInterface;
+    inputIsTTY?: boolean;
+    outputIsTTY?: boolean;
+  } = {}
+) {
   if (providedAlias !== undefined) {
     if (providedAlias !== alias) {
       throw new Error(
@@ -157,13 +193,18 @@ async function confirmProduction(alias: string, providedAlias?: string) {
     return;
   }
 
-  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+  const inputIsTTY = options.inputIsTTY ?? process.stdin.isTTY;
+  const outputIsTTY = options.outputIsTTY ?? process.stdout.isTTY;
+  if (!inputIsTTY || !outputIsTTY) {
     throw new Error(
       'Production template deployment requires an interactive terminal or --confirm-alias'
     );
   }
 
-  const readline = createInterface({ input: process.stdin, output: process.stdout });
+  const readline = (options.createReadline ?? createInterface)({
+    input: process.stdin,
+    output: process.stdout,
+  });
   try {
     const answer = await readline.question(
       `Type the production template alias to publish it:\n${alias}\n> `
@@ -176,15 +217,21 @@ async function confirmProduction(alias: string, providedAlias?: string) {
   }
 }
 
-function requireEnv(name: string) {
-  const value = process.env[name]?.trim();
+export function requireEnv(name: string, env: NodeJS.ProcessEnv = process.env) {
+  const value = env[name]?.trim();
   if (!value) {
     throw new Error(`${name} is required`);
   }
   return value;
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.stack : error);
-  process.exitCode = 1;
-});
+export function reportMainError(
+  error: unknown,
+  logger: Pick<Console, 'error'> = console,
+  processState: { exitCode?: NodeJS.Process['exitCode'] } = process
+) {
+  logger.error(error instanceof Error ? error.stack : error);
+  processState.exitCode = 1;
+}
+
+await runCliIfMain(import.meta.url, main, { onError: reportMainError });

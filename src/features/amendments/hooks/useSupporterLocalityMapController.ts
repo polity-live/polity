@@ -159,3 +159,9 @@ export function useSupporterLocalityMapController(items: readonly SupporterMapIt
     zoom: items.length === 1 ? 10 : 5,
   };
 }
+
+export const supporterLocalityMapControllerInternals = {
+  averageCenter,
+  extendBounds,
+  getViewportBounds,
+};

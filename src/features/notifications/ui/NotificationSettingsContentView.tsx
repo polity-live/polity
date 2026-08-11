@@ -77,7 +77,12 @@ export function NotificationSettingsContentView({
     <div className="space-y-6">
       {/* Reset button */}
       <div className="flex justify-end">
-        <Button variant="outline" onClick={handleReset} disabled={resetting || isUpdating}>
+        <Button
+          data-action-id="notifications.settings.reset.defaults"
+          variant="outline"
+          onClick={handleReset}
+          disabled={resetting || isUpdating}
+        >
           {resetting ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
@@ -102,6 +107,7 @@ export function NotificationSettingsContentView({
           <PushNotificationToggle variant="settings" showDiagnostics />
           <Separator />
           <SettingItem
+            data-action-id="notifications.settings.toggle.delivery-in-app"
             label={t('pages.notifications.settingsPage.delivery.inApp')}
             description={t('pages.notifications.settingsPage.delivery.inAppDescription')}
             checked={settings.deliverySettings.inAppNotifications}
@@ -119,6 +125,7 @@ export function NotificationSettingsContentView({
           />
           <Separator />
           <SettingItem
+            data-action-id="notifications.settings.toggle.delivery-email"
             label={t('pages.notifications.settingsPage.delivery.email')}
             description={t('pages.notifications.settingsPage.delivery.emailDescription')}
             checked={settings.deliverySettings.emailNotifications}
@@ -141,6 +148,7 @@ export function NotificationSettingsContentView({
         </CardHeader>
         <CardContent className="divide-y">
           <SettingItem
+            data-action-id="notifications.settings.toggle.group-tasks-assigned"
             label={t('pages.notifications.settingsPage.groups.tasksAssigned')}
             description={t('pages.notifications.settingsPage.groups.tasksAssignedDesc')}
             checked={settings.groupNotifications.tasksAssigned}
@@ -148,6 +156,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.group-payment"
             label={t('pages.notifications.settingsPage.groups.paymentNotifications')}
             description={t('pages.notifications.settingsPage.groups.paymentNotificationsDesc')}
             checked={settings.groupNotifications.paymentNotifications}
@@ -155,6 +164,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.group-new-events"
             label={t('pages.notifications.settingsPage.groups.newEvents')}
             description={t('pages.notifications.settingsPage.groups.newEventsDesc')}
             checked={settings.groupNotifications.newEvents}
@@ -162,6 +172,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.group-new-amendments"
             label={t('pages.notifications.settingsPage.groups.newAmendments')}
             description={t('pages.notifications.settingsPage.groups.newAmendmentsDesc')}
             checked={settings.groupNotifications.newAmendments}
@@ -169,6 +180,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.group-new-relationships"
             label={t('pages.notifications.settingsPage.groups.newRelationships')}
             description={t('pages.notifications.settingsPage.groups.newRelationshipsDesc')}
             checked={settings.groupNotifications.newRelationships}
@@ -176,6 +188,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.group-new-roles"
             label={t('pages.notifications.settingsPage.groups.newRoles')}
             description={t('pages.notifications.settingsPage.groups.newRolesDesc')}
             checked={settings.groupNotifications.newRoles}
@@ -183,6 +196,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.group-new-documents"
             label={t('pages.notifications.settingsPage.groups.newDocuments')}
             description={t('pages.notifications.settingsPage.groups.newDocumentsDesc')}
             checked={settings.groupNotifications.newDocuments}
@@ -190,6 +204,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.group-new-members"
             label={t('pages.notifications.settingsPage.groups.newMembers')}
             description={t('pages.notifications.settingsPage.groups.newMembersDesc')}
             checked={settings.groupNotifications.newMembers}
@@ -198,6 +213,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.group-role-updates"
             label={t('pages.notifications.settingsPage.groups.roleUpdates')}
             description={t('pages.notifications.settingsPage.groups.roleUpdatesDesc')}
             checked={settings.groupNotifications.roleUpdates}
@@ -205,6 +221,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.group-new-subscribers"
             label={t('pages.notifications.settingsPage.groups.newSubscribers')}
             description={t('pages.notifications.settingsPage.groups.newSubscribersDesc')}
             checked={settings.groupNotifications.newSubscribers}
@@ -213,6 +230,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.group-profile-updates"
             label={t('pages.notifications.settingsPage.groups.profileUpdates')}
             description={t('pages.notifications.settingsPage.groups.profileUpdatesDesc')}
             checked={settings.groupNotifications.profileUpdates}
@@ -220,6 +238,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.group-membership-requests"
             label={t('pages.notifications.settingsPage.groups.membershipRequests')}
             description={t('pages.notifications.settingsPage.groups.membershipRequestsDesc')}
             checked={settings.groupNotifications.membershipRequests}
@@ -228,6 +247,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.group-membership-invitations"
             label={t('pages.notifications.settingsPage.groups.membershipInvitations')}
             description={t('pages.notifications.settingsPage.groups.membershipInvitationsDesc')}
             checked={settings.groupNotifications.membershipInvitations}
@@ -252,6 +272,7 @@ export function NotificationSettingsContentView({
         </CardHeader>
         <CardContent className="divide-y">
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-agenda-items"
             label={t('pages.notifications.settingsPage.events.agendaItems')}
             description={t('pages.notifications.settingsPage.events.agendaItemsDesc')}
             checked={settings.eventNotifications.agendaItems}
@@ -259,6 +280,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-elections"
             label={t('pages.notifications.settingsPage.events.elections')}
             description={t('pages.notifications.settingsPage.events.electionsDesc')}
             checked={settings.eventNotifications.elections}
@@ -266,6 +288,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-votes"
             label={t('pages.notifications.settingsPage.events.votes')}
             description={t('pages.notifications.settingsPage.events.votesDesc')}
             checked={settings.eventNotifications.votes}
@@ -273,6 +296,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-schedule-changes"
             label={t('pages.notifications.settingsPage.events.scheduleChanges')}
             description={t('pages.notifications.settingsPage.events.scheduleChangesDesc')}
             checked={settings.eventNotifications.scheduleChanges}
@@ -280,6 +304,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-new-participants"
             label={t('pages.notifications.settingsPage.events.newParticipants')}
             description={t('pages.notifications.settingsPage.events.newParticipantsDesc')}
             checked={settings.eventNotifications.newParticipants}
@@ -288,6 +313,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-role-updates"
             label={t('pages.notifications.settingsPage.events.roleUpdates')}
             description={t('pages.notifications.settingsPage.events.roleUpdatesDesc')}
             checked={settings.eventNotifications.roleUpdates}
@@ -295,6 +321,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-role-changes"
             label={t('pages.notifications.settingsPage.events.roleChanges')}
             description={t('pages.notifications.settingsPage.events.roleChangesDesc')}
             checked={settings.eventNotifications.roleChanges}
@@ -302,6 +329,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-profile-updates"
             label={t('pages.notifications.settingsPage.events.profileUpdates')}
             description={t('pages.notifications.settingsPage.events.profileUpdatesDesc')}
             checked={settings.eventNotifications.profileUpdates}
@@ -309,6 +337,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-new-subscribers"
             label={t('pages.notifications.settingsPage.events.newSubscribers')}
             description={t('pages.notifications.settingsPage.events.newSubscribersDesc')}
             checked={settings.eventNotifications.newSubscribers}
@@ -317,6 +346,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-participation-requests"
             label={t('pages.notifications.settingsPage.events.participationRequests')}
             description={t('pages.notifications.settingsPage.events.participationRequestsDesc')}
             checked={settings.eventNotifications.participationRequests}
@@ -327,6 +357,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-participation-invitations"
             label={t('pages.notifications.settingsPage.events.participationInvitations')}
             description={t('pages.notifications.settingsPage.events.participationInvitationsDesc')}
             checked={settings.eventNotifications.participationInvitations}
@@ -336,6 +367,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-delegate-nominations"
             label={t('pages.notifications.settingsPage.events.delegateNominations')}
             description={t('pages.notifications.settingsPage.events.delegateNominationsDesc')}
             checked={settings.eventNotifications.delegateNominations}
@@ -343,6 +375,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-speaker-list-additions"
             label={t('pages.notifications.settingsPage.events.speakerListAdditions')}
             description={t('pages.notifications.settingsPage.events.speakerListAdditionsDesc')}
             checked={settings.eventNotifications.speakerListAdditions}
@@ -350,6 +383,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.event-meeting-bookings"
             label={t('pages.notifications.settingsPage.events.meetingBookings')}
             description={t('pages.notifications.settingsPage.events.meetingBookingsDesc')}
             checked={settings.eventNotifications.meetingBookings}
@@ -372,6 +406,7 @@ export function NotificationSettingsContentView({
         </CardHeader>
         <CardContent className="divide-y">
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-change-requests"
             label={t('pages.notifications.settingsPage.amendments.changeRequests')}
             description={t('pages.notifications.settingsPage.amendments.changeRequestsDesc')}
             checked={settings.amendmentNotifications.changeRequests}
@@ -379,6 +414,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-change-request-decisions"
             label={t('pages.notifications.settingsPage.amendments.changeRequestDecisions')}
             description={t(
               'pages.notifications.settingsPage.amendments.changeRequestDecisionsDesc'
@@ -390,6 +426,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-new-collaborators"
             label={t('pages.notifications.settingsPage.amendments.newCollaborators')}
             description={t('pages.notifications.settingsPage.amendments.newCollaboratorsDesc')}
             checked={settings.amendmentNotifications.newCollaborators}
@@ -398,6 +435,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-role-updates"
             label={t('pages.notifications.settingsPage.amendments.roleUpdates')}
             description={t('pages.notifications.settingsPage.amendments.roleUpdatesDesc')}
             checked={settings.amendmentNotifications.roleUpdates}
@@ -405,6 +443,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-upvotes-downvotes"
             label={t('pages.notifications.settingsPage.amendments.upvotesDownvotes')}
             description={t('pages.notifications.settingsPage.amendments.upvotesDownvotesDesc')}
             checked={settings.amendmentNotifications.upvotesDownvotes}
@@ -413,6 +452,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-new-subscribers"
             label={t('pages.notifications.settingsPage.amendments.newSubscribers')}
             description={t('pages.notifications.settingsPage.amendments.newSubscribersDesc')}
             checked={settings.amendmentNotifications.newSubscribers}
@@ -421,6 +461,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-process-progress"
             label={t('pages.notifications.settingsPage.amendments.processProgress')}
             description={t('pages.notifications.settingsPage.amendments.processProgressDesc')}
             checked={settings.amendmentNotifications.processProgress}
@@ -428,6 +469,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-supporting-groups"
             label={t('pages.notifications.settingsPage.amendments.supportingGroups')}
             description={t('pages.notifications.settingsPage.amendments.supportingGroupsDesc')}
             checked={settings.amendmentNotifications.supportingGroups}
@@ -435,6 +477,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-clones"
             label={t('pages.notifications.settingsPage.amendments.clones')}
             description={t('pages.notifications.settingsPage.amendments.clonesDesc')}
             checked={settings.amendmentNotifications.clones}
@@ -442,6 +485,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-discussions"
             label={t('pages.notifications.settingsPage.amendments.discussions')}
             description={t('pages.notifications.settingsPage.amendments.discussionsDesc')}
             checked={settings.amendmentNotifications.discussions}
@@ -449,6 +493,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-profile-updates"
             label={t('pages.notifications.settingsPage.amendments.profileUpdates')}
             description={t('pages.notifications.settingsPage.amendments.profileUpdatesDesc')}
             checked={settings.amendmentNotifications.profileUpdates}
@@ -456,6 +501,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-workflow-changes"
             label={t('pages.notifications.settingsPage.amendments.workflowChanges')}
             description={t('pages.notifications.settingsPage.amendments.workflowChangesDesc')}
             checked={settings.amendmentNotifications.workflowChanges}
@@ -463,6 +509,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-collaboration-requests"
             label={t('pages.notifications.settingsPage.amendments.collaborationRequests')}
             description={t('pages.notifications.settingsPage.amendments.collaborationRequestsDesc')}
             checked={settings.amendmentNotifications.collaborationRequests}
@@ -473,6 +520,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-collaboration-invitations"
             label={t('pages.notifications.settingsPage.amendments.collaborationInvitations')}
             description={t(
               'pages.notifications.settingsPage.amendments.collaborationInvitationsDesc'
@@ -484,6 +532,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.amendment-voting-sessions"
             label={t('pages.notifications.settingsPage.amendments.votingSessions')}
             description={t('pages.notifications.settingsPage.amendments.votingSessionsDesc')}
             checked={settings.amendmentNotifications.votingSessions}
@@ -506,6 +555,7 @@ export function NotificationSettingsContentView({
         </CardHeader>
         <CardContent className="divide-y">
           <SettingItem
+            data-action-id="notifications.settings.toggle.blog-new-subscribers"
             label={t('pages.notifications.settingsPage.blogs.newSubscribers')}
             description={t('pages.notifications.settingsPage.blogs.newSubscribersDesc')}
             checked={settings.blogNotifications.newSubscribers}
@@ -514,6 +564,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.blog-upvotes-downvotes"
             label={t('pages.notifications.settingsPage.blogs.upvotesDownvotes')}
             description={t('pages.notifications.settingsPage.blogs.upvotesDownvotesDesc')}
             checked={settings.blogNotifications.upvotesDownvotes}
@@ -522,6 +573,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.blog-profile-updates"
             label={t('pages.notifications.settingsPage.blogs.profileUpdates')}
             description={t('pages.notifications.settingsPage.blogs.profileUpdatesDesc')}
             checked={settings.blogNotifications.profileUpdates}
@@ -529,6 +581,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.blog-new-writers"
             label={t('pages.notifications.settingsPage.blogs.newWriters')}
             description={t('pages.notifications.settingsPage.blogs.newWritersDesc')}
             checked={settings.blogNotifications.newWriters}
@@ -537,6 +590,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.blog-role-updates"
             label={t('pages.notifications.settingsPage.blogs.roleUpdates')}
             description={t('pages.notifications.settingsPage.blogs.roleUpdatesDesc')}
             checked={settings.blogNotifications.roleUpdates}
@@ -544,6 +598,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.blog-comments"
             label={t('pages.notifications.settingsPage.blogs.comments')}
             description={t('pages.notifications.settingsPage.blogs.commentsDesc')}
             checked={settings.blogNotifications.comments}
@@ -551,6 +606,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.blog-writer-requests"
             label={t('pages.notifications.settingsPage.blogs.writerRequests')}
             description={t('pages.notifications.settingsPage.blogs.writerRequestsDesc')}
             checked={settings.blogNotifications.writerRequests}
@@ -559,6 +615,7 @@ export function NotificationSettingsContentView({
             adminOnly
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.blog-writer-invitations"
             label={t('pages.notifications.settingsPage.blogs.writerInvitations')}
             description={t('pages.notifications.settingsPage.blogs.writerInvitationsDesc')}
             checked={settings.blogNotifications.writerInvitations}
@@ -581,6 +638,7 @@ export function NotificationSettingsContentView({
         </CardHeader>
         <CardContent className="divide-y">
           <SettingItem
+            data-action-id="notifications.settings.toggle.todo-task-assigned"
             label={t('pages.notifications.settingsPage.todos.taskAssigned')}
             description={t('pages.notifications.settingsPage.todos.taskAssignedDesc')}
             checked={settings.todoNotifications.taskAssigned}
@@ -588,6 +646,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.todo-task-updated"
             label={t('pages.notifications.settingsPage.todos.taskUpdated')}
             description={t('pages.notifications.settingsPage.todos.taskUpdatedDesc')}
             checked={settings.todoNotifications.taskUpdated}
@@ -595,6 +654,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.todo-task-completed"
             label={t('pages.notifications.settingsPage.todos.taskCompleted')}
             description={t('pages.notifications.settingsPage.todos.taskCompletedDesc')}
             checked={settings.todoNotifications.taskCompleted}
@@ -602,6 +662,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.todo-comments"
             label={t('pages.notifications.settingsPage.todos.comments')}
             description={t('pages.notifications.settingsPage.todos.commentsDesc')}
             checked={settings.todoNotifications.comments}
@@ -609,6 +670,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.todo-due-date-reminders"
             label={t('pages.notifications.settingsPage.todos.dueDateReminders')}
             description={t('pages.notifications.settingsPage.todos.dueDateRemindersDesc')}
             checked={settings.todoNotifications.dueDateReminders}
@@ -616,6 +678,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.todo-overdue-alerts"
             label={t('pages.notifications.settingsPage.todos.overdueAlerts')}
             description={t('pages.notifications.settingsPage.todos.overdueAlertsDesc')}
             checked={settings.todoNotifications.overdueAlerts}
@@ -638,6 +701,7 @@ export function NotificationSettingsContentView({
         </CardHeader>
         <CardContent className="divide-y">
           <SettingItem
+            data-action-id="notifications.settings.toggle.social-new-followers"
             label={t('pages.notifications.settingsPage.social.newFollowers')}
             description={t('pages.notifications.settingsPage.social.newFollowersDesc')}
             checked={settings.socialNotifications.newFollowers}
@@ -645,6 +709,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.social-mentions"
             label={t('pages.notifications.settingsPage.social.mentions')}
             description={t('pages.notifications.settingsPage.social.mentionsDesc')}
             checked={settings.socialNotifications.mentions}
@@ -652,6 +717,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.social-direct-messages"
             label={t('pages.notifications.settingsPage.social.directMessages')}
             description={t('pages.notifications.settingsPage.social.directMessagesDesc')}
             checked={settings.socialNotifications.directMessages}
@@ -659,6 +725,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.social-conversation-requests"
             label={t('pages.notifications.settingsPage.social.conversationRequests')}
             description={t('pages.notifications.settingsPage.social.conversationRequestsDesc')}
             checked={settings.socialNotifications.conversationRequests}
@@ -668,6 +735,7 @@ export function NotificationSettingsContentView({
             disabled={isUpdating}
           />
           <SettingItem
+            data-action-id="notifications.settings.toggle.social-document-invitations"
             label={t('pages.notifications.settingsPage.social.documentInvitations')}
             description={t('pages.notifications.settingsPage.social.documentInvitationsDesc')}
             checked={settings.socialNotifications.documentInvitations}
@@ -690,6 +758,7 @@ export function NotificationSettingsContentView({
         </CardHeader>
         <CardContent className="space-y-6">
           <SettingItem
+            data-action-id="notifications.settings.toggle.timeline-show-on-homepage"
             label={t('pages.notifications.settingsPage.timeline.showOnHomepage')}
             description={t('pages.notifications.settingsPage.timeline.showOnHomepageDesc')}
             checked={settings.timelineSettings.showOnHomepage}
@@ -707,26 +776,42 @@ export function NotificationSettingsContentView({
               </p>
             </div>
             <FormControlSelect
+              data-action-id="notifications.settings.select.refresh-frequency"
               value={settings.timelineSettings.refreshFrequency}
               onValueChange={(value: TimelineRefreshFrequency) =>
                 updateTimelineSettings({ refreshFrequency: value })
               }
               disabled={isUpdating}
             >
-              <FormControlSelectTrigger className="w-40">
+              <FormControlSelectTrigger
+                data-action-id="notifications.settings.select.refresh-frequency"
+                className="w-40"
+              >
                 <FormControlSelectValue />
               </FormControlSelectTrigger>
               <FormControlSelectContent>
-                <FormControlSelectItem value="realtime">
+                <FormControlSelectItem
+                  data-action-id="notifications.settings.select.refresh-frequency-realtime"
+                  value="realtime"
+                >
                   {t('pages.notifications.settingsPage.timeline.realtime')}
                 </FormControlSelectItem>
-                <FormControlSelectItem value="every5min">
+                <FormControlSelectItem
+                  data-action-id="notifications.settings.select.refresh-frequency-every-5-min"
+                  value="every5min"
+                >
                   {t('pages.notifications.settingsPage.timeline.every5min')}
                 </FormControlSelectItem>
-                <FormControlSelectItem value="every15min">
+                <FormControlSelectItem
+                  data-action-id="notifications.settings.select.refresh-frequency-every-15-min"
+                  value="every15min"
+                >
                   {t('pages.notifications.settingsPage.timeline.every15min')}
                 </FormControlSelectItem>
-                <FormControlSelectItem value="manual">
+                <FormControlSelectItem
+                  data-action-id="notifications.settings.select.refresh-frequency-manual"
+                  value="manual"
+                >
                   {t('pages.notifications.settingsPage.timeline.manualOnly')}
                 </FormControlSelectItem>
               </FormControlSelectContent>

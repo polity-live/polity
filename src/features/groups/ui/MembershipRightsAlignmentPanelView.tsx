@@ -60,6 +60,12 @@ function isAlignmentFilter(value: string): value is AlignmentFilter {
   );
 }
 
+export const membershipRightsAlignmentPanelViewInternals = {
+  SummaryTile,
+  tText,
+  isAlignmentFilter,
+};
+
 export interface MembershipRightsAlignmentPanelViewProps {
   rows: any;
   isLoading: any;
@@ -106,19 +112,34 @@ export function MembershipRightsAlignmentPanelView({
           size="sm"
           className="justify-start"
         >
-          <FilterToggleGroupItem value="all">
+          <FilterToggleGroupItem
+            data-action-id="groups.members.rights-alignment.filter-all"
+            value="all"
+          >
             {t('features.groups.memberships.rightsAlignment.filters.all')} ({rows.length})
           </FilterToggleGroupItem>
-          <FilterToggleGroupItem value="missing">
+          <FilterToggleGroupItem
+            data-action-id="groups.members.rights-alignment.filter-missing"
+            value="missing"
+          >
             {t('features.groups.memberships.rightsAlignment.filters.missing')} ({counts.missing})
           </FilterToggleGroupItem>
-          <FilterToggleGroupItem value="extra">
+          <FilterToggleGroupItem
+            data-action-id="groups.members.rights-alignment.filter-extra"
+            value="extra"
+          >
             {t('features.groups.memberships.rightsAlignment.filters.extra')} ({counts.extra})
           </FilterToggleGroupItem>
-          <FilterToggleGroupItem value="mixed">
+          <FilterToggleGroupItem
+            data-action-id="groups.members.rights-alignment.filter-mixed"
+            value="mixed"
+          >
             {t('features.groups.memberships.rightsAlignment.filters.mixed')} ({counts.mixed})
           </FilterToggleGroupItem>
-          <FilterToggleGroupItem value="aligned">
+          <FilterToggleGroupItem
+            data-action-id="groups.members.rights-alignment.filter-aligned"
+            value="aligned"
+          >
             {t('features.groups.memberships.rightsAlignment.filters.aligned')} ({counts.aligned})
           </FilterToggleGroupItem>
         </ToggleGroup>

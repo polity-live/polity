@@ -97,6 +97,7 @@ function CompactMeetingCard({
   instance,
   onClick,
 }: {
+  'data-action-scope'?: 'presentation';
   instance: MeetingInstance;
   onClick?: (instance: MeetingInstance) => void;
 }) {
@@ -106,8 +107,13 @@ function CompactMeetingCard({
 
   return (
     <div
+      data-action-id="meet.month.instance.select"
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={onClick ? instance.title : undefined}
       className={cn(
-        'bg-card hover:bg-accent cursor-pointer rounded-md border p-1.5 text-xs shadow-sm transition-colors',
+        'bg-card hover:bg-accent pointer-events-auto rounded-md border p-1.5 text-xs shadow-sm transition-colors',
+        onClick && 'cursor-pointer',
         getCompactCardClassName(instance),
         isPast && 'opacity-50',
         !onClick && featureThemeClassName('meetMeetingCalendarViewsThemedBackground')
@@ -115,6 +121,13 @@ function CompactMeetingCard({
       onClick={event => {
         event.stopPropagation();
         onClick?.(instance);
+      }}
+      onKeyDown={event => {
+        if (onClick && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          event.stopPropagation();
+          onClick(instance);
+        }
       }}
     >
       <p className="truncate font-medium">{instance.title}</p>
@@ -278,12 +291,19 @@ export function MeetingMonthView({
                 <div
                   key={`${weekIndex}-${dayIndex}`}
                   className={cn(
-                    'hover:bg-accent/30 min-h-[120px] cursor-pointer border-r border-b p-1 transition-colors',
+                    'hover:bg-accent/30 relative min-h-[120px] border-r border-b p-1 transition-colors',
                     isSelected && 'bg-accent/50'
                   )}
-                  onClick={() => onDateSelect(day)}
                 >
-                  <div className="mb-1 flex justify-end">
+                  <button
+                    type="button"
+                    data-action-id="meet.month.day.select"
+                    aria-label={day.toLocaleDateString(language, { dateStyle: 'full' })}
+                    aria-pressed={isSelected}
+                    className="absolute inset-0 z-0 h-full w-full cursor-pointer rounded-none text-left"
+                    onClick={() => onDateSelect(day)}
+                  />
+                  <div className="pointer-events-none relative z-10 mb-1 flex justify-end">
                     <span
                       className={cn(
                         'inline-flex h-6 w-6 items-center justify-center rounded-md text-xs font-medium',
@@ -295,13 +315,14 @@ export function MeetingMonthView({
                     </span>
                   </div>
 
-                  <ScrollArea className="h-[90px]">
+                  <ScrollArea className="pointer-events-none relative z-10 h-[90px]">
                     <div className="space-y-0.5">
                       {dayInstances.map(instance => (
                         <CompactMeetingCard
+                          data-action-scope="presentation"
                           key={instance.id}
                           instance={instance}
-                          onClick={selectedInstance => onSelectInstance?.(selectedInstance)}
+                          onClick={onSelectInstance}
                         />
                       ))}
                     </div>

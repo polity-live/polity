@@ -6,6 +6,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   MergeVariantComparisonPanel,
   VariantDiffPanel,
+  mergeVariantComparisonTestApi,
   type MergeVariantCandidate,
 } from '../MergeVariantComparisonPanel';
 
@@ -128,6 +129,15 @@ describe('MergeVariantComparisonPanel', () => {
     expect(grid.className).toContain('lg:grid-cols-2');
     expect(screen.getByTestId('merge-variant-left-select').textContent).toContain('Antrag 1');
     expect(screen.getByTestId('merge-variant-right-select').textContent).toContain('Antrag 2');
+    expect(screen.getByTestId('merge-variant-left-select').getAttribute('data-action-id')).toBe(
+      'agendas.merge-comparison.left-variant.select'
+    );
+    expect(screen.getByTestId('merge-variant-right-select').getAttribute('data-action-id')).toBe(
+      'agendas.merge-comparison.right-variant.select'
+    );
+    expect(screen.getByRole('tab', { name: 'Varianten' }).getAttribute('data-action-id')).toBe(
+      'agendas.merge-comparison.tab.variants'
+    );
     expect(screen.getByTestId('merge-variant-left-preview').textContent).toContain('Antrag 1');
     expect(screen.getByTestId('merge-variant-right-preview').textContent).toContain('Antrag 2');
     expect(within(grid).getByText('Antrag 1')).toBeTruthy();
@@ -153,6 +163,10 @@ describe('MergeVariantComparisonPanel', () => {
     openSelect(screen.getByTestId('merge-variant-right-select'));
     fireEvent.click(screen.getByRole('option', { name: 'Antrag 3' }));
     openDiffTab();
+
+    expect(screen.getByRole('tab', { name: 'Diff' }).getAttribute('data-action-id')).toBe(
+      'agendas.merge-comparison.tab.diff'
+    );
 
     expect(screen.getByTestId('merge-variant-left-select').textContent).toContain('Antrag 1');
     expect(screen.getByTestId('merge-variant-right-select').textContent).toContain('Antrag 3');
@@ -222,5 +236,93 @@ describe('VariantDiffPanel', () => {
     expect(screen.getByTestId('merge-variant-right-preview').textContent).toContain(
       'Branch winner'
     );
+  });
+
+  it('renders no comparison until two content-bearing variants exist', () => {
+    const { container, rerender } = render(<VariantDiffPanel candidates={[]} />);
+    expect(container.textContent).toBe('');
+
+    rerender(
+      <VariantDiffPanel
+        candidates={[
+          { id: 'empty', label: 'Empty' },
+          { id: 'only', label: 'Only', content: content('Only') },
+        ]}
+      />
+    );
+    expect(container.textContent).toBe('');
+  });
+
+  it('supports a comparison without a badge and both left-selection paths', () => {
+    render(<VariantDiffPanel candidates={buildCandidates()} badgeLabel={null} />);
+    expect(screen.queryByText('Vergleich')).toBeNull();
+
+    openSelect(screen.getByTestId('merge-variant-left-select'));
+    fireEvent.click(screen.getByRole('option', { name: 'Antrag 3' }));
+    expect(screen.getByTestId('merge-variant-left-select').textContent).toContain('Antrag 3');
+    expect(screen.getByTestId('merge-variant-right-select').textContent).toContain('Antrag 1');
+
+    openSelect(screen.getByTestId('merge-variant-left-select'));
+    fireEvent.click(screen.getByRole('option', { name: 'Antrag 1' }));
+    expect(screen.getByTestId('merge-variant-left-select').textContent).toContain('Antrag 1');
+    expect(screen.getByTestId('merge-variant-right-select').textContent).toContain('Antrag 2');
+  });
+});
+
+describe('merge comparison pure branches', () => {
+  it('normalizes wrapped, malformed, primitive, and empty editor values', () => {
+    const { normalizePlateValue, extractTextFromNode, extractPlainTextLines } =
+      mergeVariantComparisonTestApi;
+    const wrapped = content('wrapped');
+
+    expect(normalizePlateValue({ content: wrapped })).toBe(wrapped);
+    expect(normalizePlateValue({ content: 'invalid' })).toEqual(content(''));
+    expect(normalizePlateValue(null)).toEqual(content(''));
+    expect(normalizePlateValue('plain')).toEqual(content(''));
+    expect(extractTextFromNode(null)).toBe('');
+    expect(extractTextFromNode({})).toBe('');
+    expect(
+      extractTextFromNode({ children: [{ text: 'A' }, null, { children: [{ text: 'B' }] }] })
+    ).toBe('AB');
+    expect(extractPlainTextLines([])).toEqual(['']);
+  });
+
+  it('builds add-only diffs and resolves every candidate fallback', () => {
+    const {
+      buildUnifiedLineDiff,
+      getFirstOtherCandidate,
+      getDefaultLeftCandidate,
+      getDefaultRightCandidate,
+    } = mergeVariantComparisonTestApi;
+    const candidates = [
+      { id: 'original', label: 'Original', isOriginal: true, content: content('A') },
+      { id: 'winner', label: 'Winner', isWinner: true, content: content('B') },
+      { id: 'branch', label: 'Branch', content: content('C') },
+    ];
+
+    expect(buildUnifiedLineDiff([], ['added'])).toEqual([
+      { kind: 'add', oldLineNumber: null, newLineNumber: 1, text: 'added' },
+    ]);
+    expect(getFirstOtherCandidate([{ id: 'same', label: 'Same' }], 'same')).toBeNull();
+    expect(getDefaultLeftCandidate(candidates, 'winner')?.id).toBe('winner');
+    expect(getDefaultLeftCandidate(candidates, 'missing')?.id).toBe('original');
+    expect(getDefaultLeftCandidate(candidates.filter(candidate => !candidate.isOriginal))?.id).toBe(
+      'winner'
+    );
+    expect(getDefaultLeftCandidate([])).toBeNull();
+    expect(getDefaultRightCandidate(candidates, 'original', 'branch')?.id).toBe('branch');
+    expect(getDefaultRightCandidate(candidates, 'original', 'missing')?.id).toBe('winner');
+    expect(
+      getDefaultRightCandidate(
+        candidates.map(candidate => ({ ...candidate, isWinner: false })),
+        'original'
+      )?.id
+    ).toBe('winner');
+    const originalOnly = [
+      { id: 'first', label: 'First', isOriginal: true },
+      { id: 'second', label: 'Second', isOriginal: true },
+    ];
+    expect(getDefaultRightCandidate(originalOnly, 'first', 'missing')?.id).toBe('second');
+    expect(getDefaultRightCandidate(originalOnly.slice(0, 1), null, 'missing')).toBeNull();
   });
 });

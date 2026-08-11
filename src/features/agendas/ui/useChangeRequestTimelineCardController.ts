@@ -308,11 +308,7 @@ export function useChangeRequestTimelineCardController({
     }
 
     const winningStats = choiceStats.find(choice => choice.choice.id === winningChoiceId);
-    if (!winningStats) {
-      return undefined;
-    }
-
-    return Math.round(winningStats.finalPercentage);
+    return winningStats ? Math.round(winningStats.finalPercentage) : undefined;
   }, [choiceStats, computedVoteSummary?.winningPercent, isClosed, winningChoiceId]);
 
   const currentPhaseVoteCount = isFinal || isClosed ? totalFinal : totalIndicative;

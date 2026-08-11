@@ -156,7 +156,7 @@ export function useRightsLabelEdgeController({
     });
   }, [bendPoints, resolvedEdgeEndpoints]);
 
-  const middleSegment = edgeSegments[Math.floor(edgeSegments.length / 2)] ?? null;
+  const middleSegment = edgeSegments[Math.floor(edgeSegments.length / 2)];
 
   const openRelationshipDetailsLabel = t(
     'common.network.openRelationshipDetails',

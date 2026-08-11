@@ -40,6 +40,7 @@ export function CityDesignChangeRequestDetailsView({
           </div>
         </div>
         <Button
+          data-action-id="amendments.city-cr-details.close.selection"
           type="button"
           variant="ghost"
           size="icon"
@@ -69,7 +70,13 @@ export function CityDesignChangeRequestDetailsView({
           </p>
         </div>
 
-        <Button type="button" variant="outline" className="w-full justify-start" disabled>
+        <Button
+          data-action-id="amendments.city-cr-details.edit.disabled"
+          type="button"
+          variant="outline"
+          className="w-full justify-start"
+          disabled
+        >
           <PencilLine className="size-4" />
           {t('features.amendments.cityDesign.changeRequests.edit')}
         </Button>

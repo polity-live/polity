@@ -30,7 +30,13 @@ export function GroupDetailsWithEvents({
       <div className="flex items-start justify-between">
         <h3 className="text-lg font-semibold">{t('common.labels.groupDetails')}</h3>
         {onClose && (
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            data-action-id="network.group-details.close"
+            aria-label={t('common.actions.close')}
+          >
             <X className="h-4 w-4" />
           </Button>
         )}

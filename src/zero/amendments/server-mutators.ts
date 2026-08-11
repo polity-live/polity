@@ -1371,8 +1371,6 @@ export const amendmentServerMutators = {
 
       await mutators.amendments.removeCollaborator.fn({ tx, ctx, args });
 
-      if (!collab) return;
-
       await recomputeAmendmentCounters(tx, collab.amendment_id);
 
       const aId = collab.amendment_id;
@@ -1442,8 +1440,6 @@ export const amendmentServerMutators = {
       }
 
       await mutators.amendments.updateCollaborator.fn({ tx, ctx, args });
-
-      if (!oldCollab) return;
 
       await recomputeAmendmentCounters(tx, oldCollab.amendment_id);
 
@@ -2154,4 +2150,35 @@ export const amendmentServerMutators = {
 
     await recomputeAmendmentCounters(tx, existingVote.amendment_id);
   }),
+};
+
+/** Internal decision helpers exposed for focused branch-contract tests. */
+export const amendmentServerMutatorInternals = {
+  getProcessTaskNotificationTitle,
+  loadAmendmentForMutation,
+  loadProcessBranchForMutation,
+  loadProcessRunForBranch,
+  resolveChangeRequestMutationEditingMode,
+  assertCityDesignDirectEditMode,
+  assertCanUseAmendmentPathSourceGroup,
+  assertCanReplanProcessBranchEvents,
+  loadFirstProcessBranchAgendaItemState,
+  findCurrentProcessEventId,
+  assertCanCreateChangeRequest,
+  assertCanResolveProcessVote,
+  assertCanCompleteProcessTaskWithEvent,
+  assertAmendmentTargetEventIdOpen,
+  assertCanViewOrRequestCollaboration,
+  loadCollaboratorForMutation,
+  loadCityDesignForMutation,
+  loadChangeRequestForMutation,
+  changeRequestUpdateNeedsManage,
+  appendEventChangeRequestVoteStepIfNeeded,
+  getChangeRequestResolutionMetadata,
+  loadSupportVoteForMutation,
+  amendmentRoleWithRights,
+  isAmendmentOwnerLikeRole,
+  notifyAmendmentCollaboratorRoleChange,
+  completeChangeRequestCreation,
+  assertOpenDocumentChangeRequestsArePersisted,
 };

@@ -93,12 +93,9 @@ function getTimelineItemBranchId(item: ChangeRequestTimelineRow): string | null 
 
 function filterTimelineItemsForBranch(
   items: readonly ChangeRequestTimelineRow[],
-  branchId: string | null
+  branchId: string
 ) {
-  return items.filter(item => {
-    const itemBranchId = getTimelineItemBranchId(item);
-    return branchId ? itemBranchId === branchId : !itemBranchId;
-  });
+  return items.filter(item => getTimelineItemBranchId(item) === branchId);
 }
 
 function isObsoleteTimelineItem(item: ChangeRequestTimelineRow) {
@@ -434,7 +431,7 @@ export function useChangeRequestsPageContainerController({
     });
 
     return sections.map(section => {
-      if (!isEventVoteCardsMode(section.editingMode)) {
+      if (!section.branchId || !isEventVoteCardsMode(section.editingMode)) {
         return section;
       }
 

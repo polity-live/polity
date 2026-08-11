@@ -64,7 +64,9 @@ describe('RoleDetailsTable', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create election' }));
+    const election = screen.getByRole('button', { name: 'Create election' });
+    expect(election.getAttribute('data-action-id')).toBe('groups.roles.create.election');
+    fireEvent.click(election);
 
     expect(onOpenElectionAssignment).toHaveBeenCalledWith('chairperson');
     expect(onCreateElection).not.toHaveBeenCalled();
@@ -89,5 +91,54 @@ describe('RoleDetailsTable', () => {
 
     expect(onCreateElection).toHaveBeenCalledWith('chairperson');
     expect(onOpenElectionAssignment).not.toHaveBeenCalled();
+  });
+
+  it('dispatches assigned-role management through stable actions', () => {
+    const assignedRole = { ...electedRole, assignment_mode: 'assigned' };
+    const onViewHistory = vi.fn();
+    const onAssignHolder = vi.fn();
+    const onEdit = vi.fn();
+    const onDelete = vi.fn();
+    const { container, rerender } = render(
+      <RoleDetailsTable
+        roles={[assignedRole]}
+        onViewHistory={onViewHistory}
+        onAssignHolder={onAssignHolder}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
+    );
+
+    for (const actionId of [
+      'groups.roles.view.history',
+      'groups.roles.assign.holder',
+      'groups.roles.edit.definition',
+      'groups.roles.delete.definition',
+    ]) {
+      const action = container.querySelector<HTMLElement>(`[data-action-id="${actionId}"]`)!;
+      action.focus();
+      expect(document.activeElement).toBe(action);
+      fireEvent.click(action);
+    }
+
+    expect(onViewHistory).toHaveBeenCalledWith(assignedRole);
+    expect(onAssignHolder).toHaveBeenCalledWith(assignedRole);
+    expect(onEdit).toHaveBeenCalledWith(assignedRole);
+    expect(onDelete).toHaveBeenCalledWith('chairperson');
+
+    rerender(
+      <RoleDetailsTable
+        roles={[{ ...assignedRole, currentHolder: { source: 'membership' } }]}
+        onViewHistory={onViewHistory}
+        onAssignHolder={onAssignHolder}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
+    );
+    expect(
+      container
+        .querySelector('[data-action-id="groups.roles.assign.holder"]')
+        ?.hasAttribute('disabled')
+    ).toBe(true);
   });
 });

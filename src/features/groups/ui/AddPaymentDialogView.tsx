@@ -91,7 +91,7 @@ export function AddPaymentDialogView({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button size="sm">
+        <Button data-action-id="groups.payments.open.create-dialog" size="sm">
           <Plus className="mr-2 h-4 w-4" />
           {translateText('generated.inline.0595_add_61cc55aa')}
           {direction === 'income'
@@ -100,7 +100,7 @@ export function AddPaymentDialogView({
         </Button>
       </DialogTrigger>
       <ScrollableDialogContent className="sm:max-w-[500px]">
-        <form onSubmit={handleSubmit}>
+        <form data-action-scope="presentation" onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>
               {translateText('generated.inline.0595_add_61cc55aa')}
@@ -129,36 +129,68 @@ export function AddPaymentDialogView({
             </div>
             <div className="space-y-2">
               <FormControlLabel>{translateText('pages.create.payment.currency')}</FormControlLabel>
-              <CurrencySelect value={currency} onChange={setCurrency} />
+              <CurrencySelect
+                data-action-id="groups.payments.select.currency"
+                value={currency}
+                onChange={setCurrency}
+              />
             </div>
             <div className="space-y-2">
               <FormControlLabel htmlFor="payment-type">
                 {translateText('generated.inline.0599_type_3deb7456')}
               </FormControlLabel>
-              <FormControlSelect value={type} onValueChange={setType}>
-                <FormControlSelectTrigger id="payment-type">
+              <FormControlSelect
+                data-action-scope="presentation"
+                value={type}
+                onValueChange={setType}
+              >
+                <FormControlSelectTrigger
+                  data-action-id="groups.payments.type.open"
+                  id="payment-type"
+                >
                   <FormControlSelectValue />
                 </FormControlSelectTrigger>
                 <FormControlSelectContent>
-                  <FormControlSelectItem value="membership_fee">
+                  <FormControlSelectItem
+                    data-action-id="groups.payments.type.choose-membership-fee"
+                    value="membership_fee"
+                  >
                     {translateText('generated.inline.0600_membership_fee_1fa71c2d')}
                   </FormControlSelectItem>
-                  <FormControlSelectItem value="donation">
+                  <FormControlSelectItem
+                    data-action-id="groups.payments.type.choose-donation"
+                    value="donation"
+                  >
                     {translateText('generated.inline.0601_donation_2c093025')}
                   </FormControlSelectItem>
-                  <FormControlSelectItem value="subsidies">
+                  <FormControlSelectItem
+                    data-action-id="groups.payments.type.choose-subsidies"
+                    value="subsidies"
+                  >
                     {translateText('generated.inline.0602_subsidies_6df12817')}
                   </FormControlSelectItem>
-                  <FormControlSelectItem value="campaign">
+                  <FormControlSelectItem
+                    data-action-id="groups.payments.type.choose-campaign"
+                    value="campaign"
+                  >
                     {translateText('generated.inline.0603_campaign_69390e16')}
                   </FormControlSelectItem>
-                  <FormControlSelectItem value="material">
+                  <FormControlSelectItem
+                    data-action-id="groups.payments.type.choose-material"
+                    value="material"
+                  >
                     {translateText('generated.inline.0604_material_d8169782')}
                   </FormControlSelectItem>
-                  <FormControlSelectItem value="events">
+                  <FormControlSelectItem
+                    data-action-id="groups.payments.type.choose-events"
+                    value="events"
+                  >
                     {translateText('generated.inline.0605_events_c5497bca')}
                   </FormControlSelectItem>
-                  <FormControlSelectItem value="others">
+                  <FormControlSelectItem
+                    data-action-id="groups.payments.type.choose-others"
+                    value="others"
+                  >
                     {translateText('generated.inline.0606_others_8d7bf5bf')}
                   </FormControlSelectItem>
                 </FormControlSelectContent>
@@ -193,6 +225,7 @@ export function AddPaymentDialogView({
               {/* Toggle between User and Group */}
               <div className="mb-2 flex gap-2">
                 <Button
+                  data-action-id="groups.payments.entity.select-user"
                   type="button"
                   variant={entityType === 'user' ? 'default' : 'outline'}
                   size="sm"
@@ -206,6 +239,7 @@ export function AddPaymentDialogView({
                   {translateText('generated.inline.0090_user_9f8a2389')}
                 </Button>
                 <Button
+                  data-action-id="groups.payments.entity.select-group"
                   type="button"
                   variant={entityType === 'group' ? 'default' : 'outline'}
                   size="sm"
@@ -223,6 +257,7 @@ export function AddPaymentDialogView({
               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
+                    data-action-id="groups.payments.entity.open-picker"
                     id="payment-entity"
                     variant="outline"
                     role="combobox"
@@ -280,6 +315,7 @@ export function AddPaymentDialogView({
                             const isSelected = selectedEntity?.id === userId;
                             return (
                               <CommandItem
+                                data-action-id="groups.payments.entity.choose-user"
                                 key={userId}
                                 value={`user-${userId}-${getUserDisplayName(user)}`}
                                 onSelect={() => {
@@ -329,6 +365,7 @@ export function AddPaymentDialogView({
                             const isSelected = selectedEntity?.id === group.id;
                             return (
                               <CommandItem
+                                data-action-id="groups.payments.entity.choose-group"
                                 key={group.id}
                                 value={`group-${group.id}-${group.name}`}
                                 onSelect={() => {
@@ -368,7 +405,7 @@ export function AddPaymentDialogView({
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">
+            <Button data-action-id="groups.payments.create.submit" type="submit">
               {translateText('generated.inline.0612_add_payment_b5118402')}
             </Button>
           </DialogFooter>

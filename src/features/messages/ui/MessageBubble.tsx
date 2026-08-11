@@ -27,7 +27,8 @@ export function MessageBubble({
   resolveAttachmentCardData,
 }: MessageBubbleProps) {
   const contextLabel = isAssistantUser(message.sender?.id ?? '') ? 'output' : 'input';
-  const hasContent = Boolean(message.content?.trim());
+  const content = message.content ?? '';
+  const hasContent = Boolean(content.trim());
   const isAssistantError = isAssistantErrorContext(message.context_json);
   const useFlatAssistantLayout = isAssistantConversation && !isOwnMessage && !isAssistantError;
 
@@ -69,13 +70,13 @@ export function MessageBubble({
                 <div className="flex items-start gap-2">
                   <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <MessageContent content={message.content ?? ''} />
+                    <MessageContent content={content} />
                   </div>
                 </div>
               </div>
             ) : (
               <MessageContent
-                content={message.content ?? ''}
+                content={content}
                 hidePolityLinkPreviews={isAssistantConversation}
                 renderMarkdown={contextLabel === 'output'}
               />

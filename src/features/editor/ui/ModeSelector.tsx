@@ -64,7 +64,13 @@ export function ModeSelector({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2" data-tutorial-anchor={tutorialAnchor}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          data-action-id="editor.mode.open"
+          data-tutorial-anchor={tutorialAnchor}
+        >
           <div className={`h-2 w-2 rounded-full ${currentModeConfig.colorClass}`} />
           <currentModeConfig.Icon className="h-4 w-4" />
           <span>{currentModeConfig.label}</span>

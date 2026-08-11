@@ -130,6 +130,7 @@ export function CreateThreadDialogView({
                       </div>
                     </div>
                     <Button
+                      data-action-id="discussions.create.attachment.remove"
                       variant="ghost"
                       size="icon"
                       onClick={onRemoveFile}
@@ -151,13 +152,14 @@ export function CreateThreadDialogView({
                 )}
 
                 <FileUploadTrigger
+                  data-action-id="discussions.create.attachment.choose"
                   inputProps={{
                     id: 'file',
                     'aria-label': translateText(
                       'generated.inline.0385_choose_file_to_attach_b555434d'
                     ),
                   }}
-                  onFilesSelected={files => onFileChange(files[0] ?? null)}
+                  onFilesSelected={files => onFileChange(files[0])}
                   variant="outline"
                   className="mx-auto min-w-44"
                   disabled={isUploading || isSubmitting}
@@ -181,10 +183,18 @@ export function CreateThreadDialogView({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            data-action-id="discussions.create.cancel"
+            onClick={() => onOpenChange(false)}
+          >
             {translateText('generated.inline.0065_cancel_77dfd213')}
           </Button>
-          <Button onClick={onSubmit} disabled={isSubmitting || isUploading || !title.trim()}>
+          <Button
+            data-action-id="discussions.create.submit"
+            onClick={onSubmit}
+            disabled={isSubmitting || isUploading || !title.trim()}
+          >
             {isUploading
               ? translateText('generated.inline.0057_uploading_070e328e')
               : isSubmitting

@@ -6,10 +6,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 
 function getWinningPreviewPercentage(items: { percentage: number }[]) {
-  const winningPercentage = items.reduce(
-    (max, item) => Math.max(max, Number.isFinite(item.percentage) ? item.percentage : 0),
-    0
-  );
+  const winningPercentage = items.reduce((max, item) => Math.max(max, item.percentage), 0);
   return winningPercentage > 0 ? winningPercentage : null;
 }
 

@@ -183,4 +183,95 @@ describe('change request voting mutator', () => {
     expect(tx.mutate.change_request_vote.insert).not.toHaveBeenCalled();
     expect(tx.mutate.change_request.update).not.toHaveBeenCalled();
   });
+
+  it('rejects a vote for a missing or already resolved change request', async () => {
+    const missing = createTx([null]);
+    await expect(
+      amendmentSharedMutators.voteOnChangeRequest.fn({
+        tx: missing as never,
+        ctx: { userID: 'user-1' } as never,
+        args: { id: 'vote-1', change_request_id: 'missing', vote: 'accept' },
+      })
+    ).rejects.toThrow('Change request not found');
+
+    for (const status of ['accepted', 'approved', 'rejected', 'declined']) {
+      const resolved = createTx([{ ...openChangeRequest, status }]);
+      await expect(
+        amendmentSharedMutators.voteOnChangeRequest.fn({
+          tx: resolved as never,
+          ctx: { userID: 'user-1' } as never,
+          args: { id: `vote-${status}`, change_request_id: 'cr-1', vote: 'accept' },
+        })
+      ).rejects.toThrow('Change request voting is already completed');
+    }
+  });
+
+  it('keeps the latest user vote across missing and tied timestamps and defaults a cleared vote', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(4_000);
+    const tx = createTx([
+      openChangeRequest,
+      [
+        {
+          id: 'user-keeper',
+          change_request_id: 'cr-1',
+          user_id: 'user-1',
+          vote: 'accept',
+          created_at: undefined,
+        },
+        {
+          id: 'user-duplicate',
+          change_request_id: 'cr-1',
+          user_id: 'user-1',
+          vote: 'reject',
+          created_at: null,
+        },
+        {
+          id: 'other-a',
+          change_request_id: 'cr-1',
+          user_id: 'user-2',
+          vote: 'accept',
+          created_at: undefined,
+        },
+        {
+          id: 'other-z',
+          change_request_id: 'cr-1',
+          user_id: 'user-2',
+          vote: 'abstain',
+          created_at: null,
+        },
+      ],
+    ]);
+
+    await amendmentSharedMutators.voteOnChangeRequest.fn({
+      tx: tx as never,
+      ctx: { userID: 'user-1' } as never,
+      args: { id: 'unused', change_request_id: 'cr-1', vote: null },
+    });
+
+    expect(tx.mutate.change_request_vote.update).toHaveBeenCalledWith({
+      id: 'user-keeper',
+      vote: null,
+      created_at: 4_000,
+    });
+    expect(tx.mutate.change_request_vote.delete).toHaveBeenCalledWith({ id: 'user-duplicate' });
+    expect(tx.mutate.change_request_vote.delete).toHaveBeenCalledWith({ id: 'other-a' });
+    expect(tx.mutate.change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({ votes_for: 0, votes_against: 0, votes_abstain: 1 })
+    );
+  });
+
+  it('inserts a cleared first vote as null', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(5_000);
+    const tx = createTx([openChangeRequest, []]);
+
+    await amendmentSharedMutators.voteOnChangeRequest.fn({
+      tx: tx as never,
+      ctx: { userID: 'user-1' } as never,
+      args: { id: 'vote-cleared', change_request_id: 'cr-1', vote: null },
+    });
+
+    expect(tx.mutate.change_request_vote.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'vote-cleared', vote: null })
+    );
+  });
 });

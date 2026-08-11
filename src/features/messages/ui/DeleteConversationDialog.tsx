@@ -43,10 +43,15 @@ export function DeleteConversationDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            data-action-id="messages.conversation.delete.cancel"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
             {t('common.actions.cancel')}
           </Button>
           <Button
+            data-action-id="messages.conversation.delete.confirm"
             variant="destructive"
             onClick={() => {
               onConfirm();

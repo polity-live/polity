@@ -31,9 +31,8 @@ export const DayView = ({ selectedDate, events, allEvents, onDateSelect }: DayVi
     (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
   );
 
-  const formatTime = (date: Date | number) => {
-    const d = typeof date === 'number' ? new Date(date) : date;
-    return d.toLocaleTimeString('de-DE', {
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('de-DE', {
       hour: '2-digit',
       minute: '2-digit',
     });

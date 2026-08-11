@@ -140,13 +140,13 @@ function trimLongText(value: string, maxLength = 8000): string {
   return `${value.slice(0, maxLength)}\n[truncated]`;
 }
 
-function combinePromptSections(...sections: (string | null | undefined)[]): string | null {
+function combinePromptSections(...sections: (string | null | undefined)[]): string {
   const result = sections
     .map(section => section?.trim())
     .filter(Boolean)
     .join('\n\n');
 
-  return result || null;
+  return result;
 }
 
 async function buildEventPromptContext(
@@ -339,7 +339,7 @@ async function buildAmendmentPromptContext(
               .filter(Boolean)
               .join(' | ');
             const detail = changeRequest.description || changeRequest.reason || '';
-            return `${index + 1}. ${title}${summary ? ` [${summary}]` : ''}${detail ? ` — ${detail}` : ''}`;
+            return `${index + 1}. ${title} [${summary}]${detail ? ` — ${detail}` : ''}`;
           }),
         ].join('\n')
       : null;

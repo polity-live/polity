@@ -53,13 +53,16 @@ export interface MeetupTimelineCardProps {
   className?: string;
 }
 
-function getDateLabel(date: Date): string | null {
+export function getMeetupDateLabel(date: Date): string | null {
   if (isToday(date)) return 'Today';
   if (isTomorrow(date)) return 'Tomorrow';
   return null;
 }
 
-function getMeetupState(startDate: Date, endDate: Date): 'live' | 'upcoming' | 'past' {
+export function getMeetupTimelineState(
+  startDate: Date,
+  endDate: Date
+): 'live' | 'upcoming' | 'past' {
   const now = Date.now();
 
   if (endDate.getTime() < now) {
@@ -73,7 +76,7 @@ function getMeetupState(startDate: Date, endDate: Date): 'live' | 'upcoming' | '
   return 'upcoming';
 }
 
-function getStateClassName(options: {
+export function getMeetupStateClassName(options: {
   isPast: boolean;
   isBookedByMe: boolean;
   isBookable: boolean;
@@ -109,7 +112,7 @@ export function MeetupTimelineCard({
   const endDate = meetup.endDate ? new Date(meetup.endDate) : startDate;
   const bookingCount = meetup.bookingCount ?? meetup.participants?.length ?? 0;
   const maxBookings = Math.max(1, meetup.maxBookings ?? 1);
-  const state = getMeetupState(startDate, endDate);
+  const state = getMeetupTimelineState(startDate, endDate);
   const isPast = state === 'past';
   const isFull = bookingCount >= maxBookings;
   const isBookedByMe = Boolean(meetup.isBookedByMe);
@@ -118,7 +121,7 @@ export function MeetupTimelineCard({
   const canBook = Boolean(onBook) && !isOwner && isBookable && !isBookedByMe && !isFull && !isPast;
   const canCancel = Boolean(onCancel) && !isOwner && isBookedByMe && !isPast;
   const canDelete = Boolean(onDelete) && isOwner && !isPast && !meetup.isRecurringInstance;
-  const dateLabel = getDateLabel(startDate);
+  const dateLabel = getMeetupDateLabel(startDate);
   const participantLabel =
     bookingCount === 1
       ? t('features.calendar.eventCard.participant', { count: bookingCount })
@@ -134,9 +137,11 @@ export function MeetupTimelineCard({
 
   return (
     <TimelineCardBase
+      data-action-id="timeline.meetup.open"
+      data-action-kind="navigation"
       contentType="meetup"
       className={cn(
-        getStateClassName({
+        getMeetupStateClassName({
           isPast,
           isBookedByMe,
           isBookable,
@@ -270,6 +275,8 @@ export function MeetupTimelineCard({
         {meetup.onlineUrl && (
           <div className="mt-3">
             <a
+              data-action-id="timeline.meetup.online.open"
+              data-action-kind="navigation"
               href={meetup.onlineUrl}
               target="_blank"
               rel="noopener noreferrer"
@@ -287,17 +294,35 @@ export function MeetupTimelineCard({
       {(canBook || canCancel || canDelete) && (
         <TimelineCardActions>
           {canBook && (
-            <Button size="sm" onClick={onBook}>
+            <Button
+              data-action-id="timeline.meetup.booking.create"
+              data-action-kind="async-action"
+              size="sm"
+              onClick={onBook}
+            >
               {translateText('generated.inline.1163_book_meeting_1b8711e4')}
             </Button>
           )}
           {canCancel && (
-            <Button size="sm" variant="outline" onClick={onCancel}>
+            <Button
+              data-action-id="timeline.meetup.booking.cancel"
+              data-action-kind="async-action"
+              size="sm"
+              variant="outline"
+              onClick={onCancel}
+            >
               {translateText('generated.inline.1164_cancel_booking_c6085eb5')}
             </Button>
           )}
           {canDelete && (
-            <Button size="sm" variant="ghost" onClick={onDelete}>
+            <Button
+              data-action-id="timeline.meetup.delete"
+              data-action-kind="async-action"
+              aria-label={translateText('generated.inline.0167_delete_6d432a50')}
+              size="sm"
+              variant="ghost"
+              onClick={onDelete}
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           )}

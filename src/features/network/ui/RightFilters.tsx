@@ -31,7 +31,7 @@ export function RightFilters({ selectedRights, onToggleRight }: RightFiltersProp
   const { t } = useTranslation();
 
   const getTranslatedRightLabel = (right: NetworkFlowFilterType): string =>
-    getRightLabel(right, (key, fallback) => t(key) || fallback || key);
+    getRightLabel(right, (key, fallback) => t(key, fallback));
 
   return (
     <div className={featureThemeClassName('networkRightFiltersThemedSurface')}>
@@ -45,6 +45,7 @@ export function RightFilters({ selectedRights, onToggleRight }: RightFiltersProp
               right={right}
               active={isActive}
               onClick={() => onToggleRight(right)}
+              data-action-id="network.right-filter.toggle"
             >
               {getTranslatedRightLabel(right)}
             </RightFilterOptionButton>

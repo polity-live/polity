@@ -252,12 +252,12 @@ export function LinkGroupDialogView({
       open={open}
       onOpenChange={submissionActive ? undefined : setOpen}
     >
-      <DialogTrigger asChild>
+      <DialogTrigger asChild data-action-id="network.link-group.open">
         {trigger ? (
           trigger
         ) : (
-          <Button data-tutorial-anchor="link-group">
-            <Link className="mr-2 h-4 w-4" />
+          <Button data-tutorial-anchor="link-group" data-action-id="network.link-group.open">
+            <Link className="mr-2 h-4 w-4" aria-hidden="true" />
             {t('components.actionBar.linkGroup')}
           </Button>
         )}
@@ -315,7 +315,12 @@ export function LinkGroupDialogView({
                   {submitState.reason}
                 </div>
               ) : null}
-              <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
+              <Button
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={isSubmitting}
+                data-action-id="network.link-group.cancel"
+              >
                 {t('common.actions.cancel')}
               </Button>
               <Button
@@ -324,6 +329,7 @@ export function LinkGroupDialogView({
                 disabled={submitState.disabled}
                 loading={submitState.isChecking}
                 loadingLabel={submitState.label}
+                data-action-id="network.link-group.submit"
               >
                 {submitState.label}
               </Button>

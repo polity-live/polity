@@ -607,10 +607,18 @@ async function summarizeFinalVoteResult(
   return {
     result: summary.result,
     acceptVotes: acceptChoice
-      ? (summary.choiceTallies.find(tally => tally.choiceId === acceptChoice.id)?.count ?? 0)
+      ? (
+          summary.choiceTallies.find(tally => tally.choiceId === acceptChoice.id) as {
+            count: number;
+          }
+        ).count
       : 0,
     rejectVotes: rejectChoice
-      ? (summary.choiceTallies.find(tally => tally.choiceId === rejectChoice.id)?.count ?? 0)
+      ? (
+          summary.choiceTallies.find(tally => tally.choiceId === rejectChoice.id) as {
+            count: number;
+          }
+        ).count
       : 0,
   };
 }
@@ -782,6 +790,30 @@ async function closeExpiredFinalVote(
   }
 }
 
+export const voteServerMutatorTestApi = {
+  assertCurrentCRVoteOrder,
+  assertNoOpenChangeRequestsBeforeFinalVote,
+  assertOfflineVoteTallyWithinCap,
+  assertOnlineVoteAllowed,
+  closeExpiredFinalVote,
+  findProcessBranchIdForAgendaItem,
+  findProcessBranchIdsForVote,
+  isAcceptChoice,
+  isFinalizingVoteStatus,
+  isRejectChoice,
+  loadEligibleFinalVoteCounts,
+  loadVoteContext,
+  markTimelineVoteResult,
+  materializeFinalVoteTiming,
+  maybeCloseVoteWhenAllFinalVotersVoted,
+  normalizeChoiceLabel,
+  normalizeMajorityType,
+  shouldReturnEventVoteToSuggesting,
+  summarizeFinalVoteResult,
+  syncAgendaItemClosedForAgendaVote,
+  syncVoteEventEditingMode,
+};
+
 /** Server-only mutators — override shared mutators with additional server-side logic. */
 export const voteServerMutators = {
   startVote: defineMutator(startVoteSchema, async ({ tx, ctx, args }) => {
@@ -932,8 +964,11 @@ export const voteServerMutators = {
     let oldVoteProcessBranchIds: string[] | null = null;
 
     const getOldVoteProcessBranchIds = async () => {
-      if (!oldVote) return [];
-      oldVoteProcessBranchIds ??= await findProcessBranchIdsForVote(tx, oldVote);
+      // This helper is only called from branches that have already proven oldVote exists.
+      oldVoteProcessBranchIds ??= await findProcessBranchIdsForVote(
+        tx,
+        oldVote as NonNullable<typeof oldVote>
+      );
       return oldVoteProcessBranchIds;
     };
 
@@ -1032,15 +1067,15 @@ export const voteServerMutators = {
             });
           }
 
-          if (isClosingFinalVote) {
+          if (isClosingFinalVote && closedFinalVoteSummary) {
             fireNotification('notifyVotingCompleted', {
               senderId: ctx.userID,
               eventId: agendaItem.event_id,
               eventTitle: eTitle,
               agendaItemTitle,
-              result: closedFinalVoteSummary?.result ?? 'tie',
-              acceptVotes: closedFinalVoteSummary?.acceptVotes ?? 0,
-              rejectVotes: closedFinalVoteSummary?.rejectVotes ?? 0,
+              result: closedFinalVoteSummary.result,
+              acceptVotes: closedFinalVoteSummary.acceptVotes,
+              rejectVotes: closedFinalVoteSummary.rejectVotes,
             });
           }
         }

@@ -116,9 +116,12 @@ export function buildOfflineTallyEntity({
           label: getCandidateLabel(candidate),
         })),
       tallies: (election.offline_tallies ?? [])
-        .filter(tally => tally.phase === phase && tally.candidate_id)
+        .filter(
+          (tally): tally is typeof tally & { candidate_id: string } =>
+            tally.phase === phase && Boolean(tally.candidate_id)
+        )
         .map(tally => ({
-          id: tally.candidate_id ?? '',
+          id: tally.candidate_id,
           count: tally.count ?? 0,
         })),
       participantCount,
@@ -142,9 +145,12 @@ export function buildOfflineTallyEntity({
           }),
       })),
       tallies: (vote.offline_tallies ?? [])
-        .filter(tally => tally.phase === phase && tally.choice_id)
+        .filter(
+          (tally): tally is typeof tally & { choice_id: string } =>
+            tally.phase === phase && Boolean(tally.choice_id)
+        )
         .map(tally => ({
-          id: tally.choice_id ?? '',
+          id: tally.choice_id,
           count: tally.count ?? 0,
         })),
       participantCount,

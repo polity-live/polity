@@ -208,7 +208,6 @@ export function AgendaActionBarView({
     (showLifecycleControls && onPreviousItem) ||
     currentAgendaItem ||
     showStartButton ||
-    (showLifecycleControls && currentAgendaItem && isCurrentItemActive && onCompleteItem) ||
     (showLifecycleControls && onNextItem)
   );
 
@@ -224,13 +223,18 @@ export function AgendaActionBarView({
         >
           {onBackToAgenda ? (
             <ToolbarButton asChild tooltip={t('features.events.agenda.backToAgenda')}>
-              <Link to="/event/$id/agenda" params={{ id: eventId }}>
+              <Link
+                to="/event/$id/agenda"
+                params={{ id: eventId }}
+                data-action-id="agendas.toolbar.navigate.back"
+              >
                 <ListOrdered />
               </Link>
             </ToolbarButton>
           ) : null}
           {canManageAgenda && onMoveToEvent ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.item.move-event"
               tooltip={t('features.events.agenda.moveToEvent')}
               onClick={onMoveToEvent}
             >
@@ -238,19 +242,31 @@ export function AgendaActionBarView({
             </ToolbarButton>
           ) : null}
           {canManageAgenda && currentAgendaItem && onEditItem ? (
-            <ToolbarButton tooltip={t('common.actions.edit')} onClick={onEditItem}>
+            <ToolbarButton
+              data-action-id="agendas.toolbar.item.edit"
+              tooltip={t('common.actions.edit')}
+              onClick={onEditItem}
+            >
               <Edit />
             </ToolbarButton>
           ) : null}
           {canManageAgenda && currentAgendaItem && onDeleteItem ? (
-            <ToolbarButton tooltip={t('common.actions.delete')} onClick={onDeleteItem}>
+            <ToolbarButton
+              data-action-id="agendas.toolbar.item.delete"
+              tooltip={t('common.actions.delete')}
+              onClick={onDeleteItem}
+            >
               <Trash2 />
             </ToolbarButton>
           ) : null}
           {canManageAgenda ? (
             <>
               <ToolbarButton asChild tooltip={t('features.events.agenda.quickActions.addItem')}>
-                <Link to="/create/agenda-item" search={{ eventId }}>
+                <Link
+                  to="/create/agenda-item"
+                  search={{ eventId }}
+                  data-action-id="agendas.toolbar.item.create"
+                >
                   <Plus />
                 </Link>
               </ToolbarButton>
@@ -258,12 +274,20 @@ export function AgendaActionBarView({
                 asChild
                 tooltip={t('features.events.agenda.quickActions.createElection')}
               >
-                <Link to="/create/agenda-item" search={{ eventId, type: 'election' }}>
+                <Link
+                  to="/create/agenda-item"
+                  search={{ eventId, type: 'election' }}
+                  data-action-id="agendas.toolbar.election.create"
+                >
                   <Vote />
                 </Link>
               </ToolbarButton>
               <ToolbarButton asChild tooltip={t('features.events.agenda.quickActions.createVote')}>
-                <Link to="/create/agenda-item" search={{ eventId, type: 'vote' }}>
+                <Link
+                  to="/create/agenda-item"
+                  search={{ eventId, type: 'vote' }}
+                  data-action-id="agendas.toolbar.vote.create"
+                >
                   <Gavel />
                 </Link>
               </ToolbarButton>
@@ -271,6 +295,8 @@ export function AgendaActionBarView({
           ) : null}
           {canManageAgenda && onPreviousChangeRequest ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.change-request.previous"
+              data-action-kind="interaction"
               tooltip={t('features.agendas.crTimeline.previous')}
               onClick={onPreviousChangeRequest}
               disabled={!hasPreviousChangeRequest}
@@ -280,6 +306,8 @@ export function AgendaActionBarView({
           ) : null}
           {canManageAgenda && onNextChangeRequest ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.change-request.next"
+              data-action-kind="interaction"
               tooltip={t('features.agendas.crTimeline.next')}
               onClick={onNextChangeRequest}
               disabled={!hasNextChangeRequest}
@@ -301,6 +329,7 @@ export function AgendaActionBarView({
         >
           {isVotable && onJumpToNextVoteStep ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.vote-step.next"
               tooltip={
                 jumpToNextVoteStepTooltip ||
                 t('features.agendas.crTimeline.nextVotingStep', 'Next voting step')
@@ -314,6 +343,7 @@ export function AgendaActionBarView({
           ) : null}
           {isVotable && !isClosed && isPendingVote && onStartVote ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.vote.start"
               tooltip={startVoteActionLabel}
               aria-label={startVoteActionLabel}
               onClick={onStartVote}
@@ -325,6 +355,7 @@ export function AgendaActionBarView({
           ) : null}
           {showStartFinalVoteButton ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.vote.start-final"
               tooltip={startFinalVoteActionLabel}
               aria-label={startFinalVoteActionLabel}
               onClick={onStartFinalVote}
@@ -336,6 +367,8 @@ export function AgendaActionBarView({
           ) : null}
           {isVotable && !isClosed && isFinalVotePhase && onCloseFinalVote ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.vote.close-final"
+              data-action-kind="async-action"
               tooltip={closeFinalVoteActionLabel}
               aria-label={closeFinalVoteActionLabel}
               onClick={onCloseFinalVote}
@@ -345,6 +378,7 @@ export function AgendaActionBarView({
           ) : null}
           {showJoinSpeakerAction ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.speaker.join"
               tooltip={t('features.events.agenda.actions.joinSpeakerList')}
               onClick={onJoinSpeakerList}
               disabled={speakerLoading}
@@ -355,6 +389,7 @@ export function AgendaActionBarView({
           ) : null}
           {showLeaveSpeakerAction ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.speaker.leave"
               tooltip={t('features.events.agenda.actions.leaveSpeakerList')}
               onClick={onLeaveSpeakerList}
               disabled={speakerLoading}
@@ -365,6 +400,7 @@ export function AgendaActionBarView({
           ) : null}
           {showBecomeCandidateAction ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.candidacy.become"
               tooltip={candidateTooltip}
               onClick={isCandidateActionBlocked ? undefined : onBecomeCandidate}
               disabled={candidateLoading}
@@ -379,6 +415,7 @@ export function AgendaActionBarView({
           ) : null}
           {showWithdrawCandidateAction ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.candidacy.withdraw"
               tooltip={t('features.events.agenda.actions.withdrawCandidacy')}
               onClick={onWithdrawCandidacy}
               disabled={candidateLoading}
@@ -389,6 +426,7 @@ export function AgendaActionBarView({
           ) : null}
           {showVoteButton ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.ballot.cast"
               data-tutorial-anchor={isElection ? 'agenda-election-vote' : 'agenda-amendment-vote'}
               tooltip={voteTooltip}
               onClick={isVoteActionBlocked ? undefined : onVoteClick}
@@ -410,6 +448,8 @@ export function AgendaActionBarView({
           ) : null}
           {showOfflineTallyAction ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.offline-tally.open"
+              data-action-kind="interaction"
               tooltip={offlineTallyTooltip || t('features.events.agenda.manageOfflineTally')}
               onClick={onOfflineTallyClick}
               disabled={!onOfflineTallyClick}
@@ -436,6 +476,7 @@ export function AgendaActionBarView({
         >
           {showLifecycleControls && onPreviousItem ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.item.previous"
               tooltip={t('features.events.navigation.previous')}
               onClick={onPreviousItem}
               disabled={!hasPreviousItem || navigationLoading}
@@ -446,6 +487,8 @@ export function AgendaActionBarView({
           ) : null}
           {currentAgendaItem ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.item.open"
+              data-action-kind="interaction"
               tooltip={currentItemTitle || currentItemLabel || ''}
               onClick={onOpenCurrentItem}
               disabled={!onOpenCurrentItem}
@@ -459,6 +502,7 @@ export function AgendaActionBarView({
           ) : null}
           {showStartButton ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.item.start"
               data-tutorial-anchor="event-start"
               tooltip={t('features.events.navigation.start')}
               onClick={onStartItem}
@@ -471,6 +515,7 @@ export function AgendaActionBarView({
           ) : null}
           {showLifecycleControls && currentAgendaItem && isCurrentItemActive && onCompleteItem ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.item.complete"
               tooltip={t('features.events.navigation.complete')}
               onClick={onCompleteItem}
               disabled={completeDisabled}
@@ -487,6 +532,7 @@ export function AgendaActionBarView({
           ) : null}
           {showLifecycleControls && onNextItem ? (
             <ToolbarButton
+              data-action-id="agendas.toolbar.item.next"
               tooltip={t('features.events.navigation.next')}
               onClick={onNextItem}
               disabled={nextDisabled}

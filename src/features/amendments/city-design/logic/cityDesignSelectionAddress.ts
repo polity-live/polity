@@ -17,16 +17,24 @@ export function createCityDesignSelectionAddress(
   result: GeoResolvedAddress,
   values?: GeoAddressValues
 ): CityDesignSelectionAddress {
-  const addressValues =
-    values ??
-    mapCityDesignSelectionAddressToValues({
-      country: result.country,
-      region: result.state,
-      city: result.city,
-      postCode: result.postcode,
-      street: result.street,
-      houseNumber: result.housenumber,
-    });
+  const resolvedAddressValues = mapCityDesignSelectionAddressToValues({
+    country: result.country,
+    region: result.state,
+    city: result.city,
+    postCode: result.postcode,
+    street: result.street,
+    houseNumber: result.housenumber,
+  });
+  const addressValues = values
+    ? {
+        country: resolvedAddressValues.country || values.country,
+        region: resolvedAddressValues.region || values.region,
+        city: resolvedAddressValues.city || values.city,
+        post_code: resolvedAddressValues.post_code || values.post_code,
+        street: resolvedAddressValues.street || values.street,
+        house_number: resolvedAddressValues.house_number || values.house_number,
+      }
+    : resolvedAddressValues;
 
   return compactAddress({
     placeId: result.place_id,

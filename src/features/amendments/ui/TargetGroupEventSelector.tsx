@@ -33,6 +33,8 @@ import { reportAppTutorialAction } from '@/features/app-tutorial/events';
 import { TargetGroupEventSelectorView } from './TargetGroupEventSelectorView';
 import { resolveAppTutorialFixtureText } from '@/features/app-tutorial/fixture-copy';
 
+const EMPTY_NETWORK_ROWS: never[] = [];
+
 export interface TargetGroupEventSelection {
   sourceGroupId: string;
   groupId: string;
@@ -156,10 +158,10 @@ export function TargetGroupEventSelector({
     eventGroupId: selectedGroup?.id,
   });
 
-  const networkGroups = groups ?? [];
-  const networkRelationships = allGroupRelationships ?? [];
-  const networkMemberships = allGroupMemberships ?? [];
-  const networkEvents = allEvents ?? [];
+  const networkGroups = groups ?? EMPTY_NETWORK_ROWS;
+  const networkRelationships = allGroupRelationships ?? EMPTY_NETWORK_ROWS;
+  const networkMemberships = allGroupMemberships ?? EMPTY_NETWORK_ROWS;
+  const networkEvents = allEvents ?? EMPTY_NETWORK_ROWS;
   const currentUserId = selectedUserId || userId;
   const excludedSourceGroupIdSet = useMemo(
     () => new Set(excludedSourceGroupIds),
@@ -371,18 +373,19 @@ export function TargetGroupEventSelector({
       return;
     }
 
-    if (reachableWorkflows.some(workflow => workflow.id === selectedWorkflowIdState)) {
-      return;
+    const selectedWorkflowIsReachable = reachableWorkflows.some(
+      workflow => workflow.id === selectedWorkflowIdState
+    );
+    if (!selectedWorkflowIsReachable) {
+      setSelectedWorkflowIdState('');
+      setSelectedGroup(null);
+      setSelectedEvent(null);
+      setPathWithEvents([]);
+      setSelectedHierarchyPathId('');
+      setPathValidationError(null);
+      onWorkflowSelectionChange?.(null);
+      onSelect(null);
     }
-
-    setSelectedWorkflowIdState('');
-    setSelectedGroup(null);
-    setSelectedEvent(null);
-    setPathWithEvents([]);
-    setSelectedHierarchyPathId('');
-    setPathValidationError(null);
-    onWorkflowSelectionChange?.(null);
-    onSelect(null);
   }, [
     allWorkflows.length,
     fixedWorkflowId,
@@ -681,7 +684,9 @@ export function TargetGroupEventSelector({
 
     const nextEvent = networkEvents.find(
       event =>
-        event.id === selectedEvent.id && (event.group?.id ?? event.group_id) === selectedGroup?.id
+        event.id === selectedEvent.id &&
+        (event.group?.id ?? event.group_id) ===
+          (selectedGroup as NonNullable<typeof selectedGroup>).id
     );
     if (!nextEvent) {
       return;
@@ -713,9 +718,7 @@ export function TargetGroupEventSelector({
 
   useEffect(() => {
     if (!selectedGroup?.id) {
-      if (selectedEvent) {
-        setSelectedEvent(null);
-      }
+      setSelectedEvent(null);
       return;
     }
 
@@ -735,12 +738,23 @@ export function TargetGroupEventSelector({
         event.id === selectedSegment.eventId &&
         (event.group?.id ?? event.group_id) === selectedGroup.id
     );
-    if (!nextEvent || selectedEvent?.id === nextEvent.id) {
+    if (
+      !nextEvent ||
+      selectedEvent?.id === nextEvent.id ||
+      (selectedEventId != null && nextEvent.id !== selectedEventId)
+    ) {
       return;
     }
 
     setSelectedEvent({ id: nextEvent.id, data: nextEvent });
-  }, [networkEvents, pathWithEvents, selectedEvent, selectedGroup?.id, targetPathSegment]);
+  }, [
+    networkEvents,
+    pathWithEvents,
+    selectedEvent,
+    selectedEventId,
+    selectedGroup?.id,
+    targetPathSegment,
+  ]);
 
   const validatePathEventOrder = useCallback(
     (segments: PathWithEventSegment[]): string | null => {
@@ -851,7 +865,9 @@ export function TargetGroupEventSelector({
       return;
     }
 
-    const finalSegment = targetPathSegment ?? pathWithEvents[pathWithEvents.length - 1] ?? null;
+    const finalSegment =
+      targetPathSegment ??
+      (pathWithEvents[pathWithEvents.length - 1] as (typeof pathWithEvents)[number]);
     const targetEventId = finalSegment?.eventId ?? selectedEvent?.id ?? null;
     if (!targetEventId && !allowGroupWithoutEvent) {
       lastEmittedSelectionRef.current = null;
@@ -1274,3 +1290,8 @@ export function TargetGroupEventDisplay({
     </div>
   );
 }
+
+export const targetGroupEventSelectorInternals = {
+  formatEventWindowLabel,
+  dedupeGroupsById,
+};

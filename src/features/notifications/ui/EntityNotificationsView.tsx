@@ -94,13 +94,13 @@ export function EntityNotificationsView({
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
           <div className="min-w-0 flex-initial">
             <ScrollableTabsList className="w-fit max-w-full">
-              <TabsTrigger value="all">
+              <TabsTrigger data-action-id="notifications.entity-tabs.select.all" value="all">
                 {labels.all}
                 <BadgeControl variant="secondary" className="ml-2">
                   {allCount}
                 </BadgeControl>
               </TabsTrigger>
-              <TabsTrigger value="unread">
+              <TabsTrigger data-action-id="notifications.entity-tabs.select.unread" value="unread">
                 {labels.unread}
                 {filteredUnreadCount > 0 ? (
                   <BadgeControl variant="default" className="ml-2">
@@ -108,11 +108,18 @@ export function EntityNotificationsView({
                   </BadgeControl>
                 ) : null}
               </TabsTrigger>
-              <TabsTrigger value="read">{labels.read}</TabsTrigger>
+              <TabsTrigger data-action-id="notifications.entity-tabs.select.read" value="read">
+                {labels.read}
+              </TabsTrigger>
             </ScrollableTabsList>
           </div>
           {totalUnreadCount > 0 ? (
-            <Button className="shrink-0" onClick={onMarkAllAsRead} variant="outline">
+            <Button
+              data-action-id="notifications.entity.mark-all.read"
+              className="shrink-0"
+              onClick={onMarkAllAsRead}
+              variant="outline"
+            >
               <CheckCheck className="mr-2 h-4 w-4" />
               {labels.markAllRead}
             </Button>

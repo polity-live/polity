@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { computeAgendaStats } from '../computeAgendaStats';
 
 describe('computeAgendaStats', () => {
+  it('returns empty aggregate counts for an empty agenda', () => {
+    expect(computeAgendaStats([])).toEqual({
+      electionsCount: 0,
+      amendmentsCount: 0,
+      openChangeRequestsCount: 0,
+    });
+  });
+
   it('counts amendment agenda items, election rows, and unique open change requests', () => {
     const stats = computeAgendaStats([
       {
@@ -121,5 +129,34 @@ describe('computeAgendaStats', () => {
     ]);
 
     expect(stats.openChangeRequestsCount).toBe(2);
+  });
+
+  it('builds stable fallback keys for id-less timeline and raw change requests', () => {
+    const stats = computeAgendaStats([
+      {
+        amendment: { id: 'amendment-related' },
+        change_request_timeline: [
+          { status: 'pending' },
+          { id: 'timeline-id', status: 'voting' },
+          { change_request_id: 'entity-id', status: 'pending' },
+        ],
+      },
+      {
+        amendment_id: 'amendment-scalar',
+        amendment: { change_requests: [{ status: 'open' }, { status: 'accepted' }] },
+      },
+      {
+        amendment: {
+          id: 'amendment-hydrated',
+          change_requests: [{ status: 'open' }],
+        },
+      },
+    ]);
+
+    expect(stats).toEqual({
+      electionsCount: 0,
+      amendmentsCount: 3,
+      openChangeRequestsCount: 5,
+    });
   });
 });

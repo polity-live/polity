@@ -274,8 +274,6 @@ export function mapMosaicToContentItems(
           groupName: item.group?.name,
         });
         break;
-      default:
-        break;
     }
 
     return acc;

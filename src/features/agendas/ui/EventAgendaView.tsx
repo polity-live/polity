@@ -530,7 +530,7 @@ export function EventAgendaView({
         forwardingPreview={streamForwardingPreview}
         defaultSortMode={event?.change_request_vote_order ?? null}
         discussions={streamAmendmentDiscussions}
-        amendmentId={streamAgendaItem?.amendment_id ?? undefined}
+        amendmentId={streamAgendaItem?.amendment_id}
         agendaItemId={streamAgendaItem?.id}
         hasUserVoted={crVoting?.hasUserVoted}
         getUserSelectedChoiceIds={crVoting?.getUserSelectedChoiceIds}
@@ -858,6 +858,7 @@ export function EventAgendaView({
 
     return (
       <Button
+        data-action-id="agendas.event-agenda.item.drag"
         type="button"
         variant="ghost"
         size="icon"
@@ -902,8 +903,10 @@ export function EventAgendaView({
             <p className="text-muted-foreground mb-4">
               {t('features.events.wiki.notFoundDescription')}
             </p>
-            <Button asChild>
-              <Link to="/calendar">{t('features.events.backToCalendar')}</Link>
+            <Button asChild data-action-scope="presentation">
+              <Link to="/calendar" data-action-id="agendas.event-agenda.calendar.back">
+                {t('features.events.backToCalendar')}
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -1031,6 +1034,7 @@ export function EventAgendaView({
         <div className="h-10" />
 
         <OfflineTallyDialog
+          data-action-scope="presentation"
           open={offlineTallyDialogOpen}
           onOpenChange={handleOfflineTallyDialogOpenChange}
           title={getOfflineTallyDialogTitle(toolbarOfflineTallyPhase ?? 'indicative')}
@@ -1184,6 +1188,7 @@ export function EventAgendaView({
                 action={
                   <>
                     <Button
+                      data-action-id="agendas.event-agenda.live-focus.open"
                       type="button"
                       variant="outline"
                       size="icon"
@@ -1200,6 +1205,7 @@ export function EventAgendaView({
                     </Button>
                     <CollapsibleTrigger asChild>
                       <Button
+                        data-action-id="agendas.event-agenda.stream.toggle"
                         variant="ghost"
                         size="icon"
                         aria-label={
@@ -1305,6 +1311,7 @@ export function EventAgendaView({
             <CardHeader className="px-4 py-3 sm:px-5">
               <CollapsibleTrigger asChild>
                 <Button
+                  data-action-id="agendas.event-agenda.statistics.toggle"
                   variant="ghost"
                   className="hover:bg-muted/50 w-full justify-between rounded-lg px-3"
                 >
@@ -1389,6 +1396,7 @@ export function EventAgendaView({
               />
             </div>
             <Button
+              data-action-id="agendas.event-agenda.filters.toggle"
               variant={showFilters ? 'secondary' : 'outline'}
               size="icon"
               onClick={() => setShowFilters(!showFilters)}
@@ -1411,24 +1419,52 @@ export function EventAgendaView({
                     <FormControlLabel htmlFor="type-filter">
                       {t('features.events.agenda.type')}
                     </FormControlLabel>
-                    <FormControlSelect value={typeFilter} onValueChange={setTypeFilter}>
-                      <FormControlSelectTrigger id="type-filter">
+                    <FormControlSelect
+                      data-action-scope="presentation"
+                      value={typeFilter}
+                      onValueChange={setTypeFilter}
+                    >
+                      <FormControlSelectTrigger
+                        id="type-filter"
+                        data-action-id="agendas.event-agenda.filters.type.open"
+                        data-action-kind="interaction"
+                      >
                         <FormControlSelectValue />
                       </FormControlSelectTrigger>
                       <FormControlSelectContent>
-                        <FormControlSelectItem value="all">
+                        <FormControlSelectItem
+                          value="all"
+                          data-action-id="agendas.event-agenda.filters.type.all"
+                          data-action-kind="selection"
+                        >
                           {t('features.events.agenda.allTypes')}
                         </FormControlSelectItem>
-                        <FormControlSelectItem value="election">
+                        <FormControlSelectItem
+                          value="election"
+                          data-action-id="agendas.event-agenda.filters.type.election"
+                          data-action-kind="selection"
+                        >
                           {t('features.events.agenda.typeElection')}
                         </FormControlSelectItem>
-                        <FormControlSelectItem value="vote">
+                        <FormControlSelectItem
+                          value="vote"
+                          data-action-id="agendas.event-agenda.filters.type.vote"
+                          data-action-kind="selection"
+                        >
                           {t('features.events.agenda.typeVote')}
                         </FormControlSelectItem>
-                        <FormControlSelectItem value="speech">
+                        <FormControlSelectItem
+                          value="speech"
+                          data-action-id="agendas.event-agenda.filters.type.speech"
+                          data-action-kind="selection"
+                        >
                           {t('features.events.agenda.typeSpeech')}
                         </FormControlSelectItem>
-                        <FormControlSelectItem value="discussion">
+                        <FormControlSelectItem
+                          value="discussion"
+                          data-action-id="agendas.event-agenda.filters.type.discussion"
+                          data-action-kind="selection"
+                        >
                           {t('features.events.agenda.typeDiscussion')}
                         </FormControlSelectItem>
                       </FormControlSelectContent>
@@ -1439,24 +1475,52 @@ export function EventAgendaView({
                     <FormControlLabel htmlFor="status-filter">
                       {t('features.events.agenda.statusLabel')}
                     </FormControlLabel>
-                    <FormControlSelect value={statusFilter} onValueChange={setStatusFilter}>
-                      <FormControlSelectTrigger id="status-filter">
+                    <FormControlSelect
+                      data-action-scope="presentation"
+                      value={statusFilter}
+                      onValueChange={setStatusFilter}
+                    >
+                      <FormControlSelectTrigger
+                        id="status-filter"
+                        data-action-id="agendas.event-agenda.filters.status.open"
+                        data-action-kind="interaction"
+                      >
                         <FormControlSelectValue />
                       </FormControlSelectTrigger>
                       <FormControlSelectContent>
-                        <FormControlSelectItem value="all">
+                        <FormControlSelectItem
+                          value="all"
+                          data-action-id="agendas.event-agenda.filters.status.all"
+                          data-action-kind="selection"
+                        >
                           {t('features.events.agenda.allStatus')}
                         </FormControlSelectItem>
-                        <FormControlSelectItem value="pending">
+                        <FormControlSelectItem
+                          value="pending"
+                          data-action-id="agendas.event-agenda.filters.status.pending"
+                          data-action-kind="selection"
+                        >
                           {t('features.events.agenda.statusPending')}
                         </FormControlSelectItem>
-                        <FormControlSelectItem value="in-progress">
+                        <FormControlSelectItem
+                          value="in-progress"
+                          data-action-id="agendas.event-agenda.filters.status.in-progress"
+                          data-action-kind="selection"
+                        >
                           {t('features.events.agenda.statusInProgress')}
                         </FormControlSelectItem>
-                        <FormControlSelectItem value="completed">
+                        <FormControlSelectItem
+                          value="completed"
+                          data-action-id="agendas.event-agenda.filters.status.completed"
+                          data-action-kind="selection"
+                        >
                           {t('features.events.agenda.statusCompleted')}
                         </FormControlSelectItem>
-                        <FormControlSelectItem value="planned">
+                        <FormControlSelectItem
+                          value="planned"
+                          data-action-id="agendas.event-agenda.filters.status.planned"
+                          data-action-kind="selection"
+                        >
                           {t('features.events.agenda.statusPlanned')}
                         </FormControlSelectItem>
                       </FormControlSelectContent>
@@ -1477,8 +1541,12 @@ export function EventAgendaView({
               <p className="text-muted-foreground mb-4">
                 {t('features.events.agenda.noItemsDescription')}
               </p>
-              <Button asChild>
-                <Link to="/create/agenda-item" search={{ eventId }}>
+              <Button asChild data-action-scope="presentation">
+                <Link
+                  to="/create/agenda-item"
+                  search={{ eventId }}
+                  data-action-id="agendas.event-agenda.item.create-first"
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   {t('features.events.agenda.createFirstItem')}
                 </Link>

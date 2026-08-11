@@ -62,11 +62,21 @@ describe('pending conversation request UI', () => {
   });
 
   it('shows accept and decline to the recipient', () => {
-    renderRequest('user-recipient');
+    const onAcceptConversation = vi.fn();
+    const onRejectConversation = vi.fn();
+    renderRequest('user-recipient', { onAcceptConversation, onRejectConversation });
 
     expect(screen.getByText('Mina Bauer wants to start')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Accept' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Decline' })).toBeTruthy();
+    const accept = screen.getByRole('button', { name: 'Accept' });
+    const reject = screen.getByRole('button', { name: 'Decline' });
+    expect(accept.getAttribute('data-action-id')).toBe('messages.conversation-request.accept');
+    expect(reject.getAttribute('data-action-id')).toBe('messages.conversation-request.reject');
+    accept.focus();
+    expect(document.activeElement).toBe(accept);
+    accept.click();
+    reject.click();
+    expect(onAcceptConversation).toHaveBeenCalledWith(pendingConversation);
+    expect(onRejectConversation).toHaveBeenCalledWith(pendingConversation);
   });
 
   it('hides delete from the recipient but keeps cancel for the sender', () => {

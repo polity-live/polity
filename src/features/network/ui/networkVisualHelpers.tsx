@@ -43,7 +43,6 @@ interface EntityNetworkNodeStyleOptions {
 const CIVIC_NODE_SURFACE = 'var(--card)';
 const CIVIC_NODE_TEXT = 'var(--card-foreground)';
 const CIVIC_NODE_SHADOW = 'var(--shadow-panel)';
-const CIVIC_NODE_MUTED_BORDER = 'var(--border)';
 
 const ENTITY_NODE_SYMBOLS: Record<PrimaryEntityTone, string> = {
   user: 'U',
@@ -181,8 +180,8 @@ export function getCivicNetworkNodeStyle(
   return {
     background: getCivicNodeSurface(kind, visual),
     color: kind.type === 'group' || kind.type === 'workflow' ? visual.textColor : CIVIC_NODE_TEXT,
-    border: `${borderWidth}px solid ${visual.borderColor ?? CIVIC_NODE_MUTED_BORDER}`,
-    borderColor: visual.borderColor ?? CIVIC_NODE_MUTED_BORDER,
+    border: `${borderWidth}px solid ${visual.borderColor}`,
+    borderColor: visual.borderColor,
     borderStyle: 'solid',
     borderWidth,
     borderRadius: options.borderRadius ?? '10px',

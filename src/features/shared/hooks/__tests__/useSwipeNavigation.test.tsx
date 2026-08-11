@@ -211,4 +211,42 @@ describe('useSwipeNavigation', () => {
     fireEvent.keyDown(screen.getByLabelText('Local input'), { key: 'ArrowRight' });
     expect(onSwipeNext).toHaveBeenCalledTimes(1);
   });
+
+  it('covers missing-window edge starts and incomplete touch and pointer sequences', () => {
+    render(<SwipeTarget activationMode="edge" onSwipeNext={vi.fn()} />);
+    const target = screen.getByTestId('swipe-target');
+    const savedWindow = window;
+    vi.stubGlobal('window', undefined);
+    fireEvent.touchStart(target, { touches: [{ clientX: 1, clientY: 1 }] });
+    vi.stubGlobal('window', savedWindow);
+
+    fireEvent.touchMove(target, { touches: [{ clientX: 2, clientY: 2 }] });
+    fireEvent.touchStart(target, { touches: [{ clientX: 1, clientY: 1 }] });
+
+    fireEvent.touchMove(target, {
+      touches: [
+        { clientX: 1, clientY: 1 },
+        { clientX: 2, clientY: 2 },
+      ],
+    });
+    fireEvent.touchEnd(target, { changedTouches: [] });
+    dispatchPointerEvent(target, 'pointermove', {
+      pointerId: 99,
+      pointerType: 'pen',
+      clientX: 1,
+      clientY: 1,
+    });
+    dispatchPointerEvent(target, 'pointerup', {
+      pointerId: 99,
+      pointerType: 'pen',
+      clientX: 1,
+      clientY: 1,
+    });
+    cleanup();
+    render(<SwipeTarget />);
+    touchSwipe(screen.getByTestId('swipe-target'), { startX: 300, endX: 150 });
+    cleanup();
+    render(<SwipeTarget canSwipePrev={false} />);
+    touchSwipe(screen.getByTestId('swipe-target'), { startX: 150, endX: 300 });
+  });
 });

@@ -144,7 +144,6 @@ export function useHierarchyLinkConflicts(
     }
 
     const users = Array.from(membershipsByUser.values())
-      .filter(isActiveGroupMembership)
       .map(row => buildConflictUser(row.user_id, row))
       .sort((left, right) => left.displayName.localeCompare(right.displayName));
 

@@ -64,7 +64,7 @@ interface SubscriptionsTableProps {
   emptyMessage?: string;
 }
 
-function getEntityInfo(subscription: SubscriptionRow): SubscriptionEntityInfo | null {
+function getEntityInfo(subscription: SubscriptionRow): SubscriptionEntityInfo {
   if (subscription.user) {
     const user = subscription.user;
 
@@ -140,18 +140,14 @@ export function SubscriptionsTable({
 }: SubscriptionsTableProps) {
   const rows = useMemo<SubscriptionTableRow[]>(
     () =>
-      subscriptions.flatMap(subscription => {
+      subscriptions.map(subscription => {
         const entityInfo = getEntityInfo(subscription);
 
-        if (!entityInfo) return [];
-
-        return [
-          {
-            subscription,
-            entityInfo,
-            entityHref: getSubscriptionHref(subscription),
-          },
-        ];
+        return {
+          subscription,
+          entityInfo,
+          entityHref: getSubscriptionHref(subscription),
+        };
       }),
     [getSubscriptionHref, subscriptions]
   );
@@ -183,6 +179,7 @@ export function SubscriptionsTable({
 
           return (
             <SmartLink
+              data-action-id="payments.subscriptions.entity.open"
               href={row.original.entityHref}
               className="flex items-center gap-3 hover:underline"
             >
@@ -224,6 +221,7 @@ export function SubscriptionsTable({
         cell: ({ row }) => (
           <div className="flex justify-end">
             <Button
+              data-action-id="payments.subscriptions.remove"
               variant="ghost"
               size="sm"
               onClick={() => onUnsubscribe(row.original.subscription.id)}

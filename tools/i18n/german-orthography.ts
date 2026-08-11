@@ -1,10 +1,10 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { extname, join, relative, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { extname, join, relative } from 'node:path';
 
 import { parse } from '@babel/parser';
 
 import deTranslation from '../../src/i18n/locales/de/deTranslation.ts';
+import { runCliIfMain } from '../shared/run-cli-if-main.mjs';
 
 interface AstNode {
   type: string;
@@ -141,9 +141,7 @@ export function findAsciiGermanOrthography(value: string): string[] {
   return [...matches];
 }
 
-function propertyName(node: unknown): string | null {
-  if (!node || typeof node !== 'object') return null;
-  const candidate = node as AstNode;
+function propertyName(candidate: AstNode): string | null {
   if (candidate.type === 'Identifier' || candidate.type === 'JSXIdentifier') {
     return String(candidate.name);
   }
@@ -154,13 +152,11 @@ function propertyName(node: unknown): string | null {
 function stringValue(node: AstNode): string | null {
   if (node.type === 'StringLiteral') return String(node.value);
   if (node.type !== 'TemplateElement') return null;
-  const value = node.value;
-  return value && typeof value === 'object' && 'cooked' in value
-    ? String((value as { cooked: unknown }).cooked ?? '')
-    : null;
+  const value = node.value as { cooked: unknown };
+  return String(value.cooked ?? '');
 }
 
-function isTechnicalString(node: AstNode, parent: AstNode | null, value: string): boolean {
+function isTechnicalString(node: AstNode, parent: AstNode, value: string): boolean {
   if (
     TRANSLATION_KEY.test(value) ||
     LOWERCASE_STABLE_IDENTIFIER.test(value) ||
@@ -168,7 +164,6 @@ function isTechnicalString(node: AstNode, parent: AstNode | null, value: string)
   ) {
     return true;
   }
-  if (!parent) return false;
   if (
     [
       'ExportAllDeclaration',
@@ -181,10 +176,10 @@ function isTechnicalString(node: AstNode, parent: AstNode | null, value: string)
   }
   if (parent.type === 'ObjectProperty') {
     if (parent.key === node) return true;
-    return TECHNICAL_VALUE_PROPERTIES.has(propertyName(parent.key) ?? '');
+    return TECHNICAL_VALUE_PROPERTIES.has(propertyName(parent.key as AstNode) as string);
   }
   if (parent.type === 'JSXAttribute') {
-    return TECHNICAL_VALUE_PROPERTIES.has(propertyName(parent.name) ?? '');
+    return TECHNICAL_VALUE_PROPERTIES.has(propertyName(parent.name as AstNode) as string);
   }
   return false;
 }
@@ -224,7 +219,7 @@ export function auditGermanSource(
     if (
       value === null ||
       SOURCE_VALUE_ALLOWLIST.test(value) ||
-      isTechnicalString(node, parent, value)
+      isTechnicalString(node, parent as AstNode, value)
     ) {
       return;
     }
@@ -232,7 +227,7 @@ export function auditGermanSource(
     if (words.length === 0) return;
     findings.push({
       file,
-      line: node.loc?.start.line ?? 1,
+      line: (node.loc as NonNullable<AstNode['loc']>).start.line,
       value: value.replace(/\s+/g, ' ').trim(),
       words,
     });
@@ -253,59 +248,48 @@ function sourceFiles(directory: string): string[] {
   });
 }
 
-function auditRuntimeLocale(): GermanOrthographyFinding[] {
+export function auditGermanValues(
+  value: unknown,
+  file: string,
+  initialPath = ''
+): GermanOrthographyFinding[] {
   const findings: GermanOrthographyFinding[] = [];
-  const walkValue = (value: unknown, path: string) => {
-    if (typeof value === 'string') {
-      const words = findAsciiGermanOrthography(value);
+  const walkValue = (current: unknown, path: string) => {
+    if (typeof current === 'string') {
+      const words = findAsciiGermanOrthography(current);
       if (words.length > 0) {
         findings.push({
-          file: 'src/i18n/locales/de',
+          file,
           line: 1,
           path,
-          value: value.replace(/\s+/g, ' ').trim(),
+          value: current.replace(/\s+/g, ' ').trim(),
           words,
         });
       }
       return;
     }
-    if (!value || typeof value !== 'object') return;
-    for (const [key, child] of Object.entries(value)) {
+    if (Array.isArray(current)) {
+      current.forEach((child, index) =>
+        walkValue(child, path ? `${path}.${index}` : String(index))
+      );
+      return;
+    }
+    if (!current || typeof current !== 'object') return;
+    for (const [key, child] of Object.entries(current)) {
       walkValue(child, path ? `${path}.${key}` : key);
     }
   };
-  walkValue(deTranslation, '');
+  walkValue(value, initialPath);
   return findings;
+}
+
+function auditRuntimeLocale(): GermanOrthographyFinding[] {
+  return auditGermanValues(deTranslation, 'src/i18n/locales/de');
 }
 
 function auditGermanManifest(root: string): GermanOrthographyFinding[] {
   const file = join(root, 'public', 'manifest.de.json');
-  const findings: GermanOrthographyFinding[] = [];
-  const walkValue = (value: unknown, path: string) => {
-    if (typeof value === 'string') {
-      const words = findAsciiGermanOrthography(value);
-      if (words.length > 0) {
-        findings.push({
-          file: relative(root, file),
-          line: 1,
-          path,
-          value,
-          words,
-        });
-      }
-      return;
-    }
-    if (Array.isArray(value)) {
-      value.forEach((child, index) => walkValue(child, `${path}.${index}`));
-      return;
-    }
-    if (!value || typeof value !== 'object') return;
-    for (const [key, child] of Object.entries(value)) {
-      walkValue(child, path ? `${path}.${key}` : key);
-    }
-  };
-  walkValue(JSON.parse(readFileSync(file, 'utf8')), '');
-  return findings;
+  return auditGermanValues(JSON.parse(readFileSync(file, 'utf8')), relative(root, file));
 }
 
 export function auditGermanOrthography(root = process.cwd()): GermanOrthographyFinding[] {
@@ -329,20 +313,30 @@ export function auditGermanOrthography(root = process.cwd()): GermanOrthographyF
   );
 }
 
-const isCli =
-  process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.cwd(), process.argv[1]);
-if (isCli) {
-  const findings = auditGermanOrthography();
+export function runGermanOrthographyCli(
+  options: {
+    audit?: () => GermanOrthographyFinding[];
+    logger?: Pick<Console, 'error' | 'log'>;
+    processState?: { exitCode?: number };
+  } = {}
+) {
+  const audit = options.audit ?? auditGermanOrthography;
+  const logger = options.logger ?? console;
+  const processState = options.processState ?? process;
+  const findings = audit();
   if (findings.length > 0) {
     for (const item of findings) {
       const location = item.path ? `${item.file} (${item.path})` : `${item.file}:${item.line}`;
-      console.error(
+      logger.error(
         `${location} [german-orthography] ${JSON.stringify(item.words)} in ${JSON.stringify(item.value)}`
       );
     }
-    console.error(`\n${findings.length} German orthography finding(s).`);
-    process.exitCode = 1;
+    logger.error(`\n${findings.length} German orthography finding(s).`);
+    processState.exitCode = 1;
   } else {
-    console.log('German orthography audit passed with zero findings.');
+    logger.log('German orthography audit passed with zero findings.');
   }
+  return findings;
 }
+
+await runCliIfMain(import.meta.url, runGermanOrthographyCli);

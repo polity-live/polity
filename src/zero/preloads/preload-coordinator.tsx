@@ -253,7 +253,7 @@ export class PreloadCoordinator {
       })
       .then(() => {
         if (!this.isCurrent(running)) return;
-        this.finish(running, true);
+        this.finish(running);
       })
       .catch(error => {
         if (!this.isCurrent(running)) return;
@@ -292,10 +292,10 @@ export class PreloadCoordinator {
     await Promise.all(handles.map(handle => handle.complete));
   }
 
-  private finish(running: RunningTask, succeeded: boolean) {
+  private finish(running: RunningTask) {
     this.release(running);
     this.running = null;
-    if (succeeded) this.readyUntil.set(running.task.key, this.now() + PRELOAD_CACHE_TTL_MS);
+    this.readyUntil.set(running.task.key, this.now() + PRELOAD_CACHE_TTL_MS);
     if (running.kind === 'foreground' && this.foregroundKey === running.task.key) {
       this.foregroundPending = false;
     }

@@ -1,144 +1,45 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import { test as base } from '@playwright/test';
 
 import { cleanupE2ERows } from './cleanup';
-import { authenticateWorker, ensureE2EAuthUser, type E2EWorkerUser } from './auth';
+import { actorUser, authenticateActor, removeActorAuthState, type E2EActorUser } from './auth';
 import { seedCreatePrerequisites, type SeedData } from './seed';
-import { CreateFlowPage, createSmokeTestTimeoutMs } from './create-flow-page';
+import { CreateFlowPage } from './create-flow-page';
 import { TutorialFlowPage } from './tutorial-flow-page';
-
-const LOCK_DIR = path.join(process.cwd(), 'test-results', '.locks');
-const AUTH_LOCK_PATH = path.join(LOCK_DIR, 'create-auth.lock');
-const SMOKE_LOCK_PATH = path.join(LOCK_DIR, 'create-smoke.lock');
-const DEFAULT_SMOKE_LOCK_TIMEOUT_MS = 15 * 60_000;
-const DEFAULT_SMOKE_LOCK_STALE_MS = 30 * 60_000;
-const DEFAULT_AUTH_LOCK_TIMEOUT_MS = 5 * 60_000;
-const DEFAULT_AUTH_LOCK_STALE_MS = 10 * 60_000;
+import { e2eRunId, e2eTestNamespace } from './run';
 
 interface TestFixtures {
-  _createSmokeTimeout: undefined;
   _mockCurrencyApi: undefined;
   createFlowPage: CreateFlowPage;
-  e2eRun: {
-    prefix: string;
-  };
+  e2eRun: E2ERunFixture;
+  e2eUser: E2EActorUser;
   seed: SeedData;
   tutorialFlowPage: TutorialFlowPage;
 }
 
-interface WorkerFixtures {
-  workerStorageState: string;
-  e2eUser: E2EWorkerUser;
+export interface E2ERunFixture {
+  actor: (name?: string) => E2EActorUser;
+  actorId: string;
+  prefix: string;
+  registerActorId: (id: string) => void;
+  registerEntityId: (id: string) => void;
+  runId: string;
+  testId: string;
 }
 
-function sanitizeTitle(title: string) {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 48);
-}
-
-function configuredMs(name: string, fallback: number) {
-  const configured = Number(process.env[name]);
-  return Number.isFinite(configured) && configured > 0 ? configured : fallback;
-}
-
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function errorCode(error: unknown) {
-  return typeof error === 'object' && error && 'code' in error
-    ? (error as { code?: unknown }).code
-    : undefined;
-}
-
-async function removeStaleLock(lockPath: string, staleAfterMs: number, now = Date.now()) {
-  try {
-    const stat = await fs.stat(lockPath);
-    if (now - stat.mtimeMs > staleAfterMs) {
-      await fs.unlink(lockPath);
-    }
-  } catch (error) {
-    if (errorCode(error) !== 'ENOENT') throw error;
-  }
-}
-
-async function acquireLock(
-  lockPath: string,
-  options: {
-    timeoutMs: number;
-    staleAfterMs: number;
-    metadata: Record<string, unknown>;
-  }
-) {
-  await fs.mkdir(LOCK_DIR, { recursive: true });
-  const { timeoutMs, staleAfterMs, metadata } = options;
-  const deadline = Date.now() + timeoutMs;
-  const token = `${process.pid}:${Date.now()}:${Math.random()}`;
-
-  while (Date.now() < deadline) {
-    try {
-      const file = await fs.open(lockPath, 'wx');
-      await file.writeFile(
-        JSON.stringify({
-          token,
-          pid: process.pid,
-          acquiredAt: new Date().toISOString(),
-          ...metadata,
-        })
-      );
-      await file.close();
-
-      return async () => {
-        try {
-          const raw = await fs.readFile(lockPath, 'utf8');
-          if (raw.includes(token)) {
-            await fs.unlink(lockPath);
-          }
-        } catch (error) {
-          if (errorCode(error) !== 'ENOENT') throw error;
-        }
-      };
-    } catch (error) {
-      if (errorCode(error) !== 'EEXIST') throw error;
-      await removeStaleLock(lockPath, staleAfterMs);
-      await sleep(250);
-    }
-  }
-
-  throw new Error(`Timed out waiting for ${lockPath} after ${timeoutMs}ms.`);
-}
-
-async function acquireSmokeLock(testInfo: { title: string; workerIndex: number }) {
-  return acquireLock(SMOKE_LOCK_PATH, {
-    timeoutMs: configuredMs('E2E_CREATE_SMOKE_LOCK_TIMEOUT_MS', DEFAULT_SMOKE_LOCK_TIMEOUT_MS),
-    staleAfterMs: configuredMs('E2E_CREATE_SMOKE_LOCK_STALE_MS', DEFAULT_SMOKE_LOCK_STALE_MS),
-    metadata: {
-      workerIndex: testInfo.workerIndex,
-      title: testInfo.title,
-    },
-  });
-}
-
-async function acquireAuthLock(workerIndex: number) {
-  return acquireLock(AUTH_LOCK_PATH, {
-    timeoutMs: configuredMs('E2E_CREATE_AUTH_LOCK_TIMEOUT_MS', DEFAULT_AUTH_LOCK_TIMEOUT_MS),
-    staleAfterMs: configuredMs('E2E_CREATE_AUTH_LOCK_STALE_MS', DEFAULT_AUTH_LOCK_STALE_MS),
-    metadata: { workerIndex, purpose: 'authenticate worker' },
-  });
-}
-
-export const test = base.extend<TestFixtures, WorkerFixtures>({
+export const test = base.extend<TestFixtures>({
   _mockCurrencyApi: [
     async ({ page }, use) => {
+      await page.addInitScript(() => {
+        window.sessionStorage.setItem('polity.alphaWarning.0.11.1.acknowledged', 'true');
+      });
       await page.route('**/api/currency/currencies', async route => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ currencies: ['EUR', 'GBP', 'JPY', 'USD'], source: 'test' }),
+          body: JSON.stringify({
+            currencies: ['EUR', 'GBP', 'JPY', 'USD'],
+            source: 'test',
+          }),
         });
       });
       await page.route('**/api/currency/rates', async route => {
@@ -165,79 +66,65 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     { auto: true },
   ],
 
-  _createSmokeTimeout: [
-    // Playwright requires fixture callbacks to destructure the first argument, even when no fixtures are used.
-    // oxlint-disable-next-line no-empty-pattern
-    async ({}, use, testInfo) => {
-      let releaseSmokeLock: (() => Promise<void>) | undefined;
-
-      if (testInfo.title.includes('@smoke')) {
-        const smokeLockTimeoutMs = configuredMs(
-          'E2E_CREATE_SMOKE_LOCK_TIMEOUT_MS',
-          DEFAULT_SMOKE_LOCK_TIMEOUT_MS
-        );
-        testInfo.setTimeout(
-          Math.max(testInfo.timeout, createSmokeTestTimeoutMs(), smokeLockTimeoutMs + 60_000)
-        );
-        releaseSmokeLock = await acquireSmokeLock(testInfo);
-      }
-
-      try {
-        await use(undefined);
-      } finally {
-        await releaseSmokeLock?.();
-      }
-    },
-    { auto: true },
-  ],
-
-  workerStorageState: [
-    async ({ browser }, use, workerInfo) => {
-      const releaseAuthLock = await acquireAuthLock(workerInfo.parallelIndex);
-      try {
-        const user = await authenticateWorker(browser, workerInfo.parallelIndex);
-        await use(user.storageStatePath);
-      } finally {
-        await releaseAuthLock();
-      }
-    },
-    {
-      scope: 'worker',
-      timeout:
-        configuredMs('E2E_CREATE_AUTH_LOCK_TIMEOUT_MS', DEFAULT_AUTH_LOCK_TIMEOUT_MS) + 120_000,
-    },
-  ],
-
-  e2eUser: [
-    async ({ workerStorageState }, use, workerInfo) => {
-      const match = workerStorageState.match(/worker-(\d+)\.json$/);
-      const workerIndex = Number(match?.[1] ?? workerInfo.parallelIndex);
-      const { workerUser } = await import('./auth');
-      await use(workerUser(workerIndex));
-    },
-    { scope: 'worker' },
-  ],
-
-  storageState: async ({ workerStorageState }, use) => {
-    await use(workerStorageState);
-  },
-
   // Playwright requires fixture callbacks to destructure the first argument, even when no fixtures are used.
   // oxlint-disable-next-line no-empty-pattern
   e2eRun: async ({}, use, testInfo) => {
-    const prefix = `E2E-${testInfo.workerIndex}-${Date.now()}-${sanitizeTitle(testInfo.title)}`;
-    await use({ prefix });
-    await cleanupE2ERows({ prefix });
+    const prefix = e2eTestNamespace(testInfo);
+    const actorIds = new Set<string>();
+    const entityIds = new Set<string>();
+    const actors = new Map<string, E2EActorUser>();
+    const actor = (name = 'primary') => {
+      const existing = actors.get(name);
+      if (existing) return existing;
+      const created = actorUser(prefix, name);
+      actors.set(name, created);
+      actorIds.add(created.id);
+      return created;
+    };
+    const primary = actor();
+    const fixture: E2ERunFixture = {
+      actor,
+      actorId: primary.id,
+      prefix,
+      registerActorId: id => actorIds.add(id),
+      registerEntityId: id => entityIds.add(id),
+      runId: e2eRunId(),
+      testId: testInfo.testId,
+    };
+    try {
+      await use(fixture);
+    } finally {
+      await cleanupE2ERows({ actorIds: [...actorIds], entityIds: [...entityIds] });
+    }
+  },
+
+  e2eUser: async ({ browser, e2eRun }, use) => {
+    const user = e2eRun.actor();
+    try {
+      await authenticateActor(browser, user);
+      await use(user);
+    } finally {
+      await removeActorAuthState(user);
+    }
+  },
+
+  storageState: async ({ e2eUser }, use) => {
+    await use(e2eUser.storageStatePath);
   },
 
   seed: async ({ e2eRun, e2eUser }, use) => {
-    await ensureE2EAuthUser(e2eUser);
     const seed = await seedCreatePrerequisites(e2eRun.prefix, e2eUser.id);
+    e2eRun.registerActorId(seed.extraUserId);
+    for (const [key, value] of Object.entries(seed)) {
+      if (key.endsWith('Id') && key !== 'userId' && key !== 'extraUserId') {
+        e2eRun.registerEntityId(value);
+      }
+    }
     await use(seed);
   },
 
-  createFlowPage: async ({ page }, use) => {
-    await use(new CreateFlowPage(page));
+  createFlowPage: async ({ e2eRun, page }, use) => {
+    await use(new CreateFlowPage(page, target => target.id && e2eRun.registerEntityId(target.id)));
   },
 
   tutorialFlowPage: async ({ page }, use) => {

@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -16,14 +17,48 @@ concurrency:
 env:
   NODE_VERSION: "24.x"
   NPM_VERSION: "11.18.0"
+  NPM_CONFIG_FETCH_RETRIES: "5"
+  NPM_CONFIG_FETCH_RETRY_FACTOR: "2"
+  NPM_CONFIG_FETCH_RETRY_MINTIMEOUT: "20000"
+  NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT: "120000"
+  NPM_CONFIG_FETCH_TIMEOUT: "300000"
 
 jobs:
+  pipeline-performance:
+    name: PR Pipeline P95 (15 minutes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Read recent PR pipeline runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: >-
+          gh api
+          -H "Accept: application/vnd.github+json"
+          -H "X-GitHub-Api-Version: 2022-11-28"
+          "/repos/$GH_REPO/actions/workflows/ci.yml/runs?event=pull_request&status=success&per_page=100"
+          > "$RUNNER_TEMP/pr-ci-workflow-runs.json"
+      - name: Enforce PR pipeline P95
+        run: >-
+          node tools/testing/check-pr-pipeline-p95.mjs
+          --input "$RUNNER_TEMP/pr-ci-workflow-runs.json"
+          --threshold-seconds 900
+          --min-samples 20
+          --max-samples 50
+
   static-analysis:
     name: Static Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -32,10 +67,14 @@ jobs:
         run: npm install --global npm@${NPM_VERSION}
       - name: Install dependencies
         run: npm ci
+      - name: Verify complete test accountability and static audits
+        run: npm run test:static
+      - name: Enforce exact accountability for changed production surfaces
+        run: npm run test:accountability:changed
       - id: format
-        name: Format
+        name: Changed-file format ratchet
         continue-on-error: true
-        run: npm run format:check
+        run: npm run format:check:changed
       - id: lint
         name: Lint
         continue-on-error: true
@@ -71,7 +110,168 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run unit tests
-        run: npm test
+        run: npm run test:unit
+
+  component-tests:
+    name: Component Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Use pinned npm
+        run: npm install --global npm@${NPM_VERSION}
+      - name: Install dependencies
+        run: npm ci
+      - name: Run component integration tests
+        run: npm run test:component
+
+  browser-component-tests:
+    name: Browser Component Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm install --global npm@${NPM_VERSION}
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser-component
+
+  coverage-shards:
+    name: Coverage Shard ${{ matrix.shard }} of 4
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      COVERAGE_SHARD_MAX_WORKERS: "2"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm install --global npm@${NPM_VERSION}
+      - run: npm ci
+      - name: Run isolated instrumented shard
+        run: >-
+          COVERAGE_SHARD_ARTIFACT_DIR="$RUNNER_TEMP/polity-coverage-shards"
+          npm run test:coverage:shard -- "${{ matrix.shard }}/4"
+      - name: Upload coverage blob
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-blob-${{ matrix.shard }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: .vitest-reports/blob-${{ matrix.shard }}-4.json
+      - name: Upload shard diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-shard-${{ matrix.shard }}-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: ${{ runner.temp }}/polity-coverage-shards/${{ matrix.shard }}-of-4/
+
+  coverage-ratchet:
+    name: Coverage Ratchet
+    if: always()
+    needs: coverage-shards
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Require successful coverage shards
+        env:
+          COVERAGE_SHARDS_RESULT: ${{ needs.coverage-shards.result }}
+        run: |
+          if [[ "$COVERAGE_SHARDS_RESULT" != "success" ]]; then
+            echo "Coverage shards did not all succeed: $COVERAGE_SHARDS_RESULT"
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm install --global npm@${NPM_VERSION}
+      - run: npm ci
+      - name: Download coverage blobs
+        uses: actions/download-artifact@v7
+        with:
+          pattern: coverage-blob-*-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/coverage-blobs
+          merge-multiple: true
+      - name: Verify complete shard set
+        run: |
+          blob_count="$(find "$RUNNER_TEMP/coverage-blobs" -maxdepth 1 -type f -name 'blob-*-4.json' | wc -l)"
+          if [[ "$blob_count" -ne 4 ]]; then
+            echo "Expected four coverage blobs, received $blob_count"
+            exit 1
+          fi
+      - name: Merge coverage shards
+        run: |
+          npx vitest \
+            --config vitest.coverage.config.ts \
+            --merge-reports "$RUNNER_TEMP/coverage-blobs" \
+            --coverage \
+            "--coverage.reportsDirectory=coverage"
+      - name: Enforce repository and changed-code coverage
+        run: |
+          node tools/testing/check-coverage-ratchet.mjs
+          npm run test:coverage:branches:check
+          npm run test:coverage:changed
+          npm run test:accountability:coverage
+      - name: Upload merged coverage diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: coverage/
+
+  security-tests:
+    name: Security Contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm install --global npm@${NPM_VERSION}
+      - run: npm ci
+      - run: npm run test:security
+
+  service-integration-tests:
+    name: Service Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Use pinned npm
+        run: npm install --global npm@${NPM_VERSION}
+      - name: Install dependencies
+        run: npm ci
+      - name: Run service integration tests
+        run: npm run test:integration
 
   database-tests:
     name: Database Tests
@@ -94,7 +294,7 @@ jobs:
       - name: Disable seed data for database startup
         run: sed -i '/^\[db.seed\]/,/^\[/ s/^enabled = true$/enabled = false/' supabase/config.toml
       - name: Start database
-        run: supabase db start
+        run: supabase start
       - name: Apply migrations
         run: supabase db reset --local --no-seed
       - name: Lint database
@@ -140,6 +340,165 @@ jobs:
       - name: Build production bundle
         run: npm run build
 
+  e2e-tests:
+    name: E2E / ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: desktop-1-of-3
+            project: chromium-desktop
+            shard: 1/3
+            grep: "@pr"
+          - name: desktop-2-of-3
+            project: chromium-desktop
+            shard: 2/3
+            grep: "@pr"
+          - name: desktop-3-of-3
+            project: chromium-desktop
+            shard: 3/3
+            grep: "@pr"
+          - name: mobile-core
+            project: chromium-mobile
+            shard: ""
+            grep: "@pr"
+    env:
+      CI: "1"
+      PLAYWRIGHT_BLOB_REPORT: "1"
+      PLAYWRIGHT_BLOB_DIR: blob-report
+      E2E_APP_COMMAND: npm run start:e2e
+      E2E_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.name }}
+      PLAYWRIGHT_OUTPUT_DIR: test-results/${{ matrix.name }}
+      VITE_APP_URL: http://localhost:3000
+      VITE_ZERO_CACHE_URL: http://127.0.0.1:4848
+      ZERO_UPSTREAM_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Use pinned npm
+        run: npm install --global npm@${NPM_VERSION}
+      - name: Install dependencies
+        run: npm ci
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.110.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start and reset isolated Supabase stack
+        run: |
+          supabase start
+          for attempt in 1 2 3; do
+            if supabase db reset --local --no-seed; then
+              break
+            fi
+            if [[ "$attempt" -eq 3 ]]; then
+              echo "Supabase reset failed after $attempt attempts"
+              exit 1
+            fi
+            delay_seconds=$(( attempt * 10 ))
+            echo "Supabase reset attempt $attempt failed; retrying in ${delay_seconds}s"
+            sleep "$delay_seconds"
+          done
+      - name: Export isolated stack environment
+        run: |
+          eval "$(supabase status -o env)"
+          {
+            echo "VITE_SUPABASE_URL=$API_URL"
+            echo "VITE_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "E2E_DATABASE_URL=$DB_URL"
+          } >> "$GITHUB_ENV"
+      - name: Build production-mode E2E app
+        run: npm run build:e2e
+      - name: Start with a clean Zero replica
+        run: node tools/zero/clean-dev-cache.mjs
+      - name: Run isolated E2E partition
+        env:
+          E2E_PROJECT: ${{ matrix.project }}
+          E2E_GREP: ${{ matrix.grep }}
+          E2E_SHARD: ${{ matrix.shard }}
+        run: |
+          args=(--project="$E2E_PROJECT" --grep "$E2E_GREP")
+          if [[ -n "$E2E_SHARD" ]]; then
+            args+=(--shard="$E2E_SHARD")
+          fi
+          npx playwright test "${args[@]}"
+      - name: Upload first-failure diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: e2e-${{ matrix.name }}-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            test-results/
+      - name: Upload shard blob report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: e2e-blob-${{ matrix.name }}-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: blob-report/
+      - name: Stop isolated stack
+        if: always()
+        run: supabase stop --no-backup
+
+  merge-e2e-reports:
+    name: Merge E2E Reports
+    if: always()
+    needs: e2e-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm install --global npm@${NPM_VERSION}
+      - run: npm ci
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: e2e-blob-*-${{ github.run_attempt }}
+          path: all-blob-reports
+          merge-multiple: true
+      - name: Validate E2E blob reports
+        run: |
+          blob_count=0
+          if [[ -d all-blob-reports ]]; then
+            blob_count="$(find all-blob-reports -type f -name 'report-*.zip' | wc -l | tr -d ' ')"
+          fi
+          if [[ "$blob_count" -ne 4 ]]; then
+            echo "Expected four E2E blob reports, received $blob_count"
+            exit 1
+          fi
+      - name: Merge shard reports
+        run: npx playwright merge-reports --reporter html all-blob-reports
+      - uses: actions/upload-artifact@v6
+        with:
+          name: e2e-html-report-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: playwright-report/
+      - name: Require successful E2E shards
+        if: always()
+        env:
+          E2E_SHARDS_RESULT: ${{ needs.e2e-tests.result }}
+        run: |
+          if [[ "$E2E_SHARDS_RESULT" != "success" ]]; then
+            echo "E2E shards did not all succeed: $E2E_SHARDS_RESULT"
+            exit 1
+          fi
+
   dependency-review:
     name: Dependency Review
     if: github.event_name == 'pull_request'
@@ -148,6 +507,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Review dependency changes
-        uses: actions/dependency-review-action@v5
+        uses: actions/dependency-review-action@v5.0.0
         with:
           fail-on-severity: moderate

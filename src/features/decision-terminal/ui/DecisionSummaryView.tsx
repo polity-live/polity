@@ -37,7 +37,7 @@ export function CollapsibleSectionView({
   section,
   isCollapsed,
   onToggle,
-  maxContentHeight,
+  maxContentHeight: _maxContentHeight,
   contentRef,
   needsCollapse,
 }: CollapsibleSectionViewProps) {
@@ -47,6 +47,7 @@ export function CollapsibleSectionView({
   return (
     <div className={featureThemeClassName('decisionterminalDecisionSummaryNeutralBorder')}>
       <Button
+        data-action-id="decision-terminal.summary.section.toggle"
         type="button"
         variant="ghost"
         onClick={onToggle}
@@ -81,7 +82,7 @@ export function CollapsibleSectionView({
             isCollapsed ? 'opacity-0' : 'opacity-100'
           )}
           style={{
-            maxHeight: isCollapsed ? 0 : needsCollapse && isCollapsed ? maxContentHeight : 'none',
+            maxHeight: isCollapsed ? 0 : 'none',
             overflow: 'hidden',
           }}
         >
@@ -115,7 +116,7 @@ export function DecisionSummaryView({
   className,
   labels,
   collapsedSections,
-  onToggleSection,
+  onToggleSection: _onToggleSection,
   onExpandAll,
   onCollapseAll,
   allCollapsed,
@@ -135,6 +136,7 @@ export function DecisionSummaryView({
         </span>
         <div className="flex gap-1">
           <Button
+            data-action-id="decision-terminal.summary.expand-all"
             variant="ghost"
             size="sm"
             onClick={onExpandAll}
@@ -144,6 +146,7 @@ export function DecisionSummaryView({
             {labels.expandAll}
           </Button>
           <Button
+            data-action-id="decision-terminal.summary.collapse-all"
             variant="ghost"
             size="sm"
             onClick={onCollapseAll}
@@ -162,7 +165,6 @@ export function DecisionSummaryView({
             <span className="sr-only">
               {collapsedSections.has(index) ? 'collapsed' : 'expanded'}
             </span>
-            <button type="button" className="hidden" onClick={() => onToggleSection(index)} />
           </div>
         ))}
       </div>
@@ -199,7 +201,13 @@ export function DecisionSummaryCompactView({
         {summary}
       </p>
       {summary.length > 150 && (
-        <Button variant="link" size="sm" onClick={onToggle} className="h-auto p-0 text-xs">
+        <Button
+          variant="link"
+          size="sm"
+          data-action-id="decision-terminal.summary.compact.toggle"
+          onClick={onToggle}
+          className="h-auto p-0 text-xs"
+        >
           {isExpanded ? labels.showLess : labels.readMore}
         </Button>
       )}

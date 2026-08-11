@@ -26,4 +26,39 @@ describe('wiki preload dependencies', () => {
 
     await expect(task.resolveAfterComplete?.()).resolves.toEqual([]);
   });
+
+  it('preserves unrelated tasks and resolves every supported result shape', async () => {
+    const unrelated = { ...createGroupPreloadTasks('group-1', 'viewer-1')[0], key: 'primary:home' };
+    expect(withWikiTaskDependencies(unrelated, { run: vi.fn() }, 'viewer-1')).toBe(unrelated);
+    const groupTask = createGroupPreloadTasks('group-1', 'viewer-1')[0];
+    expect(withWikiTaskDependencies(groupTask, { run: vi.fn() })).toBe(groupTask);
+
+    for (const value of [
+      [],
+      [null],
+      'invalid',
+      { connected_group_id: '' },
+      { connected_group_id: 42 },
+    ]) {
+      const task = withWikiTaskDependencies(
+        groupTask,
+        { run: vi.fn().mockResolvedValue(value) },
+        'viewer-1'
+      );
+      await expect(task.resolveAfterComplete?.()).resolves.toEqual([]);
+    }
+  });
+
+  it('keeps existing dependent entries before connected-group entries', async () => {
+    const base = createGroupPreloadTasks('group-1', 'viewer-1')[0];
+    const existing = { key: 'existing', query: {} };
+    const task = withWikiTaskDependencies(
+      { ...base, resolveAfterComplete: vi.fn().mockResolvedValue([existing]) },
+      { run: vi.fn().mockResolvedValue([{ connected_group_id: 'group-2' }]) },
+      'viewer-1'
+    );
+    const entries = await task.resolveAfterComplete?.();
+    expect(entries?.[0]).toBe(existing);
+    expect(entries).toHaveLength(3);
+  });
 });

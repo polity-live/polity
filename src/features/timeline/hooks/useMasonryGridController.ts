@@ -9,13 +9,14 @@ export function useMasonryGridController(args: {
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!args.hasMore || !args.onLoadMore || args.isLoading) return;
+    const onLoadMore = args.onLoadMore;
+    if (!args.hasMore || !onLoadMore || args.isLoading) return;
 
     const observer = new IntersectionObserver(
       entries => {
         const [entry] = entries;
         if (entry.isIntersecting) {
-          args.onLoadMore?.();
+          onLoadMore();
         }
       },
       { threshold: 0.1, rootMargin: '200px' }

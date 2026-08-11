@@ -4,6 +4,7 @@ import {
   applyEntityReadState,
   isNotificationDismissed,
   isNotificationPurged,
+  isNotificationActive,
   isNotificationRead,
 } from '../notificationReadState';
 
@@ -77,5 +78,17 @@ describe('notificationReadState', () => {
 
     expect(normalized[0]?.is_read).toBe(true);
     expect(rows[0]?.is_read).toBe(false);
+  });
+
+  it('covers empty viewer state, legacy defaults, active state, and null collections', () => {
+    expect(isNotificationRead({ viewer_state: null })).toBe(false);
+    expect(isNotificationRead({ recipient_entity_type: null, is_read: false })).toBe(false);
+    expect(isNotificationRead({ recipient_entity_type: 'blog', reads: null })).toBe(false);
+    expect(isNotificationDismissed({})).toBe(false);
+    expect(isNotificationPurged({})).toBe(false);
+    expect(isNotificationActive({})).toBe(true);
+    expect(isNotificationActive({ viewer_state: [{ dismissed_at: 1 }] })).toBe(false);
+    expect(isNotificationActive({ viewer_state: [{ purged_at: 1 }] })).toBe(false);
+    expect(applyEntityReadState(null)).toEqual([]);
   });
 });

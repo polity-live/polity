@@ -181,11 +181,22 @@ export function TodoDetailDialogView({
             <div className="flex shrink-0 items-center gap-2 self-end sm:self-start">
               {isEditing && canManageTodos ? (
                 <>
-                  <Button onClick={handleSave} disabled={isSaving} size="sm">
+                  <Button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    size="sm"
+                    data-action-id="todos.detail-dialog.save"
+                  >
                     <Save className="mr-2 h-4 w-4" />
                     {t('features.todos.detail.save')}
                   </Button>
-                  <Button onClick={handleCancel} variant="outline" size="sm" disabled={isSaving}>
+                  <Button
+                    onClick={handleCancel}
+                    variant="outline"
+                    size="sm"
+                    disabled={isSaving}
+                    data-action-id="todos.detail-dialog.cancel"
+                  >
                     <X className="mr-2 h-4 w-4" />
                     {t('features.todos.detail.cancel')}
                   </Button>
@@ -200,14 +211,25 @@ export function TodoDetailDialogView({
                     onArchive={handleArchive}
                     onUnarchive={handleUnarchive}
                   />
-                  <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+                  <Button
+                    onClick={() => setIsEditing(true)}
+                    variant="outline"
+                    size="sm"
+                    data-action-id="todos.detail-dialog.edit"
+                  >
                     <Edit className="mr-2 h-4 w-4" />
                     {t('features.todos.actions.edit')}
                   </Button>
                 </>
               ) : null}
               <DialogClose asChild>
-                <Button type="button" variant="ghost" size="icon" aria-label={t('common.close')}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t('common.close')}
+                  data-action-id="todos.detail-dialog.close"
+                >
                   <X className="h-4 w-4" />
                 </Button>
               </DialogClose>
@@ -226,30 +248,43 @@ export function TodoDetailDialogView({
                 <FormControlSelect
                   value={formData.status}
                   onValueChange={(v: TodoStatus) => setFormData({ ...formData, status: v })}
+                  data-action-id="todos.detail-dialog.status.select"
                 >
-                  <FormControlSelectTrigger>
+                  <FormControlSelectTrigger data-action-id="todos.detail-dialog.status.select">
                     <FormControlSelectValue />
                   </FormControlSelectTrigger>
                   <FormControlSelectContent>
-                    <FormControlSelectItem value="pending">
+                    <FormControlSelectItem
+                      value="pending"
+                      data-action-id="todos.detail-dialog.status.pending"
+                    >
                       <div className="flex items-center gap-2">
                         <Circle className="h-4 w-4" />
                         {t('features.todos.status.pending')}
                       </div>
                     </FormControlSelectItem>
-                    <FormControlSelectItem value="in_progress">
+                    <FormControlSelectItem
+                      value="in_progress"
+                      data-action-id="todos.detail-dialog.status.in-progress"
+                    >
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
                         {t('features.todos.status.inProgress')}
                       </div>
                     </FormControlSelectItem>
-                    <FormControlSelectItem value="completed">
+                    <FormControlSelectItem
+                      value="completed"
+                      data-action-id="todos.detail-dialog.status.completed"
+                    >
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4" />
                         {t('features.todos.status.completed')}
                       </div>
                     </FormControlSelectItem>
-                    <FormControlSelectItem value="cancelled">
+                    <FormControlSelectItem
+                      value="cancelled"
+                      data-action-id="todos.detail-dialog.status.cancelled"
+                    >
                       <div className="flex items-center gap-2">
                         <XCircle className="h-4 w-4" />
                         {t('features.todos.status.cancelled')}
@@ -273,18 +308,25 @@ export function TodoDetailDialogView({
                 <FormControlSelect
                   value={formData.priority}
                   onValueChange={(v: TodoPriority) => setFormData({ ...formData, priority: v })}
+                  data-action-id="todos.detail-dialog.priority.select"
                 >
-                  <FormControlSelectTrigger>
+                  <FormControlSelectTrigger data-action-id="todos.detail-dialog.priority.select">
                     <FormControlSelectValue />
                   </FormControlSelectTrigger>
                   <FormControlSelectContent>
-                    <FormControlSelectItem value="low">
+                    <FormControlSelectItem
+                      value="low"
+                      data-action-id="todos.detail-dialog.priority.low"
+                    >
                       <div className="flex items-center gap-2">
                         <Flag className={featureThemeClassName('eventCancelEventDialogInfoIcon')} />
                         {t('features.todos.priority.low')}
                       </div>
                     </FormControlSelectItem>
-                    <FormControlSelectItem value="medium">
+                    <FormControlSelectItem
+                      value="medium"
+                      data-action-id="todos.detail-dialog.priority.medium"
+                    >
                       <div className="flex items-center gap-2">
                         <Flag
                           className={featureThemeClassName(
@@ -294,7 +336,10 @@ export function TodoDetailDialogView({
                         {t('features.todos.priority.medium')}
                       </div>
                     </FormControlSelectItem>
-                    <FormControlSelectItem value="high">
+                    <FormControlSelectItem
+                      value="high"
+                      data-action-id="todos.detail-dialog.priority.high"
+                    >
                       <div className="flex items-center gap-2">
                         <Flag
                           className={featureThemeClassName('positionPositionsTableWarningIcon')}
@@ -302,7 +347,10 @@ export function TodoDetailDialogView({
                         {t('features.todos.priority.high')}
                       </div>
                     </FormControlSelectItem>
-                    <FormControlSelectItem value="urgent">
+                    <FormControlSelectItem
+                      value="urgent"
+                      data-action-id="todos.detail-dialog.priority.urgent"
+                    >
                       <div className="flex items-center gap-2">
                         <AlertCircle
                           className={featureThemeClassName('paymentSubscriptionStatusDangerIcon')}
@@ -465,6 +513,8 @@ export function TodoDetailDialogView({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleRemoveAssignee(userId)}
+                            aria-label={t('features.todos.assignee.removeAssignee')}
+                            data-action-id="todos.detail-dialog.assignee.remove"
                           >
                             <Trash2 className="text-destructive h-4 w-4" />
                           </Button>
@@ -482,6 +532,7 @@ export function TodoDetailDialogView({
                         variant="outline"
                         className="w-full justify-start"
                         disabled={!members.length}
+                        data-action-id="todos.detail-dialog.assignee.open"
                       >
                         <UserPlus className="mr-2 h-4 w-4" />
                         {t('features.todos.assignee.addAssignee')}
@@ -505,21 +556,14 @@ export function TodoDetailDialogView({
                               )
                               .map((membership: any) => {
                                 const user = membership.user;
-                                if (!user) return null;
                                 return (
                                   <CommandItem
                                     key={user.id}
                                     value={user.id}
                                     onSelect={() => handleAddAssignee(user.id)}
+                                    data-action-id="todos.detail-dialog.assignee.add"
                                   >
-                                    <Check
-                                      className={cn(
-                                        'mr-2 h-4 w-4',
-                                        selectedUserIds.includes(user.id)
-                                          ? 'opacity-100'
-                                          : 'opacity-0'
-                                      )}
-                                    />
+                                    <Check className={cn('mr-2 h-4 w-4', 'opacity-0')} />
                                     <Avatar className="mr-2 h-6 w-6">
                                       <AvatarImage src={user.avatar ?? undefined} />
                                       <AvatarFallback>
@@ -623,7 +667,7 @@ export function TodoDetailDialogView({
                     {t('features.todos.detail.tags')}
                   </FormControlLabel>
                   <div className="flex flex-wrap gap-2">
-                    {(todo.tags ?? []).map((tag: string, idx: number) => (
+                    {todo.tags.map((tag: string, idx: number) => (
                       <BadgeControl key={idx} variant="secondary">
                         {tag}
                       </BadgeControl>

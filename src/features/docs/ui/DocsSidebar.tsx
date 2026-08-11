@@ -14,6 +14,7 @@ export function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav aria-label={t('pages.docs.hub.sidebarTitle')} className="space-y-5">
       <Link
+        data-action-id="docs.sidebar.home.open"
         to="/docs"
         onClick={onNavigate}
         className={cn(
@@ -38,6 +39,7 @@ export function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
               return (
                 <li key={page.slug}>
                   <Link
+                    data-action-id="docs.sidebar.page.open"
                     to={page.route as never}
                     onClick={onNavigate}
                     aria-current={active ? 'page' : undefined}

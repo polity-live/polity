@@ -112,11 +112,18 @@ export function EventNetworkFlowView({
           </p>
           <div className="mt-4 flex justify-center gap-3">
             {canManageEvent ? (
-              <Button onClick={() => navigate({ to: `/event/${eventId}/settings` })}>
+              <Button
+                onClick={() => navigate({ to: `/event/${eventId}/settings` })}
+                data-action-id="network.event.settings.open"
+              >
                 {translateText('generated.inline.0767_zur_event_einstellungen_d28673fc')}
               </Button>
             ) : (
-              <Button variant="outline" onClick={() => navigate({ to: `/event/${eventId}` })}>
+              <Button
+                variant="outline"
+                onClick={() => navigate({ to: `/event/${eventId}` })}
+                data-action-id="network.event.open"
+              >
                 {translateText('generated.inline.0768_zur_ck_zur_veranstaltung_163f275f')}
               </Button>
             )}
@@ -220,6 +227,7 @@ export function EventNetworkFlowView({
             size="sm"
             variant="outline"
             onClick={handleSaveLayout}
+            data-action-id="network.event-layout.save"
             disabled={isLayoutLoading || !hasLayoutChanges}
           >
             {t('common.network.saveLayout')}
@@ -228,6 +236,7 @@ export function EventNetworkFlowView({
             size="sm"
             variant="outline"
             onClick={handleResetLayout}
+            data-action-id="network.event-layout.reset"
             disabled={isLayoutLoading || (!hasSavedLayout && !hasLayoutChanges)}
           >
             {t('common.network.resetLayout')}

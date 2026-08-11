@@ -130,9 +130,7 @@ export function useTerminalSubscription(
     }, pollInterval);
 
     return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
   }, [enabled, pollInterval, processDecisionUpdates]);
 

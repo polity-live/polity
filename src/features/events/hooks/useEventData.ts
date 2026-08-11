@@ -60,7 +60,7 @@ export function useEventData(eventId?: string) {
 export function useEventParticipants(eventId?: string) {
   const { participants: eventParticipants, isLoading } = useEventParticipantsQuery(eventId);
 
-  const participants = useMemo(() => eventParticipants || [], [eventParticipants]);
+  const participants = useMemo(() => eventParticipants, [eventParticipants]);
 
   const { activeParticipants, invitedParticipants, requestedParticipants } = useMemo(() => {
     const active: typeof participants = [];

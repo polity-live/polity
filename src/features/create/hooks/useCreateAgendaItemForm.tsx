@@ -81,6 +81,8 @@ type AgendaItemCreateInput = AgendaItemFullCreateInput['agenda_items'][number];
 type AgendaElectionCreateInput = NonNullable<AgendaItemFullCreateInput['elections']>[number];
 type AgendaRoleCreateInput = NonNullable<AgendaItemFullCreateInput['roles']>[number];
 
+const alwaysValidCreateStep: () => boolean = Boolean.bind(null, true);
+
 interface CreateAgendaItemSearch {
   eventId?: string;
   type?: AgendaItemType;
@@ -168,10 +170,10 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   );
   const roleRenewalRole = useMemo(
     () =>
-      roleRenewalAssignment?.roleId
-        ? ((sourceGroupRoles || []).find(role => role.id === roleRenewalAssignment.roleId) ?? null)
+      roleRenewalAssignment
+        ? sourceGroupRoles?.find(role => role.id === roleRenewalAssignment.roleId)
         : null,
-    [roleRenewalAssignment?.roleId, sourceGroupRoles]
+    [roleRenewalAssignment, sourceGroupRoles]
   );
   const linkedAssignment = delegateAssignment ?? roleRenewalAssignment;
 
@@ -275,6 +277,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
     }
 
     const remainingSeatCount = getRemainingSeatCount(delegateAssignment);
+    const totalSeatCount = delegateAssignment.seatCount;
+    if (totalSeatCount == null) return;
     const targetEventTitle = delegateAssignment.targetEvent?.title;
     const defaultMode = normalizeDelegateElectionMode(
       delegateAssignment.targetEvent?.delegate_election_mode ?? electionModeParam
@@ -288,7 +292,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       buildDelegateElectionAgendaItemDescription({
         mode: defaultMode,
         seatCount: Math.max(1, remainingSeatCount),
-        totalSeatCount: delegateAssignment.seatCount ?? Math.max(1, remainingSeatCount),
+        totalSeatCount,
       })
     );
 
@@ -327,7 +331,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         roleTitle,
       })
     );
-    setDescription(roleRenewalRole?.description || roleRenewalAssignment.description || '');
+    setDescription(roleRenewalRole?.description || roleRenewalAssignment.description);
 
     if (eventIdParam) {
       setEventId(eventIdParam);
@@ -511,16 +515,22 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
 
   const createDelegateAssignmentElection = (
     correlationId: string
-  ): Pick<AgendaItemFullCreateInput, 'roles' | 'agenda_items' | 'elections'> => {
+  ): {
+    roles: AgendaRoleCreateInput[];
+    agenda_items: AgendaItemCreateInput[];
+    elections: AgendaElectionCreateInput[];
+  } => {
     if (
       !delegateAssignment?.targetEvent?.id ||
       !delegateAssignment.targetEvent.group?.id ||
-      !sourceGroupId
+      !sourceGroupId ||
+      delegateAssignment.seatCount == null ||
+      delegateAssignment.completedSeatCount == null
     ) {
       throw new Error('Der Delegiertenauftrag konnte nicht eindeutig aufgelöst werden.');
     }
 
-    const totalSeatCount = delegateAssignment.seatCount ?? delegateSeatCount;
+    const totalSeatCount = delegateAssignment.seatCount;
     const existingSeatRoleIds = collectExistingDelegateSeatRoleIds(
       sourceGroupRoles || [],
       sourceGroupId,
@@ -529,7 +539,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
     const seatRoleIds = Array.from({ length: delegateSeatCount }, () => crypto.randomUUID());
     const allSeatRoleIds = [...existingSeatRoleIds, ...seatRoleIds];
     const existingSeatCount = Math.max(
-      delegateAssignment.completedSeatCount ?? 0,
+      delegateAssignment.completedSeatCount,
       existingSeatRoleIds.length
     );
     const baseSortOrder = (sourceGroupRoles || []).length;
@@ -547,6 +557,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
 
     for (let index = 0; index < seatRoleIds.length; index++) {
       const seatRoleId = seatRoleIds[index];
+      if (!seatRoleId) continue;
       const seatNumber = existingSeatCount + index + 1;
       const seatRoleInput = buildDelegateSeatRoleInput({
         sourceGroupName: sourceGroup?.name,
@@ -591,18 +602,17 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
     if (resolvedElectionMode === 'list') {
       const agendaItemId = crypto.randomUUID();
       const electionId = crypto.randomUUID();
+      const primarySeatRoleId = seatRoleIds[0];
+      if (!primarySeatRoleId) {
+        throw new Error('Für die Delegiertenwahl wurde kein Sitz angelegt.');
+      }
 
       return {
         roles,
         agenda_items: [
           createAgendaItemRecord({
             agendaItemId,
-            title:
-              title.trim() ||
-              buildDelegateElectionAgendaItemTitle({
-                mode: 'list',
-                targetEventTitle: delegateAssignment.targetEvent.title,
-              }),
+            title: title.trim(),
             description:
               description.trim() ||
               buildDelegateElectionAgendaItemDescription({
@@ -619,13 +629,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           {
             id: electionId,
             agenda_item_id: agendaItemId,
-            role_id: seatRoleIds[0] ?? null,
-            title:
-              title.trim() ||
-              buildDelegateElectionRecordTitle({
-                mode: 'list',
-                targetEventTitle: delegateAssignment.targetEvent.title,
-              }),
+            role_id: primarySeatRoleId,
+            title: title.trim(),
             description: buildDelegateElectionRecordDescription({
               sourceGroupId,
               sourceGroupName: sourceGroup?.name,
@@ -770,9 +775,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       if (isElectionType) {
         if (isDelegateAssignmentElection) {
           const delegatePayload = createDelegateAssignmentElection(correlationId);
-          roles.push(...(delegatePayload.roles ?? []));
+          roles.push(...delegatePayload.roles);
           agendaItems.push(...delegatePayload.agenda_items);
-          elections.push(...(delegatePayload.elections ?? []));
+          elections.push(...delegatePayload.elections);
         } else {
           const agendaItemId = crypto.randomUUID();
 
@@ -837,7 +842,11 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         ...(elections.length > 0 ? { elections } : {}),
         ...(votes.length > 0 ? { votes } : {}),
       };
-      const primaryAgendaItemId = agendaItems[0]?.id ?? correlationId;
+      const primaryAgendaItem = agendaItems[0];
+      if (!primaryAgendaItem) {
+        throw new Error('Es wurde kein Tagesordnungspunkt erzeugt.');
+      }
+      const primaryAgendaItemId = primaryAgendaItem.id;
       const agendaTarget = createRouteSubmitTarget('agenda_item', {
         to: '/event/$id/agenda/$agendaItemId',
         params: { id: eventId, agendaItemId: primaryAgendaItemId },
@@ -1007,7 +1016,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                     component: CreateInlineNotice,
                     props: {
                       text: t('pages.create.agendaItem.roleRenewalAssignmentNotice', {
-                        roleTitle: roleRenewalRoleTitle || roleRenewalAssignment.title,
+                        roleTitle: roleRenewalRoleTitle,
                       }),
                     },
                   },
@@ -1053,7 +1062,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         },
         {
           label: t('pages.create.agendaItem.typeAndSettings'),
-          isValid: () => true,
+          isValid: alwaysValidCreateStep,
           sections: [
             {
               key: 'type',
@@ -1214,7 +1223,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           : []),
         {
           label: t('pages.create.agendaItem.additionalLinks'),
-          isValid: () => true,
+          isValid: alwaysValidCreateStep,
           optional: true,
           fields: [
             ...(isVoteType
@@ -1264,7 +1273,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                     component: CreateInlineNotice,
                     props: {
                       text: t('pages.create.agendaItem.roleRenewalRoleNotice', {
-                        roleTitle: roleRenewalRoleTitle || roleRenewalAssignment.title,
+                        roleTitle: roleRenewalRoleTitle,
                       }),
                     },
                   },

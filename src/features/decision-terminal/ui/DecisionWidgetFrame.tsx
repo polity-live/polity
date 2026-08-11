@@ -31,6 +31,7 @@ export function DecisionWidgetFrame({
     >
       <div className="bg-muted/40 flex h-10 shrink-0 items-center gap-2 border-b px-2.5">
         <Button
+          data-action-id="decision-terminal.widget.drag"
           type="button"
           variant="outline"
           size="icon"

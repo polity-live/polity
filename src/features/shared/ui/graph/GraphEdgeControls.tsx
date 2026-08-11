@@ -44,6 +44,7 @@ export function GraphEdgeLabelButton({
 }) {
   return (
     <button
+      data-action-id="shared.graph-edge-label.activate.default"
       type="button"
       className={cn(
         'sharedEdgeLabelButton nodrag nopan',
@@ -110,6 +111,7 @@ export function GraphPositionHandle({
 }) {
   return (
     <button
+      data-action-id="shared.graph-position-handle.move.default"
       type="button"
       className={cn('sharedEdgePositionHandle', active && 'is-active', className)}
       {...props}
@@ -147,6 +149,7 @@ export function GraphBendPointButton({
 }) {
   return (
     <button
+      data-action-id="shared.graph-bend-point.move.default"
       type="button"
       className={cn('sharedEdgeBendPointHandle', dragging && 'is-dragging', className)}
       {...props}
@@ -160,7 +163,12 @@ export function GraphBendPointDeleteButton({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button type="button" className={cn('sharedEdgeBendPointDeleteButton', className)} {...props}>
+    <button
+      data-action-id="shared.graph-bend-point.delete.default"
+      type="button"
+      className={cn('sharedEdgeBendPointDeleteButton', className)}
+      {...props}
+    >
       {children ?? <X className="h-3 w-3" />}
     </button>
   );

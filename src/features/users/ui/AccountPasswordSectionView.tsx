@@ -65,7 +65,11 @@ export function AccountPasswordSectionView({
       description={requiresInitialPassword ? copy.initialDescription : copy.description}
       icon={<KeyRound className="h-5 w-5" />}
     >
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form
+        onSubmit={onSubmit}
+        className="space-y-4"
+        data-action-id="users.account.password.submit"
+      >
         <PasswordField
           id="account-password"
           label={copy.newPassword}
@@ -114,7 +118,11 @@ export function AccountPasswordSectionView({
 
         {error ? <InlineNotice variant="destructive">{error}</InlineNotice> : null}
 
-        <FormButton type="submit" disabled={!isValid || isBusy}>
+        <FormButton
+          type="submit"
+          disabled={!isValid || isBusy}
+          data-action-id="users.account.password.submit"
+        >
           {isBusy ? <Spinner className="mr-2" /> : null}
           {isBusy ? copy.updating : requiresInitialPassword ? copy.setInitialPassword : copy.update}
         </FormButton>

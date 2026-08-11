@@ -110,7 +110,7 @@ function requestForegroundToast(windowClient, notificationData) {
           notification: {
             title: notificationData.title,
             body: notificationData.body,
-            url: notificationData.data?.url || '/',
+            url: notificationData.data.url,
             notificationId: notificationData.data?.notificationId,
             notificationType: notificationData.data?.type,
             tag: notificationData.tag,
@@ -278,13 +278,8 @@ self.addEventListener('sync', (event) => {
 });
 
 async function syncPushSubscription() {
-  try {
-    // Implement logic to sync push subscription with server
-    // This would typically retry storing the subscription in your database
-  } catch (error) {
-    console.error('[Service Worker] Error syncing push subscription:', error);
-    throw error; // Re-throw to retry on next sync
-  }
+  // Placeholder for retrying a failed subscription write. Resolving keeps the
+  // browser sync lifecycle deterministic until a real retry queue is added.
 }
 
 // ============================================================================

@@ -24,6 +24,11 @@ lib-cov
 
 # Coverage directory used by tools like istanbul
 coverage/
+coverage-*/
+.a04-coverage/
+.coverage-a*/
+.branch-campaign-artifacts/
+.vitest-reports/
 *.lcov
 
 # nyc test coverage
@@ -138,8 +143,9 @@ test-output.txt
 
 # Playwright Test Results
 /test-results/
-/test-results-ui/
+/test-results-*/
 /playwright-report/
+/playwright-report-*/
 /playwright/.cache/
 /e2e-results/
 /.playwright-cli/
@@ -149,6 +155,10 @@ test-output.txt
 
 # Playwright
 /blob-report/
+/reports/mutation/
+/reports/stryker-incremental.json
+/.stryker-tmp/
+/.stryker-tmp-*/
 /playwright/.auth/
 /e2e/.auth/
 

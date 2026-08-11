@@ -112,6 +112,16 @@ describe('AI copilot route', () => {
     expect(mockedGetAiCatalog).not.toHaveBeenCalled();
   });
 
+  it('returns 400 when the request body is not JSON', async () => {
+    mockedGetSession.mockResolvedValue({ user: { id: 'user-1' } } as Awaited<
+      ReturnType<typeof getSession>
+    >);
+    const response = await handleCopilotRequest(
+      new Request('http://localhost/api/ai/copilot', { method: 'POST', body: '{invalid' })
+    );
+    expect(response.status).toBe(400);
+  });
+
   it('returns Plate-compatible text from openrouter/free when it is available', async () => {
     const alphabeticallyEarlierFreeModel = {
       provider: 'openrouter' as const,
@@ -226,10 +236,80 @@ describe('AI copilot route', () => {
     expect(mockedGetAiCatalog).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    { failure: { statusCode: '429' }, warns: true },
+    { failure: 'rate limit exceeded', warns: true },
+    { failure: { status: 'not-a-number' }, warns: false },
+    { failure: 7, warns: false },
+  ])('classifies provider failure variants', async ({ failure, warns }) => {
+    const model = {
+      provider: 'openrouter' as const,
+      id: 'openrouter/free',
+      label: 'Free Models Router',
+      source: 'app' as const,
+      free: true,
+      supports_reasoning_effort: true,
+      context_window: null,
+    };
+    mockedGetSession.mockResolvedValue({ user: { id: 'user-1' } } as Awaited<
+      ReturnType<typeof getSession>
+    >);
+    mockedGetAiCatalog.mockResolvedValue({ credentials: [], models: [model] });
+    mockedResolveLanguageModelForUser.mockResolvedValue({
+      model: { modelId: 'openrouter/free' } as never,
+      providerOptions: undefined,
+      credentialProvider: null,
+    });
+    mockedGenerateText.mockRejectedValue(failure);
+
+    const response = await handleCopilotRequest(copilotRequest({ prompt: 'Continue this' }));
+    await expect(response.json()).resolves.toEqual({ text: '0' });
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(warns ? 1 : 0);
+    expect(consoleErrorSpy).toHaveBeenCalledTimes(warns ? 0 : 1);
+  });
+
+  it('tracks credential use and tolerates tracking failures', async () => {
+    const model = {
+      provider: 'openrouter' as const,
+      id: 'openrouter/free',
+      label: 'Free Models Router',
+      source: 'app' as const,
+      free: true,
+      supports_reasoning_effort: true,
+      context_window: null,
+    };
+    mockedGetSession.mockResolvedValue({ user: { id: 'user-1' } } as Awaited<
+      ReturnType<typeof getSession>
+    >);
+    mockedGetAiCatalog.mockResolvedValue({ credentials: [], models: [model] });
+    mockedResolveLanguageModelForUser.mockResolvedValue({
+      model: { modelId: 'openrouter/free' } as never,
+      providerOptions: undefined,
+      credentialProvider: 'openrouter',
+    });
+    mockedGenerateText.mockResolvedValue({ text: ' continuation.' } as Awaited<
+      ReturnType<typeof generateText>
+    >);
+
+    let response = await handleCopilotRequest(copilotRequest({ prompt: 'Continue this' }));
+    expect(response.status).toBe(200);
+    expect(mockedTouchAiCredential).toHaveBeenCalledWith('user-1', 'openrouter');
+
+    mockedTouchAiCredential.mockRejectedValueOnce(new Error('database failed'));
+    response = await handleCopilotRequest(copilotRequest({ prompt: 'Continue again' }));
+    expect(response.status).toBe(200);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Failed to update AI credential usage after copilot completion:',
+      expect.any(Error)
+    );
+  });
+
   it('normalizes unusable completions to 0', () => {
     expect(normalizeCopilotCompletion('')).toBe('0');
     expect(normalizeCopilotCompletion('0')).toBe('0');
     expect(normalizeCopilotCompletion('- a list item')).toBe('0');
     expect(normalizeCopilotCompletion('" continued text. "')).toBe('continued text.');
+    expect(normalizeCopilotCompletion('""')).toBe('0');
+    expect(normalizeCopilotCompletion('"0"')).toBe('0');
   });
 });

@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/todos/ui/TodoDetailDialogView.tsx#/user/$id": [
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDetailDialogView.actions.test.tsx",
+        "project": "component",
+        "caseId": "edits status, priority, and assignees through stable dialog intents",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/todos/ui/TodoDetailDialogView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/todos/ui/TodoDetailDialogView.tsx#/user/$id-2": [
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDetailDialogView.actions.test.tsx",
+        "project": "component",
+        "caseId": "edits status, priority, and assignees through stable dialog intents",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/todos/ui/TodoDetailDialogView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/todos/ui/TodoDetailView.tsx#/user/$id": [
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDetailView.branch.A09.test.tsx",
+        "project": "component",
+        "caseId": "renders defaults when optional todo data is absent",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/todos/ui/TodoDetailView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/todos/ui/TodoDetailView.tsx#/user/$id-2": [
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDetailView.branch.A09.test.tsx",
+        "project": "component",
+        "caseId": "renders defaults when optional todo data is absent",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/todos/ui/TodoDetailView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {
+    "src/features/todos/ui/TodoDetailDialogView.tsx#/user/$id": {
+      "actionId": "todos.todo-detail-dialog-view.navigate.user-id"
+    },
+    "src/features/todos/ui/TodoDetailDialogView.tsx#/user/$id-2": {
+      "actionId": "todos.todo-detail-dialog-view.navigate.user-id-2"
+    },
+    "src/features/todos/ui/TodoDetailView.tsx#/user/$id": {
+      "actionId": "todos.todo-detail-view.navigate.user-id"
+    },
+    "src/features/todos/ui/TodoDetailView.tsx#/user/$id-2": {
+      "actionId": "todos.todo-detail-view.navigate.user-id-2"
+    }
+  }
+}

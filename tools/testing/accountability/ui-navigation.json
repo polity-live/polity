@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "sourceReferences": {},
+  "actionReferences": {
+    "src/features/navigation/UserMenuView.tsx#navigation.user-menu.amendment-id": [
+      {
+        "file": "src/features/navigation/__tests__/UserMenu.test.tsx",
+        "project": "component",
+        "caseId": "reports tutorial progress only after the menu opens",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/navigation/UserMenuView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/navigation/UserMenuView.tsx#navigation.user-menu.event-id": [
+      {
+        "file": "src/features/navigation/__tests__/UserMenu.test.tsx",
+        "project": "component",
+        "caseId": "reports tutorial progress only after the menu opens",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/navigation/UserMenuView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/navigation/UserMenuView.tsx#navigation.user-menu.group-id": [
+      {
+        "file": "src/features/navigation/__tests__/UserMenu.test.tsx",
+        "project": "component",
+        "caseId": "reports tutorial progress only after the menu opens",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/navigation/UserMenuView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/navigation/UserMenuView.tsx#navigation.user-menu.https-github-com-polity-live-polity-issues": [
+      {
+        "file": "src/features/navigation/__tests__/UserMenuView.test.tsx",
+        "project": "component",
+        "caseId": "dispatches menu, search, documentation, and logout actions through stable intents",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/navigation/UserMenuView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/navigation/UserMenuView.tsx#navigation.user-menu.messages": [
+      {
+        "file": "src/features/navigation/__tests__/UserMenuView.test.tsx",
+        "project": "component",
+        "caseId": "dispatches menu, search, documentation, and logout actions through stable intents",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/navigation/UserMenuView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ],
+    "src/features/navigation/UserMenuView.tsx#navigation.user-menu.onboarding": [
+      {
+        "file": "src/features/navigation/__tests__/UserMenuView.test.tsx",
+        "project": "component",
+        "caseId": "dispatches menu, search, documentation, and logout actions through stable intents",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "report": "coverage/coverage-final.json",
+          "source": "src/features/navigation/UserMenuView.tsx",
+          "sourceMetrics": "100% lines/statements/functions/branches"
+        }
+      }
+    ]
+  },
+  "actionDeclarations": {}
+}

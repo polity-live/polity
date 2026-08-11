@@ -25,4 +25,10 @@ describe('localizeNotificationCopy', () => {
   it('does not modify user-authored copy', () => {
     expect(localizeNotificationCopy('Eigener Titel', 'en')).toBe('Eigener Titel');
   });
+
+  it('accepts notification keys directly and preserves empty values', () => {
+    expect(localizeNotificationCopy(titleKey, 'de')).toBe(translateWithLanguage('de', titleKey));
+    expect(localizeNotificationCopy('', 'en')).toBe('');
+    expect(localizeNotificationCopy(undefined, 'en')).toBeUndefined();
+  });
 });

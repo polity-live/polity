@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "sourceReferenceAdditions": {
+    "src/routes/_authed/event/$id/agenda.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 event agenda layout renders the nested deep-link outlet",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/event/$id/agenda/$agendaItemId.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 event agenda item forwards both deep-link parameters",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/event/$id/agenda/index.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 event agenda index forwards the event deep-link parameter",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/event/$id/index.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 event index forwards the event deep-link parameter to its wiki",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/event/$id/network.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 event network renders its viewport with the selected event",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/event/$id/roles.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 event roles redirects the deep link to the roles participant tab",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/event/$id/stream.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 event stream redirects the deep link to its agenda",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/group/$id/amendments.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 group amendments forwards the group deep-link parameter",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/group/$id/blog.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 group blog layout renders the nested deep-link outlet",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/group/$id/blog/$entryId/index.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 group blog entry forwards the entry deep-link parameter",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/group/$id/blog/index.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 group blog index renders its translated route content",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/group/$id/blogs-and-statements.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 group blogs and statements forwards the group deep-link parameter",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/group/$id/index.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 group index forwards the group deep-link parameter to its wiki",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/user/$id/blog.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 user blog layout renders the nested deep-link outlet",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/user/$id/blog/$entryId/index.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 user blog entry forwards the entry deep-link parameter",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/user/$id/index.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 user index forwards the user deep-link parameter to its wiki",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/user/$id/meet.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 user meet forwards the user deep link to the scheduler",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/user/$id/network.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 user network renders its viewport with the selected user",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/home.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 home invokes its preload before rendering the timeline",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/notifications.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 notifications invokes its preload before rendering the page",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/search.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 search validates deep-link filters and preloads that exact state",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/statement/$id.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 statement detail builds its model from the deep-link parameter",
+        "evidence": { "relation": "direct" }
+      }
+    ],
+    "src/routes/_authed/todos/$id.tsx": [
+      {
+        "file": "src/routes/__tests__/route-open-accountability.R03.test.tsx",
+        "project": "component",
+        "caseId": "R03 todo detail forwards the todo deep-link parameter",
+        "evidence": { "relation": "direct" }
+      }
+    ]
+  }
+}

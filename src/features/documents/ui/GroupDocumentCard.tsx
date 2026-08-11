@@ -71,7 +71,11 @@ export function GroupDocumentCard({ document, href }: GroupDocumentCardProps) {
   if (href) {
     return (
       <Card asChild interactive="shadow">
-        <SmartLink href={href} className="block cursor-pointer">
+        <SmartLink
+          data-action-id="documents.card.open"
+          href={href}
+          className="block cursor-pointer"
+        >
           {content}
         </SmartLink>
       </Card>

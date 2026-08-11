@@ -22,6 +22,7 @@ interface OfflineTallyValue {
 }
 
 interface OfflineTallyDialogProps {
+  'data-action-scope'?: 'presentation';
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;

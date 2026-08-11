@@ -75,6 +75,9 @@ describe('AddLinkDialog', () => {
 
     render(<AddLinkDialog isOpen onOpenChange={vi.fn()} onSubmit={onSubmit} />);
 
+    expect(document.querySelector('[data-action-id="network.add-link.open"]')).toBeTruthy();
+    expect(document.querySelector('[data-action-id="network.add-link.form.submit"]')).toBeTruthy();
+
     fireEvent.change(screen.getByLabelText('generated.inline.0535_label_74341e3c'), {
       target: { value: 'Polity docs' },
     });

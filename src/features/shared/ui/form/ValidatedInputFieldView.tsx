@@ -104,6 +104,7 @@ export function ValidatedInputFieldView({
             onBlur?.(event);
           }}
           onKeyDown={handleKeyDown}
+          role="combobox"
           aria-invalid={computedInvalid || undefined}
           data-valid={computedValid ? 'true' : undefined}
           aria-autocomplete={visibleSuggestions.length > 0 ? 'list' : undefined}

@@ -72,6 +72,7 @@ export function TodosSectionView({
             <CardTitle>{translateText('generated.inline.0733_todos_a4114a83')}</CardTitle>
             <div className="flex items-center gap-2">
               <Button
+                data-action-id="groups.todos.toggle.archive"
                 variant={archiveMode === 'archived' ? 'secondary' : 'outline'}
                 size="sm"
                 onClick={() => setArchiveMode(archiveMode === 'archived' ? 'active' : 'archived')}
@@ -88,6 +89,7 @@ export function TodosSectionView({
               {archiveMode === 'active' ? (
                 <div className="flex rounded-md border">
                   <Button
+                    data-action-id="groups.todos.select.kanban"
                     variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
                     size="sm"
                     className="rounded-r-none border-0"
@@ -96,6 +98,7 @@ export function TodosSectionView({
                     <LayoutGrid className="h-4 w-4" />
                   </Button>
                   <Button
+                    data-action-id="groups.todos.select.list"
                     variant={viewMode === 'list' ? 'secondary' : 'ghost'}
                     size="sm"
                     className="rounded-l-none border-0"

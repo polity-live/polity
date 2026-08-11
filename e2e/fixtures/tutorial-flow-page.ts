@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page, type Request } from '@playwright/test';
+import { fromCrossJSON, toCrossJSONAsync } from 'seroval';
 
 import {
   APP_TUTORIAL_CHECKPOINTS,
@@ -7,6 +8,7 @@ import {
   type AppTutorialCheckpoint,
   type AppTutorialCheckpointId,
 } from '../../src/features/app-tutorial/catalog';
+import { tutorialRouteMatches } from '../../src/features/app-tutorial/logic/tutorialRoute';
 import { db } from './db';
 
 const CHECKPOINT_TIMEOUT_MS = 120_000;
@@ -33,6 +35,10 @@ interface BrowserError {
 
 function cssAttribute(value: string) {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 async function visible(locator: Locator) {
@@ -266,21 +272,44 @@ export class TutorialFlowPage {
   }
 
   private target(checkpoint: AppTutorialCheckpoint) {
-    return this.page
-      .locator(`[data-tutorial-anchor="${cssAttribute(checkpoint.anchor)}"]:visible`)
-      .first();
+    return this.page.locator(`[data-tutorial-current-target="${checkpoint.id}"]:visible`);
+  }
+
+  private async unique(locator: Locator) {
+    await expect(locator).toHaveCount(1, { timeout: CHECKPOINT_TIMEOUT_MS });
+    return locator;
   }
 
   private async expectCheckpoint(checkpoint: AppTutorialCheckpoint) {
     const overlay = this.overlay(checkpoint.id);
-    await expect(overlay).toHaveCount(1, { timeout: CHECKPOINT_TIMEOUT_MS });
-    await expect(overlay.locator('[role="dialog"]')).toBeVisible({
-      timeout: CHECKPOINT_TIMEOUT_MS,
-    });
-    await expect(this.target(checkpoint)).toBeVisible({
-      timeout: CHECKPOINT_TIMEOUT_MS,
-    });
-    await expect(overlay.locator('[role="alert"]')).toHaveCount(0);
+    await expect
+      .poll(
+        async () => {
+          if ((await overlay.count()) !== 1) return `overlay missing at ${this.page.url()}`;
+
+          const alerts = overlay.locator('[role="alert"]:visible');
+          if (await alerts.count()) {
+            return `tutorial error: ${(await alerts.allTextContents()).join(' | ')}`;
+          }
+
+          const expectedRoute = await overlay.getAttribute('data-tutorial-route');
+          const url = new URL(this.page.url());
+          const currentRoute = `${url.pathname}${url.search}`;
+          if (expectedRoute && !tutorialRouteMatches(currentRoute, expectedRoute)) {
+            return `route ${currentRoute}; expected ${expectedRoute}`;
+          }
+
+          if (!(await overlay.locator('[role="dialog"]:visible').count())) {
+            return `coach dialog missing at ${currentRoute}`;
+          }
+          if (!(await this.target(checkpoint).count())) {
+            return `target ${checkpoint.anchor} missing at ${currentRoute}`;
+          }
+          return 'ready';
+        },
+        { timeout: CHECKPOINT_TIMEOUT_MS }
+      )
+      .toBe('ready');
     await this.page.evaluate(
       () =>
         new Promise<void>(resolve => {
@@ -295,14 +324,14 @@ export class TutorialFlowPage {
       .poll(
         async () => {
           const currentOverlay = this.overlay(this.activeCheckpointId);
-          const error = currentOverlay
-            .locator('[role="alert"]:visible, p.text-destructive:visible')
-            .first();
-          if (await error.count()) {
+          const errors = currentOverlay.locator(
+            '[role="alert"]:visible, p.text-destructive:visible'
+          );
+          if (await errors.count()) {
             throw new Error(
               `Tutorial error at checkpoint ${this.activeCheckpointId} after ${
                 this.restartRequestCount
-              } restart request(s): ${await error.innerText()}`
+              } restart request(s): ${(await errors.allTextContents()).join(' | ')}`
             );
           }
           if (checkpoint && (await this.overlay(checkpoint.id).count()) === 1) {
@@ -327,10 +356,8 @@ export class TutorialFlowPage {
   }
 
   private async clickContinue(checkpoint: AppTutorialCheckpoint) {
-    const button = this.overlay(checkpoint.id).getByRole('button', {
-      name: /^(Continue|Got it|Weiter|Verstanden)$/,
-    });
-    await expect(button).toBeVisible();
+    const button = this.overlay(checkpoint.id).getByTestId('app-tutorial-continue');
+    await expect(button).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
     await button.click();
   }
 
@@ -347,9 +374,9 @@ export class TutorialFlowPage {
       return;
     }
 
-    const scroller = this.page
-      .locator('[data-tutorial-horizontal-scroller="primary-navigation"]:visible')
-      .last();
+    const scroller = await this.unique(
+      this.page.locator('[data-tutorial-horizontal-scroller="primary-navigation"]:visible')
+    );
     await expect(scroller).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
 
     const movement = await scroller.evaluate(element => {
@@ -399,48 +426,92 @@ export class TutorialFlowPage {
 
   private async clickTarget(checkpoint: AppTutorialCheckpoint) {
     const target = this.target(checkpoint);
-    await target.scrollIntoViewIfNeeded();
-    if ((await target.evaluate(element => element.tagName)) === 'A') {
-      await target.press('Enter', { timeout: CHECKPOINT_TIMEOUT_MS });
+    const targetTag = await target.evaluate(element => element.tagName);
+    if (checkpoint.anchor === 'tutorial-search-result' || targetTag === 'A') {
+      await target.evaluate(element => {
+        const preventNavigation = (event: Event) => event.preventDefault();
+        element.addEventListener('click', preventNavigation, { once: true });
+        element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      });
       return;
     }
     await target.click({ timeout: CHECKPOINT_TIMEOUT_MS });
   }
 
   private async selectTypeahead(anchor: string, label: string) {
-    const container = this.page
-      .locator(`[data-tutorial-anchor="${cssAttribute(anchor)}"]:visible`)
-      .first();
-    const initialButton = container.locator('button').first();
+    const container = await this.unique(
+      this.page.locator(`[data-tutorial-anchor="${cssAttribute(anchor)}"]:visible`)
+    );
+    const initialInputs = container.locator('input:not([type="hidden"]):visible');
 
-    if (
-      !(await container.locator('input:not([type="hidden"])').count()) &&
-      (await visible(initialButton))
-    ) {
-      await initialButton.click();
+    if (!(await initialInputs.count())) {
+      const containerIsButton =
+        (await container.evaluate(element => element.tagName).catch(() => '')) === 'BUTTON';
+      const initialButton = containerIsButton
+        ? container
+        : container.getByRole('button').filter({ visible: true });
+      if (await initialButton.count()) {
+        await expect(initialButton).toHaveCount(1);
+        await initialButton.click();
+      }
+    } else {
+      await expect(initialInputs).toHaveCount(1);
     }
 
-    const currentContainer = this.page
-      .locator(`[data-tutorial-anchor="${cssAttribute(anchor)}"]:visible`)
-      .last();
-    const input = currentContainer.locator('input:not([type="hidden"])').first();
+    const currentContainer = await this.unique(
+      this.page.locator(`[data-tutorial-anchor="${cssAttribute(anchor)}"]:visible`)
+    );
+    const input = currentContainer.locator('input:not([type="hidden"]):visible');
+    await expect(input).toHaveCount(1, { timeout: CHECKPOINT_TIMEOUT_MS });
     await expect(input).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
     await input.fill(label);
 
-    const result = this.page.locator(`[data-typeahead-result="${cssAttribute(label)}"]`).first();
+    const result = this.page.locator(`[data-typeahead-result="${cssAttribute(label)}"]:visible`);
+    await expect(result).toHaveCount(1, { timeout: CHECKPOINT_TIMEOUT_MS });
     await expect(result).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
     await input.press('Enter');
   }
 
-  private async appendEditorText(text: string) {
-    const editor = this.page
-      .locator('[data-tutorial-anchor="amendment-text-editor"]:visible [contenteditable="true"]')
-      .first();
+  private async appendEditorText(text: string, paste = false) {
+    const checkpoint = APP_TUTORIAL_CHECKPOINTS.find(item => item.id === this.activeCheckpointId);
+    if (!checkpoint) throw new Error('Missing active tutorial checkpoint.');
+
+    let textToInsert = text;
+    if (paste) {
+      await this.page.evaluate(() => {
+        window.__e2eClipboardText = '';
+        Object.defineProperty(navigator, 'clipboard', {
+          configurable: true,
+          value: {
+            readText: async () => window.__e2eClipboardText ?? '',
+            writeText: async (value: string) => {
+              window.__e2eClipboardText = value;
+            },
+          },
+        });
+      });
+      const copyButton = this.page
+        .getByTestId('app-tutorial-coach-card')
+        .getByRole('button', { name: /^Copy:/ });
+      await expect(copyButton).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
+      await copyButton.click();
+      await expect
+        .poll(() => this.page.evaluate(() => window.__e2eClipboardText), {
+          timeout: CHECKPOINT_TIMEOUT_MS,
+        })
+        .toBe(text);
+      await expect(copyButton).toContainText(/Copied/);
+      textToInsert = await this.page.evaluate(() => window.__e2eClipboardText ?? '');
+    }
+
+    const editor = this.target(checkpoint).locator('[contenteditable="true"]:visible');
+    await expect(editor).toHaveCount(1, { timeout: CHECKPOINT_TIMEOUT_MS });
     await expect(editor).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
     await editor.click();
     await this.page.keyboard.press('Control+End');
     await this.page.keyboard.press('Enter');
-    await this.page.keyboard.type(text);
+    await this.page.keyboard.insertText(textToInsert);
+    await expect(editor).toContainText(textToInsert, { timeout: CHECKPOINT_TIMEOUT_MS });
     await this.page.keyboard.press('Tab');
   }
 
@@ -449,72 +520,133 @@ export class TutorialFlowPage {
     if (!checkpoint) throw new Error('Missing active tutorial checkpoint.');
 
     await this.clickTarget(checkpoint);
-    const option = this.page.getByRole('menuitem').filter({ hasText: label });
+    const option = this.page.getByRole('menuitemradio').filter({ hasText: label });
     await expect(option).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
     await option.click();
   }
 
   private async selectNetworkRights() {
-    const rights = this.page
-      .locator('[data-tutorial-anchor="network-rights-selector"]:visible')
-      .first();
-    await rights.locator('button').nth(0).click();
-    await rights.locator('button').nth(2).click();
+    const rights = await this.unique(
+      this.page.locator('[data-tutorial-anchor="network-rights-selector"]:visible')
+    );
+    const rightLabels =
+      this.activeLanguage === 'de'
+        ? [/^Informationsrecht/i, /^Antragsrecht/i]
+        : [/^Information Right/i, /^Amendment Right/i];
+
+    for (const label of rightLabels) {
+      const toggle = rights.getByRole('button', { name: label });
+      await expect(toggle).toHaveCount(1);
+      await toggle.click();
+    }
   }
 
   private async requestNetworkRights() {
-    const rights = this.page
-      .locator('[data-tutorial-anchor="network-rights-selector"]:visible')
-      .first();
-    const triggers = rights.getByRole('combobox');
-    await expect(triggers).toHaveCount(2);
+    const rights = await this.unique(
+      this.page.locator('[data-tutorial-anchor="network-rights-selector"]:visible')
+    );
+    const rightLabels =
+      this.activeLanguage === 'de'
+        ? ['Informationsrecht', 'Antragsrecht']
+        : ['Information Right', 'Amendment Right'];
+    const incomingPrefix = this.activeLanguage === 'de' ? 'Diese Gruppe.*hat' : 'This group.*has';
+    const selectedGroup = escapeRegExp(this.expectedInputs().networkGroupSearch);
 
-    for (let index = 0; index < 2; index += 1) {
-      await triggers.nth(index).click();
-      const incoming = this.page.getByRole('option').nth(1);
-      await expect(incoming).toBeVisible();
+    for (const rightLabel of rightLabels) {
+      const trigger = rights.getByRole('combobox', {
+        name: new RegExp(escapeRegExp(rightLabel), 'i'),
+      });
+      await expect(trigger).toHaveCount(1, { timeout: CHECKPOINT_TIMEOUT_MS });
+      await trigger.click();
+      const incoming = this.page.getByRole('option', {
+        name: new RegExp(
+          `${incomingPrefix}.*${escapeRegExp(rightLabel)}.*in.*${selectedGroup}`,
+          'i'
+        ),
+      });
+      await expect(incoming).toHaveCount(1, { timeout: CHECKPOINT_TIMEOUT_MS });
       await incoming.click();
     }
   }
 
   private async selectCityDesignAddress() {
     await this.page.route(GEOAPIFY_SERVER_FN_PATTERN, async route => {
+      const requestBody = route.request().postDataJSON() as { t?: unknown };
+      const requestPayload = requestBody.t
+        ? (fromCrossJSON(requestBody.t as Parameters<typeof fromCrossJSON>[0], {
+            plugins: [],
+          }) as { data?: { field?: string } })
+        : null;
+      const field = requestPayload?.data?.field;
+      const includesRegion = field !== 'country';
+      const includesCity = includesRegion && field !== 'region';
+      const includesPostcode = includesCity && field !== 'city';
+      const includesStreet = field === 'street' || field === 'house_number';
+      const includesHouseNumber = field === 'house_number';
+      const searchResult = {
+        ...TUTORIAL_ADDRESS,
+        state: includesRegion ? TUTORIAL_ADDRESS.state : undefined,
+        city: includesCity ? TUTORIAL_ADDRESS.city : undefined,
+        postcode: includesPostcode ? TUTORIAL_ADDRESS.postcode : undefined,
+        street: includesStreet ? TUTORIAL_ADDRESS.street : undefined,
+        housenumber: includesHouseNumber ? TUTORIAL_ADDRESS.housenumber : undefined,
+        result_type: field ?? TUTORIAL_ADDRESS.result_type,
+      };
+      const payload = await toCrossJSONAsync({
+        result: { results: [searchResult] },
+        error: undefined,
+        context: Object.create(null) as Record<string, never>,
+      });
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ results: [TUTORIAL_ADDRESS] }),
+        headers: { 'x-tss-serialized': 'true' },
+        body: JSON.stringify(payload),
       });
     });
 
     try {
-      const street = this.page.locator('#city-design-location-search-street');
-      await street.fill(TUTORIAL_ADDRESS.street);
-      const streetOption = this.page
-        .locator('[role="option"]')
-        .filter({ hasText: TUTORIAL_ADDRESS.street })
-        .first();
-      await expect(streetOption).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
-      await streetOption.dispatchEvent('mousedown');
-
-      const houseNumber = this.page.locator('#city-design-location-search-house-number');
-      await houseNumber.fill(TUTORIAL_ADDRESS.housenumber);
-      const houseOption = this.page
-        .locator('[role="option"]')
-        .filter({ hasText: TUTORIAL_ADDRESS.housenumber })
-        .first();
-      await expect(houseOption).toBeVisible({
+      const locationSearch = this.page.locator(
+        '[data-tutorial-anchor="city-design-location-search"]'
+      );
+      await expect(locationSearch).toHaveAttribute('data-location-search-ready', 'true', {
         timeout: CHECKPOINT_TIMEOUT_MS,
       });
-      await houseOption.dispatchEvent('mousedown');
+      await expect(async () => {
+        const street = this.page.locator('#city-design-location-search-street');
+        await street.fill(TUTORIAL_ADDRESS.street.slice(0, -1));
+        const streetOption = this.page
+          .locator('[role="option"]')
+          .filter({ hasText: TUTORIAL_ADDRESS.street, visible: true });
+        await expect(streetOption).toHaveCount(1, { timeout: 8_000 });
+        await expect(streetOption).toBeVisible({ timeout: 8_000 });
+        await streetOption.click();
+        await expect(street).toHaveValue(TUTORIAL_ADDRESS.street, {
+          timeout: 8_000,
+        });
+
+        const houseNumber = this.page.locator('#city-design-location-search-house-number');
+        await houseNumber.fill(TUTORIAL_ADDRESS.housenumber.slice(0, 1));
+        const houseOption = this.page
+          .locator('[role="option"]')
+          .filter({ hasText: TUTORIAL_ADDRESS.housenumber, visible: true });
+        await expect(houseOption).toHaveCount(1, { timeout: 8_000 });
+        await expect(houseOption).toBeVisible({ timeout: 8_000 });
+        await houseOption.click();
+      }).toPass({
+        timeout: CHECKPOINT_TIMEOUT_MS,
+        intervals: [250, 500, 1_000, 2_000],
+      });
     } finally {
       await this.page.unroute(GEOAPIFY_SERVER_FN_PATTERN);
     }
   }
 
   private async addTreeRow() {
-    const canvas = this.page
-      .locator('[data-tutorial-anchor="city-design-map-canvas"]:visible canvas')
-      .first();
+    const canvas = this.page.locator(
+      '[data-tutorial-anchor="city-design-map-canvas"]:visible canvas'
+    );
+    await expect(canvas).toHaveCount(1, { timeout: CHECKPOINT_TIMEOUT_MS });
     await expect(canvas).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
     const box = await canvas.boundingBox();
     if (!box) throw new Error('The City Design canvas has no bounding box.');
@@ -532,8 +664,10 @@ export class TutorialFlowPage {
     todoAnchor: 'tutorial-network-todo' | 'tutorial-assistant-todo',
     status: 'completed' | 'in_progress'
   ) {
-    const source = this.page.locator(`[data-tutorial-anchor="${todoAnchor}"]:visible`).first();
-    const destination = this.page.locator(`[data-todo-status="${status}"]:visible`).first();
+    const source = this.page.locator(`[data-tutorial-anchor="${todoAnchor}"]:visible`);
+    const destination = this.page.locator(`[data-todo-status="${status}"]:visible`);
+    await expect(source).toHaveCount(1, { timeout: CHECKPOINT_TIMEOUT_MS });
+    await expect(destination).toHaveCount(1, { timeout: CHECKPOINT_TIMEOUT_MS });
     await expect(source).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
     await expect(destination).toBeVisible({
       timeout: CHECKPOINT_TIMEOUT_MS,
@@ -546,14 +680,20 @@ export class TutorialFlowPage {
       `[data-tutorial-anchor="${this.activeCheckpointId.includes('election') ? 'agenda-election-password' : 'agenda-amendment-password'}"]:visible input`
     );
     await expect(inputs).toHaveCount(4);
-    for (const [index, digit] of [...this.expectedInputs().votingPassword].entries()) {
-      await inputs.nth(index).fill(digit);
+    const inputLocators = await inputs.all();
+    for (const [input, digit] of inputLocators.map(
+      (input, index) => [input, this.expectedInputs().votingPassword[index] ?? ''] as const
+    )) {
+      await input.fill(digit);
     }
   }
 
   private async sendAssistantRequest() {
-    const composer = this.page.locator('[data-tutorial-anchor="message-composer"]:visible').first();
-    const input = composer.locator('textarea').first();
+    const composer = await this.unique(
+      this.page.locator('[data-tutorial-anchor="message-composer"]:visible')
+    );
+    const input = composer.locator('textarea:visible');
+    await expect(input).toHaveCount(1, { timeout: CHECKPOINT_TIMEOUT_MS });
     await expect(input).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
     await input.fill(this.expectedInputs().assistantTodo);
     await composer.locator('form').evaluate(form => (form as HTMLFormElement).requestSubmit());
@@ -566,30 +706,20 @@ export class TutorialFlowPage {
         await this.clickTarget(checkpoint);
         return;
       case 'search-initiative':
-        await this.target(checkpoint)
-          .locator('input')
-          .or(this.target(checkpoint))
-          .first()
-          .fill(this.expectedInputs().groupSearch);
+        {
+          const target = await this.unique(this.target(checkpoint));
+          const control =
+            (await target.evaluate(element => element.tagName)) === 'INPUT'
+              ? target
+              : target.locator('input:visible');
+          await expect(control).toHaveCount(1);
+          await control.fill(this.expectedInputs().groupSearch);
+        }
         return;
       case 'link-climate-council':
-        console.log(
-          '[network debug] before',
-          await this.page
-            .locator('[data-tutorial-anchor="link-group"]:visible')
-            .evaluateAll(elements =>
-              elements.map(element => ({
-                tag: element.tagName,
-                text: element.textContent?.trim(),
-              }))
-            ),
-          await this.page
-            .locator('[data-tutorial-anchor="network-group-search"]:visible input')
-            .count()
-        );
         if (
           !(await visible(
-            this.page.locator('[data-tutorial-anchor="network-group-search"]:visible input').first()
+            this.page.locator('[data-tutorial-anchor="network-group-search"]:visible input')
           ))
         ) {
           await this.target(checkpoint).evaluate(element => (element as HTMLElement).click());
@@ -600,13 +730,6 @@ export class TutorialFlowPage {
               })
           );
         }
-        console.log(
-          '[network debug] after',
-          await this.page
-            .locator('[data-tutorial-anchor="network-group-search"]:visible input')
-            .count(),
-          await this.page.locator('[role="dialog"]:visible').allInnerTexts()
-        );
         await this.selectTypeahead(
           'network-group-search',
           this.expectedInputs().networkGroupSearch
@@ -634,7 +757,7 @@ export class TutorialFlowPage {
         await this.switchEditorMode(/Internal Suggestions|Intern vorschlagen/i);
         return;
       case 'create-change-request':
-        await this.appendEditorText(this.expectedInputs().changeRequestText);
+        await this.appendEditorText(this.expectedInputs().changeRequestText, true);
         return;
       case 'switch-vote-internal':
         await this.switchEditorMode(/Internal Voting Mode|Intern abstimmen/i);
@@ -666,5 +789,11 @@ export class TutorialFlowPage {
         }
         await this.clickTarget(checkpoint);
     }
+  }
+}
+
+declare global {
+  interface Window {
+    __e2eClipboardText?: string;
   }
 }

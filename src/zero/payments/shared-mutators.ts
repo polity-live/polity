@@ -46,7 +46,9 @@ async function authorizeGroupPaymentManage(
     }
   }
 
-  throw lastError ?? new Error('Payment must reference at least one group endpoint.');
+  // Reaching the loop end means every non-empty group endpoint failed with a
+  // permission error, so the last iteration necessarily assigned lastError.
+  throw lastError;
 }
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */

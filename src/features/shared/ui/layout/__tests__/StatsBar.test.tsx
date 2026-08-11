@@ -54,4 +54,39 @@ describe('StatsBar mobile grid', () => {
     ).toBe('2');
     expect(screen.queryByText('Hidden')).toBeNull();
   });
+
+  it('supports an omitted item collection', () => {
+    const { container } = render(<StatsBar />);
+    expect(
+      container.querySelector('[data-mobile-columns]')?.getAttribute('data-mobile-columns')
+    ).toBe('1');
+  });
+
+  it('animates the default target with positive and negative color semantics', () => {
+    const positive = render(
+      <StatsBar
+        showAnimation
+        animationText="+1"
+        items={[
+          { value: 10, label: 'Subscribers' },
+          { value: 2, label: <span>Node label</span> },
+        ]}
+      />
+    );
+    expect(screen.getByText('+1').className).toContain('text-green-500');
+    expect(screen.getByText('10').className).toContain('animate-flash-green');
+    expect(screen.getByText('2').className).not.toContain('animate-flash-green');
+    positive.unmount();
+
+    render(
+      <StatsBar
+        showAnimation
+        animationText="-1"
+        animationTargetLabel="Members"
+        items={[{ value: 9, label: 'Members', unit: '%' }]}
+      />
+    );
+    expect(screen.getByText('-1').className).toContain('text-red-500');
+    expect(screen.getByText('9%')).toBeTruthy();
+  });
 });

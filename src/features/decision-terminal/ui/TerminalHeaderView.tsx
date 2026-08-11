@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu';
-import { Search, Settings, SlidersHorizontal, Eye } from 'lucide-react';
+import { Search, Eye } from 'lucide-react';
 
 import type { TerminalFilter, VisibilityFilter } from './TerminalHeader';
 
@@ -91,6 +91,7 @@ export function TerminalHeaderView({
         <div className="flex flex-wrap gap-1">
           {filters.map((filter: any) => (
             <Button
+              data-action-id="decision-terminal.header.type-filter.select"
               key={filter.value}
               variant={activeFilter === filter.value ? 'secondary' : 'ghost'}
               size="sm"
@@ -108,22 +109,40 @@ export function TerminalHeaderView({
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" presentation="monoCompact" className="h-8 gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                presentation="monoCompact"
+                className="h-8 gap-1"
+                data-action-id="decision-terminal.header.visibility.open"
+              >
                 <Eye className="h-3.5 w-3.5" />
                 {visibilityLabel}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onVisibilityFilterChange('all')}>
+              <DropdownMenuItem
+                data-action-id="decision-terminal.header.visibility.all"
+                onClick={() => onVisibilityFilterChange('all')}
+              >
                 {labels.all}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onVisibilityFilterChange('public')}>
+              <DropdownMenuItem
+                data-action-id="decision-terminal.header.visibility.public"
+                onClick={() => onVisibilityFilterChange('public')}
+              >
                 {labels.public}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onVisibilityFilterChange('authenticated')}>
+              <DropdownMenuItem
+                data-action-id="decision-terminal.header.visibility.authenticated"
+                onClick={() => onVisibilityFilterChange('authenticated')}
+              >
                 {labels.authenticated}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onVisibilityFilterChange('private')}>
+              <DropdownMenuItem
+                data-action-id="decision-terminal.header.visibility.private"
+                onClick={() => onVisibilityFilterChange('private')}
+              >
                 {labels.private}
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -140,26 +159,17 @@ export function TerminalHeaderView({
               onBlur={onSearchBlur}
             />
           ) : (
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onShowSearch}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              data-action-id="decision-terminal.header.search.open"
+              aria-label={labels.searchPlaceholder}
+              onClick={onShowSearch}
+            >
               <Search className="h-4 w-4" />
             </Button>
           )}
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <SlidersHorizontal className="mr-2 h-4 w-4" />
-                {labels.density}
-              </DropdownMenuItem>
-              <DropdownMenuItem>{labels.refreshRate}</DropdownMenuItem>
-              <DropdownMenuItem>{labels.soundAlerts}</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
     </div>

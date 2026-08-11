@@ -47,6 +47,7 @@ export function NewConversationDialogView({
           <div className="relative">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <FormControlInput
+              data-action-id="messages.new-conversation.search.change"
               placeholder={t('features.messages.compose.searchUsersPlaceholder')}
               value={userSearchQuery}
               onChange={event => onUserSearchQueryChange(event.target.value)}
@@ -65,6 +66,7 @@ export function NewConversationDialogView({
             ) : (
               filteredUsers.map((searchUser: any) => (
                 <Button
+                  data-action-id="messages.new-conversation.user.select"
                   key={searchUser.id}
                   type="button"
                   variant="ghost"

@@ -20,6 +20,7 @@ describe('deriveControllingEventForSettings', () => {
     expect(deriveControllingEventForSettings(process, 'edit')).toBeNull();
     expect(deriveControllingEventForSettings(process, 'suggest_internal')).toBeNull();
     expect(deriveControllingEventForSettings(process, 'vote_internal')).toBeNull();
+    expect(deriveControllingEventForSettings(process, null)).toBeNull();
   });
 
   it('uses the active process event instead of the first linked event id', () => {
@@ -71,4 +72,96 @@ describe('deriveControllingEventForSettings', () => {
       title: null,
     });
   });
+
+  it('returns null without event steps and filters steps without event identities', () => {
+    expect(deriveControllingEventForSettings(null, 'suggest_event')).toBeNull();
+    expect(
+      deriveControllingEventForSettings(
+        {
+          current_process_run: {
+            step_runs: [{ id: 'no-event', event_id: null, event: null, order_index: null }],
+          },
+        },
+        'suggest_event'
+      )
+    ).toBeNull();
+  });
+
+  it('sorts event relations and falls back from joined IDs and blank titles', () => {
+    expect(
+      deriveControllingEventForSettings(
+        {
+          current_process_run: {
+            step_runs: [
+              {
+                id: 'later',
+                event_id: null,
+                event: { id: 'event-later', title: '   ' },
+                status: 'completed',
+                decision_status: 'completed',
+                order_index: undefined,
+              },
+              {
+                id: 'earlier',
+                event_id: 'event-earlier',
+                event: null,
+                status: 'completed',
+                decision_status: 'completed',
+                order_index: -1,
+              },
+            ],
+          },
+        },
+        'event_final_closing_vote'
+      )
+    ).toEqual({ id: 'event-earlier', title: null });
+
+    expect(
+      deriveControllingEventForSettings(
+        {
+          current_process_run: {
+            step_runs: [
+              {
+                id: 'earlier',
+                event_id: 'event-earlier',
+                status: 'completed',
+                order_index: -1,
+              },
+              {
+                id: 'later',
+                event: { id: 'event-later', title: 'Later' },
+                status: 'completed',
+                order_index: undefined,
+              },
+            ],
+          },
+        },
+        'suggest_event'
+      )
+    ).toEqual({ id: 'event-earlier', title: null });
+  });
+
+  it.each(['approved', 'accepted', 'supported', 'merged', 'rejected', 'withdrawn'])(
+    'falls back to the first all-terminal event for %s',
+    status => {
+      expect(
+        deriveControllingEventForSettings(
+          {
+            current_process_run: {
+              step_runs: [
+                {
+                  id: 'terminal',
+                  event_id: 'event',
+                  status,
+                  decision_status: null,
+                  order_index: 1,
+                },
+              ],
+            },
+          },
+          'suggest_event'
+        )
+      ).toEqual({ id: 'event', title: null });
+    }
+  );
 });

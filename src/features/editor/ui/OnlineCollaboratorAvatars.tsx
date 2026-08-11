@@ -135,6 +135,7 @@ export function OnlineCollaboratorAvatars({
             <PopoverTrigger asChild>
               <button
                 type="button"
+                data-action-id="editor.presence.collaborator.open"
                 aria-label={displayName}
                 className="focus-visible:ring-ring focus-visible:ring-offset-background relative rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                 onClick={() =>
@@ -207,8 +208,18 @@ export function OnlineCollaboratorAvatars({
                       <dd className="truncate">{user.lastName || '-'}</dd>
                     </dl>
                   </div>
-                  <Button asChild variant="outline" size="sm" className="h-8 w-full">
-                    <SmartLink href={`/user/${user.id}`} resetScroll={false}>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-full"
+                    data-action-id="editor.presence.profile.open"
+                  >
+                    <SmartLink
+                      href={`/user/${user.id}`}
+                      resetScroll={false}
+                      data-action-id="editor.presence.profile.open"
+                    >
                       {t('features.editor.collaborators.openProfile')}
                     </SmartLink>
                   </Button>

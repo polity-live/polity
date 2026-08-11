@@ -174,7 +174,11 @@ export function PricingPageView({
           <h2 className="text-2xl font-bold">{enterpriseTitle}</h2>
           <p className="text-muted-foreground">{enterpriseDescription}</p>
           <ContactDialog>
-            <Button variant="outline" size="lg">
+            <Button
+              data-action-id="payments.pricing.enterprise-contact.open"
+              variant="outline"
+              size="lg"
+            >
               {enterpriseCta}
             </Button>
           </ContactDialog>

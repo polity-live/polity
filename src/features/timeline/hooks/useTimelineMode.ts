@@ -62,8 +62,6 @@ export function useTimelineMode(defaultMode: TimelineMode = 'timeline') {
 
   // Persist mode changes to localStorage
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
     try {
       localStorage.setItem(STORAGE_KEY, mode);
     } catch {
@@ -82,16 +80,7 @@ export function useTimelineMode(defaultMode: TimelineMode = 'timeline') {
    * Toggle between modes in order: timeline -> decisions -> timeline
    */
   const toggleMode = useCallback(() => {
-    setModeState(current => {
-      switch (current) {
-        case 'timeline':
-          return 'decisions';
-        case 'decisions':
-          return 'timeline';
-        default:
-          return 'timeline';
-      }
-    });
+    setModeState(current => (current === 'timeline' ? 'decisions' : 'timeline'));
   }, []);
 
   /**

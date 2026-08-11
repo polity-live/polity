@@ -52,9 +52,14 @@ export function TransferAgendaItemDialogView({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger data-action-scope="presentation" asChild>
         {trigger || (
-          <Button variant="outline" size="sm">
+          <Button
+            data-action-id="agendas.transfer.dialog.open"
+            data-action-kind="interaction"
+            variant="outline"
+            size="sm"
+          >
             <ArrowRight className="mr-2 h-4 w-4" />
             {t('features.events.agenda.moveToEvent')}
           </Button>
@@ -124,10 +129,21 @@ export function TransferAgendaItemDialogView({
         </AgendaDialogBody>
 
         <DialogFooter separator surface="background">
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={transferLoading}>
+          <Button
+            data-action-id="agendas.transfer.cancel"
+            data-action-kind="interaction"
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={transferLoading}
+          >
             {t('common.cancel')}
           </Button>
-          <Button onClick={handleConfirmTransfer} disabled={!selectedEventId || transferLoading}>
+          <Button
+            data-action-id="agendas.transfer.confirm"
+            data-action-kind="async-action"
+            onClick={handleConfirmTransfer}
+            disabled={!selectedEventId || transferLoading}
+          >
             {transferLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

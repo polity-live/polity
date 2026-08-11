@@ -112,8 +112,29 @@ describe('AI message context', () => {
         },
         { output: { attachments: [{ entityType: 'not-an-entity' }] } },
         null,
+        'not-an-envelope',
+        {},
       ])
     ).toEqual([groupAttachment]);
+  });
+
+  it('returns an empty context for absent, malformed, or unsupported envelopes', () => {
+    expect(parseAiMessageContext()).toEqual({ version: 1, attachments: [], presentations: [] });
+    expect(parseAiMessageContext('{')).toEqual({
+      version: 1,
+      attachments: [],
+      presentations: [],
+    });
+    expect(parseAiMessageContext(JSON.stringify({ version: 2 }))).toEqual({
+      version: 1,
+      attachments: [],
+      presentations: [],
+    });
+    expect(
+      parseAiMessageContext(
+        JSON.stringify({ version: 1, attachments: 'invalid', presentations: 'invalid' })
+      )
+    ).toEqual({ version: 1, attachments: [], presentations: [] });
   });
 
   it('rejects invalid presentations and the thirteen-item limit', () => {
@@ -128,6 +149,9 @@ describe('AI message context', () => {
       attachments: [],
       presentations: [],
     });
+    expect(
+      extractAiPresentationsFromToolResults([{ output: { presentations: invalid.presentations } }])
+    ).toEqual([]);
   });
 
   it('keeps valid envelope data when another presentation block is invalid', () => {

@@ -81,6 +81,8 @@ export function TodoTimelineCardView({
 
   return (
     <TimelineCardBase
+      data-action-id="timeline.todo.open"
+      data-action-kind="navigation"
       contentType="todo"
       className={className}
       href={detailHref}
@@ -97,6 +99,8 @@ export function TodoTimelineCardView({
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {canManageTodos && !todo.archived ? (
             <Button
+              data-action-id="timeline.todo.completion.toggle"
+              data-action-kind="async-action"
               type="button"
               variant="outline"
               onClick={event => {
@@ -208,7 +212,13 @@ export function TodoTimelineCardView({
         {canManageTodos && showStatusAction && !todo.archived ? (
           <Popover open={statusOpen} onOpenChange={onStatusOpenChange}>
             <PopoverTrigger asChild onClick={event => event.stopPropagation()}>
-              <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+              <Button
+                data-action-id="timeline.todo.status.menu.open"
+                data-action-kind="selection"
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1.5"
+              >
                 <CheckSquare className="h-3.5 w-3.5" />
                 <span className="text-xs">{statusLabels[currentStatus]}</span>
               </Button>
@@ -223,6 +233,8 @@ export function TodoTimelineCardView({
                   .filter((status: TodoStatus) => status !== currentStatus)
                   .map((status: TodoStatus) => (
                     <Button
+                      data-action-id="timeline.todo.status.select"
+                      data-action-kind="async-action"
                       key={status}
                       variant="ghost"
                       size="sm"
@@ -243,6 +255,7 @@ export function TodoTimelineCardView({
 
         {canManageTodos && !todo.archived ? (
           <TimelineCardActionButton
+            data-action-id="timeline.todo.assignment.claim"
             icon={isAssignedToMe ? UserCheck : UserPlus}
             label={isAssignedToMe ? labels.assignedToMe : labels.assignToMe}
             onClick={event => {
@@ -257,6 +270,7 @@ export function TodoTimelineCardView({
 
         <div onClick={event => event.preventDefault()}>
           <ShareButton
+            data-action-id="timeline.todo.share"
             url={`/todos/${todo.id}`}
             title={todo.title}
             description={todo.description || ''}

@@ -40,6 +40,8 @@ interface VoteChoice {
   order_index: number | null;
 }
 
+const EMPTY_VOTE_CHOICES: VoteChoice[] = [];
+
 interface EditElectionVoteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -63,7 +65,7 @@ export function useEditElectionVoteDialogController({
   agendaItemDuration,
   election,
   vote,
-  choices = [],
+  choices = EMPTY_VOTE_CHOICES,
 }: EditElectionVoteDialogProps) {
   const { t } = useTranslation();
   const agendaActions = useAgendaActions();

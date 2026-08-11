@@ -101,10 +101,29 @@ export interface UseSubscribedTimelineResult {
   subscribedGroupIds: string[];
 }
 
-interface AgendaItemPreview {
-  event_id?: string | null;
-  election?: { id?: string } | null;
-  amendmentVote?: { id?: string } | null;
+export function sortSubscribedTimelineItems(
+  items: TimelineItem[],
+  sortBy: NonNullable<UseSubscribedTimelineOptions['sortBy']>
+) {
+  switch (sortBy) {
+    case 'popular':
+      return items.sort((a, b) => {
+        const aScore = (a.stats?.reactions || 0) + (a.stats?.comments || 0);
+        const bScore = (b.stats?.reactions || 0) + (b.stats?.comments || 0);
+        return bScore - aScore;
+      });
+    case 'trending':
+      return items.sort((a, b) => {
+        const aAge = Date.now() - a.createdAt.getTime();
+        const bAge = Date.now() - b.createdAt.getTime();
+        const aScore = (a.stats?.reactions || 0) / Math.max(aAge / 3600000, 1);
+        const bScore = (b.stats?.reactions || 0) / Math.max(bAge / 3600000, 1);
+        return bScore - aScore;
+      });
+    case 'recent':
+    default:
+      return items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
 }
 
 /**
@@ -135,24 +154,8 @@ export function useSubscribedTimeline(
   const membershipData = { groupMemberships: membershipRows };
   const participationData = { eventParticipants: participationRows };
 
-  // Agenda items are already retrieved via related queries on event participation data
-  const { data: agendaItemsData } = { data: { agendaItems: [] as AgendaItemPreview[] } };
-
-  const agendaItemsByEventId = useMemo(() => {
-    const map = new Map<string, Pick<AgendaItemPreview, 'election' | 'amendmentVote'>[]>();
-    for (const item of agendaItemsData?.agendaItems ?? []) {
-      const eventId = item.event_id;
-      if (!eventId) continue;
-      const list = map.get(eventId) ?? [];
-      list.push(item);
-      map.set(eventId, list);
-    }
-    return map;
-  }, [agendaItemsData]);
-
   // Get subscribed group IDs
   const subscribedGroupIds = useMemo(() => {
-    if (!membershipData?.groupMemberships) return [];
     return membershipData.groupMemberships
       .map(m => m.group?.id)
       .filter((id): id is string => Boolean(id));
@@ -160,8 +163,6 @@ export function useSubscribedTimeline(
 
   // Transform memberships to timeline items
   const groupItems = useMemo((): TimelineItem[] => {
-    if (!membershipData?.groupMemberships) return [];
-
     return membershipData.groupMemberships.flatMap(m => {
       const g = m.group;
       if (!g) return [] as TimelineItem[];
@@ -191,8 +192,6 @@ export function useSubscribedTimeline(
 
   // Transform events to timeline items
   const eventItems = useMemo((): TimelineItem[] => {
-    if (!participationData?.eventParticipants) return [];
-
     return participationData.eventParticipants.flatMap(p => {
       const e = p.event;
       if (!e) return [] as TimelineItem[];
@@ -213,8 +212,7 @@ export function useSubscribedTimeline(
           latitude: e.latitude ?? undefined,
           longitude: e.longitude ?? undefined,
           attendeeCount: e.participants?.length,
-          electionsCount: agendaItemsByEventId.get(e.id)?.filter(item => Boolean(item?.election))
-            .length,
+          electionsCount: e.agenda_items?.filter(item => Boolean(item.election)).length,
           createdAt: new Date(e.created_at || Date.now()),
           status: e.status ?? undefined,
           tags: e.event_hashtags
@@ -241,27 +239,7 @@ export function useSubscribedTimeline(
       return true;
     });
 
-    // Sort based on sortBy option
-    switch (sortBy) {
-      case 'popular':
-        return deduped.sort((a, b) => {
-          const aScore = (a.stats?.reactions || 0) + (a.stats?.comments || 0);
-          const bScore = (b.stats?.reactions || 0) + (b.stats?.comments || 0);
-          return bScore - aScore;
-        });
-      case 'trending':
-        // For trending, prefer recent items with high engagement
-        return deduped.sort((a, b) => {
-          const aAge = Date.now() - a.createdAt.getTime();
-          const bAge = Date.now() - b.createdAt.getTime();
-          const aScore = (a.stats?.reactions || 0) / Math.max(aAge / 3600000, 1);
-          const bScore = (b.stats?.reactions || 0) / Math.max(bAge / 3600000, 1);
-          return bScore - aScore;
-        });
-      case 'recent':
-      default:
-        return deduped.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    }
+    return sortSubscribedTimelineItems(deduped, sortBy);
   }, [groupItems, eventItems, sortBy]);
 
   const loadMore = useCallback(() => undefined, []);

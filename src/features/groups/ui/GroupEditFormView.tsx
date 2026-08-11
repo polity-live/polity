@@ -143,10 +143,15 @@ export function GroupEditFormView({
             )}
           </CreateReviewCard>
           <div className="mt-6 flex gap-3">
-            <Button variant="outline" onClick={() => setShowReview(false)}>
+            <Button
+              data-action-id="groups.edit.review.back"
+              variant="outline"
+              onClick={() => setShowReview(false)}
+            >
               {t('pages.create.previous')}
             </Button>
             <Button
+              data-action-id="groups.edit.review.confirm-create"
               onClick={confirmCreate}
               disabled={siblingConfigurationPreflight.blocking}
               loading={isSubmitting || siblingConfigurationChecking}
@@ -158,13 +163,23 @@ export function GroupEditFormView({
           </div>
         </div>
         {/* Hidden form to allow real submission */}
-        <form ref={formRef} onSubmit={onFormSubmit} className="hidden" />
+        <form
+          data-action-scope="presentation"
+          ref={formRef}
+          onSubmit={onFormSubmit}
+          className="hidden"
+        />
       </div>
     );
   }
 
   return (
-    <form ref={formRef} onSubmit={onFormSubmit} className="space-y-6">
+    <form
+      data-action-scope="presentation"
+      ref={formRef}
+      onSubmit={onFormSubmit}
+      className="space-y-6"
+    >
       <SettingsTabs
         value={activeTab}
         onValueChange={onTabChange}
@@ -252,17 +267,22 @@ export function GroupEditFormView({
                   {translateText('generated.inline.0547_verbundene_gruppe_2d1da077')}
                 </FormControlLabel>
                 <FormControlSelect
+                  data-action-scope="presentation"
                   value={formData.connected_group_id ?? ''}
                   onValueChange={value => updateField('connected_group_id', value)}
                 >
-                  <FormControlSelectTrigger>
+                  <FormControlSelectTrigger data-action-id="groups.edit.relationship.connected-group.open">
                     <FormControlSelectValue
                       placeholder={translateText('generated.inline.0673_gruppe_waehlen_ef267c5c')}
                     />
                   </FormControlSelectTrigger>
                   <FormControlSelectContent>
                     {selectableConnectedGroups.map((group: any) => (
-                      <FormControlSelectItem key={group.id} value={group.id}>
+                      <FormControlSelectItem
+                        data-action-id="groups.edit.relationship.connected-group.choose"
+                        key={group.id}
+                        value={group.id}
+                      >
                         {group.name || translateText('generated.inline.0094_group_171a0606')}
                       </FormControlSelectItem>
                     ))}
@@ -275,6 +295,7 @@ export function GroupEditFormView({
                   {translateText('generated.inline.0674_membership_richtung_3a1dbdaf')}
                 </FormControlLabel>
                 <FormControlSelect
+                  data-action-scope="presentation"
                   value={formData.siblingMembershipDirection ?? ''}
                   onValueChange={value =>
                     updateField(
@@ -283,14 +304,18 @@ export function GroupEditFormView({
                     )
                   }
                 >
-                  <FormControlSelectTrigger>
+                  <FormControlSelectTrigger data-action-id="groups.edit.relationship.membership-direction.open">
                     <FormControlSelectValue
                       placeholder={translateText('generated.inline.0675_richtung_waehlen_2c1eefdb')}
                     />
                   </FormControlSelectTrigger>
                   <FormControlSelectContent>
                     {membershipDirectionOptions.map((option: any) => (
-                      <FormControlSelectItem key={option.value} value={option.value}>
+                      <FormControlSelectItem
+                        data-action-id="groups.edit.relationship.membership-direction.choose"
+                        key={option.value}
+                        value={option.value}
+                      >
                         <div className="space-y-1">
                           <div>{option.label}</div>
                           <div className="text-muted-foreground text-xs">{option.description}</div>
@@ -306,6 +331,7 @@ export function GroupEditFormView({
                   {translateText('generated.inline.0676_mitgliedschaftsmodus_cb90aa67')}
                 </FormControlLabel>
                 <FormControlSelect
+                  data-action-scope="presentation"
                   value={formData.sibling_membership_mode ?? 'none'}
                   onValueChange={value =>
                     updateField(
@@ -314,12 +340,16 @@ export function GroupEditFormView({
                     )
                   }
                 >
-                  <FormControlSelectTrigger>
+                  <FormControlSelectTrigger data-action-id="groups.edit.relationship.membership-mode.open">
                     <FormControlSelectValue />
                   </FormControlSelectTrigger>
                   <FormControlSelectContent>
                     {GROUP_EDIT_MEMBERSHIP_MODE_OPTIONS.map((mode: any) => (
-                      <FormControlSelectItem key={mode} value={mode}>
+                      <FormControlSelectItem
+                        data-action-id="groups.edit.relationship.membership-mode.choose"
+                        key={mode}
+                        value={mode}
+                      >
                         {getCanonicalMembershipModeLabel(mode)}
                       </FormControlSelectItem>
                     ))}
@@ -333,17 +363,22 @@ export function GroupEditFormView({
                     {translateText('generated.inline.0677_verbundene_rolle_6c578cbb')}
                   </FormControlLabel>
                   <FormControlSelect
+                    data-action-scope="presentation"
                     value={formData.sibling_role_id ?? ''}
                     onValueChange={value => updateField('sibling_role_id', value)}
                   >
-                    <FormControlSelectTrigger>
+                    <FormControlSelectTrigger data-action-id="groups.edit.relationship.connected-role.open">
                       <FormControlSelectValue
                         placeholder={translateText('generated.inline.0678_rolle_waehlen_51cf1595')}
                       />
                     </FormControlSelectTrigger>
                     <FormControlSelectContent>
                       {selectableConnectedRoles.map((role: any) => (
-                        <FormControlSelectItem key={role.id} value={role.id}>
+                        <FormControlSelectItem
+                          data-action-id="groups.edit.relationship.connected-role.choose"
+                          key={role.id}
+                          value={role.id}
+                        >
                           {role.name || translateText('generated.inline.0092_role_c3f104d1')}
                         </FormControlSelectItem>
                       ))}
@@ -373,6 +408,7 @@ export function GroupEditFormView({
                         {getGroupRelationshipRightLabel(right, t)}
                       </div>
                       <FormControlSelect
+                        data-action-scope="presentation"
                         value={formData.connectedRelationshipDirections[right]}
                         onValueChange={value =>
                           updateField('connectedRelationshipDirections', {
@@ -382,12 +418,16 @@ export function GroupEditFormView({
                           })
                         }
                       >
-                        <FormControlSelectTrigger>
+                        <FormControlSelectTrigger data-action-id="groups.edit.relationship.right-direction.open">
                           <FormControlSelectValue />
                         </FormControlSelectTrigger>
                         <FormControlSelectContent>
                           {relationshipDirectionOptions.map((option: any) => (
-                            <FormControlSelectItem key={option.value} value={option.value}>
+                            <FormControlSelectItem
+                              data-action-id="groups.edit.relationship.right-direction.choose"
+                              key={option.value}
+                              value={option.value}
+                            >
                               {option.label}
                             </FormControlSelectItem>
                           ))}
@@ -448,11 +488,18 @@ export function GroupEditFormView({
       {canManageGroup && activeTab !== 'themes' && (
         <SettingsActionBar className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+            <Button
+              data-action-id="groups.edit.cancel"
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
               {translateText('generated.inline.0065_cancel_77dfd213')}
             </Button>
           )}
           <Button
+            data-action-id="groups.edit.submit"
             type="submit"
             disabled={siblingConfigurationPreflight.blocking}
             loading={isSubmitting || siblingConfigurationChecking}

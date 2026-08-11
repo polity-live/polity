@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { normalizeGovDataPackage, normalizeGovDataText } from '../catalogue';
+import {
+  isGovDataCsvResource,
+  loadGovDataPackage,
+  normalizeGovDataFormat,
+  normalizeGovDataPackage,
+  normalizeGovDataText,
+  searchGovDataCatalogue,
+} from '../catalogue';
 import { parseGovDataCsvTable } from '../csv';
 import { createGovDataCsvSnapshot } from '../importer';
 import { assertSafePublicHttpUrl } from '../safety';
@@ -85,6 +92,116 @@ describe('GovData utilities', () => {
       organizationTitle: 'GovData',
     });
     expect(entry?.resources[0]?.name).toBe('Arbeitslosigkeit 2025 Q2');
+  });
+
+  it('normalizes empty text, URI formats, MIME fallbacks and resource URL variants', () => {
+    expect(normalizeGovDataText(null)).toBe('');
+    expect(normalizeGovDataText('<br><table><tr><td>One</td><td>Two</td></tr></table>')).toBe(
+      'One\nTwo'
+    );
+    expect(normalizeGovDataFormat('https://example.test/types#csv')).toBe('CSV');
+    expect(normalizeGovDataFormat('', 'text/csv')).toBe('CSV');
+    expect(normalizeGovDataFormat(null, 'application/json')).toBe('');
+    expect(isGovDataCsvResource({ download_url: 'https://example.test/data.csv?x=1' })).toBe(true);
+    expect(
+      isGovDataCsvResource({ access_url: 'https://example.test/data', mimetype: 'text/csv' })
+    ).toBe(true);
+    expect(isGovDataCsvResource({ url: 'https://example.test/data.json', format: 'JSON' })).toBe(
+      false
+    );
+  });
+
+  it('rejects incomplete packages and applies sparse resource metadata fallbacks', () => {
+    expect(normalizeGovDataPackage({ name: 'missing-id', resources: [] })).toBeNull();
+    expect(normalizeGovDataPackage({ id: 'id', name: '', resources: [] })).toBeNull();
+    expect(normalizeGovDataPackage({ id: 'id', name: 'name', resources: [] })).toBeNull();
+    expect(normalizeGovDataPackage({ id: 'id', name: 'name', resources: null })).toBeNull();
+    expect(
+      normalizeGovDataPackage({
+        id: 'id',
+        name: 'name',
+        organization: { name: 'Organization' },
+        extras: [{ key: 'publisher_name', value: 'Publisher' }],
+        metadata_modified: '2025-01-01',
+        resources: [
+          { id: null, url: 'https://example.test/a.csv', format: 'CSV' },
+          { id: 'missing-url', format: 'CSV' },
+          { id: 'not-csv', url: 'https://example.test/a.json', format: 'JSON' },
+          {
+            id: 'csv',
+            description: 'Description fallback',
+            mimetype: 'text/csv',
+            size: 'invalid',
+            access_url: 'https://example.test/a',
+            last_modified: '2025-02-01',
+          },
+        ],
+      })
+    ).toMatchObject({
+      title: 'name',
+      publisher: 'Publisher',
+      organizationTitle: 'Organization',
+      modified: '2025-01-01',
+      resources: [
+        {
+          id: 'csv',
+          name: 'Description fallback',
+          format: 'CSV',
+          size: null,
+          modified: '2025-02-01',
+        },
+      ],
+    });
+
+    expect(
+      normalizeGovDataPackage({
+        id: 'url-csv',
+        name: 'url-csv',
+        resources: [{ id: 'csv', url: 'https://example.test/data.csv' }],
+      })?.resources[0]?.format
+    ).toBe('CSV');
+  });
+
+  it('handles short search, HTTP failures, CKAN failures and successful search/show calls', async () => {
+    await expect(searchGovDataCatalogue(' x ')).resolves.toEqual([]);
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockResolvedValueOnce(new Response('', { status: 503 }));
+    await expect(searchGovDataCatalogue('data')).rejects.toThrow(
+      'GovData package_search request failed with 503'
+    );
+    fetchMock.mockResolvedValueOnce(
+      Response.json({ success: false, error: { message: 'CKAN failed' } })
+    );
+    await expect(searchGovDataCatalogue('data')).rejects.toThrow('CKAN failed');
+    fetchMock.mockResolvedValueOnce(Response.json({ success: false }));
+    await expect(loadGovDataPackage('package-1')).rejects.toThrow(
+      'GovData package_show request failed'
+    );
+    fetchMock.mockResolvedValueOnce(
+      Response.json({
+        success: true,
+        result: {
+          results: [
+            {
+              id: 'one',
+              name: 'one',
+              resources: [{ id: 'csv', url: 'https://example.test/one.csv', format: 'CSV' }],
+            },
+            { id: 'invalid', name: 'invalid', resources: [] },
+            {
+              id: 'two',
+              name: 'two',
+              resources: [{ id: 'csv', url: 'https://example.test/two.csv', format: 'CSV' }],
+            },
+          ],
+        },
+      })
+    );
+    await expect(searchGovDataCatalogue(' data ', 1)).resolves.toHaveLength(1);
+    expect(String(fetchMock.mock.calls.at(-1)?.[0])).toContain('q=data');
+    fetchMock.mockResolvedValueOnce(Response.json({ success: true, result: { id: 'package-1' } }));
+    await expect(loadGovDataPackage('package-1')).resolves.toEqual({ id: 'package-1' });
   });
 
   it('parses semicolon separated GovData CSV files', () => {

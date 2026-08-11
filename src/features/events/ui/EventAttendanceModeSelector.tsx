@@ -32,6 +32,7 @@ export function EventAttendanceModeSelector({
           <Popover open={helpOpen} onOpenChange={setHelpOpen}>
             <PopoverTrigger asChild>
               <button
+                data-action-id="events.attendance-mode.help"
                 type="button"
                 className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex size-6 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:outline-none"
                 aria-label={t(
@@ -64,6 +65,7 @@ export function EventAttendanceModeSelector({
       <div className="flex flex-wrap gap-2">
         {(['online', 'hybrid', 'offline'] as const).map(mode => (
           <Button
+            data-action-id="events.attendance-mode.select"
             key={mode}
             type="button"
             variant={value === mode ? 'default' : 'outline'}

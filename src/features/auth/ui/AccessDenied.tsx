@@ -37,27 +37,37 @@ export function AccessDenied({ description, title }: AccessDeniedProps) {
 
         <CardContent className="space-y-4">
           <div className="space-y-3">
-            <Button onClick={() => window.history.back()} variant="outline" className="w-full">
+            <Button
+              data-action-id="auth.access-denied.history.back"
+              onClick={() => window.history.back()}
+              variant="outline"
+              className="w-full"
+            >
               <ArrowLeft className="mr-2 h-4 w-4" />
               {t('common.goBack')}
             </Button>
 
-            <Link to="/" className="block">
-              <Button className="w-full">
+            <Button asChild data-action-id="auth.access-denied.home.open" className="w-full">
+              <Link to="/" data-action-id="auth.access-denied.home.open">
                 <Home className="mr-2 h-4 w-4" />
                 {t('common.goHome')}
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           <div className="border-t pt-4">
             <p className="text-muted-foreground mb-3 text-sm">
               {t('errors.contactHint')}{' '}
-              <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-foreground underline">
+              <a
+                data-action-id="auth.access-denied.support-email.open"
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="hover:text-foreground underline"
+              >
                 {SUPPORT_EMAIL}
               </a>{' '}
               {t('errors.contactHintOr')}{' '}
               <a
+                data-action-id="auth.access-denied.github-issues.open"
                 href={GITHUB_ISSUES_URL}
                 target="_blank"
                 rel="noopener noreferrer"

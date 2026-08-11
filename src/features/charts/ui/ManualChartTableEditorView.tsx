@@ -58,6 +58,7 @@ export function ManualChartTableEditorView({
                     />
                     {!readOnly ? (
                       <Button
+                        data-action-id="charts.manual-table.remove-column"
                         type="button"
                         variant="ghost"
                         size="icon"
@@ -101,6 +102,7 @@ export function ManualChartTableEditorView({
                   {!readOnly ? (
                     <TableCell className="w-10 p-1">
                       <Button
+                        data-action-id="charts.manual-table.remove-row"
                         type="button"
                         variant="ghost"
                         size="icon"
@@ -124,6 +126,7 @@ export function ManualChartTableEditorView({
         {!readOnly ? (
           <div className="flex gap-2">
             <Button
+              data-action-id="charts.manual-table.add-row"
               type="button"
               variant="outline"
               size="sm"
@@ -142,6 +145,7 @@ export function ManualChartTableEditorView({
               {t('plateJs.chart.row')}
             </Button>
             <Button
+              data-action-id="charts.manual-table.add-column"
               type="button"
               variant="outline"
               size="sm"
@@ -173,6 +177,8 @@ export function ManualChartTableEditorView({
             {page + 1}/{pageCount}
           </span>
           <Button
+            data-action-id="charts.manual-table.previous-page"
+            aria-label={t('common.pagination.previous')}
             type="button"
             variant="ghost"
             size="icon"
@@ -183,6 +189,8 @@ export function ManualChartTableEditorView({
             <ChevronLeftIcon className="size-4" />
           </Button>
           <Button
+            data-action-id="charts.manual-table.next-page"
+            aria-label={t('common.pagination.next')}
             type="button"
             variant="ghost"
             size="icon"

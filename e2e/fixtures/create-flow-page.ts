@@ -43,10 +43,12 @@ async function visible(locator: ReturnType<Page['locator']>, timeout = 500) {
 }
 
 async function recoverAppBoot(page: Page, attempt: number) {
-  const retry = page.getByRole('button', { name: 'Retry' }).first();
+  const retry = page.getByRole('button', { name: 'Retry', exact: true });
   if (await visible(retry)) {
     await retry.click().catch(() => undefined);
-    await page.waitForTimeout(1_000);
+    await expect(retry)
+      .toBeHidden({ timeout: 5_000 })
+      .catch(() => undefined);
   }
 
   if (attempt % 3 === 0) {
@@ -113,12 +115,18 @@ export async function waitForCreateReady(
   while (Date.now() < deadline) {
     if (await visible(readyLocator)) return;
 
-    const stillConnecting = page.getByRole('heading', { name: 'Still connecting' }).first();
+    const stillConnecting = page.getByRole('heading', {
+      name: 'Still connecting',
+      exact: true,
+    });
     if (await visible(stillConnecting, 250)) {
       attempt += 1;
       await recoverAppBoot(page, attempt);
     } else {
-      await page.waitForTimeout(500);
+      await Promise.race([
+        readyLocator.waitFor({ state: 'visible', timeout: 2_000 }),
+        stillConnecting.waitFor({ state: 'visible', timeout: 2_000 }),
+      ]).catch(() => undefined);
     }
   }
 
@@ -128,7 +136,9 @@ export async function waitForCreateReady(
 export async function waitForCreateDashboardReady(page: Page, timeout = CREATE_READY_TIMEOUT_MS) {
   await waitForCreateReady(
     page,
-    page.locator('[data-create-action="open-create-flow"]').first(),
+    page.locator(
+      '[data-create-action="open-create-flow"][data-create-option="/create/group"]:visible'
+    ),
     timeout
   );
 }
@@ -137,14 +147,17 @@ export class CreateFlowPage {
   readonly form: FormActions;
   private recoverySessionStateClearerInstalled = false;
 
-  constructor(readonly page: Page) {
+  constructor(
+    readonly page: Page,
+    private readonly onCreatedTarget?: (target: CreateSubmitTargetMetadata) => void
+  ) {
     this.form = new FormActions(page);
   }
 
   async goto(path: string, style: CreateFormStyle = 'one_page') {
     await this.installCreateRecoverySessionStateClearer();
     await this.page.goto(path);
-    await waitForCreateReady(this.page, this.page.locator('[data-create-flow]'));
+    await waitForCreateReady(this.page, this.page.locator('[data-create-flow]:visible'));
     await this.setFormStyle(style);
   }
 
@@ -186,9 +199,9 @@ export class CreateFlowPage {
     await this.waitForFinalizationStartedOrSaved();
     await this.form.waitForSubmissionReady();
 
-    const navigateButton = this.page
-      .locator('[data-create-action="navigate-created-target"]')
-      .first();
+    const navigateButton = this.page.locator(
+      '[data-create-action="navigate-created-target"]:visible'
+    );
     const targetKind = await navigateButton.getAttribute('data-create-target-kind');
     const targetTo = await navigateButton.getAttribute('data-create-target-to');
     const targetParams = await navigateButton.getAttribute('data-create-target-params');
@@ -203,6 +216,7 @@ export class CreateFlowPage {
       href: targetHref,
       id: targetIdFrom(parsedTargetParams, targetHref),
     };
+    this.onCreatedTarget?.(target);
 
     const documentMarker = `create-spa-${Date.now()}-${Math.random()}`;
     if (targetKind === 'route') {
@@ -216,7 +230,9 @@ export class CreateFlowPage {
     await navigateButton.click();
 
     try {
-      await expect(this.page).toHaveURL(options.expectedUrl, { timeout: 5_000 });
+      await expect(this.page).toHaveURL(options.expectedUrl, {
+        timeout: 5_000,
+      });
     } catch (error) {
       throw new Error(
         `Create target client navigation did not reach the expected URL. Rendered target: ${targetMetadataString(target, this.page.url())}.`,
@@ -251,11 +267,11 @@ export class CreateFlowPage {
   }
 
   private finalizationSavedToast() {
-    return this.page.getByTestId('create-finalization-saved-toast').first();
+    return this.page.getByTestId('create-finalization-saved-toast');
   }
 
   private finalizationLoadingToast() {
-    return this.page.getByTestId('create-finalization-pending-toast').first();
+    return this.page.getByTestId('create-finalization-pending-toast');
   }
 
   private async waitForFinalizationStartedOrSaved() {
@@ -266,10 +282,12 @@ export class CreateFlowPage {
   }
 
   private async expectPrimarySearchLinkStillNavigates() {
-    const searchLink = this.page.locator('a[href="/search"]').first();
+    const searchLink = this.page.locator('a[href="/search"]:visible');
     await expect(searchLink).toBeVisible({ timeout: 10_000 });
     await expect(searchLink).toHaveAttribute('href', '/search');
     await searchLink.click();
-    await expect(this.page).toHaveURL(/\/search(?:[?#].*)?$/, { timeout: 5_000 });
+    await expect(this.page).toHaveURL(/\/search(?:[?#].*)?$/, {
+      timeout: 5_000,
+    });
   }
 }

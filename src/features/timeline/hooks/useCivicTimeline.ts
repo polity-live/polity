@@ -22,7 +22,6 @@ import { formatLocation, formatNamedLocation } from '@/features/shared/logic/loc
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import {
   buildCivicTimelineItems,
-  CIVIC_TIMELINE_CONTENT_TYPES,
   deriveCivicCoordinates,
   formatDistanceKm,
   getCivicTimelineTimestamp,
@@ -87,15 +86,15 @@ export interface UseCivicTimelineReturn {
   discoverCount: number;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function asString(value: unknown): string | undefined {
+export function asString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined;
 }
 
-function asNumber(value: unknown): number | undefined {
+export function asNumber(value: unknown): number | undefined {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string' && value.trim() !== '') {
     const parsed = Number(value);
@@ -104,13 +103,13 @@ function asNumber(value: unknown): number | undefined {
   return undefined;
 }
 
-function asDate(value: Date | number | string | null | undefined): Date | undefined {
+export function asDate(value: Date | number | string | null | undefined): Date | undefined {
   if (value == null || value === '') return undefined;
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
-function normalizeTimelineType(value?: string | null): CivicTimelineType | null {
+export function normalizeTimelineType(value?: string | null): CivicTimelineType | null {
   const normalized = value === 'activity' || value === 'action' ? 'workflow' : value;
 
   if (
@@ -131,7 +130,7 @@ function normalizeTimelineType(value?: string | null): CivicTimelineType | null 
   return null;
 }
 
-function getHref(type: CivicTimelineType, entityId: string, fallbackHref = '/search') {
+export function getHref(type: CivicTimelineType, entityId: string, fallbackHref = '/search') {
   switch (type) {
     case 'group':
       return `/group/${entityId}`;
@@ -154,7 +153,7 @@ function getHref(type: CivicTimelineType, entityId: string, fallbackHref = '/sea
   }
 }
 
-function getReasonForItem(item: {
+export function getReasonForItem(item: {
   type: CivicTimelineType;
   isUrgent?: boolean;
   isDiscover?: boolean;
@@ -176,11 +175,11 @@ function getReasonForItem(item: {
   return 'subscribed';
 }
 
-function getPrimaryActionLabel(type: CivicTimelineType) {
+export function getPrimaryActionLabel(type: CivicTimelineType) {
   return translateText(`features.timeline.primaryActions.${type}`);
 }
 
-function getStatsLabel(item: Pick<CivicTimelineItem, 'stats' | 'type'>) {
+export function getStatsLabel(item: Pick<CivicTimelineItem, 'stats' | 'type'>) {
   if (typeof item.stats?.participants === 'number' && item.stats.participants > 0) {
     return translateText('features.timeline.stats.attending', {
       count: item.stats.participants,
@@ -204,14 +203,14 @@ function getStatsLabel(item: Pick<CivicTimelineItem, 'stats' | 'type'>) {
   return null;
 }
 
-function getMatchingInterestTags(tags: string[], interestTags: string[]) {
+export function getMatchingInterestTags(tags: string[], interestTags: string[]) {
   if (tags.length === 0 || interestTags.length === 0) return [];
 
   const interestSet = new Set(interestTags.map(tag => tag.toLowerCase()));
   return tags.filter(tag => interestSet.has(tag.toLowerCase()));
 }
 
-function getTagsFromJunctions(
+export function getTagsFromJunctions(
   junctions?: readonly { hashtag?: { tag?: string | null } | null }[] | null
 ) {
   return (
@@ -219,7 +218,7 @@ function getTagsFromJunctions(
   );
 }
 
-function mapSubscribedItem(item: TimelineItem): CivicTimelineItem | null {
+export function mapSubscribedItem(item: TimelineItem): CivicTimelineItem | null {
   const type = normalizeTimelineType(item.type);
   if (!type) return null;
 
@@ -425,7 +424,7 @@ export function mapAgendaItemToCivicTimelineItem(
   };
 }
 
-function mapDecisionItem(decision: DecisionItem): CivicTimelineItem {
+export function mapDecisionItem(decision: DecisionItem): CivicTimelineItem {
   const type = decision.type === 'election' ? 'election' : 'vote';
   const href = decision.href || '#';
   const civicItem: CivicTimelineItem = {
@@ -465,14 +464,14 @@ function mapDecisionItem(decision: DecisionItem): CivicTimelineItem {
   };
 }
 
-function mapSearchDocument(
+export function mapSearchDocument(
   document: SearchDocumentLike,
   userCoordinates: CivicTimelineCoordinates | null,
   interestTags: string[]
 ): CivicTimelineItem | null {
   const payload = isRecord(document.card_payload) ? document.card_payload : {};
   const type = normalizeTimelineType(asString(payload.type) ?? document.entity_type);
-  if (!type || !CIVIC_TIMELINE_CONTENT_TYPES.includes(type)) return null;
+  if (!type) return null;
 
   const metadata = isRecord(payload.metadata) ? payload.metadata : {};
   const coordinates = deriveCivicCoordinates(payload, metadata, document.group);
@@ -538,7 +537,7 @@ function mapSearchDocument(
   };
 }
 
-function passesDateFilter(item: CivicTimelineItem, dateRange: TimelineFilters['dateRange']) {
+export function passesDateFilter(item: CivicTimelineItem, dateRange: TimelineFilters['dateRange']) {
   if (dateRange === 'all') return true;
 
   const now = new Date();
@@ -558,7 +557,7 @@ function passesDateFilter(item: CivicTimelineItem, dateRange: TimelineFilters['d
   return Math.abs(now.getTime() - timestamp) <= maxAge;
 }
 
-function getEngagementValue(item: CivicTimelineItem) {
+export function getEngagementValue(item: CivicTimelineItem) {
   return (
     item.engagementScore ??
     (item.stats?.reactions ?? 0) +
@@ -568,7 +567,7 @@ function getEngagementValue(item: CivicTimelineItem) {
   );
 }
 
-function applyFilters(
+export function applyFilters(
   items: CivicTimelineItem[],
   filters: TimelineFilters,
   radiusKm: TimelineRadiusFilter,
@@ -657,7 +656,7 @@ export function useCivicTimeline({
 
     const seen = new Set<string>();
     return items.filter(item => {
-      const key = `${item.type}:${item.entityId ?? item.id}`;
+      const key = `${item.type}:${item.entityId}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;

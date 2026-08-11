@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildMembershipCompositionBuckets,
+  collectPathsFromBaseToTarget,
   DIRECT_WITHOUT_PATH_LABEL,
+  getMembershipProvenanceDisplayLabel,
   resolveMembershipProvenance,
+  supportsMembershipComposition,
 } from '../membershipComposition';
 
 function group(
@@ -75,6 +78,79 @@ function peerRelationship(id: string, firstGroupId: string, secondGroupId: strin
 function rawGroup(id: string, name = id) {
   return { id, name } as ReturnType<typeof group>;
 }
+
+describe('membership composition support and labels', () => {
+  it('supports only hierarchies and configured parliament/elected sibling groups', () => {
+    expect(supportsMembershipComposition(null)).toBe(false);
+    expect(supportsMembershipComposition(group('base', 'base'))).toBe(false);
+    expect(supportsMembershipComposition(group('root', 'hierarchical'))).toBe(true);
+    expect(
+      supportsMembershipComposition(
+        group('parliament', 'sibling', { sibling_membership_mode: 'parliament' })
+      )
+    ).toBe(true);
+    expect(
+      supportsMembershipComposition(
+        group('elected', 'sibling', { sibling_membership_mode: 'elected' })
+      )
+    ).toBe(true);
+    expect(supportsMembershipComposition(group('plain', 'sibling'))).toBe(false);
+  });
+
+  it('formats projected groups, bucket labels, direct fallbacks, and empty values', () => {
+    expect(
+      getMembershipProvenanceDisplayLabel(
+        {
+          partGroup: { id: 'part', name: 'Part' },
+          baseGroup: { id: 'base', name: 'Base' },
+          provenanceBucketLabel: null,
+        },
+        'partGroup'
+      )
+    ).toBe('Part');
+    expect(
+      getMembershipProvenanceDisplayLabel(
+        { partGroup: null, baseGroup: null, provenanceBucketLabel: 'Custom bucket' },
+        'partGroup'
+      )
+    ).toBe('Custom bucket');
+    expect(
+      getMembershipProvenanceDisplayLabel(
+        {
+          partGroup: null,
+          baseGroup: null,
+          provenanceBucketLabel: DIRECT_WITHOUT_PATH_LABEL,
+        },
+        'baseGroup',
+        { directWithoutPathLabel: 'Direct', emptyLabel: 'Empty' }
+      )
+    ).toBe('Direct');
+    expect(
+      getMembershipProvenanceDisplayLabel(
+        { partGroup: null, baseGroup: null, provenanceBucketLabel: null },
+        'baseGroup',
+        { emptyLabel: 'Empty' }
+      )
+    ).toBe('Empty');
+    expect(
+      getMembershipProvenanceDisplayLabel(
+        { partGroup: null, baseGroup: null, provenanceBucketLabel: null },
+        'partGroup',
+        { emptyLabel: 'Empty part' }
+      )
+    ).toBe('Empty part');
+    expect(
+      getMembershipProvenanceDisplayLabel(
+        {
+          partGroup: null,
+          baseGroup: { id: 'base', name: 'Base' },
+          provenanceBucketLabel: 'Ignored',
+        },
+        'baseGroup'
+      )
+    ).toBe('Base');
+  });
+});
 
 describe('membership composition provenance', () => {
   it('resolves part group and base group for a direct hierarchical leaf path', () => {
@@ -342,6 +418,379 @@ describe('membership composition provenance', () => {
     expect(resolvedMembership.baseGroup).toBeNull();
     expect(resolvedMembership.provenanceBucketLabel).toBe(DIRECT_WITHOUT_PATH_LABEL);
   });
+
+  it('honors explicit part/base projection fields and legacy origin fallbacks', () => {
+    const current = group('root', 'hierarchical');
+    const part = group('part', 'hierarchical', { name: 'Part' });
+    const base = group('base', 'base', { name: 'Base' });
+    const rows = resolveMembershipProvenance({
+      group: current,
+      memberships: [
+        {
+          ...membership('part-only'),
+          part_group_id: 'part',
+          part_group: part,
+        },
+        {
+          ...membership('base-only'),
+          base_group_id: 'base',
+          base_group: base,
+        },
+        {
+          ...membership('origin'),
+          origins: [
+            {
+              part_group_id: 'part',
+              base_group_id: 'base',
+              part_group: part,
+              base_group: base,
+            },
+          ],
+        },
+        {
+          ...membership('ids-only'),
+          part_group_id: 'part-id-only',
+          base_group_id: 'base-id-only',
+          part_group: null,
+          base_group: null,
+        },
+      ],
+      relationships: [],
+    });
+
+    expect(rows[0]).toMatchObject({ partGroup: part, baseGroup: part });
+    expect(rows[1]).toMatchObject({ partGroup: base, baseGroup: base });
+    expect(rows[2]).toMatchObject({ partGroup: part, baseGroup: base });
+    expect(rows[3]).toMatchObject({
+      partGroup: { id: 'part-id-only' },
+      baseGroup: { id: 'base-id-only' },
+    });
+  });
+
+  it('falls back for unsupported groups and missing sibling source identities', () => {
+    const unsupported = group('plain-sibling', 'sibling');
+    const supported = group('assembly', 'sibling', { sibling_membership_mode: 'parliament' });
+    const rows = [
+      ...resolveMembershipProvenance({
+        group: unsupported,
+        memberships: [membership('unsupported')],
+        relationships: [],
+      }),
+      ...resolveMembershipProvenance({
+        group: supported,
+        memberships: [
+          membership('missing-root', { source_group_id: null }),
+          {
+            ...membership('missing-user', { source_group_id: 'root' }),
+            user: null,
+            user_id: null,
+          },
+        ],
+        relationships: [],
+      }),
+    ];
+
+    expect(rows.every(row => row.provenanceBucketLabel === DIRECT_WITHOUT_PATH_LABEL)).toBe(true);
+  });
+
+  it('normalizes an unresolved sibling source id as a direct base source', () => {
+    const supported = group('assembly', 'sibling', { sibling_membership_mode: 'parliament' });
+    const [row] = resolveMembershipProvenance({
+      group: supported,
+      memberships: [
+        membership('unknown-source', {
+          source_group_id: 'unknown-source',
+          source_group: null,
+        }),
+      ],
+      relationships: [],
+    });
+
+    expect(row).toMatchObject({
+      partGroup: { id: 'unknown-source', group_type: null },
+      baseGroup: { id: 'unknown-source', group_type: null },
+    });
+  });
+
+  it('uses the first active root membership for an exact user/group key', () => {
+    const assembly = group('assembly', 'sibling', { sibling_membership_mode: 'elected' });
+    const root = group('root', 'hierarchical');
+    const baseA = group('base-a', 'base');
+    const baseB = group('base-b', 'base');
+    const [row] = resolveMembershipProvenance({
+      group: assembly,
+      memberships: [
+        membership('assembly-member', {
+          user_id: 'u1',
+          source_group_id: 'root',
+          source_group: root,
+        }),
+      ],
+      rootMemberships: [
+        {
+          ...membership('inactive', {
+            user_id: 'u1',
+            group_id: 'root',
+            status: 'requested',
+            source_group_id: 'base-b',
+            source_group: baseB,
+          }),
+        },
+        membership('first', {
+          user_id: 'u1',
+          group_id: 'root',
+          source_group_id: 'base-a',
+          source_group: baseA,
+        }),
+        membership('duplicate', {
+          user_id: 'u1',
+          group_id: 'root',
+          source_group_id: 'base-b',
+          source_group: baseB,
+        }),
+        {
+          ...membership('missing-key', { group_id: null }),
+          user: null,
+          user_id: null,
+        },
+        {
+          ...membership('board-holder', {
+            user_id: 'board-user',
+            group_id: 'root',
+            status: 'requested',
+            source_group_id: 'base-a',
+            source_group: baseA,
+          }),
+          roles: [
+            { id: 'unnamed', name: null },
+            { id: 'board', name: 'Board Member' },
+          ],
+          role: null,
+        },
+        {
+          ...membership('board-holder-missing-status', {
+            user_id: 'board-user-2',
+            group_id: 'root',
+            source_group_id: 'base-a',
+            source_group: baseA,
+          }),
+          status: null,
+          roles: [{ id: 'board', name: 'Board Member' }],
+          role: null,
+        },
+      ],
+      relationships: [
+        relationship('root-a', 'root', 'base-a'),
+        relationship('root-b', 'root', 'base-b'),
+        { ...relationship('inactive', 'root', 'inactive'), status: 'requested' },
+        {
+          ...relationship('sibling-kind', 'peer-a', 'peer-b'),
+          connection_type: 'hierarchy',
+          relationship_type: 'sibling',
+        },
+        {
+          ...relationship('self-link', 'same', 'same'),
+          connection_type: 'hierarchy',
+          relationship_type: null,
+        },
+        {
+          id: 'unoriented',
+          group_id: '',
+          related_group_id: '',
+          connection_type: null,
+          relationship_type: null,
+          with_right: null,
+          status: 'active',
+        } as any,
+      ],
+    });
+
+    expect(row.baseGroup?.id).toBe('base-a');
+  });
+
+  it('uses a direct hierarchical source when no compatible root membership is unique', () => {
+    const assembly = group('assembly', 'sibling', { sibling_membership_mode: 'parliament' });
+    const sourceRoot = group('source-root', 'hierarchical');
+    const [withoutMatch, ambiguous] = resolveMembershipProvenance({
+      group: assembly,
+      memberships: [
+        membership('without-match', {
+          user_id: 'u1',
+          source_group_id: 'source-root',
+          source_group: sourceRoot,
+        }),
+        membership('ambiguous', {
+          user_id: 'u2',
+          source_group_id: 'source-root',
+          source_group: sourceRoot,
+        }),
+      ],
+      rootMemberships: [
+        membership('wrong-user', {
+          user_id: 'other',
+          source_group_id: 'base-a',
+        }),
+        membership('missing-source', { user_id: 'u1', source_group_id: null }),
+        membership('u2-a', { user_id: 'u2', source_group_id: 'base-a' }),
+        membership('u2-b', { user_id: 'u2', source_group_id: 'base-b' }),
+      ],
+      relationships: [
+        relationship('root-a', 'source-root', 'base-a'),
+        relationship('root-b', 'source-root', 'base-b'),
+      ],
+    });
+
+    expect(withoutMatch.partGroup?.id).toBe('source-root');
+    expect(withoutMatch.baseGroup?.id).toBe('source-root');
+    expect(ambiguous.partGroup?.id).toBe('source-root');
+    expect(ambiguous.baseGroup?.id).toBe('source-root');
+  });
+
+  it('falls back when a hierarchy has no unique path to its base membership', () => {
+    const root = group('root', 'hierarchical');
+    const [missingBase, duplicatePath] = resolveMembershipProvenance({
+      group: root,
+      memberships: [
+        membership('missing-base', { source_group_id: null }),
+        membership('duplicate-path', {
+          source_group_id: 'base',
+          source_group: group('base', 'base'),
+        }),
+      ],
+      relationships: [
+        relationship('a-base', 'a', 'base'),
+        relationship('b-base', 'b', 'base'),
+        relationship('root-a', 'root', 'a'),
+        relationship('root-b', 'root', 'b'),
+      ],
+    });
+
+    expect(missingBase.provenanceBucketLabel).toBe(DIRECT_WITHOUT_PATH_LABEL);
+    expect(duplicatePath.provenanceBucketLabel).toBe(DIRECT_WITHOUT_PATH_LABEL);
+  });
+
+  it('uses the hierarchy itself when the source membership points at the root', () => {
+    const root = group('root', 'hierarchical');
+    const [row] = resolveMembershipProvenance({
+      group: root,
+      memberships: [
+        membership('root-source', {
+          source_group_id: 'root',
+          source_group: root,
+        }),
+      ],
+      relationships: [],
+    });
+
+    expect(row).toMatchObject({ partGroup: { id: 'root' }, baseGroup: { id: 'root' } });
+  });
+
+  it('resolves nested hierarchical and sibling sources inside a sibling source', () => {
+    const assembly = group('assembly', 'sibling', { sibling_membership_mode: 'parliament' });
+    const sourceSibling = group('source-sibling', 'sibling', {
+      sibling_membership_mode: 'parliament',
+    });
+    const nestedRoot = group('nested-root', 'hierarchical');
+    const nestedSibling = group('nested-sibling', 'sibling', {
+      sibling_membership_mode: 'parliament',
+    });
+    const base = group('base', 'base');
+
+    const rows = resolveMembershipProvenance({
+      group: assembly,
+      memberships: [
+        membership('nested-hierarchy', {
+          user_id: 'u1',
+          source_group_id: 'source-sibling',
+          source_group: sourceSibling,
+        }),
+        membership('nested-sibling', {
+          user_id: 'u2',
+          source_group_id: 'source-sibling',
+          source_group: sourceSibling,
+        }),
+      ],
+      rootMemberships: [
+        membership('source-u1', {
+          user_id: 'u1',
+          group_id: 'source-sibling',
+          source_group_id: 'nested-root',
+          source_group: nestedRoot,
+        }),
+        membership('nested-u1', {
+          user_id: 'u1',
+          group_id: 'nested-root',
+          source_group_id: 'base',
+          source_group: base,
+        }),
+        membership('source-u2', {
+          user_id: 'u2',
+          group_id: 'source-sibling',
+          source_group_id: 'nested-sibling',
+          source_group: nestedSibling,
+        }),
+      ],
+      relationships: [relationship('nested-base', 'nested-root', 'base')],
+    });
+
+    expect(rows[0]).toMatchObject({
+      partGroup: { id: 'source-sibling' },
+      baseGroup: { id: 'base' },
+    });
+    expect(rows[1]).toMatchObject({
+      partGroup: { id: 'source-sibling' },
+      baseGroup: { id: 'nested-sibling' },
+    });
+  });
+
+  it('uses compatible and missing nested hierarchy memberships deterministically', () => {
+    const assembly = group('assembly', 'sibling', { sibling_membership_mode: 'parliament' });
+    const sourceSibling = group('source-sibling', 'sibling', {
+      sibling_membership_mode: 'parliament',
+    });
+    const nestedRoot = group('nested-root', 'hierarchical');
+    const base = group('base', 'base');
+
+    const [compatible, missing] = resolveMembershipProvenance({
+      group: assembly,
+      memberships: [
+        membership('compatible', {
+          user_id: 'u1',
+          source_group_id: 'source-sibling',
+          source_group: sourceSibling,
+        }),
+        membership('missing', {
+          user_id: 'u2',
+          source_group_id: 'source-sibling',
+          source_group: sourceSibling,
+        }),
+      ],
+      rootMemberships: [
+        membership('source-u1', {
+          user_id: 'u1',
+          group_id: 'source-sibling',
+          source_group_id: 'nested-root',
+          source_group: nestedRoot,
+        }),
+        membership('compatible-u1', {
+          user_id: 'u1',
+          group_id: null,
+          source_group_id: 'base',
+          source_group: base,
+        }),
+        membership('source-u2', {
+          user_id: 'u2',
+          group_id: 'source-sibling',
+          source_group_id: 'nested-root',
+          source_group: nestedRoot,
+        }),
+      ],
+      relationships: [relationship('nested-base', 'nested-root', 'base')],
+    });
+
+    expect(compatible.baseGroup?.id).toBe('base');
+    expect(missing.baseGroup?.id).toBe('nested-root');
+  });
 });
 
 describe('membership composition aggregation', () => {
@@ -428,5 +877,94 @@ describe('membership composition aggregation', () => {
 
     expect(memberPercentageSum).toBeCloseTo(100, 5);
     expect(leadershipPercentageSum).toBeCloseTo(100, 5);
+  });
+
+  it('returns no buckets for no members and builds stable fallback buckets', () => {
+    expect(buildMembershipCompositionBuckets([])).toEqual([]);
+
+    expect(
+      buildMembershipCompositionBuckets([
+        {
+          partGroup: null,
+          provenanceBucketLabel: null,
+          roles: [],
+          role: { id: 'legacy-chair', name: 'Chair' },
+        },
+        {
+          partGroup: null,
+          provenanceBucketLabel: 'Custom',
+          roles: [{ id: 'unnamed', name: null }],
+          role: null,
+        },
+        {
+          partGroup: null,
+          provenanceBucketLabel: 'Empty',
+          roles: [],
+          role: null,
+        },
+      ])
+    ).toEqual([
+      expect.objectContaining({
+        key: `fallback:${DIRECT_WITHOUT_PATH_LABEL}`,
+        label: DIRECT_WITHOUT_PATH_LABEL,
+        memberCount: 1,
+        leadershipAssignmentCount: 1,
+      }),
+      expect.objectContaining({
+        key: 'fallback:Custom',
+        label: 'Custom',
+        memberCount: 1,
+        leadershipAssignmentCount: 1,
+      }),
+      expect.objectContaining({
+        key: 'fallback:Empty',
+        label: 'Empty',
+        memberCount: 1,
+        leadershipAssignmentCount: 0,
+      }),
+    ]);
+  });
+
+  it('uses name ordering after member and leadership counts tie', () => {
+    const buckets = buildMembershipCompositionBuckets([
+      {
+        partGroup: { id: 'z', name: 'Zulu' },
+        provenanceBucketLabel: null,
+        roles: [{ id: 'member', name: 'MEMBER' }],
+        role: null,
+      },
+      {
+        partGroup: { id: 'a', name: 'Alpha' },
+        provenanceBucketLabel: null,
+        roles: [{ id: 'member-a', name: 'Member' }],
+        role: null,
+      },
+    ]);
+
+    expect(buckets.map(bucket => bucket.key)).toEqual(['a', 'z']);
+    expect(buckets[0]?.leadershipAssignmentCount).toBe(0);
+    expect(buckets[1]?.leadershipAssignmentCount).toBe(0);
+  });
+});
+
+describe('collectPathsFromBaseToTarget', () => {
+  it('ignores malformed edges, terminates cycles, and deduplicates path keys', () => {
+    const paths = collectPathsFromBaseToTarget('base', 'root', [
+      relationship('mid-base', 'mid', 'base'),
+      relationship('root-mid', 'root', 'mid'),
+      relationship('base-mid', 'base', 'mid'),
+      {
+        id: 'peer',
+        group_id: 'base',
+        related_group_id: 'peer',
+        relationship_type: 'sibling',
+        connection_type: 'peer',
+        with_right: null,
+        status: 'active',
+      } as any,
+    ]);
+
+    expect(paths).toEqual([['base', 'mid', 'root']]);
+    expect(collectPathsFromBaseToTarget('standalone', 'root', [])).toEqual([]);
   });
 });

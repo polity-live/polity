@@ -299,10 +299,18 @@ export function GroupConnectionComposerView({
         className="space-y-4"
       >
         <ScrollableTabsList>
-          <TabsTrigger value="preset" className="min-w-max flex-1">
+          <TabsTrigger
+            value="preset"
+            className="min-w-max flex-1"
+            data-action-id="network.connection-composer.mode.preset"
+          >
             {translateText('generated.inline.0777_vorkonfiguriert_895eea86')}
           </TabsTrigger>
-          <TabsTrigger value="advanced" className="min-w-max flex-1">
+          <TabsTrigger
+            value="advanced"
+            className="min-w-max flex-1"
+            data-action-id="network.connection-composer.mode.advanced"
+          >
             {translateText('generated.inline.0778_link_selbst_konfigurieren_7eab7242')}
           </TabsTrigger>
         </ScrollableTabsList>
@@ -377,6 +385,7 @@ export function GroupConnectionComposerView({
                             id={`preset-${option.value}`}
                             value={option.value}
                             disabled={disabled}
+                            data-action-id="network.connection-composer.preset.select"
                             className="mt-0.5"
                           />
                           <div className="min-w-0 flex-1 space-y-3">
@@ -515,6 +524,7 @@ export function GroupConnectionComposerView({
                             id={`membership-direction-${direction}`}
                             value={direction}
                             className="mt-0.5"
+                            data-action-id="network.connection-composer.membership-direction.select"
                           />
                           <div className="space-y-1">
                             <div className="text-sm font-medium">
@@ -569,6 +579,7 @@ export function GroupConnectionComposerView({
                                 id={`advanced-membership-mode-${membershipDirection}-${option}`}
                                 value={option}
                                 disabled={disabled}
+                                data-action-id="network.connection-composer.membership-mode.select"
                                 className="mt-0.5"
                               />
                               <div>

@@ -38,6 +38,7 @@ describe('workflowVisualizationHelpers', () => {
     expect(getDefaultWorkflowId(workflows, '')).toBe('a');
     expect(getDefaultWorkflowId(workflows, 'z')).toBe('z');
     expect(getDefaultWorkflowId(workflows, 'missing')).toBe('a');
+    expect(getDefaultWorkflowId([], 'missing')).toBe('');
   });
 
   it('normalizes the start group and approval state for workflow visualization', () => {
@@ -73,5 +74,55 @@ describe('workflowVisualizationHelpers', () => {
         ],
       })
     );
+  });
+
+  it('sorts missing names and maps minimal pending workflows', () => {
+    expect(
+      sortWorkflowsByName([
+        buildWorkflow('named', { name: 'Alpha' }),
+        buildWorkflow('missing-left', { name: null }),
+        buildWorkflow('missing-right', { name: undefined }),
+      ])
+    ).toHaveLength(3);
+
+    expect(
+      toWorkflowVisualizationWorkflow(
+        buildWorkflow('minimal', {
+          description: undefined,
+          status: 'pending_approval',
+          start_group_id: null,
+          start_group: null,
+          steps: null,
+        })
+      )
+    ).toMatchObject({
+      description: null,
+      startGroup: null,
+      approvalState: 'pending',
+      steps: [],
+    });
+  });
+
+  it('falls back to the stored start-group id and maps steps without joined groups', () => {
+    expect(
+      toWorkflowVisualizationWorkflow(
+        buildWorkflow('fallback', {
+          start_group_id: 'stored-group',
+          start_group: null,
+          steps: [
+            {
+              id: 'step',
+              order_index: null,
+              label: null,
+              group_id: 'group',
+              group: null,
+            },
+          ],
+        })
+      )
+    ).toMatchObject({
+      startGroup: { id: 'stored-group', name: 'stored-group' },
+      steps: [{ id: 'step', group: null }],
+    });
   });
 });

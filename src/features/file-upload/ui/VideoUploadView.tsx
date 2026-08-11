@@ -76,6 +76,7 @@ export function VideoUploadView({
                 {copy.unsupportedVideo}
               </video>
               <Button
+                data-action-id="file-upload.video.remove"
                 type="button"
                 variant="destructive"
                 size="icon"

@@ -137,6 +137,7 @@ export function GroupOperationPageView({
           addLinkButton={
             canManageLinks ? (
               <AddLinkDialog
+                data-action-scope="presentation"
                 isOpen={linkDialogOpen}
                 onOpenChange={onLinkDialogOpenChange}
                 onSubmit={handleAddLink}

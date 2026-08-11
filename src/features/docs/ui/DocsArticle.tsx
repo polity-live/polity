@@ -49,6 +49,7 @@ function DocsMarkdown({ markdown }: { markdown: string }) {
         ),
         a: ({ href = '', children }) => (
           <a
+            data-action-id="docs.article.markdown-link.open"
             href={href}
             className="text-primary font-medium underline underline-offset-4"
             {...(/^https?:/i.test(href) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
@@ -113,6 +114,7 @@ function TableOfContents({ page, activeSection }: { page: DocsPage; activeSectio
         {page.sections.map(section => (
           <li key={section.id}>
             <a
+              data-action-id="docs.article.toc.jump"
               href={`#${section.id}`}
               aria-current={activeSection === section.id ? 'location' : undefined}
               className={cn(
@@ -165,7 +167,11 @@ export function DocsArticle({ page }: { page: DocsPage }) {
     <main className="mx-auto grid w-full max-w-[86rem] gap-10 px-5 py-8 md:px-8 md:py-12 xl:grid-cols-[minmax(0,52rem)_15rem] xl:px-12">
       <article className="min-w-0">
         <div className="text-muted-foreground mb-8 flex flex-wrap items-center gap-2 text-sm">
-          <Link to="/docs" className="hover:text-foreground">
+          <Link
+            to="/docs"
+            data-action-id="docs.article.home.open"
+            className="hover:text-foreground"
+          >
             {t('pages.docs.hub.overview')}
           </Link>
           <span aria-hidden="true">/</span>
@@ -193,8 +199,11 @@ export function DocsArticle({ page }: { page: DocsPage }) {
             ))}
           </div>
           {primaryAction && primaryActionRoute && primaryActionLabel ? (
-            <Button asChild className="mt-6">
-              <Link to={primaryActionRoute as never}>
+            <Button asChild className="mt-6" data-action-id="docs.article.primary-action.open">
+              <Link
+                to={primaryActionRoute as never}
+                data-action-id="docs.article.primary-action.open"
+              >
                 {primaryActionLabel}
                 <ArrowRight className="size-4" />
               </Link>
@@ -216,7 +225,11 @@ export function DocsArticle({ page }: { page: DocsPage }) {
           {page.sections.map(section => (
             <section key={section.id} id={section.id} className="scroll-mt-24 py-9">
               <h2 className="font-display mb-5 text-2xl font-semibold tracking-tight md:text-3xl">
-                <a href={`#${section.id}`} className="hover:text-primary">
+                <a
+                  href={`#${section.id}`}
+                  data-action-id="docs.article.section.jump"
+                  className="hover:text-primary"
+                >
                   {section.title}
                 </a>
               </h2>
@@ -237,6 +250,7 @@ export function DocsArticle({ page }: { page: DocsPage }) {
                 const RelatedIcon = getIconComponent(related.icon);
                 return (
                   <Link
+                    data-action-id="docs.article.related.open"
                     key={related.slug}
                     to={related.route as never}
                     className="bg-card hover:border-ring group rounded-lg border p-4 transition-colors"
@@ -258,8 +272,13 @@ export function DocsArticle({ page }: { page: DocsPage }) {
           className="mt-10 grid gap-3 border-t pt-6 sm:grid-cols-2"
         >
           {previousPage ? (
-            <Button asChild variant="outline" className="h-auto justify-start py-3">
-              <Link to={previousPage.route as never}>
+            <Button
+              asChild
+              variant="outline"
+              className="h-auto justify-start py-3"
+              data-action-id="docs.article.previous.open"
+            >
+              <Link to={previousPage.route as never} data-action-id="docs.article.previous.open">
                 <ArrowLeft className="size-4" />
                 <span className="min-w-0 text-left">
                   <span className="text-muted-foreground block text-xs">
@@ -273,8 +292,13 @@ export function DocsArticle({ page }: { page: DocsPage }) {
             <span />
           )}
           {nextPage && (
-            <Button asChild variant="outline" className="h-auto justify-end py-3">
-              <Link to={nextPage.route as never}>
+            <Button
+              asChild
+              variant="outline"
+              className="h-auto justify-end py-3"
+              data-action-id="docs.article.next.open"
+            >
+              <Link to={nextPage.route as never} data-action-id="docs.article.next.open">
                 <span className="min-w-0 text-right">
                   <span className="text-muted-foreground block text-xs">
                     {t('pages.docs.hub.nextResult')}

@@ -46,6 +46,7 @@ export function EditorViewModeToggleView({
   return (
     <div className="flex items-center gap-2">
       <Button
+        data-action-id="change-requests.view-mode.toggle"
         variant={mode === 'all' ? 'default' : 'outline'}
         size="sm"
         onClick={onModeToggle}
@@ -67,7 +68,12 @@ export function EditorViewModeToggleView({
       {mode === 'single' && (
         <Popover open={open} onOpenChange={onOpenChange}>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5">
+            <Button
+              data-action-id="change-requests.suggestion-selector.open"
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+            >
               {selectedCR ? (
                 <>
                   <BadgeControl variant="secondary" size="xs" textStyle="mono">
@@ -92,6 +98,7 @@ export function EditorViewModeToggleView({
                 <CommandGroup>
                   {changeRequests.map((cr: any) => (
                     <CommandItem
+                      data-action-id="change-requests.suggestion-selector.select"
                       key={cr.id}
                       value={`${cr.crId} ${cr.title}`}
                       onSelect={() => onSelectCR(cr.id)}

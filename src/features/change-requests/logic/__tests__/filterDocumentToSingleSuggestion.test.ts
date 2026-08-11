@@ -154,4 +154,153 @@ describe('filterDocumentToSuggestions', () => {
 
     expect(result).toEqual([]);
   });
+
+  it('resolves every inline suggestion action and property direction', () => {
+    const content = [
+      {
+        type: 'p',
+        children: [
+          {
+            text: 'accept replace',
+            suggestion: true,
+            suggestion_accept_replace: { id: 'accept-replace', type: 'replace' },
+          },
+          {
+            text: 'accept update props',
+            align: 'old',
+            suggestion: true,
+            suggestion_accept_update_props: {
+              id: 'accept-update-props',
+              type: 'update',
+              newProperties: { align: 'new' },
+            },
+          },
+          {
+            text: 'accept update empty',
+            suggestion: true,
+            suggestion_accept_update_empty: { id: 'accept-update-empty', type: 'update' },
+          },
+          {
+            text: 'accept unknown',
+            suggestion: true,
+            suggestion_accept_unknown: { id: 'accept-unknown', type: 'custom' },
+          },
+          {
+            text: 'reject replace',
+            suggestion: true,
+            suggestion_reject_replace: { id: 'reject-replace', type: 'replace' },
+          },
+          {
+            text: 'reject update props',
+            align: 'new',
+            suggestion: true,
+            suggestion_reject_update_props: {
+              id: 'reject-update-props',
+              type: 'update',
+              properties: { align: 'old' },
+            },
+          },
+          {
+            text: 'reject update empty',
+            suggestion: true,
+            suggestion_reject_update_empty: { id: 'reject-update-empty', type: 'update' },
+          },
+          {
+            text: 'reject unknown',
+            suggestion: true,
+            suggestion_reject_unknown: { id: 'reject-unknown', type: 'custom' },
+          },
+          {
+            text: 'missing mark',
+            suggestion: true,
+            suggestion_missing: undefined,
+          },
+          {
+            text: 'target plus resolved',
+            suggestion: true,
+            suggestion_target: { id: 'target', type: 'insert' },
+            suggestion_other: { id: 'other', type: 'remove' },
+          },
+          {
+            type: 'link',
+            suggestion_nested: { id: 'nested-other', type: 'remove' },
+            children: [{ text: 'nested child' }],
+          },
+        ],
+      },
+    ] as any;
+    const acceptIds = [
+      'accept-replace',
+      'accept-update-props',
+      'accept-update-empty',
+      'accept-unknown',
+    ];
+    const result = filterDocumentToSuggestions(
+      content,
+      new Set(['target']),
+      new Map(acceptIds.map(id => [id, 'accept'] as const))
+    );
+    const children = firstParagraphChildren(result) as any[];
+
+    expect(textContent(result)).not.toContain('reject replace');
+    expect(children.find(node => node.text === 'accept update props')?.align).toBe('new');
+    expect(children.find(node => node.text === 'reject update props')?.align).toBe('old');
+    expect(children.find(node => node.text === 'accept update empty')).toBeTruthy();
+    expect(children.find(node => node.text === 'reject update empty')).toBeTruthy();
+    expect(children.find(node => node.text === 'accept unknown')).toBeTruthy();
+    expect(children.find(node => node.text === 'reject unknown')).toBeTruthy();
+    expect(children.find(node => node.text === 'missing mark')).toBeTruthy();
+    expect(children.find(node => node.text === 'target plus resolved')).toMatchObject({
+      suggestion: true,
+      suggestion_target: { id: 'target', type: 'insert' },
+    });
+  });
+
+  it('resolves replace, remove, and unknown block suggestions in both directions', () => {
+    const block = (id: string | undefined, type: string) => ({
+      type: 'custom-block',
+      children: [{ text: id ?? 'missing' }],
+      suggestion: { id, type },
+    });
+    const content = [
+      block('reject-replace', 'replace'),
+      block('reject-remove', 'remove'),
+      block('reject-unknown', 'custom'),
+      block('accept-unknown', 'custom'),
+      block(undefined, 'remove'),
+    ] as any;
+    const result = filterDocumentToSuggestions(
+      content,
+      new Set(),
+      new Map([
+        ['accept-unknown', 'accept'],
+        ['', 'accept'],
+      ])
+    ) as any[];
+
+    expect(result).toHaveLength(3);
+    expect(result.map(node => node.children[0].text)).toEqual([
+      'reject-remove',
+      'reject-unknown',
+      'accept-unknown',
+    ]);
+    expect(result.every(node => !('suggestion' in node))).toBe(true);
+  });
+
+  it('recurses through ordinary content and tolerates malformed block markers', () => {
+    const content = [
+      { text: 'leaf', suggestion: true },
+      { type: 'p', suggestion: null, children: [{ text: 'null marker' }] },
+      { type: 'p', suggestion: [], children: [{ text: 'array marker' }] },
+      { type: 'p', suggestion: 'invalid', children: [{ text: 'string marker' }] },
+      null,
+      'primitive',
+    ] as any;
+
+    const result = filterDocumentToSuggestions(content, new Set()) as any[];
+
+    expect(result).toHaveLength(6);
+    expect(result[0]).toEqual({ text: 'leaf' });
+    expect(result[1].children[0].text).toBe('null marker');
+  });
 });

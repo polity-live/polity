@@ -40,7 +40,12 @@ export function CreateDashboardView({ sections, accessibleTitle }: CreateDashboa
                 const Icon = item.icon;
 
                 return (
-                  <SmartLink key={item.href} href={item.href} className="block">
+                  <SmartLink
+                    key={item.href}
+                    href={item.href}
+                    data-action-id="create.dashboard.flow.open"
+                    className="block"
+                  >
                     <Panel
                       className="hover:bg-accent/60 focus-within:ring-ring h-full transition-colors focus-within:ring-2"
                       data-create-action="open-create-flow"

@@ -3,6 +3,7 @@ import { EditorView } from '@/features/editor/ui/EditorView';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
 import { useUserState } from '@/zero/users/useUserState';
+import { mapEditorUserRecord } from '@/routes/_authed';
 
 export const Route = createFileRoute('/_authed/group/$id/editor/$docId')({
   component: GroupEditorDocPage,
@@ -14,17 +15,7 @@ function GroupEditorDocPage() {
   const { currentUser } = useUserState();
   const { canManage } = usePermissions({ groupId: id });
 
-  const userRecord = currentUser
-    ? {
-        id: currentUser.id,
-        name:
-          [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ') ||
-          currentUser.handle ||
-          '',
-        email: user?.email,
-        avatar: currentUser.avatar ?? undefined,
-      }
-    : undefined;
+  const userRecord = mapEditorUserRecord(currentUser, user?.email);
 
   return (
     <EditorView

@@ -30,7 +30,7 @@ export function buildMultiMeasureProjectionPoints({
   }
 
   return [...groups.values()].flatMap<ChartPoint>(group => {
-    const value = aggregateDatasetValues(group.values, aggregation);
-    return value == null ? [] : [{ x: group.x, value, series: group.series }];
+    const value = aggregateDatasetValues(group.values, aggregation) as number;
+    return [{ x: group.x, value, series: group.series }];
   });
 }

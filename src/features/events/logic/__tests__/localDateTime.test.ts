@@ -5,8 +5,11 @@ import {
   formatLocalDateTimeInput,
   formatLocalTimeInput,
   formatOptionalLocalTimeInput,
+  getIsoWeekdayIndex,
+  isLocalEndOfDay,
   parseLocalDateInput,
   toLocalDeadlineTimestamp,
+  toLocalDayTimestamp,
   toLocalDateTimeTimestamp,
   toLocalEndOfDayTimestamp,
   toLocalTimestamp,
@@ -14,6 +17,17 @@ import {
 } from '@/features/shared/logic/localDateTime';
 
 describe('localDateTime helpers', () => {
+  it('rejects absent and malformed values across parse and format boundaries', () => {
+    expect(parseLocalDateInput('invalid')).toBeUndefined();
+    expect(toLocalTimestamp('invalid', '09:00')).toBeNull();
+    expect(toLocalDateTimeTimestamp('invalid')).toBeNull();
+    expect(toLocalEndOfDayTimestamp('invalid')).toBeNull();
+    expect(toLocalDayTimestamp('invalid')).toBeNull();
+    expect(toLocalDeadlineTimestamp('', '')).toBeNull();
+    expect(toTimestampInTimeZone('   ', 'UTC')).toBeNull();
+    expect(toTimestampInTimeZone('invalid', 'UTC')).toBeNull();
+  });
+
   it('roundtrips local date and time inputs without shifting them', () => {
     const timestamp = toLocalTimestamp('2026-05-26', '09:45');
 
@@ -48,6 +62,14 @@ describe('localDateTime helpers', () => {
     expect(formatLocalDateInput(0)).toBe('');
     expect(formatLocalTimeInput(0)).toBe('');
     expect(formatLocalDateTimeInput(0)).toBe('');
+    expect(formatLocalDateInput(new Date(2026, 0, 2, 3, 4))).toBe('2026-01-02');
+    expect(formatLocalTimeInput(null)).toBe('');
+  });
+
+  it('uses midnight for an invalid or absent optional time', () => {
+    const timestamp = toLocalTimestamp('2026-07-19', 'invalid');
+    expect(formatLocalTimeInput(timestamp)).toBe('00:00');
+    expect(formatLocalTimeInput(toLocalTimestamp('2026-07-19'))).toBe('00:00');
   });
 
   it('uses local end of day when a deadline has no explicit time', () => {
@@ -76,6 +98,9 @@ describe('localDateTime helpers', () => {
 
     expect(new Date(berlin ?? 0).toISOString()).toBe('2026-07-19T21:59:59.999Z');
     expect(new Date(newYork ?? 0).toISOString()).toBe('2026-07-20T03:59:59.999Z');
+    expect(new Date(toTimestampInTimeZone('2026-07-19', 'UTC') ?? 0).toISOString()).toBe(
+      '2026-07-19T00:00:00.000Z'
+    );
   });
 
   it('resolves naive local times across a daylight-saving boundary', () => {
@@ -95,5 +120,29 @@ describe('localDateTime helpers', () => {
 
     expect(formatDateInputInTimeZone(instant, 'Europe/Berlin')).toBe('2026-07-19');
     expect(formatDateInputInTimeZone(instant, 'America/New_York')).toBe('2026-07-18');
+    expect(formatDateInputInTimeZone(new Date(instant), 'Europe/Berlin')).toBe('2026-07-19');
+    expect(formatDateInputInTimeZone(new Date(instant).getTime(), 'Europe/Berlin')).toBe(
+      '2026-07-19'
+    );
+    expect(formatDateInputInTimeZone(instant, 'Invalid/Zone')).toBe('2026-07-19');
+    expect(formatDateInputInTimeZone(instant)).toBe('2026-07-19');
+  });
+
+  it('parses explicit naive seconds and fractional milliseconds in a time zone', () => {
+    const timestamp = toTimestampInTimeZone('2026-07-19T14:30:05.12', 'UTC');
+    expect(new Date(timestamp ?? 0).toISOString()).toBe('2026-07-19T14:30:05.120Z');
+  });
+
+  it('normalizes dates to local-day timestamps and detects exact end-of-day values', () => {
+    const date = new Date(2026, 6, 19, 12, 30);
+    const dayTimestamp = toLocalDayTimestamp(date);
+    expect(formatLocalTimeInput(dayTimestamp)).toBe('00:00');
+    expect(isLocalEndOfDay(date)).toBe(false);
+    expect(isLocalEndOfDay(null)).toBe(false);
+  });
+
+  it('maps Sunday and weekdays to zero-based ISO weekday indices', () => {
+    expect(getIsoWeekdayIndex(new Date(2026, 6, 19))).toBe(6);
+    expect(getIsoWeekdayIndex(new Date(2026, 6, 20).getTime())).toBe(0);
   });
 });

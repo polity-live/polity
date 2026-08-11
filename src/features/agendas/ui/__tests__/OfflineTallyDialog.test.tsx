@@ -98,10 +98,11 @@ describe('OfflineTallyDialog fullscreen layout', () => {
   it('renders the enter tally form in a fullscreen centered shell', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
 
+    const onOpenChange = vi.fn();
     render(
       <OfflineTallyDialog
         open
-        onOpenChange={vi.fn()}
+        onOpenChange={onOpenChange}
         title="Final offline tally"
         description="Enter offline selections."
         phase="final"
@@ -126,10 +127,16 @@ describe('OfflineTallyDialog fullscreen layout', () => {
     expect(screen.getByLabelText<HTMLInputElement>('Support').value).toBe('2');
     expect(screen.getByLabelText<HTMLInputElement>('Oppose').value).toBe('0');
     expect(screen.queryByText('Enter voting PIN')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    const confirmCounts = screen.getByRole('button', { name: 'Confirm' });
+    expect(confirmCounts.getAttribute('data-action-id')).toBe(
+      'agendas.offline-tally.counts.confirm'
+    );
+    fireEvent.click(confirmCounts);
     expect(screen.getByText('Enter voting PIN')).toBeTruthy();
     expect(screen.queryByLabelText('Support')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    const backToCounts = screen.getByRole('button', { name: 'Back' });
+    expect(backToCounts.getAttribute('data-action-id')).toBe('agendas.offline-tally.counts.back');
+    fireEvent.click(backToCounts);
     expect(screen.getByLabelText<HTMLInputElement>('Support').value).toBe('2');
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
     const inputs = Array.from(document.querySelectorAll('input'));
@@ -142,7 +149,11 @@ describe('OfflineTallyDialog fullscreen layout', () => {
         counts: { support: 2, oppose: 0 },
       })
     );
-    expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Cancel' }).getAttribute('data-action-id')).toBe(
+      'agendas.offline-tally.cancel'
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it('shows a fullscreen animated submission overlay while saving a tally', () => {
@@ -171,10 +182,11 @@ describe('OfflineTallyDialog fullscreen layout', () => {
   });
 
   it('keeps election tallies aligned to the same centered fullscreen shell', () => {
+    const onOpenChange = vi.fn();
     render(
       <OfflineElectionTallyDialog
         open
-        onOpenChange={vi.fn()}
+        onOpenChange={onOpenChange}
         title="Indicative offline tally"
         description="Enter candidate selections."
         phase="indicative"
@@ -197,6 +209,19 @@ describe('OfflineTallyDialog fullscreen layout', () => {
     expect(screen.getByLabelText<HTMLInputElement>('Alice').value).toBe('1');
     expect(screen.getByLabelText<HTMLInputElement>('Alice').max).toBe('3');
     expect(screen.getByLabelText<HTMLInputElement>('Bob').value).toBe('0');
+    const confirmCounts = screen.getByRole('button', { name: 'Confirm' });
+    expect(confirmCounts.getAttribute('data-action-id')).toBe(
+      'agendas.offline-election-tally.counts.confirm'
+    );
+    expect(screen.getByRole('button', { name: 'Cancel' }).getAttribute('data-action-id')).toBe(
+      'agendas.offline-election-tally.cancel'
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    fireEvent.click(confirmCounts);
+    expect(screen.getByRole('button', { name: 'Back' }).getAttribute('data-action-id')).toBe(
+      'agendas.offline-election-tally.counts.back'
+    );
   });
 
   it('disables confirmation while counts exceed the participant limit', () => {

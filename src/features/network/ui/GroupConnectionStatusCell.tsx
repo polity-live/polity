@@ -66,6 +66,7 @@ export function GroupConnectionStatusCell({
               type="button"
               variant="ghost"
               size="icon"
+              data-action-id="network.connection-status.warning.open"
               className="text-destructive hover:text-destructive h-8 w-8"
               aria-label={t('common.network.linkConflict')}
               onClick={onWarningClick}

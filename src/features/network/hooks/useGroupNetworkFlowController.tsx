@@ -129,10 +129,6 @@ function sortGroupsByCreatedAt<
 }
 
 function getSiblingNodeOffset(index: number, total: number) {
-  if (total <= 0) {
-    return { x: 0, y: 0 };
-  }
-
   if (index === 0) {
     return { x: SIBLING_RADIUS, y: 0 };
   }
@@ -833,10 +829,11 @@ export function useGroupNetworkFlowController({
           return;
         }
 
-        const anchorPosition = renderedNodePositionsById.get(anchorNodeId);
-        if (!anchorPosition) {
-          return;
-        }
+        // resolveRenderedNodeId only returns nodes registered in both render maps.
+        const anchorPosition = renderedNodePositionsById.get(anchorNodeId) as {
+          x: number;
+          y: number;
+        };
 
         attachments.forEach((attachment, index) => {
           if (renderedNodeIdsByGroupId.has(attachment.group.id)) {
@@ -897,12 +894,6 @@ export function useGroupNetworkFlowController({
           return;
         }
 
-        const sourceNodeId = resolveRenderedNodeId(sourceGroupId);
-        const targetNodeId = resolveRenderedNodeId(targetGroupId);
-        if (!sourceNodeId || !targetNodeId) {
-          return;
-        }
-
         const sourceAnchorsTarget = siblingAnchorByGroupId.get(targetGroupId) === sourceGroupId;
         const targetAnchorsSource = siblingAnchorByGroupId.get(sourceGroupId) === targetGroupId;
         const [edgeSourceGroupId, edgeTargetGroupId] = sourceAnchorsTarget
@@ -916,12 +907,9 @@ export function useGroupNetworkFlowController({
                 : sourceGroupId.localeCompare(targetGroupId) <= 0
                   ? [sourceGroupId, targetGroupId]
                   : [targetGroupId, sourceGroupId];
-        const edgeSourceId = resolveRenderedNodeId(edgeSourceGroupId);
-        const edgeTargetId = resolveRenderedNodeId(edgeTargetGroupId);
-
-        if (!edgeSourceId || !edgeTargetId) {
-          return;
-        }
+        // Sibling relationships are assembled only from groups registered above.
+        const edgeSourceId = resolveRenderedNodeId(edgeSourceGroupId) as string;
+        const edgeTargetId = resolveRenderedNodeId(edgeTargetGroupId) as string;
 
         const edgeKey = `${edgeSourceId}<->${edgeTargetId}`;
         const relationshipKind = getGroupRelationshipKind(rel, graphRootGroupId);
@@ -973,9 +961,7 @@ export function useGroupNetworkFlowController({
         const rightDirection =
           rel.group_id === edgeSourceGroupId && rel.related_group_id === edgeTargetGroupId
             ? 'forward'
-            : rel.group_id === edgeTargetGroupId && rel.related_group_id === edgeSourceGroupId
-              ? 'backward'
-              : null;
+            : 'backward';
 
         if (right && rightDirection) {
           entry.rightEdgeDirections[right] = mergeNetworkEdgeRelationshipDirection(
@@ -987,10 +973,9 @@ export function useGroupNetworkFlowController({
     }
 
     parents.forEach(parent => {
+      // Every parent entry was rendered and registered above.
       const parentNodeId = resolveRenderedNodeId(parent.group.id);
-      if (!parentNodeId) {
-        return;
-      }
+      if (!parentNodeId) return;
 
       const rightMode = relationshipTraversalMode === 'right' && Boolean(filterRight);
       const hierarchyChildGroupId =
@@ -1039,10 +1024,9 @@ export function useGroupNetworkFlowController({
     });
 
     children.forEach(child => {
+      // Every child entry was rendered and registered above.
       const childNodeId = resolveRenderedNodeId(child.group.id);
-      if (!childNodeId) {
-        return;
-      }
+      if (!childNodeId) return;
 
       const edgeSourceGroupId =
         showAllDepth && child.parentId && child.parentId !== graphRootGroupId

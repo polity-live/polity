@@ -95,13 +95,11 @@ export function useUserMenuController({
   };
 
   const userInitials = displayName
-    ? displayName
-        .split(' ')
-        .map((namePart: string) => namePart[0])
-        .join('')
-        .toUpperCase()
-        .substring(0, 2)
-    : displayEmail.substring(0, 2).toUpperCase();
+    .split(' ')
+    .map((namePart: string) => namePart[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
 
   return {
     displayName,

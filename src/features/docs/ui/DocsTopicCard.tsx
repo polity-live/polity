@@ -19,7 +19,12 @@ export function DocsTopicCard({ topic }: { topic: DocsTopicDefinition }) {
   const baseKey = `pages.docs.topics.${topic.slug}`;
 
   return (
-    <Link to="/docs/$topic" params={{ topic: topic.slug }} className="group block h-full">
+    <Link
+      to="/docs/$topic"
+      params={{ topic: topic.slug }}
+      data-action-id="docs.topic-card.open"
+      className="group block h-full"
+    >
       <Card surface="backgroundSoft" interactive="lift" className="h-full">
         <CardHeader className="space-y-4">
           <div className="flex items-start justify-between gap-3">

@@ -156,6 +156,12 @@ function getMembershipWikiRoles(
   return dedupeWikiParticipationRoles([...directRoles, ...electedRoles]);
 }
 
+export const groupWikiContentViewInternals = {
+  dedupeWikiParticipationRoles,
+  getCurrentElectedWikiRolesByUserId,
+  getMembershipWikiRoles,
+};
+
 export function GroupWikiContentView({
   virtualizeParticipationDirectory = false,
   groupId,
@@ -218,13 +224,13 @@ export function GroupWikiContentView({
         handle: membership.user.handle ?? null,
         email: membership.user.email ?? null,
         avatar: membership.user.avatar ?? null,
-        status: membership.status ?? null,
+        status: membership.status,
         roles,
       };
     });
   const directoryRoles = dedupeWikiParticipationRoles([
     ...memberRoles,
-    ...memberDirectoryItems.flatMap(item => item.roles ?? []),
+    ...memberDirectoryItems.flatMap(item => item.roles as readonly WikiParticipationRole[]),
   ]);
 
   return (
@@ -301,6 +307,7 @@ export function GroupWikiContentView({
               currentGroupName={group.name ?? ''}
               trigger={
                 <Button
+                  data-action-id="groups.wiki.open.link-dialog"
                   className={compactActionButtonClassName}
                   aria-label={t('components.actionBar.linkGroup')}
                 >
@@ -313,6 +320,7 @@ export function GroupWikiContentView({
               }
             />
             <SubscribeButton
+              data-action-id="groups.wiki.toggle.subscription"
               entityType="group"
               entityId={groupId}
               isSubscribed={isSubscribed}
@@ -321,6 +329,7 @@ export function GroupWikiContentView({
               compactOnMobile
             />
             <MembershipButton
+              data-action-id="groups.wiki.manage.membership"
               actionType="join"
               status={status}
               isMember={isMember}
@@ -352,6 +361,7 @@ export function GroupWikiContentView({
           </>
         ) : null}
         <ShareButton
+          data-action-id="groups.wiki.open.share"
           url={`/group/${groupId}`}
           title={group.name ?? ''}
           description={groupDescription ?? ''}

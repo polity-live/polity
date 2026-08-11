@@ -162,6 +162,7 @@ export const timelineTranslations = {
     follow: 'Follow',
     following: 'Following',
     discuss: 'Discuss',
+    more: 'More actions',
     visit: 'Visit',
     happeningNow: 'Happening Now',
     attending: 'attending',
@@ -242,6 +243,8 @@ export const timelineTranslations = {
     // Action card translations
     action: {
       actors: 'Actors',
+      actorPair: '{{first}} and {{second}}',
+      actorOthers: '{{first}} and {{count}} others',
       userJoinedGroup: '{{actor}} joined',
       voteStarted: 'Vote started on',
       eventGoingLive: 'Event is now live',

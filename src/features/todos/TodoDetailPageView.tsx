@@ -62,12 +62,12 @@ export function TodoDetailPageView({
         <p className="text-muted-foreground mb-4">
           {t('features.todos.detail.noAccessDescription')}
         </p>
-        <Link to="/todos">
-          <Button>
+        <Button asChild data-action-id="todos.detail.not-found.back">
+          <Link to="/todos" data-action-id="todos.detail.not-found.back">
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t('features.todos.detail.backToTodos')}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
     );
   }
@@ -83,13 +83,14 @@ export function TodoDetailPageView({
   return (
     <>
       <div className="mb-6 flex items-center justify-between">
-        <Link to="/todos">
-          <Button variant="ghost" size="sm">
+        <Button asChild variant="ghost" size="sm" data-action-id="todos.detail.back">
+          <Link to="/todos" data-action-id="todos.detail.back">
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t('features.todos.detail.backToTodos')}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <ShareButton
+          data-action-id="todos.detail.share"
           url={`/todos/${todoId}`}
           title={displayTodo.title || t('common.entities.todo')}
           variant="outline"

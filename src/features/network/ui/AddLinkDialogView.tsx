@@ -44,7 +44,7 @@ export function AddLinkDialogView({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button size="sm">
+        <Button size="sm" data-action-id="network.add-link.open">
           <Plus className="mr-2 h-4 w-4" />
           {translateText('generated.inline.0761_add_link_2cf006b1')}
         </Button>
@@ -58,7 +58,7 @@ export function AddLinkDialogView({
         }
       >
         {!submissionActive ? (
-          <form onSubmit={onSubmit}>
+          <form onSubmit={onSubmit} data-action-id="network.add-link.form.submit">
             <DialogHeader>
               <DialogTitle>
                 {translateText('generated.inline.0762_add_new_link_5122d31f')}
@@ -99,7 +99,7 @@ export function AddLinkDialogView({
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit">
+              <Button type="submit" data-action-id="network.add-link.submit">
                 {translateText('generated.inline.0761_add_link_2cf006b1')}
               </Button>
             </DialogFooter>

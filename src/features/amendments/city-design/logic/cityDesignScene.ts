@@ -203,7 +203,9 @@ function seededRange(seed: number, min: number, max: number) {
 function setSceneShadows(object: Object3D, castShadow: boolean, receiveShadow: boolean) {
   object.castShadow = castShadow;
   object.receiveShadow = receiveShadow;
-  object.children.forEach(child => setSceneShadows(child, castShadow, receiveShadow));
+  for (const child of object.children) {
+    setSceneShadows(child, castShadow, receiveShadow);
+  }
 }
 
 function getSingleMaterial(object: Object3D) {
@@ -305,8 +307,6 @@ function addExtrudedPickVolume(args: {
   osmWayId?: string;
 }) {
   const { THREE, group, points, height, objectId, osmWayId } = args;
-  if (points.length < 3) return;
-
   const geometry = new THREE.ExtrudeGeometry(makeShape(THREE, points), {
     depth: Math.max(height, 0.8) + 0.4,
     bevelEnabled: false,
@@ -488,10 +488,6 @@ function getCorridorSamples(geometry: RenderableCorridorGeometry, spacing: numbe
     samples.push(getCenterlineSample(centerline, Math.min(offset, geometry.length)));
   }
 
-  if (samples.length === 0) {
-    samples.push(getCenterlineSample(centerline, 0));
-  }
-
   return samples;
 }
 
@@ -600,8 +596,7 @@ function getCityDesignElevationRampConnections(
   endpoint: ElevationRampEndpoint,
   features: CityDesignElevationRampFeature[]
 ) {
-  const sourcePoint = getGeometryEndpointPoint(source.geometry, endpoint);
-  if (!sourcePoint) return [];
+  const sourcePoint = getGeometryEndpointPoint(source.geometry, endpoint) as CityDesignLocalPoint;
 
   return features
     .flatMap(feature =>
@@ -643,14 +638,14 @@ function sliceCenterlineByDistance(
   if (centerline.length < 2) return [];
 
   const distances = getCenterlineDistances(centerline);
-  const totalDistance = distances[distances.length - 1] ?? 0;
+  const totalDistance = distances[distances.length - 1] as number;
   const safeStart = clamp(Math.min(startDistance, endDistance), 0, totalDistance);
   const safeEnd = clamp(Math.max(startDistance, endDistance), 0, totalDistance);
   if (safeEnd - safeStart <= 0.05) return [];
 
   const points: CityDesignLocalPoint[] = [getCenterlineSample(centerline, safeStart).point];
   centerline.forEach((point, index) => {
-    const distance = distances[index] ?? 0;
+    const distance = distances[index] as number;
     if (distance > safeStart + 0.05 && distance < safeEnd - 0.05) {
       points.push(point);
     }
@@ -665,8 +660,6 @@ function createRampGeometryInsideSource(args: {
   endpoint: ElevationRampEndpoint;
   length: number;
 }) {
-  if (args.geometry.length <= 0.05) return null;
-
   const rampLength = clamp(args.length, 0.05, args.geometry.length);
   const startDistance = args.endpoint === 'start' ? 0 : args.geometry.length - rampLength;
   const endDistance = args.endpoint === 'start' ? rampLength : args.geometry.length;
@@ -1202,14 +1195,16 @@ function addPointObject(args: {
   rotation?: number;
 }) {
   const { THREE, group, object, selected } = args;
-  const point = args.point ?? (object.geometry.kind === 'point' ? object.geometry.point : null);
-  if (!point) return;
+  const point =
+    args.point ??
+    (object.geometry as Extract<CityDesignObject['geometry'], { kind: 'point' }>).point;
 
   const definition = getCityDesignObjectDefinition(object.type);
   const root = new THREE.Group();
   root.position.set(point.x, 0, point.z);
   root.rotation.y =
-    args.rotation ?? (object.geometry.kind === 'point' ? object.geometry.rotation : 0);
+    args.rotation ??
+    (object.geometry as Extract<CityDesignObject['geometry'], { kind: 'point' }>).rotation;
 
   if (definition.renderKind === 'tree') {
     const height = Math.max(numberProperty(object.properties.height, 4), 2.2);
@@ -1269,8 +1264,7 @@ function addPointObject(args: {
     definition.renderKind === 'utility' ||
     definition.renderKind === 'barrier' ||
     definition.renderKind === 'traffic' ||
-    definition.renderKind === 'transit' ||
-    object.type === 'taxi_stand'
+    definition.renderKind === 'transit'
   ) {
     const primaryMaterial = new THREE.MeshStandardMaterial({
       color: definition.color,
@@ -1385,12 +1379,6 @@ function addPointObject(args: {
       booth.position.y = 1.03;
       door.position.set(0, 0.9, -0.55);
       root.add(booth, door);
-    } else if (object.type === 'taxi_stand') {
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.055, 1.8, 10), darkMaterial);
-      const plate = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.34, 0.06), primaryMaterial);
-      pole.position.y = 0.9;
-      plate.position.y = 1.55;
-      root.add(pole, plate);
     } else if (object.type === 'crossing') {
       for (let index = -2; index <= 2; index += 1) {
         const stripe = new THREE.Mesh(
@@ -1525,12 +1513,11 @@ function addPlantRowObject(args: {
   animatedObjects?: Object3D[];
 }) {
   const { THREE, group, object, selected, animatedObjects = [] } = args;
-  if (object.geometry.kind !== 'path_corridor') return;
-
   const definition = getCityDesignObjectDefinition(object.type);
+  const geometry = object.geometry as RenderableCorridorGeometry;
   const defaultSpacing = numberProperty(definition.defaultProperties.spacing, 2);
   const spacing = Math.max(numberProperty(object.properties.spacing, defaultSpacing), 0.1);
-  const samples = getCorridorSamples(object.geometry, spacing);
+  const samples = getCorridorSamples(geometry, spacing);
 
   samples.forEach(sample => {
     const plant = addPointObject({
@@ -1541,18 +1528,17 @@ function addPlantRowObject(args: {
       point: sample.point,
       rotation: Math.atan2(sample.direction.x, sample.direction.z),
     });
-    if (plant) {
-      plant.userData.baseY = plant.position.y;
-      plant.userData.phase = sample.point.x * 0.11 + sample.point.z * 0.07;
-      plant.userData.motion = definition.renderKind === 'tree' ? 'tree' : 'bush';
-      animatedObjects.push(plant);
-    }
+    const renderedPlant = plant as Object3D;
+    renderedPlant.userData.baseY = renderedPlant.position.y;
+    renderedPlant.userData.phase = sample.point.x * 0.11 + sample.point.z * 0.07;
+    renderedPlant.userData.motion = definition.renderKind === 'tree' ? 'tree' : 'bush';
+    animatedObjects.push(renderedPlant);
   });
 
   addPickPolygon({
     THREE,
     group,
-    points: object.geometry.polygon,
+    points: geometry.polygon,
     objectId: object.id,
     y: 0.22,
   });
@@ -1561,7 +1547,7 @@ function addPlantRowObject(args: {
     addCorridorOutline({
       THREE,
       group,
-      geometry: object.geometry,
+      geometry,
       color: '#facc15',
       objectId: object.id,
     });
@@ -1791,8 +1777,8 @@ function offsetOsmLocalPoints(points: CityDesignLocalPoint[], offsetMeters: numb
   if (!offsetMeters || points.length < 2) return points;
 
   return points.map((point, index) => {
-    const previous = points[Math.max(index - 1, 0)] ?? point;
-    const next = points[Math.min(index + 1, points.length - 1)] ?? point;
+    const previous = points[Math.max(index - 1, 0)] as CityDesignLocalPoint;
+    const next = points[Math.min(index + 1, points.length - 1)] as CityDesignLocalPoint;
     return offsetPointFromDirection(point, normalizeDirection(previous, next), offsetMeters);
   });
 }
@@ -1810,9 +1796,9 @@ function getOsmWayLocalPoints(way: CityDesignOsmWay, design: CityDesignStateV1) 
 function getLocalPointsCenter(points: CityDesignLocalPoint[]) {
   if (points.length === 0) return { x: 0, z: 0 };
 
-  let minX = points[0]?.x ?? 0;
+  let minX = (points[0] as CityDesignLocalPoint).x;
   let maxX = minX;
-  let minZ = points[0]?.z ?? 0;
+  let minZ = (points[0] as CityDesignLocalPoint).z;
   let maxZ = minZ;
 
   points.forEach(point => {
@@ -1845,6 +1831,7 @@ function addBuildingObject(args: {
 }) {
   const { THREE, group, object, selected, opacity = 1 } = args;
   if (object.geometry.kind !== 'corridor' && object.geometry.kind !== 'path_corridor') return;
+  if (object.geometry.polygon.length < 3) return;
 
   const definition = getCityDesignObjectDefinition(object.type);
   const height = Math.max(numberProperty(object.properties.height, 9), 1);
@@ -1930,8 +1917,6 @@ function addExtrudedPolygon(args: {
     osmWayId,
     bevel = true,
   } = args;
-  if (points.length < 3) return null;
-
   const shape = makeShape(THREE, points);
   const geometry = new THREE.ExtrudeGeometry(shape, {
     depth: height,
@@ -1966,8 +1951,6 @@ function addBuildingFacadeDetails(args: {
   osmWayId?: string;
 }) {
   const { THREE, group, points, height, color, objectId, osmWayId } = args;
-  if (points.length < 3) return;
-
   const roof = addFlatPolygon({
     THREE,
     group,
@@ -1978,12 +1961,9 @@ function addBuildingFacadeDetails(args: {
     objectId,
     osmWayId,
   });
-  if (roof) {
-    const material = roof.material;
-    if (!Array.isArray(material)) {
-      material.color.offsetHSL(0, -0.05, -0.08);
-    }
-  }
+  const roofMaterial = (roof as import('three').Mesh)
+    .material as import('three').MeshStandardMaterial;
+  roofMaterial.color.offsetHSL(0, -0.05, -0.08);
 
   addPolygonOutline({
     THREE,
@@ -2011,8 +1991,6 @@ function addBuildingFacadeDetails(args: {
   for (let pointIndex = 0; pointIndex < points.length; pointIndex += 1) {
     const start = points[pointIndex];
     const end = points[(pointIndex + 1) % points.length];
-    if (!start || !end) continue;
-
     const edgeLength = Math.hypot(end.x - start.x, end.z - start.z);
     if (edgeLength < 2.2) continue;
 
@@ -2314,8 +2292,7 @@ function addWaterDetails(args: {
       y: y + (index % 3) * 0.007,
       objectId,
       osmWayId,
-    });
-    if (!wave) return;
+    }) as import('three').Mesh;
     wave.material = rippleMaterials[index % rippleMaterials.length].clone();
     wave.userData.baseY = wave.position.y;
     wave.userData.phase = index * 0.48;
@@ -2448,7 +2425,6 @@ function addCorridorEdgeStrips(args: {
     for (let index = 0; index < centerline.length - 1; index += 1) {
       const startPoint = centerline[index];
       const endPoint = centerline[index + 1];
-      if (!startPoint || !endPoint) continue;
       const direction = normalizeDirection(startPoint, endPoint);
       const start = offsetPointFromDirection(startPoint, direction, offset);
       const end = offsetPointFromDirection(endPoint, direction, offset);
@@ -2472,23 +2448,25 @@ function getCenterlineDistances(centerline: CityDesignLocalPoint[]) {
     const previous = centerline[index - 1];
     const current = centerline[index];
     distances.push(
-      (distances[index - 1] ?? 0) +
-        (previous && current ? distanceBetweenLocalPoints(previous, current) : 0)
+      (distances[index - 1] as number) +
+        distanceBetweenLocalPoints(
+          previous as CityDesignLocalPoint,
+          current as CityDesignLocalPoint
+        )
     );
   }
   return distances;
 }
 
 function interpolateRampY(startY: number, endY: number, distance: number, totalDistance: number) {
-  if (totalDistance <= 0) return startY;
   const ratio = clamp(distance / totalDistance, 0, 1);
   return startY + (endY - startY) * ratio;
 }
 
 function getCenterlineDirectionAtIndex(centerline: CityDesignLocalPoint[], index: number) {
-  const previous = centerline[Math.max(index - 1, 0)];
-  const next = centerline[Math.min(index + 1, centerline.length - 1)];
-  if (!previous || !next || distanceBetweenLocalPoints(previous, next) <= 0.001) {
+  const previous = centerline[Math.max(index - 1, 0)] as CityDesignLocalPoint;
+  const next = centerline[Math.min(index + 1, centerline.length - 1)] as CityDesignLocalPoint;
+  if (distanceBetweenLocalPoints(previous, next) <= 0.001) {
     return { x: 0, z: 1 };
   }
   return normalizeDirection(previous, next);
@@ -2506,10 +2484,9 @@ function addSlopedCorridorMesh(args: {
 }) {
   const { THREE, group, geometry, color, startY, endY, opacity = 1, yOffset = 0 } = args;
   const centerline = getCorridorCenterline(geometry);
-  if (centerline.length < 2) return null;
 
   const distances = getCenterlineDistances(centerline);
-  const totalDistance = distances[distances.length - 1] ?? geometry.length;
+  const totalDistance = distances[distances.length - 1] as number;
   const positions: number[] = [];
   const indices: number[] = [];
 
@@ -2517,7 +2494,7 @@ function addSlopedCorridorMesh(args: {
     const direction = getCenterlineDirectionAtIndex(centerline, index);
     const left = offsetPointFromDirection(point, direction, -geometry.width * 0.5);
     const right = offsetPointFromDirection(point, direction, geometry.width * 0.5);
-    const y = interpolateRampY(startY, endY, distances[index] ?? 0, totalDistance) + yOffset;
+    const y = interpolateRampY(startY, endY, distances[index] as number, totalDistance) + yOffset;
 
     positions.push(left.x, y, left.z, right.x, y, right.z);
   });
@@ -2579,8 +2556,7 @@ function addSlopedCorridorEdgeStrips(args: {
     const edgeGeometry = createCorridorGeometryFromCenterline(
       createOffsetCenterline(geometry, offset),
       0.08
-    );
-    if (!edgeGeometry) return;
+    ) as RenderableCorridorGeometry;
     addSlopedCorridorMesh({
       THREE,
       group,
@@ -2644,8 +2620,7 @@ function addSlopedRailDetails(args: {
     const railGeometry = createCorridorGeometryFromCenterline(
       createOffsetCenterline(geometry, offset),
       0.08
-    );
-    if (!railGeometry) return;
+    ) as RenderableCorridorGeometry;
     addSlopedCorridorMesh({
       THREE,
       group,
@@ -2662,7 +2637,7 @@ function addSlopedRailDetails(args: {
     .slice(0, 80)
     .forEach(sample => {
       const distance = distanceBetweenLocalPoints(
-        getGeometryEndpointPoint(geometry, 'start') ?? sample.point,
+        getGeometryEndpointPoint(geometry, 'start') as CityDesignLocalPoint,
         sample.point
       );
       const sleeperY = interpolateRampY(startY, endY, distance, geometry.length) + 0.08;
@@ -2745,16 +2720,16 @@ function addElevationRampSegments(args: {
   });
 }
 
-function hasElevationRampSegments(segments: CityDesignElevationRampSegment[] | undefined) {
+function hasElevationRampSegments(
+  segments: CityDesignElevationRampSegment[] | undefined
+): segments is CityDesignElevationRampSegment[] {
   return Boolean(segments && segments.length > 0);
 }
 
 function getElevationRampPlateauGeometry(
   geometry: RenderableCorridorGeometry,
-  segments: CityDesignElevationRampSegment[] | undefined
+  segments: CityDesignElevationRampSegment[]
 ) {
-  if (!segments || segments.length === 0) return geometry;
-
   const startRampLength =
     segments.find(segment => segment.endpoint === 'start')?.geometry.length ?? 0;
   const endRampLength = segments.find(segment => segment.endpoint === 'end')?.geometry.length ?? 0;
@@ -2982,7 +2957,6 @@ function addRailDetails(args: {
     for (let index = 0; index < centerline.length - 1; index += 1) {
       const startPoint = centerline[index];
       const endPoint = centerline[index + 1];
-      if (!startPoint || !endPoint) continue;
       const direction = normalizeDirection(startPoint, endPoint);
       addCorridorMesh({
         THREE,
@@ -3057,14 +3031,13 @@ function addStairTreads(args: {
   geometry: RenderableCorridorGeometry;
   objectId?: string;
   osmWayId?: string;
-  y?: number;
-  endY?: number;
+  y: number;
+  endY: number;
   stepCount?: number;
   incline?: string;
 }) {
-  const { THREE, group, geometry, objectId, osmWayId, y = 0.15 } = args;
+  const { THREE, group, geometry, objectId, osmWayId, y, endY } = args;
   const stepCount = Math.max(2, Math.min(args.stepCount ?? Math.round(geometry.length / 0.55), 96));
-  const endY = typeof args.endY === 'number' ? args.endY : y;
   const samples = Array.from({ length: stepCount }, (_, index) => {
     const distance = geometry.length * ((index + 0.5) / stepCount);
     return getCenterlineSample(getCorridorCenterline(geometry), distance);
@@ -3072,7 +3045,7 @@ function addStairTreads(args: {
   const reverse = args.incline === 'down';
 
   samples.forEach((sample, index) => {
-    const ratio = stepCount <= 1 ? 0 : index / (stepCount - 1);
+    const ratio = index / (stepCount - 1);
     const adjustedRatio = reverse ? 1 - ratio : ratio;
     const treadY = y + (endY - y) * adjustedRatio;
     const start = offsetPointFromDirection(sample.point, sample.direction, -geometry.width * 0.48);
@@ -3126,10 +3099,8 @@ function addSportsMarkings(args: {
   if (points.length < 3) return;
   addPolygonOutline({ THREE, group, points, color: '#f8fafc', y, objectId, osmWayId });
   const center = getLocalPointsCenter(points);
-  const radius = Math.max(
-    0.5,
-    Math.min(1.8, Math.hypot(points[0]?.x ?? 0, points[0]?.z ?? 0) * 0.04)
-  );
+  const firstPoint = points[0] as CityDesignLocalPoint;
+  const radius = Math.max(0.5, Math.min(1.8, Math.hypot(firstPoint.x, firstPoint.z) * 0.04));
   const circle = new THREE.Mesh(
     new THREE.RingGeometry(radius * 0.82, radius, 28),
     new THREE.MeshBasicMaterial({
@@ -3307,11 +3278,13 @@ function addDesignObject(args: {
 
   if (object.geometry.kind === 'point') {
     const pointObject = addPointObject({ THREE, group, object, selected });
-    if (pointObject && (definition.renderKind === 'tree' || definition.renderKind === 'bush')) {
-      pointObject.userData.baseY = pointObject.position.y;
-      pointObject.userData.phase = object.geometry.point.x * 0.11 + object.geometry.point.z * 0.07;
-      pointObject.userData.motion = definition.renderKind === 'tree' ? 'tree' : 'bush';
-      animatedObjects.push(pointObject);
+    if (definition.renderKind === 'tree' || definition.renderKind === 'bush') {
+      const animatedPointObject = pointObject as Object3D;
+      animatedPointObject.userData.baseY = animatedPointObject.position.y;
+      animatedPointObject.userData.phase =
+        object.geometry.point.x * 0.11 + object.geometry.point.z * 0.07;
+      animatedPointObject.userData.motion = definition.renderKind === 'tree' ? 'tree' : 'bush';
+      animatedObjects.push(animatedPointObject);
     }
     return;
   }
@@ -3350,7 +3323,9 @@ function addDesignObject(args: {
     return;
   }
 
-  if (object.geometry.kind === 'corridor' || object.geometry.kind === 'path_corridor') {
+  {
+    // Point, building and polygon paths returned above; only corridor variants remain.
+    const object = args.object as CityDesignObject & { geometry: RenderableCorridorGeometry };
     const surfaceColor = getDesignObjectSurfaceColor(object, definition);
     const deckAwareObject =
       definition.renderKind === 'road' ||
@@ -3441,7 +3416,7 @@ function addDesignObject(args: {
       return;
     }
 
-    const detailGeometry = flatSurfaceGeometry ?? object.geometry;
+    const detailGeometry = flatSurfaceGeometry as RenderableCorridorGeometry;
 
     if (object.type === 'flower_bed') {
       addFlowerBedDetails({
@@ -3614,19 +3589,16 @@ function addDesignObject(args: {
         objectId: object.id,
         y: surfaceY + 0.08,
       });
-      if (object.type === 'rail_track') {
-        const railType = stringProperty(object.properties.railType, 'tram');
-        addSurfaceTexture({
-          THREE,
-          group,
-          geometry: detailGeometry,
-          objectId: object.id,
-          color:
-            railType === 'rail' ? '#d1d5db' : railType === 'light_rail' ? '#a7f3d0' : '#c7d2fe',
-          opacity: 0.18,
-          y: surfaceY + 0.095,
-        });
-      }
+      const railType = stringProperty(object.properties.railType, 'tram');
+      addSurfaceTexture({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        color: railType === 'rail' ? '#d1d5db' : railType === 'light_rail' ? '#a7f3d0' : '#c7d2fe',
+        opacity: 0.18,
+        y: surfaceY + 0.095,
+      });
     }
 
     if (object.type === 'station_platform') {
@@ -3965,7 +3937,7 @@ function cloneObjectMaterials(object: Object3D) {
 }
 
 function isInvisiblePickMaterial(material: ThreeMaterial) {
-  return material.transparent && typeof material.opacity === 'number' && material.opacity <= 0.02;
+  return material.transparent && material.opacity <= 0.02;
 }
 
 function applyChangeRequestOverlayMaterialStyle(args: {
@@ -3980,24 +3952,18 @@ function applyChangeRequestOverlayMaterialStyle(args: {
 
     const styledMaterial = material as ThreeMaterial & {
       color?: { set: (color: string) => void };
-      opacity?: number;
-      transparent?: boolean;
-      depthWrite?: boolean;
+      opacity: number;
+      transparent: boolean;
+      depthWrite: boolean;
       needsUpdate?: boolean;
     };
     if (args.colorMode === 'tinted') {
       styledMaterial.color?.set(args.color);
     }
 
-    if (typeof styledMaterial.opacity === 'number') {
-      styledMaterial.opacity = Math.min(styledMaterial.opacity, args.opacity);
-    } else {
-      styledMaterial.opacity = args.opacity;
-    }
-    styledMaterial.transparent = styledMaterial.opacity < 1;
-    if (styledMaterial.transparent) {
-      styledMaterial.depthWrite = false;
-    }
+    styledMaterial.opacity = Math.min(styledMaterial.opacity, args.opacity);
+    styledMaterial.transparent = true;
+    styledMaterial.depthWrite = false;
     styledMaterial.needsUpdate = true;
   });
 }
@@ -4094,12 +4060,10 @@ function addChangeRequestOverlayObject(args: {
 function createOsmCorridorGeometry(
   points: CityDesignLocalPoint[],
   widthMeters: number
-): RenderableCorridorGeometry | null {
-  if (points.length < 2) return null;
+): RenderableCorridorGeometry {
   const safeWidth = Math.max(widthMeters, 0.2);
-  const start = points[0];
-  const end = points[points.length - 1];
-  if (!start || !end) return null;
+  const start = points[0] as CityDesignLocalPoint;
+  const end = points[points.length - 1] as CityDesignLocalPoint;
 
   return points.length === 2
     ? createCorridorGeometry(start, end, safeWidth)
@@ -4128,35 +4092,6 @@ function createOsmTreeObject(args: {
       suggestedUnitCostMinor: definition.suggestedUnitCostMinor,
     },
   };
-}
-
-function getOsmPointObjectType(way: CityDesignOsmWay): CityDesignObjectType {
-  if (way.mappedObjectType) return way.mappedObjectType;
-  if (way.kind === 'tree') return 'tree';
-  if (way.kind === 'water') return 'fountain';
-  if (way.kind === 'transit') return 'bus_stop';
-  if (way.kind === 'traffic') {
-    if (way.subkind === 'crossing') return 'crossing';
-    if (way.subkind === 'traffic_calming') return 'traffic_calming';
-    return 'traffic_signal';
-  }
-  if (way.kind === 'barrier') {
-    if (way.subkind === 'gate') return 'gate';
-    return 'bollard';
-  }
-  if (way.kind === 'utility') {
-    if (way.subkind === 'fire_hydrant') return 'hydrant';
-    if (way.subkind === 'post_box') return 'post_box';
-    if (way.subkind === 'recycling') return 'recycling_container';
-    if (way.subkind === 'waste_basket') return 'waste_bin';
-    return 'fountain';
-  }
-  if (way.kind === 'street_furniture') {
-    if (way.subkind === 'street_lamp') return 'street_lamp';
-    if (way.subkind === 'bicycle_parking') return 'bicycle_parking';
-    return 'bank';
-  }
-  return 'bank';
 }
 
 function createOsmPointObject(args: {
@@ -4200,15 +4135,13 @@ function addOsmTreePoint(args: {
     object: createOsmTreeObject({ id: way.id, point, rotation }),
     selected,
   });
-
-  if (!tree) return;
-
-  clearObjectId(tree);
-  setOsmWayId(tree, way.id);
-  tree.userData.baseY = tree.position.y;
-  tree.userData.phase = point.x * 0.11 + point.z * 0.07;
-  tree.userData.motion = 'tree';
-  animatedObjects.push(tree);
+  const animatedTree = tree as Object3D;
+  clearObjectId(animatedTree);
+  setOsmWayId(animatedTree, way.id);
+  animatedTree.userData.baseY = animatedTree.position.y;
+  animatedTree.userData.phase = point.x * 0.11 + point.z * 0.07;
+  animatedTree.userData.motion = 'tree';
+  animatedObjects.push(animatedTree);
 }
 
 function addOsmPointFeature(args: {
@@ -4217,23 +4150,15 @@ function addOsmPointFeature(args: {
   way: CityDesignOsmWay;
   point: CityDesignLocalPoint;
   selected: boolean;
-  animatedObjects: Object3D[];
 }) {
-  const { THREE, group, way, point, selected, animatedObjects } = args;
-  const objectType = getOsmPointObjectType(way);
+  const { THREE, group, way, point, selected } = args;
+  // Every valid OSM kind receives a mapped object type during normalization.
+  const objectType = way.mappedObjectType as CityDesignObjectType;
   const object = createOsmPointObject({ id: way.id, type: objectType, point });
   const pointObject = addPointObject({ THREE, group, object, selected });
-  if (!pointObject) return;
-
-  clearObjectId(pointObject);
-  setOsmWayId(pointObject, way.id);
-
-  if (objectType === 'tree' || objectType === 'bush') {
-    pointObject.userData.baseY = pointObject.position.y;
-    pointObject.userData.phase = point.x * 0.11 + point.z * 0.07;
-    pointObject.userData.motion = objectType === 'tree' ? 'tree' : 'bush';
-    animatedObjects.push(pointObject);
-  }
+  const renderedPointObject = pointObject as Object3D;
+  clearObjectId(renderedPointObject);
+  setOsmWayId(renderedPointObject, way.id);
 }
 
 function addOsmTreeRow(args: {
@@ -4246,7 +4171,6 @@ function addOsmTreeRow(args: {
 }) {
   const { THREE, group, way, localPoints, selected, animatedObjects } = args;
   const geometry = createOsmCorridorGeometry(localPoints, way.widthMeters ?? 1.8);
-  if (!geometry) return;
 
   const samples = getCorridorSamples(geometry, 6).slice(0, 90);
   samples.forEach(sample => {
@@ -4280,49 +4204,31 @@ function addOsmTreeRow(args: {
   }
 }
 
+const cityDesignOsmRenderPriorities: Record<CityDesignOsmFeatureKind, number> = {
+  green: 0,
+  water: 1,
+  road: 2,
+  parking: 3,
+  sidewalk: 4,
+  bike_lane: 5,
+  building: 6,
+  tree_row: 7,
+  tree: 8,
+  rail: 9,
+  construction: 10,
+  landuse_context: 11,
+  civic_area: 12,
+  sports: 13,
+  playground: 13,
+  barrier: 14,
+  traffic: 15,
+  transit: 16,
+  street_furniture: 17,
+  utility: 17,
+};
+
 export function getCityDesignOsmRenderPriority(kind: CityDesignOsmFeatureKind) {
-  switch (kind) {
-    case 'green':
-      return 0;
-    case 'water':
-      return 1;
-    case 'road':
-      return 2;
-    case 'parking':
-      return 3;
-    case 'sidewalk':
-      return 4;
-    case 'bike_lane':
-      return 5;
-    case 'building':
-      return 6;
-    case 'tree_row':
-      return 7;
-    case 'tree':
-      return 8;
-    case 'rail':
-      return 9;
-    case 'construction':
-      return 10;
-    case 'landuse_context':
-      return 11;
-    case 'civic_area':
-      return 12;
-    case 'sports':
-    case 'playground':
-      return 13;
-    case 'barrier':
-      return 14;
-    case 'traffic':
-      return 15;
-    case 'transit':
-      return 16;
-    case 'street_furniture':
-    case 'utility':
-      return 17;
-    default:
-      return 18;
-  }
+  return cityDesignOsmRenderPriorities[kind];
 }
 
 function getOsmLineFeatureSurfaceY(way: CityDesignOsmWay) {
@@ -4335,10 +4241,7 @@ function getOsmLineFeatureSurfaceY(way: CityDesignOsmWay) {
   if (way.kind === 'parking') {
     return getCityDesignOsmFeatureRenderY(way, 0.06);
   }
-  if (way.kind === 'sidewalk' || way.kind === 'bike_lane') {
-    return getCityDesignOsmFeatureRenderY(way, 0.058);
-  }
-  return getCityDesignOsmFeatureRenderY(way);
+  return getCityDesignOsmFeatureRenderY(way, 0.058);
 }
 
 function getOsmLineFeatureWidth(way: CityDesignOsmWay) {
@@ -4349,16 +4252,18 @@ function getOsmLineFeatureWidth(way: CityDesignOsmWay) {
 }
 
 function getOsmRampSurfaceColor(way: CityDesignOsmWay) {
-  if (way.kind === 'rail') return '#3f474c';
-  if (way.kind === 'bike_lane') return '#2f8f87';
-  if (way.kind === 'parking') return way.subkind === 'loading_zone' ? '#9a6b30' : '#697482';
-  if (way.kind === 'sidewalk') return way.subkind === 'bridleway' ? '#9b7a55' : '#b9af9f';
   if (way.kind === 'road') {
     if (way.subkind === 'construction') return '#b7791f';
     if (way.subkind === 'track') return '#8a6a42';
     return way.renderColor ?? '#4b545a';
   }
-  return way.renderColor ?? '#4b545a';
+  const colors: Record<'rail' | 'bike_lane' | 'parking' | 'sidewalk', string> = {
+    rail: '#3f474c',
+    bike_lane: '#2f8f87',
+    parking: way.subkind === 'loading_zone' ? '#9a6b30' : '#697482',
+    sidewalk: way.subkind === 'bridleway' ? '#9b7a55' : '#b9af9f',
+  };
+  return colors[way.kind as keyof typeof colors];
 }
 
 function buildOsmElevationRampFeature(args: {
@@ -4375,7 +4280,6 @@ function buildOsmElevationRampFeature(args: {
   }
 
   const geometry = createOsmCorridorGeometry(localPoints, getOsmLineFeatureWidth(way));
-  if (!geometry) return null;
 
   return {
     id: way.id,
@@ -4430,60 +4334,42 @@ function addOsmWays(args: {
   }, new Map());
 
   visibleOsmFeatures.forEach(way => {
-    const layer = getCityDesignOsmFeatureLayer(way.kind);
-    if (hiddenOsmWayIds.has(way.id)) {
-      return;
-    }
-    if (!layerVisibility[layer]) {
-      return;
-    }
-
     const localPoints = getOsmWayLocalPoints(way, design);
     const isSelected = way.id === selectedOsmWayId;
 
     if (way.kind === 'tree') {
-      const point = localPoints[0];
-      if (point) {
-        addOsmTreePoint({
-          THREE,
-          group,
-          way,
-          point,
-          selected: isSelected,
-          animatedObjects,
-        });
-      }
+      addOsmTreePoint({
+        THREE,
+        group,
+        way,
+        point: localPoints[0] as CityDesignLocalPoint,
+        selected: isSelected,
+        animatedObjects,
+      });
       return;
     }
 
     if (way.kind === 'tree_row') {
-      if (localPoints.length < 2) {
-        return;
-      }
       addOsmTreeRow({ THREE, group, way, localPoints, selected: isSelected, animatedObjects });
       return;
     }
 
     if (way.geometryKind === 'point') {
-      const point = localPoints[0];
-      if (point) {
-        addOsmPointFeature({
-          THREE,
-          group,
-          way,
-          point,
-          selected: isSelected,
-          animatedObjects,
-        });
-      }
+      addOsmPointFeature({
+        THREE,
+        group,
+        way,
+        point: localPoints[0] as CityDesignLocalPoint,
+        selected: isSelected,
+      });
       return;
     }
 
     if (way.kind === 'rail') {
-      const geometry = createOsmCorridorGeometry(localPoints, way.widthMeters ?? 1.6);
-      if (!geometry) {
-        return;
-      }
+      const geometry = createOsmCorridorGeometry(
+        localPoints,
+        way.widthMeters ?? 1.6
+      ) as RenderableCorridorGeometry;
       const surfaceY = getCityDesignOsmFeatureRenderY(way, way.level === 'tunnel' ? 0.035 : 0.07);
       const elevationRampSegments = elevationRampsByFeatureId.get(way.id);
       const flatGeometry = hasElevationRampSegments(elevationRampSegments)
@@ -4550,7 +4436,7 @@ function addOsmWays(args: {
         way.geometryKind === 'polygon'
           ? { polygon: localPoints, width: way.widthMeters ?? 0.7, length: 0 }
           : createOsmCorridorGeometry(localPoints, way.widthMeters ?? 0.5);
-      if (!geometry || geometry.polygon.length < 3) {
+      if (geometry.polygon.length < 3) {
         return;
       }
       addBarrierVolume({
@@ -4587,12 +4473,10 @@ function addOsmWays(args: {
       way.kind === 'street_furniture' ||
       way.kind === 'utility'
     ) {
-      const corridorGeometry =
-        way.geometryKind === 'polygon'
-          ? null
-          : createOsmCorridorGeometry(localPoints, way.widthMeters ?? 1.2);
       const polygon =
-        way.geometryKind === 'polygon' ? localPoints : (corridorGeometry?.polygon ?? []);
+        way.geometryKind === 'polygon'
+          ? localPoints
+          : createOsmCorridorGeometry(localPoints, way.widthMeters ?? 1.2).polygon;
       if (polygon.length < 3) {
         return;
       }
@@ -4605,20 +4489,20 @@ function addOsmWays(args: {
         y: 0.12,
         osmWayId: way.id,
       });
-      if (way.subkind === 'crossing' && corridorGeometry) {
+      if (way.subkind === 'crossing' && way.geometryKind !== 'polygon') {
         addCrossingMarkings({
           THREE,
           group,
-          geometry: corridorGeometry,
+          geometry: createOsmCorridorGeometry(localPoints, way.widthMeters ?? 1.2),
           osmWayId: way.id,
           y: 0.18,
         });
       }
-      if (way.subkind === 'traffic_calming' && corridorGeometry) {
+      if (way.subkind === 'traffic_calming' && way.geometryKind !== 'polygon') {
         addSurfaceTexture({
           THREE,
           group,
-          geometry: corridorGeometry,
+          geometry: createOsmCorridorGeometry(localPoints, way.widthMeters ?? 1.2),
           osmWayId: way.id,
           color: '#f59e0b',
           opacity: 0.42,
@@ -4692,10 +4576,10 @@ function addOsmWays(args: {
     }
 
     if (way.kind === 'road') {
-      const geometry = createOsmCorridorGeometry(localPoints, way.widthMeters ?? 4.8);
-      if (!geometry) {
-        return;
-      }
+      const geometry = createOsmCorridorGeometry(
+        localPoints,
+        way.widthMeters ?? 4.8
+      ) as RenderableCorridorGeometry;
       const isConstruction = way.subkind === 'construction';
       const isTrack = way.subkind === 'track';
       const surfaceY = getCityDesignOsmFeatureRenderY(way, way.level === 'tunnel' ? 0.035 : 0.052);
@@ -4823,10 +4707,10 @@ function addOsmWays(args: {
         return;
       }
 
-      const geometry = createOsmCorridorGeometry(localPoints, way.widthMeters ?? 2.2);
-      if (!geometry) {
-        return;
-      }
+      const geometry = createOsmCorridorGeometry(
+        localPoints,
+        way.widthMeters ?? 2.2
+      ) as RenderableCorridorGeometry;
       const isBikeLane = way.kind === 'bike_lane';
       const isParking = way.kind === 'parking';
       const isLoadingZone = way.subkind === 'loading_zone';
@@ -5012,10 +4896,10 @@ function addOsmWays(args: {
     }
 
     if (way.kind === 'water' && way.geometryKind === 'line') {
-      const geometry = createOsmCorridorGeometry(localPoints, way.widthMeters ?? 4);
-      if (!geometry) {
-        return;
-      }
+      const geometry = createOsmCorridorGeometry(
+        localPoints,
+        way.widthMeters ?? 4
+      ) as RenderableCorridorGeometry;
       const waterY = getCityDesignOsmWaterRenderY(way);
 
       addWaterSurface({
@@ -5070,21 +4954,19 @@ function addOsmWays(args: {
           y: waterY,
           osmWayId: way.id,
         });
-        if (localPoints.length >= 3) {
-          const roughGeometry = createCorridorGeometry(
-            localPoints[0] ?? { x: 0, z: 0 },
-            localPoints[1] ?? { x: 1, z: 0 },
-            1.4
-          );
-          addGrassDetails({
-            THREE,
-            group,
-            geometry: { ...roughGeometry, polygon: localPoints, width: 2.4 },
-            osmWayId: way.id,
-            animatedObjects,
-            y: waterY + 0.024,
-          });
-        }
+        const roughGeometry = createCorridorGeometry(
+          localPoints[0] as CityDesignLocalPoint,
+          localPoints[1] as CityDesignLocalPoint,
+          1.4
+        );
+        addGrassDetails({
+          THREE,
+          group,
+          geometry: { ...roughGeometry, polygon: localPoints, width: 2.4 },
+          osmWayId: way.id,
+          animatedObjects,
+          y: waterY + 0.024,
+        });
       } else {
         addWaterSurface({
           THREE,
@@ -5126,34 +5008,34 @@ function addOsmWays(args: {
         y: 0.004,
         osmWayId: way.id,
       });
-      if (localPoints.length >= 3) {
-        const firstPoint = localPoints[0] ?? { x: 0, z: 0 };
-        const secondPoint = localPoints[1] ?? firstPoint;
-        const roughGeometry = createCorridorGeometry(firstPoint, secondPoint, 1);
-        const detailGeometry = {
-          ...roughGeometry,
-          polygon: localPoints,
-          width: Math.max(2, roughGeometry.width),
-        };
-        if (way.subkind === 'flower_bed') {
-          addFlowerBedDetails({
-            THREE,
-            group,
-            geometry: detailGeometry,
-            osmWayId: way.id,
-            animatedObjects,
-            y: 0.018,
-          });
-        } else {
-          addGrassDetails({
-            THREE,
-            group,
-            geometry: detailGeometry,
-            osmWayId: way.id,
-            animatedObjects,
-            y: 0.018,
-          });
-        }
+      const roughGeometry = createCorridorGeometry(
+        localPoints[0] as CityDesignLocalPoint,
+        localPoints[1] as CityDesignLocalPoint,
+        1
+      );
+      const detailGeometry = {
+        ...roughGeometry,
+        polygon: localPoints,
+        width: Math.max(2, roughGeometry.width),
+      };
+      if (way.subkind === 'flower_bed') {
+        addFlowerBedDetails({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          osmWayId: way.id,
+          animatedObjects,
+          y: 0.018,
+        });
+      } else {
+        addGrassDetails({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          osmWayId: way.id,
+          animatedObjects,
+          y: 0.018,
+        });
       }
     }
     addPickPolygon({
@@ -5443,16 +5325,16 @@ export async function mountCityDesignScene(
         const styled = material as ThreeMaterial & {
           color?: import('three').Color;
           emissive?: import('three').Color;
-          opacity?: number;
+          opacity: number;
           transparent?: boolean;
           depthWrite?: boolean;
         };
-        if (styled.opacity != null && styled.opacity <= 0.02) return;
+        if (styled.opacity <= 0.02) return;
         const isSelection = styled.color?.getHexString() === 'facc15';
         if (!isSelection && styled.color) styled.color.lerp(neutral, 0.55);
         if (!isSelection && styled.emissive) styled.emissive.multiplyScalar(0.35);
         if (!isSelection) {
-          styled.opacity = Math.min(styled.opacity ?? 1, 0.75);
+          styled.opacity = Math.min(styled.opacity, 0.75);
           styled.transparent = true;
           styled.depthWrite = false;
         }
@@ -5594,8 +5476,7 @@ export async function mountCityDesignScene(
       previousOptions.design.hiddenOsmWayIds !== nextOptions.design.hiddenOsmWayIds ||
       previousOptions.design.hiddenOsmFeatureIds !== nextOptions.design.hiddenOsmFeatureIds ||
       previousOptions.design.comparisonMode !== nextOptions.design.comparisonMode ||
-      previousOptions.design.showStreetMarkings !== nextOptions.design.showStreetMarkings ||
-      previousOptions.selectedOsmWayId !== nextOptions.selectedOsmWayId
+      previousOptions.design.showStreetMarkings !== nextOptions.design.showStreetMarkings
     );
   }
 
@@ -5608,8 +5489,7 @@ export async function mountCityDesignScene(
       previousOptions.design.showStreetMarkings !== nextOptions.design.showStreetMarkings ||
       previousOptions.design.comparisonMode !== nextOptions.design.comparisonMode ||
       previousOptions.hiddenObjectIds !== nextOptions.hiddenObjectIds ||
-      previousOptions.hiddenObjectCategories !== nextOptions.hiddenObjectCategories ||
-      previousOptions.selectedObjectId !== nextOptions.selectedObjectId
+      previousOptions.hiddenObjectCategories !== nextOptions.hiddenObjectCategories
     );
   }
 
@@ -5779,10 +5659,7 @@ export async function mountCityDesignScene(
 
   function handlePlacePointerDown(event: PointerEvent) {
     const point = updatePointer(event);
-
-    if (!options.readOnly) {
-      options.onPointerDown(toDesignPoint(point));
-    }
+    options.onPointerDown(toDesignPoint(point));
   }
 
   function getPointerHitContext(event: PointerEvent) {
@@ -5883,21 +5760,19 @@ export async function mountCityDesignScene(
     }
 
     if (event.pointerType === 'touch') {
-      if (action === 'objectRotate' && rotateObjectId) {
-        startObjectRotateDrag(event, rotateObjectId);
+      if (action === 'objectRotate') {
+        startObjectRotateDrag(event, rotateObjectId as string);
         return;
       }
 
-      if (action === 'select' || action === 'place') {
-        pendingTouchAction = {
-          pointerId: event.pointerId,
-          action,
-          startX: event.clientX,
-          startY: event.clientY,
-          moved: false,
-          suppressed: activeTouchPointers.size >= 2,
-        };
-      }
+      pendingTouchAction = {
+        pointerId: event.pointerId,
+        action: action as 'select' | 'place',
+        startX: event.clientX,
+        startY: event.clientY,
+        moved: false,
+        suppressed: activeTouchPointers.size >= 2,
+      };
       return;
     }
 
@@ -6049,7 +5924,7 @@ export async function mountCityDesignScene(
         applyCameraPan(panStep, 0);
       } else if (event.key === 'ArrowUp' || event.key.toLowerCase() === 'w') {
         applyCameraPan(0, panStep);
-      } else if (event.key === 'ArrowDown' || event.key.toLowerCase() === 's') {
+      } else {
         applyCameraPan(0, -panStep);
       }
       return;
@@ -6060,9 +5935,7 @@ export async function mountCityDesignScene(
       return;
     }
 
-    if (action === 'turn') {
-      applyCameraTurn(event.key.toLowerCase() === 'q' ? 'left' : 'right');
-    }
+    applyCameraTurn(event.key.toLowerCase() === 'q' ? 'left' : 'right');
   }
 
   function handleKeyUp(event: KeyboardEvent) {
@@ -6118,14 +5991,10 @@ export async function mountCityDesignScene(
         return;
       }
 
-      if (motion === 'tree' || motion === 'bush') {
-        object.position.y = baseY;
-        object.rotation.z =
-          Math.sin(elapsedSeconds * 0.7 + phase) * (motion === 'tree' ? 0.012 : 0.02);
-        return;
-      }
-
-      object.position.y = baseY + Math.sin(elapsedSeconds * 1.4 + phase) * 0.025;
+      // Every animated object is registered with one of the motions handled above or here.
+      object.position.y = baseY;
+      object.rotation.z =
+        Math.sin(elapsedSeconds * 0.7 + phase) * (motion === 'tree' ? 0.012 : 0.02);
     });
   }
 

@@ -106,11 +106,9 @@ export function usePqlFilterBuilderDialogController<TItem, TFieldKey extends str
       fields,
     });
 
-    if (!nextFilter.filter) {
-      return;
-    }
-
-    onSave(nextFilter.filter);
+    // isValid is derived from the same pure parser and validation rules used by
+    // buildPqlCodeFilter, so a valid submission always produces a filter.
+    onSave(nextFilter.filter as PqlFilter<TFieldKey>);
     onOpenChange(false);
   };
 

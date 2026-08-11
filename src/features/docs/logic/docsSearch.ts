@@ -26,7 +26,6 @@ export function markdownToPlainText(markdown: string): string {
 }
 
 function countOccurrences(haystack: string, needle: string): number {
-  if (!needle) return 0;
   let count = 0;
   let cursor = 0;
   while ((cursor = haystack.indexOf(needle, cursor)) !== -1) {

@@ -61,7 +61,7 @@ export function UserWikiView({ page }: UserWikiViewProps) {
         {isAriaKaiProfile ? (
           <WikiAvatar
             name={page.fullName}
-            avatar={resolvedAvatar ?? ''}
+            avatar={resolvedAvatar as string}
             className="mx-auto mb-4 h-24 w-24 md:h-32 md:w-32"
           />
         ) : null}
@@ -81,6 +81,7 @@ export function UserWikiView({ page }: UserWikiViewProps) {
                   variant="ghost"
                   size="icon"
                   aria-label={page.supportTier.description}
+                  data-action-id="users.wiki.support-tier.help"
                   className="text-muted-foreground hover:text-foreground h-7 w-7 shrink-0 rounded-md"
                 >
                   <CircleHelp className="h-4 w-4" />
@@ -135,6 +136,7 @@ export function UserWikiView({ page }: UserWikiViewProps) {
         {!page.isOwnUser && page.isAuthenticated ? (
           <>
             <SubscribeButton
+              data-action-id="users.wiki.subscribe"
               entityType="user"
               entityId={page.userId}
               isSubscribed={page.subscribed}
@@ -147,6 +149,7 @@ export function UserWikiView({ page }: UserWikiViewProps) {
               onClick={page.onMessage}
               className={compactActionButtonClassName}
               aria-label={page.copy.message}
+              data-action-id="users.wiki.message"
             >
               <Mail className="h-4 w-4" />
               <ResponsiveActionLabel full={page.copy.message} compact={page.copy.message} />
@@ -154,6 +157,7 @@ export function UserWikiView({ page }: UserWikiViewProps) {
           </>
         ) : null}
         <ShareButton
+          data-action-id="users.wiki.share"
           url={`/user/${page.userId}`}
           title={page.fullName}
           description={page.aboutText}

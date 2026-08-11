@@ -33,6 +33,7 @@ interface ChangeRequest {
     name?: string;
     avatar?: string;
   };
+  voteResults?: { accept: number; reject: number; abstain: number };
 }
 function ChangeRequestItem({
   changeRequest,
@@ -77,6 +78,7 @@ function ChangeRequestItem({
         {isOrganizer && !isCompleted && (
           <div className="mt-1 flex flex-col gap-1">
             <Button
+              data-action-id="votes.amendment-queue.order.move-up"
               size="sm"
               variant="ghost"
               onClick={onMoveUp}
@@ -86,6 +88,7 @@ function ChangeRequestItem({
               <ArrowUp className="h-4 w-4" />
             </Button>
             <Button
+              data-action-id="votes.amendment-queue.order.move-down"
               size="sm"
               variant="ghost"
               onClick={onMoveDown}
@@ -301,7 +304,7 @@ export function AmendmentVotingQueueView({
                 canMoveDown={index < sortedChangeRequests.length - 1}
                 voteResults={
                   index < currentIndex
-                    ? { accept: 10, reject: 5, abstain: 2 } // Placeholder: needs per-change-request vote aggregation from voting session data
+                    ? (cr.voteResults ?? { accept: 10, reject: 5, abstain: 2 })
                     : undefined
                 }
               />
@@ -351,6 +354,7 @@ export function AmendmentVotingQueueView({
             {!hasVoted && userId && (
               <div className="flex gap-2">
                 <Button
+                  data-action-id="votes.amendment-queue.vote.accept"
                   onClick={() => castVote('accept')}
                   disabled={votingLoading}
                   variant="outline"
@@ -360,6 +364,7 @@ export function AmendmentVotingQueueView({
                   {t('features.events.voting.accept')}
                 </Button>
                 <Button
+                  data-action-id="votes.amendment-queue.vote.reject"
                   onClick={() => castVote('reject')}
                   disabled={votingLoading}
                   variant="outline"
@@ -369,6 +374,7 @@ export function AmendmentVotingQueueView({
                   {t('features.events.voting.reject')}
                 </Button>
                 <Button
+                  data-action-id="votes.amendment-queue.vote.abstain"
                   onClick={() => castVote('abstain')}
                   disabled={votingLoading}
                   variant="outline"
@@ -415,12 +421,17 @@ export function AmendmentVotingQueueView({
         {isOrganizer && currentSession?.status === 'active' && (
           <div className="flex gap-2 pt-4">
             {currentIndex < totalRequests ? (
-              <Button onClick={onAdvanceToNext} className="flex-1">
+              <Button
+                data-action-id="votes.amendment-queue.advance"
+                onClick={onAdvanceToNext}
+                className="flex-1"
+              >
                 <ArrowDown className="mr-2 h-4 w-4" />
                 {translateText('generated.inline.1263_n_chster_vorschlag_17267465')}
               </Button>
             ) : (
               <Button
+                data-action-id="votes.amendment-queue.complete"
                 onClick={onComplete}
                 variant="default"
                 presentation="success"

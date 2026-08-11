@@ -3,6 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { canCreateDelegateAssemblyForGroup } from '../delegateAssemblyEligibility';
 
 describe('delegate assembly group eligibility', () => {
+  it('rejects a missing group', () => {
+    expect(canCreateDelegateAssemblyForGroup(undefined)).toBe(false);
+  });
+
+  it('falls back to the explicit hierarchy type when child metadata is absent', () => {
+    expect(canCreateDelegateAssemblyForGroup({ group_type: 'hierarchical' })).toBe(true);
+    expect(canCreateDelegateAssemblyForGroup({ group_type: 'base' })).toBe(false);
+  });
+
   it('allows hierarchy groups with lower hierarchy children', () => {
     expect(
       canCreateDelegateAssemblyForGroup({

@@ -10,6 +10,7 @@ describe('cityDesignInputRouter', () => {
     expect(getCityDesignPointerAction({ mode: 'camera', button: 0 })).toBe('move');
     expect(getCityDesignPointerAction({ mode: 'select', button: 0 })).toBe('select');
     expect(getCityDesignPointerAction({ mode: 'place', button: 0 })).toBe('place');
+    expect(getCityDesignPointerAction({ mode: 'camera', button: 3 })).toBe('none');
   });
 
   it('routes navigation gestures before select and place actions', () => {
@@ -19,6 +20,7 @@ describe('cityDesignInputRouter', () => {
     expect(getCityDesignPointerAction({ mode: 'select', button: 0, shiftKey: true })).toBe('turn');
     expect(getCityDesignPointerAction({ mode: 'select', button: 1 })).toBe('move');
     expect(getCityDesignPointerAction({ mode: 'place', button: 2 })).toBe('turn');
+    expect(getCityDesignPointerAction({ mode: 'select', button: 3 })).toBe('none');
     expect(getCityDesignPointerAction({ mode: 'select', button: 0, touchPointCount: 2 })).toBe(
       'move'
     );
@@ -30,6 +32,7 @@ describe('cityDesignInputRouter', () => {
         mode: 'select',
         button: 0,
         isObjectRotateHandle: true,
+        readOnly: false,
       })
     ).toBe('objectRotate');
     expect(
@@ -44,6 +47,10 @@ describe('cityDesignInputRouter', () => {
 
   it('disables place primaries in read-only mode', () => {
     expect(getCityDesignPointerAction({ mode: 'place', button: 0, readOnly: true })).toBe('none');
+  });
+
+  it('fails closed for an unknown runtime mode', () => {
+    expect(getCityDesignPointerAction({ mode: 'legacy' as never, button: 0 })).toBe('none');
   });
 
   it('routes wheel and keyboard navigation actions', () => {

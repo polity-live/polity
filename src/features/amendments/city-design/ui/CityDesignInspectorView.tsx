@@ -170,6 +170,16 @@ function getRelevantOsmTags(tags: Record<string, string> | undefined) {
     .slice(0, 8);
 }
 
+export const cityDesignInspectorInternals = {
+  asInputValue,
+  formatMeters,
+  getOsmLayerLabelKey,
+  getPlacementRotationValue,
+  getPlacementTotalMinor,
+  getRelevantOsmTags,
+  isFiniteNumber,
+};
+
 export function CityDesignInspectorView({
   selectedObject,
   selectedOsmWay,
@@ -285,6 +295,7 @@ export function CityDesignInspectorView({
               return (
                 <label key={field.key} className="flex items-center gap-2 text-sm">
                   <input
+                    data-action-id="amendments.city-inspector.toggle.placement-property"
                     type="checkbox"
                     checked={Boolean(value)}
                     disabled={readOnly}
@@ -300,16 +311,21 @@ export function CityDesignInspectorView({
                 <div key={field.key} className="space-y-1">
                   <Label className="text-xs">{t(field.labelKey)}</Label>
                   <Select
+                    data-action-id="amendments.city-inspector.select.placement-property"
                     value={asInputValue(value)}
                     disabled={readOnly}
                     onValueChange={nextValue => onPlacementPropertyChange(field.key, nextValue)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger data-action-id="amendments.city-inspector.select.placement-property">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {(field.options ?? []).map(option => (
-                        <SelectItem key={option.value} value={option.value}>
+                        <SelectItem
+                          data-action-id="amendments.city-inspector.select.placement-property-option"
+                          key={option.value}
+                          value={option.value}
+                        >
                           {t(option.labelKey)}
                         </SelectItem>
                       ))}
@@ -399,6 +415,7 @@ export function CityDesignInspectorView({
             </p>
             {placementSettings.customUnitCostMinor != null ? (
               <Button
+                data-action-id="amendments.city-inspector.reset.placement-cost"
                 type="button"
                 variant="ghost"
                 size="sm"
@@ -464,6 +481,7 @@ export function CityDesignInspectorView({
               </p>
             </div>
             <Button
+              data-action-id="amendments.city-inspector.hide.osm-way"
               type="button"
               size="icon"
               variant="outline"
@@ -603,6 +621,7 @@ export function CityDesignInspectorView({
           <p className="text-muted-foreground text-xs">{selectedObject.id.slice(0, 8)}</p>
         </div>
         <Button
+          data-action-id="amendments.city-inspector.delete.object"
           type="button"
           size="icon"
           variant="outline"
@@ -682,6 +701,7 @@ export function CityDesignInspectorView({
             return (
               <label key={field.key} className="flex items-center gap-2 text-sm">
                 <input
+                  data-action-id="amendments.city-inspector.toggle.object-property"
                   type="checkbox"
                   checked={Boolean(value)}
                   disabled={readOnly}
@@ -699,18 +719,23 @@ export function CityDesignInspectorView({
               <div key={field.key} className="space-y-1">
                 <Label className="text-xs">{t(field.labelKey)}</Label>
                 <Select
+                  data-action-id="amendments.city-inspector.select.object-property"
                   value={asInputValue(value)}
                   disabled={readOnly}
                   onValueChange={nextValue =>
                     onPropertyChange(selectedObject.id, field.key, nextValue)
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger data-action-id="amendments.city-inspector.select.object-property">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {(field.options ?? []).map(option => (
-                      <SelectItem key={option.value} value={option.value}>
+                      <SelectItem
+                        data-action-id="amendments.city-inspector.select.object-property-option"
+                        key={option.value}
+                        value={option.value}
+                      >
                         {t(option.labelKey)}
                       </SelectItem>
                     ))}
@@ -825,6 +850,7 @@ export function CityDesignInspectorView({
           </p>
           {selectedObject.cost.customUnitCostMinor != null ? (
             <Button
+              data-action-id="amendments.city-inspector.reset.object-cost"
               type="button"
               variant="ghost"
               size="sm"

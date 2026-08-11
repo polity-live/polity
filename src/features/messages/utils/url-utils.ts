@@ -8,21 +8,6 @@ export interface PolityLink {
   id: string;
 }
 
-const POLITY_LINK_ENTITY_TYPES = new Set<string>([
-  'user',
-  'group',
-  'event',
-  'amendment',
-  'blog',
-  'statement',
-  'todo',
-  'todos',
-]);
-
-function isPolityLinkEntityType(value: string): value is PolityLinkEntityType | 'todos' {
-  return POLITY_LINK_ENTITY_TYPES.has(value);
-}
-
 function getBaseOrigin(): string {
   if (typeof window !== 'undefined' && window.location?.origin) {
     return window.location.origin;
@@ -113,10 +98,7 @@ export function parsePolityUrl(url: string): PolityLink | null {
       return null;
     }
 
-    const rawType = match[1];
-    if (!isPolityLinkEntityType(rawType)) {
-      return null;
-    }
+    const rawType = match[1] as PolityLinkEntityType | 'todos';
 
     const type: PolityLinkEntityType = rawType === 'todos' ? 'todo' : rawType;
     return { type, id: match[2] };

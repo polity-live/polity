@@ -5,6 +5,7 @@ import {
   getAppShellResponsiveClasses,
   getAuthenticatedPageFrame,
   getUnauthenticatedPageFrame,
+  isLandingPath,
 } from '../app-shell-layout';
 
 describe('app shell page frame routing', () => {
@@ -145,5 +146,35 @@ describe('app shell page frame routing', () => {
     expect(APP_SHELL_PAGE_FRAME_CLASS.messages).toContain('pt-2');
     expect(APP_SHELL_PAGE_FRAME_CLASS.messages).toContain('md:py-6');
     expect(APP_SHELL_PAGE_FRAME_CLASS.messages).toContain('[--app-shell-page-frame-y:2rem]');
+  });
+
+  it('recognizes every landing path and rejects non-landing paths', () => {
+    for (const path of ['/', '/features', '/solutions', '/imprint']) {
+      expect(isLandingPath(path)).toBe(true);
+    }
+    expect(isLandingPath('/home')).toBe(false);
+  });
+
+  it('covers every responsive navigation layout variant', () => {
+    const classes = (
+      screenType: 'automatic' | 'desktop' | 'mobile',
+      navigationView: 'asButton' | 'asButtonList' | 'asLabeledButtonList',
+      isSecondaryNavVisible: boolean
+    ) => getAppShellResponsiveClasses({ screenType, navigationView, isSecondaryNavVisible });
+
+    expect(classes('automatic', 'asButton', false)).toContain('top-offset:0rem');
+    expect(classes('desktop', 'asButtonList', true)).toContain('mr-16');
+    expect(classes('desktop', 'asButtonList', false)).not.toContain('mr-16');
+    expect(classes('desktop', 'asLabeledButtonList', false)).not.toContain('mr-64');
+    expect(classes('mobile', 'asButtonList', true)).toContain('mt-16');
+    expect(classes('mobile', 'asButtonList', false)).not.toContain('mt-16');
+    expect(classes('mobile', 'asLabeledButtonList', false)).not.toContain('mt-20');
+    expect(classes('automatic', 'asButtonList', false)).not.toContain('md:mr-16');
+    expect(classes('automatic', 'asLabeledButtonList', true)).toContain('md:mr-64');
+    expect(classes('automatic', 'asLabeledButtonList', false)).not.toContain('md:mr-64');
+  });
+
+  it('keeps onboarding bare in an authenticated shell', () => {
+    expect(getAuthenticatedPageFrame('/onboarding')).toBe('bare');
   });
 });

@@ -24,6 +24,7 @@ export const GroupSubscribeButton: React.FC<GroupSubscribeButtonProps> = ({
 
   return (
     <Button
+      data-action-id="groups.subscription.toggle.current"
       variant={subscribed ? 'outline' : 'default'}
       onClick={onClick}
       className={className}

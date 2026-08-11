@@ -58,7 +58,8 @@ export function StatementTimelineCard({ statement, href, className }: StatementT
   const surveyOptions: SurveyOptionPreview[] = rawOptions.map(opt =>
     typeof opt === 'string' ? { label: opt, voteCount: 0 } : opt
   );
-  const hasSurvey = !!(statement.surveyQuestion && surveyOptions.length > 0);
+  const surveyQuestion = statement.surveyQuestion;
+  const hasSurvey = !!(surveyQuestion && surveyOptions.length > 0);
   const surveyTotalVotes = hasSurvey ? surveyOptions.reduce((s, o) => s + o.voteCount, 0) : 0;
   const score = (statement.supportCount ?? 0) - (statement.opposeCount ?? 0);
 
@@ -67,9 +68,9 @@ export function StatementTimelineCard({ statement, href, className }: StatementT
 
   // Title: explicit headline, survey question, or first 100 chars of content
   const displayTitle = hasSurvey
-    ? (statement.surveyQuestion ?? '')
+    ? (surveyQuestion as string)
     : statement.title ||
-      statement.content?.substring(0, 100) + ((statement.content?.length ?? 0) > 100 ? '...' : '');
+      statement.content.substring(0, 100) + (statement.content.length > 100 ? '...' : '');
 
   // Stats
   const stats = [
@@ -218,6 +219,7 @@ export function StatementTimelineCard({ statement, href, className }: StatementT
         {/* Share Button */}
         <div className="ml-auto" onClick={e => e.preventDefault()}>
           <ShareButton
+            data-action-id="timeline.statement.share"
             url={statementHref}
             title={statement.authorName}
             description={statement.content}

@@ -66,7 +66,7 @@ export function VersionControlView({ model }: VersionControlViewProps) {
       {/* Create Version Button */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" data-action-id="editor.version.create.open">
             <Plus className="mr-2 h-4 w-4" />
             {t('features.editor.versionControl.saveVersion')}
           </Button>
@@ -92,10 +92,18 @@ export function VersionControlView({ model }: VersionControlViewProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+            <Button
+              variant="outline"
+              data-action-id="editor.version.create.cancel"
+              onClick={() => setIsCreateDialogOpen(false)}
+            >
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleCreateVersion} disabled={isCreating}>
+            <Button
+              data-action-id="editor.version.create.submit"
+              onClick={handleCreateVersion}
+              disabled={isCreating}
+            >
               {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('features.editor.versionControl.save')}
             </Button>
@@ -106,7 +114,7 @@ export function VersionControlView({ model }: VersionControlViewProps) {
       {/* Version History Button */}
       <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" data-action-id="editor.version.history.open">
             <History className="mr-2 h-4 w-4" />
             {t('features.editor.versionControl.history')}
             {versionCount > 0 && (
@@ -168,16 +176,26 @@ export function VersionControlView({ model }: VersionControlViewProps) {
                               autoFocus
                             />
                             <Button
+                              data-action-id="editor.version.title.save"
                               variant="ghost"
                               size="sm"
+                              aria-label={t(
+                                'features.editor.versionControl.saveTitle',
+                                'Save title'
+                              )}
                               className="h-7 w-7 p-0"
                               onClick={() => saveEditedTitle(version.id)}
                             >
                               <Check className="h-4 w-4" />
                             </Button>
                             <Button
+                              data-action-id="editor.version.title.cancel"
                               variant="ghost"
                               size="sm"
+                              aria-label={t(
+                                'features.editor.versionControl.cancelTitle',
+                                'Cancel title edit'
+                              )}
                               className="h-7 w-7 p-0"
                               onClick={() => setEditingVersionId(null)}
                             >
@@ -188,8 +206,13 @@ export function VersionControlView({ model }: VersionControlViewProps) {
                           <>
                             <span className="font-medium">{version.change_summary ?? ''}</span>
                             <Button
+                              data-action-id="editor.version.title.edit"
                               variant="ghost"
                               size="sm"
+                              aria-label={t(
+                                'features.editor.versionControl.editTitle',
+                                'Edit title'
+                              )}
                               className="h-6 w-6 p-0"
                               onClick={() => startEditingTitle(version)}
                             >
@@ -214,6 +237,7 @@ export function VersionControlView({ model }: VersionControlViewProps) {
                       </div>
                     </div>
                     <Button
+                      data-action-id="editor.version.restore"
                       variant="outline"
                       size="sm"
                       onClick={() => handleRestoreVersion(version)}

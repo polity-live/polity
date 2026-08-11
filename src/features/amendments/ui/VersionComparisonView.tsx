@@ -88,13 +88,22 @@ export function VersionComparisonView({
 
         <Tabs defaultValue="side-by-side" className="w-full">
           <TabsList className="mb-4">
-            <TabsTrigger value="side-by-side">
+            <TabsTrigger
+              data-action-id="amendments.version-comparison.select.side-by-side"
+              value="side-by-side"
+            >
               {t('features.amendments.supportConfirmation.comparison.sideBySide')}
             </TabsTrigger>
-            <TabsTrigger value="original">
+            <TabsTrigger
+              data-action-id="amendments.version-comparison.select.original"
+              value="original"
+            >
               {t('features.amendments.supportConfirmation.comparison.original')}
             </TabsTrigger>
-            <TabsTrigger value="current">
+            <TabsTrigger
+              data-action-id="amendments.version-comparison.select.current"
+              value="current"
+            >
               {t('features.amendments.supportConfirmation.comparison.current')}
             </TabsTrigger>
           </TabsList>

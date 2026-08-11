@@ -8,6 +8,10 @@ export const todosTranslations = {
   description: 'Manage your tasks and track your progress',
   loading: 'Loading...',
   loadingTodos: 'Loading todos...',
+  view: {
+    list: 'List view',
+    kanban: 'Kanban view',
+  },
   create: {
     title: 'Create Task',
     placeholder: 'What needs to be done?',
@@ -141,6 +145,7 @@ export const todosTranslations = {
     addAssignee: 'Add Assignee',
     searchMembers: 'Search members...',
     noMembersFound: 'No members found.',
+    removeAssignee: 'Remove assignee',
   },
   group: {
     title: 'Group',
