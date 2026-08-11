@@ -434,7 +434,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: e2e-blob-${{ matrix.name }}-${{ github.run_attempt }}
-          if-no-files-found: error
+          if-no-files-found: ignore
           retention-days: 14
           path: blob-report/
       - name: Stop isolated stack
@@ -460,6 +460,16 @@ jobs:
           pattern: e2e-blob-*-${{ github.run_attempt }}
           path: all-blob-reports
           merge-multiple: true
+      - name: Validate E2E blob reports
+        run: |
+          blob_count=0
+          if [[ -d all-blob-reports ]]; then
+            blob_count="$(find all-blob-reports -type f -name 'report-*.zip' | wc -l | tr -d ' ')"
+          fi
+          if [[ "$blob_count" -ne 4 ]]; then
+            echo "Expected four E2E blob reports, received $blob_count"
+            exit 1
+          fi
       - name: Merge shard reports
         run: npx playwright merge-reports --reporter html all-blob-reports
       - uses: actions/upload-artifact@v6
@@ -468,6 +478,15 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           path: playwright-report/
+      - name: Require successful E2E shards
+        if: always()
+        env:
+          E2E_SHARDS_RESULT: ${{ needs.e2e-tests.result }}
+        run: |
+          if [[ "$E2E_SHARDS_RESULT" != "success" ]]; then
+            echo "E2E shards did not all succeed: $E2E_SHARDS_RESULT"
+            exit 1
+          fi
 
   dependency-review:
     name: Dependency Review

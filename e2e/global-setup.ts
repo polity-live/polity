@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { checkDatabase, db } from './fixtures/db';
+import { waitForZeroReady } from './fixtures/zero-readiness';
 import { BUILTIN_THEMES } from '../src/features/shared/appearance-theme/presets';
 
 async function assertBuiltinAppearanceThemes() {
@@ -57,6 +58,7 @@ async function assertBuiltinAppearanceThemes() {
 
 export default async function globalSetup() {
   await checkDatabase();
+  await waitForZeroReady();
   if (process.env.E2E_ASSERT_BUILTIN_THEMES === '1') {
     await assertBuiltinAppearanceThemes();
   }

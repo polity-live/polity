@@ -17,6 +17,7 @@ const appCommand = process.env.E2E_APP_COMMAND ?? 'npm run test:e2e:serve';
 export default defineConfig({
   testDir: './e2e',
   timeout: 120 * 1000,
+  globalTimeout: process.env.CI ? 15 * 60 * 1000 : undefined,
   /* Global setup to prepare test users */
   globalSetup: './e2e/global-setup.ts',
   /* Global teardown only closes suite resources. Test fixtures own their exact data. */
@@ -30,8 +31,16 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: process.env.CI
     ? process.env.PLAYWRIGHT_BLOB_REPORT === '1'
-      ? [['github'], ['blob', { outputDir: process.env.PLAYWRIGHT_BLOB_DIR ?? 'blob-report' }]]
-      : [['github'], ['html', { open: 'never', outputFolder: process.env.PLAYWRIGHT_REPORT_DIR }]]
+      ? [
+          ['line'],
+          ['github'],
+          ['blob', { outputDir: process.env.PLAYWRIGHT_BLOB_DIR ?? 'blob-report' }],
+        ]
+      : [
+          ['line'],
+          ['github'],
+          ['html', { open: 'never', outputFolder: process.env.PLAYWRIGHT_REPORT_DIR }],
+        ]
     : [['line'], ['html', { open: 'never', outputFolder: process.env.PLAYWRIGHT_REPORT_DIR }]],
   outputDir: process.env.PLAYWRIGHT_OUTPUT_DIR ?? 'test-results',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

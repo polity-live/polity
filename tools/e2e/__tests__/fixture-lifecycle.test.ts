@@ -12,6 +12,7 @@ import {
 } from '../../../e2e/fixtures/run';
 
 const E2E_ROOT = path.resolve(import.meta.dirname, '../../../e2e');
+const PLAYWRIGHT_CONFIG = path.resolve(E2E_ROOT, '../playwright.config.ts');
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -84,9 +85,20 @@ describe('E2E fixture lifecycle contract', () => {
   });
 
   it('keeps test ownership exact in fixtures and teardown', async () => {
-    const [fixtureSource, cleanupSource, teardownSource, networkJourneySource] = await Promise.all([
+    const [
+      fixtureSource,
+      cleanupSource,
+      databaseSource,
+      playwrightSource,
+      setupSource,
+      teardownSource,
+      networkJourneySource,
+    ] = await Promise.all([
       fs.readFile(path.join(E2E_ROOT, 'fixtures/test.ts'), 'utf8'),
       fs.readFile(path.join(E2E_ROOT, 'fixtures/cleanup.ts'), 'utf8'),
+      fs.readFile(path.join(E2E_ROOT, 'fixtures/db.ts'), 'utf8'),
+      fs.readFile(PLAYWRIGHT_CONFIG, 'utf8'),
+      fs.readFile(path.join(E2E_ROOT, 'global-setup.ts'), 'utf8'),
       fs.readFile(path.join(E2E_ROOT, 'global-teardown.ts'), 'utf8'),
       fs.readFile(path.join(E2E_ROOT, 'critical/network-linking.spec.ts'), 'utf8'),
     ]);
@@ -97,6 +109,15 @@ describe('E2E fixture lifecycle contract', () => {
     expect(fixtureSource).toContain('registerEntityId');
     expect(cleanupSource).not.toMatch(/\b(?:like|ilike)\s+\$\{/i);
     expect(cleanupSource).not.toContain('options.prefix');
+    expect(databaseSource).toContain('statement_timeout: 10_000');
+    expect(databaseSource).toContain('lock_timeout: 3_000');
+    expect(databaseSource).toContain('idle_in_transaction_session_timeout: 10_000');
+    expect(playwrightSource).toContain(
+      'globalTimeout: process.env.CI ? 15 * 60 * 1000 : undefined'
+    );
+    expect(playwrightSource).toContain("['line']");
+    expect(playwrightSource).toContain("['blob',");
+    expect(setupSource).toContain('await waitForZeroReady()');
     expect(teardownSource).not.toContain('cleanupE2ERows');
     expect(teardownSource).toContain('await closeDb()');
     expect(networkJourneySource).toContain("e2eRun.actor('network-approver')");

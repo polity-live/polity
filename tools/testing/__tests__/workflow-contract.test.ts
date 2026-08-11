@@ -32,12 +32,24 @@ describe('GitHub workflow contracts', () => {
 
   it('keeps three isolated desktop shards and one mobile PR job', () => {
     const ci = workflow('ci.yml');
+    const e2e = ci.slice(ci.indexOf('  e2e-tests:'), ci.indexOf('  merge-e2e-reports:'));
+    const merge = ci.slice(ci.indexOf('  merge-e2e-reports:'), ci.indexOf('  dependency-review:'));
 
     expect(ci.match(/shard: [123]\/3/gu)).toHaveLength(3);
     expect(ci.match(/project: chromium-desktop/gu)).toHaveLength(3);
     expect(ci.match(/project: chromium-mobile/gu)).toHaveLength(1);
     expect(ci).toContain('E2E_APP_COMMAND: npm run start:e2e');
     expect(ci).toContain('run: npm run build:e2e');
+    expect(e2e).toContain('timeout-minutes: 25');
+    expect(e2e).toContain('name: Upload shard blob report');
+    expect(e2e).toContain('if-no-files-found: ignore');
+    expect(merge).toContain('name: Validate E2E blob reports');
+    expect(merge).toContain("find all-blob-reports -type f -name 'report-*.zip'");
+    expect(merge).toContain('Expected four E2E blob reports, received $blob_count');
+    expect(merge).toContain('npx playwright merge-reports --reporter html all-blob-reports');
+    expect(merge).toContain('name: Require successful E2E shards');
+    expect(merge).toContain('E2E_SHARDS_RESULT: ${{ needs.e2e-tests.result }}');
+    expect(merge).toContain('if [[ "$E2E_SHARDS_RESULT" != "success" ]]');
   });
 
   it('runs four isolated coverage shards and gates the merged report', () => {
