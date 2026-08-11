@@ -9,6 +9,16 @@ function workflow(name: string) {
 }
 
 describe('GitHub workflow contracts', () => {
+  it('retries transient npm registry failures with bounded backoff', () => {
+    const ci = workflow('ci.yml');
+
+    expect(ci).toContain('NPM_CONFIG_FETCH_RETRIES: "5"');
+    expect(ci).toContain('NPM_CONFIG_FETCH_RETRY_FACTOR: "2"');
+    expect(ci).toContain('NPM_CONFIG_FETCH_RETRY_MINTIMEOUT: "20000"');
+    expect(ci).toContain('NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT: "120000"');
+    expect(ci).toContain('NPM_CONFIG_FETCH_TIMEOUT: "300000"');
+  });
+
   it('uses valid Supabase startup syntax and the published dependency-review ref', () => {
     const ci = workflow('ci.yml');
     const staticAnalysis = ci.slice(ci.indexOf('  static-analysis:'), ci.indexOf('  unit-tests:'));
