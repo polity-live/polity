@@ -10,6 +10,7 @@ const zeroBaseUrl = process.env.VITE_ZERO_CACHE_URL ?? 'http://127.0.0.1:4848';
 const zeroKeepaliveUrl = new URL('/keepalive', zeroBaseUrl).href;
 const reuseExistingServer = process.env.E2E_REUSE_SERVER === '1';
 const appCommand = process.env.E2E_APP_COMMAND ?? 'npm run test:e2e:serve';
+const webServerGracefulShutdown = { signal: 'SIGTERM' as const, timeout: 10_000 };
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -99,12 +100,14 @@ export default defineConfig({
       url: appBaseUrl,
       reuseExistingServer,
       timeout: 300 * 1000,
+      gracefulShutdown: webServerGracefulShutdown,
     },
     {
       command: 'npm run zero:dev',
       url: zeroKeepaliveUrl,
       reuseExistingServer,
       timeout: 180 * 1000,
+      gracefulShutdown: webServerGracefulShutdown,
     },
   ],
 });
