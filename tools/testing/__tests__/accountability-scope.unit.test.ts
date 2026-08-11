@@ -34,17 +34,26 @@ describe('test accountability contracts', () => {
   });
 
   it('classifies test projects from their collection contract', () => {
-    expect(projectForTestFile('e2e/group.spec.ts')).toBe('playwright');
-    expect(projectForTestFile('src/a/__tests__/a.browser.test.tsx')).toBe('browser-component');
-    expect(projectForTestFile('src/a/__tests__/a.integration.test.ts')).toBe('integration');
-    expect(projectForTestFile('src/a/__tests__/a.test.tsx')).toBe('component');
-    expect(projectForTestFile('src/a/__tests__/a.test.ts')).toBe('unit');
+    expect(projectForTestFile('e2e/group.e2e.spec.ts')).toBe('playwright');
+    expect(projectForTestFile('src/a/__tests__/a.browser-component.test.tsx')).toBe(
+      'browser-component'
+    );
+    expect(projectForTestFile('src/a/__tests__/a.component-flow.test.tsx')).toBe('component-flow');
+    expect(projectForTestFile('src/a/__tests__/a.service-integration.test.ts')).toBe(
+      'service-integration'
+    );
+    expect(projectForTestFile('src/a/__tests__/a.database-integration.test.ts')).toBe(
+      'database-integration'
+    );
+    expect(projectForTestFile('src/a/__tests__/a.static-contract.test.ts')).toBe('static-contract');
+    expect(projectForTestFile('src/a/__tests__/a.component.test.tsx')).toBe('component');
+    expect(projectForTestFile('src/a/__tests__/a.unit.test.ts')).toBe('unit');
   });
 
   it('rejects stale, ambiguous, and cross-project references', () => {
     const index = new Map([
       [
-        'src/a/__tests__/a.test.ts',
+        'src/a/__tests__/a.unit.test.ts',
         {
           project: 'unit',
           cases: new Map([
@@ -58,7 +67,7 @@ describe('test accountability contracts', () => {
     expect(
       validateTestReference(
         {
-          file: 'src/a/__tests__/a.test.ts',
+          file: 'src/a/__tests__/a.unit.test.ts',
           project: 'unit',
           caseId: 'unique',
         },
@@ -68,7 +77,7 @@ describe('test accountability contracts', () => {
     expect(
       validateTestReference(
         {
-          file: 'src/a/__tests__/a.test.ts',
+          file: 'src/a/__tests__/a.unit.test.ts',
           project: 'component',
           caseId: 'missing',
         },
@@ -83,7 +92,7 @@ describe('test accountability contracts', () => {
     expect(
       validateTestReference(
         {
-          file: 'src/a/__tests__/a.test.ts',
+          file: 'src/a/__tests__/a.unit.test.ts',
           project: 'unit',
           caseId: 'duplicate',
         },
@@ -116,7 +125,7 @@ describe('test accountability contracts', () => {
         sourceReferenceAdditions: {
           'src/routes/timeline.tsx': [
             {
-              file: 'src/routes/__tests__/timeline.test.tsx',
+              file: 'src/routes/__tests__/timeline.component.test.tsx',
               project: 'component',
               caseId: 'opens',
             },
@@ -141,7 +150,11 @@ describe('test accountability contracts', () => {
       },
     });
     expect(loadAccountabilityManifest(root).sourceReferences['src/routes/timeline.tsx']).toEqual([
-      { file: 'src/routes/__tests__/timeline.test.tsx', project: 'component', caseId: 'opens' },
+      {
+        file: 'src/routes/__tests__/timeline.component.test.tsx',
+        project: 'component',
+        caseId: 'opens',
+      },
     ]);
 
     fs.writeFileSync(
@@ -155,19 +168,19 @@ describe('test accountability contracts', () => {
 describe('action and route catalog accountability', () => {
   const e2eCase = 'executes process one @pr @critical';
   const e2eReference = {
-    file: 'e2e/process-one.spec.ts',
+    file: 'e2e/process-one.e2e.spec.ts',
     project: 'playwright',
     caseId: e2eCase,
     tags: ['@pr', '@critical'],
     coversActions: ['submit'],
   };
   const structuralReference = {
-    file: 'src/routes/__tests__/routeCatalog.contract.test.ts',
+    file: 'src/routes/__tests__/routeCatalog.contract.unit.test.ts',
     project: 'unit',
     caseId: 'accounts for every route source with a unique file and path',
   };
   const behaviorReference = {
-    file: 'src/routes/__tests__/page.test.tsx',
+    file: 'src/routes/__tests__/page.component.test.tsx',
     project: 'component',
     caseId: 'loads and authorizes the page',
     evidence: { relation: 'direct' },

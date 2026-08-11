@@ -4,7 +4,7 @@
   "actionReferences": {
     "src/features/public-landing/ui/PublicLandingPage.tsx#/#features": [
       {
-        "file": "src/features/public-landing/ui/__tests__/LandingCityDesignPreview.branch.A07.test.tsx",
+        "file": "src/features/public-landing/ui/__tests__/LandingCityDesignPreview.branch-a07.component.test.tsx",
         "project": "component",
         "caseId": "covers fallback map, placement boundaries and read-only map interactions",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -18,7 +18,7 @@
     ],
     "src/features/public-landing/ui/PublicLandingPage.tsx#/auth": [
       {
-        "file": "src/features/public-landing/ui/__tests__/LandingCityDesignPreview.branch.A07.test.tsx",
+        "file": "src/features/public-landing/ui/__tests__/LandingCityDesignPreview.branch-a07.component.test.tsx",
         "project": "component",
         "caseId": "covers fallback map, placement boundaries and read-only map interactions",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],

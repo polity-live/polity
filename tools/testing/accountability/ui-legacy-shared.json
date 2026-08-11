@@ -4,7 +4,7 @@
   "actionReferences": {
     "src/features/shared/ui/feedback/NotFoundView.tsx#/home": [
       {
-        "file": "src/features/shared/ui/__tests__/SharedActionAccountability.test.ts",
+        "file": "src/features/shared/ui/__tests__/SharedActionAccountability.unit.test.ts",
         "project": "unit",
         "caseId": "accounts shared navigation actions across authorization redirects deep links loading and errors",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -18,7 +18,7 @@
     ],
     "src/features/shared/ui/UserIdentityLink.tsx#shared.user-identity-link.user-id": [
       {
-        "file": "src/features/shared/ui/__tests__/SharedActionAccountability.test.ts",
+        "file": "src/features/shared/ui/__tests__/SharedActionAccountability.unit.test.ts",
         "project": "unit",
         "caseId": "accounts shared navigation actions across authorization redirects deep links loading and errors",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],

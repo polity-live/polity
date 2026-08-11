@@ -4,7 +4,7 @@
   "actionReferences": {
     "src/features/agendas/ui/AgendaActiveItemHeader.tsx#agendas.agenda-active-item-header.amendment-id": [
       {
-        "file": "src/features/agendas/ui/__tests__/AgendaActiveItemHeader.test.tsx",
+        "file": "src/features/agendas/ui/__tests__/AgendaActiveItemHeader.component.test.tsx",
         "project": "component",
         "caseId": "deduplicates voting times that match agenda start and end",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -18,7 +18,7 @@
     ],
     "src/features/agendas/ui/AgendaActiveItemHeader.tsx#agendas.agenda-active-item-header.group-id": [
       {
-        "file": "src/features/agendas/ui/__tests__/AgendaActiveItemHeader.test.tsx",
+        "file": "src/features/agendas/ui/__tests__/AgendaActiveItemHeader.component.test.tsx",
         "project": "component",
         "caseId": "deduplicates voting times that match agenda start and end",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -32,7 +32,7 @@
     ],
     "src/features/agendas/ui/AgendaElectionSection.tsx#agendas.agenda-election-section.event-id": [
       {
-        "file": "src/features/agendas/ui/__tests__/AgendaElectionSection.test.tsx",
+        "file": "src/features/agendas/ui/__tests__/AgendaElectionSection.component.test.tsx",
         "project": "component",
         "caseId": "keeps the election role badge as text when no delegate target event is present",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -46,7 +46,7 @@
     ],
     "src/features/agendas/ui/ElectionDetailsSectionView.tsx#agendas.election-details-section.group-id": [
       {
-        "file": "src/features/agendas/ui/__tests__/AgendaElectionSection.test.tsx",
+        "file": "src/features/agendas/ui/__tests__/AgendaElectionSection.component.test.tsx",
         "project": "component",
         "caseId": "keeps the election role badge as text when no delegate target event is present",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -60,7 +60,7 @@
     ],
     "src/features/agendas/ui/EventAgendaItemDetailView.tsx#agendas.event-agenda-item-detail.event-id-agenda": [
       {
-        "file": "src/features/agendas/ui/__tests__/AgendaActiveItemHeader.test.tsx",
+        "file": "src/features/agendas/ui/__tests__/AgendaActiveItemHeader.component.test.tsx",
         "project": "component",
         "caseId": "deduplicates voting times that match agenda start and end",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -74,7 +74,7 @@
     ],
     "src/features/agendas/ui/NamedBallotResultsDialog.tsx#agendas.named-ballot-results-dialog.user-id": [
       {
-        "file": "src/features/agendas/ui/__tests__/AgendaElectionSection.test.tsx",
+        "file": "src/features/agendas/ui/__tests__/AgendaElectionSection.component.test.tsx",
         "project": "component",
         "caseId": "filters withdrawn candidates from the empty named-results state",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],

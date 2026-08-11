@@ -83,12 +83,15 @@ export function loadResolutionLedger(root) {
 
 export function projectForTestFile(file) {
   const normalized = file.replaceAll('\\', '/');
-  if (normalized.startsWith('e2e/')) return 'playwright';
+  if (/\.e2e\.spec\.ts$/.test(normalized)) return 'playwright';
   if (normalized.startsWith('supabase/tests/')) return 'database';
-  if (/\.browser\.test\.tsx?$/.test(normalized)) return 'browser-component';
-  if (/\.integration\.test\.tsx?$/.test(normalized)) return 'integration';
-  if (/\.test\.tsx$/.test(normalized)) return 'component';
-  if (/\.test\.ts$/.test(normalized)) return 'unit';
+  if (/\.browser-component\.test\.tsx?$/.test(normalized)) return 'browser-component';
+  if (/\.database-integration\.test\.tsx?$/.test(normalized)) return 'database-integration';
+  if (/\.service-integration\.test\.tsx?$/.test(normalized)) return 'service-integration';
+  if (/\.component-flow\.test\.tsx$/.test(normalized)) return 'component-flow';
+  if (/\.static-contract\.test\.tsx?$/.test(normalized)) return 'static-contract';
+  if (/\.component\.test\.tsx$/.test(normalized)) return 'component';
+  if (/\.unit\.test\.ts$/.test(normalized)) return 'unit';
   return 'contract';
 }
 

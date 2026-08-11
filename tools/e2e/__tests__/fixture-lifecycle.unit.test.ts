@@ -100,7 +100,7 @@ describe('E2E fixture lifecycle contract', () => {
       fs.readFile(PLAYWRIGHT_CONFIG, 'utf8'),
       fs.readFile(path.join(E2E_ROOT, 'global-setup.ts'), 'utf8'),
       fs.readFile(path.join(E2E_ROOT, 'global-teardown.ts'), 'utf8'),
-      fs.readFile(path.join(E2E_ROOT, 'critical/network-linking.spec.ts'), 'utf8'),
+      fs.readFile(path.join(E2E_ROOT, 'critical/network-linking.e2e.spec.ts'), 'utf8'),
     ]);
 
     expect(fixtureSource).not.toMatch(/scope:\s*['"]worker['"]/);

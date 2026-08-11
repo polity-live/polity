@@ -10,7 +10,7 @@ test.describe('create/group', () => {
     ).resolves.toBe(true);
   });
 
-  test('creates a minimal group @pr @nightly @critical @mobile @cross-browser', async ({
+  test('creates a minimal group @pr @nightly @critical @mobile @cross-browser @acceptance', async ({
     createFlowPage,
     e2eRun,
   }) => {

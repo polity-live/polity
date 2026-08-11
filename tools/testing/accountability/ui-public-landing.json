@@ -4,7 +4,7 @@
   "actionReferences": {
     "src/features/public-landing/ui/PublicLandingPage.tsx#public-landing.contact.support.open": [
       {
-        "file": "src/features/public-landing/ui/__tests__/ContactLink.test.tsx",
+        "file": "src/features/public-landing/ui/__tests__/ContactLink.component.test.tsx",
         "project": "component",
         "caseId": "wires the complete imprint contact surface",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],

@@ -30,14 +30,15 @@ describe('GitHub workflow contracts', () => {
     expect(staticAnalysis).toContain('fetch-depth: 0');
   });
 
-  it('keeps three isolated desktop shards and one mobile PR job', () => {
+  it('keeps seven isolated desktop shards and two isolated mobile PR jobs', () => {
     const ci = workflow('ci.yml');
-    const e2e = ci.slice(ci.indexOf('  e2e-tests:'), ci.indexOf('  merge-e2e-reports:'));
-    const merge = ci.slice(ci.indexOf('  merge-e2e-reports:'), ci.indexOf('  dependency-review:'));
+    const e2e = ci.slice(ci.indexOf('  e2e-tests:'), ci.indexOf('  e2e-gate:'));
+    const gate = ci.slice(ci.indexOf('  e2e-gate:'), ci.indexOf('  dependency-review:'));
 
-    expect(ci.match(/shard: [123]\/3/gu)).toHaveLength(3);
-    expect(ci.match(/project: chromium-desktop/gu)).toHaveLength(3);
-    expect(ci.match(/project: chromium-mobile/gu)).toHaveLength(1);
+    expect(e2e.match(/shard: [1-7]\/7/gu)).toHaveLength(7);
+    expect(e2e.match(/shard: [12]\/2/gu)).toHaveLength(2);
+    expect(e2e.match(/project: chromium-desktop/gu)).toHaveLength(7);
+    expect(e2e.match(/project: chromium-mobile/gu)).toHaveLength(2);
     expect(ci).toContain('E2E_APP_COMMAND: npm run start:e2e');
     expect(ci).toContain('run: npm run build:e2e');
     expect(e2e).toContain('timeout-minutes: 25');
@@ -45,14 +46,39 @@ describe('GitHub workflow contracts', () => {
     expect(e2e).toContain('if supabase db reset --local --no-seed; then');
     expect(e2e).toContain('Supabase reset failed after $attempt attempts');
     expect(e2e).toContain('name: Upload shard blob report');
-    expect(e2e).toContain('if-no-files-found: ignore');
-    expect(merge).toContain('name: Validate E2E blob reports');
-    expect(merge).toContain("find all-blob-reports -type f -name 'report-*.zip'");
-    expect(merge).toContain('Expected four E2E blob reports, received $blob_count');
-    expect(merge).toContain('npx playwright merge-reports --reporter html all-blob-reports');
-    expect(merge).toContain('name: Require successful E2E shards');
-    expect(merge).toContain('E2E_SHARDS_RESULT: ${{ needs.e2e-tests.result }}');
-    expect(merge).toContain('if [[ "$E2E_SHARDS_RESULT" != "success" ]]');
+    expect(e2e).toContain('if-no-files-found: error');
+    expect(gate).toContain('name: E2E Gate');
+    expect(gate).toContain('name: Validate E2E blob reports');
+    expect(gate).toContain("find all-blob-reports -type f -name 'report-*.zip'");
+    expect(gate).toContain('Expected nine E2E blob reports, received $blob_count');
+    expect(gate).toContain('npx playwright merge-reports --reporter html all-blob-reports');
+    expect(gate).toContain('name: Require successful E2E shards');
+    expect(gate).toContain('E2E_SHARDS_RESULT: ${{ needs.e2e-tests.result }}');
+    expect(gate).toContain('if [[ "$E2E_SHARDS_RESULT" != "success" ]]');
+  });
+
+  it('gates component flows and service integrations through fail-closed matrices', () => {
+    const ci = workflow('ci.yml');
+    const componentFlow = ci.slice(
+      ci.indexOf('  component-flow-shards:'),
+      ci.indexOf('  browser-component-tests:')
+    );
+    const serviceIntegration = ci.slice(
+      ci.indexOf('  service-integration-shards:'),
+      ci.indexOf('  database-tests:')
+    );
+
+    expect(componentFlow).toContain('shard: [1, 2, 3, 4]');
+    expect(componentFlow).toContain('fail-fast: false');
+    expect(componentFlow).toContain('name: Component Flow Tests');
+    expect(componentFlow).toContain('if: always()');
+    expect(componentFlow).toContain('needs: component-flow-shards');
+    expect(componentFlow).toContain('markers=$marker_count/4');
+    expect(serviceIntegration).toContain('shard: [1, 2]');
+    expect(serviceIntegration).toContain('fail-fast: false');
+    expect(serviceIntegration).toContain('name: Service Integration Tests');
+    expect(serviceIntegration).toContain('needs: service-integration-shards');
+    expect(serviceIntegration).toContain('markers=$marker_count/2');
   });
 
   it('runs four isolated coverage shards and gates the merged report', () => {
@@ -105,8 +131,13 @@ describe('GitHub workflow contracts', () => {
 
     expect(nightly).toContain('npm run test:mutation');
     expect(nightly).toContain('--repeat-each=20');
-    expect(nightly).toContain('project: chromium-desktop');
-    expect(nightly).toContain('project: chromium-mobile');
+    expect(nightly.match(/project: chromium-desktop/gu)).toHaveLength(3);
+    expect(nightly.match(/project: chromium-mobile/gu)).toHaveLength(2);
+    expect(nightly).toContain('--shard=1/3');
+    expect(nightly).toContain('--shard=2/3');
+    expect(nightly).toContain('--shard=3/3');
+    expect(nightly).toContain('--shard=1/2');
+    expect(nightly).toContain('--shard=2/2');
     expect(nightly).toContain('firefox-nightly');
     expect(nightly).toContain('webkit-nightly');
     expect(acceptance).toContain('cron: "23 3 * * 0"');
@@ -121,6 +152,7 @@ describe('GitHub workflow contracts', () => {
     expect(acceptance.match(/--workers=1 --retries=0/gu)).toHaveLength(2);
     expect(acceptance).toContain('--suite critical-repeat');
     expect(acceptance).toContain('--suite cold-stack');
+    expect(acceptance.match(/--grep '@acceptance'/gu)).toHaveLength(2);
     expect(acceptance).toContain('Verify exactly 20 critical repetitions');
     expect(acceptance).toContain('Verify exactly 30 independent cold stacks');
     expect(acceptance).toContain('retention-days: 90');

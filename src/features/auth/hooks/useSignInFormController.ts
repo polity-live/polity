@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { isValidEmailAddress } from '@/features/auth/logic/authValidation';
+import { consumePendingSignInRedirect } from '@/features/auth/logic/authRedirects';
 import { useDebounce } from '@/features/shared/hooks/use-debounce';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuthSignIn } from './useAuthSignIn';
@@ -50,7 +51,7 @@ export function useSignInFormController() {
       if (result.isNewUser) {
         sessionStorage.setItem('polity_onboarding', 'true');
       }
-      navigate({ to: '/' });
+      navigate({ to: consumePendingSignInRedirect() });
     } else {
       setLocalError(result.error ?? null);
     }

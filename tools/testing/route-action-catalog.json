@@ -14,7 +14,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -34,7 +34,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -54,7 +54,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -74,7 +74,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -94,7 +94,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -114,7 +114,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -134,7 +134,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -154,7 +154,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -174,7 +174,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -194,7 +194,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -214,7 +214,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -234,7 +234,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -254,7 +254,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -274,7 +274,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -294,7 +294,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -314,7 +314,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -334,7 +334,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -354,7 +354,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -374,7 +374,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -394,7 +394,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -414,7 +414,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -434,7 +434,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -454,7 +454,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -474,7 +474,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -494,7 +494,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -514,7 +514,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -534,7 +534,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -554,7 +554,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -574,7 +574,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -594,7 +594,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -614,7 +614,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -634,7 +634,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -654,7 +654,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -674,7 +674,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -694,7 +694,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -714,7 +714,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -734,7 +734,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -754,7 +754,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -774,7 +774,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -794,7 +794,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -814,7 +814,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -834,7 +834,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -854,7 +854,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -874,7 +874,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -894,7 +894,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -914,7 +914,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -934,7 +934,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -954,7 +954,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -974,7 +974,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -994,7 +994,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1014,7 +1014,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1034,7 +1034,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1054,7 +1054,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1074,7 +1074,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1094,7 +1094,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1114,7 +1114,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1134,7 +1134,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1154,7 +1154,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1174,7 +1174,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1194,7 +1194,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1214,7 +1214,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1234,7 +1234,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1254,7 +1254,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1274,7 +1274,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1294,7 +1294,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1314,7 +1314,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1334,7 +1334,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1354,7 +1354,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1374,7 +1374,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1394,7 +1394,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1414,7 +1414,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1434,7 +1434,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1454,7 +1454,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1474,7 +1474,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1494,7 +1494,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1514,7 +1514,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1534,7 +1534,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1554,7 +1554,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1574,7 +1574,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1594,7 +1594,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1614,7 +1614,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1634,7 +1634,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1654,7 +1654,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1674,7 +1674,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1694,7 +1694,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1714,7 +1714,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1734,7 +1734,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1754,7 +1754,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1774,7 +1774,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1794,7 +1794,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1807,7 +1807,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1827,7 +1827,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1847,7 +1847,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1867,7 +1867,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1887,7 +1887,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1907,7 +1907,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1927,7 +1927,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1947,7 +1947,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1967,7 +1967,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -1987,7 +1987,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2007,7 +2007,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2027,7 +2027,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2047,7 +2047,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2067,7 +2067,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2087,7 +2087,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2107,7 +2107,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2127,7 +2127,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2147,7 +2147,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2167,7 +2167,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2187,7 +2187,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2207,7 +2207,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2227,7 +2227,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2240,7 +2240,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2253,7 +2253,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2273,7 +2273,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2293,7 +2293,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2306,7 +2306,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2326,7 +2326,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2346,7 +2346,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2366,7 +2366,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2386,7 +2386,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2399,7 +2399,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2419,7 +2419,7 @@
           "states": ["success", "validation-error", "unauthorized", "service-error"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2439,7 +2439,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2459,7 +2459,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2479,7 +2479,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2499,7 +2499,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2519,7 +2519,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2539,7 +2539,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2559,7 +2559,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2579,7 +2579,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2599,7 +2599,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2619,7 +2619,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2639,7 +2639,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2659,7 +2659,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2679,7 +2679,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2699,7 +2699,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2719,7 +2719,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2739,7 +2739,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2759,7 +2759,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2779,7 +2779,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2799,7 +2799,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2819,7 +2819,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2839,7 +2839,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2859,7 +2859,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }
@@ -2879,7 +2879,7 @@
           "states": ["loading", "success", "empty", "error", "unauthorized"],
           "contractCoverage": [
             {
-              "file": "src/routes/__tests__/routeCatalog.contract.test.ts",
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
               "project": "unit",
               "caseId": "accounts for every route source with a unique file and path"
             }

@@ -32,7 +32,7 @@ export default {
     'src/features/votes/logic/__tests__/computeEligibleVoters*.test.ts',
     'src/features/votes/logic/__tests__/computeVoteResult*.test.ts',
     'src/zero/rbac/__tests__/*.test.ts',
-    'src/zero/__tests__/allQueries.contract.test.ts',
+    'src/zero/__tests__/allQueries.contract.unit.test.ts',
   ],
   mutate: [
     'src/features/amendments/logic/amendmentPathHelpers.ts',

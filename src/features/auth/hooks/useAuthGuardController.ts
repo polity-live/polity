@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 
 import { useAuth } from '@/providers/auth-provider';
+import { storePendingSignInRedirect } from '@/features/auth/logic/authRedirects';
 
 interface UseAuthGuardControllerOptions {
   requireAuth: boolean;
@@ -37,6 +38,11 @@ export function useAuthGuardController({ requireAuth, redirectTo }: UseAuthGuard
     if (!authInitialized) return;
 
     if (requireAuth && !isAuthenticated) {
+      const currentTarget =
+        typeof window === 'undefined'
+          ? pathname
+          : `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      storePendingSignInRedirect(currentTarget);
       const destination = redirectTo || `/auth?redirect=${encodeURIComponent(pathname)}`;
       navigate({ to: destination });
     } else if (!requireAuth && isAuthenticated) {

@@ -78,7 +78,7 @@ jobs:
               E2E_SHARD="critical-${iteration}" \
               PLAYWRIGHT_OUTPUT_DIR="test-results/critical-${iteration}" \
               PLAYWRIGHT_REPORT_DIR="playwright-report/critical-${iteration}" \
-              npx playwright test --project=chromium-desktop --grep '@pr' --workers=1 --retries=0
+              npx playwright test --project=chromium-desktop --grep '@acceptance' --workers=1 --retries=0
             exit_code=$?
             set -e
             completed_at_ms="$(node -e 'process.stdout.write(String(Date.now()))')"
@@ -206,7 +206,7 @@ jobs:
               SUPABASE_ANON_KEY="$ANON_KEY" \
               SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
               E2E_DATABASE_URL="$DB_URL" \
-              npx playwright test --project=chromium-desktop --grep '@pr' --workers=1 --retries=0
+              npx playwright test --project=chromium-desktop --grep '@acceptance' --workers=1 --retries=0
           }
 
           for iteration in $(seq "$first_iteration" "$last_iteration"); do

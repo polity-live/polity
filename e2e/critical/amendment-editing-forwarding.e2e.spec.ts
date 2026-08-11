@@ -31,7 +31,7 @@ test.describe('critical amendment lifecycle', () => {
     await expect(page.locator('#title')).toHaveValue(updatedTitle);
   });
 
-  test('creates a persisted cross-group amendment path through the UI @pr @critical', async ({
+  test('creates a persisted cross-group amendment path through the UI @pr @critical @acceptance', async ({
     e2eRun,
     page,
     seed,

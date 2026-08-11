@@ -4,7 +4,7 @@
   "actionReferences": {
     "src/features/events/EventWikiContentView.tsx#events.event-wiki-content.group-id": [
       {
-        "file": "src/features/events/__tests__/EventWikiContentView.test.tsx",
+        "file": "src/features/events/__tests__/EventWikiContentView.component.test.tsx",
         "project": "component",
         "caseId": "keeps event actions visible to authenticated users",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -18,7 +18,7 @@
     ],
     "src/features/events/ui/CancelledEventBanner.tsx#events.cancelled-event-banner.event-id": [
       {
-        "file": "src/features/events/ui/__tests__/CancelledEventBanner.coverage.test.tsx",
+        "file": "src/features/events/ui/__tests__/CancelledEventBanner.coverage.component.test.tsx",
         "project": "component",
         "caseId": "renders sparse English and complete German cancellation metadata",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -32,7 +32,7 @@
     ],
     "src/features/events/ui/DelegateAssemblyCompositionPanel.tsx#events.delegate-assembly-composition-panel.group-id": [
       {
-        "file": "src/features/events/ui/__tests__/DelegateAssemblyCompositionPanel.test.tsx",
+        "file": "src/features/events/ui/__tests__/DelegateAssemblyCompositionPanel.component.test.tsx",
         "project": "component",
         "caseId": "renders a section skeleton while delegate composition loads",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],

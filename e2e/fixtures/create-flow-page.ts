@@ -218,7 +218,7 @@ export class CreateFlowPage {
     };
     this.onCreatedTarget?.(target);
 
-    const documentMarker = `create-spa-${Date.now()}-${Math.random()}`;
+    const documentMarker = `create-spa-${target.kind ?? 'unknown'}-${target.href ?? 'unknown'}`;
     if (targetKind === 'route') {
       await this.page.evaluate(marker => {
         (

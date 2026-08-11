@@ -70,7 +70,7 @@
       "endTime": 1779833906964.3445,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/network/__tests__/groupRelationshipRoutes.test.tsx"
+      "name": "C:/instant-to-zero/polity/src/features/network/__tests__/groupRelationshipRoutes.component.test.tsx"
     },
     {
       "assertionResults": [
@@ -97,7 +97,7 @@
       "endTime": 1779833907955.356,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/zero/common/__tests__/commonSharedMutators.links.test.ts"
+      "name": "C:/instant-to-zero/polity/src/zero/common/__tests__/commonSharedMutators.links.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -169,7 +169,7 @@
       "endTime": 1779833911174.324,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/amendments/ui/__tests__/TargetGroupEventSelector.test.tsx"
+      "name": "C:/instant-to-zero/polity/src/features/amendments/ui/__tests__/TargetGroupEventSelector.component.test.tsx"
     },
     {
       "assertionResults": [
@@ -196,7 +196,7 @@
       "endTime": 1779833907758.7146,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/create/logic/__tests__/createSearchParams.test.ts"
+      "name": "C:/instant-to-zero/polity/src/features/create/logic/__tests__/createSearchParams.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -241,7 +241,7 @@
       "endTime": 1779833907697.4924,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/create/ui/__tests__/CreateSummaryStep.test.tsx"
+      "name": "C:/instant-to-zero/polity/src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
     },
     {
       "assertionResults": [
@@ -268,7 +268,7 @@
       "endTime": 1779833912671.721,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/create/ui/__tests__/CreateTypeaheadField.test.tsx"
+      "name": "C:/instant-to-zero/polity/src/features/create/ui/__tests__/CreateTypeaheadField.component.test.tsx"
     },
     {
       "assertionResults": [
@@ -304,7 +304,7 @@
       "endTime": 1779833904198.392,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/events/logic/__tests__/buildRecurringEventFields.test.ts"
+      "name": "C:/instant-to-zero/polity/src/features/events/logic/__tests__/buildRecurringEventFields.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -349,7 +349,7 @@
       "endTime": 1779833906577.6985,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/events/logic/__tests__/localDateTime.test.ts"
+      "name": "C:/instant-to-zero/polity/src/features/events/logic/__tests__/localDateTime.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -412,7 +412,7 @@
       "endTime": 1779833904210.352,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/events/logic/__tests__/rruleHelpers.test.ts"
+      "name": "C:/instant-to-zero/polity/src/features/events/logic/__tests__/rruleHelpers.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -448,7 +448,7 @@
       "endTime": 1779833907711.8406,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/groups/logic/__tests__/groupWikiHelpers.test.ts"
+      "name": "C:/instant-to-zero/polity/src/features/groups/logic/__tests__/groupWikiHelpers.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -493,7 +493,7 @@
       "endTime": 1779833906735.6384,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/groupRelationshipDisplay.test.ts"
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/groupRelationshipDisplay.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -538,7 +538,7 @@
       "endTime": 1779833907712.5024,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/groupRelationshipSentence.test.ts"
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/groupRelationshipSentence.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -601,7 +601,7 @@
       "endTime": 1779833905653.0603,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/hierarchyLinkHelpers.test.ts"
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/hierarchyLinkHelpers.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -664,7 +664,7 @@
       "endTime": 1779833907677.7158,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/networkEdgeHelpers.test.ts"
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/networkEdgeHelpers.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -709,7 +709,7 @@
       "endTime": 1779833905938.5725,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/networkFilterHelpers.test.ts"
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/networkFilterHelpers.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -736,7 +736,7 @@
       "endTime": 1779833906803.744,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/networkRelationshipDialogHelpers.test.ts"
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/networkRelationshipDialogHelpers.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -826,7 +826,7 @@
       "endTime": 1779833904245.2585,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/networkRelationshipHelpers.test.ts"
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/networkRelationshipHelpers.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -853,7 +853,7 @@
       "endTime": 1779833912002.2822,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/network/ui/__tests__/ManageNetworkTab.test.tsx"
+      "name": "C:/instant-to-zero/polity/src/features/network/ui/__tests__/ManageNetworkTab.component.test.tsx"
     },
     {
       "assertionResults": [
@@ -871,7 +871,7 @@
       "endTime": 1779833911468.1133,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/pql/ui/__tests__/PqlToolbar.test.tsx"
+      "name": "C:/instant-to-zero/polity/src/features/pql/ui/__tests__/PqlToolbar.component.test.tsx"
     },
     {
       "assertionResults": [
@@ -916,7 +916,7 @@
       "endTime": 1779833905489.7961,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/shared/logic/__tests__/typeaheadHelpers.test.ts"
+      "name": "C:/instant-to-zero/polity/src/features/shared/logic/__tests__/typeaheadHelpers.unit.test.ts"
     },
     {
       "assertionResults": [
@@ -934,7 +934,7 @@
       "endTime": 1779833911174.6887,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/amendments/collaborators/ui/__tests__/InviteDialog.test.tsx"
+      "name": "C:/instant-to-zero/polity/src/features/amendments/collaborators/ui/__tests__/InviteDialog.component.test.tsx"
     },
     {
       "assertionResults": [
@@ -952,7 +952,7 @@
       "endTime": 1779833912678.3298,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/create/ui/inputs/__tests__/UserSearchInput.test.tsx"
+      "name": "C:/instant-to-zero/polity/src/features/create/ui/inputs/__tests__/UserSearchInput.component.test.tsx"
     },
     {
       "assertionResults": [
@@ -997,7 +997,7 @@
       "endTime": 1779833911199.5842,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/shared/ui/typeahead/__tests__/TypeaheadSearch.test.tsx"
+      "name": "C:/instant-to-zero/polity/src/features/shared/ui/typeahead/__tests__/TypeaheadSearch.component.test.tsx"
     },
     {
       "assertionResults": [
@@ -1015,7 +1015,7 @@
       "endTime": 1779833907461.6453,
       "status": "passed",
       "message": "",
-      "name": "C:/instant-to-zero/polity/src/features/shared/ui/ui/__tests__/create-review-card.test.tsx"
+      "name": "C:/instant-to-zero/polity/src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx"
     }
   ]
 }

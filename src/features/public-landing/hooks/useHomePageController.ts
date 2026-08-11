@@ -38,7 +38,7 @@ export function useHomePageController(): HomePageViewState {
 
   const hasCompletedOnboarding = currentUser != null && !!currentUser.first_name;
   const needsOnboarding =
-    !hasCompletedOnboarding && (showOnboarding || (currentUser != null && !currentUser.first_name));
+    showOnboarding || (!hasCompletedOnboarding && currentUser != null && !currentUser.first_name);
 
   if (needsOnboarding) {
     onboardingActiveRef.current = true;
@@ -51,6 +51,8 @@ export function useHomePageController(): HomePageViewState {
       userEmail: user.email,
       onComplete: () => {
         sessionStorage.removeItem(ONBOARDING_KEY);
+        sessionStorage.removeItem('polity_onboarding_step');
+        sessionStorage.removeItem('polity_onboarding_data');
       },
     };
   }

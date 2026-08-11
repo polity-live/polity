@@ -8,10 +8,14 @@ import { classifyRepositoryFile } from './coverage-scope.mjs';
 const supportedExtension = /\.(?:js|jsx|ts|tsx|json|css|scss|md)$/i;
 
 function git(args) {
-  return execFileSync('git', ['-c', 'core.autocrlf=false', ...args], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'ignore'],
-  });
+  return execFileSync(
+    'git',
+    ['-c', 'core.autocrlf=false', '-c', 'diff.renameLimit=9999', ...args],
+    {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }
+  );
 }
 
 function lines(value) {
@@ -19,6 +23,17 @@ function lines(value) {
     .split(/\r?\n/u)
     .map(item => item.trim())
     .filter(Boolean);
+}
+
+export function changedPathsFromNameStatus(value) {
+  const files = [];
+  for (const line of value.split(/\r?\n/u).filter(Boolean)) {
+    const [status, firstPath, secondPath] = line.split('\t');
+    if (/^R100$/u.test(status)) continue;
+    if (/^[RC]\d+$/u.test(status)) files.push(secondPath);
+    else files.push(firstPath);
+  }
+  return files.filter(Boolean);
 }
 
 export function filterFormattableFiles(files, root = process.cwd()) {
@@ -31,8 +46,10 @@ export function filterFormattableFiles(files, root = process.cwd()) {
 
 export function collectChangedFiles(env = process.env) {
   const files = new Set([
-    ...lines(git(['diff', '--name-only', '--diff-filter=ACMR', 'HEAD'])),
-    ...lines(git(['diff', '--cached', '--name-only', '--diff-filter=ACMR', 'HEAD'])),
+    ...changedPathsFromNameStatus(git(['diff', '--name-status', '--diff-filter=ACMR', '-M'])),
+    ...changedPathsFromNameStatus(
+      git(['diff', '--cached', '--name-status', '--diff-filter=ACMR', '-M', 'HEAD'])
+    ),
     ...lines(git(['ls-files', '--others', '--exclude-standard'])),
   ]);
 
@@ -43,8 +60,8 @@ export function collectChangedFiles(env = process.env) {
   if (base) {
     try {
       const mergeBase = git(['merge-base', base, 'HEAD']).trim();
-      for (const file of lines(
-        git(['diff', '--name-only', '--diff-filter=ACMR', `${mergeBase}...HEAD`])
+      for (const file of changedPathsFromNameStatus(
+        git(['diff', '--name-status', '--diff-filter=ACMR', '-M', `${mergeBase}...HEAD`])
       )) {
         files.add(file);
       }
@@ -53,8 +70,8 @@ export function collectChangedFiles(env = process.env) {
     }
   } else {
     try {
-      for (const file of lines(
-        git(['diff', '--name-only', '--diff-filter=ACMR', 'HEAD^', 'HEAD'])
+      for (const file of changedPathsFromNameStatus(
+        git(['diff', '--name-status', '--diff-filter=ACMR', '-M', 'HEAD^', 'HEAD'])
       )) {
         files.add(file);
       }

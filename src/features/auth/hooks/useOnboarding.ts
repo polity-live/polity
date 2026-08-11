@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAuth } from '@/providers/auth-provider';
@@ -67,6 +67,48 @@ const STEP_ORDER: OnboardingStep[] = [
   'appInstall',
   'summary',
 ];
+const ONBOARDING_MARKER_KEY = 'polity_onboarding';
+const ONBOARDING_STEP_KEY = 'polity_onboarding_step';
+const ONBOARDING_DATA_KEY = 'polity_onboarding_data';
+
+function initialOnboardingStep(): OnboardingStep {
+  if (typeof window === 'undefined' || sessionStorage.getItem(ONBOARDING_MARKER_KEY) !== 'true') {
+    return 'name';
+  }
+  const saved = sessionStorage.getItem(ONBOARDING_STEP_KEY) as OnboardingStep | null;
+  return saved && STEP_ORDER.includes(saved) ? saved : 'name';
+}
+
+function initialOnboardingData(): OnboardingData {
+  const empty: OnboardingData = {
+    firstName: '',
+    lastName: '',
+    selectedInterestTags: [],
+    selectedGroups: [],
+    activeGroupId: null,
+    membershipRequestSentGroupIds: [],
+  };
+  if (typeof window === 'undefined' || sessionStorage.getItem(ONBOARDING_MARKER_KEY) !== 'true') {
+    return empty;
+  }
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(ONBOARDING_DATA_KEY) ?? 'null');
+    if (!saved || typeof saved !== 'object') return empty;
+    return {
+      ...empty,
+      ...saved,
+      selectedInterestTags: Array.isArray(saved.selectedInterestTags)
+        ? saved.selectedInterestTags
+        : [],
+      selectedGroups: Array.isArray(saved.selectedGroups) ? saved.selectedGroups : [],
+      membershipRequestSentGroupIds: Array.isArray(saved.membershipRequestSentGroupIds)
+        ? saved.membershipRequestSentGroupIds
+        : [],
+    };
+  } catch {
+    return empty;
+  }
+}
 
 function normalizeInterestTag(tag: string) {
   return tag.trim().replace(/^#/, '');
@@ -101,17 +143,16 @@ export function useOnboarding(): UseOnboardingReturn {
     () => rankInterestSuggestions((onboardingHashtagUsage ?? []) as readonly HashtagUsageRow[]),
     [onboardingHashtagUsage]
   );
-  const [step, setStep] = useState<OnboardingStep>('name');
+  const [step, setStep] = useState<OnboardingStep>(initialOnboardingStep);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<OnboardingData>({
-    firstName: '',
-    lastName: '',
-    selectedInterestTags: [],
-    selectedGroups: [],
-    activeGroupId: null,
-    membershipRequestSentGroupIds: [],
-  });
+  const [data, setData] = useState<OnboardingData>(initialOnboardingData);
+
+  useEffect(() => {
+    if (sessionStorage.getItem(ONBOARDING_MARKER_KEY) !== 'true') return;
+    sessionStorage.setItem(ONBOARDING_STEP_KEY, step);
+    sessionStorage.setItem(ONBOARDING_DATA_KEY, JSON.stringify(data));
+  }, [data, step]);
 
   const setFirstName = useCallback((value: string) => {
     setData(prev => ({ ...prev, firstName: value }));

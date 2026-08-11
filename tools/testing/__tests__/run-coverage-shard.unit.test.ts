@@ -73,7 +73,7 @@ describe('coverage shard runner contracts', () => {
     expect(() => parseCoverageShardOptions({ argv, env: {} })).toThrow(message);
   });
 
-  it('builds the exact three-project Vitest coverage command', () => {
+  it('builds the exact four-project Vitest coverage command', () => {
     expect(
       buildVitestShardArguments({
         shard: '4/4',
@@ -85,7 +85,8 @@ describe('coverage shard runner contracts', () => {
         '--project',
         'unit',
         'component',
-        'integration',
+        'component-flow',
+        'service-integration',
         '--coverage',
         '--passWithNoTests',
         '--reporter=blob',

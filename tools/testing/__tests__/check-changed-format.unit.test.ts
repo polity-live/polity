@@ -4,7 +4,11 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { checkChangedFormat, filterFormattableFiles } from '../check-changed-format.mjs';
+import {
+  changedPathsFromNameStatus,
+  checkChangedFormat,
+  filterFormattableFiles,
+} from '../check-changed-format.mjs';
 
 const temporaryDirectories: string[] = [];
 
@@ -16,6 +20,14 @@ afterEach(() => {
 });
 
 describe('changed-format ratchet', () => {
+  it('ignores content-identical renames but checks edited rename targets', () => {
+    expect(
+      changedPathsFromNameStatus(
+        'R100\told.unit.test.ts\tnew.unit.test.ts\nR087\told.ts\tnew.ts\nM\tedited.ts\n'
+      )
+    ).toEqual(['new.ts', 'edited.ts']);
+  });
+
   it('keeps only existing supported files and removes duplicates', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'polity-format-filter-'));
     temporaryDirectories.push(root);

@@ -4,7 +4,7 @@
   "actionReferences": {
     "src/features/amendments/AmendmentWikiView.tsx#/amendment/$id": [
       {
-        "file": "src/features/amendments/__tests__/AmendmentWiki.a04.test.tsx",
+        "file": "src/features/amendments/__tests__/AmendmentWiki.a04.component.test.tsx",
         "project": "component",
         "caseId": "renders loading when neither amendment nor recovery exists",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -18,7 +18,7 @@
     ],
     "src/features/amendments/AmendmentWikiView.tsx#/amendment/$id-2": [
       {
-        "file": "src/features/amendments/__tests__/AmendmentWiki.a04.test.tsx",
+        "file": "src/features/amendments/__tests__/AmendmentWiki.a04.component.test.tsx",
         "project": "component",
         "caseId": "renders loading when neither amendment nor recovery exists",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -32,7 +32,7 @@
     ],
     "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx#/amendment/$id": [
       {
-        "file": "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.test.tsx",
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.component.test.tsx",
         "project": "component",
         "caseId": "renders a populated default panel from the first process branch",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -46,7 +46,7 @@
     ],
     "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx#/amendment/$id-2": [
       {
-        "file": "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.test.tsx",
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.component.test.tsx",
         "project": "component",
         "caseId": "renders a populated default panel from the first process branch",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -60,7 +60,7 @@
     ],
     "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx#/group/$id": [
       {
-        "file": "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.test.tsx",
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.component.test.tsx",
         "project": "component",
         "caseId": "falls back to amendment editing mode and renders a group name without an id",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -74,7 +74,7 @@
     ],
     "src/features/amendments/ui/AmendmentProcessDetailsPanelView.tsx#/group/$id-2": [
       {
-        "file": "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.test.tsx",
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessDetailsPanelView.a04.component.test.tsx",
         "project": "component",
         "caseId": "falls back to amendment editing mode and renders a group name without an id",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -88,7 +88,7 @@
     ],
     "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/amendment/$id/text": [
       {
-        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.test.tsx",
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.component.test.tsx",
         "project": "component",
         "caseId": "dispatches process management and replan actions through stable intents",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -102,7 +102,7 @@
     ],
     "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id": [
       {
-        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.test.tsx",
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.component.test.tsx",
         "project": "component",
         "caseId": "hides the source group from the summary and shows process stats",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -116,7 +116,7 @@
     ],
     "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id-2": [
       {
-        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.test.tsx",
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.component.test.tsx",
         "project": "component",
         "caseId": "hides the source group from the summary and shows process stats",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -130,7 +130,7 @@
     ],
     "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id-3": [
       {
-        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.test.tsx",
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.component.test.tsx",
         "project": "component",
         "caseId": "hides the source group from the summary and shows process stats",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -144,7 +144,7 @@
     ],
     "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id-4": [
       {
-        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.test.tsx",
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.component.test.tsx",
         "project": "component",
         "caseId": "hides the source group from the summary and shows process stats",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -158,7 +158,7 @@
     ],
     "src/features/amendments/ui/AmendmentProcessFlowView.tsx#/group/$id-5": [
       {
-        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.test.tsx",
+        "file": "src/features/amendments/ui/__tests__/AmendmentProcessFlowView.component.test.tsx",
         "project": "component",
         "caseId": "hides the source group from the summary and shows process stats",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],

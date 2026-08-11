@@ -4,7 +4,7 @@
   "actionReferences": {
     "src/features/groups/ui/ActiveMembersTable.tsx#/group/$id": [
       {
-        "file": "src/features/groups/ui/__tests__/AddRoleDialog.coverage.test.tsx",
+        "file": "src/features/groups/ui/__tests__/AddRoleDialog.coverage.component.test.tsx",
         "project": "component",
         "caseId": "executes every group form callback and both recurring-pattern paths",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -18,7 +18,7 @@
     ],
     "src/features/groups/ui/ActiveMembersTable.tsx#/group/$id-2": [
       {
-        "file": "src/features/groups/ui/__tests__/AddRoleDialog.coverage.test.tsx",
+        "file": "src/features/groups/ui/__tests__/AddRoleDialog.coverage.component.test.tsx",
         "project": "component",
         "caseId": "executes every group form callback and both recurring-pattern paths",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -32,7 +32,7 @@
     ],
     "src/features/groups/ui/MembershipsByRoleTables.tsx#/group/$id": [
       {
-        "file": "src/features/groups/ui/__tests__/AddRoleDialog.actions.test.tsx",
+        "file": "src/features/groups/ui/__tests__/AddRoleDialog.actions.component.test.tsx",
         "project": "component",
         "caseId": "opens, cancels, and submits role editing through stable actions",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -46,7 +46,7 @@
     ],
     "src/features/groups/ui/MembershipsByRoleTables.tsx#/group/$id-2": [
       {
-        "file": "src/features/groups/ui/__tests__/AddRoleDialog.actions.test.tsx",
+        "file": "src/features/groups/ui/__tests__/AddRoleDialog.actions.component.test.tsx",
         "project": "component",
         "caseId": "opens, cancels, and submits role editing through stable actions",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -60,7 +60,7 @@
     ],
     "src/features/groups/ui/PaymentsSectionView.tsx#/create/payment": [
       {
-        "file": "src/features/groups/ui/__tests__/AddPaymentDialogView.actions.test.tsx",
+        "file": "src/features/groups/ui/__tests__/AddPaymentDialogView.actions.component.test.tsx",
         "project": "component",
         "caseId": "edits and submits payments through stable actions",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -74,7 +74,7 @@
     ],
     "src/features/groups/ui/PaymentsSectionView.tsx#/create/payment-2": [
       {
-        "file": "src/features/groups/ui/__tests__/AddPaymentDialogView.actions.test.tsx",
+        "file": "src/features/groups/ui/__tests__/AddPaymentDialogView.actions.component.test.tsx",
         "project": "component",
         "caseId": "edits and submits payments through stable actions",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],

@@ -3,7 +3,7 @@
   "sourceReferenceAdditions": {
     "src/routes/$.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "throws the router not-found result for an unmatched deep link",
         "evidence": { "relation": "direct" }
@@ -11,7 +11,7 @@
     ],
     "src/routes/auth.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the auth layout outlet",
         "evidence": { "relation": "direct" }
@@ -19,7 +19,7 @@
     ],
     "src/routes/auth/callback.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the auth callback handler page",
         "evidence": { "relation": "direct" }
@@ -27,7 +27,7 @@
     ],
     "src/routes/auth/forgot-password.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the forgot-password form",
         "evidence": { "relation": "direct" }
@@ -35,7 +35,7 @@
     ],
     "src/routes/auth/index.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "redirects the auth index to the sign-in route",
         "evidence": { "relation": "direct" }
@@ -43,7 +43,7 @@
     ],
     "src/routes/auth/reset-password.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the reset-password form",
         "evidence": { "relation": "direct" }
@@ -51,7 +51,7 @@
     ],
     "src/routes/auth/sign-in.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the sign-in form",
         "evidence": { "relation": "direct" }
@@ -59,7 +59,7 @@
     ],
     "src/routes/auth/sign-up.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the sign-up form",
         "evidence": { "relation": "direct" }
@@ -67,7 +67,7 @@
     ],
     "src/routes/auth/verify.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the verification form",
         "evidence": { "relation": "direct" }
@@ -75,7 +75,7 @@
     ],
     "src/routes/docs.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the docs shell around the nested route outlet",
         "evidence": { "relation": "direct" }
@@ -83,7 +83,7 @@
     ],
     "src/routes/docs/index.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the docs landing page",
         "evidence": { "relation": "direct" }
@@ -91,7 +91,7 @@
     ],
     "src/routes/docs/getting-started/$slug.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "passes a getting-started deep-link slug to the content page",
         "evidence": { "relation": "direct" }
@@ -99,7 +99,7 @@
     ],
     "src/routes/docs/guides/$slug.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "passes a guide deep-link slug to the content page",
         "evidence": { "relation": "direct" }
@@ -107,7 +107,7 @@
     ],
     "src/routes/features.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "redirects the features route to its landing-page anchor",
         "evidence": { "relation": "direct" }
@@ -115,7 +115,7 @@
     ],
     "src/routes/imprint.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "redirects the imprint route to its landing-page anchor",
         "evidence": { "relation": "direct" }
@@ -123,7 +123,7 @@
     ],
     "src/routes/index.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the public home page",
         "evidence": { "relation": "direct" }
@@ -131,7 +131,7 @@
     ],
     "src/routes/pricing.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the pricing page",
         "evidence": { "relation": "direct" }
@@ -139,7 +139,7 @@
     ],
     "src/routes/privacy-policy.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the privacy-policy page",
         "evidence": { "relation": "direct" }
@@ -147,7 +147,7 @@
     ],
     "src/routes/solutions.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "redirects the solutions route to its landing-page anchor",
         "evidence": { "relation": "direct" }
@@ -155,7 +155,7 @@
     ],
     "src/routes/support.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the support page",
         "evidence": { "relation": "direct" }
@@ -163,7 +163,7 @@
     ],
     "src/routes/terms-and-conditions.tsx": [
       {
-        "file": "src/routes/__tests__/public-auth-docs-routes.accountability.R02.test.tsx",
+        "file": "src/routes/__tests__/public-auth-docs-routes.accountability-r02.component.test.tsx",
         "project": "component",
         "caseId": "renders the terms-and-conditions page",
         "evidence": { "relation": "direct" }
@@ -171,7 +171,7 @@
     ],
     "src/routes/api/currency/currencies.ts": [
       {
-        "file": "src/routes/api/__tests__/route-api.accountability.R02.test.ts",
+        "file": "src/routes/api/__tests__/route-api.accountability-r02.unit.test.ts",
         "project": "unit",
         "caseId": "serves live and fallback currency catalogues through GET only",
         "evidence": { "relation": "direct" }
@@ -179,7 +179,7 @@
     ],
     "src/routes/api/mutate.ts": [
       {
-        "file": "src/routes/api/__tests__/route-api.accountability.R02.test.ts",
+        "file": "src/routes/api/__tests__/route-api.accountability-r02.unit.test.ts",
         "project": "unit",
         "caseId": "authenticates and processes Zero mutations through POST only",
         "evidence": { "relation": "direct" }
@@ -187,7 +187,7 @@
     ],
     "src/routes/api/query.ts": [
       {
-        "file": "src/routes/api/__tests__/route-api.accountability.R02.test.ts",
+        "file": "src/routes/api/__tests__/route-api.accountability-r02.unit.test.ts",
         "project": "unit",
         "caseId": "authenticates and transforms Zero queries through POST only",
         "evidence": { "relation": "direct" }

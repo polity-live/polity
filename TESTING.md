@@ -4,17 +4,35 @@ Every user action belongs on the lowest test level that can reproduce a failure 
 
 ## Test levels
 
-| Level                 | Use for                                                                                  | Command                                                      |
-| --------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Unit                  | Deterministic business rules without UI, database or network                             | `npm run test:unit`                                          |
-| Component integration | Forms, dialogs, buttons, hooks, routing and loading/error states with stateful fake I/O  | `npm run test:component`                                     |
-| Service integration   | Several controllers or adapters working together; files end in `.integration.test.ts(x)` | `npm run test:integration`                                   |
-| Database integration  | Schema, RLS, triggers, transactions and concurrency against a reset local Supabase       | `npm run test:db:coverage` and `npm run test:db:concurrency` |
-| E2E                   | Critical browser-App-Zero-database boundaries, realtime and multi-user behavior          | `npm run test:e2e:pr`                                        |
+| Level                 | Use for                                                                                 | Command                             |
+| --------------------- | --------------------------------------------------------------------------------------- | ----------------------------------- |
+| Unit                  | Deterministic business rules without UI, database or network                            | `npm run test:unit`                 |
+| Component integration | Forms, dialogs, buttons, hooks, routing and loading/error states with stateful fake I/O | `npm run test:component`            |
+| Component flow        | Several components, hooks and providers exercised as one user flow                      | `npm run test:component-flow`       |
+| Service integration   | Route/handler, schema and service working together; `.service-integration.test.ts(x)`   | `npm run test:service-integration`  |
+| Database integration  | Schema, RLS, triggers, transactions and concurrency against a reset local Supabase      | `npm run test:database-integration` |
+| E2E                   | Critical browser-App-Zero-database boundaries, realtime and multi-user behavior         | `npm run test:e2e:pr`               |
 
 Integration tests intentionally use Vitest and Arrange-Act-Assert like unit tests. The classification is determined by the real components involved, not by syntax.
 
-`processEngine.initialize.test.ts` is an explicitly classified stateful service-integration suite and therefore excluded from the unit project. New service integration files use the `.integration.test.ts(x)` suffix.
+`processEngine.initialize.unit.test.ts` uses mocked collaborators and is therefore classified as Unit. Service integration tests use the `.service-integration.test.ts(x)` suffix and exercise real in-process boundaries.
+
+## File naming
+
+The filename is the executable test-style contract. Optional campaign or branch qualifiers come before the style suffix, for example `useAgenda.branch-a04.unit.test.ts`.
+
+| Test style           | Required suffix                    | Example                                      |
+| -------------------- | ---------------------------------- | -------------------------------------------- |
+| Unit                 | `*.unit.test.ts`                   | `computeVoteResult.unit.test.ts`             |
+| Component            | `*.component.test.tsx`             | `VoteDialog.component.test.tsx`              |
+| Component flow       | `*.component-flow.test.tsx`        | `amendment-review.component-flow.test.tsx`   |
+| Browser component    | `*.browser-component.test.tsx`     | `InstallPrompt.browser-component.test.tsx`   |
+| Service integration  | `*.service-integration.test.ts(x)` | `stripe-webhook.service-integration.test.ts` |
+| Database integration | `*.database-integration.test.ts`   | `push-outbox.database-integration.test.ts`   |
+| Static contract      | `*.static-contract.test.ts`        | `workflow.static-contract.test.ts`           |
+| E2E                  | `*.e2e.spec.ts`                    | `membership-approval.e2e.spec.ts`            |
+
+`npm run test:naming` rejects every legacy test filename, and `npm run test:flow-campaign` locks the 130-flow campaign, E2E promotion tiers and ten canonical acceptance journeys.
 
 ## Browser suites
 
@@ -22,11 +40,12 @@ Integration tests intentionally use Vitest and Arrange-Act-Assert like unit test
 - `@mobile` is the small Chromium mobile merge gate.
 - `@nightly` marks variants and cross-browser golden journeys.
 - `@performance` is measured separately from functional correctness.
+- `@acceptance` marks the ten canonical cross-boundary journeys.
 - `npm run test:e2e:stress` repeats the PR gate 20 times without retries.
 
-The scheduled `Nightly Tests` workflow runs the extended variants, browser golden journeys, isolated performance measurements and the complete PR browser gate 20 times. The manually dispatched `E2E Cold-stack Acceptance` workflow recreates the stack for up to 30 consecutive PR-suite runs and stores each run's artifacts separately.
+The scheduled `Nightly Tests` workflow runs extended variants and browser golden journeys across three desktop and two mobile shards plus Firefox and WebKit. It also runs isolated performance measurements and repeats the PR browser gate 20 times. The manually dispatched `E2E Cold-stack Acceptance` workflow recreates the stack for 30 consecutive runs of the ten `@acceptance` journeys and stores each run's evidence separately.
 
-Playwright runs one worker per stack with `fullyParallel: false` and no retries. CI creates three isolated desktop stacks through GitHub shards plus one isolated mobile stack. Each stack gets a fresh unseeded database, production-built app, separate run IDs/auth state/artifacts and an independent Zero replica. Preconditions are inserted by fixture builders; only the action under test is performed in the browser. Test fixtures clean their exact test namespace and teardown removes only the exact run namespace—never a global `E2E-%` pattern.
+Playwright runs one worker per stack with `fullyParallel: false` and no retries. PR CI creates seven isolated desktop stacks and two isolated mobile stacks. Each stack gets a fresh unseeded database, production-built app, separate run IDs/auth state/artifacts and an independent Zero replica. Preconditions are inserted by fixture builders; only the action under test is performed in the browser. Test fixtures clean their exact test namespace and teardown removes only the exact run namespace—never a global `E2E-%` pattern.
 
 Local terminal, headed and UI runs all call the same stack preparation and production-build commands. Existing servers are reused only with `E2E_REUSE_SERVER=1`, `E2E_REUSE_COMMIT=<git sha>` and `E2E_REUSE_SCHEMA_HASH=<migration hash>`; the verifier rejects commit, schema, local origin or Zero readiness mismatches.
 

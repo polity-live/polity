@@ -71,6 +71,23 @@ describe('Zero E2E readiness', () => {
     ).resolves.toBeUndefined();
   });
 
+  it('authenticates the statz probe when Zero has an admin password', async () => {
+    const fetcher = vi.fn().mockResolvedValue(statz(1));
+    await waitForZeroReady({
+      adminPassword: 'local-secret',
+      database: {
+        currentWalLsn: vi.fn().mockResolvedValue('0/6789'),
+        replicationStatus: vi.fn().mockResolvedValue({ activeSlots: 1, caughtUp: true }),
+      },
+      fetcher,
+    });
+
+    expect(fetcher).toHaveBeenCalledWith('http://127.0.0.1:4848/statz', {
+      headers: { authorization: `Basic ${Buffer.from('zero:local-secret').toString('base64')}` },
+      signal: expect.any(AbortSignal),
+    });
+  });
+
   it('reports the last database failure after the readiness deadline', async () => {
     const clock = fakeClock();
     const database = {

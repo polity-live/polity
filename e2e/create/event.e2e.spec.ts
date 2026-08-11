@@ -13,7 +13,11 @@ test.describe('create/event', () => {
     );
   });
 
-  test('creates a minimal open event @pr @critical', async ({ createFlowPage, e2eRun, seed }) => {
+  test('creates a minimal open event @pr @critical @acceptance', async ({
+    createFlowPage,
+    e2eRun,
+    seed,
+  }) => {
     await gotoEvent(createFlowPage, seed, 'one_page', {
       eventType: 'open',
       time: 'valid',
