@@ -117,6 +117,12 @@ describe('E2E fixture lifecycle contract', () => {
     );
     expect(playwrightSource).toContain("['line']");
     expect(playwrightSource).toContain("['blob',");
+    expect(playwrightSource).toContain(
+      "const webServerGracefulShutdown = { signal: 'SIGTERM' as const, timeout: 10_000 }"
+    );
+    expect(
+      playwrightSource.match(/gracefulShutdown: webServerGracefulShutdown/g) ?? []
+    ).toHaveLength(2);
     expect(setupSource).toContain('await waitForZeroReady()');
     expect(teardownSource).not.toContain('cleanupE2ERows');
     expect(teardownSource).toContain('await closeDb()');
