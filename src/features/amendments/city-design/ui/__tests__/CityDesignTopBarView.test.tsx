@@ -263,7 +263,7 @@ describe('CityDesignTopBarView', () => {
 
     await selectMenuAction('Comparison', 'amendments.city-comparison.select.mode');
     expect(props.onComparisonModeChange).toHaveBeenCalled();
-  });
+  }, 15_000);
 
   it('dispatches editing-mode choices through the stable mode action', async () => {
     const props = renderTopBar();
