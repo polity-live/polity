@@ -23,6 +23,8 @@ const mocks = vi.hoisted(() => ({
   networkTabs: vi.fn(),
   params: { id: 'entity-1', topic: 'legacy-topic' },
   pathname: '/home',
+  hash: '',
+  searchStr: '',
   permissionsLoading: false,
   preloads: vi.fn(),
   redirect: vi.fn(),
@@ -44,7 +46,9 @@ vi.mock('@tanstack/react-router', () => ({
   Outlet: () => <div>outlet</div>,
   redirect: (input: unknown) => mocks.redirect(input),
   useRouterState: ({ select }: { select: (state: any) => unknown }) =>
-    select({ location: { pathname: mocks.pathname } }),
+    select({
+      location: { pathname: mocks.pathname, searchStr: mocks.searchStr, hash: mocks.hash },
+    }),
 }));
 vi.mock('@/features/auth/EnsureUser', () => ({
   EnsureUser: ({ children }: { children: React.ReactNode }) => <div>ensure-user{children}</div>,
@@ -281,6 +285,8 @@ beforeEach(() => {
   };
   mocks.params = { id: 'entity-1', topic: 'legacy-topic' };
   mocks.pathname = '/home';
+  mocks.hash = '';
+  mocks.searchStr = '';
   mocks.permissionsLoading = false;
   mocks.redirect.mockImplementation(input => Object.assign(new Error('redirect'), { input }));
   mocks.search = {};
@@ -291,6 +297,36 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe('authenticated layout and simple routes', () => {
+  it.each(['/auth/sign-in', '/unauthorized'])(
+    'does not recursively redirect logged-out users from %s',
+    pathname => {
+      mocks.auth.user = null;
+      mocks.pathname = pathname;
+      const Component = component(AuthedRoute);
+
+      const { container } = render(<Component />);
+
+      expect(container.childElementCount).toBe(0);
+    }
+  );
+
+  it('preserves a protected route query and hash in the sign-in redirect', () => {
+    mocks.auth.user = null;
+    mocks.pathname = '/todos';
+    mocks.searchStr = '?filter=mine';
+    mocks.hash = 'today';
+    const Component = component(AuthedRoute);
+
+    render(<Component />);
+
+    const props = JSON.parse(screen.getByText('navigate').dataset.navigate ?? '{}');
+    expect(props).toMatchObject({
+      to: '/auth/sign-in',
+      search: { redirect: '/todos?filter=mine#today' },
+      replace: true,
+    });
+  });
+
   it('renders every authenticated layout state', () => {
     const Component = component(AuthedRoute);
     mocks.auth.loading = true;

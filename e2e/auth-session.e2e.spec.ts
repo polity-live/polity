@@ -2,7 +2,7 @@ import { expect, test } from './fixtures/test';
 import { signInThroughUi, signOutThroughUserMenu } from './fixtures/auth-flow-page';
 import { waitForAppReady } from './fixtures/readiness';
 
-test('signs in, reloads a protected page and signs out @pr @critical @acceptance', async ({
+test('signs in, reloads a protected page and signs out @pr @critical @acceptance @agent1-promotion', async ({
   page,
   e2eUser,
 }) => {

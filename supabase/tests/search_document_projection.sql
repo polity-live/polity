@@ -4,7 +4,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(15);
+SELECT plan(17);
 
 INSERT INTO public."user" (
   id, handle, first_name, last_name, country, city, latitude, longitude
@@ -250,6 +250,34 @@ SELECT ok(
   (SELECT location_label LIKE '%Dresden%' FROM public.search_document WHERE id = public.search_document_id('statement', '85000000-0000-0000-0000-000000000001'))
   AND (SELECT location_label LIKE '%Dresden%' FROM public.search_document WHERE id = public.search_document_id('dataset', '8b000000-0000-0000-0000-000000000001')),
   'group location changes refresh group-derived projections'
+);
+
+UPDATE public.dataset
+SET status = 'archived'
+WHERE id = '8b000000-0000-0000-0000-000000000001';
+
+SELECT is(
+  (
+    SELECT count(*)::INTEGER
+    FROM public.search_document
+    WHERE id = public.search_document_id('dataset', '8b000000-0000-0000-0000-000000000001')
+  ),
+  0,
+  'archiving a dataset removes its search projection'
+);
+
+UPDATE public.dataset
+SET status = 'active'
+WHERE id = '8b000000-0000-0000-0000-000000000001';
+
+SELECT is(
+  (
+    SELECT count(*)::INTEGER
+    FROM public.search_document
+    WHERE id = public.search_document_id('dataset', '8b000000-0000-0000-0000-000000000001')
+  ),
+  1,
+  'reactivating a dataset recreates its search projection'
 );
 
 INSERT INTO public.amendment_group_decision (

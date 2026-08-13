@@ -92,6 +92,46 @@ describe('PR pipeline P95 gate', () => {
     expect(stderr).toHaveBeenCalledWith(expect.stringContaining('19/20'));
   });
 
+  it('filters out runs at or before the configured cutover run ID', () => {
+    const beforeCutover = Array.from({ length: 20 }, (_, index) =>
+      successfulRun(100 + index, 2000)
+    );
+    const afterCutover = Array.from({ length: 20 }, (_, index) => successfulRun(201 + index, 300));
+
+    expect(
+      evaluatePrPipelineP95(
+        { workflow_runs: [...beforeCutover, ...afterCutover] },
+        { thresholdSeconds: 900, minSamples: 20, maxSamples: 50, afterRunId: 200 }
+      )
+    ).toMatchObject({
+      status: 'pass',
+      sampleCount: 20,
+      afterRunId: 200,
+      p95Seconds: 300,
+    });
+  });
+
+  it('can explicitly allow the post-cutover warm-up without changing the strict default', () => {
+    const runs = Array.from({ length: 19 }, (_, index) => successfulRun(201 + index, 300));
+    const stdout = vi.fn();
+    const stderr = vi.fn();
+
+    const exitCode = runPrPipelineP95Cli({
+      argv: ['--input', 'fixture.json', '--after-run-id', '200', '--allow-insufficient-samples'],
+      readFile: () => JSON.stringify({ workflow_runs: runs }),
+      stdout,
+      stderr,
+    });
+
+    expect(exitCode).toBe(0);
+    expect(JSON.parse(stdout.mock.calls[0][0])).toMatchObject({
+      status: 'insufficient-samples',
+      sampleCount: 19,
+      afterRunId: 200,
+    });
+    expect(stderr).toHaveBeenCalledWith(expect.stringContaining('19/20'));
+  });
+
   it('fails closed for malformed qualifying records and conflicting duplicates', () => {
     const malformed = { ...successfulRun(1, 300), updated_at: 'not-a-date' };
     expect(() => evaluatePrPipelineP95({ workflow_runs: [malformed] })).toThrow(
@@ -114,8 +154,16 @@ describe('PR pipeline P95 gate', () => {
         '20',
         '--max-samples',
         '50',
+        '--after-run-id=31544870651',
+        '--allow-insufficient-samples',
       ])
-    ).toMatchObject({ thresholdSeconds: 900, minSamples: 20, maxSamples: 50 });
+    ).toMatchObject({
+      thresholdSeconds: 900,
+      minSamples: 20,
+      maxSamples: 50,
+      afterRunId: 31544870651,
+      allowInsufficientSamples: true,
+    });
     expect(() =>
       parsePrPipelineP95Options([
         '--input',

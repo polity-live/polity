@@ -141,6 +141,11 @@ export const commonTranslations = {
       disconnected: 'Offline — erneuter Versuch...',
       syncing: 'Daten werden lokal synchronisiert...',
     },
+    connectionRecovery: {
+      offline:
+        'Du bist offline. Deine aktuelle Arbeit bleibt während der Wiederverbindung geöffnet.',
+      reconnecting: 'Verbindung wird wiederhergestellt. Deine aktuelle Arbeit bleibt verfügbar.',
+    },
   },
   checks: {
     membership: 'Prüfe Mitgliedschaft...',

@@ -9,9 +9,26 @@ interface UseAuthGuardControllerOptions {
   redirectTo?: string;
 }
 
+interface AuthGuardLocation {
+  pathname: string;
+  searchStr?: string;
+  hash?: string;
+}
+
+export function getAuthGuardRedirectTarget({
+  pathname,
+  searchStr = '',
+  hash = '',
+}: AuthGuardLocation) {
+  const normalizedHash = hash ? `#${hash.replace(/^#/, '')}` : '';
+  return `${pathname}${searchStr}${normalizedHash}`;
+}
+
 export function useAuthGuardController({ requireAuth, redirectTo }: UseAuthGuardControllerOptions) {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname } = location;
+  const currentTarget = getAuthGuardRedirectTarget(location);
   const { user, loading: isLoading } = useAuth();
   const isAuthenticated = Boolean(user);
   const [authInitialized, setAuthInitialized] = useState(false);
@@ -38,18 +55,22 @@ export function useAuthGuardController({ requireAuth, redirectTo }: UseAuthGuard
     if (!authInitialized) return;
 
     if (requireAuth && !isAuthenticated) {
-      const currentTarget =
-        typeof window === 'undefined'
-          ? pathname
-          : `${window.location.pathname}${window.location.search}${window.location.hash}`;
       storePendingSignInRedirect(currentTarget);
-      const destination = redirectTo || `/auth?redirect=${encodeURIComponent(pathname)}`;
+      const destination = redirectTo || `/auth?redirect=${encodeURIComponent(currentTarget)}`;
       navigate({ to: destination });
     } else if (!requireAuth && isAuthenticated) {
       const destination = redirectTo || '/';
       navigate({ to: destination });
     }
-  }, [isAuthenticated, authInitialized, requireAuth, navigate, pathname, redirectTo]);
+  }, [
+    isAuthenticated,
+    authInitialized,
+    requireAuth,
+    navigate,
+    pathname,
+    redirectTo,
+    currentTarget,
+  ]);
 
   return {
     isReady: authInitialized,

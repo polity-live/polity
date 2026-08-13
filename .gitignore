@@ -27,6 +27,7 @@ coverage/
 coverage-*/
 .a04-coverage/
 .coverage-a*/
+.coverage-shard-artifacts*/
 .branch-campaign-artifacts/
 .vitest-reports/
 *.lcov

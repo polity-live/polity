@@ -13,6 +13,11 @@ test('participant is invited, accepts, and remains in the persisted participant 
   const participantHandle = `e2e-${participant.id.slice(0, 8)}`;
   const actorPage = await openGroupActorPage(browser, participant);
   await resetEventParticipant(seed.eventId, participant.id);
+  await db()`
+    update public.event
+    set event_type = 'open', updated_at = now()
+    where id = ${seed.eventId}::uuid
+  `;
   try {
     await gotoReady(page, `/event/${seed.eventId}/participants`);
     await page.locator('[data-action-id="groups.invitations.open.members-dialog"]').click();
@@ -34,9 +39,11 @@ test('participant is invited, accepts, and remains in the persisted participant 
       .toBe('invited');
 
     await gotoReady(actorPage.page, `/event/${seed.eventId}`);
-    await actorPage.page
-      .locator('[data-action-id="events.participation.accept-invitation"]')
-      .click();
+    const acceptInvitation = actorPage.page.getByRole('button', {
+      name: /Accept Invitation|Einladung annehmen/i,
+    });
+    await expect(acceptInvitation).toBeVisible({ timeout: 30_000 });
+    await acceptInvitation.click();
     await expect
       .poll(async () => {
         const rows = await db()`

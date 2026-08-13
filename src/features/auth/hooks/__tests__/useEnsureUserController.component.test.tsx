@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   useAuth: vi.fn(),
@@ -19,7 +19,7 @@ vi.mock('@/zero/users/useUserState', () => ({
   useUserState: mocks.useUserState,
 }));
 
-import { useEnsureUserController } from '../useEnsureUserController';
+import { browserIsOnline, useEnsureUserController } from '../useEnsureUserController';
 
 describe('useEnsureUserController', () => {
   beforeEach(() => {
@@ -32,6 +32,68 @@ describe('useEnsureUserController', () => {
     });
     mocks.useUserState.mockReturnValue({ isLoading: false });
     mocks.useConnectionState.mockReturnValue({ name: 'connected' });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('treats server rendering as online and respects the browser network state', () => {
+    vi.stubGlobal('navigator', undefined);
+    expect(browserIsOnline()).toBe(true);
+    vi.unstubAllGlobals();
+
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    expect(browserIsOnline()).toBe(false);
+    const { result } = renderHook(() => useEnsureUserController());
+    expect(result.current).toMatchObject({
+      zeroConnectionState: 'disconnected',
+      connectionNotice: 'offline',
+      connectionStatus: 'disconnected',
+    });
+  });
+
+  it('announces an offline-to-online reconnect until the stable connection delay elapses', () => {
+    vi.useFakeTimers();
+    const { result, rerender } = renderHook(() => useEnsureUserController());
+
+    act(() => window.dispatchEvent(new Event('offline')));
+    expect(result.current).toMatchObject({
+      zeroConnectionState: 'disconnected',
+      connectionNotice: 'offline',
+    });
+
+    mocks.useConnectionState.mockReturnValue({ name: 'disconnected' });
+    act(() => window.dispatchEvent(new Event('online')));
+    expect(result.current).toMatchObject({
+      zeroConnectionState: 'connecting',
+      connectionNotice: 'reconnecting',
+    });
+
+    mocks.useConnectionState.mockReturnValue({ name: 'connected' });
+    rerender();
+    act(() => vi.advanceTimersByTime(750));
+    expect(result.current).toMatchObject({
+      zeroConnectionState: 'connected',
+      connectionNotice: null,
+    });
+  });
+
+  it('removes browser listeners and clears a pending reconnect timer on unmount', () => {
+    vi.useFakeTimers();
+    const removeEventListener = vi.spyOn(window, 'removeEventListener');
+    const clearTimeout = vi.spyOn(window, 'clearTimeout');
+    const { unmount } = renderHook(() => useEnsureUserController());
+
+    act(() => window.dispatchEvent(new Event('offline')));
+    act(() => window.dispatchEvent(new Event('online')));
+    unmount();
+
+    expect(removeEventListener).toHaveBeenCalledWith('offline', expect.any(Function));
+    expect(removeEventListener).toHaveBeenCalledWith('online', expect.any(Function));
+    expect(clearTimeout).toHaveBeenCalledOnce();
   });
 
   it.each([

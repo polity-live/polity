@@ -16,7 +16,8 @@ test('reschedules an event, notifies the participant, and survives mobile reload
   );
   e2eRun.registerEntityId(participantId);
   await gotoReady(page, `/event/${seed.eventId}/settings`);
-  const endTime = page.getByLabel(/end time/i);
+  await page.getByRole('tab', { name: /time & series|zeit & serie/i }).click();
+  const endTime = page.getByLabel(/end time|endzeit/i);
   await expect(endTime).toBeVisible();
   await endTime.fill('21:00');
   await page.locator('[data-action-id="events.edit.save"]').click();
@@ -34,5 +35,7 @@ test('reschedules an event, notifies the participant, and survives mobile reload
     })
     .toBe('event_schedule_changed');
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await expect(endTime).toHaveValue('21:00');
+  await gotoReady(page, `/event/${seed.eventId}/settings`);
+  await page.getByRole('tab', { name: /time & series|zeit & serie/i }).click();
+  await expect(page.getByLabel(/end time|endzeit/i)).toHaveValue('21:00');
 });

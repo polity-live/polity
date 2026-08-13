@@ -38,21 +38,27 @@ function verifySuites(suites, suffix, expectedTotal) {
   failUnless(total === expectedTotal, `${suffix}: expected ${expectedTotal} cases, found ${total}`);
 }
 
-verifySuites(manifest.componentFlow, '.component-flow.test.tsx', 80);
-verifySuites(manifest.serviceIntegration, '.service-integration.test.ts', 12);
-verifySuites(manifest.databaseIntegration, '.database-integration.test.ts', 8);
+verifySuites(manifest.componentFlow, '.component-flow.test.tsx', 86);
+verifySuites(manifest.serviceIntegration, '.service-integration.test.ts', 13);
+verifySuites(manifest.databaseIntegration, '.database-integration.test.ts', 9);
 
 let prCount = 0;
 let nightlyCount = 0;
 for (const [file, tier] of Object.entries(manifest.e2e)) {
   failUnless(file.endsWith('.e2e.spec.ts'), `${file}: invalid E2E suffix`);
   const cases = readCases(file);
-  failUnless(cases.length === 1, `${file}: expected exactly one E2E scenario, found ${cases.length}`);
+  failUnless(
+    cases.length === 1,
+    `${file}: expected exactly one E2E scenario, found ${cases.length}`
+  );
   const title = cases[0]?.caseId ?? '';
   const expectedTag = tier === 'pr' ? '@pr' : '@nightly';
   const oppositeTag = tier === 'pr' ? '@nightly' : '@pr';
   failUnless(title.includes(expectedTag), `${file}: missing ${expectedTag}`);
-  failUnless(!title.includes(oppositeTag), `${file}: campaign flow must not contain ${oppositeTag}`);
+  failUnless(
+    !title.includes(oppositeTag),
+    `${file}: campaign flow must not contain ${oppositeTag}`
+  );
   if (tier === 'pr') prCount += 1;
   else if (tier === 'nightly') nightlyCount += 1;
   else failures.push(`${file}: unknown E2E tier ${tier}`);
@@ -96,5 +102,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  'Flow-test campaign audit passed: 80 component flow, 12 service integration, 8 database integration, 20 PR E2E, 10 nightly E2E, and 10 acceptance flows.'
+  'Flow-test campaign audit passed: 86 component flow, 13 service integration, 9 database integration, 20 PR E2E, 10 nightly E2E, and 10 acceptance flows (138 total).'
 );

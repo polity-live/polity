@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   } | null,
   authStateLoading: false,
   refresh: vi.fn(),
+  signOut: vi.fn(),
   createClient: vi.fn(),
   signIn: vi.fn(),
   reauthenticate: vi.fn(),
@@ -24,6 +25,7 @@ vi.mock('@/providers/auth-provider', () => ({
     user: mocks.user,
     authStateLoading: mocks.authStateLoading,
     refreshAuthState: mocks.refresh,
+    signOut: mocks.signOut,
   }),
 }));
 vi.mock('@/lib/supabase/client', () => ({ createClient: mocks.createClient }));
@@ -44,6 +46,7 @@ beforeEach(() => {
   mocks.user = { email: 'person@example.test', hasPassword: true };
   mocks.authStateLoading = false;
   mocks.refresh.mockResolvedValue(undefined);
+  mocks.signOut.mockResolvedValue(undefined);
   mocks.signIn.mockResolvedValue({ error: null });
   mocks.reauthenticate.mockResolvedValue({ error: null });
   mocks.updateUser.mockResolvedValue({
@@ -210,7 +213,7 @@ describe('updateAccountPassword', () => {
       password: 'initial-secret',
       nonce: 'nonce-3',
     });
-    expect(mocks.refresh).toHaveBeenCalledTimes(3);
+    expect(mocks.signOut).toHaveBeenCalledTimes(3);
     expect(mocks.toastSuccess).toHaveBeenCalledWith('pages.user.accountPassword.success');
   });
 

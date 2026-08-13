@@ -1,11 +1,9 @@
 /* @vitest-environment jsdom */
 
-import { useState } from 'react';
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useAvatarUpload } from '../hooks/useAvatarUpload';
-import { useUserProfileForm } from '../hooks/useUserProfileForm';
+import { UserEdit } from '../ui/UserEdit';
 import { renderComponentFlow } from '@/test/render-component-flow';
 
 const profile = vi.hoisted(() => ({
@@ -16,7 +14,21 @@ const profile = vi.hoisted(() => ({
   updateProfileClientApplied: vi.fn(),
 }));
 
-vi.mock('@tanstack/react-router', () => ({ useNavigate: () => profile.navigate }));
+const user = {
+  id: 'profile-user',
+  first_name: 'Ada',
+  last_name: 'Lovelace',
+  email: 'ada@polity.local',
+  visibility: 'public',
+} as any;
+
+vi.mock('@tanstack/react-router', async importOriginal => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return { ...actual, useNavigate: () => profile.navigate };
+});
+vi.mock('../hooks/useUserData', () => ({
+  useUserData: () => ({ user, isLoading: false }),
+}));
 vi.mock('../hooks/useUserMutations', () => ({
   useUserMutations: () => ({ updateCompleteProfile: profile.updateCompleteProfile }),
 }));
@@ -25,6 +37,25 @@ vi.mock('@/zero/common/useCommonState', () => ({
 }));
 vi.mock('@/zero/users/useUserActions', () => ({
   useUserActions: () => ({ updateProfileClientApplied: profile.updateProfileClientApplied }),
+}));
+vi.mock('@/features/payments/hooks/useSubscriptionManagement', () => ({
+  useSubscriptionManagement: () => ({
+    activeSubscription: null,
+    hasStripeCustomer: false,
+    isPlanActive: () => false,
+    hasCustomPlan: () => false,
+    getActivePlanAmount: () => 0,
+    fetchSubscription: vi.fn(),
+  }),
+}));
+vi.mock('@/features/payments/hooks/useStripeCheckout', () => ({
+  useStripeCheckout: () => ({
+    isCheckoutLoading: false,
+    handleSubscribe: vi.fn(),
+    handleCustomAmount: vi.fn(),
+    handleCancelSubscription: vi.fn(),
+    handleManageBilling: vi.fn(),
+  }),
 }));
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
@@ -36,62 +67,43 @@ vi.mock('@/lib/supabase/client', () => ({
     },
   }),
 }));
+vi.mock('@/features/file-upload/ui/MediaUpload', () => ({
+  MediaUpload: ({ onImageFileUpload }: { onImageFileUpload: (file: File) => Promise<string> }) => (
+    <button
+      type="button"
+      onClick={() =>
+        void onImageFileUpload(new File(['avatar'], 'avatar.png', { type: 'image/png' })).catch(
+          () => undefined
+        )
+      }
+    >
+      upload-avatar
+    </button>
+  ),
+}));
+vi.mock('@/features/create/ui/inputs/VisibilityInput', () => ({
+  VisibilityInput: ({ value, onChange }: { value: string; onChange: (value: string) => void }) => (
+    <select
+      aria-label="profile-visibility"
+      value={value}
+      onChange={event => onChange(event.target.value)}
+    >
+      <option value="public">public</option>
+      <option value="private">private</option>
+    </select>
+  ),
+}));
+vi.mock('../ui/AboutSection', () => ({ AboutSection: () => null }));
+vi.mock('../ui/ContactInformationSection', () => ({ ContactInformationSection: () => null }));
+vi.mock('../ui/LocationInformationSection', () => ({ LocationInformationSection: () => null }));
+vi.mock('../ui/HashtagsSection', () => ({ HashtagsSection: () => null }));
 vi.mock('@/features/shared/ui/ui/sonner', () => ({
-  toast: { error: profile.toastError },
+  toast: { error: profile.toastError, success: vi.fn() },
 }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
+  useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-const user = {
-  id: 'profile-user',
-  first_name: 'Ada',
-  last_name: 'Lovelace',
-  email: 'ada@polity.local',
-  visibility: 'public',
-} as any;
-
-function ProfileFlow() {
-  const flow = useUserProfileForm({ userId: user.id, user });
-  return (
-    <form onSubmit={flow.handleSubmit}>
-      <input
-        aria-label="first-name"
-        value={flow.formData.firstName}
-        onChange={event => flow.updateField('firstName', event.target.value)}
-      />
-      <select
-        aria-label="visibility"
-        value={flow.formData.visibility}
-        onChange={event => flow.updateField('visibility', event.target.value as any)}
-      >
-        <option value="public">public</option>
-        <option value="private">private</option>
-      </select>
-      <button type="submit">save-profile</button>
-    </form>
-  );
-}
-
-function AvatarFlow() {
-  const [status, setStatus] = useState('idle');
-  const { uploadAvatar } = useAvatarUpload({ userId: user.id });
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => {
-          void uploadAvatar(new File(['avatar'], 'avatar.png', { type: 'image/png' }))
-            .then(() => setStatus('saved'))
-            .catch(() => setStatus('failed'));
-        }}
-      >
-        upload-avatar
-      </button>
-      <output aria-label="avatar-status">{status}</output>
-    </>
-  );
-}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -103,11 +115,13 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('profile settings flow', () => {
-  it('edits profile data and navigates only after the mutation succeeds', async () => {
-    renderComponentFlow(<ProfileFlow />);
-    await screen.findByDisplayValue('Ada');
-    fireEvent.change(screen.getByLabelText('first-name'), { target: { value: 'Augusta Ada' } });
-    fireEvent.click(screen.getByRole('button', { name: 'save-profile' }));
+  it('edits profile data through the actual settings form and navigates after persistence', async () => {
+    renderComponentFlow(<UserEdit userId={user.id} activeTab="basic-info" />);
+    const firstName = await screen.findByLabelText(
+      'pages.user.settingsForm.basicInfo.firstNameLabel'
+    );
+    fireEvent.change(firstName, { target: { value: 'Augusta Ada' } });
+    fireEvent.click(screen.getByRole('button', { name: 'pages.user.settingsTabs.saveProfile' }));
 
     await waitFor(() => expect(profile.updateCompleteProfile).toHaveBeenCalledTimes(1));
     expect(profile.updateCompleteProfile.mock.calls[0][1]).toMatchObject({
@@ -117,25 +131,26 @@ describe('profile settings flow', () => {
     expect(profile.navigate).toHaveBeenCalledWith({ to: '/user/profile-user' });
   });
 
-  it('surfaces an avatar upload failure without mutating the user profile', async () => {
-    const error = new Error('storage unavailable');
-    profile.storageUpload.mockResolvedValue({ error });
+  it('surfaces an avatar upload failure without mutating the profile', async () => {
+    profile.storageUpload.mockResolvedValue({ error: new Error('storage unavailable') });
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    renderComponentFlow(<AvatarFlow />);
-    fireEvent.click(screen.getByRole('button', { name: 'upload-avatar' }));
+    renderComponentFlow(<UserEdit userId={user.id} activeTab="basic-info" />);
+    fireEvent.click(await screen.findByRole('button', { name: 'upload-avatar' }));
 
-    await screen.findByText('failed');
-    expect(profile.toastError).toHaveBeenCalledWith(
-      'generated.inline.1180_failed_to_upload_avatar_65dabbbc'
+    await waitFor(() =>
+      expect(profile.toastError).toHaveBeenCalledWith(
+        'generated.inline.1180_failed_to_upload_avatar_65dabbbc'
+      )
     );
     expect(profile.updateProfileClientApplied).not.toHaveBeenCalled();
   });
 
-  it('persists the selected profile visibility in the same save transaction', async () => {
-    renderComponentFlow(<ProfileFlow />);
-    await screen.findByDisplayValue('Ada');
-    fireEvent.change(screen.getByLabelText('visibility'), { target: { value: 'private' } });
-    fireEvent.click(screen.getByRole('button', { name: 'save-profile' }));
+  it('persists visibility with the other profile fields in one save operation', async () => {
+    renderComponentFlow(<UserEdit userId={user.id} activeTab="basic-info" />);
+    fireEvent.change(await screen.findByLabelText('profile-visibility'), {
+      target: { value: 'private' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'pages.user.settingsTabs.saveProfile' }));
 
     await waitFor(() => expect(profile.updateCompleteProfile).toHaveBeenCalledTimes(1));
     expect(profile.updateCompleteProfile.mock.calls[0][1]).toMatchObject({ visibility: 'private' });

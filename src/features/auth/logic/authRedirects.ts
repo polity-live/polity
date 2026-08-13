@@ -25,8 +25,9 @@ export function getSafeAuthRedirect(value: string | null): AllowedAuthRedirect {
 export function getSafeSignInRedirect(value: string | null): string {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return '/';
   try {
-    const parsed = new URL(value, getAuthOrigin());
-    if (parsed.origin !== getAuthOrigin() || parsed.pathname.startsWith('/auth')) return '/';
+    const authOrigin = getAuthOrigin();
+    const parsed = new URL(value, authOrigin);
+    if (parsed.origin !== authOrigin || parsed.pathname.startsWith('/auth')) return '/';
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;
   } catch {
     return '/';
@@ -35,12 +36,20 @@ export function getSafeSignInRedirect(value: string | null): string {
 
 export function storePendingSignInRedirect(value: string) {
   if (typeof window === 'undefined') return;
-  window.sessionStorage.setItem(PENDING_SIGN_IN_REDIRECT_KEY, getSafeSignInRedirect(value));
+  try {
+    window.sessionStorage.setItem(PENDING_SIGN_IN_REDIRECT_KEY, getSafeSignInRedirect(value));
+  } catch {
+    // Storage can be unavailable in privacy-restricted browser contexts.
+  }
 }
 
 export function consumePendingSignInRedirect() {
   if (typeof window === 'undefined') return '/';
-  const value = window.sessionStorage.getItem(PENDING_SIGN_IN_REDIRECT_KEY);
-  window.sessionStorage.removeItem(PENDING_SIGN_IN_REDIRECT_KEY);
-  return getSafeSignInRedirect(value);
+  try {
+    const value = window.sessionStorage.getItem(PENDING_SIGN_IN_REDIRECT_KEY);
+    window.sessionStorage.removeItem(PENDING_SIGN_IN_REDIRECT_KEY);
+    return getSafeSignInRedirect(value);
+  } catch {
+    return '/';
+  }
 }

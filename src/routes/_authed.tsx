@@ -4,6 +4,10 @@ import { useZeroReady } from '@/providers/zero-ready-context';
 import { useAuth } from '@/providers/auth-provider';
 import { AppBootLoadingState } from '@/features/shared/ui/feedback';
 import { isGuestAccessibleEntityPath } from '@/features/auth/logic/guestEntityRouteAccess';
+import {
+  getSafeSignInRedirect,
+  storePendingSignInRedirect,
+} from '@/features/auth/logic/authRedirects';
 
 interface EditorCurrentUser {
   avatar?: string | null;
@@ -37,7 +41,8 @@ export const Route = createFileRoute('/_authed')({
 function AuthedLayout() {
   const { loading, user, refreshAuthState, signOut } = useAuth();
   const zeroReady = useZeroReady();
-  const pathname = useRouterState({ select: s => s.location.pathname });
+  const location = useRouterState({ select: s => s.location });
+  const pathname = location.pathname;
   const guestCanAccessPath = isGuestAccessibleEntityPath(pathname);
 
   if (loading) {
@@ -47,7 +52,12 @@ function AuthedLayout() {
   }
 
   if (!user && !guestCanAccessPath) {
-    return <Navigate to="/unauthorized" search={{ reason: 'login-required' }} replace />;
+    if (pathname.startsWith('/auth') || pathname === '/unauthorized') return null;
+
+    const hash = location.hash ? `#${location.hash.replace(/^#/, '')}` : '';
+    const target = getSafeSignInRedirect(`${location.pathname}${location.searchStr}${hash}`);
+    storePendingSignInRedirect(target);
+    return <Navigate to="/auth/sign-in" search={{ redirect: target }} replace />;
   }
 
   if (!user) {

@@ -61,7 +61,7 @@
     "test:browser-component": "vitest run --config vitest.browser.config.ts --passWithNoTests",
     "test:mutation": "stryker run",
     "test:mutation:contract": "stryker run --dryRunOnly",
-    "test:security": "node tools/testing/check-security-audit.mjs && vitest run src/zero/rbac src/features/auth --passWithNoTests",
+    "test:security": "node tools/testing/check-security-audit.mjs && vitest run --project unit --project component --project component-flow --project service-integration src/zero/rbac src/features/auth --passWithNoTests",
     "test:accessibility": "npm run test:e2e:prepare && playwright test --project=chromium-desktop --grep @a11y --pass-with-no-tests",
     "test:visual": "npm run test:e2e:prepare && playwright test --project=chromium-desktop --grep @visual --pass-with-no-tests",
     "test:visual:update": "npm run test:e2e:prepare && playwright test --project=chromium-desktop --grep @visual --update-snapshots",

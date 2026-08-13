@@ -41,11 +41,15 @@ test('archives a dataset and removes it from active search/details @pr', async (
         return rows[0]?.status;
       })
       .toBe('archived');
-    const searchRows = await db()`
-      select count(*)::integer as count from public.search_document
-      where entity_type = 'dataset' and entity_id = ${fixture.datasetId}::uuid
-    `;
-    expect(Number(searchRows[0]?.count ?? 0)).toBe(0);
+    await expect
+      .poll(async () => {
+        const searchRows = await db()`
+          select count(*)::integer as count from public.search_document
+          where entity_type = 'dataset' and entity_id = ${fixture.datasetId}::uuid
+        `;
+        return Number(searchRows[0]?.count ?? 0);
+      })
+      .toBe(0);
   } finally {
     await cleanupDatasetFlow(fixture.datasetId);
   }

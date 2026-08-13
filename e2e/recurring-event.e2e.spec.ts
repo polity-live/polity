@@ -14,9 +14,12 @@ test('creates a weekly recurring event and persists generated series fields @pr'
     time: 'valid',
   });
   await fillMinimalEvent(createFlowPage, e2eRun.prefix);
-  await createFlowPage.form.chooseOption('recurring', 'weekly');
+  await createFlowPage.page
+    .locator('[data-create-field="time-series"]')
+    .getByRole('radio', { name: /Weekly/i })
+    .click();
   const weekday = createFlowPage.page
-    .locator('[data-create-field="recurring"] [data-create-option="1"]')
+    .locator('[data-create-field="time-series"] [data-create-option="1"]')
     .filter({ visible: true });
   await expect(weekday).toBeVisible();
   await weekday.click();

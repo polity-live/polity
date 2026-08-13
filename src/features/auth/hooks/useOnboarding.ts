@@ -71,15 +71,23 @@ const ONBOARDING_MARKER_KEY = 'polity_onboarding';
 const ONBOARDING_STEP_KEY = 'polity_onboarding_step';
 const ONBOARDING_DATA_KEY = 'polity_onboarding_data';
 
-function initialOnboardingStep(): OnboardingStep {
-  if (typeof window === 'undefined' || sessionStorage.getItem(ONBOARDING_MARKER_KEY) !== 'true') {
+export function getOnboardingStorage(): Storage | null {
+  return typeof window === 'undefined' ? null : window.sessionStorage;
+}
+
+export function initialOnboardingStep(
+  storage: Storage | null = getOnboardingStorage()
+): OnboardingStep {
+  if (!storage || storage.getItem(ONBOARDING_MARKER_KEY) !== 'true') {
     return 'name';
   }
-  const saved = sessionStorage.getItem(ONBOARDING_STEP_KEY) as OnboardingStep | null;
+  const saved = storage.getItem(ONBOARDING_STEP_KEY) as OnboardingStep | null;
   return saved && STEP_ORDER.includes(saved) ? saved : 'name';
 }
 
-function initialOnboardingData(): OnboardingData {
+export function initialOnboardingData(
+  storage: Storage | null = getOnboardingStorage()
+): OnboardingData {
   const empty: OnboardingData = {
     firstName: '',
     lastName: '',
@@ -88,11 +96,11 @@ function initialOnboardingData(): OnboardingData {
     activeGroupId: null,
     membershipRequestSentGroupIds: [],
   };
-  if (typeof window === 'undefined' || sessionStorage.getItem(ONBOARDING_MARKER_KEY) !== 'true') {
+  if (!storage || storage.getItem(ONBOARDING_MARKER_KEY) !== 'true') {
     return empty;
   }
   try {
-    const saved = JSON.parse(sessionStorage.getItem(ONBOARDING_DATA_KEY) ?? 'null');
+    const saved = JSON.parse(storage.getItem(ONBOARDING_DATA_KEY) ?? 'null');
     if (!saved || typeof saved !== 'object') return empty;
     return {
       ...empty,
@@ -108,6 +116,16 @@ function initialOnboardingData(): OnboardingData {
   } catch {
     return empty;
   }
+}
+
+export function persistOnboardingProgress(
+  storage: Storage | null,
+  step: OnboardingStep,
+  data: OnboardingData
+) {
+  if (!storage || storage.getItem(ONBOARDING_MARKER_KEY) !== 'true') return;
+  storage.setItem(ONBOARDING_STEP_KEY, step);
+  storage.setItem(ONBOARDING_DATA_KEY, JSON.stringify(data));
 }
 
 function normalizeInterestTag(tag: string) {
@@ -149,9 +167,7 @@ export function useOnboarding(): UseOnboardingReturn {
   const [data, setData] = useState<OnboardingData>(initialOnboardingData);
 
   useEffect(() => {
-    if (sessionStorage.getItem(ONBOARDING_MARKER_KEY) !== 'true') return;
-    sessionStorage.setItem(ONBOARDING_STEP_KEY, step);
-    sessionStorage.setItem(ONBOARDING_DATA_KEY, JSON.stringify(data));
+    persistOnboardingProgress(getOnboardingStorage(), step, data);
   }, [data, step]);
 
   const setFirstName = useCallback((value: string) => {

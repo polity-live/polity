@@ -38,7 +38,14 @@ vi.mock('@/features/shared/ui/ui/sonner', () => ({
   toast: { error: mocks.toastError, success: mocks.toastSuccess },
 }));
 
-import { useOnboarding, type Group } from '../useOnboarding';
+import {
+  getOnboardingStorage,
+  initialOnboardingData,
+  initialOnboardingStep,
+  persistOnboardingProgress,
+  useOnboarding,
+  type Group,
+} from '../useOnboarding';
 
 const alpha: Group = {
   id: 'alpha',
@@ -55,6 +62,7 @@ const beta: Group = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  sessionStorage.clear();
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
   mocks.user = { id: 'user-1' };
   mocks.commonState.allHashtags = [];
@@ -174,6 +182,91 @@ describe('useOnboarding local state and navigation', () => {
 });
 
 describe('useOnboarding persistence boundaries', () => {
+  it('ignores saved progress without the onboarding marker', () => {
+    sessionStorage.setItem('polity_onboarding_step', 'summary');
+    sessionStorage.setItem('polity_onboarding_data', JSON.stringify({ firstName: 'Ignored' }));
+
+    const { result } = renderHook(() => useOnboarding());
+
+    expect(result.current.step).toBe('name');
+    expect(result.current.data.firstName).toBe('');
+  });
+
+  it('hydrates valid saved progress and persists subsequent changes', () => {
+    sessionStorage.setItem('polity_onboarding', 'true');
+    sessionStorage.setItem('polity_onboarding_step', 'confirm');
+    sessionStorage.setItem(
+      'polity_onboarding_data',
+      JSON.stringify({
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        selectedInterestTags: ['climate'],
+        selectedGroups: [alpha],
+        activeGroupId: alpha.id,
+        membershipRequestSentGroupIds: [alpha.id],
+      })
+    );
+
+    const { result } = renderHook(() => useOnboarding());
+    expect(result.current).toMatchObject({
+      step: 'confirm',
+      data: {
+        firstName: 'Ada',
+        selectedInterestTags: ['climate'],
+        selectedGroups: [alpha],
+      },
+    });
+
+    act(() => result.current.setFirstName('Grace'));
+    expect(JSON.parse(sessionStorage.getItem('polity_onboarding_data') ?? '{}')).toMatchObject({
+      firstName: 'Grace',
+      activeGroupId: alpha.id,
+    });
+  });
+
+  it('falls back safely for invalid steps, malformed JSON and sparse collection fields', () => {
+    sessionStorage.setItem('polity_onboarding', 'true');
+    sessionStorage.setItem('polity_onboarding_step', 'not-a-step');
+    sessionStorage.setItem('polity_onboarding_data', '{');
+    expect(initialOnboardingStep(sessionStorage)).toBe('name');
+    expect(initialOnboardingData(sessionStorage).firstName).toBe('');
+
+    sessionStorage.removeItem('polity_onboarding_data');
+    expect(initialOnboardingData(sessionStorage).firstName).toBe('');
+    sessionStorage.setItem('polity_onboarding_data', JSON.stringify('invalid'));
+    expect(initialOnboardingData(sessionStorage).firstName).toBe('');
+
+    sessionStorage.setItem(
+      'polity_onboarding_data',
+      JSON.stringify({
+        firstName: 'Ada',
+        selectedInterestTags: 'climate',
+        selectedGroups: null,
+        membershipRequestSentGroupIds: {},
+      })
+    );
+    expect(initialOnboardingData(sessionStorage)).toMatchObject({
+      firstName: 'Ada',
+      selectedInterestTags: [],
+      selectedGroups: [],
+      membershipRequestSentGroupIds: [],
+    });
+  });
+
+  it('supports server rendering and marker-free persistence without storage writes', () => {
+    const empty = initialOnboardingData(null);
+    expect(initialOnboardingStep(null)).toBe('name');
+    expect(empty.firstName).toBe('');
+
+    persistOnboardingProgress(null, 'summary', empty);
+    persistOnboardingProgress(sessionStorage, 'summary', empty);
+    expect(sessionStorage.getItem('polity_onboarding_step')).toBeNull();
+
+    vi.stubGlobal('window', undefined);
+    expect(getOnboardingStorage()).toBeNull();
+    vi.unstubAllGlobals();
+  });
+
   it('validates both required names and minimum lengths before continuing', async () => {
     const { result } = renderHook(() => useOnboarding());
 
@@ -208,6 +301,7 @@ describe('useOnboarding persistence boundaries', () => {
   it('synchronizes interests with empty and populated Zero collections', async () => {
     mocks.commonState.allHashtags = undefined;
     mocks.commonState.userHashtags = undefined;
+    mocks.commonState.onboardingHashtagUsage = undefined;
     const { result } = renderHook(() => useOnboarding());
     act(() => result.current.toggleInterestTag('climate'));
     await act(async () => expect(result.current.saveInterests()).resolves.toBe(true));

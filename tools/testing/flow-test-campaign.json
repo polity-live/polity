@@ -7,6 +7,8 @@
     "src/features/users/__tests__/profile-settings.component-flow.test.tsx": 3,
     "src/features/users/__tests__/user-preferences.component-flow.test.tsx": 3,
     "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx": 3,
+    "src/features/auth/__tests__/account-security.component-flow.test.tsx": 3,
+    "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx": 3,
     "src/features/pwa/__tests__/pwa-lifecycle.component-flow.test.tsx": 2,
     "src/features/groups/__tests__/group-editing.component-flow.test.tsx": 3,
     "src/features/groups/__tests__/membership-requests.component-flow.test.tsx": 3,
@@ -32,13 +34,13 @@
     "src/features/assistant/__tests__/assistant-tools.component-flow.test.tsx": 2
   },
   "serviceIntegration": {
-    "src/features/auth/__tests__/auth-callback.service-integration.test.ts": 3,
+    "src/features/auth/__tests__/auth-callback.service-integration.test.ts": 4,
     "src/zero/groups/__tests__/membership-boundaries.service-integration.test.ts": 3,
     "src/zero/amendments/__tests__/governance-mutation.service-integration.test.ts": 3,
     "src/server/__tests__/external-delivery.service-integration.test.ts": 3
   },
   "databaseIntegration": {
-    "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts": 2,
+    "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts": 3,
     "tools/database/__tests__/membership-event-invariants.database-integration.test.ts": 2,
     "src/zero/amendments/__tests__/governance-concurrency.database-integration.test.ts": 2,
     "src/server/__tests__/outbox-dataset.database-integration.test.ts": 2

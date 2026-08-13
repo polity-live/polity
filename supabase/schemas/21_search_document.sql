@@ -1261,6 +1261,22 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.delete_inactive_dataset_search_document()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.status <> 'active' THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('dataset', NEW.id);
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.delete_inactive_dataset_search_document() FROM PUBLIC;
+
 CREATE OR REPLACE FUNCTION public.upsert_event_search_document()
 RETURNS TRIGGER
 LANGUAGE plpgsql

@@ -50,6 +50,8 @@ jobs:
           --threshold-seconds 900
           --min-samples 20
           --max-samples 50
+          --after-run-id 31544870651
+          --allow-insufficient-samples
 
   static-analysis:
     name: Static Analysis

@@ -200,6 +200,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": ".github/workflows/e2e-agent1-promotion.yml",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": ".github/workflows/nightly-tests.yml",
       "domain": "platform",
       "owner": "polity/platform",
@@ -12477,6 +12487,7 @@
       "suggestedTestRefs": [
         "src/features/auth/__tests__/EnsureUserView.component.test.tsx",
         "src/features/auth/__tests__/EntityVisibilityGuard.contract.component.test.tsx",
+        "src/features/auth/__tests__/account-security.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
         "src/features/auth/__tests__/auth-recovery.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-rest-partition.branch-a08.component.test.tsx",
@@ -12484,9 +12495,8 @@
         "src/features/auth/__tests__/auth-wrappers.lsf-a08.component.test.tsx",
         "src/features/auth/__tests__/auth.unit.test.ts",
         "src/features/auth/__tests__/authStore.branch-a08.unit.test.ts",
-        "src/features/auth/__tests__/onboarding.component-flow.test.tsx",
-        "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
-        "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts"
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+        "src/features/auth/__tests__/onboarding.component-flow.test.tsx"
       ]
     },
     {
@@ -12513,6 +12523,7 @@
       "suggestedTestRefs": [
         "src/features/auth/__tests__/EnsureUserView.component.test.tsx",
         "src/features/auth/__tests__/EntityVisibilityGuard.contract.component.test.tsx",
+        "src/features/auth/__tests__/account-security.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
         "src/features/auth/__tests__/auth-recovery.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-rest-partition.branch-a08.component.test.tsx",
@@ -12520,9 +12531,8 @@
         "src/features/auth/__tests__/auth-wrappers.lsf-a08.component.test.tsx",
         "src/features/auth/__tests__/auth.unit.test.ts",
         "src/features/auth/__tests__/authStore.branch-a08.unit.test.ts",
-        "src/features/auth/__tests__/onboarding.component-flow.test.tsx",
-        "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
-        "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts"
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+        "src/features/auth/__tests__/onboarding.component-flow.test.tsx"
       ]
     },
     {
@@ -12549,6 +12559,7 @@
       "suggestedTestRefs": [
         "src/features/auth/__tests__/EnsureUserView.component.test.tsx",
         "src/features/auth/__tests__/EntityVisibilityGuard.contract.component.test.tsx",
+        "src/features/auth/__tests__/account-security.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
         "src/features/auth/__tests__/auth-recovery.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-rest-partition.branch-a08.component.test.tsx",
@@ -12556,9 +12567,8 @@
         "src/features/auth/__tests__/auth-wrappers.lsf-a08.component.test.tsx",
         "src/features/auth/__tests__/auth.unit.test.ts",
         "src/features/auth/__tests__/authStore.branch-a08.unit.test.ts",
-        "src/features/auth/__tests__/onboarding.component-flow.test.tsx",
-        "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
-        "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts"
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+        "src/features/auth/__tests__/onboarding.component-flow.test.tsx"
       ]
     },
     {
@@ -12585,6 +12595,7 @@
       "suggestedTestRefs": [
         "src/features/auth/__tests__/EnsureUserView.component.test.tsx",
         "src/features/auth/__tests__/EntityVisibilityGuard.contract.component.test.tsx",
+        "src/features/auth/__tests__/account-security.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
         "src/features/auth/__tests__/auth-recovery.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-rest-partition.branch-a08.component.test.tsx",
@@ -12592,9 +12603,8 @@
         "src/features/auth/__tests__/auth-wrappers.lsf-a08.component.test.tsx",
         "src/features/auth/__tests__/auth.unit.test.ts",
         "src/features/auth/__tests__/authStore.branch-a08.unit.test.ts",
-        "src/features/auth/__tests__/onboarding.component-flow.test.tsx",
-        "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
-        "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts"
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+        "src/features/auth/__tests__/onboarding.component-flow.test.tsx"
       ]
     },
     {
@@ -12621,6 +12631,7 @@
       "suggestedTestRefs": [
         "src/features/auth/__tests__/EnsureUserView.component.test.tsx",
         "src/features/auth/__tests__/EntityVisibilityGuard.contract.component.test.tsx",
+        "src/features/auth/__tests__/account-security.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
         "src/features/auth/__tests__/auth-recovery.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-rest-partition.branch-a08.component.test.tsx",
@@ -12628,9 +12639,8 @@
         "src/features/auth/__tests__/auth-wrappers.lsf-a08.component.test.tsx",
         "src/features/auth/__tests__/auth.unit.test.ts",
         "src/features/auth/__tests__/authStore.branch-a08.unit.test.ts",
-        "src/features/auth/__tests__/onboarding.component-flow.test.tsx",
-        "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
-        "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts"
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+        "src/features/auth/__tests__/onboarding.component-flow.test.tsx"
       ]
     },
     {
@@ -12657,6 +12667,7 @@
       "suggestedTestRefs": [
         "src/features/auth/__tests__/EnsureUserView.component.test.tsx",
         "src/features/auth/__tests__/EntityVisibilityGuard.contract.component.test.tsx",
+        "src/features/auth/__tests__/account-security.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
         "src/features/auth/__tests__/auth-recovery.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-rest-partition.branch-a08.component.test.tsx",
@@ -12664,9 +12675,8 @@
         "src/features/auth/__tests__/auth-wrappers.lsf-a08.component.test.tsx",
         "src/features/auth/__tests__/auth.unit.test.ts",
         "src/features/auth/__tests__/authStore.branch-a08.unit.test.ts",
-        "src/features/auth/__tests__/onboarding.component-flow.test.tsx",
-        "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
-        "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts"
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+        "src/features/auth/__tests__/onboarding.component-flow.test.tsx"
       ]
     },
     {
@@ -12693,6 +12703,7 @@
       "suggestedTestRefs": [
         "src/features/auth/__tests__/EnsureUserView.component.test.tsx",
         "src/features/auth/__tests__/EntityVisibilityGuard.contract.component.test.tsx",
+        "src/features/auth/__tests__/account-security.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
         "src/features/auth/__tests__/auth-recovery.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-rest-partition.branch-a08.component.test.tsx",
@@ -12700,9 +12711,8 @@
         "src/features/auth/__tests__/auth-wrappers.lsf-a08.component.test.tsx",
         "src/features/auth/__tests__/auth.unit.test.ts",
         "src/features/auth/__tests__/authStore.branch-a08.unit.test.ts",
-        "src/features/auth/__tests__/onboarding.component-flow.test.tsx",
-        "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
-        "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts"
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+        "src/features/auth/__tests__/onboarding.component-flow.test.tsx"
       ]
     },
     {
@@ -12729,6 +12739,7 @@
       "suggestedTestRefs": [
         "src/features/auth/__tests__/EnsureUserView.component.test.tsx",
         "src/features/auth/__tests__/EntityVisibilityGuard.contract.component.test.tsx",
+        "src/features/auth/__tests__/account-security.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
         "src/features/auth/__tests__/auth-recovery.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-rest-partition.branch-a08.component.test.tsx",
@@ -12736,9 +12747,8 @@
         "src/features/auth/__tests__/auth-wrappers.lsf-a08.component.test.tsx",
         "src/features/auth/__tests__/auth.unit.test.ts",
         "src/features/auth/__tests__/authStore.branch-a08.unit.test.ts",
-        "src/features/auth/__tests__/onboarding.component-flow.test.tsx",
-        "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
-        "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts"
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+        "src/features/auth/__tests__/onboarding.component-flow.test.tsx"
       ]
     },
     {
@@ -12753,6 +12763,16 @@
     },
     {
       "path": "src/features/auth/__tests__/EntityVisibilityGuard.contract.component.test.tsx",
+      "domain": "features:auth",
+      "owner": "polity/features:auth",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/auth/__tests__/account-security.component-flow.test.tsx",
       "domain": "features:auth",
       "owner": "polity/features:auth",
       "kind": "test-infrastructure",
@@ -12832,6 +12852,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+      "domain": "features:auth",
+      "owner": "polity/features:auth",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/auth/__tests__/onboarding.component-flow.test.tsx",
       "domain": "features:auth",
       "owner": "polity/features:auth",
@@ -12885,6 +12915,7 @@
       "suggestedTestRefs": [
         "src/features/auth/__tests__/EnsureUserView.component.test.tsx",
         "src/features/auth/__tests__/EntityVisibilityGuard.contract.component.test.tsx",
+        "src/features/auth/__tests__/account-security.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
         "src/features/auth/__tests__/auth-recovery.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-rest-partition.branch-a08.component.test.tsx",
@@ -12892,9 +12923,8 @@
         "src/features/auth/__tests__/auth-wrappers.lsf-a08.component.test.tsx",
         "src/features/auth/__tests__/auth.unit.test.ts",
         "src/features/auth/__tests__/authStore.branch-a08.unit.test.ts",
-        "src/features/auth/__tests__/onboarding.component-flow.test.tsx",
-        "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
-        "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts"
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+        "src/features/auth/__tests__/onboarding.component-flow.test.tsx"
       ]
     },
     {
@@ -12919,6 +12949,7 @@
       "suggestedTestRefs": [
         "src/features/auth/__tests__/EnsureUserView.component.test.tsx",
         "src/features/auth/__tests__/EntityVisibilityGuard.contract.component.test.tsx",
+        "src/features/auth/__tests__/account-security.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
         "src/features/auth/__tests__/auth-recovery.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-rest-partition.branch-a08.component.test.tsx",
@@ -12926,9 +12957,8 @@
         "src/features/auth/__tests__/auth-wrappers.lsf-a08.component.test.tsx",
         "src/features/auth/__tests__/auth.unit.test.ts",
         "src/features/auth/__tests__/authStore.branch-a08.unit.test.ts",
-        "src/features/auth/__tests__/onboarding.component-flow.test.tsx",
-        "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
-        "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts"
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+        "src/features/auth/__tests__/onboarding.component-flow.test.tsx"
       ]
     },
     {
@@ -13850,6 +13880,7 @@
         "src/features/amendments/collaborators/ui/__tests__/collaboratorsUiIndex.unit.test.ts",
         "src/features/auth/__tests__/EnsureUserView.component.test.tsx",
         "src/features/auth/__tests__/EntityVisibilityGuard.contract.component.test.tsx",
+        "src/features/auth/__tests__/account-security.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
         "src/features/auth/__tests__/auth-recovery.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-rest-partition.branch-a08.component.test.tsx",
@@ -13857,8 +13888,7 @@
         "src/features/auth/__tests__/auth-wrappers.lsf-a08.component.test.tsx",
         "src/features/auth/__tests__/auth.unit.test.ts",
         "src/features/auth/__tests__/authStore.branch-a08.unit.test.ts",
-        "src/features/auth/__tests__/onboarding.component-flow.test.tsx",
-        "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx"
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx"
       ]
     },
     {
@@ -13940,6 +13970,42 @@
       "coverageStatus": "not-instrumented",
       "testRefs": [],
       "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/auth/logic/authCallbackService.ts",
+      "domain": "features:auth",
+      "owner": "polity/features:auth",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
+          "project": "service-integration",
+          "caseId": "parses a valid callback, exchanges the code and synchronizes the pending language"
+        },
+        {
+          "file": "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
+          "project": "service-integration",
+          "caseId": "fails closed for an expired code when no fallback session exists"
+        },
+        {
+          "file": "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
+          "project": "service-integration",
+          "caseId": "normalizes an external redirect to the repository-safe home destination"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
+        "src/features/auth/logic/__tests__/authLanguage.unit.test.ts",
+        "src/features/auth/logic/__tests__/authRedirects.unit.test.ts",
+        "src/features/auth/logic/__tests__/authValidation.unit.test.ts",
+        "src/features/auth/logic/__tests__/checkEntityAccess.unit.test.ts",
+        "src/features/auth/logic/__tests__/guestEntityRouteAccess.unit.test.ts",
+        "src/features/auth/logic/__tests__/privateEntityRelationshipAccess.unit.test.ts",
+        "src/features/auth/logic/__tests__/routeVisibilityAccess.unit.test.ts",
+        "src/features/auth/logic/__tests__/user-initialization-helpers.unit.test.ts"
+      ]
     },
     {
       "path": "src/features/auth/logic/authLanguage.ts",
@@ -15377,6 +15443,7 @@
       "suggestedTestRefs": [
         "src/features/auth/__tests__/EnsureUserView.component.test.tsx",
         "src/features/auth/__tests__/EntityVisibilityGuard.contract.component.test.tsx",
+        "src/features/auth/__tests__/account-security.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
         "src/features/auth/__tests__/auth-recovery.component-flow.test.tsx",
         "src/features/auth/__tests__/auth-rest-partition.branch-a08.component.test.tsx",
@@ -15384,9 +15451,8 @@
         "src/features/auth/__tests__/auth-wrappers.lsf-a08.component.test.tsx",
         "src/features/auth/__tests__/auth.unit.test.ts",
         "src/features/auth/__tests__/authStore.branch-a08.unit.test.ts",
-        "src/features/auth/__tests__/onboarding.component-flow.test.tsx",
-        "src/features/auth/__tests__/protected-navigation.component-flow.test.tsx",
-        "src/features/auth/__tests__/user-lifecycle.database-integration.test.ts"
+        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
+        "src/features/auth/__tests__/onboarding.component-flow.test.tsx"
       ]
     },
     {
@@ -108117,6 +108183,26 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "supabase/migrations/20260812120000_auth_user_delete_cascade.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260812130000_dataset_search_archive_projection.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "supabase/schemas/00_extensions.sql",
       "domain": "database",
       "owner": "polity/database",
@@ -108787,6 +108873,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "supabase/tests/user_lifecycle.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tailwind.config.js",
       "domain": "platform",
       "owner": "polity/platform",
@@ -108962,16 +109058,6 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "tools/e2e/__tests__/playwright-webserver-shutdown.unit.test.ts",
-      "domain": "tools:e2e",
-      "owner": "polity/tools:e2e",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "tools/e2e/__tests__/run-with-env.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -108983,16 +109069,6 @@
     },
     {
       "path": "tools/e2e/__tests__/zero-readiness.unit.test.ts",
-      "domain": "tools:e2e",
-      "owner": "polity/tools:e2e",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/e2e/__tests__/zero-readiness.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
       "kind": "test-infrastructure",
@@ -109520,6 +109596,16 @@
     },
     {
       "path": "tools/testing/accountability-scope.mjs",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/accountability/auth-agent1.json",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",

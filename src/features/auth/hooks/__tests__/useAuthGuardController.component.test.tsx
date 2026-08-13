@@ -7,25 +7,33 @@ const mocks = vi.hoisted(() => ({
   user: null as null | { id: string },
   loading: false,
   pathname: '/groups/group 1',
+  searchStr: '',
+  hash: '',
   navigate: vi.fn(),
 }));
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => mocks.navigate,
-  useLocation: () => ({ pathname: mocks.pathname }),
+  useLocation: () => ({
+    pathname: mocks.pathname,
+    searchStr: mocks.searchStr,
+    hash: mocks.hash,
+  }),
 }));
 
 vi.mock('@/providers/auth-provider', () => ({
   useAuth: () => ({ user: mocks.user, loading: mocks.loading }),
 }));
 
-import { useAuthGuardController } from '../useAuthGuardController';
+import { getAuthGuardRedirectTarget, useAuthGuardController } from '../useAuthGuardController';
 
 beforeEach(() => {
   vi.useFakeTimers();
   mocks.user = null;
   mocks.loading = false;
   mocks.pathname = '/groups/group 1';
+  mocks.searchStr = '';
+  mocks.hash = '';
   mocks.navigate.mockReset();
 });
 
@@ -52,14 +60,27 @@ describe('useAuthGuardController', () => {
   });
 
   it('redirects an anonymous user to an encoded auth return path after initialization', () => {
+    mocks.searchStr = '?tab=members';
+    mocks.hash = 'roles';
     const { result } = renderHook(() => useAuthGuardController({ requireAuth: true }));
 
     act(() => vi.advanceTimersByTime(100));
 
     expect(result.current).toEqual({ isReady: true, isAllowed: false });
     expect(mocks.navigate).toHaveBeenCalledWith({
-      to: '/auth?redirect=%2Fgroups%2Fgroup%201',
+      to: '/auth?redirect=%2Fgroups%2Fgroup%201%3Ftab%3Dmembers%23roles',
     });
+  });
+
+  it('constructs browser and server-safe router targets without a window dependency', () => {
+    expect(getAuthGuardRedirectTarget({ pathname: '/settings' })).toBe('/settings');
+    expect(
+      getAuthGuardRedirectTarget({
+        pathname: '/settings',
+        searchStr: '?tab=profile',
+        hash: '#privacy',
+      })
+    ).toBe('/settings?tab=profile#privacy');
   });
 
   it('uses a custom redirect for an anonymous protected route', () => {

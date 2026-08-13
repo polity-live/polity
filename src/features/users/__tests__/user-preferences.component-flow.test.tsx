@@ -3,12 +3,11 @@
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useLanguageToggleController } from '@/features/navigation/hooks/useLanguageToggleController';
-import { useThemeToggleController } from '@/features/navigation/hooks/useThemeToggleController';
 import { useDisplayCurrencyStore } from '@/features/shared/global-state/currency.store';
 import { useLanguageStore } from '@/features/shared/global-state/language.store';
 import { useThemeStore } from '@/features/shared/global-state/theme.store';
-import { CurrencyPreferenceControl } from '../ui/CurrencyPreferenceControl';
+import { UserProfileEditForm } from '../ui/UserProfileEditForm';
+import type { UserProfileFormData } from '../hooks/useUserProfileForm';
 import { renderComponentFlow } from '@/test/render-component-flow';
 
 const preferences = vi.hoisted(() => ({
@@ -28,23 +27,80 @@ vi.mock('@/features/shared/ui/form/CurrencySelect', () => ({
     </button>
   ),
 }));
+vi.mock('../ui/AppearanceThemeSelector', () => ({ AppearanceThemeSelector: () => null }));
+vi.mock('@/features/app-tutorial/AppTutorialSettingsPanel', () => ({
+  AppTutorialSettingsPanel: () => null,
+}));
+vi.mock('@/features/navigation/toggles/NavigationViewStateToggle', () => ({
+  NavigationViewStateToggle: () => null,
+}));
+vi.mock('@/features/create/ui/FormStyleSelector', () => ({ FormStyleSelector: () => null }));
+vi.mock('@/features/pwa/ui', () => ({ PwaInstallPanel: () => null }));
 vi.mock('@/features/shared/ui/ui/sonner', () => ({
-  toast: { success: vi.fn() },
+  toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-function PreferencesFlow() {
-  const language = useLanguageToggleController();
-  const theme = useThemeToggleController();
-  return (
-    <section>
-      <button type="button" onClick={() => void language.onLanguageChange('de', true)}>
-        language:{language.language}
-      </button>
-      <button type="button" onClick={theme.onDark}>
-        theme:{theme.currentTheme}
-      </button>
-      <CurrencyPreferenceControl />
-    </section>
+const formData: UserProfileFormData = {
+  firstName: 'Ada',
+  lastName: 'Lovelace',
+  gender: 'unspecified',
+  subtitle: '',
+  about: '',
+  aboutContent: [{ type: 'p', children: [{ text: '' }] }] as any,
+  email: 'ada@polity.local',
+  youtube: '',
+  linkedin: '',
+  whatsapp: '',
+  instagram: '',
+  twitter: '',
+  facebook: '',
+  snapchat: '',
+  tiktok: '',
+  website: '',
+  country: '',
+  region: '',
+  post_code: '',
+  city: '',
+  street: '',
+  house_number: '',
+  latitude: null,
+  longitude: null,
+  location_kind: null,
+  location_place_id: null,
+  location_boundary_source: null,
+  location_geometry: null,
+  location_bounds: null,
+  avatar: '',
+  videoURL: '',
+  visibility: 'public',
+  hashtags: [],
+};
+
+function renderPreferences() {
+  return renderComponentFlow(
+    <UserProfileEditForm
+      formData={formData}
+      isSubmitting={false}
+      userId="preference-user"
+      activeTab="preferences"
+      onTabChange={vi.fn()}
+      activeSubscriptionAmount={0}
+      pendingChange={null}
+      hasStripeCustomer={false}
+      subscriptionRefreshKey={0}
+      isCheckoutLoading={false}
+      isPlanActive={() => false}
+      hasCustomPlan={false}
+      onSubmit={vi.fn()}
+      onCancel={vi.fn()}
+      onAvatarUpload={vi.fn()}
+      onAboutContentChange={vi.fn()}
+      onFieldChange={vi.fn()}
+      onSubscribe={vi.fn()}
+      onCustomAmount={vi.fn()}
+      onCancelSubscription={vi.fn()}
+      onManageBilling={vi.fn()}
+    />
   );
 }
 
@@ -59,32 +115,37 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('user preference synchronization flow', () => {
-  it('switches language and persists the hydrated language-store snapshot', async () => {
-    renderComponentFlow(<PreferencesFlow />);
-    fireEvent.click(screen.getByRole('button', { name: 'language:en' }));
+  it('switches language from the real settings surface and persists the store snapshot', async () => {
+    const view = renderPreferences();
+    fireEvent.mouseEnter(
+      view.container.querySelector('[data-action-id="navigation.language.popover.open"]')!
+    );
+    fireEvent.click(await screen.findByText('Deutsch', { selector: 'span' }));
 
-    await screen.findByRole('button', { name: 'language:de' });
-    expect(useLanguageStore.getState().language).toBe('de');
+    await waitFor(() => expect(useLanguageStore.getState().language).toBe('de'));
     expect(JSON.parse(localStorage.getItem('language-storage') ?? '{}')).toMatchObject({
       state: { language: 'de' },
       version: 1,
     });
   });
 
-  it('switches theme and applies the selected color mode to the document', async () => {
-    renderComponentFlow(<PreferencesFlow />);
-    fireEvent.click(screen.getByRole('button', { name: 'theme:system' }));
+  it('switches theme from the actual preferences tab and applies it to the document', async () => {
+    const view = renderPreferences();
+    fireEvent.click(
+      view.container.querySelector('[data-action-id="navigation.theme.dark.select"]')!
+    );
 
-    await screen.findByRole('button', { name: 'theme:dark' });
+    await waitFor(() => expect(useThemeStore.getState().theme).toBe('dark'));
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(localStorage.getItem('theme')).toBe('dark');
   });
 
-  it('updates the optimistic currency store and its persisted preference together', async () => {
-    renderComponentFlow(<PreferencesFlow />);
+  it('updates currency optimistically and persists only the supported currency preference', async () => {
+    renderPreferences();
     fireEvent.click(screen.getByRole('button', { name: 'currency' }));
 
     await waitFor(() => expect(useDisplayCurrencyStore.getState().displayCurrency).toBe('USD'));
     expect(preferences.updateDisplayCurrency).toHaveBeenCalledWith('USD');
+    expect(screen.queryByText(/timezone/i)).toBeNull();
   });
 });

@@ -8,6 +8,8 @@ export const E2E_ACCEPTANCE_EVIDENCE_SCHEMA_VERSION = 1;
 export const E2E_ACCEPTANCE_SUITES = Object.freeze({
   'critical-repeat': 20,
   'cold-stack': 30,
+  'agent1-repeat': 10,
+  'agent1-cold-stack': 3,
 });
 
 function invariant(condition, message) {
@@ -202,7 +204,10 @@ export function validateAcceptanceEvidence(documents, options) {
 
     if (!iteration?.stackRunId) failures.push(`${label}: stackRunId is missing`);
     else {
-      if (suite === 'cold-stack' && stackRunIds.has(iteration.stackRunId)) {
+      if (
+        (suite === 'cold-stack' || suite === 'agent1-cold-stack') &&
+        stackRunIds.has(iteration.stackRunId)
+      ) {
         failures.push(`${label}: duplicate cold stackRunId ${iteration.stackRunId}`);
       }
       stackRunIds.add(iteration.stackRunId);
@@ -215,7 +220,10 @@ export function validateAcceptanceEvidence(documents, options) {
     if (iteration?.reuseExistingServer !== false) {
       failures.push(`${label}: reuseExistingServer must be false`);
     }
-    if (suite === 'cold-stack' && iteration?.freshStack !== true) {
+    if (
+      (suite === 'cold-stack' || suite === 'agent1-cold-stack') &&
+      iteration?.freshStack !== true
+    ) {
       failures.push(`${label}: cold-stack evidence requires a fresh stack`);
     }
     if (!validTimestamp(iteration?.startedAt) || !validTimestamp(iteration?.completedAt)) {

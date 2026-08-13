@@ -15,6 +15,7 @@ vi.mock('@tanstack/react-router', () => ({
     options,
     path,
     useParams: () => routerMocks.params,
+    useSearch: () => ({}),
   }),
   notFound: routerMocks.notFound,
   Outlet: () => <div data-testid="router-outlet" />,

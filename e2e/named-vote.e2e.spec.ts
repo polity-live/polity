@@ -52,7 +52,8 @@ test('runs a named vote with two actors and closes the persisted result @pr', as
   const passwordId = governanceEntityId(e2eRun, 'named-vote-password-b');
 
   await sql`
-    update public.event set status = 'active', updated_at = now()
+    update public.event
+    set status = 'active', attendance_mode = 'online', updated_at = now()
     where id = ${seed.eventId}::uuid;
     insert into public.agenda_item (
       id, event_id, creator_id, title, description, type, status,
@@ -107,10 +108,20 @@ test('runs a named vote with two actors and closes the persisted result @pr', as
     await page.locator('[data-action-id="agendas.toolbar.vote.start"]').click();
     await expect
       .poll(async () => {
-        const rows = await sql`select status from public.vote where id = ${voteId}::uuid`;
-        return rows[0]?.status ?? null;
+        const rows = await sql`
+          select vote.status, agenda_item.voting_phase
+          from public.vote as vote
+          join public.agenda_item as agenda_item on agenda_item.id = vote.agenda_item_id
+          where vote.id = ${voteId}::uuid
+        `;
+        return rows[0] ?? null;
       })
-      .toMatch(/^(indicative|indication)$/);
+      .toEqual({
+        status: expect.stringMatching(/^(indicative|indication)$/),
+        voting_phase: 'indicative',
+      });
+
+    await expect(page.locator('[data-action-id="agendas.toolbar.ballot.cast"]')).toBeEnabled();
 
     await castChoice(page, 'Accept');
     await voterBPage.goto(`/event/${seed.eventId}/agenda/${agendaItemId}`);

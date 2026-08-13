@@ -2,7 +2,7 @@ import { expect, test } from './fixtures/test';
 import { db } from './fixtures/db';
 import { waitForAppReady } from './fixtures/readiness';
 
-test('persists profile edits across desktop and mobile reloads @pr @mobile', async ({
+test('persists profile edits across desktop and mobile reloads @pr @mobile @agent1-promotion', async ({
   page,
   e2eUser,
 }) => {
@@ -18,7 +18,8 @@ test('persists profile edits across desktop and mobile reloads @pr @mobile', asy
     await page.locator('#firstName').fill(editedName);
     await page
       .locator('form[data-action-id="users.profile.save"]')
-      .evaluate(form => (form as HTMLFormElement).requestSubmit());
+      .getByRole('button', { name: /save profile/i })
+      .click();
     await expect
       .poll(async () => {
         const [row] = await sql<{ first_name: string | null }[]>`

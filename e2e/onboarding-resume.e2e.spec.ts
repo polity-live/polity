@@ -2,7 +2,10 @@ import { expect, test } from './fixtures/test';
 import { finishOnboardingWithoutSelections } from './fixtures/auth-flow-page';
 import { db } from './fixtures/db';
 
-test('resumes interrupted onboarding and persists completion @pr', async ({ page, e2eUser }) => {
+test('resumes interrupted onboarding and persists completion @pr @agent1-promotion', async ({
+  page,
+  e2eUser,
+}) => {
   const sql = db();
   const [original] = await sql<{ first_name: string | null; last_name: string | null }[]>`
     select first_name, last_name from public."user" where id = ${e2eUser.id}::uuid
@@ -20,8 +23,9 @@ test('resumes interrupted onboarding and persists completion @pr', async ({ page
     await page.locator('#firstName').fill('Resume');
     await page.locator('#lastName').fill('Flow');
     await page
-      .locator('#onboarding-name-form')
-      .evaluate(form => (form as HTMLFormElement).requestSubmit());
+      .locator('[data-slot="onboarding-action-bar"]')
+      .getByRole('button', { name: 'Continue', exact: true })
+      .click();
     await expect(page.getByRole('heading', { name: 'What are you interested in?' })).toBeVisible();
 
     await page.reload();

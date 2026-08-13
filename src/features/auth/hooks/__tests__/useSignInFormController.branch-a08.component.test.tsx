@@ -37,7 +37,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: mocks.translate }),
 }));
 
-import { useSignInFormController } from '../useSignInFormController';
+import { readRouteSignInRedirect, useSignInFormController } from '../useSignInFormController';
 
 function submitEvent() {
   return { preventDefault: vi.fn() } as any;
@@ -62,9 +62,20 @@ beforeEach(() => {
   mocks.continueWithGoogle.mockResolvedValue(undefined);
   mocks.translate.mockImplementation((key: string) => key);
   sessionStorage.clear();
+  window.history.replaceState({}, '', '/auth/sign-in');
 });
 
 describe('useSignInFormController', () => {
+  it('reads a route redirect in the browser and returns none during server rendering', () => {
+    window.history.replaceState({}, '', '/auth/sign-in?redirect=%2Ftodos%3Ffilter%3Dmine%23today');
+    expect(readRouteSignInRedirect()).toBe('/todos?filter=mine#today');
+
+    const browserWindow = window;
+    vi.stubGlobal('window', undefined);
+    expect(readRouteSignInRedirect()).toBeNull();
+    vi.stubGlobal('window', browserWindow);
+  });
+
   it('exposes store errors, translated copy and independent loading sources', () => {
     mocks.storeError = 'provider error';
     mocks.isRedirecting = true;
@@ -147,6 +158,16 @@ describe('useSignInFormController', () => {
       expect(mocks.navigate).toHaveBeenCalledWith({ to: '/' });
     }
   );
+
+  it('prefers the validated route redirect after sign-in', async () => {
+    window.history.replaceState({}, '', '/auth/sign-in?redirect=%2Ftodos%3Ffilter%3Dmine%23today');
+    const { result } = renderHook(() => useSignInFormController());
+    enterCredentials(result);
+
+    await act(async () => result.current.onSubmit(submitEvent()));
+
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: '/todos?filter=mine#today' });
+  });
 
   it('shows explicit sign-in failures and permits a failure without provider text', async () => {
     mocks.signIn

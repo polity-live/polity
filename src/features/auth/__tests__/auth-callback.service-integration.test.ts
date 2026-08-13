@@ -1,90 +1,107 @@
-/* @vitest-environment jsdom */
-
-import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { storePendingGoogleLanguage } from '../logic/authLanguage';
-import { useAuthCallbackPageController } from '../hooks/useAuthCallbackPageController';
+import {
+  completeAuthCallback,
+  type AuthCallbackGateway,
+  type AuthCallbackUser,
+} from '../logic/authCallbackService';
 
-const callback = vi.hoisted(() => ({
-  exchangeCodeForSession: vi.fn(),
-  getUser: vi.fn(),
-  navigate: vi.fn(),
-  toastError: vi.fn(),
-  updateUser: vi.fn(),
-}));
+const NOW = Date.parse('2026-08-12T12:00:00.000Z');
 
-vi.mock('@tanstack/react-router', () => ({ useNavigate: () => callback.navigate }));
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: () => ({
-    auth: {
-      exchangeCodeForSession: callback.exchangeCodeForSession,
-      getUser: callback.getUser,
-      updateUser: callback.updateUser,
-    },
-  }),
-}));
-vi.mock('@/features/shared/hooks/use-translation', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
-vi.mock('@/features/shared/ui/ui/sonner', () => ({ toast: { error: callback.toastError } }));
-
-function user(language = 'en') {
+function callbackUser(language = 'en'): AuthCallbackUser {
   return {
     id: 'callback-user',
-    created_at: new Date(Date.now() - 600_000).toISOString(),
+    created_at: new Date(NOW - 600_000).toISOString(),
     user_metadata: { language },
   };
 }
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  sessionStorage.clear();
-  window.history.replaceState({}, '', '/auth/callback');
-  callback.exchangeCodeForSession.mockResolvedValue({ error: null });
-  callback.getUser.mockResolvedValue({ data: { user: user() } });
-  callback.updateUser.mockResolvedValue({ error: null });
-});
+function createGateway(): AuthCallbackGateway & {
+  exchangeCodeForSession: ReturnType<typeof vi.fn>;
+  getUser: ReturnType<typeof vi.fn>;
+  updateLanguage: ReturnType<typeof vi.fn>;
+} {
+  return {
+    exchangeCodeForSession: vi.fn().mockResolvedValue({ error: null }),
+    getUser: vi.fn().mockResolvedValue({ user: callbackUser(), error: null }),
+    updateLanguage: vi.fn().mockResolvedValue({ error: null }),
+  };
+}
 
 describe('auth callback service integration', () => {
-  it('exchanges a valid code, synchronizes pending language and routes to reset-password', async () => {
-    storePendingGoogleLanguage('de');
-    window.history.replaceState({}, '', '/auth/callback?code=valid&next=/auth/reset-password');
-    renderHook(() => useAuthCallbackPageController());
+  let gateway: ReturnType<typeof createGateway>;
 
-    await waitFor(() =>
-      expect(callback.navigate).toHaveBeenCalledWith({ to: '/auth/reset-password' })
-    );
-    expect(callback.exchangeCodeForSession).toHaveBeenCalledWith('valid');
-    expect(callback.updateUser).toHaveBeenCalledWith({ data: { language: 'de' } });
-    expect(sessionStorage.getItem('polity_pending_google_language')).toBeNull();
+  beforeEach(() => {
+    gateway = createGateway();
+  });
+
+  it('parses a valid callback, exchanges the code and synchronizes the pending language', async () => {
+    await expect(
+      completeAuthCallback({
+        gateway,
+        pendingLanguage: 'de',
+        search: '?code=valid&next=/auth/reset-password',
+        now: NOW,
+      })
+    ).resolves.toEqual({
+      ok: true,
+      destination: '/auth/reset-password',
+      isNewUser: false,
+      languageSynchronized: true,
+    });
+
+    expect(gateway.exchangeCodeForSession).toHaveBeenCalledWith('valid');
+    expect(gateway.updateLanguage).toHaveBeenCalledWith('de');
   });
 
   it('fails closed for an expired code when no fallback session exists', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    callback.exchangeCodeForSession.mockResolvedValue({ error: { message: 'expired' } });
-    callback.getUser.mockResolvedValue({ data: { user: null } });
-    window.history.replaceState({}, '', '/auth/callback?code=expired');
-    renderHook(() => useAuthCallbackPageController());
+    gateway.exchangeCodeForSession.mockResolvedValue({ error: { message: 'expired' } });
+    gateway.getUser.mockResolvedValue({ user: null, error: { message: 'missing session' } });
 
-    await waitFor(() => expect(callback.navigate).toHaveBeenCalledWith({ to: '/auth/sign-in' }), {
-      timeout: 2_000,
+    await expect(
+      completeAuthCallback({
+        gateway,
+        pendingLanguage: null,
+        search: '?code=expired',
+        now: NOW,
+      })
+    ).resolves.toEqual({
+      ok: false,
+      destination: '/auth/sign-in',
+      reason: 'missing-session',
     });
-    expect(callback.toastError).toHaveBeenCalledWith('auth.callback.failed');
+    expect(gateway.getUser).toHaveBeenCalledTimes(2);
   });
 
   it('normalizes an external redirect to the repository-safe home destination', async () => {
-    window.history.replaceState(
-      {},
-      '',
-      '/auth/callback?code=valid&next=https://attacker.invalid/collect'
-    );
-    renderHook(() => useAuthCallbackPageController());
-
-    await waitFor(() => expect(callback.navigate).toHaveBeenCalledWith({ to: '/' }));
-    expect(callback.navigate).not.toHaveBeenCalledWith({
-      to: 'https://attacker.invalid/collect',
+    const outcome = await completeAuthCallback({
+      gateway,
+      pendingLanguage: null,
+      search: '?code=valid&next=https://attacker.invalid/collect',
+      now: NOW,
     });
+
+    expect(outcome).toMatchObject({ ok: true, destination: '/' });
+    expect(gateway.updateLanguage).not.toHaveBeenCalled();
+  });
+
+  it('accepts URLSearchParams and falls back to the existing session when exchange throws', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    gateway.exchangeCodeForSession.mockRejectedValue('network unavailable');
+
+    await expect(
+      completeAuthCallback({
+        gateway,
+        pendingLanguage: null,
+        search: new URLSearchParams('code=valid&next=/'),
+        now: NOW,
+      })
+    ).resolves.toMatchObject({ ok: true, destination: '/' });
+
+    expect(console.warn).toHaveBeenCalledWith(
+      'Code exchange threw, falling back to an existing session:',
+      'network unavailable'
+    );
   });
 });

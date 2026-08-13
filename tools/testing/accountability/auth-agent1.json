@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "sourceReferences": {
+    "src/features/auth/logic/authCallbackService.ts": [
+      {
+        "file": "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
+        "project": "service-integration",
+        "caseId": "parses a valid callback, exchanges the code and synchronizes the pending language"
+      },
+      {
+        "file": "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
+        "project": "service-integration",
+        "caseId": "fails closed for an expired code when no fallback session exists"
+      },
+      {
+        "file": "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
+        "project": "service-integration",
+        "caseId": "normalizes an external redirect to the repository-safe home destination"
+      }
+    ]
+  },
+  "actionReferences": {},
+  "actionDeclarations": {}
+}

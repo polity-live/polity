@@ -18,7 +18,13 @@ test('member receives a role and can see the persisted assignment after reload @
       );
   `;
   await gotoReady(page, `/group/${seed.groupId}/memberships`);
-  const row = page.locator('tr').filter({ hasText: 'Fixture User' });
+  const activeMemberRow = () =>
+    page
+      .locator('tr', {
+        has: page.locator('[data-action-id="groups.members.active.change-role"]'),
+      })
+      .filter({ hasText: 'Fixture User' });
+  const row = activeMemberRow();
   await row.locator('[data-action-id="groups.members.active.change-role"]').click();
   const dialog = page.getByRole('dialog');
   const byLabel = dialog.getByLabel(seed.roleName);
@@ -41,7 +47,7 @@ test('member receives a role and can see the persisted assignment after reload @
     })
     .toBe(1);
   await page.reload({ waitUntil: 'domcontentloaded' });
-  const persistedRow = page.locator('tr').filter({ hasText: 'Fixture User' });
+  const persistedRow = activeMemberRow();
   await expect(persistedRow.getByText(seed.roleName, { exact: true })).toBeVisible({
     timeout: 30_000,
   });

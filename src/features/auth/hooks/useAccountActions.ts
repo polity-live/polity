@@ -33,7 +33,7 @@ interface UseAccountActionsReturn {
  */
 export function useAccountActions(): UseAccountActionsReturn {
   const { t } = useTranslation();
-  const { user, authStateLoading, refreshAuthState } = useAuth();
+  const { user, authStateLoading, refreshAuthState, signOut } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
 
   const verifyCurrentPassword = useCallback(
@@ -131,7 +131,7 @@ export function useAccountActions(): UseAccountActionsReturn {
           throw error;
         }
 
-        await refreshAuthState();
+        await signOut();
         toast.success(t('pages.user.accountPassword.success'));
         return { success: true };
       } catch (error) {
@@ -146,7 +146,7 @@ export function useAccountActions(): UseAccountActionsReturn {
         setIsUpdating(false);
       }
     },
-    [authStateLoading, refreshAuthState, t, user?.hasPassword, verifyCurrentPassword]
+    [authStateLoading, signOut, t, user?.hasPassword, verifyCurrentPassword]
   );
 
   const updateAccountEmail = useCallback(

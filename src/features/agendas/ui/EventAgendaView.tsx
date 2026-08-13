@@ -710,6 +710,7 @@ export function EventAgendaView({
         return (
           <div
             key={item.id}
+            data-agenda-drop-id={item.id}
             data-tutorial-anchor={
               event?.tutorial_run_id
                 ? item.amendment_id

@@ -15,10 +15,20 @@ test('reorders agenda items and persists the sequence after reload @pr', async (
   await waitForAppReady(page);
 
   const budget = page.locator(`[data-agenda-item-id="${items[1]!.id}"]`);
-  const first = page.locator(`[data-agenda-item-id="${seed.agendaItemId}"]`);
-  await budget
-    .locator('[data-action-id="agendas.event-agenda.item.drag"]')
-    .dragTo(first, { targetPosition: { x: 20, y: 1 } });
+  const budgetHandle = budget.locator('[data-action-id="agendas.event-agenda.item.drag"]');
+  const firstDropTarget = page.locator(`[data-agenda-drop-id="${seed.agendaItemId}"]`);
+  await firstDropTarget.scrollIntoViewIfNeeded();
+  await budgetHandle.scrollIntoViewIfNeeded();
+  const sourceBox = await budgetHandle.boundingBox();
+  const targetBox = await firstDropTarget.boundingBox();
+  if (!sourceBox || !targetBox) throw new Error('Agenda drag source or drop target is not visible');
+
+  await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 4, {
+    steps: 20,
+  });
+  await page.mouse.up();
 
   await expect
     .poll(async () => {

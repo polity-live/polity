@@ -160,8 +160,8 @@ SELECT is(
           AND dependency.deptype = 'e'
       )
   ),
-  65,
-  'all 65 application functions are installed'
+  67,
+  'all 67 application functions are installed'
 );
 
 SELECT is(
@@ -179,8 +179,8 @@ SELECT is(
           AND dependency.deptype = 'e'
       )
   ),
-  61,
-  'all 61 privileged functions are SECURITY DEFINER'
+  63,
+  'all 63 privileged functions are SECURITY DEFINER'
 );
 
 SELECT is(
@@ -236,8 +236,8 @@ SELECT is(
     WHERE namespace.nspname IN ('public', 'auth')
       AND NOT trigger_definition.tgisinternal
   ),
-  55,
-  'all 55 application triggers are installed'
+  57,
+  'all 57 application triggers are installed'
 );
 
 SELECT is(

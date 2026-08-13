@@ -10,6 +10,8 @@ const zeroBaseUrl = process.env.VITE_ZERO_CACHE_URL ?? 'http://127.0.0.1:4848';
 const zeroKeepaliveUrl = new URL('/keepalive', zeroBaseUrl).href;
 const reuseExistingServer = process.env.E2E_REUSE_SERVER === '1';
 const appCommand = process.env.E2E_APP_COMMAND ?? 'npm run test:e2e:serve';
+const zeroCommand = process.env.E2E_ZERO_COMMAND ?? 'npm run zero:dev';
+const zeroStartupTimeout = Number(process.env.E2E_ZERO_STARTUP_TIMEOUT_MS ?? 180_000);
 const webServerGracefulShutdown = { signal: 'SIGTERM' as const, timeout: 10_000 };
 
 /**
@@ -103,10 +105,10 @@ export default defineConfig({
       gracefulShutdown: webServerGracefulShutdown,
     },
     {
-      command: 'npm run zero:dev',
+      command: zeroCommand,
       url: zeroKeepaliveUrl,
       reuseExistingServer,
-      timeout: 180 * 1000,
+      timeout: zeroStartupTimeout,
       gracefulShutdown: webServerGracefulShutdown,
     },
   ],

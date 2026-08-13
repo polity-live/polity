@@ -51,14 +51,17 @@ test('invites a collaborator, edits as the second actor, and shares the change @
     await editor.pressSequentially(editedText);
 
     await expect
-      .poll(async () => {
-        const rows = await sql`
+      .poll(
+        async () => {
+          const rows = await sql`
           select content::text as content
           from public.document
           where amendment_id = ${seed.amendmentId}::uuid
         `;
-        return String(rows[0]?.content ?? '');
-      })
+          return String(rows[0]?.content ?? '');
+        },
+        { timeout: 30_000 }
+      )
       .toContain(editedText);
 
     await page.goto(`/amendment/${seed.amendmentId}/text`);

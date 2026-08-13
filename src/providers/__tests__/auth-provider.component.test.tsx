@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   context: undefined as any,
   getSession: vi.fn(),
   getUser: vi.fn(),
+  refreshSession: vi.fn(),
   signOut: vi.fn(),
   rpc: vi.fn(),
   unsubscribe: vi.fn(),
@@ -26,6 +27,7 @@ vi.mock('@/lib/supabase/client', () => ({
     auth: {
       getSession: mocks.getSession,
       getUser: mocks.getUser,
+      refreshSession: mocks.refreshSession,
       signOut: mocks.signOut,
       onAuthStateChange: (callback: (event: string, session: any) => void) => {
         mocks.authChange = callback;
@@ -75,6 +77,7 @@ function Probe() {
 
 async function renderProvider(initialSession: any) {
   mocks.getSession.mockResolvedValueOnce({ data: { session: initialSession } });
+  mocks.refreshSession.mockResolvedValueOnce({ data: { session: initialSession }, error: null });
   const rendered = render(
     <AuthProvider>
       <Probe />
@@ -89,6 +92,7 @@ beforeEach(() => {
   mocks.context = undefined;
   mocks.getSession.mockReset();
   mocks.getUser.mockReset();
+  mocks.refreshSession.mockReset();
   mocks.signOut.mockReset();
   mocks.rpc.mockReset();
   mocks.unsubscribe.mockReset();
@@ -117,7 +121,7 @@ describe('AuthProvider', () => {
     expect(mocks.context.session).toBeNull();
 
     fireEvent.click(screen.getByText('sign-out'));
-    await waitFor(() => expect(mocks.signOut).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'global' }));
 
     const nextSession = session(undefined, user());
     act(() => mocks.authChange?.('SIGNED_IN', nextSession));
@@ -127,6 +131,46 @@ describe('AuthProvider', () => {
 
     rendered.unmount();
     expect(mocks.unsubscribe).toHaveBeenCalled();
+  });
+
+  it.each([
+    { status: 401 },
+    { name: 'AuthSessionMissingError' },
+    { name: 'AuthInvalidTokenResponseError' },
+    { code: 'refresh_token_not_found' },
+    { code: 'session_not_found' },
+  ])('clears a globally revoked stored session for $status$name$code', async error => {
+    mocks.refreshSession.mockResolvedValueOnce({
+      data: { session: null },
+      error,
+    });
+    await renderProvider(session(token({ amr: ['password'] }), user()));
+
+    expect(mocks.context.session).toBeNull();
+    expect(mocks.context.user).toBeNull();
+    expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'local' });
+  });
+
+  it('keeps a stored session when refresh fails for a non-auth reason', async () => {
+    const storedSession = session(token({ amr: ['password'] }), user());
+    const refreshError = 'temporary network failure';
+    mocks.refreshSession.mockResolvedValueOnce({ data: { session: null }, error: refreshError });
+
+    await renderProvider(storedSession);
+
+    expect(mocks.context.session).toBe(storedSession);
+    expect(console.error).toHaveBeenCalledWith(
+      'Failed to refresh stored auth session:',
+      refreshError
+    );
+  });
+
+  it('surfaces global sign-out failures', async () => {
+    await renderProvider(null);
+    const signOutError = new Error('sign-out failed');
+    mocks.signOut.mockResolvedValueOnce({ error: signOutError });
+
+    await expect(mocks.context.signOut()).rejects.toBe(signOutError);
   });
 
   it('normalizes password AMR and filters linked provider metadata', async () => {
@@ -226,5 +270,20 @@ describe('AuthProvider', () => {
     expect(console.error).toHaveBeenCalledWith('Failed to fetch auth state:', expect.any(Error));
     expect(mocks.context.authStateLoading).toBe(false);
     rendered.unmount();
+  });
+
+  it('clears local auth state when getUser reports an invalid session', async () => {
+    await renderProvider(session(token({ amr: ['password'] }), user()));
+    mocks.getUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { code: 'session_not_found', status: 401 },
+    });
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    await act(async () => mocks.context.refreshAuthState());
+
+    expect(mocks.context.session).toBeNull();
+    expect(mocks.context.user).toBeNull();
+    expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'local' });
   });
 });

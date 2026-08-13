@@ -108,7 +108,7 @@ describe('GitHub workflow contracts', () => {
     expect(ratchet).not.toContain('compare-coverage-reports.mjs');
   });
 
-  it('fails closed when the recent successful PR pipeline P95 exceeds 15 minutes', () => {
+  it('warms up from the pipeline cutover before enforcing the 15-minute P95', () => {
     const ci = workflow('ci.yml');
 
     expect(ci).toContain('actions: read');
@@ -122,6 +122,8 @@ describe('GitHub workflow contracts', () => {
     expect(ci).toContain('--threshold-seconds 900');
     expect(ci).toContain('--min-samples 20');
     expect(ci).toContain('--max-samples 50');
+    expect(ci).toContain('--after-run-id 31544870651');
+    expect(ci).toContain('--allow-insufficient-samples');
     expect(ci).not.toMatch(/echo[^\n]*(?:GH_TOKEN|github\.token)/u);
   });
 
@@ -157,5 +159,25 @@ describe('GitHub workflow contracts', () => {
     expect(acceptance).toContain('Verify exactly 30 independent cold stacks');
     expect(acceptance).toContain('retention-days: 90');
     expect(`${nightly}\n${acceptance}`).not.toMatch(/retries?:\s*[1-9]/u);
+  });
+
+  it('promotes all Agent 1 flows through ten same-stack and three cold-stack runs', () => {
+    const promotion = workflow('e2e-agent1-promotion.yml');
+
+    expect(promotion).toContain('workflow_dispatch:');
+    expect(promotion).not.toContain('pull_request:');
+    expect(promotion).toContain('NODE_VERSION: "24.18.0"');
+    expect(promotion).toContain('for iteration in $(seq 1 10); do');
+    expect(promotion).toContain('stack: [1, 2, 3]');
+    expect(promotion.match(/--grep '@agent1-promotion'/gu)).toHaveLength(2);
+    expect(promotion.match(/--workers=1 --retries=0/gu)).toHaveLength(2);
+    expect(promotion).toContain('--suite agent1-repeat');
+    expect(promotion).toContain('--suite agent1-cold-stack');
+    expect(promotion).toContain('name: Agent 1 Promotion Gate');
+    expect(promotion).toContain('if: always()');
+    expect(promotion).toContain('needs: [same-stack, fresh-stack]');
+    expect(promotion).toContain('SAME_STACK_RESULT: ${{ needs.same-stack.result }}');
+    expect(promotion).toContain('FRESH_STACK_RESULT: ${{ needs.fresh-stack.result }}');
+    expect(promotion).not.toMatch(/retries?:\s*[1-9]/u);
   });
 });

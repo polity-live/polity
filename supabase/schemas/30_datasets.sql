@@ -146,6 +146,10 @@ CREATE TRIGGER trg_search_document_dataset
 AFTER INSERT OR UPDATE OR DELETE ON public.dataset
 FOR EACH ROW EXECUTE FUNCTION public.upsert_dataset_search_document();
 
+CREATE TRIGGER trg_zz_search_document_dataset_archive
+AFTER INSERT OR UPDATE ON public.dataset
+FOR EACH ROW EXECUTE FUNCTION public.delete_inactive_dataset_search_document();
+
 CREATE TRIGGER trg_zz_search_document_acl_dataset
 AFTER INSERT OR UPDATE ON public.dataset
 FOR EACH ROW EXECUTE FUNCTION public.sync_search_document_acl_entity_trigger();
