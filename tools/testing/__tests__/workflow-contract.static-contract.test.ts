@@ -30,6 +30,24 @@ describe('GitHub workflow contracts', () => {
     expect(staticAnalysis).toContain('fetch-depth: 0');
   });
 
+  it('collects every static-analysis outcome even when an earlier audit fails', () => {
+    const ci = workflow('ci.yml');
+    const staticAnalysis = ci.slice(ci.indexOf('  static-analysis:'), ci.indexOf('  unit-tests:'));
+
+    for (const id of ['static', 'accountability', 'format', 'lint', 'typecheck']) {
+      expect(staticAnalysis).toContain(`- id: ${id}`);
+      expect(staticAnalysis).toMatch(
+        new RegExp(`- id: ${id}\\n(?:.*\\n){1,4}\\s+continue-on-error: true`, 'u')
+      );
+    }
+    expect(staticAnalysis.match(/if: always\(\)/gu)).toHaveLength(5);
+    expect(staticAnalysis).toContain('STATIC_OUTCOME: ${{ steps.static.outcome }}');
+    expect(staticAnalysis).toContain('ACCOUNTABILITY_OUTCOME: ${{ steps.accountability.outcome }}');
+    expect(staticAnalysis).toContain(
+      'static=$STATIC_OUTCOME accountability=$ACCOUNTABILITY_OUTCOME format=$FORMAT_OUTCOME lint=$LINT_OUTCOME typecheck=$TYPECHECK_OUTCOME'
+    );
+  });
+
   it('keeps seven isolated desktop shards and two isolated mobile PR jobs', () => {
     const ci = workflow('ci.yml');
     const e2e = ci.slice(ci.indexOf('  e2e-tests:'), ci.indexOf('  e2e-gate:'));

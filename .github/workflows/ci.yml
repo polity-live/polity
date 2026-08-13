@@ -69,31 +69,41 @@ jobs:
         run: npm install --global npm@${NPM_VERSION}
       - name: Install dependencies
         run: npm ci
-      - name: Verify complete test accountability and static audits
+      - id: static
+        name: Verify complete test accountability and static audits
+        continue-on-error: true
         run: npm run test:static
-      - name: Enforce exact accountability for changed production surfaces
+      - id: accountability
+        name: Enforce exact accountability for changed production surfaces
+        if: always()
+        continue-on-error: true
         run: npm run test:accountability:changed
       - id: format
         name: Changed-file format ratchet
+        if: always()
         continue-on-error: true
         run: npm run format:check:changed
       - id: lint
         name: Lint
+        if: always()
         continue-on-error: true
         run: npm run lint:check
       - id: typecheck
         name: Typecheck
+        if: always()
         continue-on-error: true
         run: npm run typecheck
       - name: Verify static analysis results
         if: always()
         env:
+          STATIC_OUTCOME: ${{ steps.static.outcome }}
+          ACCOUNTABILITY_OUTCOME: ${{ steps.accountability.outcome }}
           FORMAT_OUTCOME: ${{ steps.format.outcome }}
           LINT_OUTCOME: ${{ steps.lint.outcome }}
           TYPECHECK_OUTCOME: ${{ steps.typecheck.outcome }}
         run: |
-          if [[ "$FORMAT_OUTCOME" != "success" || "$LINT_OUTCOME" != "success" || "$TYPECHECK_OUTCOME" != "success" ]]; then
-            echo "Static analysis failed: format=$FORMAT_OUTCOME lint=$LINT_OUTCOME typecheck=$TYPECHECK_OUTCOME"
+          if [[ "$STATIC_OUTCOME" != "success" || "$ACCOUNTABILITY_OUTCOME" != "success" || "$FORMAT_OUTCOME" != "success" || "$LINT_OUTCOME" != "success" || "$TYPECHECK_OUTCOME" != "success" ]]; then
+            echo "Static analysis failed: static=$STATIC_OUTCOME accountability=$ACCOUNTABILITY_OUTCOME format=$FORMAT_OUTCOME lint=$LINT_OUTCOME typecheck=$TYPECHECK_OUTCOME"
             exit 1
           fi
 

@@ -154,9 +154,6 @@ test('runs a named vote with two actors and closes the persisted result @pr', as
     await voterBPage.reload({ waitUntil: 'domcontentloaded' });
     await waitForAppReady(voterBPage);
     await castChoice(voterBPage, 'Reject');
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await waitForAppReady(page);
-    await page.locator('[data-action-id="agendas.toolbar.vote.close-final"]').click();
 
     await expect
       .poll(async () => {
@@ -171,6 +168,10 @@ test('runs a named vote with two actors and closes the persisted result @pr', as
         return { status: voteRows[0]?.status, decisions: decisionRows[0]?.count };
       })
       .toEqual({ status: 'closed', decisions: 2 });
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await waitForAppReady(page);
+    await expect(page.locator('[data-action-id="agendas.vote.named-results.open"]')).toBeVisible();
   } finally {
     await voterBContext.close();
     await removeActorAuthState(voterB);

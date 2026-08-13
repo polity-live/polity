@@ -85568,7 +85568,9 @@
         }
       ],
       "suggestedTestRefs": [
-        "src/features/notifications/utils/__tests__/notification-helpers.generated-coverage.unit.test.ts"
+        "src/features/notifications/utils/__tests__/notification-helpers.generated-coverage.unit.test.ts",
+        "tools/testing/__tests__/format-generated-json.unit.test.ts",
+        "tools/testing/format-generated-json.mjs"
       ]
     },
     {
@@ -87361,7 +87363,9 @@
         }
       ],
       "suggestedTestRefs": [
-        "src/features/notifications/utils/__tests__/notification-helpers.generated-coverage.unit.test.ts"
+        "src/features/notifications/utils/__tests__/notification-helpers.generated-coverage.unit.test.ts",
+        "tools/testing/__tests__/format-generated-json.unit.test.ts",
+        "tools/testing/format-generated-json.mjs"
       ]
     },
     {
@@ -109535,6 +109539,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/testing/__tests__/format-generated-json.unit.test.ts",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/testing/__tests__/resolve-accountability-domain.unit.test.ts",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
@@ -110206,6 +110220,16 @@
     },
     {
       "path": "tools/testing/flow-test-campaign.json",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/format-generated-json.mjs",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",

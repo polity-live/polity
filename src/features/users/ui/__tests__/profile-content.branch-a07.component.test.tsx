@@ -111,7 +111,7 @@ vi.mock('@/features/navigation/toggles/theme-toggle', () => ({
   ThemeToggle: () => <div>ThemeToggle</div>,
 }));
 vi.mock('@/features/navigation/toggles/language-toggle', () => ({
-  LanguageToggle: () => <div>LanguageToggle</div>,
+  LanguageToggle: capture('languageToggle', 'LanguageToggle'),
 }));
 vi.mock('../CurrencyPreferenceControl', () => ({
   CurrencyPreferenceControl: () => <div>CurrencyPreferenceControl</div>,
@@ -297,6 +297,7 @@ describe('profile and content branches A07', () => {
 
     view.rerender(<UserProfileEditForm {...props} activeTab="preferences" />);
     expect(document.querySelector('[data-tab]')?.getAttribute('data-tab')).toBe('preferences');
+    expect(mocks.captured.languageToggle.side).toBe('top');
     view.rerender(<UserProfileEditForm {...props} activeTab={undefined} />);
     expect(document.querySelector('[data-tab]')?.getAttribute('data-tab')).toBe('basic-info');
   });

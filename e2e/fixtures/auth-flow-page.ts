@@ -18,7 +18,7 @@ export async function signInThroughUi(
   const form = page.locator('form[data-action-id="auth.sign-in.submit.password"]');
   const email = form.locator('#email');
   const password = form.locator('#password');
-  const submit = form.getByRole('button', { name: 'Sign in', exact: true });
+  const submit = form.locator('button[data-action-id="auth.sign-in.submit.password"]');
 
   await expect(form).toBeVisible();
   await form.evaluate(async element => {
