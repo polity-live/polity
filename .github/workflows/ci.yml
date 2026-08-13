@@ -405,7 +405,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         with:
           version: 2.110.0
       - name: Disable seed data for database startup
@@ -533,7 +533,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         with:
           version: 2.110.0
       - name: Install Chromium
