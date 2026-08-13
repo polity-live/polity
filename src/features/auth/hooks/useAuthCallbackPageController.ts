@@ -4,11 +4,12 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 
 import { createClient } from '@/lib/supabase/client';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { getSafeAuthRedirect } from '@/features/auth/logic/authRedirects';
+import { consumePendingGoogleLanguage } from '@/features/auth/logic/authLanguage';
 import {
-  consumePendingGoogleLanguage,
-  normalizeAuthLanguage,
-} from '@/features/auth/logic/authLanguage';
+  completeAuthCallback,
+  type AuthCallbackGateway,
+  type AuthCallbackUser,
+} from '@/features/auth/logic/authCallbackService';
 
 export function useAuthCallbackPageController() {
   const { t } = useTranslation();
@@ -20,54 +21,36 @@ export function useAuthCallbackPageController() {
     const finalizeAuthCallback = async () => {
       try {
         const supabase = createClient();
-        const searchParams = new URLSearchParams(window.location.search);
-        const code = searchParams.get('code');
-        const destination = getSafeAuthRedirect(searchParams.get('next'));
-
-        if (code) {
-          try {
+        const gateway: AuthCallbackGateway = {
+          exchangeCodeForSession: async code => {
             const { error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) {
-              console.warn('Code exchange failed, falling back to session check:', error.message);
-            }
-          } catch (exchangeError) {
-            console.warn('Code exchange threw, falling back to session check:', exchangeError);
-          }
-        }
+            return { error };
+          },
+          getUser: async () => {
+            const { data, error } = await supabase.auth.getUser();
+            return { user: data.user as AuthCallbackUser | null, error };
+          },
+          updateLanguage: async language => {
+            const { error } = await supabase.auth.updateUser({ data: { language } });
+            return { error };
+          },
+        };
+        const outcome = await completeAuthCallback({
+          gateway,
+          pendingLanguage: consumePendingGoogleLanguage(),
+          search: window.location.search,
+        });
 
-        let user = (await supabase.auth.getUser()).data.user;
-
-        if (!user?.id) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          user = (await supabase.auth.getUser()).data.user;
-        }
-
-        if (!user?.id) {
+        if (!outcome.ok) {
           throw new Error(t('auth.callback.failed'));
         }
 
-        const pendingGoogleLanguage = consumePendingGoogleLanguage();
-        if (
-          pendingGoogleLanguage &&
-          normalizeAuthLanguage(user.user_metadata.language) !== pendingGoogleLanguage
-        ) {
-          const { error } = await supabase.auth.updateUser({
-            data: { language: pendingGoogleLanguage },
-          });
-          if (error) {
-            console.warn('Failed to synchronize Google auth language:', error.message);
-          }
-        }
-
-        const createdAt = new Date(user.created_at).getTime();
-        const isNewUser = Date.now() - createdAt < 300_000;
-
-        if (isNewUser) {
+        if (outcome.isNewUser) {
           sessionStorage.setItem('polity_onboarding', 'true');
         }
 
         if (isActive) {
-          navigate({ to: destination });
+          navigate({ to: outcome.destination });
         }
       } catch (error) {
         console.error('Failed to complete auth callback:', error);

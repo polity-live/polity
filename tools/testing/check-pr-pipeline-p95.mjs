@@ -8,7 +8,8 @@ export const DEFAULT_MAX_SAMPLES = 50;
 
 export const PR_PIPELINE_P95_USAGE = `Usage:
   node tools/testing/check-pr-pipeline-p95.mjs --input <workflow-runs.json>
-    [--threshold-seconds 900] [--min-samples 20] [--max-samples 50]`;
+    [--threshold-seconds 900] [--min-samples 20] [--max-samples 50]
+    [--after-run-id <id>] [--allow-insufficient-samples]`;
 
 function parsePositiveInteger(value, option) {
   if (!/^\d+$/.test(value ?? '') || Number(value) < 1) {
@@ -19,11 +20,19 @@ function parsePositiveInteger(value, option) {
 
 export function parsePrPipelineP95Options(argv = process.argv.slice(2)) {
   const values = new Map();
+  let allowInsufficientSamples = false;
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
     if (argument === '--help' || argument === '-h') return { help: true };
+    if (argument === '--allow-insufficient-samples') {
+      if (allowInsufficientSamples) {
+        throw new Error('Duplicate option --allow-insufficient-samples.');
+      }
+      allowInsufficientSamples = true;
+      continue;
+    }
     const match = argument.match(
-      /^--(input|threshold-seconds|min-samples|max-samples)(?:=(.*))?$/u
+      /^--(input|threshold-seconds|min-samples|max-samples|after-run-id)(?:=(.*))?$/u
     );
     if (!match) throw new Error(`Unknown option ${argument}.`);
     const value = match[2] ?? argv[index + 1];
@@ -49,6 +58,9 @@ export function parsePrPipelineP95Options(argv = process.argv.slice(2)) {
     values.get('max-samples') ?? String(DEFAULT_MAX_SAMPLES),
     '--max-samples'
   );
+  const afterRunId = values.has('after-run-id')
+    ? parsePositiveInteger(values.get('after-run-id'), '--after-run-id')
+    : null;
   if (minSamples > maxSamples) {
     throw new Error('--min-samples cannot exceed --max-samples.');
   }
@@ -59,6 +71,8 @@ export function parsePrPipelineP95Options(argv = process.argv.slice(2)) {
     thresholdSeconds,
     minSamples,
     maxSamples,
+    afterRunId,
+    allowInsufficientSamples,
   };
 }
 
@@ -118,24 +132,40 @@ export function nearestRankPercentile(values, percentile) {
   return sorted[Math.ceil(percentile * sorted.length) - 1];
 }
 
+/**
+ * @param {unknown} payload
+ * @param {{
+ *   thresholdSeconds?: number,
+ *   minSamples?: number,
+ *   maxSamples?: number,
+ *   afterRunId?: number | null
+ * }} [options]
+ */
 export function evaluatePrPipelineP95(
   payload,
   {
     thresholdSeconds = DEFAULT_THRESHOLD_SECONDS,
     minSamples = DEFAULT_MIN_SAMPLES,
     maxSamples = DEFAULT_MAX_SAMPLES,
+    afterRunId = null,
   } = {}
 ) {
   if (!payload || !Array.isArray(payload.workflow_runs)) {
     throw new Error('Input must be a GitHub workflow-runs response with workflow_runs[].');
   }
-  if (minSamples < 1 || maxSamples < minSamples || thresholdSeconds < 1) {
+  if (
+    minSamples < 1 ||
+    maxSamples < minSamples ||
+    thresholdSeconds < 1 ||
+    (afterRunId !== null && afterRunId < 1)
+  ) {
     throw new Error('Invalid P95 evaluation limits.');
   }
 
   const eligibleRuns = deduplicateRuns(
     payload.workflow_runs.filter(qualifyingRun).map(normalizeRun)
   )
+    .filter(run => afterRunId === null || Number(run.id) > afterRunId)
     .sort(
       (left, right) => right.completedAtMs - left.completedAtMs || right.id.localeCompare(left.id)
     )
@@ -148,6 +178,7 @@ export function evaluatePrPipelineP95(
       minSamples,
       maxSamples,
       thresholdSeconds,
+      afterRunId,
       p95Seconds: null,
     };
   }
@@ -162,6 +193,7 @@ export function evaluatePrPipelineP95(
     minSamples,
     maxSamples,
     thresholdSeconds,
+    afterRunId,
     p95Seconds,
   };
 }
@@ -187,7 +219,7 @@ export function runPrPipelineP95Cli({
       stderr(
         `PR pipeline P95 gate has only ${result.sampleCount}/${result.minSamples} required successful samples.`
       );
-      return 2;
+      return options.allowInsufficientSamples ? 0 : 2;
     }
     stderr(`PR pipeline P95 ${result.p95Seconds}s exceeds the ${result.thresholdSeconds}s limit.`);
     return 1;

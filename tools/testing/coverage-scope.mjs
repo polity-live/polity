@@ -198,7 +198,7 @@ function comparableStem(file) {
 export function findTestReferences(entry, files) {
   if (entry.verification !== 'instrument') return [];
   if (entry.path.startsWith('src/routes/')) {
-    return ['src/routes/__tests__/routeCatalog.contract.test.ts'];
+    return ['src/routes/__tests__/routeCatalog.contract.unit.test.ts'];
   }
 
   const tests = files.filter(isTestFile);

@@ -209,7 +209,7 @@ function chooseCandidate(source, candidates) {
         (candidate.relation === 'direct' ? 100 : 0) +
         (candidate.test.startsWith(domainRoot) ? 30 : 0) +
         overlap(source, candidate.test) * 10 -
-        (candidate.test === 'src/__tests__/router.test.ts' ? 20 : 0) -
+        (candidate.test === 'src/__tests__/router.unit.test.ts' ? 20 : 0) -
         (candidate.test.startsWith('e2e/') ? 10 : 0);
       return score(right) - score(left) || left.test.localeCompare(right.test);
     })[0];
@@ -238,7 +238,7 @@ for (const entry of manifest.entries.filter(item =>
   if (statementHits.length === 0 && isPublicModuleSurface(entry.path)) {
     accountability.sourceReferences[entry.path] = [
       {
-        file: 'src/__tests__/publicModuleSurfaces.test.ts',
+        file: 'src/__tests__/publicModuleSurfaces.unit.test.ts',
         project: 'unit',
         caseId: 'loads every re-export-only production module through the application module graph',
         evidence: {

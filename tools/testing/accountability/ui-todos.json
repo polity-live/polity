@@ -4,7 +4,7 @@
   "actionReferences": {
     "src/features/todos/TodoDetailPageView.tsx#todos.todo-detail-page.features-todos-help-links-assistant": [
       {
-        "file": "src/features/todos/__tests__/TodoDetailPageView.branch.A09.test.tsx",
+        "file": "src/features/todos/__tests__/TodoDetailPageView.branch-a09.component.test.tsx",
         "project": "component",
         "caseId": "renders edit, archive, assistant tutorial, and help-link states",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -18,7 +18,7 @@
     ],
     "src/features/todos/TodoDetailPageView.tsx#todos.todo-detail-page.features-todos-help-links-docs": [
       {
-        "file": "src/features/todos/__tests__/TodoDetailPageView.actions.test.tsx",
+        "file": "src/features/todos/__tests__/TodoDetailPageView.actions.component.test.tsx",
         "project": "component",
         "caseId": "returns from a missing todo through a stable navigation intent",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -32,7 +32,7 @@
     ],
     "src/features/todos/TodoDetailPageView.tsx#todos.todo-detail-page.features-todos-help-links-tutorial": [
       {
-        "file": "src/features/todos/__tests__/TodoDetailPageView.branch.A09.test.tsx",
+        "file": "src/features/todos/__tests__/TodoDetailPageView.branch-a09.component.test.tsx",
         "project": "component",
         "caseId": "renders edit, archive, assistant tutorial, and help-link states",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -46,7 +46,7 @@
     ],
     "src/features/todos/TodosPageView.tsx#todos.todos-page.features-todos-help-links-assistant": [
       {
-        "file": "src/features/todos/__tests__/TodoDetailPageView.branch.A09.test.tsx",
+        "file": "src/features/todos/__tests__/TodoDetailPageView.branch-a09.component.test.tsx",
         "project": "component",
         "caseId": "renders edit, archive, assistant tutorial, and help-link states",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -60,7 +60,7 @@
     ],
     "src/features/todos/TodosPageView.tsx#todos.todos-page.features-todos-help-links-docs": [
       {
-        "file": "src/features/todos/__tests__/TodoDetailPageView.branch.A09.test.tsx",
+        "file": "src/features/todos/__tests__/TodoDetailPageView.branch-a09.component.test.tsx",
         "project": "component",
         "caseId": "renders edit, archive, assistant tutorial, and help-link states",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -74,7 +74,7 @@
     ],
     "src/features/todos/TodosPageView.tsx#todos.todos-page.features-todos-help-links-tutorial": [
       {
-        "file": "src/features/todos/__tests__/TodoDetailPageView.branch.A09.test.tsx",
+        "file": "src/features/todos/__tests__/TodoDetailPageView.branch-a09.component.test.tsx",
         "project": "component",
         "caseId": "renders edit, archive, assistant tutorial, and help-link states",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -88,7 +88,7 @@
     ],
     "src/features/todos/ui/TodoDetailDialogView.tsx#todos.todo-detail-dialog.group-id": [
       {
-        "file": "src/features/todos/ui/__tests__/TodoDetailDialogView.actions.test.tsx",
+        "file": "src/features/todos/ui/__tests__/TodoDetailDialogView.actions.component.test.tsx",
         "project": "component",
         "caseId": "edits status, priority, and assignees through stable dialog intents",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -102,7 +102,7 @@
     ],
     "src/features/todos/ui/TodoDetailView.tsx#todos.todo-detail.group-id": [
       {
-        "file": "src/features/todos/ui/__tests__/TodoDetailDialogView.branch.A09.test.tsx",
+        "file": "src/features/todos/ui/__tests__/TodoDetailDialogView.branch-a09.component.test.tsx",
         "project": "component",
         "caseId": "renders assignment identity fallbacks without creator or group sections",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],

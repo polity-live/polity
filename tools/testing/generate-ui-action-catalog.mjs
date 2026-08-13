@@ -4,6 +4,7 @@ import path from 'node:path';
 import { listRepositoryFiles } from './coverage-scope.mjs';
 import { buildUiActionCatalog, serializeUiActionCatalog } from './ui-action-scope.mjs';
 import { loadAccountabilityManifest, loadResolutionLedger } from './accountability-scope.mjs';
+import { formatGeneratedJson } from './format-generated-json.mjs';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const target = path.join(import.meta.dirname, 'ui-action-catalog.json');
@@ -34,7 +35,7 @@ const catalog = buildUiActionCatalog(root, listRepositoryFiles(root), {
       .map(entry => entry.debtKey ?? entry.key),
   ],
 });
-const serialized = serializeUiActionCatalog(catalog);
+const serialized = await formatGeneratedJson(serializeUiActionCatalog(catalog), target);
 
 if (process.argv.includes('--check')) {
   const current = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : '';

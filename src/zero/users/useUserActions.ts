@@ -3,7 +3,7 @@ import { useZero } from '@rocicorp/zero/react';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
-import { onServerError, waitForClientApply } from '../mutate-with-server-check';
+import { onServerError, serverConfirmed, waitForClientApply } from '../mutate-with-server-check';
 
 /**
  * Action hook for user mutations.
@@ -35,6 +35,17 @@ export function useUserActions() {
     [zero, t]
   );
 
+  const updateProfileServerConfirmed = useCallback(
+    async (args: Parameters<typeof mutators.users.updateProfile>[0]) => {
+      const result = zero.mutate(mutators.users.updateProfile(args));
+      onServerError(result, () => toast.error(t('features.user.toasts.profileUpdateFailed')));
+      await serverConfirmed(result);
+      toast.success(t('features.user.toasts.profileUpdated'));
+      return result;
+    },
+    [zero, t]
+  );
+
   const follow = useCallback(
     (args: Parameters<typeof mutators.users.follow>[0]) => {
       const result = zero.mutate(mutators.users.follow(args));
@@ -58,6 +69,7 @@ export function useUserActions() {
   return {
     updateProfile,
     updateProfileClientApplied,
+    updateProfileServerConfirmed,
     follow,
     unfollow,
   };

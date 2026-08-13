@@ -4,7 +4,7 @@
   "actionReferences": {
     "src/features/events/EventWikiContentView.tsx#/user/$id": [
       {
-        "file": "src/features/events/__tests__/EventWikiContentView.test.tsx",
+        "file": "src/features/events/__tests__/EventWikiContentView.component.test.tsx",
         "project": "component",
         "caseId": "keeps event actions visible to authenticated users",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -18,7 +18,7 @@
     ],
     "src/features/events/EventWikiContentView.tsx#/user/$id-2": [
       {
-        "file": "src/features/events/__tests__/EventWikiContentView.test.tsx",
+        "file": "src/features/events/__tests__/EventWikiContentView.component.test.tsx",
         "project": "component",
         "caseId": "keeps event actions visible to authenticated users",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -32,7 +32,7 @@
     ],
     "src/features/events/ui/EventStreamView.tsx#/event/$id/agenda/$agendaItemId": [
       {
-        "file": "src/features/events/ui/__tests__/EventStreamView.actions.test.tsx",
+        "file": "src/features/events/ui/__tests__/EventStreamView.actions.component.test.tsx",
         "project": "component",
         "caseId": "returns to the event when no active agenda item exists",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],

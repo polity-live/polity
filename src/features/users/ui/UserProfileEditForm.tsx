@@ -246,7 +246,7 @@ export function UserProfileEditForm({
               title={t('pages.user.preferences.language')}
               description={t('pages.user.preferences.languageDescription')}
             >
-              <LanguageToggle side="bottom" />
+              <LanguageToggle side="top" />
             </SettingsPanel>
             <SettingsPanel
               title={t('pages.user.preferences.displayCurrency')}

@@ -4,11 +4,25 @@ import { useNavigate } from '@tanstack/react-router';
 
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { isValidEmailAddress } from '@/features/auth/logic/authValidation';
+import {
+  consumePendingSignInRedirect,
+  getSafeSignInRedirect,
+} from '@/features/auth/logic/authRedirects';
 import { useDebounce } from '@/features/shared/hooks/use-debounce';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuthSignIn } from './useAuthSignIn';
 import { useGoogleAuth } from './useGoogleAuth';
 import type { SignInFormCopy } from '../ui/SignInFormView';
+
+type SignInLocationWindow = Pick<Window, 'location'>;
+
+export function readRouteSignInRedirect(
+  currentWindow: SignInLocationWindow | undefined = typeof window === 'undefined'
+    ? undefined
+    : window
+) {
+  return currentWindow ? new URL(currentWindow.location.href).searchParams.get('redirect') : null;
+}
 
 export function useSignInFormController() {
   const { t } = useTranslation();
@@ -50,7 +64,11 @@ export function useSignInFormController() {
       if (result.isNewUser) {
         sessionStorage.setItem('polity_onboarding', 'true');
       }
-      navigate({ to: '/' });
+      const storedDestination = consumePendingSignInRedirect();
+      const routeDestination = readRouteSignInRedirect();
+      navigate({
+        to: routeDestination ? getSafeSignInRedirect(routeDestination) : storedDestination,
+      });
     } else {
       setLocalError(result.error ?? null);
     }

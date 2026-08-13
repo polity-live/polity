@@ -3,80 +3,80 @@
   "sourceReferences": {
     "src/zero/amendments/process-branch-document-artifacts.ts": [
       {
-        "file": "src/zero/amendments/__tests__/processBranchDocumentArtifacts.test.ts",
+        "file": "src/zero/amendments/__tests__/processBranchDocumentArtifacts.unit.test.ts",
         "project": "unit",
         "caseId": "reuses the first usable snapshot from an existing process run"
       },
       {
-        "file": "src/zero/amendments/__tests__/processBranchDocumentArtifacts.test.ts",
+        "file": "src/zero/amendments/__tests__/processBranchDocumentArtifacts.unit.test.ts",
         "project": "unit",
         "caseId": "creates a baseline version and branch document from the canonical document"
       },
       {
-        "file": "src/zero/amendments/__tests__/processBranchDocumentArtifacts.test.ts",
+        "file": "src/zero/amendments/__tests__/processBranchDocumentArtifacts.unit.test.ts",
         "project": "unit",
         "caseId": "defaults a missing canonical editing mode and increments the latest version"
       }
     ],
     "src/zero/amendments/process-engine-logic.ts": [
       {
-        "file": "src/zero/amendments/__tests__/processEngine.logic.test.ts",
+        "file": "src/zero/amendments/__tests__/processEngine.logic.unit.test.ts",
         "project": "unit",
         "caseId": "classifies every terminal and non-terminal process status"
       },
       {
-        "file": "src/zero/amendments/__tests__/processEngine.logic.test.ts",
+        "file": "src/zero/amendments/__tests__/processEngine.logic.unit.test.ts",
         "project": "unit",
         "caseId": "resolves replanned, cleared, retained, and unavailable event schedules"
       },
       {
-        "file": "src/zero/amendments/__tests__/processEngine.mergeVote.test.ts",
+        "file": "src/zero/amendments/__tests__/processEngine.mergeVote.unit.test.ts",
         "project": "unit",
         "caseId": "combines online and final offline tallies with explicit and positional branches"
       }
     ],
     "src/zero/amendments/process-engine-normalization.ts": [
       {
-        "file": "src/zero/amendments/__tests__/processEngine.normalization.test.ts",
+        "file": "src/zero/amendments/__tests__/processEngine.normalization.unit.test.ts",
         "project": "unit",
         "caseId": "filters malformed values, orders change requests, and repairs generated titles"
       },
       {
-        "file": "src/zero/amendments/__tests__/processEngine.normalization.test.ts",
+        "file": "src/zero/amendments/__tests__/processEngine.normalization.unit.test.ts",
         "project": "unit",
         "caseId": "links only one-to-one discussion candidates and leaves ambiguous candidates untouched"
       }
     ],
     "src/zero/amendments/process-task-notification.ts": [
       {
-        "file": "src/zero/amendments/__tests__/processTaskNotification.test.ts",
+        "file": "src/zero/amendments/__tests__/processTaskNotification.unit.test.ts",
         "project": "unit",
         "caseId": "does not notify without sender and group"
       },
       {
-        "file": "src/zero/amendments/__tests__/processTaskNotification.test.ts",
+        "file": "src/zero/amendments/__tests__/processTaskNotification.unit.test.ts",
         "project": "unit",
         "caseId": "uses group name %s as %s"
       }
     ],
     "src/zero/amendments/process-task-service.ts": [
       {
-        "file": "src/zero/amendments/__tests__/processTaskService.test.ts",
+        "file": "src/zero/amendments/__tests__/processTaskService.unit.test.ts",
         "project": "unit",
         "caseId": "reuses an open schedule task"
       },
       {
-        "file": "src/zero/amendments/__tests__/processTaskService.test.ts",
+        "file": "src/zero/amendments/__tests__/processTaskService.unit.test.ts",
         "project": "unit",
         "caseId": "creates a new schedule task for %s"
       },
       {
-        "file": "src/zero/amendments/__tests__/processTaskService.test.ts",
+        "file": "src/zero/amendments/__tests__/processTaskService.unit.test.ts",
         "project": "unit",
         "caseId": "reopens and notifies for a cancelled implementation task"
       },
       {
-        "file": "src/zero/amendments/__tests__/processTaskService.test.ts",
+        "file": "src/zero/amendments/__tests__/processTaskService.unit.test.ts",
         "project": "unit",
         "caseId": "creates and notifies for the first implementation task"
       }

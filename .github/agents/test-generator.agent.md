@@ -41,7 +41,7 @@ application behavior.
 
    Following file is generated:
 
-   ```ts file=add-valid-todo.spec.ts
+   ```ts file=add-valid-todo.e2e.spec.ts
    // spec: specs/plan.md
    // seed: tests/seed.spec.ts
 

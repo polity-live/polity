@@ -4,7 +4,7 @@
   "actionReferences": {
     "src/features/auth/onboarding/SummaryStep.tsx#/messages?openAriaKai=true": [
       {
-        "file": "src/features/auth/onboarding/__tests__/SummaryStepDestinations.test.tsx",
+        "file": "src/features/auth/onboarding/__tests__/SummaryStepDestinations.component.test.tsx",
         "project": "component",
         "caseId": "offers exactly the three onboarding paths and marks the guided path recommended",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -18,7 +18,7 @@
     ],
     "src/features/auth/onboarding/SummaryStep.tsx#/onboarding": [
       {
-        "file": "src/features/auth/onboarding/__tests__/SummaryStepDestinations.test.tsx",
+        "file": "src/features/auth/onboarding/__tests__/SummaryStepDestinations.component.test.tsx",
         "project": "component",
         "caseId": "offers exactly the three onboarding paths and marks the guided path recommended",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -32,7 +32,7 @@
     ],
     "src/features/auth/onboarding/SummaryStep.tsx#/search": [
       {
-        "file": "src/features/auth/onboarding/__tests__/SummaryStepDestinations.test.tsx",
+        "file": "src/features/auth/onboarding/__tests__/SummaryStepDestinations.component.test.tsx",
         "project": "component",
         "caseId": "offers exactly the three onboarding paths and marks the guided path recommended",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],

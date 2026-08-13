@@ -7,6 +7,7 @@ import {
   serializeCoverageManifest,
 } from './coverage-scope.mjs';
 import { loadAccountabilityManifest } from './accountability-scope.mjs';
+import { formatGeneratedJson } from './format-generated-json.mjs';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const target = path.join(import.meta.dirname, 'coverage-manifest.json');
@@ -24,19 +25,22 @@ const previous = fs.existsSync(target)
 const debt = fs.existsSync(debtTarget)
   ? JSON.parse(fs.readFileSync(debtTarget, 'utf8'))
   : { legacyGaps: [] };
-const serialized = serializeCoverageManifest(
-  buildCoverageManifest(files, {
-    root,
-    accountability,
-    legacyDebt: debt.legacyGaps,
-    knownLegacyPaths: previous.entries
-      .filter(entry =>
-        !Object.hasOwn(entry, 'suggestedTestRefs')
-          ? true
-          : ['legacy-reference', 'legacy-gap'].includes(entry.coverageStatus)
-      )
-      .map(entry => entry.path),
-  })
+const serialized = await formatGeneratedJson(
+  serializeCoverageManifest(
+    buildCoverageManifest(files, {
+      root,
+      accountability,
+      legacyDebt: debt.legacyGaps,
+      knownLegacyPaths: previous.entries
+        .filter(entry =>
+          !Object.hasOwn(entry, 'suggestedTestRefs')
+            ? true
+            : ['legacy-reference', 'legacy-gap'].includes(entry.coverageStatus)
+        )
+        .map(entry => entry.path),
+    })
+  ),
+  target
 );
 
 if (process.argv.includes('--check')) {

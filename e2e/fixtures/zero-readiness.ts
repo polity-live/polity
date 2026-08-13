@@ -21,6 +21,7 @@ interface ZeroStatzResponse {
 }
 
 interface WaitForZeroReadyOptions {
+  adminPassword?: string;
   database?: ZeroReadinessDatabase;
   fetcher?: (input: string | URL, init?: RequestInit) => Promise<ZeroStatzResponse>;
   now?: () => number;
@@ -67,6 +68,7 @@ export function zeroReadinessDatabase(sql: E2EDatabase = db()): ZeroReadinessDat
 }
 
 export async function waitForZeroReady(options: WaitForZeroReadyOptions = {}) {
+  const adminPassword = options.adminPassword ?? process.env.ZERO_ADMIN_PASSWORD;
   const database = options.database ?? zeroReadinessDatabase();
   const fetcher = options.fetcher ?? fetch;
   const now = options.now ?? Date.now;
@@ -87,6 +89,13 @@ export async function waitForZeroReady(options: WaitForZeroReadyOptions = {}) {
   while (now() <= deadline) {
     try {
       const response = await fetcher(statzUrl, {
+        ...(adminPassword
+          ? {
+              headers: {
+                authorization: `Basic ${Buffer.from(`zero:${adminPassword}`).toString('base64')}`,
+              },
+            }
+          : {}),
         signal: AbortSignal.timeout(ZERO_STATZ_TIMEOUT_MS),
       });
       if (!response.ok) {

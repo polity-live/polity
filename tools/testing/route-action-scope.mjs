@@ -4,7 +4,7 @@ import path from 'node:path';
 const ROUTE_EXTENSIONS = /\.[cm]?[jt]sx?$/;
 
 const ROUTE_CATALOG_CONTRACT = {
-  file: 'src/routes/__tests__/routeCatalog.contract.test.ts',
+  file: 'src/routes/__tests__/routeCatalog.contract.unit.test.ts',
   project: 'unit',
   caseId: 'accounts for every route source with a unique file and path',
 };

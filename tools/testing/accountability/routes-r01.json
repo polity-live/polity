@@ -3,7 +3,7 @@
   "sourceReferenceAdditions": {
     "src/routes/_authed/amendment/$id/citydesign.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "passes the amendment deep-link id to the city-design page",
         "evidence": { "relation": "direct" }
@@ -11,7 +11,7 @@
     ],
     "src/routes/_authed/amendment/$id/index.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "passes the amendment deep-link id to the wiki page",
         "evidence": { "relation": "direct" }
@@ -19,7 +19,7 @@
     ],
     "src/routes/_authed/blog/$id/edit.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "resolves the canonical blog edit deep link",
         "evidence": { "relation": "direct" }
@@ -27,7 +27,7 @@
     ],
     "src/routes/_authed/blog/$id/index.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "resolves the canonical blog detail deep link",
         "evidence": { "relation": "direct" }
@@ -35,7 +35,7 @@
     ],
     "src/routes/_authed/calendar.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "preloads and renders the authenticated calendar page",
         "evidence": { "relation": "direct" }
@@ -43,7 +43,7 @@
     ],
     "src/routes/_authed/create/agenda-item.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "preloads and renders the agenda-item creation form",
         "evidence": { "relation": "direct" }
@@ -51,7 +51,7 @@
     ],
     "src/routes/_authed/create/amendment.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "validates search state and renders the amendment creation form",
         "evidence": { "relation": "direct" }
@@ -59,7 +59,7 @@
     ],
     "src/routes/_authed/create/blog-entry.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "validates group search state and renders the blog-entry creation form",
         "evidence": { "relation": "direct" }
@@ -67,7 +67,7 @@
     ],
     "src/routes/_authed/create/election-candidate.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "preloads and renders the election-candidate creation form",
         "evidence": { "relation": "direct" }
@@ -75,7 +75,7 @@
     ],
     "src/routes/_authed/create/event.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "validates event search and preloads its deep-linked group",
         "evidence": { "relation": "direct" }
@@ -83,7 +83,7 @@
     ],
     "src/routes/_authed/create/group.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "preloads and renders the group creation form",
         "evidence": { "relation": "direct" }
@@ -91,7 +91,7 @@
     ],
     "src/routes/_authed/create/index.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "preloads and renders the create dashboard",
         "evidence": { "relation": "direct" }
@@ -99,7 +99,7 @@
     ],
     "src/routes/_authed/create/payment.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "validates payment return state and renders the payment creation form",
         "evidence": { "relation": "direct" }
@@ -107,7 +107,7 @@
     ],
     "src/routes/_authed/create/statement.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "validates group search state and renders the statement creation form",
         "evidence": { "relation": "direct" }
@@ -115,7 +115,7 @@
     ],
     "src/routes/_authed/create/todo.tsx": [
       {
-        "file": "src/routes/__tests__/authed-create-routes.accountability.R01.test.tsx",
+        "file": "src/routes/__tests__/authed-create-routes.accountability-r01.component.test.tsx",
         "project": "component",
         "caseId": "validates todo return state and renders the todo creation form",
         "evidence": { "relation": "direct" }

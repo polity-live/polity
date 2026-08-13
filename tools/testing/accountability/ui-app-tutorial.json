@@ -4,7 +4,7 @@
   "actionReferences": {
     "src/features/app-tutorial/AppTutorialSettingsPanel.tsx#app-tutorial.app-tutorial-settings-panel.onboarding": [
       {
-        "file": "src/features/app-tutorial/__tests__/AppTutorialSettingsPanel.test.tsx",
+        "file": "src/features/app-tutorial/__tests__/AppTutorialSettingsPanel.component.test.tsx",
         "project": "component",
         "caseId": "disables the action while loading and reports load errors",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],

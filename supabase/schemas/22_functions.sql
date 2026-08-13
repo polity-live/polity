@@ -192,6 +192,21 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.handle_deleted_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  DELETE FROM public."user"
+  WHERE id = OLD.id;
+
+  RETURN OLD;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.handle_deleted_user() FROM PUBLIC;
+
 CREATE OR REPLACE FUNCTION public.current_user_has_password()
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -215,3 +230,8 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
+
+CREATE TRIGGER on_auth_user_deleted
+  AFTER DELETE ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_deleted_user();

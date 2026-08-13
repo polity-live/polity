@@ -1,6 +1,7 @@
 export type AllowedAuthRedirect = '/' | '/auth/reset-password';
 
 const ALLOWED_AUTH_REDIRECTS = new Set<AllowedAuthRedirect>(['/', '/auth/reset-password']);
+const PENDING_SIGN_IN_REDIRECT_KEY = 'polity_pending_sign_in_redirect';
 
 function getAuthOrigin(): string {
   if (typeof window !== 'undefined') {
@@ -19,4 +20,36 @@ export function getSafeAuthRedirect(value: string | null): AllowedAuthRedirect {
     return value as AllowedAuthRedirect;
   }
   return '/';
+}
+
+export function getSafeSignInRedirect(value: string | null): string {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return '/';
+  try {
+    const authOrigin = getAuthOrigin();
+    const parsed = new URL(value, authOrigin);
+    if (parsed.origin !== authOrigin || parsed.pathname.startsWith('/auth')) return '/';
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return '/';
+  }
+}
+
+export function storePendingSignInRedirect(value: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(PENDING_SIGN_IN_REDIRECT_KEY, getSafeSignInRedirect(value));
+  } catch {
+    // Storage can be unavailable in privacy-restricted browser contexts.
+  }
+}
+
+export function consumePendingSignInRedirect() {
+  if (typeof window === 'undefined') return '/';
+  try {
+    const value = window.sessionStorage.getItem(PENDING_SIGN_IN_REDIRECT_KEY);
+    window.sessionStorage.removeItem(PENDING_SIGN_IN_REDIRECT_KEY);
+    return getSafeSignInRedirect(value);
+  } catch {
+    return '/';
+  }
 }

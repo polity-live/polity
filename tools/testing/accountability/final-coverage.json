@@ -3,21 +3,21 @@
   "sourceReferences": {
     "app/router.tsx": [
       {
-        "file": "src/__tests__/appRouter.test.ts",
+        "file": "src/__tests__/appRouter.unit.test.ts",
         "project": "unit",
         "caseId": "creates the generated route tree with restoration and the shared not-found view"
       }
     ],
     "src/features/agendas/logic/logAgendaChangeRequestItems.ts": [
       {
-        "file": "src/features/agendas/logic/__tests__/logAgendaChangeRequestItems.test.ts",
+        "file": "src/features/agendas/logic/__tests__/logAgendaChangeRequestItems.unit.test.ts",
         "project": "unit",
         "caseId": "keeps the former development logger as a side-effect-free compatibility hook"
       }
     ],
     "src/features/amendments/collaborators/ui/index.ts": [
       {
-        "file": "src/features/amendments/collaborators/ui/__tests__/collaboratorsUiIndex.test.ts",
+        "file": "src/features/amendments/collaborators/ui/__tests__/collaboratorsUiIndex.unit.test.ts",
         "project": "unit",
         "caseId": "exports every supported collaborator component from the domain entry point"
       }

@@ -10,8 +10,8 @@
     "uniqueIndexes": 28,
     "uniqueRules": 84,
     "indexes": 639,
-    "functions": 65,
-    "triggers": 55,
+    "functions": 67,
+    "triggers": 57,
     "policies": 151,
     "cronBranches": 2
   },
@@ -99,7 +99,7 @@
     },
     {
       "source": "22_functions.sql",
-      "behavior": ["auth_assistant.sql"],
+      "behavior": ["auth_assistant.sql", "user_lifecycle.sql"],
       "securityBehavior": ["auth_assistant.sql"]
     },
     { "source": "23_appearance_theme.sql", "behavior": ["account_configuration.sql"] },

@@ -141,6 +141,10 @@ export const commonTranslations = {
       disconnected: 'Offline — retrying...',
       syncing: 'Syncing data locally...',
     },
+    connectionRecovery: {
+      offline: 'You are offline. Your current work stays open while Polity reconnects.',
+      reconnecting: 'Reconnecting. Your current work is still available.',
+    },
   },
   checks: {
     membership: 'Checking membership...',

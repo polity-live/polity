@@ -10,7 +10,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['src/**/*.browser.test.tsx'],
+    include: ['src/**/*.browser-component.test.tsx'],
     setupFiles: ['./src/test/browser.setup.ts'],
     browser: {
       enabled: true,

@@ -4,7 +4,7 @@
   "actionReferences": {
     "src/features/messages/ui/GroupMembersDialog.tsx#messages.group-members-dialog.group-id": [
       {
-        "file": "src/features/messages/ui/__tests__/AiFindingsCardGroup.test.tsx",
+        "file": "src/features/messages/ui/__tests__/AiFindingsCardGroup.component.test.tsx",
         "project": "component",
         "caseId": "shows four findings initially and expands the remaining results",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],

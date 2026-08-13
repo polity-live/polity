@@ -4,7 +4,7 @@
   "actionReferences": {
     "src/features/offline-roster/ui/OfflineRosterCard.tsx#offline-roster.offline-roster-card.group-id": [
       {
-        "file": "src/features/offline-roster/ui/__tests__/OfflineRosterCard.test.tsx",
+        "file": "src/features/offline-roster/ui/__tests__/OfflineRosterCard.component.test.tsx",
         "project": "component",
         "caseId": "can show only the base group provenance column",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
@@ -18,7 +18,7 @@
     ],
     "src/features/offline-roster/ui/OfflineRosterCard.tsx#offline-roster.offline-roster-card.user-id": [
       {
-        "file": "src/features/offline-roster/ui/__tests__/OfflineRosterCard.test.tsx",
+        "file": "src/features/offline-roster/ui/__tests__/OfflineRosterCard.component.test.tsx",
         "project": "component",
         "caseId": "shows submit and success status before closing after a single offline user is added",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],

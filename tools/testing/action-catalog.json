@@ -14,21 +14,21 @@
         {
           "id": "configure-and-submit-group",
           "coverage": [
-            "src/features/create/ui/__tests__/CreateFormLayoutSubmit.test.tsx",
-            "src/features/create/logic/__tests__/groupInviteCsv.test.ts"
+            "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
+            "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
           ]
         },
         {
           "id": "persist-owner-membership-and-rights",
-          "coverage": ["src/zero/groups/__tests__/groupSharedMutators.create.test.ts"]
+          "coverage": ["src/zero/groups/__tests__/groupSharedMutators.create.unit.test.ts"]
         }
       ],
       "prE2E": [
         {
-          "file": "e2e/create/group.spec.ts",
+          "file": "e2e/create/group.e2e.spec.ts",
           "project": "playwright",
-          "caseId": "creates a minimal group @pr @nightly @critical @mobile @cross-browser",
-          "tags": ["@pr", "@nightly", "@critical", "@mobile", "@cross-browser"],
+          "caseId": "creates a minimal group @pr @nightly @critical @mobile @cross-browser @acceptance",
+          "tags": ["@pr", "@nightly", "@critical", "@mobile", "@cross-browser", "@acceptance"],
           "coversActions": ["configure-and-submit-group", "persist-owner-membership-and-rights"]
         }
       ]
@@ -41,21 +41,21 @@
         {
           "id": "compose-link-and-rights",
           "coverage": [
-            "src/features/network/ui/__tests__/LinkGroupDialogView.test.tsx",
-            "src/features/network/logic/__tests__/groupConnectionComposer.test.ts"
+            "src/features/network/ui/__tests__/LinkGroupDialogView.component.test.tsx",
+            "src/features/network/logic/__tests__/groupConnectionComposer.unit.test.ts"
           ]
         },
         {
           "id": "authorize-reconcile-and-derive-link",
           "coverage": [
-            "src/zero/network/__tests__/networkSharedMutators.authorization.test.ts",
-            "src/zero/network/__tests__/groupGraphReconcile.test.ts"
+            "src/zero/network/__tests__/networkSharedMutators.authorization.unit.test.ts",
+            "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts"
           ]
         }
       ],
       "prE2E": [
         {
-          "file": "e2e/critical/network-linking.spec.ts",
+          "file": "e2e/critical/network-linking.e2e.spec.ts",
           "project": "playwright",
           "caseId": "links two groups after realtime approval by a second administrator @pr @critical",
           "tags": ["@pr", "@critical"],
@@ -71,21 +71,21 @@
         {
           "id": "configure-times-participation-and-recurrence",
           "coverage": [
-            "src/features/create/hooks/__tests__/useCreateEventForm.test.tsx",
-            "src/features/events/logic/__tests__/eventTimeSeriesValidation.test.ts"
+            "src/features/create/hooks/__tests__/useCreateEventForm.component.test.tsx",
+            "src/features/events/logic/__tests__/eventTimeSeriesValidation.unit.test.ts"
           ]
         },
         {
           "id": "persist-event-rights-and-notifications",
-          "coverage": ["src/zero/events/__tests__/eventServerMutators.notifications.test.ts"]
+          "coverage": ["src/zero/events/__tests__/eventServerMutators.notifications.unit.test.ts"]
         }
       ],
       "prE2E": [
         {
-          "file": "e2e/create/event.spec.ts",
+          "file": "e2e/create/event.e2e.spec.ts",
           "project": "playwright",
-          "caseId": "creates a minimal open event @pr @critical",
-          "tags": ["@pr", "@critical"],
+          "caseId": "creates a minimal open event @pr @critical @acceptance",
+          "tags": ["@pr", "@critical", "@acceptance"],
           "coversActions": [
             "configure-times-participation-and-recurrence",
             "persist-event-rights-and-notifications"
@@ -101,20 +101,20 @@
         {
           "id": "select-target-and-validate-eligibility",
           "coverage": [
-            "src/features/create/logic/__tests__/createEligibility.test.ts",
-            "src/features/amendments/ui/__tests__/TargetGroupEventSelector.test.tsx"
+            "src/features/create/logic/__tests__/createEligibility.unit.test.ts",
+            "src/features/amendments/ui/__tests__/TargetGroupEventSelector.component.test.tsx"
           ]
         },
         {
           "id": "initialize-amendment-document",
           "coverage": [
-            "src/zero/amendments/__tests__/amendmentSharedMutators.documentChangeRequest.test.ts"
+            "src/zero/amendments/__tests__/amendmentSharedMutators.documentChangeRequest.unit.test.ts"
           ]
         }
       ],
       "prE2E": [
         {
-          "file": "e2e/create/amendment.spec.ts",
+          "file": "e2e/create/amendment.e2e.spec.ts",
           "project": "playwright",
           "caseId": "creates a targeted amendment @pr @critical",
           "tags": ["@pr", "@critical"],
@@ -133,21 +133,21 @@
         {
           "id": "edit-content-and-collaborators",
           "coverage": [
-            "src/features/amendments/ui/__tests__/useAmendmentEditContentController.test.tsx",
-            "src/features/amendments/collaborators/ui/__tests__/InviteDialog.test.tsx"
+            "src/features/amendments/ui/__tests__/useAmendmentEditContentController.component.test.tsx",
+            "src/features/amendments/collaborators/ui/__tests__/InviteDialog.component.test.tsx"
           ]
         },
         {
           "id": "create-number-and-resolve-change-request",
           "coverage": [
-            "src/zero/amendments/__tests__/amendmentSharedMutators.changeRequestNumbering.test.ts",
-            "src/zero/change-requests/__tests__/server-resolution.test.ts"
+            "src/zero/amendments/__tests__/amendmentSharedMutators.changeRequestNumbering.unit.test.ts",
+            "src/zero/change-requests/__tests__/server-resolution.unit.test.ts"
           ]
         }
       ],
       "prE2E": [
         {
-          "file": "e2e/critical/amendment-editing-forwarding.spec.ts",
+          "file": "e2e/critical/amendment-editing-forwarding.e2e.spec.ts",
           "project": "playwright",
           "caseId": "edits and reloads persisted amendment metadata @pr @critical",
           "tags": ["@pr", "@critical"],
@@ -166,25 +166,25 @@
         {
           "id": "calculate-preview-and-branches",
           "coverage": [
-            "src/features/amendments/logic/__tests__/amendmentPathHelpers.test.ts",
-            "src/features/amendments/ui/__tests__/AmendmentForwardingPreview.test.tsx"
+            "src/features/amendments/logic/__tests__/amendmentPathHelpers.unit.test.ts",
+            "src/features/amendments/ui/__tests__/AmendmentForwardingPreview.component.test.tsx"
           ]
         },
         {
           "id": "initialize-replan-and-merge-process",
           "coverage": [
-            "src/zero/amendments/__tests__/processEngine.initialize.test.ts",
-            "src/zero/amendments/__tests__/processEngine.replan.test.ts",
-            "src/zero/amendments/__tests__/processEngine.mergeVote.test.ts"
+            "src/zero/amendments/__tests__/processEngine.initialize.unit.test.ts",
+            "src/zero/amendments/__tests__/processEngine.replan.unit.test.ts",
+            "src/zero/amendments/__tests__/processEngine.mergeVote.unit.test.ts"
           ]
         }
       ],
       "prE2E": [
         {
-          "file": "e2e/critical/amendment-editing-forwarding.spec.ts",
+          "file": "e2e/critical/amendment-editing-forwarding.e2e.spec.ts",
           "project": "playwright",
-          "caseId": "creates a persisted cross-group amendment path through the UI @pr @critical",
-          "tags": ["@pr", "@critical"],
+          "caseId": "creates a persisted cross-group amendment path through the UI @pr @critical @acceptance",
+          "tags": ["@pr", "@critical", "@acceptance"],
           "coversActions": ["calculate-preview-and-branches", "initialize-replan-and-merge-process"]
         }
       ]
@@ -197,20 +197,20 @@
         {
           "id": "order-start-and-resume-agenda",
           "coverage": [
-            "src/features/agendas/logic/__tests__/getAgendaRuntimeStatus.test.ts",
-            "src/features/agendas/ui/__tests__/EventLiveFocusDialog.test.tsx"
+            "src/features/agendas/logic/__tests__/getAgendaRuntimeStatus.unit.test.ts",
+            "src/features/agendas/ui/__tests__/EventLiveFocusDialog.component.test.tsx"
           ]
         },
         {
           "id": "initialize-agenda-voting",
           "coverage": [
-            "src/zero/agendas/__tests__/agendaServerMutators.initializeChangeRequestVoting.test.ts"
+            "src/zero/agendas/__tests__/agendaServerMutators.initializeChangeRequestVoting.unit.test.ts"
           ]
         }
       ],
       "prE2E": [
         {
-          "file": "e2e/critical/agenda-event-start.spec.ts",
+          "file": "e2e/critical/agenda-event-start.e2e.spec.ts",
           "project": "playwright",
           "caseId": "starts an event and its first agenda item and restores both after reload @pr @critical",
           "tags": ["@pr", "@critical"],
@@ -226,22 +226,22 @@
         {
           "id": "determine-electorate-majority-and-results",
           "coverage": [
-            "src/features/votes/logic/__tests__/computeEligibleVoters.test.ts",
-            "src/features/vote-cast/logic/__tests__/computeVoteResults.test.ts"
+            "src/features/votes/logic/__tests__/computeEligibleVoters.unit.test.ts",
+            "src/features/vote-cast/logic/__tests__/computeVoteResults.unit.test.ts"
           ]
         },
         {
           "id": "cast-named-secret-and-election-ballots",
           "coverage": [
-            "src/features/vote-cast/ui/__tests__/VoteCastDialog.test.tsx",
-            "src/zero/votes/__tests__/vote-workflow.test.ts",
-            "src/zero/elections/__tests__/electionSharedMutators.ballotVisibility.test.ts"
+            "src/features/vote-cast/ui/__tests__/VoteCastDialog.component.test.tsx",
+            "src/zero/votes/__tests__/vote-workflow.unit.test.ts",
+            "src/zero/elections/__tests__/electionSharedMutators.ballotVisibility.unit.test.ts"
           ]
         }
       ],
       "prE2E": [
         {
-          "file": "e2e/critical/voting-election.spec.ts",
+          "file": "e2e/critical/voting-election.e2e.spec.ts",
           "project": "playwright",
           "caseId": "starts and casts a secret indicative election ballot @pr @critical",
           "tags": ["@pr", "@critical"],
@@ -260,29 +260,29 @@
         {
           "id": "send-and-review-invitations",
           "coverage": [
-            "src/features/amendments/collaborators/ui/__tests__/InviteDialog.test.tsx",
-            "src/features/groups/ui/__tests__/PendingRequestActionCellView.loading.test.tsx"
+            "src/features/amendments/collaborators/ui/__tests__/InviteDialog.component.test.tsx",
+            "src/features/groups/ui/__tests__/PendingRequestActionCellView.loading.component.test.tsx"
           ]
         },
         {
           "id": "persist-status-and-publish-notification",
           "coverage": [
-            "src/zero/groups/__tests__/groupServerMutators.membership-events.test.ts",
-            "src/zero/events/__tests__/eventServerMutators.notifications.test.ts",
-            "src/zero/amendments/__tests__/process-notifications.test.ts"
+            "src/zero/groups/__tests__/groupServerMutators.membership-events.unit.test.ts",
+            "src/zero/events/__tests__/eventServerMutators.notifications.unit.test.ts",
+            "src/zero/amendments/__tests__/process-notifications.unit.test.ts"
           ]
         }
       ],
       "prE2E": [
         {
-          "file": "e2e/critical/invitations-requests.spec.ts",
+          "file": "e2e/critical/invitations-requests.e2e.spec.ts",
           "project": "playwright",
           "caseId": "invites a group member and persists the notification @pr @critical",
           "tags": ["@pr", "@critical"],
           "coversActions": ["send-and-review-invitations"]
         },
         {
-          "file": "e2e/critical/invitations-requests.spec.ts",
+          "file": "e2e/critical/invitations-requests.e2e.spec.ts",
           "project": "playwright",
           "caseId": "invites an amendment collaborator and persists the notification @pr @critical",
           "tags": ["@pr", "@critical"],

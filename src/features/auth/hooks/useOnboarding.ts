@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAuth } from '@/providers/auth-provider';
@@ -67,6 +67,66 @@ const STEP_ORDER: OnboardingStep[] = [
   'appInstall',
   'summary',
 ];
+const ONBOARDING_MARKER_KEY = 'polity_onboarding';
+const ONBOARDING_STEP_KEY = 'polity_onboarding_step';
+const ONBOARDING_DATA_KEY = 'polity_onboarding_data';
+
+export function getOnboardingStorage(): Storage | null {
+  return typeof window === 'undefined' ? null : window.sessionStorage;
+}
+
+export function initialOnboardingStep(
+  storage: Storage | null = getOnboardingStorage()
+): OnboardingStep {
+  if (!storage || storage.getItem(ONBOARDING_MARKER_KEY) !== 'true') {
+    return 'name';
+  }
+  const saved = storage.getItem(ONBOARDING_STEP_KEY) as OnboardingStep | null;
+  return saved && STEP_ORDER.includes(saved) ? saved : 'name';
+}
+
+export function initialOnboardingData(
+  storage: Storage | null = getOnboardingStorage()
+): OnboardingData {
+  const empty: OnboardingData = {
+    firstName: '',
+    lastName: '',
+    selectedInterestTags: [],
+    selectedGroups: [],
+    activeGroupId: null,
+    membershipRequestSentGroupIds: [],
+  };
+  if (!storage || storage.getItem(ONBOARDING_MARKER_KEY) !== 'true') {
+    return empty;
+  }
+  try {
+    const saved = JSON.parse(storage.getItem(ONBOARDING_DATA_KEY) ?? 'null');
+    if (!saved || typeof saved !== 'object') return empty;
+    return {
+      ...empty,
+      ...saved,
+      selectedInterestTags: Array.isArray(saved.selectedInterestTags)
+        ? saved.selectedInterestTags
+        : [],
+      selectedGroups: Array.isArray(saved.selectedGroups) ? saved.selectedGroups : [],
+      membershipRequestSentGroupIds: Array.isArray(saved.membershipRequestSentGroupIds)
+        ? saved.membershipRequestSentGroupIds
+        : [],
+    };
+  } catch {
+    return empty;
+  }
+}
+
+export function persistOnboardingProgress(
+  storage: Storage | null,
+  step: OnboardingStep,
+  data: OnboardingData
+) {
+  if (!storage || storage.getItem(ONBOARDING_MARKER_KEY) !== 'true') return;
+  storage.setItem(ONBOARDING_STEP_KEY, step);
+  storage.setItem(ONBOARDING_DATA_KEY, JSON.stringify(data));
+}
 
 function normalizeInterestTag(tag: string) {
   return tag.trim().replace(/^#/, '');
@@ -89,7 +149,7 @@ function uniqueTags(tags: string[]) {
 export function useOnboarding(): UseOnboardingReturn {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { updateProfileClientApplied } = useUserActions();
+  const { updateProfileServerConfirmed } = useUserActions();
   const { joinGroup } = useGroupActions();
   const { syncEntityHashtags } = useCommonActions();
   const { allHashtags, userHashtags, onboardingHashtagUsage } = useCommonState({
@@ -101,17 +161,14 @@ export function useOnboarding(): UseOnboardingReturn {
     () => rankInterestSuggestions((onboardingHashtagUsage ?? []) as readonly HashtagUsageRow[]),
     [onboardingHashtagUsage]
   );
-  const [step, setStep] = useState<OnboardingStep>('name');
+  const [step, setStep] = useState<OnboardingStep>(initialOnboardingStep);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<OnboardingData>({
-    firstName: '',
-    lastName: '',
-    selectedInterestTags: [],
-    selectedGroups: [],
-    activeGroupId: null,
-    membershipRequestSentGroupIds: [],
-  });
+  const [data, setData] = useState<OnboardingData>(initialOnboardingData);
+
+  useEffect(() => {
+    persistOnboardingProgress(getOnboardingStorage(), step, data);
+  }, [data, step]);
 
   const setFirstName = useCallback((value: string) => {
     setData(prev => ({ ...prev, firstName: value }));
@@ -339,7 +396,7 @@ export function useOnboarding(): UseOnboardingReturn {
       setError(null);
 
       try {
-        await updateProfileClientApplied({
+        await updateProfileServerConfirmed({
           first_name: data.firstName.trim(),
           last_name: data.lastName.trim(),
         });
@@ -352,7 +409,7 @@ export function useOnboarding(): UseOnboardingReturn {
         setIsLoading(false);
       }
     },
-    [data.firstName, data.lastName, t, updateProfileClientApplied]
+    [data.firstName, data.lastName, t, updateProfileServerConfirmed]
   );
 
   return {

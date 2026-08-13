@@ -85,6 +85,18 @@ function deriveCurrentAuthMethod(methods: string[]): AuthMethod {
   return 'unknown';
 }
 
+function isInvalidAuthSessionError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { code?: unknown; name?: unknown; status?: unknown };
+  return (
+    candidate.status === 401 ||
+    candidate.name === 'AuthSessionMissingError' ||
+    candidate.name === 'AuthInvalidTokenResponseError' ||
+    candidate.code === 'refresh_token_not_found' ||
+    candidate.code === 'session_not_found'
+  );
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -110,6 +122,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ] = await Promise.all([supabase.auth.getUser(), supabase.rpc('current_user_has_password')]);
 
       if (authUserError) {
+        if (isInvalidAuthSessionError(authUserError)) {
+          await supabase.auth.signOut({ scope: 'local' });
+          setSession(null);
+          setAuthUserRecord(null);
+          setHasPassword(null);
+          return;
+        }
         console.error('Failed to fetch auth user:', authUserError);
         setAuthUserRecord(session.user);
       } else {
@@ -135,10 +154,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const getSession = async () => {
       const {
-        data: { session },
+        data: { session: storedSession },
       } = await supabase.auth.getSession();
-      setSession(session);
-      setAuthUserRecord(session?.user ?? null);
+      let nextSession = storedSession;
+
+      if (storedSession) {
+        const { data, error } = await supabase.auth.refreshSession();
+        if (error && isInvalidAuthSessionError(error)) {
+          await supabase.auth.signOut({ scope: 'local' });
+          nextSession = null;
+        } else if (error) {
+          console.error('Failed to refresh stored auth session:', error);
+        } else {
+          nextSession = data.session;
+        }
+      }
+
+      setSession(nextSession);
+      setAuthUserRecord(nextSession?.user ?? null);
       setLoading(false);
     };
 
@@ -160,7 +193,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshAuthState]);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
+    if (error) throw error;
   }, [supabase]);
 
   const currentAuthMethods = useMemo(

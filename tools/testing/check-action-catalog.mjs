@@ -14,8 +14,8 @@ const defaultRoot = path.resolve(import.meta.dirname, '../..');
 const REQUIRED_PR_TAGS = ['@critical', '@pr'];
 
 export const SCANNER_ONLY_ROUTE_TESTS = new Set([
-  'src/routes/__tests__/routeCatalog.contract.test.ts',
-  'src/zero/preloads/__tests__/route-audit.test.ts',
+  'src/routes/__tests__/routeCatalog.contract.unit.test.ts',
+  'src/zero/preloads/__tests__/route-audit.static-contract.test.ts',
 ]);
 
 function addFailure(failures, condition, message) {
