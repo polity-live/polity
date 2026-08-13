@@ -5,6 +5,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { LanguageToggleView } from '../LanguageToggleView';
 
+const popoverMocks = vi.hoisted(() => ({
+  onOpenAutoFocus: undefined as ((event: { preventDefault: () => void }) => void) | undefined,
+}));
+
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => `translated:${key}`,
 }));
@@ -30,14 +34,20 @@ vi.mock('@/features/shared/ui/ui/dropdown-menu.tsx', () => ({
 vi.mock('@/features/shared/ui/ui/popover.tsx', () => ({
   Popover: ({ children }: any) => <div>{children}</div>,
   PopoverTrigger: ({ children }: any) => <>{children}</>,
-  PopoverContent: ({ children, side, sideOffset, onMouseLeave, ...props }: any) => (
-    <div data-side={side} data-offset={sideOffset} onMouseLeave={onMouseLeave} {...props}>
-      {children}
-    </div>
-  ),
+  PopoverContent: ({ children, side, sideOffset, onMouseLeave, onOpenAutoFocus }: any) => {
+    popoverMocks.onOpenAutoFocus = onOpenAutoFocus;
+    return (
+      <div data-side={side} data-offset={sideOffset} onMouseLeave={onMouseLeave}>
+        {children}
+      </div>
+    );
+  },
 }));
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  popoverMocks.onOpenAutoFocus = undefined;
+});
 
 const labels = {
   english: 'English',
@@ -117,6 +127,9 @@ describe('LanguageToggleView', () => {
         ['en', true],
         ['de', true],
       ]);
+      const preventDefault = vi.fn();
+      popoverMocks.onOpenAutoFocus?.({ preventDefault });
+      expect(preventDefault).toHaveBeenCalledOnce();
       fireEvent.mouseEnter(screen.getByRole('button', { name: 'Choose language' }));
       expect(callbacks.onPopoverTriggerMouseEnter).toHaveBeenCalled();
     }

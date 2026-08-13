@@ -551,7 +551,9 @@ jobs:
             fi
             delay_seconds=$(( attempt * 10 ))
             echo "Supabase reset attempt $attempt failed; retrying in ${delay_seconds}s"
+            supabase stop --no-backup || true
             sleep "$delay_seconds"
+            supabase start
           done
       - name: Export isolated stack environment
         run: |
@@ -568,7 +570,8 @@ jobs:
         run: npm run build:e2e
       - name: Start with a clean Zero replica
         run: node tools/zero/clean-dev-cache.mjs
-      - name: Run isolated E2E partition
+      - id: e2e
+        name: Run isolated E2E partition
         env:
           E2E_PROJECT: ${{ matrix.project }}
           E2E_GREP: ${{ matrix.grep }}
@@ -589,7 +592,7 @@ jobs:
           path: |
             test-results/
       - name: Upload shard blob report
-        if: always()
+        if: always() && steps.e2e.outcome != 'skipped'
         uses: actions/upload-artifact@v6
         with:
           name: e2e-blob-${{ matrix.name }}-${{ github.run_attempt }}

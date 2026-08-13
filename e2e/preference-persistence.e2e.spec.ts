@@ -20,13 +20,16 @@ test('keeps language and theme through a fresh authenticated session @pr @mobile
   try {
     await page.goto(settings);
     await waitForAppReady(page);
+    await expect(
+      page.locator('[data-action-id="users.appearance.theme.select"][aria-pressed="true"]')
+    ).toBeVisible();
     const languageTrigger = page.locator('[data-action-id="navigation.language.popover.open"]');
     await languageTrigger.evaluate(element =>
       element.scrollIntoView({ block: 'center', inline: 'nearest' })
     );
     await expect(languageTrigger).toBeInViewport();
     await languageTrigger.click();
-    const languagePopover = page.locator('[data-slot="popover-content"]:visible');
+    const languagePopover = page.locator('[data-slot="popover-content"]').filter({ visible: true });
     await expect(languagePopover).toBeVisible();
     const germanOption = languagePopover.locator(
       '[data-action-id="navigation.language.popover.german"]'

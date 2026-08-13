@@ -120,6 +120,7 @@ export function LanguageToggleView({
         className="z-40 w-auto p-1"
         side={side}
         sideOffset={sideOffset}
+        onOpenAutoFocus={event => event.preventDefault()}
         onMouseLeave={onPopoverMouseLeave}
       >
         <div className="flex flex-col gap-1">

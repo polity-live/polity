@@ -63,7 +63,11 @@ describe('GitHub workflow contracts', () => {
     expect(e2e).toContain('for attempt in 1 2 3; do');
     expect(e2e).toContain('if supabase db reset --local --no-seed; then');
     expect(e2e).toContain('Supabase reset failed after $attempt attempts');
+    expect(e2e).toContain('supabase stop --no-backup || true');
+    expect(e2e).toMatch(/supabase stop --no-backup \|\| true[\s\S]*supabase start/u);
+    expect(e2e).toContain('- id: e2e');
     expect(e2e).toContain('name: Upload shard blob report');
+    expect(e2e).toContain("if: always() && steps.e2e.outcome != 'skipped'");
     expect(e2e).toContain('if-no-files-found: error');
     expect(gate).toContain('name: E2E Gate');
     expect(gate).toContain('name: Validate E2E blob reports');
