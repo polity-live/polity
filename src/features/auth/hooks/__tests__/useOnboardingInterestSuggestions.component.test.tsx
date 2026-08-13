@@ -16,7 +16,7 @@ vi.mock('@/providers/auth-provider', () => ({
 }));
 
 vi.mock('@/zero/users/useUserActions', () => ({
-  useUserActions: () => ({ updateProfileClientApplied: vi.fn() }),
+  useUserActions: () => ({ updateProfileServerConfirmed: vi.fn() }),
 }));
 
 vi.mock('@/zero/groups/useGroupActions', () => ({

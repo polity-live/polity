@@ -136,6 +136,7 @@ describe('mutate-with-server-check', () => {
       'features/vote-cast/ui/VoteCastDialog.tsx',
       'features/votes/hooks/useEventVoting.ts',
       'zero/accreditation/useAccreditationActions.ts',
+      'zero/users/useUserActions.ts',
       'zero/voting-password/useVotingPasswordActions.ts',
     ]);
     const actualFiles = new Set<string>();

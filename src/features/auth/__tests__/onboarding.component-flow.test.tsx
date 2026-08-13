@@ -17,7 +17,7 @@ vi.mock('@/providers/auth-provider', () => ({
   useAuth: () => ({ user: onboarding.user }),
 }));
 vi.mock('@/zero/users/useUserActions', () => ({
-  useUserActions: () => ({ updateProfileClientApplied: onboarding.updateProfile }),
+  useUserActions: () => ({ updateProfileServerConfirmed: onboarding.updateProfile }),
 }));
 vi.mock('@/zero/groups/useGroupActions', () => ({
   useGroupActions: () => ({ joinGroup: onboarding.joinGroup }),

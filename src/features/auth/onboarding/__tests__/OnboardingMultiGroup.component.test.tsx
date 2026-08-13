@@ -123,7 +123,7 @@ const hookMocks = vi.hoisted(() => ({
   joinGroup: vi.fn(),
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
-  updateProfileClientApplied: vi.fn(),
+  updateProfileServerConfirmed: vi.fn(),
   syncEntityHashtags: vi.fn(),
 }));
 
@@ -148,7 +148,7 @@ vi.mock('@/zero/groups/useGroupActions', () => ({
 }));
 
 vi.mock('@/zero/users/useUserActions', () => ({
-  useUserActions: () => ({ updateProfileClientApplied: hookMocks.updateProfileClientApplied }),
+  useUserActions: () => ({ updateProfileServerConfirmed: hookMocks.updateProfileServerConfirmed }),
 }));
 
 vi.mock('@/zero/common', () => ({

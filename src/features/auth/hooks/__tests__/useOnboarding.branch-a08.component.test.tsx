@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/providers/auth-provider', () => ({ useAuth: () => ({ user: mocks.user }) }));
 vi.mock('@/zero/users/useUserActions', () => ({
-  useUserActions: () => ({ updateProfileClientApplied: mocks.updateProfile }),
+  useUserActions: () => ({ updateProfileServerConfirmed: mocks.updateProfile }),
 }));
 vi.mock('@/zero/groups/useGroupActions', () => ({
   useGroupActions: () => ({ joinGroup: mocks.joinGroup }),
