@@ -6,14 +6,12 @@ import {
   isAppTutorialActiveInDocument,
   isAppTutorialSessionActive,
 } from '@/features/app-tutorial/events';
+import { ALPHA_WARNING_SESSION_KEY, ALPHA_WARNING_VERSION } from '@/features/shared/constants';
 import { translate, useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { AlphaWarningToastContent } from '../ui/AlphaWarningToastContent';
 
 const ALPHA_WARNING_TOAST_ID = 'alpha-warning';
-const ALPHA_WARNING_VERSION = '0.11.1';
 const ALPHA_WARNING_ACKNOWLEDGED_VALUE = 'true';
-
-const ALPHA_WARNING_SESSION_KEY = `polity.alphaWarning.${ALPHA_WARNING_VERSION}.acknowledged`;
 
 let hasAcknowledgedAlphaWarningInMemory = false;
 

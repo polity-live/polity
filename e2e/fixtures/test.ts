@@ -1,5 +1,7 @@
 import { test as base } from '@playwright/test';
 
+import { ALPHA_WARNING_SESSION_KEY } from '@/features/shared/constants';
+
 import { cleanupE2ERows } from './cleanup';
 import { actorUser, authenticateActor, removeActorAuthState, type E2EActorUser } from './auth';
 import { seedCreatePrerequisites, type SeedData } from './seed';
@@ -29,9 +31,9 @@ export interface E2ERunFixture {
 export const test = base.extend<TestFixtures>({
   _mockCurrencyApi: [
     async ({ page }, use) => {
-      await page.addInitScript(() => {
-        window.sessionStorage.setItem('polity.alphaWarning.0.11.1.acknowledged', 'true');
-      });
+      await page.addInitScript(alphaWarningSessionKey => {
+        window.sessionStorage.setItem(alphaWarningSessionKey, 'true');
+      }, ALPHA_WARNING_SESSION_KEY);
       await page.route('**/api/currency/currencies', async route => {
         await route.fulfill({
           status: 200,

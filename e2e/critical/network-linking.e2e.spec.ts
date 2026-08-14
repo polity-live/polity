@@ -1,3 +1,5 @@
+import { ALPHA_WARNING_SESSION_KEY } from '@/features/shared/constants';
+
 import { expect, test } from '../fixtures/test';
 import { ensureE2EAuthUser } from '../fixtures/auth';
 import { db, e2eBaseUrl } from '../fixtures/db';
@@ -42,9 +44,9 @@ test('links two groups after realtime approval by a second administrator @pr @cr
   `;
 
   const approverContext = await browser.newContext({ baseURL: e2eBaseUrl() });
-  await approverContext.addInitScript(() => {
-    window.sessionStorage.setItem('polity.alphaWarning.0.11.1.acknowledged', 'true');
-  });
+  await approverContext.addInitScript(alphaWarningSessionKey => {
+    window.sessionStorage.setItem(alphaWarningSessionKey, 'true');
+  }, ALPHA_WARNING_SESSION_KEY);
   const approverPage = await approverContext.newPage();
   try {
     await approverPage.goto('/auth/sign-in', { waitUntil: 'domcontentloaded' });
