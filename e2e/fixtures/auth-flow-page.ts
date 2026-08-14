@@ -20,6 +20,9 @@ export async function signInThroughUi(
   const password = form.locator('#password');
   const submit = form.locator('button[data-action-id="auth.sign-in.submit.password"]');
 
+  await expect(page.getByTestId('app-hydration')).toHaveAttribute('data-state', 'hydrated', {
+    timeout: 60_000,
+  });
   await expect(form).toBeVisible();
   await form.evaluate(async element => {
     const animations = new Set<Animation>();
@@ -29,10 +32,12 @@ export async function signInThroughUi(
     await Promise.all([...animations].map(animation => animation.finished.catch(() => undefined)));
   });
 
-  await email.fill(user.email);
-  await password.fill(user.password);
-  await expect(email).toHaveValue(user.email);
-  await expect(password).toHaveValue(user.password);
+  await expect(async () => {
+    await email.fill(user.email);
+    await password.fill(user.password);
+    await expect(email).toHaveValue(user.email, { timeout: 1_000 });
+    await expect(password).toHaveValue(user.password, { timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
   await expect(submit).toBeEnabled();
   await submit.click();
   await expect.poll(() => new URL(page.url()).pathname, { timeout: 90_000 }).toMatch(expectedPath);
