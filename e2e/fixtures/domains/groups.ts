@@ -1,5 +1,7 @@
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 
+import { ALPHA_WARNING_SESSION_KEY } from '@/features/shared/constants';
+
 import { authenticateActor, removeActorAuthState, type E2EActorUser } from '../auth';
 import { db, e2eBaseUrl } from '../db';
 import { waitForAppReady } from '../readiness';
@@ -25,9 +27,9 @@ export async function openGroupActorPage(
     baseURL: e2eBaseUrl(),
     storageState: actor.storageStatePath,
   });
-  await context.addInitScript(() => {
-    window.sessionStorage.setItem('polity.alphaWarning.0.11.1.acknowledged', 'true');
-  });
+  await context.addInitScript(alphaWarningSessionKey => {
+    window.sessionStorage.setItem(alphaWarningSessionKey, 'true');
+  }, ALPHA_WARNING_SESSION_KEY);
   const page = await context.newPage();
   return {
     context,

@@ -4,6 +4,8 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ALPHA_WARNING_SESSION_KEY } from '@/features/shared/constants';
+
 const { dismissMock, warningMock } = vi.hoisted(() => ({
   dismissMock: vi.fn(),
   warningMock: vi.fn(),
@@ -16,7 +18,6 @@ vi.mock('sonner', () => ({
   },
 }));
 
-const ALPHA_WARNING_SESSION_KEY = 'polity.alphaWarning.0.11.1.acknowledged';
 const ALPHA_WARNING_TOAST_ID = 'alpha-warning';
 const APP_TUTORIAL_SESSION_CHANGE_EVENT = 'polity:app-tutorial-session-change';
 const APP_TUTORIAL_SESSION_STORAGE_KEY = 'polity:app-tutorial-session-active';

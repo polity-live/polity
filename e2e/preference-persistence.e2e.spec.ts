@@ -1,3 +1,5 @@
+import { ALPHA_WARNING_SESSION_KEY } from '@/features/shared/constants';
+
 import { expect, test } from './fixtures/test';
 import { signInThroughUi } from './fixtures/auth-flow-page';
 import { db } from './fixtures/db';
@@ -52,9 +54,9 @@ test('keeps language and theme through a fresh authenticated session @pr @mobile
       .toEqual({ language: 'de', theme: 'dark' });
 
     resumedContext = await browser.newContext({ baseURL: new URL(page.url()).origin });
-    await resumedContext.addInitScript(() => {
-      window.sessionStorage.setItem('polity.alphaWarning.0.11.1.acknowledged', 'true');
-    });
+    await resumedContext.addInitScript(alphaWarningSessionKey => {
+      window.sessionStorage.setItem(alphaWarningSessionKey, 'true');
+    }, ALPHA_WARNING_SESSION_KEY);
     await resumedContext.route('**/api/currency/currencies', route =>
       route.fulfill({
         status: 200,

@@ -1,5 +1,7 @@
 import type { BrowserContext } from '@playwright/test';
 
+import { ALPHA_WARNING_SESSION_KEY } from '@/features/shared/constants';
+
 import { expect, test } from './fixtures/test';
 import { signInThroughUi } from './fixtures/auth-flow-page';
 import { e2eBaseUrl } from './fixtures/db';
@@ -76,9 +78,9 @@ test('globally revokes sessions when the password changes @nightly @agent1-promo
 
   try {
     secondaryContext = await browser.newContext({ baseURL: e2eBaseUrl() });
-    await secondaryContext.addInitScript(() => {
-      window.sessionStorage.setItem('polity.alphaWarning.0.11.1.acknowledged', 'true');
-    });
+    await secondaryContext.addInitScript(alphaWarningSessionKey => {
+      window.sessionStorage.setItem(alphaWarningSessionKey, 'true');
+    }, ALPHA_WARNING_SESSION_KEY);
     await mockCurrencyApi(secondaryContext);
     const secondaryPage = await secondaryContext.newPage();
     await secondaryPage.goto('/auth/sign-in');
