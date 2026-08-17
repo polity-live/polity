@@ -104,7 +104,7 @@ jobs:
           done
       - name: Upload critical repetition evidence and diagnostics
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: critical-repeat-shard-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -138,7 +138,7 @@ jobs:
             --suite critical-repeat \
             --commit-sha "$GITHUB_SHA"
       - name: Persist validated 20-run proof
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: critical-repeat-proof-${{ github.run_id }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -242,7 +242,7 @@ jobs:
           done
       - name: Upload cold-stack evidence and diagnostics
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: cold-stack-shard-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -276,7 +276,7 @@ jobs:
             --suite cold-stack \
             --commit-sha "$GITHUB_SHA"
       - name: Persist validated 30-stack proof
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: cold-stack-proof-${{ github.run_id }}-${{ github.run_attempt }}
           if-no-files-found: error

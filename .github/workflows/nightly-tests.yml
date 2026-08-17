@@ -41,7 +41,7 @@ jobs:
         run: npm run test:mutation
       - name: Upload deep-quality reports
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-deep-quality-${{ github.run_attempt }}
           if-no-files-found: ignore
@@ -132,7 +132,7 @@ jobs:
         run: npx playwright test --config=playwright.nightly.config.ts --project="$PROJECT" $EXTRA
       - name: Upload diagnostics
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-${{ matrix.name }}-${{ github.run_attempt }}
           if-no-files-found: ignore
@@ -185,7 +185,7 @@ jobs:
       - run: npx playwright test --project=chromium-desktop --grep @performance
       - name: Upload measurements and diagnostics
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-performance-${{ github.run_attempt }}
           if-no-files-found: ignore
@@ -241,7 +241,7 @@ jobs:
         run: npx playwright test --project=chromium-desktop --grep @pr --repeat-each=20 --workers=1
       - name: Upload stability diagnostics
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-stability-${{ github.run_attempt }}
           if-no-files-found: ignore

@@ -91,7 +91,7 @@ jobs:
           done
       - name: Upload same-stack evidence and diagnostics
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: agent1-promotion-repeat-${{ github.run_attempt }}
           if-no-files-found: error
@@ -181,7 +181,7 @@ jobs:
           exit "$exit_code"
       - name: Upload fresh-stack evidence and diagnostics
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: agent1-promotion-cold-${{ matrix.stack }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -229,7 +229,7 @@ jobs:
             exit 1
           fi
       - name: Upload verified promotion proof
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: agent1-promotion-proof-${{ github.run_id }}-${{ github.run_attempt }}
           if-no-files-found: error
