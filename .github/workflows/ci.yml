@@ -182,7 +182,7 @@ jobs:
       - name: Download component-flow markers
         if: always()
         continue-on-error: true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: component-flow-marker-*-${{ github.run_attempt }}
           path: component-flow-markers
@@ -280,7 +280,7 @@ jobs:
       - run: npm install --global npm@${NPM_VERSION}
       - run: npm ci
       - name: Download coverage blobs
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: coverage-blob-*-${{ github.run_attempt }}
           path: ${{ runner.temp }}/coverage-blobs
@@ -371,7 +371,7 @@ jobs:
       - name: Download service-integration markers
         if: always()
         continue-on-error: true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: service-integration-marker-*-${{ github.run_attempt }}
           path: service-integration-markers
@@ -617,7 +617,7 @@ jobs:
           cache: npm
       - run: npm install --global npm@${NPM_VERSION}
       - run: npm ci
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           pattern: e2e-blob-*-${{ github.run_attempt }}
