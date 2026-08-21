@@ -1,6 +1,6 @@
 -- =============================================================================
 -- 23_storage.sql — Storage RLS policies
--- Buckets are defined in config.toml and provisioned via: npx supabase seed buckets
+-- Buckets are defined in config.toml and provisioned via: pnpm exec supabase seed buckets
 -- =============================================================================
 
 -- ── Avatars bucket policies ─────────────────────────────────────────

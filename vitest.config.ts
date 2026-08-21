@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config';
 import path from 'node:path';
 
 const staticAuditTests = [
+  'tools/testing/__tests__/package-manager-contract.static-contract.test.ts',
   'tools/testing/__tests__/workflow-contract.static-contract.test.ts',
   'src/features/pwa/__tests__/earlyInstallPromptCaptureScript.static-contract.test.ts',
   'src/features/pwa/__tests__/manifestAssets.static-contract.test.ts',

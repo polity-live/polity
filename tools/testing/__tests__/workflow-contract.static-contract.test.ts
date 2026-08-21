@@ -8,15 +8,45 @@ function workflow(name: string) {
   return fs.readFileSync(path.join(root, '.github', 'workflows', name), 'utf8');
 }
 
-describe('GitHub workflow contracts', () => {
-  it('retries transient npm registry failures with bounded backoff', () => {
-    const ci = workflow('ci.yml');
+function repositoryFile(...segments: string[]) {
+  return fs.readFileSync(path.join(root, ...segments), 'utf8');
+}
 
-    expect(ci).toContain('NPM_CONFIG_FETCH_RETRIES: "5"');
-    expect(ci).toContain('NPM_CONFIG_FETCH_RETRY_FACTOR: "2"');
-    expect(ci).toContain('NPM_CONFIG_FETCH_RETRY_MINTIMEOUT: "20000"');
-    expect(ci).toContain('NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT: "120000"');
-    expect(ci).toContain('NPM_CONFIG_FETCH_TIMEOUT: "300000"');
+describe('GitHub workflow contracts', () => {
+  it('uses one pinned pnpm setup and bounded registry retries', () => {
+    const setup = repositoryFile('.github', 'actions', 'setup-project', 'action.yml');
+    const workspace = repositoryFile('pnpm-workspace.yaml');
+
+    expect(setup).toContain('pnpm/action-setup@v6');
+    expect(setup).toContain('actions/setup-node@v7');
+    expect(setup).toContain('version: 10.34.5');
+    expect(setup).toContain('node-version: 24.18.0');
+    expect(setup).toContain('cache: pnpm');
+    expect(setup).toContain('pnpm install --frozen-lockfile');
+    expect(workspace).toContain('fetchRetries: 5');
+    expect(workspace).toContain('fetchRetryFactor: 2');
+    expect(workspace).toContain('fetchRetryMintimeout: 20000');
+    expect(workspace).toContain('fetchRetryMaxtimeout: 120000');
+    expect(workspace).toContain('fetchTimeout: 300000');
+
+    const workflows = [
+      'ci.yml',
+      'e2e-acceptance.yml',
+      'e2e-agent1-promotion.yml',
+      'nightly-tests.yml',
+    ];
+    for (const name of workflows) {
+      const contents = workflow(name);
+      expect(contents).toContain('uses: ./.github/actions/setup-project');
+      expect(contents).not.toContain('actions/setup-node@v6');
+    }
+    const combined = workflows.map(workflow).join('\n');
+    expect(combined).toContain('supabase/setup-cli@v3');
+    expect(combined).toContain('actions/upload-artifact@v7');
+    expect(combined).toContain('actions/download-artifact@v8');
+    expect(combined).not.toContain('supabase/setup-cli@v1');
+    expect(combined).not.toContain('actions/upload-artifact@v6');
+    expect(combined).not.toContain('actions/download-artifact@v7');
   });
 
   it('uses valid Supabase startup syntax and the published dependency-review ref', () => {
@@ -37,7 +67,7 @@ describe('GitHub workflow contracts', () => {
     for (const id of ['static', 'accountability', 'format', 'lint', 'typecheck']) {
       expect(staticAnalysis).toContain(`- id: ${id}`);
       expect(staticAnalysis).toMatch(
-        new RegExp(`- id: ${id}\\n(?:.*\\n){1,4}\\s+continue-on-error: true`, 'u')
+        new RegExp(`- id: ${id}\\r?\\n(?:.*\\r?\\n){1,4}\\s+continue-on-error: true`, 'u')
       );
     }
     expect(staticAnalysis.match(/if: always\(\)/gu)).toHaveLength(5);
@@ -57,8 +87,8 @@ describe('GitHub workflow contracts', () => {
     expect(e2e.match(/shard: [12]\/2/gu)).toHaveLength(2);
     expect(e2e.match(/project: chromium-desktop/gu)).toHaveLength(7);
     expect(e2e.match(/project: chromium-mobile/gu)).toHaveLength(2);
-    expect(ci).toContain('E2E_APP_COMMAND: npm run start:e2e');
-    expect(ci).toContain('run: npm run build:e2e');
+    expect(ci).toContain('E2E_APP_COMMAND: pnpm run start:e2e');
+    expect(ci).toContain('run: pnpm run build:e2e');
     expect(e2e).toContain('timeout-minutes: 25');
     expect(e2e).toContain('for attempt in 1 2 3; do');
     expect(e2e).toContain('if supabase db reset --local --no-seed; then');
@@ -73,7 +103,7 @@ describe('GitHub workflow contracts', () => {
     expect(gate).toContain('name: Validate E2E blob reports');
     expect(gate).toContain("find all-blob-reports -type f -name 'report-*.zip'");
     expect(gate).toContain('Expected nine E2E blob reports, received $blob_count');
-    expect(gate).toContain('npx playwright merge-reports --reporter html all-blob-reports');
+    expect(gate).toContain('pnpm exec playwright merge-reports --reporter html all-blob-reports');
     expect(gate).toContain('name: Require successful E2E shards');
     expect(gate).toContain('E2E_SHARDS_RESULT: ${{ needs.e2e-tests.result }}');
     expect(gate).toContain('if [[ "$E2E_SHARDS_RESULT" != "success" ]]');
@@ -111,7 +141,7 @@ describe('GitHub workflow contracts', () => {
     expect(ci).toContain('shard: [1, 2, 3, 4]');
     expect(ci).toContain('COVERAGE_SHARD_ARTIFACT_DIR="$RUNNER_TEMP/polity-coverage-shards"');
     expect(ci).not.toContain('COVERAGE_SHARD_ARTIFACT_DIR: ${{ runner.temp }}');
-    expect(ci).toContain('npm run test:coverage:shard -- "${{ matrix.shard }}/4"');
+    expect(ci).toContain('pnpm run test:coverage:shard -- "${{ matrix.shard }}/4"');
     expect(ci).toContain('path: .vitest-reports/blob-${{ matrix.shard }}-4.json');
     expect(ci).not.toContain('\n  coverage-tests:');
     expect(ratchet).toContain('name: Coverage Ratchet');
@@ -123,9 +153,9 @@ describe('GitHub workflow contracts', () => {
     expect(ratchet).toContain('--merge-reports "$RUNNER_TEMP/coverage-blobs"');
     expect(ratchet).toContain('"--coverage.reportsDirectory=coverage"');
     expect(ratchet).toContain('node tools/testing/check-coverage-ratchet.mjs');
-    expect(ratchet).toContain('npm run test:coverage:branches:check');
-    expect(ratchet).toContain('npm run test:coverage:changed');
-    expect(ratchet).toContain('npm run test:accountability:coverage');
+    expect(ratchet).toContain('pnpm run test:coverage:branches:check');
+    expect(ratchet).toContain('pnpm run test:coverage:changed');
+    expect(ratchet).toContain('pnpm run test:accountability:coverage');
     expect(ratchet).not.toContain('coverage-baseline');
     expect(ratchet).not.toContain('compare-coverage-reports.mjs');
   });
@@ -153,7 +183,7 @@ describe('GitHub workflow contracts', () => {
     const nightly = workflow('nightly-tests.yml');
     const acceptance = workflow('e2e-acceptance.yml');
 
-    expect(nightly).toContain('npm run test:mutation');
+    expect(nightly).toContain('pnpm run test:mutation');
     expect(nightly).toContain('--repeat-each=20');
     expect(nightly.match(/project: chromium-desktop/gu)).toHaveLength(3);
     expect(nightly.match(/project: chromium-mobile/gu)).toHaveLength(2);
@@ -188,7 +218,9 @@ describe('GitHub workflow contracts', () => {
 
     expect(promotion).toContain('workflow_dispatch:');
     expect(promotion).not.toContain('pull_request:');
-    expect(promotion).toContain('NODE_VERSION: "24.18.0"');
+    expect(repositoryFile('.github', 'actions', 'setup-project', 'action.yml')).toContain(
+      'node-version: 24.18.0'
+    );
     expect(promotion).toContain('for iteration in $(seq 1 10); do');
     expect(promotion).toContain('stack: [1, 2, 3]');
     expect(promotion.match(/--grep '@agent1-promotion'/gu)).toHaveLength(2);

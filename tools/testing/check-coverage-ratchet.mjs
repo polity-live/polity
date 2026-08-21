@@ -5,7 +5,7 @@ const summaryPath = path.resolve('coverage/coverage-summary.json');
 const baselinePath = path.join(import.meta.dirname, 'coverage-ratchet.json');
 
 if (!fs.existsSync(summaryPath)) {
-  console.error('Missing coverage/coverage-summary.json. Run npm run test:coverage first.');
+  console.error('Missing coverage/coverage-summary.json. Run pnpm run test:coverage first.');
   process.exit(1);
 }
 

@@ -5,7 +5,7 @@ import path from 'node:path';
 const coveragePath = path.resolve('coverage/coverage-final.json');
 const GIT_OUTPUT_MAX_BUFFER = 64 * 1024 * 1024;
 if (!fs.existsSync(coveragePath)) {
-  console.error('Missing coverage/coverage-final.json. Run npm run test:coverage first.');
+  console.error('Missing coverage/coverage-final.json. Run pnpm run test:coverage first.');
   process.exit(1);
 }
 

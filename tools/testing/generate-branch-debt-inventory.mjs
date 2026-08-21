@@ -31,7 +31,7 @@ const serialized = `${JSON.stringify(inventory, null, 2)}\n`;
 if (process.argv.includes('--check')) {
   if (!fs.existsSync(targetPath) || fs.readFileSync(targetPath, 'utf8') !== serialized) {
     console.error(
-      'Branch debt inventory is stale. Resolve verified reductions with npm run test:coverage:branches:resolve.'
+      'Branch debt inventory is stale. Resolve verified reductions with pnpm run test:coverage:branches:resolve.'
     );
     process.exit(1);
   }

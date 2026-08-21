@@ -40,7 +40,7 @@ const serialized = await formatGeneratedJson(serializeUiActionCatalog(catalog), 
 if (process.argv.includes('--check')) {
   const current = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : '';
   if (current !== serialized) {
-    console.error('UI action catalog is stale. Run npm run test:ui-actions:update.');
+    console.error('UI action catalog is stale. Run pnpm run test:ui-actions:update.');
     process.exit(1);
   }
   console.info(`UI action catalog is current (${catalog.entries.length} actions).`);

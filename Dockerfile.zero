@@ -2,18 +2,14 @@ FROM node:24.18.0-bookworm-slim
 
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y python3 make g++ libreadline-dev libncurses-dev \
-    && rm -rf /var/lib/apt/lists/*
+RUN corepack enable \
+    && corepack prepare pnpm@10.34.5 --activate
 
-RUN npm install --global npm@11.18.0
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-COPY package.json package-lock.json ./
-
-RUN npm ci --omit=dev --ignore-scripts \
-    && node node_modules/@rocicorp/zero-sqlite3/deps/gen-unicode-case.mjs > node_modules/@rocicorp/zero-sqlite3/src/util/unicode_case_data.h \
-    && npm --prefix node_modules/@rocicorp/zero-sqlite3 run build-release \
-    && npm cache clean --force
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts \
+    && pnpm rebuild @parcel/watcher @rocicorp/zero-sqlite3 esbuild protobufjs \
+    && pnpm store prune
 
 EXPOSE 4848
 

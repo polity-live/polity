@@ -46,7 +46,7 @@ const serialized = await formatGeneratedJson(
 if (process.argv.includes('--check')) {
   const current = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : '';
   if (current !== serialized) {
-    console.error('Coverage manifest is stale. Run npm run test:coverage:manifest:update.');
+    console.error('Coverage manifest is stale. Run pnpm run test:coverage:manifest:update.');
     process.exit(1);
   }
   console.info(`Coverage manifest is current (${files.length} tracked files).`);

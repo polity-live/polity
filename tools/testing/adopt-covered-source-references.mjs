@@ -9,7 +9,7 @@ import { listRepositoryFiles } from './coverage-scope.mjs';
 const root = path.resolve(import.meta.dirname, '../..');
 const coverageFile = path.join(root, 'coverage/coverage-final.json');
 if (!fs.existsSync(coverageFile)) {
-  console.error('Missing coverage/coverage-final.json. Run npm run test:coverage first.');
+  console.error('Missing coverage/coverage-final.json. Run pnpm run test:coverage first.');
   process.exit(1);
 }
 

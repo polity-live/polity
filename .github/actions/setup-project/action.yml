@@ -1,0 +1,27 @@
+name: Set up Polity
+description: Configure the pinned Node.js and pnpm runtimes and install dependencies.
+
+inputs:
+  install:
+    description: Install dependencies with the frozen lockfile.
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up pnpm 10.34.5
+      uses: pnpm/action-setup@v6
+      with:
+        version: 10.34.5
+        run_install: false
+    - name: Set up Node.js 24.18.0
+      uses: actions/setup-node@v7
+      with:
+        node-version: 24.18.0
+        cache: pnpm
+        cache-dependency-path: pnpm-lock.yaml
+    - name: Install dependencies
+      if: inputs.install == 'true'
+      shell: bash
+      run: pnpm install --frozen-lockfile

@@ -47,30 +47,14 @@ describe('Resend template deployment CLI', () => {
     expect(() => parseEnvironment('preview')).toThrow('Invalid environment');
     expect(() => parseLocale('fr')).toThrow('Invalid locale');
     expect(
-      parseOptions(['newsletter'], {
-        npm_config_confirm_alias: 'alias',
-        npm_config_dry_run: 'true',
-        npm_config_environment: 'production',
-        npm_config_locale: 'en',
-      })
-    ).toEqual({
-      confirmAlias: 'alias',
-      dryRun: true,
-      environment: 'production',
-      locale: 'en',
-      slug: 'newsletter',
-    });
-    expect(
-      parseOptions(['newsletter', '--environment', 'development', '--locale=de', 'production'], {})
+      parseOptions(['newsletter', '--environment', 'development', '--locale=de', 'production'])
     ).toMatchObject({ environment: 'production', locale: 'de' });
-    expect(() => parseOptions(['newsletter', '--confirm-alias'], {})).toThrow(
-      'exact production alias'
-    );
-    expect(parseOptions(['newsletter', '--confirm-alias', 'alias'], {})).toMatchObject({
+    expect(() => parseOptions(['newsletter', '--confirm-alias'])).toThrow('exact production alias');
+    expect(parseOptions(['newsletter', '--confirm-alias', 'alias'])).toMatchObject({
       confirmAlias: 'alias',
     });
-    expect(() => parseOptions(['newsletter', '--environment'], {})).toThrow('requires development');
-    expect(() => parseOptions(['newsletter', '--locale'], {})).toThrow('requires de or en');
+    expect(() => parseOptions(['newsletter', '--environment'])).toThrow('requires development');
+    expect(() => parseOptions(['newsletter', '--locale'])).toThrow('requires de or en');
   });
 
   it('requires trimmed deployment credentials', () => {

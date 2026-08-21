@@ -91,7 +91,7 @@ const args = [
 ];
 const vitestCli = path.resolve(root, 'node_modules/vitest/vitest.mjs');
 if (!fs.existsSync(vitestCli)) {
-  console.error(`Vitest CLI missing at ${vitestCli}. Run npm ci first.`);
+  console.error(`Vitest CLI missing at ${vitestCli}. Run pnpm install --frozen-lockfile first.`);
   process.exit(1);
 }
 const result = spawnSync(process.execPath, [vitestCli, ...args.slice(1)], {
