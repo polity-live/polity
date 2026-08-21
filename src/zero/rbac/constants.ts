@@ -24,6 +24,14 @@ export const PERMISSION_IMPLIES: Partial<Record<ActionType, ActionType[]>> = {
   manageNotifications: ['viewNotifications'],
 };
 
+/** Actions that satisfy an entity's canonical `view` permission. */
+export const VIEW_IMPLYING_ACTIONS = [
+  'view',
+  ...Object.entries(PERMISSION_IMPLIES)
+    .filter(([, impliedActions]) => impliedActions?.includes('view'))
+    .map(([action]) => action),
+] as readonly ActionType[];
+
 /**
  * Default role templates for new groups.
  * These can be used to auto-generate roles when a group is created.
@@ -90,6 +98,7 @@ export const DEFAULT_GROUP_ROLES = [
     default_request_role: true,
     default_invite_role: true,
     permissions: [
+      { resource: 'groups' as ResourceType, action: 'view' as ActionType },
       { resource: 'amendments' as ResourceType, action: 'create' as ActionType },
       {
         resource: 'groupNotifications' as ResourceType,
@@ -472,6 +481,16 @@ export const GROUP_ACTION_RIGHTS = [
 export const BLOG_ACTION_RIGHTS = [
   {
     resource: 'blogs',
+    action: 'view',
+    label: translateText('generated.inline.0715_view_blogs_66e2af49'),
+  },
+  {
+    resource: 'blogs',
+    action: 'manage',
+    label: translateText('generated.inline.0714_manage_blogs_037c6223'),
+  },
+  {
+    resource: 'blogs',
     action: 'update',
     label: translateText('generated.inline.0036_update_blog_09ea894c'),
   },
@@ -498,6 +517,11 @@ export const BLOG_ACTION_RIGHTS = [
 ] as const;
 
 export const EVENT_ACTION_RIGHTS = [
+  {
+    resource: 'events',
+    action: 'view',
+    label: translateText('generated.inline.0719_view_events_6697f6b7'),
+  },
   {
     resource: 'agendaItems',
     action: 'manage',

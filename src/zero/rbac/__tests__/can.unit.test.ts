@@ -63,7 +63,8 @@ function expectQueryWhere(
 function expectAmendmentQuery(
   tx: ReturnType<typeof transaction>,
   callIndex: number,
-  amendmentId: string
+  amendmentId: string,
+  includeInvited = false
 ) {
   const ast = queryAst(tx, callIndex);
   expect(ast.table).toBe('amendment');
@@ -74,7 +75,9 @@ function expectAmendmentQuery(
       {
         column: 'status',
         operator: 'IN',
-        value: ['active', 'collaborator', 'member', 'admin'],
+        value: includeInvited
+          ? ['invited', 'active', 'collaborator', 'member', 'admin']
+          : ['active', 'collaborator', 'member', 'admin'],
       },
     ])
   );
@@ -278,6 +281,11 @@ describe('can', () => {
     expectQueryWhere(tx, 4, 'blog_blogger', [
       { column: 'user_id', value: 'actor' },
       { column: 'blog_id', value: 'blog' },
+      {
+        column: 'status',
+        operator: 'IN',
+        value: ['owner', 'admin', 'member', 'writer'],
+      },
     ]);
     expectAmendmentQuery(tx, 5, 'amendment');
 
@@ -381,10 +389,11 @@ describe('can', () => {
         },
       ],
       bloggerRelations: [
-        { id: 'blogger-without-role', blog: undefined, role: undefined },
+        { id: 'blogger-without-role', blog: undefined, role: undefined, status: undefined },
         {
           id: 'blogger',
           blog: { id: 'blog' },
+          status: undefined,
           role: {
             id: 'blog-role',
             name: '',
@@ -506,10 +515,10 @@ describe('can', () => {
       {
         column: 'status',
         operator: 'IN',
-        value: ['active', 'confirmed', 'member', 'admin'],
+        value: ['invited', 'active', 'confirmed', 'member', 'admin'],
       },
     ]);
-    expectAmendmentQuery(tx, 1, 'amendment');
+    expectAmendmentQuery(tx, 1, 'amendment', true);
   });
 
   it.each([

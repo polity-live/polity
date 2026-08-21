@@ -28,7 +28,13 @@ const BLOG = 'blog-m06';
 const AMENDMENT = 'amendment-m06';
 
 function role(scope: Role['scope'], actionRights?: ActionRight[]): Role {
-  return { id: `${scope}-role`, name: 'Role', scope, actionRights };
+  return {
+    id: `${scope}-role`,
+    name: 'Role',
+    scope,
+    [scope]: { id: { group: GROUP, event: EVENT, blog: BLOG, amendment: AMENDMENT }[scope] },
+    actionRights,
+  };
 }
 
 function groupRight(overrides: Partial<ActionRight> = {}): ActionRight {
@@ -89,6 +95,7 @@ function blogger(overrides: Partial<BloggerRelation> = {}): BloggerRelation {
   return {
     id: 'blogger',
     blog: { id: BLOG },
+    status: 'member',
     role: role('blog', [blogRight()]),
     ...overrides,
   };
@@ -135,12 +142,12 @@ describe('check RBAC mutation decision table', () => {
     }
     expect(access.isGroupMember([membership({ status: 'invited' })], GROUP)).toBe(false);
 
-    for (const status of [undefined, 'active', 'confirmed', 'member', 'admin']) {
+    for (const status of ['active', 'confirmed', 'member', 'admin']) {
       expect(access.isEventParticipant([participation({ status })], EVENT)).toBe(true);
     }
     expect(access.isEventParticipant([participation({ status: 'invited' })], EVENT)).toBe(false);
 
-    for (const status of [undefined, 'active', 'collaborator', 'member', 'admin']) {
+    for (const status of ['active', 'collaborator', 'member', 'admin']) {
       expect(
         access.isAmendmentCollaborator(
           {
@@ -349,7 +356,7 @@ describe('check RBAC mutation decision table', () => {
     ).toBe(true);
   });
 
-  it('evaluates normalized collaborator rights with inheritance and optional scope', () => {
+  it('evaluates normalized collaborator rights with inheritance and exact scope', () => {
     const amendment = (rights?: ActionRight[]): Amendment => ({
       id: AMENDMENT,
       amendmentRoleCollaborators: [
@@ -380,7 +387,7 @@ describe('check RBAC mutation decision table', () => {
         'update',
         'amendments'
       )
-    ).toBe(true);
+    ).toBe(false);
 
     for (const right of [
       { ...valid, resource: 'groups' as const },
@@ -415,18 +422,21 @@ describe('check RBAC mutation decision table', () => {
       ({
         id: AMENDMENT,
         collaborators: [
-          { id: 'missing-user', role: { action_rights: rights } },
+          {
+            id: 'missing-user',
+            role: { scope: 'amendment', amendment_id: AMENDMENT, action_rights: rights },
+          },
           {
             id: 'pending',
             user: { id: ACTOR },
             status: 'invited',
-            role: { action_rights: rights },
+            role: { scope: 'amendment', amendment_id: AMENDMENT, action_rights: rights },
           },
           {
             id: 'active',
             user: { id: ACTOR },
             status,
-            role: { action_rights: rights },
+            role: { scope: 'amendment', amendment_id: AMENDMENT, action_rights: rights },
           },
         ],
       }) as unknown as Amendment;
@@ -447,7 +457,7 @@ describe('check RBAC mutation decision table', () => {
         'update',
         'amendments'
       )
-    ).toBe(true);
+    ).toBe(false);
     for (const right of [
       { ...valid, resource: 'groups' },
       { ...valid, action: 'vote' },

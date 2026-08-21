@@ -71,9 +71,9 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   }),
   translate: (key: string) =>
     key === 'generated.inline.0030_public_61c9b2b1'
-      ? 'public'
+      ? 'Öffentlich'
       : key === 'generated.inline.0031_authenticated_8fda38ce'
-        ? 'authenticated'
+        ? 'Authentifiziert'
         : key,
 }));
 
@@ -350,7 +350,26 @@ describe('useCreateGroupForm state and validation', () => {
     const review = findField(result.current, 'review').props;
     expect(review.subtitle).toBe('Rich description');
     expect(review.hashtags).toEqual(['civic']);
+    expect(review.sections[0].fields).toContainEqual({
+      label: 'pages.create.common.visibility',
+      value: 'pages.create.common.authenticated',
+    });
     expect(review.sections.flatMap((section: any) => section.fields).length).toBeGreaterThan(4);
+  });
+
+  it.each([
+    ['public', 'pages.create.common.public'],
+    ['authenticated', 'pages.create.common.authenticated'],
+    ['private', 'pages.create.common.private'],
+  ] as const)('shows the %s visibility label in review', (visibility, expected) => {
+    const { result } = renderHook(() => useCreateGroupForm());
+
+    act(() => findField(result.current, 'image-tags').props.onVisibilityChange(visibility));
+
+    expect(findField(result.current, 'review').props.sections[0].fields).toContainEqual({
+      label: 'pages.create.common.visibility',
+      value: expected,
+    });
   });
 
   it('restores complete and sparse drafts through explicit defaults', () => {

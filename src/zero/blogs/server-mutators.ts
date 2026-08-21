@@ -18,7 +18,6 @@ import {
   updateBlogSupportVoteSchema,
   deleteBlogSupportVoteSchema,
 } from '../votes/schema';
-import { DEFAULT_BLOG_ROLES } from '../rbac/constants';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 const APPROVED_BLOGGER_STATUSES = new Set(['member', 'writer']);
@@ -42,69 +41,6 @@ async function loadBlogNotificationContext(
 export const blogServerMutators = {
   create: defineMutator(createBlogSchema, async ({ tx, ctx, args }) => {
     await mutators.blogs.create.fn({ tx, ctx, args });
-
-    const now = Date.now();
-    let ownerRoleId: string | null = null;
-    const totalRoles = DEFAULT_BLOG_ROLES.length;
-
-    for (let index = 0; index < totalRoles; index++) {
-      const roleDef = DEFAULT_BLOG_ROLES[index];
-      const roleId = crypto.randomUUID();
-
-      if (roleDef.name === 'Owner') {
-        ownerRoleId = roleId;
-      }
-
-      await tx.mutate.role.insert({
-        id: roleId,
-        name: roleDef.name,
-        description: roleDef.description,
-        scope: 'blog',
-        group_id: null,
-        event_id: null,
-        amendment_id: null,
-        blog_id: args.id,
-        assignment_mode: 'assigned',
-        visibility: 'public',
-        term_start_date: null,
-        is_recurring: false,
-        recurrence_pattern: null,
-        recurrence_rule: null,
-        recurrence_interval: null,
-        recurrence_days: null,
-        recurrence_end_date: null,
-        scheduled_revote_date: null,
-        default_request_role: false,
-        default_invite_role: false,
-        assignee_kind: 'member',
-        sort_order: totalRoles - 1 - index,
-        created_at: now,
-      });
-
-      for (const permission of roleDef.permissions) {
-        await tx.mutate.action_right.insert({
-          id: crypto.randomUUID(),
-          resource: permission.resource,
-          action: permission.action,
-          role_id: roleId,
-          group_id: null,
-          event_id: null,
-          amendment_id: null,
-          blog_id: args.id,
-          created_at: now,
-        });
-      }
-    }
-
-    await tx.mutate.blog_blogger.insert({
-      id: crypto.randomUUID(),
-      blog_id: args.id,
-      user_id: ctx.userID,
-      role_id: ownerRoleId,
-      status: 'owner',
-      visibility: args.visibility ?? 'public',
-      created_at: now,
-    });
   }),
 
   createFull: defineMutator(createBlogFullMutatorSchema, async ({ tx, ctx, args }) => {

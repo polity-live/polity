@@ -55,6 +55,8 @@ import {
 } from '../votes/schema';
 import { zql } from '../schema';
 import { denyPublicApiMutation } from '../rbac/authorize';
+import { DEFAULT_AMENDMENT_ROLES } from '../rbac/constants';
+import { creatorActionRightId, creatorRbacId, creatorRoleId } from '../rbac/creator-bootstrap';
 import {
   getOpenChangeRequestVisibilityScope,
   getResolvedChangeRequestVisibilityScope,
@@ -72,6 +74,83 @@ function denyPublicAmendmentProcessMutation(
   scope: string
 ) {
   denyPublicApiMutation(tx, { action, resource: 'amendments', scope });
+}
+
+async function bootstrapAmendmentCreatorRbac(
+  tx: Parameters<typeof denyPublicApiMutation>[0],
+  args: {
+    amendmentId: string;
+    creatorId: string;
+    visibility: string;
+    createdAt: number;
+  }
+) {
+  const totalRoles = DEFAULT_AMENDMENT_ROLES.length;
+  let authorRoleId: string | null = null;
+
+  for (let index = 0; index < totalRoles; index++) {
+    const roleDef = DEFAULT_AMENDMENT_ROLES[index];
+    const roleId = await creatorRoleId('amendment', args.amendmentId, roleDef.name);
+    if (roleDef.name === 'Author') authorRoleId = roleId;
+
+    await tx.mutate.role.insert({
+      id: roleId,
+      name: roleDef.name,
+      description: roleDef.description,
+      scope: 'amendment',
+      group_id: null,
+      event_id: null,
+      amendment_id: args.amendmentId,
+      blog_id: null,
+      assignee_kind: 'member',
+      assignment_mode: 'assigned',
+      visibility: 'public',
+      term_start_date: null,
+      is_recurring: false,
+      recurrence_pattern: null,
+      recurrence_rule: null,
+      recurrence_interval: null,
+      recurrence_days: null,
+      recurrence_end_date: null,
+      scheduled_revote_date: null,
+      default_request_role: false,
+      default_invite_role: false,
+      sort_order: totalRoles - 1 - index,
+      created_at: args.createdAt,
+    });
+
+    for (const permission of roleDef.permissions) {
+      await tx.mutate.action_right.insert({
+        id: await creatorActionRightId(
+          'amendment',
+          args.amendmentId,
+          roleDef.name,
+          permission.resource,
+          permission.action
+        ),
+        resource: permission.resource,
+        action: permission.action,
+        role_id: roleId,
+        group_id: null,
+        event_id: null,
+        amendment_id: args.amendmentId,
+        blog_id: null,
+        created_at: args.createdAt,
+      });
+    }
+  }
+
+  if (!authorRoleId) throw new Error('Default Author role is missing');
+
+  await tx.mutate.amendment_collaborator.insert({
+    id: await creatorRbacId('amendment', args.amendmentId, 'creator-collaborator', args.creatorId),
+    amendment_id: args.amendmentId,
+    user_id: args.creatorId,
+    role_id: authorRoleId,
+    status: 'admin',
+    visibility: args.visibility,
+    created_at: args.createdAt,
+  });
 }
 
 async function invokeCreateChangeRequest(input: {
@@ -474,6 +553,13 @@ export const amendmentSharedMutators = {
       current_process_run_id: args.current_process_run_id ?? null,
       created_at: now,
       updated_at: now,
+    });
+
+    await bootstrapAmendmentCreatorRbac(tx, {
+      amendmentId: args.id,
+      creatorId: userID,
+      visibility: args.visibility,
+      createdAt: now,
     });
   }),
 

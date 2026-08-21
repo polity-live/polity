@@ -8,6 +8,7 @@ import {
   applyEventManagerQueryAccess,
   applyEventParticipantOrManagerQueryAccess,
   applyEventQueryAccess,
+  applyGroupDiscoveryQueryAccess,
   applyGroupMembershipSelfOrManagerQueryAccess,
   applyGroupQueryAccess,
   applyStatementQueryAccess,
@@ -159,7 +160,7 @@ export const searchQueries = {
     }) => {
       let q: any = zql.search_document
         .related('topics')
-        .related('group', group => applyGroupQueryAccess(group, userID));
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID));
       q = applySearchDocumentQueryAccess(q, userID);
       q = applySearchText(q, query);
       q = applySpatialBounds(q, bounds);
@@ -195,7 +196,7 @@ export const searchQueries = {
     ({ args: { id, ownerUserId }, ctx: { userID } }) => {
       let q: any = zql.search_document
         .related('topics')
-        .related('group', group => applyGroupQueryAccess(group, userID))
+        .related('group', group => applyGroupDiscoveryQueryAccess(group, userID))
         .where('id', id);
       q = applySearchDocumentQueryAccess(q, userID);
       if (ownerUserId) q = q.where('owner_user_id', ownerUserId);
@@ -244,8 +245,12 @@ export const searchQueries = {
   searchableGroups: defineQuery(searchArgsSchema, ({ args: { limit, query }, ctx: { userID } }) => {
     const normalizedQuery = query.trim();
     const groupsQuery = normalizedQuery
-      ? applyGroupQueryAccess(zql.group, userID).where('name', 'ILIKE', `%${normalizedQuery}%`)
-      : applyGroupQueryAccess(zql.group, userID);
+      ? applyGroupDiscoveryQueryAccess(zql.group, userID).where(
+          'name',
+          'ILIKE',
+          `%${normalizedQuery}%`
+        )
+      : applyGroupDiscoveryQueryAccess(zql.group, userID);
 
     return groupsQuery
       .related('owner', user => applyUserQueryAccess(user, userID))

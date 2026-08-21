@@ -185,7 +185,7 @@ beforeEach(() => {
 });
 
 describe('group server creation and offline-member effects', () => {
-  it('creates default roles, rights, creator membership, conversation, counters, and graph', async () => {
+  it('delegates creator RBAC bootstrap and keeps server-only effects', async () => {
     const tx = createTx();
     tx.run.mockResolvedValueOnce([]).mockResolvedValueOnce(null);
     await mutators.create.fn({
@@ -194,13 +194,10 @@ describe('group server creation and offline-member effects', () => {
       args: { id: 'group', name: 'Group', group_type: 'base' } as never,
     });
     expect(mocks.shared.create.fn).toHaveBeenCalled();
-    expect(tx.mutate.role.insert).toHaveBeenCalledTimes(2);
-    expect(tx.mutate.role.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Member', visibility: 'private' })
-    );
-    expect(tx.mutate.action_right.insert).toHaveBeenCalledOnce();
-    expect(tx.mutate.group_membership.insert).toHaveBeenCalledOnce();
-    expect(tx.mutate.group_membership_role.insert).toHaveBeenCalledOnce();
+    expect(tx.mutate.role.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.action_right.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.group_membership.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.group_membership_role.insert).not.toHaveBeenCalled();
     expect(mocks.ensureConversation).toHaveBeenCalled();
     expect(mocks.syncConversation).toHaveBeenCalled();
   });

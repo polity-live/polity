@@ -40,9 +40,9 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
   translate: (key: string, values?: any) =>
     key === 'generated.inline.0030_public_61c9b2b1'
-      ? 'public'
+      ? 'Öffentlich'
       : key === 'generated.inline.0031_authenticated_8fda38ce'
-        ? 'authenticated'
+        ? 'Authentifiziert'
         : values?.value2775
           ? `${key}:${values.value2775}`
           : key,

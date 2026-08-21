@@ -15,6 +15,7 @@ describe('checkPermission amendment scope', () => {
           id: 'role-1',
           name: 'Editor',
           scope: 'amendment',
+          amendment: { id: 'amendment-1' },
           actionRights: [
             {
               id: 'right-1',
@@ -50,6 +51,8 @@ describe('checkPermission amendment scope', () => {
           status: 'member',
           role: {
             id: 'role-1',
+            scope: 'amendment',
+            amendment_id: 'amendment-1',
             action_rights: [
               {
                 id: 'right-1',
@@ -83,6 +86,8 @@ describe('checkPermission amendment scope', () => {
           status: 'invited',
           role: {
             id: 'role-1',
+            scope: 'amendment',
+            amendment_id: 'amendment-1',
             action_rights: [
               {
                 id: 'right-1',
@@ -99,6 +104,8 @@ describe('checkPermission amendment scope', () => {
           status: 'requested',
           role: {
             id: 'role-1',
+            scope: 'amendment',
+            amendment_id: 'amendment-1',
             action_rights: [
               {
                 id: 'right-1',

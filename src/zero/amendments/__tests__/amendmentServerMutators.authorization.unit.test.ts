@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PermissionError } from '../../rbac/errors';
-import { DEFAULT_AMENDMENT_ROLES } from '../../rbac/constants';
 import { encodeAppError } from '@/features/shared/errors/app-error';
 import * as editingModePolicy from '../editing-mode-policy';
 import * as eventModeTransition from '../event-mode-transition';
@@ -445,13 +444,12 @@ describe('amendmentServerMutators authorization', () => {
     ).resolves.toBeUndefined();
 
     expect(canMock).not.toHaveBeenCalled();
-    expect(tx.mutate.amendment_collaborator.insert).toHaveBeenCalledWith(
+    expect(amendmentCreateMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        amendment_id: 'amendment-1',
-        user_id: 'user-1',
-        status: 'admin',
+        args: expect.objectContaining({ id: 'amendment-1', event_id: 'event-1' }),
       })
     );
+    expect(tx.mutate.amendment_collaborator.insert).not.toHaveBeenCalled();
   });
 
   it('waits for an invited collaborator notification before completing', async () => {
@@ -2856,15 +2854,18 @@ describe('amendmentServerMutators authorization', () => {
     ).resolves.toBe('event-1');
   });
 
-  it('creates direct and cloned amendments across creator-role and counter branches', async () => {
+  it('delegates creator RBAC bootstrap and creates clone notifications', async () => {
     const direct = createAmendmentCreateTx();
-    direct.run.mockResolvedValueOnce({ id: 'creator-collaborator' });
     await amendmentServerMutators.create.fn({
       tx: direct as never,
       ctx: createCtx(),
       args: createAmendmentArgs(),
     });
-    expect(direct.mutate.amendment_collaborator.update).toHaveBeenCalledOnce();
+    expect(amendmentCreateMock).toHaveBeenCalled();
+    expect(direct.mutate.role.insert).not.toHaveBeenCalled();
+    expect(direct.mutate.action_right.insert).not.toHaveBeenCalled();
+    expect(direct.mutate.amendment_collaborator.insert).not.toHaveBeenCalled();
+    expect(direct.mutate.amendment_collaborator.update).not.toHaveBeenCalled();
 
     for (const title of ['Original title', null]) {
       const cloned = createAmendmentCreateTx();
@@ -2888,27 +2889,6 @@ describe('amendmentServerMutators authorization', () => {
         'notifyAmendmentCloned',
         expect.objectContaining({ originalAmendmentTitle: title ?? 'Amendment' })
       );
-    }
-
-    const roleDefinitions = DEFAULT_AMENDMENT_ROLES as unknown as Record<string, any>[];
-    const authorIndex = roleDefinitions.findIndex(role => role.name === 'Author');
-    const originalAuthor = roleDefinitions[authorIndex];
-    roleDefinitions[authorIndex] = { ...originalAuthor, name: 'Editor' };
-    try {
-      for (const existingAuthorRole of [{ id: 'existing-author' }, null]) {
-        const fallback = createAmendmentCreateTx();
-        fallback.run.mockResolvedValueOnce(existingAuthorRole).mockResolvedValueOnce(null);
-        await amendmentServerMutators.create.fn({
-          tx: fallback as never,
-          ctx: createCtx(),
-          args: createAmendmentArgs({ id: `fallback-${existingAuthorRole ? 'found' : 'missing'}` }),
-        });
-        expect(fallback.mutate.amendment_collaborator.insert).toHaveBeenCalledWith(
-          expect.objectContaining({ role_id: existingAuthorRole?.id ?? null })
-        );
-      }
-    } finally {
-      roleDefinitions[authorIndex] = originalAuthor;
     }
   });
 

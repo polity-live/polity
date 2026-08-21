@@ -148,12 +148,14 @@ describe('blog query nested authorization', () => {
     expect(calls).toEqual(
       expect.arrayContaining([
         ['cmp', 'subscriber_id', ctx.userID],
-        ['where', 'blog.bloggers', 'user_id', ctx.userID],
-        ['cmp', 'status', 'IN', ['owner', 'admin']],
-        ['exists', 'role'],
-        ['whereExists', 'role', 'action_rights'],
-        ['where', 'role.action_rights', 'resource', 'IN', ['blogs', 'blogBloggers']],
-        ['where', 'role.action_rights', 'action', 'manage'],
+        ['where', 'bloggers', 'user_id', ctx.userID],
+        ['where', 'bloggers', 'status', 'IN', ['owner', 'admin']],
+        ['where', 'roles', 'scope', 'blog'],
+        ['whereExists', 'roles', 'bloggers'],
+        ['where', 'roles.bloggers', 'status', 'IN', ['owner', 'admin', 'member', 'writer']],
+        ['whereExists', 'roles', 'blog_action_rights'],
+        ['where', 'roles.blog_action_rights', 'resource', 'IN', ['blogs', 'blogBloggers']],
+        ['where', 'roles.blog_action_rights', 'action', 'manage'],
       ])
     );
   });

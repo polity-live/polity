@@ -19,6 +19,7 @@ interface GroupStateOptions {
   includeByUser?: boolean;
   includeMembershipsWithUsers?: boolean;
   includeCurrentUserMembershipsWithGroups?: boolean;
+  includeCurrentUserGuestAccessesWithGroups?: boolean;
   includeAllRelationshipsWithGroups?: boolean;
 }
 
@@ -378,6 +379,7 @@ export function useGroupState(options: GroupStateOptions = {}) {
     includeByUser,
     includeMembershipsWithUsers,
     includeCurrentUserMembershipsWithGroups,
+    includeCurrentUserGuestAccessesWithGroups,
     includeAllRelationshipsWithGroups,
   } = options;
 
@@ -430,6 +432,12 @@ export function useGroupState(options: GroupStateOptions = {}) {
       : undefined
   );
 
+  const [currentUserGuestAccessesWithGroups, currentUserGuestAccessesWithGroupsResult] = useQuery(
+    includeCurrentUserGuestAccessesWithGroups
+      ? queries.groups.currentUserGuestAccessesWithGroups({})
+      : undefined
+  );
+
   const derivedRelationships = useMemo(
     () => deriveNormalizedGroupRelationships(allGroupConnections ?? []),
     [allGroupConnections]
@@ -441,12 +449,19 @@ export function useGroupState(options: GroupStateOptions = {}) {
       ...(currentUserMembershipsWithGroups ?? [])
         .map(membership => membership.group)
         .filter(Boolean),
+      ...(currentUserGuestAccessesWithGroups ?? []).map(access => access.group).filter(Boolean),
       ...(userGroupMemberships ?? []).map(membership => membership.group).filter(Boolean),
     ];
     return uniqueById(
       groupsToAugment.filter(Boolean) as unknown as readonly { id?: string | null }[]
     );
-  }, [currentUserMembershipsWithGroups, group, searchResults, userGroupMemberships]);
+  }, [
+    currentUserGuestAccessesWithGroups,
+    currentUserMembershipsWithGroups,
+    group,
+    searchResults,
+    userGroupMemberships,
+  ]);
   const augmentedGroup = useMemo(
     () =>
       augmentGroupWithDerivedNetworkMeta(group, allGroupConnections ?? [], groupAugmentationBase),
@@ -523,7 +538,9 @@ export function useGroupState(options: GroupStateOptions = {}) {
       groupId !== undefined &&
       membershipsWithUsersResult.type === 'unknown') ||
     (includeCurrentUserMembershipsWithGroups === true &&
-      currentUserMembershipsWithGroupsResult.type === 'unknown');
+      currentUserMembershipsWithGroupsResult.type === 'unknown') ||
+    (includeCurrentUserGuestAccessesWithGroups === true &&
+      currentUserGuestAccessesWithGroupsResult.type === 'unknown');
 
   return {
     group: augmentedGroup,
@@ -539,6 +556,7 @@ export function useGroupState(options: GroupStateOptions = {}) {
     userGroupMemberships: augmentedUserGroupMemberships,
     membershipsWithUsers: normalizeMemberships(membershipsWithUsers),
     currentUserMembershipsWithGroups: augmentedCurrentUserMembershipsWithGroups,
+    currentUserGuestAccessesWithGroups: currentUserGuestAccessesWithGroups ?? [],
     isLoading,
   };
 }

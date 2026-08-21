@@ -40,6 +40,7 @@ function applyEventCursor<T>(q: T, field: 'created_at' | 'start_date', start: an
 }
 
 const WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
+const DISCOVERY_EVENT_PARTICIPANT_STATUSES = ['invited', ...WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES];
 
 function applyEventAccess<T>(q: T, userID: string | undefined): T {
   return applyEventQueryAccess(q, userID);
@@ -302,7 +303,7 @@ export const eventQueries = {
   currentUserActiveParticipationsWithEvents: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.event_participant
       .where('user_id', userID)
-      .where('status', 'IN', WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES)
+      .where('status', 'IN', DISCOVERY_EVENT_PARTICIPANT_STATUSES)
       .whereExists('event', event => applyEventAccess(event, userID))
       .related('event', q =>
         q
@@ -310,7 +311,7 @@ export const eventQueries = {
           .related('group')
           .related('event_hashtags', hq => hq.related('hashtag'))
       )
-      .related('participant_roles', q => q.related('role'))
+      .related('participant_roles', q => q.related('role', role => role.related('action_rights')))
   ),
 
   // ── New queries (extracted from hooks.ts) ─────────────────────────
@@ -1056,8 +1057,10 @@ export const eventQueries = {
       zql.event_participant
         .where('user_id', userId)
         .where('user_id', userID)
-        .related('event', q => q.related('group'))
-        .related('participant_roles', q => q.related('role'))
+        .where('status', 'IN', DISCOVERY_EVENT_PARTICIPANT_STATUSES)
+        .whereExists('event', event => applyEventAccess(event, userID))
+        .related('event', q => applyEventAccess(q, userID).related('group'))
+        .related('participant_roles', q => q.related('role', role => role.related('action_rights')))
   ),
 
   /** Active participants for events where the current user participates or is creator. */

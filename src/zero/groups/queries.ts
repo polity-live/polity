@@ -6,6 +6,7 @@ import {
   applyDocumentQueryAccess,
   applyEventManagerQueryAccess,
   applyEventQueryAccess,
+  applyGroupDiscoveryQueryAccess,
   applyGroupQueryAccess,
   applyGroupManagerQueryAccess,
   applyGroupMembershipSelfOrManagerQueryAccess,
@@ -38,23 +39,31 @@ function applyGroupAccess<T>(q: T, userID: string | undefined): T {
   return applyGroupQueryAccess(q, userID);
 }
 
+/** Visibility of groups themselves; does not broaden access to their contents. */
+function applyGroupDiscoveryAccess<T>(q: T, userID: string | undefined): T {
+  return applyGroupDiscoveryQueryAccess(q, userID);
+}
+
 export const groupQueries = {
   // ── Existing queries (unchanged) ──────────────────────────────────
 
   byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyGroupAccess(zql.group.where('id', id), userID).one()
+    applyGroupDiscoveryAccess(zql.group.where('id', id), userID).one()
   ),
 
   byUser: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.group_membership
       .where('user_id', userID)
-      .related('group')
-      .related('membership_roles', q => q.related('role'))
+      .related('group', group => applyGroupDiscoveryAccess(group, userID))
+      .related('membership_roles', q => q.related('role', role => role.related('action_rights')))
       .orderBy('created_at', 'desc')
   ),
 
   search: defineQuery(z.object({ query: z.string() }), ({ args: { query }, ctx: { userID } }) =>
-    applyGroupAccess(zql.group.where('name', 'ILIKE', `%${query}%`), userID).orderBy('name', 'asc')
+    applyGroupDiscoveryAccess(zql.group.where('name', 'ILIKE', `%${query}%`), userID).orderBy(
+      'name',
+      'asc'
+    )
   ),
 
   memberships: defineQuery(
@@ -222,24 +231,24 @@ export const groupQueries = {
       zql.group_membership
         .where('user_id', user_id)
         .where('user_id', userID)
-        .related('group', q => q.related('owner'))
-        .related('membership_roles', q => q.related('role'))
+        .related('group', q => applyGroupDiscoveryAccess(q, userID).related('owner'))
+        .related('membership_roles', q => q.related('role', role => role.related('action_rights')))
   ),
 
   currentUserMembershipsWithGroups: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.group_membership
       .where('user_id', userID)
-      .related('group')
-      .related('membership_roles', q => q.related('role'))
+      .related('group', group => applyGroupDiscoveryAccess(group, userID))
+      .related('membership_roles', q => q.related('role', role => role.related('action_rights')))
   ),
 
   currentUserActiveMembershipsWithGroups: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.group_membership
       .where('user_id', userID)
       .where('status', 'IN', WIKI_ACTIVE_GROUP_MEMBERSHIP_STATUSES)
-      .whereExists('group', group => applyGroupAccess(group, userID))
-      .related('group')
-      .related('membership_roles', q => q.related('role'))
+      .whereExists('group', group => applyGroupDiscoveryAccess(group, userID))
+      .related('group', group => applyGroupDiscoveryAccess(group, userID))
+      .related('membership_roles', q => q.related('role', role => role.related('action_rights')))
   ),
 
   /** Current user's memberships with group and role→action_rights (for permission-filtered dropdowns) */
@@ -345,7 +354,7 @@ export const groupQueries = {
 
   /** Deep-relational query powering the GroupWiki page */
   wikiOverview: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyGroupAccess(zql.group.where('id', id), userID)
+    applyGroupDiscoveryAccess(zql.group.where('id', id), userID)
       .related('owner')
       .related('group_hashtags', q => q.related('hashtag'))
       .related('blogs', q =>
@@ -380,7 +389,7 @@ export const groupQueries = {
   viewerMembershipOverview: defineQuery(
     z.object({ groupId: z.string() }),
     ({ args: { groupId }, ctx: { userID } }) =>
-      applyGroupAccess(zql.group.where('id', groupId), userID)
+      applyGroupDiscoveryAccess(zql.group.where('id', groupId), userID)
         .related('memberships', membership =>
           membership
             .where('user_id', userID ?? '__anon__')
@@ -402,7 +411,7 @@ export const groupQueries = {
             )
         )
         .related('connected_group', connected =>
-          applyGroupAccess(connected, userID)
+          applyGroupDiscoveryAccess(connected, userID)
             .related('memberships', membership =>
               membership
                 .where('user_id', userID ?? '__anon__')
@@ -452,7 +461,7 @@ export const groupQueries = {
 
   /** Legacy deep-relational query retained for old clients. */
   wikiData: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyGroupAccess(zql.group.where('id', id), userID)
+    applyGroupDiscoveryAccess(zql.group.where('id', id), userID)
       .related('owner')
       .related('connections_as_group_a', q =>
         q
@@ -583,7 +592,9 @@ export const groupQueries = {
   ),
 
   /** All groups (no relations, no filter) */
-  all: defineQuery(z.object({}), ({ ctx: { userID } }) => applyGroupAccess(zql.group, userID)),
+  all: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    applyGroupDiscoveryAccess(zql.group, userID)
+  ),
 
   /** All documents with collaborator→user relations (cross-domain convenience) */
   allDocuments: defineQuery(z.object({}), ({ ctx: { userID } }) =>
@@ -592,7 +603,7 @@ export const groupQueries = {
 
   /** Group by ID with owner, conversations, memberships→user+role, roles→action_rights, events, amendments */
   byIdFull: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyGroupAccess(zql.group.where('id', id), userID)
+    applyGroupDiscoveryAccess(zql.group.where('id', id), userID)
       .related('owner')
       .related('connections_as_group_a', q =>
         q
@@ -702,7 +713,7 @@ export const groupQueries = {
   currentUserGuestAccessesWithGroups: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.group_guest_access
       .where('user_id', userID)
-      .related('group')
+      .related('group', group => applyGroupDiscoveryAccess(group, userID))
       .related('guest_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
 
@@ -906,7 +917,7 @@ export const groupQueries = {
 
   /** Groups visible to the current viewer (legacy query name kept for callers). */
   publicGroups: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    applyGroupAccess(zql.group, userID)
+    applyGroupDiscoveryAccess(zql.group, userID)
       .related('group_hashtags', q => q.related('hashtag'))
       .limit(100)
   ),
@@ -928,12 +939,12 @@ export const groupQueries = {
 
   /** Single group by ID (no relations, for subscriber name lookups) */
   byIdBasic: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyGroupAccess(zql.group.where('id', id), userID)
+    applyGroupDiscoveryAccess(zql.group.where('id', id), userID)
   ),
 
   /** Single group by ID for network view (no relations) */
   byIdForNetwork: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
-    applyGroupAccess(zql.group.where('id', id), userID)
+    applyGroupDiscoveryAccess(zql.group.where('id', id), userID)
       .related('connections_as_group_a', q =>
         q
           .related('group_b')

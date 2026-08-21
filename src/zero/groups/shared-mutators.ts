@@ -1,7 +1,8 @@
 import { defineMutator } from '@rocicorp/zero';
 import { can } from '../rbac/can';
 import { requireAuthenticated } from '../rbac/authorize';
-import { AMENDMENT_ACTION_RIGHTS } from '../rbac/constants';
+import { AMENDMENT_ACTION_RIGHTS, DEFAULT_GROUP_ROLES } from '../rbac/constants';
+import { creatorActionRightId, creatorRbacId, creatorRoleId } from '../rbac/creator-bootstrap';
 import { zql } from '../schema';
 import {
   groupCreateSchema,
@@ -300,6 +301,7 @@ async function addGroupMembershipRole(
     group_membership_id: string;
     role_id: string;
     assigned_by_id?: string | null;
+    id?: string;
   }
 ) {
   const existingLink = await tx.run(
@@ -314,7 +316,7 @@ async function addGroupMembershipRole(
   }
 
   const now = Date.now();
-  const id = crypto.randomUUID();
+  const id = args.id ?? crypto.randomUUID();
 
   await tx.mutate.group_membership_role.insert({
     id,
@@ -326,6 +328,97 @@ async function addGroupMembershipRole(
   });
 
   return id;
+}
+
+async function bootstrapGroupCreatorRbac(
+  tx: Parameters<typeof can>[0],
+  args: { groupId: string; creatorId: string; createdAt: number }
+) {
+  const totalRoles = DEFAULT_GROUP_ROLES.length;
+  let adminRoleId: string | null = null;
+
+  for (let index = 0; index < totalRoles; index++) {
+    const roleDef = DEFAULT_GROUP_ROLES[index];
+    const roleId = await creatorRoleId('group', args.groupId, roleDef.name);
+    if (roleDef.name === 'Admin') adminRoleId = roleId;
+
+    await tx.mutate.role.insert({
+      id: roleId,
+      name: roleDef.name,
+      description: roleDef.description,
+      scope: 'group',
+      group_id: args.groupId,
+      event_id: null,
+      amendment_id: null,
+      blog_id: null,
+      assignment_mode: 'assigned',
+      visibility: roleDef.name === 'Member' ? 'private' : 'public',
+      term_start_date: null,
+      is_recurring: false,
+      recurrence_pattern: null,
+      recurrence_rule: null,
+      recurrence_interval: null,
+      recurrence_days: null,
+      recurrence_end_date: null,
+      scheduled_revote_date: null,
+      default_request_role: roleDef.default_request_role,
+      default_invite_role: roleDef.default_invite_role,
+      assignee_kind: 'member',
+      sort_order: totalRoles - 1 - index,
+      created_at: args.createdAt,
+    });
+
+    for (const permission of roleDef.permissions) {
+      await tx.mutate.action_right.insert({
+        id: await creatorActionRightId(
+          'group',
+          args.groupId,
+          roleDef.name,
+          permission.resource,
+          permission.action
+        ),
+        resource: permission.resource,
+        action: permission.action,
+        role_id: roleId,
+        group_id: args.groupId,
+        event_id: null,
+        amendment_id: null,
+        blog_id: null,
+        created_at: args.createdAt,
+      });
+    }
+  }
+
+  if (!adminRoleId) throw new Error('Default Admin role is missing');
+
+  const membershipId = await creatorRbacId(
+    'group',
+    args.groupId,
+    'creator-membership',
+    args.creatorId
+  );
+  await tx.mutate.group_membership.insert({
+    id: membershipId,
+    group_id: args.groupId,
+    user_id: args.creatorId,
+    status: 'active',
+    visibility: 'public',
+    source: 'direct',
+    source_group_id: null,
+    created_at: args.createdAt,
+  });
+  await addGroupMembershipRole(tx, {
+    id: await creatorRbacId(
+      'group',
+      args.groupId,
+      'creator-membership-role',
+      args.creatorId,
+      'Admin'
+    ),
+    group_membership_id: membershipId,
+    role_id: adminRoleId,
+    assigned_by_id: args.creatorId,
+  });
 }
 
 async function removeGroupMembershipRole(
@@ -793,6 +886,7 @@ export const groupSharedMutatorInternals = {
   assertCanManageGroupOfflineMembers,
   loadGroupOfflineMemberForMutation,
   assertUniqueConnectedOfflineUserWithinGroup,
+  bootstrapGroupCreatorRbac,
 };
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
@@ -814,6 +908,12 @@ export const groupSharedMutators = {
       document_count: 0,
       created_at: now,
       updated_at: now,
+    });
+
+    await bootstrapGroupCreatorRbac(tx, {
+      groupId: args.id,
+      creatorId: userID,
+      createdAt: now,
     });
   }),
 

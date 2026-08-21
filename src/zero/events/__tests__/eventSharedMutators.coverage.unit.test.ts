@@ -35,6 +35,7 @@ function createTx(location: 'client' | 'server' = 'server') {
       event_offline_participant: mutationTable(),
       event_exception: mutationTable(),
       role: mutationTable(),
+      action_right: mutationTable(),
     },
   } as any;
 }

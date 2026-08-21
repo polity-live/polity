@@ -110,26 +110,19 @@ beforeEach(() => {
 });
 
 describe('blog server mutators', () => {
-  it('creates default roles, permissions, and owner membership with visibility fallbacks', async () => {
+  it('delegates creator RBAC bootstrap without duplicate server inserts', async () => {
     const tx = transaction();
     await invoke('create', tx, { id: 'blog-1' });
 
     expect(mocks.shared.create).toHaveBeenCalled();
-    expect(tx.mutate.role.insert).toHaveBeenCalledTimes(2);
-    expect(tx.mutate.action_right.insert).toHaveBeenCalledOnce();
-    expect(tx.mutate.blog_blogger.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        blog_id: 'blog-1',
-        user_id: 'actor',
-        role_id: '00000000-0000-4000-8000-000000000001',
-        visibility: 'public',
-      })
-    );
+    expect(tx.mutate.role.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.action_right.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.blog_blogger.insert).not.toHaveBeenCalled();
 
     const explicit = transaction();
     await invoke('create', explicit, { id: 'blog-2', visibility: 'private' });
-    expect(explicit.mutate.blog_blogger.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ visibility: 'private' })
+    expect(mocks.shared.create).toHaveBeenLastCalledWith(
+      expect.objectContaining({ args: expect.objectContaining({ visibility: 'private' }) })
     );
   });
 

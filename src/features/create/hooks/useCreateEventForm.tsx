@@ -42,6 +42,7 @@ import {
   toZeroRichTextValue,
 } from '@/features/shared/logic/richText';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
+import { getCreateVisibilityLabelKey } from '../logic/createVisibility';
 import {
   type CreateEventType,
   getCreateEventSearchDefaults,
@@ -293,27 +294,15 @@ export function useCreateEventForm(): CreateFormConfig {
       ? t('pages.create.event.meetingFormats.publicMeeting')
       : t('pages.create.event.meetingFormats.oneOnOne');
   const delegateAllocationLabel =
-    delegateConfig.allocationMode === translateText('generated.inline.0032_ratio_4b6339ba')
+    delegateConfig.allocationMode === 'ratio'
       ? `1:${delegateConfig.delegateRatio}`
       : translateText('generated.inline.0033_totaldelegates_total_f6e325f1', {
           totalDelegates: delegateConfig.totalDelegates,
         });
-  const delegateElectionModeLabel =
-    delegateElectionMode === translateText('generated.inline.0034_list_38b62be4')
-      ? 'Listenwahl'
-      : 'Einzelwahl';
+  const delegateElectionModeLabel = delegateElectionMode === 'list' ? 'Listenwahl' : 'Einzelwahl';
   const locationTypeLabel =
-    attendanceMode === translateText('generated.inline.0035_online_2dbc2fd2')
-      ? 'Online'
-      : attendanceMode === translateText('generated.inline.0036_hybrid_e2ac482d')
-        ? 'Hybrid'
-        : 'Offline';
-  const visibilityLabel =
-    effectiveVisibility === translateText('generated.inline.0030_public_61c9b2b1')
-      ? t('pages.create.common.public')
-      : effectiveVisibility === translateText('generated.inline.0031_authenticated_8fda38ce')
-        ? t('pages.create.common.authenticated')
-        : t('pages.create.common.private');
+    attendanceMode === 'online' ? 'Online' : attendanceMode === 'hybrid' ? 'Hybrid' : 'Offline';
+  const visibilityLabel = t(getCreateVisibilityLabelKey(effectiveVisibility));
   const recurrenceRule = isRecurring
     ? buildRRule({
         pattern: recurrencePattern,

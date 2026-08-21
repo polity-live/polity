@@ -92,6 +92,10 @@ export interface Role {
   name: string;
   description?: string;
   scope: 'group' | 'event' | 'amendment' | 'blog';
+  group?: { id: string };
+  event?: { id: string };
+  amendment?: { id: string };
+  blog?: { id: string };
   actionRights?: ActionRight[];
 }
 
@@ -120,6 +124,7 @@ export interface BloggerRelation {
   id: string;
   blog?: { id: string };
   role?: Role;
+  status?: string;
 }
 
 export interface AmendmentCollaborator {

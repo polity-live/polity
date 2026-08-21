@@ -16,7 +16,6 @@ import {
   recomputeUserCounters,
   userName,
 } from '../server-helpers';
-import { DEFAULT_AMENDMENT_ROLES } from '../rbac/constants';
 import {
   updateAmendmentSchema,
   createAmendmentCollaboratorSchema,
@@ -1057,93 +1056,6 @@ export const amendmentServerMutators = {
     };
 
     await mutators.amendments.create.fn({ tx, ctx, args: createArgs });
-
-    const now = Date.now();
-    let authorRoleId: string | null = null;
-    const totalRoles = DEFAULT_AMENDMENT_ROLES.length;
-
-    for (let index = 0; index < totalRoles; index++) {
-      const roleDef = DEFAULT_AMENDMENT_ROLES[index];
-      const roleId = crypto.randomUUID();
-
-      if (roleDef.name === 'Author') {
-        authorRoleId = roleId;
-      }
-
-      await tx.mutate.role.insert({
-        id: roleId,
-        name: roleDef.name,
-        description: roleDef.description,
-        scope: 'amendment',
-        group_id: null,
-        event_id: null,
-        amendment_id: args.id,
-        blog_id: null,
-        assignee_kind: 'member',
-        assignment_mode: 'assigned',
-        visibility: 'public',
-        term_start_date: null,
-        is_recurring: false,
-        recurrence_pattern: null,
-        recurrence_rule: null,
-        recurrence_interval: null,
-        recurrence_days: null,
-        recurrence_end_date: null,
-        scheduled_revote_date: null,
-        default_request_role: false,
-        default_invite_role: false,
-        sort_order: totalRoles - 1 - index,
-        created_at: now,
-      });
-
-      for (const permission of roleDef.permissions) {
-        await tx.mutate.action_right.insert({
-          id: crypto.randomUUID(),
-          resource: permission.resource,
-          action: permission.action,
-          role_id: roleId,
-          group_id: null,
-          event_id: null,
-          amendment_id: args.id,
-          blog_id: null,
-          created_at: now,
-        });
-      }
-    }
-
-    if (!authorRoleId) {
-      const existingAuthorRole = await tx.run(
-        zql.role
-          .where('amendment_id', args.id)
-          .where('scope', 'amendment')
-          .where('name', 'Author')
-          .one()
-      );
-      authorRoleId = existingAuthorRole?.id ?? null;
-    }
-
-    const existingCreatorCollaborator = await tx.run(
-      zql.amendment_collaborator.where('amendment_id', args.id).where('user_id', ctx.userID).one()
-    );
-
-    if (existingCreatorCollaborator) {
-      await tx.mutate.amendment_collaborator.update({
-        id: existingCreatorCollaborator.id,
-        role_id: authorRoleId,
-        status: 'admin',
-        visibility: args.visibility,
-      });
-    } else {
-      await tx.mutate.amendment_collaborator.insert({
-        id: crypto.randomUUID(),
-        amendment_id: args.id,
-        user_id: ctx.userID,
-        role_id: authorRoleId,
-        status: 'admin',
-        visibility: args.visibility,
-        created_at: now,
-      });
-    }
 
     await recomputeAmendmentCounters(tx, args.id);
 

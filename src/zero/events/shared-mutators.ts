@@ -30,6 +30,12 @@ import {
 } from './schema';
 import { can } from '../rbac/can';
 import { requireAuthenticated } from '../rbac/authorize';
+import {
+  creatorActionRightId,
+  creatorEventRoleTemplates,
+  creatorRbacId,
+  creatorRoleId,
+} from '../rbac/creator-bootstrap';
 
 function isAssemblyEventType(eventType: string | null | undefined) {
   return eventType === 'general_assembly' || eventType === 'delegate_assembly';
@@ -152,6 +158,7 @@ async function addEventParticipantRole(
     event_participant_id: string;
     role_id: string;
     assigned_by_id?: string | null;
+    id?: string;
   }
 ) {
   const existingLink = await tx.run(
@@ -166,7 +173,7 @@ async function addEventParticipantRole(
   }
 
   const now = Date.now();
-  const id = crypto.randomUUID();
+  const id = args.id ?? crypto.randomUUID();
 
   await tx.mutate.event_participant_role.insert({
     id,
@@ -178,6 +185,105 @@ async function addEventParticipantRole(
   });
 
   return id;
+}
+
+async function bootstrapEventCreatorRbac(
+  tx: Parameters<typeof can>[0],
+  args: {
+    eventId: string;
+    eventType: string | null | undefined;
+    creatorId: string;
+    groupId: string | null;
+    visibility: string;
+    createdAt: number;
+  }
+) {
+  const roleTemplates = creatorEventRoleTemplates(args.eventType);
+  const totalRoles = roleTemplates.length;
+  let organizerRoleId: string | null = null;
+
+  for (let index = 0; index < totalRoles; index++) {
+    const roleDef = roleTemplates[index];
+    const roleId = await creatorRoleId('event', args.eventId, roleDef.name);
+    if (roleDef.name === 'Organizer') organizerRoleId = roleId;
+
+    await tx.mutate.role.insert({
+      id: roleId,
+      name: roleDef.name,
+      description: roleDef.description,
+      scope: 'event',
+      event_id: args.eventId,
+      group_id: null,
+      amendment_id: null,
+      blog_id: null,
+      assignment_mode: 'assigned',
+      visibility: 'public',
+      term_start_date: null,
+      is_recurring: false,
+      recurrence_pattern: null,
+      recurrence_rule: null,
+      recurrence_interval: null,
+      recurrence_days: null,
+      recurrence_end_date: null,
+      scheduled_revote_date: null,
+      default_request_role: roleDef.default_request_role ?? false,
+      default_invite_role: roleDef.default_invite_role ?? false,
+      assignee_kind: roleDef.assignee_kind ?? 'member',
+      sort_order: totalRoles - 1 - index,
+      created_at: args.createdAt,
+    });
+
+    for (const permission of roleDef.permissions) {
+      await tx.mutate.action_right.insert({
+        id: await creatorActionRightId(
+          'event',
+          args.eventId,
+          roleDef.name,
+          permission.resource,
+          permission.action
+        ),
+        resource: permission.resource,
+        action: permission.action,
+        role_id: roleId,
+        event_id: args.eventId,
+        group_id: null,
+        amendment_id: null,
+        blog_id: null,
+        created_at: args.createdAt,
+      });
+    }
+  }
+
+  if (!organizerRoleId) throw new Error('Default Organizer role is missing');
+
+  const participantId = await creatorRbacId(
+    'event',
+    args.eventId,
+    'creator-participant',
+    args.creatorId
+  );
+  await tx.mutate.event_participant.insert({
+    id: participantId,
+    event_id: args.eventId,
+    user_id: args.creatorId,
+    group_id: args.groupId,
+    status: 'active',
+    visibility: args.visibility,
+    instance_date: null,
+    created_at: args.createdAt,
+  });
+  await addEventParticipantRole(tx, {
+    id: await creatorRbacId(
+      'event',
+      args.eventId,
+      'creator-participant-role',
+      args.creatorId,
+      'Organizer'
+    ),
+    event_participant_id: participantId,
+    role_id: organizerRoleId,
+    assigned_by_id: args.creatorId,
+  });
 }
 
 async function removeEventParticipantRole(
@@ -365,6 +471,7 @@ export const eventSharedMutatorInternals = {
   resolveDefaultEventParticipantRoleId,
   clearEventRoleDefaults,
   assertValidEventRoleDefaults,
+  bootstrapEventCreatorRbac,
 };
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
@@ -408,16 +515,13 @@ export const eventSharedMutators = {
       updated_at: now,
     } as Parameters<typeof tx.mutate.event.insert>[0]);
 
-    // Optimistically add creator as participant (server mutator assigns Organizer role)
-    await tx.mutate.event_participant.insert({
-      id: crypto.randomUUID(),
-      event_id: args.id,
-      user_id: userID,
-      group_id: args.group_id ?? null,
-      status: 'active',
+    await bootstrapEventCreatorRbac(tx, {
+      eventId: args.id,
+      eventType: args.event_type,
+      creatorId: userID,
+      groupId: args.group_id ?? null,
       visibility: args.visibility ?? 'public',
-      instance_date: null,
-      created_at: now,
+      createdAt: now,
     });
   }),
 

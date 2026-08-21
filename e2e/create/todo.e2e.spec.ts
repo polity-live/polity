@@ -1,6 +1,13 @@
 import { test, expect } from '../fixtures/test';
-import { fillMinimalTodo, gotoTodo } from './helpers';
+import { fillMinimalTodo, gotoTodo, layouts } from './helpers';
 import { submitSmokeAndExpectCreated } from './smoke-expectations';
+
+async function advanceCarousel(createFlowPage: Parameters<typeof gotoTodo>[0], count: number) {
+  const next = createFlowPage.page.locator('[data-create-action="next-step"]:visible');
+  for (let index = 0; index < count; index += 1) {
+    await next.click();
+  }
+}
 
 async function selectCurrentTodoDeadline(
   createFlowPage: Parameters<typeof gotoTodo>[0],
@@ -15,6 +22,39 @@ async function selectCurrentTodoDeadline(
 }
 
 test.describe('create/todo', () => {
+  for (const layout of layouts) {
+    test(`updates the visible ${layout} review when status and visibility change @pr @nightly`, async ({
+      createFlowPage,
+      e2eRun,
+    }) => {
+      await gotoTodo(createFlowPage, layout);
+      await fillMinimalTodo(createFlowPage, `${e2eRun.prefix} Review`);
+
+      if (layout === 'carousel') await advanceCarousel(createFlowPage, 2);
+
+      const completedOption = createFlowPage.form
+        .field('status')
+        .locator('[data-create-option="completed"]:visible');
+      const completedLabel = (await completedOption.innerText()).trim();
+      await createFlowPage.form.chooseOption('status', 'completed');
+
+      if (layout === 'carousel') await advanceCarousel(createFlowPage, 1);
+
+      const publicOption = createFlowPage.form
+        .field('visibility')
+        .locator('[data-create-option="public"]:visible');
+      const publicLabel = (await publicOption.innerText()).trim();
+      await createFlowPage.form.chooseOption('visibility', 'public');
+
+      if (layout === 'carousel') await advanceCarousel(createFlowPage, 1);
+
+      const review = createFlowPage.form.field('review');
+      await expect(review).toBeVisible();
+      await expect(review).toContainText(completedLabel);
+      await expect(review).toContainText(publicLabel);
+    });
+  }
+
   test('creates a minimal todo @nightly', async ({ createFlowPage, e2eRun }) => {
     await gotoTodo(createFlowPage);
     await fillMinimalTodo(createFlowPage, e2eRun.prefix);

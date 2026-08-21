@@ -1859,6 +1859,174 @@ AS $$
     AND ga.status = 'active';
 $$;
 
+-- Group documents are discoverable under a stricter rule than their child
+-- documents: a valid group role must explicitly grant groups:view/manage.
+CREATE OR REPLACE FUNCTION public.search_document_group_discovery_acl_users(target_group_id UUID)
+RETURNS TABLE(user_id UUID)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER SET search_path = ''
+AS $$
+  SELECT g.owner_id
+  FROM public."group" AS g
+  WHERE g.id = target_group_id
+    AND g.owner_id IS NOT NULL
+  UNION
+  SELECT gm.user_id
+  FROM public.group_membership AS gm
+  JOIN public.group_membership_role AS gmr ON gmr.group_membership_id = gm.id
+  JOIN public.role AS r
+    ON r.id = gmr.role_id
+   AND r.scope = 'group'
+   AND r.group_id = target_group_id
+  JOIN public.action_right AS ar
+    ON ar.role_id = r.id
+   AND ar.group_id = target_group_id
+   AND ar.resource = 'groups'
+   AND ar.action IN ('view', 'manage')
+  WHERE gm.group_id = target_group_id
+    AND gm.status IN ('invited', 'active', 'member', 'admin')
+  UNION
+  SELECT ga.user_id
+  FROM public.group_guest_access AS ga
+  JOIN public.group_guest_role AS ggr ON ggr.group_guest_access_id = ga.id
+  JOIN public.role AS r
+    ON r.id = ggr.role_id
+   AND r.scope = 'group'
+   AND r.group_id = target_group_id
+  JOIN public.action_right AS ar
+    ON ar.role_id = r.id
+   AND ar.group_id = target_group_id
+   AND ar.resource = 'groups'
+   AND ar.action IN ('view', 'manage')
+  WHERE ga.group_id = target_group_id
+    AND ga.status IN ('invited', 'active');
+$$;
+
+-- Keep this list in parity with src/zero/rbac/constants.ts VIEW_IMPLYING_ACTIONS.
+CREATE OR REPLACE FUNCTION public.permission_action_implies_view(target_action TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT target_action IN (
+    'view',
+    'manage',
+    'moderate',
+    'manage_members',
+    'manage_roles',
+    'manage_participants',
+    'manage_speakers',
+    'manage_votes',
+    'speak'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.search_document_event_discovery_acl_users(target_event_id UUID)
+RETURNS TABLE(user_id UUID)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER SET search_path = ''
+AS $$
+  SELECT e.creator_id
+  FROM public.event AS e
+  WHERE e.id = target_event_id
+    AND e.creator_id IS NOT NULL
+  UNION
+  SELECT ep.user_id
+  FROM public.event_participant AS ep
+  JOIN public.event_participant_role AS epr ON epr.event_participant_id = ep.id
+  JOIN public.role AS r
+    ON r.id = epr.role_id
+   AND r.scope = 'event'
+   AND r.event_id = target_event_id
+  JOIN public.action_right AS ar
+    ON ar.role_id = r.id
+   AND ar.event_id = target_event_id
+   AND ar.resource = 'events'
+   AND public.permission_action_implies_view(ar.action)
+  WHERE ep.event_id = target_event_id
+    AND ep.status IN ('invited', 'active', 'confirmed', 'member', 'admin')
+  UNION
+  SELECT access.user_id
+  FROM public.event AS e
+  CROSS JOIN LATERAL public.search_document_group_acl_users(e.group_id) AS access
+  WHERE e.id = target_event_id
+    AND e.group_id IS NOT NULL;
+$$;
+
+CREATE OR REPLACE FUNCTION public.search_document_amendment_discovery_acl_users(
+  target_amendment_id UUID
+)
+RETURNS TABLE(user_id UUID)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER SET search_path = ''
+AS $$
+  SELECT a.created_by_id
+  FROM public.amendment AS a
+  WHERE a.id = target_amendment_id
+    AND a.created_by_id IS NOT NULL
+  UNION
+  SELECT ac.user_id
+  FROM public.amendment_collaborator AS ac
+  JOIN public.role AS r
+    ON r.id = ac.role_id
+   AND r.scope = 'amendment'
+   AND r.amendment_id = target_amendment_id
+  JOIN public.action_right AS ar
+    ON ar.role_id = r.id
+   AND ar.amendment_id = target_amendment_id
+   AND ar.resource = 'amendments'
+   AND public.permission_action_implies_view(ar.action)
+  WHERE ac.amendment_id = target_amendment_id
+    AND ac.status IN ('invited', 'active', 'collaborator', 'member', 'admin')
+  UNION
+  SELECT access.user_id
+  FROM public.amendment AS a
+  CROSS JOIN LATERAL public.search_document_group_acl_users(a.group_id) AS access
+  WHERE a.id = target_amendment_id
+    AND a.group_id IS NOT NULL
+  UNION
+  SELECT ep.user_id
+  FROM public.amendment AS a
+  JOIN public.event_participant AS ep ON ep.event_id = a.event_id
+  WHERE a.id = target_amendment_id
+    AND ep.status IN ('active', 'confirmed', 'member', 'admin');
+$$;
+
+CREATE OR REPLACE FUNCTION public.search_document_blog_discovery_acl_users(target_blog_id UUID)
+RETURNS TABLE(user_id UUID)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER SET search_path = ''
+AS $$
+  SELECT bb.user_id
+  FROM public.blog_blogger AS bb
+  WHERE bb.blog_id = target_blog_id
+    AND bb.status = 'owner'
+  UNION
+  SELECT bb.user_id
+  FROM public.blog_blogger AS bb
+  JOIN public.role AS r
+    ON r.id = bb.role_id
+   AND r.scope = 'blog'
+   AND r.blog_id = target_blog_id
+  JOIN public.action_right AS ar
+    ON ar.role_id = r.id
+   AND ar.blog_id = target_blog_id
+   AND ar.resource = 'blogs'
+   AND public.permission_action_implies_view(ar.action)
+  WHERE bb.blog_id = target_blog_id
+    AND bb.status IN ('invited', 'admin', 'member', 'writer')
+  UNION
+  SELECT access.user_id
+  FROM public.blog AS b
+  CROSS JOIN LATERAL public.search_document_group_acl_users(b.group_id) AS access
+  WHERE b.id = target_blog_id
+    AND b.group_id IS NOT NULL;
+$$;
+
 CREATE OR REPLACE FUNCTION public.sync_search_document_acl(
   target_entity_type TEXT,
   target_entity_id UUID
@@ -1893,7 +2061,7 @@ BEGIN
   ELSIF target_entity_type = 'group' THEN
     INSERT INTO public.search_document_acl (document_id, user_id)
     SELECT target_document_id, access.user_id
-    FROM public.search_document_group_acl_users(target_entity_id) AS access
+    FROM public.search_document_group_discovery_acl_users(target_entity_id) AS access
     ON CONFLICT (document_id, user_id) DO NOTHING;
 
   ELSIF target_entity_type = 'statement' THEN
@@ -1915,67 +2083,20 @@ BEGIN
 
   ELSIF target_entity_type = 'blog' THEN
     INSERT INTO public.search_document_acl (document_id, user_id)
-    SELECT target_document_id, candidates.user_id
-    FROM (
-      SELECT bb.user_id
-      FROM public.blog_blogger AS bb
-      WHERE bb.blog_id = target_entity_id
-        AND bb.status IN ('owner', 'admin', 'member', 'writer')
-      UNION
-      SELECT access.user_id
-      FROM public.blog AS b
-      CROSS JOIN LATERAL public.search_document_group_acl_users(b.group_id) AS access
-      WHERE b.id = target_entity_id
-        AND b.group_id IS NOT NULL
-    ) AS candidates
+    SELECT target_document_id, access.user_id
+    FROM public.search_document_blog_discovery_acl_users(target_entity_id) AS access
     ON CONFLICT (document_id, user_id) DO NOTHING;
 
   ELSIF target_entity_type = 'amendment' THEN
     INSERT INTO public.search_document_acl (document_id, user_id)
-    SELECT target_document_id, candidates.user_id
-    FROM (
-      SELECT a.created_by_id AS user_id
-      FROM public.amendment AS a
-      WHERE a.id = target_entity_id
-      UNION
-      SELECT ac.user_id
-      FROM public.amendment_collaborator AS ac
-      WHERE ac.amendment_id = target_entity_id
-        AND ac.status IN ('active', 'collaborator', 'member', 'admin')
-      UNION
-      SELECT access.user_id
-      FROM public.amendment AS a
-      CROSS JOIN LATERAL public.search_document_group_acl_users(a.group_id) AS access
-      WHERE a.id = target_entity_id
-        AND a.group_id IS NOT NULL
-      UNION
-      SELECT ep.user_id
-      FROM public.amendment AS a
-      JOIN public.event_participant AS ep ON ep.event_id = a.event_id
-      WHERE a.id = target_entity_id
-        AND ep.status IN ('active', 'confirmed', 'member', 'admin')
-    ) AS candidates
+    SELECT target_document_id, access.user_id
+    FROM public.search_document_amendment_discovery_acl_users(target_entity_id) AS access
     ON CONFLICT (document_id, user_id) DO NOTHING;
 
   ELSIF target_entity_type = 'event' THEN
     INSERT INTO public.search_document_acl (document_id, user_id)
-    SELECT target_document_id, candidates.user_id
-    FROM (
-      SELECT e.creator_id AS user_id
-      FROM public.event AS e
-      WHERE e.id = target_entity_id
-      UNION
-      SELECT ep.user_id
-      FROM public.event_participant AS ep
-      WHERE ep.event_id = target_entity_id
-        AND ep.status IN ('active', 'confirmed', 'member', 'admin')
-      UNION
-      SELECT access.user_id
-      FROM public.event AS e
-      CROSS JOIN LATERAL public.search_document_group_acl_users(e.group_id) AS access
-      WHERE e.id = target_entity_id
-        AND e.group_id IS NOT NULL
-    ) AS candidates
+    SELECT target_document_id, access.user_id
+    FROM public.search_document_event_discovery_acl_users(target_entity_id) AS access
     ON CONFLICT (document_id, user_id) DO NOTHING;
 
   ELSIF target_entity_type = 'todo' THEN
@@ -2286,6 +2407,70 @@ BEGIN
       PERFORM public.refresh_group_search_document_acls(new_parent_id);
     END IF;
 
+  ELSIF TG_TABLE_NAME = 'group_membership_role' THEN
+    old_parent_id := CASE
+      WHEN TG_OP IN ('UPDATE', 'DELETE') THEN (
+        SELECT gm.group_id FROM public.group_membership AS gm WHERE gm.id = OLD.group_membership_id
+      )
+      ELSE NULL
+    END;
+    new_parent_id := CASE
+      WHEN TG_OP IN ('INSERT', 'UPDATE') THEN (
+        SELECT gm.group_id FROM public.group_membership AS gm WHERE gm.id = NEW.group_membership_id
+      )
+      ELSE NULL
+    END;
+    IF old_parent_id IS NOT NULL THEN
+      PERFORM public.refresh_group_search_document_acls(old_parent_id);
+    END IF;
+    IF new_parent_id IS NOT NULL AND new_parent_id IS DISTINCT FROM old_parent_id THEN
+      PERFORM public.refresh_group_search_document_acls(new_parent_id);
+    END IF;
+
+  ELSIF TG_TABLE_NAME = 'group_guest_role' THEN
+    old_parent_id := CASE
+      WHEN TG_OP IN ('UPDATE', 'DELETE') THEN (
+        SELECT ga.group_id FROM public.group_guest_access AS ga WHERE ga.id = OLD.group_guest_access_id
+      )
+      ELSE NULL
+    END;
+    new_parent_id := CASE
+      WHEN TG_OP IN ('INSERT', 'UPDATE') THEN (
+        SELECT ga.group_id FROM public.group_guest_access AS ga WHERE ga.id = NEW.group_guest_access_id
+      )
+      ELSE NULL
+    END;
+    IF old_parent_id IS NOT NULL THEN
+      PERFORM public.refresh_group_search_document_acls(old_parent_id);
+    END IF;
+    IF new_parent_id IS NOT NULL AND new_parent_id IS DISTINCT FROM old_parent_id THEN
+      PERFORM public.refresh_group_search_document_acls(new_parent_id);
+    END IF;
+
+  ELSIF TG_TABLE_NAME IN ('action_right', 'role') THEN
+    old_parent_id := CASE
+      WHEN TG_OP IN ('UPDATE', 'DELETE') THEN (
+        CASE WHEN TG_TABLE_NAME = 'action_right' THEN
+          (SELECT r.group_id FROM public.role AS r WHERE r.id = OLD.role_id)
+        ELSE OLD.group_id END
+      )
+      ELSE NULL
+    END;
+    new_parent_id := CASE
+      WHEN TG_OP IN ('INSERT', 'UPDATE') THEN (
+        CASE WHEN TG_TABLE_NAME = 'action_right' THEN
+          (SELECT r.group_id FROM public.role AS r WHERE r.id = NEW.role_id)
+        ELSE NEW.group_id END
+      )
+      ELSE NULL
+    END;
+    IF old_parent_id IS NOT NULL THEN
+      PERFORM public.refresh_group_search_document_acls(old_parent_id);
+    END IF;
+    IF new_parent_id IS NOT NULL AND new_parent_id IS DISTINCT FROM old_parent_id THEN
+      PERFORM public.refresh_group_search_document_acls(new_parent_id);
+    END IF;
+
   ELSIF TG_TABLE_NAME = 'event_participant' THEN
     old_parent_id := CASE WHEN TG_OP IN ('UPDATE', 'DELETE') THEN OLD.event_id ELSE NULL END;
     new_parent_id := CASE WHEN TG_OP IN ('INSERT', 'UPDATE') THEN NEW.event_id ELSE NULL END;
@@ -2412,6 +2597,22 @@ CREATE TRIGGER trg_zz_search_document_acl_group_guest_access
 AFTER INSERT OR UPDATE OR DELETE ON public.group_guest_access
 FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
 
+CREATE TRIGGER trg_zz_search_document_acl_group_membership_role
+AFTER INSERT OR UPDATE OR DELETE ON public.group_membership_role
+FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
+
+CREATE TRIGGER trg_zz_search_document_acl_group_guest_role
+AFTER INSERT OR UPDATE OR DELETE ON public.group_guest_role
+FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
+
+CREATE TRIGGER trg_zz_search_document_acl_action_right
+AFTER INSERT OR UPDATE OR DELETE ON public.action_right
+FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
+
+CREATE TRIGGER trg_zz_search_document_acl_role
+AFTER INSERT OR UPDATE OR DELETE ON public.role
+FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
+
 CREATE TRIGGER trg_zz_search_document_acl_event_participant
 AFTER INSERT OR UPDATE OR DELETE ON public.event_participant
 FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
@@ -2431,3 +2632,78 @@ FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigge
 CREATE TRIGGER trg_zz_search_document_acl_elector
 AFTER INSERT OR UPDATE OR DELETE ON public.elector
 FOR EACH ROW EXECUTE FUNCTION public.refresh_search_document_acl_relation_trigger();
+
+CREATE OR REPLACE FUNCTION public.refresh_private_entity_discovery_acl_role_trigger()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  old_event_id UUID;
+  new_event_id UUID;
+  old_amendment_id UUID;
+  new_amendment_id UUID;
+  old_blog_id UUID;
+  new_blog_id UUID;
+BEGIN
+  IF TG_TABLE_NAME = 'event_participant_role' THEN
+    old_event_id := CASE WHEN TG_OP IN ('UPDATE', 'DELETE') THEN (
+      SELECT ep.event_id
+      FROM public.event_participant AS ep
+      WHERE ep.id = OLD.event_participant_id
+    ) END;
+    new_event_id := CASE WHEN TG_OP IN ('INSERT', 'UPDATE') THEN (
+      SELECT ep.event_id
+      FROM public.event_participant AS ep
+      WHERE ep.id = NEW.event_participant_id
+    ) END;
+  ELSIF TG_TABLE_NAME = 'action_right' THEN
+    old_event_id := CASE WHEN TG_OP IN ('UPDATE', 'DELETE') THEN OLD.event_id END;
+    new_event_id := CASE WHEN TG_OP IN ('INSERT', 'UPDATE') THEN NEW.event_id END;
+    old_amendment_id := CASE WHEN TG_OP IN ('UPDATE', 'DELETE') THEN OLD.amendment_id END;
+    new_amendment_id := CASE WHEN TG_OP IN ('INSERT', 'UPDATE') THEN NEW.amendment_id END;
+    old_blog_id := CASE WHEN TG_OP IN ('UPDATE', 'DELETE') THEN OLD.blog_id END;
+    new_blog_id := CASE WHEN TG_OP IN ('INSERT', 'UPDATE') THEN NEW.blog_id END;
+  ELSIF TG_TABLE_NAME = 'role' THEN
+    old_event_id := CASE WHEN TG_OP IN ('UPDATE', 'DELETE') THEN OLD.event_id END;
+    new_event_id := CASE WHEN TG_OP IN ('INSERT', 'UPDATE') THEN NEW.event_id END;
+    old_amendment_id := CASE WHEN TG_OP IN ('UPDATE', 'DELETE') THEN OLD.amendment_id END;
+    new_amendment_id := CASE WHEN TG_OP IN ('INSERT', 'UPDATE') THEN NEW.amendment_id END;
+    old_blog_id := CASE WHEN TG_OP IN ('UPDATE', 'DELETE') THEN OLD.blog_id END;
+    new_blog_id := CASE WHEN TG_OP IN ('INSERT', 'UPDATE') THEN NEW.blog_id END;
+  END IF;
+
+  IF old_event_id IS NOT NULL THEN
+    PERFORM public.sync_search_document_acl_with_derivatives('event', old_event_id);
+  END IF;
+  IF new_event_id IS NOT NULL AND new_event_id IS DISTINCT FROM old_event_id THEN
+    PERFORM public.sync_search_document_acl_with_derivatives('event', new_event_id);
+  END IF;
+  IF old_amendment_id IS NOT NULL THEN
+    PERFORM public.sync_search_document_acl_with_derivatives('amendment', old_amendment_id);
+  END IF;
+  IF new_amendment_id IS NOT NULL AND new_amendment_id IS DISTINCT FROM old_amendment_id THEN
+    PERFORM public.sync_search_document_acl_with_derivatives('amendment', new_amendment_id);
+  END IF;
+  IF old_blog_id IS NOT NULL THEN
+    PERFORM public.sync_search_document_acl_with_derivatives('blog', old_blog_id);
+  END IF;
+  IF new_blog_id IS NOT NULL AND new_blog_id IS DISTINCT FROM old_blog_id THEN
+    PERFORM public.sync_search_document_acl_with_derivatives('blog', new_blog_id);
+  END IF;
+
+  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+END;
+$$;
+
+CREATE TRIGGER trg_zz_search_document_acl_event_participant_role_discovery
+AFTER INSERT OR UPDATE OR DELETE ON public.event_participant_role
+FOR EACH ROW EXECUTE FUNCTION public.refresh_private_entity_discovery_acl_role_trigger();
+
+CREATE TRIGGER trg_zz_search_document_acl_action_right_entity_discovery
+AFTER INSERT OR UPDATE OR DELETE ON public.action_right
+FOR EACH ROW EXECUTE FUNCTION public.refresh_private_entity_discovery_acl_role_trigger();
+
+CREATE TRIGGER trg_zz_search_document_acl_role_entity_discovery
+AFTER INSERT OR UPDATE OR DELETE ON public.role
+FOR EACH ROW EXECUTE FUNCTION public.refresh_private_entity_discovery_acl_role_trigger();

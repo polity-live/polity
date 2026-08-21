@@ -1,3 +1,5 @@
+import { VIEW_IMPLYING_ACTIONS } from './constants';
+
 export function isAuthenticatedUserId(userID: string | undefined | null): userID is string {
   return Boolean(userID && userID !== 'anon');
 }
@@ -57,9 +59,19 @@ export function applySearchDocumentQueryAccess<T>(q: T, userID: string | undefin
 
 const ACTIVE_GROUP_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
 const ACTIVE_GROUP_GUEST_ACCESS_STATUSES = ['active'];
+const GROUP_DISCOVERY_MEMBERSHIP_STATUSES = ['invited', ...ACTIVE_GROUP_MEMBERSHIP_STATUSES];
+const GROUP_DISCOVERY_GUEST_ACCESS_STATUSES = ['invited', ...ACTIVE_GROUP_GUEST_ACCESS_STATUSES];
+const GROUP_VIEW_ACTIONS = ['view', 'manage'];
 const ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
+const EVENT_DISCOVERY_PARTICIPANT_STATUSES = ['invited', ...ACTIVE_EVENT_PARTICIPANT_STATUSES];
 const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['active', 'collaborator', 'member', 'admin'];
+const AMENDMENT_DISCOVERY_COLLABORATOR_STATUSES = [
+  'invited',
+  ...ACTIVE_AMENDMENT_COLLABORATOR_STATUSES,
+];
 const ACTIVE_BLOGGER_STATUSES = ['owner', 'admin', 'member', 'writer'];
+const BLOG_DISCOVERY_BLOGGER_STATUSES = ['invited', 'admin', 'member', 'writer'];
+const ENTITY_VIEW_ACTIONS = [...VIEW_IMPLYING_ACTIONS];
 
 function applyGroupPrivateRelationshipQueryAccess<T>(q: T, userID: string): T {
   const query = applyTutorialRunOwnerQueryAccess(q, userID) as any;
@@ -162,7 +174,10 @@ function applyGroupRoleRightAccess<T>(
   q: T,
   userID: string | undefined | null,
   actions: readonly string[],
-  resources: readonly string[]
+  resources: readonly string[],
+  membershipStatuses: readonly string[] = ACTIVE_GROUP_MEMBERSHIP_STATUSES,
+  guestAccessStatuses: readonly string[] = ACTIVE_GROUP_GUEST_ACCESS_STATUSES,
+  includeStandardVisibility = false
 ): T {
   const query = q as any;
 
@@ -170,25 +185,28 @@ function applyGroupRoleRightAccess<T>(
 
   return query.where(({ or, cmp, exists }: any) =>
     or(
+      ...(includeStandardVisibility ? [cmp('visibility', 'IN', ['public', 'authenticated'])] : []),
       cmp('owner_id', userID),
       exists(
         'memberships',
         (membership: any) =>
           membership
             .where('user_id', userID)
-            .where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+            .where('status', 'IN', membershipStatuses)
             .whereExists(
               'membership_roles',
               (membershipRole: any) =>
                 membershipRole.whereExists(
                   'role',
                   (role: any) =>
-                    role.whereExists(
-                      'action_rights',
-                      (right: any) =>
-                        right.where('resource', 'IN', resources).where('action', 'IN', actions),
-                      { flip: false }
-                    ),
+                    role
+                      .where('scope', 'group')
+                      .whereExists(
+                        'action_rights',
+                        (right: any) =>
+                          right.where('resource', 'IN', resources).where('action', 'IN', actions),
+                        { flip: false }
+                      ),
                   { flip: false }
                 ),
               { flip: false }
@@ -200,19 +218,21 @@ function applyGroupRoleRightAccess<T>(
         (guestAccess: any) =>
           guestAccess
             .where('user_id', userID)
-            .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES)
+            .where('status', 'IN', guestAccessStatuses)
             .whereExists(
               'guest_roles',
               (guestRole: any) =>
                 guestRole.whereExists(
                   'role',
                   (role: any) =>
-                    role.whereExists(
-                      'action_rights',
-                      (right: any) =>
-                        right.where('resource', 'IN', resources).where('action', 'IN', actions),
-                      { flip: false }
-                    ),
+                    role
+                      .where('scope', 'group')
+                      .whereExists(
+                        'action_rights',
+                        (right: any) =>
+                          right.where('resource', 'IN', resources).where('action', 'IN', actions),
+                        { flip: false }
+                      ),
                   { flip: false }
                 ),
               { flip: false }
@@ -221,6 +241,29 @@ function applyGroupRoleRightAccess<T>(
       )
     )
   ) as T;
+}
+
+/**
+ * Visibility for a private group is deliberately narrower than access to its
+ * private child content. A viewer needs a valid relationship and the group's
+ * own view right; an invitation alone never exposes private child entities.
+ */
+export function applyGroupDiscoveryQueryAccess<T>(q: T, userID: string | undefined | null): T {
+  const query = applyTutorialRunOwnerQueryAccess(q, userID) as T;
+
+  if (!isAuthenticatedUserId(userID)) {
+    return (query as any).where('visibility', 'public') as T;
+  }
+
+  return applyGroupRoleRightAccess(
+    query,
+    userID,
+    GROUP_VIEW_ACTIONS,
+    ['groups'],
+    GROUP_DISCOVERY_MEMBERSHIP_STATUSES,
+    GROUP_DISCOVERY_GUEST_ACCESS_STATUSES,
+    true
+  );
 }
 
 export function applyGroupManagerQueryAccess<T>(
@@ -273,13 +316,19 @@ export function applyEventQueryAccess<T>(q: T, userID: string | undefined | null
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       cmp('creator_id', userID),
-      exists(
-        'participants',
-        (participant: any) =>
-          participant
-            .where('user_id', userID)
-            .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES),
-        { flip: false }
+      exists('roles', (role: any) =>
+        role
+          .where('scope', 'event')
+          .whereExists('event_participant_roles', (participantRole: any) =>
+            participantRole.whereExists('event_participant', (participant: any) =>
+              participant
+                .where('user_id', userID)
+                .where('status', 'IN', EVENT_DISCOVERY_PARTICIPANT_STATUSES)
+            )
+          )
+          .whereExists('event_action_rights', (right: any) =>
+            right.where('resource', 'events').where('action', 'IN', ENTITY_VIEW_ACTIONS)
+          )
       ),
       exists(
         'group',
@@ -325,26 +374,19 @@ function applyEventRoleRightAccess<T>(
     or(
       cmp('creator_id', userID),
       exists(
-        'participants',
-        (participant: any) =>
-          participant
-            .where('user_id', userID)
-            .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
-            .whereExists(
-              'participant_roles',
-              (participantRole: any) =>
-                participantRole.whereExists(
-                  'role',
-                  (role: any) =>
-                    role.whereExists(
-                      'action_rights',
-                      (right: any) =>
-                        right.where('resource', 'IN', resources).where('action', 'IN', actions),
-                      { flip: false }
-                    ),
-                  { flip: false }
-                ),
-              { flip: false }
+        'roles',
+        (role: any) =>
+          role
+            .where('scope', 'event')
+            .whereExists('event_participant_roles', (participantRole: any) =>
+              participantRole.whereExists('event_participant', (participant: any) =>
+                participant
+                  .where('user_id', userID)
+                  .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
+              )
+            )
+            .whereExists('event_action_rights', (right: any) =>
+              right.where('resource', 'IN', resources).where('action', 'IN', actions)
             ),
         { flip: false }
       )
@@ -392,13 +434,17 @@ export function applyAmendmentQueryAccess<T>(q: T, userID: string | undefined | 
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       cmp('created_by_id', userID),
-      exists(
-        'collaborators',
-        (collaborator: any) =>
-          collaborator
-            .where('user_id', userID)
-            .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES),
-        { flip: false }
+      exists('roles', (role: any) =>
+        role
+          .where('scope', 'amendment')
+          .whereExists('amendment_collaborators', (collaborator: any) =>
+            collaborator
+              .where('user_id', userID)
+              .where('status', 'IN', AMENDMENT_DISCOVERY_COLLABORATOR_STATUSES)
+          )
+          .whereExists('amendment_action_rights', (right: any) =>
+            right.where('resource', 'amendments').where('action', 'IN', ENTITY_VIEW_ACTIONS)
+          )
       ),
       exists(
         'group',
@@ -474,7 +520,17 @@ export function applyBlogQueryAccess<T>(q: T, userID: string | undefined | null)
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       exists('bloggers', (blogger: any) =>
-        blogger.where('user_id', userID).where('status', 'IN', ACTIVE_BLOGGER_STATUSES)
+        blogger.where('user_id', userID).where('status', 'owner')
+      ),
+      exists('roles', (role: any) =>
+        role
+          .where('scope', 'blog')
+          .whereExists('bloggers', (blogger: any) =>
+            blogger.where('user_id', userID).where('status', 'IN', BLOG_DISCOVERY_BLOGGER_STATUSES)
+          )
+          .whereExists('blog_action_rights', (right: any) =>
+            right.where('resource', 'blogs').where('action', 'IN', ENTITY_VIEW_ACTIONS)
+          )
       ),
       exists('group', (group: any) =>
         group.where(({ or, cmp, exists }: any) =>
@@ -492,6 +548,29 @@ export function applyBlogQueryAccess<T>(q: T, userID: string | undefined | null)
             )
           )
         )
+      )
+    )
+  ) as T;
+}
+
+export function applyBlogManagerQueryAccess<T>(q: T, userID: string | undefined | null): T {
+  const query = q as any;
+  if (!isAuthenticatedUserId(userID)) return denyAllRows(q);
+
+  return query.where(({ or, exists }: any) =>
+    or(
+      exists('bloggers', (blogger: any) =>
+        blogger.where('user_id', userID).where('status', 'IN', ['owner', 'admin'])
+      ),
+      exists('roles', (role: any) =>
+        role
+          .where('scope', 'blog')
+          .whereExists('bloggers', (blogger: any) =>
+            blogger.where('user_id', userID).where('status', 'IN', ACTIVE_BLOGGER_STATUSES)
+          )
+          .whereExists('blog_action_rights', (right: any) =>
+            right.where('resource', 'IN', ['blogs', 'blogBloggers']).where('action', 'manage')
+          )
       )
     )
   ) as T;

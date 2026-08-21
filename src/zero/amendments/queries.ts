@@ -14,11 +14,15 @@ import {
 } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
+import { VIEW_IMPLYING_ACTIONS } from '../rbac/constants';
 import type { NormalizedGroupRelationship } from '@/features/network/types/network.types';
 
 const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['active', 'collaborator', 'member', 'admin'];
 const WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ACTIVE_AMENDMENT_COLLABORATOR_STATUSES;
-const NAVIGATION_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ACTIVE_AMENDMENT_COLLABORATOR_STATUSES;
+const NAVIGATION_AMENDMENT_COLLABORATOR_STATUSES = [
+  'invited',
+  ...ACTIVE_AMENDMENT_COLLABORATOR_STATUSES,
+];
 const discussionThreadStartSchema = z
   .object({
     id: z.string(),
@@ -119,14 +123,16 @@ function applyAmendmentManagerAccess<T>(q: T, userID: string | undefined): T {
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('created_by_id', userID),
-      exists('collaborators', (collaborator: any) =>
-        collaborator
-          .where('user_id', userID)
-          .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
-          .whereExists('role', (role: any) =>
-            role.whereExists('action_rights', (right: any) =>
-              right.where('resource', 'amendments').where('action', 'manage')
-            )
+      exists('roles', (role: any) =>
+        role
+          .where('scope', 'amendment')
+          .whereExists('amendment_collaborators', (collaborator: any) =>
+            collaborator
+              .where('user_id', userID)
+              .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+          )
+          .whereExists('amendment_action_rights', (right: any) =>
+            right.where('resource', 'amendments').where('action', 'manage')
           )
       )
     )
@@ -1350,10 +1356,19 @@ const amendmentQueriesBase = {
       .where(({ or, cmp, exists }: any) =>
         or(
           cmp('created_by_id', userID),
-          exists('collaborators', (collaborator: any) =>
-            collaborator
-              .where('user_id', userID)
-              .where('status', 'IN', NAVIGATION_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+          exists('roles', (role: any) =>
+            role
+              .where('scope', 'amendment')
+              .whereExists('amendment_collaborators', (collaborator: any) =>
+                collaborator
+                  .where('user_id', userID)
+                  .where('status', 'IN', NAVIGATION_AMENDMENT_COLLABORATOR_STATUSES)
+              )
+              .whereExists('amendment_action_rights', (right: any) =>
+                right
+                  .where('resource', 'amendments')
+                  .where('action', 'IN', [...VIEW_IMPLYING_ACTIONS])
+              )
           )
         )
       )

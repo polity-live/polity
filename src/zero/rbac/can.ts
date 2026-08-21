@@ -24,7 +24,14 @@ import type { ResourceType, ActionType, Membership, GuestAccess, ActionRight, Ro
 // Build zql inside this module to avoid circular imports with schema.ts
 const zql = createBuilder(schema);
 const ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
+const DISCOVERY_EVENT_PARTICIPANT_STATUSES = ['invited', ...ACTIVE_EVENT_PARTICIPANT_STATUSES];
 const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['active', 'collaborator', 'member', 'admin'];
+const DISCOVERY_AMENDMENT_COLLABORATOR_STATUSES = [
+  'invited',
+  ...ACTIVE_AMENDMENT_COLLABORATOR_STATUSES,
+];
+const ACTIVE_BLOGGER_STATUSES = ['owner', 'admin', 'member', 'writer'];
+const DISCOVERY_BLOGGER_STATUSES = ['owner', 'invited', 'admin', 'member', 'writer'];
 
 interface PermissionRoleLinkLike {
   role?: {
@@ -32,6 +39,10 @@ interface PermissionRoleLinkLike {
     name?: string | null;
     description?: string | null;
     scope?: string | null;
+    group_id?: string | null;
+    event_id?: string | null;
+    amendment_id?: string | null;
+    blog_id?: string | null;
     action_rights?: readonly ActionRightRow[];
   } | null;
 }
@@ -119,15 +130,25 @@ async function loadPermissionData(
   }
 
   if (check.eventId) {
-    data.participations = await loadEventParticipations(tx, userId, check.eventId);
+    data.participations = await loadEventParticipations(
+      tx,
+      userId,
+      check.eventId,
+      check.action === 'view'
+    );
   }
 
   if (check.blogId) {
-    data.bloggerRelations = await loadBloggerRelations(tx, userId, check.blogId);
+    data.bloggerRelations = await loadBloggerRelations(
+      tx,
+      userId,
+      check.blogId,
+      check.action === 'view'
+    );
   }
 
   if (check.amendmentId) {
-    data.amendment = await loadAmendment(tx, check.amendmentId);
+    data.amendment = await loadAmendment(tx, check.amendmentId, check.action === 'view');
   }
 
   return data;
@@ -186,12 +207,21 @@ async function loadOwnedGroupIds(
   return ownedGroups.map(group => group.id);
 }
 
-async function loadEventParticipations(tx: Transaction<Schema>, userId: string, eventId: string) {
+async function loadEventParticipations(
+  tx: Transaction<Schema>,
+  userId: string,
+  eventId: string,
+  includeInvited: boolean
+) {
   const rows = await tx.run(
     zql.event_participant
       .where('user_id', userId)
       .where('event_id', eventId)
-      .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
+      .where(
+        'status',
+        'IN',
+        includeInvited ? DISCOVERY_EVENT_PARTICIPANT_STATUSES : ACTIVE_EVENT_PARTICIPANT_STATUSES
+      )
       .related('participant_roles', q => q.related('role', rq => rq.related('action_rights')))
       .related('event')
   );
@@ -204,11 +234,17 @@ async function loadEventParticipations(tx: Transaction<Schema>, userId: string, 
   }));
 }
 
-async function loadBloggerRelations(tx: Transaction<Schema>, userId: string, blogId: string) {
+async function loadBloggerRelations(
+  tx: Transaction<Schema>,
+  userId: string,
+  blogId: string,
+  includeInvited: boolean
+) {
   const rows = await tx.run(
     zql.blog_blogger
       .where('user_id', userId)
       .where('blog_id', blogId)
+      .where('status', 'IN', includeInvited ? DISCOVERY_BLOGGER_STATUSES : ACTIVE_BLOGGER_STATUSES)
       .related('role', q => q.related('action_rights'))
       .related('blog')
   );
@@ -216,26 +252,38 @@ async function loadBloggerRelations(tx: Transaction<Schema>, userId: string, blo
   return rows.map(b => ({
     id: b.id,
     blog: b.blog ? { id: b.blog.id } : undefined,
+    status: b.status ?? undefined,
     role: b.role
       ? {
           id: b.role.id,
           name: b.role.name ?? '',
           description: b.role.description ?? undefined,
           scope: (b.role.scope ?? 'blog') as Role['scope'],
+          ...(b.role.blog_id ? { blog: { id: b.role.blog_id } } : {}),
           actionRights: mapActionRights(b.role.action_rights),
         }
       : undefined,
   }));
 }
 
-async function loadAmendment(tx: Transaction<Schema>, amendmentId: string) {
+async function loadAmendment(
+  tx: Transaction<Schema>,
+  amendmentId: string,
+  includeInvited: boolean
+) {
   const amendment = await tx.run(
     zql.amendment
       .where('id', amendmentId)
       .related('created_by')
       .related('collaborators', q =>
         q
-          .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+          .where(
+            'status',
+            'IN',
+            includeInvited
+              ? DISCOVERY_AMENDMENT_COLLABORATOR_STATUSES
+              : ACTIVE_AMENDMENT_COLLABORATOR_STATUSES
+          )
           .related('user')
           .related('role', rq => rq.related('action_rights'))
       )
@@ -259,6 +307,9 @@ async function loadAmendment(tx: Transaction<Schema>, amendmentId: string) {
             name: collaborator.role.name ?? '',
             description: collaborator.role.description ?? undefined,
             scope: (collaborator.role.scope ?? 'amendment') as Role['scope'],
+            ...(collaborator.role.amendment_id
+              ? { amendment: { id: collaborator.role.amendment_id } }
+              : {}),
             actionRights: mapActionRights(collaborator.role.action_rights),
           }
         : undefined,
@@ -294,6 +345,10 @@ function mapRolesFromLinks<T extends PermissionRoleLinkLike>(
         name: link.role.name ?? '',
         description: link.role.description ?? undefined,
         scope: (link.role.scope ?? fallbackScope) as Role['scope'],
+        ...(link.role.group_id ? { group: { id: link.role.group_id } } : {}),
+        ...(link.role.event_id ? { event: { id: link.role.event_id } } : {}),
+        ...(link.role.amendment_id ? { amendment: { id: link.role.amendment_id } } : {}),
+        ...(link.role.blog_id ? { blog: { id: link.role.blog_id } } : {}),
         actionRights: mapActionRights(link.role.action_rights),
       },
     ];

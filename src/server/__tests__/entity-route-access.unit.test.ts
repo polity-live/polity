@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   session: vi.fn(),
   executeRead: vi.fn(),
   groupAccess: vi.fn(),
+  activeGroupAccess: vi.fn(),
   amendmentAccess: vi.fn(),
   eventAccess: vi.fn(),
   blogAccess: vi.fn(),
@@ -29,6 +30,7 @@ vi.mock('@tanstack/react-start/server', () => ({ getRequest: mocks.request }));
 vi.mock('@/lib/supabase/server', () => ({ getSession: mocks.session }));
 vi.mock('@/server/zero-mutate', () => ({ executeZeroRead: mocks.executeRead }));
 vi.mock('@/features/auth/logic/privateEntityRelationshipAccess', () => ({
+  hasActiveGroupRelationshipAccess: mocks.activeGroupAccess,
   hasPrivateGroupRouteAccess: mocks.groupAccess,
   hasPrivateAmendmentRouteAccess: mocks.amendmentAccess,
   hasPrivateEventRouteAccess: mocks.eventAccess,
@@ -97,6 +99,7 @@ beforeEach(() => {
   mocks.request.mockReturnValue({ headers: new Headers() });
   mocks.session.mockResolvedValue({ user: { id: 'viewer-1' } });
   mocks.groupAccess.mockReturnValue(true);
+  mocks.activeGroupAccess.mockReturnValue(false);
   mocks.amendmentAccess.mockReturnValue(true);
   mocks.eventAccess.mockReturnValue(true);
   mocks.blogAccess.mockReturnValue(true);
@@ -128,6 +131,38 @@ describe('entityRouteAccessFn validation and request boundary', () => {
     );
     expect(mocks.session).not.toHaveBeenCalled();
     expect(mocks.executeRead).not.toHaveBeenCalled();
+  });
+
+  it('derives private owner access only from the authenticated request', async () => {
+    const request = { headers: new Headers({ authorization: 'Bearer valid-token' }) };
+    mocks.request.mockReturnValue(request);
+    mocks.session.mockImplementation(async receivedRequest =>
+      receivedRequest.headers.get('authorization') === 'Bearer valid-token'
+        ? { user: { id: 'owner-1' } }
+        : null
+    );
+    mocks.groupAccess.mockImplementation(
+      (_groupId, ownerId, userId) => ownerId != null && ownerId === userId
+    );
+    installDatabase({
+      group: { id: 'group-1', owner_id: 'owner-1', visibility: 'private' },
+      group_membership: [],
+      group_guest_access: [],
+    });
+
+    await expect(check({ entityType: 'group', entityId: 'group-1' })).resolves.toMatchObject({
+      canAccessPrivate: true,
+    });
+    expect(mocks.session).toHaveBeenCalledWith(request);
+    expect(mocks.groupAccess).toHaveBeenCalledWith('group-1', 'owner-1', 'owner-1', [], []);
+
+    mocks.request.mockReturnValue({
+      headers: new Headers({ authorization: 'Bearer invalid-token' }),
+    });
+    await expect(check({ entityType: 'group', entityId: 'group-1' })).resolves.toMatchObject({
+      canAccessPrivate: false,
+    });
+    expect(mocks.groupAccess).toHaveBeenLastCalledWith('group-1', 'owner-1', null, [], []);
   });
 });
 
@@ -162,11 +197,14 @@ describe('entityRouteAccessFn entity policies', () => {
     });
   });
 
-  it('loads group membership and guest status for an authenticated viewer', async () => {
+  it('loads group-role action rights for an authenticated viewer', async () => {
     const run = installDatabase({
       group: { id: 'group-1', owner_id: 'owner-1', visibility: 'members' },
-      group_membership: [{ status: 'active' }, { status: 'requested' }],
-      group_guest_access: [{ status: 'invited' }],
+      group_membership: [
+        { status: 'active', membership_roles: [{ role: { action_rights: [] } }] },
+        { status: 'requested', membership_roles: [] },
+      ],
+      group_guest_access: [{ status: 'invited', guest_roles: [{ role: { action_rights: [] } }] }],
     });
     await expect(check({ entityType: 'group', entityId: 'group-1' })).resolves.toEqual({
       exists: true,
@@ -174,10 +212,14 @@ describe('entityRouteAccessFn entity policies', () => {
       canAccessPrivate: true,
     });
     expect(mocks.groupAccess).toHaveBeenCalledWith(
+      'group-1',
       'owner-1',
       'viewer-1',
-      ['active', 'requested'],
-      ['invited']
+      [
+        { status: 'active', roles: [{ action_rights: [] }] },
+        { status: 'requested', roles: [] },
+      ],
+      [{ status: 'invited', roles: [{ action_rights: [] }] }]
     );
     expect(run).toHaveBeenCalledTimes(3);
   });
@@ -191,7 +233,7 @@ describe('entityRouteAccessFn entity policies', () => {
       exists: true,
       canAccessPrivate: true,
     });
-    expect(mocks.groupAccess).toHaveBeenCalledWith('owner-1', null, [], []);
+    expect(mocks.groupAccess).toHaveBeenCalledWith('group-1', 'owner-1', null, [], []);
     expect(run).toHaveBeenCalledTimes(1);
 
     installDatabase({ group: null });
@@ -217,13 +259,20 @@ describe('entityRouteAccessFn entity policies', () => {
       visibilities: ['private', 'members'],
       canAccessPrivate: true,
     });
-    expect(mocks.amendmentAccess).toHaveBeenCalledWith('author-1', 'viewer-1', ['active']);
+    expect(mocks.amendmentAccess).toHaveBeenCalledWith(
+      'amendment-1',
+      'author-1',
+      'viewer-1',
+      [{ status: 'active', role: undefined }],
+      false
+    );
   });
 
   it('handles anonymous and missing amendments without collaborator queries', async () => {
     mocks.session.mockResolvedValue(undefined);
     const run = installDatabase({
       amendment: {
+        id: 'amendment-1',
         created_by_id: 'author-1',
         visibility: 'private',
         group: undefined,
@@ -234,7 +283,7 @@ describe('entityRouteAccessFn entity policies', () => {
       visibilities: ['private', undefined],
       canAccessPrivate: true,
     });
-    expect(mocks.amendmentAccess).toHaveBeenCalledWith('author-1', null, []);
+    expect(mocks.amendmentAccess).toHaveBeenCalledWith('amendment-1', 'author-1', null, [], false);
     expect(run).toHaveBeenCalledTimes(1);
 
     installDatabase({ amendment: null });
@@ -259,20 +308,34 @@ describe('entityRouteAccessFn entity policies', () => {
       visibilities: ['public', 'members'],
       canAccessPrivate: true,
     });
-    expect(mocks.eventAccess).toHaveBeenCalledWith('creator-1', 'viewer-1', ['active', 'invited']);
+    expect(mocks.eventAccess).toHaveBeenCalledWith(
+      'event-1',
+      'creator-1',
+      'viewer-1',
+      [
+        { status: 'active', roles: [] },
+        { status: 'invited', roles: [] },
+      ],
+      false
+    );
   });
 
   it('handles anonymous and missing events without participant queries', async () => {
     mocks.session.mockResolvedValue(null);
     const run = installDatabase({
-      event: { creator_id: 'creator-1', visibility: 'private', group: undefined },
+      event: {
+        id: 'event-1',
+        creator_id: 'creator-1',
+        visibility: 'private',
+        group: undefined,
+      },
     });
     await expect(check({ entityType: 'event', entityId: 'event-1' })).resolves.toEqual({
       exists: true,
       visibilities: ['private', undefined],
       canAccessPrivate: true,
     });
-    expect(mocks.eventAccess).toHaveBeenCalledWith('creator-1', null, []);
+    expect(mocks.eventAccess).toHaveBeenCalledWith('event-1', 'creator-1', null, [], false);
     expect(run).toHaveBeenCalledTimes(1);
 
     installDatabase({ event: null });
@@ -309,6 +372,7 @@ describe('entityRouteAccessFn entity policies', () => {
 
   it('accepts matching group and user parents and forwards the viewer blogger statuses', async () => {
     const blog = {
+      id: 'blog-1',
       group_id: 'group-1',
       visibility: 'private',
       bloggers: [
@@ -317,7 +381,12 @@ describe('entityRouteAccessFn entity policies', () => {
         { user_id: 'viewer-1', status: 'invited' },
       ],
     };
-    installDatabase({ blog });
+    installDatabase({
+      blog,
+      group: { owner_id: 'other-1' },
+      group_membership: [],
+      group_guest_access: [],
+    });
     await expect(
       check({ entityType: 'blog', entityId: 'blog-1', parentType: 'group', parentId: 'group-1' })
     ).resolves.toEqual({
@@ -329,16 +398,26 @@ describe('entityRouteAccessFn entity policies', () => {
     await expect(
       check({ entityType: 'blog', entityId: 'blog-1', parentType: 'user', parentId: 'viewer-1' })
     ).resolves.toMatchObject({ exists: true });
-    expect(mocks.blogAccess).toHaveBeenLastCalledWith('viewer-1', ['active', 'invited']);
+    expect(mocks.blogAccess).toHaveBeenLastCalledWith(
+      'blog-1',
+      'viewer-1',
+      [
+        { status: 'active', role: undefined },
+        { status: 'invited', role: undefined },
+      ],
+      false
+    );
   });
 
   it('normalizes a missing blogger relation and allows a blog without a parent constraint', async () => {
-    installDatabase({ blog: { group_id: null, visibility: 'public', bloggers: undefined } });
+    installDatabase({
+      blog: { id: 'blog-1', group_id: null, visibility: 'public', bloggers: undefined },
+    });
     await expect(check({ entityType: 'blog', entityId: 'blog-1' })).resolves.toEqual({
       exists: true,
       visibilities: ['public'],
       canAccessPrivate: true,
     });
-    expect(mocks.blogAccess).toHaveBeenCalledWith('viewer-1', []);
+    expect(mocks.blogAccess).toHaveBeenCalledWith('blog-1', 'viewer-1', [], false);
   });
 });

@@ -1017,6 +1017,36 @@ export const roleRelationships = relationships(role, helpers => ({
     destSchema: actionRight,
     destField: ['role_id'],
   }),
+  group_action_rights: helpers.many({
+    sourceField: ['id', 'group_id'],
+    destSchema: actionRight,
+    destField: ['role_id', 'group_id'],
+  }),
+  event_action_rights: helpers.many({
+    sourceField: ['id', 'event_id'],
+    destSchema: actionRight,
+    destField: ['role_id', 'event_id'],
+  }),
+  amendment_action_rights: helpers.many({
+    sourceField: ['id', 'amendment_id'],
+    destSchema: actionRight,
+    destField: ['role_id', 'amendment_id'],
+  }),
+  blog_action_rights: helpers.many({
+    sourceField: ['id', 'blog_id'],
+    destSchema: actionRight,
+    destField: ['role_id', 'blog_id'],
+  }),
+  amendment_collaborators: helpers.many({
+    sourceField: ['id'],
+    destSchema: amendmentCollaborator,
+    destField: ['role_id'],
+  }),
+  bloggers: helpers.many({
+    sourceField: ['id'],
+    destSchema: blogBlogger,
+    destField: ['role_id'],
+  }),
   holder_history: helpers.many({
     sourceField: ['id'],
     destSchema: roleHolderHistory,
@@ -1247,6 +1277,7 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
     destSchema: amendmentCollaborator,
     destField: ['amendment_id'],
   }),
+  roles: many({ sourceField: ['id'], destSchema: role, destField: ['amendment_id'] }),
   city_designs: many({
     sourceField: ['id'],
     destSchema: amendmentCityDesign,

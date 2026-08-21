@@ -176,12 +176,19 @@ describe('amendment query nested authorization', () => {
       expect.arrayContaining([
         ['cmp', 'user_id', ctx.userID],
         ['exists', 'amendment'],
-        ['where', 'collaborators', 'user_id', ctx.userID],
-        ['where', 'collaborators', 'status', 'IN', ['active', 'collaborator', 'member', 'admin']],
-        ['whereExists', 'collaborators', 'role'],
-        ['whereExists', 'collaborators.role', 'action_rights'],
-        ['where', 'collaborators.role.action_rights', 'resource', 'amendments'],
-        ['where', 'collaborators.role.action_rights', 'action', 'manage'],
+        ['where', 'roles', 'scope', 'amendment'],
+        ['whereExists', 'roles', 'amendment_collaborators'],
+        ['where', 'roles.amendment_collaborators', 'user_id', ctx.userID],
+        [
+          'where',
+          'roles.amendment_collaborators',
+          'status',
+          'IN',
+          ['active', 'collaborator', 'member', 'admin'],
+        ],
+        ['whereExists', 'roles', 'amendment_action_rights'],
+        ['where', 'roles.amendment_action_rights', 'resource', 'amendments'],
+        ['where', 'roles.amendment_action_rights', 'action', 'manage'],
       ])
     );
   });
@@ -201,8 +208,16 @@ describe('amendment query nested authorization', () => {
       expect.arrayContaining([
         ['cmp', 'user_id', ctx.userID],
         ['exists', 'amendment'],
-        ['where', 'collaborators', 'user_id', ctx.userID],
-        ['where', 'collaborators', 'status', 'IN', ['active', 'collaborator', 'member', 'admin']],
+        ['where', 'roles', 'scope', 'amendment'],
+        ['whereExists', 'roles', 'amendment_collaborators'],
+        ['where', 'roles.amendment_collaborators', 'user_id', ctx.userID],
+        [
+          'where',
+          'roles.amendment_collaborators',
+          'status',
+          'IN',
+          ['active', 'collaborator', 'member', 'admin'],
+        ],
       ])
     );
     expect(collaboratorCalls.some(call => call[0] === 'related' && call[1] === 'user')).toBe(true);
@@ -222,10 +237,12 @@ describe('amendment query nested authorization', () => {
     expect(calls).toEqual(
       expect.arrayContaining([
         ['cmp', 'user_id', ctx.userID],
-        ['whereExists', 'collaborators', 'role'],
-        ['whereExists', 'collaborators.role', 'action_rights'],
-        ['where', 'collaborators.role.action_rights', 'resource', 'amendments'],
-        ['where', 'collaborators.role.action_rights', 'action', 'manage'],
+        ['where', 'roles', 'scope', 'amendment'],
+        ['whereExists', 'roles', 'amendment_collaborators'],
+        ['where', 'roles.amendment_collaborators', 'user_id', ctx.userID],
+        ['whereExists', 'roles', 'amendment_action_rights'],
+        ['where', 'roles.amendment_action_rights', 'resource', 'amendments'],
+        ['where', 'roles.amendment_action_rights', 'action', 'manage'],
       ])
     );
   });
