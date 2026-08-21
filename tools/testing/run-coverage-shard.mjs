@@ -5,7 +5,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export const COVERAGE_SHARD_USAGE = `Usage:
-  pnpm run test:coverage:shard -- <index>/<count> [max-workers] [reports-directory]
+  pnpm run test:coverage:shard <index>/<count> [max-workers] [reports-directory]
   node tools/testing/run-coverage-shard.mjs --shard <index>/<count> \\
     [--max-workers <count>] [--reports-directory <path>]
 

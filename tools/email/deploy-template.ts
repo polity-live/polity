@@ -142,7 +142,7 @@ export function parseOptions(args: string[]): CliOptions {
 
   if (!slug) {
     throw new Error(
-      'Template slug is required. Example: pnpm run email:template:deploy -- newsletter'
+      'Template slug is required. Example: pnpm run email:template:deploy newsletter'
     );
   }
 

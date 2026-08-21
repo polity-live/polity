@@ -6,6 +6,10 @@ inputs:
     description: Install dependencies with the frozen lockfile.
     required: false
     default: "true"
+  cache:
+    description: Enable the setup-node pnpm cache.
+    required: false
+    default: "true"
 
 runs:
   using: composite
@@ -19,7 +23,7 @@ runs:
       uses: actions/setup-node@v7
       with:
         node-version: 24.18.0
-        cache: pnpm
+        cache: ${{ inputs.cache == 'true' && 'pnpm' || '' }}
         cache-dependency-path: pnpm-lock.yaml
     - name: Install dependencies
       if: inputs.install == 'true'

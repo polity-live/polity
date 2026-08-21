@@ -225,16 +225,16 @@ The project deploys to three services:
 ```bash
 pnpm run deploy          # Interactive target selection
 pnpm run deploy:dry      # Interactive dry-run (prints commands without executing)
-pnpm run deploy -- --all # Full deploy without prompt: Supabase → Fly.io → Vercel
+pnpm run deploy --all # Full deploy without prompt: Supabase → Fly.io → Vercel
 ```
 
 Skip individual steps with flags:
 
 ```bash
-pnpm run deploy -- --skip-supabase --skip-fly # Only frontend to Vercel
-pnpm run deploy -- --skip-supabase   # Skip Supabase migrations
-pnpm run deploy -- --skip-fly        # Skip Fly.io deploy
-pnpm run deploy -- --skip-vercel     # Skip Vercel deploy
+pnpm run deploy --skip-supabase --skip-fly # Only frontend to Vercel
+pnpm run deploy --skip-supabase   # Skip Supabase migrations
+pnpm run deploy --skip-fly        # Skip Fly.io deploy
+pnpm run deploy --skip-vercel     # Skip Vercel deploy
 ```
 
 The script enforces that you are on the `master` or `deploy` branch.

@@ -3,7 +3,6 @@
   "scope": "pnpm audit --prod",
   "vulnerabilities": {
     "@babel/core": "low",
-    "brace-expansion": "high",
     "defu": "high",
     "fast-uri": "high",
     "fastify": "high",

@@ -21,8 +21,9 @@ describe('GitHub workflow contracts', () => {
     expect(setup).toContain('actions/setup-node@v7');
     expect(setup).toContain('version: 10.34.5');
     expect(setup).toContain('node-version: 24.18.0');
-    expect(setup).toContain('cache: pnpm');
+    expect(setup).toContain("cache: ${{ inputs.cache == 'true' && 'pnpm' || '' }}");
     expect(setup).toContain('pnpm install --frozen-lockfile');
+    expect(workflow('ci.yml')).toContain('cache: "false"');
     expect(workspace).toContain('fetchRetries: 5');
     expect(workspace).toContain('fetchRetryFactor: 2');
     expect(workspace).toContain('fetchRetryMintimeout: 20000');
@@ -141,7 +142,7 @@ describe('GitHub workflow contracts', () => {
     expect(ci).toContain('shard: [1, 2, 3, 4]');
     expect(ci).toContain('COVERAGE_SHARD_ARTIFACT_DIR="$RUNNER_TEMP/polity-coverage-shards"');
     expect(ci).not.toContain('COVERAGE_SHARD_ARTIFACT_DIR: ${{ runner.temp }}');
-    expect(ci).toContain('pnpm run test:coverage:shard -- "${{ matrix.shard }}/4"');
+    expect(ci).toContain('pnpm run test:coverage:shard "${{ matrix.shard }}/4"');
     expect(ci).toContain('path: .vitest-reports/blob-${{ matrix.shard }}-4.json');
     expect(ci).not.toContain('\n  coverage-tests:');
     expect(ratchet).toContain('name: Coverage Ratchet');
