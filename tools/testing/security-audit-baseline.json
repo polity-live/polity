@@ -1,13 +1,5 @@
 {
   "version": 1,
   "scope": "pnpm audit --prod",
-  "vulnerabilities": {
-    "@babel/core": "low",
-    "fast-uri": "high",
-    "fastify": "high",
-    "find-my-way": "high",
-    "picomatch": "high",
-    "undici": "high",
-    "yaml": "moderate"
-  }
+  "vulnerabilities": {}
 }
