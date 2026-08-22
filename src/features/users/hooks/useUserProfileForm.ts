@@ -25,7 +25,7 @@ export interface UserProfileFormData {
   subtitle: string;
   about: string;
   aboutContent: Value;
-  email: string;
+  contactEmail: string;
   youtube: string;
   linkedin: string;
   whatsapp: string;
@@ -54,6 +54,44 @@ export interface UserProfileFormData {
   hashtags: string[];
 }
 
+function createInitialUserProfileFormData(): UserProfileFormData {
+  return {
+    firstName: '',
+    lastName: '',
+    gender: 'unspecified',
+    subtitle: '',
+    about: '',
+    aboutContent: EMPTY_RICH_TEXT_VALUE,
+    contactEmail: '',
+    youtube: '',
+    linkedin: '',
+    whatsapp: '',
+    instagram: '',
+    twitter: '',
+    facebook: '',
+    snapchat: '',
+    tiktok: '',
+    website: '',
+    country: '',
+    region: '',
+    post_code: '',
+    city: '',
+    street: '',
+    house_number: '',
+    latitude: null,
+    longitude: null,
+    location_kind: null,
+    location_place_id: null,
+    location_boundary_source: null,
+    location_geometry: null,
+    location_bounds: null,
+    avatar: '',
+    videoURL: '',
+    visibility: 'public',
+    hashtags: [],
+  };
+}
+
 export interface UseUserProfileFormOptions {
   userId: string;
   user: UserProfile | null;
@@ -79,7 +117,11 @@ export function useUserProfileForm({
 }: UseUserProfileFormOptions): UseUserProfileFormReturn {
   const navigate = useNavigate();
   const { updateCompleteProfile } = useUserMutations();
-  const { userHashtags, allHashtags } = useCommonState({
+  const {
+    userHashtags,
+    allHashtags,
+    isLoading: commonIsLoading,
+  } = useCommonState({
     user_id: userId,
     loadAllHashtags: true,
   });
@@ -90,50 +132,26 @@ export function useUserProfileForm({
     [userHashtags]
   );
 
-  const [formData, setFormData] = useState<UserProfileFormData>({
-    firstName: '',
-    lastName: '',
-    gender: 'unspecified',
-    subtitle: '',
-    about: '',
-    aboutContent: EMPTY_RICH_TEXT_VALUE,
-    email: '',
-    youtube: '',
-    linkedin: '',
-    whatsapp: '',
-    instagram: '',
-    twitter: '',
-    facebook: '',
-    snapchat: '',
-    tiktok: '',
-    website: '',
-    country: '',
-    region: '',
-    post_code: '',
-    city: '',
-    street: '',
-    house_number: '',
-    latitude: null,
-    longitude: null,
-    location_kind: null,
-    location_place_id: null,
-    location_boundary_source: null,
-    location_geometry: null,
-    location_bounds: null,
-    avatar: '',
-    videoURL: '',
-    visibility: 'public' as Visibility,
-    hashtags: [],
-  });
+  const [formData, setFormData] = useState<UserProfileFormData>(createInitialUserProfileFormData);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const initializedRef = useRef(false);
-  const hashtagsInitializedRef = useRef(false);
+  const initializedRef = useRef<string | null>(null);
+  const hashtagsInitializedRef = useRef<string | null>(null);
+  const formEntityIdRef = useRef(userId);
+
+  useEffect(() => {
+    if (formEntityIdRef.current === userId) return;
+
+    formEntityIdRef.current = userId;
+    initializedRef.current = null;
+    hashtagsInitializedRef.current = null;
+    setFormData(createInitialUserProfileFormData());
+  }, [userId]);
 
   // Initialize form data only once when user data first loads
   useEffect(() => {
-    if (user && !initializedRef.current) {
-      initializedRef.current = true;
+    if (user && user.id === userId && initializedRef.current !== userId) {
+      initializedRef.current = userId;
       const aboutContent = toRichTextValue(user.about ?? '');
       setFormData({
         firstName: user.first_name || '',
@@ -145,7 +163,7 @@ export function useUserProfileForm({
         subtitle: user.bio || '',
         about: richTextToPlainText(aboutContent),
         aboutContent,
-        email: user.email || '',
+        contactEmail: user.contact_email || '',
         youtube: user.youtube || '',
         linkedin: user.linkedin || '',
         whatsapp: user.whatsapp || '',
@@ -174,15 +192,15 @@ export function useUserProfileForm({
         hashtags: [],
       });
     }
-  }, [user]);
+  }, [user, userId]);
 
   // Initialize hashtags once junction data loads
   useEffect(() => {
-    if (existingTags.length > 0 && !hashtagsInitializedRef.current) {
-      hashtagsInitializedRef.current = true;
+    if (!commonIsLoading && user?.id === userId && hashtagsInitializedRef.current !== userId) {
+      hashtagsInitializedRef.current = userId;
       setFormData(prev => ({ ...prev, hashtags: existingTags }));
     }
-  }, [existingTags]);
+  }, [commonIsLoading, existingTags, user, userId]);
 
   const updateField = <K extends keyof UserProfileFormData>(
     field: K,
@@ -213,6 +231,7 @@ export function useUserProfileForm({
       const result = await updateCompleteProfile(userId, {
         first_name: formData.firstName,
         last_name: formData.lastName,
+        contact_email: formData.contactEmail || null,
         gender: formData.gender === 'unspecified' ? null : formData.gender,
         bio: formData.subtitle,
         about: formData.about ? toZeroRichTextValue(formData.aboutContent) : null,

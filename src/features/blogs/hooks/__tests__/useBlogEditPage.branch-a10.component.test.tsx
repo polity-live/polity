@@ -118,6 +118,40 @@ describe('useBlogEditPage exhaustive branch campaign A10', () => {
     expect(empty.result.current.formData.hashtags).toEqual([]);
   });
 
+  it('resets and hydrates every field and hashtags when the blog id changes', () => {
+    mocks.blog = {
+      id: 'first',
+      title: 'First',
+      date: 'first-date',
+      image_url: 'first-image',
+      video_url: 'first-video',
+      visibility: 'private',
+    };
+    mocks.blogHashtags = [{ hashtag: { tag: 'first-tag' } }];
+    const view = renderHook(({ blogId }) => useBlogEditPage(blogId), {
+      initialProps: { blogId: 'first' },
+    });
+    expect(view.result.current.formData.title).toBe('First');
+
+    mocks.blog = {
+      id: 'second',
+      title: 'Second',
+      date: 'second-date',
+      image_url: '',
+      video_url: '',
+      visibility: 'authenticated',
+    };
+    mocks.blogHashtags = [{ hashtag: { tag: 'second-tag' } }];
+    view.rerender({ blogId: 'second' });
+
+    expect(view.result.current.formData).toMatchObject({
+      title: 'Second',
+      date: 'second-date',
+      visibility: 'authenticated',
+      hashtags: ['second-tag'],
+    });
+  });
+
   it('updates fields, removes images, and resolves every contextual navigation target', () => {
     mocks.blog = { id: 'blog', title: 'Blog', group_id: 'blog-group' };
     const grouped = renderHook(() =>

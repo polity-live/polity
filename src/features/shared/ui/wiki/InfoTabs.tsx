@@ -5,7 +5,16 @@ import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs.tsx
 import { ScrollableTabsList } from '@/features/shared/ui/navigation/ScrollableTabs';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
-import { Calendar, Globe, Ghost, Mail, MapPin, MessageSquare, Music2 } from 'lucide-react';
+import {
+  Activity,
+  Calendar,
+  Globe,
+  Ghost,
+  Mail,
+  MapPin,
+  MessageSquare,
+  Music2,
+} from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { hasGeoCoordinates } from '@/features/shared/logic/geoCoordinates';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
@@ -60,6 +69,7 @@ interface InfoTabsProps {
   contact?: ContactInfo;
   eventDetails?: EventDetails;
   className?: string;
+  activity?: React.ReactNode;
 }
 
 interface ContactCardItem {
@@ -71,7 +81,13 @@ interface ContactCardItem {
   accentClass: string;
 }
 
-export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails, className }) => {
+export const InfoTabs: React.FC<InfoTabsProps> = ({
+  about,
+  contact,
+  eventDetails,
+  className,
+  activity,
+}) => {
   const { t, language } = useTranslation();
   const primaryContactItems: ContactCardItem[] = [
     {
@@ -277,7 +293,7 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
   };
 
   // Don't render if there's no content
-  if (!about && !contact && !eventDetails) {
+  if (!about && !contact && !eventDetails && !activity) {
     return null;
   }
 
@@ -293,6 +309,12 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
           </TabsTrigger>
         )}
         <TabsTrigger value="contact">{t('components.infoTabs.contact')}</TabsTrigger>
+        {activity ? (
+          <TabsTrigger value="activity">
+            <Activity className="mr-2 h-4 w-4" />
+            {t('components.activityLog.title')}
+          </TabsTrigger>
+        ) : null}
       </ScrollableTabsList>
 
       <TabsContent value="about" className="mt-4">
@@ -403,6 +425,13 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
           </CardContent>
         </Card>
       </TabsContent>
+      {activity ? (
+        <TabsContent value="activity" className="mt-4">
+          <Card>
+            <CardContent className="pt-6">{activity}</CardContent>
+          </Card>
+        </TabsContent>
+      ) : null}
     </Tabs>
   );
 };

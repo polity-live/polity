@@ -26,7 +26,7 @@ vi.mock('../ui/TodoArchiveAction', () => ({
 vi.mock('@/features/auth/ui/AccessDenied', () => ({ AccessDenied: () => <div>Denied</div> }));
 vi.mock('@/features/shared/ui/comments', () => ({ CommentThread: () => null }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  useTranslation: () => ({ language: 'en' }),
+  useTranslation: () => ({ language: 'en', t: (key: string) => key }),
 }));
 
 afterEach(cleanup);
@@ -51,6 +51,13 @@ function props(todo: any) {
       onAddComment: vi.fn(),
       onVote: vi.fn(),
       isSubmitting: false,
+    },
+    activity: {
+      activities: [],
+      canViewActivity: false,
+      isLoading: false,
+      severity: 'all',
+      setSeverity: vi.fn(),
     },
     canManageTodos: true,
     isArchiving: false,

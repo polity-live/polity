@@ -15,6 +15,12 @@ import {
 } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
+import {
+  activityCursorSchema,
+  activityPageLimitSchema,
+  activitySeverityFilterSchema,
+  applyActivityCursor,
+} from '../activity/queries';
 
 const createdCursorSchema = z
   .object({ id: z.string(), created_at: z.number() })
@@ -45,6 +51,48 @@ function applyGroupDiscoveryAccess<T>(q: T, userID: string | undefined): T {
 }
 
 export const groupQueries = {
+  activities: defineQuery(
+    z.object({
+      entityId: z.string(),
+      severity: activitySeverityFilterSchema,
+      cursor: activityCursorSchema,
+      limit: activityPageLimitSchema,
+    }),
+    ({ args: { entityId, severity, cursor, limit }, ctx: { userID } }) => {
+      let q: any = zql.group_activity.where('group_id', entityId);
+      if (!userID || userID === 'anon') {
+        q = q.where('id', '__unauthorized__');
+      } else {
+        q = q.where(({ or, exists }: any) =>
+          or(
+            exists('group', (group: any) =>
+              group.where(({ or, cmp, exists }: any) =>
+                or(
+                  cmp('owner_id', userID),
+                  exists('memberships', (membership: any) =>
+                    membership
+                      .where('user_id', userID)
+                      .where('status', 'IN', WIKI_ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+                  )
+                )
+              )
+            ),
+            exists('group', (group: any) =>
+              applyGroupManagerQueryAccess(group, userID, 'manage', [
+                'groups',
+                'groupMemberships',
+                'groupRoles',
+                'groupAccessRoles',
+                'groupRelationships',
+              ])
+            )
+          )
+        );
+      }
+      if (severity !== 'all') q = q.where('severity', severity);
+      return applyActivityCursor(q, cursor).related('actor').related('subject_user').limit(limit);
+    }
+  ),
   // ── Existing queries (unchanged) ──────────────────────────────────
 
   byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
@@ -518,7 +566,7 @@ export const groupQueries = {
         q
           .where('user_id', userID ?? '__anon__')
           .related('user')
-          .related('guest_roles', gq => gq.related('role'))
+          .related('guest_roles', gq => gq.related('role', rq => rq.related('action_rights')))
       )
       .related('group_hashtags', q => q.related('hashtag'))
       .related('roles', q =>

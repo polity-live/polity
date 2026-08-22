@@ -39,6 +39,7 @@ import {
 import { reconcileGeneralAssemblyParticipantsForEvent } from './assembly-reconcile';
 import { reconcileDelegateAllocationsForEvent } from './delegate-allocation-reconcile';
 import { reconcileGroupGraph } from '../network/group-graph-reconcile';
+import { appendEntityActivity } from '../activity/shared';
 import { loadGroupWithDerivedNetworkMeta } from '../groups/membership-helpers';
 import {
   canCreateDelegateAssemblyForGroup,
@@ -495,10 +496,20 @@ export const eventServerMutators = {
         assignedById: ctx.userID,
         reason: 'event-create',
       });
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: args.id,
+        action: 'delegates_reconciled',
+        severity: 'high',
+        actorType: 'system',
+        context: { reason: 'event-create-assembly-reconcile', event_type: args.event_type },
+      });
     }
 
     // Auto-invite specific users for OnInvite events
     if (args.event_type === 'on_invite' && args.invited_user_ids?.length) {
+      let invitedCount = 0;
       for (const userId of args.invited_user_ids) {
         if (userId === ctx.userID) continue; // skip creator (already added)
         const participationId = crypto.randomUUID();
@@ -519,6 +530,17 @@ export const eventServerMutators = {
             assigned_by_id: ctx.userID,
           });
         }
+        invitedCount += 1;
+      }
+      if (invitedCount > 0) {
+        await appendEntityActivity(tx, ctx, {
+          table: 'event_activity',
+          entityField: 'event_id',
+          entityId: args.id,
+          action: 'participant_added',
+          severity: 'high',
+          context: { operation: 'initial_invitations', count: invitedCount },
+        });
       }
     }
 
@@ -938,6 +960,15 @@ export const eventServerMutators = {
         eventIds: [args.id],
         assignedById: ctx.userID,
         reason: 'event-update',
+      });
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: args.id,
+        action: 'delegates_reconciled',
+        severity: 'high',
+        actorType: 'system',
+        context: { reason: 'event-update-assembly-reconcile', event_type: nextEventType },
       });
     }
   }),

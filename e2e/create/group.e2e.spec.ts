@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures/test';
+import { db } from '../fixtures/db';
 import { applyOptionalVideoUrl, fillMinimalGroup, gotoGroup, layouts } from './helpers';
 import { submitSmokeAndExpectCreated } from './smoke-expectations';
 
@@ -87,11 +88,26 @@ test.describe('create/group', () => {
       prefix: e2eRun.prefix,
     });
 
+    const groupName = `${e2eRun.prefix} Created Group`;
+    const rows = await db()`
+      select id
+      from public."group"
+      where name = ${groupName}
+      order by created_at desc
+      limit 1
+    `;
+    const groupId = String(rows[0]?.id ?? '');
+    expect(groupId).not.toBe('');
+    await createFlowPage.page.goto(`/group/${groupId}`, { waitUntil: 'domcontentloaded' });
+
     const groupHeading = createFlowPage.page.getByRole('heading', {
-      name: `${e2eRun.prefix} Created Group`,
+      name: groupName,
       exact: true,
     });
     await expect(groupHeading).toBeVisible();
+    await expect(createFlowPage.page.locator('[data-entity-visibility="private"]')).toContainText(
+      /Private|Privat/
+    );
     await createFlowPage.page.reload({ waitUntil: 'domcontentloaded' });
     await expect(groupHeading).toBeVisible({ timeout: 30_000 });
     await expect(
@@ -99,5 +115,29 @@ test.describe('create/group', () => {
         name: /This Page Is Private|Diese Seite ist privat/i,
       })
     ).toHaveCount(0);
+
+    await createFlowPage.page.goto(`/group/${groupId}/settings`, {
+      waitUntil: 'domcontentloaded',
+    });
+    const privateOption = createFlowPage.page.locator('[data-create-option="private"]:visible');
+    await expect(privateOption).toHaveAttribute('aria-pressed', 'true');
+
+    const updatedName = `${groupName} Updated`;
+    await createFlowPage.page.locator('#name').fill(updatedName);
+    await createFlowPage.page.locator('[data-action-id="groups.edit.submit"]').click();
+    await expect(createFlowPage.page).toHaveURL(new RegExp(`/group/${groupId}/?$`));
+    await expect
+      .poll(async () => {
+        const persisted = await db()`
+          select name, visibility
+          from public."group"
+          where id = ${groupId}::uuid
+        `;
+        return persisted[0] ?? null;
+      })
+      .toMatchObject({ name: updatedName, visibility: 'private' });
+    await expect(createFlowPage.page.locator('[data-entity-visibility="private"]')).toContainText(
+      /Private|Privat/
+    );
   });
 });

@@ -31,6 +31,25 @@ import {
   rejectWorkflowApproval,
   saveWorkflowDefinition,
 } from './workflow-mutator-helpers';
+import { appendEntityActivity } from '../activity/shared';
+
+async function logGroupRelationshipActivity(
+  tx: any,
+  ctx: { userID?: string | null },
+  groupIds: (string | null | undefined)[],
+  context: Record<string, unknown>
+) {
+  for (const groupId of new Set(groupIds.filter((id): id is string => Boolean(id)))) {
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: groupId,
+      action: 'relationship_updated',
+      severity: 'high',
+      context,
+    });
+  }
+}
 
 async function assertCanManageGroupRelationship(
   tx: Parameters<typeof can>[0],
@@ -129,6 +148,17 @@ export const networkSharedMutators = {
       grants: args.grants,
       membership_rule: args.membership_rule,
     });
+    await logGroupRelationshipActivity(
+      tx,
+      ctx,
+      [args.group_a_id, args.group_b_id, args.parent_group_id, args.child_group_id],
+      {
+        operation: 'created',
+        connection_id: args.id,
+        connection_type: args.connection_type,
+        status: args.status,
+      }
+    );
   }),
 
   updateGroupConnection: defineMutator(updateGroupConnectionSchema, async ({ tx, ctx, args }) => {
@@ -160,11 +190,30 @@ export const networkSharedMutators = {
       grants: args.grants,
       membership_rule: args.membership_rule,
     });
+    await logGroupRelationshipActivity(
+      tx,
+      ctx,
+      [
+        existingConnection.group_a_id,
+        existingConnection.group_b_id,
+        existingConnection.parent_group_id,
+        existingConnection.child_group_id,
+        args.group_a_id,
+        args.group_b_id,
+        args.parent_group_id,
+        args.child_group_id,
+      ],
+      {
+        operation: 'updated',
+        connection_id: args.id,
+      }
+    );
   }),
 
   deleteGroupConnection: defineMutator(deleteGroupConnectionSchema, async ({ tx, ctx, args }) => {
+    let existingConnection: any = null;
     if (tx.location !== 'client') {
-      const existingConnection = await tx.run(zql.group_connection.where('id', args.id).one());
+      existingConnection = await tx.run(zql.group_connection.where('id', args.id).one());
       if (existingConnection) {
         await assertCanDeleteConnectionFromActingGroup(
           tx,
@@ -175,6 +224,22 @@ export const networkSharedMutators = {
       }
     }
     await deleteGroupConnectionAndRequests(tx, args.id);
+    if (existingConnection)
+      await logGroupRelationshipActivity(
+        tx,
+        ctx,
+        [
+          existingConnection.group_a_id,
+          existingConnection.group_b_id,
+          existingConnection.parent_group_id,
+          existingConnection.child_group_id,
+        ],
+        {
+          operation: 'deleted',
+          connection_id: existingConnection.id,
+          connection_type: existingConnection.connection_type,
+        }
+      );
   }),
 
   proposeGroupConnectionChange: defineMutator(
@@ -182,14 +247,31 @@ export const networkSharedMutators = {
     async ({ tx, ctx, args }) => {
       await assertCanManageGroupRelationship(tx, ctx, args.initiator_group_id);
       await proposeGroupConnectionChange(tx, args);
+      await logGroupRelationshipActivity(
+        tx,
+        ctx,
+        [
+          args.initiator_group_id,
+          args.group_a_id,
+          args.group_b_id,
+          args.desired_parent_group_id,
+          args.desired_child_group_id,
+        ],
+        {
+          operation: 'proposed',
+          request_id: args.id,
+          connection_type: args.desired_connection_type,
+        }
+      );
     }
   ),
 
   approveGroupConnectionRequest: defineMutator(
     approveGroupConnectionRequestSchema,
     async ({ tx, ctx, args }) => {
+      let request: any = null;
       if (tx.location !== 'client') {
-        const request = await tx.run(zql.group_connection_request.where('id', args.id).one());
+        request = await tx.run(zql.group_connection_request.where('id', args.id).one());
         if (request) {
           await assertCanManageConnection(tx, ctx, request);
         }
@@ -201,14 +283,31 @@ export const networkSharedMutators = {
         args.grant_request_ids,
         args.approve_membership
       );
+      if (request)
+        await logGroupRelationshipActivity(
+          tx,
+          ctx,
+          [
+            request.group_a_id,
+            request.group_b_id,
+            request.desired_parent_group_id,
+            request.desired_child_group_id,
+            request.initiator_group_id,
+          ],
+          {
+            operation: 'approved',
+            request_id: request.id,
+          }
+        );
     }
   ),
 
   rejectGroupConnectionRequest: defineMutator(
     rejectGroupConnectionRequestSchema,
     async ({ tx, ctx, args }) => {
+      let request: any = null;
       if (tx.location !== 'client') {
-        const request = await tx.run(zql.group_connection_request.where('id', args.id).one());
+        request = await tx.run(zql.group_connection_request.where('id', args.id).one());
         if (request) {
           await assertCanManageConnection(tx, ctx, request);
         }
@@ -221,6 +320,22 @@ export const networkSharedMutators = {
         args.reject_membership,
         args.reject_structure
       );
+      if (request)
+        await logGroupRelationshipActivity(
+          tx,
+          ctx,
+          [
+            request.group_a_id,
+            request.group_b_id,
+            request.desired_parent_group_id,
+            request.desired_child_group_id,
+            request.initiator_group_id,
+          ],
+          {
+            operation: 'rejected',
+            request_id: request.id,
+          }
+        );
     }
   ),
 

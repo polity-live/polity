@@ -30,6 +30,19 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 
 vi.mock('@/features/shared/ui/status', () => ({
   BadgeControl: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  VisibilityBadge: ({
+    children,
+    value,
+    ...props
+  }: {
+    children: ReactNode;
+    value?: string;
+    [key: string]: unknown;
+  }) => (
+    <span data-visibility-value={value} {...props}>
+      {children}
+    </span>
+  ),
 }));
 
 vi.mock('@/features/network/ui/LinkGroupDialog', () => ({
@@ -207,6 +220,33 @@ function renderGroupWikiContent(overrides: Partial<GroupWikiContentViewProps> = 
 }
 
 describe('GroupWikiContentView', () => {
+  it.each([
+    ['public', 'common.visibility.public'],
+    ['authenticated', 'common.visibility.authenticated'],
+    ['private', 'common.visibility.private'],
+    ['unsupported', 'common.visibility.private'],
+    [null, 'common.visibility.public'],
+  ])('renders the normalized %s visibility badge', (visibility, label) => {
+    const { container } = renderGroupWikiContent({
+      group: {
+        id: 'group-1',
+        name: 'Visibility Group',
+        visibility,
+        roles: [],
+        memberships: [],
+        group_hashtags: [],
+        blogs: [],
+      },
+    });
+
+    const badge = container.querySelector('[data-entity-visibility]');
+    expect(badge?.getAttribute('data-entity-visibility')).toBe(
+      visibility == null ? 'public' : visibility === 'unsupported' ? 'private' : visibility
+    );
+    expect(badge?.textContent).toBe(label);
+    expect(container.querySelectorAll('[data-entity-visibility]')).toHaveLength(1);
+  });
+
   it('deduplicates, sorts, and merges direct and elected participation roles', () => {
     const roleA = { id: 'a', name: 'Alpha' };
     const roleB = { id: 'b', name: 'beta' };
@@ -609,7 +649,8 @@ describe('GroupWikiContentView', () => {
           id: 'user',
           first_name: 'First',
           handle: 'handle',
-          email: 'email',
+          email: 'login-email',
+          contact_email: 'email',
           avatar: 'avatar',
         },
         role: { id: 'role', name: 'Role' },
@@ -649,8 +690,8 @@ describe('GroupWikiContentView', () => {
     expect(screen.getAllByRole('button', { name: 'membership' })).toHaveLength(5);
   });
 
-  it('renders private minimal groups without optional badges, hashtags, relations, or blogs', () => {
-    renderGroupWikiContent({
+  it('renders private minimal groups without optional hashtags, relations, or blogs', () => {
+    const { container } = renderGroupWikiContent({
       isAuthenticated: false,
       groupLocation: '',
       group: {
@@ -673,5 +714,6 @@ describe('GroupWikiContentView', () => {
     });
     expect(screen.queryByTestId('group-card')).toBeNull();
     expect(screen.queryByTestId('blog-card')).toBeNull();
+    expect(container.querySelector('[data-entity-visibility="private"]')).not.toBeNull();
   });
 });

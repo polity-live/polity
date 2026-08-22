@@ -48,6 +48,15 @@ vi.mock('@/features/todos/utils/todoFormatters', () => ({
 vi.mock('../useTodoDiscussion', () => ({
   useTodoDiscussion: () => mocks.discussion,
 }));
+vi.mock('../useTodoActivity', () => ({
+  useTodoActivity: () => ({
+    activities: [],
+    canViewActivity: false,
+    isLoading: false,
+    severity: 'all',
+    setSeverity: vi.fn(),
+  }),
+}));
 vi.mock('@/zero/rbac', () => ({
   usePermissions: () => ({ canManage: mocks.canManage }),
 }));

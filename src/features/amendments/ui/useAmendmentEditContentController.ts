@@ -69,6 +69,36 @@ interface AmendmentEditContentProps {
   onTabChange?: (tab: 'general' | 'workflow' | 'location') => void;
 }
 
+function createInitialAmendmentFormData() {
+  return {
+    title: '',
+    subtitle: '',
+    code: '',
+    imageURL: '',
+    videoURL: '',
+    workflowStatus: 'edit' as EditingMode,
+    internalCRVotingCloseTrigger:
+      DEFAULT_INTERNAL_CR_VOTING_CLOSE_TRIGGER as InternalCRVotingCloseTrigger,
+    internalCRVotingDurationMinutes: DEFAULT_INTERNAL_CR_VOTING_DURATION_MINUTES,
+    internalCRResolutionVisibility: DEFAULT_INTERNAL_CR_RESOLUTION_VISIBILITY,
+    visibility: 'public' as Visibility,
+    hashtags: [] as string[],
+    country: '',
+    region: '',
+    post_code: '',
+    city: '',
+    street: '',
+    house_number: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
+    location_kind: null as string | null,
+    location_place_id: null as string | null,
+    location_boundary_source: null as string | null,
+    location_geometry: null as MutableJSONValue | null,
+    location_bounds: null as MutableJSONValue | null,
+  };
+}
+
 export function useAmendmentEditContentController({
   amendmentId,
   amendment,
@@ -99,7 +129,11 @@ export function useAmendmentEditContentController({
 
   const commonActions = useCommonActions();
 
-  const { amendmentHashtags, allHashtags } = useCommonState({
+  const {
+    amendmentHashtags,
+    allHashtags,
+    isLoading: commonIsLoading,
+  } = useCommonState({
     amendment_id: amendmentId,
     loadAllHashtags: true,
   });
@@ -108,33 +142,7 @@ export function useAmendmentEditContentController({
     documentId: amendmentDocumentId ?? undefined,
   });
 
-  const [formData, setFormData] = useState({
-    title: '',
-    subtitle: '',
-    code: '',
-    imageURL: '',
-    videoURL: '',
-    workflowStatus: 'edit' as EditingMode,
-    internalCRVotingCloseTrigger:
-      DEFAULT_INTERNAL_CR_VOTING_CLOSE_TRIGGER as InternalCRVotingCloseTrigger,
-    internalCRVotingDurationMinutes: DEFAULT_INTERNAL_CR_VOTING_DURATION_MINUTES,
-    internalCRResolutionVisibility: DEFAULT_INTERNAL_CR_RESOLUTION_VISIBILITY,
-    visibility: 'public' as Visibility,
-    hashtags: [] as string[],
-    country: '',
-    region: '',
-    post_code: '',
-    city: '',
-    street: '',
-    house_number: '',
-    latitude: null as number | null,
-    longitude: null as number | null,
-    location_kind: null as string | null,
-    location_place_id: null as string | null,
-    location_boundary_source: null as string | null,
-    location_geometry: null as MutableJSONValue | null,
-    location_bounds: null as MutableJSONValue | null,
-  });
+  const [formData, setFormData] = useState(createInitialAmendmentFormData);
 
   const workflowBranches = useMemo(
     () => getOrderedBranches(amendmentProcess?.current_process_run?.branches ?? []),
@@ -200,25 +208,41 @@ export function useAmendmentEditContentController({
 
   const formRef = useRef<HTMLFormElement>(null);
 
-  const initializedRef = useRef(false);
+  const initializedRef = useRef<string | null>(null);
 
-  const hashtagsInitializedRef = useRef(false);
+  const hashtagsInitializedRef = useRef<string | null>(null);
+  const formEntityIdRef = useRef(amendmentId);
+
+  useEffect(() => {
+    if (formEntityIdRef.current === amendmentId) return;
+
+    formEntityIdRef.current = amendmentId;
+    initializedRef.current = null;
+    hashtagsInitializedRef.current = null;
+    setFormData(createInitialAmendmentFormData());
+  }, [amendmentId]);
 
   // Initialize hashtags from junction data once available
   useEffect(() => {
-    if (amendmentHashtags && amendmentHashtags.length > 0 && !hashtagsInitializedRef.current) {
-      hashtagsInitializedRef.current = true;
-      const tags = amendmentHashtags.map(j => j.hashtag?.tag).filter((t): t is string => !!t);
+    if (
+      !commonIsLoading &&
+      (isCreating || amendment?.id === amendmentId) &&
+      hashtagsInitializedRef.current !== amendmentId
+    ) {
+      hashtagsInitializedRef.current = amendmentId;
+      const tags = (amendmentHashtags ?? [])
+        .map(j => j.hashtag?.tag)
+        .filter((t): t is string => !!t);
       setFormData(prev => ({ ...prev, hashtags: tags }));
     }
-  }, [amendmentHashtags]);
+  }, [amendment, amendmentHashtags, amendmentId, commonIsLoading, isCreating]);
 
   useEffect(() => {
-    if (amendment && !initializedRef.current) {
-      initializedRef.current = true;
+    if (amendment && amendment.id === amendmentId && initializedRef.current !== amendmentId) {
+      initializedRef.current = amendmentId;
       setFormData({
         title: amendment.title || '',
-        subtitle: '',
+        subtitle: amendment.preamble || '',
         code: amendment.code || '',
         imageURL: amendment.image_url || '',
         videoURL: amendment.video_url || '',
@@ -253,10 +277,10 @@ export function useAmendmentEditContentController({
         location_bounds: amendment.location_bounds ?? null,
       });
     }
-  }, [amendment, workflowSourceMode]);
+  }, [amendment, amendmentHashtags, amendmentId, workflowSourceMode]);
 
   useEffect(() => {
-    if (!amendment || !initializedRef.current) return;
+    if (!amendment || initializedRef.current !== amendmentId) return;
 
     if (pendingWorkflowMode?.branchId === workflowModeSourceKey) {
       if (workflowSourceMode === pendingWorkflowMode.mode) {
@@ -398,7 +422,7 @@ export function useAmendmentEditContentController({
             code: formData.code || null,
             reason: null,
             category: null,
-            preamble: null,
+            preamble: formData.subtitle || null,
             group_id: null,
             event_id: null,
             clone_source_id: null,
@@ -439,6 +463,7 @@ export function useAmendmentEditContentController({
             id: amendmentId,
             title: formData.title,
             code: formData.code,
+            preamble: formData.subtitle || null,
             internal_cr_voting_close_trigger: formData.internalCRVotingCloseTrigger,
             internal_cr_voting_duration_minutes:
               formData.internalCRVotingCloseTrigger === 'after_minutes'
@@ -476,7 +501,7 @@ export function useAmendmentEditContentController({
       );
 
       // Only create timeline events for public amendments in edit mode
-      if (!isCreating && amendment?.visibility === 'public') {
+      if (!isCreating && formData.visibility === 'public') {
         if (formData.imageURL && formData.imageURL !== amendment.image_url) {
           await createTimelineEvent({
             data: {

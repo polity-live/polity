@@ -92,13 +92,9 @@ describe('EventWiki coverage', () => {
     expect(screen.getByText('generated.inline.0426_event_not_found_4ef6dec4')).toBeTruthy();
   });
 
-  it('renders access denial and both meeting discriminators', () => {
-    mocks.page = page({ event: { event_type: 'workshop' }, canAccess: false });
-    const view = render(<EventWiki eventId="event-1" />);
-    expect(screen.getByText('denied')).toBeTruthy();
-
+  it('renders both meeting discriminators', () => {
     mocks.page = page({ event: { event_type: 'meeting' } });
-    view.rerender(<EventWiki eventId="event-1" />);
+    const view = render(<EventWiki eventId="event-1" />);
     expect(screen.getByText('meeting')).toBeTruthy();
 
     mocks.page = page({ event: { event_type: 'workshop', meeting_type: 'plenary' } });

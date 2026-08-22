@@ -144,7 +144,6 @@ describe('useBlogDetailController', () => {
 
     expect(result.current).toMatchObject({
       author: { id: 'author-1', name: 'Ada Lovelace', handle: 'ada' },
-      canAccess: true,
       canEdit: true,
       canDelete: true,
       commentCount: 1,

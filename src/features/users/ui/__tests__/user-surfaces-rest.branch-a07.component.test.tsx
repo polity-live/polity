@@ -168,6 +168,9 @@ vi.mock('@/features/shared/ui/layout', () => ({
 }));
 vi.mock('@/features/shared/ui/status', () => ({
   BadgeControl: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  VisibilityBadge: ({ children, ...props }: { children: ReactNode }) => (
+    <span {...props}>{children}</span>
+  ),
 }));
 vi.mock('@/features/shared/ui/hashtags', () => ({ HashtagDisplay: () => <div>hashtags</div> }));
 vi.mock('@/features/shared/ui/ui/hover-card', () => ({
@@ -450,7 +453,6 @@ describe('remaining user surfaces A07', () => {
       { status: 'loading', copy: { loading: 'loading' } },
       { status: 'error', copy: { error: 'error' }, error: 'x' },
       { status: 'not-found', copy: { notFoundTitle: 'n', notFoundDescription: 'd' } },
-      { status: 'access-denied' },
     ];
     const view = render(<UserWikiView page={states[0] as never} />);
     for (const state of states.slice(1)) view.rerender(<UserWikiView page={state as never} />);
@@ -495,5 +497,44 @@ describe('remaining user surfaces A07', () => {
     expect(screen.getByText('wiki-avatar')).toBeTruthy();
     expect(screen.getByText('subscribe')).toBeTruthy();
     expect(screen.getAllByText('hashtags')).toHaveLength(2);
+  });
+
+  it.each([
+    ['public', 'public'],
+    ['authenticated', 'authenticated'],
+    ['private', 'private'],
+    [null, 'public'],
+    ['unexpected', 'private'],
+  ])('normalizes the %s profile visibility to one %s badge', (visibility, expected) => {
+    const page = {
+      status: 'ready',
+      user: { id: 'u1', avatar: null, video_url: null, visibility },
+      fullName: 'Ada',
+      supportTier: { label: 'Tier', description: 'Help' },
+      hashtags: [],
+      bioText: '',
+      subscriberCount: 0,
+      groupCount: 0,
+      amendmentCount: 0,
+      isOwnUser: true,
+      isAuthenticated: false,
+      userId: 'u1',
+      subscribed: false,
+      onToggleSubscribe: vi.fn(),
+      subscribeLoading: false,
+      onMessage: vi.fn(),
+      copy: { message: 'message' },
+      aboutText: '',
+      shareContextItem: null,
+      userLocation: '',
+      searchTerms: {},
+      onSearchChange: vi.fn(),
+    } as any;
+    const { container } = render(<UserWikiView page={page} />);
+
+    const badges = container.querySelectorAll('[data-entity-visibility]');
+    expect(badges).toHaveLength(1);
+    expect(badges[0]?.getAttribute('data-entity-visibility')).toBe(expected);
+    expect(badges[0]?.textContent).toBe(`common.visibility.${expected}`);
   });
 });

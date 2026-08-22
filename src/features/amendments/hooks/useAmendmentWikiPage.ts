@@ -24,7 +24,6 @@ import {
   deriveSupporterMapItems,
   type SupporterMapItem,
 } from '../logic/supporterDirectory';
-import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import type { VoteValue } from '@/features/shared/ui/voting/VoteButtons';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
@@ -165,20 +164,10 @@ export function useAmendmentWikiPage(amendmentId: string) {
     [supporterDirectoryItems]
   );
 
-  // Visibility access check
-  const canAccess = checkEntityAccess(
-    amendment?.visibility,
-    !!user,
-    collaborationData.isCollaborator || collaborationData.isAdmin
-  );
-
   return {
     // Navigation
     navigate,
     user,
-
-    // Access
-    canAccess,
 
     // Subscribe
     ...subscribeData,

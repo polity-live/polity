@@ -371,10 +371,10 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         amendment: {
           id: amendmentId,
           title: title.trim(),
-          code: subtitle || null,
+          code: null,
           reason: null,
           category: null,
-          preamble: null,
+          preamble: subtitle || null,
           group_id: normalizedGroupId,
           event_id: normalizedEventId,
           clone_source_id: null,

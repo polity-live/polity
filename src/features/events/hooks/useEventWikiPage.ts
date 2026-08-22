@@ -9,7 +9,6 @@ import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswo
 import { useSubscribeEvent } from './useSubscribeEvent';
 import { useEventParticipation } from './useEventParticipation';
 import { computeAgendaStats } from '@/features/agendas/logic/computeAgendaStats';
-import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { isVotingPasswordError } from '@/features/notifications/utils/voting-password-error-toast';
 
@@ -137,15 +136,9 @@ export function useEventWikiPage(eventId: string) {
     ]
   );
 
-  // Visibility access check
-  const canAccess = checkEntityAccess(event?.visibility, !!user, participationData.isParticipant);
-
   return {
     navigate,
     user,
-
-    // Access
-    canAccess,
 
     // Subscribe
     ...subscribeData,

@@ -28,6 +28,73 @@ import {
   cancelMeetingBookingSchema,
   eventFullCreateMutatorSchema,
 } from './schema';
+import { appendEntityActivity, buildActivityChanges, severityForChanges } from '../activity/shared';
+
+const EVENT_ACTIVITY_FIELDS = [
+  'title',
+  'description',
+  'status',
+  'event_type',
+  'attendance_mode',
+  'location_type',
+  'location_name',
+  'country',
+  'region',
+  'post_code',
+  'city',
+  'street',
+  'house_number',
+  'latitude',
+  'longitude',
+  'location_kind',
+  'location_place_id',
+  'location_boundary_source',
+  'location_geometry',
+  'location_bounds',
+  'location_url',
+  'location_coordinates',
+  'visibility',
+  'start_date',
+  'end_date',
+  'timezone',
+  'default_final_vote_duration_seconds',
+  'change_request_vote_order',
+  'gender_quota_enabled',
+  'accreditation_required',
+  'capacity',
+  'agenda_management',
+  'meeting_type',
+  'is_bookable',
+  'max_bookings',
+  'stream_url',
+  'image_url',
+  'video_url',
+  'is_recurring',
+  'recurrence_pattern',
+  'recurrence_rule',
+  'recurrence_interval',
+  'recurrence_days',
+  'recurrence_end_date',
+  'current_agenda_item_id',
+  'registration_deadline',
+  'amendment_deadline',
+  'candidacy_deadline',
+  'delegates_nomination_deadline',
+  'group_id',
+  'has_delegates',
+  'delegate_seat_allocation_type',
+  'total_delegate_seats',
+  'main_group_delegate_allocation_mode',
+  'delegate_election_mode',
+] as const;
+const NORMAL_EVENT_FIELDS = new Set<string>([
+  'title',
+  'description',
+  'visibility',
+  'stream_url',
+  'image_url',
+  'video_url',
+]);
 import { can } from '../rbac/can';
 import { requireAuthenticated } from '../rbac/authorize';
 import {
@@ -523,6 +590,15 @@ export const eventSharedMutators = {
       visibility: args.visibility ?? 'public',
       createdAt: now,
     });
+    await appendEntityActivity(tx, ctx, {
+      table: 'event_activity',
+      entityField: 'event_id',
+      entityId: args.id,
+      action: 'created',
+      severity: 'high',
+      createdAt: now,
+      id: args.id,
+    });
   }),
 
   createFull: defineMutator(eventFullCreateMutatorSchema, async ({ tx, ctx, args }) => {
@@ -551,6 +627,29 @@ export const eventSharedMutators = {
       delegate_election_mode: delegateElectionMode,
       updated_at: Date.now(),
     });
+    if (currentEvent) {
+      const changes = buildActivityChanges(
+        currentEvent,
+        {
+          ...eventArgs,
+          ...(attendanceMode !== undefined ? { attendance_mode: attendanceMode } : {}),
+          delegate_election_mode: delegateElectionMode,
+        },
+        EVENT_ACTIVITY_FIELDS
+      );
+      const highFields = new Set(
+        EVENT_ACTIVITY_FIELDS.filter(field => !NORMAL_EVENT_FIELDS.has(field))
+      );
+      if (changes.length > 0)
+        await appendEntityActivity(tx, ctx, {
+          table: 'event_activity',
+          entityField: 'event_id',
+          entityId: args.id,
+          action: 'updated',
+          severity: severityForChanges(changes, highFields),
+          changes,
+        });
+    }
   }),
 
   cancel: defineMutator(eventCancelSchema, async ({ tx, ctx, args }) => {
@@ -564,6 +663,15 @@ export const eventSharedMutators = {
       cancelled_at: now,
       cancelled_by_id: userID,
       updated_at: now,
+    });
+    await appendEntityActivity(tx, ctx, {
+      table: 'event_activity',
+      entityField: 'event_id',
+      entityId: args.id,
+      action: 'cancelled',
+      severity: 'high',
+      changes: [{ field: 'status', from: null, to: 'cancelled' }],
+      context: { reason: args.cancel_reason },
     });
   }),
 
@@ -602,6 +710,18 @@ export const eventSharedMutators = {
               })),
         created_at: createdAt,
         updated_at: createdAt,
+      });
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: args.event_id,
+        action: 'offline_participant_added',
+        severity: 'high',
+        subjectUserId: args.connected_user_id ?? null,
+        context: {
+          offline_participant_id: args.id,
+          name: `${normalizeRequiredName(args.first_name)} ${normalizeRequiredName(args.last_name)}`,
+        },
       });
     }
   ),
@@ -661,6 +781,32 @@ export const eventSharedMutators = {
         participation_channel: nextParticipationChannel,
         updated_at: Date.now(),
       });
+      const changes = buildActivityChanges(
+        offlineParticipant,
+        {
+          ...args,
+          participation_channel: nextParticipationChannel,
+        },
+        [
+          'first_name',
+          'last_name',
+          'reason_not_signed_up',
+          'connected_user_id',
+          'attendance_status',
+          'participation_channel',
+        ]
+      );
+      if (changes.length > 0)
+        await appendEntityActivity(tx, ctx, {
+          table: 'event_activity',
+          entityField: 'event_id',
+          entityId: offlineParticipant.event_id,
+          action: 'offline_participant_updated',
+          severity: 'high',
+          changes,
+          subjectUserId: nextConnectedUserId ?? null,
+          context: { offline_participant_id: offlineParticipant.id },
+        });
     }
   ),
 
@@ -673,6 +819,18 @@ export const eventSharedMutators = {
       }
 
       await tx.mutate.event_offline_participant.delete({ id: args.id });
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: offlineParticipant.event_id,
+        action: 'offline_participant_removed',
+        severity: 'high',
+        subjectUserId: offlineParticipant.connected_user_id ?? null,
+        context: {
+          offline_participant_id: offlineParticipant.id,
+          name: `${offlineParticipant.first_name} ${offlineParticipant.last_name}`,
+        },
+      });
     }
   ),
 
@@ -726,6 +884,15 @@ export const eventSharedMutators = {
           updated_at: createdAt,
         });
       }
+      if (seenImportKeys.size > 0)
+        await appendEntityActivity(tx, ctx, {
+          table: 'event_activity',
+          entityField: 'event_id',
+          entityId: args.event_id,
+          action: 'offline_participants_imported',
+          severity: 'high',
+          context: { count: seenImportKeys.size },
+        });
     }
   ),
 
@@ -765,6 +932,23 @@ export const eventSharedMutators = {
         assigned_by_id: userID,
       });
     }
+    await appendEntityActivity(
+      tx,
+      { userID },
+      {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: args.event_id,
+        action: 'participant_added',
+        severity: 'high',
+        subjectUserId: userID,
+        context: {
+          participant_id: args.id,
+          status: args.status ?? 'requested',
+          role_ids: normalizedRoleIds,
+        },
+      }
+    );
   }),
 
   // Invite another user as participant (keeps provided user_id instead of ctx.userID)
@@ -814,11 +998,21 @@ export const eventSharedMutators = {
         assigned_by_id: null,
       });
     }
+    await appendEntityActivity(tx, ctx, {
+      table: 'event_activity',
+      entityField: 'event_id',
+      entityId: args.event_id,
+      action: 'participant_added',
+      severity: 'high',
+      subjectUserId: args.user_id,
+      context: { participant_id: args.id, status: 'invited', role_ids: normalizedRoleIds },
+    });
   }),
 
   leaveEvent: defineMutator(eventParticipantDeleteSchema, async ({ tx, ctx, args }) => {
+    let participant: any = null;
     if (tx.location !== 'client') {
-      const participant = await tx.run(zql.event_participant.where('id', args.id).one());
+      participant = await tx.run(zql.event_participant.where('id', args.id).one());
       if (!participant) {
         throw new Error('Participant not found');
       }
@@ -832,6 +1026,16 @@ export const eventSharedMutators = {
     }
 
     await tx.mutate.event_participant.delete({ id: args.id });
+    if (participant)
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: participant.event_id,
+        action: 'participant_removed',
+        severity: 'high',
+        subjectUserId: participant.user_id,
+        context: { participant_id: participant.id, status: participant.status ?? null },
+      });
   }),
 
   finalizeDelegates: defineMutator(z.object({ eventId: z.string() }), async ({ tx, ctx, args }) => {
@@ -842,19 +1046,44 @@ export const eventSharedMutators = {
       delegate_finalized_at: Date.now(),
       updated_at: Date.now(),
     });
+    await appendEntityActivity(tx, ctx, {
+      table: 'event_activity',
+      entityField: 'event_id',
+      entityId: args.eventId,
+      action: 'delegates_finalized',
+      severity: 'high',
+    });
   }),
 
   // Event Participant update
   addParticipantRole: defineMutator(eventParticipantRoleAssignSchema, async ({ tx, ctx, args }) => {
-    await loadParticipantForRoleMutation(tx, ctx, args.event_participant_id);
+    const participant = await loadParticipantForRoleMutation(tx, ctx, args.event_participant_id);
     await addEventParticipantRole(tx, args);
+    await appendEntityActivity(tx, ctx, {
+      table: 'event_activity',
+      entityField: 'event_id',
+      entityId: participant.event_id,
+      action: 'role_assigned',
+      severity: 'high',
+      subjectUserId: participant.user_id,
+      context: { participant_id: participant.id, role_id: args.role_id },
+    });
   }),
 
   removeParticipantRole: defineMutator(
     eventParticipantRoleUnassignSchema,
     async ({ tx, ctx, args }) => {
-      await loadParticipantForRoleMutation(tx, ctx, args.event_participant_id);
+      const participant = await loadParticipantForRoleMutation(tx, ctx, args.event_participant_id);
       await removeEventParticipantRole(tx, args);
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: participant.event_id,
+        action: 'role_unassigned',
+        severity: 'high',
+        subjectUserId: participant.user_id,
+        context: { participant_id: participant.id, role_id: args.role_id },
+      });
     }
   ),
 
@@ -867,8 +1096,8 @@ export const eventSharedMutators = {
   ),
 
   updateParticipant: defineMutator(eventParticipantUpdateSchema, async ({ tx, ctx, args }) => {
+    const participant = await tx.run(zql.event_participant.where('id', args.id).one());
     if (tx.location !== 'client') {
-      const participant = await tx.run(zql.event_participant.where('id', args.id).one());
       if (!participant) {
         throw new Error('Participant not found');
       }
@@ -883,6 +1112,20 @@ export const eventSharedMutators = {
 
     if (Object.keys(args).length > 1) {
       await tx.mutate.event_participant.update(args);
+      if (participant) {
+        const changes = buildActivityChanges(participant, args, ['status', 'visibility']);
+        if (changes.length > 0)
+          await appendEntityActivity(tx, ctx, {
+            table: 'event_activity',
+            entityField: 'event_id',
+            entityId: participant.event_id,
+            action: 'participant_updated',
+            severity: 'high',
+            subjectUserId: participant.user_id,
+            changes,
+            context: { participant_id: participant.id },
+          });
+      }
     }
   }),
 
@@ -937,6 +1180,14 @@ export const eventSharedMutators = {
       sort_order: args.sort_order ?? existingRoles.length,
       created_at: now,
     });
+    await appendEntityActivity(tx, ctx, {
+      table: 'event_activity',
+      entityField: 'event_id',
+      entityId: args.event_id,
+      action: 'role_created',
+      severity: 'high',
+      context: { role_id: args.id, name: args.name ?? null, assignee_kind: assigneeKind },
+    });
   }),
 
   updateRole: defineMutator(updateEventRoleSchema, async ({ tx, ctx, args }) => {
@@ -962,17 +1213,43 @@ export const eventSharedMutators = {
     }
 
     await tx.mutate.role.update(args);
+    if (role?.event_id) {
+      const changes = buildActivityChanges(
+        role,
+        args,
+        Object.keys(args).filter(key => key !== 'id')
+      );
+      if (changes.length > 0)
+        await appendEntityActivity(tx, ctx, {
+          table: 'event_activity',
+          entityField: 'event_id',
+          entityId: role.event_id,
+          action: 'role_updated',
+          severity: 'high',
+          changes,
+          context: { role_id: role.id, name: role.name ?? null },
+        });
+    }
   }),
 
   deleteRole: defineMutator(deleteEventRoleSchema, async ({ tx, ctx, args }) => {
+    const role = await tx.run(zql.role.where('id', args.id).one());
     if (tx.location !== 'client') {
-      const role = await tx.run(zql.role.where('id', args.id).one());
       if (role?.event_id) {
         await can(tx, ctx, { action: 'manage', resource: 'events', eventId: role.event_id });
       }
     }
 
     await tx.mutate.role.delete({ id: args.id });
+    if (role?.event_id)
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: role.event_id,
+        action: 'role_deleted',
+        severity: 'high',
+        context: { role_id: role.id, name: role.name ?? null },
+      });
   }),
 
   // Event Exception mutators
@@ -988,11 +1265,23 @@ export const eventSharedMutators = {
       created_at: now,
       updated_at: now,
     });
+    await appendEntityActivity(tx, ctx, {
+      table: 'event_activity',
+      entityField: 'event_id',
+      entityId: args.parent_event_id,
+      action: 'exception_created',
+      severity: 'high',
+      context: {
+        exception_id: args.id,
+        original_date: args.original_date,
+        exception_action: args.action,
+      },
+    });
   }),
 
   updateException: defineMutator(eventExceptionUpdateSchema, async ({ tx, ctx, args }) => {
+    const exception = await tx.run(zql.event_exception.where('id', args.id).one());
     if (tx.location !== 'client') {
-      const exception = await tx.run(zql.event_exception.where('id', args.id).one());
       if (exception?.parent_event_id) {
         await can(tx, ctx, {
           action: 'update',
@@ -1006,11 +1295,28 @@ export const eventSharedMutators = {
       ...args,
       updated_at: Date.now(),
     });
+    if (exception) {
+      const changes = buildActivityChanges(
+        exception,
+        args,
+        Object.keys(args).filter(key => key !== 'id')
+      );
+      if (changes.length > 0)
+        await appendEntityActivity(tx, ctx, {
+          table: 'event_activity',
+          entityField: 'event_id',
+          entityId: exception.parent_event_id,
+          action: 'exception_updated',
+          severity: 'high',
+          changes,
+          context: { exception_id: exception.id, original_date: exception.original_date },
+        });
+    }
   }),
 
   deleteException: defineMutator(eventExceptionDeleteSchema, async ({ tx, ctx, args }) => {
+    const exception = await tx.run(zql.event_exception.where('id', args.id).one());
     if (tx.location !== 'client') {
-      const exception = await tx.run(zql.event_exception.where('id', args.id).one());
       if (exception?.parent_event_id) {
         await can(tx, ctx, {
           action: 'update',
@@ -1021,6 +1327,19 @@ export const eventSharedMutators = {
     }
 
     await tx.mutate.event_exception.delete({ id: args.id });
+    if (exception)
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: exception.parent_event_id,
+        action: 'exception_deleted',
+        severity: 'high',
+        context: {
+          exception_id: exception.id,
+          original_date: exception.original_date,
+          exception_action: exception.action,
+        },
+      });
   }),
 
   // Meeting booking mutators (meetings as events)
@@ -1037,6 +1356,15 @@ export const eventSharedMutators = {
       visibility: 'public',
       instance_date: args.instance_date,
       created_at: now,
+    });
+    await appendEntityActivity(tx, ctx, {
+      table: 'event_activity',
+      entityField: 'event_id',
+      entityId: args.event_id,
+      action: 'booking_created',
+      severity: 'high',
+      subjectUserId: userID,
+      context: { instance_date: args.instance_date ?? null },
     });
   }),
 
@@ -1055,6 +1383,15 @@ export const eventSharedMutators = {
     });
     if (match) {
       await tx.mutate.event_participant.delete({ id: match.id });
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: args.event_id,
+        action: 'booking_cancelled',
+        severity: 'high',
+        subjectUserId: userID,
+        context: { participant_id: match.id, instance_date: args.instance_date ?? null },
+      });
     }
   }),
 };

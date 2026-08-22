@@ -47,11 +47,12 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 import { useGroupUpdate } from '../hooks/useGroupUpdate';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 
-function GroupEditingFlow() {
-  const editor = useGroupUpdate('group-1', {
-    name: 'Original group',
-    visibility: 'public',
-  });
+function GroupEditingFlow({
+  visibility = 'public',
+}: {
+  visibility?: 'public' | 'authenticated' | 'private';
+}) {
+  const editor = useGroupUpdate('group-1', { name: 'Original group' }, { visibility });
   return (
     <form
       onSubmit={event => {
@@ -81,6 +82,28 @@ beforeEach(() => vi.clearAllMocks());
 afterEach(cleanup);
 
 describe('group editing component flow', () => {
+  it('preserves private visibility when saving another group field', async () => {
+    render(<GroupEditingFlow visibility="private" />);
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('saved-view').textContent).toContain('Original group:private')
+    );
+    fireEvent.change(screen.getByLabelText('Group name'), {
+      target: { value: 'Renamed private group' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save group' }));
+
+    await waitFor(() =>
+      expect(mocks.updateGroup).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'group-1',
+          name: 'Renamed private group',
+          visibility: 'private',
+        })
+      )
+    );
+  });
+
   it('edits group master data and submits the normalized mutation', async () => {
     render(<GroupEditingFlow />);
     await waitFor(() =>

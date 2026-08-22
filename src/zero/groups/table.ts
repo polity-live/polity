@@ -53,6 +53,21 @@ export const group = table('group')
   })
   .primaryKey('id');
 
+export const groupActivity = table('group_activity')
+  .columns({
+    id: string(),
+    group_id: string(),
+    actor_id: string().optional(),
+    actor_type: string(),
+    subject_user_id: string().optional(),
+    action: string(),
+    severity: string(),
+    changes: json<MutableJSONValue>(),
+    context: json<MutableJSONValue>(),
+    created_at: number(),
+  })
+  .primaryKey('id');
+
 export const groupMembership = table('group_membership')
   .columns({
     id: string(),

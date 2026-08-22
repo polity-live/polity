@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 
-import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { useAuth } from '@/providers/auth-provider';
 import { useSubscribeUser } from '@/features/payments/hooks/useSubscribeUser';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
@@ -35,10 +34,6 @@ export type UserWikiPageState =
     }
   | {
       status: 'not-found';
-      copy: UserWikiCopy;
-    }
-  | {
-      status: 'access-denied';
       copy: UserWikiCopy;
     }
   | {
@@ -157,10 +152,6 @@ export function useUserWikiPage({ userId }: UserWikiPageOptions): UserWikiPageSt
 
   if (!user || !userIdToFetch) {
     return { status: 'not-found', copy };
-  }
-
-  if (!checkEntityAccess(user.visibility, Boolean(authUser), isOwnUser)) {
-    return { status: 'access-denied', copy };
   }
 
   const userLocation = formatLocation(user) || undefined;

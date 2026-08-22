@@ -48,6 +48,7 @@ function tx(location: 'client' | 'server' = 'server') {
     mutate: {
       thread: { insert: vi.fn() },
       todo: { delete: vi.fn(), insert: vi.fn(), update: vi.fn() },
+      todo_activity: { insert: vi.fn() },
       todo_assignment: { delete: vi.fn(), insert: vi.fn() },
     },
     run: vi.fn(),
@@ -66,12 +67,16 @@ describe('todo shared mutators', () => {
     await call('create', server, { group_id: null, id: 'server' });
     expect(h.requireAuthenticated).toHaveBeenCalled();
     expect(server.mutate.thread.insert).not.toHaveBeenCalled();
+    expect(server.mutate.todo_activity.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'created', id: 'server', severity: 'high' })
+    );
 
     const client = tx('client');
     await call('create', client, { group_id: undefined, id: 'client' });
     expect(client.mutate.thread.insert).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'client', todo_id: 'client' })
     );
+    expect(client.mutate.todo_activity.insert).not.toHaveBeenCalled();
   });
 
   it('authorizes group creation and delegates createFull', async () => {
@@ -123,6 +128,59 @@ describe('todo shared mutators', () => {
       'creator',
       expect.objectContaining({ action: 'update' })
     );
+    expect(standalone.mutate.todo_activity.insert).not.toHaveBeenCalled();
+  });
+
+  it('records grouped field changes once and raises status changes to high severity', async () => {
+    const transaction = tx();
+    transaction.run
+      .mockResolvedValueOnce({ creator_id: 'actor', group_id: null, id: 'todo' })
+      .mockResolvedValueOnce({
+        archived_at: null,
+        description: 'Before',
+        id: 'todo',
+        priority: 'normal',
+        status: 'pending',
+        title: 'Before',
+      });
+
+    await call('update', transaction, {
+      description: 'After',
+      id: 'todo',
+      priority: 'high',
+      status: 'completed',
+      title: 'After',
+    });
+
+    expect(transaction.mutate.todo_activity.insert).toHaveBeenCalledTimes(1);
+    expect(transaction.mutate.todo_activity.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'updated',
+        changes: expect.arrayContaining([
+          { field: 'title', from: 'Before', to: 'After' },
+          { field: 'status', from: 'pending', to: 'completed' },
+        ]),
+        severity: 'high',
+      })
+    );
+  });
+
+  it('records normal metadata edits and skips no-op updates', async () => {
+    const changed = tx();
+    changed.run
+      .mockResolvedValueOnce({ creator_id: 'actor', group_id: null, id: 'todo' })
+      .mockResolvedValueOnce({ archived_at: null, id: 'todo', priority: 'low' });
+    await call('update', changed, { id: 'todo', priority: 'medium' });
+    expect(changed.mutate.todo_activity.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'normal' })
+    );
+
+    const unchanged = tx();
+    unchanged.run
+      .mockResolvedValueOnce({ creator_id: 'actor', group_id: null, id: 'todo' })
+      .mockResolvedValueOnce({ archived_at: null, id: 'todo', priority: 'medium' });
+    await call('update', unchanged, { id: 'todo', priority: 'medium' });
+    expect(unchanged.mutate.todo_activity.insert).not.toHaveBeenCalled();
   });
 
   it('rejects incomplete archives and keeps archive idempotent', async () => {
@@ -193,7 +251,8 @@ describe('todo shared mutators', () => {
     const existing = tx();
     existing.run
       .mockResolvedValueOnce({ todo_id: 'todo' })
-      .mockResolvedValueOnce({ creator_id: 'actor', group_id: null, id: 'todo' });
+      .mockResolvedValueOnce({ creator_id: 'actor', group_id: null, id: 'todo' })
+      .mockResolvedValueOnce([]);
     await call('unassign', existing, { id: 'assignment' });
     expect(h.requireOwner).toHaveBeenCalled();
   });

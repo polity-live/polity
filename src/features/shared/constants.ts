@@ -1,4 +1,4 @@
-export const ALPHA_WARNING_VERSION = '0.13.1';
+export const ALPHA_WARNING_VERSION = '0.14.1';
 export const ALPHA_WARNING_SESSION_KEY = `polity.alphaWarning.${ALPHA_WARNING_VERSION}.acknowledged`;
 
 export const GITHUB_REPOSITORY_PATH = 'polity-live/polity';

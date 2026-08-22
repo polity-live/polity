@@ -67,6 +67,34 @@ CREATE INDEX idx_zero_amendment_creator_created_id
 CREATE INDEX idx_zero_amendment_clone_source_created_id
   ON public.amendment (clone_source_id, created_at DESC, id DESC);
 
+CREATE TABLE public.amendment_activity (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
+  actor_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  actor_type TEXT NOT NULL DEFAULT 'user' CHECK (actor_type IN ('user', 'system')),
+  subject_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  action TEXT NOT NULL CHECK (action IN (
+    'created', 'updated', 'collaborator_added', 'collaborator_updated',
+    'collaborator_removed', 'change_request_created', 'change_request_updated',
+    'change_request_resolved', 'process_started', 'process_updated',
+    'process_task_updated', 'process_replanned', 'group_decision_updated',
+    'support_confirmation_updated', 'implementation_updated'
+  )),
+  severity TEXT NOT NULL CHECK (severity IN ('normal', 'high')),
+  changes JSONB NOT NULL DEFAULT '[]'::JSONB CHECK (jsonb_typeof(changes) = 'array'),
+  context JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(context) = 'object'),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_amendment_activity_created
+  ON public.amendment_activity (amendment_id, created_at DESC, id DESC);
+CREATE INDEX idx_amendment_activity_severity_created
+  ON public.amendment_activity (amendment_id, severity, created_at DESC, id DESC);
+
+ALTER TABLE public.amendment_activity ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.amendment_activity
+  FOR ALL TO service_role USING (true);
+
 ALTER TABLE public.amendment ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment FOR ALL TO service_role USING (true);
 

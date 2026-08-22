@@ -43,6 +43,12 @@ vi.mock('@/features/shared/ui/feedback', () => ({
   PageSkeleton: () => <div data-state="loading" />,
 }));
 
+vi.mock('@/features/shared/ui/status', () => ({
+  VisibilityBadge: ({ children, ...props }: { children: ReactNode }) => (
+    <span {...props}>{children}</span>
+  ),
+}));
+
 vi.mock('@/features/auth/ui/AccessDenied', () => ({
   AccessDenied: () => <div data-state="denied" />,
 }));
@@ -168,7 +174,6 @@ const baseProps = (
   author: { id: 'author', avatar: 'avatar.png', firstName: 'Ada', handle: 'ada', name: 'Ada' },
   blogId: 'blog',
   bloggers: [],
-  canAccess: true,
   canDelete: false,
   canEdit: false,
   commentCount: 3,
@@ -213,15 +218,27 @@ beforeEach(() => {
 });
 
 describe('BlogDetailView branch contracts', () => {
-  it('renders loading, missing, and denied states in priority order', () => {
+  it.each([
+    ['public', 'public'],
+    ['authenticated', 'authenticated'],
+    ['private', 'private'],
+    [null, 'public'],
+    ['unexpected', 'private'],
+  ])('normalizes the %s visibility to one %s badge', (visibility, expected) => {
+    const { container } = render(<BlogDetailView {...baseProps({ visibility })} />);
+
+    const badges = container.querySelectorAll('[data-entity-visibility]');
+    expect(badges).toHaveLength(1);
+    expect(badges[0]?.getAttribute('data-entity-visibility')).toBe(expected);
+    expect(badges[0]?.textContent).toBe(`t:common.visibility.${expected}`);
+  });
+
+  it('renders loading and missing states in priority order', () => {
     const view = render(<BlogDetailView {...baseProps({ isLoaded: false, title: null })} />);
     expect(document.querySelector('[data-state="loading"]')).not.toBeNull();
 
     view.rerender(<BlogDetailView {...baseProps({ title: '' })} />);
     expect(screen.getByText('t:features.blogs.detail.notFound')).toBeDefined();
-
-    view.rerender(<BlogDetailView {...baseProps({ canAccess: false })} />);
-    expect(document.querySelector('[data-state="denied"]')).not.toBeNull();
   });
 
   it('renders complete optional content, visible bloggers, editing, and deletion actions', async () => {
@@ -358,7 +375,14 @@ describe('BlogDetailView branch contracts', () => {
         status: 'owner',
         user_id: 'fallback',
         role: null,
-        user: { id: 'owner-user', name: 'Owner', handle: 'owner', email: 'o@x', avatar: 'o.png' },
+        user: {
+          id: 'owner-user',
+          name: 'Owner',
+          handle: 'owner',
+          email: 'login@x',
+          contact_email: 'o@x',
+          avatar: 'o.png',
+        },
       })
     ).toMatchObject({
       userId: 'owner-user',

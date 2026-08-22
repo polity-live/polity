@@ -55,6 +55,16 @@ vi.mock('../../hooks/useTodoDiscussion', () => ({
   }),
 }));
 
+vi.mock('../../hooks/useTodoActivity', () => ({
+  useTodoActivity: () => ({
+    activities: [],
+    canViewActivity: true,
+    isLoading: false,
+    severity: 'all',
+    setSeverity: vi.fn(),
+  }),
+}));
+
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
   translate: (key: string) => key,

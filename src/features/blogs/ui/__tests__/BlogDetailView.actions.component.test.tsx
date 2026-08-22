@@ -85,7 +85,6 @@ function renderBlogDetail(
       author={{ id: 'author-1', name: 'Author' }}
       blogId="blog-1"
       bloggers={[]}
-      canAccess
       canDelete={false}
       canEdit={false}
       commentCount={0}

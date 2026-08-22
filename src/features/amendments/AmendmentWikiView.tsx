@@ -1,7 +1,8 @@
 'use client';
 
 import { getEntityGradientClasses, getMotionPreset } from '@/features/shared/theme';
-import { BadgeControl, getEditingModeOption } from '@/features/shared/ui/status';
+import { BadgeControl, VisibilityBadge, getEditingModeOption } from '@/features/shared/ui/status';
+import { normalizeRouteVisibility } from '@/features/auth/logic/routeVisibilityAccess';
 import {
   CivicMotionTimeline,
   type CivicMotionTimelineItem,
@@ -43,13 +44,14 @@ import { SupporterStatusBadge } from '@/features/amendments/ui/SupporterStatusBa
 import { TargetSelectionDialog } from '@/features/amendments/ui/TargetSelectionDialog';
 import { Link } from '@tanstack/react-router';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import {
   getBranchEditingMode,
   getOrderedBranches,
 } from '@/features/amendments/logic/amendmentBranchDisplay';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 import { queries } from '@/zero/queries';
+import { ActivityLog } from '@/features/shared/ui/wiki/ActivityLog';
+import { canViewEntityActivity } from '@/features/shared/hooks/useEntityActivity';
 const AMENDMENT_CARD_SURFACE = `${getEntityGradientClasses('amendment')} ${getMotionPreset('hoverLift')}`;
 
 const AMENDMENT_CREATION_MODES = new Set<EditingMode>([
@@ -135,7 +137,6 @@ export interface AmendmentWikiViewProps {
   amendmentId: any;
   t: any;
   user: any;
-  canAccess: any;
   isSubscribed: any;
   subscriberCount: any;
   toggleSubscribe: any;
@@ -179,7 +180,6 @@ export function AmendmentWikiView({
   amendmentId,
   t,
   user,
-  canAccess,
   isSubscribed,
   subscriberCount,
   toggleSubscribe,
@@ -232,10 +232,6 @@ export function AmendmentWikiView({
     );
   }
 
-  if (!canAccess) {
-    return <AccessDenied />;
-  }
-
   const collaboratorRoles: WikiParticipationRole[] = (roles ?? [])
     .map((role: any) => normalizeWikiParticipationRole(role))
     .filter((role: WikiParticipationRole | null): role is WikiParticipationRole => Boolean(role));
@@ -253,7 +249,7 @@ export function AmendmentWikiView({
         userId: collaborator.user.id,
         name: getWikiParticipationName(collaborator.user),
         handle: collaborator.user.handle ?? null,
-        email: collaborator.user.email ?? null,
+        email: collaborator.user.contact_email ?? null,
         avatar: collaborator.user.avatar ?? null,
         status: collaborator.status ?? null,
         roles: role ? [role] : [],
@@ -265,6 +261,7 @@ export function AmendmentWikiView({
   const changeRequestCount =
     amendment.change_requests?.length ?? amendment.change_request_count ?? 0;
   const cloneLabel = translateText('generated.inline.0071_clone_d8cdb573');
+  const amendmentVisibility = normalizeRouteVisibility(amendment.visibility);
 
   return (
     <>
@@ -272,6 +269,9 @@ export function AmendmentWikiView({
       <div className="mb-4 text-center md:mb-8">
         <div className="mb-2 flex min-w-0 flex-col items-center justify-center gap-1 md:flex-row md:gap-3">
           <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{amendment.title}</h1>
+          <VisibilityBadge value={amendmentVisibility} data-entity-visibility={amendmentVisibility}>
+            {t(`common.visibility.${amendmentVisibility}`)}
+          </VisibilityBadge>
           <EditingModeBadge mode={primaryBranchMode} showIcon />
         </div>
         {amendment.amendment_hashtags && amendment.amendment_hashtags.length > 0 ? (
@@ -474,6 +474,11 @@ export function AmendmentWikiView({
 
       {/* About and Contact Tabs */}
       <InfoTabs
+        activity={
+          canViewEntityActivity('amendment', { ...amendment, collaborators }, user?.id) ? (
+            <ActivityLog type="amendment" entityId={amendmentId} />
+          ) : undefined
+        }
         about={amendment.code || 'No description available.'}
         contact={{
           country: amendment.country ?? undefined,
@@ -544,7 +549,7 @@ export function AmendmentWikiView({
                     userId: collaboratorUser?.id ?? collaborator.user_id,
                     name: getWikiParticipationName(collaboratorUser),
                     handle: collaboratorUser?.handle ?? null,
-                    email: collaboratorUser?.email ?? null,
+                    email: collaboratorUser?.contact_email ?? null,
                     avatar: collaboratorUser?.avatar ?? null,
                     status: collaborator.status ?? null,
                     roles: role ? [role] : [],

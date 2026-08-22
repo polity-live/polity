@@ -210,6 +210,7 @@ export async function inviteAmendmentCollaborator(
   const collaborationId = governanceEntityId(e2eRun, 'collaboration-invitation');
   const collaboratorRoleId = governanceEntityId(e2eRun, 'collaboration-role');
   const documentRightId = governanceEntityId(e2eRun, 'collaboration-documents-update-right');
+  const amendmentViewRightId = governanceEntityId(e2eRun, 'collaboration-amendments-view-right');
   await sql`
     insert into public.role (
       id, name, description, scope, amendment_id, assignment_mode, visibility, created_at
@@ -220,10 +221,15 @@ export async function inviteAmendmentCollaborator(
     );
     insert into public.action_right (
       id, resource, action, role_id, amendment_id, created_at
-    ) values (
-      ${documentRightId}::uuid, 'documents', 'update',
-      ${collaboratorRoleId}::uuid, ${seed.amendmentId}::uuid, now()
-    );
+    ) values
+      (
+        ${documentRightId}::uuid, 'documents', 'update',
+        ${collaboratorRoleId}::uuid, ${seed.amendmentId}::uuid, now()
+      ),
+      (
+        ${amendmentViewRightId}::uuid, 'amendments', 'view',
+        ${collaboratorRoleId}::uuid, ${seed.amendmentId}::uuid, now()
+      );
     insert into public.amendment_collaborator (
       id, amendment_id, user_id, role_id, status, visibility, created_at
     ) values (

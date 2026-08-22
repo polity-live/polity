@@ -281,7 +281,7 @@ describe('amendment shared runtime defaults', () => {
         status: 'pending',
       } as never,
     });
-    expect(randomUUID).toHaveBeenCalledOnce();
+    expect(randomUUID).toHaveBeenCalledTimes(2);
     expect(generatedId.operations[0].value).toHaveProperty('id', 'generated-id');
   });
 
@@ -361,7 +361,7 @@ describe('amendment shared runtime defaults', () => {
         editing_mode: 'suggest_internal',
       } as never,
     });
-    expect(full.tx.run).not.toHaveBeenCalled();
+    expect(full.tx.run).toHaveBeenCalledOnce();
     expect(full.operations[0].value).toEqual(
       expect.objectContaining({
         ...values,

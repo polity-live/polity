@@ -15,7 +15,7 @@ import {
 } from '@/features/shared/ui/icons';
 
 interface ContactInformationSectionProps {
-  email: string;
+  contactEmail: string;
   website: string;
   youtube: string;
   linkedin: string;
@@ -25,7 +25,7 @@ interface ContactInformationSectionProps {
   facebook: string;
   snapchat: string;
   tiktok: string;
-  onEmailChange: (value: string) => void;
+  onContactEmailChange: (value: string) => void;
   onWebsiteChange: (value: string) => void;
   onYoutubeChange: (value: string) => void;
   onLinkedinChange: (value: string) => void;
@@ -38,7 +38,7 @@ interface ContactInformationSectionProps {
 }
 
 export function ContactInformationSection({
-  email,
+  contactEmail,
   website,
   youtube,
   linkedin,
@@ -48,7 +48,7 @@ export function ContactInformationSection({
   facebook,
   snapchat,
   tiktok,
-  onEmailChange,
+  onContactEmailChange,
   onWebsiteChange,
   onYoutubeChange,
   onLinkedinChange,
@@ -70,8 +70,8 @@ export function ContactInformationSection({
           id: 'email',
           label: t('pages.user.settingsForm.contact.emailLabel'),
           placeholder: t('pages.user.settingsForm.contact.emailPlaceholder'),
-          value: email,
-          onChange: onEmailChange,
+          value: contactEmail,
+          onChange: onContactEmailChange,
           icon: <Mail className="h-4 w-4" />,
           type: 'email',
           helpText: t('common.validation.emailHint'),

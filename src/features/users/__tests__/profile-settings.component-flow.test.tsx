@@ -19,6 +19,7 @@ const user = {
   first_name: 'Ada',
   last_name: 'Lovelace',
   email: 'ada@polity.local',
+  contact_email: 'public@polity.local',
   visibility: 'public',
 } as any;
 
@@ -126,8 +127,10 @@ describe('profile settings flow', () => {
     await waitFor(() => expect(profile.updateCompleteProfile).toHaveBeenCalledTimes(1));
     expect(profile.updateCompleteProfile.mock.calls[0][1]).toMatchObject({
       first_name: 'Augusta Ada',
+      contact_email: 'public@polity.local',
       visibility: 'public',
     });
+    expect(profile.updateCompleteProfile.mock.calls[0][1]).not.toHaveProperty('email');
     expect(profile.navigate).toHaveBeenCalledWith({ to: '/user/profile-user' });
   });
 

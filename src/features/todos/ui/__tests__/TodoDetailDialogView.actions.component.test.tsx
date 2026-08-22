@@ -47,6 +47,7 @@ vi.mock('@/features/create/ui/inputs/TodoDeadlineInput', () => ({
 vi.mock('@/features/shared/ui/comments', () => ({ CommentThread: () => null }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
+  useTranslation: () => ({ language: 'en', t: (key: string) => key }),
 }));
 vi.mock('../TodoArchiveAction', () => ({
   TodoArchiveAction: () => null,
@@ -138,6 +139,13 @@ function viewProps(overrides: Record<string, unknown> = {}) {
     handleCancel: vi.fn(),
     handleRemoveAssignee: vi.fn(),
     handleAddAssignee: vi.fn(),
+    activity: {
+      activities: [],
+      canViewActivity: false,
+      isLoading: false,
+      severity: 'all',
+      setSeverity: vi.fn(),
+    },
     discussion: {
       comments: [],
       currentUserId: 'user-current',

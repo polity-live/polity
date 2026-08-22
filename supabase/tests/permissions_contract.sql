@@ -115,8 +115,8 @@ SELECT is(
         'TRIGGER'
       )
   ),
-  987,
-  'the service role has all seven privileges on all 141 tables'
+  1015,
+  'the service role has all seven privileges on all 145 tables'
 );
 
 SELECT is(

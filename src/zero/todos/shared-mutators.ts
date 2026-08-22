@@ -14,6 +14,66 @@ import {
   createTodoAssignmentSchema,
   deleteTodoAssignmentSchema,
 } from './schema';
+import type { TodoActivityChange } from './table';
+import type { MutableJSONValue } from '../shared/helpers';
+
+const TRACKED_UPDATE_FIELDS = [
+  'title',
+  'description',
+  'status',
+  'priority',
+  'due_date',
+  'tags',
+  'visibility',
+] as const;
+
+type TodoActivityAction =
+  'created' | 'updated' | 'assigned' | 'unassigned' | 'archived' | 'unarchived';
+
+function normalizeActivityValue(value: unknown) {
+  return value === undefined ? null : value;
+}
+
+function activityValuesEqual(left: unknown, right: unknown) {
+  return (
+    JSON.stringify(normalizeActivityValue(left)) === JSON.stringify(normalizeActivityValue(right))
+  );
+}
+
+async function appendTodoActivity(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  args: {
+    todoId: string;
+    action: TodoActivityAction;
+    severity: 'normal' | 'high';
+    changes?: TodoActivityChange[];
+    subjectUserId?: string | null;
+    createdAt?: number;
+    id?: string;
+  }
+) {
+  if (tx.location === 'client') return;
+
+  await tx.mutate.todo_activity.insert({
+    id: args.id ?? crypto.randomUUID(),
+    todo_id: args.todoId,
+    actor_id: ctx.userID,
+    subject_user_id: args.subjectUserId ?? null,
+    action: args.action,
+    severity: args.severity,
+    changes: (args.changes ?? []) as unknown as MutableJSONValue,
+    created_at: args.createdAt ?? Date.now(),
+  });
+}
+
+async function loadAssigneeIds(tx: Parameters<typeof can>[0], todoId: string) {
+  const assignments = await tx.run(zql.todo_assignment.where('todo_id', todoId));
+  return assignments
+    .map(assignment => assignment.user_id)
+    .filter(Boolean)
+    .sort();
+}
 
 async function authorizeGroupTodoManage(
   tx: Parameters<typeof can>[0],
@@ -97,6 +157,14 @@ export const todoSharedMutators = {
       updated_at: now,
     });
 
+    await appendTodoActivity(tx, ctx, {
+      id: args.id,
+      todoId: args.id,
+      action: 'created',
+      severity: 'high',
+      createdAt: now,
+    });
+
     if (tx.location === 'client') {
       await tx.mutate.thread.insert({
         id: args.id,
@@ -121,14 +189,38 @@ export const todoSharedMutators = {
 
     const { id, ...fields } = args;
     const existing = await loadTodo(tx, id);
+    const changes: TodoActivityChange[] = TRACKED_UPDATE_FIELDS.flatMap(field => {
+      if (!Object.prototype.hasOwnProperty.call(fields, field)) return [];
+      const from = normalizeActivityValue(existing[field]);
+      const to = normalizeActivityValue(fields[field]);
+      return activityValuesEqual(from, to) ? [] : [{ field, from, to }];
+    });
+    const automaticallyUnarchives = Boolean(
+      existing.archived_at && fields.status && fields.status !== 'completed'
+    );
+    if (automaticallyUnarchives) {
+      changes.push({ field: 'archive_state', from: 'archived', to: 'active' });
+    }
+
     await tx.mutate.todo.update({
       id,
       ...fields,
-      ...(existing.archived_at && fields.status && fields.status !== 'completed'
-        ? { archived_at: null }
-        : {}),
+      ...(automaticallyUnarchives ? { archived_at: null } : {}),
       updated_at: Date.now(),
     });
+
+    if (changes.length > 0) {
+      await appendTodoActivity(tx, ctx, {
+        todoId: id,
+        action: 'updated',
+        severity: changes.some(
+          change => change.field === 'status' || change.field === 'archive_state'
+        )
+          ? 'high'
+          : 'normal',
+        changes,
+      });
+    }
   }),
 
   archive: defineMutator(archiveTodoSchema, async ({ tx, ctx, args }) => {
@@ -145,6 +237,13 @@ export const todoSharedMutators = {
 
     const now = Date.now();
     await tx.mutate.todo.update({ id: args.id, archived_at: now, updated_at: now });
+    await appendTodoActivity(tx, ctx, {
+      todoId: args.id,
+      action: 'archived',
+      severity: 'high',
+      changes: [{ field: 'archive_state', from: 'active', to: 'archived' }],
+      createdAt: now,
+    });
   }),
 
   unarchive: defineMutator(unarchiveTodoSchema, async ({ tx, ctx, args }) => {
@@ -155,7 +254,15 @@ export const todoSharedMutators = {
       return;
     }
 
-    await tx.mutate.todo.update({ id: args.id, archived_at: null, updated_at: Date.now() });
+    const now = Date.now();
+    await tx.mutate.todo.update({ id: args.id, archived_at: null, updated_at: now });
+    await appendTodoActivity(tx, ctx, {
+      todoId: args.id,
+      action: 'unarchived',
+      severity: 'high',
+      changes: [{ field: 'archive_state', from: 'archived', to: 'active' }],
+      createdAt: now,
+    });
   }),
 
   // Delete a todo
@@ -170,24 +277,60 @@ export const todoSharedMutators = {
     await authorizeTodoOwnerOrGroupManage(tx, ctx, args.todo_id, 'manage');
 
     const now = Date.now();
+    const previousAssigneeIds =
+      tx.location === 'client' ? [] : await loadAssigneeIds(tx, args.todo_id);
     await tx.mutate.todo_assignment.insert({
       ...args,
       assigned_at: now,
+    });
+    await appendTodoActivity(tx, ctx, {
+      todoId: args.todo_id,
+      action: 'assigned',
+      severity: 'high',
+      subjectUserId: args.user_id,
+      changes: [
+        {
+          field: 'assignees',
+          from: previousAssigneeIds,
+          to: [...previousAssigneeIds, args.user_id].sort(),
+        },
+      ],
+      createdAt: now,
     });
   }),
 
   // Unassign a user from a todo
   unassign: defineMutator(deleteTodoAssignmentSchema, async ({ tx, ctx, args }) => {
+    let assignment: { todo_id: string; user_id: string } | undefined;
+    let previousAssigneeIds: string[] = [];
     if (tx.location !== 'client') {
-      const assignment = await tx.run(zql.todo_assignment.where('id', args.id).one());
+      assignment = await tx.run(zql.todo_assignment.where('id', args.id).one());
       if (!assignment) {
         throw new Error('Todo assignment not found');
       }
 
       await authorizeTodoOwnerOrGroupManage(tx, ctx, assignment.todo_id, 'manage');
+      previousAssigneeIds = await loadAssigneeIds(tx, assignment.todo_id);
     }
 
     await tx.mutate.todo_assignment.delete({ id: args.id });
+    if (assignment) {
+      const todoId = assignment.todo_id;
+      const userId = assignment.user_id;
+      await appendTodoActivity(tx, ctx, {
+        todoId,
+        action: 'unassigned',
+        severity: 'high',
+        subjectUserId: userId,
+        changes: [
+          {
+            field: 'assignees',
+            from: previousAssigneeIds,
+            to: previousAssigneeIds.filter(id => id !== userId),
+          },
+        ],
+      });
+    }
   }),
 
   // Toggle todo completion
@@ -209,6 +352,19 @@ export const todoSharedMutators = {
       completed_at: isCompleting ? now : 0,
       archived_at: null,
       updated_at: now,
+    });
+    await appendTodoActivity(tx, ctx, {
+      todoId: args.id,
+      action: 'updated',
+      severity: 'high',
+      changes: [
+        {
+          field: 'status',
+          from: existing.status,
+          to: isCompleting ? 'completed' : 'open',
+        },
+      ],
+      createdAt: now,
     });
   }),
 };

@@ -92,8 +92,6 @@ describe('useEventWikiPage coverage', () => {
     ]);
     expect(result.current.elections).toEqual([election]);
     expect(mocks.computeAgendaStats).toHaveBeenCalledWith(result.current.agendaItems);
-    expect(mocks.checkEntityAccess).toHaveBeenCalledWith('private', true, true);
-    expect(result.current.canAccess).toBe(true);
     expect(result.current.subscriberCount).toBe(2);
   });
 
@@ -106,7 +104,7 @@ describe('useEventWikiPage coverage', () => {
     expect(result.current.getUserCandidacy({ candidates: undefined } as never)).toBeUndefined();
     await act(() => result.current.handleConfirmCandidacy('secret'));
     expect(mocks.verifyVotingPassword).not.toHaveBeenCalled();
-    expect(mocks.checkEntityAccess).toHaveBeenCalledWith(undefined, false, false);
+    expect(mocks.checkEntityAccess).not.toHaveBeenCalled();
   });
 
   it('opens confirmation and rejects an existing candidacy', async () => {

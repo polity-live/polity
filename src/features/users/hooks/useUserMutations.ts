@@ -23,6 +23,7 @@ export function useUserMutations() {
     profileData: {
       first_name?: string;
       last_name?: string;
+      contact_email?: string | null;
       gender?: 'male' | 'female' | 'diverse' | null;
       bio?: string;
       about?: MutableJSONValue | null;
@@ -124,6 +125,7 @@ export function useUserMutations() {
     profileData: {
       first_name?: string;
       last_name?: string;
+      contact_email?: string | null;
       gender?: 'male' | 'female' | 'diverse' | null;
       bio?: string;
       about?: MutableJSONValue | null;
@@ -169,6 +171,7 @@ export function useUserMutations() {
       await userActions.updateProfileClientApplied({
         first_name: profileData.first_name,
         last_name: profileData.last_name,
+        contact_email: profileData.contact_email,
         gender: profileData.gender,
         bio: profileData.bio,
         about: profileData.about,

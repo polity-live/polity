@@ -5,6 +5,7 @@ export const user = table('user')
   .columns({
     id: string(),
     email: string().optional(),
+    contact_email: string().optional(),
     handle: string().optional(),
     first_name: string().optional(),
     last_name: string().optional(),

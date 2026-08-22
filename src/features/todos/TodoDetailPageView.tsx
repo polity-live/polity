@@ -7,13 +7,14 @@ import { TodoDetailHeader } from './ui/TodoDetailHeader';
 import { TodoDetailView } from './ui/TodoDetailView';
 import { TodoDetailEdit } from './ui/TodoDetailEdit';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { CommentThread } from '@/features/shared/ui/comments';
 import type { TodoDiscussionController } from './hooks/useTodoDiscussion';
+import type { TodoActivityController } from './hooks/useTodoActivity';
 import { TodoArchiveAction, TodoArchiveBadge } from './ui/TodoArchiveAction';
 import { BookOpen, Bot, RotateCcw } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { resolveAppTutorialFixtureValue } from '@/features/app-tutorial/fixture-copy';
 import { getTodoTutorialAnchor } from './logic/tutorialTodoAnchor';
+import { TodoDiscussionTabs } from './ui/TodoDiscussionTabs';
 export interface TodoDetailPageViewProps {
   todoId: any;
   t: any;
@@ -28,6 +29,7 @@ export interface TodoDetailPageViewProps {
   handleTitleChange: any;
   handleFormUpdate: any;
   discussion: TodoDiscussionController;
+  activity: TodoActivityController;
   canManageTodos: boolean;
   isArchiving: boolean;
   handleArchive: () => void;
@@ -48,6 +50,7 @@ export function TodoDetailPageView({
   handleTitleChange,
   handleFormUpdate,
   discussion,
+  activity,
   canManageTodos,
   isArchiving,
   handleArchive,
@@ -152,14 +155,7 @@ export function TodoDetailPageView({
       {!isEditing ? (
         <Card className="mt-6">
           <CardContent className="pt-6">
-            <CommentThread
-              comments={discussion.comments}
-              currentUserId={discussion.currentUserId}
-              onAddComment={discussion.onAddComment}
-              onVote={discussion.onVote}
-              isSubmitting={discussion.isSubmitting}
-              linkAuthors
-            />
+            <TodoDiscussionTabs activity={activity} discussion={discussion} resetKey={todo.id} />
           </CardContent>
         </Card>
       ) : null}

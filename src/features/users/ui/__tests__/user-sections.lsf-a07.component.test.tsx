@@ -242,7 +242,7 @@ describe('A07 user section execution contracts', () => {
 
   it('wires contact changes and executes all eight social validators', () => {
     const values = {
-      email: 'ada@example.org',
+      contactEmail: 'ada@example.org',
       website: 'https://example.org',
       youtube: 'youtube',
       linkedin: 'linkedin',
@@ -256,7 +256,7 @@ describe('A07 user section execution contracts', () => {
     render(
       <ContactInformationSection
         {...values}
-        onEmailChange={vi.fn()}
+        onContactEmailChange={vi.fn()}
         onWebsiteChange={vi.fn()}
         onYoutubeChange={vi.fn()}
         onLinkedinChange={vi.fn()}

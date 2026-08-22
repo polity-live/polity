@@ -20,6 +20,11 @@ test('invites a collaborator, edits as the second actor, and shares the change @
   const collaborator = await authenticateGovernanceActor(browser, actors, 'collaborator');
   await seedAmendmentDocument(sql, e2eRun, seed, [`${e2eRun.prefix} original document`]);
   const collaborationId = await inviteAmendmentCollaborator(sql, e2eRun, seed, collaborator);
+  await sql`
+    update public.amendment
+    set visibility = 'private', updated_at = now()
+    where id = ${seed.amendmentId}::uuid
+  `;
   const collaboratorContext = await browser.newContext({
     storageState: collaborator.storageStatePath,
   });
@@ -28,6 +33,8 @@ test('invites a collaborator, edits as the second actor, and shares the change @
   try {
     await collaboratorPage.goto(`/amendment/${seed.amendmentId}`);
     await waitForAppReady(collaboratorPage);
+    await expect(collaboratorPage.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(collaboratorPage.locator('[data-entity-visibility="private"]')).toHaveCount(1);
     await collaboratorPage
       .locator('[data-action-id="amendments.wiki.manage.collaboration"]')
       .click();
