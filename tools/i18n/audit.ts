@@ -292,7 +292,7 @@ function finding(
 export function auditSourceText(source: string, file = 'fixture.tsx'): I18nAuditFinding[] {
   const ast = parse(source, {
     sourceType: 'module',
-    plugins: ['jsx', 'typescript'],
+    plugins: ['typescript', ...(file.endsWith('.tsx') ? (['jsx'] as const) : [])],
     errorRecovery: false,
   });
   const findings: I18nAuditFinding[] = [];

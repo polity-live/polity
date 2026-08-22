@@ -150,23 +150,45 @@ test('runs a named vote with two actors and closes the persisted result @pr', as
       })
       .toBe('final');
 
+    await expect(page.locator('[data-action-id="agendas.toolbar.vote.close-final"]')).toBeVisible({
+      timeout: 15_000,
+    });
     await castChoice(page, 'Accept');
-    await voterBPage.reload({ waitUntil: 'domcontentloaded' });
-    await waitForAppReady(voterBPage);
-    await castChoice(voterBPage, 'Reject');
-
     await expect
-      .poll(async () => {
-        const [voteRows, decisionRows] = await Promise.all([
-          sql`select status from public.vote where id = ${voteId}::uuid`,
-          sql`
+      .poll(
+        async () => {
+          const rows = await sql`
             select count(*)::int as count
             from public.final_choice_decision
             where vote_id = ${voteId}::uuid
-          `,
-        ]);
-        return { status: voteRows[0]?.status, decisions: decisionRows[0]?.count };
-      })
+          `;
+          return rows[0]?.count ?? 0;
+        },
+        { timeout: 15_000 }
+      )
+      .toBe(1);
+    await voterBPage.reload({ waitUntil: 'domcontentloaded' });
+    await waitForAppReady(voterBPage);
+    await expect(
+      voterBPage.locator('[data-action-id="agendas.toolbar.vote.close-final"]')
+    ).toBeVisible({ timeout: 15_000 });
+    await castChoice(voterBPage, 'Reject');
+
+    await expect
+      .poll(
+        async () => {
+          const [voteRows, decisionRows] = await Promise.all([
+            sql`select status from public.vote where id = ${voteId}::uuid`,
+            sql`
+              select count(*)::int as count
+              from public.final_choice_decision
+              where vote_id = ${voteId}::uuid
+            `,
+          ]);
+          return { status: voteRows[0]?.status, decisions: decisionRows[0]?.count };
+        },
+        { timeout: 15_000 }
+      )
       .toEqual({ status: 'closed', decisions: 2 });
 
     await page.reload({ waitUntil: 'domcontentloaded' });

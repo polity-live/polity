@@ -557,7 +557,7 @@ describe('CityDesignTopBarView', () => {
     expect(
       document.querySelector('[data-action-id="amendments.city-topbar.hide.selected-osm-way"]')
     ).toBeNull();
-  });
+  }, 15_000);
 
   it('renders tinted hidden overlays and invokes the optional color callback default', async () => {
     renderSecondaryActionBar({

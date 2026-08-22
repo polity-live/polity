@@ -39,12 +39,14 @@ describe('useNetworkViewportPanelController', () => {
       configurable: true,
       value: { height: 900, addEventListener: visualAdd, removeEventListener: visualRemove },
     });
+    const noBorderAncestor = document.createElement('main');
     const grandparent = document.createElement('article');
     const parent = document.createElement('section');
     const element = document.createElement('div');
     parent.appendChild(element);
     grandparent.appendChild(parent);
-    document.body.appendChild(grandparent);
+    noBorderAncestor.appendChild(grandparent);
+    document.body.appendChild(noBorderAncestor);
     vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ top: -20 } as DOMRect);
     vi.spyOn(window, 'getComputedStyle').mockImplementation(
       currentElement =>
@@ -52,13 +54,22 @@ describe('useNetworkViewportPanelController', () => {
           ? {
               paddingBottom: '10px',
               marginBottom: 'invalid',
+              borderBottomStyle: 'solid',
               borderBottomWidth: '2px',
             }
-          : {
-              paddingBottom: 'invalid',
-              marginBottom: '0px',
-              borderBottomWidth: 'invalid',
-            }) as CSSStyleDeclaration
+          : currentElement === grandparent
+            ? {
+                paddingBottom: 'invalid',
+                marginBottom: '0px',
+                borderBottomStyle: 'dashed',
+                borderBottomWidth: 'invalid',
+              }
+            : {
+                paddingBottom: 'invalid',
+                marginBottom: '0px',
+                borderBottomStyle: 'none',
+                borderBottomWidth: 'invalid',
+              }) as CSSStyleDeclaration
     );
 
     const { result, rerender, unmount } = renderHook(

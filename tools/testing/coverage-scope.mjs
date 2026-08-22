@@ -118,7 +118,7 @@ function isTypeOnlySource(file, root) {
     const ast = parse(fs.readFileSync(absolute, 'utf8'), {
       sourceType: 'module',
       errorRecovery: true,
-      plugins: ['typescript', 'jsx', 'decorators', 'importAttributes'],
+      plugins: ['typescript', ...(file.endsWith('.tsx') ? ['jsx'] : []), 'decorators'],
     });
     return ast.program.body.every(typeOnlyDeclaration);
   } catch {

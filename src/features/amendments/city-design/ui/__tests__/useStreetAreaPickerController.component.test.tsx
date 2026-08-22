@@ -312,9 +312,12 @@ describe('useStreetAreaPickerController', () => {
     expect(onSelectionAddressChange).not.toHaveBeenCalled();
   });
 
-  it('does not update modules after an immediate unmount', () => {
+  it('does not update modules after an immediate unmount', async () => {
     const hook = renderHook(() => useStreetAreaPickerController(createControllerOptions()));
     hook.unmount();
+    await act(async () => {
+      await Promise.all([import('react-leaflet'), import('leaflet')]);
+    });
   });
 });
 
