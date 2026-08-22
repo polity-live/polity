@@ -69,7 +69,7 @@ describe('UserProfileEditForm action contracts', () => {
             subtitle: '',
             visibility: 'public',
             aboutContent: [],
-            email: '',
+            contactEmail: '',
             website: '',
             youtube: '',
             linkedin: '',

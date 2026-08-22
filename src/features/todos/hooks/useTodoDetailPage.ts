@@ -10,6 +10,7 @@ import { usePermissions } from '@/zero/rbac';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { reportAppTutorialAction } from '@/features/app-tutorial/events';
+import { useTodoActivity } from './useTodoActivity';
 
 export function useTodoDetailPage(todoId: string) {
   const [isEditing, setIsEditing] = useState(false);
@@ -21,6 +22,7 @@ export function useTodoDetailPage(todoId: string) {
 
   const { todo, assignments } = useTodoState({ todoId });
   const discussion = useTodoDiscussion(todo);
+  const activity = useTodoActivity(todo);
   const { canManage } = usePermissions({ groupId: todo?.group_id ?? undefined });
 
   // Visibility access check: creator or assignee can access private todos
@@ -135,6 +137,7 @@ export function useTodoDetailPage(todoId: string) {
     handleTitleChange,
     handleFormUpdate,
     discussion,
+    activity,
     canManageTodos,
     isArchiving,
     handleArchive,

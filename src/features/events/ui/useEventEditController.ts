@@ -7,10 +7,7 @@
 
 import { useNavigate } from '@tanstack/react-router';
 import { useEventUpdate } from '../hooks/useEventUpdate';
-import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { usePermissions } from '@/zero/rbac';
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { useAllGroups, useUserGroupsWithManageEvents } from '@/zero/groups/useGroupState';
@@ -93,16 +90,16 @@ export function useEventEditController({
   });
 
   const visibilityLabel =
-    formData.visibility === translateText('generated.inline.0030_public_61c9b2b1')
-      ? t('pages.create.common.public')
-      : formData.visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
-        ? t('pages.create.common.authenticated')
-        : t('pages.create.common.private');
+    formData.visibility === 'public'
+      ? t('common.visibility.public')
+      : formData.visibility === 'authenticated'
+        ? t('common.visibility.authenticated')
+        : t('common.visibility.private');
 
   const attendanceModeLabel =
-    formData.attendanceMode === translateText('generated.inline.0035_online_2dbc2fd2')
+    formData.attendanceMode === 'online'
       ? 'Online'
-      : formData.attendanceMode === translateText('generated.inline.0036_hybrid_e2ac482d')
+      : formData.attendanceMode === 'hybrid'
         ? 'Hybrid'
         : 'Offline';
 

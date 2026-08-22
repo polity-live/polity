@@ -98,7 +98,7 @@ export const userPageTranslations = {
     contact: {
       title: 'Contact Information',
       description: 'How people can reach you and follow your work online',
-      emailLabel: 'Email',
+      emailLabel: 'Contact email',
       emailPlaceholder: 'your.email@example.com',
       twitterLabel: 'Twitter/X',
       twitterPlaceholder: '@yourusername',

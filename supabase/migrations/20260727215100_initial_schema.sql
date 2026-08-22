@@ -2377,6 +2377,7 @@ alter table "public"."todo_assignment" enable row level security;
   create table "public"."user" (
     "id" uuid not null default gen_random_uuid(),
     "email" text,
+    "contact_email" text,
     "handle" text,
     "first_name" text,
     "last_name" text,

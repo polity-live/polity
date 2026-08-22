@@ -2,7 +2,7 @@ import '@/styles/animations.css';
 
 import { CircleHelp, Mail } from 'lucide-react';
 
-import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import { normalizeRouteVisibility } from '@/features/auth/logic/routeVisibilityAccess';
 import { SubscribeButton } from '@/features/shared/ui/action-buttons';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { EmptyState, ErrorState, ProfilePageSkeleton } from '@/features/shared/ui/feedback';
@@ -16,7 +16,7 @@ import {
   StatsBar,
   compactActionButtonClassName,
 } from '@/features/shared/ui/layout';
-import { BadgeControl } from '@/features/shared/ui/status';
+import { BadgeControl, VisibilityBadge } from '@/features/shared/ui/status';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { Button } from '@/features/shared/ui/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/features/shared/ui/ui/hover-card';
@@ -47,11 +47,8 @@ export function UserWikiView({ page }: UserWikiViewProps) {
     );
   }
 
-  if (page.status === 'access-denied') {
-    return <AccessDenied />;
-  }
-
   const user = page.user;
+  const userVisibility = normalizeRouteVisibility(user.visibility);
   const isAriaKaiProfile = isAssistantUser(user.id);
   const resolvedAvatar = resolveAssistantAvatar(user.id, user.avatar);
 
@@ -67,6 +64,9 @@ export function UserWikiView({ page }: UserWikiViewProps) {
         ) : null}
         <div className="mb-2 flex min-w-0 flex-col items-center justify-center gap-2 md:flex-row md:gap-3">
           <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{page.fullName}</h1>
+          <VisibilityBadge value={userVisibility} data-entity-visibility={userVisibility}>
+            {translateText(`common.visibility.${userVisibility}`)}
+          </VisibilityBadge>
           <div className="bg-background/80 inline-flex max-w-full min-w-0 items-center gap-1 rounded-md border px-2 py-1 shadow-sm">
             <BadgeControl
               variant="secondary"
@@ -189,7 +189,7 @@ export function UserWikiView({ page }: UserWikiViewProps) {
       <InfoTabs
         about={user.about ?? undefined}
         contact={{
-          email: user.email || '',
+          email: user.contact_email || '',
           website: user.website || '',
           youtube: user.youtube || '',
           linkedin: user.linkedin || '',

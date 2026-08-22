@@ -1,4 +1,11 @@
 import { table, string, number, json } from '@rocicorp/zero';
+import type { MutableJSONValue } from '../shared/helpers';
+
+export interface TodoActivityChange {
+  field: string;
+  from: unknown;
+  to: unknown;
+}
 
 export const todo = table('todo')
   .columns({
@@ -29,5 +36,18 @@ export const todoAssignment = table('todo_assignment')
     user_id: string(),
     role: string().optional(),
     assigned_at: number(),
+  })
+  .primaryKey('id');
+
+export const todoActivity = table('todo_activity')
+  .columns({
+    id: string(),
+    todo_id: string(),
+    actor_id: string().optional(),
+    subject_user_id: string().optional(),
+    action: string(),
+    severity: string(),
+    changes: json<MutableJSONValue>(),
+    created_at: number(),
   })
   .primaryKey('id');

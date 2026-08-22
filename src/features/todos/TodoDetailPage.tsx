@@ -19,6 +19,7 @@ export function TodoDetailPage({ todoId }: TodoDetailPageProps) {
     handleTitleChange,
     handleFormUpdate,
     discussion,
+    activity,
     canManageTodos,
     isArchiving,
     handleArchive,
@@ -39,6 +40,7 @@ export function TodoDetailPage({ todoId }: TodoDetailPageProps) {
       handleTitleChange={handleTitleChange}
       handleFormUpdate={handleFormUpdate}
       discussion={discussion}
+      activity={activity}
       canManageTodos={canManageTodos}
       isArchiving={isArchiving}
       handleArchive={handleArchive}

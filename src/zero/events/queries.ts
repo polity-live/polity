@@ -21,6 +21,12 @@ import {
 } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
+import {
+  activityCursorSchema,
+  activityPageLimitSchema,
+  activitySeverityFilterSchema,
+  applyActivityCursor,
+} from '../activity/queries';
 
 const eventCreatedCursorSchema = z
   .object({ id: z.string(), created_at: z.number() })
@@ -77,6 +83,31 @@ function applyEventDelegateSelfOrParticipantAccess<T>(q: T, userID: string | und
 }
 
 export const eventQueries = {
+  activities: defineQuery(
+    z.object({
+      entityId: z.string(),
+      severity: activitySeverityFilterSchema,
+      cursor: activityCursorSchema,
+      limit: activityPageLimitSchema,
+    }),
+    ({ args: { entityId, severity, cursor, limit }, ctx: { userID } }) => {
+      let q: any = zql.event_activity.where('event_id', entityId).whereExists('event', event => {
+        if (!userID || userID === 'anon') return event.where('id', '__unauthorized__');
+        return event.where(({ or, cmp, exists }: any) =>
+          or(
+            cmp('creator_id', userID),
+            exists('participants', (participant: any) =>
+              participant
+                .where('user_id', userID)
+                .where('status', 'IN', WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES)
+            )
+          )
+        );
+      });
+      if (severity !== 'all') q = q.where('severity', severity);
+      return applyActivityCursor(q, cursor).related('actor').related('subject_user').limit(limit);
+    }
+  ),
   viewerDelegations: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     requireQueryUser(zql.event_delegate, userID)
   ),

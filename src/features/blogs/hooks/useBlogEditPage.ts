@@ -19,6 +19,17 @@ export interface BlogFormData {
   hashtags: string[];
 }
 
+function createInitialBlogFormData(): BlogFormData {
+  return {
+    title: '',
+    date: formatLocalDateInput(new Date()),
+    imageURL: '',
+    videoURL: '',
+    visibility: 'public',
+    hashtags: [],
+  };
+}
+
 /**
  * Hook for blog update functionality
  */
@@ -31,14 +42,7 @@ export function useBlogEditPage(
   const { updateBlog } = useBlogActions();
   const commonActions = useCommonActions();
 
-  const [formData, setFormData] = useState<BlogFormData>({
-    title: '',
-    date: formatLocalDateInput(new Date()),
-    imageURL: '',
-    videoURL: '',
-    visibility: 'public' as Visibility,
-    hashtags: [],
-  });
+  const [formData, setFormData] = useState<BlogFormData>(createInitialBlogFormData);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -59,13 +63,23 @@ export function useBlogEditPage(
 
   const blog = blogWithHashtags;
 
-  const initializedRef = useRef(false);
-  const hashtagsInitializedRef = useRef(false);
+  const initializedRef = useRef<string | null>(null);
+  const hashtagsInitializedRef = useRef<string | null>(null);
+  const formEntityIdRef = useRef(blogId);
+
+  useEffect(() => {
+    if (formEntityIdRef.current === blogId) return;
+
+    formEntityIdRef.current = blogId;
+    initializedRef.current = null;
+    hashtagsInitializedRef.current = null;
+    setFormData(createInitialBlogFormData());
+  }, [blogId]);
 
   // Initialize form data only once when blog first loads
   useEffect(() => {
-    if (blog && !initializedRef.current) {
-      initializedRef.current = true;
+    if (blog && blog.id === blogId && initializedRef.current !== blogId) {
+      initializedRef.current = blogId;
       const existingTags = (blogHashtags ?? [])
         .map(j => j.hashtag?.tag)
         .filter((t): t is string => !!t);
@@ -78,16 +92,16 @@ export function useBlogEditPage(
         hashtags: existingTags.length > 0 ? existingTags : [],
       });
     }
-  }, [blog]);
+  }, [blog, blogHashtags, blogId]);
 
   // Initialize hashtags from junction data once available (may load after blog)
   useEffect(() => {
-    if (blogHashtags && blogHashtags.length > 0 && !hashtagsInitializedRef.current) {
-      hashtagsInitializedRef.current = true;
-      const tags = blogHashtags.map(j => j.hashtag?.tag).filter((t): t is string => !!t);
+    if (!isCommonLoading && blog?.id === blogId && hashtagsInitializedRef.current !== blogId) {
+      hashtagsInitializedRef.current = blogId;
+      const tags = (blogHashtags ?? []).map(j => j.hashtag?.tag).filter((t): t is string => !!t);
       setFormData(prev => ({ ...prev, hashtags: tags }));
     }
-  }, [blogHashtags]);
+  }, [blog, blogHashtags, blogId, isCommonLoading]);
 
   // Update a single field
   const updateField = <K extends keyof BlogFormData>(field: K, value: BlogFormData[K]) => {

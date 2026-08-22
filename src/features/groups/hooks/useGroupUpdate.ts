@@ -242,11 +242,17 @@ export function useGroupUpdate(
   useEffect(() => {
     if (initialData && !initializedRef.current) {
       initializedRef.current = true;
-      const newFormData = buildGroupFormData(initialData, existingTags);
+      const newFormData = buildGroupFormData(
+        {
+          ...initialData,
+          visibility: initialData.visibility ?? options?.visibility,
+        },
+        existingTags
+      );
       setFormData(newFormData);
       setOriginalName(initialData.name || '');
     }
-  }, [initialData]);
+  }, [initialData, options?.visibility]);
 
   /**
    * Update a single form field
@@ -288,7 +294,16 @@ export function useGroupUpdate(
    */
   const resetForm = () => {
     if (initialData) {
-      setFormData(buildGroupFormData({ ...initialData, hashtags: existingTags }, existingTags));
+      setFormData(
+        buildGroupFormData(
+          {
+            ...initialData,
+            visibility: initialData.visibility ?? options?.visibility,
+            hashtags: existingTags,
+          },
+          existingTags
+        )
+      );
     } else {
       setFormData(initialFormState);
     }

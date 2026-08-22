@@ -36,6 +36,55 @@ import {
   actionRightCreateSchema,
   actionRightDeleteSchema,
 } from './schema';
+import { appendEntityActivity, buildActivityChanges, severityForChanges } from '../activity/shared';
+
+const GROUP_ACTIVITY_FIELDS = [
+  'name',
+  'description',
+  'email',
+  'country',
+  'region',
+  'post_code',
+  'city',
+  'street',
+  'house_number',
+  'latitude',
+  'longitude',
+  'location_kind',
+  'location_place_id',
+  'location_boundary_source',
+  'location_geometry',
+  'location_bounds',
+  'image_url',
+  'video_url',
+  'group_type',
+  'has_hierarchy_children',
+  'has_sibling_connections',
+  'connected_group_id',
+  'primary_sibling_membership_mode',
+  'sibling_membership_mode',
+  'sibling_role_id',
+  'x',
+  'youtube',
+  'linkedin',
+  'website',
+  'whatsapp',
+  'instagram',
+  'twitter',
+  'facebook',
+  'snapchat',
+  'tiktok',
+  'visibility',
+] as const;
+const HIGH_GROUP_FIELDS = new Set<string>([
+  'group_type',
+  'has_hierarchy_children',
+  'has_sibling_connections',
+  'connected_group_id',
+  'primary_sibling_membership_mode',
+  'sibling_membership_mode',
+  'sibling_role_id',
+]);
 import { z } from 'zod';
 import {
   isManualGroupMembershipSource,
@@ -915,6 +964,15 @@ export const groupSharedMutators = {
       creatorId: userID,
       createdAt: now,
     });
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: args.id,
+      action: 'created',
+      severity: 'high',
+      createdAt: now,
+      id: args.id,
+    });
   }),
 
   createFull: defineMutator(groupFullCreateMutatorSchema, async ({ tx, ctx, args }) => {
@@ -929,6 +987,16 @@ export const groupSharedMutators = {
     }
 
     await tx.mutate.group.update({ ...args, updated_at: Date.now() });
+    const changes = buildActivityChanges(existingGroup, args, GROUP_ACTIVITY_FIELDS);
+    if (changes.length > 0)
+      await appendEntityActivity(tx, ctx, {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: args.id,
+        action: 'updated',
+        severity: severityForChanges(changes, HIGH_GROUP_FIELDS),
+        changes,
+      });
   }),
 
   delete: defineMutator(groupDeleteSchema, async ({ tx, ctx, args }) => {
@@ -955,6 +1023,18 @@ export const groupSharedMutators = {
       created_by_id: ctx.userID,
       created_at: now,
       updated_at: now,
+    });
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: args.group_id,
+      action: 'offline_member_added',
+      severity: 'high',
+      subjectUserId: args.connected_user_id ?? null,
+      context: {
+        offline_member_id: args.id,
+        name: `${normalizeRequiredName(args.first_name)} ${normalizeRequiredName(args.last_name)}`,
+      },
     });
 
     const offlineMembershipId = await ensureOfflineDirectMembership(tx, {
@@ -994,11 +1074,50 @@ export const groupSharedMutators = {
         : {}),
       updated_at: Date.now(),
     });
+    const normalizedUpdate = {
+      ...args,
+      ...(args.first_name !== undefined
+        ? { first_name: normalizeRequiredName(args.first_name) }
+        : {}),
+      ...(args.last_name !== undefined ? { last_name: normalizeRequiredName(args.last_name) } : {}),
+      ...(args.reason_not_signed_up !== undefined
+        ? { reason_not_signed_up: normalizeOptionalReason(args.reason_not_signed_up) }
+        : {}),
+    };
+    const changes = buildActivityChanges(offlineMember, normalizedUpdate, [
+      'first_name',
+      'last_name',
+      'reason_not_signed_up',
+      'connected_user_id',
+    ]);
+    if (changes.length > 0)
+      await appendEntityActivity(tx, ctx, {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: offlineMember.group_id,
+        action: 'offline_member_updated',
+        severity: 'normal',
+        changes,
+        subjectUserId: connectedUserId ?? null,
+        context: { offline_member_id: offlineMember.id },
+      });
   }),
 
   deleteOfflineMember: defineMutator(groupOfflineMemberDeleteSchema, async ({ tx, ctx, args }) => {
-    await loadGroupOfflineMemberForMutation(tx, ctx, args.id);
+    const offlineMember = await loadGroupOfflineMemberForMutation(tx, ctx, args.id);
     await tx.mutate.group_offline_member.delete({ id: args.id });
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: offlineMember.group_id,
+      action: 'offline_member_removed',
+      severity: 'high',
+      subjectUserId: offlineMember.connected_user_id ?? null,
+      context: {
+        offline_member_id: offlineMember.id,
+        name: `${offlineMember.first_name} ${offlineMember.last_name}`,
+      },
+    });
   }),
 
   importOfflineMembers: defineMutator(
@@ -1058,6 +1177,15 @@ export const groupSharedMutators = {
           assignedById: ctx.userID,
         });
       }
+      if (seenImportKeys.size > 0)
+        await appendEntityActivity(tx, ctx, {
+          table: 'group_activity',
+          entityField: 'group_id',
+          entityId: args.group_id,
+          action: 'offline_members_imported',
+          severity: 'high',
+          context: { count: seenImportKeys.size },
+        });
     }
   ),
 
@@ -1093,6 +1221,19 @@ export const groupSharedMutators = {
         assigned_by_id: userID,
       });
     }
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: args.group_id,
+      action: 'membership_added',
+      severity: 'high',
+      subjectUserId: userID,
+      context: {
+        membership_id: args.id,
+        status: args.status ?? null,
+        role_ids: initialRoleId ? [initialRoleId] : [],
+      },
+    });
   }),
 
   requestGuestAccess: defineMutator(groupGuestAccessCreateSchema, async ({ tx, ctx, args }) => {
@@ -1143,6 +1284,19 @@ export const groupSharedMutators = {
           assigned_by_id: null,
         });
       }
+      await appendEntityActivity(tx, ctx, {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: args.group_id,
+        action: 'guest_updated',
+        severity: 'high',
+        subjectUserId: userID,
+        context: {
+          guest_access_id: existingGuestAccess.id,
+          status: 'requested',
+          role_id: desiredRoleId,
+        },
+      });
       return;
     }
 
@@ -1164,6 +1318,15 @@ export const groupSharedMutators = {
         assigned_by_id: null,
       });
     }
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: args.group_id,
+      action: 'guest_added',
+      severity: 'high',
+      subjectUserId: userID,
+      context: { guest_access_id: args.id, status: 'requested', role_id: desiredRoleId },
+    });
   }),
 
   leaveGroup: defineMutator(groupMembershipDeleteSchema, async ({ tx, ctx, args }) => {
@@ -1185,6 +1348,16 @@ export const groupSharedMutators = {
       });
     }
     await tx.mutate.group_membership.delete({ id: args.id });
+    if (membership)
+      await appendEntityActivity(tx, ctx, {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: membership.group_id,
+        action: 'membership_removed',
+        severity: 'high',
+        subjectUserId: membership.user_id,
+        context: { membership_id: membership.id, status: membership.status ?? null },
+      });
   }),
 
   inviteMember: defineMutator(groupMembershipCreateSchema, async ({ tx, ctx, args }) => {
@@ -1221,6 +1394,19 @@ export const groupSharedMutators = {
         assigned_by_id: ctx.userID,
       });
     }
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: args.group_id,
+      action: 'membership_added',
+      severity: 'high',
+      subjectUserId: args.user_id,
+      context: {
+        membership_id: args.id,
+        status: 'invited',
+        role_ids: initialRoleId ? [initialRoleId] : [],
+      },
+    });
   }),
 
   acceptInvitation: defineMutator(z.object({ id: z.string() }), async ({ tx, ctx, args }) => {
@@ -1239,19 +1425,47 @@ export const groupSharedMutators = {
       throw new Error('Automatic memberships cannot be accepted manually.');
     }
     await tx.mutate.group_membership.update({ id: args.id, status: 'active' });
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: membership.group_id,
+      action: 'membership_updated',
+      severity: 'high',
+      subjectUserId: membership.user_id,
+      changes: [{ field: 'status', from: membership.status ?? null, to: 'active' }],
+      context: { membership_id: membership.id },
+    });
   }),
 
   addMembershipRole: defineMutator(groupMembershipRoleAssignSchema, async ({ tx, ctx, args }) => {
     const membership = await loadMembershipForRoleMutation(tx, ctx, args.group_membership_id);
     await assertRolesAssignableToMembers(tx, [args.role_id], membership.group_id);
     await addGroupMembershipRole(tx, args);
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: membership.group_id,
+      action: 'role_assigned',
+      severity: 'high',
+      subjectUserId: membership.user_id,
+      context: { membership_id: membership.id, role_id: args.role_id },
+    });
   }),
 
   removeMembershipRole: defineMutator(
     groupMembershipRoleUnassignSchema,
     async ({ tx, ctx, args }) => {
-      await loadMembershipForRoleMutation(tx, ctx, args.group_membership_id);
+      const membership = await loadMembershipForRoleMutation(tx, ctx, args.group_membership_id);
       await removeGroupMembershipRole(tx, args);
+      await appendEntityActivity(tx, ctx, {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: membership.group_id,
+        action: 'role_unassigned',
+        severity: 'high',
+        subjectUserId: membership.user_id,
+        context: { membership_id: membership.id, role_id: args.role_id },
+      });
     }
   ),
 
@@ -1312,6 +1526,18 @@ export const groupSharedMutators = {
 
     if (Object.keys(args).length > 1) {
       await tx.mutate.group_membership.update(args);
+      const changes = buildActivityChanges(membership, args, ['status', 'visibility']);
+      if (changes.length > 0)
+        await appendEntityActivity(tx, ctx, {
+          table: 'group_activity',
+          entityField: 'group_id',
+          entityId: membership.group_id,
+          action: 'membership_updated',
+          severity: 'high',
+          subjectUserId: membership.user_id,
+          changes,
+          context: { membership_id: membership.id },
+        });
     }
   }),
 
@@ -1342,6 +1568,19 @@ export const groupSharedMutators = {
         role_ids: desiredRoleIds,
         assigned_by_id: ctx.userID,
       });
+      await appendEntityActivity(tx, ctx, {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: args.group_id,
+        action: 'guest_updated',
+        severity: 'high',
+        subjectUserId: args.user_id,
+        context: {
+          guest_access_id: existingGuestAccess.id,
+          status: 'invited',
+          role_ids: desiredRoleIds,
+        },
+      });
       return;
     }
 
@@ -1360,6 +1599,15 @@ export const groupSharedMutators = {
       group_guest_access_id: args.id,
       role_ids: desiredRoleIds,
       assigned_by_id: ctx.userID,
+    });
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: args.group_id,
+      action: 'guest_added',
+      severity: 'high',
+      subjectUserId: args.user_id,
+      context: { guest_access_id: args.id, status: args.status, role_ids: desiredRoleIds },
     });
   }),
 
@@ -1382,6 +1630,16 @@ export const groupSharedMutators = {
       status: 'active',
       updated_at: Date.now(),
     });
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: guestAccess.group_id,
+      action: 'guest_updated',
+      severity: 'high',
+      subjectUserId: guestAccess.user_id,
+      changes: [{ field: 'status', from: guestAccess.status, to: 'active' }],
+      context: { guest_access_id: guestAccess.id },
+    });
   }),
 
   revokeGuestAccess: defineMutator(groupGuestAccessDeleteSchema, async ({ tx, ctx, args }) => {
@@ -1403,17 +1661,45 @@ export const groupSharedMutators = {
       status: 'revoked',
       updated_at: Date.now(),
     });
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: guestAccess.group_id,
+      action: 'guest_removed',
+      severity: 'high',
+      subjectUserId: guestAccess.user_id,
+      changes: [{ field: 'status', from: guestAccess.status, to: 'revoked' }],
+      context: { guest_access_id: guestAccess.id },
+    });
   }),
 
   addGuestRole: defineMutator(groupGuestRoleAssignSchema, async ({ tx, ctx, args }) => {
     const guestAccess = await loadGuestAccessForRoleMutation(tx, ctx, args.group_guest_access_id);
     await assertRolesAssignableToGuests(tx, guestAccess.group_id, [args.role_id]);
     await addGroupGuestRole(tx, args);
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: guestAccess.group_id,
+      action: 'role_assigned',
+      severity: 'high',
+      subjectUserId: guestAccess.user_id,
+      context: { guest_access_id: guestAccess.id, role_id: args.role_id },
+    });
   }),
 
   removeGuestRole: defineMutator(groupGuestRoleUnassignSchema, async ({ tx, ctx, args }) => {
-    await loadGuestAccessForRoleMutation(tx, ctx, args.group_guest_access_id);
+    const guestAccess = await loadGuestAccessForRoleMutation(tx, ctx, args.group_guest_access_id);
     await removeGroupGuestRole(tx, args);
+    await appendEntityActivity(tx, ctx, {
+      table: 'group_activity',
+      entityField: 'group_id',
+      entityId: guestAccess.group_id,
+      action: 'role_unassigned',
+      severity: 'high',
+      subjectUserId: guestAccess.user_id,
+      context: { guest_access_id: guestAccess.id, role_id: args.role_id },
+    });
   }),
 
   syncGuestRoles: defineMutator(groupGuestRolesSyncSchema, async ({ tx, ctx, args }) => {
@@ -1462,6 +1748,15 @@ export const groupSharedMutators = {
       sort_order: args.sort_order ?? 0,
       created_at: now,
     });
+    if (args.group_id)
+      await appendEntityActivity(tx, ctx, {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: args.group_id,
+        action: 'role_created',
+        severity: 'high',
+        context: { role_id: args.id, name: args.name ?? null, assignee_kind: assigneeKind },
+      });
   }),
 
   updateRole: defineMutator(roleUpdateSchema, async ({ tx, ctx, args }) => {
@@ -1488,6 +1783,23 @@ export const groupSharedMutators = {
       }
     }
     await tx.mutate.role.update(args);
+    if (role?.group_id) {
+      const changes = buildActivityChanges(
+        role,
+        args,
+        Object.keys(args).filter(key => key !== 'id')
+      );
+      if (changes.length > 0)
+        await appendEntityActivity(tx, ctx, {
+          table: 'group_activity',
+          entityField: 'group_id',
+          entityId: role.group_id,
+          action: 'role_updated',
+          severity: 'high',
+          changes,
+          context: { role_id: role.id, name: role.name ?? null },
+        });
+    }
   }),
 
   deleteRole: defineMutator(roleDeleteSchema, async ({ tx, ctx, args }) => {
@@ -1496,6 +1808,15 @@ export const groupSharedMutators = {
       await authorizeScopedRoleMutation(tx, ctx, role);
     }
     await tx.mutate.role.delete({ id: args.id });
+    if (role?.group_id)
+      await appendEntityActivity(tx, ctx, {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: role.group_id,
+        action: 'role_deleted',
+        severity: 'high',
+        context: { role_id: role.id, name: role.name ?? null },
+      });
   }),
 
   assignActionRight: defineMutator(actionRightCreateSchema, async ({ tx, ctx, args }) => {
@@ -1519,6 +1840,20 @@ export const groupSharedMutators = {
     }
     const now = Date.now();
     await tx.mutate.action_right.insert({ ...args, created_at: now });
+    if (role?.group_id)
+      await appendEntityActivity(tx, ctx, {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: role.group_id,
+        action: 'right_assigned',
+        severity: 'high',
+        context: {
+          action_right_id: args.id,
+          role_id: args.role_id,
+          resource: args.resource,
+          right: args.action,
+        },
+      });
   }),
 
   removeActionRight: defineMutator(actionRightDeleteSchema, async ({ tx, ctx, args }) => {
@@ -1527,6 +1862,23 @@ export const groupSharedMutators = {
       await authorizeScopedRoleMutation(tx, ctx, actionRight);
     }
     await tx.mutate.action_right.delete({ id: args.id });
+    if (actionRight) {
+      const role = await tx.run(zql.role.where('id', actionRight.role_id).one());
+      if (role?.group_id)
+        await appendEntityActivity(tx, ctx, {
+          table: 'group_activity',
+          entityField: 'group_id',
+          entityId: role.group_id,
+          action: 'right_unassigned',
+          severity: 'high',
+          context: {
+            action_right_id: actionRight.id,
+            role_id: actionRight.role_id,
+            resource: actionRight.resource,
+            right: actionRight.action,
+          },
+        });
+    }
   }),
 
   // Role holder history mutators

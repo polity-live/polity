@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { RoleDetailsTable } from '../RoleDetailsTable';
 
-const translations: Record<string, string> = {
+const translations = vi.hoisted<Record<string, string>>(() => ({
   'generated.inline.0728_create_election_678ef240': 'Create election',
   'generated.inline.0726_view_history_8bc3b1ed': 'View history',
   'generated.inline.0727_assign_24449284': 'Assign',
@@ -26,7 +26,7 @@ const translations: Record<string, string> = {
   'generated.inline.0016_rights_1407cb23': 'Rights',
   'components.membershipTables.rights': 'Rights',
   'generated.inline.0719_term_revote_17ae9b60': 'Term',
-};
+}));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string, paramsOrFallback?: string | Record<string, unknown>) =>

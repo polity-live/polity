@@ -51,6 +51,19 @@ describe('VisibilitySelector', () => {
     fireEvent.mouseDown(tooltipButton);
   });
 
+  it('marks exactly the selected visibility as pressed', () => {
+    render(<VisibilitySelector value="private" onChange={vi.fn()} />);
+
+    const options = ['public', 'authenticated', 'private'].map(value =>
+      document.querySelector<HTMLButtonElement>(`[data-create-option="${value}"]`)
+    );
+    expect(options.map(option => option?.getAttribute('aria-pressed'))).toEqual([
+      'false',
+      'false',
+      'true',
+    ]);
+  });
+
   it('renders the longer German labels', () => {
     useLanguageStore.setState({ language: 'de' });
 

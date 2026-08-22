@@ -61,6 +61,7 @@ import {
   recomputeOfflineSiblingMembershipsForGroup,
 } from './offline-membership-helpers';
 import { assertNoBlockingGroupConflicts } from '@/server/group-conflict-validation';
+import { appendEntityActivity } from '../activity/shared';
 
 async function addGroupMembershipRoleLink(
   tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
@@ -252,6 +253,25 @@ async function reconcileBaseGroupHierarchyMemberships(
     for (const affectedGroupId of offlineAffectedGroupIds) {
       affectedMembershipGroupIds.add(affectedGroupId);
     }
+  }
+
+  for (const groupId of affectedMembershipGroupIds) {
+    await appendEntityActivity(
+      tx,
+      { userID: assignedById },
+      {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: groupId,
+        action: 'reconciliation',
+        severity: 'high',
+        actorType: 'system',
+        context: {
+          reason: 'group-membership-hierarchy',
+          affected_group_count: affectedMembershipGroupIds.size,
+        },
+      }
+    );
   }
 
   return affectedMembershipGroupIds;

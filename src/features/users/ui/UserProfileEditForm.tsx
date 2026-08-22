@@ -149,7 +149,7 @@ export function UserProfileEditForm({
             />
 
             <ContactInformationSection
-              email={formData.email}
+              contactEmail={formData.contactEmail}
               website={formData.website}
               youtube={formData.youtube}
               linkedin={formData.linkedin}
@@ -159,7 +159,7 @@ export function UserProfileEditForm({
               facebook={formData.facebook}
               snapchat={formData.snapchat}
               tiktok={formData.tiktok}
-              onEmailChange={value => onFieldChange('email', value)}
+              onContactEmailChange={value => onFieldChange('contactEmail', value)}
               onWebsiteChange={value => onFieldChange('website', value)}
               onYoutubeChange={value => onFieldChange('youtube', value)}
               onLinkedinChange={value => onFieldChange('linkedin', value)}

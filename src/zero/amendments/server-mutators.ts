@@ -94,6 +94,7 @@ import { normalizeChangeRequestVoteOrder } from '@/features/change-requests/logi
 import { reorderOpenChangeRequestVoteStepsForAgendaItem } from '../agendas/change-request-vote-ordering';
 import { isBranchEditable } from '@/features/amendments/logic/amendmentBranchDisplay';
 import { transitionProcessBranchToEventMode } from './event-mode-transition';
+import { appendEntityActivity } from '../activity/shared';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 const PENDING_SUBMISSION_STATUS = 'pending_submission';
@@ -156,6 +157,31 @@ async function loadProcessRunForBranch(
     throw new Error('Process run not found');
   }
   return processRun;
+}
+
+async function appendProcessBranchActivity(
+  tx: any,
+  ctx: { userID?: string | null },
+  branchId: string,
+  action: 'process_updated' | 'process_task_updated' | 'process_replanned',
+  context: Record<string, unknown>
+) {
+  const branch = await tx.run(zql.amendment_process_branch.where('id', branchId).one());
+  if (!branch) return;
+  const run = await tx.run(zql.amendment_process_run.where('id', branch.process_run_id).one());
+  if (!run) return;
+  await appendEntityActivity(tx, ctx, {
+    table: 'amendment_activity',
+    entityField: 'amendment_id',
+    entityId: run.amendment_id,
+    action,
+    severity: 'high',
+    context: {
+      process_run_id: run.id,
+      process_branch_id: branchId,
+      ...context,
+    },
+  });
 }
 
 function getBranchMutationEditingMode(branch: { editing_mode?: string | null }) {
@@ -1976,6 +2002,14 @@ export const amendmentServerMutators = {
       const result = await initializeAmendmentProcessPath(tx, ctx.userID, args);
       if (result.handled) {
         await materializeCurrentForwardConfirmedEventVoting(tx, ctx, result.branchId);
+        await appendEntityActivity(tx, ctx, {
+          table: 'amendment_activity',
+          entityField: 'amendment_id',
+          entityId: args.amendment_id,
+          action: 'process_started',
+          severity: 'high',
+          context: { process_branch_id: result.branchId, source_group_id: args.source_group_id },
+        });
       }
     }
   ),
@@ -1987,6 +2021,12 @@ export const amendmentServerMutators = {
       const resolution = await resolveAmendmentProcessVote(tx, args, ctx.userID);
       if (resolution.handled && 'branchId' in resolution) {
         await materializeCurrentForwardConfirmedEventVoting(tx, ctx, resolution.branchId);
+        if (resolution.branchId) {
+          await appendProcessBranchActivity(tx, ctx, resolution.branchId, 'process_updated', {
+            operation: 'vote_resolved',
+            agenda_item_id: args.agenda_item_id,
+          });
+        }
       }
       await notifyProcessVoteResolution(tx, ctx.userID, args.agenda_item_id, resolution);
     }
@@ -1999,6 +2039,13 @@ export const amendmentServerMutators = {
       const result = await completeProcessTaskWithEvent(tx, ctx.userID, args);
       if (result.handled) {
         await materializeCurrentForwardConfirmedEventVoting(tx, ctx, result.branchId);
+        if (result.branchId) {
+          await appendProcessBranchActivity(tx, ctx, result.branchId, 'process_task_updated', {
+            operation: 'completed_with_event',
+            process_task_id: args.process_task_id,
+            event_id: args.event_id,
+          });
+        }
       }
     }
   ),
@@ -2010,6 +2057,9 @@ export const amendmentServerMutators = {
       const result = await replanProcessBranchEvents(tx, ctx.userID, args);
       if (result.handled) {
         await materializeCurrentForwardConfirmedEventVoting(tx, ctx, result.branchId);
+        await appendProcessBranchActivity(tx, ctx, result.branchId, 'process_replanned', {
+          operation: 'events_replanned',
+        });
       }
     }
   ),

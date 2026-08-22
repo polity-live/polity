@@ -29,7 +29,10 @@ vi.mock('@/features/shared/ui/ui/sonner', () => ({
 }));
 
 vi.mock('../useEventData', () => ({
-  useEventData: () => ({ event: mocks.currentEvent, isLoading: mocks.eventLoading }),
+  useEventData: (eventId: string) => ({
+    event: mocks.currentEvent ? { ...mocks.currentEvent, id: eventId } : null,
+    isLoading: mocks.eventLoading,
+  }),
 }));
 
 vi.mock('../useEventMutations', () => ({
@@ -159,7 +162,9 @@ describe('useEventUpdate', () => {
       { hashtag: { tag: 'berlin' } },
     ];
 
-    const { result, rerender } = renderHook(() => useEventUpdate('event-1'));
+    const { result, rerender } = renderHook(({ eventId }) => useEventUpdate(eventId), {
+      initialProps: { eventId: 'event-1' },
+    });
 
     await waitFor(() => expect(result.current.formData.title).toBe('Assembly'));
     await waitFor(() => expect(result.current.formData.tags).toEqual(['assembly', 'berlin']));
@@ -185,9 +190,13 @@ describe('useEventUpdate', () => {
 
     mocks.currentEvent = completeEvent({ title: 'Replacement' });
     mocks.eventHashtags = [{ hashtag: { tag: 'replacement' } }];
-    rerender();
+    rerender({ eventId: 'event-1' });
     expect(result.current.formData.title).toBe('Assembly');
     expect(result.current.formData.tags).toEqual(['assembly', 'berlin']);
+
+    rerender({ eventId: 'event-2' });
+    await waitFor(() => expect(result.current.formData.title).toBe('Replacement'));
+    await waitFor(() => expect(result.current.formData.tags).toEqual(['replacement']));
   });
 
   it('falls back from malformed recurrence and absent optional event fields', async () => {
@@ -379,7 +388,6 @@ describe('useEventUpdate', () => {
     mocks.eventHashtags = [{ hashtag: { tag: 'old' } }];
     mocks.allHashtags = [{ id: 'hashtag-1', tag: 'old' }];
     const { result } = renderHook(() => useEventUpdate('new-event', 'create'));
-    await waitFor(() => expect(result.current.formData.title).toBe('Assembly'));
 
     setFields(result, {
       title: ' New assembly ',
@@ -430,11 +438,13 @@ describe('useEventUpdate', () => {
   it('creates online and hybrid payloads with the correct location and delegate fallbacks', async () => {
     mocks.currentEvent = completeEvent({ event_type: 'conference' });
     const { result } = renderHook(() => useEventUpdate('new-event', 'create'));
-    await waitFor(() => expect(result.current.formData.title).toBe('Assembly'));
 
     setFields(result, {
+      title: 'Assembly',
       description: '',
       attendanceMode: 'online',
+      locationName: 'Hall',
+      onlineLink: 'https://meet.example.test/room',
       startDate: '2026-08-20',
       startTime: '',
       endDate: '',
@@ -491,9 +501,9 @@ describe('useEventUpdate', () => {
     mocks.eventHashtags = null as any;
     mocks.allHashtags = null as any;
     const { result } = renderHook(() => useEventUpdate('new-event', 'create'));
-    await waitFor(() => expect(result.current.formData.title).toBe('Assembly'));
 
     setFields(result, {
+      title: 'Assembly',
       description: '',
       attendanceMode: 'offline',
       locationName: '',
@@ -670,7 +680,7 @@ describe('useEventUpdate', () => {
       throw new Error('create failed');
     });
     const { result } = renderHook(() => useEventUpdate('new-event', 'create'));
-    await waitFor(() => expect(result.current.formData.title).toBe('Assembly'));
+    setFields(result, { title: 'Assembly' });
     await act(() => result.current.handleSubmit(submitEvent()));
     expect(result.current.isSubmitting).toBe(false);
   });

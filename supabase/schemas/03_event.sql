@@ -99,6 +99,37 @@ CREATE INDEX idx_event_group ON public.event (group_id);
 CREATE INDEX idx_event_status ON public.event (status);
 CREATE INDEX idx_event_start_date ON public.event (start_date);
 
+CREATE TABLE public.event_activity (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
+  actor_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  actor_type TEXT NOT NULL DEFAULT 'user' CHECK (actor_type IN ('user', 'system')),
+  subject_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  action TEXT NOT NULL CHECK (action IN (
+    'created', 'updated', 'cancelled', 'participant_added', 'participant_updated',
+    'participant_removed', 'offline_participant_added', 'offline_participant_updated',
+    'offline_participant_removed', 'offline_participants_imported', 'role_created',
+    'role_updated', 'role_deleted', 'role_assigned', 'role_unassigned',
+    'delegates_finalized', 'delegates_reconciled', 'exception_created',
+    'exception_updated', 'exception_deleted', 'agenda_created', 'agenda_updated',
+    'agenda_deleted', 'agenda_reordered', 'booking_created', 'booking_cancelled',
+    'result_recorded'
+  )),
+  severity TEXT NOT NULL CHECK (severity IN ('normal', 'high')),
+  changes JSONB NOT NULL DEFAULT '[]'::JSONB CHECK (jsonb_typeof(changes) = 'array'),
+  context JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(context) = 'object'),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_event_activity_created
+  ON public.event_activity (event_id, created_at DESC, id DESC);
+CREATE INDEX idx_event_activity_severity_created
+  ON public.event_activity (event_id, severity, created_at DESC, id DESC);
+
+ALTER TABLE public.event_activity ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.event_activity
+  FOR ALL TO service_role USING (true);
+
 ALTER TABLE public.event ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.event FOR ALL TO service_role USING (true);
 

@@ -195,7 +195,6 @@ describe('useBlogDetailController A10 branch contracts', () => {
     expect(result.current).toMatchObject({
       author: undefined,
       bloggers: [],
-      canAccess: true,
       commentCount: 0,
       comments: [],
       currentVoteValue: 0,

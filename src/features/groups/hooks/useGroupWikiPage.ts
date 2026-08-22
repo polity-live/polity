@@ -54,6 +54,7 @@ export function useGroupWikiPage(groupId: string) {
     isLoading: groupLoading,
     canAccess,
     isAuthenticated: !!user,
+    viewerId: user?.id,
 
     // Derived counts
     memberCount,

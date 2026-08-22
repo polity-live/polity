@@ -1,6 +1,11 @@
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
-import { applyTodoQueryAccess } from '../rbac/query-access';
+import {
+  applyGroupManagerQueryAccess,
+  applyTodoQueryAccess,
+  denyAllRows,
+  isAuthenticatedUserId,
+} from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
 
@@ -15,6 +20,23 @@ const todoStartSchema = z
   .nullable();
 
 const todoArchiveModeSchema = z.enum(['active', 'archived']).default('active');
+export const todoActivitySeverityFilterSchema = z.enum(['all', 'normal', 'high']).default('all');
+
+function applyTodoActivityQueryAccess<T>(q: T, userID: string | undefined | null): T {
+  if (!isAuthenticatedUserId(userID)) return denyAllRows(q);
+
+  return (q as any).whereExists('todo', (todo: any) =>
+    todo.where(({ or, cmp, exists }: any) =>
+      or(
+        cmp('creator_id', userID),
+        exists('assignments', (assignment: any) => assignment.where('user_id', userID)),
+        exists('group', (group: any) =>
+          applyGroupManagerQueryAccess(group, userID, 'manage', ['groupTodos'])
+        )
+      )
+    )
+  ) as T;
+}
 
 export const todoQueries = {
   page: defineQuery(
@@ -128,6 +150,23 @@ export const todoQueries = {
         .related('user')
   ),
 
+  activities: defineQuery(
+    z.object({ todo_id: z.string(), severity: todoActivitySeverityFilterSchema }),
+    ({ args: { todo_id, severity }, ctx: { userID } }) => {
+      const activityQuery = applyTodoActivityQueryAccess(
+        zql.todo_activity.where('todo_id', todo_id),
+        userID
+      );
+      const filteredQuery =
+        severity === 'all' ? activityQuery : activityQuery.where('severity', severity);
+      return filteredQuery
+        .related('actor')
+        .related('subject_user')
+        .orderBy('created_at', 'desc')
+        .orderBy('id', 'desc');
+    }
+  ),
+
   // Single todo by ID with full relations
   byIdWithRelations: defineQuery(
     z.object({ id: z.string() }),
@@ -213,4 +252,5 @@ export type TodoByIdWithRelationsRow = QueryRowType<typeof todoQueries.byIdWithR
 export type TodoByGroupWithRelationsRow = QueryRowType<typeof todoQueries.byGroupWithRelations>;
 export type TodoByGroupWithAssignmentsRow = QueryRowType<typeof todoQueries.byGroupWithAssignments>;
 export type TodoAssignmentRow = QueryRowType<typeof todoQueries.assignments>;
+export type TodoActivityRow = QueryRowType<typeof todoQueries.activities>;
 export type TodoPageRow = QueryRowType<typeof todoQueries.page>;

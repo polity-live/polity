@@ -4,6 +4,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/features/shared/hooks/use-translation.ts', () => ({
+  translate: (key: string) => key,
   useTranslation: () => ({
     t: (key: string) => key,
   }),

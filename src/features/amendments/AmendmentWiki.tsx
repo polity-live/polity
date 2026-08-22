@@ -17,7 +17,6 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   const recoveryDraft = useCreateRecoveryDraft('amendment', amendmentId);
   const {
     user,
-    canAccess,
     isSubscribed,
     subscriberCount,
     toggleSubscribe,
@@ -75,7 +74,6 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
       amendmentId={amendmentId}
       t={t}
       user={user}
-      canAccess={canAccess}
       isSubscribed={isSubscribed}
       subscriberCount={subscriberCount}
       toggleSubscribe={toggleSubscribe}

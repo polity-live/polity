@@ -52,6 +52,7 @@ vi.mock('@/features/shared/ui/form/GeoAddressMap', () => ({
 }));
 
 vi.mock('lucide-react', () => ({
+  Activity: () => <i />,
   Calendar: () => <i />,
   Globe: () => <i />,
   Ghost: () => <i />,
@@ -132,5 +133,13 @@ describe('InfoTabs branch contracts', () => {
 
     render(<InfoTabs eventDetails={{ tags: [] }} />);
     expect(screen.queryByText('tag')).toBeNull();
+  });
+
+  it('renders the optional activity tab and content without changing the default tab', () => {
+    const { container } = render(<InfoTabs about="About" activity={<div>Activity content</div>} />);
+    expect(container.firstElementChild?.getAttribute('data-default')).toBe('about');
+    expect(document.querySelector('[data-value="activity"]')).toBeTruthy();
+    expect(screen.getByText('components.activityLog.title')).toBeTruthy();
+    expect(screen.getByText('Activity content')).toBeTruthy();
   });
 });

@@ -243,7 +243,7 @@ export function EventAgendaItemDetail({
             id: userRecord.id,
             name:
               `${userRecord.first_name ?? ''} ${userRecord.last_name ?? ''}`.trim() || undefined,
-            email: userRecord.email ?? undefined,
+            email: userRecord.contact_email ?? undefined,
             avatar: userRecord.avatar ?? undefined,
             gender: userRecord.gender ?? null,
           }
@@ -1476,7 +1476,7 @@ export function EventAgendaItemDetail({
             name:
               `${speaker.user.first_name ?? ''} ${speaker.user.last_name ?? ''}`.trim() ||
               undefined,
-            email: speaker.user.email ?? undefined,
+            email: speaker.user.contact_email ?? undefined,
             avatar: speaker.user.avatar ?? undefined,
             gender: speaker.user.gender ?? null,
           }

@@ -370,7 +370,8 @@ describe('useCreateAmendmentForm submission', () => {
       expect.objectContaining({
         amendment: expect.objectContaining({
           title: 'Full Amendment',
-          code: 'Code',
+          preamble: 'Code',
+          code: null,
           group_id: 'target-1',
           event_id: 'event-1',
           tags: ['civic'],

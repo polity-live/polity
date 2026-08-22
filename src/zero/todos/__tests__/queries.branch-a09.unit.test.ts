@@ -40,10 +40,16 @@ function builder(label: string): any {
 vi.mock('@rocicorp/zero', () => ({
   defineQuery: (_schema: unknown, fn: (...args: any[]) => unknown) => ({ fn }),
 }));
-vi.mock('../../rbac/query-access', () => ({ applyTodoQueryAccess: h.apply }));
+vi.mock('../../rbac/query-access', () => ({
+  applyGroupManagerQueryAccess: (query: unknown) => query,
+  applyTodoQueryAccess: h.apply,
+  denyAllRows: (query: any) => query.where('id', '__unauthorized__'),
+  isAuthenticatedUserId: (userID?: string) => Boolean(userID && userID !== 'anon'),
+}));
 vi.mock('../../schema', () => ({
   zql: {
     todo: builder('todo'),
+    todo_activity: builder('activity'),
     todo_assignment: builder('assignment'),
   },
 }));
@@ -136,6 +142,19 @@ describe('todo queries', () => {
     );
     expect(voteFilters.some(([, , value]) => value === 'user')).toBe(true);
     expect(voteFilters.some(([, , value]) => value === '__anon__')).toBe(true);
+  });
+
+  it('filters activities by severity and denies anonymous readers', () => {
+    invoke('activities', { severity: 'high', todo_id: 'todo' }, 'user');
+    expect(h.calls).toContainEqual(['activity.where', 'severity', 'high']);
+    expect(h.calls).toContainEqual(['activity.related', 'actor']);
+    expect(h.calls).toContainEqual(['activity.related', 'subject_user']);
+    expect(h.calls).toContainEqual(['activity.orderBy', 'created_at', 'desc']);
+
+    h.calls.length = 0;
+    invoke('activities', { severity: 'all', todo_id: 'todo' }, undefined);
+    expect(h.calls).toContainEqual(['activity.where', 'id', '__unauthorized__']);
+    expect(h.calls).not.toContainEqual(['activity.where', 'severity', 'all']);
   });
 
   it('builds active and archived all-with-relations queries', () => {
