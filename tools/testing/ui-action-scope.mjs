@@ -380,7 +380,7 @@ export function parseActions(file, source) {
   const ast = parse(source, {
     sourceType: 'module',
     errorRecovery: true,
-    plugins: ['typescript', 'jsx', 'decorators', 'importAttributes'],
+    plugins: ['typescript', ...(file.endsWith('.tsx') ? ['jsx'] : []), 'decorators'],
   });
   const actions = [];
   const legacyDuplicateIds = new Map();

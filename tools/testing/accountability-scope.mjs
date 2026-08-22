@@ -131,7 +131,7 @@ export function extractTestCases(source, file = 'fixture.test.ts') {
     ast = parse(source, {
       sourceType: 'module',
       errorRecovery: true,
-      plugins: ['typescript', 'jsx', 'decorators', 'importAttributes'],
+      plugins: ['typescript', ...(file.endsWith('.tsx') ? ['jsx'] : []), 'decorators'],
     });
   } catch (error) {
     return { cases: [], parseError: `${file}: ${error.message}` };

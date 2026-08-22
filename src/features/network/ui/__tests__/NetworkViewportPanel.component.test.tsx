@@ -60,6 +60,7 @@ describe('NetworkViewportPanel', () => {
 
     act(() => animationFrameCallback?.(0));
 
-    expect(panel.style.height).toBe(`${window.innerHeight - 101}px`);
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    expect(panel.style.height).toBe(`${viewportHeight - 101}px`);
   });
 });

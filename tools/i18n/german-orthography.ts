@@ -209,7 +209,7 @@ export function auditGermanSource(
 ): GermanOrthographyFinding[] {
   const ast = parse(source, {
     sourceType: 'module',
-    plugins: ['jsx', 'typescript'],
+    plugins: ['typescript', ...(file.endsWith('.tsx') ? (['jsx'] as const) : [])],
     errorRecovery: false,
   });
   const findings: GermanOrthographyFinding[] = [];

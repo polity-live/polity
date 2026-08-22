@@ -28,7 +28,9 @@ export function useNetworkViewportPanelController(minHeight: number) {
           const style = window.getComputedStyle(currentElement);
           additionalBottomOffset += Number.parseFloat(style.paddingBottom) || 0;
           additionalBottomOffset += Number.parseFloat(style.marginBottom) || 0;
-          additionalBottomOffset += Number.parseFloat(style.borderBottomWidth) || 0;
+          if (style.borderBottomStyle !== 'none') {
+            additionalBottomOffset += Number.parseFloat(style.borderBottomWidth) || 0;
+          }
           currentElement = currentElement.parentElement;
         }
 

@@ -80,7 +80,7 @@ function importSpecifiers(file) {
     ast = parse(source, {
       sourceType: 'module',
       errorRecovery: true,
-      plugins: ['typescript', 'jsx', 'decorators', 'importAttributes'],
+      plugins: ['typescript', ...(file.endsWith('.tsx') ? ['jsx'] : []), 'decorators'],
     });
   } catch {
     return [];
@@ -120,7 +120,7 @@ function isPublicModuleSurface(file) {
     ast = parse(source, {
       sourceType: 'module',
       errorRecovery: true,
-      plugins: ['typescript', 'jsx', 'decorators', 'importAttributes'],
+      plugins: ['typescript', ...(file.endsWith('.tsx') ? ['jsx'] : []), 'decorators'],
     });
   } catch {
     return false;

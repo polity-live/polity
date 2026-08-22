@@ -4118,10 +4118,10 @@
     "src/features/shared/ui/ui-platejs/comment-toolbar-button.tsx#ToolbarButton-e34e7b9fcd": {
       "actionId": "shared.comment-toolbar-button.activate.set-draft"
     },
-    "src/features/shared/ui/ui-platejs/comment.tsx#Button-8a3c2fbad6": {
+    "src/features/shared/ui/ui-platejs/comment.tsx#Button-37c8297c9e": {
       "actionId": "shared.comment.activate.button"
     },
-    "src/features/shared/ui/ui-platejs/comment.tsx#Button-8fae335302": {
+    "src/features/shared/ui/ui-platejs/comment.tsx#Button-0020699406": {
       "actionId": "shared.comment.activate.button-2"
     },
     "src/features/shared/ui/ui-platejs/comment.tsx#Button-96dec049d3": {
