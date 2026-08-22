@@ -9,8 +9,8 @@ const appBaseUrl = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
 const zeroBaseUrl = process.env.VITE_ZERO_CACHE_URL ?? 'http://127.0.0.1:4848';
 const zeroKeepaliveUrl = new URL('/keepalive', zeroBaseUrl).href;
 const reuseExistingServer = process.env.E2E_REUSE_SERVER === '1';
-const appCommand = process.env.E2E_APP_COMMAND ?? 'npm run test:e2e:serve';
-const zeroCommand = process.env.E2E_ZERO_COMMAND ?? 'npm run zero:dev';
+const appCommand = process.env.E2E_APP_COMMAND ?? 'pnpm run test:e2e:serve';
+const zeroCommand = process.env.E2E_ZERO_COMMAND ?? 'pnpm run zero:dev';
 const zeroStartupTimeout = Number(process.env.E2E_ZERO_STARTUP_TIMEOUT_MS ?? 180_000);
 const webServerGracefulShutdown = { signal: 'SIGTERM' as const, timeout: 10_000 };
 
@@ -72,13 +72,13 @@ export default defineConfig({
       },
     },
 
-    // Uncomment to test on Firefox (requires: npx playwright install firefox)
+    // Uncomment to test on Firefox (requires: pnpm exec playwright install firefox)
     // {
     //   name: 'firefox',
     //   use: { ...devices['Desktop Firefox'] },
     // },
 
-    // Uncomment to test on WebKit (requires: npx playwright install webkit)
+    // Uncomment to test on WebKit (requires: pnpm exec playwright install webkit)
     // {
     //   name: 'webkit',
     //   use: { ...devices['Desktop Safari'] },

@@ -18,7 +18,7 @@ const serialized = await format(
 if (process.argv.includes('--check')) {
   const current = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : '';
   if (current !== serialized) {
-    console.error('Route action catalog is stale. Run npm run test:routes:update.');
+    console.error('Route action catalog is stale. Run pnpm run test:routes:update.');
     process.exit(1);
   }
   const count = JSON.parse(serialized).routes.length;

@@ -37,7 +37,7 @@ describe('coverage shard runner contracts', () => {
     ).toMatchObject({ shard: '2/4', index: 2, count: 4, maxWorkers: '3' });
   });
 
-  it('accepts npm 11 stripped options as positional values', () => {
+  it('accepts positional shard options passed after the script separator', () => {
     const result = parseCoverageShardOptions({
       argv: ['3/4', '2', 'reports/three'],
       env: {},
@@ -58,7 +58,7 @@ describe('coverage shard runner contracts', () => {
 
   it('supports a package-friendly positional help command', () => {
     expect(parseCoverageShardOptions({ argv: ['help'], env: {} })).toEqual({ help: true });
-    expect(COVERAGE_SHARD_USAGE).toContain('npm run test:coverage:shard');
+    expect(COVERAGE_SHARD_USAGE).toContain('pnpm run test:coverage:shard');
   });
 
   it.each([

@@ -100,6 +100,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": ".github/actions/setup-project/action.yml",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": ".github/agents/plan-with-md.agent.md",
       "domain": "platform",
       "owner": "polity/platform",
@@ -1525,16 +1535,6 @@
     },
     {
       "path": "fly.toml",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "configuration",
-      "verification": "static-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "package-lock.json",
       "domain": "platform",
       "owner": "polity/platform",
       "kind": "configuration",
@@ -109540,6 +109540,16 @@
     },
     {
       "path": "tools/testing/__tests__/format-generated-json.unit.test.ts",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/__tests__/package-manager-contract.static-contract.test.ts",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",

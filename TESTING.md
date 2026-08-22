@@ -1,17 +1,17 @@
 # Polity test strategy
 
-Every user action belongs on the lowest test level that can reproduce a failure reliably. The nine critical business processes also have a complete browser journey in the PR suite. The executable mapping lives in `tools/testing/action-catalog.json` and is checked by `npm run test:action-catalog`.
+Every user action belongs on the lowest test level that can reproduce a failure reliably. The nine critical business processes also have a complete browser journey in the PR suite. The executable mapping lives in `tools/testing/action-catalog.json` and is checked by `pnpm run test:action-catalog`.
 
 ## Test levels
 
-| Level                 | Use for                                                                                 | Command                             |
-| --------------------- | --------------------------------------------------------------------------------------- | ----------------------------------- |
-| Unit                  | Deterministic business rules without UI, database or network                            | `npm run test:unit`                 |
-| Component integration | Forms, dialogs, buttons, hooks, routing and loading/error states with stateful fake I/O | `npm run test:component`            |
-| Component flow        | Several components, hooks and providers exercised as one user flow                      | `npm run test:component-flow`       |
-| Service integration   | Route/handler, schema and service working together; `.service-integration.test.ts(x)`   | `npm run test:service-integration`  |
-| Database integration  | Schema, RLS, triggers, transactions and concurrency against a reset local Supabase      | `npm run test:database-integration` |
-| E2E                   | Critical browser-App-Zero-database boundaries, realtime and multi-user behavior         | `npm run test:e2e:pr`               |
+| Level                 | Use for                                                                                 | Command                              |
+| --------------------- | --------------------------------------------------------------------------------------- | ------------------------------------ |
+| Unit                  | Deterministic business rules without UI, database or network                            | `pnpm run test:unit`                 |
+| Component integration | Forms, dialogs, buttons, hooks, routing and loading/error states with stateful fake I/O | `pnpm run test:component`            |
+| Component flow        | Several components, hooks and providers exercised as one user flow                      | `pnpm run test:component-flow`       |
+| Service integration   | Route/handler, schema and service working together; `.service-integration.test.ts(x)`   | `pnpm run test:service-integration`  |
+| Database integration  | Schema, RLS, triggers, transactions and concurrency against a reset local Supabase      | `pnpm run test:database-integration` |
+| E2E                   | Critical browser-App-Zero-database boundaries, realtime and multi-user behavior         | `pnpm run test:e2e:pr`               |
 
 Integration tests intentionally use Vitest and Arrange-Act-Assert like unit tests. The classification is determined by the real components involved, not by syntax.
 
@@ -32,7 +32,7 @@ The filename is the executable test-style contract. Optional campaign or branch 
 | Static contract      | `*.static-contract.test.ts`        | `workflow.static-contract.test.ts`           |
 | E2E                  | `*.e2e.spec.ts`                    | `membership-approval.e2e.spec.ts`            |
 
-`npm run test:naming` rejects every legacy test filename, and `npm run test:flow-campaign` locks the 130-flow campaign, E2E promotion tiers and ten canonical acceptance journeys.
+`pnpm run test:naming` rejects every legacy test filename, and `pnpm run test:flow-campaign` locks the 130-flow campaign, E2E promotion tiers and ten canonical acceptance journeys.
 
 ## Browser suites
 
@@ -41,7 +41,7 @@ The filename is the executable test-style contract. Optional campaign or branch 
 - `@nightly` marks variants and cross-browser golden journeys.
 - `@performance` is measured separately from functional correctness.
 - `@acceptance` marks the ten canonical cross-boundary journeys.
-- `npm run test:e2e:stress` repeats the PR gate 20 times without retries.
+- `pnpm run test:e2e:stress` repeats the PR gate 20 times without retries.
 
 The scheduled `Nightly Tests` workflow runs extended variants and browser golden journeys across three desktop and two mobile shards plus Firefox and WebKit. It also runs isolated performance measurements and repeats the PR browser gate 20 times. The manually dispatched `E2E Cold-stack Acceptance` workflow recreates the stack for 30 consecutive runs of the ten `@acceptance` journeys and stores each run's evidence separately.
 
@@ -55,9 +55,9 @@ The E2E build, runtime and Playwright config load `.env.development.local` and t
 
 Functional E2Es must wait for semantic UI state, the global `app-hydration` marker, the authenticated `app-readiness` marker, Zero connection state, `/keepalive`, or server confirmation. Fixed sleeps, `networkidle`, broad cleanup and shared mutable users are rejected by the catalog check.
 
-The repository still contains pre-existing Prettier debt. CI therefore runs `npm run format:check:changed`: every file introduced or changed by a pull request must be formatted immediately, while unrelated legacy files are not rewritten as part of a test change.
+The repository still contains pre-existing Prettier debt. CI therefore runs `pnpm run format:check:changed`: every file introduced or changed by a pull request must be formatted immediately, while unrelated legacy files are not rewritten as part of a test change.
 
-Runtime dependency advisories use a package-level ratchet. `npm run test:security` rejects every new vulnerable production dependency, every severity increase and every critical finding. Resolved or severity-reduced baseline findings remain green and shrink the reported debt.
+Runtime dependency advisories use a package-level ratchet. `pnpm run test:security` rejects every new vulnerable production dependency, every severity increase and every critical finding. Resolved or severity-reduced baseline findings remain green and shrink the reported debt.
 
 ## Regression rule
 

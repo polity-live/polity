@@ -32,7 +32,7 @@ export async function cleanZeroReplica(options = {}) {
   const logger = options.logger ?? console;
   const portInUse = options.portInUse ?? isZeroCachePortInUse;
   if (await portInUse()) {
-    logger.error('Port 4848 ist noch belegt. Stoppe Zero-Cache vor `npm run zero:clean`.');
+    logger.error('Port 4848 ist noch belegt. Stoppe Zero-Cache vor `pnpm run zero:clean`.');
     return { cleaned: false, reason: 'port-in-use' };
   }
 

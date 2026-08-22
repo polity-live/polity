@@ -5,7 +5,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export const COVERAGE_SHARD_USAGE = `Usage:
-  npm run test:coverage:shard -- <index>/<count> [max-workers] [reports-directory]
+  pnpm run test:coverage:shard <index>/<count> [max-workers] [reports-directory]
   node tools/testing/run-coverage-shard.mjs --shard <index>/<count> \\
     [--max-workers <count>] [--reports-directory <path>]
 
@@ -130,7 +130,7 @@ export function runCoverageShard({
 
   const vitestCli = path.resolve(root, 'node_modules/vitest/vitest.mjs');
   if (!fs.existsSync(vitestCli)) {
-    console.error(`Vitest CLI missing at ${vitestCli}. Run npm ci first.`);
+    console.error(`Vitest CLI missing at ${vitestCli}. Run pnpm install --frozen-lockfile first.`);
     return 1;
   }
   fs.mkdirSync(options.reportsDirectory, { recursive: true });

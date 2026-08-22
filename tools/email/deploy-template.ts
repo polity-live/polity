@@ -40,7 +40,7 @@ export async function runPolityTemplateDeployCli(
   } = {}
 ) {
   const env = dependencies.env ?? process.env;
-  const options = parseOptions(dependencies.args ?? process.argv.slice(2), env);
+  const options = parseOptions(dependencies.args ?? process.argv.slice(2));
   if (!(dependencies.isTemplateSlug ?? isPolityTemplateSlug)(options.slug)) {
     throw new Error(`Unknown template "${options.slug}". Use newsletter or product-update.`);
   }
@@ -79,14 +79,11 @@ export async function main() {
   await runPolityTemplateDeployCli();
 }
 
-export function parseOptions(args: string[], env: NodeJS.ProcessEnv = process.env): CliOptions {
-  let confirmAlias = env.npm_config_confirm_alias;
-  let dryRun = env.npm_config_dry_run === 'true';
-  let environment: PolityTemplateEnvironment =
-    env.npm_config_environment === 'production' || env.npm_config_environment === 'development'
-      ? env.npm_config_environment
-      : 'development';
-  let locale: PolityTemplateLocale = env.npm_config_locale === 'en' ? 'en' : 'de';
+export function parseOptions(args: string[]): CliOptions {
+  let confirmAlias: string | undefined;
+  let dryRun = false;
+  let environment: PolityTemplateEnvironment = 'development';
+  let locale: PolityTemplateLocale = 'de';
   let slug: string | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
@@ -145,7 +142,7 @@ export function parseOptions(args: string[], env: NodeJS.ProcessEnv = process.en
 
   if (!slug) {
     throw new Error(
-      'Template slug is required. Example: npm run email:template:deploy -- newsletter'
+      'Template slug is required. Example: pnpm run email:template:deploy newsletter'
     );
   }
 

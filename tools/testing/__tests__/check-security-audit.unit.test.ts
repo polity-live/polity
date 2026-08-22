@@ -3,12 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { auditRegressions, vulnerabilityMap } from '../check-security-audit.mjs';
 
 describe('runtime dependency security ratchet', () => {
-  it('normalizes npm audit findings', () => {
+  it('normalizes pnpm audit findings and keeps the highest package severity', () => {
     expect(
       vulnerabilityMap({
-        vulnerabilities: {
-          zeta: { severity: 'high' },
-          alpha: { severity: 'low' },
+        advisories: {
+          1: { module_name: 'zeta', severity: 'moderate' },
+          2: { module_name: 'alpha', severity: 'low' },
+          3: { module_name: 'zeta', severity: 'high' },
         },
       })
     ).toEqual({ alpha: 'low', zeta: 'high' });
