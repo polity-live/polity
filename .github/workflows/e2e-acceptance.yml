@@ -30,7 +30,7 @@ jobs:
       - uses: ./.github/actions/setup-project
       - uses: supabase/setup-cli@v3
         with:
-          version: 2.110.0
+          version: 2.115.0
       - run: pnpm exec playwright install --with-deps chromium
       - name: Build and provision the isolated shard stack
         run: |
@@ -152,7 +152,7 @@ jobs:
       - uses: ./.github/actions/setup-project
       - uses: supabase/setup-cli@v3
         with:
-          version: 2.110.0
+          version: 2.115.0
       - run: pnpm exec playwright install --with-deps chromium
       - name: Build once against a disposable local stack
         run: |

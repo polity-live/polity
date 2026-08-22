@@ -140,22 +140,31 @@ const MODE_DESCRIPTION_KEYS: Record<EditingMode, { fallback: string; key: string
   },
 };
 
-const MODE_COLOR_CLASSES: Record<EditingMode, string> = {
-  edit: getEntityToneClasses('amendment').dot,
-  view: getSemanticToneClasses('neutral').dot,
-  suggest_internal: getSemanticToneClasses('accent').dot,
-  suggest_event: getEntityToneClasses('event').dot,
-  vote_internal: getEntityToneClasses('vote').dot,
-  event_final_closing_vote: getEntityToneClasses('event').dot,
-  passed: getSemanticToneClasses('success').dot,
-  rejected: getSemanticToneClasses('danger').dot,
-};
+function getModeColorClass(mode: EditingMode): string {
+  switch (mode) {
+    case 'edit':
+      return getEntityToneClasses('amendment').dot;
+    case 'suggest_event':
+    case 'event_final_closing_vote':
+      return getEntityToneClasses('event').dot;
+    case 'vote_internal':
+      return getEntityToneClasses('vote').dot;
+    case 'suggest_internal':
+      return getSemanticToneClasses('accent').dot;
+    case 'passed':
+      return getSemanticToneClasses('success').dot;
+    case 'rejected':
+      return getSemanticToneClasses('danger').dot;
+    case 'view':
+      return getSemanticToneClasses('neutral').dot;
+  }
+}
 
 export function getEditingModeOption(mode: EditingMode, t: Translate): EditingModeOption {
   const labelConfig = MODE_LABEL_KEYS[mode];
 
   return {
-    colorClass: MODE_COLOR_CLASSES[mode],
+    colorClass: getModeColorClass(mode),
     description: t(MODE_DESCRIPTION_KEYS[mode].key, MODE_DESCRIPTION_KEYS[mode].fallback),
     Icon: MODE_ICON_MAP[mode],
     label: t(labelConfig.key, labelConfig.fallback),

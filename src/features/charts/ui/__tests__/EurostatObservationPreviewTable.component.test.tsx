@@ -63,6 +63,7 @@ describe('EurostatObservationPreviewTable', () => {
 
     unmount();
     render(<EurostatObservationPreviewTable dimensions={[]} rows={[]} loading />);
-    expect(screen.queryAllByTestId('eurostat-observation-preview-row')).toHaveLength(5);
+    expect(document.querySelectorAll('tbody tr')).toHaveLength(5);
+    expect(document.querySelectorAll('.civic-shimmer')).toHaveLength(5);
   });
 });

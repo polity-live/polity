@@ -200,7 +200,7 @@ describe('StatusBadges branch contracts', () => {
   });
 
   it('covers every BadgeControl layout option', () => {
-    render(
+    const { container } = render(
       <>
         <BadgeControl>Default control</BadgeControl>
         <BadgeControl tone="info" size="tiny" shape="pill" textStyle="mono">
@@ -216,6 +216,10 @@ describe('StatusBadges branch contracts', () => {
           Medium control
         </BadgeControl>
         <BadgeControl tone="accent" size="dot" aria-label="dot control" />
+        <BadgeControl tone="primary">Primary control</BadgeControl>
+        <BadgeControl tone="dangerPale">Pale danger control</BadgeControl>
+        <BadgeControl tone="warningPale">Pale warning control</BadgeControl>
+        <StatusDotIndicator tone="event" className="event-dot" />
       </>
     );
 
@@ -225,5 +229,9 @@ describe('StatusBadges branch contracts', () => {
     expect(badgeClass('Small control')).toContain('border-dashed');
     expect(badgeClass('Medium control')).toContain('text-base');
     expect(screen.getByLabelText('dot control').className).toContain('rounded-md');
+    expect(badgeClass('Primary control')).toContain('bg-primary');
+    expect(badgeClass('Pale danger control')).toContain('--badge-danger-bg');
+    expect(badgeClass('Pale warning control')).toContain('--badge-warning-bg');
+    expect(container.querySelector('.event-dot')?.className).toContain('--entity-event-base');
   });
 });

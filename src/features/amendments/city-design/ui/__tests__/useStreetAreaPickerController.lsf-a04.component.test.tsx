@@ -1,14 +1,19 @@
 /* @vitest-environment jsdom */
 
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/server/geoapify-reverse', () => ({ geoapifyReverseFn: vi.fn() }));
+vi.mock('react-leaflet', () => ({ MapContainer: vi.fn() }));
+vi.mock('leaflet', () => ({
+  divIcon: vi.fn(() => ({})),
+  latLngBounds: vi.fn(() => ({})),
+}));
 
 import { useStreetAreaPickerController } from '../useStreetAreaPickerController';
 
 describe('street area picker LSF action adapters', () => {
-  it('dispatches every geometry edit and reset callback', () => {
+  it('dispatches every geometry edit and reset callback', async () => {
     const onMapSelectionChange = vi.fn();
     const onSelectionAddressChange = vi.fn();
     const mapSelection = {
@@ -17,7 +22,7 @@ describe('street area picker LSF action adapters', () => {
       heightMeters: 80,
       rotationDeg: 0,
     } as any;
-    const { result } = renderHook(() =>
+    const { result, unmount } = renderHook(() =>
       useStreetAreaPickerController({
         center: mapSelection.center,
         bbox: { south: 52.51, west: 13.39, north: 52.53, east: 13.42 },
@@ -43,5 +48,8 @@ describe('street area picker LSF action adapters', () => {
     expect(onMapSelectionChange).toHaveBeenCalledTimes(5);
     expect(onSelectionAddressChange).toHaveBeenCalledWith(undefined);
     expect(result.current.locationSearchResetKey).toBeGreaterThan(0);
+
+    await waitFor(() => expect(result.current.mapLoading).toBe(false));
+    unmount();
   });
 });

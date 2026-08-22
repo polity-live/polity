@@ -11,11 +11,7 @@ const mocks = vi.hoisted(() => ({
     cancelIntent: ReturnType<typeof vi.fn>;
   },
   currentHref: '/home',
-  getMatchedRoutes: vi.fn(() => ({
-    matchedRoutes: [],
-    routeParams: {},
-    foundRoute: { id: '/search' },
-  })),
+  getMatchedRoutes: vi.fn(() => [[], {}, { id: '/search' }]),
   preloadRoute: vi.fn(),
 }));
 

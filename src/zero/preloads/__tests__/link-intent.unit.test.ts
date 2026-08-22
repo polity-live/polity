@@ -226,14 +226,10 @@ describe('internal link intent delegation', () => {
     const router = {
       getMatchedRoutes: vi
         .fn()
-        .mockReturnValueOnce({ matchedRoutes: [], routeParams: {}, foundRoute: { id: '/search' } })
-        .mockReturnValueOnce({ matchedRoutes: [], routeParams: {}, foundRoute: undefined })
-        .mockReturnValueOnce({ matchedRoutes: [], routeParams: {}, foundRoute: { id: '/$' } })
-        .mockReturnValueOnce({
-          matchedRoutes: [],
-          routeParams: { '**': 'rest' },
-          foundRoute: { id: '/search' },
-        }),
+        .mockReturnValueOnce([[], {}, { id: '/search' }])
+        .mockReturnValueOnce([[], {}, undefined])
+        .mockReturnValueOnce([[], {}, { id: '/$' }])
+        .mockReturnValueOnce([[], { '**': 'rest' }, { id: '/search' }]),
     };
     expect(isPreloadableAppRoute(router as never, '/api/export')).toBe(false);
     expect(isPreloadableAppRoute(router as never, '/search')).toBe(true);

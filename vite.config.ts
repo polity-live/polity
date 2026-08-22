@@ -10,6 +10,7 @@ Object.assign(process.env, loadEnv(process.env.NODE_ENV || 'development', proces
 
 export default defineConfig({
   nitro: {
+    inlineDynamicImports: true,
     traceDeps: ['web-push*'],
   },
   plugins: [

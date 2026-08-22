@@ -26,4 +26,16 @@ describe('SegmentedChoiceField shape', () => {
       expect(button.className).not.toContain('rounded-full');
     }
   });
+
+  it('maps the selected destructive tone to the danger badge tokens', () => {
+    render(
+      <SegmentedChoiceField
+        value="remove"
+        onValueChange={vi.fn()}
+        options={[{ value: 'remove', label: 'Remove', tone: 'destructive' }]}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Remove' }).className).toContain('--badge-danger-bg');
+  });
 });
