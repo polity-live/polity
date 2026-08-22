@@ -1,23 +1,19 @@
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import {
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type ColumnDef,
-  type SortingState,
-} from '@tanstack/react-table';
+import { useTable, type RowData, type SortingState } from '@tanstack/react-table';
 
 import type {
   DataTableEmptyState,
   DataTableFilter,
   DataTablePaginationOptions,
 } from '@/features/shared/ui/data-table/DataTable';
+import {
+  dataTableFeatures,
+  type DataTableColumnDef,
+} from '@/features/shared/ui/data-table/dataTableFeatures';
 
-interface UseDataTableControllerOptions<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
+interface UseDataTableControllerOptions<TData extends RowData> {
+  columns: DataTableColumnDef<TData, any>[];
   data: TData[];
   getRowId?: (row: TData, index: number) => string;
   loadingRowCount: number;
@@ -33,7 +29,7 @@ interface UseDataTableControllerOptions<TData, TValue> {
   pagination?: DataTablePaginationOptions;
 }
 
-export function useDataTableController<TData, TValue>({
+export function useDataTableController<TData extends RowData>({
   columns,
   data,
   getRowId,
@@ -48,7 +44,7 @@ export function useDataTableController<TData, TValue>({
   enablePagination,
   initialPageSize,
   pagination,
-}: UseDataTableControllerOptions<TData, TValue>) {
+}: UseDataTableControllerOptions<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [internalFilter, setInternalFilter] = useState('');
   const globalFilter = filter?.value ?? internalFilter;
@@ -66,7 +62,8 @@ export function useDataTableController<TData, TValue>({
     [loadingRowCount]
   );
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data,
     columns,
     getRowId,
@@ -76,15 +73,13 @@ export function useDataTableController<TData, TValue>({
     },
     initialState: {
       pagination: {
+        pageIndex: 0,
         pageSize,
       },
     },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: paginationEnabled ? getPaginationRowModel() : undefined,
+    manualPagination: !paginationEnabled,
   });
 
   const rows = paginationEnabled ? table.getRowModel().rows : table.getFilteredRowModel().rows;

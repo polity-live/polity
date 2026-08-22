@@ -56100,6 +56100,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/shared/motion/__tests__/MotionPrimitives.component.test.tsx",
+        "src/features/shared/motion/__tests__/MotionProvider.component.test.tsx",
         "src/features/shared/motion/__tests__/motion.component.test.tsx"
       ]
     },
@@ -56126,11 +56127,22 @@
       ],
       "suggestedTestRefs": [
         "src/features/shared/motion/__tests__/MotionPrimitives.component.test.tsx",
+        "src/features/shared/motion/__tests__/MotionProvider.component.test.tsx",
         "src/features/shared/motion/__tests__/motion.component.test.tsx"
       ]
     },
     {
       "path": "src/features/shared/motion/__tests__/MotionPrimitives.component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/motion/__tests__/MotionProvider.component.test.tsx",
       "domain": "features:shared",
       "owner": "polity/features:shared",
       "kind": "test-infrastructure",
@@ -56175,6 +56187,7 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/features/shared/motion/__tests__/MotionPrimitives.component.test.tsx",
+        "src/features/shared/motion/__tests__/MotionProvider.component.test.tsx",
         "src/features/shared/motion/__tests__/motion.component.test.tsx"
       ]
     },
@@ -56202,6 +56215,7 @@
       "suggestedTestRefs": [
         "src/features/create/ui/inputs/__tests__/CreateInputVariants.coverage.component.test.tsx",
         "src/features/shared/motion/__tests__/MotionPrimitives.component.test.tsx",
+        "src/features/shared/motion/__tests__/MotionProvider.component.test.tsx",
         "src/features/shared/motion/__tests__/motion.component.test.tsx",
         "tools/database/__tests__/membership-event-invariants.database-integration.test.ts"
       ]
@@ -58014,7 +58028,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {
@@ -58043,7 +58058,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {
@@ -58072,7 +58088,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {
@@ -58101,7 +58118,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {
@@ -58130,7 +58148,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {
@@ -58159,7 +58178,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {
@@ -58213,6 +58233,46 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/ui/data-table/dataTableFeatures.ts",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts",
+          "project": "unit",
+          "caseId": "registers the complete shared filtering, sorting, pagination, selection, and visibility contract",
+          "evidence": {
+            "kind": "instrumented-full-suite",
+            "relation": "direct",
+            "report": "coverage/coverage-final.json",
+            "coveredStatements": 1,
+            "totalStatements": 1
+          }
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/data-table/__tests__/DataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
+      ]
+    },
+    {
       "path": "src/features/shared/ui/data-table/index.ts",
       "domain": "features:shared",
       "owner": "polity/features:shared",
@@ -58241,7 +58301,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {

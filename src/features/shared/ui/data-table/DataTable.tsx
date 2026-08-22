@@ -1,10 +1,16 @@
 import type { ReactNode } from 'react';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { CellData, RowData } from '@tanstack/react-table';
 
 import { useDataTableController } from '@/features/shared/hooks/useDataTableController';
 import type { SurfaceMode } from '@/features/shared/ui/layout/SurfaceDepthContext';
 
 import { DataTableView } from './DataTableView';
+import type { DataTableColumnDef } from './dataTableFeatures';
+
+export type ColumnDef<
+  TData extends RowData,
+  TValue extends CellData = CellData,
+> = DataTableColumnDef<TData, TValue>;
 
 export interface DataTableFilter {
   value: string;
@@ -25,8 +31,8 @@ export interface DataTablePaginationOptions {
   nextLabel?: ReactNode;
 }
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
+interface DataTableProps<TData extends RowData> {
+  columns: DataTableColumnDef<TData, any>[];
   data: TData[];
   getRowId?: (row: TData, index: number) => string;
   isLoading?: boolean;
@@ -50,7 +56,7 @@ interface DataTableProps<TData, TValue> {
   tableClassName?: string;
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends RowData>({
   columns,
   data,
   getRowId,
@@ -73,7 +79,7 @@ export function DataTable<TData, TValue>({
   surface = 'standalone',
   className,
   tableClassName,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps<TData>) {
   const controller = useDataTableController({
     columns,
     data,
@@ -107,4 +113,4 @@ export function DataTable<TData, TValue>({
   );
 }
 
-export type { ColumnDef, DataTableProps };
+export type { DataTableProps };

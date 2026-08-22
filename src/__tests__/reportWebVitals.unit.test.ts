@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ReportCallback } from 'web-vitals';
 
 const metrics = vi.hoisted(() => ({
   onCLS: vi.fn(),
@@ -19,7 +20,7 @@ beforeEach(() => {
 describe('reportWebVitals', () => {
   it('does not load reporters without a callable consumer', () => {
     reportWebVitals();
-    reportWebVitals({} as () => void);
+    reportWebVitals({} as ReportCallback);
 
     expect(metrics.onCLS).not.toHaveBeenCalled();
   });

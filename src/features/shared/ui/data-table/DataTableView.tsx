@@ -1,5 +1,10 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { flexRender, type Row, type Table as TanStackTable } from '@tanstack/react-table';
+import {
+  flexRender,
+  type Row,
+  type RowData,
+  type Table as TanStackTable,
+} from '@tanstack/react-table';
 import { Search } from 'lucide-react';
 
 import { Button } from '@/features/shared/ui/ui/button';
@@ -27,6 +32,7 @@ import {
 } from '@/features/shared/ui/layout/SurfaceDepthContext';
 
 import type { DataTableFilter } from './DataTable';
+import type { DataTableFeatures } from './dataTableFeatures';
 
 interface DataTableColumnMeta {
   className?: string;
@@ -38,7 +44,7 @@ function getColumnMeta(columnDef: { meta?: unknown }): DataTableColumnMeta {
   return (columnDef.meta ?? {}) as DataTableColumnMeta;
 }
 
-interface DataTableViewProps<TData> {
+interface DataTableViewProps<TData extends RowData> {
   isLoading: boolean;
   filter?: DataTableFilter;
   toolbar?: ReactNode;
@@ -48,8 +54,8 @@ interface DataTableViewProps<TData> {
   surface?: SurfaceMode;
   className?: string;
   tableClassName?: string;
-  table: TanStackTable<TData>;
-  rows: Row<TData>[];
+  table: TanStackTable<DataTableFeatures, TData>;
+  rows: Row<DataTableFeatures, TData>[];
   globalFilter: string;
   setGlobalFilter: (value: string) => void;
   columnsLength: number;
@@ -62,7 +68,7 @@ interface DataTableViewProps<TData> {
   loadingRows: number[];
 }
 
-export function DataTableView<TData>({
+export function DataTableView<TData extends RowData>({
   isLoading,
   filter,
   toolbar,

@@ -51866,7 +51866,7 @@
       "actionId": "payments.subscribers.remove",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 102,
+      "line": 101,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -51904,7 +51904,7 @@
       "actionId": "payments.subscribers.user.open",
       "identifierSource": "data-action-id",
       "tag": "SmartLink",
-      "line": 64,
+      "line": 63,
       "column": 12,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -52133,7 +52133,7 @@
       "actionId": "payments.subscriptions.entity.open",
       "identifierSource": "data-action-id",
       "tag": "SmartLink",
-      "line": 181,
+      "line": 180,
       "column": 12,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -52170,7 +52170,7 @@
       "actionId": "payments.subscriptions.remove",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 223,
+      "line": 222,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -56962,7 +56962,7 @@
       "file": "src/features/shared/ui/data-table/DataTableParts.tsx",
       "identifierSource": "unidentified",
       "tag": "DropdownMenuTrigger",
-      "line": 146,
+      "line": 148,
       "column": 6,
       "kind": "interaction",
       "classification": "transparent-wrapper",
@@ -56976,7 +56976,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -57003,7 +57004,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableParts.tsx#Button-8233aa0915",
       "tag": "Button",
-      "line": 147,
+      "line": 149,
       "column": 8,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -57023,7 +57024,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57035,7 +57037,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableParts.tsx#Button-a7279aa1c4",
       "tag": "Button",
-      "line": 40,
+      "line": 42,
       "column": 4,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -57056,7 +57058,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57068,7 +57071,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableParts.tsx#Button-5feb77e07c",
       "tag": "Button",
-      "line": 196,
+      "line": 198,
       "column": 4,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -57088,7 +57091,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57100,7 +57104,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableParts.tsx#Button-fd99603787",
       "tag": "Button",
-      "line": 115,
+      "line": 117,
       "column": 6,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -57121,7 +57125,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57133,7 +57138,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableParts.tsx#Button-6e8446737e",
       "tag": "Button",
-      "line": 105,
+      "line": 107,
       "column": 6,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -57154,7 +57159,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57166,7 +57172,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableParts.tsx#DropdownMenuItem-3c86ffec58",
       "tag": "DropdownMenuItem",
-      "line": 156,
+      "line": 158,
       "column": 12,
       "kind": "selection",
       "classification": "canonical-action",
@@ -57187,7 +57193,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57199,7 +57206,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableView.tsx#Button-fd99603787",
       "tag": "Button",
-      "line": 210,
+      "line": 216,
       "column": 10,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -57220,7 +57227,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57232,7 +57240,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableView.tsx#Button-6e8446737e",
       "tag": "Button",
-      "line": 201,
+      "line": 207,
       "column": 10,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -57253,7 +57261,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57285,7 +57294,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57322,7 +57332,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },

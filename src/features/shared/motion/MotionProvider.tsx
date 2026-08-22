@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import isPropValid from '@emotion/is-prop-valid';
 import { MotionConfig } from 'motion/react';
 
 import { motionEasings, motionTimings } from './variants';
@@ -8,6 +9,7 @@ import { motionEasings, motionTimings } from './variants';
 export function MotionProvider({ children }: { children: ReactNode }) {
   return (
     <MotionConfig
+      isValidProp={isPropValid}
       reducedMotion="user"
       transition={{
         duration: motionTimings.base,
