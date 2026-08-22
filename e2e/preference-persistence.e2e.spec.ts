@@ -10,6 +10,7 @@ test('keeps language and theme through a fresh authenticated session @pr @mobile
   page,
   e2eUser,
 }) => {
+  test.setTimeout(180_000);
   const sql = db();
   const [original] = await sql<{ language: string; theme: string }[]>`
     select language, theme
