@@ -1,4 +1,4 @@
-import { beforeEach } from 'vitest';
+import { afterEach, beforeEach } from 'vitest';
 import { useLanguageStore } from '@/features/shared/global-state/language.store';
 
 process.env.ZERO_UPSTREAM_DB ??= 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
@@ -6,6 +6,11 @@ process.env.ZERO_UPSTREAM_DB ??= 'postgresql://postgres:postgres@127.0.0.1:54322
 beforeEach(() => {
   useLanguageStore.setState({ language: 'en' });
 });
+
+if (typeof document !== 'undefined') {
+  const { cleanup } = await import('@testing-library/react');
+  afterEach(cleanup);
+}
 
 if (!('navigation' in globalThis)) {
   let state: unknown = null;
