@@ -75,7 +75,7 @@ describe('Stripe default server dependencies', () => {
     expect(c.getServiceClients({})).toEqual({ stripe: mocks.stripe, supabase: mocks.supabase });
     expect(mocks.createClient).toHaveBeenCalledWith('https://supabase.example', 'service-role');
     expect(mocks.stripeConstructor).toHaveBeenCalledWith('sk_test_default', {
-      apiVersion: '2026-06-24.dahlia',
+      apiVersion: '2026-07-29.dahlia',
     });
   });
 

@@ -339,7 +339,7 @@ jobs:
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v3
         with:
-          version: 2.110.0
+          version: 2.115.0
       - name: Disable seed data for database startup
         run: sed -i '/^\[db.seed\]/,/^\[/ s/^enabled = true$/enabled = false/' supabase/config.toml
       - name: Start database
@@ -453,7 +453,7 @@ jobs:
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v3
         with:
-          version: 2.110.0
+          version: 2.115.0
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Start and reset isolated Supabase stack

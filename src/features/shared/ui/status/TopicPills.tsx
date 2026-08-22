@@ -11,50 +11,27 @@ export interface TopicPillProps {
   onClick?: () => void;
 }
 
-const TOPIC_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  climate: {
-    bg: getSemanticToneClasses('success').surface,
-    text: getSemanticToneClasses('success').text,
-    border: getSemanticToneClasses('success').border,
-  },
-  urban: {
-    bg: getSemanticToneClasses('info').surface,
-    text: getSemanticToneClasses('info').text,
-    border: getSemanticToneClasses('info').border,
-  },
-  transport: {
-    bg: getSemanticToneClasses('warning').surface,
-    text: getSemanticToneClasses('warning').text,
-    border: getSemanticToneClasses('warning').border,
-  },
-  budget: {
-    bg: getSemanticToneClasses('warning').surface,
-    text: getSemanticToneClasses('warning').text,
-    border: getSemanticToneClasses('warning').border,
-  },
-  education: {
-    bg: getSemanticToneClasses('accent').surface,
-    text: getSemanticToneClasses('accent').text,
-    border: getSemanticToneClasses('accent').border,
-  },
-  health: {
-    bg: getSemanticToneClasses('danger').surface,
-    text: getSemanticToneClasses('danger').text,
-    border: getSemanticToneClasses('danger').border,
-  },
-  housing: {
-    bg: getSemanticToneClasses('info').surface,
-    text: getSemanticToneClasses('info').text,
-    border: getSemanticToneClasses('info').border,
-  },
-  default: {
-    bg: getSemanticToneClasses('neutral').surface,
-    text: getSemanticToneClasses('neutral').text,
-    border: getSemanticToneClasses('neutral').border,
-  },
-};
+type TopicColorVariant = NonNullable<TopicPillProps['variant']>;
 
-function getTopicVariant(topic: string): keyof typeof TOPIC_COLORS {
+function getTopicColors(variant: TopicColorVariant) {
+  const tone =
+    variant === 'climate'
+      ? 'success'
+      : variant === 'urban' || variant === 'housing'
+        ? 'info'
+        : variant === 'transport' || variant === 'budget'
+          ? 'warning'
+          : variant === 'education'
+            ? 'accent'
+            : variant === 'health'
+              ? 'danger'
+              : 'neutral';
+
+  const colors = getSemanticToneClasses(tone);
+  return { bg: colors.surface, text: colors.text, border: colors.border };
+}
+
+function getTopicVariant(topic: string): TopicColorVariant {
   const normalizedTopic = topic.toLowerCase();
 
   if (
@@ -112,7 +89,7 @@ function getTopicVariant(topic: string): keyof typeof TOPIC_COLORS {
 
 export function TopicPill({ topic, variant, size = 'sm', className, onClick }: TopicPillProps) {
   const colorVariant = variant || getTopicVariant(topic);
-  const colors = TOPIC_COLORS[colorVariant] || TOPIC_COLORS.default;
+  const colors = getTopicColors(colorVariant);
 
   return (
     <BadgeControl

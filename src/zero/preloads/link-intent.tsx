@@ -24,7 +24,7 @@ function closestAnchor(target: EventTarget | null): HTMLAnchorElement | null {
 
 export function isPreloadableAppRoute(router: AnyRouter, pathname: string): boolean {
   if (pathname.startsWith('/api/')) return false;
-  const { routeParams, foundRoute } = router.getMatchedRoutes(pathname);
+  const [, routeParams, foundRoute] = router.getMatchedRoutes(pathname);
   return Boolean(foundRoute && foundRoute.id !== '/$' && !routeParams['**']);
 }
 

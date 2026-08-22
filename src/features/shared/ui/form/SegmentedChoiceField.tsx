@@ -27,13 +27,18 @@ interface SegmentedChoiceFieldProps<TValue extends string = string> {
   isOptionSelected?: (option: SegmentedChoiceOption<TValue>) => boolean;
 }
 
-const selectedToneClasses: Record<SegmentedChoiceTone, string> = {
-  neutral: `${getBadgeToneClasses('neutral')} hover:!bg-[var(--badge-neutral-bg)]`,
-  success: `${getBadgeToneClasses('success')} hover:!bg-[var(--badge-success-bg)]`,
-  warning: `${getBadgeToneClasses('warning')} hover:!bg-[var(--badge-warning-bg)]`,
-  destructive: `${getBadgeToneClasses('danger')} hover:!bg-[var(--badge-danger-bg)]`,
-  accent: `${getBadgeToneClasses('accent')} hover:!bg-[var(--badge-accent-bg)]`,
+const SELECTED_TONE_HOVER_CLASSES: Record<SegmentedChoiceTone, string> = {
+  neutral: 'hover:!bg-[var(--badge-neutral-bg)]',
+  success: 'hover:!bg-[var(--badge-success-bg)]',
+  warning: 'hover:!bg-[var(--badge-warning-bg)]',
+  destructive: 'hover:!bg-[var(--badge-danger-bg)]',
+  accent: 'hover:!bg-[var(--badge-accent-bg)]',
 };
+
+function getSelectedToneClass(tone: SegmentedChoiceTone): string {
+  const badgeTone = tone === 'destructive' ? 'danger' : tone;
+  return `${getBadgeToneClasses(badgeTone)} ${SELECTED_TONE_HOVER_CLASSES[tone]}`;
+}
 
 export function SegmentedChoiceField<TValue extends string = string>({
   label,
@@ -65,7 +70,7 @@ export function SegmentedChoiceField<TValue extends string = string>({
                 className={cn(
                   'gap-2',
                   size === 'icon' && 'h-9 w-9 rounded-md text-xs',
-                  selected && selectedToneClasses[option.tone ?? 'accent']
+                  selected && getSelectedToneClass(option.tone ?? 'accent')
                 )}
                 onClick={() => onValueChange(option.value)}
               >
