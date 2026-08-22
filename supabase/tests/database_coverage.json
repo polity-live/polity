@@ -2,7 +2,7 @@
   "version": 1,
   "expectedInventory": {
     "tables": 145,
-    "columns": 1584,
+    "columns": 1585,
     "primaryKeys": 145,
     "checks": 116,
     "foreignKeys": 370,

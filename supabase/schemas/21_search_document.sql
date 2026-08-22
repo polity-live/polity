@@ -2447,23 +2447,23 @@ BEGIN
       PERFORM public.refresh_group_search_document_acls(new_parent_id);
     END IF;
 
-  ELSIF TG_TABLE_NAME IN ('action_right', 'role') THEN
-    old_parent_id := CASE
-      WHEN TG_OP IN ('UPDATE', 'DELETE') THEN (
-        CASE WHEN TG_TABLE_NAME = 'action_right' THEN
-          (SELECT r.group_id FROM public.role AS r WHERE r.id = OLD.role_id)
-        ELSE OLD.group_id END
-      )
-      ELSE NULL
-    END;
-    new_parent_id := CASE
-      WHEN TG_OP IN ('INSERT', 'UPDATE') THEN (
-        CASE WHEN TG_TABLE_NAME = 'action_right' THEN
-          (SELECT r.group_id FROM public.role AS r WHERE r.id = NEW.role_id)
-        ELSE NEW.group_id END
-      )
-      ELSE NULL
-    END;
+  ELSIF TG_TABLE_NAME = 'action_right' THEN
+    old_parent_id := CASE WHEN TG_OP IN ('UPDATE', 'DELETE') THEN (
+      SELECT r.group_id FROM public.role AS r WHERE r.id = OLD.role_id
+    ) ELSE NULL END;
+    new_parent_id := CASE WHEN TG_OP IN ('INSERT', 'UPDATE') THEN (
+      SELECT r.group_id FROM public.role AS r WHERE r.id = NEW.role_id
+    ) ELSE NULL END;
+    IF old_parent_id IS NOT NULL THEN
+      PERFORM public.refresh_group_search_document_acls(old_parent_id);
+    END IF;
+    IF new_parent_id IS NOT NULL AND new_parent_id IS DISTINCT FROM old_parent_id THEN
+      PERFORM public.refresh_group_search_document_acls(new_parent_id);
+    END IF;
+
+  ELSIF TG_TABLE_NAME = 'role' THEN
+    old_parent_id := CASE WHEN TG_OP IN ('UPDATE', 'DELETE') THEN OLD.group_id ELSE NULL END;
+    new_parent_id := CASE WHEN TG_OP IN ('INSERT', 'UPDATE') THEN NEW.group_id ELSE NULL END;
     IF old_parent_id IS NOT NULL THEN
       PERFORM public.refresh_group_search_document_acls(old_parent_id);
     END IF;

@@ -108809,6 +108809,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "supabase/migrations/20260822150000_sync_private_discovery_schema.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "supabase/schemas/00_extensions.sql",
       "domain": "database",
       "owner": "polity/database",

@@ -7,6 +7,7 @@
 CREATE TABLE public."user" (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT,
+  contact_email TEXT,
   handle TEXT,
   first_name TEXT,
   last_name TEXT,
