@@ -10,6 +10,6 @@ if [ "$node_major" != "24" ]; then
   exit 1
 fi
 
-npx lint-staged --concurrent false &&
-npm run test:mutation-guards &&
+pnpm exec lint-staged --concurrent false &&
+pnpm run test:mutation-guards &&
 echo -e "\033[32m✓ All commit steps successful\033[0m"

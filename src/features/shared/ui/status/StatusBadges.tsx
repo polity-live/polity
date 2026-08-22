@@ -15,35 +15,6 @@ import { TooltipHint } from '@/features/shared/ui/ui/tooltip';
 
 export type BadgeTone = BadgeToneKind;
 
-const BADGE_TONES = [
-  'neutral',
-  'info',
-  'success',
-  'warning',
-  'danger',
-  'destructive',
-  'accent',
-  'outline',
-  'user',
-  'group',
-  'event',
-  'amendment',
-  'blog',
-  'agenda_item',
-  'vote',
-  'election',
-  'todo',
-  'role',
-] as const satisfies readonly BadgeToneKind[];
-
-const toneClasses = Object.fromEntries(
-  BADGE_TONES.map(tone => [tone, getBadgeToneClasses(tone)])
-) as Record<BadgeTone, string>;
-
-const dotToneClasses = Object.fromEntries(
-  BADGE_TONES.map(tone => [tone, getBadgeDotToneClasses(tone)])
-) as Record<BadgeTone, string>;
-
 function getBadgeDotToneClasses(tone: BadgeToneKind): string {
   if (
     [
@@ -106,7 +77,7 @@ function BaseStatusBadge({
       variant={tone === 'outline' ? 'outline' : 'secondary'}
       className={cn(
         'gap-1 whitespace-nowrap shadow-[0_1px_0_rgb(255_255_255/0.35)]',
-        toneClasses[tone],
+        getBadgeToneClasses(tone),
         className
       )}
       {...props}
@@ -319,7 +290,7 @@ export function StatusBadgeWithDot({
       <span
         className={cn(
           'mr-1 h-1.5 w-1.5 rounded-full',
-          dotTone && dotToneClasses[dotTone],
+          dotTone && getBadgeDotToneClasses(dotTone),
           dotClassName
         )}
       />
@@ -343,7 +314,7 @@ export function StatusDotIndicator({
     <span
       className={cn(
         'border-background inline-flex h-2 w-2 items-center justify-center rounded-full border',
-        dotToneClasses[tone],
+        getBadgeDotToneClasses(tone),
         pulse && 'animate-pulse',
         className
       )}
@@ -408,7 +379,7 @@ export function StatusPillFrame({
     <div
       className={cn(
         'inline-flex rounded-xl border px-3 py-2 shadow-sm',
-        toneClasses[tone],
+        getBadgeToneClasses(tone),
         className
       )}
     >
@@ -434,24 +405,34 @@ export type BadgeControlTone =
   | 'gradientNeutral'
   | 'gradientInfo';
 
-const badgeControlToneClasses: Record<BadgeControlTone, string> = {
-  ...toneClasses,
-  primary: 'border-transparent bg-primary text-primary-foreground',
-  infoStrong: getBadgeToneClasses('info'),
-  successStrong: 'border-transparent bg-success text-success-foreground',
-  successSoft: getBadgeToneClasses('success'),
-  successTint: getBadgeToneClasses('success'),
-  mutedContrast: 'border-muted bg-muted/50 text-foreground hover:opacity-100',
-  successPale: getBadgeToneClasses('success'),
-  dangerPale: getBadgeToneClasses('danger'),
-  warningPale: getBadgeToneClasses('warning'),
-  skyTint: getBadgeToneClasses('info'),
-  emeraldTint: getBadgeToneClasses('success'),
-  gradientSuccess: getBadgeToneClasses('success'),
-  gradientNeutral:
-    'border-[var(--badge-neutral-border)] bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)]',
-  gradientInfo: getBadgeToneClasses('info'),
-};
+function getBadgeControlToneClass(tone: BadgeControlTone): string {
+  switch (tone) {
+    case 'primary':
+      return 'border-transparent bg-primary text-primary-foreground';
+    case 'successStrong':
+      return 'border-transparent bg-success text-success-foreground';
+    case 'mutedContrast':
+      return 'border-muted bg-muted/50 text-foreground hover:opacity-100';
+    case 'gradientNeutral':
+      return 'border-[var(--badge-neutral-border)] bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)]';
+    case 'infoStrong':
+    case 'skyTint':
+    case 'gradientInfo':
+      return getBadgeToneClasses('info');
+    case 'successSoft':
+    case 'successTint':
+    case 'successPale':
+    case 'emeraldTint':
+    case 'gradientSuccess':
+      return getBadgeToneClasses('success');
+    case 'dangerPale':
+      return getBadgeToneClasses('danger');
+    case 'warningPale':
+      return getBadgeToneClasses('warning');
+    default:
+      return getBadgeToneClasses(tone);
+  }
+}
 
 const badgeControlToneHoverClasses: Record<BadgeControlTone, string> = {
   neutral: 'hover:bg-[var(--badge-neutral-bg)] hover:text-[var(--badge-neutral-fg)]',
@@ -513,7 +494,7 @@ export function BadgeControl({
     <Badge
       data-slot="badge-control"
       className={cn(
-        tone && badgeControlToneClasses[tone],
+        tone && getBadgeControlToneClass(tone),
         tone && badgeControlToneHoverClasses[tone],
         size === 'tiny' && 'text-[10px]',
         size === 'xs' && 'text-xs',

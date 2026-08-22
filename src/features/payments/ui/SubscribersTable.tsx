@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { Trash2, User } from 'lucide-react';
-import type { ColumnDef } from '@tanstack/react-table';
 
 import {
   Card,
@@ -12,7 +11,7 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
-import { DataTable } from '@/features/shared/ui/data-table';
+import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface SubscriberUser {

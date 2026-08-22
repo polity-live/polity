@@ -274,6 +274,8 @@ describe('AuthProvider', () => {
 
   it('clears local auth state when getUser reports an invalid session', async () => {
     await renderProvider(session(token({ amr: ['password'] }), user()));
+    await waitFor(() => expect(mocks.getUser).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.context.authStateLoading).toBe(false));
     mocks.getUser.mockResolvedValueOnce({
       data: { user: null },
       error: { code: 'session_not_found', status: 401 },

@@ -15,13 +15,23 @@ function mapActionRights(raw: readonly any[] | null | undefined): ActionRight[] 
   }));
 }
 
-function mapRole(raw: any, fallbackScope: Role['scope']): Role | undefined {
+function mapRole(
+  raw: any,
+  fallbackScope: Role['scope'],
+  fallbackScopeId: string
+): Role | undefined {
   if (!raw?.id) return undefined;
+  const scope = raw.scope ?? fallbackScope;
   return {
     id: raw.id,
     name: raw.name ?? '',
     description: raw.description ?? undefined,
-    scope: raw.scope ?? fallbackScope,
+    scope,
+    group: scope === 'group' ? { id: String(raw.group_id ?? fallbackScopeId) } : undefined,
+    event: scope === 'event' ? { id: String(raw.event_id ?? fallbackScopeId) } : undefined,
+    amendment:
+      scope === 'amendment' ? { id: String(raw.amendment_id ?? fallbackScopeId) } : undefined,
+    blog: scope === 'blog' ? { id: String(raw.blog_id ?? fallbackScopeId) } : undefined,
     actionRights: mapActionRights(raw.action_rights),
   };
 }
@@ -39,7 +49,7 @@ function mapAmendment(notification: Notification): Amendment | undefined {
       id: collaborator.id,
       user: collaborator.user_id ? { id: collaborator.user_id } : undefined,
       status: collaborator.status ?? undefined,
-      role: mapRole(collaborator.role, 'amendment'),
+      role: mapRole(collaborator.role, 'amendment', amendment.id),
     })),
   };
 }

@@ -39575,7 +39575,7 @@
         ]
       }
     },
-    "src/features/shared/ui/ui-platejs/comment.tsx#Button-8a3c2fbad6": {
+    "src/features/shared/ui/ui-platejs/comment.tsx#Button-37c8297c9e": {
       "status": "resolved",
       "introducedBy": "ui-action-debt-baseline-v1",
       "source": {
@@ -39597,7 +39597,7 @@
         ]
       }
     },
-    "src/features/shared/ui/ui-platejs/comment.tsx#Button-8fae335302": {
+    "src/features/shared/ui/ui-platejs/comment.tsx#Button-0020699406": {
       "status": "resolved",
       "introducedBy": "ui-action-debt-baseline-v1",
       "source": {

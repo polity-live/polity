@@ -51,8 +51,9 @@ vi.mock('@/zero/schema', () => ({
             chain.filters.push(args);
             return chain;
           },
-          related(relation: string) {
+          related(relation: string, callback?: (query: any) => unknown) {
             chain.relations.push(relation);
+            callback?.(chain);
             return chain;
           },
           one() {
@@ -201,10 +202,17 @@ describe('entityRouteAccessFn entity policies', () => {
     const run = installDatabase({
       group: { id: 'group-1', owner_id: 'owner-1', visibility: 'members' },
       group_membership: [
-        { status: 'active', membership_roles: [{ role: { action_rights: [] } }] },
+        {
+          status: 'active',
+          membership_roles: [{ role: null }, { role: { action_rights: [] } }],
+        },
         { status: 'requested', membership_roles: [] },
+        { status: 'active', membership_roles: undefined },
       ],
-      group_guest_access: [{ status: 'invited', guest_roles: [{ role: { action_rights: [] } }] }],
+      group_guest_access: [
+        { status: 'invited', guest_roles: [{ role: null }, { role: { action_rights: [] } }] },
+        { status: 'active', guest_roles: undefined },
+      ],
     });
     await expect(check({ entityType: 'group', entityId: 'group-1' })).resolves.toEqual({
       exists: true,
@@ -218,8 +226,12 @@ describe('entityRouteAccessFn entity policies', () => {
       [
         { status: 'active', roles: [{ action_rights: [] }] },
         { status: 'requested', roles: [] },
+        { status: 'active', roles: [] },
       ],
-      [{ status: 'invited', roles: [{ action_rights: [] }] }]
+      [
+        { status: 'invited', roles: [{ action_rights: [] }] },
+        { status: 'active', roles: [] },
+      ]
     );
     expect(run).toHaveBeenCalledTimes(3);
   });
@@ -293,6 +305,32 @@ describe('entityRouteAccessFn entity policies', () => {
     });
   });
 
+  it('inherits amendment access from an active event participant', async () => {
+    installDatabase({
+      amendment: {
+        created_by_id: 'author-1',
+        event_id: 'event-1',
+        group_id: null,
+        id: 'amendment-1',
+        visibility: 'private',
+      },
+      amendment_collaborator: [],
+      event_participant: [{ id: 'participant-1' }],
+    });
+    await expect(check({ entityType: 'amendment', entityId: 'amendment-1' })).resolves.toEqual({
+      canAccessPrivate: true,
+      exists: true,
+      visibilities: ['private', undefined],
+    });
+    expect(mocks.amendmentAccess).toHaveBeenCalledWith(
+      'amendment-1',
+      'author-1',
+      'viewer-1',
+      [],
+      true
+    );
+  });
+
   it('checks event participants and includes the related group visibility', async () => {
     installDatabase({
       event: {
@@ -301,7 +339,13 @@ describe('entityRouteAccessFn entity policies', () => {
         visibility: 'public',
         group: { visibility: 'members' },
       },
-      event_participant: [{ status: 'active' }, { status: 'invited' }],
+      event_participant: [
+        {
+          status: 'active',
+          participant_roles: [{ role: null }, { role: { action_rights: [] } }],
+        },
+        { status: 'invited', participant_roles: undefined },
+      ],
     });
     await expect(check({ entityType: 'event', entityId: 'event-1' })).resolves.toEqual({
       exists: true,
@@ -313,7 +357,7 @@ describe('entityRouteAccessFn entity policies', () => {
       'creator-1',
       'viewer-1',
       [
-        { status: 'active', roles: [] },
+        { status: 'active', roles: [{ action_rights: [] }] },
         { status: 'invited', roles: [] },
       ],
       false
@@ -384,8 +428,8 @@ describe('entityRouteAccessFn entity policies', () => {
     installDatabase({
       blog,
       group: { owner_id: 'other-1' },
-      group_membership: [],
-      group_guest_access: [],
+      group_membership: [{ status: 'active' }],
+      group_guest_access: [{ status: 'active' }],
     });
     await expect(
       check({ entityType: 'blog', entityId: 'blog-1', parentType: 'group', parentId: 'group-1' })

@@ -41,6 +41,7 @@ vi.mock('../schema', () => ({
 }));
 
 vi.mock('../rbac/query-access', () => ({
+  applyBlogManagerQueryAccess: (query: unknown) => query,
   applyBlogQueryAccess: (query: unknown) => query,
   applyStatementQueryAccess: (query: unknown) => query,
 }));

@@ -9,12 +9,10 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: "24.x"
-  NPM_VERSION: "11.18.0"
   VITE_APP_URL: http://localhost:3000
   VITE_ZERO_CACHE_URL: http://127.0.0.1:4848
   ZERO_UPSTREAM_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-  E2E_APP_COMMAND: npm run start:e2e
+  E2E_APP_COMMAND: pnpm run start:e2e
   E2E_REUSE_SERVER: "0"
 
 jobs:
@@ -29,16 +27,11 @@ jobs:
         shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: ./.github/actions/setup-project
+      - uses: supabase/setup-cli@v3
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm install --global npm@${NPM_VERSION}
-      - run: npm ci
-      - uses: supabase/setup-cli@v1
-        with:
-          version: 2.110.0
-      - run: npx playwright install --with-deps chromium
+          version: 2.115.0
+      - run: pnpm exec playwright install --with-deps chromium
       - name: Build and provision the isolated shard stack
         run: |
           supabase start
@@ -58,7 +51,7 @@ jobs:
           export SUPABASE_ANON_KEY="$ANON_KEY"
           export SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"
           export E2E_DATABASE_URL="$DB_URL"
-          npm run build:e2e
+          pnpm run build:e2e
       - name: Run five independent critical repetitions without retries
         env:
           CI: "1"
@@ -78,7 +71,7 @@ jobs:
               E2E_SHARD="critical-${iteration}" \
               PLAYWRIGHT_OUTPUT_DIR="test-results/critical-${iteration}" \
               PLAYWRIGHT_REPORT_DIR="playwright-report/critical-${iteration}" \
-              npx playwright test --project=chromium-desktop --grep '@acceptance' --workers=1 --retries=0
+              pnpm exec playwright test --project=chromium-desktop --grep '@acceptance' --workers=1 --retries=0
             exit_code=$?
             set -e
             completed_at_ms="$(node -e 'process.stdout.write(String(Date.now()))')"
@@ -104,7 +97,7 @@ jobs:
           done
       - name: Upload critical repetition evidence and diagnostics
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: critical-repeat-shard-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -125,7 +118,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           pattern: critical-repeat-shard-*-${{ github.run_attempt }}
           path: downloaded-evidence
@@ -138,7 +131,7 @@ jobs:
             --suite critical-repeat \
             --commit-sha "$GITHUB_SHA"
       - name: Persist validated 20-run proof
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: critical-repeat-proof-${{ github.run_id }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -156,16 +149,11 @@ jobs:
         shard: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: ./.github/actions/setup-project
+      - uses: supabase/setup-cli@v3
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm install --global npm@${NPM_VERSION}
-      - run: npm ci
-      - uses: supabase/setup-cli@v1
-        with:
-          version: 2.110.0
-      - run: npx playwright install --with-deps chromium
+          version: 2.115.0
+      - run: pnpm exec playwright install --with-deps chromium
       - name: Build once against a disposable local stack
         run: |
           supabase start
@@ -177,7 +165,7 @@ jobs:
           export SUPABASE_ANON_KEY="$ANON_KEY"
           export SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"
           export E2E_DATABASE_URL="$DB_URL"
-          npm run build:e2e
+          pnpm run build:e2e
           supabase stop --no-backup
       - name: Provision and test six fully fresh stacks
         env:
@@ -206,7 +194,7 @@ jobs:
               SUPABASE_ANON_KEY="$ANON_KEY" \
               SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
               E2E_DATABASE_URL="$DB_URL" \
-              npx playwright test --project=chromium-desktop --grep '@acceptance' --workers=1 --retries=0
+              pnpm exec playwright test --project=chromium-desktop --grep '@acceptance' --workers=1 --retries=0
           }
 
           for iteration in $(seq "$first_iteration" "$last_iteration"); do
@@ -242,7 +230,7 @@ jobs:
           done
       - name: Upload cold-stack evidence and diagnostics
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: cold-stack-shard-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: error
@@ -263,7 +251,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           pattern: cold-stack-shard-*-${{ github.run_attempt }}
           path: downloaded-evidence
@@ -276,7 +264,7 @@ jobs:
             --suite cold-stack \
             --commit-sha "$GITHUB_SHA"
       - name: Persist validated 30-stack proof
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: cold-stack-proof-${{ github.run_id }}-${{ github.run_attempt }}
           if-no-files-found: error

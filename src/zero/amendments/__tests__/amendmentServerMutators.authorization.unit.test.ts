@@ -3710,14 +3710,27 @@ describe('amendmentServerMutators authorization', () => {
   });
 
   it('materializes handled process results and covers branchless resolutions', async () => {
-    for (const resolution of [
-      { handled: false },
-      { handled: true },
-      { handled: true, branchId: 'branch-1' },
+    for (const { resolution, activityRows } of [
+      { resolution: { handled: false }, activityRows: [] },
+      { resolution: { handled: true }, activityRows: [] },
+      { resolution: { handled: true, branchId: undefined }, activityRows: [] },
+      { resolution: { handled: true, branchId: 'missing-branch' }, activityRows: [] },
+      {
+        resolution: { handled: true, branchId: 'missing-run' },
+        activityRows: [{ id: 'missing-run', process_run_id: 'run-missing' }, null],
+      },
+      {
+        resolution: { handled: true, branchId: 'branch-1' },
+        activityRows: [
+          { id: 'branch-1', process_run_id: 'run-1' },
+          { id: 'run-1', amendment_id: 'amendment-1' },
+        ],
+      },
     ]) {
       processEngineMocks.resolveAmendmentProcessVote.mockResolvedValueOnce(resolution);
       const tx = createTx();
       tx.run.mockResolvedValueOnce({ id: 'agenda-1', event_id: 'event-1' });
+      for (const row of activityRows) tx.run.mockResolvedValueOnce(row);
       await amendmentServerMutators.resolveProcessVote.fn({
         tx: tx as never,
         ctx: createCtx(),
@@ -3725,16 +3738,22 @@ describe('amendmentServerMutators authorization', () => {
       });
     }
 
-    for (const handled of [false, true]) {
-      processEngineMocks.completeProcessTaskWithEvent.mockResolvedValueOnce({
-        handled,
-        branchId: 'branch-1',
-      });
+    for (const result of [
+      { handled: false, branchId: 'branch-1' },
+      { handled: true, branchId: undefined },
+      { handled: true, branchId: 'branch-1' },
+    ]) {
+      processEngineMocks.completeProcessTaskWithEvent.mockResolvedValueOnce(result);
       const tx = createTx();
       tx.run
         .mockResolvedValueOnce({ id: 'task-1', process_run_id: 'run-1', event_id: null })
         .mockResolvedValueOnce({ id: 'run-1', amendment_id: 'amendment-1' })
         .mockResolvedValueOnce({ id: 'event-1', amendment_deadline: null });
+      if (result.handled && result.branchId) {
+        tx.run
+          .mockResolvedValueOnce({ id: 'branch-1', process_run_id: 'run-1' })
+          .mockResolvedValueOnce({ id: 'run-1', amendment_id: 'amendment-1' });
+      }
       await amendmentServerMutators.completeProcessTaskWithEvent.fn({
         tx: tx as never,
         ctx: createCtx(),

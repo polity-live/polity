@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
-import { renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SearchListContext } from '../../types/search-document.types';
 
@@ -50,6 +50,8 @@ const context: SearchListContext = {
 };
 
 describe('search virtualizer controller contracts', () => {
+  afterEach(cleanup);
+
   beforeEach(() => {
     mocks.useZeroVirtualizer.mockReset();
     mocks.usePolityZeroGrid.mockReset();

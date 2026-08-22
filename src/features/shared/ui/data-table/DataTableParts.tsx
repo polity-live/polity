@@ -1,4 +1,4 @@
-import type { Column, Table as ReactTable } from '@tanstack/react-table';
+import type { CellData, Column, RowData, Table as ReactTable } from '@tanstack/react-table';
 import {
   ArrowDown,
   ArrowUp,
@@ -22,13 +22,15 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { cn } from '@/features/shared/utils/utils';
 
-interface SortableHeaderProps<TData, TValue> {
-  column: Column<TData, TValue>;
+import type { DataTableFeatures } from './dataTableFeatures';
+
+interface SortableHeaderProps<TData extends RowData, TValue extends CellData> {
+  column: Column<DataTableFeatures, TData, TValue>;
   children: ReactNode;
   className?: string;
 }
 
-export function SortableHeader<TData, TValue>({
+export function SortableHeader<TData extends RowData, TValue extends CellData>({
   column,
   children,
   className,
@@ -87,14 +89,14 @@ export function DataTableToolbar({
   );
 }
 
-interface DataTablePaginationProps<TData> {
-  table: ReactTable<TData>;
+interface DataTablePaginationProps<TData extends RowData> {
+  table: ReactTable<DataTableFeatures, TData>;
   previousLabel?: ReactNode;
   nextLabel?: ReactNode;
   className?: string;
 }
 
-export function DataTablePagination<TData>({
+export function DataTablePagination<TData extends RowData>({
   table,
   previousLabel = 'Previous',
   nextLabel = 'Next',

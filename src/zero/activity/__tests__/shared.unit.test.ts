@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { appendEntityActivity, buildActivityChanges, severityForChanges } from '../shared';
+import {
+  appendEntityActivity,
+  buildActivityChanges,
+  normalizeActivityValue,
+  severityForChanges,
+} from '../shared';
 
 describe('entity activity helpers', () => {
   it('normalizes diffs, omits no-ops, and lets high fields win', () => {
@@ -15,6 +20,16 @@ describe('entity activity helpers', () => {
     ]);
     expect(severityForChanges(changes, new Set(['status']))).toBe('high');
     expect(severityForChanges(changes, new Set())).toBe('normal');
+    expect(
+      normalizeActivityValue({
+        dropped: undefined,
+        nested: [{ kept: 'value', normalized: undefined }],
+      })
+    ).toEqual({ nested: [{ kept: 'value' }] });
+    expect(normalizeActivityValue(undefined)).toBeNull();
+    expect(buildActivityChanges({ same: { value: 1 } }, { same: { value: 1 } }, ['same'])).toEqual(
+      []
+    );
   });
 
   it('writes only on a server transaction and supports system actors', async () => {
@@ -56,5 +71,31 @@ describe('entity activity helpers', () => {
       }
     );
     expect(clientInsert).not.toHaveBeenCalled();
+
+    const anonymousInsert = vi.fn();
+    await appendEntityActivity(
+      { location: 'server', mutate: { group_activity: { insert: anonymousInsert } } },
+      {},
+      {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: 'group-1',
+        action: 'created',
+        severity: 'high',
+      }
+    );
+    expect(anonymousInsert).toHaveBeenCalledWith(expect.objectContaining({ actor_id: null }));
+
+    await appendEntityActivity(
+      { location: 'server', mutate: {} },
+      {},
+      {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: 'group-1',
+        action: 'created',
+        severity: 'high',
+      }
+    );
   });
 });

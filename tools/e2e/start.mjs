@@ -20,7 +20,7 @@ assertLocalStack(identity);
 const regressions = provenanceRegressions(readBuildProvenance(root), identity);
 if (regressions.length) {
   throw new Error(
-    `Refusing start:e2e because .output was not built for this stack:\n- ${regressions.join('\n- ')}\nRun npm run build:e2e first.`
+    `Refusing start:e2e because .output was not built for this stack:\n- ${regressions.join('\n- ')}\nRun pnpm run build:e2e first.`
   );
 }
 

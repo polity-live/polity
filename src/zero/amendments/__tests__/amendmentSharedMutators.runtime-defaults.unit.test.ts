@@ -5,6 +5,7 @@ const denyPublicApiMutation = vi.hoisted(() => vi.fn());
 vi.mock('../../rbac/authorize', () => ({ denyPublicApiMutation }));
 
 import { amendmentSharedMutators } from '../shared-mutators';
+import { DEFAULT_AMENDMENT_ROLES } from '../../rbac/constants';
 
 interface Operation {
   table: string;
@@ -442,6 +443,364 @@ describe('amendment shared runtime defaults', () => {
       for (const key of optionalKeys) {
         expect(state.operations[0].value).toHaveProperty(key, explicit ? `${key}-value` : null);
       }
+    }
+  });
+
+  it('records collaborator, path, and support-confirmation activity with no-op fallbacks', async () => {
+    const collaboratorAdded = createTx();
+    await amendmentSharedMutators.addCollaborator.fn({
+      tx: collaboratorAdded.tx as never,
+      ctx,
+      args: {
+        amendment_id: 'amendment-1',
+        id: 'collaborator-added',
+        user_id: 'user-4',
+      } as never,
+    });
+
+    for (const collaborator of [
+      {
+        amendment_id: 'amendment-1',
+        id: 'collaborator-full',
+        role_id: 'role-1',
+        status: 'active',
+        user_id: 'user-2',
+      },
+      {
+        amendment_id: 'amendment-1',
+        id: 'collaborator-null',
+        role_id: null,
+        status: null,
+        user_id: 'user-3',
+      },
+    ]) {
+      const state = createTx([collaborator]);
+      await amendmentSharedMutators.removeCollaborator.fn({
+        tx: state.tx as never,
+        ctx,
+        args: { id: collaborator.id },
+      });
+      expect(state.operations.some(operation => operation.table === 'amendment_activity')).toBe(
+        true
+      );
+    }
+
+    const path = createTx([{ amendment_id: 'amendment-1', id: 'path-1', title: null }]);
+    await amendmentSharedMutators.deletePath.fn({
+      tx: path.tx as never,
+      ctx,
+      args: { id: 'path-1' },
+    });
+
+    const segmentCreated = createTx([{ amendment_id: 'amendment-1', id: 'path-1' }]);
+    await amendmentSharedMutators.createPathSegment.fn({
+      tx: segmentCreated.tx as never,
+      ctx,
+      args: {
+        event_id: null,
+        group_id: 'group-1',
+        id: 'segment-1',
+        path_id: 'path-1',
+      } as never,
+    });
+
+    const clientSegment = createTx();
+    (clientSegment.tx as any).location = 'client';
+    await amendmentSharedMutators.createPathSegment.fn({
+      tx: clientSegment.tx as never,
+      ctx,
+      args: { id: 'client-segment', path_id: 'path-1' } as never,
+    });
+
+    const segmentDeleted = createTx([
+      { event_id: null, group_id: 'group-1', id: 'segment-1', path_id: 'path-1' },
+      { amendment_id: 'amendment-1', id: 'path-1' },
+    ]);
+    await amendmentSharedMutators.deletePathSegment.fn({
+      tx: segmentDeleted.tx as never,
+      ctx,
+      args: { id: 'segment-1' },
+    });
+
+    for (const previous of [
+      null,
+      {
+        amendment_id: 'amendment-1',
+        confirmed_by_id: 'user-2',
+        id: 'confirmation-1',
+        status: 'pending',
+      },
+      {
+        amendment_id: 'amendment-1',
+        confirmed_by_id: 'user-2',
+        id: 'confirmation-1',
+        status: 'confirmed',
+      },
+    ]) {
+      const state = createTx([previous]);
+      await amendmentSharedMutators.updateSupportConfirmation.fn({
+        tx: state.tx as never,
+        ctx,
+        args: { id: 'confirmation-1', status: 'confirmed' } as never,
+      });
+    }
+  });
+
+  it('records process runtime creation, updates, and deletion activity', async () => {
+    const processRunUpdate = createTx([
+      { amendment_id: 'amendment-1', id: 'run-1', implementation_status: 'pending' },
+    ]);
+    await amendmentSharedMutators.updateProcessRun.fn({
+      tx: processRunUpdate.tx as never,
+      ctx,
+      args: { id: 'run-1', implementation_status: 'implemented' } as never,
+    });
+
+    const processRunStatusUpdate = createTx([
+      { amendment_id: 'amendment-1', id: 'run-1', status: 'active' },
+    ]);
+    await amendmentSharedMutators.updateProcessRun.fn({
+      tx: processRunStatusUpdate.tx as never,
+      ctx,
+      args: { id: 'run-1', status: 'completed' } as never,
+    });
+
+    const processRunNoop = createTx([
+      { amendment_id: 'amendment-1', id: 'run-1', status: 'active' },
+    ]);
+    await amendmentSharedMutators.updateProcessRun.fn({
+      tx: processRunNoop.tx as never,
+      ctx,
+      args: { id: 'run-1', status: 'active' } as never,
+    });
+
+    const processRunDelete = createTx([{ amendment_id: 'amendment-1', id: 'run-1' }]);
+    await amendmentSharedMutators.deleteProcessRun.fn({
+      tx: processRunDelete.tx as never,
+      ctx,
+      args: { id: 'run-1' },
+    });
+
+    const branchCreate = createTx([{ amendment_id: 'amendment-1', id: 'run-1' }]);
+    await amendmentSharedMutators.createProcessBranch.fn({
+      tx: branchCreate.tx as never,
+      ctx,
+      args: { id: 'branch-1', process_run_id: 'run-1', status: 'active' } as never,
+    });
+
+    const clientBranch = createTx();
+    (clientBranch.tx as any).location = 'client';
+    await amendmentSharedMutators.createProcessBranch.fn({
+      tx: clientBranch.tx as never,
+      ctx,
+      args: { id: 'client-branch', process_run_id: 'run-1', status: 'active' } as never,
+    });
+
+    const branchUpdate = createTx([
+      { discussions: [], id: 'branch-1', process_run_id: 'run-1', title: 'Old' },
+      { amendment_id: 'amendment-1', id: 'run-1' },
+    ]);
+    await amendmentSharedMutators.updateProcessBranch.fn({
+      tx: branchUpdate.tx as never,
+      ctx,
+      args: { discussions: [], id: 'branch-1', title: 'New' } as never,
+    });
+
+    const branchDelete = createTx([
+      { id: 'branch-1', process_run_id: 'run-1', title: null },
+      { amendment_id: 'amendment-1', id: 'run-1' },
+    ]);
+    await amendmentSharedMutators.deleteProcessBranch.fn({
+      tx: branchDelete.tx as never,
+      ctx,
+      args: { id: 'branch-1' },
+    });
+
+    const stepCreate = createTx([{ amendment_id: 'amendment-1', id: 'run-1' }]);
+    await amendmentSharedMutators.createProcessStepRun.fn({
+      tx: stepCreate.tx as never,
+      ctx,
+      args: { id: 'step-1', process_run_id: 'run-1', status: 'active' } as never,
+    });
+
+    const stepUpdate = createTx([
+      { id: 'step-1', process_run_id: 'run-1', status: 'active' },
+      { amendment_id: 'amendment-1', id: 'run-1' },
+    ]);
+    await amendmentSharedMutators.updateProcessStepRun.fn({
+      tx: stepUpdate.tx as never,
+      ctx,
+      args: { id: 'step-1', status: 'completed' } as never,
+    });
+
+    const stepDelete = createTx([
+      { id: 'step-1', process_run_id: 'run-1' },
+      { amendment_id: 'amendment-1', id: 'run-1' },
+    ]);
+    await amendmentSharedMutators.deleteProcessStepRun.fn({
+      tx: stepDelete.tx as never,
+      ctx,
+      args: { id: 'step-1' },
+    });
+
+    const taskCreate = createTx([{ amendment_id: 'amendment-1', id: 'run-1' }]);
+    await amendmentSharedMutators.createProcessTask.fn({
+      tx: taskCreate.tx as never,
+      ctx,
+      args: {
+        id: 'task-1',
+        process_run_id: 'run-1',
+        status: 'open',
+        task_type: 'schedule_event',
+      } as never,
+    });
+
+    const taskUpdate = createTx([
+      { id: 'task-1', process_run_id: 'run-1', status: 'open', task_type: 'schedule_event' },
+      { amendment_id: 'amendment-1', id: 'run-1' },
+    ]);
+    await amendmentSharedMutators.updateProcessTask.fn({
+      tx: taskUpdate.tx as never,
+      ctx,
+      args: { id: 'task-1', status: 'completed' } as never,
+    });
+
+    const taskDelete = createTx([
+      { id: 'task-1', process_run_id: 'run-1', task_type: 'schedule_event', title: null },
+      { amendment_id: 'amendment-1', id: 'run-1' },
+    ]);
+    await amendmentSharedMutators.deleteProcessTask.fn({
+      tx: taskDelete.tx as never,
+      ctx,
+      args: { id: 'task-1' },
+    });
+  });
+
+  it('records collaborator and change-request updates for normal and terminal fields', async () => {
+    const collaborator = createTx([
+      {
+        amendment_id: 'amendment-1',
+        id: 'collaborator-1',
+        role_id: 'role-1',
+        status: 'active',
+        user_id: 'user-2',
+        visibility: 'private',
+      },
+    ]);
+    await amendmentSharedMutators.updateCollaborator.fn({
+      tx: collaborator.tx as never,
+      ctx,
+      args: { id: 'collaborator-1', status: 'member' } as never,
+    });
+
+    for (const args of [
+      { description: 'Updated', id: 'change-request-normal' },
+      { id: 'change-request-terminal', status: 'approved' },
+    ]) {
+      const state = createTx([
+        {
+          amendment_id: 'amendment-1',
+          description: 'Old',
+          id: args.id,
+          status: 'open',
+          title: null,
+        },
+      ]);
+      await amendmentSharedMutators.updateChangeRequest.fn({
+        tx: state.tx as never,
+        ctx,
+        args: args as never,
+      });
+      expect(state.operations.some(operation => operation.table === 'amendment_activity')).toBe(
+        true
+      );
+    }
+  });
+
+  it('skips activity for missing and unchanged update records', async () => {
+    const changed = createTx([{ id: 'amendment-1', title: 'Old' }]);
+    await amendmentSharedMutators.update.fn({
+      tx: changed.tx as never,
+      ctx,
+      args: { id: 'amendment-1', title: 'New' } as never,
+    });
+
+    for (const previous of [null, { id: 'amendment-1', title: 'Same' }]) {
+      const state = createTx([previous]);
+      await amendmentSharedMutators.update.fn({
+        tx: state.tx as never,
+        ctx,
+        args: { id: 'amendment-1', title: 'Same' } as never,
+      });
+    }
+
+    const cases = [
+      {
+        mutator: amendmentSharedMutators.updateProcessBranch,
+        previous: { discussions: [], id: 'record-1', process_run_id: 'run-1', title: 'Same' },
+        args: { discussions: [], id: 'record-1', title: 'Same' },
+      },
+      {
+        mutator: amendmentSharedMutators.updateProcessStepRun,
+        previous: { id: 'record-1', process_run_id: 'run-1', status: 'active' },
+        args: { id: 'record-1', status: 'active' },
+      },
+      {
+        mutator: amendmentSharedMutators.updateProcessTask,
+        previous: {
+          id: 'record-1',
+          process_run_id: 'run-1',
+          status: 'open',
+          task_type: 'schedule_event',
+        },
+        args: { id: 'record-1', status: 'open' },
+      },
+      {
+        mutator: amendmentSharedMutators.updateCollaborator,
+        previous: {
+          amendment_id: 'amendment-1',
+          id: 'record-1',
+          status: 'active',
+          user_id: 'user-2',
+        },
+        args: { id: 'record-1', status: 'active' },
+      },
+      {
+        mutator: amendmentSharedMutators.updateChangeRequest,
+        previous: {
+          amendment_id: 'amendment-1',
+          description: 'Same',
+          id: 'record-1',
+          status: 'open',
+        },
+        args: { description: 'Same', id: 'record-1' },
+      },
+    ];
+    for (const testCase of cases) {
+      const state = createTx([testCase.previous, { amendment_id: 'amendment-1', id: 'run-1' }]);
+      await testCase.mutator.fn({
+        tx: state.tx as never,
+        ctx,
+        args: testCase.args as never,
+      });
+    }
+  });
+
+  it('fails creator bootstrap when the canonical Author role is absent', async () => {
+    const roles = DEFAULT_AMENDMENT_ROLES as unknown as any[];
+    const authorIndex = roles.findIndex(role => role.name === 'Author');
+    const [author] = roles.splice(authorIndex, 1);
+    try {
+      const state = createTx();
+      await expect(
+        amendmentSharedMutators.create.fn({
+          tx: state.tx as never,
+          ctx,
+          args: { id: 'without-author' } as never,
+        })
+      ).rejects.toThrow('Default Author role is missing');
+    } finally {
+      roles.splice(authorIndex, 0, author);
     }
   });
 });

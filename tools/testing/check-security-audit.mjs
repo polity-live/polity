@@ -6,10 +6,24 @@ import { fileURLToPath } from 'node:url';
 const severityRank = { info: 0, low: 1, moderate: 2, high: 3, critical: 4 };
 
 export function vulnerabilityMap(audit) {
+  const vulnerabilities = new Map();
+  const record = (name, severity) => {
+    if (!name || !severity) return;
+    const previous = vulnerabilities.get(name);
+    if (!previous || severityRank[severity] > severityRank[previous]) {
+      vulnerabilities.set(name, severity);
+    }
+  };
+
+  for (const [name, finding] of Object.entries(audit.vulnerabilities ?? {})) {
+    record(name, finding.severity);
+  }
+  for (const advisory of Object.values(audit.advisories ?? {})) {
+    record(advisory.module_name, advisory.severity);
+  }
+
   return Object.fromEntries(
-    Object.entries(audit.vulnerabilities ?? {})
-      .map(([name, finding]) => [name, finding.severity])
-      .sort(([left], [right]) => left.localeCompare(right))
+    [...vulnerabilities].sort(([left], [right]) => left.localeCompare(right))
   );
 }
 
@@ -30,29 +44,21 @@ export function auditRegressions(current, baseline) {
 }
 
 export function runAudit() {
-  const bundledNpmCli = path.join(
-    path.dirname(process.execPath),
-    'node_modules',
-    'npm',
-    'bin',
-    'npm-cli.js'
-  );
-  const npmCli = process.env.npm_execpath ?? bundledNpmCli;
-  const hasNpmCli = fs.existsSync(npmCli);
-  const result = spawnSync(
-    hasNpmCli ? process.execPath : 'npm',
-    [...(hasNpmCli ? [npmCli] : []), 'audit', '--omit=dev', '--json'],
-    {
-      encoding: 'utf8',
-      shell: false,
-    }
-  );
+  const isWindows = process.platform === 'win32';
+  const command = isWindows ? (process.env.ComSpec ?? 'cmd.exe') : 'corepack';
+  const args = isWindows
+    ? ['/d', '/s', '/c', 'corepack pnpm audit --prod --json']
+    : ['pnpm', 'audit', '--prod', '--json'];
+  const result = spawnSync(command, args, {
+    encoding: 'utf8',
+    shell: false,
+  });
   if (result.error) throw result.error;
   try {
     return JSON.parse(result.stdout);
   } catch {
-    const detail = result.stderr?.trim() || result.stdout?.trim() || 'no npm output';
-    throw new Error(`npm audit did not return valid JSON: ${detail}`);
+    const detail = result.stderr?.trim() || result.stdout?.trim() || 'no pnpm output';
+    throw new Error(`pnpm audit did not return valid JSON: ${detail}`);
   }
 }
 

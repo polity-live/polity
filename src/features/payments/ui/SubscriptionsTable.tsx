@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { BookOpen, Calendar, CircleHelp, Scale, Trash2, User, Users } from 'lucide-react';
-import type { ColumnDef } from '@tanstack/react-table';
 
 import {
   Card,
@@ -14,7 +13,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { EntityBadge, getEntityBadgeSurfaceClassName } from '@/features/shared/ui/status';
 import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
-import { DataTable } from '@/features/shared/ui/data-table';
+import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
 import type { SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 

@@ -136,4 +136,44 @@ describe('checkPermission amendment scope', () => {
       checkPermission({ userId: 'viewer-user', amendment }, { amendment }, 'update', 'amendments')
     ).toBe(false);
   });
+
+  it('uses a scope amendment when permission data has no amendment', () => {
+    expect(checkPermission({ userId: 'author-user' }, { amendment }, 'delete', 'amendments')).toBe(
+      true
+    );
+  });
+
+  it('allows invited collaborators to view through the legacy amendment shape', () => {
+    const legacyAmendment = {
+      id: 'amendment-1',
+      collaborators: [
+        {
+          user: { id: 'invited-user' },
+          status: 'invited',
+          roleName: 'Viewer',
+        },
+      ],
+      roles: [
+        {
+          name: 'Viewer',
+          actionRights: [
+            {
+              resource: 'amendments',
+              action: 'view',
+              amendment: { id: 'amendment-1' },
+            },
+          ],
+        },
+      ],
+    } as unknown as Amendment;
+
+    expect(
+      checkPermission(
+        { userId: 'invited-user', amendment: legacyAmendment },
+        {},
+        'view',
+        'amendments'
+      )
+    ).toBe(true);
+  });
 });

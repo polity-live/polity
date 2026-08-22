@@ -520,7 +520,7 @@ export const EVENT_ACTION_RIGHTS = [
   {
     resource: 'events',
     action: 'view',
-    label: translateText('generated.inline.0719_view_events_6697f6b7'),
+    label: translateText('generated.inline.0720_view_events_a77e6dec'),
   },
   {
     resource: 'agendaItems',

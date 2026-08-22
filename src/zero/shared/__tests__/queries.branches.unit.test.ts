@@ -31,6 +31,7 @@ vi.mock('../../rbac/query-access', () => {
     applyEventManagerQueryAccess: pass,
     applyEventParticipantOrManagerQueryAccess: pass,
     applyEventQueryAccess: pass,
+    applyGroupDiscoveryQueryAccess: pass,
     applyGroupMembershipSelfOrManagerQueryAccess: pass,
     applyGroupQueryAccess: pass,
     applySearchDocumentQueryAccess: pass,

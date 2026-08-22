@@ -145,7 +145,7 @@ describe('EVENT_ACTION_RIGHTS', () => {
       {
         resource: 'events',
         action: 'view',
-        label: 'generated.inline.0719_view_events_6697f6b7',
+        label: 'View Events',
       },
       { resource: 'agendaItems', action: 'manage', label: 'Manage Agenda Items' },
       { resource: 'elections', action: 'manage', label: 'Manage Elections' },

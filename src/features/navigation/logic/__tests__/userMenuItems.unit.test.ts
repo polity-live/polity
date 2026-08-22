@@ -26,6 +26,7 @@ describe('user menu item builders', () => {
         status: 'active',
         group: { id: 'group-with-custom-role', name: 'Working Circle' },
         membership_roles: [
+          { role: null },
           {
             role: {
               id: 'custom-role',
@@ -67,6 +68,7 @@ describe('user menu item builders', () => {
         status: 'invited',
         group: { id: 'invited-group', name: 'Invitation' },
         guest_roles: [
+          { role: null },
           {
             role: {
               action_rights: [{ group_id: 'invited-group', resource: 'groups', action: 'view' }],
@@ -99,7 +101,7 @@ describe('user menu item builders', () => {
         {
           id: 'participation-future',
           status: 'invited',
-          participant_roles: [{ role: eventViewRole('event-future') }],
+          participant_roles: [{ role: null }, { role: eventViewRole('event-future') }],
           event: {
             id: 'event-future',
             title: 'Future Assembly',
@@ -122,7 +124,18 @@ describe('user menu item builders', () => {
         {
           id: 'participation-no-role',
           status: 'active',
-          participant_roles: [],
+          participant_roles: [
+            {
+              role: {
+                action_rights: [
+                  { action: undefined, event_id: 'event-no-role', resource: 'events' },
+                ],
+                event_id: 'event-no-role',
+                id: 'no-action-role',
+                scope: 'event',
+              },
+            },
+          ],
           event: {
             id: 'event-no-role',
             title: 'No Role',

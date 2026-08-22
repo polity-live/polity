@@ -20,6 +20,7 @@ vi.mock('../offline-membership-helpers', () => ({
 }));
 
 import { groupSharedMutators as mutators } from '../shared-mutators';
+import { DEFAULT_GROUP_ROLES } from '../../rbac/constants';
 
 function mutationTable() {
   return { insert: vi.fn(), update: vi.fn(), delete: vi.fn() };
@@ -34,6 +35,7 @@ function createTx(location: 'client' | 'server' = 'server') {
     run: vi.fn(),
     mutate: {
       group: mutationTable(),
+      group_activity: mutationTable(),
       group_offline_member: mutationTable(),
       group_offline_membership_role: mutationTable(),
       group_membership: mutationTable(),
@@ -82,6 +84,23 @@ beforeEach(() => {
 });
 
 describe('shared group CRUD and offline-member mutators', () => {
+  it('rejects creator bootstrap without the canonical Admin role', async () => {
+    const roles = DEFAULT_GROUP_ROLES as unknown as any[];
+    const adminIndex = roles.findIndex(role => role.name === 'Admin');
+    const [admin] = roles.splice(adminIndex, 1);
+    try {
+      await expect(
+        mutators.create.fn({
+          tx: createTx(),
+          ctx,
+          args: { id: 'without-admin', name: 'Group' } as never,
+        })
+      ).rejects.toThrow('Default Admin role is missing');
+    } finally {
+      roles.splice(adminIndex, 0, admin);
+    }
+  });
+
   it('creates base/full groups and updates or deletes existing groups', async () => {
     const base = createTx();
     await mutators.create.fn({ tx: base, ctx, args: { id: 'group', name: 'Group' } as never });
@@ -108,6 +127,9 @@ describe('shared group CRUD and offline-member mutators', () => {
     updated.run.mockResolvedValueOnce({ id: 'group' });
     await mutators.update.fn({ tx: updated, ctx, args: { id: 'group', name: 'Updated' } as never });
     expect(updated.mutate.group.update).toHaveBeenCalled();
+    const unchanged = createTx();
+    unchanged.run.mockResolvedValueOnce({ id: 'group', name: 'Same' });
+    await mutators.update.fn({ tx: unchanged, ctx, args: { id: 'group', name: 'Same' } as never });
     const deleted = createTx();
     await mutators.delete.fn({ tx: deleted, ctx, args: { id: 'group' } });
     expect(deleted.mutate.group.delete).toHaveBeenCalledWith({ id: 'group' });
@@ -242,6 +264,14 @@ describe('shared group CRUD and offline-member mutators', () => {
     });
     expect(imported.mutate.group_offline_member.insert).toHaveBeenCalledTimes(2);
     expect(mocks.ensureOffline).toHaveBeenCalledTimes(2);
+
+    const empty = createTx();
+    empty.run.mockResolvedValueOnce([]);
+    await mutators.importOfflineMembers.fn({
+      tx: empty,
+      ctx,
+      args: { entries: [], group_id: 'group' } as never,
+    });
   });
 });
 
@@ -268,6 +298,14 @@ describe('shared membership and guest-access mutators', () => {
       args: membershipArgs({ initial_role_id: 'role' }),
     });
     expect(explicit.mutate.group_membership_role.insert).toHaveBeenCalledOnce();
+
+    const missingStatus = createTx();
+    missingStatus.run.mockResolvedValueOnce([]);
+    await mutators.joinGroup.fn({
+      tx: missingStatus,
+      ctx,
+      args: membershipArgs({ status: undefined }),
+    });
   });
 
   it('validates guest access requests and all existing-access states', async () => {
@@ -472,6 +510,20 @@ describe('shared membership and guest-access mutators', () => {
       args: { id: 'membership', status: 'active' } as never,
     });
     expect(patched.mutate.group_membership.update).toHaveBeenCalled();
+
+    const unchanged = createTx();
+    unchanged.run.mockResolvedValueOnce({
+      group_id: 'group',
+      id: 'membership',
+      source: 'direct',
+      status: 'active',
+      user_id: 'user',
+    });
+    await mutators.updateMembership.fn({
+      tx: unchanged,
+      ctx,
+      args: { id: 'membership', status: 'active' } as never,
+    });
   });
 });
 
@@ -683,6 +735,14 @@ describe('shared role, right, and holder-history mutators', () => {
     expect(explicit.mutate.role.insert).toHaveBeenCalledWith(
       expect.objectContaining({ assignment_mode: 'elected', is_recurring: true, sort_order: 5 })
     );
+
+    const unnamed = createTx();
+    unnamed.run.mockResolvedValueOnce([]);
+    await mutators.createRole.fn({
+      tx: unnamed,
+      ctx,
+      args: { group_id: 'group', id: 'unnamed-role', name: undefined, scope: 'group' } as never,
+    });
   });
 
   it('updates and deletes absent or scoped roles', async () => {
@@ -731,12 +791,50 @@ describe('shared role, right, and holder-history mutators', () => {
       args: { id: 'role', assignee_kind: 'member' } as never,
     });
 
+    for (const [role, args] of [
+      [
+        {
+          assignee_kind: 'member',
+          default_invite_role: false,
+          default_request_role: false,
+          group_id: 'group',
+          id: 'named-role',
+          name: 'Old',
+        },
+        { id: 'named-role', name: 'New' },
+      ],
+      [
+        {
+          assignee_kind: 'member',
+          default_invite_role: false,
+          default_request_role: false,
+          group_id: 'group',
+          id: 'unnamed-role',
+          name: null,
+        },
+        { description: 'Updated', id: 'unnamed-role' },
+      ],
+    ] as const) {
+      const activity = createTx();
+      activity.run.mockResolvedValueOnce(role);
+      await mutators.updateRole.fn({ tx: activity, ctx, args: args as never });
+    }
+
     const eventRole = createTx();
     eventRole.run.mockResolvedValueOnce({ id: 'role', event_id: 'event' });
     await mutators.updateRole.fn({ tx: eventRole, ctx, args: { id: 'role' } as never });
     const deleted = createTx();
     deleted.run.mockResolvedValueOnce({ id: 'role', blog_id: 'blog' });
     await mutators.deleteRole.fn({ tx: deleted, ctx, args: { id: 'role' } });
+    for (const name of ['Role', null]) {
+      const groupDelete = createTx();
+      groupDelete.run.mockResolvedValueOnce({ group_id: 'group', id: `group-${name}`, name });
+      await mutators.deleteRole.fn({
+        tx: groupDelete,
+        ctx,
+        args: { id: `group-${name}` },
+      });
+    }
   });
 
   it('validates amendment and guest-event action rights', async () => {
@@ -822,6 +920,20 @@ describe('shared role, right, and holder-history mutators', () => {
       } as never,
     });
     expect(allowed.mutate.action_right.insert).toHaveBeenCalled();
+
+    const groupRight = createTx();
+    groupRight.run.mockResolvedValueOnce({ group_id: 'group', id: 'group-role' });
+    await mutators.assignActionRight.fn({
+      tx: groupRight,
+      ctx,
+      args: {
+        action: 'view',
+        group_id: 'group',
+        id: 'group-right',
+        resource: 'groups',
+        role_id: 'group-role',
+      } as never,
+    });
   });
 
   it('removes rights and creates/updates holder history with authorization parity', async () => {
@@ -829,8 +941,15 @@ describe('shared role, right, and holder-history mutators', () => {
     absent.run.mockResolvedValueOnce(null);
     await mutators.removeActionRight.fn({ tx: absent, ctx, args: { id: 'right' } });
     const present = createTx();
-    present.run.mockResolvedValueOnce({ id: 'right', group_id: 'group' });
+    present.run
+      .mockResolvedValueOnce({ action: 'view', id: 'right', resource: 'groups', role_id: 'role' })
+      .mockResolvedValueOnce({ group_id: 'group', id: 'role' });
     await mutators.removeActionRight.fn({ tx: present, ctx, args: { id: 'right' } });
+    const unscoped = createTx();
+    unscoped.run
+      .mockResolvedValueOnce({ action: 'view', id: 'right', resource: 'groups', role_id: 'role' })
+      .mockResolvedValueOnce({ event_id: 'event', id: 'role' });
+    await mutators.removeActionRight.fn({ tx: unscoped, ctx, args: { id: 'right' } });
 
     const clientCreate = createTx('client');
     await mutators.createRoleHolderHistory.fn({

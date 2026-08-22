@@ -44,6 +44,7 @@ const mocks = vi.hoisted(() => {
     reconcileGroupGraph: vi.fn(async () => undefined),
     syncHashtags: vi.fn(async () => undefined),
     completeProcessTask: vi.fn(async () => undefined),
+    creatorRoleId: vi.fn(async () => 'role-id'),
     reorderVoteSteps: vi.fn(async () => undefined),
     loadGroup: vi.fn(async () => ({ id: 'group' })),
     canCreateDelegateAssembly: vi.fn(() => true),
@@ -115,6 +116,10 @@ vi.mock('../../server-helpers', () => ({
 vi.mock('../../rbac/constants', () => ({
   DEFAULT_EVENT_ROLES: mocks.defaultRoles,
   DEFAULT_ASSEMBLY_EVENT_GUEST_ROLE: mocks.guestRole,
+}));
+vi.mock('../../rbac/creator-bootstrap', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../rbac/creator-bootstrap')>()),
+  creatorRoleId: mocks.creatorRoleId,
 }));
 vi.mock('../assembly-reconcile', () => ({
   reconcileGeneralAssemblyParticipantsForEvent: mocks.reconcileAssembly,
@@ -707,6 +712,7 @@ describe('server event mutator orchestration', () => {
       event_participant: [{ id: 'creator' }],
       event_participant_role: [[], null],
     });
+    mocks.creatorRoleId.mockResolvedValueOnce('');
     await mutators.create.fn({
       tx: noDefaultInvite,
       ctx,
@@ -719,6 +725,22 @@ describe('server event mutator orchestration', () => {
     });
     participantTemplate.name = originalName;
     participantTemplate.default_invite_role = originalInviteDefault;
+
+    const creatorOnly = queueTx({
+      event_participant: [{ id: 'creator' }],
+      event_participant_role: [[], null],
+    });
+    await mutators.create.fn({
+      tx: creatorOnly,
+      ctx,
+      args: eventArgs({
+        event_type: 'on_invite',
+        group_id: null,
+        invited_user_ids: ['actor'],
+        visibility: undefined,
+      }),
+    });
+    expect(creatorOnly.mutate.event_participant.insert).not.toHaveBeenCalled();
   });
 
   it('creates full events and wraps offline roster changes', async () => {

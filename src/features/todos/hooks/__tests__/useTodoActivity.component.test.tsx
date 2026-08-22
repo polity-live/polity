@@ -8,13 +8,14 @@ const mocks = vi.hoisted(() => ({
   canManage: vi.fn(),
   query: vi.fn((args: unknown) => args),
   queryArg: undefined as unknown,
+  resultType: 'complete' as 'complete' | 'unknown',
   user: { id: 'viewer' } as any,
 }));
 
 vi.mock('@rocicorp/zero/react', () => ({
   useQuery: (query: unknown) => {
     mocks.queryArg = query;
-    return [mocks.activities, { type: 'complete' }];
+    return [mocks.activities, { type: mocks.resultType }];
   },
 }));
 
@@ -37,6 +38,7 @@ beforeEach(() => {
   mocks.canManage.mockReset().mockReturnValue(false);
   mocks.query.mockClear();
   mocks.queryArg = undefined;
+  mocks.resultType = 'complete';
   mocks.user = { id: 'viewer' };
 });
 
@@ -82,6 +84,23 @@ describe('useTodoActivity', () => {
     mocks.user = undefined;
     rerender();
     expect(result.current.canViewActivity).toBe(false);
+    expect(mocks.queryArg).toBeUndefined();
+  });
+
+  it('resets a hidden activity panel and reports loading without an activity array', () => {
+    mocks.activities = undefined as any;
+    const todo = { assignments: [], creator_id: 'viewer', group_id: null, id: 'todo' };
+    const { result, rerender } = renderHook(({ active }) => useTodoActivity(todo, active), {
+      initialProps: { active: true },
+    });
+
+    act(() => result.current.setSeverity('high'));
+    mocks.resultType = 'unknown';
+    rerender({ active: true });
+    expect(result.current).toMatchObject({ activities: [], isLoading: true, severity: 'high' });
+
+    rerender({ active: false });
+    expect(result.current).toMatchObject({ isLoading: false, severity: 'all' });
     expect(mocks.queryArg).toBeUndefined();
   });
 });

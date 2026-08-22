@@ -57,13 +57,12 @@ export function ErrorState({
   );
 }
 
-const noticeVariantClasses = {
-  default: 'border-border bg-[var(--surface)] text-foreground',
-  info: getBadgeToneClasses('info'),
-  success: getBadgeToneClasses('success'),
-  warning: getBadgeToneClasses('warning'),
-  destructive: getBadgeToneClasses('danger'),
-} as const;
+type NoticeVariant = 'default' | 'info' | 'success' | 'warning' | 'destructive';
+
+function getNoticeVariantClass(variant: NoticeVariant): string {
+  if (variant === 'default') return 'border-border bg-[var(--surface)] text-foreground';
+  return getBadgeToneClasses(variant === 'destructive' ? 'danger' : variant);
+}
 
 const noticeIcons = {
   default: Info,
@@ -76,7 +75,7 @@ const noticeIcons = {
 interface NoticeProps {
   children: ReactNode;
   title?: ReactNode;
-  variant?: keyof typeof noticeVariantClasses;
+  variant?: NoticeVariant;
   icon?: ReactNode;
   className?: string;
 }
@@ -94,7 +93,7 @@ export function InlineNotice({
     <div
       className={cn(
         'flex gap-3 rounded-md border p-3 text-sm',
-        noticeVariantClasses[variant],
+        getNoticeVariantClass(variant),
         className
       )}
     >

@@ -5795,7 +5795,7 @@
       {
         "file": "src/features/auth/logic/__tests__/privateEntityRelationshipAccess.unit.test.ts",
         "project": "unit",
-        "caseId": "allows private amendment access for creators and active collaborators only",
+        "caseId": "allows amendment owners, active parents, and invited or active scoped view roles",
         "evidence": {
           "kind": "instrumented-full-suite",
           "relation": "direct",
@@ -17310,6 +17310,20 @@
           "report": "coverage/coverage-final.json",
           "coveredStatements": 15,
           "totalStatements": 16
+        }
+      }
+    ],
+    "src/features/shared/ui/data-table/dataTableFeatures.ts": [
+      {
+        "file": "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts",
+        "project": "unit",
+        "caseId": "registers the complete shared filtering, sorting, pagination, selection, and visibility contract",
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "relation": "direct",
+          "report": "coverage/coverage-final.json",
+          "coveredStatements": 1,
+          "totalStatements": 1
         }
       }
     ],

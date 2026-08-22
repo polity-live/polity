@@ -16,6 +16,7 @@ function createTx(results: unknown[] = [], location: 'client' | 'server' = 'serv
     run: vi.fn(async () => queue.shift()),
     mutate: {
       agenda_item: { insert: vi.fn(), update: vi.fn(), delete: vi.fn() },
+      event_activity: { insert: vi.fn() },
       action_right: { insert: vi.fn() },
       speaker_list: { insert: vi.fn(), update: vi.fn(), delete: vi.fn() },
       agenda_item_change_request: { insert: vi.fn(), update: vi.fn(), delete: vi.fn() },
@@ -62,6 +63,69 @@ beforeEach(() => {
 });
 
 describe('agenda shared mutator branch contracts', () => {
+  it('records agenda create, update, reorder, and delete activity', async () => {
+    const created = createTx([], 'client');
+    await agendaSharedMutators.createAgendaItem.fn({
+      tx: created as never,
+      ctx,
+      args: { ...agendaArgs, title: undefined, type: undefined } as never,
+    });
+
+    for (const [existing, args] of [
+      [
+        { event_id: 'event-1', id: 'agenda-1', title: 'Old' },
+        { id: 'agenda-1', title: 'New' },
+      ],
+      [
+        { event_id: 'event-1', id: 'agenda-1', status: 'planned' },
+        { id: 'agenda-1', status: 'active' },
+      ],
+      [
+        { event_id: 'event-1', id: 'agenda-1', title: 'Same' },
+        { id: 'agenda-1', title: 'Same' },
+      ],
+      [
+        { event_id: null, id: 'agenda-1', title: 'Old' },
+        { id: 'agenda-1', title: 'New' },
+      ],
+    ] as const) {
+      const tx = createTx([existing], 'client');
+      await agendaSharedMutators.updateAgendaItem.fn({
+        tx: tx as never,
+        ctx,
+        args: args as never,
+      });
+    }
+
+    const reordered = createTx(
+      [{ event_id: 'event-1', id: 'agenda-1' }, { event_id: 'event-1', id: 'agenda-2' }, null],
+      'client'
+    );
+    await agendaSharedMutators.reorderAgendaItems.fn({
+      tx: reordered as never,
+      ctx,
+      args: {
+        items: [
+          { id: 'agenda-1', order_index: 1 },
+          { id: 'agenda-2', order_index: 2 },
+          { id: 'agenda-3', order_index: 3 },
+        ],
+      },
+    });
+
+    for (const existing of [
+      { event_id: 'event-1', id: 'agenda-1', title: null, type: null },
+      { event_id: null, id: 'agenda-2' },
+    ]) {
+      const tx = createTx([existing], 'client');
+      await agendaSharedMutators.deleteAgendaItem.fn({
+        tx: tx as never,
+        ctx,
+        args: { id: existing.id },
+      });
+    }
+  });
+
   it('handles client, event, amendment, missing-parent, and missing-item access', async () => {
     const client = createTx([], 'client');
     await agendaSharedMutators.createAgendaItem.fn({ tx: client as never, ctx, args: agendaArgs });

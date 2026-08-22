@@ -9,10 +9,10 @@
 
 ## Prerequisites
 
-- **Node.js 24.x LTS** (recommended via [nvm](https://github.com/nvm-sh/nvm))
-- **npm 11.18.0**
+- **Node.js 24.18.0** (recommended via [nvm](https://github.com/nvm-sh/nvm))
+- **Corepack** with **pnpm 10.34.5**
 - **Docker Desktop** (for local Supabase and Zero development)
-- **Supabase CLI** (`npm i -g supabase` or use `npx supabase`)
+- **Supabase CLI** (provided by the local dependency through `pnpm exec supabase`)
 
 ---
 
@@ -22,11 +22,11 @@
 
 Use `.env.example` as the source of truth and copy its values into the mode-specific file you are running. Vinxi/Vite loads these files automatically by mode:
 
-| File                     | Used for                                             | Notes                                     |
-| ------------------------ | ---------------------------------------------------- | ----------------------------------------- |
-| `.env.development.local` | `npm run dev`, local Supabase, local Zero Cache      | Local URLs and development credentials    |
-| `.env.production.local`  | `npm run build`, `npm run start` production previews | Cloud service URLs and production secrets |
-| `.env`                   | All modes                                            | Keep empty or shared non-sensitive values |
+| File                     | Used for                                               | Notes                                     |
+| ------------------------ | ------------------------------------------------------ | ----------------------------------------- |
+| `.env.development.local` | `pnpm run dev`, local Supabase, local Zero Cache       | Local URLs and development credentials    |
+| `.env.production.local`  | `pnpm run build`, `pnpm run start` production previews | Cloud service URLs and production secrets |
+| `.env`                   | All modes                                              | Keep empty or shared non-sensitive values |
 
 ### External APIs and Credentials
 
@@ -60,8 +60,8 @@ keys and test resources; `STRIPE_MODE=live` accepts only live keys and live reso
 
 1. Configure `.env.development.local` with test prices, a test custom-amount product, a test
    customer-portal configuration, and `VITE_APP_URL=http://localhost:3000`.
-2. Start the app with `npm run dev`.
-3. In a second terminal, run `npm run stripe:listen`.
+2. Start the app with `pnpm run dev`.
+3. In a second terminal, run `pnpm run stripe:listen`.
 4. Copy the Stripe CLI's `whsec_...` value into `STRIPE_WEBHOOK_SECRET` and restart the dev server
    whenever it changes.
 5. Complete checkouts with Stripe test cards, then inspect Stripe CLI delivery and the
@@ -106,15 +106,15 @@ in the customer portal are reconciled after the browser returns to the app.
 
 ### Local development mode
 
-- App: `npm run dev`
-- Supabase: local CLI stack via `npx supabase start`
-- Zero: local zero-cache via `npm run zero:dev`
+- App: `pnpm run dev`
+- Supabase: local CLI stack via `pnpm exec supabase start`
+- Zero: local zero-cache via `pnpm run zero:dev`
 - Env source: `.env.development.local`
 
 ### Production mode
 
-- Build: `npm run build`
-- Preview built app locally: `npm run start`
+- Build: `pnpm run build`
+- Preview built app locally: `pnpm run start`
 - Supabase: cloud project
 - Zero: deployed zero-cache URL
 - Env source: `.env.production.local` locally, or platform env vars on Vercel/Fly.io
@@ -123,13 +123,15 @@ in the customer portal are reconciled after the browser returns to the app.
 ### 1. Install dependencies
 
 ```bash
-npm install
+corepack enable
+corepack prepare pnpm@10.34.5 --activate
+pnpm install --frozen-lockfile
 ```
 
 ### 2. Start Supabase (local)
 
 ```bash
-npx supabase start
+pnpm exec supabase start
 ```
 
 This boots up a local Supabase stack (Postgres, Auth, Studio, Inbucket, etc.) via Docker.
@@ -147,7 +149,7 @@ are generated and reviewed from the declarative source of truth in
 ### 4. Create storage buckets
 
 ```bash
-npx supabase seed buckets
+pnpm exec supabase seed buckets
 ```
 
 This provisions the `avatars` and `uploads` storage buckets defined in `supabase/config.toml`.
@@ -158,13 +160,13 @@ Buckets are **not** auto-created by `supabase start` — this step is required f
 In one terminal:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 In a second terminal:
 
 ```bash
-npm run zero:dev
+pnpm run zero:dev
 ```
 
 ## Where to Find What
@@ -180,33 +182,33 @@ npm run zero:dev
 
 ---
 
-## All npm Scripts
+## All pnpm Scripts
 
-| Command                   | Description                                         |
-| ------------------------- | --------------------------------------------------- |
-| `npm run dev`             | Start the dev server on port 3000                   |
-| `npm run build`           | Production build                                    |
-| `npm run start`           | Start the production server                         |
-| `npm run lint`            | Lint with Oxlint                                    |
-| `npm run lint:check`      | Check lint rules with Oxlint                        |
-| `npm run lint:fix`        | Lint and auto-fix                                   |
-| `npm run stripe:listen`   | Forward supported Stripe test events locally        |
-| `npm run test`            | Run unit tests with Vitest                          |
-| `npm run test:e2e`        | Run E2E tests with Playwright                       |
-| `npm run test:e2e:ui`     | Run E2E tests with Playwright UI                    |
-| `npm run test:e2e:headed` | Run E2E tests in headed browser                     |
-| `npm run test:e2e:debug`  | Debug E2E tests with Playwright                     |
-| `npm run format`          | Format code with Prettier                           |
-| `npm run format:check`    | Check formatting with Prettier                      |
-| `npm run supabase:start`  | Start local Supabase                                |
-| `npm run supabase:stop`   | Stop local Supabase                                 |
-| `npm run zero:cache`      | Start zero-cache-dev with short local CVR retention |
-| `npm run zero:dev`        | Start zero-cache-dev with local DB/API settings     |
-| `npm run zero:stats`      | Summarize local Zero CVR and query statistics       |
-| `npm run zero:clean`      | Remove the stopped local Zero replica safely        |
-| `npm run deploy`          | Run the interactive deploy script                   |
-| `npm run deploy:dry`      | Run the deploy script in dry-run mode               |
-| `npm run prepare`         | Install Husky git hooks                             |
+| Command                    | Description                                         |
+| -------------------------- | --------------------------------------------------- |
+| `pnpm run dev`             | Start the dev server on port 3000                   |
+| `pnpm run build`           | Production build                                    |
+| `pnpm run start`           | Start the production server                         |
+| `pnpm run lint`            | Lint with Oxlint                                    |
+| `pnpm run lint:check`      | Check lint rules with Oxlint                        |
+| `pnpm run lint:fix`        | Lint and auto-fix                                   |
+| `pnpm run stripe:listen`   | Forward supported Stripe test events locally        |
+| `pnpm run test`            | Run unit tests with Vitest                          |
+| `pnpm run test:e2e`        | Run E2E tests with Playwright                       |
+| `pnpm run test:e2e:ui`     | Run E2E tests with Playwright UI                    |
+| `pnpm run test:e2e:headed` | Run E2E tests in headed browser                     |
+| `pnpm run test:e2e:debug`  | Debug E2E tests with Playwright                     |
+| `pnpm run format`          | Format code with Prettier                           |
+| `pnpm run format:check`    | Check formatting with Prettier                      |
+| `pnpm run supabase:start`  | Start local Supabase                                |
+| `pnpm run supabase:stop`   | Stop local Supabase                                 |
+| `pnpm run zero:cache`      | Start zero-cache-dev with short local CVR retention |
+| `pnpm run zero:dev`        | Start zero-cache-dev with local DB/API settings     |
+| `pnpm run zero:stats`      | Summarize local Zero CVR and query statistics       |
+| `pnpm run zero:clean`      | Remove the stopped local Zero replica safely        |
+| `pnpm run deploy`          | Run the interactive deploy script                   |
+| `pnpm run deploy:dry`      | Run the deploy script in dry-run mode               |
+| `pnpm run prepare`         | Install Husky git hooks                             |
 
 ## Deployment
 
@@ -221,18 +223,18 @@ The project deploys to three services:
 ### Deploy script
 
 ```bash
-npm run deploy          # Interactive target selection
-npm run deploy:dry      # Interactive dry-run (prints commands without executing)
-npm run deploy -- --all # Full deploy without prompt: Supabase → Fly.io → Vercel
+pnpm run deploy          # Interactive target selection
+pnpm run deploy:dry      # Interactive dry-run (prints commands without executing)
+pnpm run deploy --all # Full deploy without prompt: Supabase → Fly.io → Vercel
 ```
 
 Skip individual steps with flags:
 
 ```bash
-npm run deploy -- --skip-supabase --skip-fly # Only frontend to Vercel
-npm run deploy -- --skip-supabase   # Skip Supabase migrations
-npm run deploy -- --skip-fly        # Skip Fly.io deploy
-npm run deploy -- --skip-vercel     # Skip Vercel deploy
+pnpm run deploy --skip-supabase --skip-fly # Only frontend to Vercel
+pnpm run deploy --skip-supabase   # Skip Supabase migrations
+pnpm run deploy --skip-fly        # Skip Fly.io deploy
+pnpm run deploy --skip-vercel     # Skip Vercel deploy
 ```
 
 The script enforces that you are on the `master` or `deploy` branch.
@@ -247,8 +249,8 @@ The script enforces that you are on the `master` or `deploy` branch.
 #### 1. Install CLIs
 
 ```bash
-npm i -g supabase       # Supabase CLI
-npm i -g vercel          # Vercel CLI
+pnpm exec supabase --version # Supabase CLI from this repository
+pnpm add --global vercel     # Vercel CLI
 # Fly.io CLI: https://fly.io/docs/flyctl/install/
 ```
 

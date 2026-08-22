@@ -6,10 +6,10 @@ import { describe, expect, it } from 'vitest';
 
 const sourceModules = import.meta.glob('/src/**/*.{ts,tsx}');
 
-function isPublicModuleSurface(source: string) {
+function isPublicModuleSurface(source: string, file: string) {
   const ast = parse(source, {
     sourceType: 'module',
-    plugins: ['typescript', 'jsx', 'decorators', 'importAttributes'],
+    plugins: ['typescript', ...(file.endsWith('.tsx') ? (['jsx'] as const) : []), 'decorators'],
   });
 
   return (
@@ -32,7 +32,7 @@ function collectPublicModuleSurfaces(directory: string, files: string[] = []) {
     }
     if (!/\.(?:ts|tsx)$/.test(entry.name) || /\.(?:spec|test)\.[^.]+$/.test(entry.name)) continue;
     const source = fs.readFileSync(absolute, 'utf8');
-    if (isPublicModuleSurface(source)) {
+    if (isPublicModuleSurface(source, entry.name)) {
       files.push(path.relative(process.cwd(), absolute).replaceAll('\\', '/'));
     }
   }

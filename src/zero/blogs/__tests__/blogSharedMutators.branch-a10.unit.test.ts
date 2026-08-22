@@ -22,6 +22,7 @@ vi.mock('../../rbac/authorize', () => ({
 }));
 
 import { assertCanViewBlog, blogSharedMutators } from '../shared-mutators';
+import { DEFAULT_BLOG_ROLES } from '../../rbac/constants';
 
 type CreateInput = Parameters<typeof blogSharedMutators.create.fn>[0];
 type Tx = CreateInput['tx'];
@@ -55,6 +56,23 @@ beforeEach(() => {
 });
 
 describe('blogSharedMutators A10 branch contracts', () => {
+  it('rejects creator bootstrap without the canonical Owner role', async () => {
+    const roles = DEFAULT_BLOG_ROLES as unknown as any[];
+    const ownerIndex = roles.findIndex(role => role.name === 'Owner');
+    const [owner] = roles.splice(ownerIndex, 1);
+    try {
+      await expect(
+        blogSharedMutators.create.fn({
+          tx: createTx('server') as never,
+          ctx,
+          args: { id: 'without-owner', group_id: null, title: 'Blog' } as never,
+        })
+      ).rejects.toThrow('Default Owner role is missing');
+    } finally {
+      roles.splice(ownerIndex, 0, owner);
+    }
+  });
+
   it('allows client/public/relation and every group visibility path', async () => {
     await expect(assertCanViewBlog(createTx('client') as never, ctx, 'client-blog')).resolves.toBe(
       undefined

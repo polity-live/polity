@@ -229,6 +229,11 @@ function valueForStat(label: string) {
 }
 
 describe('AmendmentWikiView stats', () => {
+  it('provides activity to the author', () => {
+    render(<AmendmentWikiView {...baseProps({ created_by_id: 'user-1' })} />);
+    expect(screen.getByTestId('info-tabs')).toBeTruthy();
+  });
+
   it.each([
     ['public', 'public'],
     ['authenticated', 'authenticated'],

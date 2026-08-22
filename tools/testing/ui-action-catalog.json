@@ -6708,7 +6708,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/amendments/AmendmentWikiView.tsx#/amendment/$id-2",
       "tag": "Link",
-      "line": 703,
+      "line": 708,
       "column": 18,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -6746,7 +6746,7 @@
       "actionId": "amendments.amendment-wiki.event-id",
       "identifierSource": "destination",
       "tag": "Link",
-      "line": 660,
+      "line": 665,
       "column": 16,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -6784,7 +6784,7 @@
       "actionId": "amendments.amendment-wiki.event-id-agenda-agenda-item-id",
       "identifierSource": "destination",
       "tag": "Link",
-      "line": 667,
+      "line": 672,
       "column": 16,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -17980,7 +17980,7 @@
       "actionId": "blogs.detail.confirm-delete",
       "identifierSource": "data-action-id",
       "tag": "AlertDialogAction",
-      "line": 452,
+      "line": 449,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -18017,7 +18017,7 @@
       "actionId": "blogs.detail.delete",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 397,
+      "line": 394,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -18054,7 +18054,7 @@
       "actionId": "blogs.detail.edit",
       "identifierSource": "data-action-id",
       "tag": "Link",
-      "line": 390,
+      "line": 387,
       "column": 18,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -18100,7 +18100,7 @@
       "actionId": "blogs.detail.share",
       "identifierSource": "data-action-id",
       "tag": "ShareButton",
-      "line": 290,
+      "line": 287,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -18136,7 +18136,7 @@
       "actionId": "blogs.detail.start-writing",
       "identifierSource": "data-action-id",
       "tag": "Link",
-      "line": 423,
+      "line": 420,
       "column": 20,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -18182,7 +18182,7 @@
       "actionId": "blogs.detail.subscribe",
       "identifierSource": "data-action-id",
       "tag": "SubscribeButton",
-      "line": 272,
+      "line": 269,
       "column": 14,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -27947,7 +27947,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/events/EventWikiContentView.tsx#/user/$id",
       "tag": "Link",
-      "line": 238,
+      "line": 239,
       "column": 12,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -27985,7 +27985,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/events/EventWikiContentView.tsx#/user/$id-2",
       "tag": "Link",
-      "line": 258,
+      "line": 259,
       "column": 16,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -28022,7 +28022,7 @@
       "actionId": "events.event-wiki-content.group-id",
       "identifierSource": "destination",
       "tag": "Link",
-      "line": 269,
+      "line": 270,
       "column": 16,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -28059,7 +28059,7 @@
       "actionId": "events.wiki.candidacy.confirm",
       "identifierSource": "data-action-id",
       "tag": "CandidacyPasswordDialog",
-      "line": 575,
+      "line": 581,
       "column": 6,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -28091,7 +28091,7 @@
       "actionId": "events.wiki.candidacy.open",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 349,
+      "line": 350,
       "column": 14,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28123,7 +28123,7 @@
       "actionId": "events.wiki.candidacy.select-election",
       "identifierSource": "data-action-id",
       "tag": "button",
-      "line": 519,
+      "line": 525,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28155,7 +28155,7 @@
       "actionId": "events.wiki.participation",
       "identifierSource": "data-action-id",
       "tag": "MembershipButton",
-      "line": 333,
+      "line": 334,
       "column": 12,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -28186,7 +28186,7 @@
       "actionId": "events.wiki.share",
       "identifierSource": "data-action-id",
       "tag": "ShareButton",
-      "line": 365,
+      "line": 366,
       "column": 8,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -28217,7 +28217,7 @@
       "actionId": "events.wiki.subscribe",
       "identifierSource": "data-action-id",
       "tag": "SubscribeButton",
-      "line": 324,
+      "line": 325,
       "column": 12,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -30668,7 +30668,7 @@
       "actionId": "groups.wiki.manage.membership",
       "identifierSource": "data-action-id",
       "tag": "MembershipButton",
-      "line": 331,
+      "line": 333,
       "column": 12,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -30701,7 +30701,7 @@
       "actionId": "groups.wiki.open.link-dialog",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 309,
+      "line": 311,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30734,7 +30734,7 @@
       "actionId": "groups.wiki.open.share",
       "identifierSource": "data-action-id",
       "tag": "ShareButton",
-      "line": 363,
+      "line": 365,
       "column": 8,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -30767,7 +30767,7 @@
       "actionId": "groups.wiki.toggle.subscription",
       "identifierSource": "data-action-id",
       "tag": "SubscribeButton",
-      "line": 322,
+      "line": 324,
       "column": 12,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -51866,7 +51866,7 @@
       "actionId": "payments.subscribers.remove",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 102,
+      "line": 101,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -51904,7 +51904,7 @@
       "actionId": "payments.subscribers.user.open",
       "identifierSource": "data-action-id",
       "tag": "SmartLink",
-      "line": 64,
+      "line": 63,
       "column": 12,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -52133,7 +52133,7 @@
       "actionId": "payments.subscriptions.entity.open",
       "identifierSource": "data-action-id",
       "tag": "SmartLink",
-      "line": 181,
+      "line": 180,
       "column": 12,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -52170,7 +52170,7 @@
       "actionId": "payments.subscriptions.remove",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 223,
+      "line": 222,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -56962,7 +56962,7 @@
       "file": "src/features/shared/ui/data-table/DataTableParts.tsx",
       "identifierSource": "unidentified",
       "tag": "DropdownMenuTrigger",
-      "line": 146,
+      "line": 148,
       "column": 6,
       "kind": "interaction",
       "classification": "transparent-wrapper",
@@ -56976,7 +56976,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -57003,7 +57004,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableParts.tsx#Button-8233aa0915",
       "tag": "Button",
-      "line": 147,
+      "line": 149,
       "column": 8,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -57023,7 +57024,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57035,7 +57037,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableParts.tsx#Button-a7279aa1c4",
       "tag": "Button",
-      "line": 40,
+      "line": 42,
       "column": 4,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -57056,7 +57058,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57068,7 +57071,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableParts.tsx#Button-5feb77e07c",
       "tag": "Button",
-      "line": 196,
+      "line": 198,
       "column": 4,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -57088,7 +57091,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57100,7 +57104,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableParts.tsx#Button-fd99603787",
       "tag": "Button",
-      "line": 115,
+      "line": 117,
       "column": 6,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -57121,7 +57125,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57133,7 +57138,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableParts.tsx#Button-6e8446737e",
       "tag": "Button",
-      "line": 105,
+      "line": 107,
       "column": 6,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -57154,7 +57159,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57166,7 +57172,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableParts.tsx#DropdownMenuItem-3c86ffec58",
       "tag": "DropdownMenuItem",
-      "line": 156,
+      "line": 158,
       "column": 12,
       "kind": "selection",
       "classification": "canonical-action",
@@ -57187,7 +57193,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57199,7 +57206,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableView.tsx#Button-fd99603787",
       "tag": "Button",
-      "line": 210,
+      "line": 216,
       "column": 10,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -57220,7 +57227,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57232,7 +57240,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/data-table/DataTableView.tsx#Button-6e8446737e",
       "tag": "Button",
-      "line": 201,
+      "line": 207,
       "column": 10,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -57253,7 +57261,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57285,7 +57294,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -57322,7 +57332,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -58690,7 +58701,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/form/SegmentedChoiceField.tsx#Button-58871115a4",
       "tag": "Button",
-      "line": 58,
+      "line": 63,
       "column": 14,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -59011,7 +59022,7 @@
       "file": "src/features/shared/ui/form/VisibilitySelector.tsx",
       "identifierSource": "unidentified",
       "tag": "HoverCardTrigger",
-      "line": 82,
+      "line": 83,
       "column": 16,
       "kind": "interaction",
       "classification": "transparent-wrapper",
@@ -59059,7 +59070,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/form/VisibilitySelector.tsx#Button-10705e3bf4",
       "tag": "Button",
-      "line": 83,
+      "line": 84,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -60591,7 +60602,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/status/EditingMode.tsx#button-b919932ad3",
       "tag": "button",
-      "line": 294,
+      "line": 303,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -60630,7 +60641,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/status/EditingMode.tsx#DropdownMenuRadioItem-89d57650f1",
       "tag": "DropdownMenuRadioItem",
-      "line": 256,
+      "line": 265,
       "column": 10,
       "kind": "selection",
       "classification": "canonical-action",
@@ -60668,7 +60679,7 @@
       "actionId": "shared.right-visuals.on-click",
       "identifierSource": "action-id-prop",
       "tag": "Button",
-      "line": 200,
+      "line": 205,
       "column": 4,
       "kind": "interaction",
       "classification": "transparent-wrapper",
@@ -60716,7 +60727,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/status/TopicPills.tsx#BadgeControl-5dab94c955",
       "tag": "BadgeControl",
-      "line": 118,
+      "line": 95,
       "column": 4,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -63752,11 +63763,11 @@
     },
     {
       "key": "src/features/shared/ui/ui-platejs/comment.tsx#shared.comment.activate.button",
-      "debtKey": "src/features/shared/ui/ui-platejs/comment.tsx#Button-8a3c2fbad6",
+      "debtKey": "src/features/shared/ui/ui-platejs/comment.tsx#Button-37c8297c9e",
       "file": "src/features/shared/ui/ui-platejs/comment.tsx",
       "actionId": "shared.comment.activate.button",
       "identifierSource": "manifest-declaration",
-      "declarationKey": "src/features/shared/ui/ui-platejs/comment.tsx#Button-8a3c2fbad6",
+      "declarationKey": "src/features/shared/ui/ui-platejs/comment.tsx#Button-37c8297c9e",
       "tag": "Button",
       "line": 221,
       "column": 18,
@@ -63791,11 +63802,11 @@
     },
     {
       "key": "src/features/shared/ui/ui-platejs/comment.tsx#shared.comment.activate.button-2",
-      "debtKey": "src/features/shared/ui/ui-platejs/comment.tsx#Button-8fae335302",
+      "debtKey": "src/features/shared/ui/ui-platejs/comment.tsx#Button-0020699406",
       "file": "src/features/shared/ui/ui-platejs/comment.tsx",
       "actionId": "shared.comment.activate.button-2",
       "identifierSource": "manifest-declaration",
-      "declarationKey": "src/features/shared/ui/ui-platejs/comment.tsx#Button-8fae335302",
+      "declarationKey": "src/features/shared/ui/ui-platejs/comment.tsx#Button-0020699406",
       "tag": "Button",
       "line": 236,
       "column": 18,
@@ -74068,6 +74079,144 @@
       "accountabilityStatus": "accounted"
     },
     {
+      "key": "src/features/shared/ui/wiki/ActivityLogView.tsx#shared.activity-log.components-activity-log-load-more",
+      "debtKey": "src/features/shared/ui/wiki/ActivityLogView.tsx#Button-22bad3a794",
+      "file": "src/features/shared/ui/wiki/ActivityLogView.tsx",
+      "actionId": "shared.activity-log.components-activity-log-load-more",
+      "identifierSource": "accessible-text",
+      "tag": "Button",
+      "line": 237,
+      "column": 10,
+      "kind": "async-action",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "handler": "loadMore",
+      "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+          "project": "component",
+          "caseId": "opens on comments and renders localized high-severity changes in the activity tab",
+          "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.branches.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryCard.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryIntegration.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/shared/ui/wiki/ActivityLogView.tsx#shared.activity-log.select.severity-filter",
+      "debtKey": "src/features/shared/ui/wiki/ActivityLogView.tsx#FilterToggleGroupItem-4bacc887a1",
+      "file": "src/features/shared/ui/wiki/ActivityLogView.tsx",
+      "actionId": "shared.activity-log.select.severity-filter",
+      "identifierSource": "manifest-declaration",
+      "declarationKey": "src/features/shared/ui/wiki/ActivityLogView.tsx#FilterToggleGroupItem-4bacc887a1",
+      "tag": "FilterToggleGroupItem",
+      "line": 87,
+      "column": 12,
+      "kind": "interaction",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["idle", "success", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+          "project": "component",
+          "caseId": "passes the selected severity to the controller",
+          "scenarios": ["idle", "success", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.branches.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryCard.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryIntegration.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/shared/ui/wiki/ActivityLogView.tsx#shared.activity-log.user-id",
+      "debtKey": "src/features/shared/ui/wiki/ActivityLogView.tsx#/user/$id",
+      "file": "src/features/shared/ui/wiki/ActivityLogView.tsx",
+      "actionId": "shared.activity-log.user-id",
+      "identifierSource": "destination",
+      "tag": "Link",
+      "line": 146,
+      "column": 24,
+      "kind": "navigation",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+          "project": "component",
+          "caseId": "localizes assignments and renders the subject name instead of a translation key or id",
+          "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.branches.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryCard.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryIntegration.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/shared/ui/wiki/InfoTabs.tsx#shared.info-tabs.components-activity-log-title",
+      "debtKey": "src/features/shared/ui/wiki/InfoTabs.tsx#TabsTrigger-6c967982e1",
+      "file": "src/features/shared/ui/wiki/InfoTabs.tsx",
+      "actionId": "shared.info-tabs.components-activity-log-title",
+      "identifierSource": "accessible-text",
+      "tag": "TabsTrigger",
+      "line": 313,
+      "column": 10,
+      "kind": "selection",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["selected", "unselected", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
+          "project": "component",
+          "caseId": "renders the optional activity tab and content without changing the default tab",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.branches.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryCard.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryIntegration.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
       "key": "src/features/shared/ui/wiki/InfoTabs.tsx#shared.info-tabs.navigate.a",
       "debtKey": "src/features/shared/ui/wiki/InfoTabs.tsx#a-18f201b77b",
       "file": "src/features/shared/ui/wiki/InfoTabs.tsx",
@@ -74075,7 +74224,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/wiki/InfoTabs.tsx#a-18f201b77b",
       "tag": "a",
-      "line": 240,
+      "line": 256,
       "column": 8,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -74091,6 +74240,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
@@ -74109,7 +74259,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/wiki/InfoTabs.tsx#TabsTrigger-756c65f6eb",
       "tag": "TabsTrigger",
-      "line": 287,
+      "line": 303,
       "column": 8,
       "kind": "selection",
       "classification": "canonical-action",
@@ -74125,6 +74275,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
@@ -74143,7 +74294,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/wiki/InfoTabs.tsx#TabsTrigger-18afd384d8",
       "tag": "TabsTrigger",
-      "line": 295,
+      "line": 311,
       "column": 8,
       "kind": "selection",
       "classification": "canonical-action",
@@ -74159,6 +74310,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
@@ -74177,7 +74329,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/shared/ui/wiki/InfoTabs.tsx#TabsTrigger-e84b39bd12",
       "tag": "TabsTrigger",
-      "line": 289,
+      "line": 305,
       "column": 10,
       "kind": "selection",
       "classification": "canonical-action",
@@ -74193,6 +74345,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
@@ -74232,6 +74385,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
@@ -79640,7 +79794,7 @@
       "actionId": "todos.detail.back",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 86,
+      "line": 89,
       "column": 8,
       "kind": "interaction",
       "classification": "transparent-wrapper",
@@ -79687,7 +79841,7 @@
       "actionId": "todos.detail.back",
       "identifierSource": "data-action-id",
       "tag": "Link",
-      "line": 87,
+      "line": 90,
       "column": 10,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -79718,7 +79872,7 @@
       "actionId": "todos.detail.not-found.back",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 65,
+      "line": 68,
       "column": 8,
       "kind": "interaction",
       "classification": "transparent-wrapper",
@@ -79765,7 +79919,7 @@
       "actionId": "todos.detail.not-found.back",
       "identifierSource": "data-action-id",
       "tag": "Link",
-      "line": 66,
+      "line": 69,
       "column": 10,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -79796,7 +79950,7 @@
       "actionId": "todos.detail.share",
       "identifierSource": "data-action-id",
       "tag": "ShareButton",
-      "line": 92,
+      "line": 95,
       "column": 8,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -79827,7 +79981,7 @@
       "actionId": "todos.todo-detail-page.features-todos-help-links-assistant",
       "identifierSource": "accessible-text",
       "tag": "Link",
-      "line": 170,
+      "line": 166,
       "column": 12,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -79864,7 +80018,7 @@
       "actionId": "todos.todo-detail-page.features-todos-help-links-docs",
       "identifierSource": "accessible-text",
       "tag": "Link",
-      "line": 182,
+      "line": 178,
       "column": 12,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -79901,7 +80055,7 @@
       "actionId": "todos.todo-detail-page.features-todos-help-links-tutorial",
       "identifierSource": "accessible-text",
       "tag": "Link",
-      "line": 174,
+      "line": 170,
       "column": 12,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -80152,10 +80306,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80191,10 +80345,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80230,10 +80384,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80268,10 +80422,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80307,10 +80461,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80339,10 +80493,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -80368,7 +80522,7 @@
       "actionId": "todos.detail-dialog.assignee.add",
       "identifierSource": "data-action-id",
       "tag": "CommandItem",
-      "line": 560,
+      "line": 563,
       "column": 34,
       "kind": "selection",
       "classification": "canonical-action",
@@ -80393,10 +80547,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80407,7 +80561,7 @@
       "actionId": "todos.detail-dialog.assignee.open",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 530,
+      "line": 533,
       "column": 22,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -80431,10 +80585,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80445,7 +80599,7 @@
       "actionId": "todos.detail-dialog.assignee.remove",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 511,
+      "line": 514,
       "column": 26,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -80470,10 +80624,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80484,7 +80638,7 @@
       "actionId": "todos.detail-dialog.cancel",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 193,
+      "line": 196,
       "column": 18,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -80509,10 +80663,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80523,7 +80677,7 @@
       "actionId": "todos.detail-dialog.close",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 226,
+      "line": 229,
       "column": 16,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -80547,10 +80701,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80561,7 +80715,7 @@
       "actionId": "todos.detail-dialog.edit",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 214,
+      "line": 217,
       "column": 18,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -80586,10 +80740,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80600,7 +80754,7 @@
       "actionId": "todos.detail-dialog.priority.high",
       "identifierSource": "data-action-id",
       "tag": "FormControlSelectItem",
-      "line": 339,
+      "line": 342,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -80624,10 +80778,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80638,7 +80792,7 @@
       "actionId": "todos.detail-dialog.priority.low",
       "identifierSource": "data-action-id",
       "tag": "FormControlSelectItem",
-      "line": 317,
+      "line": 320,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -80662,10 +80816,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80676,7 +80830,7 @@
       "actionId": "todos.detail-dialog.priority.medium",
       "identifierSource": "data-action-id",
       "tag": "FormControlSelectItem",
-      "line": 326,
+      "line": 329,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -80700,10 +80854,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80714,7 +80868,7 @@
       "actionId": "todos.detail-dialog.priority.select",
       "identifierSource": "data-action-id",
       "tag": "FormControlSelect",
-      "line": 308,
+      "line": 311,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -80739,10 +80893,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80753,7 +80907,7 @@
       "actionId": "todos.detail-dialog.priority.select",
       "identifierSource": "data-action-id",
       "tag": "FormControlSelectTrigger",
-      "line": 313,
+      "line": 316,
       "column": 18,
       "kind": "interaction",
       "classification": "transparent-wrapper",
@@ -80778,10 +80932,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias",
       "resolution": {
@@ -80807,7 +80961,7 @@
       "actionId": "todos.detail-dialog.priority.urgent",
       "identifierSource": "data-action-id",
       "tag": "FormControlSelectItem",
-      "line": 350,
+      "line": 353,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -80831,10 +80985,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80845,7 +80999,7 @@
       "actionId": "todos.detail-dialog.save",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 184,
+      "line": 187,
       "column": 18,
       "kind": "async-action",
       "classification": "canonical-action",
@@ -80870,10 +81024,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80884,7 +81038,7 @@
       "actionId": "todos.detail-dialog.status.cancelled",
       "identifierSource": "data-action-id",
       "tag": "FormControlSelectItem",
-      "line": 284,
+      "line": 287,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -80908,10 +81062,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80922,7 +81076,7 @@
       "actionId": "todos.detail-dialog.status.completed",
       "identifierSource": "data-action-id",
       "tag": "FormControlSelectItem",
-      "line": 275,
+      "line": 278,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -80946,10 +81100,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80960,7 +81114,7 @@
       "actionId": "todos.detail-dialog.status.in-progress",
       "identifierSource": "data-action-id",
       "tag": "FormControlSelectItem",
-      "line": 266,
+      "line": 269,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -80984,10 +81138,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -80998,7 +81152,7 @@
       "actionId": "todos.detail-dialog.status.pending",
       "identifierSource": "data-action-id",
       "tag": "FormControlSelectItem",
-      "line": 257,
+      "line": 260,
       "column": 20,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -81022,10 +81176,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81036,7 +81190,7 @@
       "actionId": "todos.detail-dialog.status.select",
       "identifierSource": "data-action-id",
       "tag": "FormControlSelect",
-      "line": 248,
+      "line": 251,
       "column": 16,
       "kind": "selection",
       "classification": "canonical-action",
@@ -81061,10 +81215,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81075,7 +81229,7 @@
       "actionId": "todos.detail-dialog.status.select",
       "identifierSource": "data-action-id",
       "tag": "FormControlSelectTrigger",
-      "line": 253,
+      "line": 256,
       "column": 18,
       "kind": "interaction",
       "classification": "transparent-wrapper",
@@ -81100,10 +81254,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias",
       "resolution": {
@@ -81130,7 +81284,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/todos/ui/TodoDetailDialogView.tsx#/user/$id",
       "tag": "Link",
-      "line": 455,
+      "line": 458,
       "column": 14,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -81160,10 +81314,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81175,7 +81329,7 @@
       "identifierSource": "manifest-declaration",
       "declarationKey": "src/features/todos/ui/TodoDetailDialogView.tsx#/user/$id-2",
       "tag": "Link",
-      "line": 601,
+      "line": 604,
       "column": 18,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -81205,10 +81359,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81219,7 +81373,7 @@
       "actionId": "todos.todo-detail-dialog.features-todos-assignee-add-assignee",
       "identifierSource": "accessible-text",
       "tag": "PopoverTrigger",
-      "line": 529,
+      "line": 532,
       "column": 20,
       "kind": "interaction",
       "classification": "transparent-wrapper",
@@ -81237,10 +81391,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -81266,7 +81420,7 @@
       "actionId": "todos.todo-detail-dialog.group-id",
       "identifierSource": "destination",
       "tag": "Link",
-      "line": 639,
+      "line": 642,
       "column": 14,
       "kind": "navigation",
       "classification": "canonical-action",
@@ -81296,10 +81450,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81334,10 +81488,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81372,10 +81526,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81410,10 +81564,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81449,10 +81603,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81488,10 +81642,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias",
       "resolution": {
@@ -81541,10 +81695,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81579,10 +81733,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81617,10 +81771,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81655,10 +81809,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81693,10 +81847,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81732,10 +81886,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81771,10 +81925,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias",
       "resolution": {
@@ -81825,10 +81979,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81864,10 +82018,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81903,10 +82057,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81948,10 +82102,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -81993,10 +82147,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -82037,10 +82191,86 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/todos/ui/TodoDiscussionTabs.tsx#todos.detail.tabs.activity",
+      "debtKey": "src/features/todos/ui/TodoDiscussionTabs.tsx#TabsTrigger-6c967982e1",
+      "file": "src/features/todos/ui/TodoDiscussionTabs.tsx",
+      "actionId": "todos.detail.tabs.activity",
+      "identifierSource": "data-action-id",
+      "tag": "TabsTrigger",
+      "line": 48,
+      "column": 10,
+      "kind": "selection",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["selected", "unselected", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+          "project": "component",
+          "caseId": "opens on comments and renders localized high-severity changes in the activity tab",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailDialogView.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailDialogView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+      ],
+      "accountabilityStatus": "accounted"
+    },
+    {
+      "key": "src/features/todos/ui/TodoDiscussionTabs.tsx#todos.detail.tabs.comments",
+      "debtKey": "src/features/todos/ui/TodoDiscussionTabs.tsx#TabsTrigger-9c183b102b",
+      "file": "src/features/todos/ui/TodoDiscussionTabs.tsx",
+      "actionId": "todos.detail.tabs.comments",
+      "identifierSource": "data-action-id",
+      "tag": "TabsTrigger",
+      "line": 43,
+      "column": 8,
+      "kind": "selection",
+      "classification": "canonical-action",
+      "accessibilityIssues": [],
+      "scenarios": ["selected", "unselected", "keyboard", "focus"],
+      "roles": ["anonymous", "authenticated"],
+      "testRefs": [
+        {
+          "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+          "project": "component",
+          "caseId": "opens on comments and renders localized high-severity changes in the activity tab",
+          "scenarios": ["selected", "unselected", "keyboard", "focus"]
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailDialogView.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailDialogView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -82076,10 +82306,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "merged-alias",
       "resolution": {
@@ -82129,10 +82359,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -82168,10 +82398,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -82207,10 +82437,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -82245,10 +82475,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -82283,10 +82513,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -82321,10 +82551,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -82359,10 +82589,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -82397,10 +82627,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -82435,10 +82665,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },

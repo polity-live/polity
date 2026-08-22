@@ -38,7 +38,7 @@ function verifySuites(suites, suffix, expectedTotal) {
   failUnless(total === expectedTotal, `${suffix}: expected ${expectedTotal} cases, found ${total}`);
 }
 
-verifySuites(manifest.componentFlow, '.component-flow.test.tsx', 86);
+verifySuites(manifest.componentFlow, '.component-flow.test.tsx', 87);
 verifySuites(manifest.serviceIntegration, '.service-integration.test.ts', 13);
 verifySuites(manifest.databaseIntegration, '.database-integration.test.ts', 9);
 
@@ -102,5 +102,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  'Flow-test campaign audit passed: 86 component flow, 13 service integration, 9 database integration, 20 PR E2E, 10 nightly E2E, and 10 acceptance flows (138 total).'
+  'Flow-test campaign audit passed: 87 component flow, 13 service integration, 9 database integration, 20 PR E2E, 10 nightly E2E, and 10 acceptance flows (139 total).'
 );

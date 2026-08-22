@@ -220,6 +220,19 @@ function renderGroupWikiContent(overrides: Partial<GroupWikiContentViewProps> = 
 }
 
 describe('GroupWikiContentView', () => {
+  it('provides activity to the group owner', () => {
+    renderGroupWikiContent({
+      group: {
+        id: 'group-1',
+        memberships: [],
+        name: 'Owner group',
+        owner_id: 'user-1',
+      },
+      viewerId: 'user-1',
+    });
+    expect(screen.getByTestId('info-tabs')).toBeTruthy();
+  });
+
   it.each([
     ['public', 'common.visibility.public'],
     ['authenticated', 'common.visibility.authenticated'],

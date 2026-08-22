@@ -12,6 +12,7 @@ import {
   eventSharedMutatorInternals as helpers,
   eventSharedMutators as mutators,
 } from '../shared-mutators';
+import { DEFAULT_EVENT_ROLES } from '../../rbac/constants';
 
 function mutationTable() {
   return {
@@ -30,6 +31,7 @@ function createTx(location: 'client' | 'server' = 'server') {
     run: vi.fn(),
     mutate: {
       event: mutationTable(),
+      event_activity: mutationTable(),
       event_participant: mutationTable(),
       event_participant_role: mutationTable(),
       event_offline_participant: mutationTable(),
@@ -365,6 +367,34 @@ describe('shared event policy helpers', () => {
 });
 
 describe('shared event CRUD and offline roster mutators', () => {
+  it('covers creator role fallbacks and rejects a missing Organizer template', async () => {
+    const roles = DEFAULT_EVENT_ROLES as unknown as any[];
+    const fallbackRole = roles[0];
+    const previous = {
+      assignee_kind: fallbackRole.assignee_kind,
+      default_invite_role: fallbackRole.default_invite_role,
+      default_request_role: fallbackRole.default_request_role,
+    };
+    fallbackRole.assignee_kind = undefined;
+    fallbackRole.default_invite_role = undefined;
+    fallbackRole.default_request_role = undefined;
+    try {
+      await mutators.create.fn({ tx: createTx(), ctx, args: eventArgs({ id: 'fallbacks' }) });
+    } finally {
+      Object.assign(fallbackRole, previous);
+    }
+
+    const organizerIndex = roles.findIndex(role => role.name === 'Organizer');
+    const [organizer] = roles.splice(organizerIndex, 1);
+    try {
+      await expect(
+        mutators.create.fn({ tx: createTx(), ctx, args: eventArgs({ id: 'no-organizer' }) })
+      ).rejects.toThrow('Default Organizer role is missing');
+    } finally {
+      roles.splice(organizerIndex, 0, organizer);
+    }
+  });
+
   it('creates full events, updates attendance, and cancels', async () => {
     for (const args of [
       eventArgs(),
@@ -425,6 +455,20 @@ describe('shared event CRUD and offline roster mutators', () => {
     expect(cancelled.mutate.event.update).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'cancelled', cancelled_by_id: 'actor' })
     );
+
+    for (const currentEvent of [
+      null,
+      { delegate_election_mode: 'list', id: 'event', title: 'Same' },
+      { delegate_election_mode: 'list', id: 'event', title: 'Old' },
+    ]) {
+      const activity = createTx();
+      activity.run.mockResolvedValueOnce(currentEvent);
+      await mutators.update.fn({
+        tx: activity,
+        ctx,
+        args: { id: 'event', title: currentEvent?.title === 'Old' ? 'New' : 'Same' } as never,
+      });
+    }
   });
 
   it('creates, updates, and deletes offline participants with policy checks', async () => {
@@ -671,6 +715,16 @@ describe('shared event CRUD and offline roster mutators', () => {
       ctx,
       args: { event_id: 'event', entries: [{ first_name: 'One', last_name: 'Person' }] } as never,
     });
+
+    const empty = createTx();
+    empty.run
+      .mockResolvedValueOnce({ id: 'event', attendance_mode: 'offline' })
+      .mockResolvedValueOnce([]);
+    await mutators.importOfflineParticipants.fn({
+      tx: empty,
+      ctx,
+      args: { entries: [], event_id: 'event' } as never,
+    });
   });
 });
 
@@ -786,6 +840,24 @@ describe('shared participant, role, exception, and meeting mutators', () => {
       expect(tx.mutate.event_participant.update).not.toHaveBeenCalled();
     }
 
+    for (const [status, nextStatus] of [
+      ['active', 'confirmed'],
+      ['active', 'active'],
+    ] as const) {
+      const tx = createTx();
+      tx.run.mockResolvedValueOnce({
+        event_id: 'event',
+        id: 'participant',
+        status,
+        user_id: 'actor',
+      });
+      await mutators.updateParticipant.fn({
+        tx,
+        ctx,
+        args: { id: 'participant', status: nextStatus } as never,
+      });
+    }
+
     const finalized = createTx();
     await mutators.finalizeDelegates.fn({ tx: finalized, ctx, args: { eventId: 'event' } });
     expect(finalized.mutate.event.update).toHaveBeenCalledOnce();
@@ -887,6 +959,14 @@ describe('shared participant, role, exception, and meeting mutators', () => {
       expect.objectContaining({ assignee_kind: 'member', default_request_role: false })
     );
 
+    const unnamed = createTx();
+    unnamed.run.mockResolvedValueOnce([]);
+    await mutators.createRole.fn({
+      tx: unnamed,
+      ctx,
+      args: { event_id: 'event', id: 'unnamed-role', name: undefined } as never,
+    });
+
     const missingRole = createTx();
     missingRole.run.mockResolvedValueOnce(null);
     await mutators.updateRole.fn({
@@ -978,11 +1058,26 @@ describe('shared participant, role, exception, and meeting mutators', () => {
       args: { id: 'exception' } as never,
     });
     const serverUpdate = createTx();
-    serverUpdate.run.mockResolvedValueOnce({ id: 'exception', parent_event_id: 'event' });
+    serverUpdate.run.mockResolvedValueOnce({
+      id: 'exception',
+      parent_event_id: 'event',
+      status: 'active',
+    });
     await mutators.updateException.fn({
       tx: serverUpdate,
       ctx,
-      args: { id: 'exception' } as never,
+      args: { id: 'exception', status: 'cancelled' } as never,
+    });
+    const unchangedUpdate = createTx();
+    unchangedUpdate.run.mockResolvedValueOnce({
+      id: 'exception',
+      parent_event_id: 'event',
+      status: 'active',
+    });
+    await mutators.updateException.fn({
+      tx: unchangedUpdate,
+      ctx,
+      args: { id: 'exception', status: 'active' } as never,
     });
     const unscopedUpdate = createTx();
     unscopedUpdate.run.mockResolvedValueOnce(null);

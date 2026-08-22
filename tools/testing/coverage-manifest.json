@@ -100,6 +100,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": ".github/actions/setup-project/action.yml",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": ".github/agents/plan-with-md.agent.md",
       "domain": "platform",
       "owner": "polity/platform",
@@ -553,6 +563,16 @@
     },
     {
       "path": "e2e/auth-session.e2e.spec.ts",
+      "domain": "e2e",
+      "owner": "polity/e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "e2e/blog-invitation.e2e.spec.ts",
       "domain": "e2e",
       "owner": "polity/e2e",
       "kind": "test-infrastructure",
@@ -1525,16 +1545,6 @@
     },
     {
       "path": "fly.toml",
-      "domain": "platform",
-      "owner": "polity/platform",
-      "kind": "configuration",
-      "verification": "static-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "package-lock.json",
       "domain": "platform",
       "owner": "polity/platform",
       "kind": "configuration",
@@ -14178,7 +14188,7 @@
         {
           "file": "src/features/auth/logic/__tests__/privateEntityRelationshipAccess.unit.test.ts",
           "project": "unit",
-          "caseId": "allows private amendment access for creators and active collaborators only",
+          "caseId": "allows amendment owners, active parents, and invited or active scoped view roles",
           "evidence": {
             "kind": "instrumented-full-suite",
             "relation": "direct",
@@ -19905,6 +19915,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
+      "domain": "features:create",
+      "owner": "polity/features:create",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
       "domain": "features:create",
       "owner": "polity/features:create",
@@ -19965,9 +19985,9 @@
         "src/features/create/logic/__tests__/createSearchParams.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitTargets.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
         "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
-        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts",
-        "src/features/create/logic/__tests__/paymentAmount.unit.test.ts"
+        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
       ]
     },
     {
@@ -20001,9 +20021,9 @@
         "src/features/create/logic/__tests__/createSearchParams.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitTargets.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
         "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
-        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts",
-        "src/features/create/logic/__tests__/paymentAmount.unit.test.ts"
+        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
       ]
     },
     {
@@ -20037,9 +20057,9 @@
         "src/features/create/logic/__tests__/createSearchParams.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitTargets.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
         "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
-        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts",
-        "src/features/create/logic/__tests__/paymentAmount.unit.test.ts"
+        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
       ]
     },
     {
@@ -20073,9 +20093,9 @@
         "src/features/create/logic/__tests__/createSearchParams.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitTargets.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
         "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
-        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts",
-        "src/features/create/logic/__tests__/paymentAmount.unit.test.ts"
+        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
       ]
     },
     {
@@ -20109,9 +20129,9 @@
         "src/features/create/logic/__tests__/createSearchParams.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitTargets.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
         "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
-        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts",
-        "src/features/create/logic/__tests__/paymentAmount.unit.test.ts"
+        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
       ]
     },
     {
@@ -20145,9 +20165,9 @@
         "src/features/create/logic/__tests__/createSearchParams.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitTargets.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
         "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
-        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts",
-        "src/features/create/logic/__tests__/paymentAmount.unit.test.ts"
+        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
       ]
     },
     {
@@ -20181,9 +20201,9 @@
         "src/features/create/logic/__tests__/createSearchParams.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitTargets.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
         "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
-        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts",
-        "src/features/create/logic/__tests__/paymentAmount.unit.test.ts"
+        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
       ]
     },
     {
@@ -20217,9 +20237,38 @@
         "src/features/create/logic/__tests__/createSearchParams.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitTargets.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
         "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
-        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts",
-        "src/features/create/logic/__tests__/paymentAmount.unit.test.ts"
+        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/create/logic/createVisibility.ts",
+      "domain": "features:create",
+      "owner": "polity/features:create",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
+          "project": "unit",
+          "caseId": "maps %s by semantic value"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/create/logic/__tests__/createAmendmentSearch.unit.test.ts",
+        "src/features/create/logic/__tests__/createEligibility.unit.test.ts",
+        "src/features/create/logic/__tests__/createEventSearch.unit.test.ts",
+        "src/features/create/logic/__tests__/createFinalization.branch-a09.component.test.tsx",
+        "src/features/create/logic/__tests__/createFinalization.component.test.tsx",
+        "src/features/create/logic/__tests__/createReviewPreview.coverage.component.test.tsx",
+        "src/features/create/logic/__tests__/createSearchParams.unit.test.ts",
+        "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
+        "src/features/create/logic/__tests__/createSubmitTargets.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
+        "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
+        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
       ]
     },
     {
@@ -20253,9 +20302,9 @@
         "src/features/create/logic/__tests__/createSearchParams.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitTargets.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
         "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
-        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts",
-        "src/features/create/logic/__tests__/paymentAmount.unit.test.ts"
+        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
       ]
     },
     {
@@ -20289,9 +20338,9 @@
         "src/features/create/logic/__tests__/createSearchParams.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitTargets.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
         "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
-        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts",
-        "src/features/create/logic/__tests__/paymentAmount.unit.test.ts"
+        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
       ]
     },
     {
@@ -20325,9 +20374,9 @@
         "src/features/create/logic/__tests__/createSearchParams.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
         "src/features/create/logic/__tests__/createSubmitTargets.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
         "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
-        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts",
-        "src/features/create/logic/__tests__/paymentAmount.unit.test.ts"
+        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
       ]
     },
     {
@@ -53422,6 +53471,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/shared/hooks/__tests__/useEntityActivity.unit.test.ts",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/shared/hooks/__tests__/useExportToolbarButtonController.component.test.tsx",
       "domain": "features:shared",
       "owner": "polity/features:shared",
@@ -54174,6 +54233,45 @@
             "coveredStatements": 9,
             "totalStatements": 9
           }
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/hooks/__tests__/facade-hooks.contract.unit.test.ts",
+        "src/features/shared/hooks/__tests__/lsf-rest.A01.component.test.tsx",
+        "src/features/shared/hooks/__tests__/toolbar-and-emoji-controllers.component.test.tsx",
+        "src/features/shared/hooks/__tests__/use-is-touch-device.component.test.tsx",
+        "src/features/shared/hooks/__tests__/use-translation.hook.component.test.tsx",
+        "src/features/shared/hooks/__tests__/use-translation.unit.test.ts",
+        "src/features/shared/hooks/__tests__/useAlphaWarningDialogController.component.test.tsx",
+        "src/features/shared/hooks/__tests__/useCommentInputController.component.test.tsx",
+        "src/features/shared/hooks/__tests__/useCommentItemController.component.test.tsx",
+        "src/features/shared/hooks/__tests__/useCommentThreadController.component.test.tsx",
+        "src/features/shared/hooks/__tests__/useCurrency.component.test.tsx",
+        "src/features/shared/hooks/__tests__/useCurrencyCatalog.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/shared/hooks/useEntityActivity.ts",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/hooks/__tests__/useEntityActivity.unit.test.ts",
+          "project": "unit",
+          "caseId": "allows creators and active collaborators but not invited amendment readers"
+        },
+        {
+          "file": "src/features/shared/hooks/__tests__/useEntityActivity.unit.test.ts",
+          "project": "unit",
+          "caseId": "allows active group members and event participants only"
+        },
+        {
+          "file": "src/features/shared/hooks/__tests__/useEntityActivity.unit.test.ts",
+          "project": "unit",
+          "caseId": "allows an active group guest only with a contextual management right"
         }
       ],
       "suggestedTestRefs": [
@@ -56100,6 +56198,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/shared/motion/__tests__/MotionPrimitives.component.test.tsx",
+        "src/features/shared/motion/__tests__/MotionProvider.component.test.tsx",
         "src/features/shared/motion/__tests__/motion.component.test.tsx"
       ]
     },
@@ -56126,11 +56225,22 @@
       ],
       "suggestedTestRefs": [
         "src/features/shared/motion/__tests__/MotionPrimitives.component.test.tsx",
+        "src/features/shared/motion/__tests__/MotionProvider.component.test.tsx",
         "src/features/shared/motion/__tests__/motion.component.test.tsx"
       ]
     },
     {
       "path": "src/features/shared/motion/__tests__/MotionPrimitives.component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/motion/__tests__/MotionProvider.component.test.tsx",
       "domain": "features:shared",
       "owner": "polity/features:shared",
       "kind": "test-infrastructure",
@@ -56175,6 +56285,7 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/features/shared/motion/__tests__/MotionPrimitives.component.test.tsx",
+        "src/features/shared/motion/__tests__/MotionProvider.component.test.tsx",
         "src/features/shared/motion/__tests__/motion.component.test.tsx"
       ]
     },
@@ -56202,6 +56313,7 @@
       "suggestedTestRefs": [
         "src/features/create/ui/inputs/__tests__/CreateInputVariants.coverage.component.test.tsx",
         "src/features/shared/motion/__tests__/MotionPrimitives.component.test.tsx",
+        "src/features/shared/motion/__tests__/MotionProvider.component.test.tsx",
         "src/features/shared/motion/__tests__/motion.component.test.tsx",
         "tools/database/__tests__/membership-event-invariants.database-integration.test.ts"
       ]
@@ -58014,7 +58126,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {
@@ -58043,7 +58156,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {
@@ -58072,7 +58186,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {
@@ -58101,7 +58216,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {
@@ -58130,7 +58246,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {
@@ -58159,7 +58276,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {
@@ -58213,6 +58331,46 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/ui/data-table/dataTableFeatures.ts",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts",
+          "project": "unit",
+          "caseId": "registers the complete shared filtering, sorting, pagination, selection, and visibility contract",
+          "evidence": {
+            "kind": "instrumented-full-suite",
+            "relation": "direct",
+            "report": "coverage/coverage-final.json",
+            "coveredStatements": 1,
+            "totalStatements": 1
+          }
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/data-table/__tests__/DataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
+      ]
+    },
+    {
       "path": "src/features/shared/ui/data-table/index.ts",
       "domain": "features:shared",
       "owner": "polity/features:shared",
@@ -58241,7 +58399,8 @@
         "src/features/shared/ui/data-table/__tests__/DataTableParts.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/DataTableView.branches.component.test.tsx",
         "src/features/shared/ui/data-table/__tests__/UserTableCell.component.test.tsx",
-        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx"
+        "src/features/shared/ui/data-table/__tests__/VirtualDataTable.component.test.tsx",
+        "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts"
       ]
     },
     {
@@ -74677,6 +74836,68 @@
       ]
     },
     {
+      "path": "src/features/shared/ui/wiki/ActivityLog.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/groups/__tests__/GroupWikiContentView.component.test.tsx",
+          "project": "component",
+          "caseId": "renders all rich group sections and every connected-group mode"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.branches.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryCard.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryIntegration.component.test.tsx",
+        "supabase/tests/entity_activity_logs.sql",
+        "supabase/tests/todo_activity_log.sql"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/wiki/ActivityLogView.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+          "project": "component",
+          "caseId": "opens on comments and renders localized high-severity changes in the activity tab"
+        },
+        {
+          "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+          "project": "component",
+          "caseId": "passes the selected severity to the controller"
+        },
+        {
+          "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+          "project": "component",
+          "caseId": "localizes assignments and renders the subject name instead of a translation key or id"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.branches.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryCard.component.test.tsx",
+        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryIntegration.component.test.tsx"
+      ]
+    },
+    {
       "path": "src/features/shared/ui/wiki/EntityWikiMedia.tsx",
       "domain": "features:shared",
       "owner": "polity/features:shared",
@@ -74698,6 +74919,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
@@ -74729,6 +74951,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
@@ -74760,6 +74983,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
@@ -74791,6 +75015,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
@@ -74799,6 +75024,16 @@
         "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryCard.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryIntegration.component.test.tsx"
       ]
+    },
+    {
+      "path": "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
     },
     {
       "path": "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
@@ -74895,13 +75130,13 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "src/features/shared/ui/wiki/__tests__/ActivityLogView.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/EntityWikiMedia.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/InfoTabs.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.branches.component.test.tsx",
         "src/features/shared/ui/wiki/__tests__/WikiParticipationDirectory.component.test.tsx",
-        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryCard.component.test.tsx",
-        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryIntegration.component.test.tsx"
+        "src/features/shared/ui/wiki/__tests__/WikiRosterSummaryCard.component.test.tsx"
       ]
     },
     {
@@ -79603,6 +79838,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+      "domain": "features:todos",
+      "owner": "polity/features:todos",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
       "domain": "features:todos",
       "owner": "polity/features:todos",
@@ -79676,6 +79921,42 @@
       "suggestedTestRefs": [
         "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoFilters.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoMutations.branch-a09.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/todos/hooks/useTodoActivity.ts",
+      "domain": "features:todos",
+      "owner": "polity/features:todos",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+          "project": "component",
+          "caseId": "allows creators and updates the reactive severity query"
+        },
+        {
+          "file": "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+          "project": "component",
+          "caseId": "allows assignees and group todo managers"
+        },
+        {
+          "file": "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+          "project": "component",
+          "caseId": "does not request activity data for unrelated or anonymous readers"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
@@ -79707,6 +79988,7 @@
       "suggestedTestRefs": [
         "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
@@ -79738,6 +80020,7 @@
       "suggestedTestRefs": [
         "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
@@ -79769,6 +80052,7 @@
       "suggestedTestRefs": [
         "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
@@ -79800,6 +80084,7 @@
       "suggestedTestRefs": [
         "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
@@ -79831,6 +80116,7 @@
       "suggestedTestRefs": [
         "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
@@ -79950,10 +80236,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -79986,10 +80272,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -80022,10 +80308,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -80058,10 +80344,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -80094,10 +80380,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -80130,10 +80416,54 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/todos/ui/TodoDiscussionTabs.tsx",
+      "domain": "features:todos",
+      "owner": "polity/features:todos",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+          "project": "component",
+          "caseId": "opens on comments and renders localized high-severity changes in the activity tab"
+        },
+        {
+          "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+          "project": "component",
+          "caseId": "passes the selected severity to the controller"
+        },
+        {
+          "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+          "project": "component",
+          "caseId": "localizes assignments and renders the subject name instead of a translation key or id"
+        },
+        {
+          "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+          "project": "component",
+          "caseId": "does not expose the activity tab to unauthorized readers"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailDialogView.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailDialogView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -80164,10 +80494,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -80200,10 +80530,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -80236,10 +80566,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -80272,10 +80602,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -80308,10 +80638,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -80386,6 +80716,16 @@
     },
     {
       "path": "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+      "domain": "features:todos",
+      "owner": "polity/features:todos",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
       "domain": "features:todos",
       "owner": "polity/features:todos",
       "kind": "test-infrastructure",
@@ -80484,10 +80824,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -80521,9 +80861,9 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80556,10 +80896,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -80592,10 +80932,10 @@
         "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx",
-        "src/features/todos/ui/__tests__/todo-detail-dialog.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
       ]
     },
     {
@@ -96184,10 +96524,10 @@
         "src/zero/accreditation/__tests__/accreditationServerMutators.authorization.unit.test.ts",
         "src/zero/accreditation/__tests__/accreditationWorkflow.unit.test.ts",
         "src/zero/accreditation/__tests__/useAccreditationActions.lsf-a10.component.test.tsx",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
-        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
-        "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts"
+        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts"
       ]
     },
     {
@@ -96391,6 +96731,124 @@
       ]
     },
     {
+      "path": "src/zero/activity/__tests__/domain-mutators.unit.test.ts",
+      "domain": "zero:activity",
+      "owner": "polity/zero:activity",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/activity/__tests__/migration-contract.unit.test.ts",
+      "domain": "zero:activity",
+      "owner": "polity/zero:activity",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/activity/__tests__/queries.unit.test.ts",
+      "domain": "zero:activity",
+      "owner": "polity/zero:activity",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/activity/__tests__/shared.unit.test.ts",
+      "domain": "zero:activity",
+      "owner": "polity/zero:activity",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/activity/queries.ts",
+      "domain": "zero:activity",
+      "owner": "polity/zero:activity",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/activity/__tests__/queries.unit.test.ts",
+          "project": "unit",
+          "caseId": "defaults filters, cursor, and page size"
+        },
+        {
+          "file": "src/zero/activity/__tests__/queries.unit.test.ts",
+          "project": "unit",
+          "caseId": "accepts supported filters and rejects invalid filters, cursors, and limits"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/editor/logic/__tests__/version-queries.unit.test.ts",
+        "src/zero/__tests__/allQueries.contract.unit.test.ts",
+        "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
+        "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/domain-mutators.unit.test.ts",
+        "src/zero/activity/__tests__/migration-contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
+        "src/zero/activity/__tests__/shared.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
+        "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/zero/activity/shared.ts",
+      "domain": "zero:activity",
+      "owner": "polity/zero:activity",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/activity/__tests__/shared.unit.test.ts",
+          "project": "unit",
+          "caseId": "normalizes diffs, omits no-ops, and lets high fields win"
+        },
+        {
+          "file": "src/zero/activity/__tests__/shared.unit.test.ts",
+          "project": "unit",
+          "caseId": "writes only on a server transaction and supports system actors"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/events/hooks/__tests__/useSharedWeekViewController.component.test.tsx",
+        "src/features/shared/ui/__tests__/SharedActionAccountability.unit.test.ts",
+        "src/features/shared/ui/__tests__/SharedPeripheralCoverage.component.test.tsx",
+        "src/features/shared/ui/__tests__/shared-surfaces.lsf-a02.component.test.tsx",
+        "src/zero/activity/__tests__/domain-mutators.unit.test.ts",
+        "src/zero/activity/__tests__/migration-contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
+        "src/zero/activity/__tests__/shared.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaSharedMutators.branches.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaSharedMutators.speakerAuthorization.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.changeRequestNumbering.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.cityDesignBatch.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/zero/activity/types.ts",
+      "domain": "zero:activity",
+      "owner": "polity/zero:activity",
+      "kind": "declarative",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/agendas/__tests__/agendaQueryAndSchemaBranches.unit.test.ts",
       "domain": "zero:agendas",
       "owner": "polity/zero:agendas",
@@ -96584,14 +97042,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/agendas/__tests__/agendaQueryAndSchemaBranches.unit.test.ts",
         "src/zero/agendas/__tests__/agendaServerMutators.ensureEventSuggestionChangeRequestVotes.unit.test.ts",
         "src/zero/agendas/__tests__/agendaServerMutators.initializeChangeRequestVoting.unit.test.ts",
         "src/zero/agendas/__tests__/agendaServerMutators.internalBranches.unit.test.ts",
         "src/zero/agendas/__tests__/agendaSharedMutators.branches.unit.test.ts",
         "src/zero/agendas/__tests__/agendaSharedMutators.speakerAuthorization.unit.test.ts",
-        "src/zero/agendas/__tests__/changeRequestVoteOrdering.branches.unit.test.ts",
-        "src/zero/agendas/__tests__/useAgendaActions.lsf-a03.component.test.tsx"
+        "src/zero/agendas/__tests__/changeRequestVoteOrdering.branches.unit.test.ts"
       ]
     },
     {
@@ -96893,14 +97351,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -96933,6 +97391,7 @@
         "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts",
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
         "supabase/tests/schema_constraints.sql",
         "supabase/tests/schema_contract.sql"
       ]
@@ -97798,14 +98257,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentServerMutators.authorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentServerMutators.cityDesignBatch.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.changeRequestNumbering.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.cityDesignBatch.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.documentChangeRequest.unit.test.ts",
-        "src/zero/amendments/__tests__/amendmentSharedMutators.formatFallback.unit.test.ts",
-        "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts"
+        "src/zero/amendments/__tests__/amendmentSharedMutators.formatFallback.unit.test.ts"
       ]
     },
     {
@@ -98182,14 +98641,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/appearance-themes/__tests__/hooks.component.test.tsx",
         "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
         "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
-        "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts"
+        "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts"
       ]
     },
     {
@@ -98225,7 +98684,7 @@
         "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts",
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
-        "supabase/tests/schema_constraints.sql"
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts"
       ]
     },
     {
@@ -98431,14 +98890,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogServerMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/blogSharedMutators.branch-a10.unit.test.ts",
         "src/zero/blogs/__tests__/useBlogActions.lsf-a10.component.test.tsx",
         "src/zero/blogs/__tests__/useBlogState.component.test.tsx",
-        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
-        "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts"
+        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts"
       ]
     },
     {
@@ -98707,14 +99166,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/calendar-subscriptions/__tests__/shared-mutators.branch-a04.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
-        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
+        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -98748,6 +99207,7 @@
         "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts",
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
         "supabase/tests/schema_constraints.sql",
         "supabase/tests/schema_contract.sql"
       ]
@@ -99178,14 +99638,14 @@
         "src/features/auth/hooks/__tests__/useEntityVisibilityGuardController.component.test.tsx",
         "src/features/auth/logic/__tests__/routeVisibilityAccess.unit.test.ts",
         "src/features/calendar/logic/__tests__/calendarEventVisibility.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
         "src/features/discussions/ui/__tests__/DiscussionActionVisibility.component.test.tsx",
         "src/features/shared/ui/form/__tests__/VisibilitySelector.component.test.tsx",
         "src/routes/__tests__/entityVisibilityLayouts.component.test.tsx",
         "src/zero/change-requests/__tests__/document-integrity.unit.test.ts",
         "src/zero/change-requests/__tests__/event-suggestions.unit.test.ts",
         "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
-        "src/zero/change-requests/__tests__/server-resolution.city-design.unit.test.ts",
-        "src/zero/change-requests/__tests__/server-resolution.unit.test.ts"
+        "src/zero/change-requests/__tests__/server-resolution.city-design.unit.test.ts"
       ]
     },
     {
@@ -99372,14 +99832,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.branches.unit.test.ts",
         "src/zero/common/__tests__/commonSharedMutators.links.unit.test.ts",
-        "src/zero/common/__tests__/hashtagHelpers.unit.test.ts",
-        "src/zero/common/__tests__/serverHashtags.branches.unit.test.ts"
+        "src/zero/common/__tests__/hashtagHelpers.unit.test.ts"
       ]
     },
     {
@@ -99694,14 +100154,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -99820,6 +100280,7 @@
         "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts",
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
         "supabase/tests/schema_constraints.sql",
         "supabase/tests/schema_contract.sql"
       ]
@@ -99917,6 +100378,7 @@
         "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts",
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
         "supabase/tests/schema_constraints.sql",
         "supabase/tests/schema_contract.sql"
       ]
@@ -100087,14 +100549,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/documents/__tests__/documentServerMutators.statementComments.unit.test.ts",
         "src/zero/documents/__tests__/documentSharedMutators.branch-a03.unit.test.ts",
-        "src/zero/documents/__tests__/documentSharedMutators.groupRbac.unit.test.ts",
-        "src/zero/documents/__tests__/documentSharedMutators.optimisticVotes.unit.test.ts"
+        "src/zero/documents/__tests__/documentSharedMutators.groupRbac.unit.test.ts"
       ]
     },
     {
@@ -100473,14 +100935,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/elections/__tests__/electionQueryAndSchemaBranches.unit.test.ts",
         "src/zero/elections/__tests__/electionServerMutators.internalBranches.unit.test.ts",
-        "src/zero/elections/__tests__/electionServerMutators.notifications.unit.test.ts",
-        "src/zero/elections/__tests__/electionServerMutators.offlineTallies.unit.test.ts"
+        "src/zero/elections/__tests__/electionServerMutators.notifications.unit.test.ts"
       ]
     },
     {
@@ -101035,14 +101497,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/assembly-reconcile.typefix.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/assemblyReconcile.coverage.unit.test.ts",
-        "src/zero/events/__tests__/assemblyReconcile.notifications.unit.test.ts",
-        "src/zero/events/__tests__/attendanceMode.unit.test.ts"
+        "src/zero/events/__tests__/assemblyReconcile.notifications.unit.test.ts"
       ]
     },
     {
@@ -101721,14 +102183,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -102114,14 +102576,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -102382,6 +102844,7 @@
       "suggestedTestRefs": [
         "src/zero/__tests__/mutators.contract.unit.test.ts",
         "src/zero/accreditation/__tests__/accreditationServerMutators.authorization.unit.test.ts",
+        "src/zero/activity/__tests__/domain-mutators.unit.test.ts",
         "src/zero/agendas/__tests__/agendaServerMutators.ensureEventSuggestionChangeRequestVotes.unit.test.ts",
         "src/zero/agendas/__tests__/agendaServerMutators.initializeChangeRequestVoting.unit.test.ts",
         "src/zero/agendas/__tests__/agendaServerMutators.internalBranches.unit.test.ts",
@@ -102390,8 +102853,7 @@
         "src/zero/amendments/__tests__/amendmentServerMutators.authorization.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentServerMutators.cityDesignBatch.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentSharedMutators.changeRequestNumbering.unit.test.ts",
-        "src/zero/amendments/__tests__/amendmentSharedMutators.cityDesignBatch.unit.test.ts",
-        "src/zero/amendments/__tests__/amendmentSharedMutators.documentChangeRequest.unit.test.ts"
+        "src/zero/amendments/__tests__/amendmentSharedMutators.cityDesignBatch.unit.test.ts"
       ]
     },
     {
@@ -102774,14 +103236,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -103406,14 +103868,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -103874,14 +104336,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -104150,14 +104612,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -104191,6 +104653,7 @@
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
         "src/zero/pql/__tests__/pql-zero.branch-a09.unit.test.ts",
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
         "supabase/tests/schema_constraints.sql",
         "supabase/tests/schema_contract.sql"
       ]
@@ -104388,14 +104851,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -104430,8 +104893,8 @@
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
         "src/zero/preferences/__tests__/shared-mutators.branch-a07.unit.test.ts",
         "src/zero/preferences/__tests__/usePreferenceSync.branch-a07.component.test.tsx",
-        "supabase/tests/schema_constraints.sql",
-        "supabase/tests/schema_contract.sql"
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
+        "supabase/tests/schema_constraints.sql"
       ]
     },
     {
@@ -105166,14 +105629,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -105258,6 +105721,16 @@
     },
     {
       "path": "src/zero/rbac/__tests__/constants.unit.test.ts",
+      "domain": "zero:rbac",
+      "owner": "polity/zero:rbac",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
       "domain": "zero:rbac",
       "owner": "polity/zero:rbac",
       "kind": "test-infrastructure",
@@ -105366,10 +105839,10 @@
         "src/zero/rbac/__tests__/check.mutation-m06.unit.test.ts",
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
+        "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
         "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.mutation-a01.unit.test.ts"
+        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
       ]
     },
     {
@@ -105403,9 +105876,9 @@
         "src/zero/rbac/__tests__/check.mutation-m06.unit.test.ts",
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
+        "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
-        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
       ]
     },
     {
@@ -105438,10 +105911,10 @@
         "src/zero/rbac/__tests__/check.mutation-m06.unit.test.ts",
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
+        "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
         "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.mutation-a01.unit.test.ts"
+        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
       ]
     },
     {
@@ -105511,6 +105984,60 @@
         "src/zero/rbac/__tests__/check.mutation-m06.unit.test.ts",
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
+        "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
+        "src/zero/rbac/__tests__/queries.authorization.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/zero/rbac/creator-bootstrap.ts",
+      "domain": "zero:rbac",
+      "owner": "polity/zero:rbac",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+          "project": "unit",
+          "caseId": "derives stable, scoped UUIDs on client and server"
+        },
+        {
+          "file": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+          "project": "unit",
+          "caseId": "writes identical bootstrap IDs during client and server execution"
+        },
+        {
+          "file": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+          "project": "unit",
+          "caseId": "projects group membership, Admin role, and Admin rights immediately"
+        },
+        {
+          "file": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+          "project": "unit",
+          "caseId": "projects event participation, Organizer role, and Organizer rights immediately"
+        },
+        {
+          "file": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+          "project": "unit",
+          "caseId": "projects amendment collaborator, Author role, and Author rights immediately"
+        },
+        {
+          "file": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+          "project": "unit",
+          "caseId": "projects blog owner, Owner role, and Owner rights immediately"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/rbac/__tests__/amendment-access.unit.test.ts",
+        "src/zero/rbac/__tests__/authorize.unit.test.ts",
+        "src/zero/rbac/__tests__/can.unit.test.ts",
+        "src/zero/rbac/__tests__/check.amendment.unit.test.ts",
+        "src/zero/rbac/__tests__/check.decision-table.unit.test.ts",
+        "src/zero/rbac/__tests__/check.mutation-m06.unit.test.ts",
+        "src/zero/rbac/__tests__/check.status.unit.test.ts",
+        "src/zero/rbac/__tests__/constants.unit.test.ts",
+        "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
         "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
         "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
@@ -105546,10 +106073,10 @@
         "src/zero/rbac/__tests__/check.mutation-m06.unit.test.ts",
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
+        "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
         "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.mutation-a01.unit.test.ts"
+        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
       ]
     },
     {
@@ -105582,10 +106109,10 @@
         "src/zero/rbac/__tests__/check.mutation-m06.unit.test.ts",
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
+        "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
         "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.mutation-a01.unit.test.ts"
+        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
       ]
     },
     {
@@ -105648,14 +106175,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -105688,10 +106215,10 @@
         "src/zero/rbac/__tests__/check.mutation-m06.unit.test.ts",
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
+        "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
         "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.mutation-a01.unit.test.ts"
+        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
       ]
     },
     {
@@ -105734,10 +106261,10 @@
         "src/zero/rbac/__tests__/check.mutation-m06.unit.test.ts",
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
+        "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
         "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.mutation-a01.unit.test.ts"
+        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
       ]
     },
     {
@@ -105770,10 +106297,10 @@
         "src/zero/rbac/__tests__/check.mutation-m06.unit.test.ts",
         "src/zero/rbac/__tests__/check.status.unit.test.ts",
         "src/zero/rbac/__tests__/constants.unit.test.ts",
+        "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
         "src/zero/rbac/__tests__/handleMutationError.unit.test.ts",
         "src/zero/rbac/__tests__/queries.authorization.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts",
-        "src/zero/rbac/__tests__/query-access.mutation-a01.unit.test.ts"
+        "src/zero/rbac/__tests__/query-access.decision-table.unit.test.ts"
       ]
     },
     {
@@ -105833,6 +106360,7 @@
         "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts",
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
         "supabase/tests/schema_constraints.sql",
         "supabase/tests/schema_contract.sql"
       ]
@@ -106186,14 +106714,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -106402,14 +106930,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -106775,14 +107303,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -106992,6 +107520,16 @@
       ]
     },
     {
+      "path": "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
+      "domain": "zero:users",
+      "owner": "polity/zero:users",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/users/__tests__/queries.branch-a07.unit.test.ts",
       "domain": "zero:users",
       "owner": "polity/zero:users",
@@ -107056,6 +107594,7 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
         "src/zero/users/__tests__/queries.branch-a07.unit.test.ts",
         "src/zero/users/__tests__/server-mutators.lsf-a07.unit.test.ts",
         "src/zero/users/__tests__/useUserState.branch-a07.component.test.tsx",
@@ -107088,14 +107627,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -107128,10 +107667,10 @@
         "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts",
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
         "src/zero/users/__tests__/queries.branch-a07.unit.test.ts",
         "src/zero/users/__tests__/server-mutators.lsf-a07.unit.test.ts",
-        "src/zero/users/__tests__/useUserState.branch-a07.component.test.tsx",
-        "src/zero/users/__tests__/user-actions.lsf-a07.component.test.tsx"
+        "src/zero/users/__tests__/useUserState.branch-a07.component.test.tsx"
       ]
     },
     {
@@ -107264,6 +107803,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
         "src/zero/users/__tests__/queries.branch-a07.unit.test.ts",
         "src/zero/users/__tests__/server-mutators.lsf-a07.unit.test.ts",
         "src/zero/users/__tests__/useUserState.branch-a07.component.test.tsx",
@@ -107292,6 +107832,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
         "src/zero/users/__tests__/queries.branch-a07.unit.test.ts",
         "src/zero/users/__tests__/server-mutators.lsf-a07.unit.test.ts",
         "src/zero/users/__tests__/useUserState.branch-a07.component.test.tsx",
@@ -107320,6 +107861,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
         "src/zero/users/__tests__/queries.branch-a07.unit.test.ts",
         "src/zero/users/__tests__/server-mutators.lsf-a07.unit.test.ts",
         "src/zero/users/__tests__/useUserState.branch-a07.component.test.tsx",
@@ -107509,14 +108051,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -107549,10 +108091,10 @@
         "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts",
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
         "src/zero/votes/__tests__/replaceIndicativeVote.missingVoterId.branch-a10.unit.test.ts",
         "src/zero/votes/__tests__/useVoteActions.lsf-a10.component.test.tsx",
-        "src/zero/votes/__tests__/useVoteState.component.test.tsx",
-        "src/zero/votes/__tests__/vote-workflow.unit.test.ts"
+        "src/zero/votes/__tests__/useVoteState.component.test.tsx"
       ]
     },
     {
@@ -107840,14 +108382,14 @@
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
         "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
         "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
         "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
         "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
         "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
         "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
         "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts",
-        "src/zero/groups/__tests__/groupQueries.wikiRoster.unit.test.ts"
+        "src/zero/groups/__tests__/groupQueries.coverage.unit.test.ts"
       ]
     },
     {
@@ -107880,10 +108422,10 @@
         "src/zero/events/__tests__/eventSchema.timestamps.unit.test.ts",
         "src/zero/notifications/__tests__/notificationReadSchema.static-contract.test.ts",
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
         "src/zero/voting-password/__tests__/useVotingPasswordActions.component.test.tsx",
         "src/zero/voting-password/__tests__/votingPasswordMutators.authorization.unit.test.ts",
-        "supabase/tests/schema_constraints.sql",
-        "supabase/tests/schema_contract.sql"
+        "supabase/tests/schema_constraints.sql"
       ]
     },
     {
@@ -108198,6 +108740,66 @@
     },
     {
       "path": "supabase/migrations/20260812130000_dataset_search_archive_projection.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260821120000_private_group_role_discovery.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260821130000_private_entity_role_discovery.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260822031500_ensure_pg_net_extension.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260822120000_user_contact_email.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260822130000_todo_activity_log.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260822140000_entity_activity_logs.sql",
       "domain": "database",
       "owner": "polity/database",
       "kind": "declarative",
@@ -108747,6 +109349,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "supabase/tests/entity_activity_logs.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "supabase/tests/events_agenda_delegation.sql",
       "domain": "database",
       "owner": "polity/database",
@@ -108858,6 +109470,16 @@
     },
     {
       "path": "supabase/tests/storage_rls.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/tests/todo_activity_log.sql",
       "domain": "database",
       "owner": "polity/database",
       "kind": "test-infrastructure",
@@ -109549,6 +110171,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/testing/__tests__/package-manager-contract.static-contract.test.ts",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/testing/__tests__/resolve-accountability-domain.unit.test.ts",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
@@ -109630,6 +110262,16 @@
     },
     {
       "path": "tools/testing/accountability/final-coverage.json",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/accountability/private-groups-activity.json",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",

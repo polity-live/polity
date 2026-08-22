@@ -122,4 +122,15 @@ describe('event query registry coverage', () => {
     executePredicates(harness);
     expect(Object.keys(harness.byTable).length).toBeGreaterThan(20);
   });
+
+  it('keeps the unfiltered activity feed when severity is all', async () => {
+    const { eventQueries } = await loadQueries();
+
+    expect(() =>
+      (eventQueries.activities as any).fn({
+        args: { entityId: 'event-1', severity: 'all', cursor: null, limit: 20 },
+        ctx: { userID: 'user-1', email: 'user@example.com' },
+      })
+    ).not.toThrow();
+  });
 });

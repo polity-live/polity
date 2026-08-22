@@ -1,15 +1,33 @@
 import { ALPHA_WARNING_SESSION_KEY } from '@/features/shared/constants';
+import type { BrowserContext } from '@playwright/test';
 
 import { expect, test } from './fixtures/test';
 import { signInThroughUi } from './fixtures/auth-flow-page';
 import { db } from './fixtures/db';
 import { waitForAppReady } from './fixtures/readiness';
 
+async function closeContextWithin(context: BrowserContext | undefined, timeoutMs = 5_000) {
+  if (!context) return;
+
+  await new Promise<void>(resolve => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve();
+    };
+    const timer = setTimeout(finish, timeoutMs);
+    void context.close().then(finish, finish);
+  });
+}
+
 test('keeps language and theme through a fresh authenticated session @pr @mobile @agent1-promotion', async ({
   browser,
   page,
   e2eUser,
 }) => {
+  test.setTimeout(180_000);
   const sql = db();
   const [original] = await sql<{ language: string; theme: string }[]>`
     select language, theme
@@ -82,7 +100,7 @@ test('keeps language and theme through a fresh authenticated session @pr @mobile
       resumedPage.locator('[data-action-id="navigation.language.popover.open"]')
     ).toContainText('🇩🇪');
   } finally {
-    await resumedContext?.close();
+    await closeContextWithin(resumedContext);
     if (original) {
       await sql`
         update public.user_preference

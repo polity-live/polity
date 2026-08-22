@@ -10,8 +10,8 @@
     "uniqueIndexes": 28,
     "uniqueRules": 84,
     "indexes": 650,
-    "functions": 67,
-    "triggers": 57,
+    "functions": 73,
+    "triggers": 64,
     "policies": 155,
     "cronBranches": 2
   },

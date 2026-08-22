@@ -237,6 +237,22 @@ describe('todo shared mutators', () => {
     );
   });
 
+  it('records server assignment changes from the current assignee list', async () => {
+    const transaction = tx();
+    transaction.run
+      .mockResolvedValueOnce({ creator_id: 'actor', group_id: null, id: 'todo' })
+      .mockResolvedValueOnce([{ user_id: 'old-user' }, { user_id: null }]);
+    await call('assign', transaction, {
+      id: 'assignment',
+      todo_id: 'todo',
+      user_id: 'new-user',
+    });
+    expect(transaction.mutate.todo_assignment.insert).toHaveBeenCalled();
+    expect(transaction.mutate.todo_activity.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'assigned', subject_user_id: 'new-user' })
+    );
+  });
+
   it('unassigns optimistically, rejects missing server assignments, and authorizes existing ones', async () => {
     const client = tx('client');
     await call('unassign', client, { id: 'assignment' });
@@ -250,11 +266,23 @@ describe('todo shared mutators', () => {
 
     const existing = tx();
     existing.run
-      .mockResolvedValueOnce({ todo_id: 'todo' })
+      .mockResolvedValueOnce({ todo_id: 'todo', user_id: 'removed-user' })
       .mockResolvedValueOnce({ creator_id: 'actor', group_id: null, id: 'todo' })
-      .mockResolvedValueOnce([]);
+      .mockResolvedValueOnce([{ user_id: 'removed-user' }, { user_id: 'kept-user' }]);
     await call('unassign', existing, { id: 'assignment' });
     expect(h.requireOwner).toHaveBeenCalled();
+    expect(existing.mutate.todo_activity.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'unassigned',
+        changes: [
+          {
+            field: 'assignees',
+            from: ['kept-user', 'removed-user'],
+            to: ['kept-user'],
+          },
+        ],
+      })
+    );
   });
 
   it('rejects missing completion targets and toggles client completion both ways', async () => {

@@ -23,7 +23,7 @@ function TodoActivityList({ activity }: { activity: TodoActivityController }) {
         setSeverity: activity.setSeverity,
         isLoading: activity.isLoading,
         hasMore: false,
-        loadMore: () => undefined,
+        loadMore: activity.setSeverity.bind(null, activity.severity),
       }}
     />
   );

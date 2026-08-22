@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
+  applyActivityCursor,
   activityCursorSchema,
   activityPageLimitSchema,
   activitySeverityFilterSchema,
@@ -24,5 +25,21 @@ describe('activity query input contracts', () => {
     expect(() => activityCursorSchema.parse({ id: 'activity-1' })).toThrow();
     expect(() => activityPageLimitSchema.parse(0)).toThrow();
     expect(() => activityPageLimitSchema.parse(101)).toThrow();
+  });
+
+  it('orders activity pages with and without a cursor', () => {
+    const query = {
+      orderBy: vi.fn(),
+      start: vi.fn(),
+    } as any;
+    query.orderBy.mockReturnValue(query);
+    query.start.mockReturnValue(query);
+
+    expect(applyActivityCursor(query, null)).toBe(query);
+    expect(query.start).not.toHaveBeenCalled();
+
+    const cursor = { id: 'activity-1', created_at: 123 };
+    expect(applyActivityCursor(query, cursor)).toBe(query);
+    expect(query.start).toHaveBeenCalledWith(cursor, { inclusive: false });
   });
 });

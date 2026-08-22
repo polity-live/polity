@@ -38,11 +38,16 @@ export const RIGHT_LABELS: Record<RightType, string> = {
 };
 
 export const RIGHT_GRADIENTS: Record<string, string> = {
-  informationRight: getRightToneClasses('informationRight').badge,
-  amendmentRight: getRightToneClasses('amendmentRight').badge,
-  rightToSpeak: getRightToneClasses('rightToSpeak').badge,
-  activeVotingRight: getRightToneClasses('activeVotingRight').badge,
-  passiveVotingRight: getRightToneClasses('passiveVotingRight').badge,
+  informationRight:
+    'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] text-[var(--badge-info-fg)]',
+  amendmentRight:
+    'border-[var(--entity-amendment-border)] bg-[var(--entity-amendment-bg)] text-[var(--entity-amendment-fg)]',
+  rightToSpeak:
+    'border-[var(--badge-accent-border)] bg-[var(--badge-accent-bg)] text-[var(--badge-accent-fg)]',
+  activeVotingRight:
+    'border-[var(--badge-danger-border)] bg-[var(--badge-danger-bg)] text-[var(--badge-danger-fg)]',
+  passiveVotingRight:
+    'border-[var(--badge-neutral-border)] bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)]',
   [MEMBERSHIP_FLOW_RIGHT]:
     'border-[var(--entity-group-border)] bg-[var(--entity-group-bg)] text-[var(--entity-group-fg)]',
 };

@@ -217,6 +217,19 @@ function renderEventWikiContent(overrides: Partial<EventWikiContentViewProps> = 
 }
 
 describe('EventWikiContentView', () => {
+  it('provides activity to the event creator', () => {
+    renderEventWikiContent({
+      event: {
+        creator_id: 'user-1',
+        id: 'event-1',
+        participants: [],
+        title: 'Creator event',
+      },
+      user: { id: 'user-1' },
+    });
+    expect(screen.getByTestId('info-tabs')).toBeTruthy();
+  });
+
   it.each([
     ['public', 'public'],
     ['authenticated', 'authenticated'],

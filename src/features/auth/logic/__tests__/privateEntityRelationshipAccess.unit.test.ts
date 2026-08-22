@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  hasActiveGroupRelationshipAccess,
   hasPrivateAmendmentRouteAccess,
   hasPrivateBlogRouteAccess,
   hasPrivateEventRouteAccess,
@@ -8,6 +9,20 @@ import {
 } from '../privateEntityRelationshipAccess';
 
 describe('privateEntityRelationshipAccess', () => {
+  it('recognizes only owners, active members, and active guests for inherited group access', () => {
+    expect(hasActiveGroupRelationshipAccess('user-1', 'user-1', [])).toBe(true);
+    expect(hasActiveGroupRelationshipAccess('owner', 'user-1', [null, 'requested', 'member'])).toBe(
+      true
+    );
+    expect(
+      hasActiveGroupRelationshipAccess('owner', 'user-1', [undefined], [null, 'invited', 'active'])
+    ).toBe(true);
+    expect(hasActiveGroupRelationshipAccess('owner', 'user-1', ['requested'], ['invited'])).toBe(
+      false
+    );
+    expect(hasActiveGroupRelationshipAccess('owner', null, ['active'], ['active'])).toBe(false);
+  });
+
   it('rejects every private relationship without an authenticated user', () => {
     expect(hasPrivateGroupRouteAccess('group-1', 'owner', null, [])).toBe(false);
     expect(hasPrivateAmendmentRouteAccess('amendment-1', 'creator', undefined, [])).toBe(false);
@@ -71,6 +86,20 @@ describe('privateEntityRelationshipAccess', () => {
           status: 'active',
           roles: [
             { action_rights: [{ group_id: 'other-group', resource: 'groups', action: 'view' }] },
+          ],
+        },
+      ])
+    ).toBe(false);
+    expect(
+      hasPrivateGroupRouteAccess('group-1', 'user-1', 'user-2', [
+        {
+          status: 'active',
+          roles: [
+            {
+              scope: 'group',
+              group_id: 'group-1',
+              action_rights: [{ group_id: 'group-1', resource: 'groups', action: null }],
+            },
           ],
         },
       ])

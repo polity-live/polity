@@ -1,0 +1,27 @@
+allowBuilds:
+  '@parcel/watcher': true
+  '@rocicorp/zero-sqlite3': true
+  esbuild: true
+  msw: false
+  protobufjs: true
+  # sharp is dev-only via React Email/Next and its platform binary is provided
+  # through optional dependencies, so its fallback source-build hook stays disabled.
+  sharp: false
+
+fetchRetries: 5
+fetchRetryFactor: 2
+fetchRetryMintimeout: 20000
+fetchRetryMaxtimeout: 120000
+fetchTimeout: 300000
+# Zero 1.x and Radix publish declaration graphs that rely on a flat Node module
+# layout. Keep pnpm's canonical lockfile while matching that supported layout.
+nodeLinker: hoisted
+
+# Keep only transitive security fixes that the current direct dependency graph
+# does not resolve on its own. Re-check these with `pnpm why` on upgrades.
+overrides:
+  '@opentelemetry/core@2': 2.10.0
+  '@opentelemetry/propagator-jaeger@2': 2.9.0
+  qs: 6.15.2
+  uuid: 11.1.1
+  'xmlbuilder2@3.1.1>js-yaml': 3.15.1

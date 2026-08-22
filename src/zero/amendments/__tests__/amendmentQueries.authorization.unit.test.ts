@@ -142,6 +142,19 @@ beforeEach(() => {
 });
 
 describe('amendment query nested authorization', () => {
+  it('fail-closes anonymous activity and supports an unfiltered activity feed', () => {
+    amendmentQueries.activities.fn({
+      args: { entityId: 'amendment-1', severity: 'all', cursor: null, limit: 20 },
+      ctx: anonymousCtx,
+    });
+
+    expect(lastQuery('amendment_activity.amendment').calls).toContainEqual([
+      'where',
+      'id',
+      '__unauthorized__',
+    ]);
+  });
+
   it('loads all active wiki collaborators without pending statuses', () => {
     amendmentQueries.byIdFull.fn({ args: { id: 'amendment-1' }, ctx });
 

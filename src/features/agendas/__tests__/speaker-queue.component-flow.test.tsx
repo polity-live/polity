@@ -16,6 +16,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
     t: (key: string, values?: { count?: number }) =>
       values?.count === undefined ? key : `${key}:${values.count}`,
   }),
+  translate: (_key: string, fallback?: string) => fallback ?? _key,
 }));
 vi.mock('@/features/shared/ui/ui/carousel', () => ({
   Carousel: ({ children }: { children: ReactNode }) => <div>{children}</div>,

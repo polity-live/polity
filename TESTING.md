@@ -1,25 +1,25 @@
 # Polity test strategy
 
-Every user action belongs on the lowest test level that can reproduce a failure reliably. The executable mapping for the nine critical business processes lives in `tools/testing/action-catalog.json` and is checked by `npm run test:action-catalog`. The separate flow campaign and its ten canonical cross-boundary acceptance journeys live in `tools/testing/flow-test-campaign.json` and are checked by `npm run test:flow-campaign`.
+Every user action belongs on the lowest test level that can reproduce a failure reliably. The executable mapping for the nine critical business processes lives in `tools/testing/action-catalog.json` and is checked by `pnpm run test:action-catalog`. The separate flow campaign and its ten canonical cross-boundary acceptance journeys live in `tools/testing/flow-test-campaign.json` and are checked by `pnpm run test:flow-campaign`.
 
-The campaign audit currently locks 86 component-flow, 13 service-integration, 9 database-integration, 20 PR E2E and 10 nightly E2E cases: 138 promoted cases in total. It separately asserts that exactly ten E2E journeys carry the `@acceptance` contract.
+The campaign audit currently locks 87 component-flow, 13 service-integration, 9 database-integration, 20 PR E2E and 10 nightly E2E cases: 139 promoted cases in total. It separately asserts that exactly ten E2E journeys carry the `@acceptance` contract.
 
 ## Test levels
 
-| Level                 | Use for                                                                               | Required suffix                    | Primary command                     |
-| --------------------- | ------------------------------------------------------------------------------------- | ---------------------------------- | ----------------------------------- |
-| Unit                  | Deterministic business rules without UI, database or network                          | `*.unit.test.ts`                   | `npm run test:unit`                 |
-| Component integration | Components, hooks, forms and UI states with stateful fake I/O                         | `*.component.test.tsx`             | `npm run test:component`            |
-| Component flow        | Several components, hooks and providers exercised as one user flow                    | `*.component-flow.test.tsx`        | `npm run test:component-flow`       |
-| Browser component     | Browser-only component behavior requiring a real Chromium DOM                         | `*.browser-component.test.tsx`     | `npm run test:browser-component`    |
-| Service integration   | Route/handler, schema and service working together through real in-process boundaries | `*.service-integration.test.ts(x)` | `npm run test:service-integration`  |
-| Database integration  | Schema, RLS, triggers, transactions and concurrency against a reset local Supabase    | `*.database-integration.test.ts`   | `npm run test:database-integration` |
-| Static contract       | Repository, workflow, source-shape and generated-artifact invariants                  | `*.static-contract.test.ts`        | `npm run test:static`               |
-| E2E                   | Critical browser-App-Zero-database boundaries, realtime and multi-user behavior       | `*.e2e.spec.ts`                    | `npm run test:e2e:pr`               |
+| Level                 | Use for                                                                               | Required suffix                    | Primary command                      |
+| --------------------- | ------------------------------------------------------------------------------------- | ---------------------------------- | ------------------------------------ |
+| Unit                  | Deterministic business rules without UI, database or network                          | `*.unit.test.ts`                   | `pnpm run test:unit`                 |
+| Component integration | Components, hooks, forms and UI states with stateful fake I/O                         | `*.component.test.tsx`             | `pnpm run test:component`            |
+| Component flow        | Several components, hooks and providers exercised as one user flow                    | `*.component-flow.test.tsx`        | `pnpm run test:component-flow`       |
+| Browser component     | Browser-only component behavior requiring a real Chromium DOM                         | `*.browser-component.test.tsx`     | `pnpm run test:browser-component`    |
+| Service integration   | Route/handler, schema and service working together through real in-process boundaries | `*.service-integration.test.ts(x)` | `pnpm run test:service-integration`  |
+| Database integration  | Schema, RLS, triggers, transactions and concurrency against a reset local Supabase    | `*.database-integration.test.ts`   | `pnpm run test:database-integration` |
+| Static contract       | Repository, workflow, source-shape and generated-artifact invariants                  | `*.static-contract.test.ts`        | `pnpm run test:static`               |
+| E2E                   | Critical browser-App-Zero-database boundaries, realtime and multi-user behavior       | `*.e2e.spec.ts`                    | `pnpm run test:e2e:pr`               |
 
 Integration tests intentionally use Vitest and Arrange-Act-Assert like unit tests. Classification is determined by the real components involved, not by syntax. For example, `processEngine.initialize.unit.test.ts` mocks its collaborators and is therefore a unit test.
 
-Optional campaign or branch qualifiers come before the style suffix, for example `useAgenda.branch-a04.unit.test.ts`. `npm run test:naming` rejects legacy suffixes and obsolete dotted campaign qualifiers.
+Optional campaign or branch qualifiers come before the style suffix, for example `useAgenda.branch-a04.unit.test.ts`. `pnpm run test:naming` rejects legacy suffixes and obsolete dotted campaign qualifiers.
 
 ## Runners and environments
 
@@ -27,39 +27,39 @@ Optional campaign or branch qualifiers come before the style suffix, for example
 - DOM-based component and component-flow tests opt into jsdom with `@vitest-environment jsdom` and normally use Testing Library. jsdom simulates web APIs; it does not validate a real browser's layout, rendering engine or cross-browser behavior.
 - `*.browser-component.test.tsx` runs through Vitest Browser and its Playwright provider in real Chromium. Use this level when the real browser boundary matters but a full application stack does not.
 - Playwright E2E runs the production-mode application against isolated local Supabase and Zero services. Use E2E only when the failure requires those cross-process boundaries.
-- Stryker uses the Vitest runner for focused mutation testing of critical amendment, event, voting and authorization logic. `npm run test:mutation` uses per-test coverage and incremental results, writes its reports under `reports/`, and fails when the mutation score falls below 80%. `npm run test:mutation:contract` validates the Stryker sandbox and test selection with a dry run.
+- Stryker uses the Vitest runner for focused mutation testing of critical amendment, event, voting and authorization logic. `pnpm run test:mutation` uses per-test coverage and incremental results, writes its reports under `reports/`, and fails when the mutation score falls below 80%. `pnpm run test:mutation:contract` validates the Stryker sandbox and test selection with a dry run.
 
 ## Local commands and quality gates
 
-| Goal                                       | Command                                |
-| ------------------------------------------ | -------------------------------------- |
-| Run stack-independent Vitest projects      | `npm test`                             |
-| Run naming, catalogs and static contracts  | `npm run test:static`                  |
-| Run instrumented coverage and ratchets     | `npm run test:coverage:ratchet`        |
-| Check coverage of changed source           | `npm run test:coverage:changed`        |
-| Check the complete branch inventory        | `npm run test:coverage:branches:check` |
-| Check changed source/action accountability | `npm run test:accountability:changed`  |
-| Run real-browser component tests           | `npm run test:browser-component`       |
-| Run the complete local database gate       | `npm run test:db`                      |
-| Run focused mutation testing               | `npm run test:mutation`                |
-| Run the stack-independent PR aggregate     | `npm run test:all`                     |
+| Goal                                       | Command                                 |
+| ------------------------------------------ | --------------------------------------- |
+| Run stack-independent Vitest projects      | `pnpm test`                             |
+| Run naming, catalogs and static contracts  | `pnpm run test:static`                  |
+| Run instrumented coverage and ratchets     | `pnpm run test:coverage:ratchet`        |
+| Check coverage of changed source           | `pnpm run test:coverage:changed`        |
+| Check the complete branch inventory        | `pnpm run test:coverage:branches:check` |
+| Check changed source/action accountability | `pnpm run test:accountability:changed`  |
+| Run real-browser component tests           | `pnpm run test:browser-component`       |
+| Run the complete local database gate       | `pnpm run test:db`                      |
+| Run focused mutation testing               | `pnpm run test:mutation`                |
+| Run the stack-independent PR aggregate     | `pnpm run test:all`                     |
 
 `test:all` combines changed-file formatting, linting, type checking, static contracts and catalogs, coverage ratchets, browser-component tests, security contracts and the production build. Database, E2E, mutation, visual, accessibility and resilience suites remain explicit because they require isolated stacks, browsers or long-running environments. Stryker is a nightly quality gate, not part of `test:all` or the normal PR gate.
 
 ## Coverage contract
 
-`npm run test:coverage` uses V8 to instrument the source assigned to the unit, component, component-flow and service-integration projects. Coverage is necessary but not sufficient: a test must assert the observable result, not merely execute a line.
+`pnpm run test:coverage` uses V8 to instrument the source assigned to the unit, component, component-flow and service-integration projects. Coverage is necessary but not sufficient: a test must assert the observable result, not merely execute a line.
 
-- The repository ratchet checks lines, statements, functions and branches. Its current baseline contains no uncovered debt, so every instrumented metric must remain at 100%. `npm run test:coverage:ratchet` fails if any change introduces an uncovered item.
-- Changed-code coverage is stricter about the pull-request diff. `npm run test:coverage:changed` requires every changed executable line, statement and function to run and every changed branch alternative to be covered. New untracked source is included in this check.
-- Branch accountability fingerprints every branch alternative. `npm run test:coverage:branches:check` rejects new uncovered branches, stale debt and stale exceptions. Any non-critical exception must name an owner, evidence, an issue, test references and an expiry of no more than 30 days; critical domains cannot use exceptions. The current inventories contain no branch debt and no exceptions.
+- The repository ratchet checks lines, statements, functions and branches. Its current baseline contains no uncovered debt, so every instrumented metric must remain at 100%. `pnpm run test:coverage:ratchet` fails if any change introduces an uncovered item.
+- Changed-code coverage is stricter about the pull-request diff. `pnpm run test:coverage:changed` requires every changed executable line, statement and function to run and every changed branch alternative to be covered. New untracked source is included in this check.
+- Branch accountability fingerprints every branch alternative. `pnpm run test:coverage:branches:check` rejects new uncovered branches, stale debt and stale exceptions. Any non-critical exception must name an owner, evidence, an issue, test references and an expiry of no more than 30 days; critical domains cannot use exceptions. The current inventories contain no branch debt and no exceptions.
 - The coverage manifest defines which source is instrumented and how excluded artifacts are verified. Do not exclude source merely to satisfy the percentage.
 
 CI creates coverage in four shards, merges the results and then enforces the repository ratchet, the complete branch inventory, changed-code coverage and exact test-reference evidence.
 
-The repository still contains pre-existing Prettier debt. CI therefore runs `npm run format:check:changed`: every file introduced or changed by a pull request must be formatted immediately, while unrelated legacy files are not rewritten as part of a test change.
+The repository still contains pre-existing Prettier debt. CI therefore runs `pnpm run format:check:changed`: every file introduced or changed by a pull request must be formatted immediately, while unrelated legacy files are not rewritten as part of a test change.
 
-Runtime dependency advisories use a package-level ratchet. `npm run test:security` rejects every new vulnerable production dependency, every severity increase and every critical finding. Resolved or severity-reduced baseline findings remain green and shrink the reported debt.
+Runtime dependency advisories use a package-level ratchet. `pnpm run test:security` rejects every new vulnerable production dependency, every severity increase and every critical finding. Resolved or severity-reduced baseline findings remain green and shrink the reported debt.
 
 ## Browser suites
 
@@ -69,16 +69,16 @@ Runtime dependency advisories use a package-level ratchet. `npm run test:securit
 - `@acceptance` marks the ten canonical cross-boundary journeys.
 - `@performance`, `@visual`, `@a11y` and `@resilience` select their dedicated non-functional suites.
 
-| Goal                              | Command                       |
-| --------------------------------- | ----------------------------- |
-| Run the desktop PR gate           | `npm run test:e2e:pr`         |
-| Run the mobile PR gate            | `npm run test:e2e:pr:mobile`  |
-| Run the canonical acceptance set  | `npm run test:e2e:acceptance` |
-| Run the extended nightly projects | `npm run test:e2e:nightly`    |
-| Repeat the PR gate 20 times       | `npm run test:e2e:stress`     |
-| Open Playwright UI mode           | `npm run test:e2e:ui`         |
-| Run a visible browser             | `npm run test:e2e:headed`     |
-| Start the Playwright debugger     | `npm run test:e2e:debug`      |
+| Goal                              | Command                        |
+| --------------------------------- | ------------------------------ |
+| Run the desktop PR gate           | `pnpm run test:e2e:pr`         |
+| Run the mobile PR gate            | `pnpm run test:e2e:pr:mobile`  |
+| Run the canonical acceptance set  | `pnpm run test:e2e:acceptance` |
+| Run the extended nightly projects | `pnpm run test:e2e:nightly`    |
+| Repeat the PR gate 20 times       | `pnpm run test:e2e:stress`     |
+| Open Playwright UI mode           | `pnpm run test:e2e:ui`         |
+| Run a visible browser             | `pnpm run test:e2e:headed`     |
+| Start the Playwright debugger     | `pnpm run test:e2e:debug`      |
 
 Playwright runs one worker per stack with `fullyParallel: false` and no retries. PR CI creates seven isolated Chromium desktop stacks and two isolated Chromium mobile stacks. The scheduled `Nightly Tests` workflow adds three desktop and two mobile Chromium shards plus Firefox and WebKit golden journeys, isolated performance measurements, critical-domain Stryker mutation testing and 20 repetitions of the desktop PR suite.
 
@@ -121,4 +121,4 @@ Test count is behavior-based, not a fixed quota. One parameterized test may cove
 - Cover materially different affected roles, states or failure modes separately. Use a parameterized case when they share the same root cause and expected contract.
 - Keep the regression permanently. Do not replace it with a broad snapshot or a coverage-only assertion, and do not add a browser regression for a defect that a deterministic lower-level test fully reproduces.
 
-For all three change types, run the focused suite while developing, then `npm run test:all`, `npm run test:accountability:changed` and `npm run test:coverage:branches:check`. Also run `npm run test:db` or the relevant E2E suite whenever the change touches those boundaries. External AI, payment, map and currency services are stubbed at their network boundary; local email flows use Inbucket.
+For all three change types, run the focused suite while developing, then `pnpm run test:all`, `pnpm run test:accountability:changed` and `pnpm run test:coverage:branches:check`. Also run `pnpm run test:db` or the relevant E2E suite whenever the change touches those boundaries. External AI, payment, map and currency services are stubbed at their network boundary; local email flows use Inbucket.

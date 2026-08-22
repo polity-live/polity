@@ -133,6 +133,10 @@ describe('can', () => {
                 name: null,
                 description: 'Group administrator',
                 scope: null,
+                group_id: 'group',
+                event_id: 'event',
+                amendment_id: 'amendment',
+                blog_id: 'blog',
                 action_rights: [
                   {
                     id: 'default-right',
@@ -217,6 +221,7 @@ describe('can', () => {
             name: null,
             description: null,
             scope: null,
+            blog_id: 'blog',
             action_rights: undefined,
           },
         },
@@ -236,6 +241,7 @@ describe('can', () => {
               name: null,
               description: null,
               scope: null,
+              amendment_id: 'amendment',
               action_rights: undefined,
             },
           },
@@ -318,6 +324,10 @@ describe('can', () => {
               name: '',
               description: 'Group administrator',
               scope: 'group',
+              group: { id: 'group' },
+              event: { id: 'event' },
+              amendment: { id: 'amendment' },
+              blog: { id: 'blog' },
               actionRights: [
                 {
                   id: 'default-right',
@@ -399,6 +409,7 @@ describe('can', () => {
             name: '',
             description: undefined,
             scope: 'blog',
+            blog: { id: 'blog' },
             actionRights: [],
           },
         },
@@ -424,6 +435,7 @@ describe('can', () => {
               name: '',
               description: undefined,
               scope: 'amendment',
+              amendment: { id: 'amendment' },
               actionRights: [],
             },
           },
@@ -519,6 +531,62 @@ describe('can', () => {
       },
     ]);
     expectAmendmentQuery(tx, 1, 'amendment', true);
+  });
+
+  it('includes invited blogger relations for view checks', async () => {
+    checkPermissionMock.mockReturnValue(true);
+    const tx = transaction('server', [[]]);
+
+    await can(tx, { userID: 'actor' }, { action: 'view', resource: 'blogs', blogId: 'blog' });
+
+    expectQueryWhere(tx, 0, 'blog_blogger', [
+      { column: 'user_id', value: 'actor' },
+      { column: 'blog_id', value: 'blog' },
+      {
+        column: 'status',
+        operator: 'IN',
+        value: ['owner', 'invited', 'admin', 'member', 'writer'],
+      },
+    ]);
+  });
+
+  it('omits absent role entity scopes during normalization', async () => {
+    checkPermissionMock.mockReturnValue(true);
+    const tx = transaction('server', [
+      [
+        {
+          id: 'blogger',
+          blog: { id: 'blog' },
+          role: { id: 'blog-role', name: 'Writer', scope: 'blog' },
+        },
+      ],
+      {
+        id: 'amendment',
+        collaborators: [
+          {
+            id: 'collaborator',
+            user_id: 'actor',
+            status: 'active',
+            role: { id: 'amendment-role', name: 'Editor', scope: 'amendment' },
+          },
+        ],
+      },
+    ]);
+
+    await can(
+      tx,
+      { userID: 'actor' },
+      {
+        action: 'update',
+        resource: 'amendments',
+        blogId: 'blog',
+        amendmentId: 'amendment',
+      }
+    );
+
+    const data = checkPermissionMock.mock.calls[0][0];
+    expect(data.bloggerRelations[0].role).not.toHaveProperty('blog');
+    expect(data.amendment.amendmentRoleCollaborators[0].role).not.toHaveProperty('amendment');
   });
 
   it.each([
