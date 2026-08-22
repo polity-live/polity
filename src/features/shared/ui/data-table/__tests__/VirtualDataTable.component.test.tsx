@@ -27,40 +27,44 @@ vi.mock('@rocicorp/zero-virtual/react', () => ({
   rowAttributes: (index: number, key: string) => ({ 'data-row-key': key, 'data-row-index': index }),
 }));
 
-vi.mock('@tanstack/react-table', () => ({
-  flexRender: (renderer: any, context: unknown) =>
-    typeof renderer === 'function' ? renderer(context) : renderer,
-  getCoreRowModel: () => 'core-row-model',
-  useReactTable: ({ columns, data, getRowId }: any) => ({
-    getHeaderGroups: () => [
-      {
-        headers: [
-          { id: 'placeholder', isPlaceholder: true },
-          {
-            column: { columnDef: { header: columns[0]?.header ?? 'Header' } },
-            getContext: () => ({ header: true }),
-            id: 'header',
-            isPlaceholder: false,
-          },
-        ],
-        id: 'group',
-      },
-    ],
-    getRowModel: () => ({
-      rows: data
-        .filter((row: any) => getRowId(row) !== 'missing')
-        .map((row: any) => ({
-          getVisibleCells: () =>
-            columns.map((column: any, index: number) => ({
-              column: { columnDef: column },
-              getContext: () => ({ row }),
-              id: `${getRowId(row)}-${index}`,
-            })),
-          id: getRowId(row),
-        })),
+vi.mock('@tanstack/react-table', async importOriginal => {
+  const actual = await importOriginal<typeof import('@tanstack/react-table')>();
+
+  return {
+    ...actual,
+    flexRender: (renderer: any, context: unknown) =>
+      typeof renderer === 'function' ? renderer(context) : renderer,
+    useTable: ({ columns, data, getRowId }: any) => ({
+      getHeaderGroups: () => [
+        {
+          headers: [
+            { id: 'placeholder', isPlaceholder: true },
+            {
+              column: { columnDef: { header: columns[0]?.header ?? 'Header' } },
+              getContext: () => ({ header: true }),
+              id: 'header',
+              isPlaceholder: false,
+            },
+          ],
+          id: 'group',
+        },
+      ],
+      getRowModel: () => ({
+        rows: data
+          .filter((row: any) => getRowId(row) !== 'missing')
+          .map((row: any) => ({
+            getVisibleCells: () =>
+              columns.map((column: any, index: number) => ({
+                column: { columnDef: column },
+                getContext: () => ({ row }),
+                id: `${getRowId(row)}-${index}`,
+              })),
+            id: getRowId(row),
+          })),
+      }),
     }),
-  }),
-}));
+  };
+});
 
 vi.mock('@/features/shared/ui/ui/skeleton', () => ({
   Skeleton: () => <span data-testid="skeleton" />,

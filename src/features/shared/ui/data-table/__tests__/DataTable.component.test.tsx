@@ -1,9 +1,10 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { DataTable, type ColumnDef } from '../DataTable';
+import { SortableHeader } from '../DataTableParts';
 import { Card } from '../../ui/card';
 
 interface Row {
@@ -35,6 +36,56 @@ describe('DataTable', () => {
 
     expect(screen.getByText('Ada Lovelace')).toBeTruthy();
     expect(screen.getByTestId('row-1')).toBeTruthy();
+  });
+
+  it('preserves the v8 filtering, sorting, and pagination pipeline on v9 features', () => {
+    const data = [
+      { id: '1', name: 'Grace Hopper' },
+      { id: '2', name: 'Ada Lovelace' },
+    ];
+    const sortableColumns: ColumnDef<Row>[] = [
+      {
+        accessorKey: 'name',
+        header: ({ column }) => <SortableHeader column={column}>Name</SortableHeader>,
+        cell: info => info.getValue(),
+      },
+    ];
+    const filtered = render(
+      <DataTable
+        columns={sortableColumns}
+        data={data}
+        filter={{ value: 'ada', onChange: () => undefined }}
+        enablePagination={false}
+      />
+    );
+
+    expect(screen.getByText('Ada Lovelace')).toBeTruthy();
+    expect(screen.queryByText('Grace Hopper')).toBeNull();
+    filtered.unmount();
+
+    render(
+      <DataTable columns={sortableColumns} data={data} rowTestId={row => `sortable-${row.id}`} />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Name' }));
+    expect(screen.getAllByTestId(/^sortable-/).map(row => row.textContent)).toEqual([
+      'Ada Lovelace',
+      'Grace Hopper',
+    ]);
+  });
+
+  it('paginates with the same default page size and navigation labels', () => {
+    const data = Array.from({ length: 11 }, (_, index) => ({
+      id: String(index),
+      name: `Person ${index}`,
+    }));
+
+    render(<DataTable columns={columns} data={data} rowTestId={row => `page-row-${row.id}`} />);
+
+    expect(screen.getAllByTestId(/^page-row-/)).toHaveLength(10);
+    expect(screen.queryByText('Person 10')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('Person 10')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Previous' }).hasAttribute('disabled')).toBe(false);
   });
 
   it('supports the emptyState object API', () => {

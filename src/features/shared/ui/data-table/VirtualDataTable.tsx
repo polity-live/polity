@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, type CSSProperties, type ReactNode } from 'react';
-import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from '@tanstack/react-table';
+import { flexRender, useTable, type RowData } from '@tanstack/react-table';
 import { rowAttributes } from '@rocicorp/zero-virtual/react';
 
 import { usePolityZeroList } from '@/features/shared/virtualization';
@@ -14,6 +14,8 @@ import {
 } from '@/features/shared/ui/ui/table';
 import { cn } from '@/features/shared/utils/utils';
 
+import { dataTableFeatures, type DataTableColumnDef } from './dataTableFeatures';
+
 interface PageOptions<TStart> {
   limit: number;
   start: TStart | null;
@@ -21,7 +23,7 @@ interface PageOptions<TStart> {
   settled: boolean;
 }
 
-export interface VirtualDataTableSource<TRow, TStart, TContext> {
+export interface VirtualDataTableSource<TRow extends RowData, TStart, TContext> {
   context: TContext;
   historyKey: string;
   getPageQuery: (options: PageOptions<TStart>) => unknown;
@@ -32,8 +34,8 @@ export interface VirtualDataTableSource<TRow, TStart, TContext> {
   permalinkID?: string | null;
 }
 
-export interface VirtualDataTableProps<TRow, TStart, TContext> {
-  columns: ColumnDef<TRow, any>[];
+export interface VirtualDataTableProps<TRow extends RowData, TStart, TContext> {
+  columns: DataTableColumnDef<TRow, any>[];
   source: VirtualDataTableSource<TRow, TStart, TContext>;
   estimateRowSize?: number;
   overscan?: number;
@@ -46,7 +48,7 @@ export interface VirtualDataTableProps<TRow, TStart, TContext> {
 }
 
 /** Cursor-paged data table. Only visible rows plus overscan are mounted. */
-export function VirtualDataTable<TRow, TStart, TContext>({
+export function VirtualDataTable<TRow extends RowData, TStart, TContext>({
   columns,
   source,
   estimateRowSize = 68,
@@ -78,11 +80,11 @@ export function VirtualDataTable<TRow, TStart, TContext>({
       ),
     [list.items, source]
   );
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data: visibleRows,
     columns,
     getRowId: source.getRowKey,
-    getCoreRowModel: getCoreRowModel(),
   });
   const rowsById = new Map(table.getRowModel().rows.map(row => [row.id, row]));
 

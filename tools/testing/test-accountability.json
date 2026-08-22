@@ -17313,6 +17313,20 @@
         }
       }
     ],
+    "src/features/shared/ui/data-table/dataTableFeatures.ts": [
+      {
+        "file": "src/features/shared/ui/data-table/__tests__/dataTableFeatures.unit.test.ts",
+        "project": "unit",
+        "caseId": "registers the complete shared filtering, sorting, pagination, selection, and visibility contract",
+        "evidence": {
+          "kind": "instrumented-full-suite",
+          "relation": "direct",
+          "report": "coverage/coverage-final.json",
+          "coveredStatements": 1,
+          "totalStatements": 1
+        }
+      }
+    ],
     "src/features/shared/ui/data-table/MatrixTable.tsx": [
       {
         "file": "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
