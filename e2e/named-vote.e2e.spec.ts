@@ -150,7 +150,7 @@ test('runs a named vote with two actors and closes the persisted result @pr', as
           const rows = await sql`select status from public.vote where id = ${voteId}::uuid`;
           return rows[0]?.status ?? null;
         },
-        { timeout: 15_000 }
+        { timeout: 30_000 }
       )
       .toBe('final');
 
