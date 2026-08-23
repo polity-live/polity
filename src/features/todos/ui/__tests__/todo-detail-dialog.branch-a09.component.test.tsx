@@ -58,6 +58,7 @@ vi.mock('@/features/shared/ui/ui/sonner', () => ({
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+  translate: (key: string) => key,
 }));
 
 vi.mock('../../utils/todoFormatters', () => ({
@@ -71,6 +72,16 @@ vi.mock('../../hooks/useTodoDiscussion', () => ({
     mocks.discussionArg = todo;
     return mocks.discussion;
   },
+}));
+
+vi.mock('../../hooks/useTodoActivity', () => ({
+  useTodoActivity: () => ({
+    activities: [],
+    canViewActivity: true,
+    isLoading: false,
+    severity: 'all',
+    setSeverity: vi.fn(),
+  }),
 }));
 
 vi.mock('@/providers/auth-provider', () => ({

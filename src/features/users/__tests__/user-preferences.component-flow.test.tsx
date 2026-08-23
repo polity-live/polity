@@ -47,7 +47,7 @@ const formData: UserProfileFormData = {
   subtitle: '',
   about: '',
   aboutContent: [{ type: 'p', children: [{ text: '' }] }] as any,
-  email: 'ada@polity.local',
+  contactEmail: 'contact@polity.local',
   youtube: '',
   linkedin: '',
   whatsapp: '',

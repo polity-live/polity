@@ -23,7 +23,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { VoteButtons, type VoteValue } from '@/features/shared/ui/voting';
 import { CommentThread, type CommentData } from '@/features/shared/ui/comments';
 import { RichTextPreview } from '@/features/shared/ui/rich-text';
-import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import {
   getWikiParticipationName,
@@ -48,6 +47,8 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { queries } from '@/zero/queries';
+import { VisibilityBadge } from '@/features/shared/ui/status';
+import { normalizeRouteVisibility } from '@/features/auth/logic/routeVisibilityAccess';
 
 interface BlogDetailAuthor {
   id?: string;
@@ -74,7 +75,6 @@ interface BlogDetailViewProps {
   author?: BlogDetailAuthor;
   blogId: string;
   bloggers: readonly any[];
-  canAccess: boolean;
   canDelete: boolean;
   canEdit: boolean;
   commentCount: number;
@@ -102,6 +102,7 @@ interface BlogDetailViewProps {
   supporterCount: number;
   title?: string | null;
   upvotes: number;
+  visibility?: string | null;
   videoUrl?: string | null;
   viewUrl: string;
 }
@@ -111,7 +112,6 @@ export function BlogDetailView({
   author,
   blogId,
   bloggers,
-  canAccess,
   canDelete,
   canEdit,
   commentCount,
@@ -139,6 +139,7 @@ export function BlogDetailView({
   supporterCount,
   title,
   upvotes,
+  visibility,
   videoUrl,
   viewUrl,
 }: BlogDetailViewProps) {
@@ -163,14 +164,7 @@ export function BlogDetailView({
     );
   }
 
-  if (!canAccess) {
-    return (
-      <PageWrapper>
-        <AccessDenied />
-      </PageWrapper>
-    );
-  }
-
+  const blogVisibility = normalizeRouteVisibility(visibility);
   const bloggerDirectoryItems: (WikiParticipationItem & {
     roles: WikiParticipationRole[];
   })[] = (bloggers ?? [])
@@ -191,7 +185,7 @@ export function BlogDetailView({
         userId: blogger.user.id,
         name: getWikiParticipationName(blogger.user),
         handle: blogger.user.handle ?? null,
-        email: blogger.user.email ?? null,
+        email: blogger.user.contact_email ?? null,
         avatar: blogger.user.avatar ?? null,
         status: blogger.status ?? null,
         roles: [role],
@@ -210,6 +204,9 @@ export function BlogDetailView({
           <div className="mb-2 flex min-w-0 items-center justify-center gap-3">
             <BookOpen className="h-8 w-8 shrink-0" />
             <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{title}</h1>
+            <VisibilityBadge value={blogVisibility} data-entity-visibility={blogVisibility}>
+              {t(`common.visibility.${blogVisibility}`)}
+            </VisibilityBadge>
           </div>
           {hashtags.length > 0 ? (
             <div className="mt-3 md:hidden">
@@ -357,7 +354,7 @@ export function BlogDetailView({
                       userId: bloggerUser?.id ?? blogger.user_id,
                       name: getWikiParticipationName(bloggerUser),
                       handle: bloggerUser?.handle ?? null,
-                      email: bloggerUser?.email ?? null,
+                      email: bloggerUser?.contact_email ?? null,
                       avatar: bloggerUser?.avatar ?? null,
                       status: blogger.status ?? null,
                       roles: [role],

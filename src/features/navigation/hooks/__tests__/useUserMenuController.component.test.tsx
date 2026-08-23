@@ -22,6 +22,7 @@ vi.mock('@/features/shared/hooks/use-translation.ts', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
   }),
+  translate: (_key: string, fallback?: string) => fallback ?? _key,
 }));
 
 vi.mock('@/providers/auth-provider.tsx', () => ({
@@ -180,12 +181,18 @@ describe('useUserMenuController', () => {
     mocks.currentUserMembershipsWithGroups = [
       {
         group: { id: 'alpha', name: 'Alpha Group', image_url: null },
-        role: { id: 'role-alpha' },
+        role: {
+          id: 'role-alpha',
+          action_rights: [{ group_id: 'alpha', resource: 'groups', action: 'view' }],
+        },
         status: 'active',
       },
       {
         group: { id: 'beta', name: 'Beta Group', image_url: null },
-        role: { id: 'role-beta' },
+        role: {
+          id: 'role-beta',
+          action_rights: [{ group_id: 'beta', resource: 'groups', action: 'view' }],
+        },
         status: 'active',
       },
     ];
@@ -247,7 +254,16 @@ function buildParticipation(id: string, title: string) {
       end_date: new Date('2030-01-01T12:00:00Z').getTime(),
       group: null,
     },
-    participant_roles: [{ role: { id: `${id}-role` } }],
+    participant_roles: [
+      {
+        role: {
+          id: `${id}-role`,
+          scope: 'event',
+          event_id: id,
+          action_rights: [{ event_id: id, resource: 'events', action: 'view' }],
+        },
+      },
+    ],
   };
 }
 

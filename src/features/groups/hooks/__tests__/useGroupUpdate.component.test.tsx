@@ -215,6 +215,33 @@ describe('useGroupUpdate normalization', () => {
 });
 
 describe('useGroupUpdate state and submission', () => {
+  it.each(['public', 'authenticated', 'private'] as const)(
+    'uses the persisted %s visibility when initial form data omits it',
+    async visibility => {
+      const { result } = renderHook(() =>
+        useGroupUpdate('group-1', { name: 'Original' }, { visibility })
+      );
+
+      await waitFor(() => expect(result.current.formData.visibility).toBe(visibility));
+
+      act(() => result.current.updateField('visibility', 'public'));
+      act(() => result.current.resetForm());
+      expect(result.current.formData.visibility).toBe(visibility);
+    }
+  );
+
+  it('prefers an explicit initial visibility over the fallback option', async () => {
+    const { result } = renderHook(() =>
+      useGroupUpdate(
+        'group-1',
+        { name: 'Original', visibility: 'authenticated' },
+        { visibility: 'private' }
+      )
+    );
+
+    await waitFor(() => expect(result.current.formData.visibility).toBe('authenticated'));
+  });
+
   it('initializes once, syncs junction hashtags once, updates fields, and resets edits', async () => {
     mocks.groupHashtags = [
       { hashtag: { tag: 'one' } },

@@ -31,8 +31,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND relation.relkind = 'r'
   ),
-  141,
-  'the application owns 141 public tables'
+  145,
+  'the application owns 145 public tables'
 );
 
 SELECT is(
@@ -46,8 +46,8 @@ SELECT is(
       AND column_definition.attnum > 0
       AND NOT column_definition.attisdropped
   ),
-  1546,
-  'all 1546 application columns are installed'
+  1585,
+  'all 1585 application columns are installed'
 );
 
 SELECT is(
@@ -90,8 +90,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'c'
   ),
-  98,
-  'all 98 business CHECK constraints are installed'
+  116,
+  'all 116 business CHECK constraints are installed'
 );
 
 SELECT is(
@@ -103,8 +103,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'f'
   ),
-  358,
-  'all 358 foreign keys are installed'
+  370,
+  'all 370 foreign keys are installed'
 );
 
 SELECT is(
@@ -142,8 +142,8 @@ SELECT is(
     FROM pg_indexes index_definition
     WHERE index_definition.schemaname = 'public'
   ),
-  639,
-  'all 639 application indexes are installed'
+  650,
+  'all 650 application indexes are installed'
 );
 
 SELECT is(
@@ -160,8 +160,8 @@ SELECT is(
           AND dependency.deptype = 'e'
       )
   ),
-  67,
-  'all 67 application functions are installed'
+  73,
+  'all 73 application functions are installed'
 );
 
 SELECT is(
@@ -179,8 +179,8 @@ SELECT is(
           AND dependency.deptype = 'e'
       )
   ),
-  63,
-  'all 63 privileged functions are SECURITY DEFINER'
+  68,
+  'all 68 privileged functions are SECURITY DEFINER'
 );
 
 SELECT is(
@@ -236,8 +236,8 @@ SELECT is(
     WHERE namespace.nspname IN ('public', 'auth')
       AND NOT trigger_definition.tgisinternal
   ),
-  57,
-  'all 57 application triggers are installed'
+  64,
+  'all 64 application triggers are installed'
 );
 
 SELECT is(
@@ -260,8 +260,8 @@ SELECT is(
     FROM pg_policies policy_definition
     WHERE policy_definition.schemaname IN ('public', 'storage')
   ),
-  151,
-  'all 151 RLS policies are installed'
+  155,
+  'all 155 RLS policies are installed'
 );
 
 SELECT is(

@@ -10,7 +10,7 @@
     "src/features/auth/__tests__/account-security.component-flow.test.tsx": 3,
     "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx": 3,
     "src/features/pwa/__tests__/pwa-lifecycle.component-flow.test.tsx": 2,
-    "src/features/groups/__tests__/group-editing.component-flow.test.tsx": 3,
+    "src/features/groups/__tests__/group-editing.component-flow.test.tsx": 4,
     "src/features/groups/__tests__/membership-requests.component-flow.test.tsx": 3,
     "src/features/groups/__tests__/role-assignment.component-flow.test.tsx": 3,
     "src/features/groups/__tests__/group-relationships.component-flow.test.tsx": 3,

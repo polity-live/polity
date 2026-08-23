@@ -99,7 +99,7 @@ export const userPageTranslations = {
     contact: {
       title: 'Kontaktinformationen',
       description: 'So können dich andere erreichen und deine Arbeit online finden',
-      emailLabel: 'E-Mail',
+      emailLabel: 'Kontakt-E-Mail',
       emailPlaceholder: 'deine.email@beispiel.de',
       twitterLabel: 'Twitter/X',
       twitterPlaceholder: '@deinname',

@@ -125,16 +125,8 @@ function resolveAttendanceMode(event: {
   return event.location_type === 'online' ? 'online' : 'offline';
 }
 
-/**
- * Hook for event create/update functionality
- */
-export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit') {
-  const navigate = useNavigate();
-  const isCreating = mode === 'create';
-  const { user } = useAuth();
-  const { t } = useTranslation();
-
-  const [formData, setFormData] = useState<EventFormData>({
+function createInitialEventFormData(): EventFormData {
+  return {
     title: '',
     description: '',
     descriptionContent: EMPTY_RICH_TEXT_VALUE,
@@ -163,7 +155,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     groupId: '',
     imageURL: '',
     videoURL: '',
-    visibility: 'public' as Visibility,
+    visibility: 'public',
     tags: [],
     registrationDeadline: '',
     amendmentDeadline: '',
@@ -181,7 +173,19 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     recurrenceInterval: 1,
     recurrenceWeekdays: [],
     recurrenceEndDate: '',
-  });
+  };
+}
+
+/**
+ * Hook for event create/update functionality
+ */
+export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit') {
+  const navigate = useNavigate();
+  const isCreating = mode === 'create';
+  const { user } = useAuth();
+  const { t } = useTranslation();
+
+  const [formData, setFormData] = useState<EventFormData>(createInitialEventFormData);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -191,27 +195,45 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
   const { updateEvent } = useEventMutations(eventId);
   const { createEvent, updateEvent: updateEventAction } = useEventActions();
   const commonActions = useCommonActions();
-  const { eventHashtags, allHashtags } = useCommonState({
+  const {
+    eventHashtags,
+    allHashtags,
+    isLoading: commonIsLoading,
+  } = useCommonState({
     event_id: eventId,
     loadAllHashtags: true,
   });
 
-  const initializedRef = useRef(false);
-  const hashtagsInitializedRef = useRef(false);
+  const initializedRef = useRef<string | null>(null);
+  const hashtagsInitializedRef = useRef<string | null>(null);
+  const formEntityIdRef = useRef(eventId);
+
+  useEffect(() => {
+    if (formEntityIdRef.current === eventId) return;
+
+    formEntityIdRef.current = eventId;
+    initializedRef.current = null;
+    hashtagsInitializedRef.current = null;
+    setFormData(createInitialEventFormData());
+  }, [eventId]);
 
   // Initialize hashtags from junction data once available
   useEffect(() => {
-    if (eventHashtags && eventHashtags.length > 0 && !hashtagsInitializedRef.current) {
-      hashtagsInitializedRef.current = true;
-      const tags = eventHashtags.map(j => j.hashtag?.tag).filter((t): t is string => !!t);
+    if (
+      !commonIsLoading &&
+      (isCreating || event?.id === eventId) &&
+      hashtagsInitializedRef.current !== eventId
+    ) {
+      hashtagsInitializedRef.current = eventId;
+      const tags = (eventHashtags ?? []).map(j => j.hashtag?.tag).filter((t): t is string => !!t);
       setFormData(prev => ({ ...prev, tags }));
     }
-  }, [eventHashtags]);
+  }, [commonIsLoading, event, eventHashtags, eventId, isCreating]);
 
   // Initialize form data only once when event first loads
   useEffect(() => {
-    if (event && !initializedRef.current) {
-      initializedRef.current = true;
+    if (event && event.id === eventId && initializedRef.current !== eventId) {
+      initializedRef.current = eventId;
       let recurrencePattern: RecurrencePattern = 'none';
       let recurrenceInterval = 1;
       let recurrenceWeekdays: number[] = [];
@@ -310,7 +332,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         recurrenceEndDate,
       }));
     }
-  }, [event]);
+  }, [event, eventId]);
 
   // Update a single field
   const updateField = <K extends keyof EventFormData>(field: K, value: EventFormData[K]) => {

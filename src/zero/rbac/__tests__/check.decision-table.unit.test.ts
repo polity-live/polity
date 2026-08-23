@@ -27,7 +27,15 @@ const blogId = 'blog';
 const amendmentId = 'amendment';
 
 function role(scope: Role['scope'], rights?: ActionRight[]): Role {
-  return { id: `${scope}-role`, name: 'Role', scope, actionRights: rights };
+  return {
+    id: `${scope}-role`,
+    name: 'Role',
+    scope,
+    [scope]: {
+      id: { group: groupId, event: eventId, blog: blogId, amendment: amendmentId }[scope],
+    },
+    actionRights: rights,
+  };
 }
 
 describe('permission checker decision tables', () => {
@@ -138,7 +146,7 @@ describe('permission checker decision tables', () => {
     expect(
       isEventParticipant([{ id: 'pending', event: { id: eventId }, status: 'invited' }], eventId)
     ).toBe(false);
-    expect(isEventParticipant([{ id: 'legacy', event: { id: eventId } }], eventId)).toBe(true);
+    expect(isEventParticipant([{ id: 'legacy', event: { id: eventId } }], eventId)).toBe(false);
 
     const validRight: ActionRight = {
       id: 'right',
@@ -259,7 +267,9 @@ describe('permission checker decision tables', () => {
   it('filters blogger relations and blog-scoped rights', () => {
     expect(isBlogger(undefined, blogId)).toBe(false);
     expect(isBlogger([{ id: 'missing-blog' }], blogId)).toBe(false);
-    expect(isBlogger([{ id: 'blogger', blog: { id: blogId } }], blogId)).toBe(true);
+    expect(isBlogger([{ id: 'blogger', blog: { id: blogId }, status: 'member' }], blogId)).toBe(
+      true
+    );
     expect(checkPermission({ userId: actor }, { blogId }, 'view', 'blogs')).toBe(false);
 
     const validRight: ActionRight = {
@@ -271,6 +281,7 @@ describe('permission checker decision tables', () => {
     const relation = (overrides: Partial<BloggerRelation> = {}): BloggerRelation => ({
       id: 'blogger',
       blog: { id: blogId },
+      status: 'member',
       role: role('blog', [validRight]),
       ...overrides,
     });
@@ -324,7 +335,7 @@ describe('permission checker decision tables', () => {
       isAmendmentCollaborator(
         {
           id: amendmentId,
-          amendmentRoleCollaborators: [{ id: 'active', user: { id: actor } }],
+          amendmentRoleCollaborators: [{ id: 'active', user: { id: actor }, status: 'active' }],
         },
         actor
       )
@@ -387,7 +398,7 @@ describe('permission checker decision tables', () => {
         'update',
         'amendments'
       )
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('evaluates raw Zero collaborator roles and action-right field shapes', () => {
@@ -402,7 +413,7 @@ describe('permission checker decision tables', () => {
             id: 'collaborator',
             user: { id: actor },
             status: 'active',
-            role: { action_rights: [right] },
+            role: { scope: 'amendment', amendment_id: amendmentId, action_rights: [right] },
           },
         ],
       }) as unknown as Amendment;
@@ -425,7 +436,11 @@ describe('permission checker decision tables', () => {
       checkPermission(
         {
           userId: actor,
-          amendment: rawAmendment({ resource: 'amendments', action: 'manage' }),
+          amendment: rawAmendment({
+            resource: 'amendments',
+            action: 'manage',
+            amendment_id: amendmentId,
+          }),
         },
         {},
         'update',
@@ -452,7 +467,9 @@ describe('permission checker decision tables', () => {
   it('evaluates legacy role-name collaborators', () => {
     const legacyAmendment = (overrides: Partial<Amendment> = {}): Amendment => ({
       id: amendmentId,
-      collaborators: [{ id: 'collaborator', user: { id: actor }, roleName: 'Editor' }],
+      collaborators: [
+        { id: 'collaborator', user: { id: actor }, roleName: 'Editor', status: 'active' },
+      ],
       roles: [
         role('amendment', [
           {

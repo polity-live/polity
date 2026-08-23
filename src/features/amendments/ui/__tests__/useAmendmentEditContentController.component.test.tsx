@@ -99,6 +99,7 @@ import {
 const amendment = {
   id: 'amendment-1',
   title: 'A1',
+  preamble: 'A1 subtitle',
   code: 'A-1',
   image_url: null,
   video_url: null,
@@ -192,6 +193,7 @@ describe('useAmendmentEditContentController', () => {
     const sparseAmendment = {
       ...amendment,
       title: null,
+      preamble: null,
       code: null,
       image_url: null,
       video_url: null,
@@ -229,6 +231,7 @@ describe('useAmendmentEditContentController', () => {
     await waitFor(() => expect(result.current.formData.hashtags).toEqual(['one']));
     expect(result.current.formData).toMatchObject({
       title: '',
+      subtitle: '',
       code: '',
       imageURL: '',
       videoURL: '',
@@ -371,6 +374,46 @@ describe('useAmendmentEditContentController', () => {
     expect(hookMocks.updateDocument).not.toHaveBeenCalled();
   });
 
+  it('resets and hydrates all settings and hashtags when the amendment id changes', async () => {
+    hookMocks.amendmentHashtags = [{ hashtag: { tag: 'first' } }];
+    const initialProps = {
+      amendmentId: 'amendment-1',
+      amendment,
+      amendmentProcess: buildProcess(),
+      currentUserId: 'user-1',
+      isLoading: false,
+      mode: 'edit' as const,
+    };
+    const view = renderHook(props => useAmendmentEditContentController(props), {
+      initialProps: initialProps as any,
+    });
+    await waitFor(() => expect(view.result.current.formData.hashtags).toEqual(['first']));
+
+    hookMocks.amendmentHashtags = [{ hashtag: { tag: 'second' } }];
+    view.rerender({
+      ...initialProps,
+      amendmentId: 'amendment-2',
+      amendment: {
+        ...amendment,
+        id: 'amendment-2',
+        title: 'A2',
+        preamble: 'Second subtitle',
+        code: 'Second text',
+        visibility: 'authenticated',
+      },
+    } as any);
+
+    await waitFor(() =>
+      expect(view.result.current.formData).toMatchObject({
+        title: 'A2',
+        subtitle: 'Second subtitle',
+        code: 'Second text',
+        visibility: 'authenticated',
+        hashtags: ['second'],
+      })
+    );
+  });
+
   it('persists workflow status to the amendment document when no branch exists yet', async () => {
     hookMocks.documentEditingMode = 'suggest_internal';
     const initialProps = {
@@ -438,6 +481,7 @@ describe('useAmendmentEditContentController', () => {
       result.current.setFormData(previous => ({
         ...previous,
         title: 'Created',
+        subtitle: 'Created subtitle',
         code: 'C-1',
         imageURL: 'image',
         videoURL: 'video',
@@ -465,6 +509,8 @@ describe('useAmendmentEditContentController', () => {
     expect(hookMocks.createAmendment).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Created',
+        preamble: 'Created subtitle',
+        code: 'C-1',
         tags: ['one'],
         internal_cr_voting_duration_minutes: 12,
         image_url: 'image',
@@ -498,6 +544,7 @@ describe('useAmendmentEditContentController', () => {
     expect(hookMocks.createAmendment).toHaveBeenCalledWith(
       expect.objectContaining({
         title: null,
+        preamble: null,
         code: null,
         tags: null,
         internal_cr_voting_duration_minutes: null,
@@ -536,9 +583,11 @@ describe('useAmendmentEditContentController', () => {
       result.current.setFormData(previous => ({
         ...previous,
         title: '',
+        subtitle: 'Updated subtitle',
         code: '',
         imageURL: 'new-image',
         videoURL: 'new-video',
+        visibility: 'private',
         hashtags: [],
         internalCRVotingCloseTrigger: 'after_minutes',
         internalCRVotingDurationMinutes: 9,
@@ -552,18 +601,19 @@ describe('useAmendmentEditContentController', () => {
     expect(hookMocks.updateAmendment).toHaveBeenCalledWith(
       expect.objectContaining({
         title: '',
+        preamble: 'Updated subtitle',
+        code: '',
         image_url: 'new-image',
         internal_cr_voting_duration_minutes: 9,
       })
     );
-    expect(hookMocks.createTimelineEvent).toHaveBeenCalledTimes(2);
+    expect(hookMocks.createTimelineEvent).not.toHaveBeenCalled();
     expect(hookMocks.toastSuccess).toHaveBeenCalled();
 
     act(() =>
       result.current.setFormData(previous => ({
         ...previous,
-        imageURL: '',
-        videoURL: '',
+        visibility: 'public',
         internalCRVotingCloseTrigger: 'all_collaborators_voted',
       }))
     );
@@ -571,6 +621,7 @@ describe('useAmendmentEditContentController', () => {
     expect(hookMocks.updateAmendment).toHaveBeenLastCalledWith(
       expect.objectContaining({ internal_cr_voting_duration_minutes: null })
     );
+    expect(hookMocks.createTimelineEvent).toHaveBeenCalledTimes(2);
 
     hookMocks.updateAmendment.mockRejectedValueOnce(new Error('update failed'));
     await act(async () => result.current.handleSubmit({ preventDefault: vi.fn() } as never));

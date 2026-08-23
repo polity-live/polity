@@ -76,7 +76,8 @@ describe('useUserProfileForm branch campaign A07', () => {
       gender: 'male',
       about: 'Biography',
       bio: '',
-      email: '',
+      email: 'login@example.test',
+      contact_email: 'contact@example.test',
       twitter: '',
       x: 'legacy-x',
       avatar: '',
@@ -90,6 +91,7 @@ describe('useUserProfileForm branch campaign A07', () => {
       firstName: '',
       lastName: '',
       gender: 'male',
+      contactEmail: 'contact@example.test',
       twitter: 'legacy-x',
       visibility: 'public',
       videoURL: '',
@@ -97,6 +99,7 @@ describe('useUserProfileForm branch campaign A07', () => {
 
     act(() => {
       view.result.current.updateField('firstName', 'Ada');
+      view.result.current.updateField('contactEmail', 'public@example.test');
       view.result.current.updateAboutContent([
         { type: 'p', children: [{ text: 'Updated biography' }] },
       ] as never);
@@ -112,6 +115,7 @@ describe('useUserProfileForm branch campaign A07', () => {
       'user-1',
       expect.objectContaining({
         first_name: 'Ada',
+        contact_email: 'public@example.test',
         gender: 'male',
         about: expect.any(Object),
         avatar: null,
@@ -120,6 +124,7 @@ describe('useUserProfileForm branch campaign A07', () => {
         allHashtags: mocks.allHashtags,
       })
     );
+    expect(mocks.updateCompleteProfile.mock.calls[0]?.[1]).not.toHaveProperty('email');
     expect(onSuccess).toHaveBeenCalledOnce();
     expect(mocks.navigate).not.toHaveBeenCalled();
   });
@@ -165,5 +170,45 @@ describe('useUserProfileForm branch campaign A07', () => {
     await act(async () => result.current.handleSubmit(submitEvent));
     expect(mocks.toastError).toHaveBeenCalledWith(expect.stringContaining('failed_to_update_user'));
     expect(result.current.isSubmitting).toBe(false);
+  });
+
+  it('resets and hydrates profile fields and hashtags when the user id changes', async () => {
+    mocks.userHashtags = [
+      { id: 'first-junction', hashtag_id: 'first-tag', hashtag: { id: 'first-tag', tag: 'first' } },
+    ];
+    const firstUser = {
+      id: 'first-user',
+      first_name: 'First',
+      contact_email: 'first@example.test',
+      visibility: 'private',
+    } as never;
+    const view = renderHook(({ userId, user }) => useUserProfileForm({ userId, user }), {
+      initialProps: { userId: 'first-user', user: firstUser },
+    });
+    await waitFor(() => expect(view.result.current.formData.hashtags).toEqual(['first']));
+
+    mocks.userHashtags = [
+      {
+        id: 'second-junction',
+        hashtag_id: 'second-tag',
+        hashtag: { id: 'second-tag', tag: 'second' },
+      },
+    ];
+    const secondUser = {
+      id: 'second-user',
+      first_name: 'Second',
+      contact_email: 'second@example.test',
+      visibility: 'authenticated',
+    } as never;
+    view.rerender({ userId: 'second-user', user: secondUser });
+
+    await waitFor(() =>
+      expect(view.result.current.formData).toMatchObject({
+        firstName: 'Second',
+        contactEmail: 'second@example.test',
+        visibility: 'authenticated',
+        hashtags: ['second'],
+      })
+    );
   });
 });

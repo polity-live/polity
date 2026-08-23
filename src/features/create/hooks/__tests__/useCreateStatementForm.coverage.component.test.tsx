@@ -36,9 +36,9 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
   translate: (key: string) =>
     key === 'generated.inline.0030_public_61c9b2b1'
-      ? 'public'
+      ? 'Öffentlich'
       : key === 'generated.inline.0031_authenticated_8fda38ce'
-        ? 'authenticated'
+        ? 'Authentifiziert'
         : key,
 }));
 vi.mock('@/features/create/logic/createSearchParams', () => ({
@@ -117,6 +117,10 @@ describe('useCreateStatementForm', () => {
     expect(review.secondaryBadge).toBe('features.statements.story.badge');
     expect(review.media).toMatchObject({ imageUrl: 'image.png', videoUrl: 'video.mp4' });
     expect(review.hashtags).toEqual(['civic']);
+    expect(review.sections[0].fields).toContainEqual({
+      label: 'pages.create.common.visibility',
+      value: 'pages.create.common.authenticated',
+    });
     expect(review.sections).toHaveLength(2);
 
     act(() => {
@@ -124,6 +128,9 @@ describe('useCreateStatementForm', () => {
       field(result.current, 'visibility').props.onChange('private');
       field(result.current, 'survey').props.onSurveyOptionsChange(['Yes', '']);
     });
+    expect(field(result.current, 'review').props.secondaryBadge).toBe(
+      'pages.create.common.private'
+    );
     expect(field(result.current, 'review').props.sections).toHaveLength(1);
   });
 

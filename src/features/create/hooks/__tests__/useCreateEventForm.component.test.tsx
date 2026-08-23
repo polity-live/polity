@@ -42,12 +42,12 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) =>
     (
       ({
-        'generated.inline.0030_public_61c9b2b1': 'public',
-        'generated.inline.0031_authenticated_8fda38ce': 'authenticated',
-        'generated.inline.0032_ratio_4b6339ba': 'ratio',
-        'generated.inline.0034_list_38b62be4': 'list',
-        'generated.inline.0035_online_2dbc2fd2': 'online',
-        'generated.inline.0036_hybrid_e2ac482d': 'hybrid',
+        'generated.inline.0030_public_61c9b2b1': 'Öffentlich',
+        'generated.inline.0031_authenticated_8fda38ce': 'Authentifiziert',
+        'generated.inline.0032_ratio_4b6339ba': 'Verhältnis',
+        'generated.inline.0034_list_38b62be4': 'Liste',
+        'generated.inline.0035_online_2dbc2fd2': 'Online',
+        'generated.inline.0036_hybrid_e2ac482d': 'Hybrid',
       }) as Record<string, string>
     )[key] ?? key,
   useTranslation: () => ({
@@ -314,8 +314,8 @@ describe('useCreateEventForm', () => {
         meetingMaxBookings: '25',
         groupId: 'group-allowed',
         groupName: 'Draft Group',
-        delegateConfig: { allocationMode: 'total', totalDelegates: 7, delegateRatio: 3 },
-        delegateElectionMode: 'single',
+        delegateConfig: { allocationMode: 'ratio', totalDelegates: 7, delegateRatio: 3 },
+        delegateElectionMode: 'list',
         title: 'Delegates 2026',
         description: 'Delegate description',
         descriptionContent: [{ type: 'p', children: [{ text: 'Delegate description' }] }],
@@ -367,7 +367,19 @@ describe('useCreateEventForm', () => {
     );
     const reviewProps = review.props as { hashtags?: string[]; media?: unknown; sections: any[] };
     expect(reviewProps.hashtags).toEqual(['democracy']);
-    expect(reviewProps.sections.flatMap(section => section.fields).length).toBeGreaterThan(10);
+    const reviewFields = reviewProps.sections.flatMap(section => section.fields);
+    expect(reviewFields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: '1:3' }),
+        expect.objectContaining({ value: 'Listenwahl' }),
+        expect.objectContaining({ value: 'Hybrid' }),
+        {
+          label: 'pages.create.common.visibility',
+          value: 'pages.create.common.authenticated',
+        },
+      ])
+    );
+    expect(reviewFields.length).toBeGreaterThan(10);
     expect(result.current.steps.at(-1)?.isValid()).toBe(true);
   });
 

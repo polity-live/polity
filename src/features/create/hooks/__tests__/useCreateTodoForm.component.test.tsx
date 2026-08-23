@@ -112,8 +112,8 @@ vi.mock('../../logic/createFinalization', () => ({
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) =>
     ({
-      'generated.inline.0030_public_61c9b2b1': 'public',
-      'generated.inline.0031_authenticated_8fda38ce': 'authenticated',
+      'generated.inline.0030_public_61c9b2b1': 'Öffentlich',
+      'generated.inline.0031_authenticated_8fda38ce': 'Authentifiziert',
     })[key] ?? key,
   useTranslation: () => ({
     t: (key: string) => key,
@@ -510,6 +510,20 @@ describe('useCreateTodoForm', () => {
     act(() => (visibilityField.props as any).onChange(visibility));
     const review = findField(result.current.steps[4].fields ?? [], 'review', 'customComponent');
     expect(JSON.stringify(review.props)).toContain(expected);
+  });
+
+  it('shows status changes in review', () => {
+    const { result } = renderHook(() => useCreateTodoForm());
+    const statusField = findField(
+      result.current.steps[2].fields ?? [],
+      'status',
+      'customComponent'
+    );
+
+    act(() => (statusField.props as any).onChange('completed'));
+
+    const review = findField(result.current.steps[4].fields ?? [], 'review', 'customComponent');
+    expect(JSON.stringify(review.props)).toContain('features.todos.status.completed');
   });
 
   it('blocks invalid and anonymous submissions', async () => {

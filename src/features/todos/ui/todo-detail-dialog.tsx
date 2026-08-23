@@ -15,6 +15,7 @@ import {
 import { useTodoDiscussion } from '../hooks/useTodoDiscussion';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
+import { useTodoActivity } from '../hooks/useTodoActivity';
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -70,6 +71,7 @@ export function TodoDetailDialog({
   const { todo: liveTodo } = useTodoState({ todoId: initialTodo.id });
   const todo = liveTodo ?? initialTodo;
   const discussion = useTodoDiscussion(liveTodo);
+  const activity = useTodoActivity(todo, open);
   const { canManage } = usePermissions({ groupId: todo.group_id ?? undefined });
   const effectiveCanManageTodos =
     canManageTodos ??
@@ -264,6 +266,7 @@ export function TodoDetailDialog({
       handleRemoveAssignee={handleRemoveAssignee}
       handleAddAssignee={handleAddAssignee}
       discussion={discussion}
+      activity={activity}
       isArchiving={isArchiving}
       handleArchive={handleArchive}
       handleUnarchive={handleUnarchive}

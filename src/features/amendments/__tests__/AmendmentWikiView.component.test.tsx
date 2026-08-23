@@ -33,6 +33,9 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 vi.mock('@/features/shared/ui/status', () => ({
   BadgeControl: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   EditingModeBadge: () => <span data-testid="editing-mode-badge" />,
+  VisibilityBadge: ({ children, ...props }: { children: ReactNode }) => (
+    <span {...props}>{children}</span>
+  ),
   getEditingModeOption: (mode: string | null | undefined) => ({ value: mode ?? 'view' }),
 }));
 
@@ -170,7 +173,6 @@ function baseProps(amendmentOverrides: Record<string, unknown> = {}): AmendmentW
     amendmentId: 'amendment-1',
     t,
     user: { id: 'user-1' },
-    canAccess: true,
     isSubscribed: false,
     subscriberCount: 0,
     toggleSubscribe: vi.fn(),
@@ -227,6 +229,26 @@ function valueForStat(label: string) {
 }
 
 describe('AmendmentWikiView stats', () => {
+  it('provides activity to the author', () => {
+    render(<AmendmentWikiView {...baseProps({ created_by_id: 'user-1' })} />);
+    expect(screen.getByTestId('info-tabs')).toBeTruthy();
+  });
+
+  it.each([
+    ['public', 'public'],
+    ['authenticated', 'authenticated'],
+    ['private', 'private'],
+    [null, 'public'],
+    ['unexpected', 'private'],
+  ])('normalizes the %s visibility to one %s badge', (visibility, expected) => {
+    const { container } = render(<AmendmentWikiView {...baseProps({ visibility })} />);
+
+    const badges = container.querySelectorAll('[data-entity-visibility]');
+    expect(badges).toHaveLength(1);
+    expect(badges[0]?.getAttribute('data-entity-visibility')).toBe(expected);
+    expect(badges[0]?.textContent).toBe(`common.visibility.${expected}`);
+  });
+
   it('stacks the editing mode below the title on mobile and restores the row on desktop', () => {
     render(<AmendmentWikiView {...baseProps()} />);
 
@@ -237,7 +259,9 @@ describe('AmendmentWikiView stats', () => {
     expect(titleGroup?.className).toContain('md:flex-row');
     expect(titleGroup?.className).toContain('gap-1');
     expect(titleGroup?.className).toContain('md:gap-3');
-    expect(title.nextElementSibling).toBe(screen.getByTestId('editing-mode-badge'));
+    const visibilityBadge = title.nextElementSibling;
+    expect(visibilityBadge?.getAttribute('data-entity-visibility')).toBe('public');
+    expect(visibilityBadge?.nextElementSibling).toBe(screen.getByTestId('editing-mode-badge'));
 
     const header = titleGroup?.parentElement;
     expect(header?.className).toContain('mb-4');
@@ -344,14 +368,11 @@ describe('AmendmentWikiView stats', () => {
     expect(valueForStat('Änderungsanträge')).toBe('0');
   });
 
-  it('renders not-found and access-denied terminal states', () => {
+  it('renders the not-found terminal state', () => {
     const missing = render(<AmendmentWikiView {...baseProps()} amendment={null} />);
     expect(missing.container.textContent).toContain(
       'generated.inline.0066_amendment_not_found_3cea3d4d'
     );
-    missing.unmount();
-    render(<AmendmentWikiView {...baseProps()} canAccess={false} />);
-    expect(screen.getByTestId('access-denied')).toBeTruthy();
   });
 
   it('renders creation, accepted, and rejected workflow phase variants', () => {

@@ -15,15 +15,19 @@ function createCtx(): CreateGroupMutatorCtx {
 }
 
 function createTx() {
+  const table = () => ({ insert: vi.fn(), update: vi.fn(), delete: vi.fn() });
   return {
     clientID: 'client-1',
     mutationID: 1,
     reason: 'test',
     location: 'server' as const,
+    run: vi.fn().mockResolvedValue(undefined),
     mutate: {
-      group: {
-        insert: vi.fn(),
-      },
+      group: table(),
+      role: table(),
+      action_right: table(),
+      group_membership: table(),
+      group_membership_role: table(),
     },
   };
 }
@@ -86,5 +90,10 @@ describe('group create schema and mutator', () => {
         owner_id: 'user-1',
       })
     );
+    expect(tx.mutate.group_membership.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ group_id: 'group-1', user_id: 'user-1', status: 'active' })
+    );
+    expect(tx.mutate.group_membership_role.insert).toHaveBeenCalledOnce();
+    expect(tx.mutate.action_right.insert).not.toHaveBeenCalledTimes(0);
   });
 });

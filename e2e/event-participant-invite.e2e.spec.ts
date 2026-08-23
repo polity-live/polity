@@ -3,7 +3,7 @@ import { db } from './fixtures/db';
 import { eventActors, resetEventParticipant } from './fixtures/domains/events';
 import { gotoReady, openGroupActorPage } from './fixtures/domains/groups';
 
-test('participant is invited, accepts, and remains in the persisted participant list @pr', async ({
+test('participant opens a private event while invited, accepts, and remains listed @pr', async ({
   browser,
   e2eRun,
   page,
@@ -15,7 +15,7 @@ test('participant is invited, accepts, and remains in the persisted participant 
   await resetEventParticipant(seed.eventId, participant.id);
   await db()`
     update public.event
-    set event_type = 'open', updated_at = now()
+    set event_type = 'open', visibility = 'private', updated_at = now()
     where id = ${seed.eventId}::uuid
   `;
   try {
@@ -38,6 +38,8 @@ test('participant is invited, accepts, and remains in the persisted participant 
       })
       .toBe('invited');
 
+    // The invited participant's default event role includes events:view, so the
+    // private route must already be discoverable before accepting the invite.
     await gotoReady(actorPage.page, `/event/${seed.eventId}`);
     const acceptInvitation = actorPage.page.getByRole('button', {
       name: /Accept Invitation|Einladung annehmen/i,

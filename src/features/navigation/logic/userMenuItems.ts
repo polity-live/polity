@@ -1,5 +1,17 @@
+import { VIEW_IMPLYING_ACTIONS } from '@/zero/rbac/constants';
+
 interface RoleLike {
   id?: string | null;
+  scope?: string | null;
+  event_id?: string | null;
+  action_rights?:
+    | readonly {
+        resource?: string | null;
+        action?: string | null;
+        group_id?: string | null;
+        event_id?: string | null;
+      }[]
+    | null;
 }
 
 interface RoleLinkLike<TRole extends RoleLike = RoleLike> {
@@ -16,6 +28,7 @@ interface UserMenuGroupSource<TRole extends RoleLike = RoleLike> {
   role?: TRole | null;
   roles?: readonly TRole[] | null;
   membership_roles?: readonly RoleLinkLike<TRole>[] | null;
+  guest_roles?: readonly RoleLinkLike<TRole>[] | null;
 }
 
 interface UserMenuEventSource<TRole extends RoleLike = RoleLike> {
@@ -94,22 +107,64 @@ export interface UserMenuAmendment {
   eventTitle?: string | null;
 }
 
-const ACTIVE_GROUP_MEMBERSHIP_STATUSES = new Set(['active', 'member', 'admin']);
-const ACTIVE_EVENT_PARTICIPANT_STATUSES = new Set(['active', 'member', 'admin', 'confirmed']);
+const DISCOVERABLE_GROUP_MEMBERSHIP_STATUSES = new Set(['invited', 'active', 'member', 'admin']);
+const DISCOVERABLE_EVENT_PARTICIPANT_STATUSES = new Set([
+  'invited',
+  'active',
+  'member',
+  'admin',
+  'confirmed',
+]);
+const VIEW_ACTIONS = new Set<string>(VIEW_IMPLYING_ACTIONS);
 const FINAL_AMENDMENT_DECISION_STATUSES = new Set(['accepted', 'rejected']);
 const TERMINAL_AMENDMENT_PROCESS_STATUSES = new Set(['completed', 'rejected', 'withdrawn']);
 
-function hasAssignedRole<TRole extends RoleLike>(source: {
+function sourceRoles<TRole extends RoleLike>(source: {
   role?: TRole | null;
   roles?: readonly TRole[] | null;
   membership_roles?: readonly RoleLinkLike<TRole>[] | null;
   participant_roles?: readonly RoleLinkLike<TRole>[] | null;
-}) {
-  return Boolean(
-    source.role ||
-    (source.roles?.length ?? 0) > 0 ||
-    source.membership_roles?.some(link => Boolean(link.role)) ||
-    source.participant_roles?.some(link => Boolean(link.role))
+  guest_roles?: readonly RoleLinkLike<TRole>[] | null;
+}): readonly TRole[] {
+  return [
+    ...(source.role ? [source.role] : []),
+    ...(source.roles ?? []),
+    ...(source.membership_roles ?? []).flatMap(link => (link.role ? [link.role] : [])),
+    ...(source.participant_roles ?? []).flatMap(link => (link.role ? [link.role] : [])),
+    ...(source.guest_roles ?? []).flatMap(link => (link.role ? [link.role] : [])),
+  ];
+}
+
+function hasGroupViewRight<TRole extends RoleLike>(
+  source: Pick<UserMenuGroupSource<TRole>, 'role' | 'roles' | 'membership_roles' | 'guest_roles'>,
+  groupId: string
+) {
+  const roles = sourceRoles(source);
+
+  return roles.some(role =>
+    role.action_rights?.some(
+      right =>
+        (right.group_id == null || right.group_id === groupId) &&
+        right.resource === 'groups' &&
+        (right.action === 'view' || right.action === 'manage')
+    )
+  );
+}
+
+function hasEventViewRight<TRole extends RoleLike>(
+  source: UserMenuEventSource<TRole>,
+  eventId: string
+) {
+  return sourceRoles(source).some(
+    role =>
+      role.scope === 'event' &&
+      role.event_id === eventId &&
+      role.action_rights?.some(
+        right =>
+          right.event_id === eventId &&
+          right.resource === 'events' &&
+          VIEW_ACTIONS.has(right.action ?? '')
+      )
   );
 }
 
@@ -144,8 +199,8 @@ export function buildUserMenuGroups(memberships: readonly UserMenuGroupSource[])
     const group = membership.group;
     if (
       !group?.id ||
-      !ACTIVE_GROUP_MEMBERSHIP_STATUSES.has(membership.status ?? '') ||
-      !hasAssignedRole(membership)
+      !DISCOVERABLE_GROUP_MEMBERSHIP_STATUSES.has(membership.status ?? '') ||
+      !hasGroupViewRight(membership, group.id)
     ) {
       continue;
     }
@@ -186,8 +241,8 @@ export function buildUserMenuEvents(
       !event?.id ||
       event.status === 'cancelled' ||
       startDate === null ||
-      !ACTIVE_EVENT_PARTICIPANT_STATUSES.has(participation.status ?? '') ||
-      !hasAssignedRole(participation)
+      !DISCOVERABLE_EVENT_PARTICIPANT_STATUSES.has(participation.status ?? '') ||
+      !hasEventViewRight(participation, event.id)
     ) {
       continue;
     }

@@ -14,6 +14,7 @@ import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
+import { getCreateVisibilityLabelKey } from '../logic/createVisibility';
 import { CreateCharacterCountNotice } from '../ui/CreateInlineNotice';
 import { StatementSurveyInput } from '../ui/inputs/StatementSurveyInput';
 import { StatementStoryToggle } from '../ui/inputs/StatementStoryToggle';
@@ -104,12 +105,7 @@ export function useCreateStatementForm(): CreateFormConfig {
   const statementInvalidReason = textInvalidReason ?? statementContentInvalidReason;
 
   const hasSurvey = surveyQuestion.trim() && surveyOptions.filter(o => o.trim()).length >= 2;
-  const visibilityLabel =
-    visibility === translateText('generated.inline.0030_public_61c9b2b1')
-      ? t('pages.create.common.public')
-      : visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
-        ? t('pages.create.common.authenticated')
-        : t('pages.create.common.private');
+  const visibilityLabel = t(getCreateVisibilityLabelKey(visibility));
 
   useEffect(() => {
     setGroupId(groupIdParam || null);

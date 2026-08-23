@@ -15,7 +15,6 @@ describe('BlogDetailView loading state', () => {
       <BlogDetailView
         blogId="blog-1"
         bloggers={[]}
-        canAccess
         canDelete={false}
         canEdit={false}
         commentCount={0}

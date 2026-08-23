@@ -11,6 +11,7 @@ export const userGenderSchema = z.enum(['male', 'female', 'diverse']);
 const userBaseSchema = z.object({
   id: z.string(),
   email: z.string().nullable(),
+  contact_email: z.string().nullable(),
   handle: z.string().nullable(),
   first_name: z.string().nullable(),
   last_name: z.string().nullable(),
@@ -71,6 +72,7 @@ export const userUpdateSchema = userBaseSchema
   .pick({
     first_name: true,
     last_name: true,
+    contact_email: true,
     bio: true,
     gender: true,
     whatsapp: true,

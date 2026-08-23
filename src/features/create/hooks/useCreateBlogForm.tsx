@@ -15,6 +15,7 @@ import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
+import { getCreateVisibilityLabelKey } from '../logic/createVisibility';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
 import {
@@ -68,12 +69,7 @@ export function useCreateBlogForm(): CreateFormConfig {
     : selectedGroupPermissionDenied
       ? t('pages.create.blog.validation.groupPermissionDenied')
       : null;
-  const visibilityLabel =
-    visibility === translateText('generated.inline.0030_public_61c9b2b1')
-      ? t('pages.create.common.public')
-      : visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
-        ? t('pages.create.common.authenticated')
-        : t('pages.create.common.private');
+  const visibilityLabel = t(getCreateVisibilityLabelKey(visibility));
 
   useEffect(() => {
     setGroupId(groupIdParam || null);

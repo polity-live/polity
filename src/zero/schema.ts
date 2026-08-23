@@ -15,6 +15,7 @@ import {
   role,
   roleHolderHistory,
   actionRight,
+  groupActivity,
 } from './groups/table';
 import {
   event,
@@ -24,6 +25,7 @@ import {
   participant,
   eventException,
   eventAssemblyScope,
+  eventActivity,
 } from './events/table';
 import {
   amendment,
@@ -37,10 +39,11 @@ import {
   amendmentProcessBranch,
   amendmentProcessStepRun,
   processTask,
+  amendmentActivity,
 } from './amendments/table';
 import { document, documentVersion, documentCollaborator, documentCursor } from './documents/table';
 import { agendaItem, speakerList, agendaItemChangeRequest } from './agendas/table';
-import { todo, todoAssignment } from './todos/table';
+import { todo, todoActivity, todoAssignment } from './todos/table';
 import { conversation, conversationParticipant, message } from './messages/table';
 import { searchDocument, searchDocumentAcl, searchDocumentTopic } from './search-documents/table';
 import {
@@ -151,6 +154,7 @@ const zeroTables = [
   file,
   // Groups
   group,
+  groupActivity,
   groupMembership,
   groupMembershipOrigin,
   groupOfflineMember,
@@ -164,6 +168,7 @@ const zeroTables = [
   actionRight,
   // Events
   event,
+  eventActivity,
   eventParticipant,
   eventOfflineParticipant,
   eventParticipantRole,
@@ -172,6 +177,7 @@ const zeroTables = [
   eventAssemblyScope,
   // Amendments
   amendment,
+  amendmentActivity,
   amendmentCollaborator,
   amendmentCityDesign,
   amendmentPath,
@@ -245,6 +251,7 @@ const zeroTables = [
   // Todos
   todo,
   todoAssignment,
+  todoActivity,
   // Messages
   conversation,
   conversationParticipant,
@@ -328,6 +335,7 @@ export type Follow = Row<Schema['tables']['follow']>;
 
 // Groups
 export type Group = Row<Schema['tables']['group']>;
+export type GroupActivity = Row<Schema['tables']['group_activity']>;
 export type GroupMembership = Row<Schema['tables']['group_membership']>;
 export type GroupMembershipOrigin = Row<Schema['tables']['group_membership_origin']>;
 export type GroupOfflineMember = Row<Schema['tables']['group_offline_member']>;
@@ -351,6 +359,7 @@ export type ActionRight = Row<Schema['tables']['action_right']>;
 
 // Events
 export type Event = Row<Schema['tables']['event']>;
+export type EventActivity = Row<Schema['tables']['event_activity']>;
 export type EventParticipant = Row<Schema['tables']['event_participant']>;
 export type EventOfflineParticipant = Row<Schema['tables']['event_offline_participant']>;
 export type EventParticipantRole = Row<Schema['tables']['event_participant_role']>;
@@ -364,6 +373,7 @@ export type CalendarSubscription = Row<Schema['tables']['calendar_subscription']
 
 // Amendments
 export type Amendment = Row<Schema['tables']['amendment']>;
+export type AmendmentActivity = Row<Schema['tables']['amendment_activity']>;
 export type AmendmentSupportVote = Row<Schema['tables']['amendment_support_vote']>;
 export type ChangeRequest = Row<Schema['tables']['change_request']>;
 export type ChangeRequestVote = Row<Schema['tables']['change_request_vote']>;
@@ -414,6 +424,7 @@ export type FinalChoiceDecision = Row<Schema['tables']['final_choice_decision']>
 // Todos
 export type Todo = Row<Schema['tables']['todo']>;
 export type TodoAssignment = Row<Schema['tables']['todo_assignment']>;
+export type TodoActivity = Row<Schema['tables']['todo_activity']>;
 
 // Messages
 export type Conversation = Row<Schema['tables']['conversation']>;

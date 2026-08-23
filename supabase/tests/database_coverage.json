@@ -1,22 +1,22 @@
 {
   "version": 1,
   "expectedInventory": {
-    "tables": 141,
-    "columns": 1546,
-    "primaryKeys": 141,
-    "checks": 98,
-    "foreignKeys": 358,
+    "tables": 145,
+    "columns": 1585,
+    "primaryKeys": 145,
+    "checks": 116,
+    "foreignKeys": 370,
     "uniqueConstraints": 56,
     "uniqueIndexes": 28,
     "uniqueRules": 84,
-    "indexes": 639,
-    "functions": 67,
-    "triggers": 57,
-    "policies": 151,
+    "indexes": 650,
+    "functions": 73,
+    "triggers": 64,
+    "policies": 155,
     "cronBranches": 2
   },
   "expectedBehaviorAssertions": {
-    "checkViolations": 104,
+    "checkViolations": 112,
     "uniqueViolations": 87
   },
   "globalTests": {
@@ -27,22 +27,37 @@
     { "source": "00_extensions.sql", "behavior": [] },
     {
       "source": "01_user.sql",
-      "behavior": ["identity_group_network.sql", "schema_constraints.sql"]
+      "behavior": [
+        "identity_group_network.sql",
+        "schema_constraints.sql",
+        "entity_activity_logs.sql"
+      ]
     },
     {
       "source": "02_group.sql",
-      "behavior": ["identity_group_network.sql", "schema_constraints.sql"]
+      "behavior": [
+        "identity_group_network.sql",
+        "schema_constraints.sql",
+        "entity_activity_logs.sql"
+      ]
     },
     {
       "source": "03_event.sql",
-      "behavior": ["events_agenda_delegation.sql", "schema_constraints.sql"]
+      "behavior": [
+        "events_agenda_delegation.sql",
+        "schema_constraints.sql",
+        "entity_activity_logs.sql"
+      ]
     },
     { "source": "04_document.sql", "behavior": ["content_collaboration.sql"] },
     {
       "source": "05_1_network.sql",
       "behavior": ["identity_group_network.sql", "schema_constraints.sql"]
     },
-    { "source": "05_2_amendment.sql", "behavior": ["governance_voting.sql", "app_tutorial.sql"] },
+    {
+      "source": "05_2_amendment.sql",
+      "behavior": ["governance_voting.sql", "app_tutorial.sql", "entity_activity_logs.sql"]
+    },
     { "source": "06_agenda.sql", "behavior": ["events_agenda_delegation.sql"] },
     {
       "source": "07_blog.sql",
@@ -50,7 +65,11 @@
     },
     {
       "source": "08_todo.sql",
-      "behavior": ["todo_discussion_thread.sql", "content_collaboration.sql"]
+      "behavior": [
+        "todo_discussion_thread.sql",
+        "todo_activity_log.sql",
+        "content_collaboration.sql"
+      ]
     },
     { "source": "09_message.sql", "behavior": ["conversation_rollups.sql"] },
     {

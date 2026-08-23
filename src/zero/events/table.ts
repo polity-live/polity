@@ -89,6 +89,21 @@ export const event = table('event')
   })
   .primaryKey('id');
 
+export const eventActivity = table('event_activity')
+  .columns({
+    id: string(),
+    event_id: string(),
+    actor_id: string().optional(),
+    actor_type: string(),
+    subject_user_id: string().optional(),
+    action: string(),
+    severity: string(),
+    changes: json<MutableJSONValue>(),
+    context: json<MutableJSONValue>(),
+    created_at: number(),
+  })
+  .primaryKey('id');
+
 export const eventException = table('event_exception')
   .columns({
     id: string(),

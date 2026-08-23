@@ -5,7 +5,6 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { useEventWikiPage } from './hooks/useEventWikiPage';
-import { AccessDenied as AccessDeniedView } from '@/features/auth/ui/AccessDenied';
 import { useCreateRecoveryDraft } from '@/features/create/logic/createFinalization';
 import { CreateRecoveryState } from '@/features/create/ui/CreateRecoveryState';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
@@ -40,7 +39,6 @@ export function EventWiki({ eventId }: EventWikiProps) {
   const recoveryDraft = useCreateRecoveryDraft('event', eventId);
   const {
     user,
-    canAccess,
     isSubscribed,
     subscriberCount,
     toggleSubscribe,
@@ -74,10 +72,6 @@ export function EventWiki({ eventId }: EventWikiProps) {
     return <EventWikiNotFoundView />;
   }
 
-  if (!canAccess) {
-    return <AccessDeniedView />;
-  }
-
   if (event.event_type === 'meeting' || event.meeting_type) {
     return <MeetingPageView meetingId={eventId} />;
   }
@@ -108,7 +102,6 @@ export function EventWiki({ eventId }: EventWikiProps) {
       virtualizeParticipationDirectory
       agendaStats={agendaStats}
       amendmentsCount={amendmentsCount}
-      canAccess={canAccess}
       confirmDialogOpen={confirmDialogOpen}
       elections={resolveAppTutorialFixtureValue(elections, {
         tutorialRunId: event.tutorial_run_id,

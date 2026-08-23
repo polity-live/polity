@@ -475,7 +475,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
             name:
               `${speaker.user.first_name ?? ''} ${speaker.user.last_name ?? ''}`.trim() ||
               undefined,
-            email: speaker.user.email ?? undefined,
+            email: speaker.user.contact_email ?? undefined,
             avatar: speaker.user.avatar ?? undefined,
             gender: speaker.user.gender ?? null,
           }

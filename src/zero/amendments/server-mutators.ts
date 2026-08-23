@@ -16,7 +16,6 @@ import {
   recomputeUserCounters,
   userName,
 } from '../server-helpers';
-import { DEFAULT_AMENDMENT_ROLES } from '../rbac/constants';
 import {
   updateAmendmentSchema,
   createAmendmentCollaboratorSchema,
@@ -95,6 +94,7 @@ import { normalizeChangeRequestVoteOrder } from '@/features/change-requests/logi
 import { reorderOpenChangeRequestVoteStepsForAgendaItem } from '../agendas/change-request-vote-ordering';
 import { isBranchEditable } from '@/features/amendments/logic/amendmentBranchDisplay';
 import { transitionProcessBranchToEventMode } from './event-mode-transition';
+import { appendEntityActivity } from '../activity/shared';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 const PENDING_SUBMISSION_STATUS = 'pending_submission';
@@ -157,6 +157,31 @@ async function loadProcessRunForBranch(
     throw new Error('Process run not found');
   }
   return processRun;
+}
+
+async function appendProcessBranchActivity(
+  tx: any,
+  ctx: { userID?: string | null },
+  branchId: string,
+  action: 'process_updated' | 'process_task_updated' | 'process_replanned',
+  context: Record<string, unknown>
+) {
+  const branch = await tx.run(zql.amendment_process_branch.where('id', branchId).one());
+  if (!branch) return;
+  const run = await tx.run(zql.amendment_process_run.where('id', branch.process_run_id).one());
+  if (!run) return;
+  await appendEntityActivity(tx, ctx, {
+    table: 'amendment_activity',
+    entityField: 'amendment_id',
+    entityId: run.amendment_id,
+    action,
+    severity: 'high',
+    context: {
+      process_run_id: run.id,
+      process_branch_id: branchId,
+      ...context,
+    },
+  });
 }
 
 function getBranchMutationEditingMode(branch: { editing_mode?: string | null }) {
@@ -1057,93 +1082,6 @@ export const amendmentServerMutators = {
     };
 
     await mutators.amendments.create.fn({ tx, ctx, args: createArgs });
-
-    const now = Date.now();
-    let authorRoleId: string | null = null;
-    const totalRoles = DEFAULT_AMENDMENT_ROLES.length;
-
-    for (let index = 0; index < totalRoles; index++) {
-      const roleDef = DEFAULT_AMENDMENT_ROLES[index];
-      const roleId = crypto.randomUUID();
-
-      if (roleDef.name === 'Author') {
-        authorRoleId = roleId;
-      }
-
-      await tx.mutate.role.insert({
-        id: roleId,
-        name: roleDef.name,
-        description: roleDef.description,
-        scope: 'amendment',
-        group_id: null,
-        event_id: null,
-        amendment_id: args.id,
-        blog_id: null,
-        assignee_kind: 'member',
-        assignment_mode: 'assigned',
-        visibility: 'public',
-        term_start_date: null,
-        is_recurring: false,
-        recurrence_pattern: null,
-        recurrence_rule: null,
-        recurrence_interval: null,
-        recurrence_days: null,
-        recurrence_end_date: null,
-        scheduled_revote_date: null,
-        default_request_role: false,
-        default_invite_role: false,
-        sort_order: totalRoles - 1 - index,
-        created_at: now,
-      });
-
-      for (const permission of roleDef.permissions) {
-        await tx.mutate.action_right.insert({
-          id: crypto.randomUUID(),
-          resource: permission.resource,
-          action: permission.action,
-          role_id: roleId,
-          group_id: null,
-          event_id: null,
-          amendment_id: args.id,
-          blog_id: null,
-          created_at: now,
-        });
-      }
-    }
-
-    if (!authorRoleId) {
-      const existingAuthorRole = await tx.run(
-        zql.role
-          .where('amendment_id', args.id)
-          .where('scope', 'amendment')
-          .where('name', 'Author')
-          .one()
-      );
-      authorRoleId = existingAuthorRole?.id ?? null;
-    }
-
-    const existingCreatorCollaborator = await tx.run(
-      zql.amendment_collaborator.where('amendment_id', args.id).where('user_id', ctx.userID).one()
-    );
-
-    if (existingCreatorCollaborator) {
-      await tx.mutate.amendment_collaborator.update({
-        id: existingCreatorCollaborator.id,
-        role_id: authorRoleId,
-        status: 'admin',
-        visibility: args.visibility,
-      });
-    } else {
-      await tx.mutate.amendment_collaborator.insert({
-        id: crypto.randomUUID(),
-        amendment_id: args.id,
-        user_id: ctx.userID,
-        role_id: authorRoleId,
-        status: 'admin',
-        visibility: args.visibility,
-        created_at: now,
-      });
-    }
 
     await recomputeAmendmentCounters(tx, args.id);
 
@@ -2064,6 +2002,14 @@ export const amendmentServerMutators = {
       const result = await initializeAmendmentProcessPath(tx, ctx.userID, args);
       if (result.handled) {
         await materializeCurrentForwardConfirmedEventVoting(tx, ctx, result.branchId);
+        await appendEntityActivity(tx, ctx, {
+          table: 'amendment_activity',
+          entityField: 'amendment_id',
+          entityId: args.amendment_id,
+          action: 'process_started',
+          severity: 'high',
+          context: { process_branch_id: result.branchId, source_group_id: args.source_group_id },
+        });
       }
     }
   ),
@@ -2075,6 +2021,12 @@ export const amendmentServerMutators = {
       const resolution = await resolveAmendmentProcessVote(tx, args, ctx.userID);
       if (resolution.handled && 'branchId' in resolution) {
         await materializeCurrentForwardConfirmedEventVoting(tx, ctx, resolution.branchId);
+        if (resolution.branchId) {
+          await appendProcessBranchActivity(tx, ctx, resolution.branchId, 'process_updated', {
+            operation: 'vote_resolved',
+            agenda_item_id: args.agenda_item_id,
+          });
+        }
       }
       await notifyProcessVoteResolution(tx, ctx.userID, args.agenda_item_id, resolution);
     }
@@ -2087,6 +2039,13 @@ export const amendmentServerMutators = {
       const result = await completeProcessTaskWithEvent(tx, ctx.userID, args);
       if (result.handled) {
         await materializeCurrentForwardConfirmedEventVoting(tx, ctx, result.branchId);
+        if (result.branchId) {
+          await appendProcessBranchActivity(tx, ctx, result.branchId, 'process_task_updated', {
+            operation: 'completed_with_event',
+            process_task_id: args.process_task_id,
+            event_id: args.event_id,
+          });
+        }
       }
     }
   ),
@@ -2098,6 +2057,9 @@ export const amendmentServerMutators = {
       const result = await replanProcessBranchEvents(tx, ctx.userID, args);
       if (result.handled) {
         await materializeCurrentForwardConfirmedEventVoting(tx, ctx, result.branchId);
+        await appendProcessBranchActivity(tx, ctx, result.branchId, 'process_replanned', {
+          operation: 'events_replanned',
+        });
       }
     }
   ),

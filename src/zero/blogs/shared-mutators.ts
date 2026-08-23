@@ -23,9 +23,83 @@ import {
   deleteBlogSupportVoteSchema,
 } from '../votes/schema';
 import { roleCreateSchema, actionRightCreateSchema } from '../groups/schema';
+import { DEFAULT_BLOG_ROLES } from '../rbac/constants';
+import { creatorActionRightId, creatorRbacId, creatorRoleId } from '../rbac/creator-bootstrap';
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 const ACTIVE_BLOGGER_STATUSES = new Set(['owner', 'admin', 'member', 'writer']);
+
+async function bootstrapBlogCreatorRbac(
+  tx: Parameters<typeof can>[0],
+  args: { blogId: string; creatorId: string; visibility: string; createdAt: number }
+) {
+  const totalRoles = DEFAULT_BLOG_ROLES.length;
+  let ownerRoleId: string | null = null;
+
+  for (let index = 0; index < totalRoles; index++) {
+    const roleDef = DEFAULT_BLOG_ROLES[index];
+    const roleId = await creatorRoleId('blog', args.blogId, roleDef.name);
+    if (roleDef.name === 'Owner') ownerRoleId = roleId;
+
+    await tx.mutate.role.insert({
+      id: roleId,
+      name: roleDef.name,
+      description: roleDef.description,
+      scope: 'blog',
+      group_id: null,
+      event_id: null,
+      amendment_id: null,
+      blog_id: args.blogId,
+      assignment_mode: 'assigned',
+      visibility: 'public',
+      term_start_date: null,
+      is_recurring: false,
+      recurrence_pattern: null,
+      recurrence_rule: null,
+      recurrence_interval: null,
+      recurrence_days: null,
+      recurrence_end_date: null,
+      scheduled_revote_date: null,
+      default_request_role: false,
+      default_invite_role: false,
+      assignee_kind: 'member',
+      sort_order: totalRoles - 1 - index,
+      created_at: args.createdAt,
+    });
+
+    for (const permission of roleDef.permissions) {
+      await tx.mutate.action_right.insert({
+        id: await creatorActionRightId(
+          'blog',
+          args.blogId,
+          roleDef.name,
+          permission.resource,
+          permission.action
+        ),
+        resource: permission.resource,
+        action: permission.action,
+        role_id: roleId,
+        group_id: null,
+        event_id: null,
+        amendment_id: null,
+        blog_id: args.blogId,
+        created_at: args.createdAt,
+      });
+    }
+  }
+
+  if (!ownerRoleId) throw new Error('Default Owner role is missing');
+
+  await tx.mutate.blog_blogger.insert({
+    id: await creatorRbacId('blog', args.blogId, 'creator-blogger', args.creatorId),
+    blog_id: args.blogId,
+    user_id: args.creatorId,
+    role_id: ownerRoleId,
+    status: 'owner',
+    visibility: args.visibility,
+    created_at: args.createdAt,
+  });
+}
 
 export async function assertCanViewBlog(
   tx: Parameters<typeof can>[0],
@@ -104,6 +178,12 @@ export const blogSharedMutators = {
       downvotes: 0,
       updated_at: now,
       created_at: now,
+    });
+    await bootstrapBlogCreatorRbac(tx, {
+      blogId: args.id,
+      creatorId: ctx.userID,
+      visibility: args.visibility ?? 'public',
+      createdAt: now,
     });
   }),
 

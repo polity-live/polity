@@ -101,6 +101,7 @@ vi.mock('@/features/shared/utils/utils.ts', () => ({
 }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (_key: string, fallback?: string) => fallback ?? 'translated',
+  useTranslation: () => ({ language: 'en', t: (key: string) => key }),
 }));
 vi.mock('../utils/todoFormatters', () => ({ formatTodoDate: (value: number) => `date-${value}` }));
 vi.mock('@/features/create/ui/inputs/TodoDeadlineInput', () => ({
@@ -160,6 +161,13 @@ function props(overrides: Record<string, any> = {}) {
   };
   return {
     canManageTodos: true,
+    activity: {
+      activities: [],
+      canViewActivity: false,
+      isLoading: false,
+      severity: 'all',
+      setSeverity: vi.fn(),
+    },
     discussion: {
       comments: [],
       currentUserId: 'actor',

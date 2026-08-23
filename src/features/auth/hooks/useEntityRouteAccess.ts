@@ -9,6 +9,7 @@ import {
   type CreateRecoveryDraft,
 } from '@/features/create/logic/createFinalization';
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
+import { useAuth } from '@/providers/auth-provider';
 
 interface EntityRouteAccessState {
   data: EntityRouteAccessResult | null;
@@ -33,6 +34,7 @@ function toCreateRecoveryEntityType(
 }
 
 export function useEntityRouteAccess(input: EntityRouteAccessInput): EntityRouteAccessState {
+  const { session, loading: authLoading } = useAuth();
   const recoveryDraft = useCreateRecoveryDraft(
     toCreateRecoveryEntityType(input.entityType),
     input.entityId
@@ -49,7 +51,18 @@ export function useEntityRouteAccess(input: EntityRouteAccessInput): EntityRoute
 
     setState({ data: null, isLoading: true, error: null, recoveryDraft: null });
 
-    void entityRouteAccessFn({ data: input })
+    if (authLoading) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const accessToken = session?.access_token;
+
+    void entityRouteAccessFn({
+      data: input,
+      ...(accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : {}),
+    })
       .then(result => {
         if (cancelled) {
           return;
@@ -78,9 +91,20 @@ export function useEntityRouteAccess(input: EntityRouteAccessInput): EntityRoute
     input.entityType,
     input.parentId,
     input.parentType,
+    authLoading,
     recoveryDraft?.status,
     recoveryDraft?.submittedAt,
+    session?.access_token,
   ]);
+
+  if (authLoading) {
+    return {
+      data: null,
+      isLoading: true,
+      error: null,
+      recoveryDraft,
+    };
+  }
 
   if (recoveryDraft?.status === 'pending' && !state.data?.exists) {
     return {

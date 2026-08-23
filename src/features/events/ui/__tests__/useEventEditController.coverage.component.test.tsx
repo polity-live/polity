@@ -53,7 +53,7 @@ vi.mock('@/features/shared/ui/typeahead/toTypeaheadItems', () => ({
 
 function formData(overrides: Record<string, unknown> = {}) {
   return {
-    attendanceMode: 'generated.inline.0035_online_2dbc2fd2',
+    attendanceMode: 'online',
     city: 'Berlin',
     country: 'DE',
     groupId: '',
@@ -63,7 +63,7 @@ function formData(overrides: Record<string, unknown> = {}) {
     region: 'Berlin',
     street: 'Main',
     title: 'Event',
-    visibility: 'generated.inline.0030_public_61c9b2b1',
+    visibility: 'public',
     ...overrides,
   } as any;
 }
@@ -106,7 +106,7 @@ describe('useEventEditController coverage', () => {
     expect(result.current).toMatchObject({
       activeTab: 'time-series',
       canDeleteEvent: true,
-      visibilityLabel: 't:pages.create.common.public',
+      visibilityLabel: 't:common.visibility.public',
       attendanceModeLabel: 'Online',
       timeSeriesValidationMessage: null,
       attendanceModeLocked: false,
@@ -127,9 +127,9 @@ describe('useEventEditController coverage', () => {
     mocks.eventUpdate = {
       ...mocks.eventUpdate,
       formData: formData({
-        attendanceMode: 'generated.inline.0036_hybrid_e2ac482d',
+        attendanceMode: 'hybrid',
         groupId: 'selected',
-        visibility: 'generated.inline.0031_authenticated_8fda38ce',
+        visibility: 'authenticated',
       }),
       event: { agenda_items: [{ votes: 'open', election: null }] },
       timeSeriesValidationError: 'missing-start-date',
@@ -137,7 +137,7 @@ describe('useEventEditController coverage', () => {
     const hybrid = renderHook(() => useEventEditController({ eventId: 'event-1' }));
     expect(hybrid.result.current).toMatchObject({
       attendanceModeLabel: 'Hybrid',
-      visibilityLabel: 't:pages.create.common.authenticated',
+      visibilityLabel: 't:common.visibility.authenticated',
       attendanceModeLocked: true,
       timeSeriesValidationMessage:
         't:features.events.editPage.timeSeries.validation.startDateRequired',
@@ -162,7 +162,7 @@ describe('useEventEditController coverage', () => {
     const offline = renderHook(() => useEventEditController({ eventId: 'event-1' }));
     expect(offline.result.current).toMatchObject({
       attendanceModeLabel: 'Offline',
-      visibilityLabel: 't:pages.create.common.private',
+      visibilityLabel: 't:common.visibility.private',
       attendanceModeLocked: true,
       timeSeriesValidationMessage:
         't:features.events.editPage.timeSeries.validation.weekdaysRequired',

@@ -1,6 +1,7 @@
 'use client';
 
-import { BadgeControl } from '@/features/shared/ui/status';
+import { BadgeControl, VisibilityBadge } from '@/features/shared/ui/status';
+import { normalizeRouteVisibility } from '@/features/auth/logic/routeVisibilityAccess';
 import {
   Card,
   CardContent,
@@ -44,6 +45,8 @@ import { getCanonicalMembershipModeLabel } from '@/features/network/logic/groupC
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { RelatedGroupsTabs } from '@/features/groups/ui/RelatedGroupsTabs';
 import { queries } from '@/zero/queries';
+import { ActivityLog } from '@/features/shared/ui/wiki/ActivityLog';
+import { canViewEntityActivity } from '@/features/shared/hooks/useEntityActivity';
 
 export interface GroupWikiContentViewProps {
   virtualizeParticipationDirectory?: boolean;
@@ -56,6 +59,7 @@ export interface GroupWikiContentViewProps {
   eventsCount: number;
   amendmentsCount: number;
   isAuthenticated: boolean;
+  viewerId?: string;
   isSubscribed: boolean;
   subscribeLoading: boolean;
   toggleSubscribe: () => void;
@@ -173,6 +177,7 @@ export function GroupWikiContentView({
   eventsCount,
   amendmentsCount,
   isAuthenticated,
+  viewerId,
   isSubscribed,
   subscribeLoading,
   toggleSubscribe,
@@ -222,7 +227,7 @@ export function GroupWikiContentView({
         userId: membership.user.id,
         name: getWikiParticipationName(membership.user),
         handle: membership.user.handle ?? null,
-        email: membership.user.email ?? null,
+        email: membership.user.contact_email ?? null,
         avatar: membership.user.avatar ?? null,
         status: membership.status,
         roles,
@@ -232,6 +237,7 @@ export function GroupWikiContentView({
     ...memberRoles,
     ...memberDirectoryItems.flatMap(item => item.roles as readonly WikiParticipationRole[]),
   ]);
+  const groupVisibility = normalizeRouteVisibility(group.visibility);
 
   return (
     <>
@@ -239,30 +245,26 @@ export function GroupWikiContentView({
       <div className="mb-8 text-center">
         <div className="mb-2 flex min-w-0 flex-col items-center justify-center gap-2 md:flex-row md:gap-3">
           <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{group.name}</h1>
-          {group.visibility === 'public' || isHierarchical || isSibling || isBase ? (
-            <div className="flex max-w-full flex-wrap items-center justify-center gap-2 md:contents">
-              {group.visibility === 'public' && (
-                <BadgeControl variant="secondary" size="sm">
-                  {t('components.badges.public')}
-                </BadgeControl>
-              )}
-              {isHierarchical ? (
-                <BadgeControl variant="outline" size="sm">
-                  {t('components.badges.hierarchicalGroup')}
-                </BadgeControl>
-              ) : null}
-              {isSibling ? (
-                <BadgeControl variant="outline" size="sm">
-                  {translateText('generated.inline.0080_geschwistergruppe_1053d99c')}
-                </BadgeControl>
-              ) : null}
-              {isBase ? (
-                <BadgeControl variant="outline" size="sm">
-                  {t('components.badges.baseGroup')}
-                </BadgeControl>
-              ) : null}
-            </div>
-          ) : null}
+          <div className="flex max-w-full flex-wrap items-center justify-center gap-2 md:contents">
+            <VisibilityBadge value={groupVisibility} data-entity-visibility={groupVisibility}>
+              {t(`common.visibility.${groupVisibility}`)}
+            </VisibilityBadge>
+            {isHierarchical ? (
+              <BadgeControl variant="outline" size="sm">
+                {t('components.badges.hierarchicalGroup')}
+              </BadgeControl>
+            ) : null}
+            {isSibling ? (
+              <BadgeControl variant="outline" size="sm">
+                {translateText('generated.inline.0080_geschwistergruppe_1053d99c')}
+              </BadgeControl>
+            ) : null}
+            {isBase ? (
+              <BadgeControl variant="outline" size="sm">
+                {t('components.badges.baseGroup')}
+              </BadgeControl>
+            ) : null}
+          </div>
         </div>
         {group.group_hashtags && group.group_hashtags.length > 0 ? (
           <div className="mt-3 md:hidden">
@@ -406,6 +408,11 @@ export function GroupWikiContentView({
 
       {/* About and Contact Tabs */}
       <InfoTabs
+        activity={
+          canViewEntityActivity('group', group, viewerId) ? (
+            <ActivityLog type="group" entityId={groupId} />
+          ) : undefined
+        }
         about={groupDescription}
         contact={{
           email: group.email ?? undefined,
@@ -486,7 +493,7 @@ export function GroupWikiContentView({
                       userId: user?.id ?? membership.user_id,
                       name: getWikiParticipationName(user),
                       handle: user?.handle ?? null,
-                      email: user?.email ?? null,
+                      email: user?.contact_email ?? null,
                       avatar: user?.avatar ?? null,
                       status: membership.status ?? null,
                       roles: getMembershipWikiRoles(membership, electedRolesByUserId),

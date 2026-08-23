@@ -11,16 +11,27 @@ import { useGroupState } from '@/zero/groups/useGroupState.ts';
 
 export function useCurrentUserNavigationEntities(userId?: string, enabled = true) {
   const enabledUserId = enabled ? userId : undefined;
-  const { currentUserMembershipsWithGroups, isLoading: isLoadingGroups } = useGroupState({
+  const {
+    currentUserMembershipsWithGroups,
+    currentUserGuestAccessesWithGroups,
+    isLoading: isLoadingGroups,
+  } = useGroupState({
     includeCurrentUserMembershipsWithGroups: Boolean(enabledUserId),
+    includeCurrentUserGuestAccessesWithGroups: Boolean(enabledUserId),
   });
   const { participations, isLoading: isLoadingEvents } = useUserEventParticipations(enabledUserId);
   const { amendments: openAmendments, isLoading: isLoadingAmendments } =
     useCurrentUserOpenNavigationAmendments(enabledUserId);
 
   const groups = useMemo(
-    () => (enabled ? buildUserMenuGroups(currentUserMembershipsWithGroups || []) : []),
-    [currentUserMembershipsWithGroups, enabled]
+    () =>
+      enabled
+        ? buildUserMenuGroups([
+            ...(currentUserMembershipsWithGroups || []),
+            ...(currentUserGuestAccessesWithGroups || []),
+          ])
+        : [],
+    [currentUserGuestAccessesWithGroups, currentUserMembershipsWithGroups, enabled]
   );
   const events = useMemo(
     () => (enabled ? buildUserMenuEvents(participations) : []),

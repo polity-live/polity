@@ -54,6 +54,21 @@ export const amendment = table('amendment')
   })
   .primaryKey('id');
 
+export const amendmentActivity = table('amendment_activity')
+  .columns({
+    id: string(),
+    amendment_id: string(),
+    actor_id: string().optional(),
+    actor_type: string(),
+    subject_user_id: string().optional(),
+    action: string(),
+    severity: string(),
+    changes: json<MutableJSONValue>(),
+    context: json<MutableJSONValue>(),
+    created_at: number(),
+  })
+  .primaryKey('id');
+
 export const amendmentCollaborator = table('amendment_collaborator')
   .columns({
     id: string(),

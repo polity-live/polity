@@ -133,8 +133,6 @@ describe('useAmendmentWikiPage A04 branch accountability', () => {
     expect(result.current.evaluationEvent).toEqual({ id: 'event' });
     expect(result.current.hasImplementationEvaluation).toBe(true);
     expect(result.current.supporterMapItems).toEqual([{ id: 'map-item' }]);
-    expect(result.current.canAccess).toBe(true);
-
     await act(async () => result.current.handleVote(1));
     expect(mocks.supportAmendment).toHaveBeenCalledWith(
       expect.objectContaining({ amendment_id: 'amendment', vote: 1 })

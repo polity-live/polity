@@ -55,6 +55,9 @@ export async function seedActiveMembership(
   status: 'active' | 'admin' = 'active'
 ) {
   const id = deterministicE2EUuid(`${prefix}:group-membership:${groupId}:${userId}`);
+  const roleId = deterministicE2EUuid(`${prefix}:group-view-role:${groupId}`);
+  const actionRightId = deterministicE2EUuid(`${prefix}:group-view-right:${groupId}`);
+  const roleLinkId = deterministicE2EUuid(`${prefix}:group-membership-role:${groupId}:${userId}`);
   await db()`
     insert into public.group_membership (
       id, group_id, user_id, status, visibility, source, origin_kind,
@@ -68,6 +71,29 @@ export async function seedActiveMembership(
         source = excluded.source,
         origin_kind = excluded.origin_kind,
         is_auto_managed = false
+  `;
+  await db()`
+    insert into public.role (id, name, scope, group_id, created_at)
+    values (${roleId}::uuid, 'E2E Group Viewer', 'group', ${groupId}::uuid, now())
+    on conflict (id) do update
+    set group_id = excluded.group_id,
+        scope = excluded.scope
+  `;
+  await db()`
+    insert into public.action_right (id, resource, action, role_id, group_id, created_at)
+    values (
+      ${actionRightId}::uuid, 'groups', 'view', ${roleId}::uuid, ${groupId}::uuid, now()
+    )
+    on conflict (id) do update
+    set resource = excluded.resource,
+        action = excluded.action,
+        role_id = excluded.role_id,
+        group_id = excluded.group_id
+  `;
+  await db()`
+    insert into public.group_membership_role (id, group_membership_id, role_id, created_at)
+    values (${roleLinkId}::uuid, ${id}::uuid, ${roleId}::uuid, now())
+    on conflict (group_membership_id, role_id) do nothing
   `;
   return id;
 }

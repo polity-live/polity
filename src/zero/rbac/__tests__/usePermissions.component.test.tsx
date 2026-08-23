@@ -138,6 +138,10 @@ describe('usePermissions', () => {
                 name: 'Coordinator',
                 description: 'Coordinates work',
                 scope: 'event',
+                group_id: 'group-one',
+                event_id: 'event-one',
+                amendment_id: 'amendment-one',
+                blog_id: 'blog-one',
                 action_rights: [
                   {
                     id: 42,
@@ -177,7 +181,29 @@ describe('usePermissions', () => {
         { id: 'guest-revoked', group_id: 'group-revoked', status: 'revoked' },
       ],
       participations: [
-        { id: 'participant-active', event_id: 'event-one', status: 'active' },
+        {
+          id: 'participant-active',
+          event_id: 'event-one',
+          status: 'active',
+          participant_roles: [
+            {
+              role: {
+                id: 'event-role',
+                name: 'Organizer',
+                scope: 'event',
+                event_id: 'event-one',
+                action_rights: [
+                  {
+                    id: 'event-right',
+                    resource: 'events',
+                    action: 'manage',
+                    event_id: 'event-one',
+                  },
+                ],
+              },
+            },
+          ],
+        },
         { id: 'participant-confirmed', event_id: 'event-two', status: 'confirmed' },
         { id: 'participant-member', event_id: 'event-three', status: 'member' },
         { id: 'participant-admin', event_id: 'event-four', status: 'admin' },
@@ -192,10 +218,27 @@ describe('usePermissions', () => {
             name: 'Writer',
             description: 'Writes posts',
             scope: 'blog',
+            group_id: 'group-one',
+            event_id: 'event-one',
+            amendment_id: 'amendment-one',
+            blog_id: 'blog-one',
             action_rights: [],
           },
+          status: 'writer',
         },
-        { id: 'blogger-without-role', blog_id: 'blog-two', role: null },
+        {
+          id: 'blogger-with-unscoped-role',
+          blog_id: 'blog-two',
+          role: {
+            id: 'unscoped-blog-role',
+            name: 'Member',
+            description: null,
+            scope: 'blog',
+            action_rights: [],
+          },
+          status: 'member',
+        },
+        { id: 'blogger-without-role', blog_id: 'blog-three', role: null },
       ],
       ownedGroups: [{ id: 'group-owned' }],
     };
@@ -245,6 +288,10 @@ describe('usePermissions', () => {
         name: '',
         description: undefined,
         scope: 'group',
+        group: undefined,
+        event: undefined,
+        amendment: undefined,
+        blog: undefined,
         actionRights: [],
       },
       {
@@ -252,6 +299,10 @@ describe('usePermissions', () => {
         name: 'Coordinator',
         description: 'Coordinates work',
         scope: 'event',
+        group: { id: 'group-one' },
+        event: { id: 'event-one' },
+        amendment: { id: 'amendment-one' },
+        blog: { id: 'blog-one' },
         actionRights: [
           {
             id: '42',
@@ -278,12 +329,49 @@ describe('usePermissions', () => {
       expect.objectContaining({ id: 'guest-active', group: { id: 'group-guest' } }),
     ]);
     expect(permissionData.participations).toHaveLength(4);
+    expect(permissionData.participations[0].roles).toEqual([
+      expect.objectContaining({
+        id: 'event-role',
+        scope: 'event',
+        event: { id: 'event-one' },
+        actionRights: [
+          expect.objectContaining({
+            id: 'event-right',
+            event: { id: 'event-one' },
+          }),
+        ],
+      }),
+    ]);
     expect(permissionData.bloggerRelations).toEqual([
       expect.objectContaining({
         id: 'blogger-with-role',
-        role: expect.objectContaining({ id: 'blog-role', scope: 'blog' }),
+        status: 'writer',
+        role: expect.objectContaining({
+          id: 'blog-role',
+          scope: 'blog',
+          group: { id: 'group-one' },
+          event: { id: 'event-one' },
+          amendment: { id: 'amendment-one' },
+          blog: { id: 'blog-one' },
+        }),
       }),
-      { id: 'blogger-without-role', blog: { id: 'blog-two' }, role: undefined },
+      expect.objectContaining({
+        id: 'blogger-with-unscoped-role',
+        status: 'member',
+        role: expect.objectContaining({
+          id: 'unscoped-blog-role',
+          group: undefined,
+          event: undefined,
+          amendment: undefined,
+          blog: undefined,
+        }),
+      }),
+      {
+        id: 'blogger-without-role',
+        blog: { id: 'blog-three' },
+        role: undefined,
+        status: undefined,
+      },
     ]);
     expect(mocks.checkPermission.mock.calls[0][1]).toEqual({
       groupId: 'group-one',

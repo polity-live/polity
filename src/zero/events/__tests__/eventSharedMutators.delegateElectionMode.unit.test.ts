@@ -13,23 +13,19 @@ type EventCreateMutatorTx = EventCreateMutatorInput['tx'];
 type EventCreateMutatorCtx = EventCreateMutatorInput['ctx'];
 
 function createTx(location: EventCreateMutatorTx['location'] = 'server') {
+  const table = () => ({ insert: vi.fn(), update: vi.fn(), delete: vi.fn() });
   return {
     clientID: 'client-1',
     mutationID: 1,
     reason: 'test',
     location,
-    run: vi.fn(),
+    run: vi.fn().mockResolvedValue(undefined),
     mutate: {
-      event: {
-        insert: vi.fn(),
-        update: vi.fn(),
-        delete: vi.fn(),
-      },
-      event_participant: {
-        insert: vi.fn(),
-        update: vi.fn(),
-        delete: vi.fn(),
-      },
+      event: table(),
+      event_participant: table(),
+      event_participant_role: table(),
+      role: table(),
+      action_right: table(),
     },
   };
 }

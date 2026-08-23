@@ -5,6 +5,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { UserWikiView } from '../UserWikiView';
 
+const viewMocks = vi.hoisted(() => ({
+  infoTabsContact: undefined as Record<string, string> | undefined,
+}));
+
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string, paramsOrFallback?: string | Record<string, unknown>) =>
     typeof paramsOrFallback === 'string' ? paramsOrFallback : key,
@@ -37,7 +41,10 @@ vi.mock('@/features/shared/ui/wiki', () => ({
 }));
 
 vi.mock('@/features/shared/ui/wiki/InfoTabs.tsx', () => ({
-  InfoTabs: () => <div data-testid="info-tabs" />,
+  InfoTabs: ({ contact }: { contact: Record<string, string> }) => {
+    viewMocks.infoTabsContact = contact;
+    return <div data-testid="info-tabs" />;
+  },
 }));
 
 vi.mock('../SocialBar', () => ({ SocialBar: () => <div data-testid="social-bar" /> }));
@@ -105,6 +112,35 @@ describe('UserWikiView actions', () => {
     expect(document.querySelector('[data-action-id="users.wiki.support-tier.help"]')).toBeTruthy();
   });
 
+  it('publishes only the explicit contact email and never falls back to login email', () => {
+    renderUserWiki(false, {
+      user: {
+        id: 'user-1',
+        avatar: null,
+        video_url: null,
+        visibility: 'public',
+        email: 'login@example.test',
+        contact_email: 'public@example.test',
+        group_memberships: [],
+      },
+    });
+    expect(viewMocks.infoTabsContact?.email).toBe('public@example.test');
+
+    cleanup();
+    renderUserWiki(false, {
+      user: {
+        id: 'user-1',
+        avatar: null,
+        video_url: null,
+        visibility: 'public',
+        email: 'login@example.test',
+        contact_email: null,
+        group_memberships: [],
+      },
+    });
+    expect(viewMocks.infoTabsContact?.email).toBe('');
+  });
+
   it('stacks the pricing tier and mobile hashtags below a constrained title', () => {
     renderUserWiki(true, {
       fullName: 'A very long public user name',
@@ -120,7 +156,8 @@ describe('UserWikiView actions', () => {
       name: 'A very long public user name',
     });
     const titleGroup = title.parentElement;
-    const pricingTier = title.nextElementSibling;
+    const visibilityBadge = title.nextElementSibling;
+    const pricingTier = visibilityBadge?.nextElementSibling;
     const hashtagDisplays = screen.getAllByTestId('hashtags');
 
     expect(title.className).toContain('min-w-0');

@@ -15,10 +15,7 @@ import { useTodoMutations } from '@/features/todos/hooks/useTodoMutations';
 import { useCommonState } from '@/zero/common/useCommonState';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { getUserDisplayName } from '@/features/search/utils/searchUtils';
-import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { PriorityInput } from '../ui/inputs/PriorityInput';
@@ -29,6 +26,7 @@ import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { CreateInlineNotice } from '../ui/CreateInlineNotice';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
+import { getCreateVisibilityLabelKey } from '../logic/createVisibility';
 import {
   collectUserIds,
   isActiveEventParticipantStatus,
@@ -212,11 +210,7 @@ export function useCreateTodoForm(): CreateFormConfig {
   const assigneeName = assigneeId ? getUserDisplayName(selectedAssignee) || assigneeId : '';
   const visibilityLabel = groupId
     ? t('pages.create.todo.groupVisibilityLabel')
-    : visibility === translateText('generated.inline.0030_public_61c9b2b1')
-      ? t('pages.create.common.public')
-      : visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
-        ? t('pages.create.common.authenticated')
-        : t('pages.create.common.private');
+    : t(getCreateVisibilityLabelKey(visibility));
   const titleInvalidReason = !title.trim() ? t('pages.create.validation.titleRequired') : null;
 
   const handleSubmit = async (context?: CreateSubmitContext) => {

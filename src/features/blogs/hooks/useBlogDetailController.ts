@@ -3,7 +3,6 @@ import { useNavigate } from '@tanstack/react-router';
 import { useZero } from '@rocicorp/zero/react';
 import type { Value } from 'platejs';
 
-import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import {
   useTranslation,
   translate as translateText,
@@ -81,7 +80,7 @@ export function useBlogDetailController({ blogId }: UseBlogDetailControllerOptio
   const [deleteOpen, setDeleteOpen] = useState(false);
   const recoveryDraft = useCreateRecoveryDraft('blog', blogId);
 
-  const { canEdit: blogCanEdit, canDelete: blogCanDelete, isBlogger } = useBlogPermissions(blogId);
+  const { canEdit: blogCanEdit, canDelete: blogCanDelete } = useBlogPermissions(blogId);
   const blogActions = useBlogActions();
   const { addComment: addCommentAction, voteComment } = useDocumentActions();
   const {
@@ -274,7 +273,6 @@ export function useBlogDetailController({ blogId }: UseBlogDetailControllerOptio
     blogId,
     recoveryDraft: blog ? null : recoveryDraft,
     bloggers: blog?.bloggers ?? [],
-    canAccess: blog ? checkEntityAccess(blog.visibility, !!user, isBlogger) : true,
     canDelete,
     canEdit,
     commentCount,
@@ -311,6 +309,7 @@ export function useBlogDetailController({ blogId }: UseBlogDetailControllerOptio
     subscribeLoading,
     supporterCount: blog?.supporter_count ?? score,
     title: blog?.title,
+    visibility: blog?.visibility,
     upvotes: blog?.upvotes ?? 0,
     videoUrl: blog?.video_url,
     viewUrl: blogViewUrl,

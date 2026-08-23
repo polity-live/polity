@@ -22,6 +22,9 @@ function createTx(location: TodoMutatorTx['location'] = 'server') {
     location,
     run: vi.fn(),
     mutate: {
+      todo_activity: {
+        insert: vi.fn(),
+      },
       todo: {
         insert: vi.fn(),
         update: vi.fn(),

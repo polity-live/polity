@@ -54,9 +54,10 @@ import { cn } from '@/features/shared/utils/utils.ts';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { formatTodoDate } from '../utils/todoFormatters';
 import { TodoDeadlineInput } from '@/features/create/ui/inputs/TodoDeadlineInput';
-import { CommentThread } from '@/features/shared/ui/comments';
 import type { TodoDiscussionController } from '../hooks/useTodoDiscussion';
+import type { TodoActivityController } from '../hooks/useTodoActivity';
 import { TodoArchiveAction, TodoArchiveBadge } from './TodoArchiveAction';
+import { TodoDiscussionTabs } from './TodoDiscussionTabs';
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
 type TodoVisibility = 'public' | 'authenticated' | 'private';
@@ -119,6 +120,7 @@ export interface TodoDetailDialogViewProps {
   handleRemoveAssignee: any;
   handleAddAssignee: any;
   discussion: TodoDiscussionController;
+  activity: TodoActivityController;
   isArchiving: boolean;
   handleArchive: () => void;
   handleUnarchive: () => void;
@@ -149,6 +151,7 @@ export function TodoDetailDialogView({
   handleRemoveAssignee,
   handleAddAssignee,
   discussion,
+  activity,
   isArchiving,
   handleArchive,
   handleUnarchive,
@@ -700,13 +703,10 @@ export function TodoDetailDialogView({
 
           {!isEditing ? (
             <div className="border-t pt-6">
-              <CommentThread
-                comments={discussion.comments}
-                currentUserId={discussion.currentUserId}
-                onAddComment={discussion.onAddComment}
-                onVote={discussion.onVote}
-                isSubmitting={discussion.isSubmitting}
-                linkAuthors
+              <TodoDiscussionTabs
+                activity={activity}
+                discussion={discussion}
+                resetKey={`${todo.id}:${open}`}
               />
             </div>
           ) : null}

@@ -15,6 +15,7 @@ import {
   ensureEventSuggestionChangeRequestVotesSchema,
   processCRVoteResultSchema,
 } from './schema';
+import { appendEntityActivity, buildActivityChanges } from '../activity/shared';
 import { z } from 'zod';
 import { can } from '../rbac/can';
 import { denyPublicApiMutation, requireAuthenticated } from '../rbac/authorize';
@@ -244,6 +245,15 @@ export const agendaSharedMutators = {
       created_at: now,
       updated_at: now,
     });
+    if (args.event_id)
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: args.event_id,
+        action: 'agenda_created',
+        severity: 'high',
+        context: { agenda_item_id: args.id, title: args.title ?? null, type: args.type ?? null },
+      });
   }),
 
   createFull: defineMutator(createAgendaItemFullMutatorSchema, async ({ tx, ctx, args }) => {
@@ -255,24 +265,52 @@ export const agendaSharedMutators = {
   // Update an agenda item
   updateAgendaItem: defineMutator(updateAgendaItemSchema, async ({ tx, ctx, args }) => {
     await assertAgendaItemAccessById(tx, ctx, args.id, 'update');
+    const existing = await tx.run(zql.agenda_item.where('id', args.id).one());
     const { id, ...fields } = args;
     await tx.mutate.agenda_item.update({
       id,
       ...fields,
       updated_at: Date.now(),
     });
+    if (existing?.event_id) {
+      const changes = buildActivityChanges(existing, fields, Object.keys(fields));
+      if (changes.length > 0)
+        await appendEntityActivity(tx, ctx, {
+          table: 'event_activity',
+          entityField: 'event_id',
+          entityId: existing.event_id,
+          action: 'agenda_updated',
+          severity: changes.every(change => ['title', 'description'].includes(change.field))
+            ? 'normal'
+            : 'high',
+          changes,
+          context: { agenda_item_id: existing.id, title: existing.title ?? null },
+        });
+    }
   }),
 
   // Reorder agenda items
   reorderAgendaItems: defineMutator(reorderAgendaItemsSchema, async ({ tx, ctx, args }) => {
+    const affectedEventIds = new Set<string>();
     for (const item of args.items) {
       await assertAgendaItemAccessById(tx, ctx, item.id, 'manage');
+      const existing = await tx.run(zql.agenda_item.where('id', item.id).one());
+      if (existing?.event_id) affectedEventIds.add(existing.event_id);
       await tx.mutate.agenda_item.update({
         id: item.id,
         order_index: item.order_index,
         updated_at: Date.now(),
       });
     }
+    for (const eventId of affectedEventIds)
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: eventId,
+        action: 'agenda_reordered',
+        severity: 'high',
+        context: { count: args.items.length },
+      });
   }),
 
   // Add a speaker to the speaker list
@@ -293,7 +331,21 @@ export const agendaSharedMutators = {
   // Delete an agenda item
   deleteAgendaItem: defineMutator(deleteAgendaItemSchema, async ({ tx, ctx, args }) => {
     await assertAgendaItemAccessById(tx, ctx, args.id, 'delete');
+    const existing = await tx.run(zql.agenda_item.where('id', args.id).one());
     await tx.mutate.agenda_item.delete({ id: args.id });
+    if (existing?.event_id)
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: existing.event_id,
+        action: 'agenda_deleted',
+        severity: 'high',
+        context: {
+          agenda_item_id: existing.id,
+          title: existing.title ?? null,
+          type: existing.type ?? null,
+        },
+      });
   }),
 
   // Remove a speaker from the speaker list

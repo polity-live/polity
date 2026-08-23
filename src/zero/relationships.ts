@@ -17,6 +17,7 @@ import {
   role,
   roleHolderHistory,
   actionRight,
+  groupActivity,
 } from './groups/table';
 // Events
 import {
@@ -27,6 +28,7 @@ import {
   participant,
   eventException,
   eventAssemblyScope,
+  eventActivity,
 } from './events/table';
 // Amendments
 import {
@@ -41,6 +43,7 @@ import {
   amendmentProcessBranch,
   amendmentProcessStepRun,
   processTask,
+  amendmentActivity,
 } from './amendments/table';
 // Documents
 import { document, documentVersion, documentCollaborator, documentCursor } from './documents/table';
@@ -105,7 +108,7 @@ import {
   groupWorkflowApproval,
 } from './network/table';
 // Todos
-import { todo, todoAssignment } from './todos/table';
+import { todo, todoActivity, todoAssignment } from './todos/table';
 // Messages
 import { conversation, conversationParticipant, message } from './messages/table';
 import { searchDocument, searchDocumentAcl, searchDocumentTopic } from './search-documents/table';
@@ -471,6 +474,7 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
     destField: ['id'],
   }),
   owner: one({ sourceField: ['owner_id'], destSchema: user, destField: ['id'] }),
+  activities: many({ sourceField: ['id'], destSchema: groupActivity, destField: ['group_id'] }),
   connected_group: one({
     sourceField: ['connected_group_id'],
     destSchema: group,
@@ -589,6 +593,12 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
     destSchema: notification,
     destField: ['recipient_group_id'],
   }),
+}));
+
+export const groupActivityRelationships = relationships(groupActivity, ({ one }) => ({
+  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  actor: one({ sourceField: ['actor_id'], destSchema: user, destField: ['id'] }),
+  subject_user: one({ sourceField: ['subject_user_id'], destSchema: user, destField: ['id'] }),
 }));
 
 export const groupMembershipRelationships = relationships(groupMembership, ({ one, many }) => ({
@@ -1017,6 +1027,36 @@ export const roleRelationships = relationships(role, helpers => ({
     destSchema: actionRight,
     destField: ['role_id'],
   }),
+  group_action_rights: helpers.many({
+    sourceField: ['id', 'group_id'],
+    destSchema: actionRight,
+    destField: ['role_id', 'group_id'],
+  }),
+  event_action_rights: helpers.many({
+    sourceField: ['id', 'event_id'],
+    destSchema: actionRight,
+    destField: ['role_id', 'event_id'],
+  }),
+  amendment_action_rights: helpers.many({
+    sourceField: ['id', 'amendment_id'],
+    destSchema: actionRight,
+    destField: ['role_id', 'amendment_id'],
+  }),
+  blog_action_rights: helpers.many({
+    sourceField: ['id', 'blog_id'],
+    destSchema: actionRight,
+    destField: ['role_id', 'blog_id'],
+  }),
+  amendment_collaborators: helpers.many({
+    sourceField: ['id'],
+    destSchema: amendmentCollaborator,
+    destField: ['role_id'],
+  }),
+  bloggers: helpers.many({
+    sourceField: ['id'],
+    destSchema: blogBlogger,
+    destField: ['role_id'],
+  }),
   holder_history: helpers.many({
     sourceField: ['id'],
     destSchema: roleHolderHistory,
@@ -1050,6 +1090,7 @@ export const eventRelationships = relationships(event, ({ one, many }) => ({
   }),
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   creator: one({ sourceField: ['creator_id'], destSchema: user, destField: ['id'] }),
+  activities: many({ sourceField: ['id'], destSchema: eventActivity, destField: ['event_id'] }),
   participants: many({
     sourceField: ['id'],
     destSchema: eventParticipant,
@@ -1113,6 +1154,12 @@ export const eventRelationships = relationships(event, ({ one, many }) => ({
     destSchema: notification,
     destField: ['recipient_event_id'],
   }),
+}));
+
+export const eventActivityRelationships = relationships(eventActivity, ({ one }) => ({
+  event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
+  actor: one({ sourceField: ['actor_id'], destSchema: user, destField: ['id'] }),
+  subject_user: one({ sourceField: ['subject_user_id'], destSchema: user, destField: ['id'] }),
 }));
 
 export const eventParticipantRelationships = relationships(eventParticipant, ({ one, many }) => ({
@@ -1217,6 +1264,11 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
     destField: ['id'],
   }),
   created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
+  activities: many({
+    sourceField: ['id'],
+    destSchema: amendmentActivity,
+    destField: ['amendment_id'],
+  }),
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
   clone_source: one({ sourceField: ['clone_source_id'], destSchema: amendment, destField: ['id'] }),
@@ -1247,6 +1299,7 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
     destSchema: amendmentCollaborator,
     destField: ['amendment_id'],
   }),
+  roles: many({ sourceField: ['id'], destSchema: role, destField: ['amendment_id'] }),
   city_designs: many({
     sourceField: ['id'],
     destSchema: amendmentCityDesign,
@@ -1288,6 +1341,12 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
     destSchema: notification,
     destField: ['recipient_amendment_id'],
   }),
+}));
+
+export const amendmentActivityRelationships = relationships(amendmentActivity, ({ one }) => ({
+  amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
+  actor: one({ sourceField: ['actor_id'], destSchema: user, destField: ['id'] }),
+  subject_user: one({ sourceField: ['subject_user_id'], destSchema: user, destField: ['id'] }),
 }));
 
 export const amendmentSupportVoteRelationships = relationships(amendmentSupportVote, ({ one }) => ({
@@ -1889,6 +1948,7 @@ export const todoRelationships = relationships(todo, ({ one, many }) => ({
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
   amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
   assignments: many({ sourceField: ['id'], destSchema: todoAssignment, destField: ['todo_id'] }),
+  activities: many({ sourceField: ['id'], destSchema: todoActivity, destField: ['todo_id'] }),
   timeline_events: many({ sourceField: ['id'], destSchema: timelineEvent, destField: ['todo_id'] }),
   threads: many({ sourceField: ['id'], destSchema: thread, destField: ['todo_id'] }),
 }));
@@ -1896,6 +1956,12 @@ export const todoRelationships = relationships(todo, ({ one, many }) => ({
 export const todoAssignmentRelationships = relationships(todoAssignment, ({ one }) => ({
   todo: one({ sourceField: ['todo_id'], destSchema: todo, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+}));
+
+export const todoActivityRelationships = relationships(todoActivity, ({ one }) => ({
+  todo: one({ sourceField: ['todo_id'], destSchema: todo, destField: ['id'] }),
+  actor: one({ sourceField: ['actor_id'], destSchema: user, destField: ['id'] }),
+  subject_user: one({ sourceField: ['subject_user_id'], destSchema: user, destField: ['id'] }),
 }));
 
 // ============================================
@@ -2568,6 +2634,7 @@ export const allRelationships = [
   followRelationships,
   // Groups
   groupRelationships,
+  groupActivityRelationships,
   groupMembershipRelationships,
   groupMembershipOriginRelationships,
   groupOfflineMemberRelationships,
@@ -2593,6 +2660,7 @@ export const allRelationships = [
   roleHolderHistoryRelationships,
   // Events
   eventRelationships,
+  eventActivityRelationships,
   eventParticipantRelationships,
   eventOfflineParticipantRelationships,
   eventParticipantRoleRelationships,
@@ -2603,6 +2671,7 @@ export const allRelationships = [
   participantRelationships,
   // Amendments
   amendmentRelationships,
+  amendmentActivityRelationships,
   amendmentSupportVoteRelationships,
   changeRequestRelationships,
   changeRequestVoteRelationships,
@@ -2640,6 +2709,7 @@ export const allRelationships = [
   // Todos
   todoRelationships,
   todoAssignmentRelationships,
+  todoActivityRelationships,
   // Messages
   conversationRelationships,
   conversationParticipantRelationships,

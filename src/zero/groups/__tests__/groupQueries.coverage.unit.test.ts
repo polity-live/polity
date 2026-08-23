@@ -25,6 +25,7 @@ vi.mock('../../rbac/query-access', () => {
     applyDocumentQueryAccess: passThrough,
     applyEventManagerQueryAccess: passThrough,
     applyEventQueryAccess: passThrough,
+    applyGroupDiscoveryQueryAccess: passThrough,
     applyGroupQueryAccess: passThrough,
     applyGroupManagerQueryAccess: passThrough,
     applyGroupMembershipSelfOrManagerQueryAccess: passThrough,
@@ -123,6 +124,26 @@ describe('group query contracts', () => {
     expect(() => run('membershipPage', emptyPageArgs)).not.toThrow();
     expect(() => run('guestAccessPage', emptyPageArgs)).not.toThrow();
     expect(() => run('membershipPageByUser', emptyPageArgs)).not.toThrow();
+
+    const omittedArrays = {
+      ...emptyPageArgs,
+      statuses: undefined,
+      roleIds: undefined,
+    };
+    expect(() => run('membershipPage', omittedArrays)).not.toThrow();
+    expect(() => run('guestAccessPage', omittedArrays)).not.toThrow();
+    expect(() => run('membershipPageByUser', omittedArrays)).not.toThrow();
+  });
+
+  it('keeps the unfiltered activity feed when severity is all', () => {
+    expect(() =>
+      run('activities', {
+        entityId: 'group',
+        severity: 'all',
+        cursor: null,
+        limit: 20,
+      })
+    ).not.toThrow();
   });
 
   it('constructs active and archived todo queries plus all viewer variants', () => {

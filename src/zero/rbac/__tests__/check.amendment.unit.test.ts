@@ -15,6 +15,7 @@ describe('checkPermission amendment scope', () => {
           id: 'role-1',
           name: 'Editor',
           scope: 'amendment',
+          amendment: { id: 'amendment-1' },
           actionRights: [
             {
               id: 'right-1',
@@ -50,6 +51,8 @@ describe('checkPermission amendment scope', () => {
           status: 'member',
           role: {
             id: 'role-1',
+            scope: 'amendment',
+            amendment_id: 'amendment-1',
             action_rights: [
               {
                 id: 'right-1',
@@ -83,6 +86,8 @@ describe('checkPermission amendment scope', () => {
           status: 'invited',
           role: {
             id: 'role-1',
+            scope: 'amendment',
+            amendment_id: 'amendment-1',
             action_rights: [
               {
                 id: 'right-1',
@@ -99,6 +104,8 @@ describe('checkPermission amendment scope', () => {
           status: 'requested',
           role: {
             id: 'role-1',
+            scope: 'amendment',
+            amendment_id: 'amendment-1',
             action_rights: [
               {
                 id: 'right-1',
@@ -128,5 +135,45 @@ describe('checkPermission amendment scope', () => {
     expect(
       checkPermission({ userId: 'viewer-user', amendment }, { amendment }, 'update', 'amendments')
     ).toBe(false);
+  });
+
+  it('uses a scope amendment when permission data has no amendment', () => {
+    expect(checkPermission({ userId: 'author-user' }, { amendment }, 'delete', 'amendments')).toBe(
+      true
+    );
+  });
+
+  it('allows invited collaborators to view through the legacy amendment shape', () => {
+    const legacyAmendment = {
+      id: 'amendment-1',
+      collaborators: [
+        {
+          user: { id: 'invited-user' },
+          status: 'invited',
+          roleName: 'Viewer',
+        },
+      ],
+      roles: [
+        {
+          name: 'Viewer',
+          actionRights: [
+            {
+              resource: 'amendments',
+              action: 'view',
+              amendment: { id: 'amendment-1' },
+            },
+          ],
+        },
+      ],
+    } as unknown as Amendment;
+
+    expect(
+      checkPermission(
+        { userId: 'invited-user', amendment: legacyAmendment },
+        {},
+        'view',
+        'amendments'
+      )
+    ).toBe(true);
   });
 });

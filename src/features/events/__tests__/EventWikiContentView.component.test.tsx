@@ -61,6 +61,9 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 
 vi.mock('@/features/shared/ui/status', () => ({
   BadgeControl: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  VisibilityBadge: ({ children, ...props }: { children: ReactNode }) => (
+    <span {...props}>{children}</span>
+  ),
 }));
 
 vi.mock('@/features/shared/ui/dialog', () => ({
@@ -148,7 +151,6 @@ function renderEventWikiContent(overrides: Partial<EventWikiContentViewProps> = 
   const defaultProps: EventWikiContentViewProps = {
     agendaStats: {},
     amendmentsCount: 0,
-    canAccess: true,
     candidacyPasswordError: null,
     confirmDialogOpen: false,
     elections: [],
@@ -215,6 +217,43 @@ function renderEventWikiContent(overrides: Partial<EventWikiContentViewProps> = 
 }
 
 describe('EventWikiContentView', () => {
+  it('provides activity to the event creator', () => {
+    renderEventWikiContent({
+      event: {
+        creator_id: 'user-1',
+        id: 'event-1',
+        participants: [],
+        title: 'Creator event',
+      },
+      user: { id: 'user-1' },
+    });
+    expect(screen.getByTestId('info-tabs')).toBeTruthy();
+  });
+
+  it.each([
+    ['public', 'public'],
+    ['authenticated', 'authenticated'],
+    ['private', 'private'],
+    [null, 'public'],
+    ['unexpected', 'private'],
+  ])('normalizes the %s visibility to one %s badge', (visibility, expected) => {
+    const { container } = renderEventWikiContent({
+      event: {
+        id: 'event-1',
+        title: 'Civic Night',
+        visibility,
+        event_type: null,
+        recurrence_pattern: null,
+        creator: { first_name: 'Organizer' },
+      },
+    });
+
+    const badges = container.querySelectorAll('[data-entity-visibility]');
+    expect(badges).toHaveLength(1);
+    expect(badges[0]?.getAttribute('data-entity-visibility')).toBe(expected);
+    expect(badges[0]?.textContent).toBe(`common.visibility.${expected}`);
+  });
+
   it('shows only share actions to unauthenticated visitors', () => {
     renderEventWikiContent({ user: null, elections: [{ id: 'election-1' }] });
 
@@ -341,7 +380,6 @@ describe('EventWikiContentView', () => {
       <EventWikiContentView
         agendaStats={{}}
         amendmentsCount={0}
-        canAccess
         confirmDialogOpen={false}
         elections={[]}
         electionsCount={0}
@@ -763,6 +801,7 @@ describe('EventWikiContentView', () => {
           first_name: 'Ada',
           handle: 'ada',
           email: 'ada@example.test',
+          contact_email: 'contact@example.test',
           avatar: 'avatar.png',
         },
       })
@@ -770,7 +809,7 @@ describe('EventWikiContentView', () => {
       expect.objectContaining({
         userId: 'user-1',
         handle: 'ada',
-        email: 'ada@example.test',
+        email: 'contact@example.test',
         avatar: 'avatar.png',
         status: 'active',
       })

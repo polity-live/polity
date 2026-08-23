@@ -156,6 +156,9 @@ vi.mock('@/features/shared/ui/ui/tooltip', () => ({
 }));
 vi.mock('@/features/shared/ui/status', () => ({
   BadgeControl: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  VisibilityBadge: ({ children, ...props }: { children: ReactNode }) => (
+    <span {...props}>{children}</span>
+  ),
 }));
 vi.mock('@/features/shared/ui/ui/carousel', () => ({
   Carousel: ({ children, setApi }: { children: ReactNode; setApi: (api: unknown) => void }) => (

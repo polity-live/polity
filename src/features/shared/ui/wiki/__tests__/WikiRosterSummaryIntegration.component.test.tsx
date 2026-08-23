@@ -240,7 +240,6 @@ describe('wiki roster offline summary integration', () => {
       <EventWikiContentView
         agendaStats={null}
         amendmentsCount={0}
-        canAccess
         confirmDialogOpen={false}
         elections={[]}
         electionsCount={0}

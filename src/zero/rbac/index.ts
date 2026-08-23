@@ -59,6 +59,7 @@ export {
   applyAccreditationQueryAccess,
   applyAmendmentQueryAccess,
   applyBlogQueryAccess,
+  applyBlogManagerQueryAccess,
   applyDocumentQueryAccess,
   applyElectionElectorOrManagerQueryAccess,
   applyElectionManagerQueryAccess,
@@ -90,6 +91,7 @@ export { handleMutationError } from './handleMutationError';
 // Constants
 export {
   PERMISSION_IMPLIES,
+  VIEW_IMPLYING_ACTIONS,
   DEFAULT_GROUP_ROLES,
   DEFAULT_BLOG_ROLES,
   DEFAULT_AMENDMENT_ROLES,

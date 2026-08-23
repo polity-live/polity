@@ -15,7 +15,7 @@ import {
   recomputeGroupCounters,
   syncUserWithEventConversation,
 } from '../server-helpers';
-import { DEFAULT_ASSEMBLY_EVENT_GUEST_ROLE, DEFAULT_EVENT_ROLES } from '../rbac/constants';
+import { creatorEventRoleTemplates, creatorRoleId } from '../rbac/creator-bootstrap';
 import {
   eventCreateSchema,
   eventParticipantCreateSchema,
@@ -39,6 +39,7 @@ import {
 import { reconcileGeneralAssemblyParticipantsForEvent } from './assembly-reconcile';
 import { reconcileDelegateAllocationsForEvent } from './delegate-allocation-reconcile';
 import { reconcileGroupGraph } from '../network/group-graph-reconcile';
+import { appendEntityActivity } from '../activity/shared';
 import { loadGroupWithDerivedNetworkMeta } from '../groups/membership-helpers';
 import {
   canCreateDelegateAssemblyForGroup,
@@ -462,109 +463,11 @@ export const eventServerMutators = {
 
     const now = Date.now();
 
-    const eventRoleTemplates = isAssemblyEventType(args.event_type)
-      ? [
-          ...DEFAULT_EVENT_ROLES.map(role => ({
-            ...role,
-            default_request_role: false,
-            default_invite_role: false,
-          })),
-          DEFAULT_ASSEMBLY_EVENT_GUEST_ROLE,
-        ]
-      : DEFAULT_EVENT_ROLES;
-
-    // Create default event roles with action rights
-    const organizerRoleId = crypto.randomUUID();
-    const roleIds: Record<string, string> = {};
-    const totalRoles = eventRoleTemplates.length;
-
-    for (let index = 0; index < totalRoles; index++) {
-      const roleDef = eventRoleTemplates[index];
-      const roleId = roleDef.name === 'Organizer' ? organizerRoleId : crypto.randomUUID();
-      roleIds[roleDef.name] = roleId;
-
-      await tx.mutate.role.insert({
-        id: roleId,
-        name: roleDef.name,
-        description: roleDef.description,
-        scope: 'event',
-        event_id: args.id,
-        group_id: null,
-        amendment_id: null,
-        blog_id: null,
-        assignment_mode: 'assigned',
-        visibility: 'public',
-        term_start_date: null,
-        is_recurring: false,
-        recurrence_pattern: null,
-        recurrence_rule: null,
-        recurrence_interval: null,
-        recurrence_days: null,
-        recurrence_end_date: null,
-        scheduled_revote_date: null,
-        default_request_role: roleDef.default_request_role ?? false,
-        default_invite_role: roleDef.default_invite_role ?? false,
-        assignee_kind: roleDef.assignee_kind ?? 'member',
-        sort_order: totalRoles - 1 - index,
-        created_at: now,
-      });
-
-      for (const perm of roleDef.permissions) {
-        await tx.mutate.action_right.insert({
-          id: crypto.randomUUID(),
-          resource: perm.resource,
-          action: perm.action,
-          role_id: roleId,
-          event_id: args.id,
-          group_id: null,
-          amendment_id: null,
-          blog_id: null,
-          created_at: now,
-        });
-      }
-    }
-
+    const eventRoleTemplates = creatorEventRoleTemplates(args.event_type);
     const defaultInviteRole = eventRoleTemplates.find(roleDef => roleDef.default_invite_role);
     const defaultInviteRoleId = defaultInviteRole
-      ? roleIds[defaultInviteRole.name]
-      : (roleIds.Participant ?? null);
-
-    const creatorParticipation = await tx.run(
-      zql.event_participant.where('event_id', args.id).where('user_id', ctx.userID).one()
-    );
-    if (creatorParticipation) {
-      await tx.mutate.event_participant.update({
-        id: creatorParticipation.id,
-        group_id: args.group_id ?? null,
-        status: 'active',
-        visibility: args.visibility ?? 'public',
-      });
-
-      await syncEventParticipantRoleLinks(tx, {
-        event_participant_id: creatorParticipation.id,
-        role_ids: [organizerRoleId],
-        assigned_by_id: ctx.userID,
-      });
-    } else {
-      const creatorParticipationId = crypto.randomUUID();
-
-      await tx.mutate.event_participant.insert({
-        id: creatorParticipationId,
-        event_id: args.id,
-        user_id: ctx.userID,
-        group_id: args.group_id ?? null,
-        status: 'active',
-        visibility: args.visibility ?? 'public',
-        instance_date: null,
-        created_at: now,
-      });
-
-      await syncEventParticipantRoleLinks(tx, {
-        event_participant_id: creatorParticipationId,
-        role_ids: [organizerRoleId],
-        assigned_by_id: ctx.userID,
-      });
-    }
+      ? await creatorRoleId('event', args.id, defaultInviteRole.name)
+      : await creatorRoleId('event', args.id, 'Participant');
 
     await ensureEventConversation(tx, {
       eventId: args.id,
@@ -593,10 +496,20 @@ export const eventServerMutators = {
         assignedById: ctx.userID,
         reason: 'event-create',
       });
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: args.id,
+        action: 'delegates_reconciled',
+        severity: 'high',
+        actorType: 'system',
+        context: { reason: 'event-create-assembly-reconcile', event_type: args.event_type },
+      });
     }
 
     // Auto-invite specific users for OnInvite events
     if (args.event_type === 'on_invite' && args.invited_user_ids?.length) {
+      let invitedCount = 0;
       for (const userId of args.invited_user_ids) {
         if (userId === ctx.userID) continue; // skip creator (already added)
         const participationId = crypto.randomUUID();
@@ -617,6 +530,17 @@ export const eventServerMutators = {
             assigned_by_id: ctx.userID,
           });
         }
+        invitedCount += 1;
+      }
+      if (invitedCount > 0) {
+        await appendEntityActivity(tx, ctx, {
+          table: 'event_activity',
+          entityField: 'event_id',
+          entityId: args.id,
+          action: 'participant_added',
+          severity: 'high',
+          context: { operation: 'initial_invitations', count: invitedCount },
+        });
       }
     }
 
@@ -1036,6 +960,15 @@ export const eventServerMutators = {
         eventIds: [args.id],
         assignedById: ctx.userID,
         reason: 'event-update',
+      });
+      await appendEntityActivity(tx, ctx, {
+        table: 'event_activity',
+        entityField: 'event_id',
+        entityId: args.id,
+        action: 'delegates_reconciled',
+        severity: 'high',
+        actorType: 'system',
+        context: { reason: 'event-update-assembly-reconcile', event_type: nextEventType },
       });
     }
   }),

@@ -10,18 +10,42 @@ const NOW = new Date('2026-06-19T12:00:00Z').getTime();
 const FUTURE = NOW + 60 * 60 * 1000;
 const PAST = NOW - 60 * 60 * 1000;
 
+function eventViewRole(eventId: string, action = 'view') {
+  return {
+    id: `${eventId}-role`,
+    scope: 'event',
+    event_id: eventId,
+    action_rights: [{ event_id: eventId, resource: 'events', action }],
+  };
+}
+
 describe('user menu item builders', () => {
-  it('shows confirmed groups with assigned custom roles without checking role names', () => {
+  it('shows invited and active groups only when their role grants groups:view or groups:manage', () => {
     const groups = buildUserMenuGroups([
       {
         status: 'active',
         group: { id: 'group-with-custom-role', name: 'Working Circle' },
-        membership_roles: [{ role: { id: 'custom-role' } }],
+        membership_roles: [
+          { role: null },
+          {
+            role: {
+              id: 'custom-role',
+              action_rights: [
+                { group_id: 'group-with-custom-role', resource: 'groups', action: 'view' },
+              ],
+            },
+          },
+        ],
       },
       {
         status: 'member',
         group: { id: 'group-with-legacy-role', name: 'Legacy Group' },
-        role: { id: 'legacy-role' },
+        role: {
+          id: 'legacy-role',
+          action_rights: [
+            { group_id: 'group-with-legacy-role', resource: 'groups', action: 'manage' },
+          ],
+        },
       },
       {
         status: 'active',
@@ -31,23 +55,53 @@ describe('user menu item builders', () => {
       {
         status: 'requested',
         group: { id: 'pending-group', name: 'Pending' },
-        membership_roles: [{ role: { id: 'pending-role' } }],
+        membership_roles: [
+          {
+            role: {
+              id: 'pending-role',
+              action_rights: [{ group_id: 'pending-group', resource: 'groups', action: 'view' }],
+            },
+          },
+        ],
+      },
+      {
+        status: 'invited',
+        group: { id: 'invited-group', name: 'Invitation' },
+        guest_roles: [
+          { role: null },
+          {
+            role: {
+              action_rights: [{ group_id: 'invited-group', resource: 'groups', action: 'view' }],
+            },
+          },
+        ],
+      },
+      {
+        status: 'active',
+        group: { id: 'wrong-scope-group', name: 'Wrong Scope' },
+        roles: [
+          {
+            id: 'wrong-scope-role',
+            action_rights: [{ group_id: 'other-group', resource: 'groups', action: 'view' }],
+          },
+        ],
       },
     ]);
 
     expect(groups.map(group => group.id)).toEqual([
+      'invited-group',
       'group-with-legacy-role',
       'group-with-custom-role',
     ]);
   });
 
-  it('shows future or ongoing confirmed event participations with assigned roles', () => {
+  it('shows invited or active future events only with scoped view roles', () => {
     const events = buildUserMenuEvents(
       [
         {
           id: 'participation-future',
-          status: 'confirmed',
-          participant_roles: [{ role: { id: 'speaker' } }],
+          status: 'invited',
+          participant_roles: [{ role: null }, { role: eventViewRole('event-future') }],
           event: {
             id: 'event-future',
             title: 'Future Assembly',
@@ -58,7 +112,7 @@ describe('user menu item builders', () => {
         {
           id: 'participation-ongoing',
           status: 'active',
-          participant_roles: [{ role: { id: 'chair' } }],
+          participant_roles: [{ role: eventViewRole('event-ongoing', 'manage_participants') }],
           event: {
             id: 'event-ongoing',
             title: 'Ongoing Assembly',
@@ -70,7 +124,18 @@ describe('user menu item builders', () => {
         {
           id: 'participation-no-role',
           status: 'active',
-          participant_roles: [],
+          participant_roles: [
+            {
+              role: {
+                action_rights: [
+                  { action: undefined, event_id: 'event-no-role', resource: 'events' },
+                ],
+                event_id: 'event-no-role',
+                id: 'no-action-role',
+                scope: 'event',
+              },
+            },
+          ],
           event: {
             id: 'event-no-role',
             title: 'No Role',
@@ -80,7 +145,7 @@ describe('user menu item builders', () => {
         {
           id: 'participation-requested',
           status: 'requested',
-          participant_roles: [{ role: { id: 'requested-role' } }],
+          participant_roles: [{ role: eventViewRole('event-requested') }],
           event: {
             id: 'event-requested',
             title: 'Requested',
@@ -90,7 +155,7 @@ describe('user menu item builders', () => {
         {
           id: 'participation-cancelled',
           status: 'active',
-          participant_roles: [{ role: { id: 'cancelled-role' } }],
+          participant_roles: [{ role: eventViewRole('event-cancelled') }],
           event: {
             id: 'event-cancelled',
             title: 'Cancelled',
@@ -101,7 +166,7 @@ describe('user menu item builders', () => {
         {
           id: 'participation-past',
           status: 'active',
-          participant_roles: [{ role: { id: 'past-role' } }],
+          participant_roles: [{ role: eventViewRole('event-past') }],
           event: {
             id: 'event-past',
             title: 'Past',
@@ -122,7 +187,7 @@ describe('user menu item builders', () => {
           id: 'participation-recurring',
           status: 'active',
           instance_date: FUTURE,
-          participant_roles: [{ role: { id: 'moderator' } }],
+          participant_roles: [{ role: eventViewRole('event-recurring') }],
           event: {
             id: 'event-recurring',
             title: 'Recurring Meeting',
@@ -228,8 +293,20 @@ describe('user menu item builders', () => {
 
   it('sorts unnamed groups and events and handles zero-duration recurring instances', () => {
     const groups = buildUserMenuGroups([
-      { status: 'active', group: { id: 'b' }, roles: [{ id: 'role-b' }] },
-      { status: 'active', group: { id: 'a', name: null }, roles: [{ id: 'role-a' }] },
+      {
+        status: 'active',
+        group: { id: 'b' },
+        roles: [
+          { id: 'role-b', action_rights: [{ group_id: 'b', resource: 'groups', action: 'view' }] },
+        ],
+      },
+      {
+        status: 'active',
+        group: { id: 'a', name: null },
+        roles: [
+          { id: 'role-a', action_rights: [{ group_id: 'a', resource: 'groups', action: 'view' }] },
+        ],
+      },
     ]);
     expect(groups.map(group => group.id)).toEqual(['b', 'a']);
 
@@ -237,13 +314,13 @@ describe('user menu item builders', () => {
       [
         {
           status: 'active',
-          roles: [{ id: 'role-base' }],
+          roles: [eventViewRole('base')],
           event: { id: 'base', title: undefined, start_date: FUTURE, city: 'Berlin' },
         },
         {
           id: 'later',
           status: 'active',
-          role: { id: 'role-later' },
+          role: eventViewRole('later'),
           event: {
             id: 'later',
             title: undefined,
@@ -255,7 +332,7 @@ describe('user menu item builders', () => {
           id: 'zero-duration',
           status: 'active',
           instance_date: FUTURE + 2,
-          role: { id: 'role-zero' },
+          role: eventViewRole('zero-duration'),
           event: {
             id: 'zero-duration',
             title: 'Zero duration',

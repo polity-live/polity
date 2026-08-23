@@ -194,7 +194,7 @@ const formData = {
   subtitle: '',
   visibility: 'public',
   aboutContent: [],
-  email: '',
+  contactEmail: '',
   website: '',
   youtube: '',
   linkedin: '',
@@ -265,7 +265,7 @@ describe('profile and content branches A07', () => {
     mocks.captured.basic.onSubtitleChange('Countess');
     mocks.captured.visibility.onChange('private');
     for (const [handler, value] of [
-      ['onEmailChange', 'a@b'],
+      ['onContactEmailChange', 'a@b'],
       ['onWebsiteChange', 'web'],
       ['onYoutubeChange', 'yt'],
       ['onLinkedinChange', 'li'],

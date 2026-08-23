@@ -33,9 +33,9 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
   translate: (key: string) =>
     key === 'generated.inline.0030_public_61c9b2b1'
-      ? 'public'
+      ? 'Öffentlich'
       : key === 'generated.inline.0031_authenticated_8fda38ce'
-        ? 'authenticated'
+        ? 'Authentifiziert'
         : key,
 }));
 
@@ -211,6 +211,13 @@ describe('useCreateAmendmentForm state and search synchronization', () => {
 
     act(() => target().onSelect(selection()));
     expect(target().targetSelection.eventData.title).toBe('Target Event');
+    const reviewFields = field(result.current, 'review').props.sections.flatMap(
+      (section: any) => section.fields
+    );
+    expect(reviewFields).toContainEqual({
+      label: 'pages.create.common.visibility',
+      value: 'pages.create.common.authenticated',
+    });
     expect(field(result.current, 'review').props.sections[0].fields.length).toBeGreaterThan(2);
     act(() => target().onSelect(null));
     expect(target().targetSelection).toBeNull();
@@ -363,7 +370,8 @@ describe('useCreateAmendmentForm submission', () => {
       expect.objectContaining({
         amendment: expect.objectContaining({
           title: 'Full Amendment',
-          code: 'Code',
+          preamble: 'Code',
+          code: null,
           group_id: 'target-1',
           event_id: 'event-1',
           tags: ['civic'],

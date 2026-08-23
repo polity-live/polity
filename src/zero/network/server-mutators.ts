@@ -30,6 +30,7 @@ import { reconcileOfflineHierarchyForBaseGroup } from '../groups/offline-members
 import { reconcileDelegateAllocationsForGroups } from '../events/delegate-allocation-reconcile';
 import { reconcileGeneralAssemblyParticipantsForGroups } from '../events/assembly-reconcile';
 import { reconcileGroupGraph } from './group-graph-reconcile';
+import { appendEntityActivity } from '../activity/shared';
 import { fireNotification } from '../server-notify';
 import {
   groupName,
@@ -189,6 +190,21 @@ async function reconcileConnectionSideEffects(
     assignedById,
     reason: 'network-connection-side-effects',
   });
+  for (const groupId of new Set(groupIds.filter((id): id is string => Boolean(id)))) {
+    await appendEntityActivity(
+      tx,
+      { userID: assignedById },
+      {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: groupId,
+        action: 'reconciliation',
+        severity: 'high',
+        actorType: 'system',
+        context: { reason: 'network-connection-side-effects' },
+      }
+    );
+  }
   const affectedGroupIds = new Set([
     ...firstGraphResult.affectedGroupIds,
     ...offlineHierarchyAffectedGroupIds,

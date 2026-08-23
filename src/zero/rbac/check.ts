@@ -46,18 +46,35 @@ export interface PermissionScope {
 const ACTIVE_GROUP_MEMBERSHIP_STATUSES = new Set(['active', 'member', 'admin']);
 const ACTIVE_GROUP_GUEST_ACCESS_STATUSES = new Set(['active']);
 const ACTIVE_EVENT_PARTICIPANT_STATUSES = new Set(['active', 'confirmed', 'member', 'admin']);
+const DISCOVERY_EVENT_PARTICIPANT_STATUSES = new Set([
+  'invited',
+  ...ACTIVE_EVENT_PARTICIPANT_STATUSES,
+]);
 const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = new Set([
   'active',
   'collaborator',
   'member',
   'admin',
 ]);
+const DISCOVERY_AMENDMENT_COLLABORATOR_STATUSES = new Set([
+  'invited',
+  ...ACTIVE_AMENDMENT_COLLABORATOR_STATUSES,
+]);
+const ACTIVE_BLOGGER_STATUSES = new Set(['owner', 'admin', 'member', 'writer']);
+const DISCOVERY_BLOGGER_STATUSES = new Set(['invited', ...ACTIVE_BLOGGER_STATUSES]);
 
 function hasActiveStatus(
   status: string | null | undefined,
   activeStatuses: ReadonlySet<string>
 ): boolean {
   return status == null || activeStatuses.has(status);
+}
+
+function hasExplicitStatus(
+  status: string | null | undefined,
+  allowedStatuses: ReadonlySet<string>
+): boolean {
+  return status != null && allowedStatuses.has(status);
 }
 
 // ============================================================================
@@ -139,7 +156,7 @@ export function isEventParticipant(
 ): boolean {
   if (!participations) return false;
   return participations.some(
-    p => p.event?.id === eventId && hasActiveStatus(p.status, ACTIVE_EVENT_PARTICIPANT_STATUSES)
+    p => p.event?.id === eventId && hasExplicitStatus(p.status, ACTIVE_EVENT_PARTICIPANT_STATUSES)
   );
 }
 
@@ -148,19 +165,22 @@ export function isBlogger(
   blogId: string
 ): boolean {
   if (!bloggerRelations) return false;
-  return bloggerRelations.some(b => b.blog?.id === blogId);
+  return bloggerRelations.some(
+    b => b.blog?.id === blogId && b.status != null && ACTIVE_BLOGGER_STATUSES.has(b.status)
+  );
 }
 
 export function isAmendmentCollaborator(amendment: Amendment | undefined, userId: string): boolean {
   if (amendment?.amendmentRoleCollaborators) {
     return amendment.amendmentRoleCollaborators.some(
       c =>
-        c.user?.id === userId && hasActiveStatus(c.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+        c.user?.id === userId && hasExplicitStatus(c.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
     );
   }
   if (!amendment?.collaborators) return false;
   return amendment.collaborators.some(
-    c => c.user?.id === userId && hasActiveStatus(c.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+    c =>
+      c.user?.id === userId && hasExplicitStatus(c.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
   );
 }
 
@@ -221,15 +241,21 @@ function hasEventPermission(
   return participations.some(
     p =>
       p.event?.id === eventId &&
-      hasActiveStatus(p.status, ACTIVE_EVENT_PARTICIPANT_STATUSES) &&
+      hasExplicitStatus(
+        p.status,
+        action === 'view' ? DISCOVERY_EVENT_PARTICIPANT_STATUSES : ACTIVE_EVENT_PARTICIPANT_STATUSES
+      ) &&
       p.roles?.some(
         role =>
-          role.actionRights?.some(
+          role.scope === 'event' &&
+          role.event?.id === eventId &&
+          (role.actionRights?.some(
             right =>
               right.resource === resource &&
               checkWithInheritance(right.action, action) &&
               right.event?.id === eventId
-          ) ?? false
+          ) ??
+            false)
       )
   );
 }
@@ -244,8 +270,14 @@ function hasBlogPermission(
   return bloggerRelations.some(
     b =>
       b.blog?.id === blogId &&
+      b.status != null &&
+      (action === 'view'
+        ? DISCOVERY_BLOGGER_STATUSES.has(b.status)
+        : ACTIVE_BLOGGER_STATUSES.has(b.status)) &&
       b.role?.actionRights?.some(
         right =>
+          b.role?.scope === 'blog' &&
+          b.role.blog?.id === blogId &&
           right.resource === resource &&
           checkWithInheritance(right.action, action) &&
           right.blog?.id === blogId
@@ -266,15 +298,23 @@ function hasAmendmentPermission(
   if (amendment.amendmentRoleCollaborators) {
     const collaborator = amendment.amendmentRoleCollaborators.find(
       c =>
-        c.user?.id === userId && hasActiveStatus(c.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+        c.user?.id === userId &&
+        hasExplicitStatus(
+          c.status,
+          action === 'view'
+            ? DISCOVERY_AMENDMENT_COLLABORATOR_STATUSES
+            : ACTIVE_AMENDMENT_COLLABORATOR_STATUSES
+        )
     );
     const actionRights = getRoleActionRights(collaborator?.role);
     if (actionRights.length > 0) {
       return actionRights.some(
         (right: any) =>
+          collaborator?.role?.scope === 'amendment' &&
+          collaborator.role.amendment?.id === amendment.id &&
           right.resource === resource &&
           checkWithInheritance(right.action, action) &&
-          (!getActionRightAmendmentId(right) || getActionRightAmendmentId(right) === amendment.id)
+          getActionRightAmendmentId(right) === amendment.id
       );
     }
   }
@@ -282,23 +322,38 @@ function hasAmendmentPermission(
   const rawRoleCollaborator = (amendment.collaborators as any[] | undefined)?.find(
     collaborator =>
       collaborator.user?.id === userId &&
-      hasActiveStatus(collaborator.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES) &&
+      hasExplicitStatus(
+        collaborator.status,
+        action === 'view'
+          ? DISCOVERY_AMENDMENT_COLLABORATOR_STATUSES
+          : ACTIVE_AMENDMENT_COLLABORATOR_STATUSES
+      ) &&
       collaborator.role
   );
   const rawRoleActionRights = getRoleActionRights(rawRoleCollaborator?.role);
   if (rawRoleActionRights.length > 0) {
     return rawRoleActionRights.some(
       (right: any) =>
+        rawRoleCollaborator?.role?.scope === 'amendment' &&
+        (rawRoleCollaborator.role.amendment?.id ?? rawRoleCollaborator.role.amendment_id) ===
+          amendment.id &&
         right.resource === resource &&
         checkWithInheritance(right.action, action) &&
-        (!getActionRightAmendmentId(right) || getActionRightAmendmentId(right) === amendment.id)
+        getActionRightAmendmentId(right) === amendment.id
     );
   }
 
   if (!amendment.collaborators || !amendment.roles) return false;
 
   const collaboration = amendment.collaborators.find(
-    c => c.user?.id === userId && hasActiveStatus(c.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+    c =>
+      c.user?.id === userId &&
+      hasExplicitStatus(
+        c.status,
+        action === 'view'
+          ? DISCOVERY_AMENDMENT_COLLABORATOR_STATUSES
+          : ACTIVE_AMENDMENT_COLLABORATOR_STATUSES
+      )
   );
   if (!collaboration?.roleName) return false;
 

@@ -14,11 +14,21 @@ import {
 } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
+import { VIEW_IMPLYING_ACTIONS } from '../rbac/constants';
 import type { NormalizedGroupRelationship } from '@/features/network/types/network.types';
+import {
+  activityCursorSchema,
+  activityPageLimitSchema,
+  activitySeverityFilterSchema,
+  applyActivityCursor,
+} from '../activity/queries';
 
 const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['active', 'collaborator', 'member', 'admin'];
 const WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ACTIVE_AMENDMENT_COLLABORATOR_STATUSES;
-const NAVIGATION_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ACTIVE_AMENDMENT_COLLABORATOR_STATUSES;
+const NAVIGATION_AMENDMENT_COLLABORATOR_STATUSES = [
+  'invited',
+  ...ACTIVE_AMENDMENT_COLLABORATOR_STATUSES,
+];
 const discussionThreadStartSchema = z
   .object({
     id: z.string(),
@@ -119,14 +129,16 @@ function applyAmendmentManagerAccess<T>(q: T, userID: string | undefined): T {
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('created_by_id', userID),
-      exists('collaborators', (collaborator: any) =>
-        collaborator
-          .where('user_id', userID)
-          .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
-          .whereExists('role', (role: any) =>
-            role.whereExists('action_rights', (right: any) =>
-              right.where('resource', 'amendments').where('action', 'manage')
-            )
+      exists('roles', (role: any) =>
+        role
+          .where('scope', 'amendment')
+          .whereExists('amendment_collaborators', (collaborator: any) =>
+            collaborator
+              .where('user_id', userID)
+              .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+          )
+          .whereExists('amendment_action_rights', (right: any) =>
+            right.where('resource', 'amendments').where('action', 'manage')
           )
       )
     )
@@ -1350,10 +1362,19 @@ const amendmentQueriesBase = {
       .where(({ or, cmp, exists }: any) =>
         or(
           cmp('created_by_id', userID),
-          exists('collaborators', (collaborator: any) =>
-            collaborator
-              .where('user_id', userID)
-              .where('status', 'IN', NAVIGATION_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+          exists('roles', (role: any) =>
+            role
+              .where('scope', 'amendment')
+              .whereExists('amendment_collaborators', (collaborator: any) =>
+                collaborator
+                  .where('user_id', userID)
+                  .where('status', 'IN', NAVIGATION_AMENDMENT_COLLABORATOR_STATUSES)
+              )
+              .whereExists('amendment_action_rights', (right: any) =>
+                right
+                  .where('resource', 'amendments')
+                  .where('action', 'IN', [...VIEW_IMPLYING_ACTIONS])
+              )
           )
         )
       )
@@ -1370,6 +1391,44 @@ const amendmentQueriesBase = {
 };
 
 export const amendmentQueries = {
+  activities: defineQuery(
+    z.object({
+      entityId: z.string(),
+      severity: activitySeverityFilterSchema,
+      cursor: activityCursorSchema,
+      limit: activityPageLimitSchema,
+    }),
+    ({ args: { entityId, severity, cursor, limit }, ctx: { userID } }) => {
+      let q: any = zql.amendment_activity
+        .where('amendment_id', entityId)
+        .whereExists('amendment', amendment => {
+          if (!userID || userID === 'anon') return amendment.where('id', '__unauthorized__');
+          return amendment.where(({ or, cmp, exists }: any) =>
+            or(
+              cmp('created_by_id', userID),
+              exists('collaborators', (collaborator: any) =>
+                collaborator
+                  .where('user_id', userID)
+                  .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+              ),
+              exists('roles', (role: any) =>
+                role
+                  .whereExists('amendment_collaborators', (collaborator: any) =>
+                    collaborator
+                      .where('user_id', userID)
+                      .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+                  )
+                  .whereExists('amendment_action_rights', (right: any) =>
+                    right.where('resource', 'amendments').where('action', 'manage')
+                  )
+              )
+            )
+          );
+        });
+      if (severity !== 'all') q = q.where('severity', severity);
+      return applyActivityCursor(q, cursor).related('actor').related('subject_user').limit(limit);
+    }
+  ),
   viewerCollaborations: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     requireQueryUser(zql.amendment_collaborator, userID)
   ),

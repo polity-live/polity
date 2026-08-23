@@ -21,6 +21,7 @@ import {
 } from '@/features/amendments/logic/amendmentPathHelpers';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
+import { getCreateVisibilityLabelKey } from '../logic/createVisibility';
 import {
   type CreateAmendmentEvaluationMode,
   type CreateAmendmentSearch,
@@ -174,12 +175,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       state.evaluationOffsetYears ?? String(searchParams.evaluationOffsetYears)
     );
   }, [searchParams]);
-  const visibilityLabel =
-    visibility === translateText('generated.inline.0030_public_61c9b2b1')
-      ? t('pages.create.common.public')
-      : visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
-        ? t('pages.create.common.authenticated')
-        : t('pages.create.common.private');
+  const visibilityLabel = t(getCreateVisibilityLabelKey(visibility));
   const locationSummary = formatLocation({
     country,
     region,
@@ -375,10 +371,10 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         amendment: {
           id: amendmentId,
           title: title.trim(),
-          code: subtitle || null,
+          code: null,
           reason: null,
           category: null,
-          preamble: null,
+          preamble: subtitle || null,
           group_id: normalizedGroupId,
           event_id: normalizedEventId,
           clone_source_id: null,

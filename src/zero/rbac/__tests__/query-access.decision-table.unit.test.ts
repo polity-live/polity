@@ -4,6 +4,7 @@ import {
   applyAccreditationQueryAccess,
   applyAgendaItemQueryAccess,
   applyAmendmentQueryAccess,
+  applyBlogManagerQueryAccess,
   applyBlogQueryAccess,
   applyChangeRequestVisibilityAccess,
   applyDatasetQueryAccess,
@@ -16,6 +17,7 @@ import {
   applyEventQueryAccess,
   applyGroupManagerQueryAccess,
   applyGroupMembershipSelfOrManagerQueryAccess,
+  applyGroupDiscoveryQueryAccess,
   applyGroupQueryAccess,
   applyRoleQueryAccess,
   applySearchDocumentQueryAccess,
@@ -180,6 +182,10 @@ describe('query access authentication decision table', () => {
     expectQueryMutation(query =>
       applyEventManagerQueryAccess(query, 'viewer', 'manage_participants')
     );
+    expectQueryMutation(query => applyBlogManagerQueryAccess(query, undefined));
+    expectQueryMutation(query => applyBlogManagerQueryAccess(query, 'viewer'));
+    expectQueryMutation(query => applyGroupDiscoveryQueryAccess(query, undefined));
+    expectQueryMutation(query => applyGroupDiscoveryQueryAccess(query, 'viewer'));
   });
 
   it('builds document access for anonymous/authenticated viewers and flip profiles', () => {

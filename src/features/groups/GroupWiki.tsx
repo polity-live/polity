@@ -49,6 +49,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
     isLoading,
     canAccess,
     isAuthenticated,
+    viewerId,
     memberCount,
     eventsCount,
     amendmentsCount,
@@ -138,6 +139,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       isBase={isBase}
       isHierarchical={isHierarchical}
       isAuthenticated={isAuthenticated}
+      viewerId={viewerId}
       isInvited={isInvited}
       isMember={isMember}
       isSibling={isSibling}

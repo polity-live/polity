@@ -970,6 +970,10 @@ describe('aggregate useGroupState contract', () => {
     mocks.results.set('groups.currentUserMembershipsWithGroups', [
       { ...membership('current'), group: { id: 'group-a' } },
     ]);
+    mocks.results.set('groups.currentUserGuestAccessesWithGroups', [
+      { group: { id: 'group-b' }, id: 'guest-current' },
+      { group: null, id: 'guest-without-group' },
+    ]);
 
     const current = renderHook(() =>
       subject.useGroupState({
@@ -983,6 +987,7 @@ describe('aggregate useGroupState contract', () => {
         includeByUser: true,
         includeMembershipsWithUsers: true,
         includeCurrentUserMembershipsWithGroups: true,
+        includeCurrentUserGuestAccessesWithGroups: true,
         includeAllRelationshipsWithGroups: true,
       })
     ).result.current;
@@ -997,6 +1002,10 @@ describe('aggregate useGroupState contract', () => {
       userGroupMemberships: [{ group: { id: 'group-b' } }],
       membershipsWithUsers: [{ id: 'with-users' }],
       currentUserMembershipsWithGroups: [{ group: { id: 'group-a' } }],
+      currentUserGuestAccessesWithGroups: [
+        { group: { id: 'group-b' }, id: 'guest-current' },
+        { group: null, id: 'guest-without-group' },
+      ],
       isLoading: false,
     });
     expect(current.relationships).toHaveLength(1);
@@ -1031,6 +1040,7 @@ describe('aggregate useGroupState contract', () => {
       includeByUser: true,
       includeMembershipsWithUsers: true,
       includeCurrentUserMembershipsWithGroups: true,
+      includeCurrentUserGuestAccessesWithGroups: true,
       includeAllRelationshipsWithGroups: true,
     };
     const keys = [
@@ -1044,6 +1054,7 @@ describe('aggregate useGroupState contract', () => {
       'groups.byUser',
       'groups.membershipsWithUsers',
       'groups.currentUserMembershipsWithGroups',
+      'groups.currentUserGuestAccessesWithGroups',
     ];
     for (const key of keys) {
       mocks.statuses.set(key, 'unknown');

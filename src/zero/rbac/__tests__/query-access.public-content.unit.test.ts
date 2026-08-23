@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyChangeRequestVisibilityAccess,
+  applyAmendmentQueryAccess,
+  applyBlogQueryAccess,
   applyDocumentQueryAccess,
+  applyGroupDiscoveryQueryAccess,
   applyElectionQueryAccess,
   applyGroupQueryAccess,
+  applyEventQueryAccess,
   applySearchDocumentQueryAccess,
   applyTodoQueryAccess,
   applyVoteQueryAccess,
@@ -145,6 +149,52 @@ describe('public content query access', () => {
     ]);
   });
 
+  it('requires a groups:view or groups:manage role for private group discovery, including invitations', () => {
+    const query = createQuery();
+
+    applyGroupDiscoveryQueryAccess(query, 'user-1');
+
+    const memberships = query.calls.find(
+      call => call[0] === 'exists' && call[1] === 'memberships'
+    )?.[2] as Call[];
+    expect(memberships).toContainEqual([
+      'where',
+      'status',
+      'IN',
+      ['invited', 'active', 'member', 'admin'],
+    ]);
+
+    const membershipRoles = memberships.find(
+      call => call[0] === 'whereExists' && call[1] === 'membership_roles'
+    )?.[2] as Call[];
+    const roles = membershipRoles.find(
+      call => call[0] === 'whereExists' && call[1] === 'role'
+    )?.[2] as Call[];
+    const rights = roles.find(
+      call => call[0] === 'whereExists' && call[1] === 'action_rights'
+    )?.[2] as Call[];
+
+    expect(rights).toContainEqual(['where', 'resource', 'IN', ['groups']]);
+    expect(rights).toContainEqual(['where', 'action', 'IN', ['view', 'manage']]);
+    expect(query.calls).toContainEqual([
+      'exists',
+      'guest_accesses',
+      expect.arrayContaining([['where', 'status', 'IN', ['invited', 'active']]]),
+    ]);
+
+    const discoveryPredicate = query.calls.filter(call => call[0] === 'where').at(-1)?.[1];
+    const comparisons: unknown[][] = [];
+    (discoveryPredicate as (helpers: Record<string, (...args: unknown[]) => unknown>) => unknown)({
+      cmp: (...args: unknown[]) => {
+        comparisons.push(args);
+        return args;
+      },
+      exists: () => null,
+      or: (...args: unknown[]) => args,
+    });
+    expect(comparisons).toContainEqual(['visibility', 'IN', ['public', 'authenticated']]);
+  });
+
   it('carries active event and amendment relationships into private task access', () => {
     const query = createQuery();
 
@@ -174,6 +224,82 @@ describe('public content query access', () => {
     ]);
     expect(amendmentCalls.some(call => call[0] === 'exists' && call[1] === 'group')).toBe(true);
     expect(amendmentCalls.some(call => call[0] === 'exists' && call[1] === 'event')).toBe(true);
+  });
+
+  it.each([
+    {
+      name: 'event',
+      apply: applyEventQueryAccess,
+      roleRelation: 'roles',
+      scope: 'event',
+      holderRelation: 'event_participant_roles',
+      relationshipRelation: 'event_participant',
+      statuses: ['invited', 'active', 'confirmed', 'member', 'admin'],
+      rightRelation: 'event_action_rights',
+      resource: 'events',
+    },
+    {
+      name: 'amendment',
+      apply: applyAmendmentQueryAccess,
+      roleRelation: 'roles',
+      scope: 'amendment',
+      holderRelation: 'amendment_collaborators',
+      relationshipRelation: null,
+      statuses: ['invited', 'active', 'collaborator', 'member', 'admin'],
+      rightRelation: 'amendment_action_rights',
+      resource: 'amendments',
+    },
+    {
+      name: 'blog',
+      apply: applyBlogQueryAccess,
+      roleRelation: 'roles',
+      scope: 'blog',
+      holderRelation: 'bloggers',
+      relationshipRelation: null,
+      statuses: ['invited', 'admin', 'member', 'writer'],
+      rightRelation: 'blog_action_rights',
+      resource: 'blogs',
+    },
+  ])('requires scoped, view-implying roles for $name discovery', scenario => {
+    const query = createQuery();
+    scenario.apply(query, 'user-1');
+
+    const roleCalls = query.calls.find(
+      call => call[0] === 'exists' && call[1] === scenario.roleRelation
+    )?.[2] as Call[];
+    expect(roleCalls).toContainEqual(['where', 'scope', scenario.scope]);
+
+    const holderCalls = roleCalls.find(
+      call => call[0] === 'whereExists' && call[1] === scenario.holderRelation
+    )?.[2] as Call[];
+    const relationshipCalls = scenario.relationshipRelation
+      ? (holderCalls.find(
+          call => call[0] === 'whereExists' && call[1] === scenario.relationshipRelation
+        )?.[2] as Call[])
+      : holderCalls;
+    expect(relationshipCalls).toContainEqual(['where', 'user_id', 'user-1']);
+    expect(relationshipCalls).toContainEqual(['where', 'status', 'IN', scenario.statuses]);
+
+    const rightCalls = roleCalls.find(
+      call => call[0] === 'whereExists' && call[1] === scenario.rightRelation
+    )?.[2] as Call[];
+    expect(rightCalls).toContainEqual(['where', 'resource', scenario.resource]);
+    expect(rightCalls).toContainEqual([
+      'where',
+      'action',
+      'IN',
+      [
+        'view',
+        'manage',
+        'moderate',
+        'manage_members',
+        'manage_roles',
+        'manage_participants',
+        'manage_speakers',
+        'manage_votes',
+        'speak',
+      ],
+    ]);
   });
 
   it('scopes elections through an accessible agenda item or role root', () => {

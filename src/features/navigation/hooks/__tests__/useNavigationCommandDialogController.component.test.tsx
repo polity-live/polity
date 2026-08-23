@@ -109,7 +109,14 @@ describe('useNavigationCommandDialogController', () => {
       {
         status: 'active',
         group: { id: 'group-active', name: 'Working Circle' },
-        membership_roles: [{ role: { id: 'member-role' } }],
+        membership_roles: [
+          {
+            role: {
+              id: 'member-role',
+              action_rights: [{ group_id: 'group-active', resource: 'groups', action: 'view' }],
+            },
+          },
+        ],
       },
       {
         status: 'requested',
@@ -191,7 +198,14 @@ describe('useNavigationCommandDialogController', () => {
       {
         status: 'active',
         group: { id: 'group-active', name: 'Working Circle' },
-        membership_roles: [{ role: { id: 'member-role' } }],
+        membership_roles: [
+          {
+            role: {
+              id: 'member-role',
+              action_rights: [{ group_id: 'group-active', resource: 'groups', action: 'view' }],
+            },
+          },
+        ],
       },
     ];
 
@@ -376,6 +390,15 @@ function buildParticipation(
       group: { id: 'group-active', name: 'Working Circle' },
       location_name: 'Berlin',
     },
-    participant_roles: [{ role: { id: `${id}-role` } }],
+    participant_roles: [
+      {
+        role: {
+          id: `${id}-role`,
+          scope: 'event',
+          event_id: id,
+          action_rights: [{ event_id: id, resource: 'events', action: 'view' }],
+        },
+      },
+    ],
   };
 }

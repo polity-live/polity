@@ -37,7 +37,7 @@ vi.mock('@/features/shared/ui/comments', () => ({
   CommentThread: () => <div>Comments</div>,
 }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  useTranslation: () => ({ language: 'en' }),
+  useTranslation: () => ({ language: 'en', t: (key: string) => key }),
 }));
 vi.mock('@/features/app-tutorial/fixture-copy', () => ({
   resolveAppTutorialFixtureValue: () => state.displayTodo,
@@ -76,6 +76,13 @@ function props(overrides: Record<string, unknown> = {}) {
       onAddComment: vi.fn(),
       onVote: vi.fn(),
       isSubmitting: false,
+    },
+    activity: {
+      activities: [],
+      canViewActivity: false,
+      isLoading: false,
+      severity: 'all',
+      setSeverity: vi.fn(),
     },
     canManageTodos: true,
     isArchiving: false,

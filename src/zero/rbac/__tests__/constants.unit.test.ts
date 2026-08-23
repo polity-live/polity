@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import * as rbacConstants from '../constants';
 import {
   AMENDMENT_ACTION_RIGHTS,
@@ -9,7 +11,23 @@ import {
   DEFAULT_GROUP_ROLES,
   EVENT_ACTION_RIGHTS,
   GROUP_ACTION_RIGHTS,
+  VIEW_IMPLYING_ACTIONS,
 } from '../constants';
+
+describe('view permission inheritance', () => {
+  it('stays in parity with the search ACL SQL helper', () => {
+    const sql = readFileSync(
+      resolve(process.cwd(), 'supabase/schemas/21_search_document.sql'),
+      'utf8'
+    );
+    const functionBody = sql.match(
+      /FUNCTION public\.permission_action_implies_view[\s\S]*?SELECT target_action IN \(([\s\S]*?)\);/
+    )?.[1];
+    const sqlActions = [...(functionBody?.matchAll(/'([^']+)'/g) ?? [])].map(match => match[1]);
+
+    expect(sqlActions.sort()).toEqual([...VIEW_IMPLYING_ACTIONS].sort());
+  });
+});
 
 interface RightLike {
   resource: string;
@@ -97,6 +115,8 @@ describe('BLOG_ACTION_RIGHTS', () => {
 
     expect(keys).toEqual(
       new Set([
+        'blogs:view',
+        'blogs:manage',
         'blogs:update',
         'blogs:delete',
         'blogBloggers:manage',
@@ -120,8 +140,13 @@ describe('AMENDMENT_ACTION_RIGHTS', () => {
 });
 
 describe('EVENT_ACTION_RIGHTS', () => {
-  it('exposes the event-specific permission catalog without generic event view rights', () => {
+  it('exposes the event-specific permission catalog including discovery rights', () => {
     expect(EVENT_ACTION_RIGHTS).toEqual([
+      {
+        resource: 'events',
+        action: 'view',
+        label: 'View Events',
+      },
       { resource: 'agendaItems', action: 'manage', label: 'Manage Agenda Items' },
       { resource: 'elections', action: 'manage', label: 'Manage Elections' },
       { resource: 'events', action: 'manage', label: 'Manage Events' },
@@ -145,7 +170,7 @@ describe('EVENT_ACTION_RIGHTS', () => {
       EVENT_ACTION_RIGHTS.some(
         right => right.resource === 'events' && String(right.action) === 'view'
       )
-    ).toBe(false);
+    ).toBe(true);
     expect(
       EVENT_ACTION_RIGHTS.some(
         right => right.resource === 'agendaItems' && String(right.action) === 'view'
@@ -165,12 +190,14 @@ describe('EVENT_ACTION_RIGHTS', () => {
 });
 
 describe('DEFAULT_GROUP_ROLES', () => {
-  it('does not create removed group-scoped action rights from role templates', () => {
+  it('gives the standard Member role groups:view without restoring removed rights', () => {
     const keys = rolePermissionKeys(DEFAULT_GROUP_ROLES);
+    const member = DEFAULT_GROUP_ROLES.find(role => role.name === 'Member');
 
     expect(keys.has('amendments:create')).toBe(true);
     expect(keys.has('events:manage')).toBe(true);
     expect(keys.has('messages:manage')).toBe(true);
+    expect(member?.permissions).toContainEqual({ resource: 'groups', action: 'view' });
     expectNoRights(keys, removedGroupScopeRights);
   });
 });

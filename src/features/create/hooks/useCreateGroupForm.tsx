@@ -17,6 +17,7 @@ import {
 import type { ColumnDef } from '@/features/shared/ui/data-table';
 import { isValidOptionalEmailAddress } from '@/features/shared/logic/inputValidation';
 import { matchInviteCsvUsers, type InviteCsvMatchResult } from '../logic/groupInviteCsv';
+import { getCreateVisibilityLabelKey } from '../logic/createVisibility';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import {
   geoLocationFieldsFromShape,
@@ -786,12 +787,7 @@ export function useCreateGroupForm(): CreateFormConfig {
       : groupType === 'hierarchical'
         ? t('pages.create.group.groupTypes.hierarchical')
         : t('common.network.sibling');
-  const visibilityLabel =
-    visibility === translateText('generated.inline.0030_public_61c9b2b1')
-      ? t('pages.create.common.public')
-      : visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
-        ? t('pages.create.common.authenticated')
-        : t('pages.create.common.private');
+  const visibilityLabel = t(getCreateVisibilityLabelKey(visibility));
   const invitedUserNames = invitedUserIds
     .map(invitedUserId => {
       const matchedUser = allUsers.find(currentUser => currentUser.id === invitedUserId);

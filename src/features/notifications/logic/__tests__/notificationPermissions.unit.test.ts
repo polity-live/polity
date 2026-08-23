@@ -18,10 +18,21 @@ function evaluator(data: Omit<PermissionData, 'userId'> = {}): PermissionEvaluat
 }
 
 function role(right: ActionRight): Role {
+  const scope = right.event
+    ? 'event'
+    : right.blog
+      ? 'blog'
+      : right.amendment
+        ? 'amendment'
+        : 'group';
   return {
     id: 'role-1',
     name: 'Role',
-    scope: 'group',
+    scope,
+    group: right.group,
+    event: right.event,
+    amendment: right.amendment,
+    blog: right.blog,
     actionRights: [right],
   };
 }
@@ -164,6 +175,7 @@ describe('canManageEntityNotification', () => {
           {
             id: 'blogger-1',
             blog: { id: 'entity-1' },
+            status: 'writer',
             role: role({
               id: 'blog-right',
               resource: 'notifications',
@@ -245,6 +257,61 @@ describe('canManageEntityNotification', () => {
         evaluator()
       )
     ).toBe(true);
+  });
+
+  it('materializes every explicit and fallback collaborator role scope', () => {
+    const can = vi.fn((_scope: any) => false);
+    const scopedRole = (scope: string, explicit: boolean) => ({
+      id: `${scope}-${explicit ? 'explicit' : 'fallback'}`,
+      scope,
+      [`${scope}_id`]: explicit ? `${scope}-explicit` : undefined,
+      action_rights: [],
+    });
+    const collaborators = ['group', 'event', 'amendment', 'blog'].flatMap(scope => [
+      {
+        id: `${scope}-explicit-collaborator`,
+        role: scopedRole(scope, true),
+        user_id: USER_ID,
+      },
+      {
+        id: `${scope}-fallback-collaborator`,
+        role: scopedRole(scope, false),
+        user_id: USER_ID,
+      },
+    ]);
+    collaborators.push({ id: 'missing-role', role: {} as any, user_id: USER_ID });
+
+    expect(
+      canManageEntityNotification(
+        notification({
+          recipient_entity_id: 'amendment-1',
+          recipient_entity_type: 'amendment',
+          recipient_group_id: null,
+          recipient_amendment_id: 'amendment-1',
+          recipient_amendment: {
+            collaborators,
+            created_by_id: 'author-1',
+            id: 'amendment-1',
+          },
+        }),
+        { can, isLoading: false, userId: USER_ID }
+      )
+    ).toBe(false);
+
+    const amendment = can.mock.calls[0]?.[0].amendment as any;
+    expect(amendment.amendmentRoleCollaborators.map((entry: any) => entry.role)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ group: { id: 'group-explicit' } }),
+        expect.objectContaining({ group: { id: 'amendment-1' } }),
+        expect.objectContaining({ event: { id: 'event-explicit' } }),
+        expect.objectContaining({ event: { id: 'amendment-1' } }),
+        expect.objectContaining({ amendment: { id: 'amendment-explicit' } }),
+        expect.objectContaining({ amendment: { id: 'amendment-1' } }),
+        expect.objectContaining({ blog: { id: 'blog-explicit' } }),
+        expect.objectContaining({ blog: { id: 'amendment-1' } }),
+        undefined,
+      ])
+    );
   });
 
   it('hides the action for personal, inconsistent and loading rows', () => {

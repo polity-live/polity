@@ -68,6 +68,7 @@ export function VisibilitySelector({
               variant={value === option.value ? 'default' : 'outline'}
               onClick={() => onChange(option.value)}
               data-create-option={option.value}
+              aria-pressed={value === option.value}
               className={
                 showTooltip
                   ? 'flex w-full min-w-0 items-center gap-2 pr-9'

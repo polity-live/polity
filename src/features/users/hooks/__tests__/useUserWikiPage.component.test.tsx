@@ -142,11 +142,11 @@ describe('useUserWikiPage status states', () => {
     expect(mocks.userDataId).toHaveBeenLastCalledWith(undefined);
   });
 
-  it('returns access-denied with exact authentication and ownership inputs', () => {
+  it('leaves route access to the server guard', () => {
     mocks.access.mockReturnValue(false);
     const { result } = renderHook(() => useUserWikiPage({ userId: 'user-1' }));
-    expect(result.current.status).toBe('access-denied');
-    expect(mocks.access).toHaveBeenCalledWith('public', true, false);
+    expect(result.current.status).toBe('ready');
+    expect(mocks.access).not.toHaveBeenCalled();
   });
 });
 

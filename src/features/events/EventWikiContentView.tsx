@@ -1,6 +1,7 @@
 'use client';
 
-import { BadgeControl } from '@/features/shared/ui/status';
+import { BadgeControl, VisibilityBadge } from '@/features/shared/ui/status';
+import { normalizeRouteVisibility } from '@/features/auth/logic/routeVisibilityAccess';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -48,6 +49,8 @@ import {
   type WikiParticipationRole,
 } from '@/features/shared/ui/wiki';
 import { queries } from '@/zero/queries';
+import { ActivityLog } from '@/features/shared/ui/wiki/ActivityLog';
+import { canViewEntityActivity } from '@/features/shared/hooks/useEntityActivity';
 
 const ELECTION_CARD_SURFACE = `${getEntityGradientClasses('election')} ${getMotionPreset('hoverLift')}`;
 
@@ -89,7 +92,6 @@ export interface EventWikiContentViewProps {
   virtualizeParticipationDirectory?: boolean;
   agendaStats: any;
   amendmentsCount: any;
-  canAccess: any;
   candidacyPasswordError?: string | null;
   confirmDialogOpen: any;
   elections: any;
@@ -168,7 +170,7 @@ export function EventWikiContentView({
         userId: participant.user.id,
         name: getWikiParticipationName(participant.user),
         handle: participant.user.handle ?? null,
-        email: participant.user.email ?? null,
+        email: participant.user.contact_email ?? null,
         avatar: participant.user.avatar ?? null,
         status: participant.status ?? null,
         roles,
@@ -181,6 +183,7 @@ export function EventWikiContentView({
       .filter((role): role is WikiParticipationRole => Boolean(role)),
   ]);
   const delegateRatioInfo = getDelegateMembersPerSeatInfo(event);
+  const eventVisibility = normalizeRouteVisibility(event.visibility);
 
   return (
     <>
@@ -189,11 +192,9 @@ export function EventWikiContentView({
         <div className="mb-2 flex min-w-0 flex-col items-center justify-center gap-2 md:flex-row md:gap-3">
           <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{event.title}</h1>
           <div className="flex max-w-full flex-wrap items-center justify-center gap-2 md:contents">
-            {event.visibility === 'public' ? (
-              <BadgeControl variant="default">{t('components.badges.public')}</BadgeControl>
-            ) : (
-              <BadgeControl variant="secondary">{t('components.badges.private')}</BadgeControl>
-            )}
+            <VisibilityBadge value={eventVisibility} data-entity-visibility={eventVisibility}>
+              {t(`common.visibility.${eventVisibility}`)}
+            </VisibilityBadge>
             {event.event_type && (
               <BadgeControl variant="outline">
                 {t(`pages.create.event.eventTypes.${getEventTypeTranslationKey(event.event_type)}`)}
@@ -396,6 +397,11 @@ export function EventWikiContentView({
 
       {/* About Tab with Event Details */}
       <InfoTabs
+        activity={
+          canViewEntityActivity('event', event, user?.id) ? (
+            <ActivityLog type="event" entityId={eventId} />
+          ) : undefined
+        }
         about={event.description}
         eventDetails={{
           startDate: event.start_date ?? undefined,
@@ -486,7 +492,7 @@ export function EventWikiContentView({
                       userId: participantUser?.id ?? participant.user_id,
                       name: getWikiParticipationName(participantUser),
                       handle: participantUser?.handle ?? null,
-                      email: participantUser?.email ?? null,
+                      email: participantUser?.contact_email ?? null,
                       avatar: participantUser?.avatar ?? null,
                       status: participant.status ?? null,
                       roles: getParticipantWikiRoles(participant, participantRoleById),

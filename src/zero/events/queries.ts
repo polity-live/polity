@@ -21,6 +21,12 @@ import {
 } from '../rbac/query-access';
 import { zql } from '../schema';
 import { virtualPageLimitSchema } from '../virtualization';
+import {
+  activityCursorSchema,
+  activityPageLimitSchema,
+  activitySeverityFilterSchema,
+  applyActivityCursor,
+} from '../activity/queries';
 
 const eventCreatedCursorSchema = z
   .object({ id: z.string(), created_at: z.number() })
@@ -40,6 +46,7 @@ function applyEventCursor<T>(q: T, field: 'created_at' | 'start_date', start: an
 }
 
 const WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
+const DISCOVERY_EVENT_PARTICIPANT_STATUSES = ['invited', ...WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES];
 
 function applyEventAccess<T>(q: T, userID: string | undefined): T {
   return applyEventQueryAccess(q, userID);
@@ -76,6 +83,31 @@ function applyEventDelegateSelfOrParticipantAccess<T>(q: T, userID: string | und
 }
 
 export const eventQueries = {
+  activities: defineQuery(
+    z.object({
+      entityId: z.string(),
+      severity: activitySeverityFilterSchema,
+      cursor: activityCursorSchema,
+      limit: activityPageLimitSchema,
+    }),
+    ({ args: { entityId, severity, cursor, limit }, ctx: { userID } }) => {
+      let q: any = zql.event_activity.where('event_id', entityId).whereExists('event', event => {
+        if (!userID || userID === 'anon') return event.where('id', '__unauthorized__');
+        return event.where(({ or, cmp, exists }: any) =>
+          or(
+            cmp('creator_id', userID),
+            exists('participants', (participant: any) =>
+              participant
+                .where('user_id', userID)
+                .where('status', 'IN', WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES)
+            )
+          )
+        );
+      });
+      if (severity !== 'all') q = q.where('severity', severity);
+      return applyActivityCursor(q, cursor).related('actor').related('subject_user').limit(limit);
+    }
+  ),
   viewerDelegations: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     requireQueryUser(zql.event_delegate, userID)
   ),
@@ -302,7 +334,7 @@ export const eventQueries = {
   currentUserActiveParticipationsWithEvents: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.event_participant
       .where('user_id', userID)
-      .where('status', 'IN', WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES)
+      .where('status', 'IN', DISCOVERY_EVENT_PARTICIPANT_STATUSES)
       .whereExists('event', event => applyEventAccess(event, userID))
       .related('event', q =>
         q
@@ -310,7 +342,7 @@ export const eventQueries = {
           .related('group')
           .related('event_hashtags', hq => hq.related('hashtag'))
       )
-      .related('participant_roles', q => q.related('role'))
+      .related('participant_roles', q => q.related('role', role => role.related('action_rights')))
   ),
 
   // ── New queries (extracted from hooks.ts) ─────────────────────────
@@ -1056,8 +1088,10 @@ export const eventQueries = {
       zql.event_participant
         .where('user_id', userId)
         .where('user_id', userID)
-        .related('event', q => q.related('group'))
-        .related('participant_roles', q => q.related('role'))
+        .where('status', 'IN', DISCOVERY_EVENT_PARTICIPANT_STATUSES)
+        .whereExists('event', event => applyEventAccess(event, userID))
+        .related('event', q => applyEventAccess(q, userID).related('group'))
+        .related('participant_roles', q => q.related('role', role => role.related('action_rights')))
   ),
 
   /** Active participants for events where the current user participates or is creator. */

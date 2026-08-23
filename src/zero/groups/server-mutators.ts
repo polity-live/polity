@@ -18,7 +18,6 @@ import {
   recomputeUserCounters,
   syncUserWithGroupConversation,
 } from '../server-helpers';
-import { DEFAULT_GROUP_ROLES } from '../rbac/constants';
 import { reconcileGeneralAssemblyParticipantsForGroups } from '../events/assembly-reconcile';
 import { reconcileDelegateAllocationsForGroups } from '../events/delegate-allocation-reconcile';
 import { reconcileGroupGraph } from '../network/group-graph-reconcile';
@@ -62,6 +61,7 @@ import {
   recomputeOfflineSiblingMembershipsForGroup,
 } from './offline-membership-helpers';
 import { assertNoBlockingGroupConflicts } from '@/server/group-conflict-validation';
+import { appendEntityActivity } from '../activity/shared';
 
 async function addGroupMembershipRoleLink(
   tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
@@ -255,6 +255,25 @@ async function reconcileBaseGroupHierarchyMemberships(
     }
   }
 
+  for (const groupId of affectedMembershipGroupIds) {
+    await appendEntityActivity(
+      tx,
+      { userID: assignedById },
+      {
+        table: 'group_activity',
+        entityField: 'group_id',
+        entityId: groupId,
+        action: 'reconciliation',
+        severity: 'high',
+        actorType: 'system',
+        context: {
+          reason: 'group-membership-hierarchy',
+          affected_group_count: affectedMembershipGroupIds.size,
+        },
+      }
+    );
+  }
+
   return affectedMembershipGroupIds;
 }
 
@@ -349,77 +368,6 @@ export const groupServerMutators = {
     await mutators.groups.create.fn({ tx, ctx, args });
 
     const now = Date.now();
-    const adminRoleIds: string[] = [];
-    const totalRoles = DEFAULT_GROUP_ROLES.length;
-
-    for (let index = 0; index < totalRoles; index++) {
-      const roleDef = DEFAULT_GROUP_ROLES[index];
-      const roleId = crypto.randomUUID();
-
-      if (roleDef.name === 'Admin') {
-        adminRoleIds.push(roleId);
-      }
-
-      await tx.mutate.role.insert({
-        id: roleId,
-        name: roleDef.name,
-        description: roleDef.description,
-        scope: 'group',
-        group_id: args.id,
-        event_id: null,
-        amendment_id: null,
-        blog_id: null,
-        assignment_mode: 'assigned',
-        visibility: roleDef.name === 'Member' ? 'private' : 'public',
-        term_start_date: null,
-        is_recurring: false,
-        recurrence_pattern: null,
-        recurrence_rule: null,
-        recurrence_interval: null,
-        recurrence_days: null,
-        recurrence_end_date: null,
-        scheduled_revote_date: null,
-        default_request_role: roleDef.default_request_role,
-        default_invite_role: roleDef.default_invite_role,
-        assignee_kind: 'member',
-        sort_order: totalRoles - 1 - index,
-        created_at: now,
-      });
-
-      for (const permission of roleDef.permissions) {
-        await tx.mutate.action_right.insert({
-          id: crypto.randomUUID(),
-          resource: permission.resource,
-          action: permission.action,
-          role_id: roleId,
-          group_id: args.id,
-          event_id: null,
-          amendment_id: null,
-          blog_id: null,
-          created_at: now,
-        });
-      }
-    }
-
-    const creatorMembershipId = crypto.randomUUID();
-
-    await tx.mutate.group_membership.insert({
-      id: creatorMembershipId,
-      group_id: args.id,
-      user_id: ctx.userID,
-      status: 'active',
-      visibility: 'public',
-      source: 'direct',
-      source_group_id: null,
-      created_at: now,
-    });
-
-    await syncGroupMembershipRoleLinks(tx, {
-      group_membership_id: creatorMembershipId,
-      role_ids: adminRoleIds,
-      assigned_by_id: ctx.userID,
-    });
-
     await ensureGroupConversation(tx, {
       groupId: args.id,
       name: args.name,

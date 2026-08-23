@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "sourceReferences": {
+    "src/features/create/logic/createVisibility.ts": [
+      {
+        "file": "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
+        "project": "unit",
+        "caseId": "maps %s by semantic value"
+      }
+    ],
+    "src/features/shared/hooks/useEntityActivity.ts": [
+      {
+        "file": "src/features/shared/hooks/__tests__/useEntityActivity.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows creators and active collaborators but not invited amendment readers"
+      },
+      {
+        "file": "src/features/shared/hooks/__tests__/useEntityActivity.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows active group members and event participants only"
+      },
+      {
+        "file": "src/features/shared/hooks/__tests__/useEntityActivity.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows an active group guest only with a contextual management right"
+      }
+    ],
+    "src/features/shared/ui/wiki/ActivityLog.tsx": [
+      {
+        "file": "src/features/groups/__tests__/GroupWikiContentView.component.test.tsx",
+        "project": "component",
+        "caseId": "renders all rich group sections and every connected-group mode"
+      }
+    ],
+    "src/features/shared/ui/wiki/ActivityLogView.tsx": [
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "project": "component",
+        "caseId": "opens on comments and renders localized high-severity changes in the activity tab"
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "project": "component",
+        "caseId": "passes the selected severity to the controller"
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "project": "component",
+        "caseId": "localizes assignments and renders the subject name instead of a translation key or id"
+      }
+    ],
+    "src/features/todos/hooks/useTodoActivity.ts": [
+      {
+        "file": "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+        "project": "component",
+        "caseId": "allows creators and updates the reactive severity query"
+      },
+      {
+        "file": "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+        "project": "component",
+        "caseId": "allows assignees and group todo managers"
+      },
+      {
+        "file": "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+        "project": "component",
+        "caseId": "does not request activity data for unrelated or anonymous readers"
+      }
+    ],
+    "src/features/todos/ui/TodoDiscussionTabs.tsx": [
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "project": "component",
+        "caseId": "opens on comments and renders localized high-severity changes in the activity tab"
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "project": "component",
+        "caseId": "passes the selected severity to the controller"
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "project": "component",
+        "caseId": "localizes assignments and renders the subject name instead of a translation key or id"
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "project": "component",
+        "caseId": "does not expose the activity tab to unauthorized readers"
+      }
+    ],
+    "src/zero/activity/queries.ts": [
+      {
+        "file": "src/zero/activity/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "defaults filters, cursor, and page size"
+      },
+      {
+        "file": "src/zero/activity/__tests__/queries.unit.test.ts",
+        "project": "unit",
+        "caseId": "accepts supported filters and rejects invalid filters, cursors, and limits"
+      }
+    ],
+    "src/zero/activity/shared.ts": [
+      {
+        "file": "src/zero/activity/__tests__/shared.unit.test.ts",
+        "project": "unit",
+        "caseId": "normalizes diffs, omits no-ops, and lets high fields win"
+      },
+      {
+        "file": "src/zero/activity/__tests__/shared.unit.test.ts",
+        "project": "unit",
+        "caseId": "writes only on a server transaction and supports system actors"
+      }
+    ],
+    "src/zero/rbac/creator-bootstrap.ts": [
+      {
+        "file": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "project": "unit",
+        "caseId": "derives stable, scoped UUIDs on client and server"
+      },
+      {
+        "file": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "project": "unit",
+        "caseId": "writes identical bootstrap IDs during client and server execution"
+      },
+      {
+        "file": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "project": "unit",
+        "caseId": "projects group membership, Admin role, and Admin rights immediately"
+      },
+      {
+        "file": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "project": "unit",
+        "caseId": "projects event participation, Organizer role, and Organizer rights immediately"
+      },
+      {
+        "file": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "project": "unit",
+        "caseId": "projects amendment collaborator, Author role, and Author rights immediately"
+      },
+      {
+        "file": "src/zero/rbac/__tests__/creator-bootstrap.unit.test.ts",
+        "project": "unit",
+        "caseId": "projects blog owner, Owner role, and Owner rights immediately"
+      }
+    ]
+  },
+  "actionReferences": {
+    "src/features/shared/ui/wiki/ActivityLogView.tsx#shared.activity-log.select.severity-filter": [
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "project": "component",
+        "caseId": "passes the selected severity to the controller",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/shared/ui/wiki/ActivityLogView.tsx#shared.activity-log.components-activity-log-load-more": [
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "project": "component",
+        "caseId": "opens on comments and renders localized high-severity changes in the activity tab",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      }
+    ],
+    "src/features/shared/ui/wiki/ActivityLogView.tsx#shared.activity-log.user-id": [
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "project": "component",
+        "caseId": "localizes assignments and renders the subject name instead of a translation key or id",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      }
+    ],
+    "src/features/shared/ui/wiki/InfoTabs.tsx#shared.info-tabs.components-activity-log-title": [
+      {
+        "file": "src/features/shared/ui/wiki/__tests__/InfoTabs.branches.component.test.tsx",
+        "project": "component",
+        "caseId": "renders the optional activity tab and content without changing the default tab",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/todos/ui/TodoDiscussionTabs.tsx#todos.detail.tabs.activity": [
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "project": "component",
+        "caseId": "opens on comments and renders localized high-severity changes in the activity tab",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ],
+    "src/features/todos/ui/TodoDiscussionTabs.tsx#todos.detail.tabs.comments": [
+      {
+        "file": "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "project": "component",
+        "caseId": "opens on comments and renders localized high-severity changes in the activity tab",
+        "scenarios": ["selected", "unselected", "keyboard", "focus"]
+      }
+    ]
+  },
+  "actionDeclarations": {
+    "src/features/shared/ui/wiki/ActivityLogView.tsx#FilterToggleGroupItem-4bacc887a1": {
+      "actionId": "shared.activity-log.select.severity-filter"
+    }
+  }
+}

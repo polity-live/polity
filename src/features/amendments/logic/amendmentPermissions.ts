@@ -74,6 +74,7 @@ function buildPermissionAmendment(amendment: RawAmendmentPermissionEntity): Perm
               name: collaborator.role.name ?? '',
               description: collaborator.role.description ?? undefined,
               scope: 'amendment',
+              amendment: { id: String(amendment.id) },
               actionRights: mapRoleActionRights(collaborator.role.action_rights),
             }
           : undefined,
