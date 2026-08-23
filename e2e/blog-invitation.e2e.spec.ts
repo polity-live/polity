@@ -61,7 +61,10 @@ test('only an invited blogger with blogs:view opens a private blog @pr', async (
     await expect(readerPage.locator('[data-entity-visibility="private"]')).toHaveCount(1);
 
     await sql`delete from public.action_right where id = ${viewRightId}::uuid`;
-    await readerPage.reload({ waitUntil: 'domcontentloaded' });
+    await readerPage.getByRole('link', { name: 'Home', exact: true }).click();
+    await expect(readerPage).toHaveURL(/\/home$/);
+    await waitForAppReady(readerPage);
+    await readerPage.goBack();
     await waitForAppReady(readerPage);
     await expect(
       readerPage.getByRole('heading', { name: /This Page Is Private|Diese Seite ist privat/i })
