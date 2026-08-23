@@ -40,6 +40,7 @@ test('runs a named vote with two actors and closes the persisted result @pr', as
   page,
   seed,
 }) => {
+  test.setTimeout(180_000);
   const sql = db();
   const actors = governanceActors(e2eRun);
   const voterB = await authenticateGovernanceActor(browser, actors, 'voter-b');

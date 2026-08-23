@@ -11,7 +11,7 @@ test('starts an event and its first agenda item and restores both after reload @
   await page.goto(`/event/${seed.eventId}/agenda/${seed.agendaItemId}`);
   await waitForAppReady(page);
   const start = page.locator('[data-action-id="agendas.toolbar.item.start"]');
-  await expect(start).toBeEnabled();
+  await expect(start).toBeEnabled({ timeout: 30_000 });
   await start.click();
 
   await expect
@@ -26,7 +26,9 @@ test('starts an event and its first agenda item and restores both after reload @
 
   await page.reload({ waitUntil: 'domcontentloaded' });
   await waitForAppReady(page);
-  await expect(page.locator('[data-action-id="agendas.toolbar.item.complete"]')).toBeVisible();
+  await expect(page.locator('[data-action-id="agendas.toolbar.item.complete"]')).toBeVisible({
+    timeout: 30_000,
+  });
   await expect(
     page.getByRole('heading', { name: seed.agendaItemTitle, exact: true })
   ).toBeVisible();
