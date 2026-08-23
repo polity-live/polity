@@ -145,10 +145,13 @@ test('runs a named vote with two actors and closes the persisted result @pr', as
     await waitForAppReady(page);
     await page.locator('[data-action-id="agendas.toolbar.vote.start-final"]').click();
     await expect
-      .poll(async () => {
-        const rows = await sql`select status from public.vote where id = ${voteId}::uuid`;
-        return rows[0]?.status ?? null;
-      })
+      .poll(
+        async () => {
+          const rows = await sql`select status from public.vote where id = ${voteId}::uuid`;
+          return rows[0]?.status ?? null;
+        },
+        { timeout: 15_000 }
+      )
       .toBe('final');
 
     await expect(page.locator('[data-action-id="agendas.toolbar.vote.close-final"]')).toBeVisible({

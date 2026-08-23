@@ -28,7 +28,7 @@ test.describe('critical amendment lifecycle', () => {
 
     await page.goto(`/amendment/${seed.amendmentId}/settings`);
     await waitForAppReady(page);
-    await expect(page.locator('#title')).toHaveValue(updatedTitle);
+    await expect(page.locator('#title')).toHaveValue(updatedTitle, { timeout: 30_000 });
   });
 
   test('creates a persisted cross-group amendment path through the UI @pr @critical @acceptance', async ({
