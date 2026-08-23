@@ -73,6 +73,10 @@ interface PermissionRoleLinkLike {
     name?: string | null;
     description?: string | null;
     scope?: string | null;
+    group_id?: string | null;
+    event_id?: string | null;
+    amendment_id?: string | null;
+    blog_id?: string | null;
     action_rights?: readonly Record<string, string | null | number>[];
   } | null;
 }
@@ -107,6 +111,10 @@ function mapRolesFromLinks<T extends PermissionRoleLinkLike>(
         name: link.role.name ?? '',
         description: link.role.description ?? undefined,
         scope: (link.role.scope ?? fallbackScope) as Role['scope'],
+        group: link.role.group_id ? { id: link.role.group_id } : undefined,
+        event: link.role.event_id ? { id: link.role.event_id } : undefined,
+        amendment: link.role.amendment_id ? { id: link.role.amendment_id } : undefined,
+        blog: link.role.blog_id ? { id: link.role.blog_id } : undefined,
         actionRights: mapActionRights(link.role.action_rights),
       },
     ];
@@ -182,9 +190,14 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
             name: b.role.name,
             description: b.role.description,
             scope: b.role.scope,
+            group: b.role.group_id ? { id: b.role.group_id } : undefined,
+            event: b.role.event_id ? { id: b.role.event_id } : undefined,
+            amendment: b.role.amendment_id ? { id: b.role.amendment_id } : undefined,
+            blog: b.role.blog_id ? { id: b.role.blog_id } : undefined,
             actionRights: mapActionRights(b.role.action_rights),
           }
         : undefined,
+      status: b.status,
     })) as BloggerRelation[];
   }, [bloggerRelationsRaw]);
 
