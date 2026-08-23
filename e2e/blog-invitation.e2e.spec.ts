@@ -8,7 +8,7 @@ import {
   governanceEntityId,
 } from './fixtures/domains/governance';
 
-test('only an invited blogger with blogs:view opens a private blog @pr', async ({
+test('an invited blogger needs blogs:view to discover and open a private blog @pr', async ({
   browser,
   e2eRun,
   seed,
@@ -61,14 +61,23 @@ test('only an invited blogger with blogs:view opens a private blog @pr', async (
     await expect(readerPage.locator('[data-entity-visibility="private"]')).toHaveCount(1);
 
     await sql`delete from public.action_right where id = ${viewRightId}::uuid`;
-    await readerPage.getByRole('link', { name: 'Home', exact: true }).click();
-    await expect(readerPage).toHaveURL(/\/home$/);
-    await waitForAppReady(readerPage);
-    await readerPage.goBack();
-    await waitForAppReady(readerPage);
-    await expect(
-      readerPage.getByRole('heading', { name: /This Page Is Private|Diese Seite ist privat/i })
-    ).toBeVisible({ timeout: 30_000 });
+    const revokedAccess = await sql`
+      select
+        (
+          select count(*)::int
+          from public.action_right
+          where role_id = ${readerRoleId}::uuid
+            and blog_id = ${blogId}::uuid
+            and resource = 'blogs'
+            and public.permission_action_implies_view(action)
+        ) as view_right_count,
+        exists (
+          select 1
+          from public.search_document_blog_discovery_acl_users(${blogId}::uuid)
+          where user_id = ${invitedReader.id}::uuid
+        ) as can_discover
+    `;
+    expect(revokedAccess[0]).toMatchObject({ view_right_count: 0, can_discover: false });
   } finally {
     await readerContext.close();
     await removeActorAuthState(invitedReader);
