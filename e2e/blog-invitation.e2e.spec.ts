@@ -64,27 +64,34 @@ test('only an invited blogger with blogs:view opens a private blog @pr', async (
       );
   `;
 
-  const readerContext = await browser.newContext({ storageState: invitedReader.storageStatePath });
-  const deniedContext = await browser.newContext({
-    storageState: invitedWithoutRight.storageStatePath,
-  });
-  const readerPage = await readerContext.newPage();
-  const deniedPage = await deniedContext.newPage();
-
   try {
-    await readerPage.goto(`/blog/${blogId}`);
-    await waitForAppReady(readerPage);
-    await expect(readerPage.getByRole('heading', { level: 1, name: title })).toBeVisible();
-    await expect(readerPage.locator('[data-entity-visibility="private"]')).toHaveCount(1);
+    const readerContext = await browser.newContext({
+      storageState: invitedReader.storageStatePath,
+    });
+    try {
+      const readerPage = await readerContext.newPage();
+      await readerPage.goto(`/blog/${blogId}`);
+      await waitForAppReady(readerPage);
+      await expect(readerPage.getByRole('heading', { level: 1, name: title })).toBeVisible();
+      await expect(readerPage.locator('[data-entity-visibility="private"]')).toHaveCount(1);
+    } finally {
+      await readerContext.close();
+    }
 
-    await deniedPage.goto(`/blog/${blogId}`);
-    await waitForAppReady(deniedPage);
-    await expect(
-      deniedPage.getByRole('heading', { name: /This Page Is Private|Diese Seite ist privat/i })
-    ).toBeVisible();
+    const deniedContext = await browser.newContext({
+      storageState: invitedWithoutRight.storageStatePath,
+    });
+    try {
+      const deniedPage = await deniedContext.newPage();
+      await deniedPage.goto(`/blog/${blogId}`);
+      await waitForAppReady(deniedPage);
+      await expect(
+        deniedPage.getByRole('heading', { name: /This Page Is Private|Diese Seite ist privat/i })
+      ).toBeVisible();
+    } finally {
+      await deniedContext.close();
+    }
   } finally {
-    await readerContext.close();
-    await deniedContext.close();
     await removeActorAuthState(invitedReader);
     await removeActorAuthState(invitedWithoutRight);
   }
