@@ -186,7 +186,7 @@
     "@rocicorp/zero-virtual": "0.6.3",
     "@standard-schema/spec": "^1.1.0",
     "@supabase/ssr": "^0.12.4",
-    "@supabase/supabase-js": "^2.112.3",
+    "@supabase/supabase-js": "^2.112.4",
     "@tailwindcss/cli": "^4.3.3",
     "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/typography": "^0.5.20",
