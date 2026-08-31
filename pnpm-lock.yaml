@@ -100,8 +100,8 @@ importers:
         specifier: ^53.0.0
         version: 53.0.0(platejs@53.3.7(@types/react@19.2.18)(immer@11.1.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@platejs/dnd':
-        specifier: ^53.1.0
-        version: 53.1.0(platejs@53.3.7(@types/react@19.2.18)(immer@11.1.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8)))(react-dnd-html5-backend@16.0.1)(react-dnd@16.0.1(@types/node@24.13.3)(@types/react@19.2.18)(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^53.3.8
+        version: 53.3.8(platejs@53.3.7(@types/react@19.2.18)(immer@11.1.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8)))(react-dnd-html5-backend@16.0.1)(react-dnd@16.0.1(@types/node@24.13.3)(@types/react@19.2.18)(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@platejs/docx':
         specifier: ^53.0.0
         version: 53.0.0(platejs@53.3.7(@types/react@19.2.18)(immer@11.1.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8)))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -2737,8 +2737,8 @@ packages:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@platejs/dnd@53.1.0':
-    resolution: {integrity: sha512-FnYghNvsVkGkGAERssrvONOehHscsNTB0oRvmbCRO8o3bTj9FrbRF3G5hkxGbWnl7XgNfseamSk7EklwtNM/2A==}
+  '@platejs/dnd@53.3.8':
+    resolution: {integrity: sha512-ewIdlT+brr6VpD/BWqJH1TvRKDBfYeHNVqL+NfPTOFgrST+KMAnPMNR1Z9NJ+r+2+txiT+WZLJQO53elY639Cw==}
     peerDependencies:
       platejs: '>=53.0.0'
       react: '>=18.0.0'
@@ -11255,7 +11255,7 @@ snapshots:
       react-compiler-runtime: 1.0.0(react@19.2.8)
       react-dom: 19.2.8(react@19.2.8)
 
-  '@platejs/dnd@53.1.0(platejs@53.3.7(@types/react@19.2.18)(immer@11.1.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8)))(react-dnd-html5-backend@16.0.1)(react-dnd@16.0.1(@types/node@24.13.3)(@types/react@19.2.18)(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@platejs/dnd@53.3.8(platejs@53.3.7(@types/react@19.2.18)(immer@11.1.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8)))(react-dnd-html5-backend@16.0.1)(react-dnd@16.0.1(@types/node@24.13.3)(@types/react@19.2.18)(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       lodash: 4.18.1
       platejs: 53.3.7(@types/react@19.2.18)(immer@11.1.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8))

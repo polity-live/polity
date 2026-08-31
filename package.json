@@ -132,7 +132,7 @@
     "@platejs/combobox": "^53.0.0",
     "@platejs/comment": "^53.0.0",
     "@platejs/date": "^53.0.0",
-    "@platejs/dnd": "^53.1.0",
+    "@platejs/dnd": "^53.3.8",
     "@platejs/docx": "^53.0.0",
     "@platejs/docx-io": "^53.3.2",
     "@platejs/emoji": "^53.1.7",
