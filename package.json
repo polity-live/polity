@@ -197,7 +197,7 @@
     "@tanstack/react-virtual": "^3.14.10",
     "@tanstack/router-devtools": "^1.167.1",
     "@udecode/cn": "^52.3.4",
-    "@xyflow/react": "^12.11.3",
+    "@xyflow/react": "^12.11.5",
     "ai": "^7.0.77",
     "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
