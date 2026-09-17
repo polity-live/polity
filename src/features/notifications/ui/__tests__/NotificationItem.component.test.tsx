@@ -101,9 +101,9 @@ describe('NotificationItem', () => {
     const card = container.querySelector('[data-slot="notification-card"]');
 
     expect(card).toBeTruthy();
-    expect(card?.className).toContain('bg-card');
-    expect(card?.className).toContain('border-border/70');
-    expect(card?.className).toContain('shadow-[var(--shadow-panel)]');
+    expect(card?.className).toContain('bg-transparent');
+    expect(card?.className).toContain('border-border/60');
+    expect(card?.className).toContain('shadow-none');
     expectNoLeftBorderClasses(container);
     expect(screen.getAllByText('Membership requested').length).toBeGreaterThan(0);
     expect(screen.getByText('Civic Group')).toBeTruthy();

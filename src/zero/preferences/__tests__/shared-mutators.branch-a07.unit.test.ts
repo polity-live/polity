@@ -188,3 +188,38 @@ describe('preference shared mutators branches A07', () => {
     );
   });
 });
+
+it('merges collection areas without replacing map, search or favorite preferences', async () => {
+  const favorites = [{ kind: 'group', href: '/group/one', title: 'Group' }];
+  const test = harness('server', [
+    {
+      id: 'p1',
+      workspace_preferences: {
+        favorites,
+        display: {
+          searchView: 'spatial',
+          timelineMapVisible: true,
+          collectionViews: { 'profile.groups': 'compact', 'group.documents': 'cards' },
+        },
+      },
+    },
+  ]);
+  await preferenceSharedMutators.setWorkspaceDisplay.fn({
+    tx: test.tx,
+    ctx,
+    args: { id: 'p1', display: { collectionViews: { 'group.documents': 'compact' } } },
+  } as never);
+  expect(test.update).toHaveBeenCalledWith(
+    expect.objectContaining({
+      workspace_preferences: {
+        favorites,
+        display: {
+          searchView: 'spatial',
+          timelineMapVisible: true,
+          collectionViews: { 'profile.groups': 'compact', 'group.documents': 'compact' },
+        },
+      },
+    })
+  );
+  expect(mocks.requireAuthenticated).toHaveBeenCalled();
+});

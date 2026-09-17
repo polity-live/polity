@@ -158,7 +158,7 @@ describe('search header and page branches', () => {
     expect(screen.getByText('Ctrl K')).toBeTruthy();
     expect(screen.getByText('features.search.results.searchingFor')).toBeTruthy();
     fireEvent.change(screen.getByLabelText('search'), { target: { value: 'next' } });
-    fireEvent.click(screen.getByRole('button', { name: 'features.search.listView' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.workspace.cardsView' }));
     fireEvent.click(screen.getByRole('button', { name: 'features.search.spatialView' }));
     fireEvent.click(screen.getByRole('button', { name: 'features.search.filters.title' }));
     fireEvent.click(screen.getByRole('button', { name: '#civic' }));
@@ -371,3 +371,5 @@ describe('search result list/card branches', () => {
     expect(screen.getByText('empty')).toBeTruthy();
   });
 });
+
+vi.mock('../SaveSearchViewButton', () => ({ SaveSearchViewButton: () => null }));

@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
     getVirtualItems: vi.fn(() => [] as any[]),
     getTotalSize: vi.fn(() => 0),
     measureElement: vi.fn(),
+    measure: vi.fn(),
+    scrollToIndex: vi.fn(),
   },
   zeroResult: {
     rowsEmpty: true,
@@ -18,6 +20,8 @@ const mocks = vi.hoisted(() => ({
       getVirtualItems: vi.fn(() => [] as any[]),
       getTotalSize: vi.fn(() => 0),
       measureElement: vi.fn(),
+      measure: vi.fn(),
+      scrollToIndex: vi.fn(),
     },
   },
   historyState: { anchor: 'saved' },
@@ -77,6 +81,8 @@ beforeEach(() => {
       getVirtualItems: vi.fn(() => []),
       getTotalSize: vi.fn(() => 0),
       measureElement: vi.fn(),
+      measure: vi.fn(),
+      scrollToIndex: vi.fn(),
     },
   };
   installResizeObserver();
@@ -194,6 +200,8 @@ describe('responsive grid views', () => {
         ]),
         getTotalSize: vi.fn(() => 500),
         measureElement: vi.fn(),
+        measure: vi.fn(),
+        scrollToIndex: vi.fn(),
       },
     };
     const rendered = render(
@@ -236,4 +244,33 @@ describe('responsive grid views', () => {
     rendered.unmount();
     expect(disconnect).toHaveBeenCalled();
   });
+});
+
+it('remeasures compact rows and keeps the visible entity as anchor when changing lanes', () => {
+  mocks.zeroResult.rowsEmpty = false;
+  mocks.zeroResult.virtualizer.getVirtualItems.mockReturnValue([
+    { key: 'row', index: 12, lane: 0, start: 100, end: 220 },
+  ] as any);
+  mocks.zeroResult.rowAt.mockReturnValue({ id: 'anchor' });
+  const props = {
+    context: { scope: 'same-filter' },
+    historyKey: 'anchor',
+    estimateSize: 300,
+    getLanes: () => 3,
+    getRowKey: (row: { id: string }) => row.id,
+    toStartRow: (row: { id: string }) => row,
+    getPageQuery: () => null,
+    getSingleQuery: () => null,
+    renderRow: () => <span>Anchor</span>,
+    renderSkeleton: () => null,
+    renderEmpty: () => null,
+  };
+  const { rerender } = render(<PolityZeroGridView {...props} layoutKey="cards" />);
+  mocks.zeroResult.virtualizer.measure.mockClear();
+  rerender(<PolityZeroGridView {...props} layoutKey="compact" />);
+  expect(mocks.zeroOptions.lanes).toBe(1);
+  expect(mocks.zeroOptions.estimateSize()).toBe(92);
+  expect(mocks.zeroResult.virtualizer.measure).toHaveBeenCalledOnce();
+  expect(mocks.zeroResult.virtualizer.scrollToIndex).toHaveBeenCalledWith(12, { align: 'start' });
+  expect(mocks.zeroOptions.listContextParams).toEqual({ scope: 'same-filter' });
 });

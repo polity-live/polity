@@ -8,10 +8,11 @@ import type { SearchListContext } from '../../types/search-document.types';
 const mocks = vi.hoisted(() => ({
   useZeroVirtualizer: vi.fn(),
   usePolityZeroGrid: vi.fn(),
+  useHistoryScrollState: vi.fn(() => [null, vi.fn()]),
 }));
 
 vi.mock('@rocicorp/zero-virtual/react', () => ({
-  useHistoryScrollState: () => [null, vi.fn()],
+  useHistoryScrollState: mocks.useHistoryScrollState,
   useZeroVirtualizer: mocks.useZeroVirtualizer,
 }));
 
@@ -58,6 +59,7 @@ describe('search virtualizer controller contracts', () => {
     mocks.usePolityZeroGrid.mockReturnValue({
       virtualizer: {
         getVirtualItems: () => [],
+        measure: vi.fn(),
         getTotalSize: () => 0,
         scrollToIndex: vi.fn(),
       },
@@ -91,6 +93,19 @@ describe('search virtualizer controller contracts', () => {
     expect(result.current).toBe(initial);
   });
 
+  it('keeps compact and card scroll positions separate across view changes', () => {
+    const { rerender } = renderHook(
+      ({ compact }) => useVirtualSearchGridController({ context, compact }),
+      { initialProps: { compact: false } }
+    );
+    expect(mocks.useHistoryScrollState).toHaveBeenLastCalledWith('search-grid');
+    rerender({ compact: true });
+    expect(mocks.useHistoryScrollState).toHaveBeenLastCalledWith('search-compact');
+    expect(mocks.usePolityZeroGrid.mock.calls.at(-1)?.[0].lanes).toBe(1);
+    rerender({ compact: false });
+    expect(mocks.useHistoryScrollState).toHaveBeenLastCalledWith('search-grid');
+  });
+
   it('consumes the zero-virtual 0.6 snapshot without a virtualizer property', () => {
     mocks.useZeroVirtualizer.mockReturnValue({
       items: [{ index: 2, key: 'row-2', row: undefined }],
@@ -111,6 +126,7 @@ describe('search virtualizer controller contracts', () => {
   it('routes the responsive grid through the shared grid adapter', () => {
     const virtualizer = {
       getVirtualItems: () => [],
+      measure: vi.fn(),
       getTotalSize: () => 0,
       scrollToIndex: vi.fn(),
     };

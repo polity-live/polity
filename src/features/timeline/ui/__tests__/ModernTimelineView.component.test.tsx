@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -28,7 +28,7 @@ vi.mock('@/features/statements/ui/StatementStoryCarousel', () => ({
 vi.mock('../TimelineHeader', () => ({
   TimelineHeader: (props: Record<string, any>) => {
     mocks.headerProps = props;
-    return <div>Header</div>;
+    return <div>Header{props.actions}</div>;
   },
 }));
 vi.mock('../TimelineFilterPanel', () => ({
@@ -57,7 +57,7 @@ vi.mock('@/features/shared/ui/navigation/SmartLink', () => ({
   ),
 }));
 vi.mock('@/features/shared/ui/ui/button', () => ({
-  Button: ({ children }: any) => <>{children}</>,
+  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
 }));
 vi.mock('@/features/shared/ui/status', () => ({
   BadgeControl: ({ children }: any) => <span>{children}</span>,
@@ -118,14 +118,21 @@ afterEach(cleanup);
 
 describe('ModernTimelineView', () => {
   it('renders nothing without a user', () => {
-    const { container } = render(<ModernTimelineView {...(props({ userId: undefined }) as any)} />);
+    const { container } = render(
+      <ModernTimelineView mapVisible {...(props({ userId: undefined }) as any)} />
+    );
     expect(container.firstChild).toBeNull();
   });
 
   it('renders decisions mode', () => {
-    render(<ModernTimelineView {...(props({ mode: 'decisions', className: 'custom' }) as any)} />);
+    render(
+      <ModernTimelineView
+        mapVisible
+        {...(props({ mode: 'decisions', className: 'custom' }) as any)}
+      />
+    );
     expect(screen.getByText('Decision terminal')).toBeTruthy();
-    expect(mocks.headerProps?.subtitle).toBe('features.timeline.header.decisionsSubtitle');
+    expect(mocks.headerProps?.showTitle).toBe(false);
   });
 
   it('renders rich timeline state, filters, discovery, and virtualized query context', () => {
@@ -144,7 +151,7 @@ describe('ModernTimelineView', () => {
       hasActiveFilters: true,
       virtualizeTimeline: true,
     });
-    render(<ModernTimelineView {...(viewProps as any)} />);
+    render(<ModernTimelineView mapVisible {...(viewProps as any)} />);
     expect(screen.getByText('Filters')).toBeTruthy();
     expect(screen.getByText('features.timeline.around.discoverCount:3')).toBeTruthy();
     expect(screen.getByText('features.timeline.around.noUserLocation')).toBeTruthy();
@@ -157,10 +164,19 @@ describe('ModernTimelineView', () => {
   });
 
   it('renders lean timeline state without optional panels or links', () => {
-    const { container } = render(<ModernTimelineView {...(props() as any)} />);
+    const { container } = render(<ModernTimelineView mapVisible {...(props() as any)} />);
     expect(screen.queryByText('Filters')).toBeNull();
     expect(screen.queryByText('features.timeline.around.noUserLocation')).toBeNull();
     expect(container.querySelector('a')).toBeNull();
     expect(mocks.railProps?.queryContext).toBeUndefined();
   });
+});
+
+it('keeps the map off until requested and explains missing locations compactly', () => {
+  render(<ModernTimelineView {...(props() as any)} />);
+  expect(mocks.mapProps).toBeUndefined();
+  expect(screen.queryByText('common.workspace.noMappedActivity')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'common.workspace.showMap' }));
+  expect(screen.getByText('common.workspace.noMappedActivity')).toBeTruthy();
+  expect(mocks.mapProps).toBeUndefined();
 });

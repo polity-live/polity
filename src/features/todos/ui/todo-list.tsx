@@ -1,3 +1,4 @@
+import { useIsMobileScreen } from '@/features/shared/hooks/useIsMobileScreen';
 import { useCallback, useMemo, useRef } from 'react';
 
 import {
@@ -8,50 +9,9 @@ import {
 } from '@/features/shared/virtualization';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { queries } from '@/zero/queries';
-import { TodoTimelineCard } from '@/features/timeline/ui/cards/TodoTimelineCard';
-import { getTodoTutorialAnchor } from '../logic/tutorialTodoAnchor';
+import { CompactTodoRow } from './CompactTodoRow';
+import { handleWorkspaceListKeyDown } from '@/features/shared/ui/preview/list-keyboard';
 import type { Todo, TodoStatus } from '../types/todo.types';
-
-function isTodoStatus(status: string | null | undefined): status is TodoStatus {
-  return ['pending', 'in_progress', 'completed', 'cancelled'].includes(status ?? '');
-}
-
-function TodoCard({
-  todo,
-  canManageTodos,
-  onToggleComplete,
-  onTodoClick,
-}: {
-  todo: Todo;
-  canManageTodos: boolean;
-  onToggleComplete: (todo: Todo) => void;
-  onTodoClick?: (todo: Todo) => void;
-}) {
-  return (
-    <div data-tutorial-anchor={getTodoTutorialAnchor(todo)}>
-      <TodoTimelineCard
-        todo={{
-          id: todo.id,
-          title: todo.title ?? '',
-          description: todo.description ?? undefined,
-          isCompleted: todo.status === 'completed',
-          dueDate: todo.due_date ?? undefined,
-          assigneeCount: todo.assignments?.length,
-          groupName: todo.group?.name ?? undefined,
-          groupId: todo.group?.id ?? undefined,
-          status: isTodoStatus(todo.status) ? todo.status : undefined,
-          creatorId: todo.creator?.id ?? undefined,
-          archived: Boolean(todo.archived_at),
-        }}
-        canManageTodos={canManageTodos}
-        onToggle={canManageTodos ? () => onToggleComplete(todo) : undefined}
-        onCardClick={() => onTodoClick?.(todo)}
-        linkToDetail={false}
-        showStatusAction={false}
-      />
-    </div>
-  );
-}
 
 interface TodoListProps {
   canManageTodos?: boolean;
@@ -67,13 +27,14 @@ interface TodoListProps {
 
 function VirtualTodoList({
   canManageTodos,
-  onToggleComplete,
   onTodoClick,
   queryConfig,
 }: Omit<TodoListProps, 'todos' | 'virtualQuery'> & {
   canManageTodos: boolean;
   queryConfig: NonNullable<TodoListProps['virtualQuery']>;
 }) {
+  const isMobile = useIsMobileScreen();
+  const rowHeight = isMobile ? 100 : 64;
   const scrollRef = useRef<HTMLDivElement>(null);
   const listContextParams = useMemo(() => queryConfig, [queryConfig]);
   const virtualList = usePolityZeroList<
@@ -84,7 +45,7 @@ function VirtualTodoList({
     scrollStateKey: 'todos-list',
     listContextParams,
     getScrollElement: useCallback(() => scrollRef.current, []),
-    estimateSize: useCallback(() => 132, []),
+    estimateSize: useCallback(() => rowHeight, [rowHeight]),
     overscan: 8,
     getRowKey: todo => todo.id,
     toStartRow: todo =>
@@ -115,8 +76,13 @@ function VirtualTodoList({
   });
 
   return (
-    <div ref={scrollRef} className="h-[calc(100vh-20rem)] overflow-y-auto">
-      <div className="space-y-3">
+    <div
+      ref={scrollRef}
+      data-workspace-list
+      onKeyDown={handleWorkspaceListKeyDown}
+      className="h-[calc(100vh-20rem)] overflow-y-auto"
+    >
+      <div className="space-y-0">
         <ZeroVirtualSpacer position="before" size={virtualList.spaceBefore} />
         {virtualList.items.map((item, itemPosition) => (
           <div
@@ -125,14 +91,13 @@ function VirtualTodoList({
             style={itemPosition === 0 ? { marginTop: 0 } : undefined}
           >
             {item.row ? (
-              <TodoCard
+              <CompactTodoRow
                 todo={item.row}
                 canManageTodos={canManageTodos}
-                onToggleComplete={onToggleComplete}
                 onTodoClick={onTodoClick}
               />
             ) : (
-              <Skeleton className="h-28 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-none" />
             )}
           </div>
         ))}
@@ -149,6 +114,7 @@ export function TodoList({
   onTodoClick,
   virtualQuery,
 }: TodoListProps) {
+  const isMobile = useIsMobileScreen();
   if (virtualQuery) {
     return (
       <VirtualTodoList
@@ -161,20 +127,17 @@ export function TodoList({
   }
 
   return (
-    <PolityLocalListView
-      items={todos}
-      getItemKey={todo => todo.id}
-      estimateSize={132}
-      overscan={8}
-      className="h-[calc(100vh-20rem)] overflow-y-auto"
-      renderItem={todo => (
-        <TodoCard
-          todo={todo}
-          canManageTodos={canManageTodos}
-          onToggleComplete={onToggleComplete}
-          onTodoClick={onTodoClick}
-        />
-      )}
-    />
+    <div data-workspace-list onKeyDown={handleWorkspaceListKeyDown}>
+      <PolityLocalListView
+        items={todos}
+        getItemKey={todo => todo.id}
+        estimateSize={isMobile ? 100 : 64}
+        overscan={8}
+        className="h-[calc(100vh-20rem)] overflow-y-auto"
+        renderItem={todo => (
+          <CompactTodoRow todo={todo} canManageTodos={canManageTodos} onTodoClick={onTodoClick} />
+        )}
+      />
+    </div>
   );
 }

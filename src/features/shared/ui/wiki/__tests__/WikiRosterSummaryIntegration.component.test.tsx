@@ -319,3 +319,5 @@ describe('wiki roster offline summary integration', () => {
     expect(screen.queryByText('No account yet')).toBeNull();
   });
 });
+
+vi.mock('@/features/shared/ui/navigation/FavoriteButton', () => ({ FavoriteButton: () => null }));

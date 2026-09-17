@@ -140,7 +140,7 @@ describe('create form submit layouts', () => {
     expect(container.querySelector('.animate-spin')).toBeNull();
   });
 
-  it('shows the carousel invalid reason as an alert beside a disabled submit button', () => {
+  it('shows the carousel invalid reason as an alert beside an actionable submit button', () => {
     render(
       <CarouselFormLayoutView
         steps={steps}
@@ -168,7 +168,7 @@ describe('create form submit layouts', () => {
     );
 
     expect(screen.getByRole('alert').textContent).toContain('Choose an associated group');
-    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Create' }).disabled).toBe(true);
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Create' }).disabled).toBe(false);
   });
 
   it('keeps the one-page submit button spinner-free while submitting', () => {
@@ -191,7 +191,7 @@ describe('create form submit layouts', () => {
     expect(container.querySelector('.animate-spin')).toBeNull();
   });
 
-  it('shows the one-page invalid reason as an alert above a disabled submit button', () => {
+  it('shows the one-page invalid reason as an alert above an actionable submit button', () => {
     render(
       <OnePageFormLayoutView
         steps={steps}
@@ -209,6 +209,6 @@ describe('create form submit layouts', () => {
     );
 
     expect(screen.getByRole('alert').textContent).toContain('Complete the required fields');
-    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Create' }).disabled).toBe(true);
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Create' }).disabled).toBe(false);
   });
 });

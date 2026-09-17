@@ -15,9 +15,13 @@ vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, to: _to, params: _params, ...props }: any) => <a {...props}>{children}</a>,
 }));
 
-vi.mock('@/features/shared/hooks/use-translation', () => ({ translate: mocks.translate }));
+vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: mocks.translate,
+  useTranslation: () => ({ t: mocks.translate }),
+}));
 
 vi.mock('@/features/shared/theme', () => ({
+  getMotionPreset: () => '',
   getEntityToneClasses: (tone: string) => ({ badge: `badge-${tone}` }),
 }));
 

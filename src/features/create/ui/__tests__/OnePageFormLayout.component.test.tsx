@@ -33,7 +33,7 @@ describe('OnePageFormLayout', () => {
     vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
   });
 
-  it('disables create when a required step is invalid', () => {
+  it('reveals validation when a required step is invalid', () => {
     const onSubmit = vi.fn();
     const steps: CreateFormStep[] = [
       {
@@ -54,7 +54,7 @@ describe('OnePageFormLayout', () => {
     );
 
     const createButton = screen.getByRole<HTMLButtonElement>('button', { name: 'Create' });
-    expect(createButton.disabled).toBe(true);
+    expect(createButton.disabled).toBe(false);
 
     fireEvent.click(createButton);
     expect(onSubmit).not.toHaveBeenCalled();
@@ -112,7 +112,7 @@ describe('OnePageFormLayout', () => {
 
     expect(screen.getByRole('alert').textContent).toContain('Pick the conditional date');
     const createButton = screen.getByRole<HTMLButtonElement>('button', { name: 'Create' });
-    expect(createButton.disabled).toBe(true);
+    expect(createButton.disabled).toBe(false);
 
     fireEvent.click(createButton);
     expect(onSubmit).not.toHaveBeenCalled();

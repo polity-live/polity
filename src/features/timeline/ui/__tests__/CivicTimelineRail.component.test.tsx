@@ -269,3 +269,5 @@ describe('CivicTimelineRail', () => {
     expect(mocks.listProps?.permalinkID).toBeUndefined();
   });
 });
+
+vi.mock('@/features/shared/ui/preview/WorkspacePreview', () => ({ PreviewButton: () => null }));

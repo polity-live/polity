@@ -171,7 +171,7 @@ describe('useCreateTodoForm', () => {
     toastError.mockReset();
   });
 
-  it('orders title and description first, then assignment', () => {
+  it('shows title, context and visibility before optional assignment', () => {
     const { result } = renderHook(() => useCreateTodoForm());
 
     expect(result.current.steps[0].getInvalidReason?.()).toBe(
@@ -179,9 +179,11 @@ describe('useCreateTodoForm', () => {
     );
     expect(result.current.steps[0].fields?.map(field => field.key)).toEqual([
       'title',
+      'group',
+      'visibility',
       'description',
     ]);
-    expect(result.current.steps[1].fields?.map(field => field.key)).toEqual(['group', 'assignee']);
+    expect(result.current.steps[1].fields?.map(field => field.key)).toEqual(['assignee']);
     expect(result.current.steps[2].fields?.map(field => field.key)).toEqual(['priority', 'status']);
   });
 
@@ -201,7 +203,7 @@ describe('useCreateTodoForm', () => {
 
   it('filters assignees to the selected group', () => {
     const { result } = renderHook(() => useCreateTodoForm());
-    const groupField = findField(result.current.steps[1].fields ?? [], 'group', 'typeahead');
+    const groupField = findField(result.current.steps[0].fields ?? [], 'group', 'typeahead');
 
     act(() => {
       (
@@ -231,7 +233,7 @@ describe('useCreateTodoForm', () => {
       (assigneeField.props as { onChange: (ids: string[]) => void }).onChange(['user-4']);
     });
 
-    const groupField = findField(result.current.steps[1].fields ?? [], 'group', 'typeahead');
+    const groupField = findField(result.current.steps[0].fields ?? [], 'group', 'typeahead');
     act(() => {
       (
         groupField.props as { onChange: (item: { id: string; label?: string } | null) => void }
@@ -405,7 +407,7 @@ describe('useCreateTodoForm', () => {
   it('syncs the search parameter and supports clearing a selected group', () => {
     searchParams = { groupId: 'group-1', returnSection: 'todos' };
     const { result } = renderHook(() => useCreateTodoForm());
-    let groupField = findField(result.current.steps[1].fields ?? [], 'group', 'typeahead');
+    let groupField = findField(result.current.steps[0].fields ?? [], 'group', 'typeahead');
     expect(groupField.props.value).toBe('group-1');
     expect((groupField.props as any).filterFn({ id: 'group-1' })).toBe(true);
     expect((groupField.props as any).filterFn({ id: 'group-2' })).toBe(false);
@@ -420,7 +422,7 @@ describe('useCreateTodoForm', () => {
         replace: true,
       })
     );
-    groupField = findField(result.current.steps[1].fields ?? [], 'group', 'typeahead');
+    groupField = findField(result.current.steps[0].fields ?? [], 'group', 'typeahead');
     expect(groupField.props.value).toBeUndefined();
   });
 
@@ -439,7 +441,7 @@ describe('useCreateTodoForm', () => {
     rerender();
     await waitFor(() =>
       expect(
-        findField(result.current.steps[1].fields ?? [], 'group', 'typeahead').props.value
+        findField(result.current.steps[0].fields ?? [], 'group', 'typeahead').props.value
       ).toBeUndefined()
     );
     expect(
@@ -452,7 +454,7 @@ describe('useCreateTodoForm', () => {
   it('uses raw group and assignee ids when display records are unavailable', () => {
     memberLoading = true;
     const { result } = renderHook(() => useCreateTodoForm());
-    const group = findField(result.current.steps[1].fields ?? [], 'group', 'typeahead');
+    const group = findField(result.current.steps[0].fields ?? [], 'group', 'typeahead');
     act(() => (group.props as any).onChange({ id: 'missing-group', label: '' }));
     const assignee = findField(result.current.steps[1].fields ?? [], 'assignee', 'customComponent');
     act(() => (assignee.props as any).onChange(['missing-user']));
@@ -477,7 +479,7 @@ describe('useCreateTodoForm', () => {
     act(() => (assignee.props as any).onChange(['user-4']));
 
     memberLoading = true;
-    const group = findField(result.current.steps[1].fields ?? [], 'group', 'typeahead');
+    const group = findField(result.current.steps[0].fields ?? [], 'group', 'typeahead');
     act(() => (group.props as any).onChange({ id: 'group-2', label: 'Event Crew' }));
     expect(
       (findField(result.current.steps[1].fields ?? [], 'assignee', 'customComponent').props as any)
@@ -503,7 +505,7 @@ describe('useCreateTodoForm', () => {
   ] as const)('shows the %s visibility label in review', (visibility, expected) => {
     const { result } = renderHook(() => useCreateTodoForm());
     const visibilityField = findField(
-      result.current.steps[3].fields ?? [],
+      result.current.steps[0].fields ?? [],
       'visibility',
       'customComponent'
     );
@@ -584,7 +586,7 @@ describe('useCreateTodoForm', () => {
     expect(reportProgress.mock.calls.map(call => call[0])).toEqual([
       { key: 'create', status: 'active' },
       { key: 'create', status: 'complete' },
-      { key: 'sync', status: 'complete' },
+      { key: 'sync', status: 'active' },
       { key: 'ready', status: 'active' },
     ]);
     expect(outcome).toMatchObject({

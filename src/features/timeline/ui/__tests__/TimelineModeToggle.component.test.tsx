@@ -90,9 +90,9 @@ describe('TimelineModeToggle', () => {
       />
     );
     expect(container.querySelector('.custom')).toBeTruthy();
-    expect(container.querySelector('.absolute')).toBeTruthy();
+    expect(container.querySelector('span.absolute')).toBeTruthy();
 
     rerender(<TimelineModeToggle mode="decisions" onModeChange={vi.fn()} decisionsBadge={2} />);
-    expect(container.querySelector('.absolute')).toBeNull();
+    expect(container.querySelector('span.absolute')).toBeNull();
   });
 });

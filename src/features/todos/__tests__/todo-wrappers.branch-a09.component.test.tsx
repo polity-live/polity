@@ -149,3 +149,11 @@ it('updates tutorial detail description and both header modes', () => {
   expect(setViewMode).toHaveBeenCalledWith('list');
   expect(setViewMode).toHaveBeenCalledWith('kanban');
 });
+
+vi.mock('@/zero/preferences/useWorkspacePreferences', () => ({
+  useWorkspacePreferences: () => ({
+    isLoading: false,
+    display: {},
+    setDisplay: vi.fn().mockResolvedValue(undefined),
+  }),
+}));

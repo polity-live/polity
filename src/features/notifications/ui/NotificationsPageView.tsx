@@ -1,3 +1,5 @@
+import { WorkspaceHeader } from '@/features/shared/ui/layout/WorkspaceHeader';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { MouseEvent } from 'react';
 import { Bell, Check, Trash2, Users } from 'lucide-react';
 
@@ -76,8 +78,10 @@ export function NotificationsPageView({
   onDeleteForEveryone,
   canDeleteForEveryone,
 }: NotificationsPageViewProps) {
+  const { t } = useTranslation();
   return (
     <div style={{ touchAction: 'pan-y' }} {...tabSwipeHandlers}>
+      <WorkspaceHeader title={t('features.notifications.title')} />
       <Tabs
         value={selectedTab}
         onValueChange={value => onSelectedTabChange(value as NotificationTab)}

@@ -236,7 +236,7 @@ describe('CivicTimelineRail', () => {
     );
   });
 
-  it('staggers load reveal indexes across timeline sections', () => {
+  it('keeps stable row indexes without entry animations', () => {
     const secondItem: CivicTimelineItem = {
       ...item,
       id: 'group-1',
@@ -278,9 +278,9 @@ describe('CivicTimelineRail', () => {
       '[data-timeline-item-id="amendment-1"]'
     ) as HTMLElement;
 
-    expect(firstItem.className).toContain('civic-load-card-reveal');
-    expect(secondTimelineItem.className).toContain('civic-load-card-reveal');
-    expect(thirdTimelineItem.className).toContain('civic-load-card-reveal');
+    expect(firstItem.className).not.toContain('civic-load-card-reveal');
+    expect(secondTimelineItem.className).not.toContain('civic-load-card-reveal');
+    expect(thirdTimelineItem.className).not.toContain('civic-load-card-reveal');
     expect(firstItem.style.getPropertyValue('--civic-load-index')).toBe('0');
     expect(secondTimelineItem.style.getPropertyValue('--civic-load-index')).toBe('1');
     expect(thirdTimelineItem.style.getPropertyValue('--civic-load-index')).toBe('2');
@@ -335,7 +335,7 @@ describe('CivicTimelineMap', () => {
 
 describe('ModernTimelineView', () => {
   it('hides the page title and subtitle while keeping the mode tabs', () => {
-    render(<ModernTimelineView {...createTimelineViewProps()} />);
+    render(<ModernTimelineView mapVisible {...createTimelineViewProps()} />);
 
     expect(screen.getByRole('heading', { name: 'Timeline' }).className).toContain('sr-only');
     expect(
@@ -346,20 +346,20 @@ describe('ModernTimelineView', () => {
     expect(screen.getByTestId('timeline-rail-surface')).toBeTruthy();
   });
 
-  it('places the live timeline rail on the same subtle card surface as the landing preview', () => {
-    render(<ModernTimelineView {...createTimelineViewProps()} />);
+  it('keeps the timeline rail free of nested card borders', () => {
+    render(<ModernTimelineView mapVisible {...createTimelineViewProps()} />);
 
     const surface = screen.getByTestId('timeline-rail-surface');
 
-    expect(surface.className).toContain('bg-card');
-    expect(surface.className).toContain('rounded-lg');
-    expect(surface.className).toContain('border');
-    expect(surface.className).toContain('shadow-sm');
+    expect(surface.className).not.toContain('bg-card');
+    expect(surface.className).not.toContain('rounded-lg');
+    expect(surface.className).not.toContain('border');
+    expect(surface.className).not.toContain('shadow-sm');
     expect(screen.getByTestId('civic-timeline-rail')).toBeTruthy();
   });
 
   it('uses shrinkable map and rail columns in a single-column mobile grid', () => {
-    render(<ModernTimelineView {...createTimelineViewProps()} />);
+    render(<ModernTimelineView mapVisible {...createTimelineViewProps()} />);
 
     const grid = screen.getByTestId('timeline-map-rail-grid');
     const mapColumn = screen.getByTestId('timeline-map-column');
@@ -377,8 +377,10 @@ describe('ModernTimelineView', () => {
   it('shows discoverable activity only when a discover count exists', () => {
     const props = createTimelineViewProps();
     props.civicTimeline.discoverCount = 3;
-    render(<ModernTimelineView {...props} />);
+    render(<ModernTimelineView mapVisible {...props} />);
 
     expect(screen.getByText('{{count}} discover')).toBeTruthy();
   });
 });
+
+vi.mock('@/features/shared/ui/preview/WorkspacePreview', () => ({ PreviewButton: () => null }));

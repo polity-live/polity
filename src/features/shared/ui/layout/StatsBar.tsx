@@ -54,7 +54,7 @@ export function StatsBar({
             <div
               key={index}
               className={cn(
-                'bg-card relative flex min-w-0 flex-col justify-center rounded-md border px-1.5 py-2 shadow-sm sm:block sm:min-w-24 sm:px-4 sm:py-3',
+                'relative flex min-w-0 flex-col justify-center px-1.5 py-1 sm:block sm:min-w-24 sm:px-3 sm:py-1',
                 mobileColumnCount === 1 && 'w-auto min-w-24',
                 mobileColumnCount === 3 && 'col-span-2',
                 itemCount === 5 && index === 3 && 'col-start-2',
@@ -63,7 +63,7 @@ export function StatsBar({
             >
               <div
                 className={cn(
-                  'text-xl leading-none font-semibold sm:text-2xl sm:leading-normal',
+                  'text-base leading-none font-semibold sm:text-lg sm:leading-normal',
                   shouldAnimate && 'animate-flash-green'
                 )}
               >

@@ -865,10 +865,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       });
 
       context?.reportProgress({ key: 'create', status: 'complete' });
-      context?.reportProgress({ key: 'sync', status: 'complete' });
-      context?.reportProgress({ key: 'ready', status: 'active' });
+      context?.reportProgress({ key: 'sync', status: 'active' });
       context?.setRecoveryTarget(agendaTarget);
-      trackCreateFinalization({
+      await trackCreateFinalization({
         result: createAgendaResult,
         draft: {
           id: `agenda_item:${primaryAgendaItemId}`,
@@ -934,6 +933,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         },
       });
       setIsSubmitting(false);
+      context?.reportProgress({ key: 'ready', status: 'active' });
       return createSuccessSubmitOutcome(agendaTarget);
     } catch (error) {
       logElectionFlowClientError(creationFlow, 'submit-error', {
@@ -1038,6 +1038,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
               : []),
             {
               key: 'event',
+              alwaysVisible: true,
               kind: 'typeahead',
               label: t('pages.create.agendaItem.eventLabel'),
               required: true,
@@ -1207,6 +1208,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                   },
                   {
                     key: 'ballot-visibility',
+                    alwaysVisible: true,
                     kind: 'customComponent' as const,
                     component: BallotVisibilityInput,
                     props: {

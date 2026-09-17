@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCollectionPresentation } from '@/features/shared/ui/collections/CollectionScope';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 import { usePolityLocalVirtualizer } from './usePolityLocalVirtualizer';
 
@@ -24,6 +25,7 @@ export function PolityLocalGridView<T>({
   overscan = 4,
   className = 'h-[36rem] min-h-80 overflow-auto',
 }: PolityLocalGridViewProps<T>) {
+  const compact = useCollectionPresentation()?.view === 'compact';
   const parentRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
 
@@ -40,15 +42,28 @@ export function PolityLocalGridView<T>({
     return () => observer.disconnect();
   }, []);
 
-  const lanes = getLanes(width);
+  const lanes = compact ? 1 : getLanes(width);
   const rowCount = Math.ceil(items.length / lanes);
   const virtualizer = usePolityLocalVirtualizer({
     count: rowCount,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => estimateRowSize + gap,
+    estimateSize: () => (compact ? 76 : estimateRowSize) + gap,
     overscan,
     initialRect: { width: width || 1024, height: 576 },
   });
+  const anchor = useRef<number | null>(null);
+  const layoutInitialized = useRef(false);
+  useLayoutEffect(() => {
+    if (layoutInitialized.current) virtualizer.measure();
+    layoutInitialized.current = true;
+    if (anchor.current !== null)
+      virtualizer.scrollToIndex(Math.floor(anchor.current / lanes), { align: 'start' });
+    return () => {
+      const offset = parentRef.current?.scrollTop ?? 0;
+      const visible = virtualizer.getVirtualItems().find(item => item.end > offset);
+      anchor.current = visible ? visible.index * lanes : null;
+    };
+  }, [compact, lanes]);
   const measuredRows = virtualizer.getVirtualItems();
   const virtualRows =
     measuredRows.length > 0
@@ -56,9 +71,12 @@ export function PolityLocalGridView<T>({
       : Array.from({ length: Math.min(rowCount, 12) }, (_, index) => ({
           key: index,
           index,
-          start: index * (estimateRowSize + gap),
+          start: index * ((compact ? 76 : estimateRowSize) + gap),
         }));
-  const totalSize = Math.max(virtualizer.getTotalSize(), rowCount * (estimateRowSize + gap));
+  const totalSize = Math.max(
+    virtualizer.getTotalSize(),
+    rowCount * ((compact ? 76 : estimateRowSize) + gap)
+  );
 
   return (
     <div ref={parentRef} className={className}>

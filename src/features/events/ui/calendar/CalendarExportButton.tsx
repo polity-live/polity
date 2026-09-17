@@ -5,12 +5,14 @@ import type { CalendarEvent } from '@/features/events/hooks/useCalendarView';
 interface CalendarExportButtonProps {
   events: CalendarEvent[];
   filename?: string;
+  iconOnly?: boolean;
   'data-action-id'?: string;
 }
 
 export function CalendarExportButton({
   events,
   filename,
+  iconOnly,
   'data-action-id': dataActionId,
 }: CalendarExportButtonProps) {
   const handleExport = () => {
@@ -27,5 +29,11 @@ export function CalendarExportButton({
     downloadICalFile(icalEvents, filename);
   };
 
-  return <CalendarExportButtonControl onExport={handleExport} data-action-id={dataActionId} />;
+  return (
+    <CalendarExportButtonControl
+      iconOnly={iconOnly}
+      onExport={handleExport}
+      data-action-id={dataActionId}
+    />
+  );
 }

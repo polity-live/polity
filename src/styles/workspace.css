@@ -1,0 +1,38 @@
+/* Scoped to content: neither navigation rail inherits these tokens or rules. */
+[data-slot='app-shell-page-frame'] {
+  --shadow-panel: 0 1px 2px rgb(23 32 28 / 0.04);
+  --shadow-card: 0 1px 2px rgb(23 32 28 / 0.04);
+  --workspace-row-height: 3rem;
+}
+
+[data-workspace-row] {
+  min-height: var(--workspace-row-height, 3rem);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+[data-workspace-row]:focus-within {
+  background: var(--muted);
+}
+
+[data-create-flow] [data-create-section] {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+[data-create-flow] [data-create-action-bar] {
+  position: sticky;
+  bottom: calc(var(--app-shell-mobile-bottom-offset, 0rem) + 0.5rem);
+  z-index: 20;
+  background: var(--background);
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='app-shell-page-frame'] *,
+  [data-workspace-preview] * {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

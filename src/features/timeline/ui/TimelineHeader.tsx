@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import { BadgeControl } from '@/features/shared/ui/status';
 import { SlidersHorizontal, ArrowUpDown, Settings } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -42,6 +44,8 @@ export interface TimelineHeaderProps {
   showTitle?: boolean;
   /** Additional CSS classes */
   className?: string;
+  actions?: ReactNode;
+  filtersOpen?: boolean;
 }
 
 /**
@@ -77,16 +81,18 @@ export function TimelineHeader({
   subtitle,
   showTitle = true,
   className,
+  actions,
+  filtersOpen,
 }: TimelineHeaderProps) {
   const { t } = useTranslation();
   const isDecisionsMode = mode === 'decisions';
 
   return (
-    <div className={cn(showTitle && 'space-y-4', className)}>
+    <div className={cn(showTitle && 'space-y-2', className)}>
       {showTitle ? (
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="font-sans text-base font-semibold">
               {t('features.timeline.header.title', { defaultValue: 'Timeline' })}
             </h1>
             {subtitle && <p className="text-muted-foreground mt-1 text-sm">{subtitle}</p>}
@@ -114,7 +120,7 @@ export function TimelineHeader({
       )}
 
       {/* Controls row */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         {/* Mode toggle */}
         <TimelineModeToggle
           mode={mode}
@@ -124,26 +130,29 @@ export function TimelineHeader({
         />
 
         {/* Filter and sort controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {actions}
           {/* Filter button - hidden in Decisions mode */}
           {!isDecisionsMode && onFilterClick && (
             <Button
               data-action-id="timeline.header.filters.open"
               data-action-kind="interaction"
               variant="outline"
-              size="sm"
+              size="icon"
+              aria-label={t('features.timeline.header.filter', { defaultValue: 'Filter' })}
+              title={t('features.timeline.header.filter', { defaultValue: 'Filter' })}
+              aria-expanded={filtersOpen}
               onClick={onFilterClick}
               className="relative"
             >
-              <SlidersHorizontal className="mr-2 h-4 w-4" />
-              {t('features.timeline.header.filter', { defaultValue: 'Filter' })}
+              <SlidersHorizontal className="size-4" />
 
               {/* Active filter count badge */}
               {activeFilterCount > 0 && (
                 <BadgeControl
                   variant="secondary"
                   size="xs"
-                  className="ml-2 h-5 min-w-[20px] px-1.5"
+                  className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]"
                 >
                   {activeFilterCount}
                 </BadgeControl>

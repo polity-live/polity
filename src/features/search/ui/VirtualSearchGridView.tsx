@@ -4,6 +4,10 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Card } from '@/features/shared/ui/ui/card';
 import type { SearchDocument } from '../types/search-document.types';
 import { SearchResultCard } from './SearchResultCard';
+import { CompactSearchRow } from './CompactSearchRow';
+import { PreviewButton } from '@/features/shared/ui/preview/WorkspacePreview';
+import { handleWorkspaceListKeyDown } from '@/features/shared/ui/preview/list-keyboard';
+import { getSearchDocumentHref } from '../logic/searchResultHref';
 
 export const SEARCH_CARD_HEIGHT = 360;
 export const SEARCH_GRID_GAP = 16;
@@ -19,6 +23,8 @@ export interface VirtualSearchGridCell {
 }
 
 interface VirtualSearchGridViewProps {
+  compact?: boolean;
+  rowHeight?: number;
   parentRef: RefObject<HTMLDivElement | null>;
   cells: VirtualSearchGridCell[];
   totalHeight: number;
@@ -30,7 +36,17 @@ interface VirtualSearchGridViewProps {
   onJumpToTop: () => void;
 }
 
-function SearchCardSkeleton() {
+function SearchCardSkeleton({ compact = false }: { compact?: boolean }) {
+  if (compact)
+    return (
+      <div aria-hidden className="border-border/60 flex h-full items-center gap-3 border-b px-3">
+        <div className="bg-muted size-7 animate-pulse rounded" />
+        <div className="flex-1 space-y-2">
+          <div className="bg-muted h-3 w-2/3 animate-pulse rounded" />
+          <div className="bg-muted h-2 w-1/2 animate-pulse rounded" />
+        </div>
+      </div>
+    );
   return (
     <Card surface="search" shape="xl" className="h-full overflow-hidden">
       <div className="bg-muted/80 h-24 animate-pulse p-4">
@@ -54,6 +70,8 @@ function SearchCardSkeleton() {
 }
 
 export function VirtualSearchGridView({
+  compact = false,
+  rowHeight = SEARCH_CARD_HEIGHT,
   parentRef,
   cells,
   totalHeight,
@@ -84,6 +102,8 @@ export function VirtualSearchGridView({
         ref={parentRef}
         data-testid="search-results-scroll"
         className="scrollbar-hide h-full min-h-0 overflow-auto pr-1"
+        data-workspace-list
+        onKeyDown={handleWorkspaceListKeyDown}
       >
         {rowsEmpty && isComplete ? (
           <div className="text-muted-foreground flex h-64 items-center justify-center rounded-lg border border-dashed text-sm">
@@ -99,16 +119,27 @@ export function VirtualSearchGridView({
                 data-search-card-mode={cell.mode}
                 className="absolute"
                 style={{
-                  height: SEARCH_CARD_HEIGHT,
+                  height: rowHeight,
                   width: cell.width,
                   transform: `translate(${cell.left}px, ${cell.top}px)`,
                 }}
               >
                 <div className="h-full">
                   {cell.document ? (
-                    <SearchResultCard document={cell.document} mode={cell.mode} />
+                    compact ? (
+                      <CompactSearchRow document={cell.document}>
+                        <SearchResultCard document={cell.document} />
+                      </CompactSearchRow>
+                    ) : (
+                      <>
+                        <SearchResultCard document={cell.document} mode={cell.mode} />
+                        <div className="bg-background/95 absolute top-2 right-2 z-10 rounded-md">
+                          <PreviewButton href={getSearchDocumentHref(cell.document)} />
+                        </div>
+                      </>
+                    )
                   ) : (
-                    <SearchCardSkeleton />
+                    <SearchCardSkeleton compact={compact} />
                   )}
                 </div>
               </div>

@@ -1,6 +1,6 @@
 'use client';
+import { useState } from 'react';
 
-import { BadgeControl } from '@/features/shared/ui/status';
 import { MapPinned, Sparkles } from 'lucide-react';
 
 import { Button } from '@/features/shared/ui/ui/button';
@@ -20,11 +20,15 @@ import { StatementStoryCarousel } from '@/features/statements/ui/StatementStoryC
 export interface ModernTimelineViewProps extends UseTimelinePageReturn {
   className?: string;
   virtualizeTimeline?: boolean;
+  mapVisible?: boolean;
+  onMapVisibilityChange?: (visible: boolean) => void;
 }
 
 export function ModernTimelineView({
   className,
   virtualizeTimeline = false,
+  mapVisible,
+  onMapVisibilityChange,
   userId,
   mode,
   setMode,
@@ -50,6 +54,8 @@ export function ModernTimelineView({
   handleRailItemSelect,
 }: ModernTimelineViewProps) {
   const { t } = useTranslation();
+  const [localMapVisible, setLocalMapVisible] = useState(false);
+  const showMap = mapVisible ?? localMapVisible;
   const { handlers: timelineModeSwipeHandlers } = useSwipeNavigation({
     canSwipePrev: mode === 'decisions',
     canSwipeNext: mode === 'timeline',
@@ -65,7 +71,7 @@ export function ModernTimelineView({
   if (mode === 'decisions') {
     return (
       <div
-        className={cn('space-y-4', className)}
+        className={cn('space-y-3', className)}
         style={{ touchAction: 'pan-y' }}
         {...timelineModeSwipeHandlers}
       >
@@ -75,9 +81,7 @@ export function ModernTimelineView({
           sortBy={filters.sortBy}
           onSortChange={handleSortChange}
           decisionsBadge={decisionTerminal.urgentCount}
-          subtitle={t('features.timeline.header.decisionsSubtitle', {
-            defaultValue: 'Live votes, elections, and recently closed decisions.',
-          })}
+          showTitle={false}
         />
         <DecisionTerminal
           decisions={decisionTerminal.decisions}
@@ -89,7 +93,7 @@ export function ModernTimelineView({
 
   return (
     <div
-      className={cn('space-y-4', className)}
+      className={cn('space-y-3', className)}
       style={{ touchAction: 'pan-y' }}
       {...timelineModeSwipeHandlers}
     >
@@ -103,6 +107,41 @@ export function ModernTimelineView({
         decisionsBadge={decisionTerminal.urgentCount}
         showSort={false}
         showTitle={false}
+        filtersOpen={showFilterPanel}
+        actions={
+          <div className="text-muted-foreground flex items-center gap-2 text-xs">
+            <Button
+              variant="ghost"
+              size="icon"
+              type="button"
+              aria-pressed={showMap}
+              aria-label={t(showMap ? 'common.workspace.hideMap' : 'common.workspace.showMap')}
+              title={t(showMap ? 'common.workspace.hideMap' : 'common.workspace.showMap')}
+              data-action-id="timeline.map.toggle"
+              onClick={() => {
+                setLocalMapVisible(!showMap);
+                onMapVisibilityChange?.(!showMap);
+              }}
+            >
+              <MapPinned className="size-4" />
+            </Button>
+            <span className="inline-flex items-center whitespace-nowrap">
+              {t('features.timeline.around.mappedCount', {
+                count: civicTimeline.mapItems.length,
+                defaultValue: '{{count}} mapped',
+              })}
+            </span>
+            {civicTimeline.discoverCount > 0 ? (
+              <span className="inline-flex items-center whitespace-nowrap">
+                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                {t('features.timeline.around.discoverCount', {
+                  count: civicTimeline.discoverCount,
+                  defaultValue: '{{count}} discover',
+                })}
+              </span>
+            ) : null}
+          </div>
+        }
       />
 
       {showFilterPanel ? (
@@ -130,55 +169,45 @@ export function ModernTimelineView({
 
       <StatementStoryCarousel />
 
-      <div className="text-foreground flex flex-wrap items-center gap-2 text-sm">
-        <BadgeControl variant="outline" shape="rounded" className="text-foreground">
-          <MapPinned className="mr-1.5 h-3.5 w-3.5" />
-          {t('features.timeline.around.mappedCount', {
-            count: civicTimeline.mapItems.length,
-            defaultValue: '{{count}} mapped',
-          })}
-        </BadgeControl>
-        {civicTimeline.discoverCount > 0 ? (
-          <BadgeControl variant="outline" shape="rounded" className="text-foreground">
-            <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-            {t('features.timeline.around.discoverCount', {
-              count: civicTimeline.discoverCount,
-              defaultValue: '{{count}} discover',
-            })}
-          </BadgeControl>
-        ) : null}
-      </div>
-
       <div
-        className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]"
+        className={cn(
+          'grid min-w-0 grid-cols-1 gap-4',
+          showMap &&
+            civicTimeline.mapItems.length > 0 &&
+            'lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]'
+        )}
         data-testid="timeline-map-rail-grid"
       >
-        <div
-          className="max-w-full min-w-0 lg:sticky lg:top-4 lg:self-start"
-          data-swipe-lock
-          data-testid="timeline-map-column"
-        >
-          <CivicTimelineMap
-            items={civicTimeline.mapItems}
-            activeItemId={activeItemId}
-            onActiveItemChange={setActiveItemId}
-            onItemSelect={handleMapItemSelect}
-          />
-          {!civicTimeline.userCoordinates ? (
-            <div className="bg-muted/30 text-muted-foreground mt-2 rounded-lg border px-3 py-2 text-xs">
-              {t('features.timeline.around.noUserLocation', {
-                defaultValue:
-                  'Add a location to your profile to make nearby activity more precise.',
-              })}
-            </div>
-          ) : null}
-        </div>
+        {showMap && civicTimeline.mapItems.length === 0 ? (
+          <p role="status" className="text-muted-foreground text-sm">
+            {t('common.workspace.noMappedActivity')}
+          </p>
+        ) : null}
+        {showMap && civicTimeline.mapItems.length > 0 ? (
+          <div
+            className="max-w-full min-w-0 lg:sticky lg:top-4 lg:self-start"
+            data-swipe-lock
+            data-testid="timeline-map-column"
+          >
+            <CivicTimelineMap
+              items={civicTimeline.mapItems}
+              activeItemId={activeItemId}
+              onActiveItemChange={setActiveItemId}
+              onItemSelect={handleMapItemSelect}
+            />
+            {!civicTimeline.userCoordinates ? (
+              <div className="bg-muted/30 text-muted-foreground mt-2 rounded-lg border px-3 py-2 text-xs">
+                {t('features.timeline.around.noUserLocation', {
+                  defaultValue:
+                    'Add a location to your profile to make nearby activity more precise.',
+                })}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="max-w-full min-w-0" data-testid="timeline-rail-column">
-          <div
-            className="bg-card rounded-lg border p-4 shadow-sm sm:p-5"
-            data-testid="timeline-rail-surface"
-          >
+          <div className="min-w-0 px-1 sm:px-3" data-testid="timeline-rail-surface">
             <CivicTimelineRail
               sections={civicTimeline.sections}
               activeItemId={activeItemId}

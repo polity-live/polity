@@ -1,3 +1,7 @@
+import {
+  CollectionScope,
+  useCollectionPresentation,
+} from '@/features/shared/ui/collections/CollectionScope';
 import { FileText } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 
@@ -130,7 +134,7 @@ function VirtualGroupDocumentsGrid({
   );
 }
 
-export function GroupDocumentsListView({
+function GroupDocumentsListViewContent({
   canManageDocuments,
   documents,
   fields,
@@ -141,6 +145,7 @@ export function GroupDocumentsListView({
   onCreateDocument,
   pql,
 }: GroupDocumentsListModel) {
+  const compact = useCollectionPresentation()?.view === 'compact';
   if (isLoading) {
     return <SectionSkeleton rows={4} />;
   }
@@ -187,6 +192,7 @@ export function GroupDocumentsListView({
   return (
     <>
       <PqlToolbar
+        compact
         fields={fields}
         searchQuery={pql.searchQuery}
         onSearchQueryChange={pql.setSearchQuery}
@@ -229,7 +235,7 @@ export function GroupDocumentsListView({
           canManageDocuments={canManageDocuments}
         />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className={compact ? 'space-y-0' : 'grid gap-4 md:grid-cols-2 lg:grid-cols-3'}>
           {pql.filteredItems.map((document: any) => (
             <GroupDocumentCard
               key={document.id}
@@ -240,5 +246,13 @@ export function GroupDocumentsListView({
         </div>
       )}
     </>
+  );
+}
+
+export function GroupDocumentsListView(props: GroupDocumentsListModel) {
+  return (
+    <CollectionScope area="group.documents">
+      <GroupDocumentsListViewContent {...props} />
+    </CollectionScope>
   );
 }

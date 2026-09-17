@@ -1,5 +1,7 @@
 'use client';
 
+import { CollectionScope } from '@/features/shared/ui/collections/CollectionScope';
+
 import type { ReactNode } from 'react';
 import type { Value } from 'platejs';
 import type { TDiscussion } from '@/features/editor/types';
@@ -75,7 +77,7 @@ interface ChangeRequestCardsListProps {
 import { useChangeRequestCardsListController } from './useChangeRequestCardsListController';
 import { ChangeRequestCardsListView } from './ChangeRequestCardsListView';
 
-export function ChangeRequestCardsList({
+function ChangeRequestCardsListContent({
   items,
   obsoleteItems = [],
   editingMode,
@@ -162,5 +164,13 @@ export function ChangeRequestCardsList({
       virtualize={virtualize}
       containerVariant={containerVariant}
     />
+  );
+}
+
+export function ChangeRequestCardsList(props: ChangeRequestCardsListProps) {
+  return (
+    <CollectionScope area="changeRequests">
+      <ChangeRequestCardsListContent {...props} />
+    </CollectionScope>
   );
 }

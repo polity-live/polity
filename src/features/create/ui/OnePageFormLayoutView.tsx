@@ -1,3 +1,4 @@
+import { focusCreateSection } from '../logic/createFormFocus';
 import type { ReactNode, RefObject } from 'react';
 
 import { BadgeControl } from '@/features/shared/ui/status';
@@ -36,7 +37,7 @@ export function OnePageFormLayoutView({
   createButtonLabel,
 }: OnePageFormLayoutViewProps) {
   return (
-    <div className="flex flex-col gap-5">
+    <div data-create-layout-root className="flex flex-col gap-5">
       <CreateProgressIndicator
         sticky
         className="-mx-4 sm:-mx-5 lg:-mx-6"
@@ -47,7 +48,7 @@ export function OnePageFormLayoutView({
         validSteps={steps.map(() => true)}
       />
 
-      <div className="space-y-10">
+      <div className="space-y-6">
         {steps.map((step: any, index: number) => (
           <div
             key={index}
@@ -68,7 +69,7 @@ export function OnePageFormLayoutView({
             </div>
 
             <div className="min-w-0">
-              <CreateStepRenderer step={step} />
+              <CreateStepRenderer step={step} compactOptional />
             </div>
           </div>
         ))}
@@ -80,8 +81,24 @@ export function OnePageFormLayoutView({
         ) : null}
         <Button
           data-action-id="create.one-page.submit"
-          onClick={onSubmit}
-          disabled={isSubmitting || !allStepsValid}
+          onClick={event => {
+            if (!allStepsValid) {
+              const index = Math.max(
+                0,
+                steps.findIndex(step => !step.isValid())
+              );
+              onStepClick(index);
+              focusCreateSection(
+                event.currentTarget.closest('[data-create-flow]') ??
+                  event.currentTarget.closest('[data-create-layout-root]'),
+                index
+              );
+              return;
+            }
+            void onSubmit();
+          }}
+          disabled={isSubmitting}
+          aria-describedby={!allStepsValid ? 'create-invalid-notice' : undefined}
           data-create-action="submit"
           className="w-full"
           size="lg"

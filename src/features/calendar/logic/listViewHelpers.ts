@@ -20,7 +20,7 @@ export function getCalendarEventsForView<T>(
   events: T[],
   filterEventsForRange: (events: T[]) => T[]
 ): T[] {
-  if (viewMode === 'list') {
+  if (viewMode === 'list' || viewMode === 'compact') {
     return events;
   }
 

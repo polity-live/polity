@@ -7363,7 +7363,7 @@
       {
         "file": "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "project": "component",
-        "caseId": "shows the carousel invalid reason as an alert beside a disabled submit button",
+        "caseId": "shows the carousel invalid reason as an alert beside an actionable submit button",
         "evidence": {
           "kind": "instrumented-full-suite",
           "relation": "transitive",
@@ -22623,7 +22623,7 @@
       {
         "file": "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "project": "component",
-        "caseId": "keeps the route title semantic while rendering only view and create controls",
+        "caseId": "renders view and create controls for the shared page header",
         "evidence": {
           "kind": "instrumented-full-suite",
           "relation": "direct",
@@ -40501,7 +40501,7 @@
       {
         "file": "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "project": "component",
-        "caseId": "keeps the route title semantic while rendering only view and create controls",
+        "caseId": "renders view and create controls for the shared page header",
         "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
       }
     ],
@@ -40509,7 +40509,7 @@
       {
         "file": "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "project": "component",
-        "caseId": "keeps the route title semantic while rendering only view and create controls",
+        "caseId": "renders view and create controls for the shared page header",
         "scenarios": ["idle", "success", "keyboard", "focus"]
       }
     ],
@@ -40517,7 +40517,7 @@
       {
         "file": "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
         "project": "component",
-        "caseId": "keeps the route title semantic while rendering only view and create controls",
+        "caseId": "renders view and create controls for the shared page header",
         "scenarios": ["idle", "success", "keyboard", "focus"]
       }
     ],

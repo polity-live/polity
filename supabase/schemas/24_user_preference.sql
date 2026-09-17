@@ -12,6 +12,8 @@ CREATE TABLE public.user_preference (
     CONSTRAINT user_preference_display_currency_check
     CHECK (display_currency ~ '^[A-Z]{3}$'),
   navigation_view TEXT NOT NULL DEFAULT 'asButtonList',
+  workspace_preferences JSONB NOT NULL DEFAULT '{"favorites":[],"display":{}}'::jsonb
+    CHECK (jsonb_typeof(workspace_preferences) = 'object'),
   group_network_layouts JSONB NOT NULL DEFAULT '{}'::jsonb,
   decision_terminal_dashboard JSONB NOT NULL DEFAULT '{}'::jsonb,
   app_tutorial_completed_at TIMESTAMPTZ,

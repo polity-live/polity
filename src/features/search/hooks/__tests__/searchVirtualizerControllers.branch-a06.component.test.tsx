@@ -136,6 +136,7 @@ describe('search virtualizer controller branch matrix', () => {
           { key: 'first', index: 0, start: 5, lane: undefined },
           { key: 'missing', index: 1, start: 10, lane: 1 },
         ],
+        measure: vi.fn(),
         getTotalSize: () => 800,
         scrollToIndex,
       },

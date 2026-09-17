@@ -46,6 +46,8 @@ export function TodosFilters({
 
   return (
     <PqlToolbar
+      compact
+      surface="embedded"
       fields={fields}
       searchQuery={searchQuery}
       onSearchQueryChange={setSearchQuery}

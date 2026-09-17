@@ -1,6 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { act, renderHook } from '@testing-library/react';
+import { useLayoutEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockUseSearchURL = vi.hoisted(() => vi.fn());
@@ -56,6 +57,21 @@ function makeSearchURLState(searchQuery: string) {
 describe('useSearchPage result totals', () => {
   beforeEach(() => {
     mockUseSearchURL.mockReset();
+  });
+
+  it('settles repeated result-count reports without a render feedback loop', () => {
+    mockUseSearchURL.mockReturnValue(makeSearchURLState('K1'));
+    let renders = 0;
+    const { result, unmount } = renderHook(() => {
+      const search = useSearchPage();
+      renders++;
+      // Virtual result observers may report the same count after a layout update.
+      useLayoutEffect(() => search.setTotalResults(12));
+      return search;
+    });
+    expect(result.current.totalResults).toBe(12);
+    expect(renders).toBeLessThan(5);
+    unmount();
   });
 
   it('invalidates an exact total synchronously when the search context changes', () => {

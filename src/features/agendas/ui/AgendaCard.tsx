@@ -1,5 +1,9 @@
 'use client';
 
+import { useCollectionPresentation } from '@/features/shared/ui/collections/CollectionScope';
+import { EntityListRow } from '@/features/shared/ui/collections/EntityListRow';
+import { CollectionActionsMenu } from '@/features/shared/ui/collections/CollectionCard';
+
 import { ReactNode } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import {
@@ -78,7 +82,40 @@ export function AgendaCard({
   election,
 }: AgendaCardProps) {
   const { t } = useTranslation();
+  const compact = useCollectionPresentation()?.view === 'compact';
   const visualStatus = isActive ? 'active' : status;
+  if (compact)
+    return (
+      <EntityListRow
+        type={type === 'vote' || type === 'election' ? type : 'agenda'}
+        typeLabel={t(`features.events.agenda.type${type[0].toUpperCase()}${type.slice(1)}`, type)}
+        title={title}
+        summary={description ?? subtitle}
+        href={detailsLink}
+        metadata={
+          <>
+            <AgendaStatusBadge status={visualStatus} />
+            {footerRight}
+          </>
+        }
+        actions={
+          <>
+            {dragHandle}
+            {actionButton}
+            {(footer || showMoveButton) && (
+              <CollectionActionsMenu>
+                {footer}
+                {showMoveButton && (
+                  <Button onClick={onMoveClick} data-action-id="collection.agenda.move">
+                    {t('features.events.agenda.moveToEvent', 'Move')}
+                  </Button>
+                )}
+              </CollectionActionsMenu>
+            )}
+          </>
+        }
+      />
+    );
   const cardClassName = cn(
     'border-border/70 bg-card/75 w-full min-w-0 cursor-pointer overflow-hidden shadow-none transition-[border-color,background-color,box-shadow] hover:border-foreground/15 hover:bg-card hover:shadow-sm',
     isActive && 'border-primary/35 bg-primary/[0.035] ring-primary/10 ring-1',

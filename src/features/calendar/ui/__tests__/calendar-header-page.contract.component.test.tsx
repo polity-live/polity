@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string) => key,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 vi.mock('@/features/shared/ui/ui/tabs', () => {
@@ -41,7 +42,12 @@ vi.mock('@/features/shared/ui/ui/tabs', () => {
 vi.mock('@/features/shared/ui/calendar', () => ({
   CalendarHeader: (props: any) => {
     mocks.headerProps = props;
-    return <header>{props.actions}</header>;
+    return (
+      <header>
+        {props.search}
+        {props.actions}
+      </header>
+    );
   },
   CalendarFilterBar: (props: any) => {
     mocks.filterProps = props;
@@ -148,7 +154,19 @@ describe('calendar header and page', () => {
       currentViewTitle: 'August',
       headingMode: 'sr-only',
     });
-    expect(mocks.filterProps).toMatchObject({ searchQuery: 'budget', dateFilter: '2026-08' });
+    expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('budget');
+    const filters = screen.getByRole('button', { name: 'features.search.filters.title' });
+    filters.focus();
+    expect(filters.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(filters);
+    expect(filters.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByText('group-filter:group-1')).toBeTruthy();
+    const clearDate = screen.getByRole('button', { name: 'features.calendar.search.clearDate' });
+    clearDate.focus();
+    fireEvent.click(clearDate);
+    expect(base.onDateFilterChange).toHaveBeenCalledWith('');
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'assembly' } });
+    expect(base.onSearchChange).toHaveBeenCalledWith('assembly');
     expect(mocks.exportProps).toMatchObject({
       events: base.events,
       'data-action-id': 'calendar.page.events.export',
@@ -157,7 +175,9 @@ describe('calendar header and page', () => {
       viewMode: 'month',
       events: base.filteredEvents,
       allEvents: base.events,
-      listQueryScope: { query: 'budget' },
     });
+    rerender(<CalendarPageView {...base} isLoading={false} dateFilter="" />);
+    expect(mocks.viewProps.listQueryScope).toBeUndefined();
+    expect(mocks.viewProps.events).toBe(base.filteredEvents);
   });
 });

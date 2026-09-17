@@ -16,7 +16,11 @@ vi.mock('@/features/events/logic/icalExport', () => ({
   downloadICalFile: calendar.downloadICalFile,
 }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string) => key,
   useTranslation: () => ({ t: (key: string) => key }),
+}));
+vi.mock('@/features/shared/ui/preview/WorkspacePreview', () => ({
+  PreviewButton: ({ href }: { href: string }) => <button data-href={href}>Preview</button>,
 }));
 vi.mock('@/features/shared/ui/calendar', () => ({
   CalendarExportButton: (props: Record<string, any>) => {
@@ -115,6 +119,31 @@ beforeEach(() => {
 });
 
 describe('event calendar component contracts', () => {
+  it('opens compact rows using the existing event action and previews the base event', () => {
+    const onEventSelect = vi.fn();
+    const occurrence = { ...ordinary, id: 'event-1_rrule_2' };
+    render(
+      <CalendarViewContainer
+        viewMode="compact"
+        selectedDate={new Date(ordinary.start_date)}
+        events={[occurrence, meeting]}
+        allEvents={[occurrence, meeting]}
+        onDateSelect={vi.fn()}
+        onEventSelect={onEventSelect}
+      />
+    );
+    const row = screen.getByRole('button', { name: /Assembly/ });
+    row.focus();
+    fireEvent.click(row);
+    expect(onEventSelect).toHaveBeenCalledWith(occurrence);
+    expect(document.activeElement).toBe(row);
+    expect(screen.getAllByText('Civic Lab · Berlin')).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Preview' })).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Preview' }).getAttribute('data-href')).toBe(
+      '/event/event-1'
+    );
+    expect(screen.getAllByText(/Office hours/)).toHaveLength(1);
+  });
   it('normalizes calendar events into an iCal download only when export is requested', () => {
     const fallback = {
       ...ordinary,

@@ -20,6 +20,7 @@ export interface CalendarHeaderProps<TView extends string = CalendarHeaderView> 
   onNext: () => void;
   onToday: () => void;
   actions?: ReactNode;
+  search?: ReactNode;
   title?: ReactNode;
   headingMode?: CalendarHeadingMode;
   todayLabel?: string;
@@ -46,6 +47,7 @@ export function CalendarHeader<TView extends string = CalendarHeaderView>({
   onNext,
   onToday,
   actions,
+  search,
   title,
   headingMode = 'visible',
   todayLabel,
@@ -69,6 +71,7 @@ export function CalendarHeader<TView extends string = CalendarHeaderView>({
       onNext={onNext}
       onToday={onToday}
       actions={actions}
+      search={search}
       title={title}
       headingMode={headingMode}
       resolvedViews={resolvedViews}

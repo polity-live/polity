@@ -1,4 +1,9 @@
 'use client';
+
+import { useState } from 'react';
+import { useCollectionPresentation } from '@/features/shared/ui/collections/CollectionScope';
+import { EntityListRow } from '@/features/shared/ui/collections/EntityListRow';
+
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl, StatusBadge, type BadgeTone } from '@/features/shared/ui/status';
 import type { Value } from 'platejs';
@@ -293,6 +298,8 @@ export function ChangeRequestTimelineCardView({
   handleCastVote,
   isLocked,
 }: ChangeRequestTimelineCardViewProps) {
+  const compact = useCollectionPresentation()?.view === 'compact';
+  const [compactOpen, setCompactOpen] = useState(false);
   const cityDesignChangeRequest = getCityDesignChangeRequestFromCardItem(item, cr);
   const isObsolete =
     cr?.status === 'obsolete' ||
@@ -465,103 +472,148 @@ export function ChangeRequestTimelineCardView({
 
   return (
     <Collapsible
+      open={compact ? compactOpen : undefined}
+      onOpenChange={setCompactOpen}
       defaultOpen={
         isCurrent || item.is_closing_vote || voteStepKind === 'merge_variant' || isPlaceholder
       }
     >
       <Card
         className={cn(
-          'transition-all',
+          compact ? 'rounded-none border-0 shadow-none' : 'transition-all',
           isCurrent &&
             !isLocked &&
             featureThemeClassName('agendaChangeRequestTimelineCardInfoRing'),
           item.status === 'completed' && 'opacity-75'
         )}
       >
-        <CollapsibleTrigger
-          data-action-id="agendas.change-request.details.toggle"
-          data-action-kind="selection"
-          className="w-full"
-        >
-          <CardHeader className="flex flex-col items-stretch gap-3 space-y-0 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
-            <div
-              className="w-full min-w-0 flex-1 sm:w-auto sm:pr-3"
-              data-slot="change-request-summary"
-            >
-              <ChangeRequestSummaryItem
-                identifier={summaryIdentifier}
-                title={title}
-                status={item.status}
-                changeType={
-                  item.is_closing_vote
-                    ? 'final'
-                    : voteStepKind === 'merge_variant'
-                      ? 'variant'
-                      : diff?.changeType
-                }
-                selected={isCurrent && !isLocked}
-                variant="trigger"
-              />
-            </div>
-            <div
-              className="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:shrink-0 sm:flex-nowrap"
-              data-slot="change-request-statuses"
-            >
-              {hasUserVoted && !isPendingSubmission && (
-                <BadgeControl variant="outline" size="xs">
-                  {t('features.agendas.crTimeline.voted')}
-                </BadgeControl>
-              )}
-              {isLocked ? (
-                <BadgeControl variant="outline" size="xs" className="gap-1">
-                  <Lock className="h-3 w-3" />
-                  {t('features.agendas.crTimeline.locked', 'Locked')}
-                </BadgeControl>
-              ) : null}
-              {isPendingSubmission ? (
-                <BadgeControl variant="outline" size="xs">
-                  {t('features.agendas.crTimeline.pendingSubmission', 'Einreichung ausstehend')}
-                </BadgeControl>
-              ) : null}
-              {!isPendingSubmission && isInternal && (
-                <VotePhaseBadge
-                  phase="internal"
-                  labels={{
-                    internal: t('features.agendas.crTimeline.internalVote', 'Internal vote'),
-                  }}
-                />
-              )}
-              {!isPendingSubmission && !isInternal && !isInternalVotingMode && vote && (
-                <VotePhaseBadge
-                  phase={isIndicative ? 'indication' : isClosed ? 'closed' : 'final'}
-                  labels={
-                    isSubmittedChangeRequest
-                      ? {
-                          indication: t(
-                            'features.agendas.crTimeline.submittedVotePending',
-                            'Submitted - vote pending'
-                          ),
-                        }
-                      : isIndicative && editingMode === 'event_final_closing_vote'
-                        ? {
-                            indication: t('features.agendas.crTimeline.ready', 'Ready'),
-                          }
-                        : undefined
-                  }
-                />
-              )}
-              {!isPendingSubmission &&
-                getStatusBadge(
-                  item.status,
-                  isCurrent && !isLocked,
-                  t,
-                  resolvedVoteResult,
-                  (item as Record<string, unknown>)._originalStatus as string | undefined
+        {compact ? (
+          <EntityListRow
+            type="change_request"
+            typeLabel={t('features.changeRequests.title', 'Change requests')}
+            title={`${summaryIdentifier} · ${title}`}
+            summary={diff?.justification ?? placeholderDescription}
+            metadata={getStatusBadge(
+              item.status,
+              isCurrent && !isLocked,
+              t,
+              resolvedVoteResult,
+              isObsolete ? 'obsolete' : undefined
+            )}
+            onOpen={() => setCompactOpen(value => !value)}
+            actions={
+              <>
+                {canOpenVoteDialogFromAgendaDetails && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={votingLoading || isVoteActionBlocked}
+                    onClick={handleOpenVoteDialog}
+                    data-action-id="collection.change-request.vote-dialog.open"
+                    data-action-kind="selection"
+                  >
+                    {startIndicativeActionLabel}
+                  </Button>
                 )}
-              <ChevronDown className="text-muted-foreground h-4 w-4 transition-transform [[data-state=open]_&]:rotate-180" />
-            </div>
-          </CardHeader>
-        </CollapsibleTrigger>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t('common.workspace.details')}
+                  aria-expanded={compactOpen}
+                  onClick={() => setCompactOpen(value => !value)}
+                  data-action-id="collection.change-request.details"
+                >
+                  <ChevronDown className="size-4" />
+                </Button>
+              </>
+            }
+          />
+        ) : (
+          <CollapsibleTrigger
+            data-action-id="agendas.change-request.details.toggle"
+            data-action-kind="selection"
+            className="w-full"
+          >
+            <CardHeader className="flex flex-col items-stretch gap-3 space-y-0 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
+              <div
+                className="w-full min-w-0 flex-1 sm:w-auto sm:pr-3"
+                data-slot="change-request-summary"
+              >
+                <ChangeRequestSummaryItem
+                  identifier={summaryIdentifier}
+                  title={title}
+                  status={item.status}
+                  changeType={
+                    item.is_closing_vote
+                      ? 'final'
+                      : voteStepKind === 'merge_variant'
+                        ? 'variant'
+                        : diff?.changeType
+                  }
+                  selected={isCurrent && !isLocked}
+                  variant="trigger"
+                />
+              </div>
+              <div
+                className="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:shrink-0 sm:flex-nowrap"
+                data-slot="change-request-statuses"
+              >
+                {hasUserVoted && !isPendingSubmission && (
+                  <BadgeControl variant="outline" size="xs">
+                    {t('features.agendas.crTimeline.voted')}
+                  </BadgeControl>
+                )}
+                {isLocked ? (
+                  <BadgeControl variant="outline" size="xs" className="gap-1">
+                    <Lock className="h-3 w-3" />
+                    {t('features.agendas.crTimeline.locked', 'Locked')}
+                  </BadgeControl>
+                ) : null}
+                {isPendingSubmission ? (
+                  <BadgeControl variant="outline" size="xs">
+                    {t('features.agendas.crTimeline.pendingSubmission', 'Einreichung ausstehend')}
+                  </BadgeControl>
+                ) : null}
+                {!isPendingSubmission && isInternal && (
+                  <VotePhaseBadge
+                    phase="internal"
+                    labels={{
+                      internal: t('features.agendas.crTimeline.internalVote', 'Internal vote'),
+                    }}
+                  />
+                )}
+                {!isPendingSubmission && !isInternal && !isInternalVotingMode && vote && (
+                  <VotePhaseBadge
+                    phase={isIndicative ? 'indication' : isClosed ? 'closed' : 'final'}
+                    labels={
+                      isSubmittedChangeRequest
+                        ? {
+                            indication: t(
+                              'features.agendas.crTimeline.submittedVotePending',
+                              'Submitted - vote pending'
+                            ),
+                          }
+                        : isIndicative && editingMode === 'event_final_closing_vote'
+                          ? {
+                              indication: t('features.agendas.crTimeline.ready', 'Ready'),
+                            }
+                          : undefined
+                    }
+                  />
+                )}
+                {!isPendingSubmission &&
+                  getStatusBadge(
+                    item.status,
+                    isCurrent && !isLocked,
+                    t,
+                    resolvedVoteResult,
+                    (item as Record<string, unknown>)._originalStatus as string | undefined
+                  )}
+                <ChevronDown className="text-muted-foreground h-4 w-4 transition-transform [[data-state=open]_&]:rotate-180" />
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+        )}
 
         <CollapsibleContent>
           <CardContent className="space-y-4 pt-0">

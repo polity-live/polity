@@ -1,3 +1,4 @@
+import { useCollectionPresentation } from '@/features/shared/ui/collections/CollectionScope';
 import { useCallback, useEffect, useRef, type ReactNode, type RefObject } from 'react';
 
 import { usePolityZeroList, usePolityZeroWindowList } from './usePolityZeroList';
@@ -35,10 +36,18 @@ export function PolityZeroListView<TRow, TStart, TContext>({
   windowScroll = false,
   ...props
 }: PolityZeroListViewProps<TRow, TStart, TContext>) {
+  const collection = useCollectionPresentation();
+  const presentationProps = collection
+    ? {
+        ...props,
+        estimateSize: collection.view === 'compact' ? 76 : props.estimateSize,
+        historyKey: `${props.historyKey}:${collection.view}`,
+      }
+    : props;
   return windowScroll ? (
-    <PolityZeroWindowListContent {...props} windowScroll />
+    <PolityZeroWindowListContent {...presentationProps} windowScroll />
   ) : (
-    <PolityZeroContainedListContent {...props} />
+    <PolityZeroContainedListContent {...presentationProps} />
   );
 }
 

@@ -1,5 +1,13 @@
 import { useHistoryScrollState } from '@rocicorp/zero-virtual/react';
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { usePolityZeroGrid } from '@/features/shared/virtualization';
@@ -40,12 +48,14 @@ function getRowKey(document: SearchDocument) {
 }
 
 interface UseVirtualSearchGridControllerOptions {
+  compact?: boolean;
   context: SearchListContext;
   permalinkID?: string | null;
   onTotalChange?: (total: number | null) => void;
 }
 
 export function useVirtualSearchGridController({
+  compact = false,
   context,
   permalinkID,
   onTotalChange,
@@ -55,7 +65,9 @@ export function useVirtualSearchGridController({
   const [hasNewResults, setHasNewResults] = useState(false);
   const isAwayFromTopRef = useRef(false);
   const previousHeadKeyRef = useRef<string | null>(null);
-  const [scrollState, setScrollState] = useHistoryScrollState<SearchStart>('search-grid');
+  const [scrollState, setScrollState] = useHistoryScrollState<SearchStart>(
+    compact ? 'search-compact' : 'search-grid'
+  );
 
   useEffect(() => {
     const element = parentRef.current;
@@ -104,7 +116,8 @@ export function useVirtualSearchGridController({
     };
   }, []);
 
-  const lanes = getSearchGridLanes(width);
+  const lanes = compact ? 1 : getSearchGridLanes(width);
+  const rowHeight = compact ? 84 : SEARCH_CARD_HEIGHT;
   const columnWidth = Math.max(0, (width - SEARCH_GRID_GAP * (lanes - 1)) / lanes);
 
   const listContextParams = useStableSearchListContext(context);
@@ -148,7 +161,7 @@ export function useVirtualSearchGridController({
   const { virtualizer, rowAt, complete, rowsEmpty, total } = usePolityZeroGrid<SearchDocument>({
     listContextParams,
     getScrollElement: useCallback(() => parentRef.current, []),
-    estimateSize: useCallback(() => SEARCH_CARD_HEIGHT + SEARCH_GRID_GAP, []),
+    estimateSize: useCallback(() => rowHeight + SEARCH_GRID_GAP, [rowHeight]),
     overscan: 2,
     minPageSize: 18,
     maxPageSize: 48,
@@ -163,6 +176,22 @@ export function useVirtualSearchGridController({
     onScrollStateChange: setScrollState,
     settleTime: 750,
   });
+
+  const layoutInitialized = useRef(false);
+  const layoutAnchor = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    if (layoutInitialized.current) {
+      virtualizer.measure();
+      if (layoutAnchor.current !== null)
+        virtualizer.scrollToIndex(layoutAnchor.current, { align: 'start' });
+    }
+    layoutInitialized.current = true;
+    return () => {
+      const offset = parentRef.current?.scrollTop ?? 0;
+      layoutAnchor.current =
+        virtualizer.getVirtualItems().find(item => item.end > offset)?.index ?? null;
+    };
+  }, [compact, lanes]);
 
   const virtualItems = virtualizer.getVirtualItems();
   const headKey = rowAt(0)?.id ?? null;
@@ -227,6 +256,8 @@ export function useVirtualSearchGridController({
   );
 
   return {
+    compact,
+    rowHeight,
     parentRef,
     cells,
     totalHeight: virtualizer.getTotalSize(),

@@ -99,6 +99,8 @@ export const eventsTranslations = {
     amendmentDetails: 'Antragskontext',
     viewAmendment: 'Antrag öffnen',
     speakerListDescription: 'Wähle eine Person, um ihr Profil zu öffnen.',
+    speakerSearchPlaceholder: 'Redner suchen...',
+    speakerSearchEmpty: 'Keine passenden Redner',
     speakerListEmpty: 'Noch keine Redner',
     speakerCount: '{{count}} Redner',
     speakerCount_one: '{{count}} Redner',

@@ -1,6 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ComponentProps,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTypeaheadSearch } from '@/features/shared/hooks/useTypeaheadSearch';
 import {
   addUniqueTypeaheadValue,
@@ -14,6 +22,10 @@ import {
 import { TypeaheadSearchBaseView } from './TypeaheadSearchBaseView';
 
 interface TypeaheadSearchBaseProps {
+  inputAttributes?: Pick<
+    ComponentProps<'input'>,
+    'id' | 'aria-describedby' | 'aria-invalid' | 'aria-label'
+  >;
   entityTypes?: EntityType[];
   onInteract?: () => void;
   placeholder?: string;
@@ -365,6 +377,7 @@ export function TypeaheadSearchBaseContainer(props: TypeaheadSearchBaseComponent
 
   return (
     <TypeaheadSearchBaseView
+      inputAttributes={props.inputAttributes}
       className={className}
       containerRef={containerRef}
       disablePortal={disablePortal}

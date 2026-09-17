@@ -7,6 +7,7 @@ import type { CreateFormStep } from '../types/create-form.types';
 import { CreateProgressIndicator } from './CreateProgressIndicator';
 import { CreateSubmitInvalidNotice } from './CreateSubmitInvalidNotice';
 import { CreateStepRenderer } from './CreateStepRenderer';
+import { focusCreateSection } from '../logic/createFormFocus';
 
 interface CarouselFormLayoutViewProps {
   steps: CreateFormStep[];
@@ -51,7 +52,7 @@ export function CarouselFormLayoutView({
   onStepClick,
 }: CarouselFormLayoutViewProps) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
+    <div data-create-layout-root className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="shrink-0">
         <CreateProgressIndicator
           className="-mx-4 sm:-mx-5 lg:-mx-6"
@@ -66,7 +67,13 @@ export function CarouselFormLayoutView({
       <div ref={emblaRef} className="min-h-0 flex-1 overflow-hidden py-4">
         <div className="flex h-full">
           {steps.map((step: any, index: number) => (
-            <div key={index} data-create-section className="min-h-0 min-w-0 flex-[0_0_100%] px-1">
+            <div
+              key={index}
+              inert={index !== currentStep}
+              aria-hidden={index !== currentStep || undefined}
+              data-create-section
+              className="min-h-0 min-w-0 flex-[0_0_100%] px-1"
+            >
               <div className="h-full overflow-y-auto pr-1">
                 <CreateStepRenderer step={step} />
               </div>
@@ -105,8 +112,21 @@ export function CarouselFormLayoutView({
               data-action-id="create.carousel.submit"
               type="button"
               size="sm"
-              onClick={onSubmit}
-              disabled={isSubmitting || !currentStepValid}
+              onClick={event => {
+                const invalidIndex = steps.findIndex(step => !step.isValid());
+                if (!currentStepValid || invalidIndex >= 0) {
+                  const index = invalidIndex >= 0 ? invalidIndex : currentStep;
+                  onStepClick(index);
+                  focusCreateSection(
+                    event.currentTarget.closest('[data-create-flow]') ??
+                      event.currentTarget.closest('[data-create-layout-root]'),
+                    index
+                  );
+                  return;
+                }
+                void onSubmit();
+              }}
+              disabled={isSubmitting}
               data-create-action="submit"
             >
               {isSubmitting ? labels.creating : labels.createButton}
@@ -116,8 +136,17 @@ export function CarouselFormLayoutView({
               data-action-id="create.carousel.next"
               type="button"
               size="sm"
-              onClick={onScrollNext}
-              disabled={!canScrollNext || !currentStepValid}
+              onClick={event => {
+                if (!currentStepValid) {
+                  focusCreateSection(
+                    event.currentTarget.closest<HTMLElement>('[data-create-flow]'),
+                    currentStep
+                  );
+                  return;
+                }
+                onScrollNext();
+              }}
+              disabled={isSubmitting || (!canScrollNext && currentStepValid)}
               data-create-action="next-step"
             >
               {labels.next}

@@ -1,5 +1,7 @@
 'use client';
 
+import { FavoriteButton } from '@/features/shared/ui/navigation/FavoriteButton';
+
 import { getEntityGradientClasses, getMotionPreset } from '@/features/shared/theme';
 import { BadgeControl, VisibilityBadge, getEditingModeOption } from '@/features/shared/ui/status';
 import { normalizeRouteVisibility } from '@/features/auth/logic/routeVisibilityAccess';
@@ -266,13 +268,20 @@ export function AmendmentWikiView({
   return (
     <>
       {/* Header with centered title and subtitle */}
-      <div className="mb-4 text-center md:mb-8">
-        <div className="mb-2 flex min-w-0 flex-col items-center justify-center gap-1 md:flex-row md:gap-3">
-          <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{amendment.title}</h1>
-          <VisibilityBadge value={amendmentVisibility} data-entity-visibility={amendmentVisibility}>
-            {t(`common.visibility.${amendmentVisibility}`)}
-          </VisibilityBadge>
-          <EditingModeBadge mode={primaryBranchMode} showIcon />
+      <div className="mb-8 text-center">
+        <div className="mb-2 flex min-w-0 flex-col items-center justify-center gap-2 md:flex-row md:gap-3">
+          <h1 className="max-w-full min-w-0 font-sans text-2xl font-semibold break-words sm:text-3xl">
+            {amendment.title}
+          </h1>
+          <div className="flex max-w-full flex-wrap items-center justify-center gap-2 md:contents">
+            <VisibilityBadge
+              value={amendmentVisibility}
+              data-entity-visibility={amendmentVisibility}
+            >
+              {t(`common.visibility.${amendmentVisibility}`)}
+            </VisibilityBadge>
+            <EditingModeBadge mode={primaryBranchMode} showIcon />
+          </div>
         </div>
         {amendment.amendment_hashtags && amendment.amendment_hashtags.length > 0 ? (
           <div className="mt-3 md:hidden">
@@ -284,11 +293,11 @@ export function AmendmentWikiView({
           </div>
         ) : null}
         {amendment.preamble && (
-          <p className="text-muted-foreground text-xl">{amendment.preamble}</p>
+          <p className="text-muted-foreground mx-auto max-w-3xl text-base">{amendment.preamble}</p>
         )}
 
         {/* Target Collaborator, Target Group and Cloned From Section */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-6">
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
           {targetCollaborator && (
             <div className="flex items-center gap-3">
               <Avatar className="border-background h-10 w-10 border-2">
@@ -342,24 +351,6 @@ export function AmendmentWikiView({
         </div>
       </div>
 
-      <EntityWikiMedia
-        imageUrl={amendment.image_url}
-        videoUrl={amendment.video_url}
-        alt={amendment.title ?? ''}
-      />
-
-      {/* Amendment Video */}
-      {amendment.youtube && (
-        <div className="mb-8">
-          <iframe
-            src={amendment.youtube}
-            title={amendment.title ?? ''}
-            className="mx-auto aspect-video w-full max-w-4xl rounded-lg shadow-lg"
-            allowFullScreen
-          />
-        </div>
-      )}
-
       {/* Stats Bar */}
       <StatsBar
         items={[
@@ -395,7 +386,16 @@ export function AmendmentWikiView({
       />
 
       {/* Action Bar */}
+      <AmendmentWorkflowPhaseRail mode={primaryBranchMode} t={t} />
+
       <ActionBar>
+        <FavoriteButton
+          favorite={{
+            kind: 'amendment',
+            href: `/amendment/${amendmentId}`,
+            title: amendment.title || t('common.entities.amendment'),
+          }}
+        />
         {user ? (
           <>
             <SubscribeButton
@@ -465,6 +465,24 @@ export function AmendmentWikiView({
         />
       </ActionBar>
 
+      <EntityWikiMedia
+        imageUrl={amendment.image_url}
+        videoUrl={amendment.video_url}
+        alt={amendment.title ?? ''}
+      />
+
+      {/* Amendment Video */}
+      {amendment.youtube && (
+        <div className="mb-8">
+          <iframe
+            src={amendment.youtube}
+            title={amendment.title ?? ''}
+            className="mx-auto aspect-video w-full max-w-4xl rounded-lg shadow-lg"
+            allowFullScreen
+          />
+        </div>
+      )}
+
       {/* Hashtags */}
       {amendment.amendment_hashtags && amendment.amendment_hashtags.length > 0 && (
         <div className="mb-6 hidden md:block">
@@ -497,8 +515,6 @@ export function AmendmentWikiView({
         }}
         className="mb-8"
       />
-
-      <AmendmentWorkflowPhaseRail mode={primaryBranchMode} t={t} />
 
       <WikiParticipationDirectory
         title={translateText('generated.inline.0020_collaborators_6eb695e5', 'Collaborators')}

@@ -1,3 +1,5 @@
+import { PreviewButton } from '@/features/shared/ui/preview/WorkspacePreview';
+import { handleWorkspaceListKeyDown } from '@/features/shared/ui/preview/list-keyboard';
 import type { MouseEvent } from 'react';
 import {
   featureThemeClassName,
@@ -349,7 +351,7 @@ export function NotificationItem({
 
   const cardContent = (
     <CardContent className="flex items-start gap-3 p-3">
-      <div className={cn('mt-0.5 rounded-md border p-1.5', iconTone.surface)}>
+      <div className={cn('mt-0.5 p-1.5', iconTone.surface)}>
         <Icon className="h-3.5 w-3.5" />
       </div>
 
@@ -390,7 +392,10 @@ export function NotificationItem({
             {showRecipientBadge && hasEntityContext && (recipientEntity || onBehalfEntity) ? (
               <BadgeControl
                 variant="outline"
-                className={cn('w-fit max-w-full truncate', entityColors?.badgeBg)}
+                className={cn(
+                  'w-fit max-w-full truncate border-0 bg-transparent px-0',
+                  entityColors?.badgeBg
+                )}
               >
                 <Users className="mr-1 h-3 w-3 shrink-0" />
                 <span className="truncate">
@@ -406,17 +411,20 @@ export function NotificationItem({
               shape="rounded"
               textStyle="mono"
               textTransform="uppercase"
-              className="font-bold tracking-wide shadow-sm"
+              className="border-0 bg-transparent font-medium shadow-none"
             >
               {t('features.notifications.item.new')}
             </BadgeControl>
           ) : null}
         </div>
 
-        <p className="text-muted-foreground text-sm">{message}</p>
+        <p className="text-muted-foreground line-clamp-2 text-sm">{message}</p>
         <div className="flex items-center justify-between gap-3">
           <p className="text-muted-foreground text-xs">{formatTime(notification.created_at)}</p>
           <div className="flex items-center gap-1">
+            {notificationHref && mode !== 'trash' ? (
+              <PreviewButton href={notificationHref} className="h-7 w-7" />
+            ) : null}
             {mode !== 'trash' && (onToggleRead || (!isRead && onMarkAsRead)) ? (
               <Button
                 data-action-id="notifications.item.toggle.read-state"
@@ -539,13 +547,15 @@ export function NotificationItem({
   );
 
   const cardClassName = cn(
-    'bg-card border-border/70 cursor-pointer rounded-md shadow-[var(--shadow-panel)] transition-shadow hover:shadow-md'
+    'bg-transparent cursor-pointer rounded-none border-0 border-b border-border/60 shadow-none transition-colors hover:bg-muted/40'
   );
 
   if (notificationHref) {
     return (
       <Card
+        data-workspace-row
         data-slot="notification-card"
+        onKeyDown={handleWorkspaceListKeyDown}
         data-mode={mode}
         data-tutorial-anchor={
           isTutorialNotification ? 'tutorial-membership-notification' : undefined
@@ -554,6 +564,7 @@ export function NotificationItem({
       >
         <LinkSurface
           data-action-id="notifications.item.open.linked"
+          data-workspace-open
           href={notificationHref}
           mode="overlay"
           label={notification.title ?? t('common.entities.notification')}
@@ -574,8 +585,23 @@ export function NotificationItem({
 
   return (
     <Card
+      data-workspace-row
+      data-workspace-open
+      role="button"
+      tabIndex={0}
       data-action-id="notifications.item.open.unlinked"
       data-slot="notification-card"
+      onKeyDown={event => {
+        handleWorkspaceListKeyDown(event);
+        if (
+          !event.defaultPrevented &&
+          event.target === event.currentTarget &&
+          (event.key === 'Enter' || event.key === ' ')
+        ) {
+          event.preventDefault();
+          void onNotificationClick(notification);
+        }
+      }}
       data-mode={mode}
       data-tutorial-anchor={isTutorialNotification ? 'tutorial-membership-notification' : undefined}
       className={cardClassName}

@@ -164,7 +164,13 @@ export function useSearchPage() {
     totalResultsState.contextKey === resultsContextKey ? totalResultsState.total : null;
   const setTotalResults = useCallback(
     (total: number | null) => {
-      setTotalResultsState({ contextKey: resultsContextKey, total });
+      // A virtual list can report its count again after a layout update. Keep
+      // identical reports idempotent instead of feeding another parent render.
+      setTotalResultsState(current =>
+        current.contextKey === resultsContextKey && current.total === total
+          ? current
+          : { contextKey: resultsContextKey, total }
+      );
     },
     [resultsContextKey]
   );

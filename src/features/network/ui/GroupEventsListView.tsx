@@ -1,9 +1,15 @@
+import {
+  CollectionScope,
+  CollectionControls,
+} from '@/features/shared/ui/collections/CollectionScope';
+import { SearchField } from '@/features/shared/ui/form/SearchField';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { EventSearchCard } from '@/features/search/ui/EventSearchCard';
 import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import type { EventByGroupRow } from '../hooks/useGroupEventsListController';
 import { PolityZeroListView } from '@/features/shared/virtualization';
 import { queries } from '@/zero/queries';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 interface GroupEventsListViewProps {
   groupId: string;
@@ -17,7 +23,7 @@ interface GroupEventsListViewProps {
   onEventClick?: (eventId: string, eventData: EventByGroupRow) => void;
 }
 
-export function GroupEventsListView({
+function GroupEventsListViewContent({
   groupId,
   groupName,
   eventsLoading: _eventsLoading,
@@ -25,6 +31,8 @@ export function GroupEventsListView({
   labels,
   onEventClick,
 }: GroupEventsListViewProps) {
+  const [query, setQuery] = useState('');
+  const { t } = useTranslation();
   void _eventsLoading;
   void _futureEvents;
   const now = useMemo(() => Date.now(), [groupId]);
@@ -33,51 +41,68 @@ export function GroupEventsListView({
       groupId,
       from: now,
       to: null,
-      query: '',
+      query,
       order: 'ascending' as const,
       creatorId: undefined,
     }),
-    [groupId, now]
+    [groupId, now, query]
   );
 
   return (
-    <PolityZeroListView<EventByGroupRow, { id: string; start_date?: number }, typeof context>
-      context={context}
-      historyKey={`network-group-${groupId}-events`}
-      getPageQuery={useCallback(
-        ({ limit, start, dir, settled }) => ({
-          query: queries.events.calendarPage({ ...context, limit, start, dir }) as never,
-          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
-        }),
-        [context]
-      )}
-      getSingleQuery={useCallback(
-        ({ id, settled }) => ({
-          query: queries.events.byId({ id }) as never,
-          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
-        }),
-        []
-      )}
-      getRowKey={event => event.id}
-      toStartRow={event => ({ id: event.id, start_date: event.start_date ?? undefined })}
-      estimateSize={220}
-      className="max-h-[40rem] min-h-64 overflow-auto"
-      renderRow={event => (
-        <EventSearchCard
-          event={event}
-          groupName={groupName}
-          groupId={groupId}
-          onSelect={onEventClick ? () => onEventClick(event.id, event) : undefined}
+    <>
+      <CollectionControls>
+        <SearchField
+          value={query}
+          onValueChange={setQuery}
+          placeholder={t('features.calendar.search.placeholder')}
         />
-      )}
-      renderSkeleton={() => (
-        <SectionSkeleton rows={1} density="compact" label={labels.loadingEvents} />
-      )}
-      renderEmpty={() => (
-        <div className="text-muted-foreground py-4 text-center text-sm">
-          {labels.noUpcomingEvents}
-        </div>
-      )}
-    />
+      </CollectionControls>
+      <PolityZeroListView<EventByGroupRow, { id: string; start_date?: number }, typeof context>
+        context={context}
+        historyKey={`network-group-${groupId}-events`}
+        getPageQuery={useCallback(
+          ({ limit, start, dir, settled }) => ({
+            query: queries.events.calendarPage({ ...context, limit, start, dir }) as never,
+            options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+          }),
+          [context]
+        )}
+        getSingleQuery={useCallback(
+          ({ id, settled }) => ({
+            query: queries.events.byId({ id }) as never,
+            options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+          }),
+          []
+        )}
+        getRowKey={event => event.id}
+        toStartRow={event => ({ id: event.id, start_date: event.start_date ?? undefined })}
+        estimateSize={220}
+        className="max-h-[40rem] min-h-64 overflow-auto"
+        renderRow={event => (
+          <EventSearchCard
+            event={event}
+            groupName={groupName}
+            groupId={groupId}
+            onSelect={onEventClick ? () => onEventClick(event.id, event) : undefined}
+          />
+        )}
+        renderSkeleton={() => (
+          <SectionSkeleton rows={1} density="compact" label={labels.loadingEvents} />
+        )}
+        renderEmpty={() => (
+          <div className="text-muted-foreground py-4 text-center text-sm">
+            {labels.noUpcomingEvents}
+          </div>
+        )}
+      />
+    </>
+  );
+}
+
+export function GroupEventsListView(props: GroupEventsListViewProps) {
+  return (
+    <CollectionScope area="network.events">
+      <GroupEventsListViewContent {...props} />
+    </CollectionScope>
   );
 }

@@ -10,23 +10,27 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   setSelectedDate: vi.fn(),
   useCalendarData: vi.fn(),
+  initialView: vi.fn(),
 }));
 
 vi.mock('../useCalendarData', () => ({
   useCalendarData: mocks.useCalendarData,
 }));
 vi.mock('@/features/events/hooks/useCalendarView', () => ({
-  useCalendarView: () => ({
-    viewMode: 'week',
-    setViewMode: vi.fn(),
-    selectedDate: new Date(0),
-    setSelectedDate: mocks.setSelectedDate,
-    currentViewTitle: 'Week',
-    goToPrevious: vi.fn(),
-    goToNext: vi.fn(),
-    goToToday: vi.fn(),
-    filterEventsForRange: (events: unknown[]) => events,
-  }),
+  useCalendarView: (view: string) => {
+    mocks.initialView(view);
+    return {
+      viewMode: 'week',
+      setViewMode: vi.fn(),
+      selectedDate: new Date(0),
+      setSelectedDate: mocks.setSelectedDate,
+      currentViewTitle: 'Week',
+      goToPrevious: vi.fn(),
+      goToNext: vi.fn(),
+      goToToday: vi.fn(),
+      filterEventsForRange: (events: unknown[]) => events,
+    };
+  },
 }));
 vi.mock('@/features/events/hooks/useCalendarEventFilter', () => ({
   useCalendarEventFilter: (events: unknown[]) => ({
@@ -47,6 +51,10 @@ vi.mock('@tanstack/react-router', () => ({
 import { useCalendarPage } from '../useCalendarPage';
 
 describe('useCalendarPage tutorial alignment', () => {
+  it('opens the personal calendar in list view by default', () => {
+    renderHook(() => useCalendarPage());
+    expect(mocks.initialView).toHaveBeenCalledWith('list');
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.events.length = 0;

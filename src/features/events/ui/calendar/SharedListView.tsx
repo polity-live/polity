@@ -1,3 +1,4 @@
+import { EntityListRow } from '@/features/shared/ui/collections/EntityListRow';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { CalendarEvent } from '@/features/events/hooks/useCalendarView';
 import { getBaseEventId } from '@/features/calendar/logic/eventIdUtils';
@@ -8,8 +9,10 @@ import { PolityZeroListView } from '@/features/shared/virtualization';
 import { queries } from '@/zero/queries';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import type { CSSProperties } from 'react';
+import { PreviewButton } from '@/features/shared/ui/preview/WorkspacePreview';
 
 interface SharedListViewProps {
+  compact?: boolean;
   events: CalendarEvent[];
   selectedDate: Date;
   onEventSelect: (event: CalendarEvent) => void;
@@ -53,14 +56,33 @@ function toMeetupEvent(event: CalendarEvent) {
 }
 
 export function SharedListView({
+  compact = false,
   events,
   selectedDate,
   onEventSelect,
   queryScope,
 }: SharedListViewProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const renderCalendarEvent = (event: CalendarEvent) => {
+    if (compact) {
+      return (
+        <EntityListRow
+          type="event"
+          title={event.title}
+          summary={[event.groupName, event.location].filter(Boolean).join(' · ')}
+          metadata={new Intl.DateTimeFormat(language, {
+            hour: '2-digit',
+            minute: '2-digit',
+          }).format(event.start_date)}
+          onOpen={() => onEventSelect(event)}
+          actionId="calendar.compact.event.open"
+          actions={
+            !event.isMeeting ? <PreviewButton href={`/event/${getBaseEventId(event.id)}`} /> : null
+          }
+        />
+      );
+    }
     const content = event.isMeeting ? (
       <MeetupTimelineCard meetup={toMeetupEvent(event)} onSelect={() => onEventSelect(event)} />
     ) : (
@@ -84,8 +106,8 @@ export function SharedListView({
     return (
       <PolityZeroListView<any, { start_date: number; id: string }, typeof context>
         context={context}
-        historyKey={`calendar-list-${queryScope.groupId ?? queryScope.creatorId ?? 'all'}`}
-        estimateSize={300}
+        historyKey={`calendar-${compact ? 'compact' : 'list'}-${queryScope.groupId ?? queryScope.creatorId ?? 'all'}`}
+        estimateSize={compact ? 96 : 300}
         getRowKey={event => event.id}
         toStartRow={event => ({ start_date: event.start_date, id: event.id })}
         getPageQuery={({ limit, start, dir, settled }) => ({
@@ -107,7 +129,10 @@ export function SharedListView({
             .filter(event => getBaseEventId(event.id) === row.id)
             .sort((left, right) => left.start_date - right.start_date);
           return (
-            <section className="space-y-3 pb-5" data-calendar-base-event={row.id}>
+            <section
+              className={compact ? 'pb-2' : 'space-y-3 pb-5'}
+              data-calendar-base-event={row.id}
+            >
               {(rowEvents.length > 0 ? rowEvents : [row as CalendarEvent]).map(event => (
                 <div key={event.id} className="space-y-2">
                   <h3 className="text-muted-foreground text-sm font-semibold">
@@ -128,7 +153,9 @@ export function SharedListView({
             </section>
           );
         }}
-        renderSkeleton={() => <Skeleton className="h-64 w-full rounded-xl" />}
+        renderSkeleton={() => (
+          <Skeleton className={compact ? 'h-16 w-full rounded' : 'h-64 w-full rounded-xl'} />
+        )}
         renderEmpty={() => (
           <p className="text-muted-foreground py-12 text-center">
             {t('features.calendar.dayView.noEvents')}

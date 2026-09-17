@@ -1,3 +1,4 @@
+import { CollectionScope } from '@/features/shared/ui/collections/CollectionScope';
 import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -17,7 +18,7 @@ export interface GroupAmendmentsPageViewProps {
   setShowFilters: any;
 }
 
-export function GroupAmendmentsPageView({
+function GroupAmendmentsPageViewContent({
   groupId,
   t,
   canCreate,
@@ -65,5 +66,13 @@ export function GroupAmendmentsPageView({
         />
       </div>
     </>
+  );
+}
+
+export function GroupAmendmentsPageView(props: GroupAmendmentsPageViewProps) {
+  return (
+    <CollectionScope area="group.amendments">
+      <GroupAmendmentsPageViewContent {...props} />
+    </CollectionScope>
   );
 }

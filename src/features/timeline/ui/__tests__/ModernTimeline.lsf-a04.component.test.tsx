@@ -18,3 +18,14 @@ describe('ModernTimeline LSF wrapper', () => {
     expect(element.props.virtualizeTimeline).toBe(true);
   });
 });
+
+vi.mock('@/zero/preferences/useWorkspacePreferences', () => ({
+  useWorkspacePreferences: () => ({
+    display: {},
+    setDisplay: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
+vi.mock('@/features/shared/hooks/use-translation', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));

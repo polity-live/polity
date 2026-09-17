@@ -1,4 +1,5 @@
-import { useRef, type ReactNode } from 'react';
+import { useCollectionPresentation } from '@/features/shared/ui/collections/CollectionScope';
+import { useLayoutEffect, useRef, type ReactNode } from 'react';
 
 import { usePolityLocalVirtualizer } from './usePolityLocalVirtualizer';
 
@@ -17,11 +18,12 @@ export function PolityLocalListView<T>({
   items,
   getItemKey,
   renderItem,
-  estimateSize,
+  estimateSize: cardEstimate,
   gap = 8,
   overscan = 6,
   className = 'h-[36rem] min-h-64 overflow-auto',
 }: PolityLocalListViewProps<T>) {
+  const estimateSize = useCollectionPresentation()?.view === 'compact' ? 76 : cardEstimate;
   const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = usePolityLocalVirtualizer({
     count: items.length,
@@ -31,6 +33,19 @@ export function PolityLocalListView<T>({
     overscan,
     initialRect: { width: 640, height: 576 },
   });
+  const anchor = useRef<number | null>(null);
+  const layoutInitialized = useRef(false);
+  useLayoutEffect(() => {
+    if (layoutInitialized.current) virtualizer.measure();
+    layoutInitialized.current = true;
+    if (anchor.current !== null)
+      virtualizer.scrollToIndex(Math.floor(anchor.current / 1), { align: 'start' });
+    return () => {
+      const offset = parentRef.current?.scrollTop ?? 0;
+      const visible = virtualizer.getVirtualItems().find(item => item.end > offset);
+      anchor.current = visible ? visible.index * 1 : null;
+    };
+  }, [estimateSize]);
   const measuredItems = virtualizer.getVirtualItems();
   const virtualItems =
     measuredItems.length > 0

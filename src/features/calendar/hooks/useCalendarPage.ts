@@ -23,7 +23,7 @@ export function useCalendarPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { events, isLoading } = useCalendarData();
-  const calendar = useCalendarView('week');
+  const calendar = useCalendarView('list');
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const groupItems = useMemo<TypeaheadItem[]>(() => {
     const uniqueGroups = new Map<string, CalendarGroupOption>();

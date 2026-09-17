@@ -1,5 +1,10 @@
 'use client';
 
+import {
+  CollectionScope,
+  CollectionToggle,
+} from '@/features/shared/ui/collections/CollectionScope';
+
 import type { CSSProperties } from 'react';
 
 import { featureThemeClassName } from '@/features/shared/theme';
@@ -1379,205 +1384,212 @@ export function EventAgendaView({
           </Card>
         </Collapsible>
 
-        {/* Search and Filters */}
-        <AgendaSurface className="space-y-4 p-4 sm:p-5">
-          <AgendaSectionHeading
-            eyebrow={t('features.events.agenda.title', 'Agenda')}
-            title={t('features.events.agenda.itemsCount', { count: filteredAgendaItems.length })}
-          />
+        <CollectionScope area="agenda">
+          {/* Search and Filters */}
+          <AgendaSurface className="space-y-4 p-4 sm:p-5">
+            <AgendaSectionHeading
+              eyebrow={t('features.events.agenda.title', 'Agenda')}
+              title={t('features.events.agenda.itemsCount', { count: filteredAgendaItems.length })}
+            />
 
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-              <FormControlInput
-                placeholder={t('features.events.agenda.searchPlaceholder')}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button
-              data-action-id="agendas.event-agenda.filters.toggle"
-              variant={showFilters ? 'secondary' : 'outline'}
-              size="icon"
-              onClick={() => setShowFilters(!showFilters)}
-              aria-expanded={showFilters}
-              aria-label={t('features.events.agenda.filters')}
-            >
-              <Filter className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {showFilters && (
-            <Card className="bg-background/45 shadow-none">
-              <CardHeader className="px-4 pt-4 pb-3">
-                <CardTitle>{t('features.events.agenda.filters')}</CardTitle>
-                <CardDescription>{t('features.events.agenda.filtersDescription')}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <FormControlLabel htmlFor="type-filter">
-                      {t('features.events.agenda.type')}
-                    </FormControlLabel>
-                    <FormControlSelect
-                      data-action-scope="presentation"
-                      value={typeFilter}
-                      onValueChange={setTypeFilter}
-                    >
-                      <FormControlSelectTrigger
-                        id="type-filter"
-                        data-action-id="agendas.event-agenda.filters.type.open"
-                        data-action-kind="interaction"
-                      >
-                        <FormControlSelectValue />
-                      </FormControlSelectTrigger>
-                      <FormControlSelectContent>
-                        <FormControlSelectItem
-                          value="all"
-                          data-action-id="agendas.event-agenda.filters.type.all"
-                          data-action-kind="selection"
-                        >
-                          {t('features.events.agenda.allTypes')}
-                        </FormControlSelectItem>
-                        <FormControlSelectItem
-                          value="election"
-                          data-action-id="agendas.event-agenda.filters.type.election"
-                          data-action-kind="selection"
-                        >
-                          {t('features.events.agenda.typeElection')}
-                        </FormControlSelectItem>
-                        <FormControlSelectItem
-                          value="vote"
-                          data-action-id="agendas.event-agenda.filters.type.vote"
-                          data-action-kind="selection"
-                        >
-                          {t('features.events.agenda.typeVote')}
-                        </FormControlSelectItem>
-                        <FormControlSelectItem
-                          value="speech"
-                          data-action-id="agendas.event-agenda.filters.type.speech"
-                          data-action-kind="selection"
-                        >
-                          {t('features.events.agenda.typeSpeech')}
-                        </FormControlSelectItem>
-                        <FormControlSelectItem
-                          value="discussion"
-                          data-action-id="agendas.event-agenda.filters.type.discussion"
-                          data-action-kind="selection"
-                        >
-                          {t('features.events.agenda.typeDiscussion')}
-                        </FormControlSelectItem>
-                      </FormControlSelectContent>
-                    </FormControlSelect>
-                  </div>
-
-                  <div className="space-y-2">
-                    <FormControlLabel htmlFor="status-filter">
-                      {t('features.events.agenda.statusLabel')}
-                    </FormControlLabel>
-                    <FormControlSelect
-                      data-action-scope="presentation"
-                      value={statusFilter}
-                      onValueChange={setStatusFilter}
-                    >
-                      <FormControlSelectTrigger
-                        id="status-filter"
-                        data-action-id="agendas.event-agenda.filters.status.open"
-                        data-action-kind="interaction"
-                      >
-                        <FormControlSelectValue />
-                      </FormControlSelectTrigger>
-                      <FormControlSelectContent>
-                        <FormControlSelectItem
-                          value="all"
-                          data-action-id="agendas.event-agenda.filters.status.all"
-                          data-action-kind="selection"
-                        >
-                          {t('features.events.agenda.allStatus')}
-                        </FormControlSelectItem>
-                        <FormControlSelectItem
-                          value="pending"
-                          data-action-id="agendas.event-agenda.filters.status.pending"
-                          data-action-kind="selection"
-                        >
-                          {t('features.events.agenda.statusPending')}
-                        </FormControlSelectItem>
-                        <FormControlSelectItem
-                          value="in-progress"
-                          data-action-id="agendas.event-agenda.filters.status.in-progress"
-                          data-action-kind="selection"
-                        >
-                          {t('features.events.agenda.statusInProgress')}
-                        </FormControlSelectItem>
-                        <FormControlSelectItem
-                          value="completed"
-                          data-action-id="agendas.event-agenda.filters.status.completed"
-                          data-action-kind="selection"
-                        >
-                          {t('features.events.agenda.statusCompleted')}
-                        </FormControlSelectItem>
-                        <FormControlSelectItem
-                          value="planned"
-                          data-action-id="agendas.event-agenda.filters.status.planned"
-                          data-action-kind="selection"
-                        >
-                          {t('features.events.agenda.statusPlanned')}
-                        </FormControlSelectItem>
-                      </FormControlSelectContent>
-                    </FormControlSelect>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </AgendaSurface>
-
-        {/* Agenda Items List */}
-        {filteredAgendaItems.length === 0 ? (
-          <Card>
-            <CardContent align="center" className="p-8">
-              <Calendar className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-              <h3 className="mb-2 text-lg font-semibold">{t('features.events.agenda.noItems')}</h3>
-              <p className="text-muted-foreground mb-4">
-                {t('features.events.agenda.noItemsDescription')}
-              </p>
-              <Button asChild data-action-scope="presentation">
-                <Link
-                  to="/create/agenda-item"
-                  search={{ eventId }}
-                  data-action-id="agendas.event-agenda.item.create-first"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('features.events.agenda.createFirstItem')}
-                </Link>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                <FormControlInput
+                  placeholder={t('features.events.agenda.searchPlaceholder')}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <CollectionToggle />
+              <Button
+                data-action-id="agendas.event-agenda.filters.toggle"
+                variant={showFilters ? 'secondary' : 'outline'}
+                size="icon"
+                onClick={() => setShowFilters(!showFilters)}
+                aria-expanded={showFilters}
+                aria-label={t('features.events.agenda.filters')}
+              >
+                <Filter className="h-4 w-4" />
               </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {confirmedAgendaItems.length > 0 ? renderAgendaItemsList(confirmedAgendaItems) : null}
+            </div>
 
-            {scheduledButUnconfirmedAgendaItems.length > 0 ? (
-              <Card borderStyle="dashed" className="min-w-0 overflow-hidden">
-                <CardHeader className="p-4 sm:p-6">
-                  <CardTitle className="text-xl leading-tight sm:text-2xl">
-                    {t('features.events.agenda.scheduledButUnconfirmedTitle')}
-                  </CardTitle>
-                  <CardDescription className="leading-relaxed">
-                    {t('features.events.agenda.scheduledButUnconfirmedDescription')}
+            {showFilters && (
+              <Card className="bg-background/45 shadow-none">
+                <CardHeader className="px-4 pt-4 pb-3">
+                  <CardTitle>{t('features.events.agenda.filters')}</CardTitle>
+                  <CardDescription>
+                    {t('features.events.agenda.filtersDescription')}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-                  {renderAgendaItemsList(
-                    scheduledButUnconfirmedAgendaItems,
-                    confirmedAgendaItems.length
-                  )}
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <FormControlLabel htmlFor="type-filter">
+                        {t('features.events.agenda.type')}
+                      </FormControlLabel>
+                      <FormControlSelect
+                        data-action-scope="presentation"
+                        value={typeFilter}
+                        onValueChange={setTypeFilter}
+                      >
+                        <FormControlSelectTrigger
+                          id="type-filter"
+                          data-action-id="agendas.event-agenda.filters.type.open"
+                          data-action-kind="interaction"
+                        >
+                          <FormControlSelectValue />
+                        </FormControlSelectTrigger>
+                        <FormControlSelectContent>
+                          <FormControlSelectItem
+                            value="all"
+                            data-action-id="agendas.event-agenda.filters.type.all"
+                            data-action-kind="selection"
+                          >
+                            {t('features.events.agenda.allTypes')}
+                          </FormControlSelectItem>
+                          <FormControlSelectItem
+                            value="election"
+                            data-action-id="agendas.event-agenda.filters.type.election"
+                            data-action-kind="selection"
+                          >
+                            {t('features.events.agenda.typeElection')}
+                          </FormControlSelectItem>
+                          <FormControlSelectItem
+                            value="vote"
+                            data-action-id="agendas.event-agenda.filters.type.vote"
+                            data-action-kind="selection"
+                          >
+                            {t('features.events.agenda.typeVote')}
+                          </FormControlSelectItem>
+                          <FormControlSelectItem
+                            value="speech"
+                            data-action-id="agendas.event-agenda.filters.type.speech"
+                            data-action-kind="selection"
+                          >
+                            {t('features.events.agenda.typeSpeech')}
+                          </FormControlSelectItem>
+                          <FormControlSelectItem
+                            value="discussion"
+                            data-action-id="agendas.event-agenda.filters.type.discussion"
+                            data-action-kind="selection"
+                          >
+                            {t('features.events.agenda.typeDiscussion')}
+                          </FormControlSelectItem>
+                        </FormControlSelectContent>
+                      </FormControlSelect>
+                    </div>
+
+                    <div className="space-y-2">
+                      <FormControlLabel htmlFor="status-filter">
+                        {t('features.events.agenda.statusLabel')}
+                      </FormControlLabel>
+                      <FormControlSelect
+                        data-action-scope="presentation"
+                        value={statusFilter}
+                        onValueChange={setStatusFilter}
+                      >
+                        <FormControlSelectTrigger
+                          id="status-filter"
+                          data-action-id="agendas.event-agenda.filters.status.open"
+                          data-action-kind="interaction"
+                        >
+                          <FormControlSelectValue />
+                        </FormControlSelectTrigger>
+                        <FormControlSelectContent>
+                          <FormControlSelectItem
+                            value="all"
+                            data-action-id="agendas.event-agenda.filters.status.all"
+                            data-action-kind="selection"
+                          >
+                            {t('features.events.agenda.allStatus')}
+                          </FormControlSelectItem>
+                          <FormControlSelectItem
+                            value="pending"
+                            data-action-id="agendas.event-agenda.filters.status.pending"
+                            data-action-kind="selection"
+                          >
+                            {t('features.events.agenda.statusPending')}
+                          </FormControlSelectItem>
+                          <FormControlSelectItem
+                            value="in-progress"
+                            data-action-id="agendas.event-agenda.filters.status.in-progress"
+                            data-action-kind="selection"
+                          >
+                            {t('features.events.agenda.statusInProgress')}
+                          </FormControlSelectItem>
+                          <FormControlSelectItem
+                            value="completed"
+                            data-action-id="agendas.event-agenda.filters.status.completed"
+                            data-action-kind="selection"
+                          >
+                            {t('features.events.agenda.statusCompleted')}
+                          </FormControlSelectItem>
+                          <FormControlSelectItem
+                            value="planned"
+                            data-action-id="agendas.event-agenda.filters.status.planned"
+                            data-action-kind="selection"
+                          >
+                            {t('features.events.agenda.statusPlanned')}
+                          </FormControlSelectItem>
+                        </FormControlSelectContent>
+                      </FormControlSelect>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            ) : null}
-          </div>
-        )}
+            )}
+          </AgendaSurface>
+
+          {/* Agenda Items List */}
+          {filteredAgendaItems.length === 0 ? (
+            <Card>
+              <CardContent align="center" className="p-8">
+                <Calendar className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+                <h3 className="mb-2 text-lg font-semibold">
+                  {t('features.events.agenda.noItems')}
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  {t('features.events.agenda.noItemsDescription')}
+                </p>
+                <Button asChild data-action-scope="presentation">
+                  <Link
+                    to="/create/agenda-item"
+                    search={{ eventId }}
+                    data-action-id="agendas.event-agenda.item.create-first"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    {t('features.events.agenda.createFirstItem')}
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {confirmedAgendaItems.length > 0 ? renderAgendaItemsList(confirmedAgendaItems) : null}
+
+              {scheduledButUnconfirmedAgendaItems.length > 0 ? (
+                <Card borderStyle="dashed" className="min-w-0 overflow-hidden">
+                  <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-xl leading-tight sm:text-2xl">
+                      {t('features.events.agenda.scheduledButUnconfirmedTitle')}
+                    </CardTitle>
+                    <CardDescription className="leading-relaxed">
+                      {t('features.events.agenda.scheduledButUnconfirmedDescription')}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+                    {renderAgendaItemsList(
+                      scheduledButUnconfirmedAgendaItems,
+                      confirmedAgendaItems.length
+                    )}
+                  </CardContent>
+                </Card>
+              ) : null}
+            </div>
+          )}
+        </CollectionScope>
 
         <VoteCastDialog
           open={actionBarHook.voteDialogOpen}

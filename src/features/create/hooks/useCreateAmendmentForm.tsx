@@ -433,9 +433,8 @@ export function useCreateAmendmentForm(): CreateFormConfig {
 
       context?.setRecoveryTarget(amendmentTarget);
       context?.reportProgress({ key: 'create', status: 'complete' });
-      context?.reportProgress({ key: 'sync', status: 'complete' });
-      context?.reportProgress({ key: 'ready', status: 'active' });
-      trackCreateFinalization({
+      context?.reportProgress({ key: 'sync', status: 'active' });
+      await trackCreateFinalization({
         result: createAmendmentResult,
         draft: {
           id: `amendment:${amendmentId}`,
@@ -511,6 +510,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         },
       });
       setIsSubmitting(false);
+      context?.reportProgress({ key: 'ready', status: 'active' });
       return createSuccessSubmitOutcome(amendmentTarget);
     } catch (error) {
       suppressSearchSyncRef.current = false;
@@ -548,6 +548,13 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               placeholder: t('pages.create.amendment.titlePlaceholder'),
             },
             {
+              key: 'visibility',
+              alwaysVisible: true,
+              kind: 'customComponent',
+              component: VisibilityInput,
+              props: { value: visibility, onChange: setVisibility },
+            },
+            {
               key: 'subtitle',
               kind: 'text',
               label: t('pages.create.amendment.subtitleOptional'),
@@ -558,6 +565,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
             },
             {
               key: 'media',
+              supplementary: true,
               kind: 'customComponent',
               component: MediaUpload,
               props: {
@@ -584,6 +592,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           fields: [
             {
               key: 'target',
+              alwaysVisible: true,
               kind: 'customComponent',
               component: AmendmentTargetSelectionField,
               props: {
@@ -695,6 +704,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               fields: [
                 {
                   key: 'mode-buttons',
+                  alwaysVisible: true,
                   kind: 'customComponent',
                   component: AmendmentEvaluationModeInput,
                   props: {
@@ -785,12 +795,6 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           isValid: () => true,
           optional: true,
           fields: [
-            {
-              key: 'visibility',
-              kind: 'customComponent',
-              component: VisibilityInput,
-              props: { value: visibility, onChange: setVisibility },
-            },
             {
               key: 'hashtags',
               kind: 'customComponent',

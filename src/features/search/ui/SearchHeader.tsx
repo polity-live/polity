@@ -1,8 +1,10 @@
+import { CollectionViewToggle } from '@/features/shared/ui/collections/CollectionViewToggle';
+import { SaveSearchViewButton } from './SaveSearchViewButton';
 import { SearchField } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Kbd } from '@/features/shared/ui/ui/kbd';
 import { FilterButton } from '@/features/shared/ui/filter-controls';
-import { Filter, List, MapPinned } from 'lucide-react';
+import { Filter, MapPinned } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { SearchViewMode } from '../hooks/useSearchURL';
 import { commandDialogShortcut } from '@/features/navigation/nav-keyboard/keyboard-navigation';
@@ -40,7 +42,6 @@ export function SearchHeader({
 
   return (
     <>
-      <h1 className="sr-only">{t('features.search.title')}</h1>
       {/* Search Bar - Fixed/Sticky */}
       <div className="bg-background sticky top-0 z-10 mb-2 space-y-3 pt-2 pb-2">
         <div className="flex gap-2">
@@ -61,22 +62,11 @@ export function SearchHeader({
             }
             aria-keyshortcuts={commandDialogShortcutResolved?.ariaKeyShortcuts}
           />
-          <div
-            className="border-input bg-background inline-flex shrink-0 overflow-hidden rounded-md border"
-            role="group"
-            aria-label={t('features.search.viewToggle', { defaultValue: 'Search view' })}
+          <CollectionViewToggle
+            actionIds={{ cards: 'search.header.view.list', compact: 'search.header.view.compact' }}
+            value={view === 'list' ? 'cards' : view === 'compact' ? 'compact' : null}
+            onChange={next => onViewChange(next === 'cards' ? 'list' : 'compact')}
           >
-            <Button
-              data-action-id="search.header.view.list"
-              variant={view === 'list' ? 'secondary' : 'ghost'}
-              size="icon"
-              className="rounded-none border-0"
-              onClick={() => onViewChange('list')}
-              aria-label={t('features.search.listView', { defaultValue: 'List view' })}
-              aria-pressed={view === 'list'}
-            >
-              <List className="h-4 w-4" />
-            </Button>
             <Button
               data-action-id="search.header.view.spatial"
               variant={view === 'spatial' ? 'secondary' : 'ghost'}
@@ -88,7 +78,8 @@ export function SearchHeader({
             >
               <MapPinned className="h-4 w-4" />
             </Button>
-          </div>
+          </CollectionViewToggle>
+          <SaveSearchViewButton />
           <Button
             data-action-id="search.header.filters.toggle"
             variant="outline"

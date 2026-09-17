@@ -1,3 +1,5 @@
+import { useCollectionPresentation } from '@/features/shared/ui/collections/CollectionScope';
+import { EntityListRow } from '@/features/shared/ui/collections/EntityListRow';
 /**
  * Group Document Card Component
  *
@@ -36,7 +38,18 @@ function formatDate(timestamp: number | string | Date): string {
 }
 
 export function GroupDocumentCard({ document, href }: GroupDocumentCardProps) {
+  const compact = useCollectionPresentation()?.view === 'compact';
   const collaboratorCount = document.collaborators?.length || 0;
+  if (compact)
+    return (
+      <EntityListRow
+        type="document"
+        title={document.title ?? ''}
+        href={href}
+        summary={`${translateText('generated.inline.0413_updated_702cad2f')} ${formatDate(document.updated_at || document.created_at)}`}
+        metadata={`${collaboratorCount} ${translateText('generated.inline.0052_collaborator_722018f2')}`}
+      />
+    );
   const content = (
     <>
       <CardHeader>

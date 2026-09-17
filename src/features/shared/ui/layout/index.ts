@@ -25,6 +25,7 @@ export {
   type EntityPageShellStat,
 } from './EntityPageShell';
 export { ActionToolbar, PageHeader, PageShell, PanelGrid, Section } from './PageShell';
+export { WorkspaceHeader } from './WorkspaceHeader';
 export { StatsBar, StatsStrip, type StatsBarItem, type StatsBarProps } from './StatsBar';
 export { SubscriberStatsBar } from './SubscriberStatsBar';
 export {

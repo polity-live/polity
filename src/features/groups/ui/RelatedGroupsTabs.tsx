@@ -1,3 +1,8 @@
+import {
+  CollectionScope,
+  CollectionControls,
+  useCollectionPresentation,
+} from '@/features/shared/ui/collections/CollectionScope';
 import type { CSSProperties } from 'react';
 import { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
@@ -85,8 +90,9 @@ export const relatedGroupsTabsInternals = {
   buildRelatedItems,
 };
 
-export function RelatedGroupsTabs({ parentGroups, childGroups }: RelatedGroupsTabsProps) {
+function RelatedGroupsTabsContent({ parentGroups, childGroups }: RelatedGroupsTabsProps) {
   const { t } = useTranslation();
+  const compact = useCollectionPresentation()?.view === 'compact';
   const [activeTab, setActiveTab] = useState<RelatedGroupsTab>('all');
   const [searchValue, setSearchValue] = useState('');
 
@@ -120,7 +126,9 @@ export function RelatedGroupsTabs({ parentGroups, childGroups }: RelatedGroupsTa
     }
 
     return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div
+        className={compact ? 'space-y-0' : 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'}
+      >
         {items.map((item, index) => {
           const group = item.group;
 
@@ -166,15 +174,18 @@ export function RelatedGroupsTabs({ parentGroups, childGroups }: RelatedGroupsTa
           </TabsTrigger>
         </ScrollableTabsList>
 
-        <div className="relative mt-4">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <FormControlInput
-            placeholder={t('pages.group.relatedGroups.searchPlaceholder')}
-            className="pl-10"
-            value={searchValue}
-            onChange={event => setSearchValue(event.target.value)}
-          />
-        </div>
+        <CollectionControls>
+          {' '}
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <FormControlInput
+              placeholder={t('pages.group.relatedGroups.searchPlaceholder')}
+              className="pl-10"
+              value={searchValue}
+              onChange={event => setSearchValue(event.target.value)}
+            />
+          </div>
+        </CollectionControls>
 
         <TabsContent value="all" className="mt-4">
           {renderGroupGrid(visibleItemsByTab.all, 'all')}
@@ -187,5 +198,13 @@ export function RelatedGroupsTabs({ parentGroups, childGroups }: RelatedGroupsTa
         </TabsContent>
       </Tabs>
     </section>
+  );
+}
+
+export function RelatedGroupsTabs(props: RelatedGroupsTabsProps) {
+  return (
+    <CollectionScope area="group.related">
+      <RelatedGroupsTabsContent {...props} />
+    </CollectionScope>
   );
 }

@@ -22,6 +22,7 @@ interface PqlToolbarProps<TItem, TFieldKey extends string> {
   onCustomFilterSave: (filter: PqlFilter<TFieldKey>) => void;
   surface?: SurfaceMode;
   actions?: ReactNode;
+  compact?: boolean;
 }
 
 export function PqlToolbar<TItem, TFieldKey extends string>({
@@ -41,9 +42,11 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
   onCustomFilterSave,
   surface = 'auto',
   actions,
+  compact = false,
 }: PqlToolbarProps<TItem, TFieldKey>) {
   return (
     <PqlToolbarView
+      compact={compact}
       activeCustomFilterIds={activeCustomFilterIds}
       fields={fields}
       onCustomFilterDelete={onCustomFilterDelete}

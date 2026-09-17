@@ -132,6 +132,9 @@ describe('mutate-with-server-check', () => {
       'features/events/hooks/useEventMutations.ts',
       'features/notifications/hooks/useNotificationActions.ts',
       'features/todos/hooks/useTodoMutations.ts',
+      // Inline edits and favorites keep pending controls active until the server accepts them.
+      'features/todos/ui/CompactTodoRow.tsx',
+      'zero/preferences/useWorkspacePreferences.ts',
       'features/vote-cast/hooks/useVotePasswordConfirmation.ts',
       'features/vote-cast/ui/VoteCastDialog.tsx',
       'features/votes/hooks/useEventVoting.ts',

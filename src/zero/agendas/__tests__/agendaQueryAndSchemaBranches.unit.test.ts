@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createQueryHarness } from '../../__tests__/test-utils/zeroHarness';
+import { createQueryHarness, evaluatePredicate } from '../../__tests__/test-utils/zeroHarness';
 
 describe('agenda query and schema branches', () => {
   beforeEach(() => vi.resetModules());
@@ -31,6 +31,37 @@ describe('agenda query and schema branches', () => {
       'asc',
     ]);
     expect(harness.lastQuery('speaker_list').calls.some(call => call[0] === 'start')).toBe(false);
+
+    harness.reset();
+    agendaQueries.speakerPage.fn({
+      args: {
+        agendaItemId: 'agenda-1',
+        query: ' Ada Lovelace ',
+        limit: 10,
+        start: null,
+        dir: 'forward',
+      },
+      ctx: { userID: 'user-1', email: 'user@example.test' },
+    });
+    const filters = harness
+      .queriesFor('speaker_list.user')
+      .flatMap(q =>
+        q.calls.filter(call => call[0] === 'where').flatMap(call => evaluatePredicate(call[1]))
+      );
+    expect(filters).toEqual(
+      expect.arrayContaining([
+        ['cmp', 'first_name', 'ILIKE', '%Ada%'],
+        ['cmp', 'last_name', 'ILIKE', '%Lovelace%'],
+        ['cmp', 'handle', 'ILIKE', '%Ada%'],
+        ['cmp', 'email', 'ILIKE', '%Lovelace%'],
+      ])
+    );
+    expect(harness.lastQuery('speaker_list').calls).toContainEqual([
+      'whereExists',
+      'agenda_item',
+      expect.any(Array),
+    ]);
+    expect(harness.lastQuery('speaker_list').calls).toContainEqual(['limit', 10]);
 
     harness.reset();
     const cursor = { id: 'speaker-1', order_index: 1 };

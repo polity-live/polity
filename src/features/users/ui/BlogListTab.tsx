@@ -1,3 +1,6 @@
+import { CollectionToolbar } from '@/features/shared/ui/collections/CollectionToolbar';
+import { CollectionCard } from '@/features/shared/ui/collections/CollectionCard';
+import { useCollectionView } from '@/features/shared/ui/collections/useCollectionView';
 import { FormControlInput } from '@/features/shared/ui/form';
 import React, { useCallback, useMemo } from 'react';
 import { Search } from 'lucide-react';
@@ -24,25 +27,33 @@ export const BlogListTab: React.FC<BlogListTabProps> = ({
   onSearchChange,
 }) => {
   const { t } = useTranslation();
+  const { view, setView } = useCollectionView('profile.blogs');
 
   const context = useMemo(() => ({ userId, query: searchValue.trim() }), [searchValue, userId]);
 
   return (
     <>
-      <div className="relative mb-4">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-        <FormControlInput
-          placeholder={t('pages.user.blogs.searchPlaceholder')}
-          className="pl-10"
-          value={searchValue}
-          onChange={e => onSearchChange(e.target.value)}
-        />
-      </div>
+      <CollectionToolbar
+        view={view}
+        onViewChange={setView}
+        search={
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <FormControlInput
+              placeholder={t('pages.user.blogs.searchPlaceholder')}
+              className="pl-10"
+              value={searchValue}
+              onChange={e => onSearchChange(e.target.value)}
+            />
+          </div>
+        }
+      />
       <PolityZeroGridView<
         NonNullable<ProfileBloggerRelation['blog']>,
         { created_at: number; id: string },
         typeof context
       >
+        layoutKey={view}
         context={context}
         historyKey={`user-${userId}-blogs`}
         getPageQuery={useCallback(
@@ -61,16 +72,21 @@ export const BlogListTab: React.FC<BlogListTabProps> = ({
         )}
         getRowKey={blog => blog.id}
         toStartRow={blog => ({ created_at: blog.created_at, id: blog.id })}
-        getLanes={width => (width >= 1024 ? 3 : width >= 768 ? 2 : 1)}
-        estimateSize={360}
-        renderRow={(blog, index) => {
+        getLanes={width => (view === 'compact' ? 1 : width >= 1024 ? 3 : width >= 768 ? 2 : 1)}
+        estimateSize={view === 'compact' ? 76 : 360}
+        renderRow={blog => {
           const hashtags = (blog.blog_hashtags ?? [])
             .map(j => j.hashtag)
             .filter((h): h is NonNullable<typeof h> => !!h);
           return (
-            <div
-              className="civic-load-card-reveal"
-              style={{ '--civic-load-index': Math.min(index, 11) } as React.CSSProperties}
+            <CollectionCard
+              compact={view === 'compact'}
+              model={{
+                type: 'blog',
+                title: blog.title ?? '',
+                summary: blog.description ?? undefined,
+                href: `/blog/${blog.id}`,
+              }}
             >
               <BlogTimelineCard
                 blog={{
@@ -87,7 +103,7 @@ export const BlogListTab: React.FC<BlogListTabProps> = ({
                   publishedAt: blog.date ?? '',
                 }}
               />
-            </div>
+            </CollectionCard>
           );
         }}
         renderSkeleton={() => <Skeleton className="h-80 w-full rounded-xl" />}

@@ -237,8 +237,7 @@ export function useCreateTodoForm(): CreateFormConfig {
       }
 
       context?.reportProgress({ key: 'create', status: 'complete' });
-      context?.reportProgress({ key: 'sync', status: 'complete' });
-      context?.reportProgress({ key: 'ready', status: 'active' });
+      context?.reportProgress({ key: 'sync', status: 'active' });
 
       const target =
         returnSection === 'todos' && groupId
@@ -252,7 +251,7 @@ export function useCreateTodoForm(): CreateFormConfig {
               params: { id: createResult.todoId },
             });
 
-      trackCreateFinalization({
+      await trackCreateFinalization({
         result: createResult.mutationResult,
         draft: {
           id: `todo:${createResult.todoId}`,
@@ -277,9 +276,11 @@ export function useCreateTodoForm(): CreateFormConfig {
       });
 
       if (returnSection === 'todos' && groupId) {
+        context?.reportProgress({ key: 'ready', status: 'active' });
         return createSuccessSubmitOutcome(target);
       }
 
+      context?.reportProgress({ key: 'ready', status: 'active' });
       return createSuccessSubmitOutcome(target);
     } catch (error) {
       toast.error(t('pages.create.error.createFailed'));
@@ -315,6 +316,31 @@ export function useCreateTodoForm(): CreateFormConfig {
               placeholder: t('pages.create.todo.titlePlaceholder'),
             },
             {
+              key: 'group',
+              alwaysVisible: true,
+              kind: 'typeahead',
+              label: t('pages.create.common.group'),
+              hint: t('pages.create.todo.groupHint'),
+              props: {
+                entityTypes: ['group'],
+                value: groupId || undefined,
+                onChange: item => {
+                  handleGroupChange(item?.id ?? '', item?.label ?? '');
+                },
+                placeholder: t('pages.create.common.searchGroup'),
+                filterFn: item => memberGroupIds.has(item.id),
+              },
+            },
+            {
+              key: 'visibility',
+              alwaysVisible: true,
+              kind: 'customComponent',
+              component: groupId ? CreateInlineNotice : VisibilityInput,
+              props: groupId
+                ? { children: t('pages.create.todo.groupVisibilityHint') }
+                : { value: visibility, onChange: setVisibility },
+            },
+            {
               key: 'description',
               kind: 'text',
               multiline: true,
@@ -333,21 +359,6 @@ export function useCreateTodoForm(): CreateFormConfig {
           optional: true,
           fields: [
             {
-              key: 'group',
-              kind: 'typeahead',
-              label: t('pages.create.common.group'),
-              hint: t('pages.create.todo.groupHint'),
-              props: {
-                entityTypes: ['group'],
-                value: groupId || undefined,
-                onChange: item => {
-                  handleGroupChange(item?.id ?? '', item?.label ?? '');
-                },
-                placeholder: t('pages.create.common.searchGroup'),
-                filterFn: item => memberGroupIds.has(item.id),
-              },
-            },
-            {
               key: 'assignee',
               kind: 'customComponent',
               component: UserSearchInput,
@@ -365,6 +376,7 @@ export function useCreateTodoForm(): CreateFormConfig {
         },
         {
           label: t('pages.create.todo.priorityLabel'),
+          optional: true,
           isValid: () => true,
           fields: [
             {
@@ -398,14 +410,6 @@ export function useCreateTodoForm(): CreateFormConfig {
                   setDueTime(values.dueTime);
                 },
               },
-            },
-            {
-              key: 'visibility',
-              kind: 'customComponent',
-              component: groupId ? CreateInlineNotice : VisibilityInput,
-              props: groupId
-                ? { children: t('pages.create.todo.groupVisibilityHint') }
-                : { value: visibility, onChange: setVisibility },
             },
             {
               key: 'tags',

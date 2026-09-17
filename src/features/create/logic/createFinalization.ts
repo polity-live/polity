@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
 import type { MutationResultLike } from '@/zero/mutate-with-server-check';
-import { toMutationError } from '@/zero/mutate-with-server-check';
+import { serverConfirmed, toMutationError } from '@/zero/mutate-with-server-check';
 import { toAppError } from '@/features/shared/errors';
 import {
   trackMutationFinalization,
@@ -299,6 +299,11 @@ export function trackCreateFinalization({ result, draft, retry }: TrackCreateFin
         : undefined,
     }),
   });
+  // Callers in the create shell await this confirmation. Background recovery retries
+  // still receive the existing toasts and may intentionally ignore the promise.
+  const confirmation = serverConfirmed(result);
+  void confirmation.catch(() => undefined);
+  return confirmation;
 }
 
 export function openCreateRecoveryTarget(draft: CreateRecoveryDraft) {

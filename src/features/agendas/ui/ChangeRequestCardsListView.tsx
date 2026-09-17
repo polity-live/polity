@@ -1,5 +1,7 @@
 'use client';
 
+import { CollectionToggle } from '@/features/shared/ui/collections/CollectionScope';
+
 import { Fragment, type ReactNode } from 'react';
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl, getEditingModeOption } from '@/features/shared/ui/status';
@@ -720,17 +722,20 @@ export function ChangeRequestCardsListView({
         </div>
 
         {/* Search */}
-        {crItems.length + obsoleteCrItems.length > 1 && (
-          <div className="relative">
-            <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
-            <FormControlInput
-              placeholder={t('features.agendas.crTimeline.searchPlaceholder')}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="h-9 pl-9 text-sm"
-            />
+        {
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
+              <FormControlInput
+                placeholder={t('features.agendas.crTimeline.searchPlaceholder')}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="h-9 pl-9 text-sm"
+              />
+            </div>
+            <CollectionToggle />
           </div>
-        )}
+        }
       </CardHeader>
 
       <CardContent className={cn(isFrameless && 'p-0')}>

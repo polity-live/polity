@@ -1,7 +1,7 @@
 import type { EventForCalendarRow } from '@/zero/events/queries';
 
 export type CalendarView = 'day' | 'week' | 'month';
-export type CalendarViewMode = 'list' | 'week' | 'month';
+export type CalendarViewMode = 'list' | 'compact' | 'week' | 'month';
 
 export interface CalendarUser {
   id: string;

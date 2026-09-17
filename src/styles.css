@@ -5,6 +5,7 @@
 @import 'react-leaflet-cluster/dist/assets/MarkerCluster.css';
 @import 'react-leaflet-cluster/dist/assets/MarkerCluster.Default.css';
 @import './styles/animations.css';
+@import './styles/workspace.css';
 
 @plugin '@tailwindcss/typography';
 @plugin 'tailwind-scrollbar-hide';
