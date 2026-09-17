@@ -835,3 +835,5 @@ describe('EventWikiContentView', () => {
     expect(queryMocks.participantById).toHaveBeenCalledTimes(2);
   });
 });
+
+vi.mock('@/features/shared/ui/navigation/FavoriteButton', () => ({ FavoriteButton: () => null }));

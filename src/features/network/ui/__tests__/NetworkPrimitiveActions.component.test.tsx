@@ -62,7 +62,7 @@ vi.mock('@/zero/queries', () => ({
 
 vi.mock('@/features/search/ui/EventSearchCard', () => ({
   EventSearchCard: ({ event, onSelect }: any) => (
-    <button type="button" onClick={onSelect}>
+    <button type="button" data-testid="event-select" onClick={onSelect}>
       {event.id}
     </button>
   ),
@@ -160,7 +160,7 @@ describe('network primitive stable actions', () => {
       start_date: undefined,
     });
     render(list.renderRow(event));
-    fireEvent.click(document.querySelector('button')!);
+    fireEvent.click(document.querySelector('[data-testid="event-select"]')!);
     expect(onEventClick).toHaveBeenCalledWith('event-1', event);
     render(list.renderSkeleton());
     render(list.renderEmpty());

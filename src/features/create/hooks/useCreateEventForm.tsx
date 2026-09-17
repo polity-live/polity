@@ -577,8 +577,7 @@ export function useCreateEventForm(): CreateFormConfig {
       context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'active' });
 
-      context?.reportProgress({ key: 'sync', status: 'complete' });
-      context?.reportProgress({ key: 'ready', status: 'active' });
+      context?.reportProgress({ key: 'sync', status: 'active' });
       const recoveryFormState: CreateEventRestoreState = {
         eventType,
         meetingType,
@@ -627,7 +626,7 @@ export function useCreateEventForm(): CreateFormConfig {
           searchParams.returnTo,
           t('pages.create.event.targetLabel')
         );
-        trackCreateFinalization({
+        await trackCreateFinalization({
           result: createEventResult,
           draft: {
             id: `event:${eventId}`,
@@ -640,6 +639,7 @@ export function useCreateEventForm(): CreateFormConfig {
           },
         });
         setIsSubmitting(false);
+        context?.reportProgress({ key: 'ready', status: 'active' });
         return createSuccessSubmitOutcome(target);
       }
 
@@ -647,7 +647,7 @@ export function useCreateEventForm(): CreateFormConfig {
         to: '/event/$id',
         params: { id: eventId },
       });
-      trackCreateFinalization({
+      await trackCreateFinalization({
         result: createEventResult,
         draft: {
           id: `event:${eventId}`,
@@ -660,6 +660,7 @@ export function useCreateEventForm(): CreateFormConfig {
         },
       });
       setIsSubmitting(false);
+      context?.reportProgress({ key: 'ready', status: 'active' });
       return createSuccessSubmitOutcome(target);
     } catch (error) {
       setIsSubmitting(false);
@@ -709,6 +710,7 @@ export function useCreateEventForm(): CreateFormConfig {
             },
             {
               key: 'media',
+              supplementary: true,
               kind: 'customComponent',
               component: MediaUpload,
               props: {
@@ -784,6 +786,7 @@ export function useCreateEventForm(): CreateFormConfig {
           fields: [
             {
               key: 'group',
+              alwaysVisible: true,
               kind: 'typeahead',
               label: t('pages.create.event.associatedGroupLabel'),
               hint: t('pages.create.event.tips.group'),

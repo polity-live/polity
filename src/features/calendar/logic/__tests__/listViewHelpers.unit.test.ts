@@ -13,6 +13,7 @@ describe('listViewHelpers', () => {
     const rangeFilter = vi.fn((values: number[]) => values.slice(0, 1));
 
     expect(getCalendarEventsForView('list', [1, 2, 3], rangeFilter)).toEqual([1, 2, 3]);
+    expect(getCalendarEventsForView('compact', [1, 2, 3], rangeFilter)).toEqual([1, 2, 3]);
     expect(rangeFilter).not.toHaveBeenCalled();
   });
 

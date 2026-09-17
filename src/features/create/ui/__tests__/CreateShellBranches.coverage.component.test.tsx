@@ -65,7 +65,7 @@ describe('remaining create shell branches', () => {
     );
 
     expect(queryByText('Plain')).toBeTruthy();
-    expect(getByTestId('create-flow-frame').className).toContain('max-w-6xl');
+    expect(getByTestId('create-flow-frame').className).toContain('max-w-3xl');
 
     rerender(
       <CreateFlowFrame
@@ -77,8 +77,8 @@ describe('remaining create shell branches', () => {
         content
       </CreateFlowFrame>
     );
-    expect(getByTestId('page-header')).toBeTruthy();
-    expect(getByTestId('create-flow-frame').className).toContain('max-w-5xl');
+    expect(queryByText('Aligned')).toBeTruthy();
+    expect(getByTestId('create-flow-frame').className).toContain('max-w-4xl');
   });
 
   it('handles zero progress without a click callback', () => {

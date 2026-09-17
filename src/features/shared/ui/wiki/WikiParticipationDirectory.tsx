@@ -1,3 +1,6 @@
+import { CollectionToolbar } from '@/features/shared/ui/collections/CollectionToolbar';
+import { useCollectionView } from '@/features/shared/ui/collections/useCollectionView';
+import { EntityListRow } from '@/features/shared/ui/collections/EntityListRow';
 import type { CSSProperties, ReactNode } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
@@ -175,6 +178,15 @@ export function WikiParticipationDirectory({
   virtualSource,
   className,
 }: WikiParticipationDirectoryProps) {
+  const { view, setView } = useCollectionView(
+    entityType === 'event'
+      ? 'directory.event'
+      : entityType === 'amendment'
+        ? 'directory.amendment'
+        : entityType === 'blog'
+          ? 'directory.blog'
+          : 'directory.group'
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const entityTone = getEntityToneClasses(entityType);
@@ -229,6 +241,19 @@ export function WikiParticipationDirectory({
   );
 
   const renderDirectoryItem = (item: WikiParticipationItem, index: number) => {
+    if (view === 'compact')
+      return (
+        <EntityListRow
+          type="user"
+          title={item.name}
+          summary={item.handle ? `@${item.handle}` : item.email}
+          metadata={
+            [...(item.roles ?? []).map(role => role.name), ...(item.metadata ?? [])].join(' · ') ||
+            item.status
+          }
+          href={item.userId ? `/user/${item.userId}` : undefined}
+        />
+      );
     const loadIndex = Math.min(index + (leadingCard ? 1 : 0), 11);
     const card = (
       <Card interactive={item.userId ? 'lift' : 'default'} className="h-full">
@@ -294,12 +319,18 @@ export function WikiParticipationDirectory({
         {description ? <p className="text-muted-foreground mt-1 text-sm">{description}</p> : null}
       </div>
 
-      {items.length > 0 ? (
+      {items.length > 0 || virtualSource ? (
         <div className="space-y-3">
-          <EntitySearchBar
-            searchQuery={searchQuery}
-            onSearchQueryChange={setSearchQuery}
-            placeholder={searchPlaceholder}
+          <CollectionToolbar
+            view={view}
+            onViewChange={setView}
+            search={
+              <EntitySearchBar
+                searchQuery={searchQuery}
+                onSearchQueryChange={setSearchQuery}
+                placeholder={searchPlaceholder}
+              />
+            }
           />
           <ParticipationRoleFilterBar
             roles={filterRoles}
@@ -331,6 +362,7 @@ export function WikiParticipationDirectory({
           ) : null}
           {virtualSource ? (
             <PolityZeroGridView<any, WikiParticipationCursor, typeof virtualContext>
+              layoutKey={view}
               context={virtualContext}
               historyKey={virtualSource.historyKey}
               getPageQuery={getVirtualPageQuery}
@@ -340,8 +372,10 @@ export function WikiParticipationDirectory({
                 virtualSource.toStartRow ??
                 (row => ({ id: row.id, created_at: Number(row.created_at ?? 0) }))
               }
-              getLanes={width => (width >= 1024 ? 3 : width >= 640 ? 2 : 1)}
-              estimateSize={230}
+              getLanes={width =>
+                view === 'compact' ? 1 : width >= 1024 ? 3 : width >= 640 ? 2 : 1
+              }
+              estimateSize={view === 'compact' ? 76 : 230}
               renderRow={(row, index) => renderDirectoryItem(virtualSource.mapRow(row), index)}
               renderSkeleton={() => <Skeleton className="h-56 w-full rounded-xl" />}
               renderEmpty={() => (
@@ -352,7 +386,11 @@ export function WikiParticipationDirectory({
               viewportClassName="max-h-[48rem] min-h-64 overflow-auto"
             />
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div
+              className={
+                view === 'compact' ? 'space-y-0' : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3'
+              }
+            >
               {visibleItems.map(renderDirectoryItem)}
             </div>
           )}

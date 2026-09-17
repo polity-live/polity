@@ -1,3 +1,4 @@
+import { handleWorkspaceListKeyDown } from '@/features/shared/ui/preview/list-keyboard';
 import { useCallback, useMemo, type CSSProperties } from 'react';
 
 import { FeedStatePanel } from '@/features/shared/ui/feed';
@@ -74,70 +75,72 @@ function VirtualNotificationsList({
   );
 
   return (
-    <PolityZeroListView<NotificationPageRow, { created_at: number; id: string }, typeof context>
-      context={context}
-      historyKey={`notifications-${queryConfig.key}`}
-      estimateSize={176}
-      getRowKey={(notification: NotificationPageRow) => notification.id}
-      toStartRow={(notification: NotificationPageRow) => ({
-        created_at: notification.created_at,
-        id: notification.id,
-      })}
-      getPageQuery={useCallback(
-        ({ limit, start, dir, settled }) => ({
-          query: queries.notifications.page({ ...context, limit, start, dir }) as never,
-          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
-        }),
-        [context]
-      )}
-      getSingleQuery={useCallback(
-        ({ id, settled }) => ({
-          query: queries.notifications.byId({ id }) as never,
-          options: { ttl: settled ? ('5m' as const) : ('none' as const) },
-        }),
-        []
-      )}
-      permalinkID={queryConfig.permalinkID}
-      renderRow={(row, index) => {
-        const notification = row as Notification;
-        const visible =
-          context.tab === 'trash'
-            ? isNotificationDismissed(notification) && !isNotificationPurged(notification)
-            : isNotificationActive(notification) &&
-              (context.tab === 'unread'
-                ? !isNotificationRead(notification)
-                : context.tab === 'read'
-                  ? isNotificationRead(notification)
-                  : true);
-        if (!visible) return null;
-        return (
-          <div
-            data-slot="notification-list-item"
-            className="civic-load-card-reveal"
-            style={{ '--civic-load-index': Math.min(index, 11) } as CSSProperties}
-          >
-            <NotificationItem
-              notification={notification}
-              onNotificationClick={onNotificationClick}
-              onMarkAsRead={onMarkAsRead}
-              onToggleRead={onToggleRead}
-              onDeleteNotification={onDeleteNotification}
-              onRestoreNotification={onRestoreNotification}
-              onPurgeNotification={onPurgeNotification}
-              onDeleteForEveryone={onDeleteForEveryone}
-              canDeleteForEveryone={canDeleteForEveryone?.(notification) ?? false}
-              formatTime={formatTime}
-              mode={mode}
-              showRecipientBadge={showRecipientBadge}
-            />
-          </div>
-        );
-      }}
-      renderSkeleton={index => <Skeleton key={index} className="h-40 w-full rounded-xl" />}
-      renderEmpty={() => (
-        <FeedStatePanel icon={EmptyIcon} title={emptyTitle} description={emptyDescription} />
-      )}
-    />
+    <div data-workspace-list onKeyDown={handleWorkspaceListKeyDown}>
+      <PolityZeroListView<NotificationPageRow, { created_at: number; id: string }, typeof context>
+        context={context}
+        historyKey={`notifications-${queryConfig.key}`}
+        estimateSize={120}
+        getRowKey={(notification: NotificationPageRow) => notification.id}
+        toStartRow={(notification: NotificationPageRow) => ({
+          created_at: notification.created_at,
+          id: notification.id,
+        })}
+        getPageQuery={useCallback(
+          ({ limit, start, dir, settled }) => ({
+            query: queries.notifications.page({ ...context, limit, start, dir }) as never,
+            options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+          }),
+          [context]
+        )}
+        getSingleQuery={useCallback(
+          ({ id, settled }) => ({
+            query: queries.notifications.byId({ id }) as never,
+            options: { ttl: settled ? ('5m' as const) : ('none' as const) },
+          }),
+          []
+        )}
+        permalinkID={queryConfig.permalinkID}
+        renderRow={(row, index) => {
+          const notification = row as Notification;
+          const visible =
+            context.tab === 'trash'
+              ? isNotificationDismissed(notification) && !isNotificationPurged(notification)
+              : isNotificationActive(notification) &&
+                (context.tab === 'unread'
+                  ? !isNotificationRead(notification)
+                  : context.tab === 'read'
+                    ? isNotificationRead(notification)
+                    : true);
+          if (!visible) return null;
+          return (
+            <div
+              data-slot="notification-list-item"
+              className="civic-load-card-reveal"
+              style={{ '--civic-load-index': Math.min(index, 11) } as CSSProperties}
+            >
+              <NotificationItem
+                notification={notification}
+                onNotificationClick={onNotificationClick}
+                onMarkAsRead={onMarkAsRead}
+                onToggleRead={onToggleRead}
+                onDeleteNotification={onDeleteNotification}
+                onRestoreNotification={onRestoreNotification}
+                onPurgeNotification={onPurgeNotification}
+                onDeleteForEveryone={onDeleteForEveryone}
+                canDeleteForEveryone={canDeleteForEveryone?.(notification) ?? false}
+                formatTime={formatTime}
+                mode={mode}
+                showRecipientBadge={showRecipientBadge}
+              />
+            </div>
+          );
+        }}
+        renderSkeleton={index => <Skeleton key={index} className="h-28 w-full rounded-none" />}
+        renderEmpty={() => (
+          <FeedStatePanel icon={EmptyIcon} title={emptyTitle} description={emptyDescription} />
+        )}
+      />
+    </div>
   );
 }
 
@@ -190,7 +193,12 @@ export function NotificationsList({
   }
 
   return (
-    <div data-slot="feed-list" className="space-y-3">
+    <div
+      data-slot="feed-list"
+      data-workspace-list
+      onKeyDown={handleWorkspaceListKeyDown}
+      className="space-y-0"
+    >
       {notifications.map((notification, index) => (
         <div
           key={notification.id}

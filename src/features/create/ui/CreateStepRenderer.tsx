@@ -1,11 +1,12 @@
 import type { CreateFormStep } from '../types/create-form.types';
 interface CreateStepRendererProps {
   step: CreateFormStep;
+  compactOptional?: boolean;
 }
 import { useCreateStepRendererController } from './useCreateStepRendererController';
 import { CreateStepRendererView } from './CreateStepRendererView';
-export function CreateStepRenderer({ step }: CreateStepRendererProps) {
+export function CreateStepRenderer({ step, compactOptional }: CreateStepRendererProps) {
   const viewProps = useCreateStepRendererController({ step });
 
-  return <CreateStepRendererView {...viewProps} />;
+  return <CreateStepRendererView {...viewProps} compactOptional={compactOptional} />;
 }

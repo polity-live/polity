@@ -169,7 +169,11 @@ export function CreateSubmissionOverlay({
                     : t('pages.create.progress.submission.overlay.creating')}
               </p>
               <h2 id={titleId} className="mt-2 text-2xl leading-tight font-semibold sm:text-3xl">
-                {t('pages.create.progress.submission.overlay.title')}
+                {t(
+                  status === 'ready'
+                    ? 'common.workspace.created'
+                    : 'pages.create.progress.submission.overlay.title'
+                )}
               </h2>
               <p id={descriptionId} className="text-muted-foreground mt-2 text-sm leading-relaxed">
                 {status === 'error'

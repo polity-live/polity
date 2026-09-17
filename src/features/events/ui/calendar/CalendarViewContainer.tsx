@@ -24,9 +24,11 @@ export function CalendarViewContainer({
   onCreateEventRange,
   listQueryScope,
 }: CalendarViewContainerProps) {
-  if (viewMode === 'list') {
+  if (viewMode === 'list' || viewMode === 'compact') {
     return (
       <SharedListView
+        key={viewMode}
+        compact={viewMode === 'compact'}
         events={events}
         selectedDate={selectedDate}
         onEventSelect={onEventSelect}

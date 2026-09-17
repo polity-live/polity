@@ -173,6 +173,13 @@ export function VoteTimelineCard({ vote, href, className }: VoteTimelineCardProp
   return (
     <TimelineCardBase
       contentType="vote"
+      compactMetadata={[
+        t(`features.timeline.cards.voteStatus.${vote.status}`),
+        endDate?.toLocaleString(),
+        `${vote.supportCount} / ${vote.opposeCount}`,
+      ]
+        .filter(Boolean)
+        .join(' · ')}
       className={cn(
         statusConfig.pulse && featureThemeClassName('timelineVoteTimelineCardDangerRing'),
         className

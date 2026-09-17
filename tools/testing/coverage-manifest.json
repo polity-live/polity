@@ -350,6 +350,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": ".workspace-collections-files.json",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "CONVENTIONS.md",
       "domain": "platform",
       "owner": "polity/platform",
@@ -466,6 +476,26 @@
       "domain": "platform",
       "owner": "polity/platform",
       "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "docs/collection-views.md",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "documentation",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "docs/ux/workspace-ux-rollout.md",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "documentation",
       "verification": "static-contract",
       "coverageStatus": "not-instrumented",
       "testRefs": [],
@@ -20099,6 +20129,35 @@
       ]
     },
     {
+      "path": "src/features/create/logic/createFormFocus.ts",
+      "domain": "features:create",
+      "owner": "polity/features:create",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
+          "project": "component",
+          "caseId": "opens invalid optional sections and focuses their first editable invalid control"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/create/logic/__tests__/createAmendmentSearch.unit.test.ts",
+        "src/features/create/logic/__tests__/createEligibility.unit.test.ts",
+        "src/features/create/logic/__tests__/createEventSearch.unit.test.ts",
+        "src/features/create/logic/__tests__/createFinalization.branch-a09.component.test.tsx",
+        "src/features/create/logic/__tests__/createFinalization.component.test.tsx",
+        "src/features/create/logic/__tests__/createReviewPreview.coverage.component.test.tsx",
+        "src/features/create/logic/__tests__/createSearchParams.unit.test.ts",
+        "src/features/create/logic/__tests__/createSubmitProgress.unit.test.ts",
+        "src/features/create/logic/__tests__/createSubmitTargets.unit.test.ts",
+        "src/features/create/logic/__tests__/createVisibility.unit.test.ts",
+        "src/features/create/logic/__tests__/eligibleUsers.unit.test.ts",
+        "src/features/create/logic/__tests__/groupInviteCsv.unit.test.ts"
+      ]
+    },
+    {
       "path": "src/features/create/logic/createReviewPreview.tsx",
       "domain": "features:create",
       "owner": "polity/features:create",
@@ -20416,13 +20475,13 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx"
       ]
     },
     {
@@ -20451,14 +20510,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20487,14 +20546,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20523,14 +20582,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20559,14 +20618,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20596,13 +20655,13 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx"
       ]
     },
     {
@@ -20631,14 +20690,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20667,14 +20726,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20703,14 +20762,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20739,14 +20798,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20775,14 +20834,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20811,14 +20870,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20847,14 +20906,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20883,14 +20942,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20919,14 +20978,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20955,14 +21014,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -20976,7 +21035,7 @@
         {
           "file": "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
           "project": "component",
-          "caseId": "shows the carousel invalid reason as an alert beside a disabled submit button",
+          "caseId": "shows the carousel invalid reason as an alert beside an actionable submit button",
           "evidence": {
             "kind": "instrumented-full-suite",
             "relation": "transitive",
@@ -20991,14 +21050,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -21027,14 +21086,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -21063,14 +21122,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -21099,14 +21158,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -21135,14 +21194,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -21171,14 +21230,43 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/create/ui/CreateValidationContext.tsx",
+      "domain": "features:create",
+      "owner": "polity/features:create",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps visibility exposed and preserves optional inputs when details are closed"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/create/ui/__tests__/CreateDescriptorBranches.coverage.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -21207,14 +21295,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -21243,14 +21331,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -21279,14 +21367,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -21315,14 +21403,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -21357,6 +21445,16 @@
     },
     {
       "path": "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+      "domain": "features:create",
+      "owner": "polity/features:create",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
       "domain": "features:create",
       "owner": "polity/features:create",
       "kind": "test-infrastructure",
@@ -23394,14 +23492,14 @@
         "src/features/create/ui/__tests__/CreateFormLayoutSubmit.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFormShell.component.test.tsx",
         "src/features/create/ui/__tests__/CreateFoundationActions.component.test.tsx",
+        "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
         "src/features/create/ui/__tests__/CreateProgressIndicator.component.test.tsx",
         "src/features/create/ui/__tests__/CreateShellBranches.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateSimpleInputs.coverage.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRenderer.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererFieldsView.component.test.tsx",
         "src/features/create/ui/__tests__/CreateStepRendererView.coverage.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx",
-        "src/features/create/ui/__tests__/CreateSummaryStep.component.test.tsx"
+        "src/features/create/ui/__tests__/CreateSubmissionOverlay.targets.component.test.tsx"
       ]
     },
     {
@@ -40746,6 +40844,7 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
@@ -40781,6 +40880,7 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
@@ -40816,6 +40916,7 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
@@ -40851,6 +40952,7 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
@@ -40886,6 +40988,7 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
@@ -40922,13 +41025,13 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
         "src/features/navigation/__tests__/navigation-surfaces.lsf-a02.component.test.tsx",
         "src/features/navigation/__tests__/responsive-navigation-layout.unit.test.ts",
-        "src/features/navigation/__tests__/six-branch-views.component.test.tsx",
-        "src/features/navigation/__tests__/useNavigationDemoController.component.test.tsx"
+        "src/features/navigation/__tests__/six-branch-views.component.test.tsx"
       ]
     },
     {
@@ -40957,6 +41060,36 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
+        "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
+        "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
+        "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
+        "src/features/navigation/__tests__/navigation-surfaces.lsf-a02.component.test.tsx",
+        "src/features/navigation/__tests__/responsive-navigation-layout.unit.test.ts",
+        "src/features/navigation/__tests__/six-branch-views.component.test.tsx",
+        "src/features/navigation/__tests__/useNavigationDemoController.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/navigation/WorkspaceCommandItems.tsx",
+      "domain": "features:navigation",
+      "owner": "polity/features:navigation",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
+          "project": "component",
+          "caseId": "uses the existing group context and permissions while exposing saved views"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/navigation/__tests__/NavigationCommandDialogView.component.test.tsx",
+        "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
+        "src/features/navigation/__tests__/UserMenu.component.test.tsx",
+        "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
@@ -40998,6 +41131,16 @@
     },
     {
       "path": "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+      "domain": "features:navigation",
+      "owner": "polity/features:navigation",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
       "domain": "features:navigation",
       "owner": "polity/features:navigation",
       "kind": "test-infrastructure",
@@ -41102,6 +41245,7 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
@@ -41137,6 +41281,7 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
@@ -41172,6 +41317,7 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
@@ -41207,14 +41353,14 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
         "src/features/navigation/__tests__/navigation-surfaces.lsf-a02.component.test.tsx",
         "src/features/navigation/__tests__/responsive-navigation-layout.unit.test.ts",
         "src/features/navigation/__tests__/six-branch-views.component.test.tsx",
-        "src/features/navigation/__tests__/useNavigationDemoController.component.test.tsx",
-        "src/features/navigation/hooks/__tests__/useNavigationCommandDialogController.component.test.tsx"
+        "src/features/navigation/__tests__/useNavigationDemoController.component.test.tsx"
       ]
     },
     {
@@ -41243,6 +41389,7 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
@@ -41766,6 +41913,26 @@
             "coveredStatements": 56,
             "totalStatements": 56
           }
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/navigation/logic/__tests__/amendmentBranchNavigation.unit.test.ts",
+        "src/features/navigation/logic/__tests__/entityNotificationBadge.unit.test.ts",
+        "src/features/navigation/logic/__tests__/userMenuItems.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/navigation/logic/workspaceCommands.ts",
+      "domain": "features:navigation",
+      "owner": "polity/features:navigation",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
+          "project": "component",
+          "caseId": "uses the existing group context and permissions while exposing saved views"
         }
       ],
       "suggestedTestRefs": [
@@ -42314,6 +42481,7 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
@@ -42716,6 +42884,7 @@
         "src/features/navigation/__tests__/NavigationFoundationViews.actions.component.test.tsx",
         "src/features/navigation/__tests__/UserMenu.component.test.tsx",
         "src/features/navigation/__tests__/UserMenuView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/__tests__/adapter-components.contract.component.test.tsx",
         "src/features/navigation/__tests__/adapter-defaults.component.test.tsx",
         "src/features/navigation/__tests__/four-branch-adapters.component.test.tsx",
@@ -52227,6 +52396,35 @@
       ]
     },
     {
+      "path": "src/features/search/ui/CompactSearchRow.tsx",
+      "domain": "features:search",
+      "owner": "polity/features:search",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps a direct detail link and an explicit preview in compact search results"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/search/ui/__tests__/EntitySearchCardsMotion.component.test.tsx",
+        "src/features/search/ui/__tests__/EventSearchCard.branch-a05.component.test.tsx",
+        "src/features/search/ui/__tests__/EventSearchCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
+        "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
+        "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
+        "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
+        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+      ]
+    },
+    {
       "path": "src/features/search/ui/EventSearchCard.tsx",
       "domain": "features:search",
       "owner": "polity/features:search",
@@ -52317,6 +52515,35 @@
             "coveredStatements": 1,
             "totalStatements": 1
           }
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/search/ui/__tests__/EntitySearchCardsMotion.component.test.tsx",
+        "src/features/search/ui/__tests__/EventSearchCard.branch-a05.component.test.tsx",
+        "src/features/search/ui/__tests__/EventSearchCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCard.branch-a05.component.test.tsx",
+        "src/features/search/ui/__tests__/SearchResultCard.component.test.tsx",
+        "src/features/search/ui/__tests__/SpatialSearchMap.branch-a05.component.test.tsx",
+        "src/features/search/ui/__tests__/SpatialSearchMap.cancelled-failure.branch-a05.component.test.tsx",
+        "src/features/search/ui/__tests__/SpatialSearchMap.component.test.tsx",
+        "src/features/search/ui/__tests__/SpatialSearchMap.failure.branch-a05.component.test.tsx",
+        "src/features/search/ui/__tests__/SpatialSearchResultsList.component.test.tsx",
+        "src/features/search/ui/__tests__/StatementSearchCard.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/search/ui/SaveSearchViewButton.tsx",
+      "domain": "features:search",
+      "owner": "polity/features:search",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+          "project": "component",
+          "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection"
         }
       ],
       "suggestedTestRefs": [
@@ -57597,6 +57824,160 @@
         "src/features/docs/logic/__tests__/aiDocsIndex.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/collections/CollectionCard.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+          "project": "component",
+          "caseId": "adapts existing cards while retaining the permission-aware primary action, status and secondary menu"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/collections/CollectionPreferencesProvider.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+          "project": "component",
+          "caseId": "restores stored choices per area and keeps the working view after a failed save"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/collections/CollectionScope.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+          "project": "component",
+          "caseId": "shares one area choice between status sections without changing other areas"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/collections/CollectionToolbar.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+          "project": "component",
+          "caseId": "switches with keyboard focus without losing the search and queues only the latest choice while preferences load"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/collections/CollectionViewToggle.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+          "project": "component",
+          "caseId": "switches with keyboard focus without losing the search and queues only the latest choice while preferences load"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/collections/EntityListRow.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps direct links, entity colors, callback actions and the existing action menu accessible"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/ui/collections/useCalendarCollectionView.ts",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps calendar week preferences compatible and restores the compact list choice"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/collections/useCollectionView.ts",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+          "project": "component",
+          "caseId": "switches with keyboard focus without losing the search and queues only the latest choice while preferences load"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx"
       ]
     },
     {
@@ -64245,6 +64626,29 @@
       ]
     },
     {
+      "path": "src/features/shared/ui/layout/WorkspaceHeader.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+          "project": "component",
+          "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/layout/__tests__/ActionBar.component.test.tsx",
+        "src/features/shared/ui/layout/__tests__/EntityPageShell.component.test.tsx",
+        "src/features/shared/ui/layout/__tests__/StatsBar.component.test.tsx",
+        "src/features/shared/ui/layout/__tests__/SubscriberStatsBar.component.test.tsx",
+        "src/features/shared/ui/layout/__tests__/Toolbar.branches.component.test.tsx",
+        "src/features/shared/ui/layout/__tests__/Toolbar.tooltip.component.test.tsx"
+      ]
+    },
+    {
       "path": "src/features/shared/ui/layout/__tests__/ActionBar.component.test.tsx",
       "domain": "features:shared",
       "owner": "polity/features:shared",
@@ -64338,6 +64742,28 @@
       ]
     },
     {
+      "path": "src/features/shared/ui/navigation/FavoriteButton.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+          "project": "component",
+          "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/navigation/__tests__/LinkSurface.component.test.tsx",
+        "src/features/shared/ui/navigation/__tests__/NavigationButtons.accessibility.component.test.tsx",
+        "src/features/shared/ui/navigation/__tests__/SectionProgressTopBar.component.test.tsx",
+        "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx",
+        "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx"
+      ]
+    },
+    {
       "path": "src/features/shared/ui/navigation/LinkSurface.tsx",
       "domain": "features:shared",
       "owner": "polity/features:shared",
@@ -64362,7 +64788,8 @@
         "src/features/shared/ui/navigation/__tests__/LinkSurface.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/NavigationButtons.accessibility.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/SectionProgressTopBar.component.test.tsx",
-        "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx"
+        "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx",
+        "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx"
       ]
     },
     {
@@ -64390,7 +64817,8 @@
         "src/features/shared/ui/navigation/__tests__/LinkSurface.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/NavigationButtons.accessibility.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/SectionProgressTopBar.component.test.tsx",
-        "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx"
+        "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx",
+        "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx"
       ]
     },
     {
@@ -64418,7 +64846,8 @@
         "src/features/shared/ui/navigation/__tests__/LinkSurface.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/NavigationButtons.accessibility.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/SectionProgressTopBar.component.test.tsx",
-        "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx"
+        "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx",
+        "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx"
       ]
     },
     {
@@ -64446,7 +64875,8 @@
         "src/features/shared/ui/navigation/__tests__/LinkSurface.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/NavigationButtons.accessibility.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/SectionProgressTopBar.component.test.tsx",
-        "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx"
+        "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx",
+        "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx"
       ]
     },
     {
@@ -64474,7 +64904,8 @@
         "src/features/shared/ui/navigation/__tests__/LinkSurface.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/NavigationButtons.accessibility.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/SectionProgressTopBar.component.test.tsx",
-        "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx"
+        "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx",
+        "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx"
       ]
     },
     {
@@ -64518,6 +64949,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/shared/ui/navigation/index.ts",
       "domain": "features:shared",
       "owner": "polity/features:shared",
@@ -64545,7 +64986,8 @@
         "src/features/shared/ui/navigation/__tests__/LinkSurface.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/NavigationButtons.accessibility.component.test.tsx",
         "src/features/shared/ui/navigation/__tests__/SectionProgressTopBar.component.test.tsx",
-        "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx"
+        "src/features/shared/ui/navigation/__tests__/SmartLink.component.test.tsx",
+        "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx"
       ]
     },
     {
@@ -64688,6 +65130,130 @@
         "src/features/shared/ui/participation/__tests__/HolderHistoryDialog.component.test.tsx",
         "src/features/shared/ui/participation/__tests__/MembershipTabs.component.test.tsx",
         "src/features/shared/ui/participation/__tests__/ParticipationRoleFilterBar.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/preview/PreviewSearchDetails.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/preview/__tests__/PreviewSearchDetails.component.test.tsx",
+          "project": "component",
+          "caseId": "shows the amendment status, source group, deduplicated topics and localized counts"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/preview/__tests__/PreviewSearchDetails.component.test.tsx",
+        "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "src/features/shared/ui/preview/__tests__/preview-target.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/preview/WorkspacePreview.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps list state and scroll, restores trigger focus on Back, and supports Forward"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/preview/__tests__/PreviewSearchDetails.component.test.tsx",
+        "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "src/features/shared/ui/preview/__tests__/preview-target.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/preview/__tests__/PreviewSearchDetails.component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/ui/preview/__tests__/preview-target.unit.test.ts",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/ui/preview/list-keyboard.ts",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+          "project": "component",
+          "caseId": "moves between rows and opens the explicitly focused preview with Space"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/preview/__tests__/PreviewSearchDetails.component.test.tsx",
+        "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "src/features/shared/ui/preview/__tests__/preview-target.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/preview/preview-target.ts",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/preview/__tests__/preview-target.unit.test.ts",
+          "project": "unit",
+          "caseId": "leaves ordinary anchors and nested detail routes alone"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/preview/__tests__/PreviewSearchDetails.component.test.tsx",
+        "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "src/features/shared/ui/preview/__tests__/preview-target.unit.test.ts"
       ]
     },
     {
@@ -72314,6 +72880,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/navigation/__tests__/NavigationCommandDialogView.component.test.tsx",
+        "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/hooks/__tests__/useNavigationCommandDialogController.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01FormAndDialog.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveBranches.component.test.tsx",
@@ -72323,8 +72890,7 @@
         "src/features/shared/ui/ui/__tests__/button-motion.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/carousel.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/chart.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/hashtag-display.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx"
       ]
     },
     {
@@ -79848,6 +80414,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/todos/hooks/__tests__/useTodoAssigneeOptions.component.test.tsx",
+      "domain": "features:todos",
+      "owner": "polity/features:todos",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
       "domain": "features:todos",
       "owner": "polity/features:todos",
@@ -79922,6 +80498,7 @@
         "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoAssigneeOptions.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
@@ -79957,6 +80534,33 @@
         "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoAssigneeOptions.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoFilters.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoMutations.branch-a09.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/todos/hooks/useTodoAssigneeOptions.ts",
+      "domain": "features:todos",
+      "owner": "polity/features:todos",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/todos/hooks/__tests__/useTodoAssigneeOptions.component.test.tsx",
+          "project": "component",
+          "caseId": "restricts group tasks to that group and uses only active memberships for personal tasks"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoAssigneeOptions.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
@@ -79989,6 +80593,7 @@
         "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoAssigneeOptions.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
@@ -80021,6 +80626,7 @@
         "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoAssigneeOptions.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
@@ -80053,6 +80659,7 @@
         "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoAssigneeOptions.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
@@ -80085,6 +80692,7 @@
         "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoAssigneeOptions.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
@@ -80117,6 +80725,7 @@
         "src/features/todos/hooks/__tests__/todo-hooks-remaining.branch-a09.component.test.tsx",
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoActivity.component.test.tsx",
+        "src/features/todos/hooks/__tests__/useTodoAssigneeOptions.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDetailPage.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoDiscussion.component.test.tsx",
         "src/features/todos/hooks/__tests__/useTodoFilters.branch-a09.component.test.tsx",
@@ -80207,6 +80816,35 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/todos/ui/CompactTodoRow.tsx",
+      "domain": "features:todos",
+      "owner": "polity/features:todos",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+          "project": "component",
+          "caseId": "waits for confirmation and prevents duplicate status writes while pending"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailDialogView.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailDialogView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailEdit.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
+      ]
+    },
+    {
       "path": "src/features/todos/ui/KanbanBoardShellView.tsx",
       "domain": "features:todos",
       "owner": "polity/features:todos",
@@ -80228,6 +80866,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80238,8 +80877,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80264,6 +80902,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80274,8 +80913,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80300,6 +80938,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80310,8 +80949,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80336,6 +80974,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80346,8 +80985,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80372,6 +81010,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80382,8 +81021,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80408,6 +81046,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80418,8 +81057,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80452,6 +81090,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80462,8 +81101,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80486,6 +81124,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80496,8 +81135,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80522,6 +81160,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80532,8 +81171,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80558,6 +81196,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80568,8 +81207,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80583,7 +81221,7 @@
         {
           "file": "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
           "project": "component",
-          "caseId": "keeps the route title semantic while rendering only view and create controls",
+          "caseId": "renders view and create controls for the shared page header",
           "evidence": {
             "kind": "instrumented-full-suite",
             "relation": "direct",
@@ -80594,6 +81232,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80604,8 +81243,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80630,6 +81268,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80640,9 +81279,18 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
+    },
+    {
+      "path": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+      "domain": "features:todos",
+      "owner": "polity/features:todos",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
     },
     {
       "path": "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
@@ -80816,6 +81464,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80826,8 +81475,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80853,6 +81501,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/todos/hooks/__tests__/useKanbanBoardController.component.test.tsx",
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80862,8 +81511,7 @@
         "src/features/todos/ui/__tests__/TodoDetailHeader.actions.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx"
       ]
     },
     {
@@ -80888,6 +81536,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80898,8 +81547,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -80924,6 +81572,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
         "src/features/todos/ui/__tests__/KanbanBoard.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoArchiveAction.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDetailDialog.component.test.tsx",
@@ -80934,8 +81583,7 @@
         "src/features/todos/ui/__tests__/TodoDetailView.branch-a09.component.test.tsx",
         "src/features/todos/ui/__tests__/TodoDiscussionTabs.component.test.tsx",
         "src/features/todos/ui/__tests__/TodosHeader.component.test.tsx",
-        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx",
-        "src/features/todos/ui/__tests__/kanban-board-view.branch-a09.component.test.tsx"
+        "src/features/todos/ui/__tests__/TodosTabs.actions.component.test.tsx"
       ]
     },
     {
@@ -96174,6 +96822,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/styles/workspace.css",
+      "domain": "src:styles",
+      "owner": "polity/src:styles",
+      "kind": "declarative",
+      "verification": "render-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/test/__tests__/coverageScope.unit.test.ts",
       "domain": "src:test",
       "owner": "polity/src:test",
@@ -104797,6 +105455,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/preferences/__tests__/workspace-preferences.unit.test.ts",
+      "domain": "zero:preferences",
+      "owner": "polity/zero:preferences",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/preferences/index.ts",
       "domain": "zero:preferences",
       "owner": "polity/zero:preferences",
@@ -104822,7 +105490,8 @@
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.branch-a06.unit.test.ts",
         "src/features/messages/logic/__tests__/buildAttachmentCardDataIndex.unit.test.ts",
         "src/zero/preferences/__tests__/shared-mutators.branch-a07.unit.test.ts",
-        "src/zero/preferences/__tests__/usePreferenceSync.branch-a07.component.test.tsx"
+        "src/zero/preferences/__tests__/usePreferenceSync.branch-a07.component.test.tsx",
+        "src/zero/preferences/__tests__/workspace-preferences.unit.test.ts"
       ]
     },
     {
@@ -104893,8 +105562,8 @@
         "src/zero/notifications/__tests__/notificationSchema.coverage.unit.test.ts",
         "src/zero/preferences/__tests__/shared-mutators.branch-a07.unit.test.ts",
         "src/zero/preferences/__tests__/usePreferenceSync.branch-a07.component.test.tsx",
-        "src/zero/users/__tests__/contact-email-schema.unit.test.ts",
-        "supabase/tests/schema_constraints.sql"
+        "src/zero/preferences/__tests__/workspace-preferences.unit.test.ts",
+        "src/zero/users/__tests__/contact-email-schema.unit.test.ts"
       ]
     },
     {
@@ -104985,7 +105654,8 @@
       ],
       "suggestedTestRefs": [
         "src/zero/preferences/__tests__/shared-mutators.branch-a07.unit.test.ts",
-        "src/zero/preferences/__tests__/usePreferenceSync.branch-a07.component.test.tsx"
+        "src/zero/preferences/__tests__/usePreferenceSync.branch-a07.component.test.tsx",
+        "src/zero/preferences/__tests__/workspace-preferences.unit.test.ts"
       ]
     },
     {
@@ -105011,7 +105681,8 @@
       ],
       "suggestedTestRefs": [
         "src/zero/preferences/__tests__/shared-mutators.branch-a07.unit.test.ts",
-        "src/zero/preferences/__tests__/usePreferenceSync.branch-a07.component.test.tsx"
+        "src/zero/preferences/__tests__/usePreferenceSync.branch-a07.component.test.tsx",
+        "src/zero/preferences/__tests__/workspace-preferences.unit.test.ts"
       ]
     },
     {
@@ -105030,7 +105701,48 @@
       ],
       "suggestedTestRefs": [
         "src/zero/preferences/__tests__/shared-mutators.branch-a07.unit.test.ts",
-        "src/zero/preferences/__tests__/usePreferenceSync.branch-a07.component.test.tsx"
+        "src/zero/preferences/__tests__/usePreferenceSync.branch-a07.component.test.tsx",
+        "src/zero/preferences/__tests__/workspace-preferences.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/zero/preferences/useWorkspacePreferences.ts",
+      "domain": "zero:preferences",
+      "owner": "polity/zero:preferences",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+          "project": "component",
+          "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/preferences/__tests__/shared-mutators.branch-a07.unit.test.ts",
+        "src/zero/preferences/__tests__/usePreferenceSync.branch-a07.component.test.tsx",
+        "src/zero/preferences/__tests__/workspace-preferences.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/zero/preferences/workspace-schema.ts",
+      "domain": "zero:preferences",
+      "owner": "polity/zero:preferences",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/zero/preferences/__tests__/workspace-preferences.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps display choices and other favorites when adding, renaming or removing a favorite"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/zero/preferences/__tests__/shared-mutators.branch-a07.unit.test.ts",
+        "src/zero/preferences/__tests__/usePreferenceSync.branch-a07.component.test.tsx",
+        "src/zero/preferences/__tests__/workspace-preferences.unit.test.ts"
       ]
     },
     {
@@ -108819,6 +109531,26 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "supabase/migrations/20260916090000_workspace_preferences.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260916091000_readable_search_summaries.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "supabase/schemas/00_extensions.sql",
       "domain": "database",
       "owner": "polity/database",
@@ -110552,6 +111284,16 @@
     },
     {
       "path": "tools/testing/accountability/ui-todos.json",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/accountability/workspace-ux.json",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",

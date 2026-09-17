@@ -431,7 +431,14 @@ export function ElectionTimelineCard({
   const dateText = getDateText();
 
   return (
-    <TimelineCardBase contentType="election" className={className} href={electionHref}>
+    <TimelineCardBase
+      compactMetadata={[getStatusLabel(), dateText, election.winnerName]
+        .filter(Boolean)
+        .join(' · ')}
+      contentType="election"
+      className={className}
+      href={electionHref}
+    >
       <TimelineCardHeader
         contentType="election"
         title={election.title}

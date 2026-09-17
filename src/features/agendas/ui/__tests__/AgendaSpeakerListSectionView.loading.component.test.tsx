@@ -373,6 +373,69 @@ describe('AgendaSpeakerListSectionView action loading', () => {
     const skeleton = render(props.renderSkeleton());
     expect(skeleton.container.querySelector('.h-28')).toBeTruthy();
     skeleton.unmount();
-    expect(props.renderEmpty()).toBeNull();
+    expect(
+      render(props.renderEmpty()).getByText('features.events.agenda.speakerSearchEmpty')
+    ).toBeTruthy();
   });
+});
+
+it('searches both speaker views without renumbering the queue or hiding membership actions', () => {
+  const complete = vi.fn();
+  const queue = [
+    { id: 'one', order: 1, isCurrent: true, user: { id: 'u1', name: 'Ada Lovelace' } },
+    { id: 'two', order: 2, isCurrent: false, user: { id: 'u2', name: 'Grace Hopper' } },
+  ];
+  const props = baseProps({
+    speakerQueue: queue,
+    speakers: queue,
+    canManageSpeakers: true,
+    onMarkCompleted: complete,
+    showMembershipState: true,
+  });
+  const { container, rerender } = render(<AgendaSpeakerListSectionView {...props} />);
+  const search = screen.getByPlaceholderText('features.events.agenda.speakerSearchPlaceholder');
+  fireEvent.change(search, { target: { value: 'ada love' } });
+  expect(screen.queryByText('Grace Hopper')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Compact view' }));
+  expect((search as HTMLInputElement).value).toBe('ada love');
+  expect(container.querySelector('[data-workspace-row]')).toBeTruthy();
+  expect(screen.getByText('Ada Lovelace')).toBeTruthy();
+  fireEvent.click(container.querySelector('[data-action-id="agendas.speakers.current.complete"]')!);
+  expect(complete).toHaveBeenCalledWith('one');
+  rerender(<AgendaSpeakerListSectionView {...props} canManageSpeakers={false} />);
+  expect(
+    container.querySelector('[data-action-id="agendas.speakers.current.complete"]')
+  ).toBeNull();
+  fireEvent.change(search, { target: { value: 'missing' } });
+  expect(screen.getByText('features.events.agenda.speakerSearchEmpty')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Leave Speaker List' })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
+});
+
+it('passes speaker search to the full paginated query and keeps its original cursor', () => {
+  const speaker = { id: 'one', order: 7, order_index: 7, user: { id: 'u1', name: 'Ada' } };
+  render(
+    <AgendaSpeakerListSectionView
+      {...baseProps({ agendaItemId: 'agenda-1', speakerQueue: [speaker], speakers: [speaker] })}
+    />
+  );
+  fireEvent.change(screen.getByPlaceholderText('features.events.agenda.speakerSearchPlaceholder'), {
+    target: { value: 'Ada Lovelace' },
+  });
+  const list = mocks.zeroList.mock.lastCall?.[0] as any;
+  expect(list.context).toEqual({ agendaItemId: 'agenda-1', query: 'Ada Lovelace' });
+  list.getPageQuery({
+    limit: 10,
+    start: { id: 'earlier', order_index: 6 },
+    dir: 'forward',
+    settled: true,
+  });
+  expect(mocks.speakerPage).toHaveBeenLastCalledWith({
+    agendaItemId: 'agenda-1',
+    query: 'Ada Lovelace',
+    limit: 10,
+    start: { id: 'earlier', order_index: 6 },
+    dir: 'forward',
+  });
+  expect(list.toStartRow(speaker)).toEqual({ id: 'one', order_index: 7 });
 });

@@ -84,6 +84,7 @@ export function TodoTimelineCardView({
       data-action-id="timeline.todo.open"
       data-action-kind="navigation"
       contentType="todo"
+      compactMetadata={statusLabels[currentStatus]}
       className={className}
       href={detailHref}
       onClick={onCardClick}

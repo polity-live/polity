@@ -63,9 +63,16 @@ export function TypeaheadField({
       descriptionClassName={descriptionClassName}
       errorClassName={errorClassName}
     >
-      {({ invalid }) => (
+      {({ id, describedBy, invalid }) => (
         <TypeaheadSearch
           {...(typeaheadProps as TypeaheadSingleProps | TypeaheadMultiProps)}
+          inputAttributes={{
+            ...typeaheadProps.inputAttributes,
+            id,
+            'aria-describedby': describedBy,
+            'aria-invalid': invalid || undefined,
+          }}
+          ariaRequired={required || typeaheadProps.ariaRequired}
           className={cn(
             invalid &&
               '[&_[data-slot=input]]:border-destructive [&_[data-slot=input]]:focus-visible:ring-destructive/20 dark:[&_[data-slot=input]]:focus-visible:ring-destructive/40 [&_[data-slot=typeahead-selected]]:border-destructive',

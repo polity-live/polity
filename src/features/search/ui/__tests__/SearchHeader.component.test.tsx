@@ -125,7 +125,12 @@ describe('SearchHeader actions', () => {
       </KeyboardPlatformProvider>
     );
 
-    const listView = screen.getByRole('button', { name: 'List view' });
+    const listView = screen.getByRole('button', { name: 'Cards' });
+    const compactView = screen.getByRole('button', { name: 'Compact view' });
+    compactView.focus();
+    expect(document.activeElement).toBe(compactView);
+    fireEvent.click(compactView);
+    expect(onViewChange).toHaveBeenCalledWith('compact');
     const spatialView = screen.getByRole('button', { name: 'Spatial view' });
     const filters = screen.getByRole('button', { name: 'Filters' });
     const topic = screen.getByRole('button', { name: '#climate' });
@@ -148,4 +153,18 @@ describe('SearchHeader actions', () => {
     expect(setShowFilters).toHaveBeenCalledWith(true);
     expect(onTopicToggle).toHaveBeenCalledWith('climate');
   });
+});
+
+vi.mock('../SaveSearchViewButton', () => ({
+  SaveSearchViewButton: () => <button>Save view</button>,
+}));
+
+it('keeps the search controls in one toolbar with the star between map and filters', () => {
+  renderEmptyHeader();
+  expect(screen.queryByRole('heading', { name: 'Search' })).toBeNull();
+  const map = screen.getByRole('button', { name: 'Spatial view' });
+  const star = screen.getByRole('button', { name: 'Save view' });
+  const filters = screen.getByRole('button', { name: 'Filters' });
+  expect(map.parentElement?.nextElementSibling).toBe(star);
+  expect(star.nextElementSibling).toBe(filters);
 });

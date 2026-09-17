@@ -1,3 +1,4 @@
+import { CollectionViewToggle } from '@/features/shared/ui/collections/CollectionViewToggle';
 import type { ReactNode } from 'react';
 
 import { Button } from '@/features/shared/ui/ui/button';
@@ -35,6 +36,7 @@ export interface CalendarHeaderPresenterViewProps<TView extends string = Calenda
   onNext: () => void;
   onToday: () => void;
   actions?: ReactNode;
+  search?: ReactNode;
   title?: ReactNode;
   headingMode?: CalendarHeadingMode;
   resolvedViews: CalendarHeaderViewOption<TView>[];
@@ -51,6 +53,7 @@ export function CalendarHeaderPresenterView<TView extends string = CalendarHeade
   onNext,
   onToday,
   actions,
+  search,
   title,
   headingMode = 'visible',
   resolvedViews,
@@ -58,6 +61,81 @@ export function CalendarHeaderPresenterView<TView extends string = CalendarHeade
   resolvedPreviousLabel,
   resolvedNextLabel,
 }: CalendarHeaderPresenterViewProps<TView>) {
+  if (search) {
+    const previousPeriod = onPrevious;
+    const currentPeriod = onToday;
+    const nextPeriod = onNext;
+    return (
+      <div className="mb-3 space-y-2" data-slot="calendar-controls">
+        {title ? <h1 className="sr-only">{title}</h1> : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <div className="min-w-0 flex-1">{search}</div>
+            <CollectionViewToggle
+              value={viewMode === 'list' ? 'cards' : viewMode === 'compact' ? 'compact' : null}
+              onChange={next => setViewMode((next === 'cards' ? 'list' : 'compact') as TView)}
+            >
+              {resolvedViews
+                .filter(view => !['list', 'compact'].includes(view.value))
+                .map(view => {
+                  const Icon =
+                    view.Icon ??
+                    DEFAULT_ICON_BY_VIEW[view.value as CalendarHeaderView] ??
+                    CalendarIcon;
+                  return (
+                    <Button
+                      key={view.value}
+                      variant={viewMode === view.value ? 'secondary' : 'ghost'}
+                      size="icon"
+                      className="rounded-none border-0"
+                      aria-label={view.label}
+                      title={view.label}
+                      aria-pressed={viewMode === view.value}
+                      onClick={() => setViewMode(view.value)}
+                      data-action-id="calendar.toolbar.view"
+                    >
+                      <Icon className="size-4" />
+                    </Button>
+                  );
+                })}
+            </CollectionViewToggle>
+          </div>
+          <div className="flex shrink-0 items-center gap-2" data-slot="calendar-actions">
+            {actions}
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={previousPeriod}
+            data-action-id="calendar.toolbar.previous"
+            aria-label={resolvedPreviousLabel}
+          >
+            <ChevronLeft className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={currentPeriod}
+            data-action-id="calendar.toolbar.today"
+          >
+            {resolvedTodayLabel}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={nextPeriod}
+            aria-label={resolvedNextLabel}
+            data-action-id="calendar.toolbar.next"
+          >
+            <ChevronRight className="size-4" />
+          </Button>
+          <h2 className="ml-2 font-sans text-sm font-medium">{currentViewTitle}</h2>
+        </div>
+      </div>
+    );
+  }
   return (
     <>
       {title && headingMode !== 'none' ? (

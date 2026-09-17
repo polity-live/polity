@@ -1,6 +1,11 @@
-import { Plus } from 'lucide-react';
+import { useCalendarCollectionView } from '@/features/shared/ui/collections/useCalendarCollectionView';
+import { Plus, Filter, List, ListFilter, Grid3x3, CalendarDays } from 'lucide-react';
+import { useId, useState } from 'react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { SearchField } from '@/features/shared/ui/form/SearchField';
+import { FormControlInput } from '@/features/shared/ui/form/FormControls';
 
-import { CalendarFilterBar, CalendarHeader } from '@/features/shared/ui/calendar';
+import { CalendarHeader } from '@/features/shared/ui/calendar';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { Button } from '@/features/shared/ui/ui/button';
 import { CalendarExportButton } from '@/features/events/ui/calendar/CalendarExportButton';
@@ -65,6 +70,10 @@ export function CalendarPageView({
   onCreateEventRange,
   swipeHandlers,
 }: CalendarPageViewProps) {
+  const { t } = useTranslation();
+  const changeView = useCalendarCollectionView('calendar', viewMode, setViewMode);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterPanelId = useId();
   if (isLoading) {
     return <PageSkeleton variant="calendar" label={loadingLabel} />;
   }
@@ -72,8 +81,22 @@ export function CalendarPageView({
   return (
     <div style={{ touchAction: 'pan-y' }} {...swipeHandlers}>
       <CalendarHeader
+        search={
+          <SearchField
+            value={searchQuery}
+            onValueChange={onSearchChange}
+            placeholder={t('features.calendar.search.placeholder')}
+            clearLabel={t('common.actions.clear')}
+          />
+        }
+        views={[
+          { value: 'list', label: t('features.calendar.views.list'), Icon: List },
+          { value: 'compact', label: t('common.workspace.compactView'), Icon: ListFilter },
+          { value: 'week', label: t('features.calendar.views.week'), Icon: Grid3x3 },
+          { value: 'month', label: t('features.calendar.views.month'), Icon: CalendarDays },
+        ]}
         viewMode={viewMode}
-        setViewMode={setViewMode}
+        setViewMode={changeView}
         currentViewTitle={currentViewTitle}
         onPrevious={onPrevious}
         onNext={onNext}
@@ -82,28 +105,67 @@ export function CalendarPageView({
         headingMode="sr-only"
         actions={
           <>
-            <CalendarExportButton events={events} data-action-id="calendar.page.events.export" />
-            <Button onClick={onCreateEvent} data-action-id="calendar.page.event.create">
-              <Plus className="mr-2 h-4 w-4" />
-              {createEventLabel}
+            <Button
+              variant="outline"
+              size="icon"
+              className="relative"
+              aria-label={t('features.search.filters.title')}
+              aria-expanded={filtersOpen}
+              aria-controls={filterPanelId}
+              onClick={() => setFiltersOpen(open => !open)}
+              data-action-id="calendar.page.filters.toggle"
+            >
+              <Filter className="size-4" />
+              {selectedGroupId || dateFilter ? (
+                <span className="bg-primary absolute top-1 right-1 size-1.5 rounded-full" />
+              ) : null}
+            </Button>
+            <CalendarExportButton
+              iconOnly
+              events={events}
+              data-action-id="calendar.page.events.export"
+            />
+            <Button
+              size="icon"
+              aria-label={createEventLabel}
+              title={createEventLabel}
+              onClick={onCreateEvent}
+              data-action-id="calendar.page.event.create"
+            >
+              <Plus className="h-4 w-4" />
             </Button>
           </>
         }
       />
 
-      <CalendarFilterBar
-        searchQuery={searchQuery}
-        onSearchChange={onSearchChange}
-        dateFilter={dateFilter}
-        onDateFilterChange={onDateFilterChange}
-        middleFilter={
-          <CalendarGroupFilter
-            items={groupItems}
-            selectedGroupId={selectedGroupId}
-            onGroupChange={onGroupChange}
+      <div id={filterPanelId} hidden={!filtersOpen} className="mb-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <CalendarGroupFilter
+              items={groupItems}
+              selectedGroupId={selectedGroupId}
+              onGroupChange={onGroupChange}
+            />
+          </div>
+          <FormControlInput
+            type="date"
+            aria-label={t('common.labels.date')}
+            value={dateFilter}
+            onChange={event => onDateFilterChange(event.target.value)}
+            className="w-full sm:w-44"
           />
-        }
-      />
+          {dateFilter ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDateFilterChange('')}
+              data-action-id="calendar.page.date.clear"
+            >
+              {t('features.calendar.search.clearDate')}
+            </Button>
+          ) : null}
+        </div>
+      </div>
 
       <CalendarViewContainer
         viewMode={viewMode}
@@ -113,7 +175,6 @@ export function CalendarPageView({
         onDateSelect={onDateSelect}
         onEventSelect={onEventSelect}
         onCreateEventRange={onCreateEventRange}
-        listQueryScope={{ query: searchQuery }}
       />
     </div>
   );

@@ -1,3 +1,6 @@
+import { CollectionToolbar } from '@/features/shared/ui/collections/CollectionToolbar';
+import { CollectionCard } from '@/features/shared/ui/collections/CollectionCard';
+import { useCollectionView } from '@/features/shared/ui/collections/useCollectionView';
 import { FormControlInput } from '@/features/shared/ui/form';
 import React, { useCallback, useMemo } from 'react';
 import { Search } from 'lucide-react';
@@ -26,6 +29,7 @@ export const StatementListTab: React.FC<StatementListTabProps> = ({
   onSearchChange,
 }) => {
   const { t } = useTranslation();
+  const { view, setView } = useCollectionView('profile.statements');
 
   const now = useMemo(() => Date.now(), [userId]);
   const context = useMemo(
@@ -35,16 +39,23 @@ export const StatementListTab: React.FC<StatementListTabProps> = ({
 
   return (
     <>
-      <div className="relative mb-4">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-        <FormControlInput
-          placeholder={t('pages.user.statements.searchPlaceholder')}
-          className="pl-10"
-          value={searchValue}
-          onChange={event => onSearchChange(event.target.value)}
-        />
-      </div>
+      <CollectionToolbar
+        view={view}
+        onViewChange={setView}
+        search={
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <FormControlInput
+              placeholder={t('pages.user.statements.searchPlaceholder')}
+              className="pl-10"
+              value={searchValue}
+              onChange={event => onSearchChange(event.target.value)}
+            />
+          </div>
+        }
+      />
       <PolityZeroGridView<ProfileStatement, { created_at: number; id: string }, typeof context>
+        layoutKey={view}
         context={context}
         historyKey={`user-${userId}-statements`}
         getPageQuery={useCallback(
@@ -63,16 +74,21 @@ export const StatementListTab: React.FC<StatementListTabProps> = ({
         )}
         getRowKey={statement => statement.id}
         toStartRow={statement => ({ created_at: statement.created_at, id: statement.id })}
-        getLanes={width => (width >= 1024 ? 3 : width >= 768 ? 2 : 1)}
-        estimateSize={400}
-        renderRow={(statement, index) => {
+        getLanes={width => (view === 'compact' ? 1 : width >= 1024 ? 3 : width >= 768 ? 2 : 1)}
+        estimateSize={view === 'compact' ? 76 : 400}
+        renderRow={statement => {
           const supportVotes = statement.support_votes ?? [];
           const survey = statement.surveys?.[0];
 
           return (
-            <div
-              className="civic-load-card-reveal"
-              style={{ '--civic-load-index': Math.min(index, 11) } as React.CSSProperties}
+            <CollectionCard
+              compact={view === 'compact'}
+              model={{
+                type: 'statement',
+                title: statement.title ?? authorName,
+                summary: statement.text ?? undefined,
+                href: `/statement/${statement.id}`,
+              }}
             >
               <StatementTimelineCard
                 statement={{
@@ -103,7 +119,7 @@ export const StatementListTab: React.FC<StatementListTabProps> = ({
                     .filter(hashtag => hashtag.tag),
                 }}
               />
-            </div>
+            </CollectionCard>
           );
         }}
         renderSkeleton={() => <Skeleton className="h-96 w-full rounded-xl" />}

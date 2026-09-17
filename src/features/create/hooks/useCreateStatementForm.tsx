@@ -214,9 +214,8 @@ export function useCreateStatementForm(): CreateFormConfig {
 
       await waitForOptimisticCreate(statementResult);
       context?.reportProgress({ key: 'create', status: 'complete' });
-      context?.reportProgress({ key: 'sync', status: 'complete' });
-      context?.reportProgress({ key: 'ready', status: 'active' });
-      trackCreateFinalization({
+      context?.reportProgress({ key: 'sync', status: 'active' });
+      await trackCreateFinalization({
         result: statementResult,
         draft: {
           id: `statement:${statementId}`,
@@ -270,6 +269,7 @@ export function useCreateStatementForm(): CreateFormConfig {
         },
       });
 
+      context?.reportProgress({ key: 'ready', status: 'active' });
       return createSuccessSubmitOutcome(statementTarget);
     } finally {
       setIsSubmitting(false);
@@ -328,6 +328,7 @@ export function useCreateStatementForm(): CreateFormConfig {
             },
             {
               key: 'group',
+              alwaysVisible: true,
               kind: 'typeahead',
               label: t('pages.create.statement.attachTo'),
               props: {
@@ -352,6 +353,7 @@ export function useCreateStatementForm(): CreateFormConfig {
           fields: [
             {
               key: 'media',
+              supplementary: true,
               kind: 'customComponent',
               component: MediaUpload,
               props: {
@@ -423,6 +425,7 @@ export function useCreateStatementForm(): CreateFormConfig {
           fields: [
             {
               key: 'visibility',
+              alwaysVisible: true,
               kind: 'customComponent',
               component: VisibilityInput,
               props: { value: visibility, onChange: setVisibility },

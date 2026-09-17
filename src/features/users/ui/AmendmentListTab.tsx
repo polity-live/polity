@@ -1,3 +1,6 @@
+import { CollectionToolbar } from '@/features/shared/ui/collections/CollectionToolbar';
+import { CollectionCard } from '@/features/shared/ui/collections/CollectionCard';
+import { useCollectionView } from '@/features/shared/ui/collections/useCollectionView';
 import { FormControlInput } from '@/features/shared/ui/form';
 import React, { useCallback, useMemo } from 'react';
 import { Search } from 'lucide-react';
@@ -25,25 +28,33 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
   onSearchChange,
 }) => {
   const { t } = useTranslation();
+  const { view, setView } = useCollectionView('profile.amendments');
 
   const context = useMemo(() => ({ userId, query: searchValue.trim() }), [searchValue, userId]);
 
   return (
     <>
-      <div className="relative mb-4">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-        <FormControlInput
-          placeholder={t('pages.user.amendments.searchPlaceholder')}
-          className="pl-10"
-          value={searchValue}
-          onChange={e => onSearchChange(e.target.value)}
-        />
-      </div>
+      <CollectionToolbar
+        view={view}
+        onViewChange={setView}
+        search={
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <FormControlInput
+              placeholder={t('pages.user.amendments.searchPlaceholder')}
+              className="pl-10"
+              value={searchValue}
+              onChange={e => onSearchChange(e.target.value)}
+            />
+          </div>
+        }
+      />
       <PolityZeroGridView<
         ProfileAmendmentCollaboration,
         { created_at: number; id: string },
         typeof context
       >
+        layoutKey={view}
         context={context}
         historyKey={`user-${userId}-amendments`}
         getPageQuery={useCallback(
@@ -70,9 +81,9 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
           created_at: collaboration.created_at,
           id: collaboration.id,
         })}
-        getLanes={width => (width >= 768 ? 2 : 1)}
-        estimateSize={380}
-        renderRow={(collab, index) => {
+        getLanes={width => (view === 'compact' ? 1 : width >= 768 ? 2 : 1)}
+        estimateSize={view === 'compact' ? 76 : 380}
+        renderRow={collab => {
           const a = collab.amendment;
           if (!a) return null;
           const hashtagTags = (a.amendment_hashtags ?? [])
@@ -90,9 +101,14 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
           const branchStatuses = mapAmendmentBranchStatusChips(branches);
 
           return (
-            <div
-              className="civic-load-card-reveal"
-              style={{ '--civic-load-index': Math.min(index, 11) } as React.CSSProperties}
+            <CollectionCard
+              compact={view === 'compact'}
+              model={{
+                type: 'amendment',
+                title: a.title ?? '',
+                summary: a.reason ?? undefined,
+                href: `/amendment/${a.id}`,
+              }}
             >
               <AmendmentTimelineCard
                 amendment={{
@@ -110,7 +126,7 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
                   branchStatuses,
                 }}
               />
-            </div>
+            </CollectionCard>
           );
         }}
         renderSkeleton={() => <Skeleton className="h-96 w-full rounded-xl" />}

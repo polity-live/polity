@@ -257,15 +257,17 @@ describe('AmendmentWikiView stats', () => {
 
     expect(titleGroup?.className).toContain('flex-col');
     expect(titleGroup?.className).toContain('md:flex-row');
-    expect(titleGroup?.className).toContain('gap-1');
+    expect(titleGroup?.className).toContain('gap-2');
+    expect(titleGroup?.className).toContain('items-center');
+    expect(titleGroup?.className).toContain('justify-center');
     expect(titleGroup?.className).toContain('md:gap-3');
-    const visibilityBadge = title.nextElementSibling;
+    const visibilityBadge = title.nextElementSibling?.firstElementChild;
     expect(visibilityBadge?.getAttribute('data-entity-visibility')).toBe('public');
     expect(visibilityBadge?.nextElementSibling).toBe(screen.getByTestId('editing-mode-badge'));
 
     const header = titleGroup?.parentElement;
-    expect(header?.className).toContain('mb-4');
-    expect(header?.className).toContain('md:mb-8');
+    expect(header?.className).toContain('mb-8');
+    expect(header?.className).toContain('text-center');
   });
 
   it('places mobile hashtags after the editing mode and keeps the desktop position', () => {
@@ -612,3 +614,5 @@ describe('AmendmentWikiView stats', () => {
     expect((directoryMock.mock.calls.at(-1) as any)?.[0].items[0].roles).toEqual([]);
   });
 });
+
+vi.mock('@/features/shared/ui/navigation/FavoriteButton', () => ({ FavoriteButton: () => null }));

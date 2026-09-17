@@ -1,5 +1,6 @@
 'use client';
 
+import type { ComponentProps } from 'react';
 import { createPortal } from 'react-dom';
 import { Search } from 'lucide-react';
 import { type TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
@@ -9,6 +10,10 @@ import { TypeaheadDropdown } from './TypeaheadDropdown';
 import { TypeaheadSelectedCard } from './TypeaheadSelectedCard';
 
 export interface TypeaheadSearchBaseViewProps {
+  inputAttributes?: Pick<
+    ComponentProps<'input'>,
+    'id' | 'aria-describedby' | 'aria-invalid' | 'aria-label'
+  >;
   className: any;
   containerRef: any;
   disablePortal: any;
@@ -38,6 +43,7 @@ export interface TypeaheadSearchBaseViewProps {
 }
 
 export function TypeaheadSearchBaseView({
+  inputAttributes,
   className,
   containerRef,
   disablePortal,
@@ -104,6 +110,7 @@ export function TypeaheadSearchBaseView({
         <div ref={inputWrapperRef} className="relative">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
+            {...inputAttributes}
             ref={inputRef}
             placeholder={placeholder}
             value={query}

@@ -1,5 +1,7 @@
 'use client';
 
+import { FavoriteButton } from '@/features/shared/ui/navigation/FavoriteButton';
+
 import { BadgeControl, VisibilityBadge } from '@/features/shared/ui/status';
 import { normalizeRouteVisibility } from '@/features/auth/logic/routeVisibilityAccess';
 import {
@@ -244,7 +246,9 @@ export function GroupWikiContentView({
       {/* Header with centered title and subtitle */}
       <div className="mb-8 text-center">
         <div className="mb-2 flex min-w-0 flex-col items-center justify-center gap-2 md:flex-row md:gap-3">
-          <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{group.name}</h1>
+          <h1 className="max-w-full min-w-0 font-sans text-2xl font-semibold break-words sm:text-3xl">
+            {group.name}
+          </h1>
           <div className="flex max-w-full flex-wrap items-center justify-center gap-2 md:contents">
             <VisibilityBadge value={groupVisibility} data-entity-visibility={groupVisibility}>
               {t(`common.visibility.${groupVisibility}`)}
@@ -278,13 +282,13 @@ export function GroupWikiContentView({
         {groupLocation && <p className="text-muted-foreground">{groupLocation}</p>}
       </div>
 
-      <EntityWikiMedia
-        imageUrl={group.image_url}
-        videoUrl={group.video_url}
-        alt={group.name ?? t('common.entities.group')}
-      />
-
       {/* Stats Bar with Events and Amendments */}
+      {groupDescription ? (
+        <p className="text-muted-foreground mb-4 line-clamp-3 max-w-3xl text-sm">
+          {groupDescription}
+        </p>
+      ) : null}
+
       <StatsBar
         items={[
           { value: memberCount, label: t('components.labels.members', { count: memberCount }) },
@@ -302,6 +306,13 @@ export function GroupWikiContentView({
 
       {/* Action Bar */}
       <ActionBar>
+        <FavoriteButton
+          favorite={{
+            kind: 'group',
+            href: `/group/${groupId}`,
+            title: group.name || t('common.entities.group'),
+          }}
+        />
         {isAuthenticated ? (
           <>
             <LinkGroupDialog
@@ -383,6 +394,12 @@ export function GroupWikiContentView({
           compactOnMobile
         />
       </ActionBar>
+
+      <EntityWikiMedia
+        imageUrl={group.image_url}
+        videoUrl={group.video_url}
+        alt={group.name ?? t('common.entities.group')}
+      />
 
       {/* Hashtags */}
       {group.group_hashtags && group.group_hashtags.length > 0 && (

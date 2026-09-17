@@ -15,12 +15,17 @@ export function TodosHeader({ viewMode, setViewMode }: TodosHeaderProps) {
 
   return (
     <>
-      <h1 className="sr-only">{t('features.todos.title')}</h1>
       <div className="flex gap-2">
-        <div className="flex gap-1 rounded-lg border p-1">
+        <div
+          className="border-input bg-background inline-flex shrink-0 overflow-hidden rounded-md border"
+          role="group"
+          aria-label={t('features.todos.title')}
+        >
           <Button
             variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-            size="sm"
+            size="icon"
+            className="rounded-none border-0"
+            aria-pressed={viewMode === 'list'}
             onClick={() => setViewMode('list')}
             aria-label={t('features.todos.view.list')}
             data-action-id="todos.header.view.list"
@@ -29,7 +34,9 @@ export function TodosHeader({ viewMode, setViewMode }: TodosHeaderProps) {
           </Button>
           <Button
             variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
-            size="sm"
+            size="icon"
+            className="rounded-none border-0"
+            aria-pressed={viewMode === 'kanban'}
             onClick={() => setViewMode('kanban')}
             aria-label={t('features.todos.view.kanban')}
             data-action-id="todos.header.view.kanban"
@@ -37,10 +44,15 @@ export function TodosHeader({ viewMode, setViewMode }: TodosHeaderProps) {
             <LayoutGrid className="h-4 w-4" />
           </Button>
         </div>
-        <Button asChild data-action-id="todos.header.create">
+        <Button
+          asChild
+          className="size-9 p-0 sm:w-auto sm:px-3"
+          aria-label={t('features.todos.create.newTodo')}
+          data-action-id="todos.header.create"
+        >
           <Link to="/create/todo" data-action-id="todos.header.create">
-            <Plus className="mr-2 h-4 w-4" />
-            {t('features.todos.create.newTodo')}
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('features.todos.create.newTodo')}</span>
           </Link>
         </Button>
       </div>

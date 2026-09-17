@@ -3,7 +3,7 @@ import type { CalendarEvent } from '@/features/calendar/types/calendar.types';
 
 export type { CalendarEvent } from '@/features/calendar/types/calendar.types';
 
-export type CalendarViewMode = 'list' | 'week' | 'month';
+export type CalendarViewMode = 'list' | 'compact' | 'week' | 'month';
 
 export interface VisibleRange {
   start: Date;

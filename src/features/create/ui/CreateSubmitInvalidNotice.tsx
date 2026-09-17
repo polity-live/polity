@@ -14,7 +14,7 @@ export function CreateSubmitInvalidNotice({ reason, className }: CreateSubmitInv
   const { t } = useTranslation();
 
   return (
-    <Alert variant="destructive" className={cn('text-left', className)}>
+    <Alert id="create-invalid-notice" variant="destructive" className={cn('text-left', className)}>
       <CircleAlert className="h-4 w-4" />
       <AlertTitle>{t('pages.create.validation.blockedTitle')}</AlertTitle>
       <AlertDescription>{reason}</AlertDescription>

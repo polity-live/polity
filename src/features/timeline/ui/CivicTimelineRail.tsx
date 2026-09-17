@@ -1,5 +1,8 @@
 'use client';
 
+import { PreviewButton } from '@/features/shared/ui/preview/WorkspacePreview';
+import { handleWorkspaceListKeyDown } from '@/features/shared/ui/preview/list-keyboard';
+
 import { useMemo, type CSSProperties } from 'react';
 
 import { featureThemeClassName } from '@/features/shared/theme';
@@ -135,8 +138,10 @@ function TimelineArticle({
     <article
       data-action-scope="presentation"
       data-timeline-item-id={item.id}
+      data-workspace-row
+      onKeyDown={handleWorkspaceListKeyDown}
       className={cn(
-        'bg-background civic-load-card-reveal relative rounded-lg border p-4 shadow-sm transition-colors',
+        'bg-background border-border/60 relative rounded-md border-b px-2 py-3 transition-colors',
         isActive && 'border-primary bg-primary/5'
       )}
       style={{ '--civic-load-index': Math.min(revealIndex, 11) } as CSSProperties}
@@ -162,7 +167,7 @@ function TimelineArticle({
         <div
           data-slot="timeline-item-icon"
           className={cn(
-            'bg-muted/40 col-start-1 row-start-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border',
+            'text-muted-foreground col-start-1 row-start-1 flex h-8 w-8 shrink-0 items-center justify-center',
             CONTENT_TYPE_CONFIG[item.type]?.accentColor
           )}
         >
@@ -199,6 +204,7 @@ function TimelineArticle({
           >
             <h3 className="mt-2 text-base leading-snug font-semibold break-words">
               <SmartLink
+                data-workspace-open
                 data-action-id="timeline.rail.item.open"
                 data-action-kind="navigation"
                 href={item.href}
@@ -221,10 +227,10 @@ function TimelineArticle({
                   </SmartLink>
                 ) : null}
                 {item.locationLabel ? (
-                  <span className="inline-flex min-w-0 items-center gap-1 break-words">
-                    <MapPin className="h-3.5 w-3.5 shrink-0" />
-                    {item.locationLabel}
-                  </span>
+                  <details className="text-xs">
+                    <summary className="cursor-pointer">{t('common.workspace.details')}</summary>
+                    <p className="pt-1">{item.locationLabel}</p>
+                  </details>
                 ) : null}
               </div>
             ) : null}
@@ -233,7 +239,8 @@ function TimelineArticle({
                 {item.description}
               </p>
             ) : null}
-            <div className="mt-3 flex max-w-full min-w-0 flex-wrap items-center gap-2">
+            <div className="mt-2 flex max-w-full min-w-0 flex-wrap items-center gap-2">
+              <PreviewButton href={item.href} />
               {item.status ? (
                 <BadgeControl
                   variant="outline"
@@ -256,7 +263,7 @@ function TimelineArticle({
                 <BadgeControl
                   key={tag}
                   variant="outline"
-                  className="max-w-full rounded-md font-normal break-words whitespace-normal"
+                  className="text-muted-foreground max-w-full rounded-none border-0 bg-transparent px-0 font-normal break-words whitespace-normal"
                 >
                   #{tag}
                 </BadgeControl>
@@ -298,7 +305,7 @@ export function CivicTimelineRail({
   if (queryContext) {
     const entityIds = queryContext.entityIds ?? [];
     return (
-      <div data-testid="civic-timeline-rail">
+      <div data-testid="civic-timeline-rail" data-workspace-list>
         <PolityZeroListView<any, { created_at: number; id: string }, any>
           context={{ entityIds, contentTypes: queryContext.contentTypes, now }}
           historyKey="home-civic-timeline"
@@ -381,7 +388,7 @@ export function CivicTimelineRail({
   let revealItemIndex = 0;
 
   return (
-    <div className="space-y-7" data-testid="civic-timeline-rail">
+    <div className="space-y-7" data-testid="civic-timeline-rail" data-workspace-list>
       {sections.map(section => (
         <section key={section.id} aria-labelledby={`timeline-section-${section.id}`}>
           <div className="mb-3 flex items-center gap-2">

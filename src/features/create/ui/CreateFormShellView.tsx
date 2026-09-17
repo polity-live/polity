@@ -16,6 +16,9 @@ import { cn } from '@/features/shared/utils/utils';
 import { LayoutGroup } from 'motion/react';
 import { getCreateReviewPreview } from '../logic/createReviewPreview';
 import { CreateFlowFrame } from './CreateFlowFrame';
+import { useEffect, useRef, useState } from 'react';
+import { CreateValidationContext } from './CreateValidationContext';
+import { focusCreateSection } from '../logic/createFormFocus';
 
 interface CreateFormShellViewProps {
   title: string;
@@ -51,6 +54,24 @@ export function CreateFormShellView({
   onSubmit,
   submission,
 }: CreateFormShellViewProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [validateAll, setValidateAll] = useState(false);
+  useEffect(() => {
+    const root = rootRef.current;
+    const validate = () => setValidateAll(true);
+    root?.addEventListener('create:validate', validate);
+    return () => root?.removeEventListener('create:validate', validate);
+  }, []);
+  const submitValidated = async () => {
+    const invalidIndex = steps.findIndex(step => !step.isValid());
+    if (invalidIndex >= 0) {
+      setValidateAll(true);
+      onStepChange(invalidIndex);
+      focusCreateSection(rootRef.current, invalidIndex);
+      return;
+    }
+    await onSubmit();
+  };
   const Layout = isCarouselLayout ? CarouselFormLayout : OnePageFormLayout;
   const overlayOpen = submission.status !== 'idle';
   const reviewPreview = getCreateReviewPreview(steps);
@@ -58,50 +79,51 @@ export function CreateFormShellView({
     entityType === 'group' || entityType === 'amendment' || entityType === 'event';
 
   return (
-    <LayoutGroup id={`create-${entityType}`}>
-      <div
-        data-create-flow={entityType}
-        data-create-layout={isCarouselLayout ? 'carousel' : 'one_page'}
-        aria-hidden={overlayOpen || undefined}
-        className={cn(
-          isCarouselLayout
-            ? 'flex h-[calc(100dvh-3rem)] min-h-0 w-full flex-col overflow-hidden'
-            : 'w-full',
-          overlayOpen &&
-            'pointer-events-none opacity-30 blur-[1px] transition-[filter,opacity] duration-[var(--motion-duration-base)] select-none',
-          settingsAligned &&
-            '[&_[data-create-section]]:border-border/60 [&_[data-create-section]]:bg-card [&_[data-create-action-bar]]:border-border/70 [&_[data-create-action-bar]]:bg-background/95 [&_[data-create-action-bar]]:sticky [&_[data-create-action-bar]]:bottom-3 [&_[data-create-action-bar]]:z-20 [&_[data-create-action-bar]]:rounded-xl [&_[data-create-action-bar]]:border [&_[data-create-action-bar]]:p-3 [&_[data-create-action-bar]]:shadow-lg [&_[data-create-action-bar]]:backdrop-blur [&_[data-create-section]]:rounded-xl [&_[data-create-section]]:border [&_[data-create-section]]:p-4 [&_[data-create-section]]:shadow-none sm:[&_[data-create-section]]:p-5'
-        )}
-      >
-        {submission.status !== 'ready' ? (
-          <CreateFlowFrame
-            title={title}
-            action={<FormStyleSelector value={selectedFormStyle} onChange={onFormStyleChange} />}
-            isCarouselLayout={isCarouselLayout}
-            settingsAligned={settingsAligned}
-          >
-            <Layout
-              steps={steps}
-              currentStep={currentStep}
-              onStepChange={onStepChange}
-              onSubmit={onSubmit}
-              isSubmitting={isSubmitting}
-            />
-          </CreateFlowFrame>
-        ) : null}
-      </div>
+    <CreateValidationContext.Provider value={validateAll}>
+      <LayoutGroup id={`create-${entityType}`}>
+        <div
+          ref={rootRef}
+          data-create-flow={entityType}
+          data-create-layout={isCarouselLayout ? 'carousel' : 'one_page'}
+          aria-hidden={overlayOpen || undefined}
+          className={cn(
+            isCarouselLayout
+              ? 'flex h-[calc(100dvh-var(--app-shell-mobile-top-offset,0rem)-var(--app-shell-mobile-bottom-offset,0rem)-3rem)] min-h-0 w-full flex-col overflow-hidden'
+              : 'w-full',
+            overlayOpen &&
+              'pointer-events-none opacity-30 blur-[1px] transition-[filter,opacity] duration-[var(--motion-duration-base)] select-none'
+          )}
+        >
+          {submission.status !== 'ready' ? (
+            <CreateFlowFrame
+              title={title}
+              action={<FormStyleSelector value={selectedFormStyle} onChange={onFormStyleChange} />}
+              isCarouselLayout={isCarouselLayout}
+              settingsAligned={settingsAligned}
+            >
+              <Layout
+                steps={steps}
+                currentStep={currentStep}
+                onStepChange={onStepChange}
+                onSubmit={submitValidated}
+                isSubmitting={isSubmitting}
+              />
+            </CreateFlowFrame>
+          ) : null}
+        </div>
 
-      <CreateSubmissionOverlay
-        status={submission.status}
-        entityType={entityType}
-        title={title}
-        target={submission.target}
-        error={submission.error}
-        progressSteps={submission.progressSteps}
-        reviewPreview={reviewPreview}
-        onBack={submission.onBack}
-        onRetry={submission.onRetry}
-      />
-    </LayoutGroup>
+        <CreateSubmissionOverlay
+          status={submission.status}
+          entityType={entityType}
+          title={title}
+          target={submission.target}
+          error={submission.error}
+          progressSteps={submission.progressSteps}
+          reviewPreview={reviewPreview}
+          onBack={submission.onBack}
+          onRetry={submission.onRetry}
+        />
+      </LayoutGroup>
+    </CreateValidationContext.Provider>
   );
 }

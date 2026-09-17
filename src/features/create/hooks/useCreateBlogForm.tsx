@@ -193,8 +193,7 @@ export function useCreateBlogForm(): CreateFormConfig {
       context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'active' });
 
-      context?.reportProgress({ key: 'sync', status: 'complete' });
-      context?.reportProgress({ key: 'ready', status: 'active' });
+      context?.reportProgress({ key: 'sync', status: 'active' });
       setIsSubmitting(false);
 
       if (groupId) {
@@ -202,7 +201,7 @@ export function useCreateBlogForm(): CreateFormConfig {
           to: '/group/$id/blog/$entryId',
           params: { id: groupId, entryId: blogId },
         });
-        trackCreateFinalization({
+        await trackCreateFinalization({
           result: createBlogResults.blogResult,
           draft: {
             id: `blog:${blogId}`,
@@ -214,6 +213,7 @@ export function useCreateBlogForm(): CreateFormConfig {
             target,
           },
         });
+        context?.reportProgress({ key: 'ready', status: 'active' });
         return createSuccessSubmitOutcome(target);
       }
 
@@ -221,7 +221,7 @@ export function useCreateBlogForm(): CreateFormConfig {
         to: '/user/$id/blog/$entryId',
         params: { id: user.id, entryId: blogId },
       });
-      trackCreateFinalization({
+      await trackCreateFinalization({
         result: createBlogResults.blogResult,
         draft: {
           id: `blog:${blogId}`,
@@ -233,6 +233,7 @@ export function useCreateBlogForm(): CreateFormConfig {
           target,
         },
       });
+      context?.reportProgress({ key: 'ready', status: 'active' });
       return createSuccessSubmitOutcome(target);
     } catch (error) {
       toast.error(t('pages.create.error.createFailed'));
@@ -282,6 +283,7 @@ export function useCreateBlogForm(): CreateFormConfig {
             },
             {
               key: 'media',
+              supplementary: true,
               kind: 'customComponent',
               component: MediaUpload,
               props: {
@@ -301,6 +303,7 @@ export function useCreateBlogForm(): CreateFormConfig {
             },
             {
               key: 'group',
+              alwaysVisible: true,
               kind: 'typeahead',
               label: t('pages.create.blog.attachTo'),
               invalid: selectedGroupPermissionDenied,
@@ -327,6 +330,7 @@ export function useCreateBlogForm(): CreateFormConfig {
           fields: [
             {
               key: 'visibility',
+              alwaysVisible: true,
               kind: 'customComponent',
               component: VisibilityInput,
               props: { value: visibility, onChange: setVisibility },

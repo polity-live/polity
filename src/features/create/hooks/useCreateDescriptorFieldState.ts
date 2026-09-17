@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react';
+import { useContext, useState, type ReactNode } from 'react';
+import { CreateValidationContext } from '../ui/CreateValidationContext';
 
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
@@ -19,12 +20,14 @@ export function useCreateDescriptorFieldState({
 }) {
   const { t } = useTranslation();
   const [hasInteracted, setHasInteracted] = useState(false);
+  const validateAll = useContext(CreateValidationContext);
   const normalizedValue = normalizeValue(value);
   const trimmedValue = normalizedValue.trim();
   const hasValue = trimmedValue.length > 0;
   const validationError = validator?.(normalizedValue) ?? null;
   const isInvalid =
-    hasInteracted && ((Boolean(required) && !hasValue) || (hasValue && Boolean(validationError)));
+    (hasInteracted || validateAll) &&
+    ((Boolean(required) && !hasValue) || (hasValue && Boolean(validationError)));
   const isValid = (hasInteracted || hasValue) && hasValue && !validationError;
   const fallbackHint =
     hint ??

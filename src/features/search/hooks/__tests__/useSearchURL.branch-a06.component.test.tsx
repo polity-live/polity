@@ -7,17 +7,20 @@ import { ALL_CONTENT_TYPES } from '@/features/timeline/hooks/useTimelineFilters'
 import { useSearchURL } from '../useSearchURL';
 
 const navigateMock = vi.fn();
+let previewOpen = false;
 let searchParams: Record<string, string> = {};
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => navigateMock,
   useSearch: () => searchParams,
+  useRouterState: () => previewOpen,
 }));
 
 describe('useSearchURL branch matrix', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     navigateMock.mockReset();
+    previewOpen = false;
     searchParams = {};
   });
 
@@ -114,7 +117,11 @@ describe('useSearchURL branch matrix', () => {
       result.current.setView('list');
     });
     act(() => vi.advanceTimersByTime(250));
-    expect(navigateMock).toHaveBeenLastCalledWith({ to: '/search?' });
+    expect(navigateMock).toHaveBeenLastCalledWith({
+      to: '/search?',
+      hash: true,
+      resetScroll: false,
+    });
 
     act(() => {
       result.current.setSearchQuery('new');

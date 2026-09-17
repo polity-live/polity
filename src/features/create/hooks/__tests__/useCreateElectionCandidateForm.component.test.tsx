@@ -85,7 +85,7 @@ describe('useCreateElectionCandidateForm', () => {
     addCandidate.mockReset();
     addCandidate.mockReturnValue({
       client: Promise.resolve(),
-      server: new Promise(() => undefined),
+      server: Promise.resolve({ type: 'success' }),
     });
     window.sessionStorage.clear();
     vi.stubGlobal('crypto', { randomUUID: () => 'candidate-1' });
@@ -155,7 +155,14 @@ describe('useCreateElectionCandidateForm', () => {
     expect(result.current.steps[0].isValid()).toBe(true);
   });
 
-  it('stores election-candidate recovery drafts under the matching entity key', async () => {
+  it('keeps the recovery draft and waits for server confirmation before reporting success', async () => {
+    let confirm!: (value: { type: 'success' }) => void;
+    addCandidate.mockReturnValue({
+      client: Promise.resolve(),
+      server: new Promise(resolve => {
+        confirm = resolve;
+      }),
+    });
     const { result } = renderHook(() => useCreateElectionCandidateForm());
     const electionField = findField(
       result.current.steps[0].fields ?? [],
@@ -170,9 +177,14 @@ describe('useCreateElectionCandidateForm', () => {
     });
 
     let outcome: Awaited<ReturnType<typeof result.current.onSubmit>> | undefined;
+    let submission!: Promise<void>;
     await act(async () => {
-      outcome = await result.current.onSubmit?.();
+      submission = result.current.onSubmit().then(value => {
+        outcome = value;
+      });
+      await Promise.resolve();
     });
+    expect(outcome).toBeUndefined();
 
     const rawDraft = window.sessionStorage.getItem('polity:create:recovery:election:candidate-1');
     expect(rawDraft).not.toBeNull();
@@ -186,6 +198,11 @@ describe('useCreateElectionCandidateForm', () => {
         params: { id: 'event-member', agendaItemId: 'agenda-member' },
       },
     });
+    await act(async () => {
+      confirm({ type: 'success' });
+      await submission;
+    });
+    expect(window.sessionStorage.getItem('polity:create:recovery:election:candidate-1')).toBeNull();
     expect(outcome).toMatchObject({
       status: 'success',
       target: {

@@ -99,6 +99,8 @@ export const eventsTranslations = {
     amendmentDetails: 'Amendment context',
     viewAmendment: 'View amendment',
     speakerListDescription: 'Select a speaker to view their profile.',
+    speakerSearchPlaceholder: 'Search speakers...',
+    speakerSearchEmpty: 'No matching speakers',
     speakerListEmpty: 'No speakers yet',
     speakerCount: '{{count}} speakers',
     speakerCount_one: '{{count}} speaker',

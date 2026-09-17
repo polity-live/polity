@@ -1,5 +1,7 @@
 'use client';
 
+import { FavoriteButton } from '@/features/shared/ui/navigation/FavoriteButton';
+
 import { BadgeControl, VisibilityBadge } from '@/features/shared/ui/status';
 import { normalizeRouteVisibility } from '@/features/auth/logic/routeVisibilityAccess';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
@@ -190,7 +192,9 @@ export function EventWikiContentView({
       {/* Header with centered title and subtitle */}
       <div className="mb-8 text-center">
         <div className="mb-2 flex min-w-0 flex-col items-center justify-center gap-2 md:flex-row md:gap-3">
-          <h1 className="max-w-full min-w-0 text-4xl font-bold break-words">{event.title}</h1>
+          <h1 className="max-w-full min-w-0 font-sans text-2xl font-semibold break-words sm:text-3xl">
+            {event.title}
+          </h1>
           <div className="flex max-w-full flex-wrap items-center justify-center gap-2 md:contents">
             <VisibilityBadge value={eventVisibility} data-entity-visibility={eventVisibility}>
               {t(`common.visibility.${eventVisibility}`)}
@@ -280,13 +284,13 @@ export function EventWikiContentView({
         </div>
       </div>
 
-      <EntityWikiMedia
-        imageUrl={event.image_url}
-        videoUrl={event.video_url}
-        alt={event.title ?? ''}
-      />
-
       {/* Stats Bar */}
+      {eventDescription ? (
+        <p className="text-muted-foreground mb-4 line-clamp-3 max-w-3xl text-sm">
+          {eventDescription}
+        </p>
+      ) : null}
+
       <StatsBar
         items={[
           {
@@ -320,6 +324,13 @@ export function EventWikiContentView({
 
       {/* Action Bar */}
       <ActionBar>
+        <FavoriteButton
+          favorite={{
+            kind: 'event',
+            href: `/event/${eventId}`,
+            title: event.title || t('common.entities.event'),
+          }}
+        />
         {user ? (
           <>
             <SubscribeButton
@@ -387,6 +398,12 @@ export function EventWikiContentView({
           compactOnMobile
         />
       </ActionBar>
+
+      <EntityWikiMedia
+        imageUrl={event.image_url}
+        videoUrl={event.video_url}
+        alt={event.title ?? ''}
+      />
 
       {/* Hashtags */}
       {event.event_hashtags && event.event_hashtags.length > 0 && (

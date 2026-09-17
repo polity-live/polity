@@ -28,15 +28,18 @@ const assigneeItems: TypeaheadItem[] = [
 function ToolbarHarness({
   embedded = false,
   withActions = false,
+  compact = false,
 }: {
   embedded?: boolean;
   withActions?: boolean;
+  compact?: boolean;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [values, setValues] = useState<Partial<Record<FieldKey, string[]>>>({});
 
   const toolbar = (
     <PqlToolbar<unknown, FieldKey>
+      compact={compact}
       fields={[
         {
           key: 'status',
@@ -113,6 +116,23 @@ afterEach(() => {
 });
 
 describe('PqlToolbar', () => {
+  it('reveals compact filters on demand while retaining search and active filter values', () => {
+    render(<ToolbarHarness compact withActions />);
+    const toggle = screen.getByRole('button', { name: 'Filters' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('button', { name: /Field filters/ })).toBeNull();
+    fireEvent.change(screen.getByPlaceholderText('Search todos'), { target: { value: 'agenda' } });
+    toggle.focus();
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: /Field filters/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
+    fireEvent.click(toggle);
+    expect((screen.getByPlaceholderText('Search todos') as HTMLInputElement).value).toBe('agenda');
+    expect(toggle.textContent).toContain('1');
+    fireEvent.click(toggle);
+    expect(screen.getByRole('button', { name: 'Open' }).getAttribute('aria-pressed')).toBe('true');
+  });
   it('renders optional actions in the same responsive row as search', () => {
     const { container } = render(<ToolbarHarness withActions />);
 

@@ -1,5 +1,6 @@
+import { useCollectionPresentation } from '@/features/shared/ui/collections/CollectionScope';
 import { useHistoryScrollState } from '@rocicorp/zero-virtual/react';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 import { usePolityZeroGrid } from './usePolityZeroGrid';
 
@@ -12,6 +13,7 @@ interface PageOptions<TStart> {
 
 export interface PolityZeroGridViewProps<TRow, TStart, TContext> {
   context: TContext;
+  layoutKey?: string;
   historyKey: string;
   estimateSize: number;
   gap?: number;
@@ -31,6 +33,7 @@ export interface PolityZeroGridViewProps<TRow, TStart, TContext> {
 /** Responsive, measured, cursor-paged grid using the shared Polity runtime. */
 export function PolityZeroGridView<TRow, TStart, TContext>({
   context,
+  layoutKey,
   historyKey,
   estimateSize,
   gap = 16,
@@ -46,9 +49,15 @@ export function PolityZeroGridView<TRow, TStart, TContext>({
   permalinkID,
   viewportClassName = 'h-[calc(100dvh-16rem)] min-h-80 overflow-auto',
 }: PolityZeroGridViewProps<TRow, TStart, TContext>) {
+  const collection = useCollectionPresentation();
+  const compact = (layoutKey ?? collection?.view) === 'compact';
+  const layout = compact ? 'compact' : 'cards';
+  const anchor = useRef<number | null>(null);
   const parentRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
-  const [scrollState, onScrollStateChange] = useHistoryScrollState<TStart>(historyKey);
+  const [scrollState, onScrollStateChange] = useHistoryScrollState<TStart>(
+    layoutKey || collection ? `${historyKey}:${layout}` : historyKey
+  );
 
   useEffect(() => {
     const element = parentRef.current;
@@ -59,12 +68,15 @@ export function PolityZeroGridView<TRow, TStart, TContext>({
     return () => observer.disconnect();
   }, []);
 
-  const lanes = getLanes(width);
+  const lanes = compact ? 1 : getLanes(width);
   const columnWidth = Math.max(0, (width - gap * (lanes - 1)) / lanes);
   const result = usePolityZeroGrid<TRow>({
     listContextParams: context,
     getScrollElement: useCallback(() => parentRef.current, []),
-    estimateSize: useCallback(() => estimateSize + gap, [estimateSize, gap]),
+    estimateSize: useCallback(
+      () => (compact ? 76 : estimateSize) + gap,
+      [compact, estimateSize, gap]
+    ),
     overscan,
     lanes,
     getPageQuery,
@@ -76,6 +88,19 @@ export function PolityZeroGridView<TRow, TStart, TContext>({
     onScrollStateChange,
     settleTime: 750,
   });
+
+  const layoutInitialized = useRef(false);
+  useLayoutEffect(() => {
+    if (layoutInitialized.current) result.virtualizer.measure();
+    layoutInitialized.current = true;
+    if (anchor.current !== null)
+      result.virtualizer.scrollToIndex(anchor.current, { align: 'start' });
+    return () => {
+      const offset = parentRef.current?.scrollTop ?? 0;
+      anchor.current =
+        result.virtualizer.getVirtualItems().find(item => item.end > offset)?.index ?? null;
+    };
+  }, [layout, lanes]);
 
   if (result.rowsEmpty) return renderEmpty();
 
@@ -95,7 +120,13 @@ export function PolityZeroGridView<TRow, TStart, TContext>({
                 transform: `translate(${(item.lane ?? 0) * (columnWidth + gap)}px, ${item.start}px)`,
               }}
             >
-              {row ? renderRow(row, item.index) : renderSkeleton(item.index)}
+              {row ? (
+                renderRow(row, item.index)
+              ) : compact ? (
+                <div className="bg-muted h-16 w-full animate-pulse rounded" />
+              ) : (
+                renderSkeleton(item.index)
+              )}
             </div>
           );
         })}

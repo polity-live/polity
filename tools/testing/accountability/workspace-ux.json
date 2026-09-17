@@ -1,0 +1,907 @@
+{
+  "version": 1,
+  "sourceReferences": {
+    "src/features/shared/ui/preview/PreviewSearchDetails.tsx": [
+      {
+        "file": "src/features/shared/ui/preview/__tests__/PreviewSearchDetails.component.test.tsx",
+        "project": "component",
+        "caseId": "shows the amendment status, source group, deduplicated topics and localized counts"
+      }
+    ],
+    "src/features/create/logic/createFormFocus.ts": [
+      {
+        "file": "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
+        "project": "component",
+        "caseId": "opens invalid optional sections and focuses their first editable invalid control"
+      }
+    ],
+    "src/features/create/ui/CreateValidationContext.tsx": [
+      {
+        "file": "src/features/create/ui/__tests__/CreateOptionalValidation.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps visibility exposed and preserves optional inputs when details are closed"
+      }
+    ],
+    "src/features/navigation/WorkspaceCommandItems.tsx": [
+      {
+        "file": "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
+        "project": "component",
+        "caseId": "uses the existing group context and permissions while exposing saved views"
+      }
+    ],
+    "src/features/navigation/logic/workspaceCommands.ts": [
+      {
+        "file": "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
+        "project": "component",
+        "caseId": "uses the existing group context and permissions while exposing saved views"
+      }
+    ],
+    "src/features/search/ui/CompactSearchRow.tsx": [
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps a direct detail link and an explicit preview in compact search results"
+      }
+    ],
+    "src/features/search/ui/SaveSearchViewButton.tsx": [
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection"
+      }
+    ],
+    "src/features/shared/ui/layout/WorkspaceHeader.tsx": [
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection"
+      }
+    ],
+    "src/features/shared/ui/navigation/FavoriteButton.tsx": [
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection"
+      }
+    ],
+    "src/zero/preferences/useWorkspacePreferences.ts": [
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection"
+      }
+    ],
+    "src/features/shared/ui/preview/WorkspacePreview.tsx": [
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps list state and scroll, restores trigger focus on Back, and supports Forward"
+      }
+    ],
+    "src/features/shared/ui/preview/list-keyboard.ts": [
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space"
+      }
+    ],
+    "src/features/shared/ui/preview/preview-target.ts": [
+      {
+        "file": "src/features/shared/ui/preview/__tests__/preview-target.unit.test.ts",
+        "project": "unit",
+        "caseId": "leaves ordinary anchors and nested detail routes alone"
+      }
+    ],
+    "src/features/todos/hooks/useTodoAssigneeOptions.ts": [
+      {
+        "file": "src/features/todos/hooks/__tests__/useTodoAssigneeOptions.component.test.tsx",
+        "project": "component",
+        "caseId": "restricts group tasks to that group and uses only active memberships for personal tasks"
+      }
+    ],
+    "src/features/todos/ui/CompactTodoRow.tsx": [
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for confirmation and prevents duplicate status writes while pending"
+      }
+    ],
+    "src/zero/preferences/workspace-schema.ts": [
+      {
+        "file": "src/zero/preferences/__tests__/workspace-preferences.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps display choices and other favorites when adding, renaming or removing a favorite"
+      }
+    ],
+    "src/features/shared/ui/collections/CollectionViewToggle.tsx": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "switches with keyboard focus without losing the search and queues only the latest choice while preferences load"
+      }
+    ],
+    "src/features/shared/ui/collections/CollectionToolbar.tsx": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "switches with keyboard focus without losing the search and queues only the latest choice while preferences load"
+      }
+    ],
+    "src/features/shared/ui/collections/EntityListRow.tsx": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps direct links, entity colors, callback actions and the existing action menu accessible"
+      }
+    ],
+    "src/features/shared/ui/collections/CollectionCard.tsx": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "adapts existing cards while retaining the permission-aware primary action, status and secondary menu"
+      }
+    ],
+    "src/features/shared/ui/collections/CollectionScope.tsx": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "shares one area choice between status sections without changing other areas"
+      }
+    ],
+    "src/features/shared/ui/collections/useCollectionView.ts": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "switches with keyboard focus without losing the search and queues only the latest choice while preferences load"
+      }
+    ],
+    "src/features/shared/ui/collections/CollectionPreferencesProvider.tsx": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "restores stored choices per area and keeps the working view after a failed save"
+      }
+    ],
+    "src/features/shared/ui/collections/useCalendarCollectionView.ts": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps calendar week preferences compatible and restores the compact list choice"
+      }
+    ]
+  },
+  "actionReferences": {
+    "src/features/amendments/AmendmentWikiView.tsx#workspace.amendment-wiki-view.favoritebutton.activate-1": [
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection",
+        "scenarios": ["idle", "loading", "error", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "removes a saved favorite and hides personal controls when signed out",
+        "scenarios": ["success", "authorized", "unauthorized", "selected", "unselected"]
+      }
+    ],
+    "src/features/events/EventWikiContentView.tsx#workspace.event-wiki-content-view.favoritebutton.activate-2": [
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection",
+        "scenarios": ["idle", "loading", "error", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "removes a saved favorite and hides personal controls when signed out",
+        "scenarios": ["success", "authorized", "unauthorized", "selected", "unselected"]
+      }
+    ],
+    "src/features/groups/GroupWikiContentView.tsx#workspace.group-wiki-content-view.favoritebutton.activate-3": [
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection",
+        "scenarios": ["idle", "loading", "error", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "removes a saved favorite and hides personal controls when signed out",
+        "scenarios": ["success", "authorized", "unauthorized", "selected", "unselected"]
+      }
+    ],
+    "src/features/navigation/WorkspaceCommandItems.tsx#navigation.workspace-command-items.handler": [
+      {
+        "file": "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
+        "project": "component",
+        "caseId": "uses the existing group context and permissions while exposing saved views",
+        "scenarios": ["selected", "unselected", "disabled", "keyboard", "focus"]
+      }
+    ],
+    "src/features/notifications/ui/NotificationItem.tsx#workspace.notification-item.previewbutton.activate-4": [
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps list state and scroll, restores trigger focus on Back, and supports Forward",
+        "scenarios": ["idle", "success", "authorized", "redirect", "deep-link", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the source available while loading and hides details for unavailable records",
+        "scenarios": ["loading", "error"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/search/ui/CompactSearchRow.tsx#workspace.compact-search-row.previewbutton.activate-5": [
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps list state and scroll, restores trigger focus on Back, and supports Forward",
+        "scenarios": ["idle", "success", "authorized", "redirect", "deep-link", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the source available while loading and hides details for unavailable records",
+        "scenarios": ["loading", "error"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/search/ui/CompactSearchRow.tsx#search.compact.open": [
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps a direct detail link and an explicit preview in compact search results",
+        "scenarios": ["authorized", "redirect", "deep-link"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps list state and scroll, restores trigger focus on Back, and supports Forward",
+        "scenarios": ["idle", "success", "authorized", "redirect", "deep-link", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the source available while loading and hides details for unavailable records",
+        "scenarios": ["loading", "error"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/search/ui/SaveSearchViewButton.tsx#workspace.save-search-view-button.favoritebutton.activate-6": [
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection",
+        "scenarios": ["idle", "loading", "error", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "removes a saved favorite and hides personal controls when signed out",
+        "scenarios": ["success", "authorized", "unauthorized", "selected", "unselected"]
+      }
+    ],
+    "src/features/search/ui/SearchHeader.tsx#workspace.search-header.savesearchviewbutton.activate-7": [
+      {
+        "file": "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
+        "project": "component",
+        "caseId": "exposes stable selectable view, filter, and personal-topic actions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/search/ui/SearchHeader.tsx#search.header.view.compact": [
+      {
+        "file": "src/features/search/ui/__tests__/SearchHeader.component.test.tsx",
+        "project": "component",
+        "caseId": "exposes stable selectable view, filter, and personal-topic actions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/search/ui/VirtualSearchGridView.tsx#workspace.virtual-search-grid-view.previewbutton.activate-8": [
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps list state and scroll, restores trigger focus on Back, and supports Forward",
+        "scenarios": ["idle", "success", "authorized", "redirect", "deep-link", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the source available while loading and hides details for unavailable records",
+        "scenarios": ["loading", "error"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/shared/ui/navigation/FavoriteButton.tsx#workspace.favorite-button.connectedfavoritebutton.activate-9": [
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection",
+        "scenarios": ["idle", "loading", "error", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "removes a saved favorite and hides personal controls when signed out",
+        "scenarios": ["success", "authorized", "unauthorized", "selected", "unselected"]
+      }
+    ],
+    "src/features/shared/ui/navigation/FavoriteButton.tsx#workspace.favorite.toggle": [
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection",
+        "scenarios": ["idle", "loading", "error", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "removes a saved favorite and hides personal controls when signed out",
+        "scenarios": ["success", "authorized", "unauthorized", "selected", "unselected"]
+      }
+    ],
+    "src/features/shared/ui/preview/WorkspacePreview.tsx#workspace.workspace-preview.favoritebutton.activate-10": [
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "saves the exact filtered view once, waits for confirmation and reports rejection",
+        "scenarios": ["idle", "loading", "error", "disabled", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/navigation/__tests__/WorkspaceActions.component.test.tsx",
+        "project": "component",
+        "caseId": "removes a saved favorite and hides personal controls when signed out",
+        "scenarios": ["success", "authorized", "unauthorized", "selected", "unselected"]
+      }
+    ],
+    "src/features/shared/ui/preview/WorkspacePreview.tsx#workspace.preview.open": [
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps list state and scroll, restores trigger focus on Back, and supports Forward",
+        "scenarios": ["idle", "success", "authorized", "redirect", "deep-link", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the source available while loading and hides details for unavailable records",
+        "scenarios": ["loading", "error"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/shared/ui/preview/WorkspacePreview.tsx#workspace.preview.open-page": [
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps list state and scroll, restores trigger focus on Back, and supports Forward",
+        "scenarios": ["idle", "success", "authorized", "redirect", "deep-link", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the source available while loading and hides details for unavailable records",
+        "scenarios": ["loading", "error"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/CivicTimelineRail.tsx#workspace.civic-timeline-rail.previewbutton.activate-11": [
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps list state and scroll, restores trigger focus on Back, and supports Forward",
+        "scenarios": ["idle", "success", "authorized", "redirect", "deep-link", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the source available while loading and hides details for unavailable records",
+        "scenarios": ["loading", "error"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/timeline/ui/ModernTimelineView.tsx#timeline.map.toggle": [
+      {
+        "file": "src/features/timeline/ui/__tests__/ModernTimelineView.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the map off until requested and explains missing locations compactly",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/todos/ui/CompactTodoRow.tsx#workspace.compact-todo-row.assigneepicker.activate-12": [
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for confirmation and prevents duplicate status writes while pending",
+        "scenarios": ["idle", "loading", "success", "selected", "unselected", "disabled"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the row available after server failure and respects group permissions",
+        "scenarios": ["error", "unauthorized", "disabled", "authorized", "deep-link", "redirect"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "edits assignees and deadlines with pending guards and restores the edit context after rejection",
+        "scenarios": ["idle", "loading", "success", "error", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/todos/ui/CompactTodoRow.tsx#workspace.compact-todo-row.button.activate-13": [
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for confirmation and prevents duplicate status writes while pending",
+        "scenarios": ["idle", "loading", "success", "selected", "unselected", "disabled"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the row available after server failure and respects group permissions",
+        "scenarios": ["error", "unauthorized", "disabled", "authorized", "deep-link", "redirect"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "edits assignees and deadlines with pending guards and restores the edit context after rejection",
+        "scenarios": ["idle", "loading", "success", "error", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/todos/ui/CompactTodoRow.tsx#workspace.compact-todo-row.deadlinepicker.activate-14": [
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for confirmation and prevents duplicate status writes while pending",
+        "scenarios": ["idle", "loading", "success", "selected", "unselected", "disabled"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the row available after server failure and respects group permissions",
+        "scenarios": ["error", "unauthorized", "disabled", "authorized", "deep-link", "redirect"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "edits assignees and deadlines with pending guards and restores the edit context after rejection",
+        "scenarios": ["idle", "loading", "success", "error", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/todos/ui/CompactTodoRow.tsx#workspace.compact-todo-row.previewbutton.activate-16": [
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps list state and scroll, restores trigger focus on Back, and supports Forward",
+        "scenarios": ["idle", "success", "authorized", "redirect", "deep-link", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the source available while loading and hides details for unavailable records",
+        "scenarios": ["loading", "error"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/todos/ui/CompactTodoRow.tsx#workspace.compact-todo-row.select.activate-17": [
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for confirmation and prevents duplicate status writes while pending",
+        "scenarios": ["idle", "loading", "success", "selected", "unselected", "disabled"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the row available after server failure and respects group permissions",
+        "scenarios": ["error", "unauthorized", "disabled", "authorized", "deep-link", "redirect"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "edits assignees and deadlines with pending guards and restores the edit context after rejection",
+        "scenarios": ["idle", "loading", "success", "error", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/todos/ui/CompactTodoRow.tsx#workspace.compact-todo-row.smartlink.activate-18": [
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for confirmation and prevents duplicate status writes while pending",
+        "scenarios": ["idle", "loading", "success", "selected", "unselected", "disabled"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the row available after server failure and respects group permissions",
+        "scenarios": ["error", "unauthorized", "disabled", "authorized", "deep-link", "redirect"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "edits assignees and deadlines with pending guards and restores the edit context after rejection",
+        "scenarios": ["idle", "loading", "success", "error", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/todos/ui/CompactTodoRow.tsx#todos.compact-todo-row.common-actions-edit": [
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for confirmation and prevents duplicate status writes while pending",
+        "scenarios": ["idle", "loading", "success", "selected", "unselected", "disabled"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the row available after server failure and respects group permissions",
+        "scenarios": ["error", "unauthorized", "disabled", "authorized", "deep-link", "redirect"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "edits assignees and deadlines with pending guards and restores the edit context after rejection",
+        "scenarios": ["idle", "loading", "success", "error", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/todos/ui/CompactTodoRow.tsx#todos.compact.assignee.open": [
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for confirmation and prevents duplicate status writes while pending",
+        "scenarios": ["idle", "loading", "success", "selected", "unselected", "disabled"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the row available after server failure and respects group permissions",
+        "scenarios": ["error", "unauthorized", "disabled", "authorized", "deep-link", "redirect"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "edits assignees and deadlines with pending guards and restores the edit context after rejection",
+        "scenarios": ["idle", "loading", "success", "error", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/todos/ui/CompactTodoRow.tsx#todos.compact.deadline.open": [
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for confirmation and prevents duplicate status writes while pending",
+        "scenarios": ["idle", "loading", "success", "selected", "unselected", "disabled"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the row available after server failure and respects group permissions",
+        "scenarios": ["error", "unauthorized", "disabled", "authorized", "deep-link", "redirect"]
+      },
+      {
+        "file": "src/features/todos/ui/__tests__/CompactTodoRow.component.test.tsx",
+        "project": "component",
+        "caseId": "edits assignees and deadlines with pending guards and restores the edit context after rejection",
+        "scenarios": ["idle", "loading", "success", "error", "keyboard", "focus"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/list-keyboard.component.test.tsx",
+        "project": "component",
+        "caseId": "moves between rows and opens the explicitly focused preview with Space",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/shared/ui/calendar/CalendarHeaderPresenterView.tsx#calendar.toolbar.view": [
+      {
+        "file": "src/features/shared/ui/calendar/__tests__/CalendarHeaderPresenterView.component.test.tsx",
+        "project": "component",
+        "caseId": "offers compact calendar views beside search with accessible period actions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/shared/ui/calendar/CalendarHeaderPresenterView.tsx#calendar.toolbar.previous": [
+      {
+        "file": "src/features/shared/ui/calendar/__tests__/CalendarHeaderPresenterView.component.test.tsx",
+        "project": "component",
+        "caseId": "offers compact calendar views beside search with accessible period actions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/shared/ui/calendar/CalendarHeaderPresenterView.tsx#calendar.toolbar.today": [
+      {
+        "file": "src/features/shared/ui/calendar/__tests__/CalendarHeaderPresenterView.component.test.tsx",
+        "project": "component",
+        "caseId": "offers compact calendar views beside search with accessible period actions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/shared/ui/calendar/CalendarHeaderPresenterView.tsx#calendar.toolbar.next": [
+      {
+        "file": "src/features/shared/ui/calendar/__tests__/CalendarHeaderPresenterView.component.test.tsx",
+        "project": "component",
+        "caseId": "offers compact calendar views beside search with accessible period actions",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/calendar/ui/CalendarPageView.tsx#calendar.page.filters.toggle": [
+      {
+        "file": "src/features/calendar/ui/__tests__/calendar-header-page.contract.component.test.tsx",
+        "project": "component",
+        "caseId": "renders loading independently and forwards the complete ready-page interaction contract",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/calendar/ui/CalendarPageView.tsx#calendar.page.date.clear": [
+      {
+        "file": "src/features/calendar/ui/__tests__/calendar-header-page.contract.component.test.tsx",
+        "project": "component",
+        "caseId": "renders loading independently and forwards the complete ready-page interaction contract",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/pql/ui/PqlToolbarView.tsx#pql.toolbar.filters.toggle": [
+      {
+        "file": "src/features/pql/ui/__tests__/PqlToolbar.component.test.tsx",
+        "project": "component",
+        "caseId": "reveals compact filters on demand while retaining search and active filter values",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/events/ui/calendar/SharedListView.tsx#calendar.compact.event.open": [
+      {
+        "file": "src/features/events/ui/calendar/__tests__/calendar-components.contract.component.test.tsx",
+        "project": "component",
+        "caseId": "opens compact rows using the existing event action and previews the base event",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/events/ui/calendar/SharedListView.tsx#calendar.compact.event.preview": [
+      {
+        "file": "src/features/events/ui/calendar/__tests__/calendar-components.contract.component.test.tsx",
+        "project": "component",
+        "caseId": "opens compact rows using the existing event action and previews the base event",
+        "scenarios": ["authorized", "redirect", "deep-link"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the source available while loading and hides details for unavailable records",
+        "scenarios": ["loading", "error"]
+      }
+    ],
+    "src/features/agendas/ui/AgendaCard.tsx#collection.agenda.move": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps agenda detail destinations and authorized move and voting actions in compact rows",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/agendas/ui/ChangeRequestTimelineCardView.tsx#collection.change-request.details": [
+      {
+        "file": "src/features/agendas/ui/__tests__/ChangeRequestTimelineCardView.actions.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps compact change-request details and vote permissions on the existing dialog path",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/agendas/ui/ChangeRequestTimelineCardView.tsx#collection.change-request.vote-dialog.open": [
+      {
+        "file": "src/features/agendas/ui/__tests__/ChangeRequestTimelineCardView.actions.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps compact change-request details and vote permissions on the existing dialog path",
+        "scenarios": [
+          "idle",
+          "success",
+          "keyboard",
+          "focus",
+          "disabled",
+          "unauthorized",
+          "selected",
+          "unselected"
+        ]
+      }
+    ],
+    "src/features/shared/ui/collections/CollectionViewToggle.tsx#shared.collection-view-toggle.on-change": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "switches with keyboard focus without losing the search and queues only the latest choice while preferences load",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/shared/ui/collections/EntityListRow.tsx#shared.entity-list-row.on-open": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps direct links, entity colors, callback actions and the existing action menu accessible",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/shared/ui/collections/CollectionCard.tsx#shared.collection.menu.open": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps direct links, entity colors, callback actions and the existing action menu accessible",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/shared/ui/collections/EntityListRow.tsx#shared.collection.entity.navigate": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps direct links, entity colors, callback actions and the existing action menu accessible",
+        "scenarios": ["authorized", "redirect", "deep-link"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the source available while loading and hides details for unavailable records",
+        "scenarios": ["loading", "error"]
+      }
+    ],
+    "src/features/timeline/ui/cards/TimelineCardBase.tsx#shared.collection.entity.preview": [
+      {
+        "file": "src/features/shared/ui/collections/__tests__/CollectionViews.component.test.tsx",
+        "project": "component",
+        "caseId": "adapts existing cards while retaining the permission-aware primary action, status and secondary menu",
+        "scenarios": ["authorized", "redirect", "deep-link"]
+      },
+      {
+        "file": "src/features/shared/ui/preview/__tests__/WorkspacePreview.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps the source available while loading and hides details for unavailable records",
+        "scenarios": ["loading", "error"]
+      }
+    ]
+  },
+  "actionDeclarations": {
+    "src/features/amendments/AmendmentWikiView.tsx#FavoriteButton-6b9fd342e8": {
+      "actionId": "workspace.amendment-wiki-view.favoritebutton.activate-1"
+    },
+    "src/features/events/EventWikiContentView.tsx#FavoriteButton-f2ba6e1451": {
+      "actionId": "workspace.event-wiki-content-view.favoritebutton.activate-2"
+    },
+    "src/features/groups/GroupWikiContentView.tsx#FavoriteButton-040fc9ff46": {
+      "actionId": "workspace.group-wiki-content-view.favoritebutton.activate-3"
+    },
+    "src/features/notifications/ui/NotificationItem.tsx#PreviewButton-9b25da5cb3": {
+      "actionId": "workspace.notification-item.previewbutton.activate-4"
+    },
+    "src/features/search/ui/CompactSearchRow.tsx#PreviewButton-4dd811c858": {
+      "actionId": "workspace.compact-search-row.previewbutton.activate-5"
+    },
+    "src/features/search/ui/SaveSearchViewButton.tsx#FavoriteButton-e5e1046db6": {
+      "actionId": "workspace.save-search-view-button.favoritebutton.activate-6"
+    },
+    "src/features/search/ui/SearchHeader.tsx#SaveSearchViewButton-5a0ec73345": {
+      "actionId": "workspace.search-header.savesearchviewbutton.activate-7"
+    },
+    "src/features/search/ui/VirtualSearchGridView.tsx#PreviewButton-a9f8b268ec": {
+      "actionId": "workspace.virtual-search-grid-view.previewbutton.activate-8"
+    },
+    "src/features/shared/ui/navigation/FavoriteButton.tsx#ConnectedFavoriteButton-88b9f3e6f6": {
+      "actionId": "workspace.favorite-button.connectedfavoritebutton.activate-9"
+    },
+    "src/features/shared/ui/preview/WorkspacePreview.tsx#FavoriteButton-6eab2a3abf": {
+      "actionId": "workspace.workspace-preview.favoritebutton.activate-10"
+    },
+    "src/features/timeline/ui/CivicTimelineRail.tsx#PreviewButton-123abeebbd": {
+      "actionId": "workspace.civic-timeline-rail.previewbutton.activate-11"
+    },
+    "src/features/todos/ui/CompactTodoRow.tsx#AssigneePicker-a38644c2e5": {
+      "actionId": "workspace.compact-todo-row.assigneepicker.activate-12"
+    },
+    "src/features/todos/ui/CompactTodoRow.tsx#Button-ab3caf0408": {
+      "actionId": "workspace.compact-todo-row.button.activate-13"
+    },
+    "src/features/todos/ui/CompactTodoRow.tsx#DeadlinePicker-17f8f18b2e": {
+      "actionId": "workspace.compact-todo-row.deadlinepicker.activate-14"
+    },
+    "src/features/todos/ui/CompactTodoRow.tsx#PreviewButton-4dd811c858": {
+      "actionId": "workspace.compact-todo-row.previewbutton.activate-16"
+    },
+    "src/features/todos/ui/CompactTodoRow.tsx#select-0b3a866c44": {
+      "actionId": "workspace.compact-todo-row.select.activate-17"
+    },
+    "src/features/todos/ui/CompactTodoRow.tsx#SmartLink-dc52a00c3e": {
+      "actionId": "workspace.compact-todo-row.smartlink.activate-18"
+    },
+    "src/features/events/ui/calendar/SharedListView.tsx#PreviewButton-fc6a6c8952": {
+      "actionId": "calendar.compact.event.preview"
+    },
+    "src/features/shared/ui/collections/CollectionCard.tsx#PopoverTrigger-e558429676": {
+      "actionId": "shared.collection.menu.open"
+    },
+    "src/features/shared/ui/collections/EntityListRow.tsx#SmartLink-f8be21dae5": {
+      "actionId": "shared.collection.entity.navigate"
+    },
+    "src/features/timeline/ui/cards/TimelineCardBase.tsx#PreviewButton-53b7fdfbe3": {
+      "actionId": "shared.collection.entity.preview"
+    }
+  }
+}

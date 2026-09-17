@@ -153,6 +153,7 @@ export function EventTimelineCardView({
       data-action-id="timeline.event.open"
       data-action-kind="navigation"
       contentType="event"
+      compactMetadata={[`${day} ${month} ${time}`, eventSubtitle].filter(Boolean).join(' · ')}
       className={className}
       onClick={onSelect}
       href={eventHref}

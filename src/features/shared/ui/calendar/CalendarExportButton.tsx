@@ -6,6 +6,7 @@ import { Button, type ButtonProps } from '@/features/shared/ui/ui/button';
 export interface CalendarExportButtonProps {
   onExport: () => void;
   label?: string;
+  iconOnly?: boolean;
   disabled?: boolean;
   size?: ButtonProps['size'];
   variant?: ButtonProps['variant'];
@@ -16,6 +17,7 @@ export interface CalendarExportButtonProps {
 export function CalendarExportButton({
   onExport,
   label,
+  iconOnly = false,
   disabled = false,
   size = 'sm',
   variant = 'outline',
@@ -28,14 +30,16 @@ export function CalendarExportButton({
     <Button
       type="button"
       variant={variant}
-      size={size}
+      size={iconOnly ? 'icon' : size}
+      aria-label={iconOnly ? (label ?? t('features.calendar.actions.export')) : undefined}
+      title={iconOnly ? (label ?? t('features.calendar.actions.export')) : undefined}
       onClick={onExport}
       disabled={disabled}
       className={className}
       data-action-id={dataActionId}
     >
-      <Download className="mr-2 h-4 w-4" />
-      {label ?? t('features.calendar.actions.export')}
+      <Download className={iconOnly ? 'size-4' : 'mr-2 h-4 w-4'} />
+      {!iconOnly ? (label ?? t('features.calendar.actions.export')) : null}
     </Button>
   );
 }

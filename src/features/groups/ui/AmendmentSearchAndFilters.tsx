@@ -1,5 +1,7 @@
 'use client';
 
+import { CollectionToggle } from '@/features/shared/ui/collections/CollectionScope';
+
 import { FormControlInput, FormControlLabel, SearchField } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
@@ -63,14 +65,17 @@ export function AmendmentSearchAndFilters({
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <SearchField
-          fieldClassName="flex-1"
-          placeholder={t('features.groups.amendments.searchPlaceholder')}
-          value={filters.searchQuery}
-          onValueChange={onSearchChange}
-          clearLabel={translateText('generated.inline.1132_clear_search_67300d0f')}
-        />
+      <div className="flex flex-wrap gap-2">
+        <div className="flex min-w-0 flex-1 gap-2">
+          <SearchField
+            fieldClassName="min-w-0 flex-1"
+            placeholder={t('features.groups.amendments.searchPlaceholder')}
+            value={filters.searchQuery}
+            onValueChange={onSearchChange}
+            clearLabel={translateText('generated.inline.1132_clear_search_67300d0f')}
+          />
+          <CollectionToggle />
+        </div>
         <Button
           data-action-id="groups.amendments.toggle.filters"
           variant="outline"

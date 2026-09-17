@@ -8,6 +8,10 @@ import type {
 interface CreateDescriptorBase {
   key: string;
   className?: string;
+  /** Context and visibility fields stay visible even in optional steps. */
+  alwaysVisible?: boolean;
+  /** Optional supporting content within an otherwise required step. */
+  supplementary?: boolean;
 }
 
 interface CreateTextFieldDescriptor extends CreateDescriptorBase {
@@ -73,6 +77,7 @@ export interface CreateFormSectionDescriptor {
   fields: CreateFormFieldDescriptor[];
   className?: string;
   layout?: 'list' | 'grid';
+  collapsible?: boolean;
 }
 
 /** A single step in a create form */
@@ -89,6 +94,8 @@ export interface CreateFormStep {
   getInvalidReason?: () => ReactNode | null;
   /** Whether this step is optional (skippable) */
   optional?: boolean;
+  /** Opt out when an optional step contains central workflow decisions. */
+  collapsible?: boolean;
 }
 
 export type CreateSubmitProgressStatus = 'pending' | 'active' | 'complete' | 'error';

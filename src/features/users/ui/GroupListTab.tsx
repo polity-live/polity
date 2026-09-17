@@ -1,3 +1,6 @@
+import { CollectionToolbar } from '@/features/shared/ui/collections/CollectionToolbar';
+import { CollectionCard } from '@/features/shared/ui/collections/CollectionCard';
+import { useCollectionView } from '@/features/shared/ui/collections/useCollectionView';
 import { FormControlInput } from '@/features/shared/ui/form';
 import React, { useCallback, useMemo } from 'react';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
@@ -22,25 +25,33 @@ export const GroupsListTab: React.FC<GroupsListTabProps> = ({
   onSearchChange,
 }) => {
   const { t } = useTranslation();
+  const { view, setView } = useCollectionView('profile.groups');
 
   const context = useMemo(() => ({ userId, query: searchValue.trim() }), [searchValue, userId]);
 
   return (
     <>
-      <div className="relative mb-4">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-        <FormControlInput
-          placeholder={t('pages.user.groups.searchPlaceholder')}
-          className="pl-10"
-          value={searchValue}
-          onChange={e => onSearchChange(e.target.value)}
-        />
-      </div>
+      <CollectionToolbar
+        view={view}
+        onViewChange={setView}
+        search={
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <FormControlInput
+              placeholder={t('pages.user.groups.searchPlaceholder')}
+              className="pl-10"
+              value={searchValue}
+              onChange={e => onSearchChange(e.target.value)}
+            />
+          </div>
+        }
+      />
       <PolityZeroGridView<
         ProfileGroupMembership,
         { created_at: number; id: string },
         typeof context
       >
+        layoutKey={view}
         context={context}
         historyKey={`user-${userId}-groups`}
         getPageQuery={useCallback(
@@ -59,15 +70,20 @@ export const GroupsListTab: React.FC<GroupsListTabProps> = ({
         )}
         getRowKey={membership => membership.id}
         toStartRow={membership => ({ created_at: membership.created_at, id: membership.id })}
-        getLanes={width => (width >= 1024 ? 3 : width >= 768 ? 2 : 1)}
-        estimateSize={360}
-        renderRow={(membership, index) => {
+        getLanes={width => (view === 'compact' ? 1 : width >= 1024 ? 3 : width >= 768 ? 2 : 1)}
+        estimateSize={view === 'compact' ? 76 : 360}
+        renderRow={membership => {
           const group = membership.group;
           if (!group) return null;
           return (
-            <div
-              className="civic-load-card-reveal"
-              style={{ '--civic-load-index': Math.min(index, 11) } as React.CSSProperties}
+            <CollectionCard
+              compact={view === 'compact'}
+              model={{
+                type: 'group',
+                title: group.name ?? '',
+                summary: richTextToPlainText(group.description),
+                href: `/group/${group.id}`,
+              }}
             >
               <GroupTimelineCard
                 group={{
@@ -79,7 +95,7 @@ export const GroupsListTab: React.FC<GroupsListTabProps> = ({
                   amendmentCount: group.amendment_count ?? group.amendments?.length,
                 }}
               />
-            </div>
+            </CollectionCard>
           );
         }}
         renderSkeleton={() => <Skeleton className="h-80 w-full rounded-xl" />}

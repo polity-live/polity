@@ -1,3 +1,7 @@
+import {
+  CollectionScope,
+  CollectionControls,
+} from '@/features/shared/ui/collections/CollectionScope';
 import { FormControlInput } from '@/features/shared/ui/form';
 import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
 import { StatementTimelineCard } from '@/features/timeline/ui/cards/StatementTimelineCard';
@@ -211,7 +215,7 @@ function VirtualStatementGrid({
   );
 }
 
-export function BlogsAndStatementsView({
+function BlogsAndStatementsViewContent({
   groupId,
   blogs,
   statements,
@@ -239,14 +243,19 @@ export function BlogsAndStatementsView({
 
       {/* Search + filter bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <FormControlInput
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder={translateText('generated.inline.0299_search_6d7a30a9')}
-            className="pl-9"
-          />
+        <div className="min-w-0 flex-1">
+          <CollectionControls>
+            {' '}
+            <div className="relative flex-1">
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+              <FormControlInput
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder={translateText('generated.inline.0299_search_6d7a30a9')}
+                className="pl-9"
+              />
+            </div>
+          </CollectionControls>
         </div>
 
         <div className="flex gap-1">
@@ -343,5 +352,13 @@ export function BlogsAndStatementsView({
           </div>
         )}
     </div>
+  );
+}
+
+export function BlogsAndStatementsView(props: BlogsAndStatementsViewProps) {
+  return (
+    <CollectionScope area="group.content">
+      <BlogsAndStatementsViewContent {...props} />
+    </CollectionScope>
   );
 }

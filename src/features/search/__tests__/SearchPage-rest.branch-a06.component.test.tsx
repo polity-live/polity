@@ -96,3 +96,13 @@ describe('SearchPage view branches', () => {
     expect(state.swipeOptions).toMatchObject({ canSwipePrev: true, canSwipeNext: false });
   });
 });
+
+vi.mock('@/zero/preferences/useWorkspacePreferences', () => ({
+  useWorkspacePreferences: () => ({
+    isLoading: false,
+    display: {},
+    setDisplay: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
+vi.mock('@tanstack/react-router', () => ({ useSearch: () => ({}) }));

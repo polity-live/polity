@@ -730,3 +730,5 @@ describe('GroupWikiContentView', () => {
     expect(container.querySelector('[data-entity-visibility="private"]')).not.toBeNull();
   });
 });
+
+vi.mock('@/features/shared/ui/navigation/FavoriteButton', () => ({ FavoriteButton: () => null }));

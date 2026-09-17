@@ -1,5 +1,5 @@
-import { useNavigate, useSearch } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearch, useRouterState } from '@tanstack/react-router';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import {
   ALL_CONTENT_TYPES,
   type DateRangeFilter,
@@ -8,10 +8,13 @@ import {
 } from '@/features/timeline/hooks/useTimelineFilters';
 import { type ContentType } from '@/features/timeline/constants/content-type-config';
 
-export type SearchViewMode = 'list' | 'spatial';
+export type SearchViewMode = 'list' | 'spatial' | 'compact';
 
 export function useSearchURL() {
   const navigate = useNavigate();
+  const previewOpen = useRouterState({
+    select: state => state.location.hash.startsWith('preview='),
+  });
   const searchParams = useSearch({ strict: false }) as Record<string, string>;
 
   // Get URL parameters
@@ -63,7 +66,8 @@ export function useSearchURL() {
 
   const parsedSort: TimelineSortOption =
     sortParam === 'trending' || sortParam === 'engagement' ? sortParam : 'recent';
-  const parsedView: SearchViewMode = viewParam === 'spatial' ? 'spatial' : 'list';
+  const parsedView: SearchViewMode =
+    viewParam === 'spatial' ? 'spatial' : viewParam === 'compact' ? 'compact' : 'list';
 
   // Local state
   const [searchQuery, setSearchQuery] = useState(queryParam);
@@ -73,6 +77,21 @@ export function useSearchURL() {
   const [engagement, setEngagement] = useState<EngagementFilter>(parsedEngagement);
   const [sortBy, setSortBy] = useState<TimelineSortOption>(parsedSort);
   const [view, setView] = useState<SearchViewMode>(parsedView);
+
+  // History navigation restores the controls without remounting the results or preview.
+  const urlKey = JSON.stringify(searchParams);
+  const lastURL = useRef(urlKey);
+  useEffect(() => {
+    if (lastURL.current === urlKey) return;
+    lastURL.current = urlKey;
+    setSearchQuery(queryParam);
+    setContentTypes(parsedContentTypes);
+    setDateRange(parsedDateRange);
+    setTopics(parsedTopics);
+    setEngagement(parsedEngagement);
+    setSortBy(parsedSort);
+    setView(parsedView);
+  }, [urlKey]);
 
   // Update URL when search parameters change
   const updateURL = (updates: Record<string, string>) => {
@@ -88,11 +107,26 @@ export function useSearchURL() {
         params.delete(key);
       }
     });
-    navigate({ to: `/search?${params.toString()}` });
+    const current = new URLSearchParams(
+      Object.entries(searchParams)
+        .filter(([, value]) => value != null)
+        .map(([key, value]) => [key, String(value)])
+    );
+    params.sort();
+    current.sort();
+    if (params.toString() === current.toString()) return;
+    void navigate({
+      to: `/search?${params.toString()}`,
+      hash: true,
+      resetScroll: false,
+    });
   };
 
   // Type-ahead search: Update URL as user types (with debouncing)
   useEffect(() => {
+    // A pending search update must not add another history entry above the preview.
+    // Keep local controls intact and flush their URL once the preview closes.
+    if (previewOpen) return;
     const timer = setTimeout(() => {
       const allTypesSelected = contentTypes.length === ALL_CONTENT_TYPES.length;
       updateURL({
@@ -107,7 +141,7 @@ export function useSearchURL() {
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, contentTypes, dateRange, topics, engagement, sortBy, view]);
+  }, [searchQuery, contentTypes, dateRange, topics, engagement, sortBy, view, urlKey, previewOpen]);
 
   return {
     searchQuery,

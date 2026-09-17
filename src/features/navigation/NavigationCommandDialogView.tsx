@@ -1,3 +1,4 @@
+import { WorkspaceCommandItems } from './WorkspaceCommandItems';
 import { Calendar, FileText, Users } from 'lucide-react';
 
 import type {
@@ -231,6 +232,12 @@ export function NavigationCommandDialogView({
       <CommandInput placeholder={copy.placeholder} />
       <CommandList>
         <CommandEmpty>{copy.noResults}</CommandEmpty>
+        <WorkspaceCommandItems
+          groups={groupItems}
+          events={eventItems}
+          amendments={amendmentItems}
+          onComplete={() => onOpenChange(false)}
+        />
         {navigationEntitiesLoading ? (
           <div
             role="status"

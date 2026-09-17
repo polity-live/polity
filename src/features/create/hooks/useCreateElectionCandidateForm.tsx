@@ -111,8 +111,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
       });
       await waitForOptimisticCreate(candidateResult);
       context?.reportProgress({ key: 'create', status: 'complete' });
-      context?.reportProgress({ key: 'sync', status: 'complete' });
-      context?.reportProgress({ key: 'ready', status: 'active' });
+      context?.reportProgress({ key: 'sync', status: 'active' });
       const candidateTarget =
         selectedEventId && selectedAgendaItemId
           ? createRouteSubmitTarget('election', {
@@ -123,7 +122,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
               to: '/create',
             });
       context?.setRecoveryTarget(candidateTarget);
-      trackCreateFinalization({
+      await trackCreateFinalization({
         result: candidateResult,
         draft: {
           id: `election:${candidateId}`,
@@ -160,6 +159,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
           });
         },
       });
+      context?.reportProgress({ key: 'ready', status: 'active' });
       return createSuccessSubmitOutcome(candidateTarget);
     } catch (error) {
       toast.error(t('pages.create.error.createFailed'));
@@ -225,6 +225,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
             },
             {
               key: 'image',
+              supplementary: true,
               kind: 'customComponent',
               component: ImageUpload,
               props: {

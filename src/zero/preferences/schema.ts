@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { workspacePreferencesSchema } from './workspace-schema';
 import { timestampSchema } from '../shared/helpers';
 import { currencyCodeSchema, type CurrencyCode } from '@/features/shared/logic/currency';
 
@@ -108,6 +109,7 @@ const baseUserPreferenceSchema = z.object({
   language: languageEnum,
   display_currency: currencyCodeSchema.default('EUR'),
   navigation_view: navigationViewEnum,
+  workspace_preferences: workspacePreferencesSchema.optional(),
   group_network_layouts: groupNetworkLayoutsSchema,
   decision_terminal_dashboard: decisionTerminalDashboardConfigSchema.optional(),
   app_tutorial_completed_at: timestampSchema.nullable(),

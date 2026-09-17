@@ -84,7 +84,10 @@ export function TimelineModeToggle({
           onModeChange(nextMode);
         }
       }}
-      className={cn('bg-muted/50 inline-flex items-center gap-1 rounded-lg border p-1', className)}
+      className={cn(
+        'inline-flex shrink-0 items-center gap-0 overflow-hidden rounded-md border',
+        className
+      )}
       aria-label={translateText('generated.inline.1167_timeline_mode_8f6d2e57')}
     >
       {modes.map(m => {
@@ -101,21 +104,22 @@ export function TimelineModeToggle({
             key={m}
             value={m}
             aria-label={t(config.labelKey)}
+            title={t(config.labelKey)}
             className={cn(
-              'relative h-auto gap-1.5 px-3 py-1.5 text-sm font-medium transition-all duration-200',
+              'relative size-9 shrink-0 rounded-none p-0 text-sm font-medium transition-colors',
               isActive ? config.activeClass : cn('text-muted-foreground', config.hoverClass),
               m === 'decisions' && !isActive && 'font-mono text-xs tracking-tight'
             )}
           >
             <Icon className="h-4 w-4" />
-            <span className="hidden sm:inline">{t(config.labelKey)}</span>
+            <span className="sr-only">{t(config.labelKey)}</span>
 
             {/* Badge */}
             {showBadge && (
               <BadgeControl
                 variant={m === 'decisions' ? 'destructive' : 'secondary'}
                 className={cn(
-                  'ml-1 h-5 min-w-[20px] px-1.5 text-xs',
+                  'absolute top-0 right-0 h-3.5 min-w-3.5 px-0.5 text-[9px]',
                   m === 'decisions' &&
                     'dark:border-transparent dark:bg-[#8a332b] dark:text-slate-50 dark:hover:bg-[#8a332b] dark:hover:text-slate-50',
                   isActive &&

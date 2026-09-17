@@ -32,6 +32,45 @@ function renderHeader(headingMode: 'visible' | 'sr-only' | 'none') {
 }
 
 describe('CalendarHeaderPresenterView', () => {
+  it('offers compact calendar views beside search with accessible period actions', () => {
+    const change = vi.fn();
+    const previous = vi.fn();
+    const next = vi.fn();
+    const today = vi.fn();
+    render(
+      <CalendarHeaderPresenterView
+        search={<input aria-label="Search events" />}
+        title="Calendar"
+        viewMode="list"
+        setViewMode={change}
+        currentViewTitle="September 2026"
+        onPrevious={previous}
+        onNext={next}
+        onToday={today}
+        resolvedTodayLabel="Today"
+        resolvedPreviousLabel="Previous"
+        resolvedNextLabel="Next"
+        resolvedViews={[
+          { value: 'list', label: 'List' },
+          { value: 'compact', label: 'Compact list' },
+          { value: 'week', label: 'Week' },
+          { value: 'month', label: 'Month' },
+        ]}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Cards' }).getAttribute('aria-pressed')).toBe('true');
+    const compact = screen.getByRole('button', { name: 'Compact view' });
+    compact.focus();
+    fireEvent.click(compact);
+    expect(change).toHaveBeenCalledWith('compact');
+    expect(document.activeElement).toBe(compact);
+    fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Today' }));
+    expect(previous).toHaveBeenCalledOnce();
+    expect(next).toHaveBeenCalledOnce();
+    expect(today).toHaveBeenCalledOnce();
+  });
   it('keeps an sr-only page heading and aligns actions with view controls', () => {
     const { container } = renderHeader('sr-only');
 

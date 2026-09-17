@@ -681,9 +681,8 @@ export function useCreateGroupForm(): CreateFormConfig {
 
       context?.setRecoveryTarget(groupSubmitTarget);
       context?.reportProgress({ key: 'create', status: 'complete' });
-      context?.reportProgress({ key: 'sync', status: 'complete' });
-      context?.reportProgress({ key: 'ready', status: 'active' });
-      trackCreateFinalization({
+      context?.reportProgress({ key: 'sync', status: 'active' });
+      await trackCreateFinalization({
         result: createGroupResult,
         draft: {
           id: `group:${groupId}`,
@@ -765,6 +764,7 @@ export function useCreateGroupForm(): CreateFormConfig {
         },
       });
       setIsSubmitting(false);
+      context?.reportProgress({ key: 'ready', status: 'active' });
       return createSuccessSubmitOutcome(groupSubmitTarget);
     } catch (error) {
       setIsSubmitting(false);

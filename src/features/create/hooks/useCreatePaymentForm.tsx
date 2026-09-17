@@ -203,8 +203,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
       const paymentResult = createPayment(paymentPayload, { notificationMode: 'silent' });
       await waitForOptimisticCreate(paymentResult);
       context?.reportProgress({ key: 'create', status: 'complete' });
-      context?.reportProgress({ key: 'sync', status: 'complete' });
-      context?.reportProgress({ key: 'ready', status: 'active' });
+      context?.reportProgress({ key: 'sync', status: 'active' });
 
       const paymentTarget = createRouteSubmitTarget('payment', {
         to: '/group/$id/operation',
@@ -212,7 +211,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
         hash: returnSection ?? 'payments',
       });
       context?.setRecoveryTarget(paymentTarget);
-      trackCreateFinalization({
+      await trackCreateFinalization({
         result: paymentResult,
         draft: {
           id: `payment:${paymentId}`,
@@ -258,6 +257,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
         },
       });
 
+      context?.reportProgress({ key: 'ready', status: 'active' });
       return createSuccessSubmitOutcome(paymentTarget);
     } catch (error) {
       toast.error(t('pages.create.error.createFailed'));
@@ -369,6 +369,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
           fields: [
             {
               key: 'group',
+              alwaysVisible: true,
               kind: 'typeahead',
               label: t('pages.create.common.group'),
               required: true,

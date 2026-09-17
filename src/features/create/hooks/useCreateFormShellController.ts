@@ -46,6 +46,7 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
     progressSteps: normalizeCreateSubmitProgressSteps(config.entityType, config.submissionSteps),
   });
   const submitInFlightRef = useRef(false);
+  const [submitPending, setSubmitPending] = useState(false);
   const recoveryTargetRef = useRef<CreateSubmitTarget | null>(null);
   const progressStepsRef = useRef<CreateSubmitProgressStep[]>(
     normalizeCreateSubmitProgressSteps(config.entityType, config.submissionSteps)
@@ -76,6 +77,7 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
     }
 
     submitInFlightRef.current = true;
+    setSubmitPending(true);
     recoveryTargetRef.current = null;
     progressStepsRef.current = activateCreateSubmitProgressStep(
       normalizeCreateSubmitProgressSteps(config.entityType, config.submissionSteps),
@@ -124,6 +126,7 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
       }
 
       if (outcome.status === 'blocked') {
+        setSubmitPending(false);
         submitInFlightRef.current = false;
         recoveryTargetRef.current = null;
         setSubmissionState({
@@ -146,6 +149,7 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
         progressSteps: progressStepsRef.current,
       });
     } catch (error) {
+      setSubmitPending(false);
       if (overlayTimer) {
         clearTimeout(overlayTimer);
       }
@@ -163,6 +167,7 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
   }, [config, submissionState.status]);
 
   const handleBackToForm = useCallback(() => {
+    setSubmitPending(false);
     submitInFlightRef.current = false;
     recoveryTargetRef.current = null;
     setSubmissionState({
@@ -183,7 +188,7 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
     onFormStyleChange: handleFormStyleChange,
     onStepChange: handleStepChange,
     onSubmit: handleSubmit,
-    isSubmitting: config.isSubmitting || submissionState.status === 'submitting',
+    isSubmitting: config.isSubmitting || submitPending || submissionState.status === 'submitting',
     submission: {
       status: submissionState.status,
       target: submissionState.target,

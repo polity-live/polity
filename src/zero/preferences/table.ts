@@ -1,5 +1,6 @@
 import { table, string, number, json } from '@rocicorp/zero';
 import type { DecisionTerminalDashboardConfig, GroupNetworkLayouts } from './schema';
+import type { WorkspacePreferences } from './workspace-schema';
 
 export const userPreference = table('user_preference')
   .columns({
@@ -11,6 +12,7 @@ export const userPreference = table('user_preference')
     language: string(),
     display_currency: string(),
     navigation_view: string(),
+    workspace_preferences: json<WorkspacePreferences>().optional(),
     group_network_layouts: json<GroupNetworkLayouts>(),
     decision_terminal_dashboard: json<DecisionTerminalDashboardConfig>().optional(),
     app_tutorial_completed_at: number().optional(),

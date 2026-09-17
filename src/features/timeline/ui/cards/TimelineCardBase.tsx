@@ -1,8 +1,16 @@
 'use client';
 
+import { useCollectionPresentation } from '@/features/shared/ui/collections/CollectionScope';
+
 import { getContentTypeToneClasses, getMotionPreset } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
-import { ReactNode } from 'react';
+import { Children, isValidElement, ReactNode } from 'react';
+import {
+  useCompactCard,
+  CollectionActionsMenu,
+} from '@/features/shared/ui/collections/CollectionCard';
+import { EntityListRow } from '@/features/shared/ui/collections/EntityListRow';
+import { PreviewButton } from '@/features/shared/ui/preview/WorkspacePreview';
 import { cn } from '@/features/shared/utils/utils';
 import { Button } from '@/features/shared/ui/ui/button';
 import { LinkSurface } from '@/features/shared/ui/navigation/LinkSurface.tsx';
@@ -16,12 +24,23 @@ import {
 import { type LucideIcon } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
+function firstCardParagraph(nodes: ReactNode): ReactNode {
+  for (const child of Children.toArray(nodes)) {
+    if (!isValidElement<{ children?: ReactNode }>(child)) continue;
+    if (child.type === 'p') return child.props.children;
+    const paragraph = firstCardParagraph(child.props.children);
+    if (paragraph) return paragraph;
+  }
+  return null;
+}
+
 export interface TimelineCardBaseProps {
   'data-action-id'?: string;
   contentType: ContentType;
   className?: string;
   children: ReactNode;
   elevated?: boolean;
+  compactMetadata?: ReactNode;
   onClick?: () => void;
   /** URL to navigate to when card is clicked (supports browser-native new-tab gestures) */
   href?: string;
@@ -39,10 +58,28 @@ export function TimelineCardBase({
   className,
   children,
   elevated = false,
+  compactMetadata,
   onClick,
   href,
 }: TimelineCardBaseProps) {
   const { t } = useTranslation();
+  const explicitModel = useCompactCard();
+  const collection = useCollectionPresentation();
+  const slots = Children.toArray(children);
+  const header = slots.find(
+    child => isValidElement<TimelineCardHeaderProps>(child) && child.type === TimelineCardHeader
+  );
+  const compactModel =
+    explicitModel ??
+    (collection?.view === 'compact' && isValidElement<TimelineCardHeaderProps>(header)
+      ? {
+          type: contentType,
+          title: header.props.title,
+          summary: header.props.subtitle ?? firstCardParagraph(children),
+          metadata: compactMetadata ?? header.props.children,
+          href: header.props.href ?? href,
+        }
+      : null);
   const shadowClasses = getCardShadowClasses(elevated);
   const tone = getContentTypeToneClasses(contentType);
 
@@ -56,6 +93,41 @@ export function TimelineCardBase({
     (onClick || href) && 'cursor-pointer',
     className
   );
+
+  if (compactModel) {
+    const previewHref = compactModel.href ?? href;
+    const actions = slots.flatMap(child =>
+      isValidElement<{ children?: ReactNode }>(child) && child.type === TimelineCardActions
+        ? Children.toArray(child.props.children)
+        : []
+    );
+    const hasPrimary = ['amendment', 'group', 'event', 'blog', 'user', 'todo'].includes(
+      contentType
+    );
+    const primary = hasPrimary ? actions.shift() : null;
+    if (contentType === 'todo' && isValidElement<TimelineCardHeaderProps>(header))
+      actions.push(...Children.toArray(header.props.children));
+    return (
+      <EntityListRow
+        {...compactModel}
+        metadata={
+          compactModel.metadata ??
+          compactMetadata ??
+          (isValidElement<TimelineCardHeaderProps>(header) ? header.props.children : null)
+        }
+        href={compactModel.href ?? href}
+        onOpen={compactModel.onOpen ?? onClick}
+        actions={
+          <>
+            {compactModel.actions}
+            {primary}
+            {previewHref && <PreviewButton href={previewHref} />}
+            {actions.length > 0 && <CollectionActionsMenu>{actions}</CollectionActionsMenu>}
+          </>
+        }
+      />
+    );
+  }
 
   if (href) {
     return (

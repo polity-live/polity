@@ -374,3 +374,5 @@ describe('NavigationCommandDialogView', () => {
     }
   );
 });
+
+vi.mock('../WorkspaceCommandItems', () => ({ WorkspaceCommandItems: () => null }));

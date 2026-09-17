@@ -1,5 +1,10 @@
 'use client';
 
+import { useState } from 'react';
+import { CollectionToolbar } from '@/features/shared/ui/collections/CollectionToolbar';
+import { useCollectionView } from '@/features/shared/ui/collections/useCollectionView';
+import { EntityListRow } from '@/features/shared/ui/collections/EntityListRow';
+import { SearchField } from '@/features/shared/ui/form/SearchField';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
@@ -95,6 +100,60 @@ export function AgendaSpeakerListSectionView({
   renderTimingLabel,
   agendaItemId,
 }: AgendaSpeakerListSectionViewProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const { view, setView } = useCollectionView('agenda.speakers');
+  const compact = view === 'compact';
+  const query = searchQuery.trim();
+  const speakerName = (speaker: any) =>
+    speaker.user?.name ||
+    [speaker.user?.first_name, speaker.user?.last_name].filter(Boolean).join(' ') ||
+    speaker.user?.email ||
+    t('common.unspecified');
+  const filteredQueue = speakerQueue.filter(speaker => {
+    const text = [speakerName(speaker), speaker.user?.handle, speaker.user?.email]
+      .filter(Boolean)
+      .join(' ')
+      .toLocaleLowerCase();
+    return query
+      .toLocaleLowerCase()
+      .split(/\s+/)
+      .every(term => text.includes(term));
+  });
+  const renderCompactSpeaker = (speaker: any) => (
+    <EntityListRow
+      key={speaker.id}
+      type="user"
+      title={speakerName(speaker)}
+      href={speaker.user?.id ? `/user/${speaker.user.id}` : undefined}
+      summary={t('features.events.agenda.speakerPosition', {
+        count: speaker.order ?? speaker.order_index,
+      })}
+      metadata={
+        <>
+          {speaker.isCurrent && <span>{t('features.events.agenda.currentSpeaker')}</span>}
+          {speaker.completed && <span>{t('features.events.agenda.completedSpeaker')}</span>}
+          {Number.isFinite(speaker.estimatedStartTime) && (
+            <span>{formatClockTime(speaker.estimatedStartTime)}</span>
+          )}
+          {showGender && <span>{formatGenderBadgeLabel(t, speaker.user?.gender)}</span>}
+        </>
+      }
+      actions={
+        canManageSpeakers && speaker.isCurrent && onMarkCompleted ? (
+          <Button
+            data-action-id="agendas.speakers.current.complete"
+            data-action-kind="async-action"
+            size="icon"
+            variant="ghost"
+            aria-label={t('features.events.agenda.completedSpeaker')}
+            onClick={() => onMarkCompleted(speaker.id)}
+          >
+            <CheckCircle2 className="size-4" />
+          </Button>
+        ) : undefined
+      }
+    />
+  );
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
       <Card className={cn(className)}>
@@ -126,26 +185,47 @@ export function AgendaSpeakerListSectionView({
 
         <CollapsibleContent>
           <CardContent className="space-y-4">
-            {speakerQueue.length === 0 ? (
+            <CollectionToolbar
+              view={view}
+              onViewChange={setView}
+              search={
+                <SearchField
+                  value={searchQuery}
+                  onValueChange={setSearchQuery}
+                  placeholder={t('features.events.agenda.speakerSearchPlaceholder')}
+                />
+              }
+            />
+            {speakerQueue.length === 0 || (!agendaItemId && filteredQueue.length === 0) ? (
               <div className="rounded-lg border border-dashed p-8 text-center">
                 <Users className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
                 <p className="text-muted-foreground text-sm">
-                  {t('features.events.agenda.speakerListEmpty')}
+                  {t(
+                    query
+                      ? 'features.events.agenda.speakerSearchEmpty'
+                      : 'features.events.agenda.speakerListEmpty'
+                  )}
                 </p>
               </div>
             ) : agendaItemId ? (
               <PolityZeroListView<
                 any,
                 { order_index: number; id: string },
-                { agendaItemId: string }
+                { agendaItemId: string; query: string }
               >
-                context={{ agendaItemId }}
-                historyKey={`agenda-${agendaItemId}-speakers`}
-                estimateSize={116}
+                context={{ agendaItemId, query }}
+                historyKey={`agenda-${agendaItemId}-speakers-${view}`}
+                estimateSize={compact ? 76 : 116}
                 getRowKey={speaker => speaker.id}
                 toStartRow={speaker => ({ order_index: speaker.order_index, id: speaker.id })}
                 getPageQuery={({ limit, start, dir, settled }) => ({
-                  query: queries.agendas.speakerPage({ agendaItemId, limit, start, dir }) as never,
+                  query: queries.agendas.speakerPage({
+                    agendaItemId,
+                    query,
+                    limit,
+                    start,
+                    dir,
+                  }) as never,
                   options: { ttl: settled ? ('5m' as const) : ('none' as const) },
                 })}
                 getSingleQuery={({ id, settled }) => ({
@@ -154,8 +234,8 @@ export function AgendaSpeakerListSectionView({
                 })}
                 renderRow={row => {
                   const speaker = speakerQueue.find(candidate => candidate.id === row.id) ?? row;
-                  const speakerName =
-                    speaker.user?.name || speaker.user?.email || t('common.unspecified');
+                  if (compact) return renderCompactSpeaker(speaker);
+                  const name = speakerName(speaker);
                   return (
                     <Card
                       className={cn('border', speaker.isCurrent && 'border-primary bg-primary/5')}
@@ -168,10 +248,10 @@ export function AgendaSpeakerListSectionView({
                         >
                           <Avatar className="h-11 w-11">
                             <AvatarImage src={speaker.user?.avatar} />
-                            <AvatarFallback>{speakerName[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                            <AvatarFallback>{name[0]?.toUpperCase() || 'U'}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0">
-                            <p className="truncate font-medium">{speakerName}</p>
+                            <p className="truncate font-medium">{name}</p>
                             <p className="text-muted-foreground text-sm">
                               {t('features.events.agenda.speakerPosition', {
                                 count: speaker.order ?? row.order_index,
@@ -195,9 +275,15 @@ export function AgendaSpeakerListSectionView({
                   );
                 }}
                 renderSkeleton={() => <Skeleton className="h-28 w-full rounded-xl" />}
-                renderEmpty={() => null}
+                renderEmpty={() => (
+                  <p className="text-muted-foreground py-6 text-center text-sm">
+                    {t('features.events.agenda.speakerSearchEmpty')}
+                  </p>
+                )}
                 className="max-h-[36rem] overflow-auto"
               />
+            ) : compact ? (
+              <div>{filteredQueue.map(renderCompactSpeaker)}</div>
             ) : (
               <div className="px-10">
                 <Carousel
@@ -206,9 +292,8 @@ export function AgendaSpeakerListSectionView({
                   opts={{ align: 'start', dragFree: true }}
                 >
                   <CarouselContent className="-ml-3 md:-ml-4">
-                    {speakerQueue.map((speaker: any) => {
-                      const speakerName =
-                        speaker.user?.name || speaker.user?.email || t('common.unspecified');
+                    {filteredQueue.map((speaker: any) => {
+                      const name = speakerName(speaker);
                       return (
                         <CarouselItem
                           key={speaker.id}
@@ -231,15 +316,11 @@ export function AgendaSpeakerListSectionView({
                                 >
                                   <Avatar className="border-border/60 h-14 w-14 border">
                                     <AvatarImage src={speaker.user?.avatar} />
-                                    <AvatarFallback>
-                                      {speakerName[0]?.toUpperCase() || 'U'}
-                                    </AvatarFallback>
+                                    <AvatarFallback>{name[0]?.toUpperCase() || 'U'}</AvatarFallback>
                                   </Avatar>
                                   <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <p className="truncate font-medium hover:underline">
-                                        {speakerName}
-                                      </p>
+                                      <p className="truncate font-medium hover:underline">{name}</p>
                                       {speaker.isCurrent && (
                                         <BadgeControl variant="default">
                                           {t('features.events.agenda.currentSpeaker')}

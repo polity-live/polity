@@ -96,20 +96,29 @@ export const agendaQueries = {
   speakerPage: defineQuery(
     z.object({
       agendaItemId: z.string(),
+      query: z.string().optional(),
       limit: virtualPageLimitSchema,
       start: agendaOrderCursorSchema,
       dir: agendaPageDirectionSchema,
     }),
-    ({ args: { agendaItemId, limit, start, dir }, ctx: { userID } }) =>
-      applyAgendaOrderCursor(
-        zql.speaker_list
-          .where('agenda_item_id', agendaItemId)
-          .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID)),
-        start,
-        dir
-      )
-        .related('user')
-        .limit(limit)
+    ({ args: { agendaItemId, query = '', limit, start, dir }, ctx: { userID } }) => {
+      let speakers = zql.speaker_list
+        .where('agenda_item_id', agendaItemId)
+        .whereExists('agenda_item', agendaItem => applyAgendaItemQueryAccess(agendaItem, userID));
+      for (const term of query.trim().split(/\s+/).filter(Boolean)) {
+        speakers = speakers.whereExists('user', user =>
+          user.where(({ or, cmp }) =>
+            or(
+              cmp('first_name', 'ILIKE', `%${term}%`),
+              cmp('last_name', 'ILIKE', `%${term}%`),
+              cmp('handle', 'ILIKE', `%${term}%`),
+              cmp('email', 'ILIKE', `%${term}%`)
+            )
+          )
+        );
+      }
+      return applyAgendaOrderCursor(speakers, start, dir).related('user').limit(limit);
+    }
   ),
 
   speakerById: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>

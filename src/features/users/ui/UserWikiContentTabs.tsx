@@ -1,3 +1,6 @@
+import { CollectionToolbar } from '@/features/shared/ui/collections/CollectionToolbar';
+import { useCollectionView } from '@/features/shared/ui/collections/useCollectionView';
+import { CompactSearchRow } from '@/features/search/ui/CompactSearchRow';
 import React, { useCallback, useMemo } from 'react';
 import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { ScrollableTabsList } from '@/features/shared/ui/navigation';
@@ -31,6 +34,7 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
   handleSearchChange,
 }) => {
   const { t } = useTranslation();
+  const { view, setView } = useCollectionView('profile.all');
   const resolvedAuthorName = authorName || t('common.labels.unspecifiedUser');
 
   const allContext = useMemo(
@@ -103,13 +107,20 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
         </ScrollableTabsList>
 
         <TabsContent value="all" className="mt-4 space-y-4">
-          <EntitySearchBar
-            searchQuery={searchTerms.all}
-            onSearchQueryChange={value => handleSearchChange('all', value)}
-            placeholder={t('pages.user.all.searchPlaceholder')}
+          <CollectionToolbar
+            view={view}
+            onViewChange={setView}
+            search={
+              <EntitySearchBar
+                searchQuery={searchTerms.all}
+                onSearchQueryChange={value => handleSearchChange('all', value)}
+                placeholder={t('pages.user.all.searchPlaceholder')}
+              />
+            }
           />
 
           <PolityZeroGridView<SearchDocument, { created_at: number; id: string }, typeof allContext>
+            layoutKey={view}
             context={allContext}
             historyKey={`user-${user.id}-all-content`}
             getPageQuery={useCallback(
@@ -144,14 +155,20 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
             )}
             getRowKey={document => document.id}
             toStartRow={document => ({ created_at: document.created_at, id: document.id })}
-            getLanes={width => (width >= 1280 ? 3 : width >= 720 ? 2 : 1)}
-            estimateSize={360}
+            getLanes={width => (view === 'compact' ? 1 : width >= 1280 ? 3 : width >= 720 ? 2 : 1)}
+            estimateSize={view === 'compact' ? 76 : 360}
             renderRow={(document, index) => (
               <div
                 className="civic-load-card-reveal"
                 style={{ '--civic-load-index': Math.min(index, 11) } as React.CSSProperties}
               >
-                <SearchResultCard document={document} />
+                {view === 'compact' ? (
+                  <CompactSearchRow document={document}>
+                    <SearchResultCard document={document} />
+                  </CompactSearchRow>
+                ) : (
+                  <SearchResultCard document={document} />
+                )}
               </div>
             )}
             renderSkeleton={() => <Skeleton className="h-[360px] w-full rounded-xl" />}

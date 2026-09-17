@@ -1,3 +1,4 @@
+import { CollectionPreferencesProvider } from '@/features/shared/ui/collections/CollectionPreferencesProvider';
 import type { ReactNode } from 'react';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { DynamicNavigation } from '@/features/navigation/dynamic-navigation.tsx';
@@ -24,6 +25,7 @@ import { isItemActive } from '@/features/navigation/nav-items/nav-helpers.ts';
 import { getAuthenticatedPageFrame, getAppShellResponsiveClasses } from './app-shell-layout';
 import { PageFrame } from './page-frame';
 import { AppTutorialSessionGate } from '@/features/app-tutorial/AppTutorialSessionGate';
+import { WorkspacePreviewProvider } from '@/features/shared/ui/preview/WorkspacePreview';
 
 function isEntitySecondarySwipeRoute(pathname: string): boolean {
   return /^\/(?:group|user|amendment|event|blog)\/[^/]+/.test(pathname);
@@ -145,8 +147,12 @@ export default function AuthenticatedShell({ children }: { children: ReactNode }
     <PrioritizedPreloadProvider>
       <InternalLinkIntentPreloader />
       <I18nSyncProvider>
-        {content}
-        <AppTutorialSessionGate pathname={pathname} />
+        <CollectionPreferencesProvider>
+          <WorkspacePreviewProvider>
+            {content}
+            <AppTutorialSessionGate pathname={pathname} />
+          </WorkspacePreviewProvider>
+        </CollectionPreferencesProvider>
       </I18nSyncProvider>
     </PrioritizedPreloadProvider>
   );

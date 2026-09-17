@@ -58,6 +58,7 @@ describe('ModernTimelineView LSF callback contract', () => {
     const setShowFilterPanel = vi.fn();
     render(
       <ModernTimelineView
+        mapVisible
         {...({
           userId: 'user-1',
           mode: 'timeline',

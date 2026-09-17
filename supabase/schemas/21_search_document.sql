@@ -94,10 +94,26 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.search_document_json_text(value JSONB)
 RETURNS TEXT
-LANGUAGE sql
+LANGUAGE plpgsql
 IMMUTABLE
 AS $$
-  SELECT coalesce(regexp_replace(value::text, '[\[\]\{\}"_,:]+', ' ', 'g'), '');
+DECLARE
+  result TEXT;
+BEGIN
+  IF value IS NULL OR value = 'null'::jsonb THEN RETURN ''; END IF;
+  CASE jsonb_typeof(value)
+    WHEN 'string' THEN RETURN value #>> '{}';
+    WHEN 'array' THEN
+      SELECT string_agg(public.search_document_json_text(item), ' ' ORDER BY ordinal)
+      INTO result FROM jsonb_array_elements(value) WITH ORDINALITY AS nodes(item, ordinal);
+      RETURN coalesce(result, '');
+    WHEN 'object' THEN
+      IF value ? 'text' THEN RETURN coalesce(value->>'text', ''); END IF;
+      IF value ? 'children' THEN RETURN public.search_document_json_text(value->'children'); END IF;
+      RETURN '';
+    ELSE RETURN '';
+  END CASE;
+END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.search_document_epoch_ms(value TIMESTAMPTZ)

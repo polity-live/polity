@@ -28,11 +28,11 @@ vi.mock('@tanstack/react-router', () => ({
 afterEach(cleanup);
 
 describe('TodosHeader', () => {
-  it('keeps the route title semantic while rendering only view and create controls', () => {
+  it('renders view and create controls for the shared page header', () => {
     const setViewMode = vi.fn();
     render(<TodosHeader viewMode="list" setViewMode={setViewMode} />);
 
-    expect(screen.getByRole('heading', { name: 'My Todos' }).className).toContain('sr-only');
+    expect(screen.queryByRole('heading')).toBeNull();
     expect(screen.getByText('New Todo')).toBeTruthy();
     expect(screen.getAllByRole('button')).toHaveLength(2);
     const list = document.querySelector('[data-action-id="todos.header.view.list"]')!;

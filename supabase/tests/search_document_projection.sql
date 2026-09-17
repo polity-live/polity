@@ -4,7 +4,11 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(17);
+SELECT plan(20);
+
+SELECT is(public.search_document_json_text('[{"type":"p","children":[{"text":"Content"},{"text":"first","bold":true}]}]'::jsonb), 'Content first', 'rich text summaries exclude editor keys and retain reading order');
+SELECT is(public.search_document_json_text('"Plain description"'::jsonb), 'Plain description', 'plain descriptions remain readable');
+SELECT is(public.search_document_json_text(NULL), '', 'missing descriptions remain empty');
 
 INSERT INTO public."user" (
   id, handle, first_name, last_name, country, city, latitude, longitude

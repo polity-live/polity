@@ -43,13 +43,12 @@ vi.mock('@/zero/queries', () => ({
   },
 }));
 
-vi.mock('@/features/timeline/ui/cards/TodoTimelineCard', () => ({
-  TodoTimelineCard: (props: any) => {
+vi.mock('../CompactTodoRow', () => ({
+  CompactTodoRow: (props: any) => {
     mocks.cards.push(props);
     return (
       <div>
-        <button onClick={props.onToggle}>toggle</button>
-        <button onClick={props.onCardClick}>open</button>
+        <button onClick={() => props.onTodoClick?.(props.todo)}>open</button>
       </div>
     );
   },
@@ -111,35 +110,16 @@ describe('TodoList branch coverage', () => {
       />
     );
     expect(mocks.localProps.getItemKey(complete)).toBe('todo-1');
-    expect(mocks.cards[0].todo).toEqual(
-      expect.objectContaining({
-        isCompleted: true,
-        status: 'completed',
-        archived: true,
-        assigneeCount: 1,
-      })
-    );
-    expect(mocks.cards[1].todo).toEqual(
-      expect.objectContaining({
-        title: '',
-        description: undefined,
-        status: undefined,
-        dueDate: undefined,
-        groupName: undefined,
-        groupId: undefined,
-        creatorId: undefined,
-        archived: false,
-      })
-    );
-    fireEvent.click(screen.getAllByRole('button', { name: 'toggle' })[0]);
+    expect(mocks.cards[0].todo).toBe(complete);
+    expect(mocks.cards[1].todo).toBe(fallback);
+    expect(mocks.localProps.estimateSize).toBe(64);
     fireEvent.click(screen.getAllByRole('button', { name: 'open' })[0]);
-    expect(onToggleComplete).toHaveBeenCalledWith(complete);
     expect(onTodoClick).toHaveBeenCalledWith(complete);
   });
 
   it('disables toggle and tolerates an absent card-click callback', () => {
     render(<TodoList canManageTodos={false} todos={[todo()]} onToggleComplete={vi.fn()} />);
-    expect(mocks.cards[0].onToggle).toBeUndefined();
+    expect(mocks.cards[0].canManageTodos).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'open' }));
   });
 
@@ -161,7 +141,7 @@ describe('TodoList branch coverage', () => {
       />
     );
     expect(mocks.zeroOptions.getScrollElement()).toBeTruthy();
-    expect(mocks.zeroOptions.estimateSize()).toBe(132);
+    expect(mocks.zeroOptions.estimateSize()).toBe(64);
     expect(mocks.zeroOptions.getRowKey(row)).toBe('todo-1');
     expect(mocks.zeroOptions.toStartRow(row)).toEqual({ created_at: 20, id: 'todo-1' });
     expect(

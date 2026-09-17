@@ -1,3 +1,5 @@
+import { CollectionPreferencesContext } from '@/features/shared/ui/collections/useCollectionView';
+import { CollectionScope } from '@/features/shared/ui/collections/CollectionScope';
 /* @vitest-environment jsdom */
 
 import { cleanup, fireEvent, render } from '@testing-library/react';
@@ -501,4 +503,38 @@ describe('ChangeRequestTimelineCardView actions', () => {
     expect(handleCastVote).toHaveBeenCalledWith('no');
     expect(handleCastVote).toHaveBeenCalledWith('maybe');
   });
+});
+
+it('keeps compact change-request details and vote permissions on the existing dialog path', () => {
+  const props = makeProps({ showAgendaDetailsVoteActions: true });
+  const wrapper = (canVote: boolean) => (
+    <CollectionPreferencesContext.Provider
+      value={{
+        userId: 'compact-cr',
+        display: { collectionViews: { changeRequests: 'compact' } },
+        isLoading: false,
+      }}
+    >
+      <CollectionScope area="changeRequests">
+        <ChangeRequestTimelineCardView {...props} canVote={canVote} />
+      </CollectionScope>
+    </CollectionPreferencesContext.Provider>
+  );
+  const { rerender } = render(wrapper(true));
+  const details = document.querySelector('[data-action-id="collection.change-request.details"]')!;
+  expect(details.getAttribute('aria-expanded')).toBe('false');
+  fireEvent.click(details);
+  expect(details.getAttribute('aria-expanded')).toBe('true');
+  fireEvent.click(
+    document.querySelector('[data-action-id="collection.change-request.vote-dialog.open"]')!
+  );
+  expect(props.onOpenVoteDialog).toHaveBeenCalledWith('item-1');
+  rerender(wrapper(false));
+  expect(
+    (
+      document.querySelector(
+        '[data-action-id="collection.change-request.vote-dialog.open"]'
+      ) as HTMLButtonElement
+    ).disabled
+  ).toBe(true);
 });

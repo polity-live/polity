@@ -92,7 +92,9 @@ export function TodosPageView({
 
   return (
     <div style={{ touchAction: 'pan-y' }} {...tabSwipeHandlers}>
+      <h1 className="sr-only">{t('features.todos.title')}</h1>
       <TodosFilters
+        actions={<TodosHeader viewMode={viewMode} setViewMode={setViewMode} />}
         fields={fields}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -106,7 +108,6 @@ export function TodosPageView({
         onCustomFilterToggle={toggleCustomFilter}
         onCustomFilterDelete={deleteCustomFilter}
         onCustomFilterSave={saveCustomFilter}
-        actions={<TodosHeader viewMode={viewMode} setViewMode={setViewMode} />}
       />
 
       <TodosTabs
