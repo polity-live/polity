@@ -672,6 +672,15 @@ export class TutorialFlowPage {
     await expect(destination).toBeVisible({
       timeout: CHECKPOINT_TIMEOUT_MS,
     });
+    const isDesktop = await this.page.evaluate(
+      () => window.matchMedia('(min-width: 768px)').matches
+    );
+    if (isDesktop) {
+      // The desktop coach overlaps the column heading; its center remains a
+      // visible drop target below the coach.
+      await source.dragTo(destination);
+      return;
+    }
     // Start the native drag before scrolling the destination into view. On the
     // stacked mobile board, scrolling first moves the source out of the viewport.
     await source.scrollIntoViewIfNeeded();
