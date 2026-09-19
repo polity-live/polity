@@ -45874,7 +45874,7 @@
       "actionId": "navigation.language.dropdown.english",
       "identifierSource": "data-action-id",
       "tag": "DropdownMenuItem",
-      "line": 82,
+      "line": 78,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -45891,6 +45891,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -45903,7 +45904,7 @@
       "actionId": "navigation.language.dropdown.german",
       "identifierSource": "data-action-id",
       "tag": "DropdownMenuItem",
-      "line": 88,
+      "line": 84,
       "column": 12,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -45920,6 +45921,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -45932,7 +45934,7 @@
       "actionId": "navigation.language.dropdown.open",
       "identifierSource": "data-action-id",
       "tag": "DropdownMenuSubTrigger",
-      "line": 75,
+      "line": 71,
       "column": 8,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -45948,6 +45950,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -45960,7 +45963,7 @@
       "actionId": "navigation.language.popover.english",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 127,
+      "line": 121,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -45977,6 +45980,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -45989,7 +45993,7 @@
       "actionId": "navigation.language.popover.german",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 139,
+      "line": 133,
       "column": 10,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -46006,6 +46010,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -46018,7 +46023,7 @@
       "actionId": "navigation.language.popover.open",
       "identifierSource": "data-action-id",
       "tag": "Button",
-      "line": 105,
+      "line": 101,
       "column": 8,
       "kind": "interaction",
       "classification": "canonical-action",
@@ -46034,6 +46039,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -46045,16 +46051,17 @@
       "file": "src/features/navigation/toggles/LanguageToggleView.tsx",
       "identifierSource": "unidentified",
       "tag": "PopoverTrigger",
-      "line": 104,
+      "line": 100,
       "column": 6,
       "kind": "interaction",
       "classification": "transparent-wrapper",
-      "aliasOfLegacyFingerprint": "5ed48256b9",
+      "aliasOfLegacyFingerprint": "4a2696ccdf",
       "accessibilityIssues": [],
       "scenarios": ["idle", "success", "keyboard", "focus"],
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -46099,6 +46106,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -46128,6 +46136,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -46157,6 +46166,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -46178,6 +46188,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -46214,6 +46225,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -46257,6 +46269,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -46285,6 +46298,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -46314,6 +46328,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -46343,6 +46358,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],
@@ -46372,6 +46388,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ],

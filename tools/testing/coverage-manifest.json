@@ -43507,6 +43507,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ]
@@ -43533,6 +43534,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ]
@@ -43559,6 +43561,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ]
@@ -43585,6 +43588,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ]
@@ -43611,9 +43615,20 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ]
+    },
+    {
+      "path": "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
+      "domain": "features:navigation",
+      "owner": "polity/features:navigation",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
     },
     {
       "path": "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
@@ -43658,6 +43673,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/navigation/hooks/__tests__/useLanguageToggleController.component.test.tsx",
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ]
@@ -43685,6 +43701,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/navigation/hooks/__tests__/useStateSwitcherController.component.test.tsx",
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ]
@@ -43711,6 +43728,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ]
@@ -43737,6 +43755,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx"
       ]
@@ -75616,14 +75635,14 @@
         "src/features/editor/hooks/__tests__/useSuggestionViewToggleController.branch-a03.component.test.tsx",
         "src/features/editor/hooks/__tests__/useSuggestionViewToggleController.component.test.tsx",
         "src/features/navigation/hooks/__tests__/useLanguageToggleController.component.test.tsx",
+        "src/features/navigation/toggles/__tests__/LanguageToggle.interaction.component.test.tsx",
         "src/features/navigation/toggles/__tests__/LanguageToggleView.component.test.tsx",
         "src/features/notifications/ui/__tests__/PushNotificationToggle.component.test.tsx",
         "src/features/notifications/ui/__tests__/PushNotificationToggleView.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01FormAndDialog.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveBranches.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveMatrix.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/ToasterView.interactions.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/avatar.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/ToasterView.interactions.component.test.tsx"
       ]
     },
     {
