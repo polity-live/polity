@@ -1,3 +1,4 @@
+import { NETWORK_FLOW_FILTER_TYPES } from '@/features/shared/ui/status';
 /* @vitest-environment jsdom */
 
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -544,4 +545,28 @@ describe('ManageNetworkTabContentView branch harness', () => {
 
     expect(harness.overlayProps).toBeTruthy();
   });
+});
+
+it('requests structural connections when all network filters are selected', () => {
+  const { rerender } = render(
+    <ManageNetworkTabContentView
+      {...props({
+        virtualize: true,
+        manageRightFilter: new Set(NETWORK_FLOW_FILTER_TYPES),
+      })}
+    />
+  );
+  const options = { limit: 10, start: null, dir: 'forward', settled: true };
+  expect(harness.activeSource!.getPageQuery(options).query.args.rights).toEqual([]);
+  rerender(
+    <ManageNetworkTabContentView
+      {...props({
+        virtualize: true,
+        manageRightFilter: new Set(['informationRight']),
+      })}
+    />
+  );
+  expect(harness.activeSource!.getPageQuery(options).query.args.rights).toEqual([
+    'informationRight',
+  ]);
 });

@@ -824,7 +824,10 @@ export function ManageNetworkTabContentView({
           groupId,
           status: 'active',
           relationshipType: directionFilter,
-          rights: [...manageRightFilter],
+          rights:
+            manageRightFilter.size === NETWORK_FLOW_FILTER_TYPES.length
+              ? []
+              : [...manageRightFilter],
           query: searchQuery,
           limit,
           start,

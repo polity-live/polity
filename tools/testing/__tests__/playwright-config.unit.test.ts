@@ -62,6 +62,7 @@ describe('Playwright run budgets', () => {
           command: 'pnpm exec zero-cache',
           url: 'http://127.0.0.1:4948/keepalive',
           env: expect.objectContaining({
+            ZERO_ADMIN_PASSWORD: 'polity-e2e-local-only',
             ZERO_UPSTREAM_DB: 'postgresql://postgres:postgres@127.0.0.1:55322/postgres',
             ZERO_QUERY_URL: 'http://localhost:3100/api/query',
             ZERO_MUTATE_URL: 'http://localhost:3100/api/mutate',

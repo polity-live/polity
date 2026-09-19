@@ -129,6 +129,7 @@ export default defineConfig({
       // Run the cache directly: the development supervisor can outlive its
       // shell during teardown and keep Playwright's output pipes open.
       env: {
+        ZERO_ADMIN_PASSWORD: 'polity-e2e-local-only',
         ZERO_UPSTREAM_DB:
           process.env.E2E_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres',
         ZERO_QUERY_URL: new URL('/api/query', appBaseUrl).href,

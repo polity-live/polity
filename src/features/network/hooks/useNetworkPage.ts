@@ -232,7 +232,10 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
         ...item,
         rights: item.rights.filter(r => manageRightFilter.has(r)),
       }))
-      .filter(item => item.rights.length > 0);
+      .filter(
+        item =>
+          item.rights.length > 0 || manageRightFilter.size === NETWORK_FLOW_FILTER_TYPES.length
+      );
 
     // Filter by search query
     if (searchQuery.trim()) {
