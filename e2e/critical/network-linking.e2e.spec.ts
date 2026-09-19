@@ -87,15 +87,21 @@ test('links two groups after realtime approval by a second administrator @pr @cr
     await approve.click();
 
     await expect
-      .poll(async () => {
-        const rows = await sql`
-          select status
-          from public.group_connection
-          where group_a_id = least(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
-            and group_b_id = greatest(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
-        `;
-        return rows[0]?.status ?? null;
-      })
+      .poll(
+        async () => {
+          const rows = await sql`
+            select status
+            from public.group_connection
+            where group_a_id = least(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
+              and group_b_id = greatest(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
+          `;
+          return rows[0]?.status ?? null;
+        },
+        {
+          timeout: 30_000,
+          message: 'The approval mutation must reach PostgreSQL before reloading the network',
+        }
+      )
       .toBe('active');
 
     await page.reload({ waitUntil: 'domcontentloaded' });
