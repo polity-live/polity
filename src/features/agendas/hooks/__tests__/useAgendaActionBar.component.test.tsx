@@ -850,3 +850,51 @@ describe('useAgendaActionBar', () => {
     expect(result.current.editDialogOpen).toBe(false);
   });
 });
+
+it('keeps ballot controls busy until the confirmed phase reaches the rendered query', async () => {
+  let confirm!: () => void;
+  mocks.serverConfirmed.mockImplementationOnce(
+    () =>
+      new Promise<void>(resolve => {
+        confirm = resolve;
+      })
+  );
+  const initial = options();
+  const { result, rerender } = renderHook(props => useAgendaActionBar(props), {
+    initialProps: initial,
+  });
+  let transition!: Promise<void>;
+  act(() => {
+    transition = result.current.handleStartFinalVote();
+  });
+  expect(result.current.voteCasting.isLoading).toBe(true);
+  await act(async () => {
+    confirm();
+    await transition;
+  });
+  expect(result.current.voteCasting.isLoading).toBe(true);
+  rerender(options({ election: { ...initial.election, status: 'final' } }));
+  expect(result.current.voteCasting.isLoading).toBe(false);
+  rerender(options({ election: { ...initial.election, status: 'closed' } }));
+  expect(result.current.voteCasting.isLoading).toBe(false);
+});
+
+it('releases ballot controls after a rejected transition or a change of ballot', async () => {
+  const failure = new Error('phase rejected');
+  mocks.serverConfirmed.mockRejectedValueOnce(failure);
+  const { result, rerender } = renderHook(props => useAgendaActionBar(props), {
+    initialProps: options(),
+  });
+  await expect(act(() => result.current.handleStartFinalVote())).rejects.toBe(failure);
+  expect(result.current.voteCasting.isLoading).toBe(false);
+  await act(() => result.current.handleStartFinalVote());
+  expect(result.current.voteCasting.isLoading).toBe(true);
+  rerender(options({ election: election({ id: 'different-election' }) }));
+  expect(result.current.voteCasting.isLoading).toBe(false);
+});
+
+it('preserves ballot submission loading when no phase transition is pending', () => {
+  mocks.voteCasting.isLoading = true;
+  const { result } = renderHook(() => useAgendaActionBar(options()));
+  expect(result.current.voteCasting.isLoading).toBe(true);
+});

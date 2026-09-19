@@ -1,4 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('dotenv', () => ({ config: vi.fn() }));
+beforeEach(() => vi.stubEnv('ZERO_ADMIN_PASSWORD', undefined));
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -56,7 +59,9 @@ describe('Playwright run budgets', () => {
     vi.stubEnv('E2E_DATABASE_URL', 'postgresql://postgres:postgres@127.0.0.1:55322/postgres');
     vi.stubEnv('PLAYWRIGHT_BASE_URL', 'http://localhost:3100');
     vi.stubEnv('VITE_ZERO_CACHE_URL', 'http://127.0.0.1:4948');
-    expect((await configuration(undefined)).webServer).toEqual(
+    const config = await configuration(undefined);
+    expect(process.env.ZERO_ADMIN_PASSWORD).toBe('polity-e2e-local-only');
+    expect(config.webServer).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           command: 'pnpm exec zero-cache',
@@ -79,5 +84,18 @@ describe('Playwright run budgets', () => {
     async timeout => {
       await expect(configuration(timeout)).rejects.toThrow('E2E_GLOBAL_TIMEOUT_MS');
     }
+  );
+});
+
+it('shares the configured cache credential with the readiness probe', async () => {
+  vi.stubEnv('ZERO_ADMIN_PASSWORD', 'isolated-test-credential');
+  const config = await configuration(undefined);
+  expect(process.env.ZERO_ADMIN_PASSWORD).toBe('isolated-test-credential');
+  expect(config.webServer).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        env: expect.objectContaining({ ZERO_ADMIN_PASSWORD: process.env.ZERO_ADMIN_PASSWORD }),
+      }),
+    ])
   );
 });

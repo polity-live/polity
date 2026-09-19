@@ -76,7 +76,9 @@ export async function waitForZeroReady(options: WaitForZeroReadyOptions = {}) {
   const sleep =
     options.sleep ??
     ((milliseconds: number) => new Promise(resolve => setTimeout(resolve, milliseconds)));
-  const statzUrl = options.statzUrl ?? 'http://127.0.0.1:4848/statz';
+  const statzUrl =
+    options.statzUrl ??
+    new URL('/statz', process.env.VITE_ZERO_CACHE_URL ?? 'http://127.0.0.1:4848').href;
   const timeoutMs = options.timeoutMs ?? ZERO_READY_TIMEOUT_MS;
   const deadline = now() + timeoutMs;
   const targetLsn = await database.currentWalLsn();

@@ -672,7 +672,20 @@ export class TutorialFlowPage {
     await expect(destination).toBeVisible({
       timeout: CHECKPOINT_TIMEOUT_MS,
     });
-    await source.dragTo(destination);
+    // Start the native drag before scrolling the destination into view. On the
+    // stacked mobile board, scrolling first moves the source out of the viewport.
+    await source.scrollIntoViewIfNeeded();
+    const start = await source.boundingBox();
+    expect(start).not.toBeNull();
+    await this.page.mouse.move(start!.x + 24, start!.y + 24);
+    await this.page.mouse.down();
+    await this.page.mouse.move(start!.x + 40, start!.y + 40, { steps: 5 });
+    await destination.scrollIntoViewIfNeeded();
+    const finish = await destination.boundingBox();
+    expect(finish).not.toBeNull();
+    await this.page.mouse.move(finish!.x + 24, Math.max(0, finish!.y) + 40, { steps: 10 });
+    await this.page.mouse.move(finish!.x + 24, Math.max(0, finish!.y) + 42);
+    await this.page.mouse.up();
   }
 
   private async enterVotingPassword() {
@@ -754,13 +767,13 @@ export class TutorialFlowPage {
         await this.addTreeRow();
         return;
       case 'switch-suggest-internal':
-        await this.switchEditorMode(/Internal Suggestions|Intern vorschlagen/i);
+        await this.switchEditorMode(/Internal Suggestions|Interne Vorschläge/i);
         return;
       case 'create-change-request':
         await this.appendEditorText(this.expectedInputs().changeRequestText, true);
         return;
       case 'switch-vote-internal':
-        await this.switchEditorMode(/Internal Voting Mode|Intern abstimmen/i);
+        await this.switchEditorMode(/Internal Voting Mode|Interner Abstimmungsmodus/i);
         return;
       case 'create-amendment-path':
         await this.selectTypeahead(checkpoint.anchor, this.expectedInputs().groupSearch);

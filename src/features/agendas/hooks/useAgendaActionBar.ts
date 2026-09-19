@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
@@ -125,6 +125,36 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   const electionActions = useElectionActions();
   const voteActionsHook = useVoteActions();
   const { verifyVotingPassword } = useVotingPasswordActions();
+
+  const ballotId = election?.id ?? vote?.id;
+  const ballotStatus = election?.status ?? vote?.status;
+  const [pendingVotingPhase, setPendingVotingPhase] = useState<{
+    id: string;
+    phase: string;
+  } | null>(null);
+  const isChangingVotingPhase = Boolean(
+    pendingVotingPhase &&
+    pendingVotingPhase.id === ballotId &&
+    pendingVotingPhase.phase !== ballotStatus
+  );
+  useEffect(() => {
+    if (
+      pendingVotingPhase &&
+      (pendingVotingPhase.id !== ballotId || pendingVotingPhase.phase === ballotStatus)
+    ) {
+      setPendingVotingPhase(null);
+    }
+  }, [ballotId, ballotStatus, pendingVotingPhase]);
+  const changeVotingPhase = async (phase: string, action: () => Promise<void>) => {
+    if (!canManageAgenda) return;
+    if (ballotId) setPendingVotingPhase({ id: ballotId, phase });
+    try {
+      await action();
+    } catch (error) {
+      setPendingVotingPhase(null);
+      throw error;
+    }
+  };
 
   const [speakerLoading, setSpeakerLoading] = useState(false);
   const [candidateLoading, setCandidateLoading] = useState(false);
@@ -351,7 +381,6 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   }, [user?.id, userCandidate, openCandidacyDialog]);
 
   const handleStartVote = useCallback(async () => {
-    if (!canManageAgenda) return;
     if (election?.id) {
       await serverConfirmed(
         electionActions.updateElection({
@@ -389,7 +418,6 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   ]);
 
   const handleStartFinalVote = useCallback(async () => {
-    if (!canManageAgenda) return;
     if (election?.id) {
       await serverConfirmed(
         electionActions.updateElection({
@@ -431,7 +459,6 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   ]);
 
   const handleCloseFinalVote = useCallback(async () => {
-    if (!canManageAgenda) return;
     const flow = election?.id ? 'election-close-final-vote' : 'vote-close-final-vote';
     const correlationId = createElectionFlowCorrelationId(flow);
 
@@ -532,7 +559,10 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     },
 
     // Vote casting (for dialog)
-    voteCasting,
+    voteCasting: {
+      ...voteCasting,
+      isLoading: voteCasting.isLoading || isChangingVotingPhase,
+    },
     disableSecretIndicativeVoteButton,
     secretIndicativeVoteTooltip,
 
@@ -541,9 +571,9 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     handleLeaveSpeakerList,
     handleBecomeCandidate,
     handleWithdrawCandidacy,
-    handleStartVote,
-    handleStartFinalVote,
-    handleCloseFinalVote,
+    handleStartVote: () => changeVotingPhase('indicative', handleStartVote),
+    handleStartFinalVote: () => changeVotingPhase('final', handleStartFinalVote),
+    handleCloseFinalVote: () => changeVotingPhase('closed', handleCloseFinalVote),
     handleVoteClick,
     handleEditClick,
   };
