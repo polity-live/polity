@@ -84,6 +84,7 @@ jobs:
       E2E_RUN_ID: nightly-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.name }}
       E2E_GLOBAL_TIMEOUT_MS: "4500000"
       PLAYWRIGHT_OUTPUT_DIR: test-results/${{ matrix.name }}
+      DEBUG: ${{ matrix.name == 'chromium-mobile-2-of-2' && 'pw:test,pw:webserver,pw:browser' || '' }}
       VITE_APP_URL: http://localhost:3000
       VITE_ZERO_CACHE_URL: http://127.0.0.1:4848
       ZERO_UPSTREAM_DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres
@@ -116,7 +117,10 @@ jobs:
         env:
           PROJECT: ${{ matrix.project }}
           EXTRA: ${{ matrix.extra }}
-        run: pnpm exec playwright test --config=playwright.nightly.config.ts --project="$PROJECT" $EXTRA
+        run: |
+          set -o pipefail
+          mkdir -p e2e-diagnostics
+          pnpm exec playwright test --config=playwright.nightly.config.ts --project="$PROJECT" $EXTRA 2>&1 | tee "e2e-diagnostics/${PROJECT}.log"
       - name: Upload diagnostics
         if: always()
         uses: actions/upload-artifact@v7
@@ -127,6 +131,7 @@ jobs:
           path: |
             playwright-report/
             test-results/
+            e2e-diagnostics/
       - if: always()
         run: supabase stop --no-backup
 

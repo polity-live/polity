@@ -192,6 +192,10 @@ describe('GitHub workflow contracts', () => {
     );
     const stability = nightly.slice(nightly.indexOf('  browser-stability:'));
     expect(golden).toContain('E2E_GLOBAL_TIMEOUT_MS: "4500000"');
+    expect(golden).toContain('pw:test,pw:webserver,pw:browser');
+    expect(golden).toContain('set -o pipefail');
+    expect(golden).toContain('tee "e2e-diagnostics/${PROJECT}.log"');
+    expect(golden).toContain('            e2e-diagnostics/');
     expect(stability).toContain('E2E_GLOBAL_TIMEOUT_MS: "19800000"');
     expect(nightly.match(/project: chromium-desktop/gu)).toHaveLength(3);
     expect(nightly.match(/project: chromium-mobile/gu)).toHaveLength(2);

@@ -176,7 +176,30 @@ export class TutorialFlowPage {
   }
 
   async installExternalServiceStubs() {
-    await this.page.route('**/api/ai/chat', async route => {
+    // The PWA worker fetches GET APIs itself, so intercept the browser context.
+    await this.page.context().route('**/api/ai/catalog', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          models: [
+            {
+              provider: 'openrouter',
+              id: 'openrouter/free',
+              label: 'Tutorial model',
+              source: 'app',
+              free: true,
+              supports_reasoning_effort: false,
+              context_window: 128_000,
+            },
+          ],
+        }),
+      });
+    });
+    await this.page.context().route('**/api/ai/chat', async route => {
+      expect(route.request().postDataJSON()).toMatchObject({
+        model: { provider: 'openrouter', id: 'openrouter/free' },
+      });
       await route.fulfill({
         status: 200,
         contentType: 'application/x-ndjson',
@@ -718,7 +741,9 @@ export class TutorialFlowPage {
     await expect(input).toHaveCount(1, { timeout: CHECKPOINT_TIMEOUT_MS });
     await expect(input).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
     await input.fill(this.expectedInputs().assistantTodo);
-    await composer.locator('form').evaluate(form => (form as HTMLFormElement).requestSubmit());
+    const send = composer.locator('[data-action-id="messages.assistant.send"]');
+    await expect(send).toBeEnabled({ timeout: CHECKPOINT_TIMEOUT_MS });
+    await send.click();
   }
 
   private async performCheckpoint(checkpoint: AppTutorialCheckpoint) {
