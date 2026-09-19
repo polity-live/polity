@@ -93,6 +93,31 @@ function expectNoLeftBorderClasses(container: HTMLElement) {
 }
 
 describe('NotificationItem', () => {
+  it('opens an unlinked notification with Enter or Space without intercepting child controls or other keys', () => {
+    const open = vi.fn();
+    const { container } = render(
+      <NotificationItem
+        notification={notification({
+          type: 'system',
+          related_user_id: null,
+          related_user: null,
+          recipient_group: null,
+        } as never)}
+        onNotificationClick={open}
+      />
+    );
+    const card = container.querySelector('[data-action-id="notifications.item.open.unlinked"]')!;
+    expect(card).toBeTruthy();
+    fireEvent.keyDown(card, { key: 'Enter' });
+    fireEvent.keyDown(card, { key: ' ' });
+    expect(open).toHaveBeenCalledTimes(2);
+    fireEvent.keyDown(card, { key: 'Escape' });
+    fireEvent.keyDown(card, { key: 'ArrowDown' });
+    const child = document.createElement('input');
+    card.appendChild(child);
+    fireEvent.keyDown(child, { key: 'Enter' });
+    expect(open).toHaveBeenCalledTimes(2);
+  });
   it('renders unread notifications without left-border accent classes', () => {
     const { container } = render(
       <NotificationItem notification={notification()} onNotificationClick={vi.fn()} />

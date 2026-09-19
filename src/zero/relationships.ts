@@ -3,6 +3,14 @@ import { relationships } from '@rocicorp/zero';
 // Users
 import { user, file } from './users/table';
 import { appearanceTheme, appearanceThemeRevision } from './appearance-themes/table';
+import { studioProject, studioExport } from './communication-studio/table';
+
+export const studioProjectRelationships = relationships(studioProject, ({ one }) => ({
+  group: one({ sourceField: ['group_id'], destField: ['id'], destSchema: group }),
+}));
+export const studioExportRelationships = relationships(studioExport, ({ one }) => ({
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+}));
 // Groups
 import {
   group,
@@ -2628,6 +2636,8 @@ export const allRelationships = [
   fileRelationships,
   userPreferenceRelationships,
   appearanceThemeRelationships,
+  studioProjectRelationships,
+  studioExportRelationships,
   appearanceThemeRevisionRelationships,
   aiSkillRelationships,
   aiToolRelationships,

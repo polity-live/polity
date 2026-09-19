@@ -28,9 +28,12 @@ import { Route as AuthedMessagesRouteImport } from './routes/_authed/messages'
 import { Route as AuthedNotificationsRouteImport } from './routes/_authed/notifications'
 import { Route as AuthedOnboardingRouteImport } from './routes/_authed/onboarding'
 import { Route as AuthedSearchRouteImport } from './routes/_authed/search'
+import { Route as AuthedStudioRouteImport } from './routes/_authed/studio'
 import { Route as AuthedTodosRouteImport } from './routes/_authed/todos'
+import { Route as ApiCollaborationRouteImport } from './routes/api/collaboration'
 import { Route as ApiMutateRouteImport } from './routes/api/mutate'
 import { Route as ApiQueryRouteImport } from './routes/api/query'
+import { Route as ApiStudioRouteImport } from './routes/api/studio'
 import { Route as ApiTutorialRouteImport } from './routes/api/tutorial'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
@@ -119,6 +122,7 @@ import { Route as AuthedGroupIdNotificationsRouteImport } from './routes/_authed
 import { Route as AuthedGroupIdOperationRouteImport } from './routes/_authed/group/$id/operation'
 import { Route as AuthedGroupIdRelationshipsRouteImport } from './routes/_authed/group/$id/relationships'
 import { Route as AuthedGroupIdSettingsRouteImport } from './routes/_authed/group/$id/settings'
+import { Route as AuthedGroupIdStudioRouteImport } from './routes/_authed/group/$id/studio'
 import { Route as AuthedUserIdIndexRouteImport } from './routes/_authed/user/$id/index'
 import { Route as AuthedUserIdBlogRouteImport } from './routes/_authed/user/$id/blog'
 import { Route as AuthedUserIdEditorRouteImport } from './routes/_authed/user/$id/editor'
@@ -133,6 +137,7 @@ import { Route as ApiDatasetsDatasetIdDetailsRouteImport } from './routes/api/da
 import { Route as ApiDatasetsSnapshotIdProjectionRouteImport } from './routes/api/datasets/$snapshotId/projection'
 import { Route as ApiDatasetsSnapshotIdValuesRouteImport } from './routes/api/datasets/$snapshotId/values'
 import { Route as ApiPushTestJobIdRouteImport } from './routes/api/push/test/$jobId'
+import { Route as ApiStudioPublishedMediaIdRouteImport } from './routes/api/studio/published-media/$id'
 import { Route as AuthedEventIdAgendaIndexRouteImport } from './routes/_authed/event/$id/agenda/index'
 import { Route as AuthedEventIdAgendaAgendaItemIdRouteImport } from './routes/_authed/event/$id/agenda/$agendaItemId'
 import { Route as AuthedGroupIdBlogIndexRouteImport } from './routes/_authed/group/$id/blog/index'
@@ -244,10 +249,20 @@ const AuthedSearchRoute = AuthedSearchRouteImport.update({
   path: '/search',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedStudioRoute = AuthedStudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedTodosRoute = AuthedTodosRouteImport.update({
   id: '/todos',
   path: '/todos',
   getParentRoute: () => AuthedRoute,
+} as any)
+const ApiCollaborationRoute = ApiCollaborationRouteImport.update({
+  id: '/api/collaboration',
+  path: '/api/collaboration',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMutateRoute = ApiMutateRouteImport.update({
   id: '/api/mutate',
@@ -257,6 +272,11 @@ const ApiMutateRoute = ApiMutateRouteImport.update({
 const ApiQueryRoute = ApiQueryRouteImport.update({
   id: '/api/query',
   path: '/api/query',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStudioRoute = ApiStudioRouteImport.update({
+  id: '/api/studio',
+  path: '/api/studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTutorialRoute = ApiTutorialRouteImport.update({
@@ -715,6 +735,11 @@ const AuthedGroupIdSettingsRoute = AuthedGroupIdSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthedGroupIdRoute,
 } as any)
+const AuthedGroupIdStudioRoute = AuthedGroupIdStudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
+  getParentRoute: () => AuthedGroupIdRoute,
+} as any)
 const AuthedUserIdIndexRoute = AuthedUserIdIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -791,6 +816,12 @@ const ApiPushTestJobIdRoute = ApiPushTestJobIdRouteImport.update({
   path: '/$jobId',
   getParentRoute: () => ApiPushTestRoute,
 } as any)
+const ApiStudioPublishedMediaIdRoute =
+  ApiStudioPublishedMediaIdRouteImport.update({
+    id: '/published-media/$id',
+    path: '/published-media/$id',
+    getParentRoute: () => ApiStudioRoute,
+  } as any)
 const AuthedEventIdAgendaIndexRoute =
   AuthedEventIdAgendaIndexRouteImport.update({
     id: '/',
@@ -904,9 +935,12 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthedNotificationsRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/search': typeof AuthedSearchRoute
+  '/studio': typeof AuthedStudioRoute
   '/todos': typeof AuthedTodosRouteWithChildren
+  '/api/collaboration': typeof ApiCollaborationRoute
   '/api/mutate': typeof ApiMutateRoute
   '/api/query': typeof ApiQueryRoute
+  '/api/studio': typeof ApiStudioRouteWithChildren
   '/api/tutorial': typeof ApiTutorialRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -991,6 +1025,7 @@ export interface FileRoutesByFullPath {
   '/group/$id/operation': typeof AuthedGroupIdOperationRoute
   '/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
   '/group/$id/settings': typeof AuthedGroupIdSettingsRoute
+  '/group/$id/studio': typeof AuthedGroupIdStudioRoute
   '/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
   '/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
   '/user/$id/meet': typeof AuthedUserIdMeetRoute
@@ -1004,6 +1039,7 @@ export interface FileRoutesByFullPath {
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
   '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
+  '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
   '/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id/': typeof AuthedBlogIdIndexRoute
   '/event/$id/': typeof AuthedEventIdIndexRoute
@@ -1043,9 +1079,12 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthedNotificationsRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/search': typeof AuthedSearchRoute
+  '/studio': typeof AuthedStudioRoute
   '/todos': typeof AuthedTodosRouteWithChildren
+  '/api/collaboration': typeof ApiCollaborationRoute
   '/api/mutate': typeof ApiMutateRoute
   '/api/query': typeof ApiQueryRoute
+  '/api/studio': typeof ApiStudioRouteWithChildren
   '/api/tutorial': typeof ApiTutorialRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -1122,6 +1161,7 @@ export interface FileRoutesByTo {
   '/group/$id/operation': typeof AuthedGroupIdOperationRoute
   '/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
   '/group/$id/settings': typeof AuthedGroupIdSettingsRoute
+  '/group/$id/studio': typeof AuthedGroupIdStudioRoute
   '/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
   '/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
   '/user/$id/meet': typeof AuthedUserIdMeetRoute
@@ -1135,6 +1175,7 @@ export interface FileRoutesByTo {
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
   '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
+  '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
   '/amendment/$id': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id': typeof AuthedBlogIdIndexRoute
   '/event/$id': typeof AuthedEventIdIndexRoute
@@ -1176,9 +1217,12 @@ export interface FileRoutesById {
   '/_authed/notifications': typeof AuthedNotificationsRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
   '/_authed/search': typeof AuthedSearchRoute
+  '/_authed/studio': typeof AuthedStudioRoute
   '/_authed/todos': typeof AuthedTodosRouteWithChildren
+  '/api/collaboration': typeof ApiCollaborationRoute
   '/api/mutate': typeof ApiMutateRoute
   '/api/query': typeof ApiQueryRoute
+  '/api/studio': typeof ApiStudioRouteWithChildren
   '/api/tutorial': typeof ApiTutorialRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -1263,6 +1307,7 @@ export interface FileRoutesById {
   '/_authed/group/$id/operation': typeof AuthedGroupIdOperationRoute
   '/_authed/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
   '/_authed/group/$id/settings': typeof AuthedGroupIdSettingsRoute
+  '/_authed/group/$id/studio': typeof AuthedGroupIdStudioRoute
   '/_authed/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
   '/_authed/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
   '/_authed/user/$id/meet': typeof AuthedUserIdMeetRoute
@@ -1276,6 +1321,7 @@ export interface FileRoutesById {
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
   '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
+  '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
   '/_authed/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/_authed/blog/$id/': typeof AuthedBlogIdIndexRoute
   '/_authed/event/$id/': typeof AuthedEventIdIndexRoute
@@ -1319,9 +1365,12 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/onboarding'
     | '/search'
+    | '/studio'
     | '/todos'
+    | '/api/collaboration'
     | '/api/mutate'
     | '/api/query'
+    | '/api/studio'
     | '/api/tutorial'
     | '/auth/callback'
     | '/auth/forgot-password'
@@ -1406,6 +1455,7 @@ export interface FileRouteTypes {
     | '/group/$id/operation'
     | '/group/$id/relationships'
     | '/group/$id/settings'
+    | '/group/$id/studio'
     | '/user/$id/blog'
     | '/user/$id/editor'
     | '/user/$id/meet'
@@ -1419,6 +1469,7 @@ export interface FileRouteTypes {
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
     | '/api/push/test/$jobId'
+    | '/api/studio/published-media/$id'
     | '/amendment/$id/'
     | '/blog/$id/'
     | '/event/$id/'
@@ -1458,9 +1509,12 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/onboarding'
     | '/search'
+    | '/studio'
     | '/todos'
+    | '/api/collaboration'
     | '/api/mutate'
     | '/api/query'
+    | '/api/studio'
     | '/api/tutorial'
     | '/auth/callback'
     | '/auth/forgot-password'
@@ -1537,6 +1591,7 @@ export interface FileRouteTypes {
     | '/group/$id/operation'
     | '/group/$id/relationships'
     | '/group/$id/settings'
+    | '/group/$id/studio'
     | '/user/$id/blog'
     | '/user/$id/editor'
     | '/user/$id/meet'
@@ -1550,6 +1605,7 @@ export interface FileRouteTypes {
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
     | '/api/push/test/$jobId'
+    | '/api/studio/published-media/$id'
     | '/amendment/$id'
     | '/blog/$id'
     | '/event/$id'
@@ -1590,9 +1646,12 @@ export interface FileRouteTypes {
     | '/_authed/notifications'
     | '/_authed/onboarding'
     | '/_authed/search'
+    | '/_authed/studio'
     | '/_authed/todos'
+    | '/api/collaboration'
     | '/api/mutate'
     | '/api/query'
+    | '/api/studio'
     | '/api/tutorial'
     | '/auth/callback'
     | '/auth/forgot-password'
@@ -1677,6 +1736,7 @@ export interface FileRouteTypes {
     | '/_authed/group/$id/operation'
     | '/_authed/group/$id/relationships'
     | '/_authed/group/$id/settings'
+    | '/_authed/group/$id/studio'
     | '/_authed/user/$id/blog'
     | '/_authed/user/$id/editor'
     | '/_authed/user/$id/meet'
@@ -1690,6 +1750,7 @@ export interface FileRouteTypes {
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
     | '/api/push/test/$jobId'
+    | '/api/studio/published-media/$id'
     | '/_authed/amendment/$id/'
     | '/_authed/blog/$id/'
     | '/_authed/event/$id/'
@@ -1727,8 +1788,10 @@ export interface RootRouteChildren {
   SupportRoute: typeof SupportRoute
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
+  ApiCollaborationRoute: typeof ApiCollaborationRoute
   ApiMutateRoute: typeof ApiMutateRoute
   ApiQueryRoute: typeof ApiQueryRoute
+  ApiStudioRoute: typeof ApiStudioRouteWithChildren
   ApiTutorialRoute: typeof ApiTutorialRouteWithChildren
   ApiAiCatalogRoute: typeof ApiAiCatalogRoute
   ApiAiChatRoute: typeof ApiAiChatRoute
@@ -1895,12 +1958,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSearchRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/studio': {
+      id: '/_authed/studio'
+      path: '/studio'
+      fullPath: '/studio'
+      preLoaderRoute: typeof AuthedStudioRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/todos': {
       id: '/_authed/todos'
       path: '/todos'
       fullPath: '/todos'
       preLoaderRoute: typeof AuthedTodosRouteImport
       parentRoute: typeof AuthedRoute
+    }
+    '/api/collaboration': {
+      id: '/api/collaboration'
+      path: '/api/collaboration'
+      fullPath: '/api/collaboration'
+      preLoaderRoute: typeof ApiCollaborationRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/mutate': {
       id: '/api/mutate'
@@ -1914,6 +1991,13 @@ declare module '@tanstack/react-router' {
       path: '/api/query'
       fullPath: '/api/query'
       preLoaderRoute: typeof ApiQueryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/studio': {
+      id: '/api/studio'
+      path: '/api/studio'
+      fullPath: '/api/studio'
+      preLoaderRoute: typeof ApiStudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/tutorial': {
@@ -2532,6 +2616,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedGroupIdSettingsRouteImport
       parentRoute: typeof AuthedGroupIdRoute
     }
+    '/_authed/group/$id/studio': {
+      id: '/_authed/group/$id/studio'
+      path: '/studio'
+      fullPath: '/group/$id/studio'
+      preLoaderRoute: typeof AuthedGroupIdStudioRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
+    }
     '/_authed/user/$id/': {
       id: '/_authed/user/$id/'
       path: '/'
@@ -2629,6 +2720,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/push/test/$jobId'
       preLoaderRoute: typeof ApiPushTestJobIdRouteImport
       parentRoute: typeof ApiPushTestRoute
+    }
+    '/api/studio/published-media/$id': {
+      id: '/api/studio/published-media/$id'
+      path: '/published-media/$id'
+      fullPath: '/api/studio/published-media/$id'
+      preLoaderRoute: typeof ApiStudioPublishedMediaIdRouteImport
+      parentRoute: typeof ApiStudioRoute
     }
     '/_authed/event/$id/agenda/': {
       id: '/_authed/event/$id/agenda/'
@@ -2898,6 +2996,7 @@ interface AuthedGroupIdRouteChildren {
   AuthedGroupIdOperationRoute: typeof AuthedGroupIdOperationRoute
   AuthedGroupIdRelationshipsRoute: typeof AuthedGroupIdRelationshipsRoute
   AuthedGroupIdSettingsRoute: typeof AuthedGroupIdSettingsRoute
+  AuthedGroupIdStudioRoute: typeof AuthedGroupIdStudioRoute
   AuthedGroupIdIndexRoute: typeof AuthedGroupIdIndexRoute
 }
 
@@ -2913,6 +3012,7 @@ const AuthedGroupIdRouteChildren: AuthedGroupIdRouteChildren = {
   AuthedGroupIdOperationRoute: AuthedGroupIdOperationRoute,
   AuthedGroupIdRelationshipsRoute: AuthedGroupIdRelationshipsRoute,
   AuthedGroupIdSettingsRoute: AuthedGroupIdSettingsRoute,
+  AuthedGroupIdStudioRoute: AuthedGroupIdStudioRoute,
   AuthedGroupIdIndexRoute: AuthedGroupIdIndexRoute,
 }
 
@@ -3000,6 +3100,7 @@ interface AuthedRouteChildren {
   AuthedNotificationsRoute: typeof AuthedNotificationsRoute
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
   AuthedSearchRoute: typeof AuthedSearchRoute
+  AuthedStudioRoute: typeof AuthedStudioRoute
   AuthedTodosRoute: typeof AuthedTodosRouteWithChildren
   AuthedAmendmentIdRoute: typeof AuthedAmendmentIdRouteWithChildren
   AuthedBlogIdRoute: typeof AuthedBlogIdRouteWithChildren
@@ -3026,6 +3127,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedNotificationsRoute: AuthedNotificationsRoute,
   AuthedOnboardingRoute: AuthedOnboardingRoute,
   AuthedSearchRoute: AuthedSearchRoute,
+  AuthedStudioRoute: AuthedStudioRoute,
   AuthedTodosRoute: AuthedTodosRouteWithChildren,
   AuthedAmendmentIdRoute: AuthedAmendmentIdRouteWithChildren,
   AuthedBlogIdRoute: AuthedBlogIdRouteWithChildren,
@@ -3088,6 +3190,18 @@ const DocsRouteChildren: DocsRouteChildren = {
 
 const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
 
+interface ApiStudioRouteChildren {
+  ApiStudioPublishedMediaIdRoute: typeof ApiStudioPublishedMediaIdRoute
+}
+
+const ApiStudioRouteChildren: ApiStudioRouteChildren = {
+  ApiStudioPublishedMediaIdRoute: ApiStudioPublishedMediaIdRoute,
+}
+
+const ApiStudioRouteWithChildren = ApiStudioRoute._addFileChildren(
+  ApiStudioRouteChildren,
+)
+
 interface ApiTutorialRouteChildren {
   ApiTutorialCleanupRoute: typeof ApiTutorialCleanupRoute
 }
@@ -3126,8 +3240,10 @@ const rootRouteChildren: RootRouteChildren = {
   SupportRoute: SupportRoute,
   TermsAndConditionsRoute: TermsAndConditionsRoute,
   UnauthorizedRoute: UnauthorizedRoute,
+  ApiCollaborationRoute: ApiCollaborationRoute,
   ApiMutateRoute: ApiMutateRoute,
   ApiQueryRoute: ApiQueryRoute,
+  ApiStudioRoute: ApiStudioRouteWithChildren,
   ApiTutorialRoute: ApiTutorialRouteWithChildren,
   ApiAiCatalogRoute: ApiAiCatalogRoute,
   ApiAiChatRoute: ApiAiChatRoute,

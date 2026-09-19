@@ -101,6 +101,10 @@ vi.mock('@/features/agendas/ui/TransferAgendaItemDialogView', () => ({
   TransferAgendaItemDialogView: view('transfer'),
 }));
 
+vi.mock('@/providers/auth-provider', () => ({ useAuth: () => ({ user: { id: 'user-1' } }) }));
+vi.mock('@/features/collaboration/hooks/useCollaborationDocument', () => ({
+  useCollaborationDocument: () => ({ phase: 'legacy' }),
+}));
 vi.mock('@/features/blogs/hooks/useBlogEditorController', () => ({
   useBlogEditorController: () => ({ marker: 'blog-editor' }),
 }));

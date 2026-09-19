@@ -23,6 +23,7 @@ export const navItemsAuthenticated = (
   // Translation function can be passed as parameter for i18n support
 
   // Define navigation items for primary navigation with Next.js router integration
+  const studioEnabled = import.meta.env.DEV || import.meta.env.VITE_STUDIO_ENABLED === 'true';
   const primaryNavItems: NavigationItem[] = [
     {
       id: 'home',
@@ -60,6 +61,17 @@ export const navItemsAuthenticated = (
         navigatePrimary('/create');
       },
     },
+    ...(studioEnabled
+      ? [
+          {
+            id: 'studio',
+            label: translate('navigation.primary.studio'),
+            icon: 'Edit' as const,
+            href: '/studio',
+            onClick: () => navigatePrimary('/studio'),
+          },
+        ]
+      : []),
 
     {
       id: 'calendar',
@@ -253,6 +265,14 @@ export const navItemsAuthenticated = (
       },
     ];
 
+    if (studioEnabled && (_isMember || isAdmin))
+      items.push({
+        id: 'studio',
+        label: translate('navigation.primary.studio'),
+        icon: 'Edit' as const,
+        href: `/group/${groupId}/studio`,
+        onClick: () => navigate({ to: `/group/${groupId}/studio` }),
+      });
     // Add operation as second item if user is a member
     if (canAccessOperation) {
       items.push({

@@ -3,6 +3,9 @@ import { GROUP_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import { getActionRightSections } from '../actionRightSections';
 
 describe('getActionRightSections', () => {
+  it('shows no phantom section for an empty permission set', () => {
+    expect(getActionRightSections([])).toEqual([]);
+  });
   it('covers every configured action right exactly once', () => {
     const sections = getActionRightSections();
     const keys = sections.flatMap(section =>

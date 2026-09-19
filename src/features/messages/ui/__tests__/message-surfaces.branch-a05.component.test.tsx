@@ -167,7 +167,7 @@ describe('message bubble and view exhaustive branches', () => {
   });
 
   it('renders empty, assistant, loading and loaded message views', () => {
-    const conversation = { id: 'conversation' } as any;
+    const conversation = { id: 'conversation', messages: [] } as any;
     const rendered = render(<MessageView {...viewProps()} />);
     expect(document.body.textContent).toContain('features.messages.conversation.selectDescription');
 

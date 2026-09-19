@@ -68,6 +68,7 @@ function useZeroGridVirtualizerImplementation({
   // Tanstack Virtual params
   estimateSize,
   overscan = 5, // Virtualizer defaults to 1.
+  lanes = 1,
   getScrollElement,
   getItemKey = defaultKeyExtractor,
   minPageSize = MIN_PAGE_SIZE,
@@ -200,6 +201,7 @@ function useZeroGridVirtualizerImplementation({
     count: effectiveCount,
     estimateSize,
     overscan,
+    lanes,
     getScrollElement,
     getItemKey: getRowKey
       ? index => {
@@ -244,17 +246,21 @@ function useZeroGridVirtualizerImplementation({
     awaitingScrollSettleRef.current = true;
   };
   useEffect(() => {
-    // Make sure page size is enough to fill the scroll element at least
-    // 3 times.  Don't shrink page size.
+    // Size the query window for every lane, including overscan. A window
+    // smaller than the rendered grid can alternate between its two edges
+    // indefinitely, even when the user has stopped scrolling.
     const newPageSize = virtualizer.scrollRect
       ? Math.max(
           normalizedMinPageSize,
           makeEven(
-            Math.ceil(
+            (Math.ceil(
               virtualizer.scrollRect?.height /
                 // TODO: Support dynamic item sizes
                 estimateSize(0)
-            ) * 3
+            ) +
+              2 * overscan) *
+              lanes *
+              3
           )
         )
       : MIN_PAGE_SIZE;
@@ -262,7 +268,15 @@ function useZeroGridVirtualizerImplementation({
     if (boundedPageSize > pageSize) {
       setPageSize(boundedPageSize);
     }
-  }, [normalizedMaxPageSize, normalizedMinPageSize, pageSize, virtualizer.scrollRect]);
+  }, [
+    estimateSize,
+    lanes,
+    overscan,
+    normalizedMaxPageSize,
+    normalizedMinPageSize,
+    pageSize,
+    virtualizer.scrollRect,
+  ]);
   useEffect(() => {
     if (!isListContextCurrent || !onScrollStateChange) {
       return;

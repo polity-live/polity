@@ -24,6 +24,19 @@ beforeEach(() => {
 });
 
 describe('search preview details', () => {
+  it('handles sparse authorized projections and ignores invalid counts while showing a published image', () => {
+    state.document = {
+      visibility: 'public',
+      card_payload: { status: 'unknown' },
+      image_url: '/published/photo.png',
+    };
+    const view = render(<PreviewSearchDetails target={{ kind: 'amendment', id: 'one' }} />);
+    expect(view.container.querySelector('img')?.getAttribute('src')).toBe('/published/photo.png');
+    expect(view.container.querySelector('dl')).toBeNull();
+    state.document.card_payload.stats = { participants: 'private', comments: Infinity };
+    view.rerender(<PreviewSearchDetails target={{ kind: 'amendment', id: 'one' }} />);
+    expect(view.container.querySelector('dl')).toBeNull();
+  });
   it('shows the amendment status, source group, deduplicated topics and localized counts', () => {
     render(<PreviewSearchDetails target={{ kind: 'amendment', id: 'one' }} />);
     expect(state.query).toHaveBeenCalledWith({ id: 'amendment:one' });

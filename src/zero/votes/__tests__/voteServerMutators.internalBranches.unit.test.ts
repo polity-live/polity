@@ -1148,7 +1148,7 @@ describe('vote server public mutator edge branches', () => {
       ctx,
       args: { event_id: 'event-1' },
     });
-    expect(mocks.recomputeEventCounters).toHaveBeenCalledWith(expect.anything(), 'event-1');
+    expect(mocks.recomputeEventCounters).not.toHaveBeenCalled();
   });
 
   it('executes direct vote wrappers and only auto-closes final offline tally updates', async () => {

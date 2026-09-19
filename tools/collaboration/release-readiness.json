@@ -1,0 +1,7 @@
+{
+  "scope": "studio-only",
+  "legacyEditors": ["amendments", "blogs", "personal-documents", "group-documents", "streetdesign"],
+  "previousMigrationAcceptance": "superseded by editor rollback",
+  "production": "unchanged",
+  "verification": "See output/editor-rollback and IMPLEMENTATION.md"
+}

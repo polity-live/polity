@@ -209,6 +209,9 @@ export function useAmendmentEditContentController({
   const formRef = useRef<HTMLFormElement>(null);
 
   const initializedRef = useRef<string | null>(null);
+  const synchronizedFormRef = useRef<ReturnType<typeof createInitialAmendmentFormData> | null>(
+    null
+  );
 
   const hashtagsInitializedRef = useRef<string | null>(null);
   const formEntityIdRef = useRef(amendmentId);
@@ -218,6 +221,7 @@ export function useAmendmentEditContentController({
 
     formEntityIdRef.current = amendmentId;
     initializedRef.current = null;
+    synchronizedFormRef.current = null;
     hashtagsInitializedRef.current = null;
     setFormData(createInitialAmendmentFormData());
   }, [amendmentId]);
@@ -238,9 +242,8 @@ export function useAmendmentEditContentController({
   }, [amendment, amendmentHashtags, amendmentId, commonIsLoading, isCreating]);
 
   useEffect(() => {
-    if (amendment && amendment.id === amendmentId && initializedRef.current !== amendmentId) {
-      initializedRef.current = amendmentId;
-      setFormData({
+    if (!isLoading && amendment && amendment.id === amendmentId) {
+      const nextFormData = {
         title: amendment.title || '',
         subtitle: amendment.preamble || '',
         code: amendment.code || '',
@@ -275,9 +278,28 @@ export function useAmendmentEditContentController({
         location_boundary_source: amendment.location_boundary_source ?? null,
         location_geometry: amendment.location_geometry ?? null,
         location_bounds: amendment.location_bounds ?? null,
+      };
+      const previousSynchronized = synchronizedFormRef.current;
+      synchronizedFormRef.current = nextFormData;
+      initializedRef.current = amendmentId;
+      setFormData(previous => {
+        if (!previousSynchronized) return nextFormData;
+        // Refresh untouched cached fields without overwriting the user's draft.
+        const merged = Object.fromEntries(
+          Object.entries(nextFormData).map(([field, value]) => {
+            const key = field as keyof typeof previous;
+            return [
+              field,
+              JSON.stringify(previous[key]) === JSON.stringify(previousSynchronized[key])
+                ? value
+                : previous[key],
+            ];
+          })
+        ) as typeof previous;
+        return JSON.stringify(merged) === JSON.stringify(previous) ? previous : merged;
       });
     }
-  }, [amendment, amendmentHashtags, amendmentId, workflowSourceMode]);
+  }, [amendment, amendmentHashtags, amendmentId, isLoading, workflowSourceMode]);
 
   useEffect(() => {
     if (!amendment || initializedRef.current !== amendmentId) return;

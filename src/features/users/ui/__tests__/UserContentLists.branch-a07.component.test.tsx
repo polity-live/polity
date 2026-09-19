@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   blogRows: [] as any[],
   amendmentCards: [] as any[],
   blogCards: [] as any[],
+  gridProps: [] as any[],
   pageByUser: vi.fn((args: unknown) => ({ kind: 'blog-page', args })),
   blogById: vi.fn((args: unknown) => ({ kind: 'blog-single', args })),
   collaborationPageByUser: vi.fn((args: unknown) => ({ kind: 'amendment-page', args })),
@@ -40,6 +41,7 @@ vi.mock('@/zero/queries', () => ({
 }));
 vi.mock('@/features/shared/virtualization', () => ({
   PolityZeroGridView: (props: any) => {
+    mocks.gridProps.push(props);
     const rows = props.historyKey.includes('amendments') ? mocks.amendmentRows : mocks.blogRows;
     props.getPageQuery({ limit: 10, start: null, dir: 'forward', settled: false });
     props.getPageQuery({
@@ -141,6 +143,27 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('profile content list branch contracts', () => {
+  it('keeps profile filters when switching amendment and blog grids to compact rows', () => {
+    for (const element of [
+      <AmendmentListTab userId="viewer" searchValue="climate" onSearchChange={vi.fn()} />,
+      <BlogListTab
+        authorName="Viewer"
+        authorAvatar=""
+        userId="viewer"
+        searchValue="climate"
+        onSearchChange={vi.fn()}
+      />,
+    ]) {
+      const view = render(element);
+      const controls = view.container.querySelectorAll('[data-action-id="collection.view.select"]');
+      fireEvent.click(controls[1]);
+      expect(mocks.gridProps.at(-1).estimateSize).toBe(76);
+      expect(mocks.gridProps.at(-1).getLanes(1200)).toBe(1);
+      expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('climate');
+      fireEvent.click(controls[0]);
+      view.unmount();
+    }
+  });
   it('executes all amendment grid contracts and mapping fallbacks', () => {
     const onSearchChange = vi.fn();
     render(

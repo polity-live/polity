@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   createCtx,
@@ -17,6 +17,28 @@ const publicCreateArgs = {
 };
 
 describe('statementServerMutators', () => {
+  it.each(['create', 'update'] as const)(
+    'rejects %s with inaccessible Studio media before any statement or timeline write',
+    async operation => {
+      const { tx, mutation } = createTxHarness();
+      const query = vi.fn().mockResolvedValue([{ allowed: false }]);
+      Object.assign(tx, { location: 'server', dbTransaction: { query } });
+      await expect(
+        statementServerMutators[operation].fn({
+          tx: tx as never,
+          ctx: createCtx(),
+          args: {
+            ...publicCreateArgs,
+            image_url: '/api/studio/published-media/10000000-0000-4000-8000-000000000001',
+          },
+        } as never)
+      ).rejects.toThrow('No access to this studio project');
+      expect(query).toHaveBeenCalled();
+      expect(mutation('statement', 'insert')).not.toHaveBeenCalled();
+      expect(mutation('statement', 'update')).not.toHaveBeenCalled();
+      expect(mutation('timeline_event', 'insert')).not.toHaveBeenCalled();
+    }
+  );
   it('creates a timeline event when creating a public statement', async () => {
     const globals = installDeterministicGlobals({
       now: 1_700_000_000_123,

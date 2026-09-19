@@ -153,6 +153,48 @@ afterEach(() => {
 });
 
 describe('useAmendmentEditContentController', () => {
+  it('shows the selected branch mode while another branch has an unconfirmed mode change', async () => {
+    const { result } = renderHook(() =>
+      useAmendmentEditContentController({
+        amendmentId: amendment.id,
+        amendment: amendment as any,
+        amendmentProcess: buildProcess() as any,
+        currentUserId: 'user-1',
+        isLoading: false,
+        mode: 'edit',
+      })
+    );
+    await act(() => result.current.handleWorkflowStatusChange('vote_internal'));
+    expect(result.current.formData.workflowStatus).toBe('vote_internal');
+    act(() => result.current.setSelectedWorkflowBranchId('branch-a'));
+    expect(result.current.formData.workflowStatus).toBe('edit');
+  });
+  it('refreshes cached fields after synchronization and preserves unsaved edits', async () => {
+    const props = {
+      amendmentId: amendment.id,
+      amendment: amendment as any,
+      currentUserId: 'user-1',
+      isLoading: true,
+    };
+    const { result, rerender } = renderHook(useAmendmentEditContentController, {
+      initialProps: props,
+    });
+    expect(result.current.formData.title).toBe('');
+    rerender({ ...props, isLoading: false });
+    await waitFor(() => expect(result.current.formData.title).toBe('A1'));
+    act(() => result.current.setFormData(previous => ({ ...previous, subtitle: 'Unsaved draft' })));
+    rerender({
+      ...props,
+      isLoading: false,
+      amendment: { ...amendment, title: 'Persisted title', preamble: 'Remote subtitle' } as any,
+    });
+    await waitFor(() =>
+      expect(result.current.formData).toMatchObject({
+        title: 'Persisted title',
+        subtitle: 'Unsaved draft',
+      })
+    );
+  });
   it('normalizes settings, initializes sparse records, tabs, hashtags, locations, and review state', async () => {
     expect(
       amendmentEditContentControllerInternals.normalizeInternalCRVotingCloseTrigger('after_minutes')

@@ -1183,6 +1183,26 @@
       ]
     },
     {
+      "file": "src/routes/_authed/group/$id/studio.tsx",
+      "routePath": "/_authed/group/$id/studio",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "file": "src/routes/_authed/home.tsx",
       "routePath": "/_authed/home",
       "access": "authenticated",
@@ -1285,6 +1305,26 @@
     {
       "file": "src/routes/_authed/statement/$id.tsx",
       "routePath": "/_authed/statement/$id",
+      "access": "authenticated",
+      "actions": [
+        {
+          "id": "open-route",
+          "kind": "navigation",
+          "roles": ["authenticated"],
+          "states": ["loading", "success", "empty", "error", "unauthorized"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/_authed/studio.tsx",
+      "routePath": "/_authed/studio",
       "access": "authenticated",
       "actions": [
         {
@@ -1800,6 +1840,26 @@
             }
           ]
         },
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/collaboration.ts",
+      "routePath": "/api/collaboration",
+      "access": "public",
+      "actions": [
         {
           "id": "post-request",
           "kind": "api-request",
@@ -2361,6 +2421,46 @@
       "actions": [
         {
           "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/studio.ts",
+      "routePath": "/api/studio",
+      "access": "public",
+      "actions": [
+        {
+          "id": "post-request",
+          "kind": "api-request",
+          "roles": ["anonymous", "authenticated"],
+          "states": ["success", "validation-error", "unauthorized", "service-error"],
+          "contractCoverage": [
+            {
+              "file": "src/routes/__tests__/routeCatalog.contract.unit.test.ts",
+              "project": "unit",
+              "caseId": "accounts for every route source with a unique file and path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/routes/api/studio/published-media/$id.ts",
+      "routePath": "/api/studio/published-media/$id",
+      "access": "public",
+      "actions": [
+        {
+          "id": "get-request",
           "kind": "api-request",
           "roles": ["anonymous", "authenticated"],
           "states": ["success", "validation-error", "unauthorized", "service-error"],

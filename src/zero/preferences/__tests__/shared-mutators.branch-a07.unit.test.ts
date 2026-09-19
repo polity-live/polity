@@ -44,6 +44,65 @@ const createArgs = { id: 'p1', theme: 'dark', appearance_theme_id: null };
 beforeEach(() => vi.clearAllMocks());
 
 describe('preference shared mutators branches A07', () => {
+  it('creates personal workspace defaults and merges display choices without dropping other areas or favorites', async () => {
+    const favorite = { kind: 'group' as const, href: '/group/one', title: 'Council' };
+    const fresh = harness('server', [undefined]);
+    await preferenceSharedMutators.setWorkspaceFavorite.fn({
+      tx: fresh.tx,
+      ctx,
+      args: { id: 'fresh', favorite, active: true },
+    } as never);
+    expect(fresh.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'fresh',
+        user_id: 'u1',
+        theme: 'system',
+        language: 'en',
+        workspace_preferences: { favorites: [favorite], display: {} },
+      })
+    );
+    const existing = harness('server', [
+      {
+        id: 'old',
+        workspace_preferences: {
+          favorites: [favorite],
+          display: { todoView: 'list', collectionViews: { 'profile.all': 'cards' } },
+        },
+      },
+    ]);
+    await preferenceSharedMutators.setWorkspaceDisplay.fn({
+      tx: existing.tx,
+      ctx,
+      args: {
+        id: 'unused',
+        display: { searchView: 'compact', collectionViews: { 'group.amendments': 'compact' } },
+      },
+    } as never);
+    expect(existing.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'old',
+        workspace_preferences: {
+          favorites: [favorite],
+          display: {
+            todoView: 'list',
+            searchView: 'compact',
+            collectionViews: { 'profile.all': 'cards', 'group.amendments': 'compact' },
+          },
+        },
+      })
+    );
+    const displayOnly = harness('server', []);
+    await preferenceSharedMutators.setWorkspaceDisplay.fn({
+      tx: displayOnly.tx,
+      ctx,
+      args: { id: 'display-only', display: { timelineMapVisible: true } },
+    } as never);
+    expect(displayOnly.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspace_preferences: { favorites: [], display: { timelineMapVisible: true } },
+      })
+    );
+  });
   it('updates an existing row and inserts a missing row without a theme check', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(100);
     const existing = harness('server', [{ id: 'old' }]);

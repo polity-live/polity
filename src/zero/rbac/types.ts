@@ -37,6 +37,7 @@ export type ResourceType =
   | 'groupAccessRoles'
   | 'groupDatasets'
   | 'groupThemes'
+  | 'communicationStudio'
   | 'groupTodos'
   | 'messages'
   | 'notifications'

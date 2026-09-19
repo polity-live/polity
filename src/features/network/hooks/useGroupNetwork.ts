@@ -268,12 +268,15 @@ export function useGroupNetwork(groupId: string) {
 
     // Filter by selected rights
     const filterByRights = <T extends { rights: string[] }>(items: T[]) => {
-      return items
-        .map(item => ({
-          ...item,
-          rights: item.rights.filter(r => selectedRights.has(r)),
-        }))
-        .filter(item => item.rights.length > 0);
+      return (
+        items
+          .map(item => ({
+            ...item,
+            rights: item.rights.filter(r => selectedRights.has(r)),
+          }))
+          // A structural connection remains manageable before any rights are granted.
+          .filter(item => item.rights.length > 0 || selectedRights.size === RIGHT_TYPES.length)
+      );
     };
 
     return {

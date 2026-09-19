@@ -108,6 +108,31 @@ afterEach(() => {
 });
 
 describe('AuthProvider', () => {
+  it('waits for stored-session refresh even when INITIAL_SESSION arrives first', async () => {
+    const stored = session('stored-token');
+    const refreshed = session('refreshed-token');
+    let finishRefresh: (value: unknown) => void = () => {
+      throw new Error('Refresh not started');
+    };
+    mocks.getSession.mockResolvedValue({ data: { session: stored } });
+    mocks.refreshSession.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finishRefresh = resolve;
+        })
+    );
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+    await waitFor(() => expect(mocks.refreshSession).toHaveBeenCalledOnce());
+    act(() => mocks.authChange?.('INITIAL_SESSION', stored));
+    expect(mocks.context.loading).toBe(true);
+    await act(async () => finishRefresh({ data: { session: refreshed }, error: null }));
+    expect(mocks.context.loading).toBe(false);
+    expect(mocks.context.session).toBe(refreshed);
+  });
   it('requires context for useAuth and keeps optional auth nullable', () => {
     expect(() => renderHook(() => useAuth())).toThrow(
       'useAuth must be used within an AuthProvider'

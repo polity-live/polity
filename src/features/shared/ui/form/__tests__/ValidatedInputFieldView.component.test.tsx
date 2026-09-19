@@ -94,7 +94,7 @@ describe('ValidatedInputFieldView', () => {
         {...buildProps({ showHint: 'edited', hasEdited: false, isFocused: false })}
       />
     );
-    expect(screen.queryByText('Helpful hint')).toBeNull();
+    expect(screen.getByText('Helpful hint').classList.contains('invisible')).toBe(true);
   });
 });
 

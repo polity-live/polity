@@ -1,22 +1,22 @@
 {
   "version": 1,
   "expectedInventory": {
-    "tables": 145,
-    "columns": 1585,
-    "primaryKeys": 145,
-    "checks": 116,
-    "foreignKeys": 370,
-    "uniqueConstraints": 56,
+    "tables": 163,
+    "columns": 1743,
+    "primaryKeys": 164,
+    "checks": 139,
+    "foreignKeys": 405,
+    "uniqueConstraints": 63,
     "uniqueIndexes": 28,
-    "uniqueRules": 84,
-    "indexes": 650,
-    "functions": 73,
-    "triggers": 64,
+    "uniqueRules": 91,
+    "indexes": 681,
+    "functions": 96,
+    "triggers": 101,
     "policies": 155,
     "cronBranches": 2
   },
   "expectedBehaviorAssertions": {
-    "checkViolations": 112,
+    "checkViolations": 113,
     "uniqueViolations": 87
   },
   "globalTests": {
@@ -24,7 +24,10 @@
     "security": "permissions_contract.sql"
   },
   "assignments": [
-    { "source": "00_extensions.sql", "behavior": [] },
+    {
+      "source": "00_extensions.sql",
+      "behavior": []
+    },
     {
       "source": "01_user.sql",
       "behavior": [
@@ -49,7 +52,10 @@
         "entity_activity_logs.sql"
       ]
     },
-    { "source": "04_document.sql", "behavior": ["content_collaboration.sql"] },
+    {
+      "source": "04_document.sql",
+      "behavior": ["content_collaboration.sql"]
+    },
     {
       "source": "05_1_network.sql",
       "behavior": ["identity_group_network.sql", "schema_constraints.sql"]
@@ -58,7 +64,10 @@
       "source": "05_2_amendment.sql",
       "behavior": ["governance_voting.sql", "app_tutorial.sql", "entity_activity_logs.sql"]
     },
-    { "source": "06_agenda.sql", "behavior": ["events_agenda_delegation.sql"] },
+    {
+      "source": "06_agenda.sql",
+      "behavior": ["events_agenda_delegation.sql"]
+    },
     {
       "source": "07_blog.sql",
       "behavior": ["content_collaboration.sql", "schema_constraints.sql"]
@@ -71,7 +80,10 @@
         "content_collaboration.sql"
       ]
     },
-    { "source": "09_message.sql", "behavior": ["conversation_rollups.sql"] },
+    {
+      "source": "09_message.sql",
+      "behavior": ["conversation_rollups.sql"]
+    },
     {
       "source": "10_notification.sql",
       "behavior": ["push_notification_outbox.sql", "notification_lifecycle.sql"],
@@ -81,7 +93,10 @@
       "source": "11_statement.sql",
       "behavior": ["content_collaboration.sql", "schema_constraints.sql"]
     },
-    { "source": "12_payment.sql", "behavior": ["account_configuration.sql"] },
+    {
+      "source": "12_payment.sql",
+      "behavior": ["account_configuration.sql"]
+    },
     {
       "source": "14_change_request.sql",
       "behavior": ["content_collaboration.sql", "governance_voting.sql"]
@@ -90,7 +105,10 @@
       "source": "15_discussion.sql",
       "behavior": ["todo_discussion_thread.sql", "content_collaboration.sql"]
     },
-    { "source": "16_position_election.sql", "behavior": ["governance_voting.sql"] },
+    {
+      "source": "16_position_election.sql",
+      "behavior": ["governance_voting.sql"]
+    },
     {
       "source": "18_delegate.sql",
       "behavior": ["events_agenda_delegation.sql", "schema_constraints.sql"]
@@ -99,8 +117,14 @@
       "source": "20_0_amendment_vote.sql",
       "behavior": ["governance_voting.sql", "schema_constraints.sql"]
     },
-    { "source": "20_1_amendment_choices_vote.sql", "behavior": ["governance_voting.sql"] },
-    { "source": "20_2_election_candidate_vote.sql", "behavior": ["governance_voting.sql"] },
+    {
+      "source": "20_1_amendment_choices_vote.sql",
+      "behavior": ["governance_voting.sql"]
+    },
+    {
+      "source": "20_2_election_candidate_vote.sql",
+      "behavior": ["governance_voting.sql"]
+    },
     {
       "source": "20_3_indicative_amendment_choice_vote.sql",
       "behavior": ["governance_voting.sql"]
@@ -109,8 +133,14 @@
       "source": "20_4_indicative_election_candidate_vote.sql",
       "behavior": ["governance_voting.sql"]
     },
-    { "source": "20_5_agenda_item_change_request.sql", "behavior": ["governance_voting.sql"] },
-    { "source": "21_common.sql", "behavior": ["content_collaboration.sql"] },
+    {
+      "source": "20_5_agenda_item_change_request.sql",
+      "behavior": ["governance_voting.sql"]
+    },
+    {
+      "source": "21_common.sql",
+      "behavior": ["content_collaboration.sql"]
+    },
     {
       "source": "21_search_document.sql",
       "behavior": ["search_document_projection.sql", "search_document_acl.sql"],
@@ -121,8 +151,15 @@
       "behavior": ["auth_assistant.sql", "user_lifecycle.sql"],
       "securityBehavior": ["auth_assistant.sql"]
     },
-    { "source": "23_appearance_theme.sql", "behavior": ["account_configuration.sql"] },
-    { "source": "23_storage.sql", "behavior": [], "securityBehavior": ["storage_rls.sql"] },
+    {
+      "source": "23_appearance_theme.sql",
+      "behavior": ["account_configuration.sql"]
+    },
+    {
+      "source": "23_storage.sql",
+      "behavior": [],
+      "securityBehavior": ["storage_rls.sql"]
+    },
     {
       "source": "24_user_preference.sql",
       "behavior": ["account_configuration.sql", "auth_assistant.sql"]
@@ -135,9 +172,18 @@
       "source": "26_voting_password.sql",
       "behavior": ["account_configuration.sql", "schema_constraints.sql"]
     },
-    { "source": "27_accreditation.sql", "behavior": ["governance_voting.sql"] },
-    { "source": "28_ai.sql", "behavior": ["account_configuration.sql"] },
-    { "source": "29_pql_filter.sql", "behavior": ["account_configuration.sql"] },
+    {
+      "source": "27_accreditation.sql",
+      "behavior": ["governance_voting.sql"]
+    },
+    {
+      "source": "28_ai.sql",
+      "behavior": ["account_configuration.sql"]
+    },
+    {
+      "source": "29_pql_filter.sql",
+      "behavior": ["account_configuration.sql"]
+    },
     {
       "source": "30_datasets.sql",
       "behavior": ["datasets.sql", "search_document_projection.sql"],
@@ -158,11 +204,79 @@
       "behavior": ["app_tutorial.sql"],
       "securityBehavior": ["app_tutorial.sql"]
     },
-    { "source": "34_scheduled_jobs.sql", "behavior": [], "operations": ["cron_jobs.sql"] },
+    {
+      "source": "34_scheduled_jobs.sql",
+      "behavior": [],
+      "operations": ["cron_jobs.sql"]
+    },
     {
       "source": "35_security.sql",
       "behavior": [],
       "securityBehavior": ["permissions_contract.sql"]
+    },
+    {
+      "source": "36_communication_studio.sql",
+      "behavior": ["communication_studio.sql"]
+    },
+    {
+      "source": "37_collaboration.sql",
+      "behavior": ["collaboration.sql"],
+      "securityBehavior": ["collaboration.sql"]
+    },
+    {
+      "source": "38_collaboration_workspaces.sql",
+      "behavior": ["collaboration_completion.sql"],
+      "securityBehavior": ["collaboration_completion.sql"]
+    },
+    {
+      "source": "39_collaboration_ballots.sql",
+      "behavior": ["collaboration_completion.sql"],
+      "securityBehavior": ["collaboration_completion.sql"]
+    },
+    {
+      "source": "40_collaboration_migration_attempts.sql",
+      "behavior": ["collaboration_completion.sql"],
+      "securityBehavior": ["collaboration_completion.sql"]
+    },
+    {
+      "source": "41_collaboration_compatibility.sql",
+      "behavior": ["collaboration_completion.sql"],
+      "securityBehavior": ["collaboration_completion.sql"]
+    },
+    {
+      "source": "42_collaboration_transaction_initialization.sql",
+      "behavior": ["collaboration_completion.sql"],
+      "securityBehavior": ["collaboration_completion.sql"]
+    },
+    {
+      "source": "43_collaboration_authority.sql",
+      "behavior": ["collaboration_completion.sql"],
+      "securityBehavior": ["collaboration_completion.sql"]
+    },
+    {
+      "source": "44_collaboration_integrity.sql",
+      "behavior": ["collaboration_completion.sql"],
+      "securityBehavior": ["collaboration_completion.sql"]
+    },
+    {
+      "source": "45_collaboration_legacy_fences.sql",
+      "behavior": ["collaboration_completion.sql"],
+      "securityBehavior": ["collaboration_completion.sql"]
+    },
+    {
+      "source": "46_collaboration_ballot_guards.sql",
+      "behavior": ["collaboration_completion.sql"],
+      "securityBehavior": ["collaboration_completion.sql"]
+    },
+    {
+      "source": "47_collaboration_tutorial.sql",
+      "behavior": ["collaboration_completion.sql"],
+      "securityBehavior": ["collaboration_completion.sql"]
+    },
+    {
+      "source": "48_studio_only_collaboration.sql",
+      "behavior": ["collaboration_completion.sql"],
+      "securityBehavior": ["collaboration_completion.sql"]
     }
   ]
 }

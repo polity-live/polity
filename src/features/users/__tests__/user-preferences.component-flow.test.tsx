@@ -117,9 +117,12 @@ afterEach(cleanup);
 describe('user preference synchronization flow', () => {
   it('switches language from the real settings surface and persists the store snapshot', async () => {
     const view = renderPreferences();
-    fireEvent.mouseEnter(
-      view.container.querySelector('[data-action-id="navigation.language.popover.open"]')!
-    );
+    const trigger = view.container.querySelector(
+      '[data-action-id="navigation.language.popover.open"]'
+    )!;
+    fireEvent.mouseEnter(trigger);
+    fireEvent.click(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
     fireEvent.click(await screen.findByText('Deutsch', { selector: 'span' }));
 
     await waitFor(() => expect(useLanguageStore.getState().language).toBe('de'));

@@ -109,4 +109,44 @@ describe('useKanbanBoardController', () => {
       event: 'todo.in-progress',
     });
   });
+
+  it.each(['success', 'error'] as const)(
+    'waits for a server %s before completing an optimistic tutorial drop',
+    async type => {
+      let settle!: (value: { type: 'success' | 'error' }) => void;
+      mocks.updateTodo.mockReturnValue({
+        client: Promise.resolve(),
+        server: new Promise(resolve => {
+          settle = resolve;
+        }),
+      });
+      const todo = {
+        id: 'assistant-todo',
+        title: 'Die Welt zu einem besseren Ort machen',
+        status: 'pending',
+        tutorial_run_id: 'tutorial-run',
+      };
+      const { result } = renderHook(() =>
+        useKanbanBoardController({ canManageTodos: true, todos: [todo] as never })
+      );
+      act(() => result.current.onCardDragStart(todo as never));
+      let drop!: Promise<void>;
+      await act(async () => {
+        drop = result.current.onColumnDrop('in_progress');
+        await Promise.resolve();
+      });
+      expect(mocks.reportAppTutorialAction).not.toHaveBeenCalled();
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      try {
+        await act(async () => {
+          settle({ type });
+          await drop;
+        });
+        expect(mocks.reportAppTutorialAction).toHaveBeenCalledTimes(type === 'success' ? 1 : 0);
+        expect(result.current.draggedTodoId).toBeNull();
+      } finally {
+        consoleError.mockRestore();
+      }
+    }
+  );
 });

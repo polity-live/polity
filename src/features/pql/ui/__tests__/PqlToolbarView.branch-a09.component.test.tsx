@@ -96,6 +96,13 @@ function baseProps(overrides: Record<string, unknown> = {}) {
   } as any;
 }
 
+it('keeps the embedded compact toolbar spacing aligned with compact rows', () => {
+  render(<PqlToolbarView {...baseProps({ surface: 'embedded', compact: true })} />);
+  expect(document.querySelector('[data-slot="pql-toolbar-surface"]')?.className).toBe(
+    'mb-3 space-y-2'
+  );
+});
+
 describe('PqlToolbarView branch coverage', () => {
   afterEach(() => {
     cleanup();

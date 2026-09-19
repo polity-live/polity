@@ -9,6 +9,7 @@ import { defineConfig, loadEnv } from 'vite';
 Object.assign(process.env, loadEnv(process.env.NODE_ENV || 'development', process.cwd(), ''));
 
 export default defineConfig({
+  cacheDir: process.env.POLITY_VITE_CACHE_DIR,
   nitro: {
     inlineDynamicImports: true,
     traceDeps: ['web-push*'],
@@ -55,6 +56,26 @@ export default defineConfig({
   },
   css: {
     devSourcemap: true,
+  },
+  server: {
+    watch: {
+      // Export artifacts and test sandboxes can contain entire copies of the app.
+      // Watching them stalls local startup and triggers unrelated hot reloads.
+      ignored: [
+        '**/.stryker-tmp*/**',
+        '**/coverage*/**',
+        '**/.coverage*/**',
+        '**/.a04-coverage/**',
+        '**/test-results*/**',
+        '**/playwright-report*/**',
+        '**/.playwright-cli/**',
+        '**/output/**',
+        '**/.output/**',
+        '**/.next/**',
+        '**/.vercel/**',
+        '**/reports/**',
+      ],
+    },
   },
   build: {
     cssCodeSplit: false,

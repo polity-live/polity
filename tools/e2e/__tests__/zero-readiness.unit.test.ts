@@ -1,10 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   waitForZeroReady,
   ZERO_READY_TIMEOUT_MS,
   zeroReplicaCount,
 } from '../../../e2e/fixtures/zero-readiness';
+
+afterEach(() => vi.unstubAllEnvs());
 
 function statz(replicas: number) {
   return {
@@ -125,5 +127,24 @@ describe('Zero E2E readiness', () => {
         timeoutMs: 20,
       })
     ).rejects.toThrow('replicas=1, activeSlots=0, caughtUp=false');
+  });
+});
+
+it('probes the configured isolated cache URL with its credential', async () => {
+  vi.stubEnv('VITE_ZERO_CACHE_URL', 'http://127.0.0.1:4948');
+  vi.stubEnv('ZERO_ADMIN_PASSWORD', 'isolated-test-credential');
+  const fetcher = vi.fn().mockResolvedValue(statz(1));
+  await waitForZeroReady({
+    database: {
+      currentWalLsn: async () => '0/1234',
+      replicationStatus: async () => ({ activeSlots: 1, caughtUp: true }),
+    },
+    fetcher,
+  });
+  expect(fetcher).toHaveBeenCalledWith('http://127.0.0.1:4948/statz', {
+    headers: {
+      authorization: `Basic ${Buffer.from('zero:isolated-test-credential').toString('base64')}`,
+    },
+    signal: expect.any(AbortSignal),
   });
 });

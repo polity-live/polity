@@ -66,6 +66,45 @@ beforeEach(() => {
 });
 
 describe('useUserMenuController', () => {
+  it('waits for session removal before exposing the sign-in page', async () => {
+    let finishSignOut!: () => void;
+    mocks.signOut.mockImplementation(() => new Promise<void>(resolve => (finishSignOut = resolve)));
+    const { result } = renderHook(() => useUserMenuController({ user: null }));
+    let logout!: Promise<void>;
+
+    await act(async () => {
+      result.current!.onLogoutDialogOpenChange(true);
+    });
+    await act(async () => {
+      logout = result.current!.onLogout();
+    });
+
+    expect(mocks.signOut).toHaveBeenCalledOnce();
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(result.current!.logoutDialogOpen).toBe(false);
+
+    await act(async () => {
+      finishSignOut();
+      await logout;
+    });
+    expect(mocks.navigate).toHaveBeenCalledExactlyOnceWith({
+      to: '/auth/sign-in',
+      replace: true,
+    });
+  });
+
+  it('keeps the current page when session removal fails', async () => {
+    const failure = new Error('logout unavailable');
+    mocks.signOut.mockRejectedValueOnce(failure);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { result } = renderHook(() => useUserMenuController({ user: null }));
+
+    await act(async () => result.current!.onLogout());
+
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledWith('Failed to sign out:', failure);
+  });
+
   it('does not expose relationship entities until navigation loading is enabled', () => {
     mocks.userEventParticipations = [buildParticipation('event-alpha', 'Alpha Assembly')];
 

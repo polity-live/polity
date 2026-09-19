@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures/test';
+import { db } from '../fixtures/db';
 import { fillMinimalTodo, gotoTodo, layouts } from './helpers';
 import { submitSmokeAndExpectCreated } from './smoke-expectations';
 
@@ -13,6 +14,7 @@ async function selectCurrentTodoDeadline(
   createFlowPage: Parameters<typeof gotoTodo>[0],
   options: { optional?: boolean } = {}
 ) {
+  if (!options.optional) await createFlowPage.form.revealField('due-date-time');
   const field = createFlowPage.form.field('due-date-time');
   if (options.optional && (!(await field.count()) || !(await field.isVisible()))) return false;
 
@@ -30,7 +32,14 @@ test.describe('create/todo', () => {
       await gotoTodo(createFlowPage, layout);
       await fillMinimalTodo(createFlowPage, `${e2eRun.prefix} Review`);
 
+      const publicOption = createFlowPage.form
+        .field('visibility')
+        .locator('[data-create-option="public"]:visible');
+      const publicLabel = (await publicOption.innerText()).trim();
+      await createFlowPage.form.chooseOption('visibility', 'public');
+
       if (layout === 'carousel') await advanceCarousel(createFlowPage, 2);
+      await createFlowPage.form.revealField('status');
 
       const completedOption = createFlowPage.form
         .field('status')
@@ -38,15 +47,7 @@ test.describe('create/todo', () => {
       const completedLabel = (await completedOption.innerText()).trim();
       await createFlowPage.form.chooseOption('status', 'completed');
 
-      if (layout === 'carousel') await advanceCarousel(createFlowPage, 1);
-
-      const publicOption = createFlowPage.form
-        .field('visibility')
-        .locator('[data-create-option="public"]:visible');
-      const publicLabel = (await publicOption.innerText()).trim();
-      await createFlowPage.form.chooseOption('visibility', 'public');
-
-      if (layout === 'carousel') await advanceCarousel(createFlowPage, 1);
+      if (layout === 'carousel') await advanceCarousel(createFlowPage, 2);
 
       const review = createFlowPage.form.field('review');
       await expect(review).toBeVisible();
@@ -81,6 +82,7 @@ test.describe('create/todo', () => {
     await expect(createFlowPage.page).toHaveURL(/\/todos\/[0-9a-f-]+\/?$/);
 
     const comment = `${e2eRun.prefix} Todo comment`;
+    await createFlowPage.page.getByRole('button', { name: 'Add Comment', exact: true }).click();
     const commentInput = createFlowPage.page
       .getByPlaceholder('Add a comment...')
       .filter({ visible: true });
@@ -101,21 +103,50 @@ test.describe('create/todo', () => {
 
     await createFlowPage.page.goBack({ waitUntil: 'domcontentloaded' });
     await expect(createFlowPage.page).toHaveURL(/\/todos\/[0-9a-f-]+\/?$/);
+    const todoId = new URL(createFlowPage.page.url()).pathname.match(/\/todos\/([0-9a-f-]+)/)?.[1];
+    expect(todoId).toBeTruthy();
 
     await createFlowPage.page.getByRole('button', { name: 'Archive', exact: true }).click();
     await createFlowPage.page
       .getByRole('alertdialog')
       .getByRole('button', { name: 'Archive', exact: true })
       .click();
+    await expect
+      .poll(
+        async () => {
+          const [row] = await db()`select archived_at from public.todo where id = ${todoId}::uuid`;
+          return row?.archived_at != null;
+        },
+        {
+          timeout: 30_000,
+          message: 'The archive mutation must be persisted before navigating away',
+        }
+      )
+      .toBe(true);
 
     await createFlowPage.page.goto('/todos');
     await createFlowPage.page.getByRole('tab', { name: /Archived/ }).click();
     await expect(createFlowPage.page.getByText(title, { exact: true })).toBeVisible();
 
     await createFlowPage.page.getByText(title, { exact: true }).click();
-    const dialog = createFlowPage.page.getByRole('dialog');
-    await dialog.getByRole('button', { name: 'Restore', exact: true }).click();
-    await dialog.getByRole('button', { name: 'Close' }).click();
+    await expect(createFlowPage.page).toHaveURL(/\/todos\/[0-9a-f-]+\/?$/);
+    await createFlowPage.page.getByRole('button', { name: 'Restore', exact: true }).click();
+    await expect(
+      createFlowPage.page.getByRole('button', { name: 'Archive', exact: true })
+    ).toBeVisible();
+    await expect
+      .poll(
+        async () => {
+          const [row] = await db()`select archived_at from public.todo where id = ${todoId}::uuid`;
+          return row?.archived_at === null;
+        },
+        {
+          timeout: 30_000,
+          message: 'The restore mutation must be persisted before navigating away',
+        }
+      )
+      .toBe(true);
+    await createFlowPage.page.goto('/todos');
 
     await createFlowPage.page.getByRole('tab', { name: /Completed/ }).click();
     await expect(createFlowPage.page.getByText(title, { exact: true })).toBeVisible();

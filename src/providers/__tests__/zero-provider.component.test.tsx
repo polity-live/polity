@@ -4,6 +4,7 @@ import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+  loading: false,
   session: null as null | {
     access_token: string;
     user: { id: string; email?: string };
@@ -12,7 +13,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../auth-provider', () => ({
-  useAuth: () => ({ session: mocks.session }),
+  useAuth: () => ({ session: mocks.session, loading: mocks.loading }),
 }));
 
 vi.mock('@rocicorp/zero/react', () => ({
@@ -28,7 +29,9 @@ describe('ZeroAppProvider identity', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_ZERO_CACHE_URL', 'https://zero.example.test');
     vi.stubEnv('VITE_APP_URL', 'https://app.example.test');
+    vi.stubEnv('VITE_ZERO_API_URL', '');
     mocks.session = null;
+    mocks.loading = false;
     mocks.zeroProps = undefined;
   });
 
@@ -44,6 +47,16 @@ describe('ZeroAppProvider identity', () => {
     expect(Object.hasOwn(mocks.zeroProps ?? {}, 'userID')).toBe(false);
     expect(mocks.zeroProps?.context).toEqual({ userID: 'anon', email: '' });
     expect(mocks.zeroProps?.auth).toBeUndefined();
+    expect(mocks.zeroProps?.queryURL).toBe('https://app.example.test/api/query');
+    expect(mocks.zeroProps?.mutateURL).toBe('https://app.example.test/api/mutate');
+  });
+
+  it('uses the Zero server reachable API origin independently of the browser application origin', () => {
+    vi.stubEnv('VITE_ZERO_API_URL', 'http://host.docker.internal:3000');
+    render(<ZeroAppProvider>content</ZeroAppProvider>);
+    expect(mocks.zeroProps?.queryURL).toBe('http://host.docker.internal:3000/api/query');
+    expect(mocks.zeroProps?.mutateURL).toBe('http://host.docker.internal:3000/api/mutate');
+    expect(import.meta.env.VITE_APP_URL).toBe('https://app.example.test');
   });
 
   it('passes the authenticated identity and context to Zero', () => {
@@ -60,6 +73,22 @@ describe('ZeroAppProvider identity', () => {
       email: 'person@example.test',
     });
     expect(mocks.zeroProps?.auth).toBe('access-token');
+  });
+
+  it('opens sync only after the initial session refresh has completed', () => {
+    mocks.loading = true;
+    const { rerender, container } = render(<ZeroAppProvider>content</ZeroAppProvider>);
+    expect(mocks.zeroProps).toBeUndefined();
+    mocks.session = { access_token: 'stored-token', user: { id: 'user-1' } };
+    rerender(<ZeroAppProvider>content</ZeroAppProvider>);
+    expect(mocks.zeroProps).toBeUndefined();
+    expect(container.textContent).toBe('');
+
+    mocks.session = { ...mocks.session, access_token: 'refreshed-token' };
+    mocks.loading = false;
+    rerender(<ZeroAppProvider>content</ZeroAppProvider>);
+    expect(mocks.zeroProps?.auth).toBe('refreshed-token');
+    expect(container.textContent).toBe('content');
   });
 
   it('requires both Zero and application URLs', () => {

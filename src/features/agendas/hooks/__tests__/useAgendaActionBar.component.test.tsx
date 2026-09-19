@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   updateVote: vi.fn((args: unknown) => ({ kind: 'vote', args })),
   verifyVotingPassword: vi.fn(async (_password: string) => undefined),
   waitForClientApply: vi.fn(async (_result: unknown) => undefined),
+  serverConfirmed: vi.fn(async (_result: unknown) => undefined),
   voteCasting: { isIndicationPhase: false, marker: 'casting' } as any,
   voteCastingArgs: vi.fn(),
   quotaResult: { allowed: true } as any,
@@ -101,6 +102,7 @@ vi.mock('@/features/notifications/utils/gated-toast', () => ({
 }));
 vi.mock('@/zero/mutate-with-server-check', () => ({
   waitForClientApply: (result: unknown) => mocks.waitForClientApply(result),
+  serverConfirmed: (result: unknown) => mocks.serverConfirmed(result),
 }));
 vi.mock('@/features/shared/errors/app-error', () => ({
   localizeAppError: (error: unknown) =>
@@ -164,6 +166,7 @@ beforeEach(() => {
   mocks.quotaResult = { allowed: true };
   mocks.verifyVotingPassword.mockResolvedValue(undefined);
   mocks.waitForClientApply.mockResolvedValue(undefined);
+  mocks.serverConfirmed.mockResolvedValue(undefined);
   vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue('00000000-0000-4000-8000-000000000001');
 });
 
@@ -663,6 +666,33 @@ describe('useAgendaActionBar', () => {
     });
   });
 
+  it('keeps the agenda indicative until the election transition is confirmed', async () => {
+    let confirm: () => void = () => {
+      throw new Error('confirmation has not been registered');
+    };
+    mocks.serverConfirmed.mockImplementationOnce(
+      () =>
+        new Promise<undefined>(resolve => {
+          confirm = () => resolve(undefined);
+        })
+    );
+    const { result } = renderHook(() => useAgendaActionBar(options()));
+    const transition = result.current.handleStartFinalVote();
+    expect(mocks.updateElection).toHaveBeenCalledWith(expect.objectContaining({ status: 'final' }));
+    expect(mocks.updateAgendaItem).not.toHaveBeenCalled();
+    confirm();
+    await transition;
+    expect(mocks.updateAgendaItem).toHaveBeenCalledWith({ id: 'agenda-1', voting_phase: 'final' });
+  });
+
+  it('does not advance the agenda when the election transition is rejected', async () => {
+    const failure = new Error('transition denied');
+    mocks.serverConfirmed.mockRejectedValueOnce(failure);
+    const { result } = renderHook(() => useAgendaActionBar(options()));
+    await expect(result.current.handleStartFinalVote()).rejects.toBe(failure);
+    expect(mocks.updateAgendaItem).not.toHaveBeenCalled();
+  });
+
   it('starts an indicative standalone vote', async () => {
     const { result } = renderHook(() =>
       useAgendaActionBar(options({ election: null, vote: vote() }))
@@ -774,7 +804,7 @@ describe('useAgendaActionBar', () => {
     ['Error', new Error('close failed'), 'close failed'],
     ['non-Error', 'rejected', 'rejected'],
   ])('logs and rethrows %s close failures', async (_label, failure, message) => {
-    mocks.waitForClientApply.mockRejectedValueOnce(failure);
+    mocks.serverConfirmed.mockRejectedValueOnce(failure);
     const { result } = renderHook(() => useAgendaActionBar(options()));
 
     await expect(
@@ -792,7 +822,7 @@ describe('useAgendaActionBar', () => {
 
   it('logs null ballot and agenda metadata on a failed close', async () => {
     const failure = new Error('close failed');
-    mocks.waitForClientApply.mockRejectedValueOnce(failure);
+    mocks.serverConfirmed.mockRejectedValueOnce(failure);
     const { result } = renderHook(() =>
       useAgendaActionBar(options({ currentAgendaItem: null, election: null, vote: vote() }))
     );
@@ -819,4 +849,52 @@ describe('useAgendaActionBar', () => {
     expect(result.current.voteDialogOpen).toBe(false);
     expect(result.current.editDialogOpen).toBe(false);
   });
+});
+
+it('keeps ballot controls busy until the confirmed phase reaches the rendered query', async () => {
+  let confirm!: () => void;
+  mocks.serverConfirmed.mockImplementationOnce(
+    () =>
+      new Promise<undefined>(resolve => {
+        confirm = () => resolve(undefined);
+      })
+  );
+  const initial = options();
+  const { result, rerender } = renderHook(props => useAgendaActionBar(props), {
+    initialProps: initial,
+  });
+  let transition!: Promise<void>;
+  act(() => {
+    transition = result.current.handleStartFinalVote();
+  });
+  expect(result.current.voteCasting.isLoading).toBe(true);
+  await act(async () => {
+    confirm();
+    await transition;
+  });
+  expect(result.current.voteCasting.isLoading).toBe(true);
+  rerender(options({ election: { ...initial.election, status: 'final' } }));
+  expect(result.current.voteCasting.isLoading).toBe(false);
+  rerender(options({ election: { ...initial.election, status: 'closed' } }));
+  expect(result.current.voteCasting.isLoading).toBe(false);
+});
+
+it('releases ballot controls after a rejected transition or a change of ballot', async () => {
+  const failure = new Error('phase rejected');
+  mocks.serverConfirmed.mockRejectedValueOnce(failure);
+  const { result, rerender } = renderHook(props => useAgendaActionBar(props), {
+    initialProps: options(),
+  });
+  await expect(act(() => result.current.handleStartFinalVote())).rejects.toBe(failure);
+  expect(result.current.voteCasting.isLoading).toBe(false);
+  await act(() => result.current.handleStartFinalVote());
+  expect(result.current.voteCasting.isLoading).toBe(true);
+  rerender(options({ election: election({ id: 'different-election' }) }));
+  expect(result.current.voteCasting.isLoading).toBe(false);
+});
+
+it('preserves ballot submission loading when no phase transition is pending', () => {
+  mocks.voteCasting.isLoading = true;
+  const { result } = renderHook(() => useAgendaActionBar(options()));
+  expect(result.current.voteCasting.isLoading).toBe(true);
 });

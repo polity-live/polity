@@ -136,6 +136,7 @@ import { votingPassword } from './voting-password/table';
 import { accreditation, accreditationAudit } from './accreditation/table';
 import { dataset, datasetSnapshot } from './datasets/table';
 import { appearanceTheme, appearanceThemeRevision } from './appearance-themes/table';
+import { studioProject, studioExport } from './communication-studio/table';
 import {
   appTutorialRun,
   appTutorialCheckpointEffect,
@@ -310,6 +311,8 @@ const zeroTables = [
   // Appearance themes
   appearanceTheme,
   appearanceThemeRevision,
+  studioProject,
+  studioExport,
   // Live tutorial
   appTutorialRun,
   appTutorialCheckpointEffect,

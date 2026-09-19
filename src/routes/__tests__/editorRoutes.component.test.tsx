@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   params: { docId: 'doc-1', entryId: 'entry-1', id: 'entity-1' },
   permissionsLoading: false,
+  childDocument: false,
   search: { tab: undefined as 'general' | 'tags' | undefined },
 }));
 
@@ -35,6 +36,10 @@ vi.mock('@tanstack/react-router', () => ({
     useSearch: () => mocks.search,
   }),
   Outlet: () => <div>outlet</div>,
+  useRouterState: ({ select }: any) =>
+    select({
+      matches: mocks.childDocument ? [{ routeId: '/_authed/user/$id/editor/$docId' }] : [],
+    }),
 }));
 vi.mock('@/features/auth/ui/AccessDenied', () => ({
   AccessDenied: () => <div>access-denied</div>,
@@ -113,6 +118,7 @@ beforeEach(() => {
   mocks.isMember.mockReturnValue(true);
   mocks.navigate.mockResolvedValue(undefined);
   mocks.permissionsLoading = false;
+  mocks.childDocument = false;
   mocks.search = { tab: undefined };
 });
 
@@ -239,6 +245,14 @@ describe('document editor routes', () => {
         userRecord: expect.objectContaining({ name: 'owner' }),
       })
     );
+  });
+
+  it('renders the nested personal document instead of opening a document with the user ID', () => {
+    mocks.childDocument = true;
+    const Component = component(UserEditorRoute);
+    render(<Component />);
+    expect(screen.getByText('outlet')).toBeTruthy();
+    expect(mocks.editor).not.toHaveBeenCalled();
   });
 
   it('renders managed and read-only group documents with or without an authenticated user', () => {

@@ -1,3 +1,4 @@
+import { NETWORK_FLOW_FILTER_TYPES } from '@/features/shared/ui/status';
 /* @vitest-environment jsdom */
 
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -96,10 +97,25 @@ vi.mock('@/features/shared/virtualization', () => ({
 }));
 
 vi.mock('@/features/shared/ui/dialog', () => ({
-  DangerConfirmDialog: ({ trigger, onConfirm }: { trigger: ReactNode; onConfirm: () => void }) => (
+  DangerConfirmDialog: ({
+    trigger,
+    onConfirm,
+    onOpenChange,
+  }: {
+    trigger: ReactNode;
+    onConfirm: () => void;
+    onOpenChange: (open: boolean) => void;
+  }) => (
     <div>
       {trigger}
-      <button data-testid="confirm-delete" onClick={onConfirm}>
+      <button
+        data-testid="confirm-delete"
+        onClick={() => {
+          onOpenChange(true);
+          onConfirm();
+          onOpenChange(false);
+        }}
+      >
         Confirm delete
       </button>
     </div>
@@ -422,7 +438,17 @@ describe('ManageNetworkTabContentView branch harness', () => {
     fireEvent.click(screen.getByTestId('search-change'));
     fireEvent.click(screen.getByTestId('right-filter'));
     for (const button of screen.getAllByTestId('warning')) fireEvent.click(button);
-    for (const button of screen.getAllByTestId('confirm-delete')) fireEvent.click(button);
+    const deleteActionIds = [
+      'network.relationship.delete.open',
+      'network.relationship.active.delete.open',
+    ];
+    for (const actionId of deleteActionIds) {
+      const count = document.querySelectorAll(`[data-action-id="${actionId}"]`).length;
+      for (let index = 0; index < count; index++) {
+        fireEvent.click(document.querySelectorAll(`[data-action-id="${actionId}"]`)[index]);
+        fireEvent.click(screen.getByTestId('confirm-delete'));
+      }
+    }
 
     const approveButtons = Array.from(
       document.querySelectorAll<HTMLButtonElement>(
@@ -544,4 +570,28 @@ describe('ManageNetworkTabContentView branch harness', () => {
 
     expect(harness.overlayProps).toBeTruthy();
   });
+});
+
+it('requests structural connections when all network filters are selected', () => {
+  const { rerender } = render(
+    <ManageNetworkTabContentView
+      {...props({
+        virtualize: true,
+        manageRightFilter: new Set(NETWORK_FLOW_FILTER_TYPES),
+      })}
+    />
+  );
+  const options = { limit: 10, start: null, dir: 'forward', settled: true };
+  expect(harness.activeSource!.getPageQuery(options).query.args.rights).toEqual([]);
+  rerender(
+    <ManageNetworkTabContentView
+      {...props({
+        virtualize: true,
+        manageRightFilter: new Set(['informationRight']),
+      })}
+    />
+  );
+  expect(harness.activeSource!.getPageQuery(options).query.args.rights).toEqual([
+    'informationRight',
+  ]);
 });

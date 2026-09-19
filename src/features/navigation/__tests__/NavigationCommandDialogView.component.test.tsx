@@ -115,6 +115,7 @@ describe('NavigationCommandDialogView', () => {
   });
 
   it('renders user groups and events as command groups', () => {
+    const close = vi.fn();
     const onSelectGroupItem = vi.fn();
     const onSelectEventItem = vi.fn();
     const onSelectAmendmentItem = vi.fn();
@@ -122,7 +123,7 @@ describe('NavigationCommandDialogView', () => {
     render(
       <NavigationCommandDialogView
         open
-        onOpenChange={vi.fn()}
+        onOpenChange={close}
         copy={copy}
         primaryNavItems={primaryNavItems}
         userNavItems={[]}
@@ -155,6 +156,8 @@ describe('NavigationCommandDialogView', () => {
         onSelectAmendmentItem={onSelectAmendmentItem}
       />
     );
+    fireEvent.click(screen.getByRole('button', { name: 'Workspace action complete' }));
+    expect(close).toHaveBeenCalledWith(false);
 
     expect(screen.getByRole('region', { name: 'Groups' })).toBeTruthy();
     expect(screen.getByRole('region', { name: 'Events' })).toBeTruthy();
@@ -375,4 +378,8 @@ describe('NavigationCommandDialogView', () => {
   );
 });
 
-vi.mock('../WorkspaceCommandItems', () => ({ WorkspaceCommandItems: () => null }));
+vi.mock('../WorkspaceCommandItems', () => ({
+  WorkspaceCommandItems: ({ onComplete }: { onComplete: () => void }) => (
+    <button onClick={onComplete}>Workspace action complete</button>
+  ),
+}));

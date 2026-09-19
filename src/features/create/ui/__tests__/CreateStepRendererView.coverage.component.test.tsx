@@ -19,6 +19,108 @@ import { CreateStepRendererView } from '../CreateStepRendererView';
 afterEach(cleanup);
 
 describe('CreateStepRendererView branches', () => {
+  it('collapses optional sections but keeps required or explicitly visible fields accessible', () => {
+    const custom = (key: string, extra = {}) => ({
+      key,
+      kind: 'custom',
+      node: <span>{key}</span>,
+      ...extra,
+    });
+    const { container, rerender } = render(
+      <CreateStepRendererView
+        compactOptional
+        step={
+          {
+            label: 'Optional',
+            optional: true,
+            isValid: () => true,
+            sections: [
+              { key: 'named', title: 'Extras', fields: [custom('additional')] },
+              { key: 'unnamed', fields: [custom('no-title')] },
+              {
+                key: 'required',
+                collapsible: true,
+                fields: [
+                  {
+                    key: 'required-input',
+                    kind: 'text',
+                    required: true,
+                    label: 'Required',
+                    value: '',
+                    onValueChange: vi.fn(),
+                  },
+                ],
+              },
+              {
+                key: 'visible',
+                collapsible: true,
+                fields: [custom('essential', { alwaysVisible: true })],
+              },
+              { key: 'expanded', collapsible: false, fields: [custom('expanded')] },
+            ],
+          } as any
+        }
+      />
+    );
+    expect(container.querySelectorAll('details')).toHaveLength(2);
+    expect(screen.getByText('Extras', { selector: 'summary' })).toBeTruthy();
+    expect(screen.getByText('essential').closest('details')).toBeNull();
+    expect(screen.getByText('text field').closest('details')).toBeNull();
+    rerender(
+      <CreateStepRendererView
+        compactOptional
+        step={
+          {
+            label: 'Required step',
+            optional: false,
+            isValid: () => true,
+            fields: [custom('main'), custom('supplement', { supplementary: true })],
+          } as any
+        }
+      />
+    );
+    expect(screen.getByText('main').closest('details')).toBeNull();
+    expect(screen.getByText('supplement').closest('details')).toBeTruthy();
+    rerender(
+      <CreateStepRendererView
+        compactOptional
+        step={
+          {
+            label: 'Always shown',
+            optional: true,
+            isValid: () => true,
+            fields: [
+              custom('always', { alwaysVisible: true }),
+              {
+                key: 'required',
+                kind: 'text',
+                required: true,
+                label: 'Required',
+                value: '',
+                onValueChange: vi.fn(),
+              },
+            ],
+          } as any
+        }
+      />
+    );
+    expect(container.querySelector('details')).toBeNull();
+    rerender(
+      <CreateStepRendererView
+        compactOptional
+        step={
+          {
+            label: 'Explicit expanded',
+            optional: true,
+            collapsible: false,
+            isValid: () => true,
+            fields: [custom('expanded')],
+          } as any
+        }
+      />
+    );
+    expect(container.querySelector('details')).toBeNull();
+  });
   it('renders every direct field kind and default custom-component props', () => {
     const CustomComponent = ({ label = 'default props' }: { label?: string }) => <div>{label}</div>;
     render(

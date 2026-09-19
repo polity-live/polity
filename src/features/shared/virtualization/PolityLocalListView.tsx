@@ -36,12 +36,13 @@ export function PolityLocalListView<T>({
   const anchor = useRef<number | null>(null);
   const layoutInitialized = useRef(false);
   useLayoutEffect(() => {
+    const scrollElement = parentRef.current as HTMLDivElement;
     if (layoutInitialized.current) virtualizer.measure();
     layoutInitialized.current = true;
     if (anchor.current !== null)
       virtualizer.scrollToIndex(Math.floor(anchor.current / 1), { align: 'start' });
     return () => {
-      const offset = parentRef.current?.scrollTop ?? 0;
+      const offset = scrollElement.scrollTop;
       const visible = virtualizer.getVirtualItems().find(item => item.end > offset);
       anchor.current = visible ? visible.index * 1 : null;
     };

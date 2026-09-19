@@ -38,7 +38,5 @@ export function useLanguageToggleController() {
     },
     onLanguageChange: handleLanguageChange,
     onPopoverOpenChange: setIsLanguagePopoverOpen,
-    onPopoverTriggerMouseEnter: () => setIsLanguagePopoverOpen(true),
-    onPopoverMouseLeave: () => setIsLanguagePopoverOpen(false),
   };
 }

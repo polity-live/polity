@@ -29,9 +29,7 @@ interface LanguageToggleViewProps {
     title: string;
   };
   onLanguageChange: (language: Language, closePopover?: boolean) => void;
-  onPopoverMouseLeave: () => void;
   onPopoverOpenChange: (open: boolean) => void;
-  onPopoverTriggerMouseEnter: () => void;
 }
 
 function LanguageDisplay({
@@ -65,9 +63,7 @@ export function LanguageToggleView({
   language,
   labels,
   onLanguageChange,
-  onPopoverMouseLeave,
   onPopoverOpenChange,
-  onPopoverTriggerMouseEnter,
 }: LanguageToggleViewProps) {
   if (variant === 'dropdown') {
     return (
@@ -107,7 +103,6 @@ export function LanguageToggleView({
           size="icon"
           className={cn('h-8 w-8', size === 'small' && 'h-6 w-6', className)}
           title={labels.title}
-          onMouseEnter={onPopoverTriggerMouseEnter}
           aria-label={labels.title}
           data-action-id="navigation.language.popover.open"
         >
@@ -121,7 +116,6 @@ export function LanguageToggleView({
         side={side}
         sideOffset={sideOffset}
         onOpenAutoFocus={event => event.preventDefault()}
-        onMouseLeave={onPopoverMouseLeave}
       >
         <div className="flex flex-col gap-1">
           <Button

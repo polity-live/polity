@@ -147,10 +147,11 @@ export function ValidatedInputFieldView({
           </div>
         ) : null}
       </div>
-      {hint && (showHint === 'always' || (hasEdited && isFocused)) ? (
+      {hint ? (
         <p
           className={cn(
             'text-muted-foreground text-xs',
+            showHint !== 'always' && !(hasEdited && isFocused) && 'invisible',
             computedInvalid && 'text-destructive',
             computedValid && getSemanticToneClasses('success').text
           )}

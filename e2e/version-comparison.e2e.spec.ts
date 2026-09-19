@@ -23,7 +23,10 @@ test('compares document versions and restores the selected revision @nightly', a
   const history = page.getByRole('dialog');
   await expect(history.getByText('Version 1', { exact: true })).toBeVisible();
   await expect(history.getByText('Version 2', { exact: true })).toBeVisible();
-  const originalVersionRow = history.getByText('Version 1', { exact: true }).locator('xpath=../..');
+  const originalVersionRow = history
+    .getByText('Version 1', { exact: true })
+    .locator('xpath=ancestor::div[button[@data-action-id="editor.version.restore"]]');
+  await expect(originalVersionRow).toHaveCount(1);
   await originalVersionRow.locator('[data-action-id="editor.version.restore"]').click();
 
   await expect

@@ -182,6 +182,20 @@ describe('CreateFormShell', () => {
     expect(screen.getByRole('button', { name: /eine seite/i })).toBeTruthy();
   });
 
+  it('keeps invalid submissions in the form until the required fields become valid', async () => {
+    let valid = false;
+    const current = { ...config, steps: [{ ...config.steps[0], isValid: () => valid }] };
+    const view = render(<CreateFormShell config={current} />);
+    const root = view.container.querySelector('[data-create-flow]')!;
+    fireEvent(root, new Event('create:validate'));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    expect(config.onSubmit).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    valid = true;
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await waitFor(() => expect(config.onSubmit).toHaveBeenCalledOnce());
+  });
+
   it('switches to one-page layout immediately when the preference button is clicked', () => {
     render(<CreateFormShell config={config} />);
 

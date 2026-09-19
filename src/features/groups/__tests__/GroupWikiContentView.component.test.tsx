@@ -171,6 +171,10 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+it('shows the group description as readable context', () => {
+  renderGroupWikiContent({ groupDescription: 'Gemeinsam die Sitzung vorbereiten.' });
+  expect(screen.getByText('Gemeinsam die Sitzung vorbereiten.')).toBeTruthy();
+});
 function renderGroupWikiContent(overrides: Partial<GroupWikiContentViewProps> = {}) {
   const defaultProps: GroupWikiContentViewProps = {
     groupId: 'group-1',

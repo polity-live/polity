@@ -77,6 +77,10 @@ describe('RelatedGroupsTabs branches', () => {
     }));
     view.rerender(<RelatedGroupsTabs parentGroups={groups} childGroups={[groups[0]]} />);
     expect(mocks.cards.some(card => card.name === 'common.unspecified')).toBe(true);
+    fireEvent.click(
+      view.container.querySelectorAll('[data-action-id="collection.view.select"]')[1]
+    );
+    expect(view.container.querySelector('.space-y-0')).toBeTruthy();
     fireEvent.change(view.container.querySelector('input')!, {
       target: { value: 'does-not-exist' },
     });

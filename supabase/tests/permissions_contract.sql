@@ -83,7 +83,23 @@ SELECT set_eq(
       ('enqueue_direct_push_delivery(uuid,text,jsonb)'::TEXT),
       ('expand_push_notification_job(bigint)'::TEXT),
       ('purge_expired_notifications()'::TEXT),
-      ('resolve_notification_recipients(uuid)'::TEXT)
+      ('resolve_notification_recipients(uuid)'::TEXT),
+      ('studio_access(uuid,uuid,boolean)'::TEXT),
+      ('studio_group_access(uuid,uuid,boolean)'::TEXT),
+      ('collaboration_version_guard()'::TEXT),
+      ('collaboration_annotation_guard()'::TEXT),
+      ('collaboration_authority_lock()'::TEXT),
+      ('collaboration_immutable_revision()'::TEXT),
+      ('collaboration_projection_guard()'::TEXT),
+      ('collaboration_mode_changed()'::TEXT),
+      ('collaboration_proposal_immutable()'::TEXT),
+      ('collaboration_cr_guard()'::TEXT),
+      ('collaboration_capture_ballot()'::TEXT),
+      ('collaboration_acl_changed()'::TEXT),
+      ('collaboration_ballot_input_guard()'::TEXT),
+      ('collaboration_source_deleted()'::TEXT),
+      ('collaboration_needs_initialization()'::TEXT),
+      ('collaboration_ballot_metadata_guard()'::TEXT)
   $sql$,
   'the service role can execute exactly the server RPC allowlist'
 );
@@ -115,8 +131,8 @@ SELECT is(
         'TRIGGER'
       )
   ),
-  1015,
-  'the service role has all seven privileges on all 145 tables'
+  1141,
+  'the service role has all seven privileges on all 163 tables'
 );
 
 SELECT is(
@@ -127,7 +143,7 @@ SELECT is(
       AND has_sequence_privilege('service_role', sequence_definition.oid, 'SELECT')
       AND has_sequence_privilege('service_role', sequence_definition.oid, 'UPDATE')
   ),
-  3,
+  4,
   'the service role can use every application sequence'
 );
 

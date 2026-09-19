@@ -63,6 +63,7 @@ function createServiceWorkerHarness(options: HarnessOptions = {}) {
     constructor(readonly settings: unknown) {}
   }
   class ExpirationPlugin extends Strategy {}
+  class NetworkOnlyStrategy extends Strategy {}
   const workbox = {
     expiration: { ExpirationPlugin },
     precaching: { precacheAndRoute: vi.fn() },
@@ -71,6 +72,7 @@ function createServiceWorkerHarness(options: HarnessOptions = {}) {
     strategies: {
       CacheFirst: Strategy,
       NetworkFirst: Strategy,
+      NetworkOnly: NetworkOnlyStrategy,
       StaleWhileRevalidate: Strategy,
     },
   };
@@ -255,7 +257,7 @@ describe('custom service worker foreground push delivery', () => {
 
     expect(worker.workbox.setConfig).toHaveBeenCalledWith({ debug: false });
     expect(worker.workbox.precaching.precacheAndRoute).toHaveBeenCalledWith(manifest);
-    expect(worker.workbox.routing.registerRoute).toHaveBeenCalledTimes(3);
+    expect(worker.workbox.routing.registerRoute).toHaveBeenCalledTimes(4);
   });
 
   it('uses an empty manifest and no runtime routes when Workbox is unavailable', () => {
@@ -610,6 +612,30 @@ describe('custom service worker notification actions and lifecycle', () => {
 });
 
 describe('custom service worker navigation caching', () => {
+  it('keeps private Studio API and media requests ahead of all cache strategies', () => {
+    const worker = createServiceWorkerHarness({ importScriptsBehavior: 'with-workbox' });
+    const [match, strategy, method] = worker.workbox.routing.registerRoute.mock.calls[0];
+    expect(strategy).toBeInstanceOf(worker.workbox.strategies.NetworkOnly);
+    expect(method).toBe('GET');
+    expect(match({ url: new URL('https://polity.test/api/studio') })).toBe(true);
+    expect(
+      match({ url: new URL('https://polity.test/api/studio/published-media/export-id') })
+    ).toBe(true);
+    expect(match({ url: new URL('https://polity.test/api/query') })).toBe(false);
+    expect(match({ url: new URL('https://external.test/api/studio') })).toBe(false);
+  });
+  it('does not return a formerly authorized Studio media response from navigation cache', () => {
+    const worker = createServiceWorkerHarness();
+    const request = {
+      method: 'GET',
+      mode: 'navigate',
+      url: 'https://polity.test/api/studio/published-media/export-id',
+    };
+    worker.navigationCache.set(request, new Response('private cached content'));
+    expect(worker.dispatchFetch(request)).toBeUndefined();
+    expect(worker.cacheMatch).not.toHaveBeenCalled();
+    expect(worker.cachePut).not.toHaveBeenCalled();
+  });
   it('ignores non-navigation and non-GET requests', () => {
     const worker = createServiceWorkerHarness();
 

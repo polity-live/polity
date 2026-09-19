@@ -48,9 +48,16 @@ test('keeps language and theme through a fresh authenticated session @pr @mobile
       element.scrollIntoView({ block: 'center', inline: 'nearest' })
     );
     await expect(languageTrigger).toBeInViewport();
+    await languageTrigger.hover();
     await languageTrigger.click();
+    await expect(languageTrigger).toHaveAttribute('aria-expanded', 'true');
     const languagePopover = page.locator('[data-slot="popover-content"]').filter({ visible: true });
-    await expect(languagePopover).toBeVisible();
+    await expect(languagePopover).toHaveAttribute('data-state', 'open');
+    await languageTrigger.press('Escape');
+    await expect(languagePopover).toHaveCount(0);
+    await expect(languageTrigger).toBeFocused();
+    await languageTrigger.press('Enter');
+    await expect(languagePopover).toHaveAttribute('data-state', 'open');
     const germanOption = languagePopover.locator(
       '[data-action-id="navigation.language.popover.german"]'
     );
@@ -71,7 +78,10 @@ test('keeps language and theme through a fresh authenticated session @pr @mobile
       })
       .toEqual({ language: 'de', theme: 'dark' });
 
-    resumedContext = await browser.newContext({ baseURL: new URL(page.url()).origin });
+    resumedContext = await browser.newContext({
+      baseURL: new URL(page.url()).origin,
+      storageState: { cookies: [], origins: [] },
+    });
     await resumedContext.addInitScript(alphaWarningSessionKey => {
       window.sessionStorage.setItem(alphaWarningSessionKey, 'true');
     }, ALPHA_WARNING_SESSION_KEY);

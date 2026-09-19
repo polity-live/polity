@@ -34,10 +34,10 @@ vi.mock('@/features/shared/ui/ui/dropdown-menu.tsx', () => ({
 vi.mock('@/features/shared/ui/ui/popover.tsx', () => ({
   Popover: ({ children }: any) => <div>{children}</div>,
   PopoverTrigger: ({ children }: any) => <>{children}</>,
-  PopoverContent: ({ children, side, sideOffset, onMouseLeave, onOpenAutoFocus }: any) => {
+  PopoverContent: ({ children, side, sideOffset, onOpenAutoFocus }: any) => {
     popoverMocks.onOpenAutoFocus = onOpenAutoFocus;
     return (
-      <div data-side={side} data-offset={sideOffset} onMouseLeave={onMouseLeave}>
+      <div data-side={side} data-offset={sideOffset}>
         {children}
       </div>
     );
@@ -58,9 +58,7 @@ const labels = {
 
 const callbacks = {
   onLanguageChange: vi.fn(),
-  onPopoverMouseLeave: vi.fn(),
   onPopoverOpenChange: vi.fn(),
-  onPopoverTriggerMouseEnter: vi.fn(),
 };
 
 describe('LanguageToggleView', () => {
@@ -130,8 +128,6 @@ describe('LanguageToggleView', () => {
       const preventDefault = vi.fn();
       popoverMocks.onOpenAutoFocus?.({ preventDefault });
       expect(preventDefault).toHaveBeenCalledOnce();
-      fireEvent.mouseEnter(screen.getByRole('button', { name: 'Choose language' }));
-      expect(callbacks.onPopoverTriggerMouseEnter).toHaveBeenCalled();
     }
   );
 });

@@ -85,6 +85,28 @@ describe('useGroupNetwork', () => {
     );
   });
 
+  it('keeps active structure-only connections visible until an explicit right filter is applied', () => {
+    useGroupStateMock.mockReturnValue({ group: groupStub('group-a', 'Group A'), isLoading: false });
+    useGroupConnectionStateMock.mockReturnValue({
+      groupConnections: [
+        createRelationship({ id: 'structure', with_right: null, request_item_kind: 'structure' }),
+      ],
+      groupConnectionsLoading: false,
+      groupConnectionRequests: [],
+      groupConnectionRequestsLoading: false,
+      allConnections: [],
+      allConnectionsLoading: false,
+    });
+    const { result } = renderHook(() => useGroupNetwork('group-a'));
+    expect(result.current.networkData.children).toEqual([
+      expect.objectContaining({ group: expect.objectContaining({ id: 'group-b' }), rights: [] }),
+    ]);
+    act(() => result.current.toggleRight('informationRight'));
+    expect(result.current.networkData.children).toEqual([]);
+    act(() => result.current.toggleRight('informationRight'));
+    expect(result.current.networkData.children).toHaveLength(1);
+  });
+
   it('uses global allLinks for indirect expansion while keeping requests scoped to the current group', () => {
     const activeAB = createRelationship({
       id: 'active-a-b',

@@ -1,9 +1,18 @@
-import { describe, expect, it, vi } from 'vitest';
+/* @vitest-environment jsdom */
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+vi.mock('@/features/collaboration/ui/CollaborationStatus', () => ({
+  CollaborationStatus: () => null,
+}));
+afterEach(cleanup);
+vi.mock('@/features/shared/hooks/use-translation', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
 
 const mocks = vi.hoisted(() => ({
   controller: vi.fn(() => new Proxy({}, { get: () => vi.fn() })),
   subscribe: vi.fn(() => ({ isSubscribed: false, isLoading: false, toggleSubscribe: vi.fn() })),
-  view: vi.fn(() => null),
+  view: vi.fn((_props: unknown) => null),
 }));
 
 vi.mock('../city-design/hooks/useCityDesignPageController', () => ({
@@ -69,6 +78,26 @@ import { SupportConfirmationPanel } from '../ui/SupportConfirmationPanel';
 import { VersionControl } from '../ui/VersionControl';
 
 describe('amendment composition wrapper contracts', () => {
+  it('keeps city design on its original save path without Studio history controls', () => {
+    const save = vi.fn();
+    const controller = {
+      state: {},
+      amendmentId: 'amendment-1',
+      onSave: save,
+      design: { objects: [] },
+      readOnly: false,
+    };
+    mocks.controller.mockReturnValueOnce(controller as any);
+    render(<CityDesignPage amendmentId="amendment-1" />);
+    expect(mocks.view.mock.calls.at(-1)?.[0]).toMatchObject({
+      amendmentId: 'amendment-1',
+      design: controller.design,
+      readOnly: false,
+      onSave: save,
+    });
+    expect(screen.queryByRole('button', { name: 'plateJs.toolbar.undo' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'plateJs.toolbar.redo' })).toBeNull();
+  });
   it('connects every thin wrapper to its controller and view', async () => {
     const components = [
       CityDesignPage({ amendmentId: 'amendment-1' }),

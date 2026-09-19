@@ -938,3 +938,23 @@ describe('useNetworkPage request actions', () => {
     expect(result.current.workflowActiveRelevant).toEqual([activeCoOwnedWorkflow]);
   });
 });
+
+it('retains a structure-only active connection in the unfiltered management list', () => {
+  const base = useGroupNetworkMock();
+  useGroupNetworkMock.mockReturnValue({
+    ...base,
+    networkData: {
+      parents: [],
+      siblings: [],
+      children: [{ group: { id: 'child', name: 'Child' }, rights: [] }],
+    },
+  });
+  const { result } = renderHook(() => useNetworkPage('group-1'));
+  expect(result.current.filteredRelationships).toEqual([
+    expect.objectContaining({ group: expect.objectContaining({ id: 'child' }), rights: [] }),
+  ]);
+  act(() => result.current.toggleManageRightFilter('informationRight'));
+  expect(result.current.filteredRelationships).toEqual([]);
+  act(() => result.current.toggleManageRightFilter('informationRight'));
+  expect(result.current.filteredRelationships).toHaveLength(1);
+});

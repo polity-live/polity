@@ -98,7 +98,7 @@ export function MessageView({
             onMembersClick={onMembersClick}
             onRenameConversation={onRenameConversation}
           />
-          {isThreadLoading ? (
+          {isThreadLoading && (messages ?? conversation.messages).length === 0 ? (
             <MessageThreadSkeleton />
           ) : (
             <MessageList

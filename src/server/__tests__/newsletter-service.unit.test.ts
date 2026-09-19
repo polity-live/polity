@@ -563,6 +563,7 @@ describe('newsletter service boundary contracts', () => {
 
   beforeEach(() => {
     vi.unstubAllEnvs();
+    vi.stubEnv('NEWSLETTER_ENVIRONMENT', undefined);
     vi.stubEnv('RESEND_API_KEY', 're_env');
     vi.stubEnv('RESEND_WEBHOOK_SECRET', ' whsec_env ');
     vi.stubEnv('RESEND_SEGMENT_ID_DE', 'segment-de');

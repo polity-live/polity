@@ -6,11 +6,24 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { SearchDocument } from '../../types/search-document.types';
 import { VirtualSearchGridView } from '../VirtualSearchGridView';
+import { useCompactCard } from '@/features/shared/ui/collections/CollectionCard';
+import { EntityListRow } from '@/features/shared/ui/collections/EntityListRow';
 
 vi.mock('../SearchResultCard', () => ({
-  SearchResultCard: ({ document }: { document: SearchDocument }) => (
-    <div data-testid="search-result-card">{document.title}</div>
-  ),
+  SearchResultCard: ({ document }: { document: SearchDocument }) => {
+    const compact = useCompactCard();
+    return compact ? (
+      <EntityListRow {...compact} />
+    ) : (
+      <div data-testid="search-result-card">{document.title}</div>
+    );
+  },
+}));
+vi.mock('@/features/shared/ui/navigation/SmartLink', () => ({
+  SmartLink: ({ href, children }: any) => <a href={href}>{children}</a>,
+}));
+vi.mock('@/features/shared/ui/preview/WorkspacePreview', () => ({
+  PreviewButton: () => <button>Preview</button>,
 }));
 
 afterEach(() => {
@@ -18,6 +31,52 @@ afterEach(() => {
 });
 
 describe('VirtualSearchGridView', () => {
+  it('renders compact placeholders and interactive compact results at the compact row height', () => {
+    const { container } = render(
+      <VirtualSearchGridView
+        compact
+        rowHeight={76}
+        parentRef={createRef<HTMLDivElement>()}
+        cells={[
+          {
+            key: 'placeholder',
+            index: 0,
+            top: 0,
+            left: 0,
+            width: 500,
+            document: undefined,
+            mode: 'preview',
+          },
+          {
+            key: 'loaded',
+            index: 1,
+            top: 84,
+            left: 0,
+            width: 500,
+            document: {
+              id: 'task',
+              entity_type: 'todo',
+              entity_id: 'one',
+              title: 'Plan meeting',
+            } as SearchDocument,
+            mode: 'preview',
+          },
+        ]}
+        totalHeight={168}
+        showNewResults={false}
+        rowsEmpty={false}
+        isComplete={false}
+        newResultsLabel="New"
+        emptyLabel="Empty"
+        onJumpToTop={vi.fn()}
+      />
+    );
+    expect(container.querySelector('[aria-hidden]')).toBeTruthy();
+    expect(screen.getByRole('link').getAttribute('href')).toBe('/todos/one');
+    expect(container.querySelector('[data-index="1"]')?.getAttribute('style')).toContain(
+      'height: 76px'
+    );
+  });
   it('positions fixed-height search cards without entrance animations or measurements', () => {
     const document = {
       id: 'search-doc-1',

@@ -182,7 +182,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setAuthUserRecord(session?.user ?? null);
-      setLoading(false);
+      // INITIAL_SESSION can arrive before the stored token has been refreshed.
+      // Only getSession may release the initial loading gate.
     });
 
     return () => subscription.unsubscribe();

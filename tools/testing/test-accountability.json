@@ -1114,6 +1114,13 @@
         "caseId": "checks every environment, locale, alias, link, and plain-text template"
       }
     ],
+    "tools/zero/run-e2e-cache.mjs": [
+      {
+        "file": "tools/zero/__tests__/run-e2e-cache.unit.test.ts",
+        "project": "unit",
+        "caseId": "reaps a detached worker that keeps stdout open after its parent exits"
+      }
+    ],
     "tools/zero/clean-dev-cache.mjs": [
       {
         "file": "tools/zero/__tests__/clean-dev-cache.unit.test.ts",
@@ -36533,6 +36540,34 @@
     ]
   },
   "actionReferences": {
+    "src/features/amendments/city-design/CityDesignPage.tsx#amendments.city-design.undo": [
+      {
+        "file": "src/features/amendments/__tests__/wrappers.lsf-a04.component.test.tsx",
+        "project": "component",
+        "caseId": "exposes shared undo and redo only when active and permitted with available history",
+        "scenarios": ["idle", "success", "disabled"]
+      },
+      {
+        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/CityDesignPage.tsx#amendments.city-design.redo": [
+      {
+        "file": "src/features/amendments/__tests__/wrappers.lsf-a04.component.test.tsx",
+        "project": "component",
+        "caseId": "exposes shared undo and redo only when active and permitted with available history",
+        "scenarios": ["idle", "success", "disabled"]
+      },
+      {
+        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
     "src/features/events/EventWikiContentView.tsx#events.wiki.candidacy.confirm": [
       {
         "file": "src/features/events/__tests__/EventWikiContentView.component.test.tsx",

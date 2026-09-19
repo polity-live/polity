@@ -124,6 +124,8 @@ describe('mutate-with-server-check', () => {
     const repoRoot = process.cwd();
     const sourceRoot = join(repoRoot, 'src');
     const allowedFiles = new Set([
+      // The agenda phase must follow the accepted election or vote transition.
+      'features/agendas/hooks/useAgendaActionBar.ts',
       'features/agendas/hooks/useAgendaNavigation.ts',
       'features/amendments/city-design/hooks/useCityDesignPageController.ts',
       'features/amendments/ui/useAmendmentProcessFlowController.ts',
@@ -131,6 +133,8 @@ describe('mutate-with-server-check', () => {
       'features/editor/hooks/useEditorOperations.ts',
       'features/events/hooks/useEventMutations.ts',
       'features/notifications/hooks/useNotificationActions.ts',
+      // Tutorial advancement verifies the Kanban status in the database.
+      'features/todos/hooks/useKanbanBoardController.ts',
       'features/todos/hooks/useTodoMutations.ts',
       // Inline edits and favorites keep pending controls active until the server accepts them.
       'features/todos/ui/CompactTodoRow.tsx',
