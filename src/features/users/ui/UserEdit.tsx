@@ -33,7 +33,7 @@ export function UserEdit({ userId, activeTab, onTabChange }: UserEditProps) {
     hasCustomPlan,
     getActivePlanAmount,
     fetchSubscription,
-  } = useSubscriptionManagement({ userId });
+  } = useSubscriptionManagement({ userId: activeTab === 'subscriptions' ? userId : undefined });
   const [subscriptionRefreshKey, setSubscriptionRefreshKey] = useState(0);
   const pendingChange =
     activeSubscription?.cancelAtPeriodEnd && activeSubscription.currentPeriodEnd

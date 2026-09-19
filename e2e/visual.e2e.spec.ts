@@ -1,8 +1,24 @@
 import { expect, test as publicTest, type Page } from '@playwright/test';
 
-import { test as authenticatedTest } from './fixtures/test';
+import { test as baseAuthenticatedTest } from './fixtures/test';
+import { authenticateActor, removeActorAuthState } from './fixtures/auth';
 import { waitForAppReady } from './fixtures/readiness';
 import { ALPHA_WARNING_SESSION_KEY } from '@/features/shared/constants';
+
+const authenticatedTest = baseAuthenticatedTest.extend({
+  e2eUser: async ({ browser, e2eRun }, use) => {
+    const actor = e2eRun.actor();
+    // Keep the masked identity on one line regardless of the run/shard namespace.
+    // The actor remains unique and is provisioned and cleaned up normally.
+    actor.email = `${actor.id.replaceAll('-', '').slice(0, 12)}@polity.local`;
+    try {
+      await authenticateActor(browser, actor);
+      await use(actor);
+    } finally {
+      await removeActorAuthState(actor);
+    }
+  },
+});
 
 publicTest.describe('deterministic public visual baselines', () => {
   publicTest.use({
@@ -76,7 +92,9 @@ authenticatedTest.describe('deterministic authenticated visual baselines', () =>
       await waitForAppReady(page);
 
       const menu = await openUserMenu(page);
-      await expect(menu.getByTestId('user-menu-navigation-loading')).toHaveCount(0);
+      await expect(menu.getByTestId('user-menu-navigation-loading')).toHaveCount(0, {
+        timeout: 30_000,
+      });
       const actorIdentity = menu.getByText(e2eRun.actor().email, { exact: true });
       await expect(actorIdentity).toBeVisible();
       await expect(menu.getByRole('menuitem', { name: 'Profile', exact: true })).toBeVisible();

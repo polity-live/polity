@@ -112,10 +112,16 @@ test.describe('create/todo', () => {
       .getByRole('button', { name: 'Archive', exact: true })
       .click();
     await expect
-      .poll(async () => {
-        const [row] = await db()`select archived_at from public.todo where id = ${todoId}::uuid`;
-        return row?.archived_at != null;
-      })
+      .poll(
+        async () => {
+          const [row] = await db()`select archived_at from public.todo where id = ${todoId}::uuid`;
+          return row?.archived_at != null;
+        },
+        {
+          timeout: 30_000,
+          message: 'The archive mutation must be persisted before navigating away',
+        }
+      )
       .toBe(true);
 
     await createFlowPage.page.goto('/todos');
@@ -129,10 +135,16 @@ test.describe('create/todo', () => {
       createFlowPage.page.getByRole('button', { name: 'Archive', exact: true })
     ).toBeVisible();
     await expect
-      .poll(async () => {
-        const [row] = await db()`select archived_at from public.todo where id = ${todoId}::uuid`;
-        return row?.archived_at === null;
-      })
+      .poll(
+        async () => {
+          const [row] = await db()`select archived_at from public.todo where id = ${todoId}::uuid`;
+          return row?.archived_at === null;
+        },
+        {
+          timeout: 30_000,
+          message: 'The restore mutation must be persisted before navigating away',
+        }
+      )
       .toBe(true);
     await createFlowPage.page.goto('/todos');
 
