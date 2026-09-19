@@ -81,6 +81,7 @@ test.describe('create/todo', () => {
     await expect(createFlowPage.page).toHaveURL(/\/todos\/[0-9a-f-]+\/?$/);
 
     const comment = `${e2eRun.prefix} Todo comment`;
+    await createFlowPage.page.getByRole('button', { name: 'Add Comment', exact: true }).click();
     const commentInput = createFlowPage.page
       .getByPlaceholder('Add a comment...')
       .filter({ visible: true });
@@ -113,9 +114,12 @@ test.describe('create/todo', () => {
     await expect(createFlowPage.page.getByText(title, { exact: true })).toBeVisible();
 
     await createFlowPage.page.getByText(title, { exact: true }).click();
-    const dialog = createFlowPage.page.getByRole('dialog');
-    await dialog.getByRole('button', { name: 'Restore', exact: true }).click();
-    await dialog.getByRole('button', { name: 'Close' }).click();
+    await expect(createFlowPage.page).toHaveURL(/\/todos\/[0-9a-f-]+\/?$/);
+    await createFlowPage.page.getByRole('button', { name: 'Restore', exact: true }).click();
+    await expect(
+      createFlowPage.page.getByRole('button', { name: 'Archive', exact: true })
+    ).toBeVisible();
+    await createFlowPage.page.goto('/todos');
 
     await createFlowPage.page.getByRole('tab', { name: /Completed/ }).click();
     await expect(createFlowPage.page.getByText(title, { exact: true })).toBeVisible();

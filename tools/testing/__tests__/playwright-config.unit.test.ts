@@ -28,6 +28,29 @@ describe('Playwright run budgets', () => {
     }
   );
 
+  it('starts a private collaboration writer and waits for its health endpoint', async () => {
+    vi.stubEnv('E2E_REUSE_SERVER', undefined);
+    vi.stubEnv('E2E_COLLABORATION_URL', 'http://127.0.0.1:1238');
+    const config = await configuration(undefined);
+    expect(config.webServer).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          command: 'pnpm run collaboration:server',
+          url: 'http://127.0.0.1:1238/health',
+          env: { PORT: '1238' },
+          reuseExistingServer: false,
+          gracefulShutdown: { signal: 'SIGTERM', timeout: 10_000 },
+        }),
+        expect.objectContaining({
+          env: expect.objectContaining({
+            STUDIO_ENABLED: 'true',
+            COLLABORATION_WEBSOCKET_URL: 'ws://127.0.0.1:1238',
+          }),
+        }),
+      ])
+    );
+  });
+
   it.each(['', '0', '-1', 'NaN', 'Infinity', '12.5', '9007199254740992'])(
     'rejects invalid run budget %j before starting services',
     async timeout => {

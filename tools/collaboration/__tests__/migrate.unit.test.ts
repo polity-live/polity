@@ -20,19 +20,22 @@ it.each(['maintenance', 'convert', 'activate', 'abort', 'rollback', 'preflight']
     expect(io.query).not.toHaveBeenCalled();
   }
 );
-it('reports Studio-only status without writing', async () => {
-  process.argv = ['node', 'launch', 'migrate', 'status'];
-  io.query.mockResolvedValue([{ phase: 'active', compatibility: false }]);
-  const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-  vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
-  await import('../migrate');
-  expect(JSON.parse(log.mock.calls[0][0])).toEqual({
-    phase: 'active',
-    compatibility: false,
-    scope: 'studio-only',
-  });
-  expect(io.query).toHaveBeenCalledExactlyOnceWith(
-    'select phase,compatibility from collaboration_control where singleton',
-    []
-  );
-});
+it.each([undefined, 'status'])(
+  'reports Studio-only status without writing with argument %j',
+  async command => {
+    process.argv = ['node', 'launch', 'migrate', ...(command ? [command] : [])];
+    io.query.mockResolvedValue([{ phase: 'active', compatibility: false }]);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    await import('../migrate');
+    expect(JSON.parse(log.mock.calls[0][0])).toEqual({
+      phase: 'active',
+      compatibility: false,
+      scope: 'studio-only',
+    });
+    expect(io.query).toHaveBeenCalledExactlyOnceWith(
+      'select phase,compatibility from collaboration_control where singleton',
+      []
+    );
+  }
+);

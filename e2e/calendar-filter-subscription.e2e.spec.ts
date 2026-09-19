@@ -11,7 +11,7 @@ test('filters calendars and preserves the event subscription across reload @nigh
     where subscriber_id = ${seed.userId}::uuid and event_id = ${seed.eventId}::uuid
   `;
   await gotoReady(page, `/group/${seed.groupId}/events`);
-  const listView = page.getByRole('tab', { name: /list/i });
+  const listView = page.getByRole('button', { name: 'Cards', exact: true });
   await expect(listView).toBeVisible();
   await listView.click();
   const search = page.locator('input[placeholder*="Search" i]:visible');

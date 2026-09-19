@@ -26,7 +26,7 @@ import {
 } from '../logic/speakerListGenderQuota';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { serverConfirmed, waitForClientApply } from '@/zero/mutate-with-server-check';
 import { localizeAppError } from '@/features/shared/errors/app-error';
 
 interface AgendaItem {
@@ -353,7 +353,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   const handleStartVote = useCallback(async () => {
     if (!canManageAgenda) return;
     if (election?.id) {
-      await waitForClientApply(
+      await serverConfirmed(
         electionActions.updateElection({
           id: election.id,
           status: 'indicative',
@@ -361,7 +361,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
         })
       );
     } else if (vote?.id) {
-      await waitForClientApply(
+      await serverConfirmed(
         voteActionsHook.updateVote({
           id: vote.id,
           status: VOTE_PHASE.indicative,
@@ -371,7 +371,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     }
 
     if (currentAgendaItem?.id) {
-      await waitForClientApply(
+      await serverConfirmed(
         updateAgendaItem({
           id: currentAgendaItem.id,
           voting_phase: 'indicative',
@@ -391,7 +391,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   const handleStartFinalVote = useCallback(async () => {
     if (!canManageAgenda) return;
     if (election?.id) {
-      await waitForClientApply(
+      await serverConfirmed(
         electionActions.updateElection({
           id: election.id,
           status: 'final',
@@ -401,7 +401,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
         })
       );
     } else if (vote?.id) {
-      await waitForClientApply(
+      await serverConfirmed(
         voteActionsHook.updateVote({
           id: vote.id,
           status: VOTE_PHASE.final,
@@ -413,7 +413,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     }
 
     if (currentAgendaItem?.id) {
-      await waitForClientApply(
+      await serverConfirmed(
         updateAgendaItem({
           id: currentAgendaItem.id,
           voting_phase: 'final',
@@ -445,7 +445,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
 
     try {
       if (election?.id) {
-        await waitForClientApply(
+        await serverConfirmed(
           electionActions.updateElection({
             id: election.id,
             status: 'closed',
@@ -453,11 +453,11 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
           })
         );
       } else if (vote?.id) {
-        await waitForClientApply(voteActionsHook.updateVote({ id: vote.id, status: 'closed' }));
+        await serverConfirmed(voteActionsHook.updateVote({ id: vote.id, status: 'closed' }));
       }
 
       if (currentAgendaItem?.id) {
-        await waitForClientApply(
+        await serverConfirmed(
           updateAgendaItem({
             id: currentAgendaItem.id,
             voting_phase: 'closed',

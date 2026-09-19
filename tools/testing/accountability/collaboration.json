@@ -341,7 +341,7 @@
       {
         "file": "tools/collaboration/__tests__/migrate.unit.test.ts",
         "project": "unit",
-        "caseId": "reports Studio-only status without writing"
+        "caseId": "reports Studio-only status without writing with argument %j"
       }
     ],
     "tools/collaboration/verify.ts": [

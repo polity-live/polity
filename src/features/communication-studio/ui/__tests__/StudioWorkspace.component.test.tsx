@@ -263,7 +263,7 @@ describe('Studio user workflows', () => {
     fireEvent.click(existing);
     expect(open).toHaveBeenCalledWith('old');
   });
-  it('edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations', async () => {
+  it('edits shared text properties and rejects invalid dimensions', async () => {
     await show();
     const page = value().pages[0],
       text = page.elements.find(e => e.type === 'text')!;
@@ -305,6 +305,11 @@ describe('Studio user workflows', () => {
     });
     change('width', '1');
     expect(value().pages[0].elements.find(e => e.id === text.id)?.width).toBe(400);
+    expect(io.editor.undo).toHaveBeenCalledOnce();
+    expect(io.editor.redo).toHaveBeenCalledOnce();
+  });
+  it('edits shared project and page properties', async () => {
+    await show();
     fireEvent.change(document.querySelector('header input')!, { target: { value: 'Renamed' } });
     fireEvent.change(pageName(), { target: { value: 'New page name' } });
     const backgrounds = screen.getAllByLabelText('background');
@@ -320,6 +325,9 @@ describe('Studio user workflows', () => {
       transition: 'fade',
       format: 'square',
     });
+  });
+  it('preserves selection operations and toggles the preview', async () => {
+    await show();
     click('text');
     click('rect');
     click('ellipse');
@@ -338,8 +346,6 @@ describe('Studio user workflows', () => {
     await screen.findByRole('button', { name: 'stop' });
     click('stop');
     fireEvent.click(screen.getByLabelText('guides'));
-    expect(io.editor.undo).toHaveBeenCalledOnce();
-    expect(io.editor.redo).toHaveBeenCalledOnce();
   });
   it('reorders, duplicates and removes pages without dropping their post references', async () => {
     await show();

@@ -153,6 +153,32 @@ afterEach(() => {
 });
 
 describe('useAmendmentEditContentController', () => {
+  it('refreshes cached fields after synchronization and preserves unsaved edits', async () => {
+    const props = {
+      amendmentId: amendment.id,
+      amendment: amendment as any,
+      currentUserId: 'user-1',
+      isLoading: true,
+    };
+    const { result, rerender } = renderHook(useAmendmentEditContentController, {
+      initialProps: props,
+    });
+    expect(result.current.formData.title).toBe('');
+    rerender({ ...props, isLoading: false });
+    await waitFor(() => expect(result.current.formData.title).toBe('A1'));
+    act(() => result.current.setFormData(previous => ({ ...previous, subtitle: 'Unsaved draft' })));
+    rerender({
+      ...props,
+      isLoading: false,
+      amendment: { ...amendment, title: 'Persisted title', preamble: 'Remote subtitle' } as any,
+    });
+    await waitFor(() =>
+      expect(result.current.formData).toMatchObject({
+        title: 'Persisted title',
+        subtitle: 'Unsaved draft',
+      })
+    );
+  });
   it('normalizes settings, initializes sparse records, tabs, hashtags, locations, and review state', async () => {
     expect(
       amendmentEditContentControllerInternals.normalizeInternalCRVotingCloseTrigger('after_minutes')

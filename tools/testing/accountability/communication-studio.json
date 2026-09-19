@@ -388,7 +388,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "preserves selection operations and toggles the preview",
         "scenarios": ["idle", "success"]
       },
       {
@@ -440,7 +440,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "preserves selection operations and toggles the preview",
         "scenarios": ["idle", "success"]
       },
       {
@@ -506,7 +506,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "preserves selection operations and toggles the preview",
         "scenarios": ["idle", "success"]
       },
       {
@@ -558,7 +558,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "preserves selection operations and toggles the preview",
         "scenarios": ["idle", "success"]
       },
       {
@@ -584,7 +584,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "updates channel copy and campaign assignments then exports the selected confirmed scope",
         "scenarios": ["idle", "success"]
       },
       {
@@ -610,7 +610,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "preserves selection operations and toggles the preview",
         "scenarios": ["idle", "success"]
       },
       {
@@ -690,7 +690,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared text properties and rejects invalid dimensions",
         "scenarios": ["idle", "success"]
       },
       {
@@ -770,7 +770,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "preserves selection operations and toggles the preview",
         "scenarios": ["idle", "success"]
       },
       {
@@ -824,7 +824,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared text properties and rejects invalid dimensions",
         "scenarios": ["idle", "success"]
       },
       {
@@ -850,7 +850,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "preserves selection operations and toggles the preview",
         "scenarios": ["idle", "success"]
       },
       {
@@ -1168,7 +1168,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared project and page properties",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1250,7 +1250,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared text properties and rejects invalid dimensions",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1318,7 +1318,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared project and page properties",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1332,7 +1332,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared text properties and rejects invalid dimensions",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1346,7 +1346,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared project and page properties",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1372,7 +1372,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared project and page properties",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1478,7 +1478,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared project and page properties",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1492,7 +1492,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared text properties and rejects invalid dimensions",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1506,7 +1506,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "preserves selection operations and toggles the preview",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1520,7 +1520,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared text properties and rejects invalid dimensions",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1602,7 +1602,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared text properties and rejects invalid dimensions",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1616,7 +1616,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared text properties and rejects invalid dimensions",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1630,7 +1630,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared text properties and rejects invalid dimensions",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1658,7 +1658,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared project and page properties",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1742,7 +1742,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+        "caseId": "edits shared text properties and rejects invalid dimensions",
         "scenarios": ["idle", "success"]
       },
       {

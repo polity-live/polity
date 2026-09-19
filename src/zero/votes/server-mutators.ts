@@ -1102,8 +1102,8 @@ export const voteServerMutators = {
           await closeExpiredFinalVote(tx, ctx, vote, now);
         }
       }
-
-      await recomputeEventCounters(tx, args.event_id);
+      // Closing a vote recomputes its event counters. An unchanged polling pass
+      // must not write the event and invalidate every subscriber's event graph.
     }
   ),
 

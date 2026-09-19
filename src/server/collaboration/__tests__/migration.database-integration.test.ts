@@ -5,8 +5,8 @@ const url = new URL(
     process.env.ZERO_UPSTREAM_DB ??
     'postgresql://postgres:postgres@127.0.0.1:54322/postgres'
 );
-if (!['localhost', '127.0.0.1', '::1'].includes(url.hostname) || url.port !== '54322')
-  throw new Error('Rollback tests require local PostgreSQL on 54322');
+if (!['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))
+  throw new Error('Rollback tests require local PostgreSQL');
 const sql = postgres(url.toString(), { max: 1 });
 it('removes migration fences from legacy editors while retaining Studio authority', async () => {
   try {

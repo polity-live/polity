@@ -71,7 +71,7 @@ test.describe('virtualized routes', () => {
     await page.goto('/search');
 
     await expect(page).not.toHaveURL(/\/unauthorized(?:\?|$)/);
-    await expect(page.locator('body')).toContainText('Search');
+    await expect(page.getByTestId('search-results-scroll')).toBeVisible();
     await page.mouse.wheel(0, 1200);
     await expect.poll(() => page.locator('[data-index]').count()).toBeGreaterThan(0);
     await waitForPaint(page);

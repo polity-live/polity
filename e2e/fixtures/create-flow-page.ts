@@ -179,7 +179,7 @@ export class CreateFlowPage {
   async selectTypeahead(
     fieldKey: string,
     label: string,
-    options: { entityType?: string; optional?: boolean } = {}
+    options: { entityType?: string; entityId?: string; optional?: boolean } = {}
   ) {
     return selectTypeahead(this.page, fieldKey, label, options);
   }

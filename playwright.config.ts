@@ -12,6 +12,8 @@ const reuseExistingServer = process.env.E2E_REUSE_SERVER === '1';
 const appCommand = process.env.E2E_APP_COMMAND ?? 'pnpm run test:e2e:serve';
 const zeroCommand = process.env.E2E_ZERO_COMMAND ?? 'pnpm run zero:dev';
 const zeroStartupTimeout = Number(process.env.E2E_ZERO_STARTUP_TIMEOUT_MS ?? 180_000);
+const collaborationBaseUrl = process.env.E2E_COLLABORATION_URL ?? 'http://127.0.0.1:1236';
+const collaborationUrl = new URL(collaborationBaseUrl);
 const webServerGracefulShutdown = { signal: 'SIGTERM' as const, timeout: 10_000 };
 const configuredGlobalTimeout = process.env.E2E_GLOBAL_TIMEOUT_MS;
 const globalTimeout =
@@ -112,6 +114,11 @@ export default defineConfig({
   webServer: [
     {
       command: appCommand,
+      env: {
+        STUDIO_ENABLED: 'true',
+        STUDIO_PILOT_USER_IDS: '',
+        COLLABORATION_WEBSOCKET_URL: collaborationBaseUrl.replace(/^http/, 'ws'),
+      },
       url: appBaseUrl,
       reuseExistingServer,
       timeout: 300 * 1000,
@@ -122,6 +129,14 @@ export default defineConfig({
       url: zeroKeepaliveUrl,
       reuseExistingServer,
       timeout: zeroStartupTimeout,
+      gracefulShutdown: webServerGracefulShutdown,
+    },
+    {
+      command: 'pnpm run collaboration:server',
+      url: new URL('/health', collaborationUrl).href,
+      env: { PORT: collaborationUrl.port || '1236' },
+      reuseExistingServer,
+      timeout: 60_000,
       gracefulShutdown: webServerGracefulShutdown,
     },
   ],

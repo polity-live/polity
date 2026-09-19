@@ -12,6 +12,7 @@ const io = vi.hoisted(() => ({
   write: vi.fn(),
   ffmpeg: vi.fn(),
   store: vi.fn(),
+  unsafe: vi.fn(),
 }));
 vi.mock('../../../src/server/collaboration/store', async original => ({
   ...(await original<typeof import('../../../src/server/collaboration/store')>()),
@@ -44,7 +45,12 @@ beforeEach(() => {
   vi.spyOn(process, 'exit').mockImplementation(() => {
     throw stopped;
   });
-  Object.assign(io.sql, { json: (value: unknown) => value, begin: io.begin, end: io.end });
+  Object.assign(io.sql, {
+    json: (value: unknown) => value,
+    begin: io.begin,
+    end: io.end,
+    unsafe: io.unsafe,
+  });
   io.sql.mockImplementation(async (parts: TemplateStringsArray | unknown[]) => {
     if (!('raw' in parts)) return parts;
     const query = parts.join('?');
@@ -94,6 +100,9 @@ describe('reproducible local collaboration demo seed', () => {
       expect.objectContaining({ title: 'Unser gemeinsamer Stadtteil' }),
       demo.actors.owner.id
     );
+    const adapter = io.store.mock.calls[0][0];
+    await adapter.query('select Studio fixture', []);
+    expect(io.unsafe).toHaveBeenCalledWith('select Studio fixture', []);
     expect(io.upload).toHaveBeenCalledTimes(2);
     expect(io.ffmpeg).toHaveBeenCalledTimes(2);
     expect(commands('insert into document(')).toHaveLength(6);

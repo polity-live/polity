@@ -113,8 +113,9 @@ describe('E2E fixture lifecycle contract', () => {
     expect(databaseSource).toContain('lock_timeout: 3_000');
     expect(databaseSource).toContain('idle_in_transaction_session_timeout: 10_000');
     expect(playwrightSource).toContain(
-      'globalTimeout: process.env.CI ? 15 * 60 * 1000 : undefined'
+      'const configuredGlobalTimeout = process.env.E2E_GLOBAL_TIMEOUT_MS'
     );
+    expect(playwrightSource).toContain('globalTimeout,');
     expect(playwrightSource).toContain("['line']");
     expect(playwrightSource).toContain("['blob',");
     expect(playwrightSource).toContain(
@@ -122,7 +123,7 @@ describe('E2E fixture lifecycle contract', () => {
     );
     expect(
       playwrightSource.match(/gracefulShutdown: webServerGracefulShutdown/g) ?? []
-    ).toHaveLength(2);
+    ).toHaveLength(3);
     expect(setupSource).toContain('await waitForZeroReady()');
     expect(teardownSource).not.toContain('cleanupE2ERows');
     expect(teardownSource).toContain('await closeDb()');

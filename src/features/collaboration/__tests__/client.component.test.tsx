@@ -23,6 +23,8 @@ vi.mock('@hocuspocus/provider', () => ({
     awareness = { setLocalStateField: vi.fn() };
     destroy = vi.fn();
     sendToken = vi.fn();
+    connect = vi.fn();
+    disconnect = vi.fn();
     constructor(public options: any) {
       mocks.providers.push(this);
       if (mocks.autoSync)
@@ -122,6 +124,32 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe('shared client persistence and authority transitions', () => {
+  it.each([true, false])(
+    'retains local edits and reconnects after a browser offline event (initially online: %s)',
+    async initiallyOnline => {
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(initiallyOnline);
+      const hook = renderHook(() => useCollaborationDocument(reference, 'alice'));
+      await tick();
+      const provider = mocks.providers[0];
+      if (initiallyOnline) expect(provider.disconnect).not.toHaveBeenCalled();
+      else expect(provider.disconnect).toHaveBeenCalledOnce();
+      act(() => window.dispatchEvent(new Event('offline')));
+      expect(hook.result.current.status).toBe('offline');
+      expect(hook.result.current.canEdit).toBe(true);
+      const document = hook.result.current.doc;
+      act(() => window.dispatchEvent(new Event('online')));
+      expect(provider.connect).toHaveBeenCalledOnce();
+      expect(hook.result.current.doc).toBe(document);
+      hook.unmount();
+      provider.connect.mockClear();
+      provider.disconnect.mockClear();
+      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event('online'));
+      expect(provider.connect).not.toHaveBeenCalled();
+      expect(provider.disconnect).not.toHaveBeenCalled();
+      vi.restoreAllMocks();
+    }
+  );
   it('enables typing only after the initial handshake and pending writes are acknowledged', async () => {
     mocks.autoSync = false;
     const hook = renderHook(() => useCollaborationDocument(reference, 'alice'));

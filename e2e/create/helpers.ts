@@ -2,6 +2,7 @@ import { expect, type Page } from '@playwright/test';
 import type { CreateFlowPage, CreateFormStyle } from '../fixtures/create-flow-page';
 import type { SeedData } from '../fixtures/seed';
 import { mediaUrl } from '../fixtures/media-url';
+import { FormActions } from '../fixtures/form-actions';
 
 export const layouts = ['one_page', 'carousel'] as const satisfies readonly CreateFormStyle[];
 export const visibilityValues = ['public', 'authenticated', 'private'] as const;
@@ -141,7 +142,7 @@ export async function fillMinimalStatement(create: CreateFlowPage, prefix: strin
 export async function fillMinimalPayment(create: CreateFlowPage, seed: SeedData, prefix: string) {
   await create.form.fillText('label', `${prefix} Created Payment`);
   await create.form.fillText('amount', '12.50');
-  await create.selectTypeahead('entity-user', 'E2E', { entityType: 'user' });
+  await create.selectTypeahead('entity-user', 'E2E', { entityType: 'user', entityId: seed.userId });
   await expect(create.page.locator('[data-create-field="entity-user"]')).not.toContainText(
     'Required.'
   );
@@ -163,6 +164,7 @@ export async function fillMinimalBlogEntry(create: CreateFlowPage, prefix: strin
 export async function applyOptionalMediaUrl(page: Page, fieldKey: string, prefix: string) {
   const field = page.locator(`[data-create-field="${fieldKey}"]`);
   if (!(await field.count())) return false;
+  await new FormActions(page).revealField(fieldKey);
 
   const input = field
     .locator('input[type="url"], input[placeholder*="http"], input:not([type="hidden"])')

@@ -1,5 +1,5 @@
 /* @vitest-environment jsdom */
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/features/collaboration/ui/CollaborationStatus', () => ({
   CollaborationStatus: () => null,
@@ -12,7 +12,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 const mocks = vi.hoisted(() => ({
   controller: vi.fn(() => new Proxy({}, { get: () => vi.fn() })),
   subscribe: vi.fn(() => ({ isSubscribed: false, isLoading: false, toggleSubscribe: vi.fn() })),
-  view: vi.fn(() => null),
+  view: vi.fn((_props: unknown) => null),
 }));
 
 vi.mock('../city-design/hooks/useCityDesignPageController', () => ({
@@ -78,41 +78,25 @@ import { SupportConfirmationPanel } from '../ui/SupportConfirmationPanel';
 import { VersionControl } from '../ui/VersionControl';
 
 describe('amendment composition wrapper contracts', () => {
-  it('exposes shared undo and redo only when active and permitted with available history', () => {
-    const undo = vi.fn(),
-      redo = vi.fn();
-    const base = {
+  it('keeps city design on its original save path without Studio history controls', () => {
+    const save = vi.fn();
+    const controller = {
       state: {},
-      collaboration: { phase: 'active', canEdit: true },
-      undo,
-      redo,
-      canUndo: true,
-      canRedo: true,
+      amendmentId: 'amendment-1',
+      onSave: save,
+      design: { objects: [] },
+      readOnly: false,
     };
-    mocks.controller.mockReturnValueOnce(base as any);
-    const view = render(<CityDesignPage amendmentId="amendment-1" />);
-    const undoButton = screen.getByRole('button', { name: 'plateJs.toolbar.undo' });
-    const redoButton = screen.getByRole('button', { name: 'plateJs.toolbar.redo' });
-    fireEvent.click(undoButton);
-    fireEvent.click(redoButton);
-    expect(undo).toHaveBeenCalledOnce();
-    expect(redo).toHaveBeenCalledOnce();
-    for (const change of [
-      { canUndo: false, canRedo: false },
-      { collaboration: { phase: 'active', canEdit: false } },
-    ]) {
-      mocks.controller.mockReturnValueOnce({ ...base, ...change } as any);
-      view.rerender(<CityDesignPage amendmentId="amendment-1" />);
-      expect((undoButton as HTMLButtonElement).disabled).toBe(true);
-      expect((redoButton as HTMLButtonElement).disabled).toBe(true);
-      fireEvent.click(undoButton);
-      fireEvent.click(redoButton);
-      expect(undo).toHaveBeenCalledOnce();
-      expect(redo).toHaveBeenCalledOnce();
-    }
-    mocks.controller.mockReturnValueOnce({ ...base, collaboration: { phase: 'legacy' } } as any);
-    view.rerender(<CityDesignPage amendmentId="amendment-1" />);
+    mocks.controller.mockReturnValueOnce(controller as any);
+    render(<CityDesignPage amendmentId="amendment-1" />);
+    expect(mocks.view.mock.calls.at(-1)?.[0]).toMatchObject({
+      amendmentId: 'amendment-1',
+      design: controller.design,
+      readOnly: false,
+      onSave: save,
+    });
     expect(screen.queryByRole('button', { name: 'plateJs.toolbar.undo' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'plateJs.toolbar.redo' })).toBeNull();
   });
   it('connects every thin wrapper to its controller and view', async () => {
     const components = [

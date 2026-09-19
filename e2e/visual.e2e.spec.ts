@@ -2,6 +2,7 @@ import { expect, test as publicTest, type Page } from '@playwright/test';
 
 import { test as authenticatedTest } from './fixtures/test';
 import { waitForAppReady } from './fixtures/readiness';
+import { ALPHA_WARNING_SESSION_KEY } from '@/features/shared/constants';
 
 publicTest.describe('deterministic public visual baselines', () => {
   publicTest.use({
@@ -33,6 +34,10 @@ publicTest.describe('deterministic public visual baselines', () => {
   publicTest(
     'visual.public.not-found matches the deterministic error layout @nightly @visual',
     async ({ page }) => {
+      await page.addInitScript(
+        key => sessionStorage.setItem(key, 'true'),
+        ALPHA_WARNING_SESSION_KEY
+      );
       await page.goto('/visual-regression/missing-state');
       await expect(page.getByRole('heading', { name: '404', exact: true })).toBeVisible();
       await expect(page).toHaveScreenshot('public-not-found.png', {
@@ -118,6 +123,11 @@ authenticatedTest.describe('deterministic authenticated visual baselines', () =>
         '[data-create-flow="group"][data-create-layout="one_page"]'
       );
       await expect(createForm).toBeVisible();
+      const notifications = createFlowPage.page.getByRole('region', { name: /Notifications/i });
+      for (const close of await notifications.getByRole('button', { name: /Close toast/i }).all()) {
+        await close.click();
+      }
+      await expect(notifications.getByRole('listitem')).toHaveCount(0);
       await expect(createForm).toHaveScreenshot('create-group-empty-one-page.png', {
         animations: 'disabled',
         caret: 'hide',

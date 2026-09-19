@@ -1302,6 +1302,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "e2e/studio-collaboration.e2e.spec.ts",
+      "domain": "e2e",
+      "owner": "polity/e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "e2e/user-profile-media.e2e.spec.ts",
       "domain": "e2e",
       "owner": "polity/e2e",
@@ -19033,6 +19043,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
+      "domain": "features:collaboration",
+      "owner": "polity/features:collaboration",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/collaboration/__tests__/comments.component.test.tsx",
       "domain": "features:collaboration",
       "owner": "polity/features:collaboration",
@@ -19380,7 +19400,9 @@
           "caseId": "adds initial comments, replies, submits, and activates existing comments"
         }
       ],
-      "suggestedTestRefs": []
+      "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx"
+      ]
     },
     {
       "path": "src/features/collaboration/ui/ProposalViews.tsx",
@@ -19567,6 +19589,7 @@
       ],
       "suggestedTestRefs": [
         "e2e/amendment-collaboration.e2e.spec.ts",
+        "e2e/studio-collaboration.e2e.spec.ts",
         "src/features/amendments/__tests__/amendment-collaboration.component-flow.test.tsx",
         "src/features/amendments/hooks/__tests__/useAmendmentCollaboration.a04.component.test.tsx",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
@@ -61928,6 +61951,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/shared/ui/form/__tests__/validated-input.browser-component.test.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/shared/ui/form/index.ts",
       "domain": "features:shared",
       "owner": "polity/features:shared",
@@ -69944,6 +69977,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/features/collaboration/__tests__/comments.component.test.tsx",
         "src/features/discussions/ui/__tests__/DiscussionCommentCreation.component.test.tsx",
         "src/features/discussions/utils/__tests__/comment-tree.unit.test.ts",
@@ -69954,8 +69988,7 @@
         "src/features/shared/logic/__tests__/commentKit.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentItemView.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentThread.component.test.tsx",
-        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx"
+        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx"
       ]
     },
     {
@@ -73728,6 +73761,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/features/navigation/__tests__/NavigationCommandDialogView.component.test.tsx",
         "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/hooks/__tests__/useNavigationCommandDialogController.component.test.tsx",
@@ -73738,8 +73772,7 @@
         "src/features/shared/ui/ui/__tests__/avatar.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/button-motion.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/carousel.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/chart.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/chart.component.test.tsx"
       ]
     },
     {
@@ -87253,6 +87286,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "e2e/studio-collaboration.e2e.spec.ts",
         "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
@@ -89073,6 +89107,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "e2e/studio-collaboration.e2e.spec.ts",
         "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
@@ -96476,6 +96511,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/server/collaboration/__tests__/access.unit.test.ts",
         "src/server/collaboration/__tests__/api.unit.test.ts",
         "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
@@ -96486,8 +96522,7 @@
         "src/server/collaboration/__tests__/exports.unit.test.ts",
         "src/server/collaboration/__tests__/finalize.unit.test.ts",
         "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
+        "src/server/collaboration/__tests__/governance.unit.test.ts"
       ]
     },
     {
@@ -113150,7 +113185,7 @@
         {
           "file": "tools/collaboration/__tests__/migrate.unit.test.ts",
           "project": "unit",
-          "caseId": "reports Studio-only status without writing"
+          "caseId": "reports Studio-only status without writing with argument %j"
         }
       ],
       "suggestedTestRefs": [

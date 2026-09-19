@@ -9,7 +9,7 @@ export async function selectTypeahead(
   page: Page,
   fieldKey: string,
   label: string,
-  options: { entityType?: string; optional?: boolean } = {}
+  options: { entityType?: string; entityId?: string; optional?: boolean } = {}
 ) {
   const field = fieldLocator(page, fieldKey);
   if (options.optional && !(await field.count())) return false;
@@ -20,11 +20,13 @@ export async function selectTypeahead(
   await expect(input).toBeVisible();
   await input.fill(label);
 
-  const result = options.entityType
-    ? page.locator(
-        `[data-typeahead-entity-type="${cssAttr(options.entityType)}"][data-typeahead-result="${cssAttr(label)}"]`
-      )
-    : page.locator(`[data-typeahead-result="${cssAttr(label)}"]`);
+  const result = options.entityId
+    ? page.locator(`[data-typeahead-entity-id="${cssAttr(options.entityId)}"]`)
+    : options.entityType
+      ? page.locator(
+          `[data-typeahead-entity-type="${cssAttr(options.entityType)}"][data-typeahead-result="${cssAttr(label)}"]`
+        )
+      : page.locator(`[data-typeahead-result="${cssAttr(label)}"]`);
   const visibleResult = result.filter({ visible: true });
 
   if (options.optional) {

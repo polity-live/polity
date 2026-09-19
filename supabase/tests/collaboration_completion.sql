@@ -11,8 +11,8 @@
 -- @covers schema 48_studio_only_collaboration.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(20);
-UPDATE collaboration_control SET phase='active' WHERE singleton;
+SELECT plan(21);
+SELECT is((SELECT phase FROM collaboration_control WHERE singleton),'active','Fresh migrations enable Studio without a manual data migration');
 INSERT INTO public."user"(id) VALUES('cf000000-0000-4000-8000-000000000001');
 INSERT INTO document(id,content,editing_mode) VALUES('cf000000-0000-4000-8000-000000000002','[]','edit');
 INSERT INTO amendment(id,document_id,created_by_id) VALUES('cf000000-0000-4000-8000-000000000003','cf000000-0000-4000-8000-000000000002','cf000000-0000-4000-8000-000000000001');
@@ -38,7 +38,7 @@ SELECT ok(NOT has_table_privilege('authenticated','public.collaboration_command'
 SELECT ok(NOT has_table_privilege('anon','public.collaboration_migration_attempt','SELECT'),'Migration history remains private');
 SELECT has_column('public','collaboration_document','integrity_error','Studio retains integrity diagnostics');
 SELECT has_column('public','collaboration_document','integrity_checked_at','Studio retains integrity verification timestamps');
-SELECT throws_ok($UPDATE collaboration_ballot_context SET context='{"changed":true}' WHERE vote_id='cf000000-0000-4000-8000-000000000007'$,'55000','collaboration_revision_immutable','Archived ballots remain immutable after their legacy vote is removed');
+SELECT throws_ok($$UPDATE collaboration_ballot_context SET context='{"changed":true}' WHERE vote_id='cf000000-0000-4000-8000-000000000007'$$,'55000','collaboration_revision_immutable','Archived ballots remain immutable after their legacy vote is removed');
 SELECT ok(EXISTS(SELECT 1 FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid WHERE t.tgname='collaboration_authority' AND c.relname='studio_state'),'Studio writes retain the transaction authority lock');
 SELECT ok(NOT EXISTS(SELECT 1 FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid WHERE t.tgname LIKE 'collaboration_%' AND c.relname IN ('app_tutorial_run','vote_choice','agenda_item_change_request','indicative_voter_participation','final_voter_participation')),'Tutorial cleanup and legacy ballots are independent of retired migration guards');
 SELECT * FROM finish();

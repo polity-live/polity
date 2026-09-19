@@ -49,7 +49,8 @@ test('invites a collaborator, edits as the second actor, and shares the change @
       })
       .toMatch(/^(active|collaborator|member)$/);
 
-    const editedText = `${e2eRun.prefix} collaboratively edited document`;
+    // Keep the namespace literal: the editor intentionally autoformats "--".
+    const editedText = `${e2eRun.prefix.replaceAll('--', '-')} collaboratively edited document`;
     await collaboratorPage.goto(`/amendment/${seed.amendmentId}/text`);
     await waitForAppReady(collaboratorPage);
     const editor = collaboratorPage.locator('[data-slate-editor="true"][contenteditable="true"]');

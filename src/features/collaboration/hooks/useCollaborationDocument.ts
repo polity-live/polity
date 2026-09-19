@@ -296,9 +296,21 @@ export function useCollaborationDocument(
         },
       });
       provider.awareness?.setLocalStateField('user', { id: userId, name: '', color: '#B88A3B' });
+      const offline = () => {
+        provider.disconnect();
+        setStatus('offline');
+      };
+      const online = () => {
+        void provider.connect();
+      };
+      window.addEventListener('offline', offline);
+      window.addEventListener('online', online);
+      if (!navigator.onLine) offline();
       const renewal = setInterval(() => provider.sendToken(), 240_000);
       cleanup = () => {
         clearInterval(renewal);
+        window.removeEventListener('offline', offline);
+        window.removeEventListener('online', online);
         doc.off('update', updateValue);
         provider.destroy();
         void persistence.destroy();

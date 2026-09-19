@@ -38,6 +38,8 @@ describe('central rights and phase mapping', () => {
     await expect(resolveAccess(tx, '', reference)).rejects.toThrow('authentication_required');
     await expect(resolveAccess(tx, 'anon', reference)).rejects.toThrow('authentication_required');
     const check = { action: 'update' as const, resource: 'blogs' as const, blogId: 'blog' };
+    expect(await permitted(tx, 'actor', check)).toBe(true);
+    expect(io.can).toHaveBeenCalledWith(tx, { userID: 'actor' }, check);
     io.can.mockRejectedValueOnce(new PermissionError('update', 'blogs'));
     expect(await permitted(tx, 'actor', check)).toBe(false);
     io.can.mockRejectedValueOnce(new Error('database unavailable'));

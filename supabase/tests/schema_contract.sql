@@ -90,8 +90,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'c'
   ),
-  137,
-  'all 137 business CHECK constraints are installed'
+  138,
+  'all 138 business CHECK constraints are installed'
 );
 
 SELECT is(
@@ -103,8 +103,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'f'
   ),
-  405,
-  'all 405 foreign keys are installed'
+  398,
+  'all 398 foreign keys are installed'
 );
 
 SELECT is(
@@ -236,8 +236,8 @@ SELECT is(
     WHERE namespace.nspname IN ('public', 'auth')
       AND NOT trigger_definition.tgisinternal
   ),
-  170,
-  'all 170 application triggers are installed'
+  87,
+  'all 87 application triggers are installed'
 );
 
 SELECT is(

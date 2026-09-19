@@ -13,8 +13,8 @@ const url = new URL(
     process.env.ZERO_UPSTREAM_DB ??
     'postgresql://postgres:postgres@127.0.0.1:54322/postgres'
 );
-if (!['localhost', '127.0.0.1', '::1'].includes(url.hostname) || url.port !== '54322')
-  throw new Error('Studio tests require local PostgreSQL on 54322');
+if (!['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))
+  throw new Error('Studio tests require local PostgreSQL');
 if (process.env.COLLABORATION_TEST_DATABASE) {
   if (!/^polity_collaboration_[a-z0-9_]+$/.test(process.env.COLLABORATION_TEST_DATABASE))
     throw new Error('Invalid test database');

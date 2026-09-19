@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { proposalConflicts } from '../logic/conflicts';
 import { validateTextProposal } from '../logic/proposals';
 describe('proposal application safety', () => {
+  it('does not conflict with an unchanged proposal even when the current document diverged', () => {
+    expect(
+      proposalConflicts({ title: 'Other edit' }, { title: 'Base' }, { title: 'Base' })
+    ).toEqual([]);
+  });
   it('submits a marked insertion into an existing empty paragraph without allowing an extra unmarked block', () => {
     const base = [{ id: 'empty', type: 'p', children: [{ text: '' }] }];
     const draft = [

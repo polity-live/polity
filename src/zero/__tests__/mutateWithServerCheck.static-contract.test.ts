@@ -124,6 +124,8 @@ describe('mutate-with-server-check', () => {
     const repoRoot = process.cwd();
     const sourceRoot = join(repoRoot, 'src');
     const allowedFiles = new Set([
+      // The agenda phase must follow the accepted election or vote transition.
+      'features/agendas/hooks/useAgendaActionBar.ts',
       'features/agendas/hooks/useAgendaNavigation.ts',
       'features/amendments/city-design/hooks/useCityDesignPageController.ts',
       'features/amendments/ui/useAmendmentProcessFlowController.ts',

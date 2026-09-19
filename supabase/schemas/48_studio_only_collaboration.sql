@@ -63,6 +63,12 @@ UPDATE collaboration_outbox SET delivered_at=(extract(epoch from clock_timestamp
   WHERE delivered_at IS NULL AND document_id IN (SELECT id FROM collaboration_document WHERE kind<>'studio');
 ALTER TABLE collaboration_document ADD CONSTRAINT collaboration_studio_scope CHECK(kind='studio' OR deleted);
 
+-- Studio has no legacy editor to migrate. Enable its transaction initialization
+-- on fresh installs while preserving an operator's explicit maintenance fence.
+UPDATE collaboration_control SET phase='active',
+  updated_at=(extract(epoch from clock_timestamp())*1000)::bigint
+  WHERE singleton AND phase='legacy';
+
 CREATE OR REPLACE FUNCTION public.cleanup_expired_app_tutorial_runs()
 RETURNS INTEGER LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE cleaned_count integer;

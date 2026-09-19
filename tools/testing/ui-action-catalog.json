@@ -22003,7 +22003,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "preserves selection operations and toggles the preview",
           "scenarios": ["idle", "success"]
         },
         {
@@ -22101,7 +22101,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "preserves selection operations and toggles the preview",
           "scenarios": ["idle", "success"]
         },
         {
@@ -22236,7 +22236,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "preserves selection operations and toggles the preview",
           "scenarios": ["idle", "success"]
         },
         {
@@ -22334,7 +22334,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "preserves selection operations and toggles the preview",
           "scenarios": ["idle", "success"]
         },
         {
@@ -22383,7 +22383,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "updates channel copy and campaign assignments then exports the selected confirmed scope",
           "scenarios": ["idle", "success"]
         },
         {
@@ -22432,7 +22432,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "preserves selection operations and toggles the preview",
           "scenarios": ["idle", "success"]
         },
         {
@@ -22604,7 +22604,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared text properties and rejects invalid dimensions",
           "scenarios": ["idle", "success"]
         },
         {
@@ -22776,7 +22776,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "preserves selection operations and toggles the preview",
           "scenarios": ["idle", "success"]
         },
         {
@@ -22899,7 +22899,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared text properties and rejects invalid dimensions",
           "scenarios": ["idle", "success"]
         },
         {
@@ -22948,7 +22948,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "preserves selection operations and toggles the preview",
           "scenarios": ["idle", "success"]
         },
         {
@@ -23534,7 +23534,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared project and page properties",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -23726,7 +23726,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared text properties and rejects invalid dimensions",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -23882,7 +23882,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared project and page properties",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -23918,7 +23918,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared text properties and rejects invalid dimensions",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -23954,7 +23954,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared project and page properties",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -24002,7 +24002,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared project and page properties",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -24218,7 +24218,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared project and page properties",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -24254,7 +24254,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared text properties and rejects invalid dimensions",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -24290,7 +24290,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "preserves selection operations and toggles the preview",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -24326,7 +24326,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared text properties and rejects invalid dimensions",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -24518,7 +24518,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared text properties and rejects invalid dimensions",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -24554,7 +24554,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared text properties and rejects invalid dimensions",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -24590,7 +24590,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared text properties and rejects invalid dimensions",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -24662,7 +24662,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared project and page properties",
           "scenarios": ["selected", "unselected"]
         },
         {
@@ -24878,7 +24878,7 @@
         {
           "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
           "project": "component",
-          "caseId": "edits text and page properties through shared objects, rejects invalid dimensions and preserves selection operations",
+          "caseId": "edits shared text properties and rejects invalid dimensions",
           "scenarios": ["idle", "success"]
         },
         {
@@ -68619,6 +68619,7 @@
       "roles": ["anonymous", "authenticated"],
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/features/collaboration/__tests__/comments.component.test.tsx",
         "src/features/discussions/ui/__tests__/DiscussionCommentCreation.component.test.tsx",
         "src/features/discussions/utils/__tests__/comment-tree.unit.test.ts",
@@ -68629,8 +68630,7 @@
         "src/features/shared/logic/__tests__/commentKit.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentItemView.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentThread.component.test.tsx",
-        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx"
+        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx"
       ],
       "accountabilityStatus": "resolved-non-canonical",
       "resolution": {
@@ -68673,6 +68673,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/features/collaboration/__tests__/comments.component.test.tsx",
         "src/features/discussions/ui/__tests__/DiscussionCommentCreation.component.test.tsx",
         "src/features/discussions/utils/__tests__/comment-tree.unit.test.ts",
@@ -68683,8 +68684,7 @@
         "src/features/shared/logic/__tests__/commentKit.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentItemView.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentThread.component.test.tsx",
-        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx"
+        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -68712,6 +68712,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/features/collaboration/__tests__/comments.component.test.tsx",
         "src/features/discussions/ui/__tests__/DiscussionCommentCreation.component.test.tsx",
         "src/features/discussions/utils/__tests__/comment-tree.unit.test.ts",
@@ -68722,8 +68723,7 @@
         "src/features/shared/logic/__tests__/commentKit.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentItemView.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentThread.component.test.tsx",
-        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx"
+        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -68751,6 +68751,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/features/collaboration/__tests__/comments.component.test.tsx",
         "src/features/discussions/ui/__tests__/DiscussionCommentCreation.component.test.tsx",
         "src/features/discussions/utils/__tests__/comment-tree.unit.test.ts",
@@ -68761,8 +68762,7 @@
         "src/features/shared/logic/__tests__/commentKit.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentItemView.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentThread.component.test.tsx",
-        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx"
+        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -68791,6 +68791,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/features/collaboration/__tests__/comments.component.test.tsx",
         "src/features/discussions/ui/__tests__/DiscussionCommentCreation.component.test.tsx",
         "src/features/discussions/utils/__tests__/comment-tree.unit.test.ts",
@@ -68801,8 +68802,7 @@
         "src/features/shared/logic/__tests__/commentKit.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentItemView.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentThread.component.test.tsx",
-        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx"
+        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -68831,6 +68831,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/features/collaboration/__tests__/comments.component.test.tsx",
         "src/features/discussions/ui/__tests__/DiscussionCommentCreation.component.test.tsx",
         "src/features/discussions/utils/__tests__/comment-tree.unit.test.ts",
@@ -68841,8 +68842,7 @@
         "src/features/shared/logic/__tests__/commentKit.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentItemView.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentThread.component.test.tsx",
-        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx"
+        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -68871,6 +68871,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/features/collaboration/__tests__/comments.component.test.tsx",
         "src/features/discussions/ui/__tests__/DiscussionCommentCreation.component.test.tsx",
         "src/features/discussions/utils/__tests__/comment-tree.unit.test.ts",
@@ -68881,8 +68882,7 @@
         "src/features/shared/logic/__tests__/commentKit.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentItemView.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentThread.component.test.tsx",
-        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx"
+        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -68911,6 +68911,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/features/collaboration/__tests__/comments.component.test.tsx",
         "src/features/discussions/ui/__tests__/DiscussionCommentCreation.component.test.tsx",
         "src/features/discussions/utils/__tests__/comment-tree.unit.test.ts",
@@ -68921,8 +68922,7 @@
         "src/features/shared/logic/__tests__/commentKit.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentItemView.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentThread.component.test.tsx",
-        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx"
+        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -68950,6 +68950,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/features/collaboration/__tests__/comments.component.test.tsx",
         "src/features/discussions/ui/__tests__/DiscussionCommentCreation.component.test.tsx",
         "src/features/discussions/utils/__tests__/comment-tree.unit.test.ts",
@@ -68960,8 +68961,7 @@
         "src/features/shared/logic/__tests__/commentKit.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentItemView.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentThread.component.test.tsx",
-        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx"
+        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
@@ -77020,6 +77020,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/features/navigation/__tests__/NavigationCommandDialogView.component.test.tsx",
         "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/hooks/__tests__/useNavigationCommandDialogController.component.test.tsx",
@@ -77030,8 +77031,7 @@
         "src/features/shared/ui/ui/__tests__/avatar.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/button-motion.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/carousel.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/chart.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/chart.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },
