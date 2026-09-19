@@ -77254,6 +77254,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "e2e/visual.e2e.spec.ts-snapshots/authenticated-documentation-dialog-open-chromium-desktop-linux.png",
         "e2e/visual.e2e.spec.ts-snapshots/authenticated-documentation-dialog-open-chromium-desktop-win32.png",
         "src/features/agendas/hooks/__tests__/useOfflineTallyDialogController.component.test.tsx",
         "src/features/agendas/hooks/__tests__/useTransferAgendaItemDialogController.component.test.tsx",
@@ -77264,8 +77265,7 @@
         "src/features/agendas/ui/__tests__/TransferAgendaItemDialogView.branch.component.test.tsx",
         "src/features/agendas/ui/__tests__/useEditElectionVoteDialogController.component.test.tsx",
         "src/features/amendments/city-design/ui/__tests__/CityDesignTopBarView.dialog.a04.component.test.tsx",
-        "src/features/amendments/collaborators/hooks/__tests__/useInviteDialogController.a04.component.test.tsx",
-        "src/features/amendments/collaborators/ui/__tests__/InviteDialog.component.test.tsx"
+        "src/features/amendments/collaborators/hooks/__tests__/useInviteDialogController.a04.component.test.tsx"
       ],
       "accountabilityStatus": "accounted"
     },

@@ -1,10 +1,51 @@
-import { describe, expect, it } from 'vitest';
-import { createPlateEditor } from 'platejs/react';
+import { describe, expect, it, vi } from 'vitest';
+import { createPlateEditor, type AnyPlatePlugin } from 'platejs/react';
 import { bindPlateDocument } from '../logic/plate';
 import * as Y from 'yjs';
 import { seedDocument, projectDocument } from '../logic/codec';
 
 describe('installed Plate and slate-yjs adapter contract', () => {
+  it.each([true, false])(
+    'synchronizes native navigation before input and retains a prior handler: %s',
+    hasHandler => {
+      const doc = seedDocument('document', [{ id: 'p', type: 'p', children: [{ text: 'Text' }] }]);
+      const plate = createPlateEditor();
+      const previous = vi.fn();
+      const root = plate.getPlugin({ key: 'root' }) as AnyPlatePlugin;
+      root.handlers.onKeyUp = hasHandler ? previous : undefined;
+      const editor = bindPlateDocument(plate, doc);
+      const nativeSelection = {} as Selection;
+      const getSelection = vi.fn(() => nativeSelection as Selection | null);
+      vi.stubGlobal('window', { getSelection });
+      const destination = {
+        anchor: { path: [0, 0], offset: 2 },
+        focus: { path: [0, 0], offset: 2 },
+      };
+      const toSlateRange = vi.spyOn(editor.api, 'toSlateRange').mockReturnValue(destination);
+      const select = vi.spyOn(editor.tf, 'select');
+      const keyUp = (key: string) => root.handlers.onKeyUp?.({ event: { key } } as never);
+      try {
+        editor.connect();
+        keyUp('ArrowLeft');
+        expect(editor.selection).toEqual(destination);
+        expect(select).toHaveBeenCalledOnce();
+        toSlateRange.mockReturnValueOnce(null);
+        keyUp('Home');
+        getSelection.mockReturnValueOnce(null);
+        keyUp('End');
+        keyUp('a');
+        expect(select).toHaveBeenCalledOnce();
+        expect(toSlateRange).toHaveBeenCalledTimes(2);
+        expect(getSelection).toHaveBeenCalledTimes(3);
+        expect(previous).toHaveBeenCalledTimes(hasHandler ? 4 : 0);
+      } finally {
+        editor.disconnect();
+        doc.destroy();
+        vi.restoreAllMocks();
+        vi.unstubAllGlobals();
+      }
+    }
+  );
   it('flushes Plate API notifications automatically without a remote update or manual flush', async () => {
     const doc = seedDocument('document', [{ id: 'p', type: 'p', children: [{ text: 'Text' }] }]);
     const editor = bindPlateDocument(createPlateEditor(), doc);

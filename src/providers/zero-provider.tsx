@@ -14,7 +14,7 @@ function getRequiredEnvVar(value: string | undefined, name: string) {
 }
 
 export function ZeroAppProvider({ children }: { children: React.ReactNode }) {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const cacheURL = getRequiredEnvVar(import.meta.env.VITE_ZERO_CACHE_URL, 'VITE_ZERO_CACHE_URL');
   const appURL = getRequiredEnvVar(import.meta.env.VITE_APP_URL, 'VITE_APP_URL');
   const zeroAPIURL = import.meta.env.VITE_ZERO_API_URL || appURL;
@@ -28,6 +28,11 @@ export function ZeroAppProvider({ children }: { children: React.ReactNode }) {
   );
   const zeroIdentity = session ? { userID: session.user.id } : {};
   const zeroIdentityKey = session ? `user:${session.user.id}` : 'anonymous';
+
+  // Resolve and refresh the stored session before opening a sync connection.
+  // Otherwise startup creates an anonymous/stale-token connection, then tears
+  // it down while its queries are still being initialized.
+  if (loading) return null;
 
   return (
     <ZeroReadyContext.Provider value={true}>

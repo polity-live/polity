@@ -10,7 +10,7 @@ const zeroBaseUrl = process.env.VITE_ZERO_CACHE_URL ?? 'http://127.0.0.1:4848';
 const zeroKeepaliveUrl = new URL('/keepalive', zeroBaseUrl).href;
 const reuseExistingServer = process.env.E2E_REUSE_SERVER === '1';
 const appCommand = process.env.E2E_APP_COMMAND ?? 'pnpm run test:e2e:serve';
-const zeroCommand = process.env.E2E_ZERO_COMMAND ?? 'pnpm run zero:dev';
+const zeroCommand = process.env.E2E_ZERO_COMMAND ?? 'pnpm exec zero-cache';
 const zeroStartupTimeout = Number(process.env.E2E_ZERO_STARTUP_TIMEOUT_MS ?? 180_000);
 const collaborationBaseUrl = process.env.E2E_COLLABORATION_URL ?? 'http://127.0.0.1:1236';
 const collaborationUrl = new URL(collaborationBaseUrl);
@@ -126,6 +126,21 @@ export default defineConfig({
     },
     {
       command: zeroCommand,
+      // Run the cache directly: the development supervisor can outlive its
+      // shell during teardown and keep Playwright's output pipes open.
+      env: {
+        ZERO_UPSTREAM_DB:
+          process.env.E2E_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres',
+        ZERO_QUERY_URL: new URL('/api/query', appBaseUrl).href,
+        ZERO_MUTATE_URL: new URL('/api/mutate', appBaseUrl).href,
+        ZERO_PORT: new URL(zeroBaseUrl).port || '4848',
+        ZERO_NUM_SYNC_WORKERS: '3',
+        ZERO_CVR_MAX_CONNS: '6',
+        ZERO_UPSTREAM_MAX_CONNS: '6',
+        ZERO_CVR_GARBAGE_COLLECTION_INACTIVITY_THRESHOLD_HOURS: '0.25',
+        ZERO_CVR_GARBAGE_COLLECTION_INITIAL_INTERVAL_SECONDS: '30',
+        ZERO_CVR_GARBAGE_COLLECTION_INITIAL_BATCH_SIZE: '100',
+      },
       url: zeroKeepaliveUrl,
       reuseExistingServer,
       timeout: zeroStartupTimeout,

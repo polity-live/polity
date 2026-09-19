@@ -452,4 +452,18 @@ describe('safe local development stack lifecycle', () => {
     vi.resetModules();
     await expect(command('unknown')).rejects.toThrow('Expected start');
   });
+  it('terminates every Windows writer process tree on shutdown', async () => {
+    vi.spyOn(process, 'platform', 'get').mockReturnValue('win32');
+    await command('supervise');
+    await expect(request('/stop')).rejects.toBe(exit);
+    const terminations = io.sync.mock.calls.filter(([name]) => name === 'taskkill');
+    expect(terminations).toHaveLength(4);
+    for (const child of children) {
+      expect(terminations).toContainEqual([
+        'taskkill',
+        ['/PID', String(child.pid), '/T', '/F'],
+        { windowsHide: true, stdio: 'ignore' },
+      ]);
+    }
+  });
 });

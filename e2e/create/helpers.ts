@@ -179,6 +179,7 @@ export async function applyOptionalMediaUrl(page: Page, fieldKey: string, prefix
 export async function applyOptionalVideoUrl(page: Page, fieldKey: string, prefix: string) {
   const field = page.locator(`[data-create-field="${fieldKey}"]`);
   if (!(await field.count())) return false;
+  await new FormActions(page).revealField(fieldKey);
 
   const videoTab = field.getByRole('tab', { name: /video/i }).filter({ visible: true });
   if (!(await videoTab.count())) return false;

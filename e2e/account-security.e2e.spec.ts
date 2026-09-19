@@ -35,22 +35,6 @@ async function latestSecurityCode(email: string) {
   return (message.body?.text ?? message.text ?? '').match(/\b\d{6}\b/)?.[0] ?? null;
 }
 
-async function setLocalActorPassword(userId: string, password: string) {
-  const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) throw new Error('Local Supabase admin credentials are required.');
-  const response = await fetch(`${url.replace(/\/$/, '')}/auth/v1/admin/users/${userId}`, {
-    method: 'PUT',
-    headers: {
-      apikey: serviceRoleKey,
-      authorization: `Bearer ${serviceRoleKey}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({ password }),
-  });
-  if (!response.ok) throw new Error(`Password restoration failed with HTTP ${response.status}.`);
-}
-
 async function mockCurrencyApi(context: BrowserContext) {
   await context.route('**/api/currency/currencies', route =>
     route.fulfill({
@@ -134,6 +118,6 @@ test('globally revokes sessions when the password changes @nightly @agent1-promo
     await expect(page.getByRole('tab', { name: 'Account & Passwords' })).toBeVisible();
   } finally {
     await secondaryContext?.close().catch(() => undefined);
-    await setLocalActorPassword(e2eUser.id, e2eUser.password);
+    // The e2eRun fixture deletes this test's account and all of its sessions.
   }
 });

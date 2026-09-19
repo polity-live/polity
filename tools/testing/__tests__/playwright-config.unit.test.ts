@@ -51,6 +51,28 @@ describe('Playwright run budgets', () => {
     );
   });
 
+  it('runs the cache directly against the configured isolated stack', async () => {
+    vi.stubEnv('E2E_ZERO_COMMAND', undefined);
+    vi.stubEnv('E2E_DATABASE_URL', 'postgresql://postgres:postgres@127.0.0.1:55322/postgres');
+    vi.stubEnv('PLAYWRIGHT_BASE_URL', 'http://localhost:3100');
+    vi.stubEnv('VITE_ZERO_CACHE_URL', 'http://127.0.0.1:4948');
+    expect((await configuration(undefined)).webServer).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          command: 'pnpm exec zero-cache',
+          url: 'http://127.0.0.1:4948/keepalive',
+          env: expect.objectContaining({
+            ZERO_UPSTREAM_DB: 'postgresql://postgres:postgres@127.0.0.1:55322/postgres',
+            ZERO_QUERY_URL: 'http://localhost:3100/api/query',
+            ZERO_MUTATE_URL: 'http://localhost:3100/api/mutate',
+            ZERO_PORT: '4948',
+          }),
+          gracefulShutdown: { signal: 'SIGTERM', timeout: 10_000 },
+        }),
+      ])
+    );
+  });
+
   it.each(['', '0', '-1', 'NaN', 'Infinity', '12.5', '9007199254740992'])(
     'rejects invalid run budget %j before starting services',
     async timeout => {

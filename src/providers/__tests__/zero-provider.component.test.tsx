@@ -4,6 +4,7 @@ import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+  loading: false,
   session: null as null | {
     access_token: string;
     user: { id: string; email?: string };
@@ -12,7 +13,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../auth-provider', () => ({
-  useAuth: () => ({ session: mocks.session }),
+  useAuth: () => ({ session: mocks.session, loading: mocks.loading }),
 }));
 
 vi.mock('@rocicorp/zero/react', () => ({
@@ -30,6 +31,7 @@ describe('ZeroAppProvider identity', () => {
     vi.stubEnv('VITE_APP_URL', 'https://app.example.test');
     vi.stubEnv('VITE_ZERO_API_URL', '');
     mocks.session = null;
+    mocks.loading = false;
     mocks.zeroProps = undefined;
   });
 
@@ -71,6 +73,22 @@ describe('ZeroAppProvider identity', () => {
       email: 'person@example.test',
     });
     expect(mocks.zeroProps?.auth).toBe('access-token');
+  });
+
+  it('opens sync only after the initial session refresh has completed', () => {
+    mocks.loading = true;
+    const { rerender, container } = render(<ZeroAppProvider>content</ZeroAppProvider>);
+    expect(mocks.zeroProps).toBeUndefined();
+    mocks.session = { access_token: 'stored-token', user: { id: 'user-1' } };
+    rerender(<ZeroAppProvider>content</ZeroAppProvider>);
+    expect(mocks.zeroProps).toBeUndefined();
+    expect(container.textContent).toBe('');
+
+    mocks.session = { ...mocks.session, access_token: 'refreshed-token' };
+    mocks.loading = false;
+    rerender(<ZeroAppProvider>content</ZeroAppProvider>);
+    expect(mocks.zeroProps?.auth).toBe('refreshed-token');
+    expect(container.textContent).toBe('content');
   });
 
   it('requires both Zero and application URLs', () => {

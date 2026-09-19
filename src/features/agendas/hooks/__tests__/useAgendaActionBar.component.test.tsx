@@ -667,7 +667,7 @@ describe('useAgendaActionBar', () => {
   });
 
   it('keeps the agenda indicative until the election transition is confirmed', async () => {
-    let confirm = () => {
+    let confirm: () => void = () => {
       throw new Error('confirmation has not been registered');
     };
     mocks.serverConfirmed.mockImplementationOnce(
