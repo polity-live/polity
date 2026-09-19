@@ -25,6 +25,9 @@ if (!databaseUrl) throw new Error('ZERO_UPSTREAM_DB is required');
 const leader = postgres(databaseUrl, {
   max: 1,
   idle_timeout: 0,
+  // The advisory lock belongs to this session. Pool retirement would release
+  // healthy leadership after the driver's default 30–60 minute lifetime.
+  max_lifetime: 0,
   onclose: () => {
     if (!stopping) {
       console.error('Collaboration leadership connection lost');

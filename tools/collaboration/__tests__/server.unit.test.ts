@@ -99,6 +99,7 @@ beforeEach(() => {
   });
 });
 afterEach(() => {
+  vi.useRealTimers();
   for (const doc of io.rooms.values()) doc.destroy();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
@@ -120,6 +121,25 @@ function room(key: string, connections: any[]) {
   return doc;
 }
 describe('shared Hocuspocus service lifecycle', () => {
+  it('keeps exclusive leadership beyond pool retirement while still stopping on connection loss', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+    io.postgres.mockImplementation((_url, options) => {
+      io.leaderOptions = options;
+      // Model the driver's automatic connection retirement separately from
+      // genuine connection loss: replacing a session releases its advisory lock.
+      if (options.max_lifetime !== 0) setTimeout(options.onclose, 60 * 60_000);
+      return io.sql;
+    });
+    await import('../server');
+    await vi.advanceTimersByTimeAsync(2 * 60 * 60_000);
+    timer();
+    await settle();
+    expect(io.sql).toHaveBeenCalled();
+    expect(io.destroy).not.toHaveBeenCalled();
+    expect(process.exit).not.toHaveBeenCalled();
+    io.leaderOptions.onclose();
+    expect(process.exit).toHaveBeenCalledWith(1);
+  });
   it('never falls back to an implicit PostgreSQL database when configuration is missing', async () => {
     vi.stubEnv('ZERO_UPSTREAM_DB', undefined);
     await expect(import('../server')).rejects.toThrow('ZERO_UPSTREAM_DB is required');
