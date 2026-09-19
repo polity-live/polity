@@ -115209,6 +115209,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/zero/__tests__/run-e2e-cache.unit.test.ts",
+      "domain": "tools:zero",
+      "owner": "polity/tools:zero",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/zero/__tests__/stats.unit.test.ts",
       "domain": "tools:zero",
       "owner": "polity/tools:zero",
@@ -115233,6 +115243,22 @@
         }
       ],
       "suggestedTestRefs": ["tools/zero/__tests__/clean-dev-cache.unit.test.ts"]
+    },
+    {
+      "path": "tools/zero/run-e2e-cache.mjs",
+      "domain": "tools:zero",
+      "owner": "polity/tools:zero",
+      "kind": "operational-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "tools/zero/__tests__/run-e2e-cache.unit.test.ts",
+          "project": "unit",
+          "caseId": "reaps a detached worker that keeps stdout open after its parent exits"
+        }
+      ],
+      "suggestedTestRefs": ["tools/zero/__tests__/run-e2e-cache.unit.test.ts"]
     },
     {
       "path": "tools/zero/stats.mjs",

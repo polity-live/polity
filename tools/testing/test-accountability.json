@@ -1114,6 +1114,13 @@
         "caseId": "checks every environment, locale, alias, link, and plain-text template"
       }
     ],
+    "tools/zero/run-e2e-cache.mjs": [
+      {
+        "file": "tools/zero/__tests__/run-e2e-cache.unit.test.ts",
+        "project": "unit",
+        "caseId": "reaps a detached worker that keeps stdout open after its parent exits"
+      }
+    ],
     "tools/zero/clean-dev-cache.mjs": [
       {
         "file": "tools/zero/__tests__/clean-dev-cache.unit.test.ts",
