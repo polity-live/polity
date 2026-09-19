@@ -29,6 +29,16 @@ function isStructuredMutationMessage(message: string): boolean {
 function safeMutationMessage(value: unknown): string {
   const message = messageFrom(value);
   if (message && isStructuredMutationMessage(message)) return message;
+  if (message === 'collaboration_maintenance') return encodeAppError('collaboration_maintenance');
+  if (
+    message &&
+    [
+      'collaboration_legacy_write_rejected',
+      'collaboration_version_requires_committed_revision',
+      'collaboration_comments_require_server_command',
+    ].includes(message)
+  )
+    return encodeAppError('collaboration_client_outdated');
   if (value != null) console.error('Unstructured Zero mutation error', value);
   return encodeAppError('mutation_server_failed');
 }

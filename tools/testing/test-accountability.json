@@ -36533,6 +36533,34 @@
     ]
   },
   "actionReferences": {
+    "src/features/amendments/city-design/CityDesignPage.tsx#amendments.city-design.undo": [
+      {
+        "file": "src/features/amendments/__tests__/wrappers.lsf-a04.component.test.tsx",
+        "project": "component",
+        "caseId": "exposes shared undo and redo only when active and permitted with available history",
+        "scenarios": ["idle", "success", "disabled"]
+      },
+      {
+        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/amendments/city-design/CityDesignPage.tsx#amendments.city-design.redo": [
+      {
+        "file": "src/features/amendments/__tests__/wrappers.lsf-a04.component.test.tsx",
+        "project": "component",
+        "caseId": "exposes shared undo and redo only when active and permitted with available history",
+        "scenarios": ["idle", "success", "disabled"]
+      },
+      {
+        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
     "src/features/events/EventWikiContentView.tsx#events.wiki.candidacy.confirm": [
       {
         "file": "src/features/events/__tests__/EventWikiContentView.component.test.tsx",

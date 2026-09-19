@@ -61,6 +61,7 @@ export function useAlphaWarningDialogController() {
         {
           id: ALPHA_WARNING_TOAST_ID,
           description: translate('common.alphaWarning.description'),
+          classNames: { description: '!text-[var(--badge-warning-fg)]' },
           duration: Infinity,
           dismissible: false,
           closeButton: false,

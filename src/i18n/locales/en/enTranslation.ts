@@ -1,3 +1,4 @@
+import { studioTranslations } from './features/studio';
 import type { DeepReplace } from '@/i18n/i18n.types.ts';
 
 import { mergeTranslations } from '@/i18n/merge-translations.ts';
@@ -76,6 +77,54 @@ const baseEnTranslation = {
 
   // Feature-specific translations
   features: {
+    collaboration: {
+      publish: 'Publish draft',
+      verifiedRead: 'Last verified version: revision {{revision}}. Editing is blocked.',
+      repair: 'Restore verified version',
+      proposalTitle: 'Change request',
+      submitted: 'Submitted',
+      accept: 'Accept',
+      reject: 'Reject',
+      previewChanged:
+        'The preview shows the submitted version. The main document has changed since submission.',
+      conflictNotice: 'Application conflict: {{reason}}. The decision remains unchanged.',
+      retryDecision: 'Retry applying the decision',
+      newProposal: 'Draft a new change request',
+      waiting: 'Waiting for server confirmation …',
+      compareLocal: 'Compare local draft {{number}}',
+      resumeTitle: 'Resume as a new private draft',
+      original: 'Original version',
+      local: 'Local draft',
+      server: 'Current server version',
+      resume: 'Resume as a new draft',
+      close: 'Close',
+      rebase: 'Rebase draft onto the current main document',
+      history: 'Saved versions',
+      loadHistory: 'Load versions',
+      revision: 'Revision {{revision}} · {{reason}}',
+      restore: 'Restore as a new generation',
+      applicationConflict:
+        'Decision recorded. Applying it to the text remains blocked by a conflict.',
+      workspace: 'Workspace',
+      main: 'Main document',
+      draft: 'Draft',
+      share: 'Share with eligible collaborators',
+      unshare: 'Make draft private',
+      recover: 'Download earlier local draft',
+      submit: 'Submit change request',
+      createDraft: 'Create a separate follow-up draft',
+      reconnect: 'Reconnect; keep local draft',
+      status: {
+        loading: 'Connecting document …',
+        syncing: 'Saving changes …',
+        saved: 'Confirmed saved',
+        offline: 'Offline — changes are only saved locally',
+        maintenance: 'Migration in progress. Editing and voting are paused.',
+        recovery: 'Access or the document generation changed. Your local draft has been retained.',
+        error: 'Could not establish a connection.',
+      },
+    },
+    studio: studioTranslations,
     agendas: agendasTranslations,
     appTutorial: appTutorialTranslations,
     auth: authTranslations,

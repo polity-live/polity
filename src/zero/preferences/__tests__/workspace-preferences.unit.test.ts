@@ -6,6 +6,18 @@ import {
 } from '../workspace-schema';
 
 describe('personal workspace preferences', () => {
+  it('enforces the favorite limit without blocking removal of an existing entry', () => {
+    const favorites = Array.from({ length: 200 }, (_, i) => ({
+      kind: 'group' as const,
+      href: `/group/${i}`,
+      title: `Group ${i}`,
+    }));
+    const state = { favorites, display: {} };
+    expect(() =>
+      changeWorkspaceFavorite(state, { kind: 'group', href: '/group/new', title: 'New' }, true)
+    ).toThrow('Favorite limit reached');
+    expect(changeWorkspaceFavorite(state, favorites[0], false).favorites).toHaveLength(199);
+  });
   it('keeps display choices and other favorites when adding, renaming or removing a favorite', () => {
     const group = { kind: 'group' as const, href: '/group/one', title: 'Local group' };
     const view = {

@@ -32,6 +32,40 @@ function renderHeader(headingMode: 'visible' | 'sr-only' | 'none') {
 }
 
 describe('CalendarHeaderPresenterView', () => {
+  it('switches compact search controls between cards and periods, including custom views', () => {
+    const change = vi.fn();
+    const props = {
+      search: <input aria-label="Events" />,
+      viewMode: 'compact',
+      setViewMode: change,
+      currentViewTitle: 'Period',
+      onPrevious: vi.fn(),
+      onNext: vi.fn(),
+      onToday: vi.fn(),
+      resolvedTodayLabel: 'Today',
+      resolvedPreviousLabel: 'Previous',
+      resolvedNextLabel: 'Next',
+      resolvedViews: [
+        { value: 'week', label: 'Week' },
+        { value: 'other', label: 'Other' },
+        { value: 'custom', label: 'Custom', Icon: (() => <span>Explicit icon</span>) as never },
+      ],
+    };
+    const view = render(<CalendarHeaderPresenterView {...props} />);
+    expect(screen.getByRole('button', { name: 'Compact view' }).getAttribute('aria-pressed')).toBe(
+      'true'
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
+    expect(change).toHaveBeenLastCalledWith('list');
+    fireEvent.click(screen.getByRole('button', { name: 'Week' }));
+    expect(change).toHaveBeenLastCalledWith('week');
+    view.rerender(<CalendarHeaderPresenterView {...props} viewMode="week" />);
+    expect(screen.getByRole('button', { name: 'Week' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Cards' }).getAttribute('aria-pressed')).toBe(
+      'false'
+    );
+    expect(screen.getByText('Explicit icon')).toBeTruthy();
+  });
   it('offers compact calendar views beside search with accessible period actions', () => {
     const change = vi.fn();
     const previous = vi.fn();

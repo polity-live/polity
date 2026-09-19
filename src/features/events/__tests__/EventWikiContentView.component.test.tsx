@@ -147,6 +147,10 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+it('shows the event description as readable context', () => {
+  renderEventWikiContent({ eventDescription: 'Tagesordnung gemeinsam besprechen.' });
+  expect(screen.getByText('Tagesordnung gemeinsam besprechen.')).toBeTruthy();
+});
 function renderEventWikiContent(overrides: Partial<EventWikiContentViewProps> = {}) {
   const defaultProps: EventWikiContentViewProps = {
     agendaStats: {},

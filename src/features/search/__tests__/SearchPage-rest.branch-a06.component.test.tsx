@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const state = vi.hoisted(() => ({
   view: 'list' as 'list' | 'spatial',
@@ -14,6 +14,11 @@ const state = vi.hoisted(() => ({
       }
     | undefined,
   setView: vi.fn(),
+  loading: false,
+  display: {} as Record<string, unknown>,
+  params: {} as Record<string, string>,
+  save: vi.fn().mockResolvedValue(undefined),
+  error: vi.fn(),
 }));
 
 vi.mock('../hooks/useSearchPage', () => ({
@@ -71,6 +76,13 @@ vi.mock('../ui/VirtualSearchGrid', () => ({
 import { SearchPage } from '../SearchPage';
 
 describe('SearchPage view branches', () => {
+  beforeEach(() => {
+    state.loading = false;
+    state.display = {};
+    state.params = {};
+    state.save.mockReset().mockResolvedValue(undefined);
+    state.error.mockClear();
+  });
   afterEach(() => {
     cleanup();
     state.setView.mockClear();
@@ -95,14 +107,38 @@ describe('SearchPage view branches', () => {
     expect(screen.getByText('spatial-result')).toBeTruthy();
     expect(state.swipeOptions).toMatchObject({ canSwipePrev: true, canSwipeNext: false });
   });
+  it('restores a saved view once loading completes, respects an explicit URL and reports failed saves', async () => {
+    state.loading = true;
+    state.display = { searchView: 'compact' };
+    const view = render(<SearchPage />);
+    expect(state.setView).not.toHaveBeenCalled();
+    state.loading = false;
+    view.rerender(<SearchPage />);
+    expect(state.setView).toHaveBeenCalledExactlyOnceWith('compact');
+    view.rerender(<SearchPage />);
+    expect(state.setView).toHaveBeenCalledTimes(1);
+    state.save.mockRejectedValueOnce(new Error('offline'));
+    state.swipeOptions?.onSwipeNext();
+    await waitFor(() => expect(state.error).toHaveBeenCalledWith('common.workspace.saveFailed'));
+    expect(state.setView).toHaveBeenLastCalledWith('spatial');
+    view.unmount();
+    state.setView.mockClear();
+    state.params = { view: 'list' };
+    render(<SearchPage />);
+    expect(state.setView).not.toHaveBeenCalled();
+  });
 });
 
 vi.mock('@/zero/preferences/useWorkspacePreferences', () => ({
   useWorkspacePreferences: () => ({
-    isLoading: false,
-    display: {},
-    setDisplay: vi.fn().mockResolvedValue(undefined),
+    isLoading: state.loading,
+    display: state.display,
+    setDisplay: state.save,
   }),
 }));
 
-vi.mock('@tanstack/react-router', () => ({ useSearch: () => ({}) }));
+vi.mock('@tanstack/react-router', () => ({ useSearch: () => state.params }));
+vi.mock('@/features/shared/ui/ui/sonner', () => ({ toast: { error: state.error } }));
+vi.mock('@/features/shared/hooks/use-translation', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));

@@ -228,6 +228,10 @@ export const commonTranslations = {
     resource_not_found: 'Der angeforderte Eintrag wurde nicht gefunden.',
     validation_failed: 'Prüfe deine Eingaben und versuche es erneut.',
     mutation_server_failed: 'Die Änderung konnte auf dem Server nicht gespeichert werden.',
+    collaboration_client_outdated:
+      'Dieser Editorstand ist veraltet. Bitte lade die Seite neu und übernimm lokale Änderungen über die Entwurfswiederherstellung.',
+    collaboration_maintenance:
+      'Bearbeitung und Abstimmungen sind für die Umstellung vorübergehend pausiert. Bitte versuche es nach der Wartung erneut.',
     auth_service_unavailable: 'Der Anmeldedienst ist derzeit nicht verfügbar.',
     upload_failed: 'Die Datei konnte nicht hochgeladen werden.',
     file_too_large: 'Die Datei ist zu groß. Die maximale Größe beträgt {{maxSize}}.',

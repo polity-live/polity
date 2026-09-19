@@ -9,6 +9,7 @@ vi.mock('@/zero/groups/useGroupState', () => ({
   useGroupState: () => ({
     currentUserMembershipsWithGroups: [
       { group_id: 'active-group', status: 'member' },
+      { group_id: null, status: 'member' },
       { group_id: 'invited-group', status: 'invited' },
     ],
   }),
@@ -21,6 +22,7 @@ vi.mock('@/zero/events/useEventState', () => ({
   useUserEventParticipations: () => ({
     participations: [
       { event_id: 'joined-event', status: 'confirmed' },
+      { event_id: null, status: 'confirmed' },
       { event_id: 'invited-event', status: 'invited' },
     ],
   }),

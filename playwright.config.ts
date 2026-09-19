@@ -13,6 +13,19 @@ const appCommand = process.env.E2E_APP_COMMAND ?? 'pnpm run test:e2e:serve';
 const zeroCommand = process.env.E2E_ZERO_COMMAND ?? 'pnpm run zero:dev';
 const zeroStartupTimeout = Number(process.env.E2E_ZERO_STARTUP_TIMEOUT_MS ?? 180_000);
 const webServerGracefulShutdown = { signal: 'SIGTERM' as const, timeout: 10_000 };
+const configuredGlobalTimeout = process.env.E2E_GLOBAL_TIMEOUT_MS;
+const globalTimeout =
+  configuredGlobalTimeout === undefined
+    ? process.env.CI
+      ? 15 * 60 * 1000
+      : undefined
+    : Number(configuredGlobalTimeout);
+if (
+  configuredGlobalTimeout !== undefined &&
+  (!Number.isSafeInteger(globalTimeout) || (globalTimeout ?? 0) <= 0)
+) {
+  throw new Error('E2E_GLOBAL_TIMEOUT_MS must be a positive safe integer in milliseconds');
+}
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -20,7 +33,7 @@ const webServerGracefulShutdown = { signal: 'SIGTERM' as const, timeout: 10_000 
 export default defineConfig({
   testDir: './e2e',
   timeout: 120 * 1000,
-  globalTimeout: process.env.CI ? 15 * 60 * 1000 : undefined,
+  globalTimeout,
   /* Global setup to prepare test users */
   globalSetup: './e2e/global-setup.ts',
   /* Global teardown only closes suite resources. Test fixtures own their exact data. */

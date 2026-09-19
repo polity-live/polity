@@ -1,0 +1,620 @@
+{
+  "version": 1,
+  "sourceReferences": {
+    "src/features/collaboration/logic/types.ts": [
+      {
+        "file": "src/features/collaboration/__tests__/codec.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects malformed room addresses and preserves document generations"
+      }
+    ],
+    "src/features/collaboration/logic/codec.ts": [
+      {
+        "file": "src/features/collaboration/__tests__/codec.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not change committed state when an invalid shared type is rejected"
+      }
+    ],
+    "src/features/collaboration/logic/city-schema.ts": [
+      {
+        "file": "src/features/collaboration/__tests__/city.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects malformed geometry before accepting a client state"
+      }
+    ],
+    "src/features/collaboration/logic/city-object.ts": [
+      {
+        "file": "src/features/collaboration/__tests__/city.unit.test.ts",
+        "project": "unit",
+        "caseId": "merges different properties and a complete geometry from concurrent peers"
+      }
+    ],
+    "src/features/collaboration/logic/city.ts": [
+      {
+        "file": "src/features/collaboration/__tests__/city.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not resurrect an object deleted before a stale local edit is dispatched"
+      }
+    ],
+    "src/features/collaboration/logic/plate.ts": [
+      {
+        "file": "src/features/collaboration/__tests__/plate.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies Plate text operations to Yjs and remote changes back to Plate"
+      },
+      {
+        "file": "src/features/collaboration/__tests__/suggestion-binding.component.test.tsx",
+        "project": "component",
+        "caseId": "persists a canonical replacement including deletion of the selected original text"
+      }
+    ],
+    "src/features/collaboration/logic/reconcile.ts": [
+      {
+        "file": "src/features/collaboration/__tests__/codec.unit.test.ts",
+        "project": "unit",
+        "caseId": "reconciles a server decision while preserving an unrelated text anchor"
+      }
+    ],
+    "src/features/collaboration/logic/proposals.ts": [
+      {
+        "file": "src/features/collaboration/__tests__/conflicts.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not accept an unmarked rewrite from a suggestion-only draft"
+      }
+    ],
+    "src/features/collaboration/logic/conflicts.ts": [
+      {
+        "file": "src/features/collaboration/__tests__/conflicts.unit.test.ts",
+        "project": "unit",
+        "caseId": "treats geometry as one value and detects competing insertion/deletion"
+      }
+    ],
+    "src/server/collaboration/access.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/store.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rechecks current ownership and generation instead of trusting a session"
+      }
+    ],
+    "src/server/collaboration/service.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/store.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "rechecks current ownership and generation instead of trusting a session"
+      }
+    ],
+    "src/server/collaboration/store.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/store.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "commits Yjs state, projection, revision and outbox together and deduplicates retries"
+      }
+    ],
+    "src/server/collaboration/transaction.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/store.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "commits Yjs state, projection, revision and outbox together and deduplicates retries"
+      }
+    ],
+    "src/server/collaboration/migration.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/migration.unit.test.ts",
+        "project": "unit",
+        "caseId": "activates only a verified unchanged manifest and protects all archived revisions through compatibility rollback"
+      }
+    ],
+    "src/server/collaboration/governance.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/governance.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not silently reinterpret an existing decision"
+      }
+    ],
+    "src/server/collaboration/protocol.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/protocol.service-integration.test.ts",
+        "project": "service-integration",
+        "caseId": "does not acknowledge or broadcast an incoming update before commit resolves"
+      }
+    ],
+    "src/server/collaboration/delivery.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/delivery.unit.test.ts",
+        "project": "unit",
+        "caseId": "guards constructor awareness and drops queued data when access is revoked"
+      }
+    ],
+    "src/server/collaboration/api.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/api.unit.test.ts",
+        "caseId": "rejects cross-origin and unauthenticated requests before opening a document",
+        "project": "unit"
+      }
+    ],
+    "src/server/collaboration/commands.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/store.database-integration.test.ts",
+        "caseId": "restores a server-held version as a new generation and deduplicates the operation",
+        "project": "database-integration"
+      }
+    ],
+    "src/features/collaboration/hooks/useCollaborationDocument.ts": [
+      {
+        "file": "src/features/collaboration/__tests__/client.component.test.tsx",
+        "project": "component",
+        "caseId": "does not automatically resubmit rejected offline content in compatibility mode"
+      }
+    ],
+    "src/features/collaboration/hooks/useCollaborationComments.ts": [
+      {
+        "file": "src/features/collaboration/__tests__/comments.component.test.tsx",
+        "project": "component",
+        "caseId": "uses an explicit versioned delete and preserves the reply and history in the refreshed view"
+      }
+    ],
+    "src/server/collaboration/receipts.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/receipts.unit.test.ts",
+        "project": "unit",
+        "caseId": "replays the result without rewriting and rejects changed input or a different actor"
+      }
+    ],
+    "src/server/collaboration/proposals.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/proposals.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses draft publication for personal content and rejects stale main-document registration"
+      }
+    ],
+    "src/server/collaboration/decisions.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/decisions.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies the decided suggestion and atomically records its revision and procedural status"
+      }
+    ],
+    "src/server/collaboration/migrate-comments.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/migrate-comments.unit.test.ts",
+        "project": "unit",
+        "caseId": "retains original authors, timestamps, identifiers, proposal scope and stable anchors"
+      }
+    ],
+    "src/server/collaboration/rollback.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/migration.unit.test.ts",
+        "project": "unit",
+        "caseId": "activates only a verified unchanged manifest and protects all archived revisions through compatibility rollback"
+      }
+    ],
+    "src/features/collaboration/ui/RecoveryPanel.tsx": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps local, original and server content separate and resumes only into a newly authorized draft"
+      }
+    ],
+    "src/features/collaboration/ui/CollaborationStatus.tsx": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "offers an offline download and comparison after revocation but never offers to submit or overwrite"
+      }
+    ],
+    "src/features/collaboration/ui/ProposalViews.tsx": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "retains the recorded decision while retrying application against the current server revision"
+      }
+    ],
+    "src/server/collaboration/comments.ts": [
+      {
+        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "HTTP and ten real WebSocket editors enforce rights, proposals, comments, recovery and reconnection"
+      },
+      {
+        "file": "src/server/collaboration/__tests__/comments.unit.test.ts",
+        "project": "unit",
+        "caseId": "shows private comments to authorized document editors but excludes them from public readers"
+      }
+    ],
+    "src/server/collaboration/recovery.ts": [
+      {
+        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "HTTP and ten real WebSocket editors enforce rights, proposals, comments, recovery and reconnection"
+      }
+    ],
+    "src/server/collaboration/repair.ts": [
+      {
+        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "HTTP and ten real WebSocket editors enforce rights, proposals, comments, recovery and reconnection"
+      }
+    ],
+    "src/server/collaboration/capture-proposal.ts": [
+      {
+        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "HTTP and ten real WebSocket editors enforce rights, proposals, comments, recovery and reconnection"
+      }
+    ],
+    "src/server/collaboration/submission-context.ts": [
+      {
+        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "HTTP and ten real WebSocket editors enforce rights, proposals, comments, recovery and reconnection"
+      }
+    ],
+    "src/routes/api/collaboration.ts": [
+      {
+        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "HTTP and ten real WebSocket editors enforce rights, proposals, comments, recovery and reconnection",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises the real authorized route through the local application and verifies its persisted result or downloaded media."
+        }
+      }
+    ],
+    "tools/collaboration/server.ts": [
+      {
+        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "process death before and after commit replays once and excludes a second writer"
+      }
+    ],
+    "tools/collaboration/rehearsal.ts": [
+      {
+        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "committed conversion retries and both rollback paths retain legacy history and new acknowledgements"
+      }
+    ],
+    "tools/collaboration/launch.ts": [
+      {
+        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "a complete stack restart preserves confirmed content, rights, decisions and comments"
+      }
+    ],
+    "tools/collaboration/local-stack.mjs": [
+      {
+        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "a complete stack restart preserves confirmed content, rights, decisions and comments"
+      }
+    ],
+    "src/server/collaboration/studio-export.ts": [
+      {
+        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "all seven Studio exports refer to confirmed shared revisions and contain valid media"
+      }
+    ],
+    "src/server/collaboration/studio-assets.ts": [
+      {
+        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "all seven Studio exports refer to confirmed shared revisions and contain valid media"
+      }
+    ],
+    "src/server/collaboration/finalize.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/finalize.unit.test.ts",
+        "project": "unit",
+        "caseId": "initializes only Studio projects without reading legacy editors"
+      }
+    ],
+    "tools/collaboration/evidence.ts": [
+      {
+        "file": "tools/collaboration/__tests__/evidence.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects every missing or failed gate even if the report summary claims success"
+      }
+    ],
+    "src/features/collaboration/ui/CollaborationCursors.tsx": [
+      {
+        "file": "src/features/collaboration/__tests__/cursors.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps peer cursors attached across inserted text, sanitizes color and removes stale or invalid peer selections"
+      }
+    ],
+    "src/features/collaboration/ui/CommentCommands.tsx": [
+      {
+        "file": "src/features/shared/ui/ui-platejs/__tests__/block-discussion.branch-a02.component.test.tsx",
+        "project": "component",
+        "caseId": "adds initial comments, replies, submits, and activates existing comments"
+      }
+    ],
+    "src/server/collaboration/replace.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/replace.unit.test.ts",
+        "project": "unit",
+        "caseId": "publishes exactly the selected Studio draft without resurrecting removed pages and leaves invalid input unchanged"
+      }
+    ],
+    "tools/collaboration/migrate.ts": [
+      {
+        "file": "tools/collaboration/__tests__/migrate.unit.test.ts",
+        "project": "unit",
+        "caseId": "reports Studio-only status without writing"
+      }
+    ],
+    "tools/collaboration/verify.ts": [
+      {
+        "file": "tools/collaboration/__tests__/verify.unit.test.ts",
+        "project": "unit",
+        "caseId": "never approves a partial run or a failed command and still records later independent checks"
+      }
+    ],
+    "tools/collaboration/seed.ts": [
+      {
+        "file": "tools/collaboration/__tests__/seed-guard.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects demo seeding outside the explicit local primary database before creating users or media"
+      }
+    ],
+    "src/server/collaboration/diagnostics.ts": [
+      {
+        "file": "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
+        "project": "unit",
+        "caseId": "reports durable pending work and per-document integrity failures separately from global readiness"
+      }
+    ]
+  },
+  "actionReferences": {
+    "src/features/collaboration/ui/CollaborationStatus.tsx#collaboration.collaboration-status.features-collaboration-create-draft": [
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "operates collaboration draft, sharing, repair and offline controls with the keyboard",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/CollaborationStatus.tsx#collaboration.collaboration-status.features-collaboration-main": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps frozen drafts read-only while permitting workspace selection",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "operates collaboration draft, sharing, repair and offline controls with the keyboard",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/CollaborationStatus.tsx#collaboration.collaboration-status.features-collaboration-reconnect": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "offers an offline download and comparison after revocation but never offers to submit or overwrite",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "operates collaboration draft, sharing, repair and offline controls with the keyboard",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/CollaborationStatus.tsx#collaboration.collaboration-status.features-collaboration-recover": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "offers an offline download and comparison after revocation but never offers to submit or overwrite",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "operates collaboration draft, sharing, repair and offline controls with the keyboard",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/CollaborationStatus.tsx#collaboration.collaboration-status.gepr-fte-fassung-wiederherstellen": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "shows the last verified revision and restricts repair to managers",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "operates collaboration draft, sharing, repair and offline controls with the keyboard",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/ProposalViews.tsx#collaboration.proposal-views.anwendung-erneut-pr-fen": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "retains the recorded decision while retrying application against the current server revision",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "retains decision results while keyboard users retry conflicts or start a new proposal",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/ProposalViews.tsx#collaboration.proposal-views.neuen-nderungsantrag-entwerfen": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "retains the recorded decision while retrying application against the current server revision",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "retains decision results while keyboard users retry conflicts or start a new proposal",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/RecoveryPanel.tsx#collaboration.recovery-panel.als-neue-generation-wiederherstellen": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for one restore confirmation, prevents duplicate clicks and withholds restore from read-only users",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "restores a displayed historical version using the freshly confirmed revision and reports a rejected command",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "compares and resumes offline work and loads, restores and rebases revisions using native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/RecoveryPanel.tsx#collaboration.recovery-panel.als-neuen-entwurf-wiederaufnehmen": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps local, original and server content separate and resumes only into a newly authorized draft",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "retains the comparison when renewed resume permission is denied and never overwrites the server",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "compares and resumes offline work and loads, restores and rebases revisions using native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/RecoveryPanel.tsx#collaboration.recovery-panel.entwurf-auf-aktuellen-haupttext-beziehen": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for a confirmed draft commit before rebase and reloads only after success",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "reports rejected rebase and history reads while keeping the existing draft and server content",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "compares and resumes offline work and loads, restores and rebases revisions using native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/RecoveryPanel.tsx#collaboration.recovery-panel.fassungen-laden": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "waits for one restore confirmation, prevents duplicate clicks and withholds restore from read-only users",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "reports rejected rebase and history reads while keeping the existing draft and server content",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "compares and resumes offline work and loads, restores and rebases revisions using native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/RecoveryPanel.tsx#collaboration.recovery-panel.lokalen-entwurf-vergleichen": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps local, original and server content separate and resumes only into a newly authorized draft",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps failed offline comparisons downloadable and permits a deliberate retry after inspection completes",
+        "scenarios": ["idle", "loading", "success", "error", "unauthorized", "disabled"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "compares and resumes offline work and loads, restores and rebases revisions using native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/RecoveryPanel.tsx#collaboration.recovery-panel.schlie-en": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "offers an offline download and comparison after revocation but never offers to submit or overwrite",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "compares and resumes offline work and loads, restores and rebases revisions using native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/CollaborationStatus.tsx#collaboration.collaborationstatus.activate.button-6ac80345dc": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "allows a private draft owner to share, submit and return to main without exposing legacy controls",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "operates collaboration draft, sharing, repair and offline controls with the keyboard",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/CollaborationStatus.tsx#collaboration.collaborationstatus.activate.button-93060762cd": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "allows a private draft owner to share, submit and return to main without exposing legacy controls",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "operates collaboration draft, sharing, repair and offline controls with the keyboard",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/collaboration/ui/ProposalViews.tsx#collaboration.proposalviews.activate.button-a066808dbe": [
+      {
+        "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
+        "project": "component",
+        "caseId": "confirms pending edits before resolving a proposal and never sends preview content as the decision",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "retains decision results while keyboard users retry conflicts or start a new proposal",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ]
+  },
+  "actionDeclarations": {}
+}

@@ -525,6 +525,11 @@ it('keeps compact change-request details and vote permissions on the existing di
   expect(details.getAttribute('aria-expanded')).toBe('false');
   fireEvent.click(details);
   expect(details.getAttribute('aria-expanded')).toBe('true');
+  const rowOpen = document.querySelector('[data-action-id="collection.entity.open"]')!;
+  fireEvent.click(rowOpen);
+  expect(details.getAttribute('aria-expanded')).toBe('false');
+  fireEvent.click(rowOpen);
+  expect(details.getAttribute('aria-expanded')).toBe('true');
   fireEvent.click(
     document.querySelector('[data-action-id="collection.change-request.vote-dialog.open"]')!
   );
@@ -537,4 +542,11 @@ it('keeps compact change-request details and vote permissions on the existing di
       ) as HTMLButtonElement
     ).disabled
   ).toBe(true);
+  props.cr = {
+    ...props.cr,
+    status: 'obsolete',
+    obsolete_reason: 'suggestion_removed_in_collaborative_editing',
+  };
+  rerender(wrapper(false));
+  expect(document.querySelector('[data-workspace-row]')?.textContent).toMatch(/obsolete/i);
 });

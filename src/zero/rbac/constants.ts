@@ -450,6 +450,16 @@ export const GROUP_ACTION_RIGHTS = [
   },
   // groupThemes
   {
+    resource: 'communicationStudio',
+    action: 'manage',
+    label: translateText('features.studio.manage', 'Manage communication studio'),
+  },
+  {
+    resource: 'communicationStudio',
+    action: 'update',
+    label: translateText('features.studio.edit', 'Edit group studio projects'),
+  },
+  {
     resource: 'groupThemes',
     action: 'manage',
     label: translateText('features.groups.themes.manageThemes', 'Manage group themes'),

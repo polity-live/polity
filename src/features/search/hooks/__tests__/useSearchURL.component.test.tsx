@@ -12,7 +12,8 @@ let searchParams: Record<string, string> = {};
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => navigateMock,
   useSearch: () => searchParams,
-  useRouterState: () => previewOpen,
+  useRouterState: ({ select }: { select: (state: { location: { hash: string } }) => boolean }) =>
+    select({ location: { hash: previewOpen ? 'preview=event:one' : '' } }),
 }));
 
 describe('useSearchURL', () => {
@@ -54,6 +55,14 @@ describe('useSearchURL', () => {
     const { result } = renderHook(() => useSearchURL());
 
     expect(result.current.view).toBe('list');
+  });
+
+  it('does not duplicate an unchanged compact search history entry', () => {
+    searchParams = { view: 'compact', q: 'Council' };
+    const { result } = renderHook(useSearchURL);
+    expect(result.current.view).toBe('compact');
+    act(() => vi.advanceTimersByTime(300));
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 
   it('reads and writes the spatial view parameter', () => {

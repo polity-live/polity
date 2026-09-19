@@ -43,18 +43,14 @@ function expectAccounted(entries: ActionEntry[]) {
     expect(entry.actionId, entry.file).toMatch(/^[a-z0-9-]+(?:\.[a-z0-9-]+){3,}$/);
     expect(entry.accountabilityStatus, `${entry.file}#${entry.actionId}`).toBe('accounted');
     expect(entry.accessibilityIssues ?? [], `${entry.file}#${entry.actionId}`).toEqual([]);
-    const reference = entry.testRefs.find(
-      candidate =>
-        entry.scenarios.every(scenario => candidate.scenarios?.includes(scenario)) &&
-        declaresConcreteTestCase(candidate)
-    );
-    expect(reference, `${entry.file}#${entry.actionId}`).toBeDefined();
-    expect(reference?.project, `${entry.file}#${entry.actionId}:project`).toMatch(
-      /^(?:component|unit)$/u
-    );
+    const references = entry.testRefs.filter(declaresConcreteTestCase);
+    // The repository accountability contract permits separate behavior cases for
+    // loading, failure and keyboard interaction. Every scenario still needs evidence.
     for (const scenario of entry.scenarios) {
-      expect(reference?.scenarios, `${entry.file}#${entry.actionId}:${scenario}`).toContain(
-        scenario
+      const reference = references.find(candidate => candidate.scenarios?.includes(scenario));
+      expect(reference, `${entry.file}#${entry.actionId}:${scenario}`).toBeDefined();
+      expect(reference?.project, `${entry.file}#${entry.actionId}:${scenario}:project`).toMatch(
+        /^(?:component|unit)$/u
       );
     }
   }

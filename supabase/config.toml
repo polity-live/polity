@@ -19,7 +19,9 @@ sql_paths = [
 enabled = false
 
 [db.settings]
-max_connections = 200
+# Zero 1.9 on Windows opens one initial-copy connection per published table.
+# Leave capacity for local Supabase, collaboration and ten editing clients.
+max_connections = 300
 
 
 [studio]

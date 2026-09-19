@@ -94,6 +94,19 @@ describe('search virtualizer controller contracts', () => {
   });
 
   it('keeps compact and card scroll positions separate across view changes', () => {
+    const virtualizer = {
+      getVirtualItems: () => [{ key: 'row', index: 4, start: 400, end: 500, size: 100, lane: 0 }],
+      measure: vi.fn(),
+      getTotalSize: () => 700,
+      scrollToIndex: vi.fn(),
+    };
+    mocks.usePolityZeroGrid.mockReturnValue({
+      virtualizer,
+      rowAt: vi.fn(),
+      complete: true,
+      rowsEmpty: false,
+      total: 10,
+    });
     const { rerender } = renderHook(
       ({ compact }) => useVirtualSearchGridController({ context, compact }),
       { initialProps: { compact: false } }
@@ -102,6 +115,7 @@ describe('search virtualizer controller contracts', () => {
     rerender({ compact: true });
     expect(mocks.useHistoryScrollState).toHaveBeenLastCalledWith('search-compact');
     expect(mocks.usePolityZeroGrid.mock.calls.at(-1)?.[0].lanes).toBe(1);
+    expect(virtualizer.scrollToIndex).toHaveBeenLastCalledWith(4, { align: 'start' });
     rerender({ compact: false });
     expect(mocks.useHistoryScrollState).toHaveBeenLastCalledWith('search-grid');
   });

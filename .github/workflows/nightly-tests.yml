@@ -82,6 +82,7 @@ jobs:
       CI: "1"
       E2E_APP_COMMAND: pnpm run start:e2e
       E2E_RUN_ID: nightly-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.name }}
+      E2E_GLOBAL_TIMEOUT_MS: "4500000"
       PLAYWRIGHT_OUTPUT_DIR: test-results/${{ matrix.name }}
       VITE_APP_URL: http://localhost:3000
       VITE_ZERO_CACHE_URL: http://127.0.0.1:4848
@@ -185,6 +186,7 @@ jobs:
       CI: "1"
       E2E_APP_COMMAND: pnpm run start:e2e
       E2E_RUN_ID: stability-${{ github.run_id }}-${{ github.run_attempt }}
+      E2E_GLOBAL_TIMEOUT_MS: "19800000"
       PLAYWRIGHT_OUTPUT_DIR: test-results/stability
       VITE_APP_URL: http://localhost:3000
       VITE_ZERO_CACHE_URL: http://127.0.0.1:4848

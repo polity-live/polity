@@ -13,13 +13,11 @@ export function handleWorkspaceListKeyDown(event: KeyboardEvent<HTMLElement>) {
     return;
   if (!target.matches('[data-workspace-open]')) return;
   const row = target.closest('[data-workspace-row]');
-  if (
-    event.key === ' ' &&
-    row?.querySelector<HTMLButtonElement>('[data-workspace-preview-button]')
-  ) {
+  const preview = row?.querySelector<HTMLButtonElement>('[data-workspace-preview-button]');
+  if (event.key === ' ' && preview) {
     event.preventDefault();
     event.stopPropagation();
-    row.querySelector<HTMLButtonElement>('[data-workspace-preview-button]')?.click();
+    preview.click();
     return;
   }
   if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;

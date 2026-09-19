@@ -186,6 +186,13 @@ describe('GitHub workflow contracts', () => {
 
     expect(nightly).toContain('pnpm run test:mutation');
     expect(nightly).toContain('--repeat-each=20');
+    const golden = nightly.slice(
+      nightly.indexOf('  browser-golden-journeys:'),
+      nightly.indexOf('  browser-performance:')
+    );
+    const stability = nightly.slice(nightly.indexOf('  browser-stability:'));
+    expect(golden).toContain('E2E_GLOBAL_TIMEOUT_MS: "4500000"');
+    expect(stability).toContain('E2E_GLOBAL_TIMEOUT_MS: "19800000"');
     expect(nightly.match(/project: chromium-desktop/gu)).toHaveLength(3);
     expect(nightly.match(/project: chromium-mobile/gu)).toHaveLength(2);
     expect(nightly).toContain('--shard=1/3');

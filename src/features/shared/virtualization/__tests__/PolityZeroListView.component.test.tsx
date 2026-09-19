@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PolityZeroListView } from '../PolityZeroListView';
 
 const virtualizerCapture = vi.hoisted(() => ({
+  collection: null as { view: string } | null,
   windowOptions: null as Record<string, unknown> | null,
   containedOptions: null as Record<string, unknown> | null,
   total: undefined as number | undefined,
@@ -16,6 +17,9 @@ const virtualizerCapture = vi.hoisted(() => ({
     spaceBefore: 0,
     total: undefined as number | undefined,
   },
+}));
+vi.mock('@/features/shared/ui/collections/CollectionScope', () => ({
+  useCollectionPresentation: () => virtualizerCapture.collection,
 }));
 
 vi.mock('../usePolityZeroList', () => ({
@@ -38,6 +42,7 @@ vi.mock('@rocicorp/zero-virtual/react', () => ({
 
 afterEach(() => {
   cleanup();
+  virtualizerCapture.collection = null;
   virtualizerCapture.windowOptions = null;
   virtualizerCapture.containedOptions = null;
   virtualizerCapture.total = undefined;
@@ -51,6 +56,28 @@ afterEach(() => {
 });
 
 describe('PolityZeroListView window scrolling', () => {
+  it('preserves separate scroll history and measured row sizes when changing collection presentation', () => {
+    const props = {
+      context: {},
+      historyKey: 'items',
+      estimateSize: 220,
+      getRowKey: (row: any) => row.id,
+      toStartRow: (row: any) => row,
+      getPageQuery: () => null,
+      getSingleQuery: () => null,
+      renderRow: () => null,
+      renderSkeleton: () => null,
+      renderEmpty: () => null,
+    };
+    virtualizerCapture.collection = { view: 'compact' };
+    const view = render(<PolityZeroListView {...props} />);
+    expect(virtualizerCapture.containedOptions?.scrollStateKey).toBe('items:compact');
+    expect((virtualizerCapture.containedOptions!.estimateSize as () => number)()).toBe(76);
+    virtualizerCapture.collection = { view: 'cards' };
+    view.rerender(<PolityZeroListView {...props} />);
+    expect(virtualizerCapture.containedOptions?.scrollStateKey).toBe('items:cards');
+    expect((virtualizerCapture.containedOptions!.estimateSize as () => number)()).toBe(220);
+  });
   it('provides a DOM anchor to the window virtualizer while the list is empty', () => {
     render(
       <PolityZeroListView

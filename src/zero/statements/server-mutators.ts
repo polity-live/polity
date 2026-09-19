@@ -1,4 +1,6 @@
 import { defineMutator } from '@rocicorp/zero';
+import { sqlTransaction } from '@/server/collaboration/transaction';
+import { validateStudioStatementRefs } from '@/server/studio/service';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
@@ -69,6 +71,7 @@ async function createStatementTimelineEvent(
 /** Server-only mutators for statement side effects. */
 export const statementServerMutators = {
   create: defineMutator(createStatementSchema, async ({ tx, ctx, args }) => {
+    await validateStudioStatementRefs(ctx.userID, args, () => sqlTransaction(tx));
     await mutators.statements.create.fn({ tx, ctx, args });
 
     if (args.visibility !== 'public') return;
@@ -115,6 +118,7 @@ export const statementServerMutators = {
   }),
 
   update: defineMutator(updateStatementSchema, async ({ tx, ctx, args }) => {
+    await validateStudioStatementRefs(ctx.userID, args, () => sqlTransaction(tx));
     const previousStatement = await tx.run(zql.statement.where('id', args.id).one());
 
     await mutators.statements.update.fn({ tx, ctx, args });

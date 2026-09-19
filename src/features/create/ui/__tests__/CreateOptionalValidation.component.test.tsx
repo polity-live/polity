@@ -79,6 +79,10 @@ describe('optional create sections', () => {
     act(() => focusCreateSection(container.firstElementChild as HTMLElement, 1));
     expect(container.querySelector('details')?.open).toBe(true);
     expect(document.activeElement).toBe(screen.getByLabelText('Invalid date'));
+    const direct = screen.getByLabelText('Valid');
+    direct.setAttribute('aria-invalid', 'true');
+    act(() => focusCreateSection(container.firstElementChild as HTMLElement, 0));
+    expect(document.activeElement).toBe(direct);
     vi.restoreAllMocks();
   });
 });

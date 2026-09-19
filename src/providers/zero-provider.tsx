@@ -17,6 +17,7 @@ export function ZeroAppProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
   const cacheURL = getRequiredEnvVar(import.meta.env.VITE_ZERO_CACHE_URL, 'VITE_ZERO_CACHE_URL');
   const appURL = getRequiredEnvVar(import.meta.env.VITE_APP_URL, 'VITE_APP_URL');
+  const zeroAPIURL = import.meta.env.VITE_ZERO_API_URL || appURL;
 
   const zeroContext = useMemo(
     () =>
@@ -35,8 +36,8 @@ export function ZeroAppProvider({ children }: { children: React.ReactNode }) {
         {...zeroIdentity}
         context={zeroContext}
         cacheURL={cacheURL}
-        queryURL={`${appURL}/api/query`}
-        mutateURL={`${appURL}/api/mutate`}
+        queryURL={`${zeroAPIURL}/api/query`}
+        mutateURL={`${zeroAPIURL}/api/mutate`}
         auth={session?.access_token ?? undefined}
         schema={schema}
         mutators={mutators}

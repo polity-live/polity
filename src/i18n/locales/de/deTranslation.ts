@@ -1,3 +1,4 @@
+import { studioTranslations } from './features/studio';
 import type { I18nLocale } from '../en/enTranslation';
 
 import { mergeTranslations } from '@/i18n/merge-translations.ts';
@@ -77,6 +78,55 @@ const baseDeTranslation = {
 
   // Feature-specific translations
   features: {
+    collaboration: {
+      publish: 'Entwurf veröffentlichen',
+      verifiedRead: 'Letzte geprüfte Fassung: Revision {{revision}}. Bearbeitung gesperrt.',
+      repair: 'Geprüfte Fassung wiederherstellen',
+      proposalTitle: 'Änderungsantrag',
+      submitted: 'Eingereicht',
+      accept: 'Annehmen',
+      reject: 'Ablehnen',
+      previewChanged:
+        'Die Vorschau zeigt die eingereichte Fassung. Der Haupttext hat sich inzwischen verändert.',
+      conflictNotice: 'Anwendungskonflikt: {{reason}}. Die Entscheidung bleibt erhalten.',
+      retryDecision: 'Anwendung erneut prüfen',
+      newProposal: 'Neuen Änderungsantrag entwerfen',
+      waiting: 'Serverbestätigung wird abgewartet …',
+      compareLocal: 'Lokalen Entwurf {{number}} vergleichen',
+      resumeTitle: 'Wiederaufnahme als neuer privater Entwurf',
+      original: 'Ausgangsstand',
+      local: 'Lokaler Entwurf',
+      server: 'Aktueller Serverstand',
+      resume: 'Als neuen Entwurf wiederaufnehmen',
+      close: 'Schließen',
+      rebase: 'Entwurf auf aktuellen Haupttext beziehen',
+      history: 'Gespeicherte Fassungen',
+      loadHistory: 'Fassungen laden',
+      revision: 'Revision {{revision}} · {{reason}}',
+      restore: 'Als neue Generation wiederherstellen',
+      applicationConflict:
+        'Entscheidung gespeichert. Die Anwendung auf den Text ist wegen eines Konflikts noch offen.',
+      workspace: 'Arbeitsbereich',
+      main: 'Hauptdokument',
+      draft: 'Entwurf',
+      share: 'Für berechtigte Mitwirkende freigeben',
+      unshare: 'Entwurf privat machen',
+      recover: 'Früheren lokalen Entwurf herunterladen',
+      submit: 'Änderungsantrag verbindlich einreichen',
+      createDraft: 'Separaten Folgeentwurf erstellen',
+      reconnect: 'Neu verbinden; lokalen Entwurf behalten',
+      status: {
+        loading: 'Dokument wird verbunden …',
+        syncing: 'Änderungen werden gespeichert …',
+        saved: 'Verbindlich gespeichert',
+        offline: 'Offline – Änderungen sind nur lokal gespeichert',
+        maintenance: 'Umstellung läuft. Bearbeitung und Abstimmung sind pausiert.',
+        recovery:
+          'Zugriff oder Dokumentstand hat sich geändert. Dein lokaler Entwurf bleibt erhalten.',
+        error: 'Verbindung konnte nicht hergestellt werden.',
+      },
+    },
+    studio: studioTranslations,
     agendas: agendasTranslations,
     appTutorial: appTutorialTranslations,
     auth: authTranslations,

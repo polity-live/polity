@@ -20,6 +20,12 @@ vi.mock('@/features/shared/ui/ui/tabs', () => ({
 vi.mock('@/features/shared/ui/navigation', () => ({
   ScrollableTabsList: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
+vi.mock('@/features/shared/ui/navigation/SmartLink', () => ({
+  SmartLink: ({ href, children }: any) => <a href={href}>{children}</a>,
+}));
+vi.mock('@/features/shared/ui/preview/WorkspacePreview', () => ({
+  PreviewButton: () => <button>Preview</button>,
+}));
 vi.mock('@/features/shared/ui/typeahead', () => ({
   EntitySearchBar: (props: any) => {
     mocks.captured.search = props;
@@ -174,8 +180,26 @@ vi.mock('@/features/shared/virtualization', () => ({
     };
     return (
       <div>
-        {props.renderRow({ id: 'd1', created_at: 1 }, 2)}
-        {props.renderRow({ id: 'd2', created_at: 2 }, 20)}
+        {props.renderRow(
+          {
+            id: 'd1',
+            entity_type: 'todo',
+            entity_id: 'todo-1',
+            title: 'First task',
+            created_at: 1,
+          },
+          2
+        )}
+        {props.renderRow(
+          {
+            id: 'd2',
+            entity_type: 'todo',
+            entity_id: 'todo-2',
+            title: 'Second task',
+            created_at: 2,
+          },
+          20
+        )}
         {props.renderSkeleton()}
         {props.renderEmpty()}
       </div>
@@ -359,5 +383,9 @@ describe('profile and content branches A07', () => {
     expect(mocks.captured.statements.authorName).toBe('Ada');
     expect(mocks.captured.statements.authorTitle).toBe('Bio');
     expect(mocks.captured.statements.authorAvatar).toBe('avatar');
+    const controls = view.container.querySelectorAll('[data-action-id="collection.view.select"]');
+    fireEvent.click(controls[1]);
+    expect(mocks.captured.grid.lanes).toEqual([1, 1, 1]);
+    fireEvent.click(controls[0]);
   });
 });

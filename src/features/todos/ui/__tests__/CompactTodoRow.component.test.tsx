@@ -4,7 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CompactTodoRow } from '../CompactTodoRow';
 import type { Todo } from '../../types/todo.types';
 
-const mocks = vi.hoisted(() => ({ mutate: vi.fn(), canManage: vi.fn(() => true) }));
+const mocks = vi.hoisted(() => ({
+  mutate: vi.fn(),
+  canManage: vi.fn(() => true),
+  user: { id: 'me' } as { id: string } | null,
+}));
 vi.mock('@rocicorp/zero/react', () => ({ useZero: () => ({ mutate: mocks.mutate }) }));
 vi.mock('@/zero/mutators', () => ({
   mutators: {
@@ -15,7 +19,7 @@ vi.mock('@/zero/mutators', () => ({
     },
   },
 }));
-vi.mock('@/providers/auth-provider', () => ({ useAuth: () => ({ user: { id: 'me' } }) }));
+vi.mock('@/providers/auth-provider', () => ({ useAuth: () => ({ user: mocks.user }) }));
 vi.mock('@/zero/rbac', () => ({ usePermissions: () => ({ canManage: mocks.canManage }) }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
@@ -62,9 +66,55 @@ const todo = {
 beforeEach(() => {
   mocks.mutate.mockReset();
   mocks.canManage.mockReturnValue(true);
+  mocks.user = { id: 'me' };
 });
 afterEach(cleanup);
 describe('compact todo editing', () => {
+  it('handles a sparse personal task, preserves existing assignees and disables archived or anonymous editing', async () => {
+    mocks.mutate.mockReturnValue({ server: Promise.resolve({ type: 'success' }) });
+    const personal = {
+      ...todo,
+      group_id: null,
+      status: null,
+      assignments: undefined,
+      due_date: Date.UTC(2026, 8, 22),
+    } as unknown as Todo;
+    const view = render(<CompactTodoRow todo={personal} />);
+    expect((screen.getByRole('combobox') as HTMLSelectElement).value).toBe('pending');
+    expect(
+      screen.getByRole('button', { name: 'features.todos.dueDate.title' }).textContent
+    ).not.toBe('—');
+    fireEvent.click(screen.getByRole('button', { name: 'features.todos.assignee.title' }));
+    await act(async () =>
+      fireEvent.click(await screen.findByRole('button', { name: 'Assign new user' }))
+    );
+    expect(mocks.mutate).toHaveBeenCalledOnce();
+    view.unmount();
+    mocks.mutate.mockClear();
+    const kept = render(
+      <CompactTodoRow
+        todo={
+          {
+            ...personal,
+            assignments: [
+              { id: 'existing', user_id: 'new-user' },
+              { id: 'incomplete', user_id: null },
+            ],
+          } as unknown as Todo
+        }
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'features.todos.assignee.title' }));
+    await act(async () =>
+      fireEvent.click(await screen.findByRole('button', { name: 'Assign new user' }))
+    );
+    expect(mocks.mutate).not.toHaveBeenCalled();
+    kept.rerender(<CompactTodoRow todo={{ ...personal, archived_at: 1 }} />);
+    expect((screen.getByRole('combobox') as HTMLSelectElement).disabled).toBe(true);
+    mocks.user = null;
+    kept.rerender(<CompactTodoRow todo={personal} />);
+    expect((screen.getByRole('combobox') as HTMLSelectElement).disabled).toBe(true);
+  });
   it('waits for confirmation and prevents duplicate status writes while pending', async () => {
     let confirm!: (value: { type: 'success' }) => void;
     mocks.mutate.mockReturnValue({
@@ -107,7 +157,7 @@ describe('compact todo editing', () => {
                 user: undefined,
               },
             ],
-          } as Todo
+          } as unknown as Todo
         }
         onTodoClick={onTodoClick}
       />

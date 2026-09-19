@@ -271,6 +271,23 @@ describe('event calendar component contracts', () => {
   it('builds deterministic virtual page and permalink queries and renders matching recurring rows', () => {
     render(
       <SharedListView
+        compact
+        events={[ordinary]}
+        selectedDate={new Date(2026, 7, 2)}
+        onEventSelect={vi.fn()}
+        queryScope={{ groupId: 'group-1' }}
+      />
+    );
+    const compactProps = calendar.zeroListProps!;
+    expect(compactProps.historyKey).toBe('calendar-compact-group-1');
+    expect(compactProps.estimateSize).toBe(96);
+    expect(
+      render(compactProps.renderRow(ordinary, 0)).container.querySelector('.pb-2')
+    ).toBeTruthy();
+    expect(render(compactProps.renderSkeleton()).container.querySelector('.h-16')).toBeTruthy();
+    cleanup();
+    render(
+      <SharedListView
         events={[ordinary]}
         selectedDate={new Date(2026, 7, 2)}
         onEventSelect={vi.fn()}

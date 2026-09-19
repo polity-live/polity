@@ -286,9 +286,18 @@ async function syncPushSubscription() {
 // CACHE STRATEGIES (from next-pwa configuration)
 // ============================================================================
 
+function isStudioRequest(url) {
+  return url.origin === self.location.origin &&
+    (url.pathname === '/api/studio' || url.pathname.startsWith('/api/studio/'));
+}
+
 if (workboxReady) {
-  const { CacheFirst, NetworkFirst, StaleWhileRevalidate } = workbox.strategies;
+  const { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } = workbox.strategies;
   const { ExpirationPlugin } = workbox.expiration;
+
+  // Access to private Studio media can change after publishing or leaving a group.
+  // Never let an offline API/image cache bypass the server's visibility check.
+  workbox.routing.registerRoute(({ url }) => isStudioRequest(url), new NetworkOnly(), 'GET');
 
   // Google Fonts
   workbox.routing.registerRoute(
@@ -341,6 +350,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || event.request.mode !== 'navigate') {
     return;
   }
+  if (isStudioRequest(new URL(event.request.url, self.location.origin))) return;
 
   event.respondWith(handleNavigationRequest(event.request));
 });

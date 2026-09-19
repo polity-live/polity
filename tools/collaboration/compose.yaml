@@ -1,0 +1,18 @@
+services:
+  zero:
+    image: rocicorp/zero:1.9.0
+    ports:
+      - '127.0.0.1:4848:4848'
+    environment:
+      ZERO_UPSTREAM_DB: ${POLITY_LOCAL_ZERO_DATABASE}
+      ZERO_CVR_DB: ${POLITY_LOCAL_ZERO_DATABASE}
+      ZERO_CHANGE_DB: ${POLITY_LOCAL_ZERO_DATABASE}
+      ZERO_QUERY_URL: http://host.docker.internal:3000/api/query
+      ZERO_MUTATE_URL: http://host.docker.internal:3000/api/mutate
+      ZERO_REPLICA_FILE: /data/replica.db
+      ZERO_LOG_LEVEL: warn
+      ZERO_NUM_SYNC_WORKERS: '1'
+      ZERO_ADMIN_PASSWORD: ${ZERO_ADMIN_PASSWORD:-local-development}
+    tmpfs:
+      - /data
+    stop_grace_period: 15s

@@ -299,9 +299,9 @@ const expectedDigests = {
     '08903444cf7d0472707ff6b79533ca952a03318821aa7f447d8f3d49d64fdbcf',
   'document anonymous true flip':
     'd98b9c9eb1f57e6658dd5da29dc58635ffb3e8ba06a610d67b75e54c718db226',
-  'document viewer default': '0e27b8e14d9b8f95491c77227e0f48c7250d4a9c24c1aa215c573ade5f3d1a52',
-  'document viewer false flips': 'aa8822fabd9908644d08bd4ea766c1577eafca0bb7404873e1163ef795ce8521',
-  'document viewer true flips': 'c963252575a8795cc517b24001b6036897f4ed87f141795a80f1cacf5e0322e9',
+  'document viewer default': '3e009ecc6358e01a09ba2d7045c7ba6f2371be055020f068534d094d103140d6',
+  'document viewer false flips': 'a98ea99fa129ff48a40c4d0317f07a7077a0cb06b0311fe46a820a29cb62ed74',
+  'document viewer true flips': 'c918729a2b6986c7dd7ae95643389f4272ed316ea94cba9bca967c8882d6a62d',
 } satisfies Record<keyof typeof cases, string>;
 
 describe('query access mutation decision table', () => {

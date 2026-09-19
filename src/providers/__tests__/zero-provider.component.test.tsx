@@ -28,6 +28,7 @@ describe('ZeroAppProvider identity', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_ZERO_CACHE_URL', 'https://zero.example.test');
     vi.stubEnv('VITE_APP_URL', 'https://app.example.test');
+    vi.stubEnv('VITE_ZERO_API_URL', '');
     mocks.session = null;
     mocks.zeroProps = undefined;
   });
@@ -44,6 +45,16 @@ describe('ZeroAppProvider identity', () => {
     expect(Object.hasOwn(mocks.zeroProps ?? {}, 'userID')).toBe(false);
     expect(mocks.zeroProps?.context).toEqual({ userID: 'anon', email: '' });
     expect(mocks.zeroProps?.auth).toBeUndefined();
+    expect(mocks.zeroProps?.queryURL).toBe('https://app.example.test/api/query');
+    expect(mocks.zeroProps?.mutateURL).toBe('https://app.example.test/api/mutate');
+  });
+
+  it('uses the Zero server reachable API origin independently of the browser application origin', () => {
+    vi.stubEnv('VITE_ZERO_API_URL', 'http://host.docker.internal:3000');
+    render(<ZeroAppProvider>content</ZeroAppProvider>);
+    expect(mocks.zeroProps?.queryURL).toBe('http://host.docker.internal:3000/api/query');
+    expect(mocks.zeroProps?.mutateURL).toBe('http://host.docker.internal:3000/api/mutate');
+    expect(import.meta.env.VITE_APP_URL).toBe('https://app.example.test');
   });
 
   it('passes the authenticated identity and context to Zero', () => {

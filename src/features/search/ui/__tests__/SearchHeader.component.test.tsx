@@ -102,6 +102,28 @@ describe('SearchHeader command box promotion', () => {
 });
 
 describe('SearchHeader actions', () => {
+  it('indicates the selected compact view', () => {
+    render(
+      <SearchHeader
+        searchQuery=""
+        setSearchQuery={vi.fn()}
+        showFilters={false}
+        setShowFilters={vi.fn()}
+        activeTopics={[]}
+        onTopicToggle={vi.fn()}
+        totalResults={null}
+        queryParam=""
+        view="compact"
+        onViewChange={vi.fn()}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Compact view' }).getAttribute('aria-pressed')).toBe(
+      'true'
+    );
+    expect(screen.getByRole('button', { name: 'Cards' }).getAttribute('aria-pressed')).toBe(
+      'false'
+    );
+  });
   it('exposes stable selectable view, filter, and personal-topic actions', () => {
     const onViewChange = vi.fn();
     const setShowFilters = vi.fn();

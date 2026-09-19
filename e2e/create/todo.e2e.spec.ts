@@ -13,6 +13,7 @@ async function selectCurrentTodoDeadline(
   createFlowPage: Parameters<typeof gotoTodo>[0],
   options: { optional?: boolean } = {}
 ) {
+  if (!options.optional) await createFlowPage.form.revealField('due-date-time');
   const field = createFlowPage.form.field('due-date-time');
   if (options.optional && (!(await field.count()) || !(await field.isVisible()))) return false;
 
@@ -30,7 +31,14 @@ test.describe('create/todo', () => {
       await gotoTodo(createFlowPage, layout);
       await fillMinimalTodo(createFlowPage, `${e2eRun.prefix} Review`);
 
+      const publicOption = createFlowPage.form
+        .field('visibility')
+        .locator('[data-create-option="public"]:visible');
+      const publicLabel = (await publicOption.innerText()).trim();
+      await createFlowPage.form.chooseOption('visibility', 'public');
+
       if (layout === 'carousel') await advanceCarousel(createFlowPage, 2);
+      await createFlowPage.form.revealField('status');
 
       const completedOption = createFlowPage.form
         .field('status')
@@ -38,15 +46,7 @@ test.describe('create/todo', () => {
       const completedLabel = (await completedOption.innerText()).trim();
       await createFlowPage.form.chooseOption('status', 'completed');
 
-      if (layout === 'carousel') await advanceCarousel(createFlowPage, 1);
-
-      const publicOption = createFlowPage.form
-        .field('visibility')
-        .locator('[data-create-option="public"]:visible');
-      const publicLabel = (await publicOption.innerText()).trim();
-      await createFlowPage.form.chooseOption('visibility', 'public');
-
-      if (layout === 'carousel') await advanceCarousel(createFlowPage, 1);
+      if (layout === 'carousel') await advanceCarousel(createFlowPage, 2);
 
       const review = createFlowPage.form.field('review');
       await expect(review).toBeVisible();

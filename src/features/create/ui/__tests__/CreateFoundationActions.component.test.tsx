@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { Circle } from 'lucide-react';
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CreateDashboardView } from '../CreateDashboardView';
@@ -38,6 +38,41 @@ afterEach(() => {
 });
 
 describe('create foundation action contracts', () => {
+  it('filters creation flows by all search terms and displays an empty result', () => {
+    render(
+      <CreateDashboardView
+        accessibleTitle="Create"
+        sections={[
+          {
+            key: 'org',
+            title: 'Organization',
+            items: [
+              {
+                href: '/create/group',
+                icon: Circle,
+                title: 'Group',
+                description: 'Council members',
+              },
+              {
+                href: '/create/event',
+                icon: Circle,
+                title: 'Event',
+                description: 'General assembly',
+              },
+            ],
+          },
+        ]}
+      />
+    );
+    fireEvent.change(screen.getByRole('searchbox'), {
+      target: { value: '  ORGANIZATION   council ' },
+    });
+    expect(screen.getByRole('link').getAttribute('href')).toBe('/create/group');
+    expect(screen.queryByText('Event')).toBeNull();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'no matching flow' } });
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(screen.getByRole('status').textContent).not.toBe('');
+  });
   it('opens dashboard creation flows as stable deep links', () => {
     render(
       <CreateDashboardView

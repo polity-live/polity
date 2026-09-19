@@ -165,6 +165,10 @@ describe('calendar header and page', () => {
     clearDate.focus();
     fireEvent.click(clearDate);
     expect(base.onDateFilterChange).toHaveBeenCalledWith('');
+    fireEvent.change(document.querySelector('input[type="date"]')!, {
+      target: { value: '2026-09-18' },
+    });
+    expect(base.onDateFilterChange).toHaveBeenCalledWith('2026-09-18');
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'assembly' } });
     expect(base.onSearchChange).toHaveBeenCalledWith('assembly');
     expect(mocks.exportProps).toMatchObject({
@@ -179,5 +183,11 @@ describe('calendar header and page', () => {
     rerender(<CalendarPageView {...base} isLoading={false} dateFilter="" />);
     expect(mocks.viewProps.listQueryScope).toBeUndefined();
     expect(mocks.viewProps.events).toBe(base.filteredEvents);
+    rerender(
+      <CalendarPageView {...base} isLoading={false} selectedGroupId="" dateFilter="2026-09-18" />
+    );
+    expect(filters.querySelector('.bg-primary')).toBeTruthy();
+    rerender(<CalendarPageView {...base} isLoading={false} selectedGroupId="" dateFilter="" />);
+    expect(filters.querySelector('.bg-primary')).toBeNull();
   });
 });

@@ -286,7 +286,43 @@ describe('WikiParticipationDirectory branch contracts', () => {
 
     fireEvent.change(screen.getByLabelText('search'), { target: { value: 'missing' } });
     expect(screen.getByText('Virtual missing')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'common.workspace.compactView' }));
+    expect(screen.getByText('Virtual Person')).toBeTruthy();
+    expect(mocks.gridProps.getLanes(1200)).toBe(1);
+    expect(mocks.gridProps.estimateSize).toBe(76);
+    fireEvent.change(screen.getByLabelText('search'), { target: { value: '' } });
+    fireEvent.click(screen.getByText('select admin'));
+    expect(screen.getByText('Virtual missing')).toBeTruthy();
   });
+
+  it.each(['event', 'amendment', 'blog'] as const)(
+    'keeps participant links and role metadata in the compact %s directory',
+    entityType => {
+      const { container } = render(
+        <WikiParticipationDirectory
+          title="Participants"
+          entityType={entityType}
+          items={[
+            {
+              id: 'one',
+              name: 'Ada',
+              userId: 'user-one',
+              handle: 'ada',
+              roles: [{ id: 'chair', name: 'Chair' }],
+              metadata: ['North'],
+            },
+            { id: 'two', name: 'Guest', email: 'guest@test', status: 'invited' },
+          ]}
+        />
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'common.workspace.compactView' }));
+      expect(screen.getByText('Ada')).toBeTruthy();
+      expect(screen.getByText('@ada')).toBeTruthy();
+      expect(container.textContent).toContain('Chair · North');
+      expect(screen.getByText('guest@test')).toBeTruthy();
+      expect(container.querySelectorAll('[data-workspace-row]')).toHaveLength(2);
+    }
+  );
 
   it('preserves a custom virtual start-row adapter', () => {
     const toStartRow = vi.fn(row => ({ created_at: 99, id: row.id }));

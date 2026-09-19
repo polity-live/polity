@@ -1044,7 +1044,19 @@ export function applyDocumentQueryAccess<T>(
     ) as T;
   }
 
-  return query.where(({ or, exists }: any) =>
+  // A direct collaborator link must not bypass a retired or another user's
+  // tutorial sandbox, even though its decision history is retained.
+  const scoped = query.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('amendment_id', 'IS', null),
+      exists(
+        'amendment',
+        (amendment: any) => applyTutorialRunOwnerQueryAccess(amendment, userID),
+        flipOption(profile.amendmentFlip)
+      )
+    )
+  );
+  return scoped.where(({ or, exists }: any) =>
     or(
       exists(
         'collaborators',

@@ -1,4 +1,13 @@
-import { describe, expect, it, vi } from 'vitest';
+/* @vitest-environment jsdom */
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+vi.mock('@/features/collaboration/ui/CollaborationStatus', () => ({
+  CollaborationStatus: () => null,
+}));
+afterEach(cleanup);
+vi.mock('@/features/shared/hooks/use-translation', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
 
 const mocks = vi.hoisted(() => ({
   controller: vi.fn(() => new Proxy({}, { get: () => vi.fn() })),
@@ -69,6 +78,42 @@ import { SupportConfirmationPanel } from '../ui/SupportConfirmationPanel';
 import { VersionControl } from '../ui/VersionControl';
 
 describe('amendment composition wrapper contracts', () => {
+  it('exposes shared undo and redo only when active and permitted with available history', () => {
+    const undo = vi.fn(),
+      redo = vi.fn();
+    const base = {
+      state: {},
+      collaboration: { phase: 'active', canEdit: true },
+      undo,
+      redo,
+      canUndo: true,
+      canRedo: true,
+    };
+    mocks.controller.mockReturnValueOnce(base as any);
+    const view = render(<CityDesignPage amendmentId="amendment-1" />);
+    const undoButton = screen.getByRole('button', { name: 'plateJs.toolbar.undo' });
+    const redoButton = screen.getByRole('button', { name: 'plateJs.toolbar.redo' });
+    fireEvent.click(undoButton);
+    fireEvent.click(redoButton);
+    expect(undo).toHaveBeenCalledOnce();
+    expect(redo).toHaveBeenCalledOnce();
+    for (const change of [
+      { canUndo: false, canRedo: false },
+      { collaboration: { phase: 'active', canEdit: false } },
+    ]) {
+      mocks.controller.mockReturnValueOnce({ ...base, ...change } as any);
+      view.rerender(<CityDesignPage amendmentId="amendment-1" />);
+      expect((undoButton as HTMLButtonElement).disabled).toBe(true);
+      expect((redoButton as HTMLButtonElement).disabled).toBe(true);
+      fireEvent.click(undoButton);
+      fireEvent.click(redoButton);
+      expect(undo).toHaveBeenCalledOnce();
+      expect(redo).toHaveBeenCalledOnce();
+    }
+    mocks.controller.mockReturnValueOnce({ ...base, collaboration: { phase: 'legacy' } } as any);
+    view.rerender(<CityDesignPage amendmentId="amendment-1" />);
+    expect(screen.queryByRole('button', { name: 'plateJs.toolbar.undo' })).toBeNull();
+  });
   it('connects every thin wrapper to its controller and view', async () => {
     const components = [
       CityDesignPage({ amendmentId: 'amendment-1' }),

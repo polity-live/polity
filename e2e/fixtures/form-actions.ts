@@ -5,7 +5,7 @@ function cssAttr(value: string) {
 }
 
 export function fieldLocator(page: Page, fieldKey: string) {
-  return page.locator(`[data-create-field="${cssAttr(fieldKey)}"]:visible`);
+  return page.locator(`[data-create-field="${cssAttr(fieldKey)}"]:visible:not([inert] *)`);
 }
 
 export class FormActions {
@@ -15,11 +15,22 @@ export class FormActions {
     return fieldLocator(this.page, fieldKey);
   }
 
+  async revealField(fieldKey: string) {
+    const field = this.page.locator(`[data-create-field="${cssAttr(fieldKey)}"]:not([inert] *)`);
+    const details = this.page.locator('details:not([open])').filter({ has: field });
+    if (await details.count()) {
+      await expect(details).toHaveCount(1);
+      await details.locator(':scope > summary').click();
+    }
+    await expect(this.field(fieldKey)).toBeVisible();
+  }
+
   async expectField(fieldKey: string) {
     await expect(this.field(fieldKey)).toBeVisible();
   }
 
   async fillText(fieldKey: string, value: string, options: { optional?: boolean } = {}) {
+    if (!options.optional) await this.revealField(fieldKey);
     const field = this.field(fieldKey);
     if (options.optional && !(await field.count())) return false;
 
@@ -49,6 +60,7 @@ export class FormActions {
   }
 
   async chooseOption(fieldKey: string, value: string, options: { optional?: boolean } = {}) {
+    if (!options.optional) await this.revealField(fieldKey);
     const field = this.field(fieldKey);
     if (options.optional && !(await field.count())) return false;
 

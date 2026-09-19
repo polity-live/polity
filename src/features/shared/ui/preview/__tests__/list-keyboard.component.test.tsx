@@ -5,6 +5,40 @@ import { handleWorkspaceListKeyDown } from '../list-keyboard';
 
 afterEach(cleanup);
 describe('workspace list keyboard', () => {
+  it('keeps unrelated controls and boundary keys local even without optional row wrappers', () => {
+    const outer = vi.fn();
+    render(
+      <div onKeyDown={outer}>
+        <div onKeyDown={handleWorkspaceListKeyDown}>
+          <button>Unrelated</button>
+          <a href="/event/one" data-workspace-open>
+            One
+          </a>
+          <a href="/event/two" data-workspace-open>
+            Two
+          </a>
+        </div>
+      </div>
+    );
+    const one = screen.getByRole('link', { name: 'One' }),
+      two = screen.getByRole('link', { name: 'Two' });
+    fireEvent.keyDown(screen.getByRole('button'), { key: 'ArrowDown' });
+    expect(outer).toHaveBeenCalledOnce();
+    outer.mockClear();
+    one.focus();
+    fireEvent.keyDown(one, { key: 'ArrowUp' });
+    expect(document.activeElement).toBe(one);
+    fireEvent.keyDown(one, { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(two);
+    fireEvent.keyDown(two, { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(two);
+    fireEvent.keyDown(two, { key: 'ArrowUp' });
+    expect(document.activeElement).toBe(one);
+    expect(outer).not.toHaveBeenCalled();
+    fireEvent.keyDown(one, { key: 'Enter' });
+    fireEvent.keyDown(one, { key: ' ' });
+    expect(outer).toHaveBeenCalledTimes(2);
+  });
   it('moves between rows and opens the explicitly focused preview with Space', () => {
     const preview = vi.fn();
     render(
