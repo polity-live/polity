@@ -35,8 +35,10 @@ export function applyTutorialRunOwnerQueryAccess<T>(q: T, userID: string | undef
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('tutorial_run_id', 'IS', null),
-      exists('tutorial_run', (run: any) =>
-        run.where('user_id', userID).where('status', 'IN', ['active', 'paused'])
+      exists(
+        'tutorial_run',
+        (run: any) => run.where('user_id', userID).where('status', 'IN', ['active', 'paused']),
+        { flip: false }
       )
     )
   ) as T;
@@ -316,19 +318,31 @@ export function applyEventQueryAccess<T>(q: T, userID: string | undefined | null
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       cmp('creator_id', userID),
-      exists('roles', (role: any) =>
-        role
-          .where('scope', 'event')
-          .whereExists('event_participant_roles', (participantRole: any) =>
-            participantRole.whereExists('event_participant', (participant: any) =>
-              participant
-                .where('user_id', userID)
-                .where('status', 'IN', EVENT_DISCOVERY_PARTICIPANT_STATUSES)
+      exists(
+        'roles',
+        (role: any) =>
+          role
+            .where('scope', 'event')
+            .whereExists(
+              'event_participant_roles',
+              (participantRole: any) =>
+                participantRole.whereExists(
+                  'event_participant',
+                  (participant: any) =>
+                    participant
+                      .where('user_id', userID)
+                      .where('status', 'IN', EVENT_DISCOVERY_PARTICIPANT_STATUSES),
+                  { flip: false }
+                ),
+              { flip: false }
             )
-          )
-          .whereExists('event_action_rights', (right: any) =>
-            right.where('resource', 'events').where('action', 'IN', ENTITY_VIEW_ACTIONS)
-          )
+            .whereExists(
+              'event_action_rights',
+              (right: any) =>
+                right.where('resource', 'events').where('action', 'IN', ENTITY_VIEW_ACTIONS),
+              { flip: false }
+            ),
+        { flip: false }
       ),
       exists(
         'group',
@@ -378,15 +392,24 @@ function applyEventRoleRightAccess<T>(
         (role: any) =>
           role
             .where('scope', 'event')
-            .whereExists('event_participant_roles', (participantRole: any) =>
-              participantRole.whereExists('event_participant', (participant: any) =>
-                participant
-                  .where('user_id', userID)
-                  .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
-              )
+            .whereExists(
+              'event_participant_roles',
+              (participantRole: any) =>
+                participantRole.whereExists(
+                  'event_participant',
+                  (participant: any) =>
+                    participant
+                      .where('user_id', userID)
+                      .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES),
+                  { flip: false }
+                ),
+              { flip: false }
             )
-            .whereExists('event_action_rights', (right: any) =>
-              right.where('resource', 'IN', resources).where('action', 'IN', actions)
+            .whereExists(
+              'event_action_rights',
+              (right: any) =>
+                right.where('resource', 'IN', resources).where('action', 'IN', actions),
+              { flip: false }
             ),
         { flip: false }
       )
@@ -434,17 +457,26 @@ export function applyAmendmentQueryAccess<T>(q: T, userID: string | undefined | 
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       cmp('created_by_id', userID),
-      exists('roles', (role: any) =>
-        role
-          .where('scope', 'amendment')
-          .whereExists('amendment_collaborators', (collaborator: any) =>
-            collaborator
-              .where('user_id', userID)
-              .where('status', 'IN', AMENDMENT_DISCOVERY_COLLABORATOR_STATUSES)
-          )
-          .whereExists('amendment_action_rights', (right: any) =>
-            right.where('resource', 'amendments').where('action', 'IN', ENTITY_VIEW_ACTIONS)
-          )
+      exists(
+        'roles',
+        (role: any) =>
+          role
+            .where('scope', 'amendment')
+            .whereExists(
+              'amendment_collaborators',
+              (collaborator: any) =>
+                collaborator
+                  .where('user_id', userID)
+                  .where('status', 'IN', AMENDMENT_DISCOVERY_COLLABORATOR_STATUSES),
+              { flip: false }
+            )
+            .whereExists(
+              'amendment_action_rights',
+              (right: any) =>
+                right.where('resource', 'amendments').where('action', 'IN', ENTITY_VIEW_ACTIONS),
+              { flip: false }
+            ),
+        { flip: false }
       ),
       exists(
         'group',
@@ -660,14 +692,18 @@ export function applyAgendaItemQueryAccess<T>(q: T, userID: string | undefined |
   const query = q as any;
 
   if (!isAuthenticatedUserId(userID)) {
-    return query.whereExists('event', (event: any) => event.where('visibility', 'public')) as T;
+    return query.whereExists('event', (event: any) => event.where('visibility', 'public'), {
+      flip: false,
+    }) as T;
   }
 
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('creator_id', userID),
-      exists('event', (event: any) => applyEventQueryAccess(event, userID)),
-      exists('amendment', (amendment: any) => applyAmendmentQueryAccess(amendment, userID))
+      exists('event', (event: any) => applyEventQueryAccess(event, userID), { flip: false }),
+      exists('amendment', (amendment: any) => applyAmendmentQueryAccess(amendment, userID), {
+        flip: false,
+      })
     )
   ) as T;
 }
