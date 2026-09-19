@@ -23,7 +23,7 @@ test('filters calendars and preserves the event subscription across reload @nigh
   await expect(eventCard).toBeVisible({ timeout: 30_000 });
   await eventCard.click();
   await expect(page).toHaveURL(new RegExp(`/event/${seed.eventId}`));
-  await page.locator('[data-action-id="events.subscribe.toggle"]').click();
+  await page.getByRole('button', { name: 'Subscribe', exact: true }).click();
 
   await expect
     .poll(async () => {
@@ -35,7 +35,5 @@ test('filters calendars and preserves the event subscription across reload @nigh
     })
     .toBe(1);
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await expect(page.locator('[data-action-id="events.subscribe.toggle"]')).toContainText(
-    /unsubscribe/i
-  );
+  await expect(page.getByRole('button', { name: 'Unsubscribe', exact: true })).toBeVisible();
 });

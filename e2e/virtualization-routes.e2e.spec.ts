@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures/test';
+import { waitForAppReady } from './fixtures/readiness';
 
 const virtualizerFailure =
   /getVirtualItems|InputValidationError|expected number to be <=\s*100|cannot read properties of undefined.*virtualizer/i;
@@ -55,8 +56,19 @@ test.describe('virtualized routes', () => {
 
     for (const [route, marker] of desktopRoutes) {
       await page.goto(route);
+      await waitForAppReady(page);
       await expect(page).not.toHaveURL(/\/unauthorized(?:\?|$)/);
-      await expect(page.locator('body')).toContainText(marker);
+      if (route.startsWith('/search')) {
+        const search = page.getByTestId('search-page-layout');
+        await expect(search).toBeVisible();
+        await expect(search.getByRole('searchbox')).toBeEditable();
+        await expect(search.getByRole('searchbox')).toHaveAttribute('placeholder', /Search/i);
+        await expect(
+          search.locator('[data-action-id="search.header.view.spatial"]')
+        ).toHaveAttribute('aria-pressed', String(route.includes('view=spatial')));
+      } else {
+        await expect(page.locator('body')).toContainText(marker);
+      }
       await waitForPaint(page);
     }
 

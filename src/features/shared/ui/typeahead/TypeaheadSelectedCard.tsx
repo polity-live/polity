@@ -68,7 +68,7 @@ export function TypeaheadSelectedCard({
   const content = (
     <div className="flex items-start gap-3">
       <Avatar className={cn('shrink-0 ring-1 ring-white/60', isCompact ? 'h-8 w-8' : 'h-10 w-10')}>
-        <AvatarImage src={item.avatar ?? undefined} />
+        <AvatarImage src={item.avatar ?? undefined} alt="" />
         <AvatarFallback className={cn('text-xs', toneClasses.badge)}>
           <Icon
             data-slot="typeahead-entity-icon"

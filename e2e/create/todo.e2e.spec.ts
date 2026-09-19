@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures/test';
+import { db } from '../fixtures/db';
 import { fillMinimalTodo, gotoTodo, layouts } from './helpers';
 import { submitSmokeAndExpectCreated } from './smoke-expectations';
 
@@ -102,12 +103,20 @@ test.describe('create/todo', () => {
 
     await createFlowPage.page.goBack({ waitUntil: 'domcontentloaded' });
     await expect(createFlowPage.page).toHaveURL(/\/todos\/[0-9a-f-]+\/?$/);
+    const todoId = new URL(createFlowPage.page.url()).pathname.match(/\/todos\/([0-9a-f-]+)/)?.[1];
+    expect(todoId).toBeTruthy();
 
     await createFlowPage.page.getByRole('button', { name: 'Archive', exact: true }).click();
     await createFlowPage.page
       .getByRole('alertdialog')
       .getByRole('button', { name: 'Archive', exact: true })
       .click();
+    await expect
+      .poll(async () => {
+        const [row] = await db()`select archived_at from public.todo where id = ${todoId}::uuid`;
+        return row?.archived_at != null;
+      })
+      .toBe(true);
 
     await createFlowPage.page.goto('/todos');
     await createFlowPage.page.getByRole('tab', { name: /Archived/ }).click();
@@ -119,6 +128,12 @@ test.describe('create/todo', () => {
     await expect(
       createFlowPage.page.getByRole('button', { name: 'Archive', exact: true })
     ).toBeVisible();
+    await expect
+      .poll(async () => {
+        const [row] = await db()`select archived_at from public.todo where id = ${todoId}::uuid`;
+        return row?.archived_at === null;
+      })
+      .toBe(true);
     await createFlowPage.page.goto('/todos');
 
     await createFlowPage.page.getByRole('tab', { name: /Completed/ }).click();

@@ -76,6 +76,7 @@ authenticatedTest.describe('deterministic authenticated visual baselines', () =>
       await waitForAppReady(page);
 
       const menu = await openUserMenu(page);
+      await expect(menu.getByTestId('user-menu-navigation-loading')).toHaveCount(0);
       const actorIdentity = menu.getByText(e2eRun.actor().email, { exact: true });
       await expect(actorIdentity).toBeVisible();
       await expect(menu.getByRole('menuitem', { name: 'Profile', exact: true })).toBeVisible();

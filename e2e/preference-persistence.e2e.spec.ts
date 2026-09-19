@@ -71,7 +71,10 @@ test('keeps language and theme through a fresh authenticated session @pr @mobile
       })
       .toEqual({ language: 'de', theme: 'dark' });
 
-    resumedContext = await browser.newContext({ baseURL: new URL(page.url()).origin });
+    resumedContext = await browser.newContext({
+      baseURL: new URL(page.url()).origin,
+      storageState: { cookies: [], origins: [] },
+    });
     await resumedContext.addInitScript(alphaWarningSessionKey => {
       window.sessionStorage.setItem(alphaWarningSessionKey, 'true');
     }, ALPHA_WARNING_SESSION_KEY);

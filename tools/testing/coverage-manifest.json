@@ -1392,6 +1392,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "e2e/visual.e2e.spec.ts-snapshots/create-group-empty-one-page-chromium-desktop-linux.png",
+      "domain": "e2e",
+      "owner": "polity/e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "e2e/visual.e2e.spec.ts-snapshots/create-group-empty-one-page-chromium-desktop-win32.png",
       "domain": "e2e",
       "owner": "polity/e2e",
@@ -1433,6 +1443,16 @@
     },
     {
       "path": "e2e/visual.e2e.spec.ts-snapshots/public-home-chromium-desktop-win32.png",
+      "domain": "e2e",
+      "owner": "polity/e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "e2e/visual.e2e.spec.ts-snapshots/public-not-found-chromium-desktop-linux.png",
       "domain": "e2e",
       "owner": "polity/e2e",
       "kind": "test-infrastructure",
@@ -59967,6 +59987,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "e2e/visual.e2e.spec.ts-snapshots/public-not-found-chromium-desktop-linux.png",
         "e2e/visual.e2e.spec.ts-snapshots/public-not-found-chromium-desktop-win32.png",
         "src/features/shared/ui/feedback/__tests__/FeedbackStates.component.test.tsx",
         "src/features/shared/ui/feedback/__tests__/GlobalLoadingAnimation.component.test.tsx",
@@ -74063,6 +74084,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "e2e/visual.e2e.spec.ts-snapshots/create-group-empty-one-page-chromium-desktop-linux.png",
         "e2e/visual.e2e.spec.ts-snapshots/create-group-empty-one-page-chromium-desktop-win32.png",
         "src/features/shared/ui/ui/__tests__/A01FormAndDialog.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveBranches.component.test.tsx",
@@ -74073,8 +74095,7 @@
         "src/features/shared/ui/ui/__tests__/carousel.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/chart.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/hashtag-display.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/overlay-portal-boundary.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/hashtag-display.component.test.tsx"
       ]
     },
     {
@@ -74733,6 +74754,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "e2e/visual.e2e.spec.ts-snapshots/public-not-found-chromium-desktop-linux.png",
         "e2e/visual.e2e.spec.ts-snapshots/public-not-found-chromium-desktop-win32.png",
         "src/features/shared/ui/ui/__tests__/A01FormAndDialog.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/A01PrimitiveBranches.component.test.tsx",
@@ -74743,8 +74765,7 @@
         "src/features/shared/ui/ui/__tests__/carousel.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/chart.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/hashtag-display.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/overlay-portal-boundary.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/hashtag-display.component.test.tsx"
       ]
     },
     {

@@ -855,8 +855,8 @@ it('keeps ballot controls busy until the confirmed phase reaches the rendered qu
   let confirm!: () => void;
   mocks.serverConfirmed.mockImplementationOnce(
     () =>
-      new Promise<void>(resolve => {
-        confirm = resolve;
+      new Promise<undefined>(resolve => {
+        confirm = () => resolve(undefined);
       })
   );
   const initial = options();

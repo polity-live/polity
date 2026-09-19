@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/test';
+import { waitForAppReady } from './fixtures/readiness';
 import {
   cleanupCommunicationFlow,
   installCommunicationBoundaryFakes,
@@ -14,6 +15,7 @@ test('sends, searches, and reopens a persisted cross-actor message after reload 
   const fixture = await seedMessageFlow(e2eRun.prefix, seed.extraUserId, seed.userId);
   try {
     await page.goto('/messages');
+    await waitForAppReady(page);
     const search = page.locator('[data-action-id="messages.conversation.search.change"]');
     await expect(search).toBeVisible();
     await search.fill(fixture.content);
@@ -24,6 +26,7 @@ test('sends, searches, and reopens a persisted cross-actor message after reload 
     await expect(persistedMessage).toBeVisible();
 
     await page.reload();
+    await waitForAppReady(page);
     await expect(search).toBeVisible();
     await search.fill(fixture.content);
     await expect(matchingConversation).toHaveCount(1);

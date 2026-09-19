@@ -133,6 +133,8 @@ describe('mutate-with-server-check', () => {
       'features/editor/hooks/useEditorOperations.ts',
       'features/events/hooks/useEventMutations.ts',
       'features/notifications/hooks/useNotificationActions.ts',
+      // Tutorial advancement verifies the Kanban status in the database.
+      'features/todos/hooks/useKanbanBoardController.ts',
       'features/todos/hooks/useTodoMutations.ts',
       // Inline edits and favorites keep pending controls active until the server accepts them.
       'features/todos/ui/CompactTodoRow.tsx',

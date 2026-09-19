@@ -492,7 +492,7 @@ export class TutorialFlowPage {
       });
       const copyButton = this.page
         .getByTestId('app-tutorial-coach-card')
-        .getByRole('button', { name: /^Copy:/ });
+        .getByRole('button', { name: /^(Copy|Kopieren):/ });
       await expect(copyButton).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
       await copyButton.click();
       await expect
@@ -500,7 +500,7 @@ export class TutorialFlowPage {
           timeout: CHECKPOINT_TIMEOUT_MS,
         })
         .toBe(text);
-      await expect(copyButton).toContainText(/Copied/);
+      await expect(copyButton).toContainText(/Copied|Kopiert/);
       textToInsert = await this.page.evaluate(() => window.__e2eClipboardText ?? '');
     }
 
