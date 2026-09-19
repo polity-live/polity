@@ -87,8 +87,10 @@ export function useUserMenuController({
   const handleLogout = async () => {
     try {
       setShowLogoutDialog(false);
-      await navigate({ to: signInHref, replace: true });
       await signOut();
+      // Session removal remounts the app's sync provider. Expose the form only
+      // afterwards so that this remount cannot discard newly entered credentials.
+      await navigate({ to: signInHref, replace: true });
     } catch (error) {
       console.error('Failed to sign out:', error);
     }
