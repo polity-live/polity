@@ -233,6 +233,16 @@ describe('push delivery policy', () => {
       role: process.env.SUPABASE_SERVICE_ROLE_KEY,
     };
     try {
+      vi.stubEnv('PUSH_DELIVERY_ENABLED', undefined);
+      vi.stubEnv('VAPID_PUBLIC_KEY', undefined);
+      vi.stubEnv('VAPID_PRIVATE_KEY', undefined);
+      vi.stubEnv('VAPID_EMAIL', undefined);
+      expect(pushDeliveryContracts.readConfig()).toEqual({
+        enabled: false,
+        publicKey: '',
+        privateKey: '',
+        email: 'mailto:support@polity.live',
+      });
       vi.stubEnv('PUSH_DELIVERY_ENABLED', ' TRUE ');
       vi.stubEnv('VAPID_PUBLIC_KEY', ' public ');
       vi.stubEnv('VAPID_PRIVATE_KEY', ' private ');

@@ -46,7 +46,7 @@ const plateReactMock = vi.hoisted(() => ({
         withoutSuggestions: (callback: () => void) => callback(),
       },
     },
-    editor: {},
+    editor: { api: { isFocused: () => false } },
   } as any,
   pluginOptions: new Map<string, unknown>(),
 }));
@@ -203,7 +203,7 @@ describe('BlockSuggestionCard internal vote actions', () => {
           withoutSuggestions: (callback: () => void) => callback(),
         },
       },
-      editor: {},
+      editor: { api: { isFocused: () => false } },
     };
   });
 
@@ -378,7 +378,7 @@ describe('suggestion editor styling', () => {
           withoutSuggestions: (callback: () => void) => callback(),
         },
       },
-      editor: {},
+      editor: { api: { isFocused: () => false } },
       setOption: vi.fn(),
     };
   });

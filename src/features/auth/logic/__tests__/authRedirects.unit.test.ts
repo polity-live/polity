@@ -10,6 +10,7 @@ import {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe('getAuthRedirectUrl', () => {
@@ -25,8 +26,10 @@ describe('getAuthRedirectUrl', () => {
 
   it('uses the configured fallback origin outside a browser', () => {
     vi.stubGlobal('window', undefined);
-
-    expect(getAuthRedirectUrl('/auth/callback')).toMatch(/^https?:\/\/[^/]+\/auth\/callback$/);
+    vi.stubEnv('VITE_APP_URL', 'https://configured.example');
+    expect(getAuthRedirectUrl('/auth/callback')).toBe('https://configured.example/auth/callback');
+    vi.stubEnv('VITE_APP_URL', undefined);
+    expect(getAuthRedirectUrl('/auth/callback')).toBe('http://localhost:3000/auth/callback');
   });
 });
 

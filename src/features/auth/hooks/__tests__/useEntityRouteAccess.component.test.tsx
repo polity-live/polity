@@ -152,6 +152,97 @@ describe('useEntityRouteAccess create recovery', () => {
     expect(result.current.recoveryDraft?.status).toBe('pending');
   });
 
+  it('keeps the same route mounted during token refresh and applies revoked access', async () => {
+    const allowed = { exists: true, visibilities: ['private'], canAccessPrivate: true };
+    vi.mocked(entityRouteAccessFn).mockResolvedValueOnce(allowed);
+    auth.session = { access_token: 'old-token', user: { id: 'user-1' } };
+    const { result, rerender } = renderHook(() =>
+      useEntityRouteAccess({ entityType: 'group', entityId: 'group-1' })
+    );
+    await waitFor(() => expect(result.current.data).toEqual(allowed));
+
+    let resolveRefresh!: (value: typeof allowed) => void;
+    vi.mocked(entityRouteAccessFn).mockReturnValueOnce(
+      new Promise(resolve => {
+        resolveRefresh = resolve;
+      })
+    );
+    auth.session = { access_token: 'new-token', user: { id: 'user-1' } };
+    rerender();
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.data).toEqual(allowed);
+    expect(entityRouteAccessFn).toHaveBeenLastCalledWith({
+      data: { entityType: 'group', entityId: 'group-1' },
+      headers: { Authorization: 'Bearer new-token' },
+    });
+
+    await act(async () => resolveRefresh({ ...allowed, canAccessPrivate: false }));
+    expect(result.current.data?.canAccessPrivate).toBe(false);
+  });
+
+  it.each(['entityId', 'entityType', 'parentId', 'parentType', 'account', 'sign-out'] as const)(
+    'discards cached access immediately when %s changes',
+    async change => {
+      const allowed = { exists: true, visibilities: ['private'], canAccessPrivate: true };
+      vi.mocked(entityRouteAccessFn).mockResolvedValueOnce(allowed);
+      auth.session = { access_token: 'old-token', user: { id: 'user-1' } };
+      const input: Parameters<typeof useEntityRouteAccess>[0] = {
+        entityType: 'group',
+        entityId: 'group-1',
+      };
+      const seen: ReturnType<typeof useEntityRouteAccess>['data'][] = [];
+      const { result, rerender } = renderHook(
+        (props: Parameters<typeof useEntityRouteAccess>[0]) => {
+          const value = useEntityRouteAccess(props);
+          seen.push(value.data);
+          return value;
+        },
+        { initialProps: input }
+      );
+      await waitFor(() => expect(result.current.data).toEqual(allowed));
+      vi.mocked(entityRouteAccessFn).mockReturnValueOnce(
+        new Promise(() => {
+          // Leave the next request pending to inspect access before its response.
+        })
+      );
+      seen.length = 0;
+      if (change === 'account')
+        auth.session = { access_token: 'other-token', user: { id: 'user-2' } };
+      else if (change === 'sign-out') auth.session = null;
+      const nextInput =
+        change === 'entityId'
+          ? { ...input, entityId: 'group-2' }
+          : change === 'entityType'
+            ? { ...input, entityType: 'event' as const }
+            : change === 'parentId'
+              ? { ...input, parentId: 'parent-2' }
+              : change === 'parentType'
+                ? { ...input, parentType: 'group' as const }
+                : input;
+      rerender(nextInput);
+      expect(result.current.isLoading).toBe(true);
+      expect(seen.every(value => value === null)).toBe(true);
+    }
+  );
+
+  it('removes cached access when revalidation fails', async () => {
+    vi.mocked(entityRouteAccessFn).mockResolvedValueOnce({
+      exists: true,
+      visibilities: ['private'],
+      canAccessPrivate: true,
+    });
+    auth.session = { access_token: 'old-token', user: { id: 'user-1' } };
+    const { result, rerender } = renderHook(() =>
+      useEntityRouteAccess({ entityType: 'group', entityId: 'group-1' })
+    );
+    await waitFor(() => expect(result.current.data?.canAccessPrivate).toBe(true));
+    vi.mocked(entityRouteAccessFn).mockRejectedValueOnce(new Error('Access unavailable'));
+    auth.session = { access_token: 'new-token', user: { id: 'user-1' } };
+    rerender();
+    await waitFor(() => expect(result.current.error?.message).toBe('Access unavailable'));
+    expect(result.current.data).toBeNull();
+  });
+
   it('surfaces a failed recovery draft instead of hiding it behind a generic miss', async () => {
     saveCreateRecoveryDraft({
       ...pendingGroupDraft,

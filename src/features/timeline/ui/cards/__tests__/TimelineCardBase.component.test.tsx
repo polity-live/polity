@@ -2,7 +2,12 @@
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
+import { CollectionCard } from '@/features/shared/ui/collections/CollectionCard';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+const presentation = vi.hoisted(() => ({ compact: false }));
+vi.mock('@/features/shared/ui/collections/CollectionScope', () => ({
+  useCollectionPresentation: () => (presentation.compact ? { view: 'compact' } : null),
+}));
 
 vi.mock('@/features/shared/ui/navigation/LinkSurface.tsx', () => ({
   LinkSurface: ({ children, href, containerClassName, ...props }: any) => (
@@ -31,9 +36,60 @@ import {
 
 const Icon = (props: any) => <svg data-testid="icon" {...props} />;
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  presentation.compact = false;
+});
 
 describe('TimelineCardBase', () => {
+  it('keeps the first meaningful paragraph and task actions in the compact list presentation', () => {
+    presentation.compact = true;
+    const { rerender } = render(
+      <TimelineCardBase contentType="todo" href="/todos/one">
+        {'Unstructured text'}
+        <span>Empty wrapper</span>
+        <TimelineCardHeader contentType="todo" title="Task">
+          <button>Assign owner</button>
+        </TimelineCardHeader>
+        <section>
+          <div>
+            <p>Meaningful summary</p>
+          </div>
+          <p>Later text</p>
+        </section>
+        <TimelineCardActions>
+          <button>Complete</button>
+        </TimelineCardActions>
+      </TimelineCardBase>
+    );
+    expect(screen.getByText('Meaningful summary')).toBeTruthy();
+    expect(screen.queryByText('Later text')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Complete' })).toBeTruthy();
+    expect(document.querySelector('[data-workspace-row]')).toBeTruthy();
+    rerender(
+      <TimelineCardBase contentType="event">
+        <TimelineCardHeader contentType="event" title="Meeting" subtitle="Explicit summary" />
+        <span>No paragraph</span>
+      </TimelineCardBase>
+    );
+    expect(screen.getByText('Explicit summary')).toBeTruthy();
+    rerender(
+      <TimelineCardBase contentType="statement">
+        <TimelineCardHeader contentType="statement" title="Statement" />
+        <span>No paragraph</span>
+      </TimelineCardBase>
+    );
+    expect(screen.getByText('Statement')).toBeTruthy();
+    expect(screen.queryByText('No paragraph')).toBeNull();
+    rerender(
+      <CollectionCard compact model={{ title: 'Standalone', type: 'statement' }}>
+        <TimelineCardBase contentType="statement">
+          <span>Plain contents</span>
+        </TimelineCardBase>
+      </CollectionCard>
+    );
+    expect(screen.getByText('Standalone')).toBeTruthy();
+  });
   it('clips its colored sections to the rounded card boundary', () => {
     const { container } = render(
       <TimelineCardBase contentType="agenda_item">

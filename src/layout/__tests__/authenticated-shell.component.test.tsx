@@ -21,6 +21,12 @@ const mocks = vi.hoisted(() => ({
   sync: vi.fn(),
 }));
 
+vi.mock('@/features/shared/ui/collections/CollectionPreferencesProvider', () => ({
+  CollectionPreferencesProvider: ({ children }: any) => <>{children}</>,
+}));
+vi.mock('@/features/shared/ui/preview/WorkspacePreview', () => ({
+  WorkspacePreviewProvider: ({ children }: any) => <>{children}</>,
+}));
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => mocks.navigate,
   useRouterState: ({ select }: any) => select({ location: { pathname: mocks.pathname } }),

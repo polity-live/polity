@@ -45,6 +45,25 @@ const privateAmendment: ViewableAmendment = {
 };
 
 describe('amendment read authorization', () => {
+  it('requires the current tutorial owner even for authenticated visibility or creator access', async () => {
+    const amendment = {
+      ...privateAmendment,
+      tutorial_run_id: 'tutorial',
+      visibility: 'authenticated',
+    };
+    await expect(
+      assertCanViewAmendment(serverTx(amendment, undefined), { userID: 'creator' }, amendment.id)
+    ).rejects.toThrow();
+    const tx = serverTx(amendment, { id: 'tutorial', user_id: 'creator', status: 'active' });
+    await expect(assertCanViewAmendment(tx, { userID: 'creator' }, amendment.id)).resolves.toBe(
+      amendment
+    );
+    expectQuery(tx, 1, 'app_tutorial_run', [
+      { column: 'id', value: 'tutorial' },
+      { column: 'user_id', value: 'creator' },
+      { column: 'status', operator: 'IN', value: ['active', 'paused'] },
+    ]);
+  });
   it('keeps the optimistic client path free from server reads', async () => {
     const tx = { location: 'client', run: vi.fn() } as any;
 

@@ -76,6 +76,7 @@ describe('useAlphaWarningDialogController', () => {
       dismissible: false,
       duration: Infinity,
       id: ALPHA_WARNING_TOAST_ID,
+      classNames: { description: '!text-[var(--badge-warning-fg)]' },
     });
     expect(options?.action?.onClick).toEqual(expect.any(Function));
 

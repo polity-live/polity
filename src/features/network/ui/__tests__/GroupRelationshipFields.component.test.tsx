@@ -607,3 +607,33 @@ describe('GroupRelationshipFields branch contracts', () => {
     );
   });
 });
+
+it('names direction selectors for assistive technology and updates the selected direction', () => {
+  const props = {
+    label: 'Rights',
+    selectedRights: new Set<'informationRight'>(['informationRight']),
+    onToggleRight: vi.fn(),
+    directionOptions: getGroupRelationshipDirectionOptions(key => key),
+    onDirectionChange: vi.fn(),
+    currentGroupName: 'Current',
+    selectedGroupName: 'Selected',
+  };
+  const { rerender } = render(
+    <GroupRelationshipRightsSelector
+      {...props}
+      rightDirections={{ informationRight: 'current_grants_right_to_partner' }}
+    />
+  );
+  expect(
+    screen.getByRole('combobox', { name: 'Diese Gruppe gibt Information Right an Selected' })
+  ).toBeTruthy();
+  rerender(
+    <GroupRelationshipRightsSelector
+      {...props}
+      rightDirections={{ informationRight: 'partner_grants_right_to_current' }}
+    />
+  );
+  expect(
+    screen.getByRole('combobox', { name: 'Diese Gruppe hat Information Right in Selected' })
+  ).toBeTruthy();
+});

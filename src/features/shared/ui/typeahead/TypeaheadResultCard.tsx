@@ -85,7 +85,7 @@ export function TypeaheadResultCard({
       data-typeahead-entity-id={item.id}
     >
       <Avatar className="mt-0.5 h-8 w-8 shrink-0">
-        <AvatarImage src={item.avatar ?? undefined} />
+        <AvatarImage src={item.avatar ?? undefined} alt="" />
         <AvatarFallback className={cn('text-xs', toneClasses.badge)}>
           <Icon data-slot="typeahead-entity-icon" className={cn('h-4 w-4', entityIconClassName)} />
         </AvatarFallback>

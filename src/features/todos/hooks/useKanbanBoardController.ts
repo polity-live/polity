@@ -4,7 +4,7 @@ import { featureThemeClassName } from '@/features/shared/theme';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTodoActions } from '@/zero/todos/useTodoActions.ts';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { serverConfirmed, waitForClientApply } from '@/zero/mutate-with-server-check';
 import { reportAppTutorialAction } from '@/features/app-tutorial/events';
 
 import type { Todo, TodoStatus } from '../types/todo.types';
@@ -79,12 +79,14 @@ export function useKanbanBoardController({
         completed_at: status === 'completed' ? Date.now() : null,
       };
 
-      await waitForClientApply(updateTodo(updates));
+      const mutation = updateTodo(updates);
+      await waitForClientApply(mutation);
       if (
         status === 'completed' &&
         draggedTodo &&
         getTodoTutorialAnchor(draggedTodo) === 'tutorial-network-todo'
       ) {
+        await serverConfirmed(mutation);
         reportAppTutorialAction({ type: 'drop', event: 'todo.completed' });
       }
       if (
@@ -92,6 +94,8 @@ export function useKanbanBoardController({
         draggedTodo &&
         getTodoTutorialAnchor(draggedTodo) === 'tutorial-assistant-todo'
       ) {
+        // Tutorial advancement verifies the persisted status on the server.
+        await serverConfirmed(mutation);
         reportAppTutorialAction({ type: 'mutation', event: 'todo.in-progress' });
       }
       toast.success(t('features.todos.kanban.statusUpdated'));

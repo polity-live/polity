@@ -2505,6 +2505,10 @@ describe('AppTutorialOrchestrator', () => {
   });
 
   it('offers separate copy actions for the tutorial street and house number', async () => {
+    let finishCopy!: () => void;
+    mocks.writeClipboard.mockImplementation(
+      () => new Promise<void>(resolve => (finishCopy = resolve))
+    );
     mocks.loadTutorialRun.mockResolvedValueOnce({
       run: {
         runId: 'run-1',
@@ -2533,11 +2537,16 @@ describe('AppTutorialOrchestrator', () => {
     expect(streetCopyButton.parentElement?.className).toContain('col-start-2');
 
     fireEvent.click(streetCopyButton);
-    await waitFor(() => expect(mocks.writeClipboard).toHaveBeenCalledWith('Euckenstraße'));
+    expect(mocks.writeClipboard).toHaveBeenCalledWith('Euckenstraße');
+    expect(screen.getByText('Euckenstraße · Copy')).toBeTruthy();
+    await act(async () => finishCopy());
     expect(screen.getByText('Euckenstraße · Copied')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy: 38' }));
-    await waitFor(() => expect(mocks.writeClipboard).toHaveBeenCalledWith('38'));
+    expect(mocks.writeClipboard).toHaveBeenCalledWith('38');
+    expect(screen.getByText('38 · Copy')).toBeTruthy();
+    expect(screen.getByText('Euckenstraße · Copied')).toBeTruthy();
+    await act(async () => finishCopy());
     expect(screen.getByText('38 · Copied')).toBeTruthy();
     expect(screen.getByText('Euckenstraße · Copy')).toBeTruthy();
     expect(mocks.advanceTutorial).not.toHaveBeenCalled();

@@ -49,6 +49,21 @@ vi.mock('@/zero/queries', () => ({
 import { StatementListTab } from '../StatementListTab';
 
 describe('StatementListTab branch campaign A07', () => {
+  it('keeps the statement filter while switching to compact rows', () => {
+    const view = render(
+      <StatementListTab
+        authorName="Viewer"
+        userId="viewer"
+        searchValue="climate"
+        onSearchChange={vi.fn()}
+      />
+    );
+    const controls = view.container.querySelectorAll('[data-action-id="collection.view.select"]');
+    fireEvent.click(controls[1]);
+    expect((mocks.gridProps as any).getLanes(1200)).toBe(1);
+    expect(mocks.gridProps!.estimateSize).toBe(76);
+    fireEvent.click(controls[0]);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.gridProps = undefined;

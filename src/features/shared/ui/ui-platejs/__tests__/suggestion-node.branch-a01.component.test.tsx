@@ -12,12 +12,22 @@ const state = vi.hoisted(() => ({
   discussions: undefined as any[] | undefined,
   selectedCrIds: null as Set<string> | null,
   setOption: vi.fn(),
+  editor: {
+    selection: {} as object | null,
+    api: {
+      isFocused: vi.fn(() => false),
+      isComposing: vi.fn(() => false),
+      isCollapsed: vi.fn(() => true),
+      toDOMRange: vi.fn<() => Range | undefined>(),
+    },
+  },
 }));
 
 vi.mock('platejs/react', () => ({
   PlateLeaf: ({ as = 'span', children, attributes, ...props }: any) =>
     React.createElement(as, { ...attributes, className: props.className }, children),
   useEditorPlugin: () => ({
+    editor: state.editor,
     api: {
       suggestion: {
         nodeId: () => state.nodeId,
@@ -69,6 +79,11 @@ beforeEach(() => {
   state.hoverId = undefined;
   state.discussions = undefined;
   state.selectedCrIds = null;
+  state.editor.selection = {};
+  state.editor.api.isFocused.mockReturnValue(false);
+  state.editor.api.isComposing.mockReturnValue(false);
+  state.editor.api.isCollapsed.mockReturnValue(true);
+  state.editor.api.toDOMRange.mockReset();
 });
 
 afterEach(cleanup);
@@ -81,6 +96,39 @@ const leafProps = {
 } as any;
 
 describe('SuggestionLeaf', () => {
+  it('restores the logical caret after the first suggestion replaces its text node', async () => {
+    state.editor.api.isFocused.mockReturnValue(true);
+    const view = render(<SuggestionLeaf {...leafProps} />);
+    const text = view.container.firstElementChild!.firstChild!;
+    const range = document.createRange();
+    range.setStart(text, 3);
+    range.collapse(true);
+    state.editor.api.toDOMRange.mockReturnValue(range);
+    await Promise.resolve();
+    expect(window.getSelection()?.anchorNode).toBe(text);
+    expect(window.getSelection()?.anchorOffset).toBe(3);
+  });
+
+  it.each(['composition', 'expanded', 'absent'])(
+    'does not replace a %s selection during rendering',
+    async mode => {
+      state.editor.api.isFocused.mockReturnValue(true);
+      state.editor.api.isComposing.mockReturnValue(mode === 'composition');
+      state.editor.api.isCollapsed.mockReturnValue(mode !== 'expanded');
+      if (mode === 'absent') state.editor.selection = null;
+      render(<SuggestionLeaf {...leafProps} />);
+      await Promise.resolve();
+      expect(state.editor.api.toDOMRange).not.toHaveBeenCalled();
+    }
+  );
+
+  it('tolerates a leaf unmounted before its DOM range can be resolved', async () => {
+    state.editor.api.isFocused.mockReturnValue(true);
+    const view = render(<SuggestionLeaf {...leafProps} />);
+    view.unmount();
+    await Promise.resolve();
+    expect(state.editor.api.toDOMRange).toHaveBeenCalledOnce();
+  });
   it('hides filtered inserts and shows filtered removals without decoration', () => {
     state.nodeId = 'suggestion';
     state.discussions = [{ id: 'suggestion', crId: 'CR-1' }];

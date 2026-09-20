@@ -66,6 +66,7 @@ function field(config: any, key: string) {
 }
 
 beforeEach(() => {
+  sessionStorage.clear();
   vi.clearAllMocks();
   mocks.user = { id: 'user-1' };
   mocks.search = {};
@@ -77,6 +78,76 @@ beforeEach(() => {
 });
 
 describe('useCreateStatementForm', () => {
+  it('restores a Studio return, prioritizes exported media and retains the group without a URL parameter', () => {
+    sessionStorage.setItem(
+      'studio:statement-return',
+      JSON.stringify({
+        title: 'Draft',
+        text: 'Unfinished',
+        groupId: 'group-1',
+        imageUrl: 'old.png',
+        videoUrl: 'old.mp4',
+        isStory: true,
+        visibility: 'private',
+        surveyQuestion: 'Proceed?',
+        surveyOptions: ['Yes', 'No'],
+        surveyDurationHours: 48,
+        hashtags: ['local'],
+      })
+    );
+    sessionStorage.setItem(
+      'studio:post',
+      JSON.stringify({
+        title: 'Export',
+        imageUrl: 'new.png',
+        videoUrl: '',
+        isStory: false,
+        groupId: 'group-1',
+      })
+    );
+    const { result, rerender } = renderHook(useCreateStatementForm);
+    expect(field(result.current, 'title').value).toBe('Export');
+    expect(field(result.current, 'text').value).toBe('Unfinished');
+    expect(field(result.current, 'group').props.value).toBe('group-1');
+    expect(field(result.current, 'review').props.media).toMatchObject({ imageUrl: 'new.png' });
+    expect(field(result.current, 'review').props.hashtags).toEqual(['local']);
+    expect(sessionStorage.getItem('studio:post')).toBeNull();
+    expect(sessionStorage.getItem('studio:statement-return')).toBeNull();
+    mocks.search = { groupId: 'group-2' };
+    rerender();
+    expect(field(result.current, 'group').props.value).toBe('group-2');
+  });
+  it.each([
+    ['studio:statement-return', '{}'],
+    ['studio:post', '{}'],
+    [
+      'studio:statement-return',
+      JSON.stringify({
+        title: 'Draft',
+        groupId: 'group-1',
+        imageUrl: 'draft.png',
+        videoUrl: 'draft.mp4',
+        isStory: true,
+      }),
+    ],
+    ['studio:post', '{invalid'],
+  ])(
+    'consumes a sparse or damaged Studio handoff at %s without blocking the form',
+    (key, value) => {
+      sessionStorage.setItem(key, value);
+      const { result } = renderHook(useCreateStatementForm);
+      expect(result.current.steps.length).toBeGreaterThan(0);
+      expect(sessionStorage.getItem(key)).toBeNull();
+      if (value.includes('Draft')) {
+        expect(field(result.current, 'title').value).toBe('Draft');
+        expect(field(result.current, 'group').props.value).toBe('group-1');
+        expect(field(result.current, 'review').props.media).toMatchObject({
+          imageUrl: 'draft.png',
+          videoUrl: 'draft.mp4',
+        });
+      }
+    }
+  );
   it('updates content, group, media, survey, story, hashtags, and visibility review state', () => {
     const { result } = renderHook(() => useCreateStatementForm());
     expect(result.current.steps.at(-1)?.isValid()).toBe(false);

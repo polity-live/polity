@@ -1,8 +1,20 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+afterEach(() => vi.unstubAllEnvs());
 
 import { navItemsAuthenticated } from '../nav-items-authenticated';
 
 describe('navItemsAuthenticated', () => {
+  it('keeps Studio hidden in production unless explicitly enabled', () => {
+    vi.stubEnv('DEV', false);
+    vi.stubEnv('VITE_STUDIO_ENABLED', 'false');
+    expect(navItemsAuthenticated(vi.fn()).primaryNavItems.some(item => item.id === 'studio')).toBe(
+      false
+    );
+    vi.stubEnv('VITE_STUDIO_ENABLED', 'true');
+    expect(navItemsAuthenticated(vi.fn()).primaryNavItems.some(item => item.id === 'studio')).toBe(
+      true
+    );
+  });
   it('performs exactly one navigation for a primary item click', () => {
     const navigate = vi.fn();
     const searchItem = navItemsAuthenticated(navigate).primaryNavItems.find(
@@ -169,7 +181,7 @@ describe('navItemsAuthenticated', () => {
         true,
         true
       )
-    ).toHaveLength(10);
+    ).toHaveLength(11);
 
     expect(resolve('amendment')).toBeNull();
     expect(resolve('amendment', undefined, undefined, undefined, undefined, 'a')).toHaveLength(4);
@@ -243,7 +255,9 @@ describe('navItemsAuthenticated', () => {
     });
     vi.stubGlobal('window', { setTimeout });
 
-    navItemsAuthenticated(navigate).primaryNavItems[0]?.onClick?.();
+    navItemsAuthenticated(navigate)
+      .primaryNavItems.find(item => item.id === 'home')
+      ?.onClick?.();
 
     expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 0);
     expect(navigate).toHaveBeenCalledWith({ to: '/home' });

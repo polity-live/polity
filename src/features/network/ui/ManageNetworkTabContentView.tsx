@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { RoleTag } from '@/features/groups/ui/RoleTag';
 import { Button } from '@/features/shared/ui/ui/button';
 import { ManagementSection, ManagementToolbar } from '@/features/shared/ui/form';
@@ -143,11 +143,22 @@ export function ManageNetworkTabContentView({
   manageDialogCanAccept,
 }: ManageNetworkTabContentViewProps) {
   const { t } = useTranslation();
+  const contentRef = useRef<HTMLDivElement>(null);
   const linkSubmission = useActionSubmission('link', GROUP_LINK_APPROVAL_STEPS);
   const [linkPreview, setLinkPreview] = useState<{
     title: string;
     path: string[];
     badges: string[];
+  } | null>(null);
+  // Table cell renderers remount when live query results rebuild the columns.
+  // Keep an open confirmation outside those cells so updates cannot dismiss it.
+  const [deleteDialog, setDeleteDialog] = useState<{
+    title: string;
+    description: string;
+    triggerKey: string;
+    target:
+      | { type: 'request'; relationships: NormalizedGroupRelationship[] }
+      | { type: 'active'; groupId: string };
   } | null>(null);
 
   const currentGroupTagName = groupName || '';
@@ -301,31 +312,31 @@ export function ManageNetworkTabContentView({
 
   const renderRequestDeleteAction = ({
     partnerGroupName,
-    onDelete,
+    relationships,
   }: {
     partnerGroupName: string;
-    onDelete: () => void;
+    relationships: NormalizedGroupRelationship[];
   }) => (
-    <DangerConfirmDialog
-      trigger={
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          data-action-id="network.relationship.delete.open"
-        >
-          <Trash2 className="h-4 w-4" />
-          <span className="sr-only">{t('common.actions.delete')}</span>
-        </Button>
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8"
+      data-action-id="network.relationship.delete.open"
+      data-network-delete-target={relationships.map(rel => rel.id).join(':')}
+      onClick={() =>
+        setDeleteDialog({
+          title: t('common.network.deleteRequestTitle'),
+          description: t('common.network.deleteRequestDescription', {
+            groupName: partnerGroupName,
+          }),
+          target: { type: 'request', relationships },
+          triggerKey: relationships.map(rel => rel.id).join(':'),
+        })
       }
-      title={t('common.network.deleteRequestTitle')}
-      description={t('common.network.deleteRequestDescription', {
-        groupName: partnerGroupName,
-      })}
-      cancelLabel={t('common.actions.cancel')}
-      confirmLabel={t('common.actions.delete')}
-      onConfirm={onDelete}
-    />
+    >
+      <Trash2 className="h-4 w-4" />
+      <span className="sr-only">{t('common.actions.delete')}</span>
+    </Button>
   );
 
   const renderRequestFallbackRelationshipCell = () => (
@@ -580,7 +591,7 @@ export function ManageNetworkTabContentView({
         {renderRequestEditAction(row)}
         {renderRequestDeleteAction({
           partnerGroupName: otherGroupName,
-          onDelete: () => onRejectRequest(row.rels),
+          relationships: row.rels,
         })}
       </div>
     );
@@ -594,7 +605,7 @@ export function ManageNetworkTabContentView({
         {renderRequestEditAction(row)}
         {renderRequestDeleteAction({
           partnerGroupName: otherGroupName,
-          onDelete: () => onRejectRequest(row.rels),
+          relationships: row.rels,
         })}
       </div>
     );
@@ -776,28 +787,28 @@ export function ManageNetworkTabContentView({
                   }
                   allRelationships={allRelationships}
                 />
-                <DangerConfirmDialog
-                  trigger={
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      data-action-id="network.relationship.active.delete.open"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">
-                        {translateText('generated.inline.0802_delete_relationship_98af16bc')}
-                      </span>
-                    </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  data-action-id="network.relationship.active.delete.open"
+                  data-network-delete-target={row.original.group.id}
+                  onClick={() =>
+                    setDeleteDialog({
+                      title: t('common.network.deleteAllRelationships'),
+                      description: t('common.network.deleteRelationshipDescription', {
+                        groupName: row.original.group.name,
+                      }),
+                      target: { type: 'active', groupId: row.original.group.id },
+                      triggerKey: row.original.group.id,
+                    })
                   }
-                  title={t('common.network.deleteAllRelationships')}
-                  description={t('common.network.deleteRelationshipDescription', {
-                    groupName: row.original.group.name,
-                  })}
-                  cancelLabel={t('common.actions.cancel')}
-                  confirmLabel={t('common.actions.delete')}
-                  onConfirm={() => onDeleteRelationship(row.original.group.id)}
-                />
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">
+                    {translateText('generated.inline.0802_delete_relationship_98af16bc')}
+                  </span>
+                </Button>
               </div>
             ),
           } satisfies ColumnDef<GroupedRelationshipSummary>,
@@ -824,7 +835,10 @@ export function ManageNetworkTabContentView({
           groupId,
           status: 'active',
           relationshipType: directionFilter,
-          rights: [...manageRightFilter],
+          rights:
+            manageRightFilter.size === NETWORK_FLOW_FILTER_TYPES.length
+              ? []
+              : [...manageRightFilter],
           query: searchQuery,
           limit,
           start,
@@ -908,7 +922,7 @@ export function ManageNetworkTabContentView({
   );
 
   return (
-    <div className="space-y-6">
+    <div ref={contentRef} className="space-y-6">
       <header className="flex flex-col gap-4 px-3 sm:flex-row sm:items-start sm:justify-between sm:px-4">
         <div className="max-w-2xl space-y-1.5">
           <h1 className="text-xl font-semibold tracking-tight">
@@ -1085,6 +1099,36 @@ export function ManageNetworkTabContentView({
         </ManagementSection>
       </div>
 
+      {canManageRelationships && deleteDialog ? (
+        <DangerConfirmDialog
+          open
+          onOpenChange={open => {
+            if (!open) setDeleteDialog(null);
+          }}
+          onCloseAutoFocus={event => {
+            const trigger = Array.from(
+              contentRef.current?.querySelectorAll<HTMLButtonElement>(
+                '[data-network-delete-target]'
+              ) ?? []
+            ).find(button => button.dataset.networkDeleteTarget === deleteDialog.triggerKey);
+            if (trigger) {
+              event.preventDefault();
+              trigger.focus();
+            }
+          }}
+          title={deleteDialog.title}
+          description={deleteDialog.description}
+          cancelLabel={t('common.actions.cancel')}
+          confirmLabel={t('common.actions.delete')}
+          onConfirm={() => {
+            if (deleteDialog.target.type === 'request') {
+              void onRejectRequest(deleteDialog.target.relationships);
+            } else {
+              onDeleteRelationship(deleteDialog.target.groupId);
+            }
+          }}
+        />
+      ) : null}
       {canManageRelationships && manageDialog ? (
         <HierarchyConflictDialog
           open

@@ -18,8 +18,26 @@ import { getMotionPreset, getSemanticToneClasses } from '@/features/shared/theme
 const INLINE_SUGGESTION_MARK_CLASSES = 'box-decoration-clone rounded-sm border px-0.5 no-underline';
 
 export function SuggestionLeaf(props: PlateLeafProps<TSuggestionText>) {
-  const { api, setOption } = useEditorPlugin(suggestionPlugin);
+  const { api, editor, setOption } = useEditorPlugin(suggestionPlugin);
   const leaf = props.leaf;
+
+  React.useLayoutEffect(() => {
+    if (
+      !editor.api.isFocused() ||
+      editor.api.isComposing() ||
+      !editor.selection ||
+      !editor.api.isCollapsed()
+    )
+      return;
+    // Applying the first suggestion mark mounts a new leaf component and replaces
+    // its DOM text node. Restore the logical caret before selectionchange can
+    // overwrite it with the browser's collapsed position at the start of the line.
+    const selection = editor.selection;
+    queueMicrotask(() => {
+      const range = editor.api.toDOMRange(selection);
+      if (range) window.getSelection()?.collapse(range.endContainer, range.endOffset);
+    });
+  }, [editor, leaf]);
 
   const leafId: string = api.suggestion.nodeId(leaf) ?? '';
   const activeSuggestionId = usePluginOption(suggestionPlugin, 'activeId');

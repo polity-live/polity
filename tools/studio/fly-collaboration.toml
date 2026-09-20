@@ -1,0 +1,19 @@
+app = "polity-studio-collaboration"
+primary_region = "fra"
+[build]
+  dockerfile = "tools/studio/Dockerfile"
+[processes]
+  app = "node --import tsx tools/studio/launch.ts collaboration-server"
+[env]
+  NODE_ENV = "production"
+  PORT = "1235"
+  STUDIO_ENABLED = "true"
+[http_service]
+  internal_port = 1235
+  force_https = true
+  auto_stop_machines = "off"
+  min_machines_running = 1
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory = "1gb"

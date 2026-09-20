@@ -1,12 +1,16 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 const state = vi.hoisted(() => ({
   model: {} as any,
   swipe: undefined as any,
   view: undefined as any,
+  loading: false,
+  display: {} as Record<string, unknown>,
+  save: vi.fn().mockResolvedValue(undefined),
+  error: vi.fn(),
 }));
 vi.mock('@/features/todos/hooks/useTodosPage', () => ({ useTodosPage: () => state.model }));
 vi.mock('@/features/shared/hooks/useSwipeNavigation', () => ({
@@ -15,7 +19,7 @@ vi.mock('@/features/shared/hooks/useSwipeNavigation', () => ({
     return { handlers: { onTouchStart: vi.fn() } };
   },
 }));
-vi.mock('./TodosPageView', () => ({
+vi.mock('../TodosPageView', () => ({
   TodosPageView: (props: any) => {
     state.view = props;
     return null;
@@ -40,6 +44,33 @@ import { TodosHeader } from '../ui/TodosHeader';
 import { TodoStatusIcon } from '../ui/TodoStatusIcon';
 
 afterEach(cleanup);
+beforeEach(() => {
+  state.loading = false;
+  state.display = {};
+  state.save.mockReset().mockResolvedValue(undefined);
+  state.error.mockClear();
+});
+
+it('loads the saved todo view once and retains a manually selected view when saving fails', async () => {
+  state.model = model('all');
+  state.loading = true;
+  state.display = { todoView: 'list' };
+  const view = render(<TodosPage />);
+  expect(state.model.setViewMode).not.toHaveBeenCalled();
+  state.loading = false;
+  view.rerender(<TodosPage />);
+  expect(state.model.setViewMode).toHaveBeenCalledExactlyOnceWith('list');
+  view.rerender(<TodosPage />);
+  expect(state.model.setViewMode).toHaveBeenCalledTimes(1);
+  state.save.mockRejectedValueOnce(new Error('offline'));
+  state.view.setViewMode('kanban');
+  await waitFor(() => expect(state.error).toHaveBeenCalledWith('common.workspace.saveFailed'));
+  expect(state.model.setViewMode).toHaveBeenLastCalledWith('kanban');
+  view.unmount();
+  state.model = { ...model('all'), filteredTodos: [{ tutorial_run_id: 'tutorial' }] };
+  render(<TodosPage />);
+  expect(state.model.setViewMode).not.toHaveBeenCalled();
+});
 
 const model = (selectedTab: string) => ({
   user: null,
@@ -152,8 +183,9 @@ it('updates tutorial detail description and both header modes', () => {
 
 vi.mock('@/zero/preferences/useWorkspacePreferences', () => ({
   useWorkspacePreferences: () => ({
-    isLoading: false,
-    display: {},
-    setDisplay: vi.fn().mockResolvedValue(undefined),
+    isLoading: state.loading,
+    display: state.display,
+    setDisplay: state.save,
   }),
 }));
+vi.mock('@/features/shared/ui/ui/sonner', () => ({ toast: { error: state.error } }));

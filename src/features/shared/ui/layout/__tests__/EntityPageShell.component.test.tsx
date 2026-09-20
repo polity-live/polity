@@ -12,10 +12,16 @@ vi.mock('@/features/shared/theme', () => ({
 }));
 
 import { EntityPageShell } from '../EntityPageShell';
+import { PageHeader } from '../PageShell';
 
 afterEach(cleanup);
 
 describe('EntityPageShell', () => {
+  it('omits an absent description in the shared page header', () => {
+    const { container } = render(<PageHeader title="A short header" />);
+    expect(screen.getByRole('heading', { name: 'A short header' })).toBeTruthy();
+    expect(container.querySelector('p')).toBeNull();
+  });
   it('renders the complete page shell including stats with and without units', () => {
     const { container } = render(
       <EntityPageShell

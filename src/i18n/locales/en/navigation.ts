@@ -1,5 +1,6 @@
 export const navigationTranslations = {
   primary: {
+    studio: 'Communication studio',
     home: 'Home',
     features: 'Features',
     solutions: 'Solutions',

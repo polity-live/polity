@@ -1,9 +1,13 @@
 import { expect, test } from '@playwright/test';
+import { ALPHA_WARNING_SESSION_KEY } from '@/features/shared/constants';
 
 const searchLabel = /Search documentation|Dokumentation durchsuchen/;
 const openNavigationLabel = /Open docs navigation|Docs-Navigation öffnen/;
 
 test.describe('public documentation', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(key => sessionStorage.setItem(key, 'true'), ALPHA_WARNING_SESSION_KEY);
+  });
   test('searches sections by keyboard and opens their anchors @nightly', async ({ page }) => {
     await page.goto('/docs');
 
@@ -15,7 +19,7 @@ test.describe('public documentation', () => {
     await search.fill('ballot');
 
     const result = page
-      .getByRole('option', { name: /Votes|Abstimmungen/ })
+      .getByRole('option', { name: /Votes|Abstimmungen/, selected: true })
       .filter({ visible: true });
     await expect(result).toHaveCount(1);
     await page.keyboard.press('Enter');

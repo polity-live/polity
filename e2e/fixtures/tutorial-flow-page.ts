@@ -176,7 +176,30 @@ export class TutorialFlowPage {
   }
 
   async installExternalServiceStubs() {
-    await this.page.route('**/api/ai/chat', async route => {
+    // The PWA worker fetches GET APIs itself, so intercept the browser context.
+    await this.page.context().route('**/api/ai/catalog', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          models: [
+            {
+              provider: 'openrouter',
+              id: 'openrouter/free',
+              label: 'Tutorial model',
+              source: 'app',
+              free: true,
+              supports_reasoning_effort: false,
+              context_window: 128_000,
+            },
+          ],
+        }),
+      });
+    });
+    await this.page.context().route('**/api/ai/chat', async route => {
+      expect(route.request().postDataJSON()).toMatchObject({
+        model: { provider: 'openrouter', id: 'openrouter/free' },
+      });
       await route.fulfill({
         status: 200,
         contentType: 'application/x-ndjson',
@@ -492,7 +515,7 @@ export class TutorialFlowPage {
       });
       const copyButton = this.page
         .getByTestId('app-tutorial-coach-card')
-        .getByRole('button', { name: /^Copy:/ });
+        .getByRole('button', { name: /^(Copy|Kopieren):/ });
       await expect(copyButton).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
       await copyButton.click();
       await expect
@@ -500,7 +523,7 @@ export class TutorialFlowPage {
           timeout: CHECKPOINT_TIMEOUT_MS,
         })
         .toBe(text);
-      await expect(copyButton).toContainText(/Copied/);
+      await expect(copyButton).toContainText(/Copied|Kopiert/);
       textToInsert = await this.page.evaluate(() => window.__e2eClipboardText ?? '');
     }
 
@@ -672,7 +695,29 @@ export class TutorialFlowPage {
     await expect(destination).toBeVisible({
       timeout: CHECKPOINT_TIMEOUT_MS,
     });
-    await source.dragTo(destination);
+    const isDesktop = await this.page.evaluate(
+      () => window.matchMedia('(min-width: 768px)').matches
+    );
+    if (isDesktop) {
+      // The desktop coach overlaps the column heading; its center remains a
+      // visible drop target below the coach.
+      await source.dragTo(destination);
+      return;
+    }
+    // Start the native drag before scrolling the destination into view. On the
+    // stacked mobile board, scrolling first moves the source out of the viewport.
+    await source.scrollIntoViewIfNeeded();
+    const start = await source.boundingBox();
+    expect(start).not.toBeNull();
+    await this.page.mouse.move(start!.x + 24, start!.y + 24);
+    await this.page.mouse.down();
+    await this.page.mouse.move(start!.x + 40, start!.y + 40, { steps: 5 });
+    await destination.scrollIntoViewIfNeeded();
+    const finish = await destination.boundingBox();
+    expect(finish).not.toBeNull();
+    await this.page.mouse.move(finish!.x + 24, Math.max(0, finish!.y) + 40, { steps: 10 });
+    await this.page.mouse.move(finish!.x + 24, Math.max(0, finish!.y) + 42);
+    await this.page.mouse.up();
   }
 
   private async enterVotingPassword() {
@@ -696,7 +741,9 @@ export class TutorialFlowPage {
     await expect(input).toHaveCount(1, { timeout: CHECKPOINT_TIMEOUT_MS });
     await expect(input).toBeVisible({ timeout: CHECKPOINT_TIMEOUT_MS });
     await input.fill(this.expectedInputs().assistantTodo);
-    await composer.locator('form').evaluate(form => (form as HTMLFormElement).requestSubmit());
+    const send = composer.locator('[data-action-id="messages.assistant.send"]');
+    await expect(send).toBeEnabled({ timeout: CHECKPOINT_TIMEOUT_MS });
+    await send.click();
   }
 
   private async performCheckpoint(checkpoint: AppTutorialCheckpoint) {
@@ -754,13 +801,13 @@ export class TutorialFlowPage {
         await this.addTreeRow();
         return;
       case 'switch-suggest-internal':
-        await this.switchEditorMode(/Internal Suggestions|Intern vorschlagen/i);
+        await this.switchEditorMode(/Internal Suggestions|Interne Vorschläge/i);
         return;
       case 'create-change-request':
         await this.appendEditorText(this.expectedInputs().changeRequestText, true);
         return;
       case 'switch-vote-internal':
-        await this.switchEditorMode(/Internal Voting Mode|Intern abstimmen/i);
+        await this.switchEditorMode(/Internal Voting Mode|Interner Abstimmungsmodus/i);
         return;
       case 'create-amendment-path':
         await this.selectTypeahead(checkpoint.anchor, this.expectedInputs().groupSearch);

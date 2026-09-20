@@ -12,6 +12,7 @@ import { AlphaWarningToastContent } from '../ui/AlphaWarningToastContent';
 
 const ALPHA_WARNING_TOAST_ID = 'alpha-warning';
 const ALPHA_WARNING_ACKNOWLEDGED_VALUE = 'true';
+const ALPHA_WARNING_DESCRIPTION_CLASS = '!text-[var(--badge-warning-fg)]';
 
 let hasAcknowledgedAlphaWarningInMemory = false;
 
@@ -61,6 +62,7 @@ export function useAlphaWarningDialogController() {
         {
           id: ALPHA_WARNING_TOAST_ID,
           description: translate('common.alphaWarning.description'),
+          classNames: { description: ALPHA_WARNING_DESCRIPTION_CLASS },
           duration: Infinity,
           dismissible: false,
           closeButton: false,

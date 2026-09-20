@@ -20,9 +20,9 @@ test.describe('currency localization', () => {
       await expect(currencySelector()).toContainText('USD');
 
       await page.goto('/create/payment');
-      await expect(
-        page.getByRole('combobox', { name: /display currency|anzeigewährung/i })
-      ).toContainText('USD');
+      await expect(page.getByRole('combobox', { name: /^(currency|währung)$/i })).toContainText(
+        'USD'
+      );
     } finally {
       await page.goto(`/user/${e2eUser.id}/settings?tab=preferences`);
       await currencySelector().click();

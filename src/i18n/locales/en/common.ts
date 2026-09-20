@@ -225,6 +225,10 @@ export const commonTranslations = {
     resource_not_found: 'The requested item could not be found.',
     validation_failed: 'Check your entries and try again.',
     mutation_server_failed: 'The change could not be saved on the server.',
+    collaboration_client_outdated:
+      'This editor version is outdated. Reload the page and recover local changes through draft recovery.',
+    collaboration_maintenance:
+      'Editing and voting are temporarily paused for the migration. Please try again after maintenance.',
     auth_service_unavailable: 'The authentication service is currently unavailable.',
     upload_failed: 'The file could not be uploaded.',
     file_too_large: 'The file is too large. The maximum size is {{maxSize}}.',

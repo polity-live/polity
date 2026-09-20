@@ -39,17 +39,34 @@ export function useEntityRouteAccess(input: EntityRouteAccessInput): EntityRoute
     toCreateRecoveryEntityType(input.entityType),
     input.entityId
   );
-  const [state, setState] = useState<EntityRouteAccessState>({
+  const accessKey = JSON.stringify([
+    input.entityType,
+    input.entityId,
+    input.parentType,
+    input.parentId,
+    session?.user.id,
+  ]);
+  const pendingState: EntityRouteAccessState = {
     data: null,
     isLoading: true,
     error: null,
     recoveryDraft: null,
-  });
+  };
+  const [storedState, setState] = useState({ ...pendingState, accessKey });
+  // Never expose the previous entity or account's access decision, even for
+  // the render before the effect starts the next request.
+  const state = storedState.accessKey === accessKey ? storedState : pendingState;
 
   useEffect(() => {
     let cancelled = false;
 
-    setState({ data: null, isLoading: true, error: null, recoveryDraft: null });
+    // Refreshing a token for the same account revalidates access in place.
+    // Unmounting the route here discards forms and security confirmation dialogs.
+    setState(previous =>
+      previous.accessKey === accessKey && previous.data
+        ? previous
+        : { data: null, isLoading: true, error: null, recoveryDraft: null, accessKey }
+    );
 
     if (authLoading) {
       return () => {
@@ -68,7 +85,7 @@ export function useEntityRouteAccess(input: EntityRouteAccessInput): EntityRoute
           return;
         }
 
-        setState({ data: result, isLoading: false, error: null, recoveryDraft: null });
+        setState({ data: result, isLoading: false, error: null, recoveryDraft: null, accessKey });
       })
       .catch(error => {
         if (cancelled) {
@@ -80,6 +97,7 @@ export function useEntityRouteAccess(input: EntityRouteAccessInput): EntityRoute
           isLoading: false,
           error: error instanceof Error ? error : new Error('Failed to resolve route access'),
           recoveryDraft: null,
+          accessKey,
         });
       });
 
@@ -95,6 +113,7 @@ export function useEntityRouteAccess(input: EntityRouteAccessInput): EntityRoute
     recoveryDraft?.status,
     recoveryDraft?.submittedAt,
     session?.access_token,
+    accessKey,
   ]);
 
   if (authLoading) {

@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cloneElement, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ManageNetworkTab } from '../ManageNetworkTab';
@@ -164,7 +164,7 @@ function renderManageNetworkTab(canManageRelationships: boolean) {
   const onRejectRequest = vi.fn().mockResolvedValue(undefined);
   const onDeleteRelationship = vi.fn();
   const onDirectionFilterChange = vi.fn();
-  const rendered = render(
+  const view = (
     <ManageNetworkTab
       canManageRelationships={canManageRelationships}
       groupId="current-group"
@@ -192,9 +192,12 @@ function renderManageNetworkTab(canManageRelationships: boolean) {
       onDeleteRelationship={onDeleteRelationship}
     />
   );
+  const rendered = render(view);
 
   return {
     ...rendered,
+    refresh: (overrides: Partial<typeof view.props> = {}) =>
+      rendered.rerender(cloneElement(view, { groupName: 'Updated Current Group', ...overrides })),
     onAcceptRequest,
     onRejectRequest,
     onDeleteRelationship,
@@ -203,6 +206,74 @@ function renderManageNetworkTab(canManageRelationships: boolean) {
 }
 
 describe('ManageNetworkTab', () => {
+  it('uses the latest mutation handler when confirming after a data refresh', () => {
+    const { refresh, onDeleteRelationship } = renderManageNetworkTab(true);
+    fireEvent.click(
+      document.querySelector('[data-action-id="network.relationship.active.delete.open"]')!
+    );
+    const refreshedDelete = vi.fn();
+    refresh({ onDeleteRelationship: refreshedDelete });
+    fireEvent.click(screen.getByRole('button', { name: 'common.actions.delete' }));
+    expect(refreshedDelete).toHaveBeenCalledWith('partner-group');
+    expect(onDeleteRelationship).not.toHaveBeenCalled();
+  });
+
+  it('returns keyboard focus to the refreshed trigger when cancelling without deleting', async () => {
+    const { refresh, onRejectRequest, onDeleteRelationship } = renderManageNetworkTab(true);
+    fireEvent.click(
+      document.querySelector('[data-action-id="network.relationship.active.delete.open"]')!
+    );
+    refresh();
+    fireEvent.click(screen.getByRole('button', { name: 'common.actions.cancel' }));
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(onDeleteRelationship).not.toHaveBeenCalled();
+    expect(onRejectRequest).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        document.querySelector('[data-action-id="network.relationship.active.delete.open"]')
+      )
+    );
+  });
+
+  it('can close the confirmation if its target disappears during a live update', async () => {
+    const { refresh, onDeleteRelationship } = renderManageNetworkTab(true);
+    fireEvent.click(
+      document.querySelector('[data-action-id="network.relationship.active.delete.open"]')!
+    );
+    refresh({ filteredRelationships: [] });
+    fireEvent.click(screen.getByRole('button', { name: 'common.actions.cancel' }));
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    expect(onDeleteRelationship).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['active relationship', 'network.relationship.active.delete.open', 0],
+    ['incoming request', 'network.relationship.delete.open', 0],
+    ['outgoing request', 'network.relationship.delete.open', 1],
+  ] as const)(
+    'keeps the %s confirmation open across live data updates',
+    async (_, action, index) => {
+      const { refresh, onRejectRequest, onDeleteRelationship } = renderManageNetworkTab(true);
+      fireEvent.click(document.querySelectorAll(`[data-action-id="${action}"]`)[index]);
+      const confirmation = screen.getByRole('alertdialog');
+
+      refresh();
+
+      expect(screen.getByRole('alertdialog')).toBe(confirmation);
+      fireEvent.click(within(confirmation).getByRole('button', { name: 'common.actions.delete' }));
+      if (action === 'network.relationship.active.delete.open') {
+        expect(onDeleteRelationship).toHaveBeenCalledWith('partner-group');
+        expect(onRejectRequest).not.toHaveBeenCalled();
+      } else {
+        expect(onRejectRequest).toHaveBeenCalledWith([
+          expect.objectContaining({ id: index === 0 ? 'incoming-rel' : 'outgoing-rel' }),
+        ]);
+        expect(onDeleteRelationship).not.toHaveBeenCalled();
+      }
+      await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    }
+  );
+
   it('dispatches relationship row actions and filters through stable intents', async () => {
     hierarchyCanActivateLink.mockReturnValue(true);
     const { onAcceptRequest } = renderManageNetworkTab(true);

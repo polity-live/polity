@@ -154,6 +154,7 @@ export function FormDialog({
 interface ConfirmDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onCloseAutoFocus?: ComponentProps<typeof AlertDialogContent>['onCloseAutoFocus'];
   title: ReactNode;
   description?: ReactNode;
   trigger?: ReactNode;
@@ -167,6 +168,7 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({
   open,
   onOpenChange,
+  onCloseAutoFocus,
   title,
   description,
   trigger,
@@ -179,7 +181,7 @@ export function ConfirmDialog({
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {trigger ? <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger> : null}
-      <ScrollableAlertDialogContent>
+      <ScrollableAlertDialogContent onCloseAutoFocus={onCloseAutoFocus}>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           {description ? <AlertDialogDescription>{description}</AlertDialogDescription> : null}

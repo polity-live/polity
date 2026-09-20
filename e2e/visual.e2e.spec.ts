@@ -1,7 +1,24 @@
 import { expect, test as publicTest, type Page } from '@playwright/test';
 
-import { test as authenticatedTest } from './fixtures/test';
+import { test as baseAuthenticatedTest } from './fixtures/test';
+import { authenticateActor, removeActorAuthState } from './fixtures/auth';
 import { waitForAppReady } from './fixtures/readiness';
+import { ALPHA_WARNING_SESSION_KEY } from '@/features/shared/constants';
+
+const authenticatedTest = baseAuthenticatedTest.extend({
+  e2eUser: async ({ browser, e2eRun }, use) => {
+    const actor = e2eRun.actor();
+    // Keep the masked identity on one line regardless of the run/shard namespace.
+    // The actor remains unique and is provisioned and cleaned up normally.
+    actor.email = `${actor.id.replaceAll('-', '').slice(0, 12)}@polity.local`;
+    try {
+      await authenticateActor(browser, actor);
+      await use(actor);
+    } finally {
+      await removeActorAuthState(actor);
+    }
+  },
+});
 
 publicTest.describe('deterministic public visual baselines', () => {
   publicTest.use({
@@ -33,6 +50,10 @@ publicTest.describe('deterministic public visual baselines', () => {
   publicTest(
     'visual.public.not-found matches the deterministic error layout @nightly @visual',
     async ({ page }) => {
+      await page.addInitScript(
+        key => sessionStorage.setItem(key, 'true'),
+        ALPHA_WARNING_SESSION_KEY
+      );
       await page.goto('/visual-regression/missing-state');
       await expect(page.getByRole('heading', { name: '404', exact: true })).toBeVisible();
       await expect(page).toHaveScreenshot('public-not-found.png', {
@@ -71,6 +92,9 @@ authenticatedTest.describe('deterministic authenticated visual baselines', () =>
       await waitForAppReady(page);
 
       const menu = await openUserMenu(page);
+      await expect(menu.getByTestId('user-menu-navigation-loading')).toHaveCount(0, {
+        timeout: 30_000,
+      });
       const actorIdentity = menu.getByText(e2eRun.actor().email, { exact: true });
       await expect(actorIdentity).toBeVisible();
       await expect(menu.getByRole('menuitem', { name: 'Profile', exact: true })).toBeVisible();
@@ -118,6 +142,11 @@ authenticatedTest.describe('deterministic authenticated visual baselines', () =>
         '[data-create-flow="group"][data-create-layout="one_page"]'
       );
       await expect(createForm).toBeVisible();
+      const notifications = createFlowPage.page.getByRole('region', { name: /Notifications/i });
+      for (const close of await notifications.getByRole('button', { name: /Close toast/i }).all()) {
+        await close.click();
+      }
+      await expect(notifications.getByRole('listitem')).toHaveCount(0);
       await expect(createForm).toHaveScreenshot('create-group-empty-one-page.png', {
         animations: 'disabled',
         caret: 'hide',

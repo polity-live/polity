@@ -1,0 +1,12 @@
+app = "polity-studio-worker"
+primary_region = "fra"
+[build]
+  dockerfile = "tools/studio/Dockerfile"
+[processes]
+  worker = "node --import tsx tools/studio/launch.ts worker"
+[env]
+  NODE_ENV = "production"
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 2
+  memory = "4gb"

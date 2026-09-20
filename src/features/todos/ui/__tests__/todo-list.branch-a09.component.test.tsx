@@ -13,6 +13,10 @@ const mocks = vi.hoisted(() => ({
   page: vi.fn(),
   single: vi.fn(),
   anchor: vi.fn(),
+  mobile: false,
+}));
+vi.mock('@/features/shared/hooks/useIsMobileScreen', () => ({
+  useIsMobileScreen: () => mocks.mobile,
 }));
 
 vi.mock('@/features/shared/virtualization', () => ({
@@ -76,6 +80,7 @@ function todo(overrides: Record<string, unknown> = {}) {
 
 describe('TodoList branch coverage', () => {
   beforeEach(() => {
+    mocks.mobile = false;
     mocks.zeroOptions = null;
     mocks.virtual = { items: [], spaceBefore: 0, spaceAfter: 0 };
     mocks.localProps = null;
@@ -85,6 +90,19 @@ describe('TodoList branch coverage', () => {
     mocks.anchor.mockReset().mockReturnValue('tutorial-anchor');
   });
   afterEach(cleanup);
+  it('uses taller touch targets in both local and server-paged mobile lists', () => {
+    mocks.mobile = true;
+    const view = render(<TodoList todos={[todo()]} onToggleComplete={vi.fn()} />);
+    expect(mocks.localProps.estimateSize).toBe(100);
+    view.rerender(
+      <TodoList
+        todos={[]}
+        onToggleComplete={vi.fn()}
+        virtualQuery={{ status: 'all', archive: 'active', query: '' }}
+      />
+    );
+    expect(mocks.zeroOptions.estimateSize()).toBe(100);
+  });
 
   it('maps complete and fallback local todo cards with manageable actions', () => {
     const onToggleComplete = vi.fn();

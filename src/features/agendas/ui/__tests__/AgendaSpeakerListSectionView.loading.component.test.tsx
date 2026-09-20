@@ -87,6 +87,41 @@ afterEach(() => {
 });
 
 describe('AgendaSpeakerListSectionView action loading', () => {
+  it('renders compact virtual speakers with original positions and sparse identity and time data', () => {
+    const speaker = {
+      id: 'completed',
+      order: null,
+      order_index: 3,
+      completed: true,
+      estimatedStartTime: Date.now(),
+      user: null,
+    };
+    render(
+      <AgendaSpeakerListSectionView
+        {...baseProps({
+          agendaItemId: 'compact-agenda',
+          speakers: [speaker],
+          speakerQueue: [speaker],
+          showGender: true,
+        })}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Compact view' }));
+    let props = mocks.zeroList.mock.lastCall?.[0] as any;
+    expect(props.estimateSize).toBe(76);
+    const row = render(props.renderRow({ id: 'completed' }));
+    expect(row.container.querySelector('[data-workspace-row]')).toBeTruthy();
+    expect(row.container.textContent).toContain('features.events.agenda.completedSpeaker');
+    row.unmount();
+    props = mocks.zeroList.mock.lastCall?.[0] as any;
+    const sparse = render(
+      props.renderRow({ id: 'missing', order_index: 4, estimatedStartTime: NaN, user: null })
+    );
+    expect(sparse.container.querySelector('a')).toBeNull();
+    expect(sparse.container.textContent).not.toContain('Invalid Date');
+    sparse.unmount();
+    fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
+  });
   it('uses verb-specific shared button loading labels', () => {
     const { rerender } = render(
       <AgendaSpeakerListSectionView {...baseProps({ isAddingSpeaker: true })} />

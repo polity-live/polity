@@ -33,6 +33,17 @@ export async function assertCanViewAmendment(
   if (!amendment) {
     throw new Error('Amendment not found');
   }
+  if (amendment.tutorial_run_id) {
+    const run = await tx.run(
+      zql.app_tutorial_run
+        .where('id', amendment.tutorial_run_id)
+        .where('user_id', ctx.userID)
+        .where('status', 'IN', ['active', 'paused'])
+        .one()
+    );
+    if (!run)
+      throw new PermissionError('view', 'amendments', `tutorial:${amendment.tutorial_run_id}`);
+  }
 
   if (canReadVisibility(amendment.visibility, ctx, amendment.created_by_id === ctx.userID)) {
     return amendment;

@@ -52,6 +52,75 @@ beforeEach(() => {
 });
 
 describe('vendored grid runtime contracts', () => {
+  it('settles multi-column paging while scrolling down and back across query boundaries', () => {
+    const documents = Array.from({ length: 60 }, (_, id) => ({ id: String(id) }));
+    const pageCache = new Map<string, typeof documents>();
+    let queryReads = 0;
+    mocks.useQuery.mockImplementation(query => {
+      if (++queryReads > 150) throw new Error('Paging did not settle after scrolling');
+      if (!query) return [undefined, complete];
+      const key = JSON.stringify(query);
+      if (!pageCache.has(key)) {
+        const start = query.start ? Number(query.start.id) : -1;
+        pageCache.set(
+          key,
+          query.dir === 'backward'
+            ? documents.slice(0, start).reverse().slice(0, query.limit)
+            : documents.slice(start + 1, start + 1 + query.limit)
+        );
+      }
+      return [pageCache.get(key), complete];
+    });
+    const items = (first: number) =>
+      Array.from({ length: 21 }, (_, offset) => ({ index: first + offset }));
+    let visibleItems = items(3);
+    const virtualizer = {
+      scrollOffset: 376,
+      scrollRect: { width: 1200, height: 634 },
+      scrollToOffset: vi.fn(),
+      scrollToIndex: vi.fn(),
+      getVirtualItems: () => visibleItems,
+    };
+    mocks.useVirtualizer.mockReturnValue(virtualizer);
+    const options = {
+      listContextParams: { scope: 'all' },
+      estimateSize: () => 376,
+      getScrollElement: () => null,
+      getPageQuery: (query: unknown) => ({ query }),
+      getSingleQuery: () => ({ query: null }),
+      toStartRow: (row: { id: string }) => row,
+      getRowKey: (row: { id: string }) => row.id,
+      minPageSize: 18,
+      maxPageSize: 48,
+      lanes: 3,
+      overscan: 2,
+    };
+    const { result, rerender, unmount } = renderHook(
+      () =>
+        useZeroGridVirtualizer(options) as {
+          rowAt: (index: number) => { id: string } | undefined;
+        }
+    );
+    const expectVisibleRows = () => {
+      for (const { index } of visibleItems)
+        expect(result.current.rowAt(index)).toEqual(documents[index]);
+      expect(queryReads).toBeLessThan(150);
+      queryReads = 0;
+    };
+    expectVisibleRows();
+
+    visibleItems = items(24);
+    virtualizer.scrollOffset = 8 * 376;
+    rerender();
+    expectVisibleRows();
+
+    visibleItems = items(3);
+    virtualizer.scrollOffset = 376;
+    rerender();
+    expectVisibleRows();
+    unmount();
+  });
+
   it('enforces assertions and unreachable branches with deterministic messages', () => {
     expect(() => assert(true)).not.toThrow();
     expect(() => assert(false)).toThrow('Assertion failed');

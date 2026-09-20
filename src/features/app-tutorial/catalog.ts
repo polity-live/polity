@@ -851,11 +851,11 @@ export const APP_TUTORIAL_CHECKPOINTS = [
     completion: { type: 'mutation', event: 'amendment.mode.suggest_internal' },
     copy: copy(
       'Interne Vorschläge',
-      'Im Modus „Intern vorschlagen“ können Mitglieder konkrete Änderungen als Change Request einreichen.',
-      'Wechsle zu Intern vorschlagen.',
+      'Im Modus „Interne Vorschläge“ können Mitglieder konkrete Änderungen als Change Request einreichen.',
+      'Wechsle zu Interne Vorschläge.',
       'Internal suggestions',
-      'Suggest internal mode lets members submit concrete edits as change requests.',
-      'Switch to Suggest internal.'
+      'Internal Suggestions mode lets members submit concrete edits as change requests.',
+      'Switch to Internal Suggestions.'
     ),
   }),
   checkpoint({
@@ -887,10 +887,10 @@ export const APP_TUTORIAL_CHECKPOINTS = [
     copy: copy(
       'Intern bewerten',
       'Im internen Voting-Modus priorisiert die Gruppe bestehende Änderungsvorschläge.',
-      'Wechsle zu Intern abstimmen.',
+      'Wechsle zu Interner Abstimmungsmodus.',
       'Internal review',
-      'Vote internal mode lets the group prioritize existing change proposals.',
-      'Switch to Vote internal.'
+      'Internal Voting Mode lets the group prioritize existing change proposals.',
+      'Switch to Internal Voting Mode.'
     ),
   }),
   checkpoint({

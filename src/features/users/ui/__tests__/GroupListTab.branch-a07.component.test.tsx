@@ -61,6 +61,17 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('GroupsListTab branch campaign A07', () => {
+  it('switches the same filtered membership query to one compact column', () => {
+    const view = render(
+      <GroupsListTab userId="viewer" searchValue="climate" onSearchChange={vi.fn()} />
+    );
+    const controls = view.container.querySelectorAll('[data-action-id="collection.view.select"]');
+    fireEvent.click(controls[1]);
+    expect(mocks.gridProps!.getLanes(1200)).toBe(1);
+    expect(mocks.gridProps!.estimateSize).toBe(76);
+    expect(mocks.gridProps!.context).toEqual({ userId: 'viewer', query: 'climate' });
+    fireEvent.click(controls[0]);
+  });
   it('wires search, paging TTLs, lane boundaries, row fallbacks, and empty renderers', () => {
     const onSearchChange = vi.fn();
     render(

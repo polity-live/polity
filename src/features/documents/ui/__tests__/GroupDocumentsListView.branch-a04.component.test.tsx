@@ -5,10 +5,15 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+  compact: false,
   gridProps: undefined as Record<string, any> | undefined,
   toolbarProps: undefined as Record<string, any> | undefined,
   pageByGroup: vi.fn((args: unknown) => ({ kind: 'page', args })),
   byId: vi.fn((args: unknown) => ({ kind: 'single', args })),
+}));
+vi.mock('@/features/shared/ui/collections/CollectionScope', () => ({
+  CollectionScope: ({ children }: { children: ReactNode }) => <>{children}</>,
+  useCollectionPresentation: () => ({ view: mocks.compact ? 'compact' : 'cards' }),
 }));
 
 vi.mock('@/features/pql/ui/PqlToolbar', () => ({
@@ -82,6 +87,7 @@ function model(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
+  mocks.compact = false;
   mocks.gridProps = undefined;
   mocks.toolbarProps = undefined;
   vi.clearAllMocks();
@@ -206,9 +212,12 @@ describe('GroupDocumentsListView branch contract', () => {
         { id: 'two', title: null },
       ],
     };
-    render(<GroupDocumentsListView {...model({ pql })} />);
+    const view = render(<GroupDocumentsListView {...model({ pql })} />);
 
     expect(screen.queryByTestId('virtual-grid')).toBeNull();
+    mocks.compact = true;
+    view.rerender(<GroupDocumentsListView {...model({ pql })} />);
+    expect(screen.getByText('One').closest('.space-y-0')).toBeTruthy();
     expect(screen.getAllByTestId('document-card')).toHaveLength(2);
     expect(screen.getByText('One').getAttribute('href')).toBe('/group/group-1/editor/one');
     expect(screen.getByText('untitled').getAttribute('href')).toBe('/group/group-1/editor/two');

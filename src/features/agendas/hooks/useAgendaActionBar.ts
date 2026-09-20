@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
@@ -26,7 +26,7 @@ import {
 } from '../logic/speakerListGenderQuota';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { serverConfirmed, waitForClientApply } from '@/zero/mutate-with-server-check';
 import { localizeAppError } from '@/features/shared/errors/app-error';
 
 interface AgendaItem {
@@ -125,6 +125,36 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   const electionActions = useElectionActions();
   const voteActionsHook = useVoteActions();
   const { verifyVotingPassword } = useVotingPasswordActions();
+
+  const ballotId = election?.id ?? vote?.id;
+  const ballotStatus = election?.status ?? vote?.status;
+  const [pendingVotingPhase, setPendingVotingPhase] = useState<{
+    id: string;
+    phase: string;
+  } | null>(null);
+  const isChangingVotingPhase = Boolean(
+    pendingVotingPhase &&
+    pendingVotingPhase.id === ballotId &&
+    pendingVotingPhase.phase !== ballotStatus
+  );
+  useEffect(() => {
+    if (
+      pendingVotingPhase &&
+      (pendingVotingPhase.id !== ballotId || pendingVotingPhase.phase === ballotStatus)
+    ) {
+      setPendingVotingPhase(null);
+    }
+  }, [ballotId, ballotStatus, pendingVotingPhase]);
+  const changeVotingPhase = async (phase: string, action: () => Promise<void>) => {
+    if (!canManageAgenda) return;
+    if (ballotId) setPendingVotingPhase({ id: ballotId, phase });
+    try {
+      await action();
+    } catch (error) {
+      setPendingVotingPhase(null);
+      throw error;
+    }
+  };
 
   const [speakerLoading, setSpeakerLoading] = useState(false);
   const [candidateLoading, setCandidateLoading] = useState(false);
@@ -351,9 +381,8 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   }, [user?.id, userCandidate, openCandidacyDialog]);
 
   const handleStartVote = useCallback(async () => {
-    if (!canManageAgenda) return;
     if (election?.id) {
-      await waitForClientApply(
+      await serverConfirmed(
         electionActions.updateElection({
           id: election.id,
           status: 'indicative',
@@ -361,7 +390,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
         })
       );
     } else if (vote?.id) {
-      await waitForClientApply(
+      await serverConfirmed(
         voteActionsHook.updateVote({
           id: vote.id,
           status: VOTE_PHASE.indicative,
@@ -371,7 +400,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     }
 
     if (currentAgendaItem?.id) {
-      await waitForClientApply(
+      await serverConfirmed(
         updateAgendaItem({
           id: currentAgendaItem.id,
           voting_phase: 'indicative',
@@ -389,9 +418,8 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   ]);
 
   const handleStartFinalVote = useCallback(async () => {
-    if (!canManageAgenda) return;
     if (election?.id) {
-      await waitForClientApply(
+      await serverConfirmed(
         electionActions.updateElection({
           id: election.id,
           status: 'final',
@@ -401,7 +429,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
         })
       );
     } else if (vote?.id) {
-      await waitForClientApply(
+      await serverConfirmed(
         voteActionsHook.updateVote({
           id: vote.id,
           status: VOTE_PHASE.final,
@@ -413,7 +441,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     }
 
     if (currentAgendaItem?.id) {
-      await waitForClientApply(
+      await serverConfirmed(
         updateAgendaItem({
           id: currentAgendaItem.id,
           voting_phase: 'final',
@@ -431,7 +459,6 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   ]);
 
   const handleCloseFinalVote = useCallback(async () => {
-    if (!canManageAgenda) return;
     const flow = election?.id ? 'election-close-final-vote' : 'vote-close-final-vote';
     const correlationId = createElectionFlowCorrelationId(flow);
 
@@ -445,7 +472,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
 
     try {
       if (election?.id) {
-        await waitForClientApply(
+        await serverConfirmed(
           electionActions.updateElection({
             id: election.id,
             status: 'closed',
@@ -453,11 +480,11 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
           })
         );
       } else if (vote?.id) {
-        await waitForClientApply(voteActionsHook.updateVote({ id: vote.id, status: 'closed' }));
+        await serverConfirmed(voteActionsHook.updateVote({ id: vote.id, status: 'closed' }));
       }
 
       if (currentAgendaItem?.id) {
-        await waitForClientApply(
+        await serverConfirmed(
           updateAgendaItem({
             id: currentAgendaItem.id,
             voting_phase: 'closed',
@@ -532,7 +559,10 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     },
 
     // Vote casting (for dialog)
-    voteCasting,
+    voteCasting: {
+      ...voteCasting,
+      isLoading: voteCasting.isLoading || isChangingVotingPhase,
+    },
     disableSecretIndicativeVoteButton,
     secretIndicativeVoteTooltip,
 
@@ -541,9 +571,9 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     handleLeaveSpeakerList,
     handleBecomeCandidate,
     handleWithdrawCandidacy,
-    handleStartVote,
-    handleStartFinalVote,
-    handleCloseFinalVote,
+    handleStartVote: () => changeVotingPhase('indicative', handleStartVote),
+    handleStartFinalVote: () => changeVotingPhase('final', handleStartFinalVote),
+    handleCloseFinalVote: () => changeVotingPhase('closed', handleCloseFinalVote),
     handleVoteClick,
     handleEditClick,
   };

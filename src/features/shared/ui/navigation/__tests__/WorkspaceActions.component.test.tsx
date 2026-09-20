@@ -3,10 +3,36 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FavoriteButton } from '../FavoriteButton';
 import { WorkspaceHeader } from '../../layout/WorkspaceHeader';
+import { PageHeader } from '../../layout/PageShell';
 import { SaveSearchViewButton } from '@/features/search/ui/SaveSearchViewButton';
 import { CompactSearchRow, searchTypeDotClasses } from '@/features/search/ui/CompactSearchRow';
+import { useCompactCard } from '../../collections/CollectionCard';
+import { EntityListRow } from '../../collections/EntityListRow';
+
+function ExistingCardWithAction() {
+  const model = useCompactCard();
+  return model ? <EntityListRow {...model} actions={<button>Task action</button>} /> : null;
+}
+
+it('keeps page descriptions and header actions visible at the same level as their title', () => {
+  const view = render(
+    <PageHeader
+      title="Decisions"
+      description="Current group decisions"
+      actions={<button>New decision</button>}
+    />
+  );
+  expect(screen.getByText('Current group decisions')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'New decision' })).toBeTruthy();
+  view.rerender(<WorkspaceHeader title="Decisions" description="Current group decisions" />);
+  expect(screen.getByText('Current group decisions')).toBeTruthy();
+});
 
 const mocks = vi.hoisted(() => ({
+  location: {
+    search: { q: 'assembly' } as Record<string, string>,
+    searchStr: '?q=assembly&view=compact',
+  },
   mutate: vi.fn(),
   error: vi.fn(),
   user: { id: 'me' } as { id: string } | null,
@@ -25,7 +51,11 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 }));
 vi.mock('@/features/shared/ui/ui/sonner', () => ({ toast: { error: mocks.error } }));
 vi.mock('@tanstack/react-router', () => ({
-  useRouterState: () => ({ search: { q: 'assembly' }, searchStr: '?q=assembly&view=compact' }),
+  useRouterState: ({
+    select,
+  }: {
+    select: (state: { location: typeof mocks.location }) => unknown;
+  }) => select({ location: mocks.location }),
 }));
 vi.mock('../SmartLink', () => ({
   SmartLink: ({ href, children, ...props }: any) => (
@@ -39,12 +69,56 @@ vi.mock('../../preview/WorkspacePreview', () => ({
 }));
 afterEach(cleanup);
 beforeEach(() => {
+  mocks.location = { search: { q: 'assembly' }, searchStr: '?q=assembly&view=compact' };
   vi.clearAllMocks();
   mocks.user = { id: 'me' };
   mocks.preference.workspace_preferences.favorites = [];
 });
 
 describe('workspace actions and saved views', () => {
+  it('saves an unfiltered view without adding an empty query label', async () => {
+    mocks.location = { search: {}, searchStr: '' };
+    mocks.mutate.mockReturnValue({ server: Promise.resolve({ type: 'success' }) });
+    render(<SaveSearchViewButton />);
+    await act(async () =>
+      fireEvent.click(screen.getByRole('button', { name: 'common.workspace.favorite' }))
+    );
+    expect(mocks.mutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        favorite: { kind: 'view', href: '/search', title: 'features.search.title' },
+      })
+    );
+  });
+  it('keeps child actions in supported compact cards and falls back for unknown entities', () => {
+    const { rerender, container } = render(
+      <CompactSearchRow
+        document={
+          { entity_type: 'todo', entity_id: 'task', title: 'Task', subtitle: 'pending' } as any
+        }
+      >
+        <ExistingCardWithAction />
+      </CompactSearchRow>
+    );
+    expect(screen.getByText('features.todos.status.pending')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Task action' })).toBeTruthy();
+    rerender(
+      <CompactSearchRow
+        document={
+          { entity_type: 'unknown', id: 'unknown', title: 'Unknown', subtitle: 'Fallback' } as any
+        }
+      >
+        <button>Hidden unsupported child</button>
+      </CompactSearchRow>
+    );
+    expect(screen.getByText('Fallback')).toBeTruthy();
+    expect(screen.queryByText('Hidden unsupported child')).toBeNull();
+    rerender(
+      <CompactSearchRow
+        document={{ entity_type: 'todo', entity_id: 'task', title: 'Task', subtitle: null } as any}
+      />
+    );
+    expect(container.textContent).toContain('Task');
+  });
   it('saves the exact filtered view once, waits for confirmation and reports rejection', async () => {
     let reject!: (error: Error) => void;
     mocks.mutate.mockReturnValue({

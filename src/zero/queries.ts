@@ -26,6 +26,7 @@ import { networkQueries } from './network/queries';
 import { pqlQueries } from './pql/queries';
 import { datasetQueries } from './datasets/queries';
 import { appearanceThemeQueries } from './appearance-themes/queries';
+import { studioQueries } from './communication-studio/queries';
 
 export const queries = defineQueries({
   users: userQueries,
@@ -54,4 +55,5 @@ export const queries = defineQueries({
   pql: pqlQueries,
   datasets: datasetQueries,
   appearanceThemes: appearanceThemeQueries,
+  studio: studioQueries,
 });

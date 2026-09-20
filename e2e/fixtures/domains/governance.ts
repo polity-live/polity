@@ -104,7 +104,9 @@ export async function seedAmendmentDocument(
     values (
       ${documentId}::uuid, ${seed.amendmentId}::uuid,
       ${sql.json(content(versions.at(-1) ?? ''))}::jsonb, 'edit', now(), now()
-    );
+    )
+  `;
+  await sql`
     update public.amendment
     set document_id = ${documentId}::uuid, updated_at = now()
     where id = ${seed.amendmentId}::uuid;

@@ -11,6 +11,8 @@ export const APP_ERROR_CODES = [
   'resource_not_found',
   'validation_failed',
   'mutation_server_failed',
+  'collaboration_client_outdated',
+  'collaboration_maintenance',
   'auth_service_unavailable',
   'upload_failed',
   'file_too_large',

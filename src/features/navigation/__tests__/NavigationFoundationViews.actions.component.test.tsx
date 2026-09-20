@@ -271,9 +271,7 @@ describe('navigation foundation view action contracts', () => {
             title: 'Language',
           },
           onLanguageChange,
-          onPopoverMouseLeave: vi.fn(),
           onPopoverOpenChange: vi.fn(),
-          onPopoverTriggerMouseEnter: vi.fn(),
         } as any)}
       />
     );
@@ -299,9 +297,7 @@ describe('navigation foundation view action contracts', () => {
             title: 'Language',
           },
           onLanguageChange,
-          onPopoverMouseLeave: vi.fn(),
           onPopoverOpenChange: vi.fn(),
-          onPopoverTriggerMouseEnter: vi.fn(),
         } as any)}
       />
     );

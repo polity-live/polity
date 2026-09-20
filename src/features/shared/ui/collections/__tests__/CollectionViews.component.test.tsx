@@ -4,6 +4,7 @@ import type { CalendarViewMode } from '@/features/events/hooks/useCalendarView';
 /* @vitest-environment jsdom */
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
+import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -13,7 +14,9 @@ const mocks = vi.hoisted(() => ({
   error: vi.fn(),
   userId: 'collection-test',
 }));
-vi.mock('@/providers/auth-provider', () => ({ useAuth: () => ({ user: { id: mocks.userId } }) }));
+vi.mock('@/providers/auth-provider', () => ({
+  useAuth: () => ({ user: mocks.userId ? { id: mocks.userId } : null }),
+}));
 vi.mock('@/zero/preferences/useWorkspacePreferences', () => ({
   useWorkspacePreferences: () => ({
     display: mocks.display,
@@ -49,7 +52,7 @@ import { CollectionPreferencesProvider } from '../CollectionPreferencesProvider'
 import { CollectionScope, CollectionControls, useCollectionPresentation } from '../CollectionScope';
 import { EntityListRow } from '../EntityListRow';
 import { CollectionCard, CollectionActionsMenu } from '../CollectionCard';
-import { useCollectionView } from '../useCollectionView';
+import { useCollectionView, pendingCollectionViews } from '../useCollectionView';
 
 afterEach(cleanup);
 beforeEach(() => {
@@ -82,6 +85,52 @@ function ListHarness() {
 }
 
 describe('collection views', () => {
+  it('keeps anonymous view choices local and renders standalone controls with optional actions', () => {
+    mocks.userId = '';
+    const view = render(
+      <CollectionPreferencesProvider>
+        <ListHarness />
+        <CollectionControls>
+          <span>Independent search</span>
+        </CollectionControls>
+      </CollectionPreferencesProvider>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'common.workspace.compactView' }));
+    expect(screen.getByRole('status').textContent).toBe('compact');
+    expect(mocks.save).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'common.workspace.cardsView' }));
+    view.rerender(
+      <CollectionToolbar
+        search={null}
+        view="cards"
+        onViewChange={vi.fn()}
+        actions={<button>Export</button>}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Export' })).toBeTruthy();
+  });
+  it('server-renders the selected view and leaves another user’s pending preferences untouched', () => {
+    pendingCollectionViews.set('other-user:profile.all', {
+      userId: 'other-user',
+      area: 'profile.all',
+      view: 'compact',
+    });
+    mocks.display = { collectionViews: { 'profile.all': 'compact' } };
+    const markup = renderToString(
+      <CollectionPreferencesProvider>
+        <ListHarness />
+      </CollectionPreferencesProvider>
+    );
+    expect(markup).toContain('compact');
+    render(
+      <CollectionPreferencesProvider>
+        <ListHarness />
+      </CollectionPreferencesProvider>
+    );
+    expect(mocks.save).not.toHaveBeenCalled();
+    expect(pendingCollectionViews.has('other-user:profile.all')).toBe(true);
+    pendingCollectionViews.delete('other-user:profile.all');
+  });
   it('switches with keyboard focus without losing the search and queues only the latest choice while preferences load', async () => {
     mocks.loading = true;
     const { rerender } = render(
@@ -249,6 +298,8 @@ it('keeps calendar week preferences compatible and restores the compact list cho
       <>
         <output>{mode}</output>
         <button onClick={() => setView('list')}>Calendar cards</button>
+        <button onClick={() => setView('compact')}>Calendar compact</button>
+        <button onClick={() => setView('week')}>Calendar week</button>
       </>
     );
   }
@@ -270,6 +321,21 @@ it('keeps calendar week preferences compatible and restores the compact list cho
     expect(mocks.save).toHaveBeenCalledWith({ collectionViews: { calendar: 'cards' } })
   );
   expect(screen.getByRole('status').textContent).toBe('list');
+  fireEvent.click(screen.getByRole('button', { name: 'Calendar compact' }));
+  await waitFor(() => expect(screen.getByRole('status').textContent).toBe('compact'));
+  const saved = mocks.save.mock.calls.length;
+  fireEvent.click(screen.getByRole('button', { name: 'Calendar week' }));
+  expect(screen.getByRole('status').textContent).toBe('week');
+  expect(mocks.save).toHaveBeenCalledTimes(saved);
+  cleanup();
+  mocks.userId = 'calendar-card-preference';
+  mocks.display = { collectionViews: { calendar: 'cards' } };
+  render(
+    <CollectionPreferencesProvider>
+      <CalendarHarness initial="compact" />
+    </CollectionPreferencesProvider>
+  );
+  await waitFor(() => expect(screen.getByRole('status').textContent).toBe('list'));
 });
 
 it('places agenda order and times inside the compact row and restores the card timeline', () => {

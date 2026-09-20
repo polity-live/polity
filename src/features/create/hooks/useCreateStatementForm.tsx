@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { StudioStatementEntry } from '@/features/communication-studio/ui/StudioStatementEntry';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 import { useStatementActions } from '@/zero/statements/useStatementActions';
@@ -87,6 +88,37 @@ export function useCreateStatementForm(): CreateFormConfig {
 
   // Step 4: Visibility
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
+  useEffect(() => {
+    setGroupId(groupIdParam || null);
+  }, [groupIdParam]);
+
+  // A Studio return restores its group after the initial URL defaults. Later
+  // explicit route changes still update the selected group normally.
+  useEffect(() => {
+    const saved = sessionStorage.getItem('studio:statement-return');
+    const handoff = sessionStorage.getItem('studio:post');
+    if (!saved && !handoff) return;
+    try {
+      const form = saved ? JSON.parse(saved) : {};
+      const media = handoff ? JSON.parse(handoff) : {};
+      setTitle(media.title ?? form.title ?? '');
+      setText(form.text ?? '');
+      setGroupId(media.groupId ?? form.groupId ?? null);
+      setImageUrl(media.imageUrl ?? form.imageUrl ?? '');
+      setVideoUrl(media.videoUrl ?? form.videoUrl ?? '');
+      setIsStory(media.isStory ?? form.isStory ?? false);
+      setVisibility(form.visibility ?? 'public');
+      setSurveyQuestion(form.surveyQuestion ?? '');
+      setSurveyOptions(form.surveyOptions ?? ['', '']);
+      setSurveyDurationHours(form.surveyDurationHours ?? 24);
+      setHashtags(form.hashtags ?? []);
+    } catch {
+      /* Invalid local drafts must not prevent opening the form. */
+    } finally {
+      sessionStorage.removeItem('studio:statement-return');
+      sessionStorage.removeItem('studio:post');
+    }
+  }, []);
 
   const charsRemaining = MAX_CHARS - text.length;
   const hasContent = hasStatementContent({
@@ -106,10 +138,6 @@ export function useCreateStatementForm(): CreateFormConfig {
 
   const hasSurvey = surveyQuestion.trim() && surveyOptions.filter(o => o.trim()).length >= 2;
   const visibilityLabel = t(getCreateVisibilityLabelKey(visibility));
-
-  useEffect(() => {
-    setGroupId(groupIdParam || null);
-  }, [groupIdParam]);
 
   useEffect(() => {
     const restoreDraft = consumeCreateRestoreDraft<{
@@ -368,6 +396,27 @@ export function useCreateStatementForm(): CreateFormConfig {
                 imageDescription: t('pages.create.statement.imageDescription'),
                 videoLabel: t('pages.create.statement.videoUrl'),
                 videoDescription: t('pages.create.statement.videoDescription'),
+              },
+            },
+            {
+              key: 'studio',
+              kind: 'customComponent',
+              component: StudioStatementEntry,
+              props: {
+                groupId,
+                form: {
+                  title,
+                  text,
+                  groupId,
+                  imageUrl,
+                  videoUrl,
+                  isStory,
+                  surveyQuestion,
+                  surveyOptions,
+                  surveyDurationHours,
+                  hashtags,
+                  visibility,
+                },
               },
             },
             {

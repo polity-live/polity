@@ -1324,6 +1324,13 @@ export function GroupRelationshipRightsSelector({
                     data-action-id="network.right.direction.select"
                   >
                     <FormControlSelectTrigger
+                      aria-label={getGroupRelationshipRightSentenceText({
+                        direction: selectedDirection,
+                        rightLabel: getGroupRelationshipRightLabel(option.value, t),
+                        currentGroupName: sentenceCurrentGroupName,
+                        selectedGroupName: sentenceSelectedGroupName,
+                        t,
+                      })}
                       className="border-border bg-background/80 h-auto min-h-10 py-2 text-left shadow-none"
                       data-action-id="network.right.direction.select"
                     >

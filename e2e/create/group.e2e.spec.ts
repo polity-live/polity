@@ -22,6 +22,7 @@ test.describe('create/group', () => {
       if (layout === 'carousel') {
         await advanceCarousel(createFlowPage, 3);
       } else {
+        await createFlowPage.form.revealField('image-tags');
         const publicLabel = (
           await createFlowPage.form
             .field('image-tags')
@@ -58,6 +59,7 @@ test.describe('create/group', () => {
 
   test('accepts a title video URL @nightly', async ({ createFlowPage, e2eRun }) => {
     await gotoGroup(createFlowPage);
+    await createFlowPage.form.revealField('image-tags');
     await expect(
       applyOptionalVideoUrl(createFlowPage.page, 'image-tags', e2eRun.prefix)
     ).resolves.toBe(true);

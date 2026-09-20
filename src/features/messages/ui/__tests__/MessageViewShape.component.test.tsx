@@ -21,10 +21,48 @@ vi.mock('../MessageInput', () => ({
   MessageInput: () => null,
 }));
 vi.mock('../MessageList', () => ({
-  MessageList: () => null,
+  MessageList: () => <div data-testid="message-list" />,
 }));
 
 describe('regular message view surface', () => {
+  it.each([true, false])(
+    'keeps cached messages visible while queries refresh (window: %s)',
+    hasWindow => {
+      const cached = [{ id: 'persisted-message', content: 'Persisted message' }];
+      const { container, rerender, getByTestId } = render(
+        <MessageView
+          {...({
+            conversation: {
+              id: 'conversation',
+              type: 'direct',
+              participants: [],
+              messages: hasWindow ? [] : cached,
+            },
+            messages: hasWindow ? cached : undefined,
+            isThreadLoading: true,
+          } as any)}
+        />
+      );
+      expect(getByTestId('message-list')).toBeTruthy();
+      expect(container.querySelector('[data-slot="message-thread-skeleton"]')).toBeNull();
+      rerender(
+        <MessageView
+          {...({
+            conversation: {
+              id: 'empty-conversation',
+              type: 'direct',
+              participants: [],
+              messages: [],
+            },
+            messages: hasWindow ? [] : undefined,
+            isThreadLoading: true,
+          } as any)}
+        />
+      );
+      expect(container.querySelector('[data-slot="message-thread-skeleton"]')).toBeTruthy();
+    }
+  );
+
   it('removes the card surface on mobile and restores it on desktop', () => {
     const { container } = render(
       <MessageView

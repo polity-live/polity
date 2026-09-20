@@ -39,9 +39,9 @@ describe('useLanguageToggleController', () => {
       title: 'translated:navigation.toggles.language.title',
     });
 
-    act(() => result.current.onPopoverTriggerMouseEnter());
+    act(() => result.current.onPopoverOpenChange(true));
     expect(result.current.isLanguagePopoverOpen).toBe(true);
-    act(() => result.current.onPopoverMouseLeave());
+    act(() => result.current.onPopoverOpenChange(false));
     expect(result.current.isLanguagePopoverOpen).toBe(false);
     act(() => result.current.onPopoverOpenChange(true));
     expect(result.current.isLanguagePopoverOpen).toBe(true);

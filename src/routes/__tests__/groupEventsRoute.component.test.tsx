@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
 import type { AnchorHTMLAttributes, ComponentType, ReactNode } from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 type MockLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
@@ -10,7 +10,7 @@ type MockLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
   search?: { groupId?: string };
 };
 
-const permissions = vi.hoisted(() => ({ canCreateEvents: true }));
+const permissions = vi.hoisted(() => ({ canCreateEvents: true, date: vi.fn() }));
 
 vi.mock('@tanstack/react-router', async () => {
   const React = await import('react');
@@ -45,7 +45,7 @@ vi.mock('@/features/groups/hooks/useGroupEventsPage', () => ({
     searchQuery: '',
     setSearchQuery: vi.fn(),
     dateFilter: 'all',
-    setDateFilter: vi.fn(),
+    setDateFilter: permissions.date,
     selectedDate: new Date('2026-08-02T00:00:00Z'),
     filteredEvents: [],
     events: [],
@@ -89,6 +89,8 @@ describe('authenticated group events route', () => {
     expect(action.getAttribute('href')).toBe('/create/event?groupId=group-1');
     action.focus();
     expect(document.activeElement).toBe(action);
+    fireEvent.change(screen.getByLabelText('Calendar'), { target: { value: '2026-09-18' } });
+    expect(permissions.date).toHaveBeenCalledWith('2026-09-18');
   });
 
   it('hides creation when the member cannot create events', () => {

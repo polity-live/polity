@@ -59,6 +59,22 @@ test('rejects a link request, reconnects, and unlinks the active relationship @n
     ).toBeVisible({ timeout: 45_000 });
     await requestRow.locator('[data-action-id="network.relationship.delete.open"]').click();
     await confirmDelete();
+    // A pending request has no active connection yet. Verify the rejection itself
+    // has reached PostgreSQL before submitting the replacement request.
+    await expect
+      .poll(
+        async () => {
+          const rows = await db()`
+            select status from public.group_connection_request
+            where group_a_id = least(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
+              and group_b_id = greatest(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
+            order by created_at desc limit 1
+          `;
+          return rows[0]?.status ?? null;
+        },
+        { timeout: 30_000 }
+      )
+      .toBe('rejected');
     await expect
       .poll(async () => {
         const rows = await db()`
@@ -78,29 +94,46 @@ test('rejects a link request, reconnects, and unlinks the active relationship @n
     await expect(approve).toBeVisible({ timeout: 45_000 });
     await approve.click();
     await expect
-      .poll(async () => {
-        const rows = await db()`
-          select status from public.group_connection
-          where group_a_id = least(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
-            and group_b_id = greatest(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
-        `;
-        return rows[0]?.status ?? null;
-      })
+      .poll(
+        async () => {
+          const rows = await db()`
+            select status from public.group_connection
+            where group_a_id = least(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
+              and group_b_id = greatest(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
+          `;
+          return rows[0]?.status ?? null;
+        },
+        { timeout: 30_000 }
+      )
       .toBe('active');
 
     await approverPage.page.reload({ waitUntil: 'domcontentloaded' });
     const activeRow = approverPage.page.locator('tr').filter({ hasText: seed.groupName });
-    await activeRow.locator('[data-action-id="network.relationship.active.delete.open"]').click();
+    const deleteActive = activeRow.locator(
+      '[data-action-id="network.relationship.active.delete.open"]'
+    );
+    await deleteActive.click();
+    await expect(approverPage.page.getByRole('alertdialog')).toBeVisible();
+    await approverPage.page.keyboard.press('Escape');
+    await expect(approverPage.page.getByRole('alertdialog')).toBeHidden();
+    await expect(deleteActive).toBeFocused();
+    await deleteActive.press('Enter');
     await confirmDelete();
     await expect
-      .poll(async () => {
-        const rows = await db()`
-          select count(*)::int as count from public.group_connection
-          where group_a_id = least(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
-            and group_b_id = greatest(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
-        `;
-        return rows[0]?.count ?? 0;
-      })
+      .poll(
+        async () => {
+          const rows = await db()`
+            select count(*)::int as count from public.group_connection
+            where group_a_id = least(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
+              and group_b_id = greatest(${seed.groupId}::uuid, ${seed.linkedGroupId}::uuid)
+          `;
+          return rows[0]?.count ?? 0;
+        },
+        {
+          timeout: 30_000,
+          message: 'The unlink mutation must be persisted before the actors leave the page',
+        }
+      )
       .toBe(0);
   } finally {
     await approverPage.close();

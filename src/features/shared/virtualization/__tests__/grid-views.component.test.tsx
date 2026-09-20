@@ -4,6 +4,7 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+  presentation: null as null | { view: string },
   localOptions: undefined as any,
   zeroOptions: undefined as any,
   localVirtualizer: {
@@ -27,6 +28,9 @@ const mocks = vi.hoisted(() => ({
   historyState: { anchor: 'saved' },
   onHistoryChange: vi.fn(),
 }));
+vi.mock('@/features/shared/ui/collections/CollectionScope', () => ({
+  useCollectionPresentation: () => mocks.presentation,
+}));
 
 vi.mock('../usePolityLocalVirtualizer', () => ({
   usePolityLocalVirtualizer: (options: unknown) => {
@@ -45,6 +49,7 @@ vi.mock('@rocicorp/zero-virtual/react', () => ({
 }));
 
 import { PolityLocalGridView } from '../PolityLocalGridView';
+import { PolityLocalListView } from '../PolityLocalListView';
 import { PolityZeroGridView } from '../PolityZeroGridView';
 
 let resizeCallback: ResizeObserverCallback | undefined;
@@ -67,6 +72,9 @@ function installResizeObserver() {
 }
 
 beforeEach(() => {
+  mocks.presentation = null;
+  mocks.localVirtualizer.measure.mockClear();
+  mocks.localVirtualizer.scrollToIndex.mockClear();
   resizeCallback = undefined;
   mocks.localOptions = undefined;
   mocks.zeroOptions = undefined;
@@ -95,6 +103,53 @@ afterEach(() => {
 });
 
 describe('responsive grid views', () => {
+  it('retains the first visible entity when changing from a card grid to compact rows', () => {
+    mocks.localVirtualizer.getVirtualItems.mockReturnValue([
+      { key: 'visible', index: 1, start: 100, end: 200 },
+    ]);
+    const props = {
+      items: ['a', 'b', 'c', 'd'],
+      getItemKey: (item: string) => item,
+      renderItem: (item: string) => <span>{item}</span>,
+      getLanes: () => 2,
+      estimateRowSize: 100,
+    };
+    const view = render(<PolityLocalGridView {...props} />);
+    (view.container.firstElementChild as HTMLElement).scrollTop = 120;
+    mocks.presentation = { view: 'compact' };
+    view.rerender(<PolityLocalGridView {...props} />);
+    expect(mocks.localVirtualizer.measure).toHaveBeenCalled();
+    expect(mocks.localVirtualizer.scrollToIndex).toHaveBeenLastCalledWith(2, { align: 'start' });
+    expect(mocks.localOptions.estimateSize()).toBe(92);
+    mocks.localVirtualizer.getVirtualItems.mockReturnValue([]);
+    view.rerender(<PolityLocalGridView {...props} />);
+    expect(screen.getByText('d')).toBeTruthy();
+    expect(view.container.querySelector('[data-index="1"]')?.getAttribute('style')).toContain(
+      'translateY(92px)'
+    );
+  });
+  it('retains a list anchor across density changes and handles an empty measured viewport', () => {
+    mocks.localVirtualizer.getVirtualItems.mockReturnValue([
+      { key: 'b', index: 1, start: 100, end: 200 },
+    ]);
+    const props = {
+      items: ['a', 'b'],
+      getItemKey: (item: string) => item,
+      renderItem: (item: string) => <span>{item}</span>,
+      estimateSize: 100,
+    };
+    const view = render(<PolityLocalListView {...props} />);
+    (view.container.firstElementChild as HTMLElement).scrollTop = 110;
+    mocks.presentation = { view: 'compact' };
+    view.rerender(<PolityLocalListView {...props} />);
+    expect(mocks.localVirtualizer.scrollToIndex).toHaveBeenLastCalledWith(1, { align: 'start' });
+    expect(mocks.localOptions.estimateSize()).toBe(84);
+    mocks.localVirtualizer.getVirtualItems.mockReturnValue([]);
+    mocks.presentation = { view: 'cards' };
+    view.rerender(<PolityLocalListView {...props} />);
+    expect(screen.getByText('a')).toBeTruthy();
+    expect(screen.getByText('b')).toBeTruthy();
+  });
   it('renders a local fallback window when ResizeObserver is unavailable', () => {
     vi.stubGlobal('ResizeObserver', undefined);
     const getLanes = vi.fn(() => 2);
@@ -241,6 +296,25 @@ describe('responsive grid views', () => {
       )
     );
     expect(mocks.zeroOptions.lanes).toBe(2);
+    mocks.presentation = { view: 'compact' };
+    rendered.rerender(
+      <PolityZeroGridView
+        context={{ scope: 'loaded' }}
+        historyKey="loaded"
+        estimateSize={80}
+        getLanes={() => 2}
+        getRowKey={(row: { id: string }) => row.id}
+        toStartRow={(row: { id: string }) => row}
+        getPageQuery={() => null}
+        getSingleQuery={() => null}
+        renderRow={() => <p>Compact row</p>}
+        renderSkeleton={() => <p>Card skeleton</p>}
+        renderEmpty={() => null}
+      />
+    );
+    expect(screen.queryByText('Card skeleton')).toBeNull();
+    expect(screen.getByText('Compact row')).toBeTruthy();
+    mocks.presentation = null;
     rendered.unmount();
     expect(disconnect).toHaveBeenCalled();
   });
