@@ -618,8 +618,8 @@ importers:
         specifier: ^6.9.2
         version: 6.9.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       seroval:
-        specifier: ^1.6.3
-        version: 1.6.3
+        specifier: ^1.6.7
+        version: 1.6.7
       supabase:
         specifier: ^2.115.0
         version: 2.115.0
@@ -8245,8 +8245,8 @@ packages:
     peerDependencies:
       seroval: ^1.0
 
-  seroval@1.6.3:
-    resolution: {integrity: sha512-5PwLbVPpT4DEki1hYVSSsoxWY6xCNMVucAVLK/CH0mXSDfp/I4KaAex72q80GNt5hpn7CCMGdSpIg4YGqH/wXQ==}
+  seroval@1.6.7:
+    resolution: {integrity: sha512-AeDcLh0yO2SFm9W71essgnSzLV9DI8ZH0x0knXn2DMnUZj728mpLbxjlbB6IqKCmqh8JA3cEqRyGoNkt584JcQ==}
     engines: {node: '>=10'}
 
   set-cookie-parser@2.7.2:
@@ -9243,6 +9243,18 @@ packages:
 
   ws@8.21.1:
     resolution: {integrity: sha512-+0NTnW77fFN/DjQi6k/Sq/Yvk4Sgajw7urW8V+asjXnRgDs9gyGkdb7EzgfhA4goXsRIZKE28fzIXBHEzhuiWw==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.21.3:
+    resolution: {integrity: sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -13282,8 +13294,8 @@ snapshots:
     dependencies:
       '@tanstack/history': 1.162.1
       cookie-es: 3.1.1
-      seroval: 1.6.3
-      seroval-plugins: 1.6.2(seroval@1.6.3)
+      seroval: 1.6.7
+      seroval-plugins: 1.6.2(seroval@1.6.7)
 
   '@tanstack/router-devtools-core@1.168.1(@tanstack/router-core@1.171.26)(csstype@3.2.3)':
     dependencies:
@@ -13359,7 +13371,7 @@ snapshots:
       '@tanstack/router-core': 1.171.26
       '@tanstack/start-fn-stubs': 1.162.0
       '@tanstack/start-storage-context': 1.167.28
-      seroval: 1.6.3
+      seroval: 1.6.7
 
   '@tanstack/start-fn-stubs@1.162.0': {}
 
@@ -13377,7 +13389,7 @@ snapshots:
       lightningcss: 1.32.0
       pathe: 2.0.3
       picomatch: 4.0.5
-      seroval: 1.6.3
+      seroval: 1.6.7
       source-map: 0.7.6
       srvx: 0.11.17
       tinyglobby: 0.2.17
@@ -13409,7 +13421,7 @@ snapshots:
       '@tanstack/start-storage-context': 1.167.28
       fetchdts: 0.1.7
       h3-v2: h3@2.0.1-rc.20(crossws@0.4.6(srvx@0.11.17))
-      seroval: 1.6.3
+      seroval: 1.6.7
     transitivePeerDependencies:
       - crossws
 
@@ -17464,11 +17476,11 @@ snapshots:
 
   semver@7.8.5: {}
 
-  seroval-plugins@1.6.2(seroval@1.6.3):
+  seroval-plugins@1.6.2(seroval@1.6.7):
     dependencies:
-      seroval: 1.6.3
+      seroval: 1.6.7
 
-  seroval@1.6.3: {}
+  seroval@1.6.7: {}
 
   set-cookie-parser@2.7.2: {}
 
@@ -18382,6 +18394,9 @@ snapshots:
 
   ws@8.21.1: {}
 
+  ws@8.21.3:
+    optional: true
+
   x-is-array@0.1.0: {}
 
   x-is-string@0.1.0: {}
@@ -18429,7 +18444,7 @@ snapshots:
       y-protocols: 1.0.7(yjs@13.6.32)
       yjs: 13.6.32
     optionalDependencies:
-      ws: 8.21.1
+      ws: 8.21.3
     transitivePeerDependencies:
       - bufferutil
       - supports-color
