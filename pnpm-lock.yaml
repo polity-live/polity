@@ -479,8 +479,8 @@ importers:
         specifier: ^2.0.8
         version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       stripe:
-        specifier: ^22.5.0
-        version: 22.5.0(@types/node@24.13.3)
+        specifier: ^22.6.2
+        version: 22.6.2(@types/node@24.13.3)
       styled-components:
         specifier: ^6.5.3
         version: 6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -8460,8 +8460,8 @@ packages:
     resolution: {integrity: sha512-aulFJcD6YK8V1G7iRB5tigAP4TsHBZZrOV8pjV++zdUwmeV8uzbY7yn6h9MswN62adStNZFuCIx4haBnRuMDaw==}
     engines: {node: '>=18'}
 
-  stripe@22.5.0:
-    resolution: {integrity: sha512-QVwMwriC0bbySx6R4dpsvJ0W//GojC1kwWVS6rPSoVqDUIZX4Hy3TaUrd2AZeXEAaKbfWIjQjvo3vKAReHZ0vQ==}
+  stripe@22.6.2:
+    resolution: {integrity: sha512-PwRE2scocvXqDKPiskMa5vRJEAEkq46W69XyUYmAwrNSLr675lQnfqLwnsndAWizwgihOWw/irLmoFRo3ez7ew==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -9243,6 +9243,18 @@ packages:
 
   ws@8.21.1:
     resolution: {integrity: sha512-+0NTnW77fFN/DjQi6k/Sq/Yvk4Sgajw7urW8V+asjXnRgDs9gyGkdb7EzgfhA4goXsRIZKE28fzIXBHEzhuiWw==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.21.3:
+    resolution: {integrity: sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -17728,7 +17740,7 @@ snapshots:
 
   strip-final-newline@4.0.0: {}
 
-  stripe@22.5.0(@types/node@24.13.3):
+  stripe@22.6.2(@types/node@24.13.3):
     optionalDependencies:
       '@types/node': 24.13.3
 
@@ -18382,6 +18394,9 @@ snapshots:
 
   ws@8.21.1: {}
 
+  ws@8.21.3:
+    optional: true
+
   x-is-array@0.1.0: {}
 
   x-is-string@0.1.0: {}
@@ -18429,7 +18444,7 @@ snapshots:
       y-protocols: 1.0.7(yjs@13.6.32)
       yjs: 13.6.32
     optionalDependencies:
-      ws: 8.21.1
+      ws: 8.21.3
     transitivePeerDependencies:
       - bufferutil
       - supports-color
