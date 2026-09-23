@@ -55,6 +55,12 @@ function contentItem(
 }
 
 describe('search result href branch matrix', () => {
+  it('opens Studio results in their personal or group route', () => {
+    expect(getEntityHref('studio', 'project-1')).toBe('/studio/project-1');
+    expect(getEntityHref('studio', 'project-1', { groupId: 'group-1' })).toBe(
+      '/group/group-1/studio/project-1'
+    );
+  });
   it.each([
     ['amendment', 'amendment'],
     [' blog ', 'blog'],

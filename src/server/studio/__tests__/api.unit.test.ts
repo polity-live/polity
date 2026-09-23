@@ -30,6 +30,7 @@ vi.mock('../db', async original => ({
   studioTransaction: mocks.transaction,
   assertStudioGroup: mocks.group,
   assertStudioAccess: mocks.access,
+  assertStudioCollaborationAccess: mocks.access,
 }));
 vi.mock('../service', () => ({
   loadProject: mocks.load,
@@ -105,10 +106,15 @@ describe('Studio HTTP authorization and transactional operations', () => {
       ],
       ['finishUpload', mocks.finishUpload, {}, ['actor', id, false]],
       ['cancelUpload', mocks.finishUpload, {}, ['actor', id, true]],
-      ['create', mocks.createSelection, createInput, ['actor', createInput]],
+      [
+        'create',
+        mocks.createSelection,
+        createInput,
+        ['actor', { ...createInput, visibility: 'private' }],
+      ],
       ['assets', mocks.assets, {}, ['actor', id, undefined]],
       ['load', mocks.load, {}, ['actor', id]],
-      ['duplicate', mocks.duplicate, {}, ['actor', id]],
+      ['duplicate', mocks.duplicate, {}, ['actor', id, null, 'private']],
       ['download', mocks.download, {}, ['actor', id]],
       ['exportStatus', mocks.exportStatus, {}, ['actor', id]],
       [
@@ -124,6 +130,17 @@ describe('Studio HTTP authorization and transactional operations', () => {
       expect(handler).toHaveBeenLastCalledWith(...args);
       expect(await response.json()).toEqual({ id });
     }
+  });
+  it('forwards clone destination and visibility after validation', async () => {
+    const destination = '00000000-0000-4000-8000-000000000002';
+    const response = await request({
+      operation: 'duplicate',
+      id,
+      groupId: destination,
+      visibility: 'authenticated',
+    });
+    expect(response.status).toBe(200);
+    expect(mocks.duplicate).toHaveBeenCalledWith('actor', id, destination, 'authenticated');
   });
   it('hands off only completed single image or video exports using their immutable revision and story pages', async () => {
     const legacy = createDocument('story', 'Story');

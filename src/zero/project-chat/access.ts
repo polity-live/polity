@@ -1,5 +1,5 @@
 import { applyTutorialRunOwnerQueryAccess } from '../rbac/query-access';
-import { studioProjectReadAccess } from '../communication-studio/access';
+import { studioProjectCollaborativeAccess } from '../communication-studio/access';
 
 // The same relationship predicate protects replication and server commands.
 // Public entity visibility and former conversation participation grant no access.
@@ -14,7 +14,7 @@ export function projectGroupAccess(q: any, userID: string): any {
   );
 }
 export function studioChatAccess(q: any, userID: string): any {
-  return studioProjectReadAccess(q, userID);
+  return studioProjectCollaborativeAccess(q, userID);
 }
 export function amendmentChatAccess(q: any, userID: string): any {
   return (applyTutorialRunOwnerQueryAccess(q, userID) as any).where(({ or, cmp, exists }: any) =>

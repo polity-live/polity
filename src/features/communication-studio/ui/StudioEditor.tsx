@@ -78,6 +78,8 @@ import { ProjectChatPanel } from '@/features/project-chat/ui/ProjectChatPanel';
 import { GroupThemeSettings } from '@/features/groups/ui/GroupThemeSettings';
 import { StudioPanel } from './StudioPanel';
 import { StudioInviteDialog } from './StudioInviteDialog';
+import { StudioCloneDialog } from './StudioCloneDialog';
+import { StudioVisibilityDialog } from './StudioVisibilityDialog';
 import { openStudioPanel } from '../logic/panel-events';
 import { StudioLayersPanel } from './StudioLayersPanel';
 import { StudioPreviewDialog } from './StudioPreviewDialog';
@@ -226,7 +228,6 @@ export function StudioEditor({
   projectId,
   groupId,
   conversationId,
-  open,
   governance,
   modeButton,
   canvasOverlay,
@@ -339,7 +340,6 @@ export function StudioEditor({
       projectId={projectId}
       groupId={groupId}
       conversationId={conversationId}
-      open={open}
       governance={governance}
       modeButton={modeButton}
       canvasOverlay={canvasOverlay}
@@ -360,7 +360,6 @@ function StudioEditorReady({
   projectId,
   groupId,
   conversationId,
-  open,
   governance,
   modeButton,
   canvasOverlay,
@@ -378,7 +377,6 @@ function StudioEditorReady({
   projectId: string;
   groupId: string | null;
   conversationId?: string;
-  open: (id: string) => void;
   governance?: ReactNode;
   modeButton?: ReactNode;
   canvasOverlay?: ReactNode;
@@ -389,6 +387,9 @@ function StudioEditorReady({
   onChangeRequestSelect?: (id: string) => void;
   tr: (key: string) => string;
 }) {
+  const { t } = useTranslation();
+  const [cloneOpen, setCloneOpen] = useState(false);
+  const [visibilityOpen, setVisibilityOpen] = useState(false);
   const disabled = !c.canEdit || c.busy || !!previewDocument || editingAllowed === false;
   const studioPresence = useMemo(
     () => buildStudioPresence(c.identity, c.peers),
@@ -1506,16 +1507,15 @@ function StudioEditorReady({
             <StudioMenuItem
               label={tr('duplicateProject')}
               icon={<Copy />}
-              onSelect={() =>
-                c.run(async () => {
-                  await c.commit();
-                  const result = await c.actions.request<{ id: string }>('duplicate', {
-                    id: projectId,
-                  });
-                  open(result.id);
-                })
-              }
+              onSelect={() => setCloneOpen(true)}
             />
+            {(groupId || c.project?.owner_id === c.identity.id) && (
+              <StudioMenuItem
+                label={t('pages.create.common.visibility')}
+                icon={<FolderOpen />}
+                onSelect={() => setVisibilityOpen(true)}
+              />
+            )}
           </StudioToolbarMenu>
         </ToolbarGroup>
         {modeButton && <ToolbarGroup>{modeButton}</ToolbarGroup>}
@@ -2687,6 +2687,25 @@ function StudioEditorReady({
         }}
         onSave={async file => (await c.savePhoto(file)) ?? false}
       />
+      {cloneOpen && (
+        <StudioCloneDialog
+          sourceId={projectId}
+          open={cloneOpen}
+          onOpenChange={setCloneOpen}
+          beforeClone={c.commit}
+        />
+      )}
+      {visibilityOpen && (
+        <StudioVisibilityDialog
+          key={`${projectId}:${c.project?.visibility ?? 'private'}`}
+          projectId={projectId}
+          visibility={
+            (c.project?.visibility as 'public' | 'authenticated' | 'private') ?? 'private'
+          }
+          open={visibilityOpen}
+          onOpenChange={setVisibilityOpen}
+        />
+      )}
     </main>
   );
 }

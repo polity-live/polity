@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useZero } from '@rocicorp/zero/react';
+import { useQuery, useZero } from '@rocicorp/zero/react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useStudioApi } from '@/zero/communication-studio/useStudioApi';
 import { useStudioState } from '@/zero/communication-studio/useStudioState';
 import { mutators } from '@/zero/mutators';
+import { queries } from '@/zero/queries';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { BUILTIN_THEMES } from '@/features/shared/appearance-theme';
 import {
@@ -17,6 +18,8 @@ import type { StudioDocument } from '@/features/communication-studio/logic/docum
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import type { CreateFormConfig } from '../types/create-form.types';
 import { createRouteSubmitTarget, createSuccessSubmitOutcome } from '../logic/createSubmitTargets';
+import { VisibilityInput } from '../ui/inputs/VisibilityInput';
+import { getCreateVisibilityLabelKey, type CreateVisibility } from '../logic/createVisibility';
 
 const selectClass = 'w-full rounded-md border bg-background px-3 py-2 text-sm';
 const kinds: StudioDocument['kind'][] = [
@@ -28,12 +31,15 @@ const kinds: StudioDocument['kind'][] = [
   'campaign',
 ];
 
-export function useCreateStudioProjectForm(groupId: string | null): CreateFormConfig {
+export function useCreateStudioProjectForm(initialGroupId: string | null): CreateFormConfig {
   const { t } = useTranslation();
   const tr = (key: string) => t(`features.studio.${key}`);
   const navigate = useNavigate();
   const zero = useZero();
   const { request } = useStudioApi();
+  const [manageableGroups] = useQuery(queries.studio.manageGroups());
+  const [groupId, setGroupId] = useState<string | null>(initialGroupId);
+  const [visibility, setVisibility] = useState<CreateVisibility>('private');
   const { projects } = useStudioState(groupId);
   const createdId = useRef<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -100,6 +106,7 @@ export function useCreateStudioProjectForm(groupId: string | null): CreateFormCo
       if (!createdId.current) {
         const result = await request<{ id: string }>('create', {
           groupId,
+          visibility,
           title: title.trim(),
           kind,
           themeId,
@@ -181,6 +188,20 @@ export function useCreateStudioProjectForm(groupId: string | null): CreateFormCo
             onValueChange: setTitle,
             maxLength: 200,
           },
+          {
+            key: 'group',
+            alwaysVisible: true,
+            kind: 'typeahead',
+            label: t('pages.create.event.associatedGroupLabel'),
+            props: {
+              entityTypes: ['group'],
+              value: groupId ?? undefined,
+              onChange: (item: { id: string } | null) => setGroupId(item?.id ?? null),
+              placeholder: t('pages.create.event.associatedGroupPlaceholder'),
+              filterFn: (item: { id: string }) =>
+                (manageableGroups ?? []).some(group => group.id === item.id),
+            },
+          },
           field(
             'mode',
             <fieldset className="space-y-2">
@@ -229,6 +250,14 @@ export function useCreateStudioProjectForm(groupId: string | null): CreateFormCo
         label: t('pages.create.studioProject.settings'),
         isValid: () => mode !== 'ai' || brief.trim().length > 0,
         fields: [
+          field(
+            'visibility',
+            <VisibilityInput
+              value={visibility}
+              onChange={setVisibility}
+              label={t('pages.create.common.visibility')}
+            />
+          ),
           field(
             'theme',
             select(
@@ -324,6 +353,20 @@ export function useCreateStudioProjectForm(groupId: string | null): CreateFormCo
                   value: themes.find(theme => theme.themeId === themeId)?.name ?? '',
                 },
                 { label: tr('themeMode'), value: tr(themeMode) },
+                {
+                  label: t('pages.create.common.visibility'),
+                  value: t(getCreateVisibilityLabelKey(visibility)),
+                },
+                ...(groupId
+                  ? [
+                      {
+                        label: t('pages.create.event.associatedGroupLabel'),
+                        value:
+                          (manageableGroups ?? []).find(group => group.id === groupId)?.name ??
+                          groupId,
+                      },
+                    ]
+                  : []),
                 ...(kind === 'campaign'
                   ? [
                       { label: tr('weeks'), value: weeks },

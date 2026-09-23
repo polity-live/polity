@@ -9,6 +9,7 @@ import { BlogListTab } from './BlogListTab';
 import { GroupsListTab } from './GroupListTab';
 import { AmendmentListTab } from './AmendmentListTab';
 import { StatementListTab } from './StatementListTab';
+import { StudioProjectsTab } from './StudioProjectsTab';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { StatementStoryCarousel } from '@/features/statements/ui/StatementStoryCarousel';
 import type { UserProfile, TabSearchState } from '../types/user.types';
@@ -41,7 +42,7 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
     () => ({
       ownerUserId: user.id,
       query: searchTerms.all,
-      types: ['amendment', 'blog', 'group', 'statement'],
+      types: ['amendment', 'blog', 'group', 'statement', 'studio'],
     }),
     [searchTerms.all, user.id]
   );
@@ -103,6 +104,9 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
           </TabsTrigger>
           <TabsTrigger value="statements" data-action-id="users.content-tab.statements">
             {t('pages.user.statements.title')}
+          </TabsTrigger>
+          <TabsTrigger value="studio" data-action-id="users.content-tab.studio">
+            {t('features.studio.projects')}
           </TabsTrigger>
         </ScrollableTabsList>
 
@@ -194,6 +198,9 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
 
         <TabsContent value="statements" className="mt-4">
           {renderStatementsTab()}
+        </TabsContent>
+        <TabsContent value="studio" className="mt-4">
+          <StudioProjectsTab userId={user.id} />
         </TabsContent>
       </Tabs>
     </div>

@@ -9,10 +9,15 @@ const io = vi.hoisted(() => ({
   chatCreate: vi.fn(),
   confirm: vi.fn(),
   projects: [] as { id: string; title: string; is_template: boolean }[],
+  groups: [] as { id: string; name: string }[],
 }));
 
 vi.mock('@tanstack/react-router', () => ({ useNavigate: () => io.navigate }));
-vi.mock('@rocicorp/zero/react', () => ({ useZero: () => ({ mutate: io.chatCreate }) }));
+vi.mock('@rocicorp/zero/react', () => ({
+  useZero: () => ({ mutate: io.chatCreate }),
+  useQuery: () => [io.groups],
+}));
+vi.mock('@/zero/queries', () => ({ queries: { studio: { manageGroups: () => ({}) } } }));
 vi.mock('@/zero/mutators', () => ({
   mutators: { projectChat: { create: (value: unknown) => value } },
 }));
@@ -38,6 +43,7 @@ beforeEach(() => {
   io.chatCreate.mockReturnValue({ server: Promise.resolve({ type: 'success' }) });
   io.confirm.mockResolvedValue(undefined);
   io.projects = [];
+  io.groups = [];
   sessionStorage.clear();
   localStorage.clear();
 });
@@ -70,6 +76,7 @@ it('validates the title and opens a confirmed personal project', async () => {
       title: 'My Studio project',
       kind: 'single',
       template: { kind: 'builtin', id: 'announcement' },
+      visibility: 'private',
     })
   );
   expect(io.navigate).toHaveBeenCalledWith({
@@ -77,6 +84,33 @@ it('validates the title and opens a confirmed personal project', async () => {
     params: { projectId: 'new-project' },
   });
   expect(outcome).toMatchObject({ status: 'success', target: { to: '/studio/$projectId' } });
+});
+
+it('keeps the draft when an optional prefilled group changes', async () => {
+  io.groups = [
+    { id: 'group-1', name: 'Original' },
+    { id: 'group-2', name: 'Destination' },
+  ];
+  const { result } = renderHook(() => useCreateStudioProjectForm('group-1'));
+  const title = field(result, 'title');
+  if (title?.kind !== 'text') throw new Error('Missing title');
+  act(() => title.onValueChange('Draft kept'));
+  const group = field(result, 'group');
+  if (group?.kind !== 'typeahead') throw new Error('Missing group selector');
+  expect(group.props.value).toBe('group-1');
+  act(() => group.props.onChange?.({ id: 'group-2', label: 'Destination', entityType: 'group' }));
+  expect((field(result, 'title') as typeof title).value).toBe('Draft kept');
+  await act(async () => {
+    await result.current.onSubmit();
+  });
+  expect(io.request).toHaveBeenCalledWith(
+    'create',
+    expect.objectContaining({
+      title: 'Draft kept',
+      groupId: 'group-2',
+      visibility: 'private',
+    })
+  );
 });
 
 it('preserves group context, project template, theme and campaign settings', async () => {

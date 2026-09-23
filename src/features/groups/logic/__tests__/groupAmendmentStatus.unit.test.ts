@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  getGroupAmendmentDisplayStatusForGroup,
   getGroupAmendmentBadgeStatus,
   groupAmendmentsByDisplayStatus,
   normalizeGroupAmendmentDisplayStatus,
@@ -73,5 +74,38 @@ describe('groupAmendmentsByDisplayStatus', () => {
     expect(grouped.pending).toHaveLength(1);
     expect(grouped.rejected).toHaveLength(1);
     expect(grouped.withdrawn).toHaveLength(1);
+  });
+});
+
+describe('getGroupAmendmentDisplayStatusForGroup', () => {
+  it('uses the target step status without an event and leaves its source pending', () => {
+    const amendment = {
+      id: 'a',
+      current_process_run: {
+        step_runs: [
+          {
+            source_group_id: 'source',
+            target_group_id: 'target',
+            event: null,
+            decision_status: 'approved',
+            status: 'pending_event',
+          },
+        ],
+      },
+    };
+    expect(getGroupAmendmentDisplayStatusForGroup(amendment, 'source')).toBe('pending');
+    expect(getGroupAmendmentDisplayStatusForGroup(amendment, 'target')).toBe('accepted');
+  });
+
+  it('uses the group decision ahead of process status', () => {
+    const amendment = {
+      id: 'a',
+      group_decisions: [{ group_id: 'target', status: 'declined' }],
+      current_process_run: {
+        step_runs: [{ target_group_id: 'target', decision_status: 'approved' }],
+      },
+    };
+    expect(getGroupAmendmentDisplayStatusForGroup(amendment, 'target')).toBe('rejected');
+    expect(getGroupAmendmentDisplayStatusForGroup(amendment, 'elsewhere')).toBe('pending');
   });
 });

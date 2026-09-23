@@ -2,16 +2,16 @@
   "version": 1,
   "expectedInventory": {
     "tables": 185,
-    "columns": 1923,
+    "columns": 1924,
     "primaryKeys": 186,
-    "checks": 171,
+    "checks": 172,
     "foreignKeys": 445,
     "uniqueConstraints": 72,
     "uniqueIndexes": 29,
     "uniqueRules": 101,
     "indexes": 730,
-    "functions": 111,
-    "triggers": 106,
+    "functions": 120,
+    "triggers": 113,
     "policies": 165,
     "cronBranches": 2
   },
@@ -377,6 +377,11 @@
       "source": "69_retire_whiteboards.sql",
       "behavior": ["communication_studio.sql"],
       "securityBehavior": ["communication_studio.sql"]
+    },
+    {
+      "source": "70_studio_visibility_discovery.sql",
+      "behavior": ["studio_visibility_discovery.sql"],
+      "securityBehavior": ["studio_visibility_discovery.sql"]
     }
   ]
 }

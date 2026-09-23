@@ -2,7 +2,7 @@ import { createClient, getSession } from '@/lib/supabase/server';
 import { createServerClient, parseCookieHeader } from '@supabase/ssr';
 import { getRequiredEnvVar } from '@/lib/env';
 import { z } from 'zod';
-import { studioSql } from './db';
+import { assertStudioAccess, assertStudioCollaborationAccess, studioSql } from './db';
 import { assertCanvasWorkspace } from './workspace-access';
 import { validMediaRange } from './media-range';
 
@@ -55,7 +55,6 @@ export async function privateCanvasMedia(
     const { data } = await auth.auth.getUser();
     if (data.user) session = { user: data.user };
   }
-  if (!session) return new Response(null, { status: 401, headers });
   const sql = studioSql();
   const [asset] =
     kind === 'asset'
@@ -63,7 +62,21 @@ export async function privateCanvasMedia(
       : await sql`select project_id,null::uuid as workspace_id,storage_path,file_name from studio_export where id=${id} and status='completed' and storage_path is not null`;
   if (!asset) return new Response(null, { status: 404, headers });
   try {
-    await assertCanvasWorkspace(session.user.id, asset.project_id, asset.workspace_id, false, sql);
+    if (kind === 'export') {
+      if (!session) throw new Error('Authentication required');
+      await assertStudioCollaborationAccess(session.user.id, asset.project_id, sql);
+    } else if (asset.workspace_id) {
+      if (!session) throw new Error('Authentication required');
+      await assertCanvasWorkspace(
+        session.user.id,
+        asset.project_id,
+        asset.workspace_id,
+        false,
+        sql
+      );
+    } else {
+      await assertStudioAccess(session?.user.id ?? null, asset.project_id, false, sql);
+    }
   } catch {
     return new Response(null, { status: 404, headers });
   }

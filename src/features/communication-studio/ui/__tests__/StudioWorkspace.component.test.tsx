@@ -151,6 +151,22 @@ vi.mock('../StudioPreviewDialog', () => ({
       </div>
     ) : null,
 }));
+vi.mock('../StudioCloneDialog', () => ({
+  StudioCloneDialog: ({ beforeClone }: { beforeClone: () => Promise<unknown> }) => (
+    <button onClick={() => void beforeClone()}>confirmClone</button>
+  ),
+}));
+vi.mock('../useStudioProcedure', () => ({
+  useStudioProcedure: () => ({
+    modeButton: null,
+    canvasOverlay: null,
+    markers: [],
+    previewDocument: null,
+    previewAssets: [],
+    editingAllowed: true,
+    selectProposal: vi.fn(),
+  }),
+}));
 vi.mock('@/features/file-upload/ui/ImageEditorDialog', () => ({
   ImageEditorDialog: (p: any) =>
     p.open ? (
@@ -1319,13 +1335,11 @@ describe('Studio toolbar workflows', () => {
     const commit = vi.fn().mockResolvedValue(7);
     io.editor.commit = commit;
     io.editor.collaboration = { commit };
-    io.request.mockResolvedValue({ id: 'copy' });
-    const open = vi.fn();
-    await show({ projectId: 'project', open });
+    await show({ projectId: 'project', open: vi.fn() });
     panel('project');
     fireEvent.click(screen.getByRole('menuitem', { name: 'duplicateProject' }));
-    await waitFor(() => expect(open).toHaveBeenCalledWith('copy'));
-    expect(commit).toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'confirmClone' }));
+    await waitFor(() => expect(commit).toHaveBeenCalled());
   });
   it('shows a conflict with base, local and remote values', async () => {
     io.editor.conflicts = [{ path: ['title'], base: 'old', local: 'mine', remote: 'theirs' }];

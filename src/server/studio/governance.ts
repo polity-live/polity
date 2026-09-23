@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { studioTransaction, StudioError, assertStudioAccess, canvasEnabled } from './db';
+import {
+  studioTransaction,
+  StudioError,
+  assertStudioCollaborationAccess,
+  canvasEnabled,
+} from './db';
 import { checksum } from '@/server/checksum';
 import { studioDocumentV3Schema } from '@/features/communication-studio/logic/document-v3';
 import { canvasPhaseSchema } from '@/features/communication-studio/logic/governance';
@@ -154,7 +159,7 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
   return studioTransaction(
     async sql => {
       const { projectId, action, workspaceId } = input;
-      await assertStudioAccess(actor, projectId, false, sql);
+      await assertStudioCollaborationAccess(actor, projectId, sql);
       const [project] =
         await sql`select *,studio_access(${actor}::uuid,id,true) as can_edit,canvas_manage(${actor}::uuid,id) as can_manage from studio_project where id=${projectId} and document_schema_version=5 ${readOnly ? sql`` : sql`for update`}`;
       const [control] =
@@ -228,7 +233,7 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
         };
       }
       if (action === 'libraries')
-        return sql`select l.id,l.name,l.content from canvas_library l join studio_project p on p.id=l.project_id where studio_access(${actor}::uuid,p.id,false) and ((p.group_id is null and ${project.group_id}::uuid is null and p.owner_id=${actor}) or (p.group_id=${project.group_id}::uuid)) order by l.created_at`;
+        return sql`select l.id,l.name,l.content from canvas_library l join studio_project p on p.id=l.project_id where studio_collaboration_access(${actor}::uuid,p.id) and ((p.group_id is null and ${project.group_id}::uuid is null and p.owner_id=${actor}) or (p.group_id=${project.group_id}::uuid)) order by l.created_at`;
       const operationId = requireValue(input.operationId);
       const hash = checksum(input);
       const [prior] = await sql`select * from canvas_receipt where id=${operationId}`;
@@ -347,7 +352,8 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
         case 'share': {
           const p = ownDraft();
           if (p.owner_id !== actor) denied();
-          for (const id of input.userIds ?? []) await assertStudioAccess(id, projectId, false, sql);
+          for (const id of input.userIds ?? [])
+            await assertStudioCollaborationAccess(id, projectId, sql);
           await sql`update canvas_proposal set shared_ids=${input.userIds ?? []},updated_at=${Date.now()} where id=${p.id}`;
           break;
         }

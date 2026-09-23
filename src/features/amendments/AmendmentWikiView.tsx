@@ -315,7 +315,11 @@ export function AmendmentWikiView({
             </div>
           )}
           {targetGroup && (
-            <div className="flex items-center gap-3">
+            <Link
+              to="/group/$id"
+              params={{ id: targetGroup.id }}
+              className="flex items-center gap-3 transition-opacity hover:opacity-80"
+            >
               <Avatar className="border-background h-10 w-10 border-2">
                 <AvatarImage src={targetGroup.image_url ?? undefined} />
                 <AvatarFallback>{targetGroup.name?.[0]?.toUpperCase() || 'G'}</AvatarFallback>
@@ -326,7 +330,7 @@ export function AmendmentWikiView({
                   {translateText('generated.inline.0069_targets_d35260a0')}
                 </p>
               </div>
-            </div>
+            </Link>
           )}
           {clonedFrom && (
             <Link

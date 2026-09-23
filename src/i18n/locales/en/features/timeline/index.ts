@@ -142,6 +142,7 @@ export const timelineTranslations = {
     action: 'Activity',
     workflow: 'Workflow',
     user: 'User',
+    studio: 'Studio project',
   },
   imageSources: {
     user: 'User photo',

@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useQuery, useZero } from '@rocicorp/zero/react';
-import { MessageSquare, Minus } from 'lucide-react';
+import { MessageSquare, MessageSquarePlus, Minus } from 'lucide-react';
 import { queries } from '@/zero/queries';
 import { mutators } from '@/zero/mutators';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
@@ -23,7 +23,7 @@ export function ProjectChatPanel({
   const zero = useZero(),
     { t } = useTranslation(),
     tr = (key: string) => t(`features.projectChat.${key}`);
-  const [conversations] = useQuery(queries.projectChat.conversations(scope));
+  const [conversations, conversationsResult] = useQuery(queries.projectChat.conversations(scope));
   const [selected, setSelected] = useState(conversationId ?? ''),
     [open, setOpen] = useState(false),
     [error, setError] = useState(''),
@@ -31,6 +31,7 @@ export function ProjectChatPanel({
   const panelId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const restoreTriggerFocus = useRef(false);
+  const autoCreateAttempt = useRef('');
   const key = scopeKey(scope);
   useEffect(() => {
     setSelected(conversationId ?? localStorage.getItem(`project-chat:${key}`) ?? '');
@@ -58,6 +59,7 @@ export function ProjectChatPanel({
     localStorage.setItem(`project-chat:${key}`, id);
   };
   async function create() {
+    if (conversations.length === 0) autoCreateAttempt.current = key;
     setCreating(true);
     setError('');
     try {
@@ -78,6 +80,22 @@ export function ProjectChatPanel({
       setCreating(false);
     }
   }
+  useEffect(() => {
+    if (conversations.length > 0) {
+      if (autoCreateAttempt.current === key) autoCreateAttempt.current = '';
+      return;
+    }
+    if (
+      !open ||
+      conversationsResult.type !== 'complete' ||
+      creating ||
+      autoCreateAttempt.current === key
+    ) {
+      return;
+    }
+    autoCreateAttempt.current = key;
+    void create();
+  }, [open, conversationsResult.type, conversations.length, creating, key]);
   const minimize = () => {
     restoreTriggerFocus.current = true;
     setOpen(false);
@@ -112,23 +130,11 @@ export function ProjectChatPanel({
       >
         <header className="flex h-11 shrink-0 items-center gap-2 border-b px-3">
           <MessageSquare className="size-4" aria-hidden="true" />
-          <span className="min-w-0 flex-1 truncate text-sm font-semibold">{tr('title')}</span>
-          <button
-            type="button"
-            className="hover:bg-muted rounded p-1.5"
-            aria-label={tr('minimize')}
-            data-action-id="project-chat.dock.minimize"
-            onClick={minimize}
-          >
-            <Minus className="size-4" aria-hidden="true" />
-          </button>
-        </header>
-        <div className="flex shrink-0 gap-2 p-2">
           <select
             aria-label={tr('choose')}
             value={current ?? ''}
             onChange={e => choose(e.target.value)}
-            className="bg-background min-w-0 flex-1 rounded border p-1 text-sm"
+            className="bg-background min-w-0 flex-1 rounded border px-2 py-1 text-sm"
           >
             <option value="" disabled>
               {tr('choose')}
@@ -141,14 +147,24 @@ export function ProjectChatPanel({
           </select>
           <button
             type="button"
-            className="rounded border px-2 text-sm"
-            disabled={creating}
+            className="hover:bg-muted rounded p-1.5"
+            aria-label={tr('new')}
+            disabled={creating || conversationsResult.type === 'unknown'}
             data-action-id="project-chat.conversation.create"
             onClick={() => void create()}
           >
-            {tr('new')}
+            <MessageSquarePlus className="size-4" aria-hidden="true" />
           </button>
-        </div>
+          <button
+            type="button"
+            className="hover:bg-muted rounded p-1.5"
+            aria-label={tr('minimize')}
+            data-action-id="project-chat.dock.minimize"
+            onClick={minimize}
+          >
+            <Minus className="size-4" aria-hidden="true" />
+          </button>
+        </header>
         {error && (
           <p role="alert" className="text-destructive p-2 text-sm">
             {error}
@@ -166,16 +182,11 @@ export function ProjectChatPanel({
             />
           ) : (
             <div className="p-4 text-sm">
-              <p>{tr('empty')}</p>
-              <button
-                type="button"
-                className="mt-3 rounded border p-2"
-                disabled={creating}
-                data-action-id="project-chat.conversation.start"
-                onClick={() => void create()}
-              >
-                {tr('start')}
-              </button>
+              <p role="status">
+                {creating || conversationsResult.type === 'unknown'
+                  ? tr('unavailable')
+                  : tr('empty')}
+              </p>
             </div>
           )}
         </div>

@@ -3,11 +3,12 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const state = vi.hoisted(() => ({
   conversations: [] as { id: string; name: string }[],
+  queryType: 'complete' as 'complete' | 'unknown',
   mutate: vi.fn(),
 }));
 vi.mock('@rocicorp/zero/react', () => ({
   useZero: () => ({ mutate: state.mutate }),
-  useQuery: () => [state.conversations],
+  useQuery: () => [state.conversations, { type: state.queryType }],
 }));
 vi.mock('@/zero/queries', () => ({ queries: { projectChat: { conversations: () => ({}) } } }));
 vi.mock('@/zero/mutators', () => ({ mutators: { projectChat: { create: (x: unknown) => x } } }));
@@ -30,6 +31,7 @@ const scope = { kind: 'studio' as const, projectId: '00000000-0000-4000-a000-000
 beforeEach(() => {
   localStorage.clear();
   state.conversations = [];
+  state.queryType = 'complete';
   state.mutate
     .mockReset()
     .mockReturnValue({ client: Promise.resolve(), server: Promise.resolve({ type: 'success' }) });
@@ -72,6 +74,9 @@ it('opens from a bottom dock, switches chats and restores focus when minimized',
   expect(screen.getByRole('dialog', { name: 'title' })).toBeTruthy();
   expect(screen.getByTestId('project-conversation').getAttribute('data-active')).toBe('true');
   const choose = screen.getByLabelText('choose');
+  expect(choose.closest('header')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'new' }).closest('header')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'new' }).textContent).toBe('');
   choose.focus();
   expect(document.activeElement).toBe(choose);
   fireEvent.change(choose, { target: { value: 'two' } });
@@ -92,7 +97,7 @@ it('opens from a bottom dock, switches chats and restores focus when minimized',
   await act(async () => fireEvent.click(screen.getByRole('button', { name: 'new' })));
   expect(state.mutate).toHaveBeenCalledWith(expect.objectContaining({ scope, name: 'title 3' }));
 });
-it('shows creation progress, prevents duplicate submission and retains errors for retry', async () => {
+it('creates the first chat automatically after the query resolves, and allows retry after an error', async () => {
   let reject!: (reason: Error) => void;
   state.mutate.mockReturnValueOnce({
     client: Promise.resolve(),
@@ -102,11 +107,35 @@ it('shows creation progress, prevents duplicate submission and retains errors fo
   });
   render(<ProjectChatPanel scope={scope} context={{ surface: 'studio' }} />);
   fireEvent.click(screen.getByRole('button', { name: 'title' }));
-  fireEvent.click(screen.getByRole('button', { name: 'start' }));
+  expect(state.mutate).toHaveBeenCalledTimes(1);
+  expect(state.mutate).toHaveBeenCalledWith(expect.objectContaining({ scope, name: 'title 1' }));
   expect((screen.getByRole('button', { name: 'new' }) as HTMLButtonElement).disabled).toBe(true);
   await act(async () => reject(new Error('Permission denied')));
   expect(screen.getByRole('alert').textContent).toContain('Permission denied');
-  fireEvent.click(screen.getByRole('button', { name: 'start' }));
+  expect(state.mutate).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole('button', { name: 'new' }));
   await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
   expect(state.mutate).toHaveBeenCalledTimes(2);
+});
+it('waits for the conversation query before creating a first chat', () => {
+  state.queryType = 'unknown';
+  const { rerender } = render(<ProjectChatPanel scope={scope} context={{ surface: 'studio' }} />);
+  fireEvent.click(screen.getByRole('button', { name: 'title' }));
+  expect(state.mutate).not.toHaveBeenCalled();
+  state.queryType = 'complete';
+  rerender(<ProjectChatPanel scope={scope} context={{ surface: 'studio' }} />);
+  expect(state.mutate).toHaveBeenCalledTimes(1);
+});
+it('shows the automatically created chat when it arrives in the conversation query', async () => {
+  const { rerender } = render(<ProjectChatPanel scope={scope} context={{ surface: 'studio' }} />);
+  fireEvent.click(screen.getByRole('button', { name: 'title' }));
+  const created = state.mutate.mock.calls[0][0] as { id: string };
+  await waitFor(() =>
+    expect((screen.getByRole('button', { name: 'new' }) as HTMLButtonElement).disabled).toBe(false)
+  );
+  state.conversations = [{ id: created.id, name: 'First project chat' }];
+  rerender(<ProjectChatPanel scope={scope} context={{ surface: 'studio' }} />);
+  expect(screen.getByText(`Conversation ${created.id}`)).toBeTruthy();
+  expect((screen.getByLabelText('choose') as HTMLSelectElement).value).toBe(created.id);
+  expect(state.mutate).toHaveBeenCalledTimes(1);
 });

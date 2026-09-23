@@ -52,6 +52,7 @@ export const ALL_CONTENT_TYPES: ContentType[] = [
   'blog',
   'action',
   'user',
+  'studio',
 ];
 
 /**

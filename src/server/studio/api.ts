@@ -10,6 +10,7 @@ import {
   studioEnabled,
   studioV3Enabled,
   assertStudioAccess,
+  assertStudioCollaborationAccess,
   assertStudioGroup,
 } from './db';
 import {
@@ -92,14 +93,14 @@ export async function handleStudio(request: Request) {
         break;
       case 'editorActions':
         result = await studioTransaction(async sql => {
-          await assertStudioAccess(userId, uuid.parse(body.projectId), false, sql);
+          await assertStudioCollaborationAccess(userId, uuid.parse(body.projectId), sql);
           const clientId = uuid.parse(body.clientId);
           return sql`update studio_editor_action set claimed_by=${clientId} where id in (select id from studio_editor_action where project_id=${body.projectId} and actor_id=${userId} and result is null and (claimed_by is null or claimed_by=${clientId}) and created_at>${Date.now() - 120000} order by created_at limit 20 for update skip locked) returning id,name,input`;
         });
         break;
       case 'editorResult':
         result = await studioTransaction(async sql => {
-          await assertStudioAccess(userId, uuid.parse(body.projectId), false, sql);
+          await assertStudioCollaborationAccess(userId, uuid.parse(body.projectId), sql);
           const response = z
             .object({
               status: z.enum(['completed', 'failed']),
@@ -144,7 +145,7 @@ export async function handleStudio(request: Request) {
         break;
       case 'receipt':
         result = await studioTransaction(async sql => {
-          await assertStudioAccess(userId, uuid.parse(body.projectId), false, sql);
+          await assertStudioCollaborationAccess(userId, uuid.parse(body.projectId), sql);
           const [row] =
             await sql`select result from studio_operation where id=${uuid.parse(body.id)} and project_id=${body.projectId} and actor_id=${userId}`;
           if (!row) throw new StudioError('Operation not found', 404);
@@ -159,8 +160,27 @@ export async function handleStudio(request: Request) {
         );
         break;
       case 'duplicate':
-        result = await duplicateProject(userId, uuid.parse(body.id));
+        result = await duplicateProject(
+          userId,
+          uuid.parse(body.id),
+          z.union([uuid, z.null()]).parse(body.groupId ?? null),
+          z.enum(['public', 'authenticated', 'private']).parse(body.visibility ?? 'private')
+        );
         break;
+      case 'visibility': {
+        result = await studioTransaction(async sql => {
+          const id = uuid.parse(body.id);
+          const visibility = z.enum(['public', 'authenticated', 'private']).parse(body.visibility);
+          await assertStudioAccess(userId, id, true, sql);
+          const [project] =
+            await sql`select owner_id,group_id from studio_project where id=${id} for update`;
+          if (!project || (project.group_id === null && project.owner_id !== userId))
+            throw new StudioError('Only the project owner can change visibility', 403);
+          await sql`update studio_project set visibility=${visibility},updated_at=${Date.now()} where id=${id}`;
+          return { ok: true };
+        });
+        break;
+      }
       case 'handoff': {
         result = await studioTransaction(async sql => {
           const [job] =

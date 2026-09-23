@@ -6,6 +6,7 @@ export const studioProject = table('studio_project')
     group_id: string().optional(),
     title: string(),
     kind: string(),
+    visibility: string(),
     is_template: boolean(),
     version: number(),
     document_schema_version: number(),

@@ -30,7 +30,7 @@ export async function applyStudioOperation(
   await lockAuthority(sql);
   const [permission] = await rows<{ allowed: boolean; can_edit: boolean }>(
     sql,
-    'select studio_access($1::uuid,$2::uuid,false) as allowed,studio_access($1::uuid,$2::uuid,true) as can_edit',
+    'select studio_collaboration_access($1::uuid,$2::uuid) as allowed,studio_access($1::uuid,$2::uuid,true) as can_edit',
     [actor, args.projectId]
   );
   if (!permission?.allowed) throw new Error('Studio access denied');

@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { StudioWorkspace } from '@/features/communication-studio/ui/StudioWorkspace';
+import { StudioProjectOverview } from '@/features/communication-studio/ui/StudioProjectOverview';
+import { useStudioState } from '@/zero/communication-studio/useStudioState';
+import { useAuth } from '@/providers/auth-provider';
 
 export const Route = createFileRoute('/_authed/group/$id/studio/')({
   component: GroupStudioOverview,
@@ -7,12 +9,17 @@ export const Route = createFileRoute('/_authed/group/$id/studio/')({
 
 function GroupStudioOverview() {
   const { id } = Route.useParams();
-  const navigate = Route.useNavigate();
+  const { user } = useAuth();
+  const { projects, isLoading } = useStudioState(id);
   return (
-    <StudioWorkspace
+    <StudioProjectOverview
       groupId={id}
-      open={projectId =>
-        void navigate({ to: '/group/$id/studio/$projectId', params: { id, projectId } })
+      ownerId={user?.id ?? ''}
+      projects={projects}
+      isLoading={isLoading}
+      failure=""
+      projectHref={projectId =>
+        `/group/${encodeURIComponent(id)}/studio/${encodeURIComponent(projectId)}`
       }
     />
   );

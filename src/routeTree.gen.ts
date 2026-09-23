@@ -143,6 +143,7 @@ import { Route as ApiPushTestJobIdRouteImport } from './routes/api/push/test/$jo
 import { Route as ApiStudioExportsIdRouteImport } from './routes/api/studio/exports/$id'
 import { Route as ApiStudioMediaIdRouteImport } from './routes/api/studio/media/$id'
 import { Route as ApiStudioPublishedMediaIdRouteImport } from './routes/api/studio/published-media/$id'
+import { Route as ApiStudioReadIdRouteImport } from './routes/api/studio/read/$id'
 import { Route as AuthedEventIdAgendaIndexRouteImport } from './routes/_authed/event/$id/agenda/index'
 import { Route as AuthedEventIdAgendaAgendaItemIdRouteImport } from './routes/_authed/event/$id/agenda/$agendaItemId'
 import { Route as AuthedGroupIdBlogIndexRouteImport } from './routes/_authed/group/$id/blog/index'
@@ -855,6 +856,11 @@ const ApiStudioPublishedMediaIdRoute =
     path: '/published-media/$id',
     getParentRoute: () => ApiStudioRoute,
   } as any)
+const ApiStudioReadIdRoute = ApiStudioReadIdRouteImport.update({
+  id: '/read/$id',
+  path: '/read/$id',
+  getParentRoute: () => ApiStudioRoute,
+} as any)
 const AuthedEventIdAgendaIndexRoute =
   AuthedEventIdAgendaIndexRouteImport.update({
     id: '/',
@@ -1090,6 +1096,7 @@ export interface FileRoutesByFullPath {
   '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
   '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
   '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
+  '/api/studio/read/$id': typeof ApiStudioReadIdRoute
   '/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id/': typeof AuthedBlogIdIndexRoute
   '/event/$id/': typeof AuthedEventIdIndexRoute
@@ -1231,6 +1238,7 @@ export interface FileRoutesByTo {
   '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
   '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
   '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
+  '/api/studio/read/$id': typeof ApiStudioReadIdRoute
   '/amendment/$id': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id': typeof AuthedBlogIdIndexRoute
   '/event/$id': typeof AuthedEventIdIndexRoute
@@ -1384,6 +1392,7 @@ export interface FileRoutesById {
   '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
   '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
   '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
+  '/api/studio/read/$id': typeof ApiStudioReadIdRoute
   '/_authed/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/_authed/blog/$id/': typeof AuthedBlogIdIndexRoute
   '/_authed/event/$id/': typeof AuthedEventIdIndexRoute
@@ -1539,6 +1548,7 @@ export interface FileRouteTypes {
     | '/api/studio/exports/$id'
     | '/api/studio/media/$id'
     | '/api/studio/published-media/$id'
+    | '/api/studio/read/$id'
     | '/amendment/$id/'
     | '/blog/$id/'
     | '/event/$id/'
@@ -1680,6 +1690,7 @@ export interface FileRouteTypes {
     | '/api/studio/exports/$id'
     | '/api/studio/media/$id'
     | '/api/studio/published-media/$id'
+    | '/api/studio/read/$id'
     | '/amendment/$id'
     | '/blog/$id'
     | '/event/$id'
@@ -1832,6 +1843,7 @@ export interface FileRouteTypes {
     | '/api/studio/exports/$id'
     | '/api/studio/media/$id'
     | '/api/studio/published-media/$id'
+    | '/api/studio/read/$id'
     | '/_authed/amendment/$id/'
     | '/_authed/blog/$id/'
     | '/_authed/event/$id/'
@@ -2846,6 +2858,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStudioPublishedMediaIdRouteImport
       parentRoute: typeof ApiStudioRoute
     }
+    '/api/studio/read/$id': {
+      id: '/api/studio/read/$id'
+      path: '/read/$id'
+      fullPath: '/api/studio/read/$id'
+      preLoaderRoute: typeof ApiStudioReadIdRouteImport
+      parentRoute: typeof ApiStudioRoute
+    }
     '/_authed/event/$id/agenda/': {
       id: '/_authed/event/$id/agenda/'
       path: '/'
@@ -3355,12 +3374,14 @@ interface ApiStudioRouteChildren {
   ApiStudioExportsIdRoute: typeof ApiStudioExportsIdRoute
   ApiStudioMediaIdRoute: typeof ApiStudioMediaIdRoute
   ApiStudioPublishedMediaIdRoute: typeof ApiStudioPublishedMediaIdRoute
+  ApiStudioReadIdRoute: typeof ApiStudioReadIdRoute
 }
 
 const ApiStudioRouteChildren: ApiStudioRouteChildren = {
   ApiStudioExportsIdRoute: ApiStudioExportsIdRoute,
   ApiStudioMediaIdRoute: ApiStudioMediaIdRoute,
   ApiStudioPublishedMediaIdRoute: ApiStudioPublishedMediaIdRoute,
+  ApiStudioReadIdRoute: ApiStudioReadIdRoute,
 }
 
 const ApiStudioRouteWithChildren = ApiStudioRoute._addFileChildren(

@@ -25,6 +25,24 @@ vi.mock('@/features/communication-studio/ui/StudioWorkspace', () => ({
     </button>
   ),
 }));
+vi.mock('@/features/communication-studio/ui/StudioProjectAccess', () => ({
+  StudioProjectAccess: ({ groupId, projectId }: any) => (
+    <button>
+      {groupId ?? 'personal'}:{projectId}
+    </button>
+  ),
+}));
+vi.mock('@/features/communication-studio/ui/StudioProjectOverview', () => ({
+  StudioProjectOverview: ({ groupId, projectHref }: any) => (
+    <a href={projectHref('next')}>{groupId}:</a>
+  ),
+}));
+vi.mock('@/zero/communication-studio/useStudioState', () => ({
+  useStudioState: () => ({ projects: [], isLoading: false }),
+}));
+vi.mock('@/providers/auth-provider', () => ({
+  useAuth: () => ({ user: null }),
+}));
 vi.mock('@/server/studio/api', () => ({ handleStudio: io.studio }));
 vi.mock('@/server/studio/published-media', () => ({ publishedStudioMedia: io.media }));
 vi.mock('@/server/studio/private-media', () => ({ privateCanvasMedia: io.privateMedia }));
@@ -43,22 +61,22 @@ afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
-it.each([
-  [Personal, 'personal', { to: '/studio/$projectId', params: { projectId: 'next' } }],
-  [
-    Group,
-    'group',
-    { to: '/group/$id/studio/$projectId', params: { id: 'group', projectId: 'next' } },
-  ],
-] as const)(
-  'opens the selected project without losing its workspace route',
-  (route, scope, expected) => {
-    const Page = route.options.component as any;
-    render(<Page />);
-    fireEvent.click(screen.getByRole('button', { name: `${scope}:` }));
-    expect(io.navigate).toHaveBeenCalledWith(expected);
-  }
-);
+it('opens the selected project without losing its workspace route', () => {
+  const Page = Personal.options.component as any;
+  render(<Page />);
+  fireEvent.click(screen.getByRole('button', { name: 'personal:' }));
+  expect(io.navigate).toHaveBeenCalledWith({
+    to: '/studio/$projectId',
+    params: { projectId: 'next' },
+  });
+});
+it('links group projects to their group Studio route', () => {
+  const Page = Group.options.component as any;
+  render(<Page />);
+  expect(screen.getByRole('link', { name: 'group:' }).getAttribute('href')).toBe(
+    '/group/group/studio/next'
+  );
+});
 
 it.each([
   [PersonalProject, 'personal'],

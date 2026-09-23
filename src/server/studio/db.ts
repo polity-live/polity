@@ -15,7 +15,7 @@ export class StudioError extends Error {
   }
 }
 export async function assertStudioAccess(
-  userId: string,
+  userId: string | null,
   projectId: string,
   edit = false,
   sql: ReturnType<typeof postgres> | postgres.TransactionSql = studioSql()
@@ -23,6 +23,15 @@ export async function assertStudioAccess(
   const [row] =
     await sql`select public.studio_access(${userId}::uuid,${projectId}::uuid,${edit}) as allowed`;
   if (!row?.allowed) throw new StudioError('No access to this studio project', 403);
+}
+export async function assertStudioCollaborationAccess(
+  userId: string,
+  projectId: string,
+  sql: ReturnType<typeof postgres> | postgres.TransactionSql = studioSql()
+) {
+  const [row] =
+    await sql`select public.studio_collaboration_access(${userId}::uuid,${projectId}::uuid) as allowed`;
+  if (!row?.allowed) throw new StudioError('No access to this studio workspace', 403);
 }
 export async function assertStudioGroup(
   userId: string,

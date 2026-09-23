@@ -16,6 +16,16 @@ function access(table: string) {
   return evaluatePredicate(call?.[1]);
 }
 describe('Studio Zero visibility projections', () => {
+  it('offers only manageable groups as clone and create targets', () => {
+    studioQueries.manageGroups.fn({ args: undefined, ctx: { userID: 'alice', email: '' } });
+    expect(access('group')).toContainEqual([
+      'where',
+      'memberships.membership_roles.role.group_action_rights',
+      'action',
+      'IN',
+      ['manage'],
+    ]);
+  });
   it('shows group creation only to the owner or a role with projects:manage', () => {
     studioQueries.manageGroup.fn({
       args: { groupId: 'group' },
@@ -74,28 +84,19 @@ describe('Studio Zero visibility projections', () => {
         ['active', 'member', 'admin'],
       ]);
       expect(rules).toContainEqual(['where', 'memberships', 'user_id', 'alice']);
-      expect(rules.some(r => JSON.stringify(r).includes('public'))).toBe(false);
+      expect(rules).toContainEqual(['cmp', 'visibility', 'public']);
+      expect(rules).toContainEqual(['cmp', 'visibility', 'authenticated']);
     }
   );
   it.each([undefined, null, 'anon', ''])(
-    'maps unauthenticated identity %s to an impossible owner, including exports',
+    'limits unauthenticated identity %s to public projects',
     userID => {
       const ctx = { userID, email: '' } as any;
       studioQueries.project.fn({ args: { id: 'private' }, ctx });
       expect(harness.lastQuery('studio_project').calls).toContainEqual(['where', 'id', 'private']);
       expect(harness.lastQuery('studio_project').calls).toContainEqual(['one']);
-      expect(access('studio_project')).toContainEqual([
-        'cmp',
-        'owner_id',
-        '00000000-0000-0000-0000-000000000000',
-      ]);
-      studioQueries.exports.fn({ args: { projectId: 'private' }, ctx });
-      expect(access('studio_export.project')).toContainEqual([
-        'where',
-        'memberships',
-        'user_id',
-        '00000000-0000-0000-0000-000000000000',
-      ]);
+      expect(access('studio_project')).toContainEqual(['cmp', 'visibility', 'public']);
+      expect(JSON.stringify(access('studio_project'))).not.toContain('authenticated');
     }
   );
   it('protects each export through its parent project and caps the recent job list', () => {
@@ -111,6 +112,7 @@ describe('Studio Zero visibility projections', () => {
       ])
     );
     const rules = access('studio_export.project');
+    expect(JSON.stringify(rules)).not.toContain('visibility');
     expect(harness.lastQuery('studio_export.project').calls).toContainEqual([
       'where',
       'document_schema_version',

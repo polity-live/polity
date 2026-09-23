@@ -79,9 +79,9 @@ const virtualizedPageQueries = [
     args: { groupId: 'g' },
   },
   {
-    name: 'group amendments by display status',
+    name: 'group amendments by selected ids',
     definition: amendmentQueries.groupAmendmentPage,
-    args: { groupId: 'g', displayStatus: 'pending' },
+    args: { groupId: 'g', ids: ['a'] },
   },
   {
     name: 'amendment collaborators',

@@ -3,6 +3,8 @@ const io = vi.hoisted(() => ({
   session: vi.fn(),
   sql: vi.fn(),
   access: vi.fn(),
+  studioAccess: vi.fn(),
+  collaborationAccess: vi.fn(),
   sign: vi.fn(),
   fetch: vi.fn(),
 }));
@@ -10,7 +12,11 @@ vi.mock('@/lib/supabase/server', () => ({
   getSession: io.session,
   createClient: () => ({ storage: { from: () => ({ createSignedUrl: io.sign }) } }),
 }));
-vi.mock('../db', () => ({ studioSql: () => io.sql }));
+vi.mock('../db', () => ({
+  studioSql: () => io.sql,
+  assertStudioAccess: io.studioAccess,
+  assertStudioCollaborationAccess: io.collaborationAccess,
+}));
 vi.mock('../workspace-access', () => ({ assertCanvasWorkspace: io.access }));
 import { privateCanvasMedia } from '../private-media';
 const id = crypto.randomUUID();
@@ -19,6 +25,8 @@ beforeEach(() => {
   vi.stubGlobal('fetch', io.fetch);
   io.session.mockResolvedValue({ user: { id: 'actor' } });
   io.access.mockResolvedValue(undefined);
+  io.studioAccess.mockResolvedValue(undefined);
+  io.collaborationAccess.mockResolvedValue(undefined);
   io.sql.mockResolvedValue([
     {
       project_id: 'project',
@@ -53,6 +61,24 @@ it('rejects the same asset URL after access is withdrawn before contacting stora
   expect(io.sign).not.toHaveBeenCalled();
   expect(io.fetch).not.toHaveBeenCalled();
 });
+it('serves canonical public media to guests and rechecks access for every request', async () => {
+  io.session.mockResolvedValue(null);
+  io.sql.mockResolvedValue([
+    {
+      project_id: 'project',
+      workspace_id: null,
+      storage_path: 'public/file',
+      mime_type: 'image/png',
+      byte_size: 3,
+    },
+  ]);
+  const request = new Request(`http://localhost:3000/api/studio/media/${id}`);
+  expect((await privateCanvasMedia(request, id)).status).toBe(200);
+  expect(io.studioAccess).toHaveBeenCalledWith(null, 'project', false, io.sql);
+  io.studioAccess.mockRejectedValue(new Error('visibility changed'));
+  expect((await privateCanvasMedia(request, id)).status).toBe(404);
+  expect(io.sign).toHaveBeenCalledTimes(1);
+});
 it('rechecks export downloads and sends an attachment without exposing a reusable storage link', async () => {
   io.sql.mockResolvedValue([
     {
@@ -67,11 +93,27 @@ it('rechecks export downloads and sends an attachment without exposing a reusabl
     'attachment; filename="Polity.pdf"; filename*=UTF-8\'\'Polity.pdf'
   );
   expect(response.headers.get('Content-Type')).toBe('application/pdf');
-  expect(io.access).toHaveBeenCalledWith('actor', 'project', null, false, io.sql);
-  io.access.mockRejectedValue(new Error('revoked'));
+  expect(io.collaborationAccess).toHaveBeenCalledWith('actor', 'project', io.sql);
+  io.collaborationAccess.mockRejectedValue(new Error('revoked'));
   expect(
     (await privateCanvasMedia(new Request('http://localhost:3000'), id, 'export')).status
   ).toBe(404);
+});
+it('keeps export downloads internal even when a project is public', async () => {
+  io.session.mockResolvedValue(null);
+  io.sql.mockResolvedValue([
+    {
+      project_id: 'project',
+      workspace_id: null,
+      storage_path: 'private/export',
+      file_name: 'Polity.pdf',
+    },
+  ]);
+  expect(
+    (await privateCanvasMedia(new Request('http://localhost:3000'), id, 'export')).status
+  ).toBe(404);
+  expect(io.studioAccess).not.toHaveBeenCalled();
+  expect(io.sign).not.toHaveBeenCalled();
 });
 it.each([
   ['Deck.zip', 'application/zip'],

@@ -24,6 +24,7 @@ vi.mock('../db', async original => ({
   studioSql: () => io.sql,
   studioTransaction: io.transaction,
   assertStudioAccess: io.access,
+  assertStudioCollaborationAccess: io.access,
   assertStudioGroup: io.group,
 }));
 vi.mock('@/lib/supabase/server', () => ({
@@ -311,7 +312,7 @@ describe('Studio shared persistence and media authority', () => {
     const legacy = v3DocumentToLegacy(source.document);
     legacy.pages[0].elements.push(element('image', { assetId: image }));
     source.document = legacyDocumentToV3(legacy, source.document);
-    const result = await duplicateProject('reader', 'original');
+    const result = await duplicateProject('reader', 'original', 'group');
     const row = writes('insert into studio_state')[0],
       value = row[2] as any;
     const copiedId = writes('insert into studio_asset')[0][1];

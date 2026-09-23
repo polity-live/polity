@@ -379,4 +379,26 @@ describe('SearchResultCard', () => {
       groupId: 'group-1',
     });
   });
+
+  it('shows translated Studio labels without raw index text', () => {
+    const document = makeSearchDocument({
+      entity_id: 'project-1',
+      entity_type: 'studio',
+      title: 'g4',
+      subtitle: 'single',
+      summary: null,
+      search_text: 'g4 single',
+      card_payload: { type: 'studio' },
+    });
+    const view = render(<SearchResultCard mode="preview" document={document} />);
+    expect(screen.getByText('Studio project')).toBeTruthy();
+    expect(screen.getByText('Single post')).toBeTruthy();
+    expect(screen.queryByText('g4 single')).toBeNull();
+    view.unmount();
+
+    act(() => useLanguageStore.setState({ language: 'de' }));
+    render(<SearchResultCard mode="preview" document={document} />);
+    expect(screen.getByText('Studio-Projekt')).toBeTruthy();
+    expect(screen.getByText('Einzelpost')).toBeTruthy();
+  });
 });

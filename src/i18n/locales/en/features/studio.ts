@@ -1,4 +1,10 @@
 export const studioTranslations = {
+  cloneProject: 'Clone project',
+  cloneDestination: 'Destination',
+  cloneFailed: 'Could not clone the project.',
+  personalStudio: 'Personal Studio',
+  projectUnavailable: 'This Studio project is unavailable.',
+  mediaUnavailable: 'Project media could not be loaded.',
   canvasPreviewRequired:
     'This project requires the canvas preview. Enable it to keep all saved content and procedures available.',
   insert: 'Insert',

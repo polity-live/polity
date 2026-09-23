@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { studioTransaction, canvasEnabled, StudioError } from './db';
+import {
+  studioTransaction,
+  canvasEnabled,
+  StudioError,
+  assertStudioCollaborationAccess,
+} from './db';
 import { assertCanvasWorkspace } from './workspace-access';
 import { createClient } from '@/lib/supabase/server';
 
@@ -34,6 +39,7 @@ export async function canvasPresence(actor: string, raw: unknown) {
   return studioTransaction(
     async sql => {
       await assertCanvasWorkspace(actor, input.projectId, input.workspaceId, false, sql);
+      await assertStudioCollaborationAccess(actor, input.projectId, sql);
       const [user] = await sql`select first_name,last_name,avatar from "user" where id=${actor}`;
       const now = Date.now();
       for (const [roomId, room] of rooms) {
@@ -58,7 +64,7 @@ export async function canvasPresence(actor: string, raw: unknown) {
       });
       for (const id of room.keys()) {
         const [right] =
-          await sql`select studio_access(${id}::uuid,${input.projectId}::uuid,false) and (${input.workspaceId ?? null}::uuid is null or canvas_proposal_access(${id}::uuid,${input.workspaceId ?? null}::uuid)) as allowed`;
+          await sql`select studio_collaboration_access(${id}::uuid,${input.projectId}::uuid) and (${input.workspaceId ?? null}::uuid is null or canvas_proposal_access(${id}::uuid,${input.workspaceId ?? null}::uuid)) as allowed`;
         if (!right.allowed) room.delete(id);
       }
       const peers = [...room.values()];

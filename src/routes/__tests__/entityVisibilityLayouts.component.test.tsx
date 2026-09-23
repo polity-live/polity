@@ -14,9 +14,12 @@ const mocks = vi.hoisted(() => ({
   preloadGroup: vi.fn(),
   preloadUser: vi.fn(),
   zeroReady: true,
+  pathname: '/group/entity-1',
 }));
 
 vi.mock('@tanstack/react-router', () => ({
+  useRouterState: ({ select }: { select: (state: unknown) => unknown }) =>
+    select({ location: { pathname: mocks.pathname } }),
   createFileRoute: () => (options: Record<string, unknown>) => ({
     ...options,
     useParams: () => mocks.params,
@@ -72,6 +75,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.authUser = null;
   mocks.zeroReady = true;
+  mocks.pathname = '/group/entity-1';
   mocks.access.mockReturnValue({ data: undefined, isLoading: false, error: null });
 });
 
@@ -172,4 +176,20 @@ describe('entity visibility route layouts', () => {
       })
     );
   });
+
+  it.each(['/group/entity-1/studio', '/group/entity-1/studio/project-1'])(
+    'lets the Studio route check project visibility independently at %s',
+    pathname => {
+      mocks.pathname = pathname;
+      mocks.access.mockReturnValue({
+        data: { exists: true, visibilities: ['private'], canAccessPrivate: false },
+        isLoading: false,
+        error: null,
+      });
+      const Component = (GroupRoute as unknown as TestRoute).component;
+      const view = render(<Component />);
+      expect(view.getByTestId('outlet')).toBeTruthy();
+      expect(mocks.guard).not.toHaveBeenCalled();
+    }
+  );
 });

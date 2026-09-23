@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
-import { StudioWorkspace } from '@/features/communication-studio/ui/StudioWorkspace';
+import { StudioProjectAccess } from '@/features/communication-studio/ui/StudioProjectAccess';
 
 export const Route = createFileRoute('/_authed/group/$id/studio/$projectId')({
   validateSearch: z.object({ conversationId: z.string().uuid().optional() }),
@@ -12,7 +12,7 @@ function GroupStudioProject() {
   const { conversationId } = Route.useSearch();
   const navigate = Route.useNavigate();
   return (
-    <StudioWorkspace
+    <StudioProjectAccess
       groupId={id}
       projectId={projectId}
       conversationId={conversationId}

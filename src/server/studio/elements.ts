@@ -317,7 +317,7 @@ export async function synchronizeProjectElementInstances(userId: string, project
   const copiedPaths: string[] = [];
   try {
     return await studioTransaction(async tx => {
-      await assertStudioAccess(userId, projectId, false, tx);
+      await assertStudioAccess(userId, projectId, true, tx);
       await tx`select id from studio_project where id=${projectId} for update`;
       const [row] = await tx`
         select s.document,s.content_revision

@@ -97,6 +97,7 @@ describe('Studio Elements server synchronization', () => {
 
     const result = await synchronizeProjectElementInstances('reader', projectId);
 
+    expect(io.access).toHaveBeenCalledWith('reader', projectId, true, io.sql);
     expect(result?.revision).toBe(5);
     const media = result?.document.nodes.find(node => node.type === 'media');
     expect(media?.type).toBe('media');

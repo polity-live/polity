@@ -10,7 +10,7 @@ export const Route = createFileRoute('/_authed/create/studio-project')({
 
 function CreateStudioProjectPage() {
   const { groupId } = Route.useSearch();
-  return <StudioProjectForm key={groupId ?? 'personal'} groupId={groupId ?? null} />;
+  return <StudioProjectForm groupId={groupId ?? null} />;
 }
 
 function StudioProjectForm({ groupId }: { groupId: string | null }) {

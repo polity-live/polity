@@ -100,7 +100,7 @@ vi.mock('@/features/shared/ui/wiki', () => ({
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, to, params, ...props }: any) => (
-    <a href={params?.id ? `${to}/${params.id}` : to} {...props}>
+    <a href={params?.id ? to.replace('$id', params.id) : to} {...props}>
       {children}
     </a>
   ),
@@ -229,6 +229,19 @@ function valueForStat(label: string) {
 }
 
 describe('AmendmentWikiView stats', () => {
+  it('links the target group avatar and name to its group page', () => {
+    render(
+      <AmendmentWikiView
+        {...baseProps()}
+        targetGroup={{ id: 'group-1', name: 'Gruppe Eins', image_url: null }}
+      />
+    );
+
+    const groupLink = screen.getByRole('link', { name: /Gruppe Eins/ });
+    expect(groupLink.getAttribute('href')).toBe('/group/group-1');
+    expect(groupLink.querySelector('[data-slot="avatar"]')).toBeTruthy();
+  });
+
   it('provides activity to the author', () => {
     render(<AmendmentWikiView {...baseProps({ created_by_id: 'user-1' })} />);
     expect(screen.getByTestId('info-tabs')).toBeTruthy();

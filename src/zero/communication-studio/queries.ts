@@ -1,24 +1,32 @@
 import { defineQuery } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
-import { groupProjectsAccess, studioProjectReadAccess } from './access';
+import {
+  groupProjectsAccess,
+  studioProjectCollaborativeAccess,
+  studioProjectReadAccess,
+} from './access';
 
 const requireQueryUser = (userID: string | undefined | null) =>
   userID && userID !== 'anon' ? userID : '00000000-0000-0000-0000-000000000000';
 
-function projects(actor: string) {
+function projects(actor: string | null) {
   return studioProjectReadAccess(zql.studio_project.where('document_schema_version', 5), actor);
 }
 
-function relatedProject(project: any, actor: string) {
+function relatedProject(project: any, actor: string | null) {
   return studioProjectReadAccess(project.where('document_schema_version', 5), actor);
+}
+
+function collaborativeProject(project: any, actor: string) {
+  return studioProjectCollaborativeAccess(project.where('document_schema_version', 5), actor);
 }
 
 function canvasWorkspaces(actor: string, projectId: string) {
   return zql.canvas_proposal
     .where('project_id', projectId)
     .whereExists('project', (project: any) =>
-      relatedProject(project, actor).where('group_id', 'IS NOT', null)
+      collaborativeProject(project, actor).where('group_id', 'IS NOT', null)
     )
     .where(({ or, cmp, exists }) =>
       or(
@@ -30,6 +38,15 @@ function canvasWorkspaces(actor: string, projectId: string) {
 }
 
 export const studioQueries = {
+  byOwner: defineQuery(z.object({ ownerId: z.string().uuid() }), ({ args, ctx: { userID } }) =>
+    projects(userID && userID !== 'anon' ? userID : null)
+      .where('owner_id', args.ownerId)
+      .orderBy('updated_at', 'desc')
+      .limit(100)
+  ),
+  manageGroups: defineQuery(z.undefined(), ({ ctx: { userID } }) =>
+    groupProjectsAccess(zql.group, requireQueryUser(userID), true).orderBy('name', 'asc').limit(200)
+  ),
   manageGroup: defineQuery(z.object({ groupId: z.string().uuid() }), ({ args, ctx: { userID } }) =>
     groupProjectsAccess(zql.group.where('id', args.groupId), requireQueryUser(userID), true).one()
   ),
@@ -54,24 +71,28 @@ export const studioQueries = {
   document: defineQuery(z.object({ id: z.string() }), ({ args, ctx: { userID } }) =>
     zql.studio_state
       .where('project_id', args.id)
-      .whereExists('project', project => relatedProject(project, requireQueryUser(userID)))
+      .whereExists('project', project =>
+        relatedProject(project, userID && userID !== 'anon' ? userID : null)
+      )
       .one()
   ),
   list: defineQuery(
     z.object({ groupId: z.string().nullable().default(null) }),
     ({ args, ctx: { userID } }) =>
-      projects(requireQueryUser(userID))
+      projects(userID && userID !== 'anon' ? userID : null)
         .where('group_id', args.groupId === null ? 'IS' : '=', args.groupId)
         .orderBy('updated_at', 'desc')
         .limit(100)
   ),
   project: defineQuery(z.object({ id: z.string() }), ({ args, ctx: { userID } }) =>
-    projects(requireQueryUser(userID)).where('id', args.id).one()
+    projects(userID && userID !== 'anon' ? userID : null)
+      .where('id', args.id)
+      .one()
   ),
   exports: defineQuery(z.object({ projectId: z.string() }), ({ args, ctx: { userID } }) =>
     zql.studio_export
       .where('project_id', args.projectId)
-      .whereExists('project', project => relatedProject(project, requireQueryUser(userID)))
+      .whereExists('project', project => collaborativeProject(project, requireQueryUser(userID)))
       .orderBy('created_at', 'desc')
       .limit(25)
   ),

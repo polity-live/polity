@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { studioDocumentV3Schema } from '@/features/communication-studio/logic/document-v3';
 export const createStudioProjectSchema = z.object({
   groupId: z.string().uuid().nullable(),
+  visibility: z.enum(['public', 'authenticated', 'private']).default('private'),
   title: z.string().trim().min(1).max(200),
   kind: studioDocumentV3Schema.shape.kind,
   themeId: z.string().uuid(),
@@ -33,6 +34,7 @@ export const studioProjectSchema = z.object({
   group_id: z.string().uuid().nullable(),
   title: z.string().max(200),
   kind: studioDocumentV3Schema.shape.kind,
+  visibility: z.enum(['public', 'authenticated', 'private']),
   is_template: z.boolean(),
   version: z.number().int(),
   document_schema_version: z.literal(5),

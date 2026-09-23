@@ -267,7 +267,7 @@ export const navItemsAuthenticated = (
       },
     ];
 
-    if (studioEnabled && (_isMember || isAdmin))
+    if (studioEnabled)
       items.push({
         id: 'studio',
         label: translate('navigation.primary.studio'),

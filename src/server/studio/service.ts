@@ -21,6 +21,7 @@ import {
   studioTransaction,
   StudioError,
   assertStudioAccess,
+  assertStudioCollaborationAccess,
   assertStudioGroup,
   canvasEnabled,
 } from './db';
@@ -29,6 +30,7 @@ export const bucket = 'studio';
 
 interface CreateProjectSelection {
   groupId: string | null;
+  visibility: 'public' | 'authenticated' | 'private';
   title: string;
   kind: StudioDocumentV3['kind'];
   themeId: string;
@@ -138,7 +140,7 @@ export async function createProjectFromSelection(userId: string, input: CreatePr
     const now = Date.now();
     await studioTransaction(async tx => {
       if (input.groupId) await assertStudioGroup(userId, input.groupId, tx, true);
-      await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${userId},${input.groupId},${document.title},${document.kind},5,${now},${now})`;
+      await tx`insert into studio_project(id,owner_id,group_id,title,kind,visibility,document_schema_version,created_at,updated_at) values(${projectId},${userId},${input.groupId},${document.title},${document.kind},${input.visibility},5,${now},${now})`;
       for (const asset of copied)
         await tx`insert into studio_asset(id,project_id,name,mime_type,byte_size,storage_path,ready,created_at) values(${asset.id},${projectId},${asset.name},${asset.mime},${asset.size},${asset.path},true,${now})`;
       await tx`insert into studio_state(project_id,document,updated_at) values(${projectId},${tx.json(JSON.parse(JSON.stringify(document)))},${now})`;
@@ -188,7 +190,7 @@ export async function createProject(
   return { id };
 }
 export async function loadProject(userId: string, id: string) {
-  await assertStudioAccess(userId, id);
+  await assertStudioAccess(userId, id, true);
   const synchronized = await synchronizeProjectElementInstances(userId, id);
   const sql = studioSql();
   const [row] =
@@ -312,7 +314,7 @@ export async function downloadExport(userId: string, id: string) {
   const sql = studioSql();
   const [job] = await sql`select * from studio_export where id=${id}`;
   if (!job) throw new StudioError('Export not found', 404);
-  await assertStudioAccess(userId, job.project_id);
+  await assertStudioCollaborationAccess(userId, job.project_id);
   if (job.status !== 'completed' || !job.storage_path) throw new StudioError('Export is not ready');
   return { url: `/api/studio/exports/${id}`, name: job.file_name };
 }
@@ -321,7 +323,7 @@ export async function exportStatus(userId: string, id: string) {
   const [job] =
     await sql`select project_id,format,status,progress,error,file_name from studio_export where id=${id}`;
   if (!job) throw new StudioError('Export not found', 404);
-  await assertStudioAccess(userId, job.project_id);
+  await assertStudioCollaborationAccess(userId, job.project_id);
   return {
     id,
     format: job.format,
@@ -331,8 +333,14 @@ export async function exportStatus(userId: string, id: string) {
     fileName: job.file_name,
   };
 }
-export async function duplicateProject(userId: string, id: string) {
+export async function duplicateProject(
+  userId: string,
+  id: string,
+  destinationGroupId: string | null = null,
+  visibility: 'public' | 'authenticated' | 'private' = 'private'
+) {
   await assertStudioAccess(userId, id);
+  if (destinationGroupId) await assertStudioGroup(userId, destinationGroupId, studioSql(), true);
   const sql = studioSql();
   const [source] =
     await sql`select p.group_id,s.document from studio_project p join studio_state s on s.project_id=p.id where p.id=${id} and p.document_schema_version=5`;
@@ -373,13 +381,12 @@ export async function duplicateProject(userId: string, id: string) {
         node.sourceAssetId = replacements.get(node.sourceAssetId) ?? null;
     });
     await assertStudioAccess(userId, id);
-    if (source.group_id) await assertStudioGroup(userId, source.group_id, studioSql(), true);
     const now = Date.now();
     // A copy becomes visible only after every private asset and its document are ready.
     await studioTransaction(async tx => {
       await assertStudioAccess(userId, id, false, tx);
-      if (source.group_id) await assertStudioGroup(userId, source.group_id, tx, true);
-      await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${userId},${source.group_id},${value.title},${value.kind},5,${now},${now})`;
+      if (destinationGroupId) await assertStudioGroup(userId, destinationGroupId, tx, true);
+      await tx`insert into studio_project(id,owner_id,group_id,title,kind,visibility,document_schema_version,created_at,updated_at) values(${projectId},${userId},${destinationGroupId},${value.title},${value.kind},${visibility},5,${now},${now})`;
       for (const asset of copies)
         await tx`insert into studio_asset(id,project_id,name,mime_type,byte_size,storage_path,created_at) values(${asset.id},${projectId},${asset.name},${asset.mime},${asset.size},${asset.path},${now})`;
       await tx`insert into studio_state(project_id,document,updated_at) values(${projectId},${tx.json(JSON.parse(JSON.stringify(value)))},${now})`;
