@@ -80,6 +80,7 @@ vi.mock('@/zero/mutators', () => ({
 }));
 
 vi.mock('@/zero/mutate-with-server-check', () => ({
+  serverConfirmed: (...args: any[]) => mocks.waitForClientApply(...args),
   waitForClientApply: (...args: any[]) => mocks.waitForClientApply(...args),
   trackServerFinalization: (result: unknown, callbacks: any) => {
     mocks.finalizations.push({ result, callbacks });
@@ -477,8 +478,6 @@ describe('useEditor complete branch contract', () => {
     const failed = renderEditor({ entityType: 'document', entityId: 'document-1' });
     await act(async () => failed.result.current.setContent(content('failure')));
     await waitFor(() => expect(failed.result.current.saveStatus).toBe('error'));
-    const finalization = mocks.finalizations.at(-1);
-    act(() => finalization.callbacks.onError(new Error('server failed')));
     expect(failed.result.current.saveStatus).toBe('error');
   });
 
@@ -497,6 +496,7 @@ describe('useEditor complete branch contract', () => {
     await act(async () => amendment.result.current.setContent(content('suggestion')));
     expect(mocks.mutationFns['documents.updateContent']).toHaveBeenLastCalledWith({
       id: 'document-1',
+      expected_content_revision: 0,
       content: content('suggestion'),
     });
   });

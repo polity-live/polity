@@ -1,3 +1,4 @@
+import { projectConversationAccess } from '../project-chat/access';
 import { defineMutator } from '@rocicorp/zero';
 import { can } from '../rbac/can';
 import { requireAuthenticated, requireOwner } from '../rbac/authorize';
@@ -34,7 +35,16 @@ async function assertConversationParticipant(
     throw new Error('Conversation not found');
   }
 
-  if (conversation.assistant_for_user_id === ctx.userID) return;
+  if (conversation.type === 'project_ai') {
+    if (
+      !(await tx.run(
+        projectConversationAccess(zql.conversation.where('id', conversationId), ctx.userID).one()
+      ))
+    )
+      throw new Error('Project access denied');
+    return conversation;
+  }
+  if (conversation.assistant_for_user_id === ctx.userID) return conversation;
 
   const participant = await tx.run(
     zql.conversation_participant
@@ -46,6 +56,7 @@ async function assertConversationParticipant(
   if (!participant || participant.left_at) {
     throw new Error('You are not a participant in this conversation.');
   }
+  return conversation;
 }
 
 async function assertCanManageConversation(
@@ -62,6 +73,12 @@ async function assertCanManageConversation(
     throw new Error('Conversation not found');
   }
 
+  if (conversation.type === 'project_ai') {
+    await assertConversationParticipant(tx, ctx, conversationId);
+    if (conversation.requested_by_id !== ctx.userID)
+      throw new Error('Only the creator can manage this shared chat');
+    return;
+  }
   if (
     conversation.requested_by_id === ctx.userID ||
     conversation.assistant_for_user_id === ctx.userID
@@ -102,6 +119,8 @@ async function assertCanMutateMessage(
     throw new Error('Message not found');
   }
 
+  const conversation = await tx.run(zql.conversation.where('id', message.conversation_id).one());
+  if (conversation?.type === 'project_ai') throw new Error('Project run messages are immutable');
   if (message.sender_id === ctx.userID) return;
 
   await assertCanManageConversation(tx, ctx, message.conversation_id);
@@ -111,6 +130,7 @@ export const messageSharedMutators = {
   // Create a new conversation
   createConversation: defineMutator(createConversationSchema, async ({ tx, ctx, args }) => {
     const { userID } = ctx;
+    if (args.type === 'project_ai') throw new Error('Use projectChat.create');
     requireAuthenticated(tx, ctx, { action: 'create', resource: 'conversations' });
     if (args.assistant_for_user_id) {
       requireOwner(tx, ctx, args.assistant_for_user_id, {
@@ -160,7 +180,8 @@ export const messageSharedMutators = {
   // Send a message
   sendMessage: defineMutator(createMessageSchema, async ({ tx, ctx, args }) => {
     const { userID } = ctx;
-    await assertConversationParticipant(tx, ctx, args.conversation_id);
+    const conversation = await assertConversationParticipant(tx, ctx, args.conversation_id);
+    if (conversation?.type === 'project_ai') throw new Error('Use the AI chat transport');
     const now = Date.now();
     await tx.mutate.message.insert({
       ...args,

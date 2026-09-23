@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const mocks = vi.hoisted(() => ({ execSync: vi.fn() }));
 
@@ -12,7 +14,20 @@ describe('deployment CLI dry-run', () => {
     vi.restoreAllMocks();
   });
 
-  it('prints both production database steps without executing either command', async () => {
+  it('declares the private Studio bucket with the upload contract', () => {
+    const config = readFileSync(resolve('supabase/config.toml'), 'utf8');
+    const storage = config.match(/\[storage\]\s*([\s\S]*?)(?=\r?\n\[|$)/)?.[1];
+    const section = config.match(/\[storage\.buckets\.studio\]\s*([\s\S]*?)(?=\r?\n\[|$)/)?.[1];
+    expect(storage).toContain('file_size_limit = "100MiB"');
+    expect(section).toBeDefined();
+    expect(section).toContain('public = false');
+    expect(section).toContain('file_size_limit = "100MiB"');
+    expect(section).toContain(
+      'allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "video/mp4"]'
+    );
+  });
+
+  it('prints migrations, bucket provisioning, and production seed in order without executing them', async () => {
     process.argv = [
       process.execPath,
       'tools/deploy/deploy.mjs',
@@ -32,8 +47,12 @@ describe('deployment CLI dry-run', () => {
     await import(deploymentModule);
 
     const output = log.mock.calls.flat().join('\n');
-    expect(output).toContain('supabase db push');
-    expect(output).toContain('supabase db query --linked --file supabase/seed.production.sql');
+    const migration = output.indexOf('supabase db push');
+    const buckets = output.indexOf('supabase seed buckets --linked');
+    const seed = output.indexOf('supabase db query --linked --file supabase/seed.production.sql');
+    expect(migration).toBeGreaterThanOrEqual(0);
+    expect(buckets).toBeGreaterThan(migration);
+    expect(seed).toBeGreaterThan(buckets);
     expect(mocks.execSync.mock.calls.map(([command]) => command)).not.toContain('supabase db push');
   });
 });

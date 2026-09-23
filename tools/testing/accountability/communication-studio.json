@@ -73,24 +73,24 @@
     ],
     "src/features/communication-studio/logic/collaboration.ts": [
       {
-        "file": "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
-        "project": "unit",
-        "caseId": "merges captions independently across channels"
+        "file": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
+        "project": "component",
+        "caseId": "moves selected elements together while leaving locked companions in place"
       },
       {
-        "file": "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
-        "project": "unit",
-        "caseId": "merges independent properties and simultaneous text insertions"
+        "file": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
+        "project": "component",
+        "caseId": "applies group brand settings while preserving custom colors"
       },
       {
-        "file": "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
-        "project": "unit",
-        "caseId": "does not resurrect an element deleted while another peer edits it"
+        "file": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
+        "project": "component",
+        "caseId": "reuses the group logo on every page without flattening the layout"
       },
       {
-        "file": "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
-        "project": "unit",
-        "caseId": "undoes only the local author"
+        "file": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
+        "project": "component",
+        "caseId": "duplicates a long-named page with new element identities and removes its references atomically"
       }
     ],
     "src/server/studio/media-range.ts": [
@@ -158,133 +158,306 @@
     ],
     "src/features/communication-studio/hooks/useStudioDocument.ts": [
       {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
-      }
-    ],
-    "src/features/communication-studio/logic/paint.ts": [
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "saves through Zero and waits for the durable receipt"
+      },
       {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps a failed draft and retries the same operation ID"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "shows a conflict and can choose the saved value"
+      },
+      {
+        "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "project": "component",
+        "caseId": "undos only local properties"
       }
     ],
+    "src/features/communication-studio/logic/paint.ts": [],
     "src/features/communication-studio/ui/StudioCanvas.tsx": [
       {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
+        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "project": "component",
+        "caseId": "clears selection on the canvas background while ignoring pointer events without coordinates"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "project": "component",
+        "caseId": "loads media previews, crops images, synchronizes video playback and releases media on replacement"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "project": "component",
+        "caseId": "provides focusable keyboard selection, incremental movement and immutable read-only or locked objects"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "project": "component",
+        "caseId": "selects by pointer and touch, snaps dragging and preserves scale when committing a transform"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "project": "component",
+        "caseId": "renders different shapes, placeholders, matching peer cursors and a bounded transition during preview"
       }
     ],
     "src/features/communication-studio/ui/StudioWorkspace.tsx": [
       {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps project overview and creation available"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows storage status and peers without a permanent sidebar"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts all new element types from the insert menu"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "formats the first selected text and preserves selection when properties close"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "aligns, duplicates and deletes through selection tools"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "uploads media from the insert panel and keeps a failed image edit open"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "exports a confirmed JSON revision and lists export status"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "confirms drafts before copying a project"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows a conflict with base, local and remote values"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "supports keyboard copy/paste, movement, undo and preview"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits brand and imports authorized sources through the tools dialog"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits channel captions and campaign scheduling in the captions dialog"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects"
       }
     ],
     "src/routes/_authed/group/$id/studio.tsx": [
       {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX",
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "opens the selected project without losing its workspace route",
         "evidence": {
           "relation": "direct",
-          "description": "Exercises the real authorized route through the local application and verifies its persisted result or downloaded media."
+          "description": "Exercises workspace navigation or the route authorization boundary and retired endpoint response."
+        }
+      }
+    ],
+    "src/routes/_authed/group/$id/studio/index.tsx": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "opens the selected project without losing its workspace route",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises the dedicated Studio V3 route."
+        }
+      }
+    ],
+    "src/routes/_authed/group/$id/studio/$projectId.tsx": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "renders a project on its dedicated full-screen route",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises the dedicated Studio V3 route."
+        }
+      }
+    ],
+    "src/routes/_authed/studio/index.tsx": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "opens the selected project without losing its workspace route",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises the dedicated Studio V3 route."
+        }
+      }
+    ],
+    "src/routes/_authed/studio/$projectId.tsx": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "renders a project on its dedicated full-screen route",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises the dedicated Studio V3 route."
         }
       }
     ],
     "src/routes/api/studio.ts": [
       {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX",
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "passes original requests to authorization handlers, including the published asset identity",
         "evidence": {
           "relation": "direct",
-          "description": "Exercises the real authorized route through the local application and verifies its persisted result or downloaded media."
+          "description": "Exercises workspace navigation or the route authorization boundary and retired endpoint response."
         }
       }
     ],
-    "src/zero/communication-studio/useStudioState.ts": [
-      {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
-      }
-    ],
-    "src/zero/communication-studio/queries.ts": [
-      {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
-      }
-    ],
-    "src/zero/communication-studio/schema.ts": [
-      {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
-      }
-    ],
-    "src/zero/communication-studio/table.ts": [
-      {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
-      }
-    ],
+    "src/zero/communication-studio/useStudioState.ts": [],
+    "src/zero/communication-studio/schema.ts": [],
+    "src/zero/communication-studio/table.ts": [],
     "src/server/studio/db.ts": [
       {
-        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "all seven Studio exports refer to confirmed shared revisions and contain valid media"
+        "file": "src/server/studio/__tests__/db.unit.test.ts",
+        "project": "unit",
+        "caseId": "uses an explicit studio connection or upstream fallback and reuses its limited pool"
+      },
+      {
+        "file": "src/server/studio/__tests__/db.unit.test.ts",
+        "project": "unit",
+        "caseId": "requires current project or group access on the chosen transaction"
+      },
+      {
+        "file": "src/server/studio/__tests__/db.unit.test.ts",
+        "project": "unit",
+        "caseId": "locks authority before executing commands and propagates failure"
+      },
+      {
+        "file": "src/server/studio/__tests__/db.unit.test.ts",
+        "project": "unit",
+        "caseId": "respects explicit enablement, production defaults and pilot restrictions"
       }
     ],
     "src/server/studio/service.ts": [
       {
-        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "all seven Studio exports refer to confirmed shared revisions and contain valid media"
-      }
-    ],
-    "tools/studio/worker.ts": [
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "duplicates a project without inventing a missing brand logo"
+      },
       {
-        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "all seven Studio exports refer to confirmed shared revisions and contain valid media"
-      }
-    ],
-    "tools/studio/launch.ts": [
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "creates editable JSON documents atomically and rechecks group authority inside the transaction"
+      },
       {
-        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "all seven Studio exports refer to confirmed shared revisions and contain valid media"
-      }
-    ],
-    "src/server/studio/published-media.ts": [
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects foreign media before creating a project and deduplicates legitimate media references"
+      },
       {
-        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Studio media operations preserve private visibility, validate uploads and support authorized ranged downloads"
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "queues exports using a confirmed content revision"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "reserves uploads under current rights and quotas before issuing a signed upload token"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "removes the failed reservation when signing fails and denies upload after permission revocation"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates stored size and actual file signatures before marking each supported media type ready"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "fails media verification on missing or inconsistent object metadata and never makes it ready"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "treats completed uploads idempotently and cancellation keeps the reservation until token expiry"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "serves authorized media and export proxy URLs only after access checks"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "copies private assets before exposing a new project and remaps image and logo references"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "cleans partial copies after storage or transaction failure and never exposes the incomplete copy"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "copies personal templates without group authority and clears references without a matching asset"
+      },
+      {
+        "file": "src/server/studio/__tests__/service.unit.test.ts",
+        "project": "unit",
+        "caseId": "allows publishing only completed Studio exports currently editable by the actor"
       }
     ],
+    "tools/studio/worker.ts": [],
+    "tools/studio/launch.ts": [],
+    "src/server/studio/published-media.ts": [],
     "src/routes/api/studio/published-media/$id.ts": [
       {
-        "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Studio media operations preserve private visibility, validate uploads and support authorized ranged downloads",
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "passes original requests to authorization handlers, including the published asset identity",
         "evidence": {
           "relation": "direct",
-          "description": "Exercises the real authorized route through the local application and verifies its persisted result or downloaded media."
+          "description": "Exercises workspace navigation or the route authorization boundary and retired endpoint response."
         }
-      }
-    ],
-    "tools/studio/collaboration-server.ts": [
-      {
-        "file": "tools/studio/__tests__/retired-server.unit.test.ts",
-        "project": "unit",
-        "caseId": "rejects the retired standalone Studio server before starting a second persistence channel"
       }
     ],
     "src/features/communication-studio/ui/StudioStatementEntry.tsx": [
@@ -310,12 +483,12 @@
     ],
     "src/routes/_authed/studio.tsx": [
       {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX",
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "opens the selected project without losing its workspace route",
         "evidence": {
           "relation": "direct",
-          "description": "Exercises the real authorized route through the local application and verifies its persisted result or downloaded media."
+          "description": "Exercises workspace navigation or the route authorization boundary and retired endpoint response."
         }
       }
     ],
@@ -325,6 +498,199 @@
         "project": "unit",
         "caseId": "returns only approved descriptive amendment fields and never imports private discussions or vote metadata"
       }
+    ],
+    "src/features/communication-studio/logic/operations.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "merges independent properties without losing either author"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "reports the original, local and remote values for an overlapping edit"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not resurrect deleted elements and refuses deleting a modified element"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps remote fields when undoing an independent local edit"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects prototype paths"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "merges separate rich-text paragraphs and table cells"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies all six alignments against the page"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "distributes bounding boxes evenly and rejects fewer than three elements"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "formats text and protects locked resources"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates table and chart dimensions"
+      }
+    ],
+    "src/features/communication-studio/logic/commands.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "merges independent properties without losing either author"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "reports the original, local and remote values for an overlapping edit"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "does not resurrect deleted elements and refuses deleting a modified element"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "keeps remote fields when undoing an independent local edit"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects prototype paths"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "merges separate rich-text paragraphs and table cells"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "applies all six alignments against the page"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "distributes bounding boxes evenly and rejects fewer than three elements"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "formats text and protects locked resources"
+      },
+      {
+        "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "project": "unit",
+        "caseId": "validates table and chart dimensions"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps project overview and creation available"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows storage status and peers without a permanent sidebar"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts all new element types from the insert menu"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "formats the first selected text and preserves selection when properties close"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "aligns, duplicates and deletes through selection tools"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "uploads media from the insert panel and keeps a failed image edit open"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "exports a confirmed JSON revision and lists export status"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "confirms drafts before copying a project"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows a conflict with base, local and remote values"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "supports keyboard copy/paste, movement, undo and preview"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits brand and imports authorized sources through the tools dialog"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits channel captions and campaign scheduling in the captions dialog"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects"
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities"
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits chart data and legend while keeping pie constraints and minimum dimensions valid"
+      }
     ]
   },
   "actionReferences": {
@@ -333,13 +699,7 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
         "project": "component",
         "caseId": "provides focusable keyboard selection, incremental movement and immutable read-only or locked objects",
-        "scenarios": ["keyboard", "focus", "idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
-        "project": "component",
-        "caseId": "selects by pointer and touch, snaps dragging and preserves scale when committing a transform",
-        "scenarios": ["idle", "success"]
+        "scenarios": ["idle", "success", "keyboard", "focus"]
       }
     ],
     "src/features/communication-studio/ui/StudioCanvas.tsx#communication-studio.studio-canvas.features-studio-clear-selection": [
@@ -347,13 +707,1547 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
         "project": "component",
         "caseId": "provides focusable keyboard selection, incremental movement and immutable read-only or locked objects",
-        "scenarios": ["keyboard", "focus", "idle", "success"]
-      },
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioCanvas.tsx#communication-studio.studiocanvas.activate.rect-820a638cbc": [
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
         "project": "component",
         "caseId": "selects by pointer and touch, snaps dragging and preserves scale when committing a transform",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioCanvas.tsx#communication-studio.studio-canvas.activate.group-23d805b8bd": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "project": "component",
+        "caseId": "provides focusable keyboard selection, incremental movement and immutable read-only or locked objects",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.button-2591644817": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities",
+        "scenarios": ["idle", "success", "disabled"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.button-4f05e18a5a": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits chart data and legend while keeping pie constraints and minimum dimensions valid",
+        "scenarios": ["idle", "success", "disabled"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.button-5619ced44f": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits chart data and legend while keeping pie constraints and minimum dimensions valid",
+        "scenarios": ["idle", "success", "disabled"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.button-7a57c8fcfb": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits chart data and legend while keeping pie constraints and minimum dimensions valid",
+        "scenarios": ["idle", "success", "disabled"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.button-93f847c07b": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities",
+        "scenarios": ["idle", "success", "disabled"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.button-99756d2c36": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities",
+        "scenarios": ["idle", "success", "disabled"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.button-9a19093164": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities",
+        "scenarios": ["idle", "success", "disabled"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.button-f56bde7e05": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits chart data and legend while keeping pie constraints and minimum dimensions valid",
+        "scenarios": ["idle", "success", "disabled"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-019b52b855": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-0383aca720": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits chart data and legend while keeping pie constraints and minimum dimensions valid",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-1df3fcf7b8": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-3c45cc135e": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits chart data and legend while keeping pie constraints and minimum dimensions valid",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-445008570f": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-6e61809cd7": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-7e8f3cb2d0": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-8d97ae1e91": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits chart data and legend while keeping pie constraints and minimum dimensions valid",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-9a80f856e5": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-da9dfdfba0": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits chart data and legend while keeping pie constraints and minimum dimensions valid",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-dd2a076f14": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.select-1481c471ce": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.select-1f227bef7a": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "project": "component",
+        "caseId": "edits cells and selected row or column structure while keeping stable identities",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.a-dfa819da8b": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "confirms drafts before copying a project",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": []
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.button-1488e0d1c3": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows a conflict with base, local and remote values",
         "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.button-1530b471fe": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "formats the first selected text and preserves selection when properties close",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.button-27730074b4": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "confirms drafts before copying a project",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.button-80e5692fe0": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "aligns, duplicates and deletes through selection tools",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.button-8c9e4701cb": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "aligns, duplicates and deletes through selection tools",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.button-9fe2f0396c": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows a conflict with base, local and remote values",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.button-a413e386f5": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "formats the first selected text and preserves selection when properties close",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.button-aa0b083391": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows a conflict with base, local and remote values",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.button-d4063e9cb1": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "confirms drafts before copying a project",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.button-e8118db4dd": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "aligns, duplicates and deletes through selection tools",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.button-ee587f8114": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows a conflict with base, local and remote values",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.add": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts all new element types from the insert menu",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.format-text": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "formats the first selected text and preserves selection when properties close",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.set-guides": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "supports keyboard copy/paste, movement, undo and preview",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.set-playing": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "supports keyboard copy/paste, movement, undo and preview",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.set-properties-open": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "aligns, duplicates and deletes through selection tools",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-workspace.apply-logo": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-workspace.duplicate-page": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-workspace.export-media": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "exports a confirmed JSON revision and lists export status",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-workspace.insert-page": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-workspace.load-sources": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits brand and imports authorized sources through the tools dialog",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-workspace.remove-page": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-workspace.set-photo-edit": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-workspace.source": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits brand and imports authorized sources through the tools dialog",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.a-983295b263": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits brand and imports authorized sources through the tools dialog",
+        "scenarios": ["authorized", "redirect", "deep-link", "loading", "error"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": []
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.button-07f95dca6d": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "exports a confirmed JSON revision and lists export status",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.button-0d5d4ff509": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.button-33414fbc81": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits brand and imports authorized sources through the tools dialog",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.button-34e4cc1616": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits channel captions and campaign scheduling in the captions dialog",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.button-6182d65caf": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.button-a1be62e947": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.button-f159baea82": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "exports a confirmed JSON revision and lists export status",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.button-fdbeb1cd6b": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "exports a confirmed JSON revision and lists export status",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.format": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.format-2": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "exports a confirmed JSON revision and lists export status",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.input-08551745f9": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits channel captions and campaign scheduling in the captions dialog",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.input-196201b86b": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows storage status and peers without a permanent sidebar",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.input-3f9842a2bc": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits channel captions and campaign scheduling in the captions dialog",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.input-635c870eb9": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.input-70799f297e": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.input-9c30e00289": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.input-e77fb67ee7": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits brand and imports authorized sources through the tools dialog",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.input-ef4bdcdc59": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits channel captions and campaign scheduling in the captions dialog",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.input-f15ecea43d": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.input-f7078e4db3": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.input-f891eec816": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.input-f95d891276": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.select-1408e711cc": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.select-335fe1f170": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits channel captions and campaign scheduling in the captions dialog",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.select-4d0cd79d46": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.select-515683ba65": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.select-74119eaeb9": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.select-8e6f883574": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits brand and imports authorized sources through the tools dialog",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.select-97008fc688": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.select-ba740cd21e": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "exports a confirmed JSON revision and lists export status",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.textarea-c86d94bab4": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits channel captions and campaign scheduling in the captions dialog",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studioworkspace.activate.textarea-dcebf42594": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.input-21b047b74f": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "formats the first selected text and preserves selection when properties close",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.input-54b937c9e3": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "inserts all new element types from the insert menu",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.input-6b4651ec8d": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "formats the first selected text and preserves selection when properties close",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.input-7010fff2d4": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "shows a conflict with base, local and remote values",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.input-922d2dbcbc": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.input-e7c5465a6d": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.input-f9d64640a1": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "formats the first selected text and preserves selection when properties close",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.select-4ad05456fa": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "aligns, duplicates and deletes through selection tools",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.select-86c00e5902": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "changes object properties without moving other selected objects",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.select-9875c0cfe8": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "formats the first selected text and preserves selection when properties close",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.select-9ed9ed58d6": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "formats the first selected text and preserves selection when properties close",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.toolbarbutton-13558298cb": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "supports keyboard copy/paste, movement, undo and preview",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.toolbarbutton-30e1803505": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "supports keyboard copy/paste, movement, undo and preview",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.toolbarbutton-4a8887d3a9": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "aligns, duplicates and deletes through selection tools",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioEditor.tsx#communication-studio.studio-editor.activate.toolbarbutton-69d9939481": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover",
+        "scenarios": ["idle", "success"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["keyboard", "focus"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "project": "component",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
+        "scenarios": ["disabled"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioPanel.tsx#communication-studio.studio-panel.change": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioPanel.tsx#communication-studio.studio-panel.activate.toolbarbutton-c5c28ba672": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "scenarios": ["idle", "success", "keyboard", "focus"]
       }
     ],
     "src/features/communication-studio/ui/StudioStatementEntry.tsx#communication-studio.studio-statement-entry.features-studio-title": [
@@ -361,126 +2255,14 @@
         "file": "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "project": "component",
         "caseId": "preserves the unfinished statement when opening the group or personal Studio",
-        "scenarios": ["idle", "success", "focus"]
-      },
-      {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "keyboard entry opens the group Studio and preserves the unfinished statement",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.accept-ai": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "imports an authorized source and theme while treating generated copy as an explicit proposal",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.add": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "preserves selection operations and toggles the preview",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.ai": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "imports an authorized source and theme while treating generated copy as an explicit proposal",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.align": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "preserves selection operations and toggles the preview",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.apply-logo": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "uploads images and video, edits cropping and clip properties and replaces an image without flattening it",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
+        "scenarios": ["idle", "success", "keyboard", "focus"]
       }
     ],
     "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.create": [
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "creates a configured campaign, preserves failed input and opens existing projects with keyboard focus",
+        "caseId": "keeps project overview and creation available",
         "scenarios": ["idle", "success"]
       },
       {
@@ -492,191 +2274,15 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
+        "caseId": "disables writes in read-only mode but keeps menus accessible",
         "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.delete-selected": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "preserves selection operations and toggles the preview",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.duplicate-page": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "reorders, duplicates and removes pages without dropping their post references",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.duplicate-selected": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "preserves selection operations and toggles the preview",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.export-media": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "updates channel copy and campaign assignments then exports the selected confirmed scope",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.group-selected": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "preserves selection operations and toggles the preview",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.insert-page": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "reorders, duplicates and removes pages without dropping their post references",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.load-sources": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "imports an authorized source and theme while treating generated copy as an explicit proposal",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
       }
     ],
     "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.open": [
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "creates a configured campaign, preserves failed input and opens existing projects with keyboard focus",
+        "caseId": "keeps project overview and creation available",
         "scenarios": ["idle", "success"]
       },
       {
@@ -684,506 +2290,14 @@
         "project": "browser-component",
         "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
         "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.redo": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared text properties and rejects invalid dimensions",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.remove-page": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "reorders, duplicates and removes pages without dropping their post references",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
       }
     ],
     "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.set-mode": [
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "creates a configured campaign, preserves failed input and opens existing projects with keyboard focus",
+        "caseId": "keeps project overview and creation available",
         "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.set-photo-edit": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "uploads images and video, edits cropping and clip properties and replaces an image without flattening it",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.set-playing": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "preserves selection operations and toggles the preview",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.set-proposal": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "imports an authorized source and theme while treating generated copy as an explicit proposal",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.source": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "imports an authorized source and theme while treating generated copy as an explicit proposal",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.undo": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared text properties and rejects invalid dimensions",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.ungroup": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "preserves selection operations and toggles the preview",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioCanvas.tsx#communication-studio.studiocanvas.activate.group-d8e1db5e80": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
-        "project": "component",
-        "caseId": "provides focusable keyboard selection, incremental movement and immutable read-only or locked objects",
-        "scenarios": ["keyboard", "focus", "idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
-        "project": "component",
-        "caseId": "selects by pointer and touch, snaps dragging and preserves scale when committing a transform",
-        "scenarios": ["idle", "success"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioCanvas.tsx#communication-studio.studiocanvas.activate.rect-820a638cbc": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
-        "project": "component",
-        "caseId": "provides focusable keyboard selection, incremental movement and immutable read-only or locked objects",
-        "scenarios": ["keyboard", "focus", "idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
-        "project": "component",
-        "caseId": "selects by pointer and touch, snaps dragging and preserves scale when committing a transform",
-        "scenarios": ["idle", "success"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.a-983295b263": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "imports an authorized source and theme while treating generated copy as an explicit proposal",
-        "scenarios": ["authorized", "redirect"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["loading", "error"]
-      },
-      {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX",
-        "scenarios": ["deep-link"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.a-dfa819da8b": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "saves templates, opens a confirmed duplicate and handles completed and cancelled export jobs",
-        "scenarios": ["authorized", "redirect"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["loading", "error"]
-      },
-      {
-        "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-        "project": "playwright",
-        "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX",
-        "scenarios": ["deep-link"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.button-07f95dca6d": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "saves templates, opens a confirmed duplicate and handles completed and cancelled export jobs",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.button-0d5d4ff509": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "reorders, duplicates and removes pages without dropping their post references",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.button-141337c53d": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "saves templates, opens a confirmed duplicate and handles completed and cancelled export jobs",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.button-33414fbc81": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "imports an authorized source and theme while treating generated copy as an explicit proposal",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.button-34e4cc1616": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "updates channel copy and campaign assignments then exports the selected confirmed scope",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.button-3ed37cb5f3": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "saves templates, opens a confirmed duplicate and handles completed and cancelled export jobs",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.button-6182d65caf": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "reorders, duplicates and removes pages without dropping their post references",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.button-a1be62e947": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "reorders, duplicates and removes pages without dropping their post references",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.button-f159baea82": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "saves templates, opens a confirmed duplicate and handles completed and cancelled export jobs",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.button-fdbeb1cd6b": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "saves templates, opens a confirmed duplicate and handles completed and cancelled export jobs",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.format": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared project and page properties",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.format-2": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "updates channel copy and campaign assignments then exports the selected confirmed scope",
-        "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
@@ -1196,7 +2310,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "creates a configured campaign, preserves failed input and opens existing projects with keyboard focus",
+        "caseId": "keeps project overview and creation available",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1204,93 +2318,13 @@
         "project": "browser-component",
         "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
         "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-08551745f9": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "updates channel copy and campaign assignments then exports the selected confirmed scope",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-196201b86b": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "updates channel copy and campaign assignments then exports the selected confirmed scope",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-32634c553b": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared text properties and rejects invalid dimensions",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-3f9842a2bc": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "updates channel copy and campaign assignments then exports the selected confirmed scope",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
       }
     ],
     "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-4bccd4d2f8": [
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "creates a configured campaign, preserves failed input and opens existing projects with keyboard focus",
+        "caseId": "keeps project overview and creation available",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1304,75 +2338,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "creates a configured campaign, preserves failed input and opens existing projects with keyboard focus",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-635c870eb9": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared project and page properties",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-70799f297e": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared text properties and rejects invalid dimensions",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-9338527e93": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared project and page properties",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-9c30e00289": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared project and page properties",
+        "caseId": "keeps project overview and creation available",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1386,169 +2352,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "creates a configured campaign, preserves failed input and opens existing projects with keyboard focus",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-db68506611": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "uploads images and video, edits cropping and clip properties and replaces an image without flattening it",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-e77fb67ee7": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "imports an authorized source and theme while treating generated copy as an explicit proposal",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-ef4bdcdc59": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "updates channel copy and campaign assignments then exports the selected confirmed scope",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-f15ecea43d": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared project and page properties",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-f7078e4db3": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared text properties and rejects invalid dimensions",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-f7d0660f32": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "preserves selection operations and toggles the preview",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-f891eec816": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared text properties and rejects invalid dimensions",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.input-f95d891276": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "uploads images and video, edits cropping and clip properties and replaces an image without flattening it",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.select-1408e711cc": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "uploads images and video, edits cropping and clip properties and replaces an image without flattening it",
+        "caseId": "keeps project overview and creation available",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1562,117 +2366,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "creates a configured campaign, preserves failed input and opens existing projects with keyboard focus",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.select-335fe1f170": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "updates channel copy and campaign assignments then exports the selected confirmed scope",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "disables every document mutation and duplicate while an export request is awaiting confirmation",
-        "scenarios": ["disabled"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "keeps unavailable, read-only and offline states visible and disables mutation controls",
-        "scenarios": ["disabled"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.select-4d0cd79d46": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared text properties and rejects invalid dimensions",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.select-515683ba65": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared text properties and rejects invalid dimensions",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.select-74119eaeb9": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared text properties and rejects invalid dimensions",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.select-8e6f883574": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "imports an authorized source and theme while treating generated copy as an explicit proposal",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.select-97008fc688": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared project and page properties",
-        "scenarios": ["selected", "unselected"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.select-ba740cd21e": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "updates channel copy and campaign assignments then exports the selected confirmed scope",
+        "caseId": "keeps project overview and creation available",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1686,7 +2380,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "creates a configured campaign, preserves failed input and opens existing projects with keyboard focus",
+        "caseId": "keeps project overview and creation available",
         "scenarios": ["selected", "unselected"]
       },
       {
@@ -1700,7 +2394,7 @@
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "project": "component",
-        "caseId": "creates a configured campaign, preserves failed input and opens existing projects with keyboard focus",
+        "caseId": "keeps project overview and creation available",
         "scenarios": ["idle", "success"]
       },
       {
@@ -1710,55 +2404,180 @@
         "scenarios": ["keyboard", "focus"]
       }
     ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.textarea-87fab7971d": [
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#communication-studio.studio-data-properties.activate.input-e3bdd3d2be": [
       {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "project": "component",
-        "caseId": "imports an authorized source and theme while treating generated copy as an explicit proposal",
-        "scenarios": ["idle", "success"]
+        "caseId": "edits chart data and legend while keeping pie constraints and minimum dimensions valid",
+        "scenarios": ["selected", "unselected"]
       },
       {
         "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
         "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.textarea-c86d94bab4": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "updates channel copy and campaign assignments then exports the selected confirmed scope",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
-        "scenarios": ["keyboard", "focus"]
-      }
-    ],
-    "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studioworkspace.activate.textarea-dcebf42594": [
-      {
-        "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "project": "component",
-        "caseId": "edits shared text properties and rejects invalid dimensions",
-        "scenarios": ["idle", "success"]
-      },
-      {
-        "file": "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx",
-        "project": "browser-component",
-        "caseId": "exposes Studio creation, text, media, campaign and export controls to real keyboard focus and native activation",
+        "caseId": "supports native keyboard focus and activation for table and chart controls",
         "scenarios": ["keyboard", "focus"]
       }
     ]
   },
   "actionDeclarations": {
-    "src/features/communication-studio/ui/StudioCanvas.tsx#Group-d8e1db5e80": {
-      "actionId": "communication-studio.studiocanvas.activate.group-d8e1db5e80"
+    "src/features/communication-studio/ui/StudioCanvas.tsx#Group-23d805b8bd": {
+      "actionId": "communication-studio.studio-canvas.activate.group-23d805b8bd"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-2591644817": {
+      "actionId": "communication-studio.studio-data-properties.activate.button-2591644817"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-4f05e18a5a": {
+      "actionId": "communication-studio.studio-data-properties.activate.button-4f05e18a5a"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-5619ced44f": {
+      "actionId": "communication-studio.studio-data-properties.activate.button-5619ced44f"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-7a57c8fcfb": {
+      "actionId": "communication-studio.studio-data-properties.activate.button-7a57c8fcfb"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-93f847c07b": {
+      "actionId": "communication-studio.studio-data-properties.activate.button-93f847c07b"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-99756d2c36": {
+      "actionId": "communication-studio.studio-data-properties.activate.button-99756d2c36"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-9a19093164": {
+      "actionId": "communication-studio.studio-data-properties.activate.button-9a19093164"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#button-f56bde7e05": {
+      "actionId": "communication-studio.studio-data-properties.activate.button-f56bde7e05"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-019b52b855": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-019b52b855"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-0383aca720": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-0383aca720"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-1df3fcf7b8": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-1df3fcf7b8"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-3c45cc135e": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-3c45cc135e"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-445008570f": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-445008570f"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-6e61809cd7": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-6e61809cd7"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-7e8f3cb2d0": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-7e8f3cb2d0"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-8d97ae1e91": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-8d97ae1e91"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-9a80f856e5": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-9a80f856e5"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-da9dfdfba0": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-da9dfdfba0"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-dd2a076f14": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-dd2a076f14"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#select-1481c471ce": {
+      "actionId": "communication-studio.studio-data-properties.activate.select-1481c471ce"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#select-1f227bef7a": {
+      "actionId": "communication-studio.studio-data-properties.activate.select-1f227bef7a"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#a-dfa819da8b": {
+      "actionId": "communication-studio.studio-editor.activate.a-dfa819da8b"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#button-1488e0d1c3": {
+      "actionId": "communication-studio.studio-editor.activate.button-1488e0d1c3"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#button-1530b471fe": {
+      "actionId": "communication-studio.studio-editor.activate.button-1530b471fe"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#button-27730074b4": {
+      "actionId": "communication-studio.studio-editor.activate.button-27730074b4"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#button-80e5692fe0": {
+      "actionId": "communication-studio.studio-editor.activate.button-80e5692fe0"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#button-8c9e4701cb": {
+      "actionId": "communication-studio.studio-editor.activate.button-8c9e4701cb"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#button-9fe2f0396c": {
+      "actionId": "communication-studio.studio-editor.activate.button-9fe2f0396c"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#button-a413e386f5": {
+      "actionId": "communication-studio.studio-editor.activate.button-a413e386f5"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#button-aa0b083391": {
+      "actionId": "communication-studio.studio-editor.activate.button-aa0b083391"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#button-d4063e9cb1": {
+      "actionId": "communication-studio.studio-editor.activate.button-d4063e9cb1"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#button-e8118db4dd": {
+      "actionId": "communication-studio.studio-editor.activate.button-e8118db4dd"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#button-ee587f8114": {
+      "actionId": "communication-studio.studio-editor.activate.button-ee587f8114"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#input-21b047b74f": {
+      "actionId": "communication-studio.studio-editor.activate.input-21b047b74f"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#input-54b937c9e3": {
+      "actionId": "communication-studio.studio-editor.activate.input-54b937c9e3"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#input-6b4651ec8d": {
+      "actionId": "communication-studio.studio-editor.activate.input-6b4651ec8d"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#input-7010fff2d4": {
+      "actionId": "communication-studio.studio-editor.activate.input-7010fff2d4"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#input-922d2dbcbc": {
+      "actionId": "communication-studio.studio-editor.activate.input-922d2dbcbc"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#input-e7c5465a6d": {
+      "actionId": "communication-studio.studio-editor.activate.input-e7c5465a6d"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#input-f9d64640a1": {
+      "actionId": "communication-studio.studio-editor.activate.input-f9d64640a1"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#select-4ad05456fa": {
+      "actionId": "communication-studio.studio-editor.activate.select-4ad05456fa"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#select-86c00e5902": {
+      "actionId": "communication-studio.studio-editor.activate.select-86c00e5902"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#select-9875c0cfe8": {
+      "actionId": "communication-studio.studio-editor.activate.select-9875c0cfe8"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#select-9ed9ed58d6": {
+      "actionId": "communication-studio.studio-editor.activate.select-9ed9ed58d6"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-13558298cb": {
+      "actionId": "communication-studio.studio-editor.activate.toolbarbutton-13558298cb"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-30e1803505": {
+      "actionId": "communication-studio.studio-editor.activate.toolbarbutton-30e1803505"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-4a8887d3a9": {
+      "actionId": "communication-studio.studio-editor.activate.toolbarbutton-4a8887d3a9"
+    },
+    "src/features/communication-studio/ui/StudioEditor.tsx#ToolbarButton-69d9939481": {
+      "actionId": "communication-studio.studio-editor.activate.toolbarbutton-69d9939481"
+    },
+    "src/features/communication-studio/ui/StudioPanel.tsx#ToolbarButton-c5c28ba672": {
+      "actionId": "communication-studio.studio-panel.activate.toolbarbutton-c5c28ba672"
     },
     "src/features/communication-studio/ui/StudioCanvas.tsx#Rect-820a638cbc": {
       "actionId": "communication-studio.studiocanvas.activate.rect-820a638cbc"
+    },
+    "src/features/communication-studio/ui/StudioPanel.tsx#PopoverTrigger-e558429676": {
+      "actionId": "communication-studio.studio-panel.activate.toolbarbutton-c5c28ba672"
+    },
+    "src/features/communication-studio/ui/StudioDataProperties.tsx#input-e3bdd3d2be": {
+      "actionId": "communication-studio.studio-data-properties.activate.input-e3bdd3d2be"
     }
   }
 }

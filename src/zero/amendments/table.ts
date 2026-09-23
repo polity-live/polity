@@ -92,6 +92,7 @@ export const amendmentCityDesign = table('amendment_city_design')
     center_lon: number().optional(),
     osm_snapshot: json<MutableJSONValue>().optional(),
     design_state: json<MutableJSONValue>().optional(),
+    content_revision: number().optional(),
     currency: string(),
     estimated_total_cost_minor: number(),
     cost_catalog_version: string().optional(),

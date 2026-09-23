@@ -13,6 +13,9 @@ CREATE TABLE public.studio_project (
 );
 CREATE INDEX studio_project_group ON public.studio_project(group_id,updated_at);
 CREATE INDEX studio_project_owner ON public.studio_project(owner_id,updated_at);
+ALTER TABLE public.conversation
+  ADD CONSTRAINT conversation_studio_project_id_fkey
+  FOREIGN KEY (studio_project_id) REFERENCES public.studio_project(id) ON DELETE CASCADE;
 CREATE TABLE public.studio_state (
   project_id uuid PRIMARY KEY REFERENCES public.studio_project(id) ON DELETE CASCADE,
   state bytea NOT NULL,
@@ -81,4 +84,3 @@ ALTER TABLE public.studio_asset ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.studio_export ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.studio_project,public.studio_state,public.studio_revision,public.studio_asset,public.studio_export FROM anon,authenticated;
 GRANT ALL ON public.studio_project,public.studio_state,public.studio_revision,public.studio_asset,public.studio_export TO service_role;
-INSERT INTO storage.buckets(id,name,public,file_size_limit) VALUES ('studio','studio',false,104857600) ON CONFLICT(id) DO UPDATE SET public=false;

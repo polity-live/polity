@@ -51,6 +51,7 @@ vi.mock('@/features/shared/ui/ui/card', () => ({
 vi.mock('@/features/shared/ui/ui/skeleton', () => ({ Skeleton: () => <i /> }));
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+  translate: (key: string) => key,
 }));
 vi.mock('../ConversationHeader', () => ({
   ConversationHeader: (props: any) => {
@@ -74,6 +75,12 @@ vi.mock('../AssistantMessageView', () => ({
   AssistantMessageView: (props: any) => {
     mocks.views.push(['assistant', props]);
     return <div>assistant</div>;
+  },
+}));
+vi.mock('@/features/project-chat/ui/ProjectConversation', () => ({
+  ProjectConversation: (props: any) => {
+    mocks.views.push(['project-assistant', props]);
+    return <div>project assistant</div>;
   },
 }));
 

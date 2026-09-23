@@ -32,6 +32,7 @@ async function loadMutatorContext(options: { includeRegistries?: boolean } = {})
   }));
   vi.doMock('../schema', () => ({
     zql: queryHarness.zql,
+    schema: {},
   }));
   vi.doMock('../rbac/can', () => ({
     can: (...args: unknown[]) => canMock(...args),

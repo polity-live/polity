@@ -4,6 +4,7 @@ import { schema } from '@/zero/schema';
 import { mutators } from '@/zero/mutators';
 import { useAuth } from './auth-provider';
 import { ZeroReadyContext } from './zero-ready-context';
+import { resolveZeroAPIURL } from '@/lib/zero-api-url';
 
 function getRequiredEnvVar(value: string | undefined, name: string) {
   if (!value) {
@@ -17,7 +18,12 @@ export function ZeroAppProvider({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
   const cacheURL = getRequiredEnvVar(import.meta.env.VITE_ZERO_CACHE_URL, 'VITE_ZERO_CACHE_URL');
   const appURL = getRequiredEnvVar(import.meta.env.VITE_APP_URL, 'VITE_APP_URL');
-  const zeroAPIURL = import.meta.env.VITE_ZERO_API_URL || appURL;
+  const zeroAPIURL = resolveZeroAPIURL(
+    appURL,
+    cacheURL,
+    import.meta.env.VITE_ZERO_API_URL,
+    import.meta.env.DEV
+  );
 
   const zeroContext = useMemo(
     () =>
@@ -37,7 +43,7 @@ export function ZeroAppProvider({ children }: { children: React.ReactNode }) {
   return (
     <ZeroReadyContext.Provider value={true}>
       <ZeroProvider
-        key={zeroIdentityKey}
+        key={`${zeroIdentityKey}:${zeroAPIURL}`}
         {...zeroIdentity}
         context={zeroContext}
         cacheURL={cacheURL}

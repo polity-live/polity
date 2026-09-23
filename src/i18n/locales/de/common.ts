@@ -230,6 +230,10 @@ export const commonTranslations = {
     mutation_server_failed: 'Die Änderung konnte auf dem Server nicht gespeichert werden.',
     collaboration_client_outdated:
       'Dieser Editorstand ist veraltet. Bitte lade die Seite neu und übernimm lokale Änderungen über die Entwurfswiederherstellung.',
+    project_revision_conflict:
+      'Der Inhalt wurde zwischenzeitlich geändert. Lade den aktuellen Stand, bevor du deine Änderungen erneut speicherst.',
+    project_undo_conflict:
+      'Seit dieser KI-Änderung wurde weitergearbeitet. Rückgängig wurde abgebrochen, damit keine neueren Änderungen verloren gehen.',
     collaboration_maintenance:
       'Bearbeitung und Abstimmungen sind für die Umstellung vorübergehend pausiert. Bitte versuche es nach der Wartung erneut.',
     auth_service_unavailable: 'Der Anmeldedienst ist derzeit nicht verfügbar.',

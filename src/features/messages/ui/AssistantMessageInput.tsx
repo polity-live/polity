@@ -14,10 +14,11 @@ import {
   slugifySkillName,
   type SuggestionAnchorPosition,
 } from '../logic/assistantComposer';
-import type { useAssistantChat } from '../hooks/useAssistantChat';
+import type { AssistantChatController } from '../hooks/useAssistantChat';
 
 interface AssistantMessageInputProps {
-  assistantChat: ReturnType<typeof useAssistantChat>;
+  assistantChat: AssistantChatController;
+  compact?: boolean;
 }
 function buildModelKey(model: { provider: string; id: string }): string {
   return `${model.provider}:${model.id}`;
@@ -28,7 +29,10 @@ import {
   requestAppTutorialSpotlightTarget,
 } from '@/features/app-tutorial/events';
 import { matchesAppTutorialExpectedInput } from '@/features/app-tutorial/catalog';
-export function AssistantMessageInput({ assistantChat }: AssistantMessageInputProps) {
+export function AssistantMessageInput({
+  assistantChat,
+  compact = false,
+}: AssistantMessageInputProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [messageText, setMessageText] = useState('');
@@ -65,6 +69,11 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
 
   const updateTools = useMemo(
     () => assistantChat.availableTools.filter(tool => tool.kind === 'update'),
+    [assistantChat.availableTools]
+  );
+
+  const projectTools = useMemo(
+    () => assistantChat.availableTools.filter(tool => tool.kind === 'project'),
     [assistantChat.availableTools]
   );
 
@@ -211,7 +220,9 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
       return freeRouterLabel;
     }
 
-    return model.label;
+    return model.supports_tools === false
+      ? `${model.label} · ${t('features.studio.modelNoTools')}`
+      : model.label;
   };
 
   const selectedModelHint = useMemo(() => {
@@ -428,6 +439,8 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
       searchTools={searchTools}
       createTools={createTools}
       updateTools={updateTools}
+      projectTools={projectTools}
+      compact={compact}
       mentionQuery={mentionQuery}
       skillCommand={skillCommand}
       toolCommand={toolCommand}

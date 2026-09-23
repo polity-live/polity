@@ -129,10 +129,18 @@ describe('mutate-with-server-check', () => {
       'features/agendas/hooks/useAgendaNavigation.ts',
       'features/amendments/city-design/hooks/useCityDesignPageController.ts',
       'features/amendments/ui/useAmendmentProcessFlowController.ts',
+      // Project editors flush and confirm persisted revisions before an AI run starts.
+      'features/communication-studio/hooks/useStudioController.ts',
+      // Studio document saves need the accepted mutation before fetching its receipt.
+      'features/communication-studio/hooks/useStudioDocument.ts',
       'features/decision-terminal/hooks/useDecisionVoteDialogController.ts',
       'features/editor/hooks/useEditorOperations.ts',
+      'features/editor/hooks/useEditor.ts',
       'features/events/hooks/useEventMutations.ts',
       'features/notifications/hooks/useNotificationActions.ts',
+      // Shared project chats wait for server authorization of creation, membership and runs.
+      'features/project-chat/ui/ProjectChatPanel.tsx',
+      'features/project-chat/ui/ProjectConversation.tsx',
       // Tutorial advancement verifies the Kanban status in the database.
       'features/todos/hooks/useKanbanBoardController.ts',
       'features/todos/hooks/useTodoMutations.ts',

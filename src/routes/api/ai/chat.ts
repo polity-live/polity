@@ -60,6 +60,12 @@ export async function handleAiChatRequest(request: Request): Promise<Response> {
     }
 
     const body = aiChatRequestSchema.parse(await request.json());
+    if (body.resume || body.requestId) {
+      const { handleProjectAiChat } = await import('@/server/project-chat/run');
+      const projectResponse = await handleProjectAiChat(session.user.id, body, request);
+      if (projectResponse) return projectResponse;
+    }
+    if (body.resume) return aiChatError('permission_denied', 403);
     const conversation = await getAssistantConversationForUser(
       session.user.id,
       body.conversationId
@@ -164,7 +170,7 @@ export async function handleAiChatRequest(request: Request): Promise<Response> {
       conversation.name === DEFAULT_ASSISTANT_CONVERSATION_NAME && effectiveUserMessageCount === 1;
 
     const tools = {
-      ...buildAiTools(session.user.id, body.timeZone),
+      ...buildAiTools(session.user.id, body.timeZone, body.content, body.attachments),
       ...(shouldEnableChatTitleTool
         ? {
             [INTERNAL_CHAT_TITLE_TOOL_NAME]: tool({

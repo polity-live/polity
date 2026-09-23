@@ -1,10 +1,32 @@
+import { aiRun, aiChangeSet } from './project-chat/table';
 import { relationships } from '@rocicorp/zero';
 
 // Users
 import { user, file } from './users/table';
 import { appearanceTheme, appearanceThemeRevision } from './appearance-themes/table';
-import { studioProject, studioExport } from './communication-studio/table';
+import {
+  studioProject,
+  studioExport,
+  studioState,
+  studioOperation,
+  canvasProposal,
+  canvasWorkspaceReader,
+} from './communication-studio/table';
+export const canvasProposalRelationships = relationships(canvasProposal, ({ one, many }) => ({
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+  readers: many({
+    sourceField: ['id'],
+    destField: ['workspace_id'],
+    destSchema: canvasWorkspaceReader,
+  }),
+}));
 
+export const studioOperationRelationships = relationships(studioOperation, ({ one }) => ({
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+}));
+export const studioStateRelationships = relationships(studioState, ({ one }) => ({
+  project: one({ sourceField: ['project_id'], destField: ['id'], destSchema: studioProject }),
+}));
 export const studioProjectRelationships = relationships(studioProject, ({ one }) => ({
   group: one({ sourceField: ['group_id'], destField: ['id'], destSchema: group }),
 }));
@@ -1976,6 +1998,12 @@ export const todoActivityRelationships = relationships(todoActivity, ({ one }) =
 // Message relationships
 // ============================================
 export const conversationRelationships = relationships(conversation, ({ one, many }) => ({
+  studio_project: one({
+    sourceField: ['studio_project_id'],
+    destField: ['id'],
+    destSchema: studioProject,
+  }),
+  amendment: one({ sourceField: ['amendment_id'], destField: ['id'], destSchema: amendment }),
   tutorial_run: one({
     sourceField: ['tutorial_run_id'],
     destSchema: appTutorialRun,
@@ -2003,6 +2031,21 @@ export const conversationParticipantRelationships = relationships(
     user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
   })
 );
+
+export const aiRunRelationships = relationships(aiRun, ({ one }) => ({
+  conversation: one({
+    sourceField: ['conversation_id'],
+    destField: ['id'],
+    destSchema: conversation,
+  }),
+}));
+export const aiChangeSetRelationships = relationships(aiChangeSet, ({ one }) => ({
+  conversation: one({
+    sourceField: ['conversation_id'],
+    destField: ['id'],
+    destSchema: conversation,
+  }),
+}));
 
 export const messageRelationships = relationships(message, ({ one }) => ({
   conversation: one({
@@ -2636,6 +2679,9 @@ export const allRelationships = [
   fileRelationships,
   userPreferenceRelationships,
   appearanceThemeRelationships,
+  studioStateRelationships,
+  studioOperationRelationships,
+  canvasProposalRelationships,
   studioProjectRelationships,
   studioExportRelationships,
   appearanceThemeRevisionRelationships,
@@ -2722,6 +2768,8 @@ export const allRelationships = [
   todoActivityRelationships,
   // Messages
   conversationRelationships,
+  aiRunRelationships,
+  aiChangeSetRelationships,
   conversationParticipantRelationships,
   messageRelationships,
   // Search Documents

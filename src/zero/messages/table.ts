@@ -15,6 +15,8 @@ export const conversation = table('conversation')
     event_id: string().optional(),
     requested_by_id: string().optional(),
     tutorial_run_id: string().optional(),
+    studio_project_id: string().optional(),
+    amendment_id: string().optional(),
     created_at: number(),
   })
   .primaryKey('id');
@@ -28,6 +30,7 @@ export const conversationParticipant = table('conversation_participant')
     last_read_at: number().optional(),
     left_at: number().optional(),
     unread_count: number().optional(),
+    project_surface: string().optional(),
   })
   .primaryKey('id');
 

@@ -55,6 +55,10 @@ async function recomputeCommentVoteCounters(
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const documentServerMutators = {
   updateContent: defineMutator(updateDocumentSchema, async ({ tx, ctx, args }) => {
+    if (args.content !== undefined) {
+      const { assertContentRevision } = await import('@/server/project-chat/revisions');
+      await assertContentRevision(tx, 'document', args.id, args.expected_content_revision);
+    }
     const document = await tx.run(zql.document.where('id', args.id).one());
 
     await mutators.documents.updateContent.fn({ tx, ctx, args });

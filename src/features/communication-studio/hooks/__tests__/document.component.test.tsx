@@ -1,197 +1,201 @@
 /* @vitest-environment jsdom */
-import { act, cleanup, renderHook } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as Y from 'yjs';
+import { act, renderHook, waitFor, cleanup } from '@testing-library/react';
+import { vi, beforeEach, afterEach, it, expect } from 'vitest';
 import { createDocument } from '../../logic/templates';
-import { element } from '../../logic/document';
-import { initialize, readDocument } from '../../logic/collaboration';
+import { mergeStudioV3 } from '../../logic/operations';
+import { legacyDocumentToV3 } from '../../logic/v3-adapter';
+import { studioDocumentV3Schema } from '../../logic/document-v3';
 const io = vi.hoisted(() => ({
-  shared: vi.fn(),
+  remote: undefined as any,
+  server: undefined as any,
+  revision: 0,
+  receipt: undefined as any,
+  mutate: vi.fn(),
   request: vi.fn(),
-  field: vi.fn(),
-  on: vi.fn(),
-  off: vi.fn(),
-  states: vi.fn(),
+  fetch: vi.fn(),
+  createObjectURL: vi.fn(),
+  revokeObjectURL: vi.fn(),
 }));
-vi.mock('@/features/collaboration/hooks/useCollaborationDocument', () => ({
-  useCollaborationDocument: io.shared,
-  encodeDocument: (doc: Y.Doc) => Buffer.from(Y.encodeStateAsUpdate(doc)).toString('base64'),
+vi.mock('@rocicorp/zero/react', () => ({
+  useZero: () => ({ mutate: io.mutate }),
+  useQuery: (query: unknown) => [query ? io.remote : undefined],
 }));
+vi.mock('@/zero/queries', () => ({ queries: { studio: { document: (v: unknown) => v } } }));
+vi.mock('@/zero/mutators', () => ({ mutators: { studio: { apply: (v: unknown) => v } } }));
 vi.mock('@/zero/communication-studio/useStudioApi', () => ({ studioRequest: io.request }));
-import { useStudioDocument } from '../useStudioDocument';
-let state: any, doc: Y.Doc, original: ReturnType<typeof createDocument>;
-const user = { id: 'alice', name: 'Alice' };
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.clearAllMocks();
-  doc = new Y.Doc();
-  original = createDocument('single', 'Original');
-  initialize(doc, original);
-  state = {
-    doc,
-    provider: {
-      awareness: { setLocalStateField: io.field, on: io.on, off: io.off, getStates: io.states },
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: { getSession: async () => ({ data: { session: { access_token: 'test' } } }) },
+    realtime: { setAuth: vi.fn().mockResolvedValue(undefined) },
+    removeChannel: vi.fn().mockResolvedValue(undefined),
+    channel: () => {
+      const c = {
+        on: () => c,
+        subscribe: () => c,
+        track: vi.fn(),
+        unsubscribe: vi.fn(),
+        send: vi.fn(),
+        presenceState: () => ({}),
+      };
+      return c;
     },
-    canEdit: true,
-    status: 'saved',
-    phase: 'active',
-    value: original,
-  };
-  io.shared.mockImplementation(() => state);
-  io.request.mockResolvedValue([{ id: 'asset', name: 'Image', url: 'signed', mime: 'image/png' }]);
-  io.states.mockReturnValue(
-    new Map([
-      [doc.clientID, { user: { id: 'alice' } }],
-      [1, { user: { id: 'bob' }, cursor: { pageId: original.pages[0].id, x: 1, y: 2 } }],
-    ])
-  );
+  }),
+}));
+import { useStudioDocument } from '../useStudioDocument';
+const id = '10000000-0000-4000-8000-000000000001',
+  user = { id: '10000000-0000-4000-8000-000000000002', name: 'User' };
+beforeEach(() => {
+  localStorage.clear();
+  vi.stubGlobal('fetch', io.fetch);
+  vi.stubGlobal('URL', {
+    ...URL,
+    createObjectURL: io.createObjectURL,
+    revokeObjectURL: io.revokeObjectURL,
+  });
+  io.fetch.mockReset();
+  io.createObjectURL.mockReset().mockReturnValue('blob:studio-media');
+  io.revokeObjectURL.mockReset();
+  io.server = legacyDocumentToV3(createDocument('single', 'Initial'));
+  io.remote = undefined;
+  io.revision = 0;
+  io.mutate.mockReset().mockImplementation(args => {
+    const merged = mergeStudioV3(io.server, args.changes);
+    if (!merged.conflicts.length) {
+      io.server = merged.value;
+      io.revision++;
+    }
+    io.receipt = {
+      status: merged.conflicts.length ? 'conflict' : 'applied',
+      document: io.server,
+      revision: io.revision,
+      conflicts: merged.conflicts,
+    };
+    return { server: Promise.resolve({ type: 'success' }) };
+  });
+  io.request
+    .mockReset()
+    .mockImplementation(async op =>
+      op === 'load'
+        ? { document: structuredClone(io.server), revision: io.revision, canEdit: true }
+        : op === 'canvasPresence'
+          ? { peers: [] }
+          : op === 'receipt'
+            ? io.receipt
+            : []
+    );
 });
 afterEach(() => {
   cleanup();
-  doc.destroy();
-  vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
-describe('Studio shared document adapter', () => {
-  it('clears old project assets and presence, and ignores asset responses from the previous project', async () => {
-    const hook = renderHook(({ id }) => useStudioDocument(id, user), {
-      initialProps: { id: 'first' as string | undefined },
-    });
-    await act(async () => undefined);
-    expect(hook.result.current.assets).toHaveLength(1);
-    expect(hook.result.current.peers).toHaveLength(1);
-    let complete: (value: unknown) => void = () => undefined;
-    io.request.mockImplementationOnce(
-      () =>
-        new Promise(resolve => {
-          complete = resolve;
-        })
-    );
-    let pending: Promise<void>;
-    act(() => {
-      pending = hook.result.current.refreshAssets();
-    });
-    state = { ...state, doc: null, provider: null };
-    hook.rerender({ id: undefined });
-    expect(hook.result.current.assets).toEqual([]);
-    expect(hook.result.current.peers).toEqual([]);
-    await act(async () => {
-      complete([{ id: 'private-old-asset' }]);
-      await pending!;
-    });
-    expect(hook.result.current.assets).toEqual([]);
+it('saves through Zero and waits for the durable receipt', async () => {
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await waitFor(() => expect(hook.result.current.value?.title).toBe('Initial'));
+  act(() => hook.result.current.meta('title', 'Saved'));
+  expect(hook.result.current.status).toBe('unsaved');
+  await act(() => hook.result.current.commit());
+  expect(io.server.title).toBe('Saved');
+  await waitFor(() => expect(hook.result.current.status).toBe('saved'));
+  expect(io.mutate).toHaveBeenCalledTimes(1);
+});
+it('keeps a failed draft and retries the same operation ID', async () => {
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  act(() => hook.result.current.meta('title', 'Draft'));
+  io.mutate.mockImplementationOnce(() => ({
+    server: Promise.reject(new Error('connection lost')),
+  }));
+  await act(async () => {
+    await expect(hook.result.current.commit()).rejects.toThrow();
   });
-  it('edits shared pages, captions and elements and exposes the exact revision state for confirmed exports', async () => {
-    const hook = renderHook(() => useStudioDocument('project', user));
-    await act(async () => undefined);
-    const p = original.pages[0],
-      e = p.elements[0],
-      extra = element('rect');
-    act(() => {
-      hook.result.current.patchElement(p.id, e.id, { text: 'New' });
-      hook.result.current.patchPage(p.id, { background: '#12362D' });
-      hook.result.current.patchPost(original.posts[0].id, {
-        action: 'Start',
-        captions: { instagram: 'Caption' },
-      });
-      hook.result.current.insertElement(p.id, extra);
-      hook.result.current.meta('title', 'Changed');
-    });
-    let value = readDocument(doc);
-    expect(value.title).toBe('Changed');
-    expect(value.pages[0].elements.find(item => item.id === e.id)!.text).toBe('New');
-    expect(value.posts[0]).toMatchObject({ action: 'Start', captions: { instagram: 'Caption' } });
-    expect(value.pages[0].background).toBe('#12362D');
-    expect(value.pages[0].elements.some(e => e.id === extra.id)).toBe(true);
-    act(() => {
-      hook.result.current.removeElement(p.id, extra.id);
-      hook.result.current.addPage({
-        ...p,
-        id: crypto.randomUUID(),
-        name: 'Second',
-        order: 1,
-        elements: [],
-      });
-      hook.result.current.cursor(p.id, 10, 20);
-    });
-    value = readDocument(doc);
-    expect(value.pages).toHaveLength(2);
-    expect(value.pages[0].elements.some(e => e.id === extra.id)).toBe(false);
-    expect(io.field).toHaveBeenLastCalledWith('cursor', { pageId: p.id, x: 10, y: 20 });
-    const copy = new Y.Doc();
-    Y.applyUpdate(copy, Buffer.from(hook.result.current.state(), 'base64'));
-    expect(readDocument(copy)).toEqual(value);
-    copy.destroy();
-    expect(hook.result.current.assets).toHaveLength(1);
-    expect(hook.result.current.collaboration).toBe(state);
+  const first = io.mutate.mock.calls[0][0].operationId;
+  expect(localStorage.getItem(`studio:v4:${user.id}:${id}:canonical`)).toContain('Draft');
+  await act(() => hook.result.current.commit());
+  expect(io.mutate.mock.calls[1][0].operationId).toBe(first);
+});
+it('shows a conflict and can choose the saved value', async () => {
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  act(() => hook.result.current.meta('title', 'Local'));
+  io.server.title = 'Remote';
+  await act(async () => {
+    await expect(hook.result.current.commit()).rejects.toThrow();
   });
-  it('undoes only local origins and does not undo a remote user change', async () => {
-    const hook = renderHook(() => useStudioDocument('project', user));
-    await act(async () => undefined);
-    act(() => hook.result.current.meta('title', 'Local'));
-    doc.transact(() => doc.getMap('meta').set('startDate', '2026-09-18'), 'remote');
-    act(() => hook.result.current.undo());
-    expect(readDocument(doc)).toMatchObject({ title: 'Original', startDate: '2026-09-18' });
-    act(() => hook.result.current.redo());
-    expect(readDocument(doc)).toMatchObject({ title: 'Local', startDate: '2026-09-18' });
-    state = { ...state, canEdit: false };
-    hook.rerender();
-    const before = hook.result.current.state();
-    act(() => {
-      hook.result.current.meta('title', 'Forbidden');
-      hook.result.current.undo();
-      hook.result.current.redo();
-    });
-    expect(hook.result.current.state()).toBe(before);
+  expect(hook.result.current.conflicts).toHaveLength(1);
+  await act(() => hook.result.current.resolveConflicts(false));
+  expect(hook.result.current.value?.title).toBe('Remote');
+});
+it('undos only local properties', async () => {
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  act(() => hook.result.current.meta('title', 'Changed'));
+  await act(() => hook.result.current.commit());
+  act(() => hook.result.current.undo());
+  await act(() => hook.result.current.commit());
+  expect(io.server.title).toBe('Initial');
+});
+it('persists V3-only frame settings without losing the legacy canvas projection', async () => {
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await waitFor(() => expect(hook.result.current.canEdit).toBe(true));
+  const frameId = hook.result.current.value?.pages[0].id;
+  act(() =>
+    hook.result.current.transactV3(document => {
+      const frame = document.nodes.find(node => node.id === frameId);
+      if (frame?.type !== 'frame') throw new Error('Frame missing');
+      frame.grid = { enabled: true, size: 16, snap: false };
+      frame.layout = { ...frame.layout, mode: 'wrap', padding: 24, gap: 12 };
+      frame.clipContent = false;
+    })
+  );
+  const frame = hook.result.current.v3Value?.nodes.find(node => node.id === frameId);
+  expect(frame).toMatchObject({
+    type: 'frame',
+    grid: { enabled: true, size: 16, snap: false },
+    layout: { mode: 'wrap', padding: 24, gap: 12 },
+    clipContent: false,
   });
-  it('uses shared awareness, renews asset URLs and releases timers and subscriptions on unmount', async () => {
-    const hook = renderHook(() => useStudioDocument('project', user));
-    await act(async () => undefined);
-    expect(io.field).toHaveBeenCalledWith('user', { ...user, color: '#B88A3B' });
-    act(() => io.on.mock.calls[0][1]());
-    expect(hook.result.current.peers).toHaveLength(1);
-    expect(hook.result.current.peers[0].user.id).toBe('bob');
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(240_000);
-    });
-    expect(io.request).toHaveBeenCalledTimes(2);
-    hook.unmount();
-    expect(io.off).toHaveBeenCalledWith('change', io.on.mock.calls[0][1]);
-    await vi.advanceTimersByTimeAsync(240_000);
-    expect(io.request).toHaveBeenCalledTimes(2);
+  expect(hook.result.current.value?.pages[0].id).toBe(frameId);
+  await act(() => hook.result.current.commit());
+  expect(
+    studioDocumentV3Schema.parse(io.server).nodes.find(node => node.id === frameId)
+  ).toMatchObject({
+    grid: { size: 16, snap: false },
+    layout: { mode: 'wrap', padding: 24, gap: 12 },
+    clipContent: false,
   });
-  it('keeps an unloaded or read-only session safe and supports the HTTP compatibility transport without awareness', async () => {
-    state = { ...state, doc: null, provider: null, canEdit: false, phase: 'maintenance' };
-    const hook = renderHook(() => useStudioDocument(undefined, user));
-    expect(io.shared).toHaveBeenCalledWith(null, 'alice');
-    expect(hook.result.current.status).toBe('maintenance');
-    expect(() => hook.result.current.state()).toThrow('Document not loaded');
-    act(() => {
-      hook.result.current.meta('title', 'Ignored');
-      hook.result.current.undo();
-      hook.result.current.redo();
-      hook.result.current.cursor('page', 1, 2);
-    });
-    await act(async () => hook.result.current.refreshAssets());
-    expect(io.request).not.toHaveBeenCalled();
-    state = { ...state, doc, canEdit: true };
-    hook.rerender();
-    await act(async () => undefined);
-    act(() => hook.result.current.meta('title', 'Offline compatible'));
-    expect(readDocument(doc).title).toBe('Offline compatible');
+});
+
+it('loads private media with the session token and exposes only revocable object URLs', async () => {
+  const asset = {
+    id: crypto.randomUUID(),
+    name: 'Photo.png',
+    mime: 'image/png',
+    url: `/api/studio/media/${crypto.randomUUID()}`,
+  };
+  io.request.mockImplementation(async op =>
+    op === 'load'
+      ? {
+          document: structuredClone(io.server),
+          revision: io.revision,
+          generation: 'current',
+          canEdit: true,
+        }
+      : op === 'assets'
+        ? [asset]
+        : op === 'canvasPresence'
+          ? { peers: [] }
+          : []
+  );
+  io.fetch.mockResolvedValue(new Response(new Blob(['image'], { type: 'image/png' })));
+  const hook = renderHook(() => useStudioDocument(id, user));
+  await waitFor(() => expect(hook.result.current.assets).toHaveLength(1));
+  expect(io.fetch).toHaveBeenCalledWith(asset.url, {
+    headers: { Authorization: 'Bearer test' },
   });
-  it('reports asset renewal errors without discarding editable document state', async () => {
-    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    io.request.mockRejectedValue(new Error('asset unavailable'));
-    try {
-      const hook = renderHook(() => useStudioDocument('project', user));
-      await act(async () => undefined);
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(240_000);
-      });
-      expect(error).toHaveBeenCalledTimes(2);
-      expect(hook.result.current.canEdit).toBe(true);
-    } finally {
-      error.mockRestore();
-    }
-  });
+  expect(hook.result.current.assets[0]).toEqual({ ...asset, url: 'blob:studio-media' });
+  expect(io.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+  await act(() => hook.result.current.refreshAssets());
+  expect(io.fetch).toHaveBeenCalledTimes(1);
+  hook.unmount();
+  expect(io.revokeObjectURL).toHaveBeenCalledWith('blob:studio-media');
 });

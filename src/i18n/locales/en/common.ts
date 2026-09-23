@@ -227,6 +227,10 @@ export const commonTranslations = {
     mutation_server_failed: 'The change could not be saved on the server.',
     collaboration_client_outdated:
       'This editor version is outdated. Reload the page and recover local changes through draft recovery.',
+    project_revision_conflict:
+      'The content changed while you were editing. Load the current version before saving again.',
+    project_undo_conflict:
+      'This resource changed after the AI action. Undo was stopped to preserve newer changes.',
     collaboration_maintenance:
       'Editing and voting are temporarily paused for the migration. Please try again after maintenance.',
     auth_service_unavailable: 'The authentication service is currently unavailable.',

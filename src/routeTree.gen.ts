@@ -30,6 +30,7 @@ import { Route as AuthedOnboardingRouteImport } from './routes/_authed/onboardin
 import { Route as AuthedSearchRouteImport } from './routes/_authed/search'
 import { Route as AuthedStudioRouteImport } from './routes/_authed/studio'
 import { Route as AuthedTodosRouteImport } from './routes/_authed/todos'
+import { Route as AuthedWhiteboardsRouteImport } from './routes/_authed/whiteboards'
 import { Route as ApiCollaborationRouteImport } from './routes/api/collaboration'
 import { Route as ApiMutateRouteImport } from './routes/api/mutate'
 import { Route as ApiQueryRouteImport } from './routes/api/query'
@@ -60,8 +61,12 @@ import { Route as AuthedCreateTodoRouteImport } from './routes/_authed/create/to
 import { Route as AuthedEventIdRouteImport } from './routes/_authed/event/$id'
 import { Route as AuthedGroupIdRouteImport } from './routes/_authed/group/$id'
 import { Route as AuthedStatementIdRouteImport } from './routes/_authed/statement/$id'
+import { Route as AuthedStudioIndexRouteImport } from './routes/_authed/studio/index'
+import { Route as AuthedStudioProjectIdRouteImport } from './routes/_authed/studio/$projectId'
 import { Route as AuthedTodosIdRouteImport } from './routes/_authed/todos/$id'
 import { Route as AuthedUserIdRouteImport } from './routes/_authed/user/$id'
+import { Route as AuthedWhiteboardsIndexRouteImport } from './routes/_authed/whiteboards/index'
+import { Route as AuthedWhiteboardsProjectIdRouteImport } from './routes/_authed/whiteboards/$projectId'
 import { Route as ApiAiCatalogRouteImport } from './routes/api/ai/catalog'
 import { Route as ApiAiChatRouteImport } from './routes/api/ai/chat'
 import { Route as ApiAiCommandRouteImport } from './routes/api/ai/command'
@@ -123,6 +128,7 @@ import { Route as AuthedGroupIdOperationRouteImport } from './routes/_authed/gro
 import { Route as AuthedGroupIdRelationshipsRouteImport } from './routes/_authed/group/$id/relationships'
 import { Route as AuthedGroupIdSettingsRouteImport } from './routes/_authed/group/$id/settings'
 import { Route as AuthedGroupIdStudioRouteImport } from './routes/_authed/group/$id/studio'
+import { Route as AuthedGroupIdWhiteboardsRouteImport } from './routes/_authed/group/$id/whiteboards'
 import { Route as AuthedUserIdIndexRouteImport } from './routes/_authed/user/$id/index'
 import { Route as AuthedUserIdBlogRouteImport } from './routes/_authed/user/$id/blog'
 import { Route as AuthedUserIdEditorRouteImport } from './routes/_authed/user/$id/editor'
@@ -137,6 +143,8 @@ import { Route as ApiDatasetsDatasetIdDetailsRouteImport } from './routes/api/da
 import { Route as ApiDatasetsSnapshotIdProjectionRouteImport } from './routes/api/datasets/$snapshotId/projection'
 import { Route as ApiDatasetsSnapshotIdValuesRouteImport } from './routes/api/datasets/$snapshotId/values'
 import { Route as ApiPushTestJobIdRouteImport } from './routes/api/push/test/$jobId'
+import { Route as ApiStudioExportsIdRouteImport } from './routes/api/studio/exports/$id'
+import { Route as ApiStudioMediaIdRouteImport } from './routes/api/studio/media/$id'
 import { Route as ApiStudioPublishedMediaIdRouteImport } from './routes/api/studio/published-media/$id'
 import { Route as AuthedEventIdAgendaIndexRouteImport } from './routes/_authed/event/$id/agenda/index'
 import { Route as AuthedEventIdAgendaAgendaItemIdRouteImport } from './routes/_authed/event/$id/agenda/$agendaItemId'
@@ -144,6 +152,10 @@ import { Route as AuthedGroupIdBlogIndexRouteImport } from './routes/_authed/gro
 import { Route as AuthedGroupIdBlogEntryIdRouteImport } from './routes/_authed/group/$id/blog/$entryId'
 import { Route as AuthedGroupIdEditorIndexRouteImport } from './routes/_authed/group/$id/editor/index'
 import { Route as AuthedGroupIdEditorDocIdRouteImport } from './routes/_authed/group/$id/editor/$docId'
+import { Route as AuthedGroupIdStudioIndexRouteImport } from './routes/_authed/group/$id/studio/index'
+import { Route as AuthedGroupIdStudioProjectIdRouteImport } from './routes/_authed/group/$id/studio/$projectId'
+import { Route as AuthedGroupIdWhiteboardsIndexRouteImport } from './routes/_authed/group/$id/whiteboards/index'
+import { Route as AuthedGroupIdWhiteboardsProjectIdRouteImport } from './routes/_authed/group/$id/whiteboards/$projectId'
 import { Route as AuthedUserIdBlogEntryIdRouteImport } from './routes/_authed/user/$id/blog/$entryId'
 import { Route as AuthedUserIdEditorDocIdRouteImport } from './routes/_authed/user/$id/editor/$docId'
 import { Route as AuthedGroupIdBlogEntryIdIndexRouteImport } from './routes/_authed/group/$id/blog/$entryId/index'
@@ -257,6 +269,11 @@ const AuthedStudioRoute = AuthedStudioRouteImport.update({
 const AuthedTodosRoute = AuthedTodosRouteImport.update({
   id: '/todos',
   path: '/todos',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedWhiteboardsRoute = AuthedWhiteboardsRouteImport.update({
+  id: '/whiteboards',
+  path: '/whiteboards',
   getParentRoute: () => AuthedRoute,
 } as any)
 const ApiCollaborationRoute = ApiCollaborationRouteImport.update({
@@ -410,6 +427,16 @@ const AuthedStatementIdRoute = AuthedStatementIdRouteImport.update({
   path: '/statement/$id',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedStudioIndexRoute = AuthedStudioIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedStudioRoute,
+} as any)
+const AuthedStudioProjectIdRoute = AuthedStudioProjectIdRouteImport.update({
+  id: '/$projectId',
+  path: '/$projectId',
+  getParentRoute: () => AuthedStudioRoute,
+} as any)
 const AuthedTodosIdRoute = AuthedTodosIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -420,6 +447,17 @@ const AuthedUserIdRoute = AuthedUserIdRouteImport.update({
   path: '/user/$id',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedWhiteboardsIndexRoute = AuthedWhiteboardsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedWhiteboardsRoute,
+} as any)
+const AuthedWhiteboardsProjectIdRoute =
+  AuthedWhiteboardsProjectIdRouteImport.update({
+    id: '/$projectId',
+    path: '/$projectId',
+    getParentRoute: () => AuthedWhiteboardsRoute,
+  } as any)
 const ApiAiCatalogRoute = ApiAiCatalogRouteImport.update({
   id: '/api/ai/catalog',
   path: '/api/ai/catalog',
@@ -740,6 +778,12 @@ const AuthedGroupIdStudioRoute = AuthedGroupIdStudioRouteImport.update({
   path: '/studio',
   getParentRoute: () => AuthedGroupIdRoute,
 } as any)
+const AuthedGroupIdWhiteboardsRoute =
+  AuthedGroupIdWhiteboardsRouteImport.update({
+    id: '/whiteboards',
+    path: '/whiteboards',
+    getParentRoute: () => AuthedGroupIdRoute,
+  } as any)
 const AuthedUserIdIndexRoute = AuthedUserIdIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -816,6 +860,16 @@ const ApiPushTestJobIdRoute = ApiPushTestJobIdRouteImport.update({
   path: '/$jobId',
   getParentRoute: () => ApiPushTestRoute,
 } as any)
+const ApiStudioExportsIdRoute = ApiStudioExportsIdRouteImport.update({
+  id: '/exports/$id',
+  path: '/exports/$id',
+  getParentRoute: () => ApiStudioRoute,
+} as any)
+const ApiStudioMediaIdRoute = ApiStudioMediaIdRouteImport.update({
+  id: '/media/$id',
+  path: '/media/$id',
+  getParentRoute: () => ApiStudioRoute,
+} as any)
 const ApiStudioPublishedMediaIdRoute =
   ApiStudioPublishedMediaIdRouteImport.update({
     id: '/published-media/$id',
@@ -856,6 +910,30 @@ const AuthedGroupIdEditorDocIdRoute =
     id: '/$docId',
     path: '/$docId',
     getParentRoute: () => AuthedGroupIdEditorRoute,
+  } as any)
+const AuthedGroupIdStudioIndexRoute =
+  AuthedGroupIdStudioIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthedGroupIdStudioRoute,
+  } as any)
+const AuthedGroupIdStudioProjectIdRoute =
+  AuthedGroupIdStudioProjectIdRouteImport.update({
+    id: '/$projectId',
+    path: '/$projectId',
+    getParentRoute: () => AuthedGroupIdStudioRoute,
+  } as any)
+const AuthedGroupIdWhiteboardsIndexRoute =
+  AuthedGroupIdWhiteboardsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthedGroupIdWhiteboardsRoute,
+  } as any)
+const AuthedGroupIdWhiteboardsProjectIdRoute =
+  AuthedGroupIdWhiteboardsProjectIdRouteImport.update({
+    id: '/$projectId',
+    path: '/$projectId',
+    getParentRoute: () => AuthedGroupIdWhiteboardsRoute,
   } as any)
 const AuthedUserIdBlogEntryIdRoute = AuthedUserIdBlogEntryIdRouteImport.update({
   id: '/$entryId',
@@ -935,8 +1013,9 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthedNotificationsRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/search': typeof AuthedSearchRoute
-  '/studio': typeof AuthedStudioRoute
+  '/studio': typeof AuthedStudioRouteWithChildren
   '/todos': typeof AuthedTodosRouteWithChildren
+  '/whiteboards': typeof AuthedWhiteboardsRouteWithChildren
   '/api/collaboration': typeof ApiCollaborationRoute
   '/api/mutate': typeof ApiMutateRoute
   '/api/query': typeof ApiQueryRoute
@@ -966,8 +1045,10 @@ export interface FileRoutesByFullPath {
   '/event/$id': typeof AuthedEventIdRouteWithChildren
   '/group/$id': typeof AuthedGroupIdRouteWithChildren
   '/statement/$id': typeof AuthedStatementIdRoute
+  '/studio/$projectId': typeof AuthedStudioProjectIdRoute
   '/todos/$id': typeof AuthedTodosIdRoute
   '/user/$id': typeof AuthedUserIdRouteWithChildren
+  '/whiteboards/$projectId': typeof AuthedWhiteboardsProjectIdRoute
   '/api/ai/catalog': typeof ApiAiCatalogRoute
   '/api/ai/chat': typeof ApiAiChatRoute
   '/api/ai/command': typeof ApiAiCommandRoute
@@ -997,6 +1078,8 @@ export interface FileRoutesByFullPath {
   '/docs/getting-started/$slug': typeof DocsGettingStartedSlugRoute
   '/docs/guides/$slug': typeof DocsGuidesSlugRoute
   '/create/': typeof AuthedCreateIndexRoute
+  '/studio/': typeof AuthedStudioIndexRoute
+  '/whiteboards/': typeof AuthedWhiteboardsIndexRoute
   '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
   '/amendment/$id/citydesign': typeof AuthedAmendmentIdCitydesignRoute
   '/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
@@ -1025,7 +1108,8 @@ export interface FileRoutesByFullPath {
   '/group/$id/operation': typeof AuthedGroupIdOperationRoute
   '/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
   '/group/$id/settings': typeof AuthedGroupIdSettingsRoute
-  '/group/$id/studio': typeof AuthedGroupIdStudioRoute
+  '/group/$id/studio': typeof AuthedGroupIdStudioRouteWithChildren
+  '/group/$id/whiteboards': typeof AuthedGroupIdWhiteboardsRouteWithChildren
   '/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
   '/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
   '/user/$id/meet': typeof AuthedUserIdMeetRoute
@@ -1039,6 +1123,8 @@ export interface FileRoutesByFullPath {
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
   '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
+  '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
+  '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
   '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
   '/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id/': typeof AuthedBlogIdIndexRoute
@@ -1048,11 +1134,15 @@ export interface FileRoutesByFullPath {
   '/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
   '/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRouteWithChildren
   '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
+  '/group/$id/studio/$projectId': typeof AuthedGroupIdStudioProjectIdRoute
+  '/group/$id/whiteboards/$projectId': typeof AuthedGroupIdWhiteboardsProjectIdRoute
   '/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRouteWithChildren
   '/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
   '/event/$id/agenda/': typeof AuthedEventIdAgendaIndexRoute
   '/group/$id/blog/': typeof AuthedGroupIdBlogIndexRoute
   '/group/$id/editor/': typeof AuthedGroupIdEditorIndexRoute
+  '/group/$id/studio/': typeof AuthedGroupIdStudioIndexRoute
+  '/group/$id/whiteboards/': typeof AuthedGroupIdWhiteboardsIndexRoute
   '/group/$id/blog/$entryId/edit': typeof AuthedGroupIdBlogEntryIdEditRoute
   '/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
   '/group/$id/blog/$entryId/notifications': typeof AuthedGroupIdBlogEntryIdNotificationsRoute
@@ -1079,7 +1169,6 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthedNotificationsRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/search': typeof AuthedSearchRoute
-  '/studio': typeof AuthedStudioRoute
   '/todos': typeof AuthedTodosRouteWithChildren
   '/api/collaboration': typeof ApiCollaborationRoute
   '/api/mutate': typeof ApiMutateRoute
@@ -1106,7 +1195,9 @@ export interface FileRoutesByTo {
   '/create/statement': typeof AuthedCreateStatementRoute
   '/create/todo': typeof AuthedCreateTodoRoute
   '/statement/$id': typeof AuthedStatementIdRoute
+  '/studio/$projectId': typeof AuthedStudioProjectIdRoute
   '/todos/$id': typeof AuthedTodosIdRoute
+  '/whiteboards/$projectId': typeof AuthedWhiteboardsProjectIdRoute
   '/api/ai/catalog': typeof ApiAiCatalogRoute
   '/api/ai/chat': typeof ApiAiChatRoute
   '/api/ai/command': typeof ApiAiCommandRoute
@@ -1136,6 +1227,8 @@ export interface FileRoutesByTo {
   '/docs/getting-started/$slug': typeof DocsGettingStartedSlugRoute
   '/docs/guides/$slug': typeof DocsGuidesSlugRoute
   '/create': typeof AuthedCreateIndexRoute
+  '/studio': typeof AuthedStudioIndexRoute
+  '/whiteboards': typeof AuthedWhiteboardsIndexRoute
   '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
   '/amendment/$id/citydesign': typeof AuthedAmendmentIdCitydesignRoute
   '/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
@@ -1161,7 +1254,6 @@ export interface FileRoutesByTo {
   '/group/$id/operation': typeof AuthedGroupIdOperationRoute
   '/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
   '/group/$id/settings': typeof AuthedGroupIdSettingsRoute
-  '/group/$id/studio': typeof AuthedGroupIdStudioRoute
   '/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
   '/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
   '/user/$id/meet': typeof AuthedUserIdMeetRoute
@@ -1175,6 +1267,8 @@ export interface FileRoutesByTo {
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
   '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
+  '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
+  '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
   '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
   '/amendment/$id': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id': typeof AuthedBlogIdIndexRoute
@@ -1183,10 +1277,14 @@ export interface FileRoutesByTo {
   '/user/$id': typeof AuthedUserIdIndexRoute
   '/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
   '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
+  '/group/$id/studio/$projectId': typeof AuthedGroupIdStudioProjectIdRoute
+  '/group/$id/whiteboards/$projectId': typeof AuthedGroupIdWhiteboardsProjectIdRoute
   '/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
   '/event/$id/agenda': typeof AuthedEventIdAgendaIndexRoute
   '/group/$id/blog': typeof AuthedGroupIdBlogIndexRoute
   '/group/$id/editor': typeof AuthedGroupIdEditorIndexRoute
+  '/group/$id/studio': typeof AuthedGroupIdStudioIndexRoute
+  '/group/$id/whiteboards': typeof AuthedGroupIdWhiteboardsIndexRoute
   '/group/$id/blog/$entryId/edit': typeof AuthedGroupIdBlogEntryIdEditRoute
   '/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
   '/group/$id/blog/$entryId/notifications': typeof AuthedGroupIdBlogEntryIdNotificationsRoute
@@ -1217,8 +1315,9 @@ export interface FileRoutesById {
   '/_authed/notifications': typeof AuthedNotificationsRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
   '/_authed/search': typeof AuthedSearchRoute
-  '/_authed/studio': typeof AuthedStudioRoute
+  '/_authed/studio': typeof AuthedStudioRouteWithChildren
   '/_authed/todos': typeof AuthedTodosRouteWithChildren
+  '/_authed/whiteboards': typeof AuthedWhiteboardsRouteWithChildren
   '/api/collaboration': typeof ApiCollaborationRoute
   '/api/mutate': typeof ApiMutateRoute
   '/api/query': typeof ApiQueryRoute
@@ -1248,8 +1347,10 @@ export interface FileRoutesById {
   '/_authed/event/$id': typeof AuthedEventIdRouteWithChildren
   '/_authed/group/$id': typeof AuthedGroupIdRouteWithChildren
   '/_authed/statement/$id': typeof AuthedStatementIdRoute
+  '/_authed/studio/$projectId': typeof AuthedStudioProjectIdRoute
   '/_authed/todos/$id': typeof AuthedTodosIdRoute
   '/_authed/user/$id': typeof AuthedUserIdRouteWithChildren
+  '/_authed/whiteboards/$projectId': typeof AuthedWhiteboardsProjectIdRoute
   '/api/ai/catalog': typeof ApiAiCatalogRoute
   '/api/ai/chat': typeof ApiAiChatRoute
   '/api/ai/command': typeof ApiAiCommandRoute
@@ -1279,6 +1380,8 @@ export interface FileRoutesById {
   '/docs/getting-started/$slug': typeof DocsGettingStartedSlugRoute
   '/docs/guides/$slug': typeof DocsGuidesSlugRoute
   '/_authed/create/': typeof AuthedCreateIndexRoute
+  '/_authed/studio/': typeof AuthedStudioIndexRoute
+  '/_authed/whiteboards/': typeof AuthedWhiteboardsIndexRoute
   '/_authed/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
   '/_authed/amendment/$id/citydesign': typeof AuthedAmendmentIdCitydesignRoute
   '/_authed/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
@@ -1307,7 +1410,8 @@ export interface FileRoutesById {
   '/_authed/group/$id/operation': typeof AuthedGroupIdOperationRoute
   '/_authed/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
   '/_authed/group/$id/settings': typeof AuthedGroupIdSettingsRoute
-  '/_authed/group/$id/studio': typeof AuthedGroupIdStudioRoute
+  '/_authed/group/$id/studio': typeof AuthedGroupIdStudioRouteWithChildren
+  '/_authed/group/$id/whiteboards': typeof AuthedGroupIdWhiteboardsRouteWithChildren
   '/_authed/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
   '/_authed/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
   '/_authed/user/$id/meet': typeof AuthedUserIdMeetRoute
@@ -1321,6 +1425,8 @@ export interface FileRoutesById {
   '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
   '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
   '/api/push/test/$jobId': typeof ApiPushTestJobIdRoute
+  '/api/studio/exports/$id': typeof ApiStudioExportsIdRoute
+  '/api/studio/media/$id': typeof ApiStudioMediaIdRoute
   '/api/studio/published-media/$id': typeof ApiStudioPublishedMediaIdRoute
   '/_authed/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/_authed/blog/$id/': typeof AuthedBlogIdIndexRoute
@@ -1330,11 +1436,15 @@ export interface FileRoutesById {
   '/_authed/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
   '/_authed/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRouteWithChildren
   '/_authed/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
+  '/_authed/group/$id/studio/$projectId': typeof AuthedGroupIdStudioProjectIdRoute
+  '/_authed/group/$id/whiteboards/$projectId': typeof AuthedGroupIdWhiteboardsProjectIdRoute
   '/_authed/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRouteWithChildren
   '/_authed/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
   '/_authed/event/$id/agenda/': typeof AuthedEventIdAgendaIndexRoute
   '/_authed/group/$id/blog/': typeof AuthedGroupIdBlogIndexRoute
   '/_authed/group/$id/editor/': typeof AuthedGroupIdEditorIndexRoute
+  '/_authed/group/$id/studio/': typeof AuthedGroupIdStudioIndexRoute
+  '/_authed/group/$id/whiteboards/': typeof AuthedGroupIdWhiteboardsIndexRoute
   '/_authed/group/$id/blog/$entryId/edit': typeof AuthedGroupIdBlogEntryIdEditRoute
   '/_authed/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
   '/_authed/group/$id/blog/$entryId/notifications': typeof AuthedGroupIdBlogEntryIdNotificationsRoute
@@ -1367,6 +1477,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/studio'
     | '/todos'
+    | '/whiteboards'
     | '/api/collaboration'
     | '/api/mutate'
     | '/api/query'
@@ -1396,8 +1507,10 @@ export interface FileRouteTypes {
     | '/event/$id'
     | '/group/$id'
     | '/statement/$id'
+    | '/studio/$projectId'
     | '/todos/$id'
     | '/user/$id'
+    | '/whiteboards/$projectId'
     | '/api/ai/catalog'
     | '/api/ai/chat'
     | '/api/ai/command'
@@ -1427,6 +1540,8 @@ export interface FileRouteTypes {
     | '/docs/getting-started/$slug'
     | '/docs/guides/$slug'
     | '/create/'
+    | '/studio/'
+    | '/whiteboards/'
     | '/amendment/$id/change-requests'
     | '/amendment/$id/citydesign'
     | '/amendment/$id/collaborators'
@@ -1456,6 +1571,7 @@ export interface FileRouteTypes {
     | '/group/$id/relationships'
     | '/group/$id/settings'
     | '/group/$id/studio'
+    | '/group/$id/whiteboards'
     | '/user/$id/blog'
     | '/user/$id/editor'
     | '/user/$id/meet'
@@ -1469,6 +1585,8 @@ export interface FileRouteTypes {
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
     | '/api/push/test/$jobId'
+    | '/api/studio/exports/$id'
+    | '/api/studio/media/$id'
     | '/api/studio/published-media/$id'
     | '/amendment/$id/'
     | '/blog/$id/'
@@ -1478,11 +1596,15 @@ export interface FileRouteTypes {
     | '/event/$id/agenda/$agendaItemId'
     | '/group/$id/blog/$entryId'
     | '/group/$id/editor/$docId'
+    | '/group/$id/studio/$projectId'
+    | '/group/$id/whiteboards/$projectId'
     | '/user/$id/blog/$entryId'
     | '/user/$id/editor/$docId'
     | '/event/$id/agenda/'
     | '/group/$id/blog/'
     | '/group/$id/editor/'
+    | '/group/$id/studio/'
+    | '/group/$id/whiteboards/'
     | '/group/$id/blog/$entryId/edit'
     | '/group/$id/blog/$entryId/editor'
     | '/group/$id/blog/$entryId/notifications'
@@ -1509,7 +1631,6 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/onboarding'
     | '/search'
-    | '/studio'
     | '/todos'
     | '/api/collaboration'
     | '/api/mutate'
@@ -1536,7 +1657,9 @@ export interface FileRouteTypes {
     | '/create/statement'
     | '/create/todo'
     | '/statement/$id'
+    | '/studio/$projectId'
     | '/todos/$id'
+    | '/whiteboards/$projectId'
     | '/api/ai/catalog'
     | '/api/ai/chat'
     | '/api/ai/command'
@@ -1566,6 +1689,8 @@ export interface FileRouteTypes {
     | '/docs/getting-started/$slug'
     | '/docs/guides/$slug'
     | '/create'
+    | '/studio'
+    | '/whiteboards'
     | '/amendment/$id/change-requests'
     | '/amendment/$id/citydesign'
     | '/amendment/$id/collaborators'
@@ -1591,7 +1716,6 @@ export interface FileRouteTypes {
     | '/group/$id/operation'
     | '/group/$id/relationships'
     | '/group/$id/settings'
-    | '/group/$id/studio'
     | '/user/$id/blog'
     | '/user/$id/editor'
     | '/user/$id/meet'
@@ -1605,6 +1729,8 @@ export interface FileRouteTypes {
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
     | '/api/push/test/$jobId'
+    | '/api/studio/exports/$id'
+    | '/api/studio/media/$id'
     | '/api/studio/published-media/$id'
     | '/amendment/$id'
     | '/blog/$id'
@@ -1613,10 +1739,14 @@ export interface FileRouteTypes {
     | '/user/$id'
     | '/event/$id/agenda/$agendaItemId'
     | '/group/$id/editor/$docId'
+    | '/group/$id/studio/$projectId'
+    | '/group/$id/whiteboards/$projectId'
     | '/user/$id/editor/$docId'
     | '/event/$id/agenda'
     | '/group/$id/blog'
     | '/group/$id/editor'
+    | '/group/$id/studio'
+    | '/group/$id/whiteboards'
     | '/group/$id/blog/$entryId/edit'
     | '/group/$id/blog/$entryId/editor'
     | '/group/$id/blog/$entryId/notifications'
@@ -1648,6 +1778,7 @@ export interface FileRouteTypes {
     | '/_authed/search'
     | '/_authed/studio'
     | '/_authed/todos'
+    | '/_authed/whiteboards'
     | '/api/collaboration'
     | '/api/mutate'
     | '/api/query'
@@ -1677,8 +1808,10 @@ export interface FileRouteTypes {
     | '/_authed/event/$id'
     | '/_authed/group/$id'
     | '/_authed/statement/$id'
+    | '/_authed/studio/$projectId'
     | '/_authed/todos/$id'
     | '/_authed/user/$id'
+    | '/_authed/whiteboards/$projectId'
     | '/api/ai/catalog'
     | '/api/ai/chat'
     | '/api/ai/command'
@@ -1708,6 +1841,8 @@ export interface FileRouteTypes {
     | '/docs/getting-started/$slug'
     | '/docs/guides/$slug'
     | '/_authed/create/'
+    | '/_authed/studio/'
+    | '/_authed/whiteboards/'
     | '/_authed/amendment/$id/change-requests'
     | '/_authed/amendment/$id/citydesign'
     | '/_authed/amendment/$id/collaborators'
@@ -1737,6 +1872,7 @@ export interface FileRouteTypes {
     | '/_authed/group/$id/relationships'
     | '/_authed/group/$id/settings'
     | '/_authed/group/$id/studio'
+    | '/_authed/group/$id/whiteboards'
     | '/_authed/user/$id/blog'
     | '/_authed/user/$id/editor'
     | '/_authed/user/$id/meet'
@@ -1750,6 +1886,8 @@ export interface FileRouteTypes {
     | '/api/datasets/$snapshotId/projection'
     | '/api/datasets/$snapshotId/values'
     | '/api/push/test/$jobId'
+    | '/api/studio/exports/$id'
+    | '/api/studio/media/$id'
     | '/api/studio/published-media/$id'
     | '/_authed/amendment/$id/'
     | '/_authed/blog/$id/'
@@ -1759,11 +1897,15 @@ export interface FileRouteTypes {
     | '/_authed/event/$id/agenda/$agendaItemId'
     | '/_authed/group/$id/blog/$entryId'
     | '/_authed/group/$id/editor/$docId'
+    | '/_authed/group/$id/studio/$projectId'
+    | '/_authed/group/$id/whiteboards/$projectId'
     | '/_authed/user/$id/blog/$entryId'
     | '/_authed/user/$id/editor/$docId'
     | '/_authed/event/$id/agenda/'
     | '/_authed/group/$id/blog/'
     | '/_authed/group/$id/editor/'
+    | '/_authed/group/$id/studio/'
+    | '/_authed/group/$id/whiteboards/'
     | '/_authed/group/$id/blog/$entryId/edit'
     | '/_authed/group/$id/blog/$entryId/editor'
     | '/_authed/group/$id/blog/$entryId/notifications'
@@ -1970,6 +2112,13 @@ declare module '@tanstack/react-router' {
       path: '/todos'
       fullPath: '/todos'
       preLoaderRoute: typeof AuthedTodosRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/whiteboards': {
+      id: '/_authed/whiteboards'
+      path: '/whiteboards'
+      fullPath: '/whiteboards'
+      preLoaderRoute: typeof AuthedWhiteboardsRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/api/collaboration': {
@@ -2182,6 +2331,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedStatementIdRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/studio/': {
+      id: '/_authed/studio/'
+      path: '/'
+      fullPath: '/studio/'
+      preLoaderRoute: typeof AuthedStudioIndexRouteImport
+      parentRoute: typeof AuthedStudioRoute
+    }
+    '/_authed/studio/$projectId': {
+      id: '/_authed/studio/$projectId'
+      path: '/$projectId'
+      fullPath: '/studio/$projectId'
+      preLoaderRoute: typeof AuthedStudioProjectIdRouteImport
+      parentRoute: typeof AuthedStudioRoute
+    }
     '/_authed/todos/$id': {
       id: '/_authed/todos/$id'
       path: '/$id'
@@ -2195,6 +2358,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/user/$id'
       preLoaderRoute: typeof AuthedUserIdRouteImport
       parentRoute: typeof AuthedRoute
+    }
+    '/_authed/whiteboards/': {
+      id: '/_authed/whiteboards/'
+      path: '/'
+      fullPath: '/whiteboards/'
+      preLoaderRoute: typeof AuthedWhiteboardsIndexRouteImport
+      parentRoute: typeof AuthedWhiteboardsRoute
+    }
+    '/_authed/whiteboards/$projectId': {
+      id: '/_authed/whiteboards/$projectId'
+      path: '/$projectId'
+      fullPath: '/whiteboards/$projectId'
+      preLoaderRoute: typeof AuthedWhiteboardsProjectIdRouteImport
+      parentRoute: typeof AuthedWhiteboardsRoute
     }
     '/api/ai/catalog': {
       id: '/api/ai/catalog'
@@ -2623,6 +2800,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedGroupIdStudioRouteImport
       parentRoute: typeof AuthedGroupIdRoute
     }
+    '/_authed/group/$id/whiteboards': {
+      id: '/_authed/group/$id/whiteboards'
+      path: '/whiteboards'
+      fullPath: '/group/$id/whiteboards'
+      preLoaderRoute: typeof AuthedGroupIdWhiteboardsRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
+    }
     '/_authed/user/$id/': {
       id: '/_authed/user/$id/'
       path: '/'
@@ -2721,6 +2905,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPushTestJobIdRouteImport
       parentRoute: typeof ApiPushTestRoute
     }
+    '/api/studio/exports/$id': {
+      id: '/api/studio/exports/$id'
+      path: '/exports/$id'
+      fullPath: '/api/studio/exports/$id'
+      preLoaderRoute: typeof ApiStudioExportsIdRouteImport
+      parentRoute: typeof ApiStudioRoute
+    }
+    '/api/studio/media/$id': {
+      id: '/api/studio/media/$id'
+      path: '/media/$id'
+      fullPath: '/api/studio/media/$id'
+      preLoaderRoute: typeof ApiStudioMediaIdRouteImport
+      parentRoute: typeof ApiStudioRoute
+    }
     '/api/studio/published-media/$id': {
       id: '/api/studio/published-media/$id'
       path: '/published-media/$id'
@@ -2769,6 +2967,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/group/$id/editor/$docId'
       preLoaderRoute: typeof AuthedGroupIdEditorDocIdRouteImport
       parentRoute: typeof AuthedGroupIdEditorRoute
+    }
+    '/_authed/group/$id/studio/': {
+      id: '/_authed/group/$id/studio/'
+      path: '/'
+      fullPath: '/group/$id/studio/'
+      preLoaderRoute: typeof AuthedGroupIdStudioIndexRouteImport
+      parentRoute: typeof AuthedGroupIdStudioRoute
+    }
+    '/_authed/group/$id/studio/$projectId': {
+      id: '/_authed/group/$id/studio/$projectId'
+      path: '/$projectId'
+      fullPath: '/group/$id/studio/$projectId'
+      preLoaderRoute: typeof AuthedGroupIdStudioProjectIdRouteImport
+      parentRoute: typeof AuthedGroupIdStudioRoute
+    }
+    '/_authed/group/$id/whiteboards/': {
+      id: '/_authed/group/$id/whiteboards/'
+      path: '/'
+      fullPath: '/group/$id/whiteboards/'
+      preLoaderRoute: typeof AuthedGroupIdWhiteboardsIndexRouteImport
+      parentRoute: typeof AuthedGroupIdWhiteboardsRoute
+    }
+    '/_authed/group/$id/whiteboards/$projectId': {
+      id: '/_authed/group/$id/whiteboards/$projectId'
+      path: '/$projectId'
+      fullPath: '/group/$id/whiteboards/$projectId'
+      preLoaderRoute: typeof AuthedGroupIdWhiteboardsProjectIdRouteImport
+      parentRoute: typeof AuthedGroupIdWhiteboardsRoute
     }
     '/_authed/user/$id/blog/$entryId': {
       id: '/_authed/user/$id/blog/$entryId'
@@ -2843,6 +3069,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthedStudioRouteChildren {
+  AuthedStudioProjectIdRoute: typeof AuthedStudioProjectIdRoute
+  AuthedStudioIndexRoute: typeof AuthedStudioIndexRoute
+}
+
+const AuthedStudioRouteChildren: AuthedStudioRouteChildren = {
+  AuthedStudioProjectIdRoute: AuthedStudioProjectIdRoute,
+  AuthedStudioIndexRoute: AuthedStudioIndexRoute,
+}
+
+const AuthedStudioRouteWithChildren = AuthedStudioRoute._addFileChildren(
+  AuthedStudioRouteChildren,
+)
+
 interface AuthedTodosRouteChildren {
   AuthedTodosIdRoute: typeof AuthedTodosIdRoute
 }
@@ -2854,6 +3094,19 @@ const AuthedTodosRouteChildren: AuthedTodosRouteChildren = {
 const AuthedTodosRouteWithChildren = AuthedTodosRoute._addFileChildren(
   AuthedTodosRouteChildren,
 )
+
+interface AuthedWhiteboardsRouteChildren {
+  AuthedWhiteboardsProjectIdRoute: typeof AuthedWhiteboardsProjectIdRoute
+  AuthedWhiteboardsIndexRoute: typeof AuthedWhiteboardsIndexRoute
+}
+
+const AuthedWhiteboardsRouteChildren: AuthedWhiteboardsRouteChildren = {
+  AuthedWhiteboardsProjectIdRoute: AuthedWhiteboardsProjectIdRoute,
+  AuthedWhiteboardsIndexRoute: AuthedWhiteboardsIndexRoute,
+}
+
+const AuthedWhiteboardsRouteWithChildren =
+  AuthedWhiteboardsRoute._addFileChildren(AuthedWhiteboardsRouteChildren)
 
 interface AuthedAmendmentIdRouteChildren {
   AuthedAmendmentIdChangeRequestsRoute: typeof AuthedAmendmentIdChangeRequestsRoute
@@ -2984,6 +3237,36 @@ const AuthedGroupIdEditorRouteChildren: AuthedGroupIdEditorRouteChildren = {
 const AuthedGroupIdEditorRouteWithChildren =
   AuthedGroupIdEditorRoute._addFileChildren(AuthedGroupIdEditorRouteChildren)
 
+interface AuthedGroupIdStudioRouteChildren {
+  AuthedGroupIdStudioProjectIdRoute: typeof AuthedGroupIdStudioProjectIdRoute
+  AuthedGroupIdStudioIndexRoute: typeof AuthedGroupIdStudioIndexRoute
+}
+
+const AuthedGroupIdStudioRouteChildren: AuthedGroupIdStudioRouteChildren = {
+  AuthedGroupIdStudioProjectIdRoute: AuthedGroupIdStudioProjectIdRoute,
+  AuthedGroupIdStudioIndexRoute: AuthedGroupIdStudioIndexRoute,
+}
+
+const AuthedGroupIdStudioRouteWithChildren =
+  AuthedGroupIdStudioRoute._addFileChildren(AuthedGroupIdStudioRouteChildren)
+
+interface AuthedGroupIdWhiteboardsRouteChildren {
+  AuthedGroupIdWhiteboardsProjectIdRoute: typeof AuthedGroupIdWhiteboardsProjectIdRoute
+  AuthedGroupIdWhiteboardsIndexRoute: typeof AuthedGroupIdWhiteboardsIndexRoute
+}
+
+const AuthedGroupIdWhiteboardsRouteChildren: AuthedGroupIdWhiteboardsRouteChildren =
+  {
+    AuthedGroupIdWhiteboardsProjectIdRoute:
+      AuthedGroupIdWhiteboardsProjectIdRoute,
+    AuthedGroupIdWhiteboardsIndexRoute: AuthedGroupIdWhiteboardsIndexRoute,
+  }
+
+const AuthedGroupIdWhiteboardsRouteWithChildren =
+  AuthedGroupIdWhiteboardsRoute._addFileChildren(
+    AuthedGroupIdWhiteboardsRouteChildren,
+  )
+
 interface AuthedGroupIdRouteChildren {
   AuthedGroupIdAmendmentsRoute: typeof AuthedGroupIdAmendmentsRoute
   AuthedGroupIdBlogRoute: typeof AuthedGroupIdBlogRouteWithChildren
@@ -2996,7 +3279,8 @@ interface AuthedGroupIdRouteChildren {
   AuthedGroupIdOperationRoute: typeof AuthedGroupIdOperationRoute
   AuthedGroupIdRelationshipsRoute: typeof AuthedGroupIdRelationshipsRoute
   AuthedGroupIdSettingsRoute: typeof AuthedGroupIdSettingsRoute
-  AuthedGroupIdStudioRoute: typeof AuthedGroupIdStudioRoute
+  AuthedGroupIdStudioRoute: typeof AuthedGroupIdStudioRouteWithChildren
+  AuthedGroupIdWhiteboardsRoute: typeof AuthedGroupIdWhiteboardsRouteWithChildren
   AuthedGroupIdIndexRoute: typeof AuthedGroupIdIndexRoute
 }
 
@@ -3012,7 +3296,8 @@ const AuthedGroupIdRouteChildren: AuthedGroupIdRouteChildren = {
   AuthedGroupIdOperationRoute: AuthedGroupIdOperationRoute,
   AuthedGroupIdRelationshipsRoute: AuthedGroupIdRelationshipsRoute,
   AuthedGroupIdSettingsRoute: AuthedGroupIdSettingsRoute,
-  AuthedGroupIdStudioRoute: AuthedGroupIdStudioRoute,
+  AuthedGroupIdStudioRoute: AuthedGroupIdStudioRouteWithChildren,
+  AuthedGroupIdWhiteboardsRoute: AuthedGroupIdWhiteboardsRouteWithChildren,
   AuthedGroupIdIndexRoute: AuthedGroupIdIndexRoute,
 }
 
@@ -3100,8 +3385,9 @@ interface AuthedRouteChildren {
   AuthedNotificationsRoute: typeof AuthedNotificationsRoute
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
   AuthedSearchRoute: typeof AuthedSearchRoute
-  AuthedStudioRoute: typeof AuthedStudioRoute
+  AuthedStudioRoute: typeof AuthedStudioRouteWithChildren
   AuthedTodosRoute: typeof AuthedTodosRouteWithChildren
+  AuthedWhiteboardsRoute: typeof AuthedWhiteboardsRouteWithChildren
   AuthedAmendmentIdRoute: typeof AuthedAmendmentIdRouteWithChildren
   AuthedBlogIdRoute: typeof AuthedBlogIdRouteWithChildren
   AuthedCreateAgendaItemRoute: typeof AuthedCreateAgendaItemRoute
@@ -3127,8 +3413,9 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedNotificationsRoute: AuthedNotificationsRoute,
   AuthedOnboardingRoute: AuthedOnboardingRoute,
   AuthedSearchRoute: AuthedSearchRoute,
-  AuthedStudioRoute: AuthedStudioRoute,
+  AuthedStudioRoute: AuthedStudioRouteWithChildren,
   AuthedTodosRoute: AuthedTodosRouteWithChildren,
+  AuthedWhiteboardsRoute: AuthedWhiteboardsRouteWithChildren,
   AuthedAmendmentIdRoute: AuthedAmendmentIdRouteWithChildren,
   AuthedBlogIdRoute: AuthedBlogIdRouteWithChildren,
   AuthedCreateAgendaItemRoute: AuthedCreateAgendaItemRoute,
@@ -3191,10 +3478,14 @@ const DocsRouteChildren: DocsRouteChildren = {
 const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
 
 interface ApiStudioRouteChildren {
+  ApiStudioExportsIdRoute: typeof ApiStudioExportsIdRoute
+  ApiStudioMediaIdRoute: typeof ApiStudioMediaIdRoute
   ApiStudioPublishedMediaIdRoute: typeof ApiStudioPublishedMediaIdRoute
 }
 
 const ApiStudioRouteChildren: ApiStudioRouteChildren = {
+  ApiStudioExportsIdRoute: ApiStudioExportsIdRoute,
+  ApiStudioMediaIdRoute: ApiStudioMediaIdRoute,
   ApiStudioPublishedMediaIdRoute: ApiStudioPublishedMediaIdRoute,
 }
 

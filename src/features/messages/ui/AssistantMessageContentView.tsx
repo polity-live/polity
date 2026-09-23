@@ -4,6 +4,9 @@ import { ConversationHeader } from './ConversationHeader';
 import { MessageList } from './MessageList';
 import { AssistantMessageInput } from './AssistantMessageInput';
 import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
+import type { AssistantChatController } from '../hooks/useAssistantChat';
+import type { ReactNode } from 'react';
+import type { MessageTimelineItem } from './MessageList';
 
 interface AssistantMessageContentViewProps {
   conversation: Conversation;
@@ -21,8 +24,12 @@ interface AssistantMessageContentViewProps {
   onRejectConversation: (conversation: Conversation) => void;
   className?: string;
   swipeHandlers?: SwipeNavigationHandlers;
-  assistantChat: any;
+  assistantChat: AssistantChatController;
   streamingAssistantMessage: any;
+  compact?: boolean;
+  canManage?: boolean;
+  contextActions?: ReactNode;
+  timelineItems?: MessageTimelineItem[];
 }
 
 export function AssistantMessageContentView({
@@ -43,6 +50,10 @@ export function AssistantMessageContentView({
   swipeHandlers,
   assistantChat,
   streamingAssistantMessage,
+  compact = false,
+  canManage = true,
+  contextActions,
+  timelineItems,
 }: AssistantMessageContentViewProps) {
   return (
     <div
@@ -60,7 +71,11 @@ export function AssistantMessageContentView({
           onDeleteClick={onDeleteClick}
           onMembersClick={onMembersClick}
           onRenameConversation={onRenameConversation}
+          canManage={canManage}
+          compact={compact}
         />
+
+        {contextActions ? <div className="border-b px-4 py-2 text-sm">{contextActions}</div> : null}
 
         <MessageList
           conversation={conversation}
@@ -73,9 +88,10 @@ export function AssistantMessageContentView({
           onRejectConversation={onRejectConversation}
           resolveAttachmentCardData={assistantChat.resolveAttachmentCardData}
           streamingAssistantMessage={streamingAssistantMessage}
+          timelineItems={timelineItems}
         />
 
-        <AssistantMessageInput assistantChat={assistantChat} />
+        <AssistantMessageInput assistantChat={assistantChat} compact={compact} />
       </div>
     </div>
   );

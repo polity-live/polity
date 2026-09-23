@@ -1,3 +1,7 @@
+import {
+  useProjectEditorBridge,
+  projectTextSelection,
+} from '@/features/project-chat/hooks/editor-bridge';
 /**
  * Unified Editor Hook
  *
@@ -41,7 +45,11 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { mutators } from '@/zero/mutators';
-import { trackServerFinalization, waitForClientApply } from '@/zero/mutate-with-server-check';
+import {
+  serverConfirmed,
+  trackServerFinalization,
+  waitForClientApply,
+} from '@/zero/mutate-with-server-check';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import {
   editorSelectionDebugLog,
@@ -206,6 +214,8 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   const titleSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const contentSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSaveTime = useRef<number>(0);
+  const pendingContentSave = useRef<Promise<void> | null>(null);
+  const baseRevision = useRef({ id: '', revision: 0, signature: '' });
   const isLocalChange = useRef(false);
   const lastRemoteUpdate = useRef<number>(0);
   const lastDiscussionsSave = useRef<number>(0);
@@ -514,11 +524,30 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     }
   }, [entity?.content]);
 
-  // Persist content via Zero
+  const rawDocument =
+    entityType === 'amendment'
+      ? (selectedProcessBranch?.document ?? amendmentDocsCollabs?.document)
+      : documentData;
+  if (
+    rawDocument &&
+    (baseRevision.current.id !== rawDocument.id || (!hasUnsavedChanges && !isLocalChange.current))
+  ) {
+    baseRevision.current = {
+      id: rawDocument.id,
+      revision: rawDocument.content_revision ?? 0,
+      signature: JSON.stringify(rawDocument.content),
+    };
+  }
+
+  // Serialize saves and wait for server acceptance before sending editor context.
   const saveContent = useCallback(
-    async (newContent: Value) => {
+    async (newContent: Value, propagate = false) => {
       setSaveStatus('saving');
-      try {
+      const preceding = pendingContentSave.current;
+      const operation = (async () => {
+        if (preceding) await preceding;
+        const signature = JSON.stringify(newContent);
+        const base = { ...baseRevision.current };
         const result =
           entityType === 'blog'
             ? zero.mutate(
@@ -530,29 +559,60 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
             : zero.mutate(
                 mutators.documents.updateContent({
                   id: contentEntityId,
+                  expected_content_revision: base.revision,
                   content: toMutableJSONValue(newContent),
                   ...(entityType === 'amendment' && mode === 'edit'
                     ? { reconcile_orphaned_change_requests: true }
                     : {}),
                 })
               );
-        trackServerFinalization(result, {
-          onError: error => {
-            console.error('Content save failed on server:', error);
-            setSaveStatus('error');
-          },
-        });
-        await waitForClientApply(result);
+        await serverConfirmed(result);
+        if (baseRevision.current.id === base.id)
+          baseRevision.current = {
+            id: base.id,
+            revision: base.revision + (signature !== base.signature ? 1 : 0),
+            signature,
+          };
         lastSaveTime.current = Date.now();
         lastRemoteUpdate.current = Date.now();
-        setSaveStatus('saved');
-        setHasUnsavedChanges(false);
+        if (JSON.stringify(latestEditorContent.current) === signature) {
+          setSaveStatus('saved');
+          setHasUnsavedChanges(false);
+        }
+      })();
+      pendingContentSave.current = operation;
+      try {
+        await operation;
       } catch (error) {
         console.error('Content save failed:', error);
         setSaveStatus('error');
+        setHasUnsavedChanges(true);
+        if (propagate) throw error;
+      } finally {
+        if (pendingContentSave.current === operation) pendingContentSave.current = null;
       }
     },
-    [entityType, contentEntityId, mode, readOnly, zero]
+    [entityType, contentEntityId, mode, zero]
+  );
+
+  useProjectEditorBridge(
+    entityType === 'amendment' ? { kind: 'amendment', amendmentId: entityId } : null,
+    async () => {
+      if (contentSaveTimeoutRef.current) {
+        clearTimeout(contentSaveTimeoutRef.current);
+        contentSaveTimeoutRef.current = null;
+      }
+      if (pendingContentSave.current) await pendingContentSave.current;
+      if (hasUnsavedChanges) await saveContent(latestEditorContent.current, true);
+      if (saveStatus === 'error') throw new Error('Save the document before starting the AI.');
+      return {
+        surface: 'amendment_text',
+        selection: projectTextSelection(contentEntityId),
+        documentId: contentEntityId,
+        branchId: effectiveProcessBranchId,
+        contentRevision: baseRevision.current.revision,
+      };
+    }
   );
 
   // Content change handler - throttled with trailing edge

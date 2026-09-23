@@ -5,6 +5,7 @@ type QueryCall = readonly [string, ...unknown[]];
 interface FakeQuery {
   readonly calls: QueryCall[];
   where: (...args: unknown[]) => FakeQuery;
+  whereExists: (...args: any[]) => FakeQuery;
   related: (relation: string, fn?: (query: FakeQuery) => unknown) => FakeQuery;
   orderBy: (...args: unknown[]) => FakeQuery;
   limit: (...args: unknown[]) => FakeQuery;
@@ -25,6 +26,10 @@ vi.mock('../../schema', () => {
       calls: [],
       where: (...args: unknown[]) => {
         query.calls.push(['where', ...args]);
+        return query;
+      },
+      whereExists: (...args: any[]) => {
+        query.calls.push(['whereExists', ...args]);
         return query;
       },
       related: (relation: string, fn?: (child: FakeQuery) => unknown) => {
@@ -80,6 +85,7 @@ function evaluatePredicate(predicate: unknown): QueryCall[] {
           if (typeof args[0] === 'function') args[0](helpers);
           return child;
         },
+        whereExists: () => child,
         related: () => child,
         orderBy: () => child,
         limit: () => child,
@@ -89,6 +95,7 @@ function evaluatePredicate(predicate: unknown): QueryCall[] {
       fn(child);
       return ['exists', relation];
     },
+    and: (...args: unknown[]) => args,
     or: (...args: unknown[]) => {
       calls.push(['or', ...args]);
       return ['or', ...args];
@@ -140,6 +147,7 @@ describe('messageQueries unread summary projection', () => {
 
     expect(queryState.conversationQueries[0].calls).toEqual([
       ['where', 'user_id', 'user-1'],
+      ['whereExists', 'conversation', expect.any(Function)],
       ['related', 'conversation', []],
     ]);
   });
@@ -152,6 +160,7 @@ describe('messageQueries unread summary projection', () => {
 
     expect(queryState.conversationQueries[0].calls).toEqual([
       ['where', 'id', '__unauthorized__'],
+      ['whereExists', 'conversation', expect.any(Function)],
       ['related', 'conversation', []],
     ]);
   });

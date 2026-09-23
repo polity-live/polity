@@ -55,17 +55,64 @@ export const themeFontsSchema = z.object({
 });
 export type ThemeFonts = z.infer<typeof themeFontsSchema>;
 
+export const themePaletteRoleSchema = z.enum([
+  'background',
+  'foreground',
+  'card',
+  'cardForeground',
+  'primary',
+  'primaryForeground',
+  'secondary',
+  'secondaryForeground',
+  'muted',
+  'mutedForeground',
+  'accent',
+  'accentForeground',
+  'border',
+  'input',
+  'ring',
+  'brand',
+  'highlight',
+  'success',
+  'successForeground',
+  'destructive',
+  'destructiveForeground',
+  'chart1',
+  'chart2',
+  'chart3',
+  'chart4',
+  'chart5',
+]);
+export type ThemePaletteRole = z.infer<typeof themePaletteRoleSchema>;
+
+export const themeTextStyleSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().trim().min(1).max(80),
+  font: fontIdSchema,
+  size: z.number().finite().min(8).max(300),
+  color: themePaletteRoleSchema,
+  bold: z.boolean().default(false),
+  italic: z.boolean().default(false),
+  underline: z.boolean().default(false),
+  lineHeight: z.number().finite().min(0.5).max(4).default(1.2),
+  letterSpacing: z.number().finite().min(-20).max(100).default(0),
+  align: z.enum(['left', 'center', 'right', 'justify']).default('left'),
+});
+export type ThemeTextStyle = z.infer<typeof themeTextStyleSchema>;
+
 export const appearanceThemeDefinitionSchema = z.object({
   id: z.string().uuid(),
   slug: z.string().min(1).max(80),
   name: z.string().min(1).max(120),
   description: z.string().max(280).optional(),
-  kind: z.enum(['builtin', 'group']),
+  kind: z.enum(['builtin', 'personal', 'group']),
   groupId: z.string().uuid().nullable(),
+  ownerId: z.string().uuid().nullable().default(null),
   version: z.number().int().positive(),
   light: themePaletteSchema,
   dark: themePaletteSchema,
   fonts: themeFontsSchema,
+  textStyles: z.array(themeTextStyleSchema).max(50).default([]),
 });
 export type AppearanceThemeDefinition = z.infer<typeof appearanceThemeDefinitionSchema>;
 

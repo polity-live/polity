@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { TablePlugin } from '@platejs/table/react';
+import { useEditorPlugin } from 'platejs/react';
 import {
   ArrowDown,
   ArrowLeft,
@@ -13,7 +14,6 @@ import {
   Ungroup,
   XIcon,
 } from 'lucide-react';
-import { useEditorPlugin } from 'platejs/react';
 
 import {
   DropdownMenu,
@@ -25,74 +25,20 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
-import { cn } from '@/features/shared/utils/utils.ts';
+import { TableSizePicker } from './TableSizePicker';
 
 import { ToolbarButton } from '@/features/shared/ui/layout';
 
-function TablePicker() {
+function PlateTablePicker({ label }: { label: string }) {
   const { editor, tf } = useEditorPlugin(TablePlugin);
-
-  const [tablePicker, setTablePicker] = React.useState({
-    grid: Array.from({ length: 8 }, () => Array.from({ length: 8 }).fill(0)),
-    size: { colCount: 0, rowCount: 0 },
-  });
-
-  const onCellMove = (rowIndex: number, colIndex: number) => {
-    const newGrid = [...tablePicker.grid];
-
-    for (let i = 0; i < newGrid.length; i++) {
-      for (let j = 0; j < newGrid[i].length; j++) {
-        newGrid[i][j] = i >= 0 && i <= rowIndex && j >= 0 && j <= colIndex ? 1 : 0;
-      }
-    }
-
-    setTablePicker({
-      grid: newGrid,
-      size: { colCount: colIndex + 1, rowCount: rowIndex + 1 },
-    });
-  };
-
-  const insertTable = () => {
-    tf.insert.table(tablePicker.size, { select: true });
-    editor.tf.focus();
-  };
-
   return (
-    <div
-      className="m-0 flex! flex-col p-0"
-      role="button"
-      tabIndex={0}
-      onClick={insertTable}
-      onKeyDown={event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          insertTable();
-        }
+    <TableSizePicker
+      label={label}
+      onSelect={size => {
+        tf.insert.table(size, { select: true });
+        editor.tf.focus();
       }}
-    >
-      <div className="grid size-[130px] grid-cols-8 gap-0.5 p-1">
-        {tablePicker.grid.map((rows: any, rowIndex: number) =>
-          rows.map((value: any, columIndex: number) => {
-            return (
-              <div
-                key={`(${rowIndex},${columIndex})`}
-                className={cn(
-                  'bg-secondary col-span-1 size-3 border border-solid',
-                  !!value && 'border-current'
-                )}
-                onMouseMove={() => {
-                  onCellMove(rowIndex, columIndex);
-                }}
-              />
-            );
-          })
-        )}
-      </div>
-
-      <div className="text-center text-xs text-current">
-        {tablePicker.size.rowCount} x {tablePicker.size.colCount}
-      </div>
-    </div>
+    />
   );
 }
 
@@ -133,7 +79,7 @@ export function TableToolbarButtonView({
               <span>{t('plateJs.toolbar.table.title')}</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="m-0 p-0">
-              <TablePicker />
+              <PlateTablePicker label={t('plateJs.toolbar.table.title')} />
             </DropdownMenuSubContent>
           </DropdownMenuSub>
 

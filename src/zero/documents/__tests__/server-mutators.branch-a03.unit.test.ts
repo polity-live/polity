@@ -49,6 +49,7 @@ vi.mock('../../server-helpers', () => ({
 vi.mock('../../todos/comment-notifications', () => ({
   collectTodoCommentRecipientIds: mocks.recipients,
 }));
+vi.mock('@/server/project-chat/revisions', () => ({ assertContentRevision: vi.fn() }));
 
 import { documentServerMutators } from '../server-mutators';
 

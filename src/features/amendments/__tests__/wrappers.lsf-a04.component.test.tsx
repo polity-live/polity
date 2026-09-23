@@ -7,6 +7,10 @@ vi.mock('@/features/collaboration/ui/CollaborationStatus', () => ({
 afterEach(cleanup);
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+  translate: (key: string) => key,
+}));
+vi.mock('@/features/project-chat/ui/ProjectChatPanel', () => ({
+  ProjectChatWorkspace: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 const mocks = vi.hoisted(() => ({

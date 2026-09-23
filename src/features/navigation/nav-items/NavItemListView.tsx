@@ -146,6 +146,7 @@ export function NavItemListView({
                       className="inline-block"
                       aria-label={item.label}
                       aria-disabled={loadingItem === item.id}
+                      data-navigation-item-id={item.id}
                       data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
                       data-action-id="navigation.item.overlay.compact.open"
                       onClick={e => {
@@ -202,6 +203,7 @@ export function NavItemListView({
                     className="inline-block"
                     aria-label={item.label}
                     aria-disabled={loadingItem === item.id}
+                    data-navigation-item-id={item.id}
                     data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
                     data-action-id="navigation.item.overlay.grid.open"
                     onClick={e => {
@@ -271,6 +273,7 @@ export function NavItemListView({
                 to={item.href || '#'}
                 preload="intent"
                 aria-label={item.label}
+                data-navigation-item-id={item.id}
                 data-slot="button"
                 data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
                 className={cn(
@@ -366,6 +369,7 @@ export function NavItemListView({
                   preload="intent"
                   className={linkClasses}
                   aria-label={item.label}
+                  data-navigation-item-id={item.id}
                   data-tutorial-anchor={tutorialAnchor(item, isPrimary)}
                   data-action-id="navigation.item.labeled.open"
                   onClick={e => {

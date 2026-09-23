@@ -8,6 +8,7 @@ export const studioProject = table('studio_project')
     kind: string(),
     is_template: boolean(),
     version: number(),
+    document_schema_version: number(),
     created_at: number(),
     updated_at: number(),
   })
@@ -31,3 +32,40 @@ export const studioExport = table('studio_export')
     updated_at: number(),
   })
   .primaryKey('id');
+
+export const studioState = table('studio_state')
+  .columns({
+    project_id: string(),
+    document: json<any>(),
+    content_revision: number(),
+    updated_at: number(),
+  })
+  .primaryKey('project_id');
+
+export const studioOperation = table('studio_operation')
+  .columns({
+    id: string(),
+    project_id: string(),
+    actor_id: string(),
+    result: json(),
+    created_at: number(),
+  })
+  .primaryKey('id');
+
+export const canvasProposal = table('canvas_proposal')
+  .columns({
+    id: string(),
+    project_id: string(),
+    owner_id: string(),
+    title: string(),
+    reason: string(),
+    state: string(),
+    checksum: string().optional(),
+    document: json<any>(),
+    revision: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
+export const canvasWorkspaceReader = table('canvas_workspace_reader')
+  .columns({ workspace_id: string(), user_id: string() })
+  .primaryKey('workspace_id', 'user_id');

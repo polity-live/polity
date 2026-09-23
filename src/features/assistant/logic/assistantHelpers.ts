@@ -23,10 +23,11 @@ export function resolveAssistantAvatar<T extends string | null | undefined>(
  * Works with any conversation shape that has a `participants` array with `user_id` or nested `user.id`.
  */
 export function isAssistantConversation(conversation: {
+  type?: string | null;
   assistant_for_user_id?: string | null;
   participants: readonly { user_id?: string; user?: { id: string } | null }[];
 }): boolean {
-  if (conversation.assistant_for_user_id) {
+  if (conversation.type === 'project_ai' || conversation.assistant_for_user_id) {
     return true;
   }
 

@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { CollaborationError } from '@/features/collaboration/logic/types';
 import { generateText } from 'ai';
 import { getSession } from '@/lib/supabase/server';
 import { getPreferredDefaultAiModel, toAiModelDescriptor } from '@/lib/ai/models';
@@ -9,21 +8,30 @@ import {
   studioTransaction,
   StudioError,
   studioEnabled,
+  studioV3Enabled,
   assertStudioAccess,
   assertStudioGroup,
 } from './db';
 import {
   assetUrls,
-  createProject,
   downloadExport,
   loadProject,
   queueExport,
   duplicateProject,
   beginUpload,
   finishUpload,
+  createProjectFromSelection,
 } from './service';
-import { studioSource } from './sources';
-import { documentSchema } from '@/features/communication-studio/logic/document';
+import { studioDocumentV3Schema } from '@/features/communication-studio/logic/document-v3';
+import { v3DocumentToLegacy } from '@/features/communication-studio/logic/v3-adapter';
+import {
+  archiveElementSet,
+  createElementSet,
+  instantiateElementSetForProject,
+  listElementSets,
+  publishElementSetRevision,
+  renameElementSet,
+} from './elements';
 const uuid = z.string().uuid();
 export async function handleStudio(request: Request) {
   try {
@@ -33,13 +41,42 @@ export async function handleStudio(request: Request) {
     const session = await getSession(request);
     if (!session) throw new StudioError('Authentication required', 401);
     const userId = session.user.id;
-    if (!studioEnabled(userId)) throw new StudioError('Studio is not enabled', 404);
+    if (!studioEnabled(userId) || !studioV3Enabled(userId))
+      throw new StudioError('Studio V4 is not enabled', 404);
     const body = await request.json().catch(() => {
       throw new StudioError('Invalid studio input');
     });
     if (!body || typeof body.operation !== 'string') throw new StudioError('Invalid studio input');
     let result: unknown;
     switch (body.operation) {
+      case 'canvasPresence':
+        result = await (await import('./presence')).canvasPresence(userId, body);
+        break;
+      case 'canvas':
+        result = await (await import('./governance')).canvasCommand(userId, body);
+        break;
+      case 'editorActions':
+        result = await studioTransaction(async sql => {
+          await assertStudioAccess(userId, uuid.parse(body.projectId), false, sql);
+          const clientId = uuid.parse(body.clientId);
+          return sql`update studio_editor_action set claimed_by=${clientId} where id in (select id from studio_editor_action where project_id=${body.projectId} and actor_id=${userId} and result is null and (claimed_by is null or claimed_by=${clientId}) and created_at>${Date.now() - 120000} order by created_at limit 20 for update skip locked) returning id,name,input`;
+        });
+        break;
+      case 'editorResult':
+        result = await studioTransaction(async sql => {
+          await assertStudioAccess(userId, uuid.parse(body.projectId), false, sql);
+          const response = z
+            .object({
+              status: z.enum(['completed', 'failed']),
+              error: z.string().max(1000).optional(),
+              revision: z.number().optional(),
+              projectId: uuid.optional(),
+            })
+            .parse(body.result);
+          await sql`update studio_editor_action set result=${sql.json(response)} where id=${uuid.parse(body.id)} and project_id=${body.projectId} and actor_id=${userId} and claimed_by=${uuid.parse(body.clientId)} and result is null`;
+          return { status: 'acknowledged' };
+        });
+        break;
       case 'config':
         result = { enabled: true };
         break;
@@ -54,7 +91,8 @@ export async function handleStudio(request: Request) {
             .int()
             .min(1)
             .max(100 * 1024 * 1024)
-            .parse(body.size)
+            .parse(body.size),
+          uuid.optional().parse(body.workspaceId)
         );
         break;
       case 'finishUpload':
@@ -63,14 +101,27 @@ export async function handleStudio(request: Request) {
         break;
       case 'create': {
         const input = createStudioProjectSchema.parse(body);
-        result = await createProject(userId, input.groupId, input.document);
+        result = await createProjectFromSelection(userId, input);
         break;
       }
       case 'load':
         result = await loadProject(userId, uuid.parse(body.id));
         break;
+      case 'receipt':
+        result = await studioTransaction(async sql => {
+          await assertStudioAccess(userId, uuid.parse(body.projectId), false, sql);
+          const [row] =
+            await sql`select result from studio_operation where id=${uuid.parse(body.id)} and project_id=${body.projectId} and actor_id=${userId}`;
+          if (!row) throw new StudioError('Operation not found', 404);
+          return row.result;
+        });
+        break;
       case 'assets':
-        result = await assetUrls(userId, uuid.parse(body.id));
+        result = await assetUrls(
+          userId,
+          uuid.parse(body.id),
+          uuid.optional().parse(body.workspaceId)
+        );
         break;
       case 'duplicate':
         result = await duplicateProject(userId, uuid.parse(body.id));
@@ -85,12 +136,17 @@ export async function handleStudio(request: Request) {
             throw new StudioError('Select a single page or video for a Polity post');
           const [revision] =
             await sql`select document from studio_revision where id=${job.revision_id}`;
-          const document = documentSchema.parse(revision.document);
-          const pageIds = job.page_ids.length ? job.page_ids : document.pages.map(p => p.id);
+          const document = studioDocumentV3Schema.parse(revision.document);
+          const legacy = v3DocumentToLegacy(document);
+          const pageIds = job.page_ids.length
+            ? job.page_ids
+            : document.nodes
+                .filter(node => node.type === 'frame' && node.parentFrameId === null)
+                .map(node => node.id);
           return {
             imageUrl: job.file_name.endsWith('.png') ? '/api/studio/published-media/' + job.id : '',
             videoUrl: job.file_name.endsWith('.mp4') ? '/api/studio/published-media/' + job.id : '',
-            isStory: document.posts.some(
+            isStory: legacy.posts.some(
               post =>
                 post.kind === 'story' && pageIds.every((id: string) => post.pageIds.includes(id))
             ),
@@ -105,7 +161,7 @@ export async function handleStudio(request: Request) {
           input.projectId,
           input.format,
           input.pageIds,
-          input.state
+          input.revision
         );
         break;
       }
@@ -147,21 +203,57 @@ export async function handleStudio(request: Request) {
         });
         break;
       }
-      case 'sources':
-        result = await studioSource(
-          userId,
-          z.enum(['event', 'amendment', 'statement']).parse(body.type),
-          body.id ? uuid.parse(body.id) : undefined
-        );
-        break;
       case 'themes': {
         result = await studioTransaction(async sql => {
-          const gid = uuid.parse(body.groupId);
-          await assertStudioGroup(userId, gid, sql);
-          return await sql`select t.id,t.name,r.id as revision_id,r.light_palette,r.dark_palette,r.fonts from appearance_theme t join appearance_theme_revision r on r.id=t.current_revision_id where t.group_id=${gid} and r.status='published'`;
+          const gid = z.union([uuid, z.null()]).parse(body.groupId ?? null);
+          if (gid) await assertStudioGroup(userId, gid, sql);
+          return await sql`
+            select t.id,t.slug,t.name,t.description,t.kind,t.group_id,t.created_by_id,
+              r.id as revision_id,r.version,r.light_palette,r.dark_palette,r.fonts,r.text_styles
+            from appearance_theme t
+            join appearance_theme_revision r on r.id=t.current_revision_id and r.status='published'
+            where (t.kind='personal' and t.created_by_id=${userId})
+              or (t.kind='group' and t.group_id=${gid})
+            order by t.kind,t.name`;
         });
         break;
       }
+      case 'elementSets':
+        result = await listElementSets(
+          userId,
+          z.union([uuid, z.null()]).parse(body.groupId ?? null)
+        );
+        break;
+      case 'elementSetCreate':
+        result = await createElementSet(userId, {
+          projectId: uuid.parse(body.projectId),
+          groupId: z.union([uuid, z.null()]).parse(body.groupId ?? null),
+          selectedIds: z.array(uuid).min(1).max(5000).parse(body.selectedIds),
+          name: z.string().trim().min(1).max(120).optional().parse(body.name),
+        });
+        break;
+      case 'elementSetInstantiate':
+        result = await instantiateElementSetForProject(userId, {
+          setId: uuid.parse(body.setId),
+          projectId: uuid.parse(body.projectId),
+        });
+        break;
+      case 'elementSetRename':
+        result = await renameElementSet(
+          userId,
+          uuid.parse(body.setId),
+          z.string().trim().min(1).max(120).parse(body.name)
+        );
+        break;
+      case 'elementSetArchive':
+        result = await archiveElementSet(userId, uuid.parse(body.setId));
+        break;
+      case 'elementSetPublish':
+        result = await publishElementSetRevision(userId, {
+          projectId: uuid.parse(body.projectId),
+          instanceId: uuid.parse(body.instanceId),
+        });
+        break;
       case 'generate': {
         const prompt = z.string().min(1).max(12000).parse(body.prompt);
         const catalog = await getAiCatalog(userId);
@@ -210,7 +302,7 @@ export async function handleStudio(request: Request) {
     }
     return Response.json(result, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
-    if (error instanceof StudioError || error instanceof CollaborationError)
+    if (error instanceof StudioError)
       return Response.json({ error: error.message }, { status: error.status });
     if (error instanceof z.ZodError)
       return Response.json(

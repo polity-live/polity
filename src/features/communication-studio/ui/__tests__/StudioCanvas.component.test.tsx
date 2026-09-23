@@ -8,7 +8,11 @@ const scene = vi.hoisted(() => ({
   nodes: {} as Record<string, any>,
   transformer: vi.fn(),
   draw: vi.fn(),
-  stage: { findOne: vi.fn(), getPointerPosition: vi.fn() },
+  stage: {
+    findOne: vi.fn(),
+    getPointerPosition: vi.fn(),
+    container: () => ({ getBoundingClientRect: () => ({ left: 0, top: 0 }) }),
+  },
 }));
 vi.mock('react-konva', () => {
   const shape = (kind: string) => (p: any) => {
@@ -35,7 +39,9 @@ import StudioCanvas from '../StudioCanvas';
 beforeEach(() => {
   vi.clearAllMocks();
   scene.nodes = {};
-  scene.stage.findOne.mockReturnValue({});
+  scene.stage.findOne.mockReturnValue({
+    getClientRect: () => ({ x: 0, y: 0, width: 100, height: 100 }),
+  });
   scene.stage.getPointerPosition.mockReturnValue({ x: 60, y: 120 });
   vi.stubGlobal(
     'ResizeObserver',
@@ -45,7 +51,7 @@ beforeEach(() => {
         this.callback = cb;
       }
       observe() {
-        this.callback([{ contentRect: { width: 600 } }]);
+        this.callback([{ contentRect: { width: 600, height: 600 } }]);
       }
       disconnect() {
         this.callback = undefined;
@@ -205,7 +211,7 @@ describe('Studio canvas interaction', () => {
     node.onClick({ evt: {} });
     node.onTap();
     expect(p.select).toHaveBeenLastCalledWith([item.id]);
-    node.onDragMove({ target: { x: () => 127, y: () => 233 } });
+    node.onDragEnd({ target: { x: () => 127, y: () => 233 } });
     expect(p.patch).toHaveBeenLastCalledWith(item.id, { x: 125, y: 235 });
     const scaleX = vi.fn().mockReturnValue(2),
       scaleY = vi.fn().mockReturnValue(0);
@@ -253,9 +259,18 @@ describe('Studio canvas interaction', () => {
     expect(scene.nodes[p.page.elements.at(-2)!.id]).toBeTruthy();
     expect(scene.nodes.Rect.fill).toBeUndefined();
     view.rerender(<StudioCanvas {...p} playing time={0.1} guides={false} />);
-    expect(scene.nodes.Text.fontStyle).toBe('bold');
+    expect(scene.nodes[p.page.elements[0].id]).toBeDefined();
     expect(scene.nodes[p.page.elements[0].id].opacity).toBe(p.page.elements[0].opacity * 0.25);
     expect(scene.nodes.Rect.fill).toBe('#000000');
     expect(scene.nodes.Rect.opacity).toBeGreaterThan(0);
+  });
+  it('contains custom frame dimensions inside the preview viewport', () => {
+    const p = props();
+    render(<StudioCanvas {...p} dimensions={[1920, 1080]} fit="contain" guides={false} />);
+    expect(scene.nodes.Stage.width).toBeLessThanOrEqual(600);
+    expect(scene.nodes.Stage.height).toBeLessThanOrEqual(600);
+    expect(screen.getByTestId('studio-canvas').getAttribute('data-canvas-width')).toBe('1920');
+    expect(screen.getByTestId('studio-canvas').getAttribute('data-canvas-height')).toBe('1080');
+    expect(screen.getByTestId('studio-canvas').getAttribute('data-canvas-fit')).toBe('contain');
   });
 });

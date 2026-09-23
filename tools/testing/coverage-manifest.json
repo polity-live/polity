@@ -492,6 +492,26 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "docs/project-chats-implementation.md",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "documentation",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "docs/studio-zero-rollout.md",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "documentation",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "docs/ux/workspace-ux-rollout.md",
       "domain": "platform",
       "owner": "polity/platform",
@@ -7531,6 +7551,29 @@
           }
         }
       ],
+      "suggestedTestRefs": [
+        "src/features/amendments/city-design/logic/__tests__/cityDesignAmendmentLocation.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignAmendmentLocation.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBbox.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBbox.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignBuildingUse.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequestDiff.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequestDiff.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequests.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignChangeRequests.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignCosting.a04.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignCosting.unit.test.ts",
+        "src/features/amendments/city-design/logic/__tests__/cityDesignElementSections.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/amendments/city-design/logic/projection-schema.ts",
+      "domain": "features:amendments",
+      "owner": "polity/features:amendments",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": [
         "src/features/amendments/city-design/logic/__tests__/cityDesignAmendmentLocation.a04.unit.test.ts",
         "src/features/amendments/city-design/logic/__tests__/cityDesignAmendmentLocation.unit.test.ts",
@@ -19053,430 +19096,6 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "src/features/collaboration/__tests__/city.unit.test.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/client.component.test.tsx",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/codec.unit.test.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/comments.component.test.tsx",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/conflicts.unit.test.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/controls.browser-component.test.tsx",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/cursors.component.test.tsx",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/plate.unit.test.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/proposals.unit.test.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/suggestion-binding.component.test.tsx",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/typing.browser-component.test.tsx",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/hooks/useCollaborationComments.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/comments.component.test.tsx",
-          "project": "component",
-          "caseId": "uses an explicit versioned delete and preserves the reply and history in the refreshed view"
-        }
-      ],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/hooks/useCollaborationDocument.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/client.component.test.tsx",
-          "project": "component",
-          "caseId": "does not automatically resubmit rejected offline content in compatibility mode"
-        }
-      ],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/logic/city-object.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/city.unit.test.ts",
-          "project": "unit",
-          "caseId": "merges different properties and a complete geometry from concurrent peers"
-        }
-      ],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/logic/city-schema.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/city.unit.test.ts",
-          "project": "unit",
-          "caseId": "rejects malformed geometry before accepting a client state"
-        }
-      ],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/logic/city.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/city.unit.test.ts",
-          "project": "unit",
-          "caseId": "does not resurrect an object deleted before a stale local edit is dispatched"
-        }
-      ],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/logic/codec.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/codec.unit.test.ts",
-          "project": "unit",
-          "caseId": "does not change committed state when an invalid shared type is rejected"
-        }
-      ],
-      "suggestedTestRefs": ["src/features/collaboration/__tests__/codec.unit.test.ts"]
-    },
-    {
-      "path": "src/features/collaboration/logic/conflicts.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/conflicts.unit.test.ts",
-          "project": "unit",
-          "caseId": "treats geometry as one value and detects competing insertion/deletion"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/collaboration/__tests__/__screenshots__/controls.browser-component.test.tsx/retains-decision-results-while-keyboard-users-retry-conflicts-or-start-a-new-proposal-1.png",
-        "src/features/collaboration/__tests__/conflicts.unit.test.ts",
-        "src/features/network/hooks/__tests__/useHierarchyLinkConflicts.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/features/collaboration/logic/plate.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/plate.unit.test.ts",
-          "project": "unit",
-          "caseId": "applies Plate text operations to Yjs and remote changes back to Plate"
-        },
-        {
-          "file": "src/features/collaboration/__tests__/suggestion-binding.component.test.tsx",
-          "project": "component",
-          "caseId": "persists a canonical replacement including deletion of the selected original text"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/collaboration/__tests__/plate.unit.test.ts",
-        "src/features/shared/ui/kit-platejs/__tests__/PlateEditorView.branches.component.test.tsx",
-        "src/features/shared/ui/kit-platejs/__tests__/plate-editor.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/plate-node-primitives.branch-a01.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/plate-node-surfaces.branch-a02.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/plate-surfaces.lsf-a02.component.test.tsx",
-        "src/server/__tests__/email-templates.component.test.tsx",
-        "src/server/__tests__/resend-template-deployment.unit.test.ts",
-        "src/server/__tests__/supabase-auth-email-templates.component.test.tsx",
-        "tools/email/__tests__/deploy-auth-templates.unit.test.ts",
-        "tools/email/__tests__/deploy-template.unit.test.ts",
-        "tools/email/__tests__/template-cli-contracts.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/features/collaboration/logic/proposals.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/conflicts.unit.test.ts",
-          "project": "unit",
-          "caseId": "does not accept an unmarked rewrite from a suggestion-only draft"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/collaboration/__tests__/proposals.unit.test.ts",
-        "src/server/collaboration/__tests__/proposals.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/features/collaboration/logic/reconcile.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/codec.unit.test.ts",
-          "project": "unit",
-          "caseId": "reconciles a server decision while preserving an unrelated text anchor"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/zero/events/__tests__/assembly-reconcile.typefix.branch-a03.unit.test.ts",
-        "src/zero/events/__tests__/assemblyReconcile.coverage.unit.test.ts",
-        "src/zero/events/__tests__/assemblyReconcile.notifications.unit.test.ts",
-        "src/zero/events/__tests__/delegateAllocationReconcile.coverage.unit.test.ts",
-        "src/zero/events/__tests__/delegateAllocationReconcile.unit.test.ts",
-        "src/zero/network/__tests__/groupGraphReconcile.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/features/collaboration/logic/types.ts",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/codec.unit.test.ts",
-          "project": "unit",
-          "caseId": "rejects malformed room addresses and preserves document generations"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/groups/ui/__tests__/GroupTypeSection.component.test.tsx",
-        "src/features/network/types/__tests__/network.types.unit.test.ts",
-        "src/features/notifications/logic/__tests__/notificationTypeSettingMap.todoComments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/features/collaboration/ui/CollaborationCursors.tsx",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/cursors.component.test.tsx",
-          "project": "component",
-          "caseId": "keeps peer cursors attached across inserted text, sanitizes color and removes stale or invalid peer selections"
-        }
-      ],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/ui/CollaborationStatus.tsx",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
-          "project": "component",
-          "caseId": "offers an offline download and comparison after revocation but never offers to submit or overwrite"
-        }
-      ],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/ui/CommentCommands.tsx",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/shared/ui/ui-platejs/__tests__/block-discussion.branch-a02.component.test.tsx",
-          "project": "component",
-          "caseId": "adds initial comments, replies, submits, and activates existing comments"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/collaboration/__tests__/comment-commands.component.test.tsx"
-      ]
-    },
-    {
-      "path": "src/features/collaboration/ui/ProposalViews.tsx",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
-          "project": "component",
-          "caseId": "retains the recorded decision while retrying application against the current server revision"
-        }
-      ],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/features/collaboration/ui/RecoveryPanel.tsx",
-      "domain": "features:collaboration",
-      "owner": "polity/features:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/features/collaboration/__tests__/workspace-controls.component.test.tsx",
-          "project": "component",
-          "caseId": "keeps local, original and server content separate and resumes only into a newly authorized draft"
-        }
-      ],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -19549,15 +19168,63 @@
       "coverageStatus": "referenced",
       "testRefs": [
         {
-          "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
+          "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+          "project": "component",
+          "caseId": "saves through Zero and waits for the durable receipt"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps a failed draft and retries the same operation ID"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+          "project": "component",
+          "caseId": "shows a conflict and can choose the saved value"
+        },
+        {
+          "file": "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+          "project": "component",
+          "caseId": "undos only local properties"
         }
       ],
       "suggestedTestRefs": [
         "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
         "src/features/communication-studio/hooks/__tests__/document.component.test.tsx"
       ]
+    },
+    {
+      "path": "src/features/communication-studio/hooks/useStudioEditorTools.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/hooks/__tests__/controller.component.test.tsx",
+        "src/features/communication-studio/hooks/__tests__/document.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
     },
     {
       "path": "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
@@ -19594,6 +19261,53 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/canvas-adapter.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/canvas-layers.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/canvas-schema.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio.unit.test.ts"
       ]
@@ -19632,14 +19346,80 @@
         "e2e/studio-collaboration.e2e.spec.ts",
         "src/features/amendments/__tests__/amendment-collaboration.component-flow.test.tsx",
         "src/features/amendments/hooks/__tests__/useAmendmentCollaboration.a04.component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
         "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
         "src/zero/__tests__/db-provider.collaboration.unit.test.ts",
         "supabase/tests/collaboration.sql",
-        "supabase/tests/collaboration_completion.sql",
-        "supabase/tests/content_collaboration.sql",
-        "tools/testing/accountability/collaboration.json"
+        "supabase/tests/collaboration_completion.sql"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/commands.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "merges independent properties without losing either author"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "reports the original, local and remote values for an overlapping edit"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not resurrect deleted elements and refuses deleting a modified element"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps remote fields when undoing an independent local edit"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects prototype paths"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "merges separate rich-text paragraphs and table cells"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "applies all six alignments against the page"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "distributes bounding boxes evenly and rejects fewer than three elements"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "formats text and protects locked resources"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates table and chart dimensions"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio.unit.test.ts"
       ]
     },
     {
@@ -19673,12 +19453,61 @@
         "src/features/app-tutorial/__tests__/city-design-fixture-document.unit.test.ts",
         "src/features/change-requests/logic/__tests__/filterDocumentToSingleSuggestion.unit.test.ts",
         "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
         "src/features/documents/hooks/__tests__/document-controllers-mutations.branch-a04.component.test.tsx",
-        "src/features/documents/hooks/__tests__/useGroupDocuments.branch-a04.component.test.tsx",
-        "src/features/documents/logic/__tests__/groupDocumentsList.unit.test.ts",
-        "src/features/documents/ui/__tests__/CreateDocumentDialog.branch-a04.component.test.tsx"
+        "src/features/documents/hooks/__tests__/useGroupDocuments.branch-a04.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/draw-element.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/editor-commands.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/governance.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "e2e/fixtures/domains/governance.ts",
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
+        "src/zero/amendments/__tests__/governance-concurrency.database-integration.test.ts",
+        "src/zero/amendments/__tests__/governance-mutation.service-integration.test.ts",
+        "supabase/tests/governance_voting.sql"
       ]
     },
     {
@@ -19696,6 +19525,8 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
         "src/features/create/hooks/__tests__/useCarouselFormLayoutController.component.test.tsx",
@@ -19705,9 +19536,76 @@
         "src/features/editor/ui/__tests__/EditorHeader.mobile-layout.component.test.tsx",
         "src/features/navigation/__tests__/responsive-navigation-layout.unit.test.ts",
         "src/features/network/hooks/__tests__/useEditableNetworkLayout.unit.test.ts",
-        "src/features/network/hooks/__tests__/usePersistedNetworkLayout.unit.test.ts",
-        "src/features/network/logic/__tests__/networkLayoutHelpers.unit.test.ts",
-        "src/features/network/logic/__tests__/networkLayoutScopeHelpers.unit.test.ts"
+        "src/features/network/hooks/__tests__/usePersistedNetworkLayout.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/operations.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "merges independent properties without losing either author"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "reports the original, local and remote values for an overlapping edit"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "does not resurrect deleted elements and refuses deleting a modified element"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "keeps remote fields when undoing an independent local edit"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects prototype paths"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "merges separate rich-text paragraphs and table cells"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "applies all six alignments against the page"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "distributes bounding boxes evenly and rejects fewer than three elements"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "formats text and protects locked resources"
+        },
+        {
+          "file": "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates table and chart dimensions"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/auth/hooks/__tests__/authOperations.branch-a08.component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
+        "src/features/editor/hooks/__tests__/useEditorOperations.branch-a03.component.test.tsx",
+        "src/features/editor/hooks/__tests__/useEditorOperations.component.test.tsx"
       ]
     },
     {
@@ -19716,15 +19614,26 @@
       "owner": "polity/features:communication-studio",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
-        }
-      ],
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/patch-schema.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio.unit.test.ts"
       ]
@@ -19744,11 +19653,45 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
         "src/server/__tests__/email-templates.component.test.tsx",
         "src/server/__tests__/supabase-auth-email-templates.component.test.tsx",
         "tools/email/__tests__/deploy-auth-templates.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/ui/CanvasGovernancePanel.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/ui/ExcalidrawCanvas.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
       ]
     },
     {
@@ -19760,13 +19703,169 @@
       "coverageStatus": "referenced",
       "testRefs": [
         {
-          "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
+          "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+          "project": "component",
+          "caseId": "clears selection on the canvas background while ignoring pointer events without coordinates"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+          "project": "component",
+          "caseId": "loads media previews, crops images, synchronizes video playback and releases media on replacement"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+          "project": "component",
+          "caseId": "provides focusable keyboard selection, incremental movement and immutable read-only or locked objects"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+          "project": "component",
+          "caseId": "selects by pointer and touch, snaps dragging and preserves scale when committing a transform"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+          "project": "component",
+          "caseId": "renders different shapes, placeholders, matching peer cursors and a bounded transition during preview"
         }
       ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/ui/StudioDataProperties.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "edits cells and selected row or column structure while keeping stable identities"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+          "project": "component",
+          "caseId": "edits chart data and legend while keeping pie constraints and minimum dimensions valid"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/ui/StudioEditor.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps project overview and creation available"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "shows storage status and peers without a permanent sidebar"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "inserts all new element types from the insert menu"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "formats the first selected text and preserves selection when properties close"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "aligns, duplicates and deletes through selection tools"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "uploads media from the insert panel and keeps a failed image edit open"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "exports a confirmed JSON revision and lists export status"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "confirms drafts before copying a project"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "shows a conflict with base, local and remote values"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "disables writes in read-only mode but keeps menus accessible"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "supports keyboard copy/paste, movement, undo and preview"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "edits brand and imports authorized sources through the tools dialog"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "edits channel captions and campaign scheduling in the captions dialog"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "changes object properties without moving other selected objects"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/ui/StudioPanel.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
@@ -19788,6 +19887,23 @@
       ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/ui/StudioTextEditor.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
@@ -19802,13 +19918,84 @@
       "coverageStatus": "referenced",
       "testRefs": [
         {
-          "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "keeps project overview and creation available"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "shows storage status and peers without a permanent sidebar"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "inserts all new element types from the insert menu"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "formats the first selected text and preserves selection when properties close"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "aligns, duplicates and deletes through selection tools"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "edits page settings and creates/duplicates/removes pages through the pages popover"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "uploads media from the insert panel and keeps a failed image edit open"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "exports a confirmed JSON revision and lists export status"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "confirms drafts before copying a project"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "shows a conflict with base, local and remote values"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "disables writes in read-only mode but keeps menus accessible"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "supports keyboard copy/paste, movement, undo and preview"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "edits brand and imports authorized sources through the tools dialog"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "edits channel captions and campaign scheduling in the captions dialog"
+        },
+        {
+          "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
+          "project": "component",
+          "caseId": "changes object properties without moving other selected objects"
         }
       ],
       "suggestedTestRefs": [
         "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
@@ -19816,6 +20003,16 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -19850,6 +20047,26 @@
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
       "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/excalidraw.css",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "declarative",
+      "verification": "render-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/studio-fonts.css",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "declarative",
+      "verification": "render-contract",
       "coverageStatus": "not-instrumented",
       "testRefs": [],
       "suggestedTestRefs": []
@@ -50665,6 +50882,161 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/project-chat/hooks/editor-bridge.ts",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/project-chat/logic/city-actions.ts",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": ["src/features/project-chat/logic/__tests__/actions.unit.test.ts"]
+    },
+    {
+      "path": "src/features/project-chat/logic/conditional-undo.ts",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": ["src/features/project-chat/logic/__tests__/actions.unit.test.ts"]
+    },
+    {
+      "path": "src/features/project-chat/logic/contracts.ts",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/project-chat/logic/__tests__/actions.unit.test.ts",
+        "supabase/tests/permissions_contract.sql",
+        "supabase/tests/schema_contract.sql",
+        "tools/email/__tests__/template-cli-contracts.unit.test.ts",
+        "tools/testing/__tests__/package-manager-contract.static-contract.test.ts",
+        "tools/testing/__tests__/workflow-contract.static-contract.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/project-chat/logic/studio-actions.ts",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": ["src/features/project-chat/logic/__tests__/actions.unit.test.ts"]
+    },
+    {
+      "path": "src/features/project-chat/logic/text-actions.ts",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": ["src/features/project-chat/logic/__tests__/actions.unit.test.ts"]
+    },
+    {
+      "path": "src/features/project-chat/ui/ProjectChatPanel.tsx",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "creates and switches project chats, preserves the choice and exposes properties, collapse and resizing"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+          "project": "component",
+          "caseId": "shows creation progress, prevents duplicate submission and retains errors for retry"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/project-chat/ui/ProjectConversation.tsx",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "referenced",
+      "testRefs": [
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+          "project": "component",
+          "caseId": "uses the shared assistant view, flushes the editor and sends through the existing transport"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+          "project": "component",
+          "caseId": "does not start an AI run if the editor cannot confirm its save"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+          "project": "component",
+          "caseId": "shows shared progress and offers undo for an applied change by the current sender"
+        },
+        {
+          "file": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+          "project": "component",
+          "caseId": "links to the project and review and saves the selected amendment surface"
+        }
+      ],
+      "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/project-chat/ui/__tests__/ProjectConversation.component.test.tsx",
+      "domain": "features:project-chat",
+      "owner": "polity/features:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/public-landing/hooks/__tests__/home-controller.branch-a07.unit.test.ts",
       "domain": "features:public-landing",
       "owner": "polity/features:public-landing",
@@ -70037,8 +70409,6 @@
         }
       ],
       "suggestedTestRefs": [
-        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
-        "src/features/collaboration/__tests__/comments.component.test.tsx",
         "src/features/discussions/ui/__tests__/DiscussionCommentCreation.component.test.tsx",
         "src/features/discussions/utils/__tests__/comment-tree.unit.test.ts",
         "src/features/notifications/logic/__tests__/notificationTypeSettingMap.todoComments.unit.test.ts",
@@ -70048,7 +70418,9 @@
         "src/features/shared/logic/__tests__/commentKit.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentItemView.component.test.tsx",
         "src/features/shared/ui/comments/__tests__/CommentThread.component.test.tsx",
-        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx"
+        "src/features/shared/ui/comments/__tests__/CommentThreadView.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/Editor.mobile-spacing.component.test.tsx"
       ]
     },
     {
@@ -73821,7 +74193,6 @@
         }
       ],
       "suggestedTestRefs": [
-        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
         "src/features/navigation/__tests__/NavigationCommandDialogView.component.test.tsx",
         "src/features/navigation/__tests__/WorkspaceCommandItems.component.test.tsx",
         "src/features/navigation/hooks/__tests__/useNavigationCommandDialogController.component.test.tsx",
@@ -73832,7 +74203,8 @@
         "src/features/shared/ui/ui/__tests__/avatar.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/button-motion.component.test.tsx",
         "src/features/shared/ui/ui/__tests__/carousel.component.test.tsx",
-        "src/features/shared/ui/ui/__tests__/chart.component.test.tsx"
+        "src/features/shared/ui/ui/__tests__/chart.component.test.tsx",
+        "src/features/shared/ui/ui/__tests__/create-review-card.component.test.tsx"
       ]
     },
     {
@@ -76708,6 +77080,21 @@
           }
         }
       ],
+      "suggestedTestRefs": [
+        "src/features/shared/utils/__tests__/delegate-calculations.unit.test.ts",
+        "src/features/shared/utils/__tests__/search-card-gradients.unit.test.ts",
+        "src/features/shared/utils/__tests__/suggestion-utils.unit.test.ts",
+        "src/features/shared/utils/__tests__/voting-utils.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/shared/utils/document-value.ts",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": [
         "src/features/shared/utils/__tests__/delegate-calculations.unit.test.ts",
         "src/features/shared/utils/__tests__/search-card-gradients.unit.test.ts",
@@ -87255,6 +87642,20 @@
       ]
     },
     {
+      "path": "src/i18n/locales/de/features/projectChat.ts",
+      "domain": "src:i18n",
+      "owner": "polity/src:i18n",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "tools/testing/accountability/project-chat.json"
+      ]
+    },
+    {
       "path": "src/i18n/locales/de/features/roles/index.ts",
       "domain": "src:i18n",
       "owner": "polity/src:i18n",
@@ -87359,11 +87760,12 @@
         "e2e/studio-collaboration.e2e.spec.ts",
         "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
         "supabase/tests/communication_studio.sql",
-        "tools/e2e/collaboration/studio-acceptance.ts",
+        "supabase/tests/studio_zero.sql",
         "tools/testing/accountability/communication-studio.json"
       ]
     },
@@ -89076,6 +89478,20 @@
       ]
     },
     {
+      "path": "src/i18n/locales/en/features/projectChat.ts",
+      "domain": "src:i18n",
+      "owner": "polity/src:i18n",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/project-chat/ui/__tests__/ProjectChatPanel.component.test.tsx",
+        "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "tools/testing/accountability/project-chat.json"
+      ]
+    },
+    {
       "path": "src/i18n/locales/en/features/roles/index.ts",
       "domain": "src:i18n",
       "owner": "polity/src:i18n",
@@ -89180,11 +89596,12 @@
         "e2e/studio-collaboration.e2e.spec.ts",
         "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioCanvas.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
         "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
         "supabase/tests/communication_studio.sql",
-        "tools/e2e/collaboration/studio-acceptance.ts",
+        "supabase/tests/studio_zero.sql",
         "tools/testing/accountability/communication-studio.json"
       ]
     },
@@ -90518,7 +90935,9 @@
         "src/lib/ai/__tests__/messageContext.unit.test.ts",
         "src/lib/ai/__tests__/models.unit.test.ts",
         "src/lib/ai/__tests__/prompts.unit.test.ts",
-        "src/lib/ai/__tests__/schemas.unit.test.ts"
+        "src/lib/ai/__tests__/schemas.unit.test.ts",
+        "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/upload-attachments.unit.test.ts"
       ]
     },
     {
@@ -90841,7 +91260,6 @@
       ],
       "suggestedTestRefs": [
         "src/features/charts/api/__tests__/datasetClient.unit.test.ts",
-        "src/features/collaboration/__tests__/client.component.test.tsx",
         "src/lib/__tests__/zero-client.unit.test.ts",
         "src/lib/supabase/__tests__/middleware.unit.test.ts",
         "src/lib/supabase/__tests__/server.unit.test.ts",
@@ -93059,15 +93477,25 @@
       "coverageStatus": "referenced",
       "testRefs": [
         {
-          "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX",
+          "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+          "project": "component",
+          "caseId": "opens the selected project without losing its workspace route",
           "evidence": {
             "relation": "direct",
-            "description": "Exercises the real authorized route through the local application and verifies its persisted result or downloaded media."
+            "description": "Exercises workspace navigation or the route authorization boundary and retired endpoint response."
           }
         }
       ],
+      "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
+    },
+    {
+      "path": "src/routes/_authed/group/$id/whiteboards.tsx",
+      "domain": "routes:ui",
+      "owner": "polity/routes:ui",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
     },
     {
@@ -93249,12 +93677,12 @@
       "coverageStatus": "referenced",
       "testRefs": [
         {
-          "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX",
+          "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+          "project": "component",
+          "caseId": "opens the selected project without losing its workspace route",
           "evidence": {
             "relation": "direct",
-            "description": "Exercises the real authorized route through the local application and verifies its persisted result or downloaded media."
+            "description": "Exercises workspace navigation or the route authorization boundary and retired endpoint response."
           }
         }
       ],
@@ -93746,6 +94174,16 @@
       "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
     },
     {
+      "path": "src/routes/_authed/whiteboards.tsx",
+      "domain": "routes:ui",
+      "owner": "polity/routes:ui",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
+    },
+    {
       "path": "src/routes/api/__tests__/api-handlers.lsf-a10.unit.test.ts",
       "domain": "routes:api",
       "owner": "polity/routes:api",
@@ -93989,12 +94427,12 @@
       "coverageStatus": "referenced",
       "testRefs": [
         {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "HTTP and ten real WebSocket editors enforce rights, proposals, comments, recovery and reconnection",
+          "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+          "project": "component",
+          "caseId": "passes original requests to authorization handlers, including the published asset identity",
           "evidence": {
             "relation": "direct",
-            "description": "Exercises the real authorized route through the local application and verifies its persisted result or downloaded media."
+            "description": "Exercises workspace navigation or the route authorization boundary and retired endpoint response."
           }
         }
       ],
@@ -94641,15 +95079,25 @@
       "coverageStatus": "referenced",
       "testRefs": [
         {
-          "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX",
+          "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+          "project": "component",
+          "caseId": "passes original requests to authorization handlers, including the published asset identity",
           "evidence": {
             "relation": "direct",
-            "description": "Exercises the real authorized route through the local application and verifies its persisted result or downloaded media."
+            "description": "Exercises workspace navigation or the route authorization boundary and retired endpoint response."
           }
         }
       ],
+      "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
+    },
+    {
+      "path": "src/routes/api/studio/media/$id.ts",
+      "domain": "routes:api",
+      "owner": "polity/routes:api",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
     },
     {
@@ -94661,12 +95109,12 @@
       "coverageStatus": "referenced",
       "testRefs": [
         {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "Studio media operations preserve private visibility, validate uploads and support authorized ranged downloads",
+          "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+          "project": "component",
+          "caseId": "passes original requests to authorization handlers, including the published asset identity",
           "evidence": {
             "relation": "direct",
-            "description": "Exercises the real authorized route through the local application and verifies its persisted result or downloaded media."
+            "description": "Exercises workspace navigation or the route authorization boundary and retired endpoint response."
           }
         }
       ],
@@ -96250,964 +96698,14 @@
       ]
     },
     {
-      "path": "src/server/collaboration/__tests__/access.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
+      "path": "src/server/checksum.ts",
+      "domain": "server:checksum.ts",
+      "owner": "polity/server:checksum.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/api.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/comments.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/decisions.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/delivery.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/exports.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/finalize.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/governance.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/migrate-comments.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/migration.database-integration.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/migration.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/proposals.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/protocol.service-integration.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/receipts.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/recovery.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/replace.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/service.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/store.database-integration.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/store.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/__tests__/transaction.unit.test.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "src/server/collaboration/access.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/store.database-integration.test.ts",
-          "project": "database-integration",
-          "caseId": "rechecks current ownership and generation instead of trusting a session"
-        }
-      ],
-      "suggestedTestRefs": [
-        "e2e/accessibility.e2e.spec.ts",
-        "src/features/auth/hooks/__tests__/useEntityRouteAccess.component.test.tsx",
-        "src/features/auth/logic/__tests__/checkEntityAccess.unit.test.ts",
-        "src/features/auth/logic/__tests__/guestEntityRouteAccess.unit.test.ts",
-        "src/features/auth/logic/__tests__/privateEntityRelationshipAccess.unit.test.ts",
-        "src/features/auth/logic/__tests__/routeVisibilityAccess.unit.test.ts",
-        "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
-        "src/features/groups/logic/__tests__/hasGroupOperationAccess.unit.test.ts",
-        "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx",
-        "src/features/shared/ui/navigation/__tests__/NavigationButtons.accessibility.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/TableToolbarButtonView.accessibility.component.test.tsx",
-        "src/features/shared/ui/ui-platejs/__tests__/media-placeholder-node.accessibility.component.test.tsx"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/api.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/api.unit.test.ts",
-          "caseId": "rejects cross-origin and unauthenticated requests before opening a document",
-          "project": "unit"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/capture-proposal.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "HTTP and ten real WebSocket editors enforce rights, proposals, comments, recovery and reconnection"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/commands.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/store.database-integration.test.ts",
-          "caseId": "restores a server-held version as a new generation and deduplicates the operation",
-          "project": "database-integration"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/collaboration/__tests__/comment-commands.component.test.tsx",
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/comments.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "HTTP and ten real WebSocket editors enforce rights, proposals, comments, recovery and reconnection"
-        },
-        {
-          "file": "src/server/collaboration/__tests__/comments.unit.test.ts",
-          "project": "unit",
-          "caseId": "shows private comments to authorized document editors but excludes them from public readers"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/collaboration/__tests__/comments.component.test.tsx",
-        "src/features/notifications/logic/__tests__/notificationTypeSettingMap.todoComments.unit.test.ts",
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/decisions.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/decisions.unit.test.ts",
-          "project": "unit",
-          "caseId": "applies the decided suggestion and atomically records its revision and procedural status"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/decision-terminal/logic/__tests__/decision-status.unit.test.ts",
-        "src/features/shared/ui/status/__tests__/DecisionStatusBadges.component.test.tsx",
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/delivery.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/delivery.unit.test.ts",
-          "project": "unit",
-          "caseId": "guards constructor awareness and drops queued data when access is revoked"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/routes/api/__tests__/deliveryRoutes.contract.unit.test.ts",
-        "src/server/__tests__/external-delivery.service-integration.test.ts",
-        "src/server/__tests__/push-delivery-service-defaults.unit.test.ts",
-        "src/server/__tests__/push-delivery-service.unit.test.ts",
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/diagnostics.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-          "project": "unit",
-          "caseId": "reports durable pending work and per-document integrity failures separately from global readiness"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/finalize.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/finalize.unit.test.ts",
-          "project": "unit",
-          "caseId": "initializes only Studio projects without reading legacy editors"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/__tests__/finalize-delegates.unit.test.ts",
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/governance.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/governance.unit.test.ts",
-          "project": "unit",
-          "caseId": "does not silently reinterpret an existing decision"
-        }
-      ],
-      "suggestedTestRefs": [
-        "e2e/fixtures/domains/governance.ts",
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/migrate-comments.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/migrate-comments.unit.test.ts",
-          "project": "unit",
-          "caseId": "retains original authors, timestamps, identifiers, proposal scope and stable anchors"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/migration.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/migration.unit.test.ts",
-          "project": "unit",
-          "caseId": "activates only a verified unchanged manifest and protects all archived revisions through compatibility rollback"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/proposals.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/proposals.unit.test.ts",
-          "project": "unit",
-          "caseId": "uses draft publication for personal content and rejects stale main-document registration"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/collaboration/__tests__/proposals.unit.test.ts",
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/protocol.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/protocol.service-integration.test.ts",
-          "project": "service-integration",
-          "caseId": "does not acknowledge or broadcast an incoming update before commit resolves"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/receipts.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/receipts.unit.test.ts",
-          "project": "unit",
-          "caseId": "replays the result without rewriting and rejects changed input or a different actor"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/recovery.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "HTTP and ten real WebSocket editors enforce rights, proposals, comments, recovery and reconnection"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/auth/__tests__/auth-recovery.component-flow.test.tsx",
-        "src/features/auth/__tests__/connection-recovery.component-flow.test.tsx",
-        "src/features/create/hooks/__tests__/useCreateRecoveryActions.component.test.tsx",
-        "src/features/create/ui/__tests__/createRecoveryDestinations.component.test.tsx",
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/repair.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "HTTP and ten real WebSocket editors enforce rights, proposals, comments, recovery and reconnection"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/replace.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/replace.unit.test.ts",
-          "project": "unit",
-          "caseId": "publishes exactly the selected Studio draft without resurrecting removed pages and leaves invalid input unchanged"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/rollback.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/migration.unit.test.ts",
-          "project": "unit",
-          "caseId": "activates only a verified unchanged manifest and protects all archived revisions through compatibility rollback"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/service.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/store.database-integration.test.ts",
-          "project": "database-integration",
-          "caseId": "rechecks current ownership and generation instead of trusting a session"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/auth/__tests__/auth-callback.service-integration.test.ts",
-        "src/features/pwa/__tests__/custom-service-worker.unit.test.ts",
-        "src/server/__tests__/external-delivery.service-integration.test.ts",
-        "src/server/__tests__/newsletter-service.unit.test.ts",
-        "src/server/__tests__/push-delivery-service-defaults.unit.test.ts",
-        "src/server/__tests__/push-delivery-service.unit.test.ts",
-        "src/server/__tests__/push-subscription-service.unit.test.ts",
-        "src/server/__tests__/stripe-service-defaults.unit.test.ts",
-        "src/server/__tests__/stripe-service.unit.test.ts",
-        "src/server/app-tutorial/__tests__/service.contract.unit.test.ts",
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/store.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/store.database-integration.test.ts",
-          "project": "database-integration",
-          "caseId": "commits Yjs state, projection, revision and outbox together and deduplicates retries"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/auth/__tests__/authStore.branch-a08.unit.test.ts",
-        "src/features/collaboration/__tests__/__screenshots__/controls.browser-component.test.tsx/compares-and-resumes-offline-work-and-loads--restores-and-rebases-revisions-using-native-activation-1.png",
-        "src/features/shared/global-state/__tests__/groups.store.unit.test.ts",
-        "src/features/shared/global-state/__tests__/screen.store.component.test.tsx",
-        "src/features/shared/global-state/__tests__/screen.store.node.unit.test.ts",
-        "src/features/shared/global-state/__tests__/theme.store.component.test.tsx",
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/studio-assets.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "all seven Studio exports refer to confirmed shared revisions and contain valid media"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/studio-export.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "all seven Studio exports refer to confirmed shared revisions and contain valid media"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/submission-context.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "HTTP and ten real WebSocket editors enforce rights, proposals, comments, recovery and reconnection"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/server/collaboration/transaction.ts",
-      "domain": "server:collaboration",
-      "owner": "polity/server:collaboration",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/server/collaboration/__tests__/store.database-integration.test.ts",
-          "project": "database-integration",
-          "caseId": "commits Yjs state, projection, revision and outbox together and deduplicates retries"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/access.unit.test.ts",
-        "src/server/collaboration/__tests__/api.unit.test.ts",
-        "src/server/collaboration/__tests__/capture-proposal.unit.test.ts",
-        "src/server/collaboration/__tests__/comments.unit.test.ts",
-        "src/server/collaboration/__tests__/decisions.unit.test.ts",
-        "src/server/collaboration/__tests__/delivery.unit.test.ts",
-        "src/server/collaboration/__tests__/diagnostics.unit.test.ts",
-        "src/server/collaboration/__tests__/exports.unit.test.ts",
-        "src/server/collaboration/__tests__/finalize.unit.test.ts",
-        "src/server/collaboration/__tests__/governance-bridge.unit.test.ts",
-        "src/server/collaboration/__tests__/governance.unit.test.ts",
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts"
-      ]
     },
     {
       "path": "src/server/currency/__tests__/frankfurter.unit.test.ts",
@@ -97669,8 +97167,8 @@
         "src/server/__tests__/stripe-service-defaults.unit.test.ts",
         "src/server/__tests__/stripe-service.unit.test.ts",
         "src/server/app-tutorial/__tests__/service.contract.unit.test.ts",
-        "src/server/collaboration/__tests__/protocol.service-integration.test.ts",
-        "src/server/collaboration/__tests__/service.unit.test.ts"
+        "src/server/datasets/__tests__/access.unit.test.ts",
+        "src/server/datasets/__tests__/csv.contract.unit.test.ts"
       ]
     },
     {
@@ -98496,6 +97994,221 @@
       ]
     },
     {
+      "path": "src/server/project-chat/__tests__/attachments.unit.test.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/project-chat/__tests__/history.unit.test.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/project-chat/__tests__/run.database-integration.test.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/project-chat/__tests__/upload-attachments.unit.test.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/project-chat/attachments.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/messages/__tests__/contextAttachments.unit.test.ts",
+        "src/features/messages/hooks/__tests__/useMessageAttachments.branch-a06.component.test.tsx",
+        "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/history.unit.test.ts",
+        "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "src/server/project-chat/__tests__/run.database-integration.test.ts",
+        "src/server/project-chat/__tests__/upload-attachments.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/project-chat/context.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/agendas/ui/__tests__/AgendaItemContextCardController.branch.component.test.tsx",
+        "src/features/agendas/ui/__tests__/AgendaItemContextCardView.branch.component.test.tsx",
+        "src/features/charts/context/__tests__/ChartDatasetContext.component.test.tsx",
+        "src/features/messages/__tests__/contextAttachments.unit.test.ts",
+        "src/features/messages/logic/__tests__/shareContextAttachment.unit.test.ts",
+        "src/features/messages/ui/__tests__/AiContextCards.branch-a05.component.test.tsx",
+        "src/features/messages/ui/__tests__/AiContextCards.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/context-link.branch-a01.component.test.tsx",
+        "src/lib/ai/__tests__/messageContext.unit.test.ts",
+        "src/server/app-tutorial/__tests__/assistant-todo-context.unit.test.ts",
+        "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/history.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/project-chat/history.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/shared/hooks/__tests__/useHistoryToolbarButtonController.component.test.tsx",
+        "src/features/shared/ui/participation/__tests__/HolderHistoryDialog.component.test.tsx",
+        "src/lib/ai/__tests__/historyCompression.unit.test.ts",
+        "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/history.unit.test.ts",
+        "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "src/server/project-chat/__tests__/run.database-integration.test.ts",
+        "src/server/project-chat/__tests__/upload-attachments.unit.test.ts",
+        "src/zero/groups/__tests__/groupSharedMutators.role-holder-history-auth.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/project-chat/revisions.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/collaboration/__tests__/__screenshots__/controls.browser-component.test.tsx/compares-and-resumes-offline-work-and-loads--restores-and-rebases-revisions-using-native-activation-1.png",
+        "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/history.unit.test.ts",
+        "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "src/server/project-chat/__tests__/run.database-integration.test.ts",
+        "src/server/project-chat/__tests__/upload-attachments.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/project-chat/run.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/history.unit.test.ts",
+        "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "src/server/project-chat/__tests__/run.database-integration.test.ts",
+        "src/server/project-chat/__tests__/upload-attachments.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/project-chat/sources.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/history.unit.test.ts",
+        "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "src/server/project-chat/__tests__/run.database-integration.test.ts",
+        "src/server/project-chat/__tests__/upload-attachments.unit.test.ts",
+        "src/server/studio/__tests__/sources.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/project-chat/starter-tools.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/history.unit.test.ts",
+        "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "src/server/project-chat/__tests__/run.database-integration.test.ts",
+        "src/server/project-chat/__tests__/upload-attachments.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/project-chat/tools.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/assistant/__tests__/assistant-tools.component-flow.test.tsx",
+        "src/server/__tests__/ai-create-tools.contract.unit.test.ts",
+        "src/server/__tests__/ai-create-tools.timestamps.unit.test.ts",
+        "src/server/__tests__/ai-tools-findings.unit.test.ts",
+        "src/server/__tests__/ai-tools.contract.unit.test.ts",
+        "src/server/__tests__/ai-update-tools.contract.unit.test.ts",
+        "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/history.unit.test.ts",
+        "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "src/server/project-chat/__tests__/run.database-integration.test.ts",
+        "src/server/project-chat/__tests__/upload-attachments.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/project-chat/upload-attachments.ts",
+      "domain": "server:project-chat",
+      "owner": "polity/server:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/server/project-chat/__tests__/attachments.unit.test.ts",
+        "src/server/project-chat/__tests__/history.unit.test.ts",
+        "src/server/project-chat/__tests__/project-chat.database-integration.test.ts",
+        "src/server/project-chat/__tests__/run.database-integration.test.ts",
+        "src/server/project-chat/__tests__/upload-attachments.unit.test.ts"
+      ]
+    },
+    {
       "path": "src/server/push-delivery-service.ts",
       "domain": "server:push-delivery-service.ts",
       "owner": "polity/server:push-delivery-service.ts",
@@ -98812,6 +98525,26 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/studio/__tests__/chat-media.unit.test.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/studio/__tests__/db.unit.test.ts",
       "domain": "server:studio",
       "owner": "polity/server:studio",
@@ -98823,6 +98556,16 @@
     },
     {
       "path": "src/server/studio/__tests__/media-range.unit.test.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/studio/__tests__/private-media.unit.test.ts",
       "domain": "server:studio",
       "owner": "polity/server:studio",
       "kind": "test-infrastructure",
@@ -98877,8 +98620,53 @@
       ],
       "suggestedTestRefs": [
         "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts",
+        "src/server/studio/__tests__/service.unit.test.ts",
+        "src/server/studio/__tests__/sources.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/studio/assets.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/pwa/__tests__/manifestAssets.static-contract.test.ts",
+        "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/db.unit.test.ts",
+        "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts",
+        "src/server/studio/__tests__/service.unit.test.ts",
+        "src/server/studio/__tests__/sources.unit.test.ts",
+        "tools/deploy/__tests__/sync-vinxi-assets.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/studio/chat-media.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/db.unit.test.ts",
+        "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts",
         "src/server/studio/__tests__/published-media.unit.test.ts",
         "src/server/studio/__tests__/service.unit.test.ts",
         "src/server/studio/__tests__/sources.unit.test.ts"
@@ -98893,18 +98681,82 @@
       "coverageStatus": "referenced",
       "testRefs": [
         {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "all seven Studio exports refer to confirmed shared revisions and contain valid media"
+          "file": "src/server/studio/__tests__/db.unit.test.ts",
+          "project": "unit",
+          "caseId": "uses an explicit studio connection or upstream fallback and reuses its limited pool"
+        },
+        {
+          "file": "src/server/studio/__tests__/db.unit.test.ts",
+          "project": "unit",
+          "caseId": "requires current project or group access on the chosen transaction"
+        },
+        {
+          "file": "src/server/studio/__tests__/db.unit.test.ts",
+          "project": "unit",
+          "caseId": "locks authority before executing commands and propagates failure"
+        },
+        {
+          "file": "src/server/studio/__tests__/db.unit.test.ts",
+          "project": "unit",
+          "caseId": "respects explicit enablement, production defaults and pilot restrictions"
         }
       ],
       "suggestedTestRefs": [
         "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts",
         "src/server/studio/__tests__/published-media.unit.test.ts",
         "src/server/studio/__tests__/service.unit.test.ts",
         "src/server/studio/__tests__/sources.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/studio/export.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/events/logic/__tests__/icalExport.unit.test.ts",
+        "src/features/shared/hooks/__tests__/useExportToolbarButtonController.component.test.tsx",
+        "src/features/shared/ui/calendar/__tests__/CalendarExportButton.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/export-toolbar-button.component.test.tsx",
+        "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/db.unit.test.ts",
+        "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts",
+        "src/server/studio/__tests__/service.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/studio/governance.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "e2e/fixtures/domains/governance.ts",
+        "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/db.unit.test.ts",
+        "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts",
+        "src/server/studio/__tests__/service.unit.test.ts",
+        "src/server/studio/__tests__/sources.unit.test.ts",
+        "src/zero/amendments/__tests__/governance-concurrency.database-integration.test.ts",
+        "src/zero/amendments/__tests__/governance-mutation.service-integration.test.ts"
       ]
     },
     {
@@ -98933,8 +98785,77 @@
       ],
       "suggestedTestRefs": [
         "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts",
+        "src/server/studio/__tests__/service.unit.test.ts",
+        "src/server/studio/__tests__/sources.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/studio/operations.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/auth/hooks/__tests__/authOperations.branch-a08.component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "src/features/editor/hooks/__tests__/useEditorOperations.branch-a03.component.test.tsx",
+        "src/features/editor/hooks/__tests__/useEditorOperations.component.test.tsx",
+        "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/db.unit.test.ts",
+        "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts",
+        "src/server/studio/__tests__/service.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/studio/presence.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/editor/hooks/__tests__/editor-presence-invite-controllers.branch-a03.component.test.tsx",
+        "src/features/editor/ui/__tests__/editor-presence-inline.branch-a04.component.test.tsx",
+        "src/presence/__tests__/presence-server.unit.test.ts",
+        "src/presence/__tests__/usePresence.component.test.tsx",
+        "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/db.unit.test.ts",
+        "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts",
+        "src/server/studio/__tests__/service.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/studio/private-media.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/db.unit.test.ts",
+        "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts",
         "src/server/studio/__tests__/published-media.unit.test.ts",
         "src/server/studio/__tests__/service.unit.test.ts",
         "src/server/studio/__tests__/sources.unit.test.ts"
@@ -98946,18 +98867,15 @@
       "owner": "polity/server:studio",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "Studio media operations preserve private visibility, validate uploads and support authorized ranged downloads"
-        }
-      ],
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": [
         "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts",
         "src/server/studio/__tests__/published-media.unit.test.ts",
         "src/server/studio/__tests__/service.unit.test.ts",
         "src/server/studio/__tests__/sources.unit.test.ts"
@@ -98972,9 +98890,74 @@
       "coverageStatus": "referenced",
       "testRefs": [
         {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "all seven Studio exports refer to confirmed shared revisions and contain valid media"
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "duplicates a project without inventing a missing brand logo"
+        },
+        {
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "creates editable JSON documents atomically and rechecks group authority inside the transaction"
+        },
+        {
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "rejects foreign media before creating a project and deduplicates legitimate media references"
+        },
+        {
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "queues exports using a confirmed content revision"
+        },
+        {
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "reserves uploads under current rights and quotas before issuing a signed upload token"
+        },
+        {
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "removes the failed reservation when signing fails and denies upload after permission revocation"
+        },
+        {
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "validates stored size and actual file signatures before marking each supported media type ready"
+        },
+        {
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "fails media verification on missing or inconsistent object metadata and never makes it ready"
+        },
+        {
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "treats completed uploads idempotently and cancellation keeps the reservation until token expiry"
+        },
+        {
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "serves short-lived signed media and export links only after access checks"
+        },
+        {
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "copies private assets before exposing a new project and remaps image and logo references"
+        },
+        {
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "cleans partial copies after storage or transaction failure and never exposes the incomplete copy"
+        },
+        {
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "copies personal templates without group authority and clears references without a matching asset"
+        },
+        {
+          "file": "src/server/studio/__tests__/service.unit.test.ts",
+          "project": "unit",
+          "caseId": "allows publishing only completed Studio exports currently editable by the actor"
         }
       ],
       "suggestedTestRefs": [
@@ -98988,8 +98971,8 @@
         "src/server/__tests__/stripe-service-defaults.unit.test.ts",
         "src/server/__tests__/stripe-service.unit.test.ts",
         "src/server/app-tutorial/__tests__/service.contract.unit.test.ts",
-        "src/server/collaboration/__tests__/protocol.service-integration.test.ts",
-        "src/server/collaboration/__tests__/service.unit.test.ts"
+        "src/server/datasets/__tests__/service.contract.unit.test.ts",
+        "src/server/studio/__tests__/api.unit.test.ts"
       ]
     },
     {
@@ -99008,8 +98991,31 @@
       ],
       "suggestedTestRefs": [
         "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts",
+        "src/server/studio/__tests__/service.unit.test.ts",
+        "src/server/studio/__tests__/sources.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/studio/workspace-access.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/db.unit.test.ts",
+        "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts",
         "src/server/studio/__tests__/published-media.unit.test.ts",
         "src/server/studio/__tests__/service.unit.test.ts",
         "src/server/studio/__tests__/sources.unit.test.ts"
@@ -99036,6 +99042,16 @@
           }
         }
       ],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/transaction.ts",
+      "domain": "server:transaction.ts",
+      "owner": "polity/server:transaction.ts",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": []
     },
     {
@@ -102606,6 +102622,29 @@
       ]
     },
     {
+      "path": "src/zero/change-requests/vote-result.ts",
+      "domain": "zero:change-requests",
+      "owner": "polity/zero:change-requests",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/voting/__tests__/VoteResultsDisplay.component.test.tsx",
+        "src/features/vote-cast/logic/__tests__/computeVoteResults.mutation-m01.unit.test.ts",
+        "src/features/vote-cast/logic/__tests__/computeVoteResults.property.unit.test.ts",
+        "src/features/vote-cast/logic/__tests__/computeVoteResults.typefix.branch-a02.unit.test.ts",
+        "src/features/vote-cast/logic/__tests__/computeVoteResults.unit.test.ts",
+        "src/features/vote-cast/ui/__tests__/VoteResultSentence.component.test.tsx",
+        "src/features/votes/logic/__tests__/computeVoteResult.mutation-m08.unit.test.ts",
+        "src/features/votes/logic/__tests__/computeVoteResult.unit.test.ts",
+        "src/zero/change-requests/__tests__/document-integrity.unit.test.ts",
+        "src/zero/change-requests/__tests__/event-suggestions.unit.test.ts",
+        "src/zero/change-requests/__tests__/internal-voting.unit.test.ts",
+        "src/zero/change-requests/__tests__/server-resolution.city-design.unit.test.ts"
+      ]
+    },
+    {
       "path": "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
       "domain": "zero:common",
       "owner": "polity/zero:common",
@@ -103111,14 +103150,8 @@
       "owner": "polity/zero:communication-studio",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
-        }
-      ],
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": [
         "src/features/editor/logic/__tests__/version-queries.unit.test.ts",
         "src/zero/__tests__/allQueries.contract.unit.test.ts",
@@ -103140,14 +103173,8 @@
       "owner": "polity/zero:communication-studio",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
-        }
-      ],
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": [
         "src/lib/ai/__tests__/schemas.unit.test.ts",
         "src/zero/__tests__/primaryMediaSchemas.unit.test.ts",
@@ -103164,19 +103191,59 @@
       ]
     },
     {
+      "path": "src/zero/communication-studio/server-mutators.ts",
+      "domain": "zero:communication-studio",
+      "owner": "polity/zero:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/zero/accreditation/__tests__/accreditationServerMutators.authorization.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaServerMutators.ensureEventSuggestionChangeRequestVotes.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaServerMutators.initializeChangeRequestVoting.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaServerMutators.internalBranches.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentServerMutators.authorization.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentServerMutators.cityDesignBatch.unit.test.ts",
+        "src/zero/blogs/__tests__/blogServerMutators.branch-a10.unit.test.ts",
+        "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts",
+        "src/zero/communication-studio/__tests__/api.unit.test.ts",
+        "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "src/zero/communication-studio/__tests__/state.component.test.tsx",
+        "src/zero/documents/__tests__/documentServerMutators.statementComments.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/zero/communication-studio/shared-mutators.ts",
+      "domain": "zero:communication-studio",
+      "owner": "polity/zero:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/zero/agendas/__tests__/agendaSharedMutators.branches.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaSharedMutators.speakerAuthorization.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.changeRequestNumbering.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.cityDesignBatch.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.documentChangeRequest.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.formatFallback.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
+        "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
+        "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
+        "src/zero/blogs/__tests__/blogSharedMutators.branch-a10.unit.test.ts",
+        "src/zero/calendar-subscriptions/__tests__/shared-mutators.branch-a04.unit.test.ts"
+      ]
+    },
+    {
       "path": "src/zero/communication-studio/table.ts",
       "domain": "zero:communication-studio",
       "owner": "polity/zero:communication-studio",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
-        }
-      ],
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": [
         "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
         "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
@@ -103243,14 +103310,8 @@
       "owner": "polity/zero:communication-studio",
       "kind": "production-code",
       "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/editors.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "Streetdesign and Studio save object fields and captions and download a real revision-bound PPTX"
-        }
-      ],
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": [
         "src/zero/communication-studio/__tests__/api.unit.test.ts",
         "src/zero/communication-studio/__tests__/queries.unit.test.ts",
@@ -108813,6 +108874,121 @@
       ]
     },
     {
+      "path": "src/zero/project-chat/access.ts",
+      "domain": "zero:project-chat",
+      "owner": "polity/zero:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "e2e/accessibility.e2e.spec.ts",
+        "src/features/auth/hooks/__tests__/useEntityRouteAccess.component.test.tsx",
+        "src/features/auth/logic/__tests__/checkEntityAccess.unit.test.ts",
+        "src/features/auth/logic/__tests__/guestEntityRouteAccess.unit.test.ts",
+        "src/features/auth/logic/__tests__/privateEntityRelationshipAccess.unit.test.ts",
+        "src/features/auth/logic/__tests__/routeVisibilityAccess.unit.test.ts",
+        "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
+        "src/features/groups/logic/__tests__/hasGroupOperationAccess.unit.test.ts",
+        "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx",
+        "src/features/shared/ui/navigation/__tests__/NavigationButtons.accessibility.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/TableToolbarButtonView.accessibility.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/media-placeholder-node.accessibility.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/zero/project-chat/queries.ts",
+      "domain": "zero:project-chat",
+      "owner": "polity/zero:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/editor/logic/__tests__/version-queries.unit.test.ts",
+        "src/zero/__tests__/allQueries.contract.unit.test.ts",
+        "src/zero/__tests__/blog-statement-queries.branch-a10.unit.test.ts",
+        "src/zero/__tests__/virtualizedPageQueries.contract.unit.test.ts",
+        "src/zero/activity/__tests__/queries.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentQueries.authorization.unit.test.ts",
+        "src/zero/blogs/__tests__/blogQueries.authorization.unit.test.ts",
+        "src/zero/common/__tests__/commonQueries.branches.unit.test.ts",
+        "src/zero/communication-studio/__tests__/queries.unit.test.ts",
+        "src/zero/documents/__tests__/document-queries.branch-a03.unit.test.ts",
+        "src/zero/events/__tests__/eventQueries.authorization.unit.test.ts",
+        "src/zero/events/__tests__/eventQueries.coverage.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/zero/project-chat/server-mutators.ts",
+      "domain": "zero:project-chat",
+      "owner": "polity/zero:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/zero/accreditation/__tests__/accreditationServerMutators.authorization.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaServerMutators.ensureEventSuggestionChangeRequestVotes.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaServerMutators.initializeChangeRequestVoting.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaServerMutators.internalBranches.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentServerMutators.authorization.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentServerMutators.cityDesignBatch.unit.test.ts",
+        "src/zero/blogs/__tests__/blogServerMutators.branch-a10.unit.test.ts",
+        "src/zero/common/__tests__/commonServerMutators.subscribe.unit.test.ts",
+        "src/zero/documents/__tests__/documentServerMutators.statementComments.unit.test.ts",
+        "src/zero/documents/__tests__/server-mutators.branch-a03.unit.test.ts",
+        "src/zero/elections/__tests__/electionServerMutators.internalBranches.unit.test.ts",
+        "src/zero/elections/__tests__/electionServerMutators.notifications.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/zero/project-chat/shared-mutators.ts",
+      "domain": "zero:project-chat",
+      "owner": "polity/zero:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/zero/agendas/__tests__/agendaSharedMutators.branches.unit.test.ts",
+        "src/zero/agendas/__tests__/agendaSharedMutators.speakerAuthorization.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.changeRequestNumbering.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.cityDesignBatch.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.documentChangeRequest.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.formatFallback.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.processAuthorization.unit.test.ts",
+        "src/zero/amendments/__tests__/amendmentSharedMutators.runtime-defaults.unit.test.ts",
+        "src/zero/appearance-themes/__tests__/shared-mutators.branch-a04.unit.test.ts",
+        "src/zero/appearance-themes/__tests__/shared-mutators.unit.test.ts",
+        "src/zero/blogs/__tests__/blogSharedMutators.branch-a10.unit.test.ts",
+        "src/zero/calendar-subscriptions/__tests__/shared-mutators.branch-a04.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/zero/project-chat/table.ts",
+      "domain": "zero:project-chat",
+      "owner": "polity/zero:project-chat",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/agendas/logic/__tests__/selectableAgendaBranches.unit.test.ts",
+        "src/features/charts/ui/__tests__/EurostatObservationPreviewTable.component.test.tsx",
+        "src/features/charts/ui/__tests__/ManualChartTableEditor.component.test.tsx",
+        "src/features/groups/ui/__tests__/GuestsTable.coverage.component.test.tsx",
+        "src/features/groups/ui/__tests__/MembershipsByRoleTables.component.test.tsx",
+        "src/features/groups/ui/__tests__/RoleDetailsTable.component.test.tsx",
+        "src/features/groups/ui/__tests__/RoleDetailsTable.coverage.component.test.tsx",
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.component.test.tsx",
+        "src/features/groups/ui/__tests__/RolesPermissionsTable.coverage.component.test.tsx",
+        "src/features/groups/ui/__tests__/membershipTables.coverage.component.test.tsx",
+        "src/features/network/hooks/__tests__/useEditableNetworkLayout.unit.test.ts",
+        "src/features/payments/ui/__tests__/SubscriptionsTable.branch-a08.component.test.tsx"
+      ]
+    },
+    {
       "path": "src/zero/queries.ts",
       "domain": "zero:queries.ts",
       "owner": "polity/zero:queries.ts",
@@ -112188,6 +112364,156 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "supabase/migrations/20260920120000_project_chats.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921120000_project_chat_full_assistant.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921121000_project_chat_participant_surface.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921130000_studio_zero.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921140000_studio_editor_actions.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921150000_retire_collaboration_functions.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921160000_studio_function_permissions.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921170000_studio_editor_claim.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921200000_canvas_workflows.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921210000_canvas_capabilities.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921220000_canvas_authority_lock.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921230000_canvas_private_assets.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921240000_canvas_recipient_presence.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921250000_canvas_zero_workspaces.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260921260000_canvas_conflict_resolution.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "supabase/schemas/00_extensions.sql",
       "domain": "database",
       "owner": "polity/database",
@@ -112728,6 +113054,126 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "supabase/schemas/49_studio_zero.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/50_studio_editor_actions.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/51_retire_collaboration_functions.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/52_studio_function_permissions.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/53_studio_editor_claim.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/54_canvas_workflows.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/55_canvas_capabilities.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/56_canvas_authority_lock.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/57_canvas_private_assets.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/58_canvas_recipient_presence.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/59_canvas_zero_workspaces.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/60_canvas_conflict_resolution.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "supabase/seed.local-context-tables.sql",
       "domain": "database",
       "owner": "polity/database",
@@ -112799,6 +113245,16 @@
     },
     {
       "path": "supabase/tests/auth_assistant.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/tests/canvas_workflows.sql",
       "domain": "database",
       "owner": "polity/database",
       "kind": "test-infrastructure",
@@ -113018,6 +113474,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "supabase/tests/studio_zero.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "supabase/tests/todo_activity_log.sql",
       "domain": "database",
       "owner": "polity/database",
@@ -113056,304 +113522,6 @@
       "coverageStatus": "not-instrumented",
       "testRefs": [],
       "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/IMPLEMENTATION.md",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "documentation",
-      "verification": "static-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/__tests__/evidence.unit.test.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/__tests__/launch.unit.test.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/__tests__/local-stack.unit.test.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/__tests__/migrate.unit.test.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/__tests__/rehearsal.unit.test.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/__tests__/seed-guard.unit.test.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/__tests__/seed.unit.test.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/__tests__/server.unit.test.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/__tests__/verify.unit.test.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/compose.yaml",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "configuration",
-      "verification": "static-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/e2e/editors.e2e.spec.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/e2e/operations.e2e.spec.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/evidence.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "operational-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/__tests__/evidence.unit.test.ts",
-          "project": "unit",
-          "caseId": "rejects every missing or failed gate even if the report summary claims success"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/app-tutorial/__tests__/scroll-evidence.unit.test.ts",
-        "tools/collaboration/__tests__/evidence.unit.test.ts",
-        "tools/testing/__tests__/e2e-acceptance-evidence.unit.test.ts",
-        "tools/testing/check-accountability-coverage-evidence.mjs",
-        "tools/testing/e2e-acceptance-evidence.mjs"
-      ]
-    },
-    {
-      "path": "tools/collaboration/launch.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "operational-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "a complete stack restart preserves confirmed content, rights, decisions and comments"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/app-tutorial/__tests__/TutorialLauncherPage.component.test.tsx",
-        "tools/collaboration/__tests__/launch.unit.test.ts"
-      ]
-    },
-    {
-      "path": "tools/collaboration/local-stack.mjs",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "operational-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "a complete stack restart preserves confirmed content, rights, decisions and comments"
-        }
-      ],
-      "suggestedTestRefs": ["tools/collaboration/__tests__/local-stack.unit.test.ts"]
-    },
-    {
-      "path": "tools/collaboration/migrate.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "operational-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/__tests__/migrate.unit.test.ts",
-          "project": "unit",
-          "caseId": "reports Studio-only status without writing with argument %j"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/server/collaboration/__tests__/migrate-comments.unit.test.ts",
-        "tools/collaboration/__tests__/migrate.unit.test.ts",
-        "tools/testing/migrate-test-names.mjs"
-      ]
-    },
-    {
-      "path": "tools/collaboration/rehearsal.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "operational-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "committed conversion retries and both rollback paths retain legacy history and new acknowledgements"
-        }
-      ],
-      "suggestedTestRefs": ["tools/collaboration/__tests__/rehearsal.unit.test.ts"]
-    },
-    {
-      "path": "tools/collaboration/release-readiness.json",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "configuration",
-      "verification": "static-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/seed.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "operational-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/__tests__/seed-guard.unit.test.ts",
-          "project": "unit",
-          "caseId": "rejects demo seeding outside the explicit local primary database before creating users or media"
-        }
-      ],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/collaboration/server.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "operational-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "process death before and after commit replays once and excludes a second writer"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/notifications/utils/__tests__/notification-helpers.server-audiences.unit.test.ts",
-        "src/lib/supabase/__tests__/server.unit.test.ts",
-        "src/presence/__tests__/presence-server.unit.test.ts",
-        "src/server/__tests__/server-wrappers.lsf-a10.unit.test.ts",
-        "src/zero/__tests__/mutate-with-server-check.contract.unit.test.ts",
-        "src/zero/__tests__/mutateWithServerCheck.static-contract.test.ts",
-        "src/zero/__tests__/server-helpers.contract.unit.test.ts",
-        "src/zero/__tests__/serverNotify.unit.test.ts",
-        "src/zero/accreditation/__tests__/accreditationServerMutators.authorization.unit.test.ts",
-        "src/zero/agendas/__tests__/agendaServerMutators.ensureEventSuggestionChangeRequestVotes.unit.test.ts",
-        "src/zero/agendas/__tests__/agendaServerMutators.initializeChangeRequestVoting.unit.test.ts",
-        "src/zero/agendas/__tests__/agendaServerMutators.internalBranches.unit.test.ts"
-      ]
-    },
-    {
-      "path": "tools/collaboration/verify.ts",
-      "domain": "tools:collaboration",
-      "owner": "polity/tools:collaboration",
-      "kind": "operational-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/__tests__/verify.unit.test.ts",
-          "project": "unit",
-          "caseId": "never approves a partial run or a failed command and still records later independent checks"
-        }
-      ],
-      "suggestedTestRefs": [
-        "src/features/auth/hooks/__tests__/useVerifyFormController.component.test.tsx",
-        "tools/collaboration/__tests__/verify.unit.test.ts",
-        "tools/e2e/verify-reused-stack.mjs"
-      ]
     },
     {
       "path": "tools/database/__tests__/check-pgtap-coverage-errors.unit.test.ts",
@@ -113501,6 +113669,26 @@
       "suggestedTestRefs": ["tools/deploy/__tests__/sync-vinxi-assets.unit.test.ts"]
     },
     {
+      "path": "tools/dev/compose.yaml",
+      "domain": "tools:dev",
+      "owner": "polity/tools:dev",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/dev/local-stack.mjs",
+      "domain": "tools:dev",
+      "owner": "polity/tools:dev",
+      "kind": "operational-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/__tests__/build-provenance.unit.test.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -113561,56 +113749,6 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "tools/e2e/collaboration/acceptance.ts",
-      "domain": "tools:e2e",
-      "owner": "polity/tools:e2e",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/e2e/collaboration/faults.ts",
-      "domain": "tools:e2e",
-      "owner": "polity/tools:e2e",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/e2e/collaboration/lifecycle.ts",
-      "domain": "tools:e2e",
-      "owner": "polity/tools:e2e",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/e2e/collaboration/restart.ts",
-      "domain": "tools:e2e",
-      "owner": "polity/tools:e2e",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
-      "path": "tools/e2e/collaboration/studio-acceptance.ts",
-      "domain": "tools:e2e",
-      "owner": "polity/tools:e2e",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "tools/e2e/prepare-stack.mjs",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -113641,6 +113779,56 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/e2e/studio/canvas-exports.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/studio/canvas.e2e.spec.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/studio/canvas.playwright.config.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/studio/editor.e2e.spec.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/studio/playwright.config.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/e2e/studio/smoke-export.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
@@ -113652,6 +113840,26 @@
     },
     {
       "path": "tools/e2e/studio/smoke-service.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/studio/verify-exports.ts",
+      "domain": "tools:e2e",
+      "owner": "polity/tools:e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/e2e/studio/visual-fixture.ts",
       "domain": "tools:e2e",
       "owner": "polity/tools:e2e",
       "kind": "test-infrastructure",
@@ -113998,6 +114206,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "tools/studio/CANVAS-IMPLEMENTATION.md",
+      "domain": "tools:studio",
+      "owner": "polity/tools:studio",
+      "kind": "documentation",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "tools/studio/Dockerfile",
       "domain": "tools:studio",
       "owner": "polity/tools:studio",
@@ -114028,16 +114246,6 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "tools/studio/__tests__/retired-server.unit.test.ts",
-      "domain": "tools:studio",
-      "owner": "polity/tools:studio",
-      "kind": "test-infrastructure",
-      "verification": "self-test",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "tools/studio/__tests__/workbook.unit.test.ts",
       "domain": "tools:studio",
       "owner": "polity/tools:studio",
@@ -114058,19 +114266,43 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "tools/studio/collaboration-server.ts",
+      "path": "tools/studio/canvas-export-layout.ts",
       "domain": "tools:studio",
       "owner": "polity/tools:studio",
       "kind": "operational-code",
       "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/studio/__tests__/retired-server.unit.test.ts",
-          "project": "unit",
-          "caseId": "rejects the retired standalone Studio server before starting a second persistence channel"
-        }
-      ],
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/studio/canvas-pptx.ts",
+      "domain": "tools:studio",
+      "owner": "polity/tools:studio",
+      "kind": "operational-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/studio/canvas-render-bundle.ts",
+      "domain": "tools:studio",
+      "owner": "polity/tools:studio",
+      "kind": "operational-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/studio/canvas-render-entry.ts",
+      "domain": "tools:studio",
+      "owner": "polity/tools:studio",
+      "kind": "operational-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": []
     },
     {
@@ -114090,16 +114322,6 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "tools/studio/fly-collaboration.toml",
-      "domain": "tools:studio",
-      "owner": "polity/tools:studio",
-      "kind": "configuration",
-      "verification": "static-contract",
-      "coverageStatus": "not-instrumented",
-      "testRefs": [],
-      "suggestedTestRefs": []
-    },
-    {
       "path": "tools/studio/fly-worker.toml",
       "domain": "tools:studio",
       "owner": "polity/tools:studio",
@@ -114115,18 +114337,21 @@
       "owner": "polity/tools:studio",
       "kind": "operational-code",
       "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "all seven Studio exports refer to confirmed shared revisions and contain valid media"
-        }
-      ],
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": [
-        "src/features/app-tutorial/__tests__/TutorialLauncherPage.component.test.tsx",
-        "tools/collaboration/__tests__/launch.unit.test.ts"
+        "src/features/app-tutorial/__tests__/TutorialLauncherPage.component.test.tsx"
       ]
+    },
+    {
+      "path": "tools/studio/reset-storage.ts",
+      "domain": "tools:studio",
+      "owner": "polity/tools:studio",
+      "kind": "operational-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": []
     },
     {
       "path": "tools/studio/worker.ts",
@@ -114134,14 +114359,8 @@
       "owner": "polity/tools:studio",
       "kind": "operational-code",
       "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "tools/collaboration/e2e/operations.e2e.spec.ts",
-          "project": "playwright",
-          "caseId": "all seven Studio exports refer to confirmed shared revisions and contain valid media"
-        }
-      ],
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": [
         "src/features/pwa/__tests__/custom-service-worker.unit.test.ts",
         "tools/studio/__tests__/worker.unit.test.ts"
@@ -114389,6 +114608,16 @@
     },
     {
       "path": "tools/testing/accountability/process-engine.json",
+      "domain": "tools:testing",
+      "owner": "polity/tools:testing",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "tools/testing/accountability/project-chat.json",
       "domain": "tools:testing",
       "owner": "polity/tools:testing",
       "kind": "test-infrastructure",

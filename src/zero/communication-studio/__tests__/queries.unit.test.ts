@@ -22,6 +22,7 @@ describe('Studio Zero visibility projections', () => {
       studioQueries.list.fn({ args: { groupId }, ctx: { userID: 'alice', email: '' } });
       expect(harness.lastQuery('studio_project').calls).toEqual(
         expect.arrayContaining([
+          ['where', 'document_schema_version', 4],
           ['where', 'group_id', groupId === null ? 'IS' : '=', groupId],
           ['orderBy', 'updated_at', 'desc'],
           ['limit', 100],
@@ -78,6 +79,11 @@ describe('Studio Zero visibility projections', () => {
       ])
     );
     const rules = access('studio_export.project');
+    expect(harness.lastQuery('studio_export.project').calls).toContainEqual([
+      'where',
+      'document_schema_version',
+      4,
+    ]);
     expect(rules).toContainEqual([
       'and',
       ['cmp', 'group_id', 'IS', null],
@@ -92,4 +98,36 @@ describe('Studio Zero visibility projections', () => {
       ['active', 'member', 'admin'],
     ]);
   });
+  it('never exposes a legacy document through a direct project lookup', () => {
+    studioQueries.document.fn({
+      args: { id: 'legacy-project' },
+      ctx: { userID: 'alice', email: '' },
+    });
+    expect(harness.lastQuery('studio_state.project').calls).toContainEqual([
+      'where',
+      'document_schema_version',
+      4,
+    ]);
+  });
+});
+
+it('restricts operation receipts to their actor and current project access', () => {
+  studioQueries.operation.fn({
+    args: { projectId: 'private', operationId: 'operation' },
+    ctx: { userID: 'alice', email: '' },
+  });
+  expect(harness.lastQuery('studio_operation').calls).toEqual(
+    expect.arrayContaining([
+      ['where', 'project_id', 'private'],
+      ['where', 'id', 'operation'],
+      ['where', 'actor_id', 'alice'],
+      ['one'],
+    ])
+  );
+  expect(access('studio_operation.project')).toContainEqual([
+    'where',
+    'memberships',
+    'user_id',
+    'alice',
+  ]);
 });

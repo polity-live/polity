@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, Copy, Palette, Send, Trash2 } from 'lucide-react';
+import { CheckCircle2, Copy, Palette, Plus, Send, Trash2 } from 'lucide-react';
 import { useQuery, useZero } from '@rocicorp/zero/react';
 import { queries } from '@/zero/queries';
 import { mutators } from '@/zero/mutators';
@@ -14,6 +14,8 @@ import {
   type FontId,
   type ThemeFonts,
   type ThemePalette,
+  type ThemePaletteRole,
+  type ThemeTextStyle,
 } from '@/features/shared/appearance-theme';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
@@ -52,6 +54,7 @@ interface RevisionRow {
   light_palette: ThemePalette;
   dark_palette: ThemePalette;
   fonts: ThemeFonts;
+  text_styles?: ThemeTextStyle[];
 }
 
 interface ThemeRow {
@@ -59,7 +62,7 @@ interface ThemeRow {
   slug: string;
   name: string;
   description?: string | null;
-  group_id: string;
+  group_id?: string | null;
   current_revision?: RevisionRow | null;
   revisions?: readonly RevisionRow[];
 }
@@ -71,6 +74,7 @@ interface EditorState {
   light: ThemePalette;
   dark: ThemePalette;
   fonts: ThemeFonts;
+  textStyles: ThemeTextStyle[];
   draftId: string;
   nextVersion: number;
 }
@@ -87,6 +91,7 @@ function toEditorState(row: ThemeRow): EditorState | null {
     light: source.light_palette,
     dark: source.dark_palette,
     fonts: source.fonts,
+    textStyles: structuredClone(source.text_styles ?? []),
     draftId: draft?.id ?? crypto.randomUUID(),
     nextVersion: Math.max(0, ...revisions.map(revision => revision.version)) + 1,
   };
@@ -237,10 +242,17 @@ function PaletteEditor({
   );
 }
 
-export function GroupThemeSettings({ groupId }: { groupId: string }) {
+export function GroupThemeSettings({ groupId = null }: { groupId?: string | null }) {
   const { t } = useTranslation();
   const zero = useZero();
-  const [rows, result] = useQuery(queries.appearanceThemes.groupEditor({ groupId }));
+  const [groupRows, groupResult] = useQuery(
+    groupId ? queries.appearanceThemes.groupEditor({ groupId }) : undefined
+  );
+  const [personalRows, personalResult] = useQuery(
+    groupId ? undefined : queries.appearanceThemes.personalEditor({})
+  );
+  const rows = groupId ? groupRows : personalRows;
+  const result = groupId ? groupResult : personalResult;
   const themes = (Array.isArray(rows) ? rows : []) as unknown as ThemeRow[];
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [saved, setSaved] = useState(false);
@@ -253,12 +265,14 @@ export function GroupThemeSettings({ groupId }: { groupId: string }) {
             slug: 'group-preview',
             name: editor.name,
             description: editor.description || undefined,
-            kind: 'group',
+            kind: groupId ? 'group' : 'personal',
             groupId,
             version: editor.nextVersion,
             light: editor.light,
             dark: editor.dark,
             fonts: editor.fonts,
+            textStyles: editor.textStyles,
+            ownerId: null,
           })
         : null,
     [editor, groupId]
@@ -279,23 +293,25 @@ export function GroupThemeSettings({ groupId }: { groupId: string }) {
       light: structuredClone(preset.light),
       dark: structuredClone(preset.dark),
       fonts: { ...preset.fonts },
+      textStyles: structuredClone(preset.textStyles),
       draftId: revisionId,
       nextVersion: 1,
     };
     setEditor(state);
-    const mutation = zero.mutate(
-      mutators.appearanceThemes.createGroup({
-        id: themeId,
-        revision_id: revisionId,
-        slug: `${preset.slug}-${themeId.slice(0, 8)}`,
-        group_id: groupId,
-        name: state.name,
-        description: null,
-        light_palette: state.light,
-        dark_palette: state.dark,
-        fonts: state.fonts,
-      })
-    );
+    const common = {
+      id: themeId,
+      revision_id: revisionId,
+      slug: `${preset.slug}-${themeId.slice(0, 8)}`,
+      name: state.name,
+      description: null,
+      light_palette: state.light,
+      dark_palette: state.dark,
+      fonts: state.fonts,
+      text_styles: state.textStyles,
+    };
+    const mutation = groupId
+      ? zero.mutate(mutators.appearanceThemes.createGroup({ ...common, group_id: groupId }))
+      : zero.mutate(mutators.appearanceThemes.createPersonal(common));
     onServerError(mutation, message => console.error('Theme creation failed:', message));
   };
 
@@ -314,6 +330,7 @@ export function GroupThemeSettings({ groupId }: { groupId: string }) {
         light_palette: parsed.data.light,
         dark_palette: parsed.data.dark,
         fonts: parsed.data.fonts,
+        text_styles: parsed.data.textStyles,
       })
     );
     setSaved(true);
@@ -415,6 +432,177 @@ export function GroupThemeSettings({ groupId }: { groupId: string }) {
             </div>
           ))}
         </div>
+
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="font-semibold">{t('pages.group.themes.textStyles.title')}</h4>
+              <p className="text-muted-foreground text-sm">
+                {t('pages.group.themes.textStyles.description')}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={editor.textStyles.length >= 50}
+              onClick={() =>
+                setEditor({
+                  ...editor,
+                  textStyles: [
+                    ...editor.textStyles,
+                    {
+                      id: crypto.randomUUID(),
+                      name: t('pages.group.themes.textStyles.defaultName', {
+                        number: editor.textStyles.length + 1,
+                      }),
+                      font: editor.fonts.sans,
+                      size: 28,
+                      color: 'foreground',
+                      bold: false,
+                      italic: false,
+                      underline: false,
+                      lineHeight: 1.2,
+                      letterSpacing: 0,
+                      align: 'left',
+                    },
+                  ],
+                })
+              }
+            >
+              <Plus />
+              {t('pages.group.themes.textStyles.add')}
+            </Button>
+          </div>
+          {editor.textStyles.map((style, index) => {
+            const update = (patch: Partial<ThemeTextStyle>) => {
+              const textStyles = [...editor.textStyles];
+              textStyles[index] = { ...style, ...patch };
+              setEditor({ ...editor, textStyles });
+            };
+            return (
+              <div key={style.id} className="bg-card space-y-3 rounded-lg border p-3">
+                <div className="flex gap-2">
+                  <Input
+                    aria-label={t('pages.group.themes.textStyles.name')}
+                    value={style.name}
+                    maxLength={80}
+                    onChange={event => update({ name: event.currentTarget.value })}
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-label={t('pages.group.themes.textStyles.delete')}
+                    onClick={() =>
+                      setEditor({
+                        ...editor,
+                        textStyles: editor.textStyles.filter(item => item.id !== style.id),
+                      })
+                    }
+                  >
+                    <Trash2 />
+                  </Button>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-4">
+                  <label className="space-y-1 text-xs">
+                    <span>{t('pages.group.themes.textStyles.font')}</span>
+                    <select
+                      className="border-input bg-card h-9 w-full rounded-md border px-2"
+                      value={style.font}
+                      onChange={event => update({ font: event.currentTarget.value as FontId })}
+                    >
+                      {fontIdSchema.options.map(font => (
+                        <option key={font} value={font}>
+                          {font}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="space-y-1 text-xs">
+                    <span>{t('pages.group.themes.textStyles.color')}</span>
+                    <select
+                      className="border-input bg-card h-9 w-full rounded-md border px-2"
+                      value={style.color}
+                      onChange={event =>
+                        update({ color: event.currentTarget.value as ThemePaletteRole })
+                      }
+                    >
+                      {[...COLOR_FIELDS, 'chart1', 'chart2', 'chart3', 'chart4', 'chart5'].map(
+                        role => (
+                          <option key={role} value={role}>
+                            {role}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </label>
+                  <label className="space-y-1 text-xs">
+                    <span>{t('pages.group.themes.textStyles.size')}</span>
+                    <Input
+                      type="number"
+                      min={8}
+                      max={300}
+                      value={style.size}
+                      onChange={event => update({ size: event.currentTarget.valueAsNumber })}
+                    />
+                  </label>
+                  <label className="space-y-1 text-xs">
+                    <span>{t('pages.group.themes.textStyles.lineHeight')}</span>
+                    <Input
+                      type="number"
+                      min={0.5}
+                      max={4}
+                      step={0.05}
+                      value={style.lineHeight}
+                      onChange={event => update({ lineHeight: event.currentTarget.valueAsNumber })}
+                    />
+                  </label>
+                  <label className="space-y-1 text-xs">
+                    <span>{t('pages.group.themes.textStyles.letterSpacing')}</span>
+                    <Input
+                      type="number"
+                      min={-20}
+                      max={100}
+                      step={0.1}
+                      value={style.letterSpacing}
+                      onChange={event =>
+                        update({ letterSpacing: event.currentTarget.valueAsNumber })
+                      }
+                    />
+                  </label>
+                  <label className="space-y-1 text-xs">
+                    <span>{t('pages.group.themes.textStyles.alignment')}</span>
+                    <select
+                      className="border-input bg-card h-9 w-full rounded-md border px-2"
+                      value={style.align}
+                      onChange={event =>
+                        update({ align: event.currentTarget.value as ThemeTextStyle['align'] })
+                      }
+                    >
+                      {['left', 'center', 'right', 'justify'].map(align => (
+                        <option key={align} value={align}>
+                          {align}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="flex flex-wrap gap-4 text-sm">
+                  {(['bold', 'italic', 'underline'] as const).map(mark => (
+                    <label key={mark} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={style[mark]}
+                        onChange={event => update({ [mark]: event.currentTarget.checked })}
+                      />
+                      {t(`pages.group.themes.textStyles.marks.${mark}`)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </section>
 
         <PaletteEditor
           title={t('pages.group.themes.light')}

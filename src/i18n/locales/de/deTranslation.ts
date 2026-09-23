@@ -1,3 +1,4 @@
+import { projectChatTranslations } from './features/projectChat';
 import { studioTranslations } from './features/studio';
 import type { I18nLocale } from '../en/enTranslation';
 
@@ -127,6 +128,7 @@ const baseDeTranslation = {
       },
     },
     studio: studioTranslations,
+    projectChat: projectChatTranslations,
     agendas: agendasTranslations,
     appTutorial: appTutorialTranslations,
     auth: authTranslations,

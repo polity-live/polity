@@ -1,34 +1,100 @@
+import { useZero } from '@rocicorp/zero/react';
+import { mutators } from '@/zero/mutators';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useStudioState } from '@/zero/communication-studio/useStudioState';
 import { useStudioApi } from '@/zero/communication-studio/useStudioApi';
+import { useUserState } from '@/zero/users/useUserState';
 import { useStudioDocument } from './useStudioDocument';
-import { createDocument, makePage } from '../logic/templates';
 import {
   element,
-  defaultBrand,
   formats,
   type StudioDocument,
   type StudioElement,
-  type StudioBrand,
   type StudioPage,
 } from '../logic/document';
 import { applyProposal, type StudioProposal } from '../logic/ai-proposal';
 import { addPage, patchPage, patchElement, patchPost } from '../logic/collaboration';
 import { resizePage } from '../logic/layout';
+import {
+  createFrameNode,
+  framePresetRegistry,
+  type FramePresetId,
+  type StudioDocumentV3,
+} from '../logic/document-v3';
+import { applyStudioCommandV3, type StudioCommandV3 } from '../logic/commands-v3';
+import { createTableData, type TableDimensions } from '../logic/table-operations';
+import { BUILTIN_THEMES } from '@/features/shared/appearance-theme';
+import {
+  activePalette,
+  applyThemeSnapshot,
+  applyTextStyleToNode,
+  createThemeSnapshot,
+  themeFromApiRow,
+  type StudioThemeSnapshot,
+} from '../logic/theme';
+import {
+  elementSetListItemSchema,
+  elementSetSnapshotSchema,
+  instantiateElementSet,
+  type ElementSetListItem,
+} from '../logic/element-library';
+
+const presetByFormat: Record<StudioPage['format'], FramePresetId> = {
+  feed: 'portrait',
+  square: 'square',
+  story: 'story',
+  widescreen: 'widescreen',
+  standard: 'standard',
+};
+
+function runV3Command(document: StudioDocumentV3, command: StudioCommandV3) {
+  Object.assign(document, applyStudioCommandV3(document, command));
+}
+
+function nextRootFrameX(document: StudioDocumentV3) {
+  const frames = document.nodes.filter(
+    node =>
+      node.type === 'frame' && !node.parentFrameId && node.id !== document.masterLayout.frameId
+  );
+  return frames.length
+    ? Math.max(...frames.map(frame => frame.transform.x + frame.transform.width)) + 160
+    : 0;
+}
 export function useStudioController(
   groupId: string | null,
   id: string | undefined,
-  open: (id: string) => void
+  open: (id: string) => void,
+  workspaceId?: string
 ) {
+  const zero = useZero();
   const { user } = useAuth();
+  const { currentUser } = useUserState();
   const studioApi = useStudioApi();
   const { projects, exports, isLoading } = useStudioState(groupId, id);
   const identity = useMemo(
-    () => ({ id: user?.id ?? '', name: user?.email?.split('@')[0] || 'Polity' }),
-    [user?.id, user?.email]
+    () => ({
+      id: user?.id ?? '',
+      name:
+        [currentUser?.first_name, currentUser?.last_name].filter(Boolean).join(' ') ||
+        currentUser?.handle ||
+        user?.email?.split('@')[0] ||
+        'Polity',
+      firstName: currentUser?.first_name ?? null,
+      lastName: currentUser?.last_name ?? null,
+      avatarUrl: currentUser?.avatar ?? undefined,
+    }),
+    [
+      currentUser?.avatar,
+      currentUser?.first_name,
+      currentUser?.handle,
+      currentUser?.last_name,
+      user?.email,
+      user?.id,
+    ]
   );
-  const editor = useStudioDocument(id, identity);
+  const editor = useStudioDocument(id, identity, workspaceId);
   const [pageId, setPageId] = useState(''),
     [selected, setSelected] = useState<string[]>([]),
     [busy, setBusy] = useState(false),
@@ -42,11 +108,12 @@ export function useStudioController(
     [template, setTemplate] = useState('announcement'),
     [brief, setBrief] = useState(''),
     [proposal, setProposal] = useState<StudioProposal | null>(null),
-    [themes, setThemes] = useState<any[]>([]),
-    [sources, setSources] = useState<any[]>([]),
-    [sourceType, setSourceType] = useState<'event' | 'amendment' | 'statement'>('event'),
-    [playing, setPlaying] = useState(false),
-    [time, setTime] = useState(0),
+    [themes, setThemes] = useState<StudioThemeSnapshot[]>(() =>
+      BUILTIN_THEMES.map(theme => createThemeSnapshot(theme))
+    ),
+    [themeId, setThemeId] = useState(BUILTIN_THEMES[0].id),
+    [themeMode, setThemeMode] = useState<'light' | 'dark'>('light'),
+    [elementSets, setElementSets] = useState<ElementSetListItem[]>([]),
     [guides, setGuides] = useState(true),
     [format, setFormat] = useState('png'),
     [scope, setScope] = useState('post'),
@@ -55,6 +122,15 @@ export function useStudioController(
     posts = editor.value?.posts ?? [];
   const page = pages.find(p => p.id === pageId) ?? pages[0];
   const post = posts.find(p => page && p.pageIds.includes(page.id));
+  useEffect(() => {
+    const followLink = () => {
+      const target = new URLSearchParams(location.hash.slice(1)).get('canvas');
+      if (target && pages.some(p => p.id === target)) setPageId(target);
+    };
+    followLink();
+    window.addEventListener('hashchange', followLink);
+    return () => window.removeEventListener('hashchange', followLink);
+  }, [id, pages]);
   const active = page?.elements.find(e => e.id === selected[0]);
   const run = async <T>(work: () => Promise<T>) => {
     setBusy(true);
@@ -69,30 +145,27 @@ export function useStudioController(
     }
   };
   useEffect(() => {
-    if (groupId)
-      void studioApi
-        .request<any[]>('themes', { groupId })
-        .then(setThemes)
-        .catch(() => {
-          /* Themes remain optional when temporarily unavailable. */
-        });
+    void studioApi
+      .request<Record<string, unknown>[]>('themes', { groupId })
+      .then(rows =>
+        setThemes([
+          ...BUILTIN_THEMES.map(theme => createThemeSnapshot(theme)),
+          ...rows.map(themeFromApiRow),
+        ])
+      )
+      .catch(() => {
+        /* Builtin themes remain available when custom themes are temporarily unavailable. */
+      });
   }, [groupId]);
+  const refreshElementSets = async () => {
+    const rows = await studioApi.request<unknown[]>('elementSets', { groupId });
+    setElementSets(elementSetListItemSchema.array().parse(rows));
+  };
   useEffect(() => {
-    if (!playing) return;
-    const start = performance.now();
-    const timer = setInterval(() => {
-      const now = (performance.now() - start) / 1000;
-      setTime(now);
-      if (now >= (page?.duration ?? 5)) {
-        const sequence = pages.filter(p => post?.pageIds.includes(p.id));
-        const next = sequence[sequence.findIndex(p => p.id === page?.id) + 1];
-        if (next) setPageId(next.id);
-        else setPlaying(false);
-        setTime(0);
-      }
-    }, 40);
-    return () => clearInterval(timer);
-  }, [playing, page?.duration, page?.id]);
+    void refreshElementSets().catch(() => {
+      /* The canvas remains usable while the Elements library is unavailable. */
+    });
+  }, [groupId, id]);
   useEffect(() => {
     if (id) return;
     try {
@@ -122,46 +195,74 @@ export function useStudioController(
   };
   const create = () =>
     run(async () => {
-      let document = createDocument(kind, title || 'Neue Kampagne', defaultBrand, weeks, template, {
-        core,
-        stories,
+      const result = await studioApi.request<{ id: string }>('create', {
+        groupId,
+        title: title || 'Neue Kampagne',
+        kind,
+        themeId,
+        themeMode,
+        template: template.startsWith('project:')
+          ? { kind: 'project', id: template.slice('project:'.length) }
+          : { kind: 'builtin', id: template },
+        campaign: { weeks, core, stories },
       });
       if (mode === 'ai') {
-        const suggestion = await generate(document);
-        document = applyProposal(document, suggestion);
-      } else if (brief.trim()) {
-        const body = document.pages[0].elements.find(e => e.order === 2 && e.type === 'text');
-        if (body) body.text = brief.slice(0, 10000);
+        const conversationId = crypto.randomUUID();
+        await serverConfirmed(
+          zero.mutate(
+            mutators.projectChat.create({
+              id: conversationId,
+              scope: { kind: 'studio', projectId: result.id },
+              name: title || 'Briefing',
+            })
+          )
+        );
+        localStorage.setItem(`project-chat:studio:${result.id}`, conversationId);
+        sessionStorage.setItem(
+          `studio-brief:${result.id}`,
+          brief.trim() || `Gestalte ${title || 'Neue Kampagne'}.`
+        );
       }
-      const result = await studioApi.request<{ id: string }>('create', { groupId, document });
       open(result.id);
     });
   const select = (ids: string[]) => {
-    const groups =
-      page?.elements.filter(e => ids.includes(e.id) && e.group).map(e => e.group) ?? [];
-    setSelected([
-      ...new Set([
-        ...ids,
-        ...(page?.elements.filter(e => e.group && groups.includes(e.group)).map(e => e.id) ?? []),
-      ]),
-    ]);
+    const nodes = editor.v3Value?.nodes ?? [];
+    const expanded = new Set(ids);
+    for (const id of ids) {
+      const groupId = nodes.find(node => node.id === id)?.groupIds[0];
+      if (groupId)
+        for (const node of nodes) if (node.groupIds[0] === groupId) expanded.add(node.id);
+    }
+    setSelected([...expanded]);
   };
-  const patch = (elementId: string, patch: Partial<StudioElement>) => {
+  const selectExact = (ids: string[]) => setSelected([...new Set(ids)]);
+  const move = (elementId: string, patch: Partial<StudioElement>) => {
     if (!page) return;
     const original = page.elements.find(e => e.id === elementId);
-    editor.patchElement(page.id, elementId, patch);
-    if (
-      original &&
-      selected.includes(elementId) &&
-      (patch.x !== undefined || patch.y !== undefined)
-    )
-      for (const other of page.elements.filter(
-        e => selected.includes(e.id) && e.id !== elementId && !e.locked
-      ))
-        editor.patchElement(page.id, other.id, {
-          x: other.x + (patch.x ?? original.x) - original.x,
-          y: other.y + (patch.y ?? original.y) - original.y,
-        });
+    editor.transact(d => {
+      patchElement(d, page.id, elementId, patch);
+      if (
+        original &&
+        selected.includes(elementId) &&
+        (patch.x !== undefined || patch.y !== undefined)
+      )
+        for (const other of page.elements.filter(
+          e => selected.includes(e.id) && e.id !== elementId && !e.locked
+        ))
+          patchElement(d, page.id, other.id, {
+            x: other.x + (patch.x ?? original.x) - original.x,
+            y: other.y + (patch.y ?? original.y) - original.y,
+          });
+    });
+  };
+  const patch = (id: string, change: Partial<StudioElement>) => {
+    if (page) editor.transact(d => patchElement(d, page.id, id, change));
+  };
+  const transform = (changes: { id: string; patch: Partial<StudioElement> }[]) => {
+    if (page)
+      editor.transact(d => {
+        for (const change of changes) patchElement(d, page.id, change.id, change.patch);
+      });
   };
   const add = (type: StudioElement['type']) => {
     if (!page) return;
@@ -175,10 +276,23 @@ export function useStudioController(
     editor.insertElement(page.id, e);
     setSelected([e.id]);
   };
+  const addTable = (dimensions: TableDimensions) => {
+    if (!page) return null;
+    const e = element('table', {
+      order: page.elements.length + 1,
+      fill: editor.value?.brand.foreground,
+      height: Math.max(160, dimensions.rowCount * 60),
+      width: Math.max(300, dimensions.colCount * 150),
+      table: createTableData(dimensions),
+    });
+    editor.insertElement(page.id, e);
+    setSelected([e.id]);
+    return e.id;
+  };
   const upload = (file: File) =>
     run(async () => {
       if (!id || !page) return;
-      const asset = await studioApi.upload(id, file);
+      const asset = await studioApi.upload(id, file, workspaceId);
       const e = element(asset.mime.startsWith('video') ? 'video' : 'image', {
         assetId: asset.id,
         x: 85,
@@ -216,88 +330,231 @@ export function useStudioController(
   const removePage = () => {
     if (!page || pages.length === 1) return;
     editor.transact(d => {
-      d.getMap('pages').delete(page.id);
+      d.pages = d.pages.filter(p => p.id !== page.id);
       for (const post of posts) {
         const pageIds = post.pageIds.filter(p => p !== page.id);
         if (pageIds.length) patchPost(d, post.id, { pageIds });
-        else d.getMap('posts').delete(post.id);
+        else d.posts = d.posts.filter(p => p.id !== post.id);
       }
     });
     setPageId('');
   };
+  const insertFrame = (format: StudioPage['format'] = page?.format ?? 'feed') => {
+    if (!editor.value || editor.value.pages.length >= 300 || (post && post.pageIds.length >= 30))
+      return;
+    if (
+      post?.kind === 'video' &&
+      pages
+        .filter(candidate => post.pageIds.includes(candidate.id))
+        .reduce((duration, candidate) => duration + candidate.duration, 5) > 60
+    )
+      return;
+    let frameId = '';
+    editor.transactV3(document => {
+      const preset = presetByFormat[format];
+      const definition = framePresetRegistry[preset];
+      const rootFrames = document.nodes.filter(
+        node =>
+          node.type === 'frame' && !node.parentFrameId && node.id !== document.masterLayout.frameId
+      );
+      const frame = createFrameNode(preset, {
+        name: 'Neuer Frame',
+        zIndex: rootFrames.length,
+        transform: {
+          x: nextRootFrameX(document),
+          y: 0,
+          width: definition.width,
+          height: definition.height,
+          rotation: 0,
+          flipX: false,
+          flipY: false,
+        },
+        style: {
+          fill: null,
+          fillBinding: null,
+          stroke: '#888888',
+          strokeBinding: null,
+          strokeWidth: 1,
+          strokeStyle: 'solid',
+          opacity: 1,
+          cornerRadius: 0,
+          roughness: 0,
+        },
+      });
+      frameId = frame.id;
+      runV3Command(document, { type: 'createNodes', nodes: [frame] });
+      const deliverable = post
+        ? document.deliverables.find(candidate => candidate.id === post.id)
+        : undefined;
+      if (deliverable)
+        runV3Command(document, {
+          type: 'upsertDeliverable',
+          deliverable: {
+            ...deliverable,
+            frameIds: [...deliverable.frameIds, frame.id],
+          },
+        });
+    });
+    if (frameId) setPageId(frameId);
+  };
+  const insertFrameSet = (kind: 'single' | 'carousel' | 'story' | 'video') => {
+    if (!editor.value) return;
+    const count = kind === 'single' ? 1 : kind === 'story' ? 3 : 5;
+    if (editor.value.pages.length + count > 300) return;
+    const format: StudioPage['format'] = kind === 'story' || kind === 'video' ? 'story' : 'feed';
+    let firstFrameId = '';
+    editor.transactV3(document => {
+      const preset = presetByFormat[format];
+      const definition = framePresetRegistry[preset];
+      let x = nextRootFrameX(document);
+      const rootCount = document.nodes.filter(
+        node =>
+          node.type === 'frame' && !node.parentFrameId && node.id !== document.masterLayout.frameId
+      ).length;
+      const frames = Array.from({ length: count }, (_, index) => {
+        const name = `${kind === 'carousel' ? 'Karussell' : kind === 'story' ? 'Story' : kind === 'video' ? 'Szene' : 'Post'} ${index + 1}`;
+        const frame = createFrameNode(preset, {
+          name,
+          zIndex: rootCount + index,
+          transform: {
+            x,
+            y: 0,
+            width: definition.width,
+            height: definition.height,
+            rotation: 0,
+            flipX: false,
+            flipY: false,
+          },
+          style: {
+            fill: null,
+            fillBinding: null,
+            stroke: '#888888',
+            strokeBinding: null,
+            strokeWidth: 1,
+            strokeStyle: 'solid',
+            opacity: 1,
+            cornerRadius: 0,
+            roughness: 0,
+          },
+        });
+        x += definition.width + 160;
+        return frame;
+      });
+      firstFrameId = frames[0].id;
+      runV3Command(document, { type: 'createNodes', nodes: frames });
+      runV3Command(document, {
+        type: 'upsertDeliverable',
+        deliverable: {
+          id: crypto.randomUUID(),
+          code: String(document.deliverables.length + 1).padStart(2, '0'),
+          title: frames[0].name,
+          kind,
+          frameIds: frames.map(frame => frame.id),
+          channel: 'instagram',
+          order: document.deliverables.length,
+          status: 'draft',
+          dayOffset: 0,
+          scheduledAt: null,
+          assignee: '',
+          brief: '',
+          captions: { instagram: '', linkedin: '', facebook: '' },
+        },
+      });
+    });
+    if (firstFrameId) setPageId(firstFrameId);
+  };
   const exportMedia = () =>
     run(async () => {
       if (!id || !page) return;
+      if (workspaceId)
+        throw new Error(
+          'Return to canonical content to export a committed project. Drafts can be downloaded from the canvas.'
+        );
       await studioApi.request('export', {
         projectId: id,
         format,
         pageIds: scope === 'all' ? [] : scope === 'page' ? [page.id] : (post?.pageIds ?? [page.id]),
-        state: editor.state(),
+        revision: await editor.commit(),
       });
     });
-  const applyTheme = (row: any) => {
-    if (!editor.value) return;
-    const fontMap: Record<string, StudioBrand['font']> = {
-      newsreader: 'Newsreader',
-      manrope: 'Manrope',
-      inter: 'Inter',
-      'open-sans': 'Open Sans',
-      'ibm-plex-serif': 'IBM Plex Serif',
-      'public-sans': 'Public Sans',
-      'pt-sans': 'PT Sans',
-      'work-sans': 'Work Sans',
-      ubuntu: 'Ubuntu',
-      'jetbrains-mono': 'JetBrains Mono',
-    };
-    const palette = row.light_palette;
-    const brand: StudioBrand = {
-      ...editor.value.brand,
-      background: palette.background,
-      foreground: palette.foreground,
-      accent: palette.accent,
-      font: fontMap[row.fonts.display] || 'Newsreader',
-      bodyFont: fontMap[row.fonts.sans] || 'Manrope',
-      themeId: row.id,
-      revisionId: row.revision_id,
-    };
-    updateBrand(brand);
+  const applyTheme = (theme: StudioThemeSnapshot) => {
+    editor.transactV3(document => applyThemeSnapshot(document, theme));
+    setThemeId(theme.themeId);
+    setThemeMode(theme.mode);
   };
-  const updateBrand = (brand: StudioBrand) => {
-    const old = editor.value?.brand;
-    if (!old) return;
-    editor.meta('brand', brand);
-    for (const p of pages) {
-      editor.patchPage(p.id, {
-        background:
-          p.background === old.background
-            ? brand.background
-            : p.background === old.foreground
-              ? brand.foreground
-              : p.background,
+  const changeThemeMode = (nextMode: 'light' | 'dark') => {
+    const current = editor.v3Value?.theme;
+    setThemeMode(nextMode);
+    if (current) applyTheme({ ...current, mode: nextMode });
+  };
+  const applyTextStyle = (styleId: string) => {
+    editor.transactV3(document => {
+      const style = document.theme.textStyles.find(candidate => candidate.id === styleId);
+      if (!style) return;
+      const palette = activePalette(document.theme);
+      for (const node of document.nodes)
+        if (selected.includes(node.id) && node.type === 'richText')
+          applyTextStyleToNode(node, style, palette);
+    });
+  };
+  const saveSelectionToElements = () =>
+    run(async () => {
+      if (!id || !selected.length) throw new Error('Select elements first');
+      await studioApi.request('elementSetCreate', {
+        projectId: id,
+        groupId,
+        selectedIds: selected,
       });
-      for (const e of p.elements)
-        editor.patchElement(p.id, e.id, {
-          fill:
-            e.fill === old.background
-              ? brand.background
-              : e.fill === old.foreground
-                ? brand.foreground
-                : e.fill === old.accent
-                  ? brand.accent
-                  : e.fill,
-          font:
-            e.font === old.font ? brand.font : e.font === old.bodyFont ? brand.bodyFont : e.font,
-        });
-    }
-  };
-  const source = (s: any) => {
-    if (!page) return;
-    editor.meta('source', s);
-    editor.meta('title', s.title);
-    const texts = page.elements.filter(e => e.type === 'text');
-    if (texts[1]) patch(texts[1].id, { text: s.title });
-    if (texts[2]) patch(texts[2].id, { text: s.text });
-  };
+      await refreshElementSets();
+    });
+  const insertElementSet = (
+    setId: string,
+    point: { x: number; y: number; targetFrameId?: string | null }
+  ) =>
+    run(async () => {
+      if (!id) return;
+      const result = await studioApi.request<{
+        setId: string;
+        revisionId: string;
+        snapshot: unknown;
+        assetIds: Record<string, string>;
+      }>('elementSetInstantiate', { setId, projectId: id });
+      const created = instantiateElementSet(elementSetSnapshotSchema.parse(result.snapshot), {
+        setId: result.setId,
+        revisionId: result.revisionId,
+        targetFrameId: point.targetFrameId ?? page?.id ?? null,
+        x: point.x,
+        y: point.y,
+        zIndex: Math.max(0, ...(editor.v3Value?.nodes.map(node => node.zIndex) ?? [0])) + 1,
+        assetIds: result.assetIds,
+      });
+      editor.transactV3(document => {
+        document.nodes.push(...created.nodes);
+        document.componentInstances.push(created.instance);
+      });
+      setSelected(created.nodes.map(node => node.id));
+      await editor.refreshAssets();
+    });
+  const publishSelectedElementChanges = () =>
+    run(async () => {
+      if (!id || !editor.v3Value) return;
+      const instance = editor.v3Value.componentInstances.find(item =>
+        Object.values(item.sourceToInstance).some(nodeId => selected.includes(nodeId))
+      );
+      if (!instance) throw new Error('Select a linked Elements instance first');
+      const result = await studioApi.request<{ revisionId: string }>('elementSetPublish', {
+        projectId: id,
+        instanceId: instance.id,
+      });
+      editor.transactV3(document => {
+        const current = document.componentInstances.find(item => item.id === instance.id);
+        if (!current) return;
+        current.revisionId = result.revisionId;
+        current.localOverrides = {};
+        current.localDeletions = [];
+      });
+      await refreshElementSets();
+    });
   const ai = () =>
     run(async () => {
       if (!editor.value) return;
@@ -306,15 +563,12 @@ export function useStudioController(
   const acceptAI = () => {
     if (!proposal || !editor.value) return;
     const next = applyProposal(editor.value, proposal);
-    editor.meta('title', next.title);
-    for (const p of next.pages) {
-      editor.patchPage(p.id, { name: p.name });
-      for (const e of p.elements) editor.patchElement(p.id, e.id, { text: e.text });
-    }
-    for (const p of next.posts) editor.patchPost(p.id, p);
+    editor.transact(d => Object.assign(d, next));
     setProposal(null);
   };
   return {
+    workspaceId,
+    identity,
     ...editor,
     projects,
     exports,
@@ -326,6 +580,7 @@ export function useStudioController(
     active,
     selected,
     select,
+    selectExact,
     pageId,
     setPageId,
     busy,
@@ -349,12 +604,14 @@ export function useStudioController(
     proposal,
     setProposal,
     themes,
-    sources,
-    sourceType,
-    setSourceType,
-    playing,
-    setPlaying,
-    time,
+    themeId,
+    setThemeId,
+    themeMode,
+    setThemeMode: changeThemeMode,
+    theme: editor.v3Value?.theme,
+    themePalette: editor.v3Value ? activePalette(editor.v3Value.theme) : null,
+    elementSets,
+    refreshElementSets,
     guides,
     setGuides,
     format,
@@ -367,9 +624,14 @@ export function useStudioController(
     actions: studioApi,
     create,
     patch,
+    move,
+    transform,
     add,
+    addTable,
     upload,
     duplicatePage,
+    insertFrame,
+    insertFrameSet,
     changeFormat: (format: StudioPage['format']) => {
       if (!page) return;
       const next = resizePage(page, format);
@@ -390,33 +652,22 @@ export function useStudioController(
     removePage,
     exportMedia,
     applyTheme,
-    updateBrand,
-    applyLogo: () => {
-      if (!active?.assetId || !editor.value) return;
-      const old = editor.value.brand.logoAssetId;
-      editor.meta('brand', { ...editor.value.brand, logoAssetId: active.assetId });
-      for (const p of editor.value.pages) {
-        const existing = old && p.elements.find(e => e.type === 'image' && e.assetId === old);
-        if (existing) editor.patchElement(p.id, existing.id, { assetId: active.assetId });
-        else
-          editor.insertElement(
-            p.id,
-            element('image', {
-              assetId: active.assetId,
-              x: 860,
-              y: p.format === 'story' ? 250 : 70,
-              width: 140,
-              height: 100,
-              order: Math.max(0, ...p.elements.map(e => e.order)) + 1,
-            })
-          );
-      }
-    },
-    source,
+    applyTextStyle,
+    saveSelectionToElements,
+    insertElementSet,
+    publishSelectedElementChanges,
+    renameElementSet: (setId: string, name: string) =>
+      run(async () => {
+        await studioApi.request('elementSetRename', { setId, name });
+        await refreshElementSets();
+      }),
+    archiveElementSet: (setId: string) =>
+      run(async () => {
+        await studioApi.request('elementSetArchive', { setId });
+        await refreshElementSets();
+      }),
     ai,
     acceptAI,
-    loadSources: () =>
-      run(async () => setSources(await studioApi.request<any[]>('sources', { type: sourceType }))),
     deleteSelected: () => {
       if (page) for (const el of selected) editor.removeElement(page.id, el);
       setSelected([]);
@@ -452,34 +703,12 @@ export function useStudioController(
     savePhoto: (file: File) =>
       run(async () => {
         if (!id || !active || !page) return false;
-        const asset = await studioApi.upload(id, file);
-        editor.patchElement(page.id, active.id, { assetId: asset.id });
+        const asset = await studioApi.upload(id, file, workspaceId);
+        editor.patchElement(page.id, active.id, { assetId: asset.id, crop: null });
         await editor.refreshAssets();
         setPhotoEdit(undefined);
         return true;
       }),
-    insertPage: () => {
-      if (!editor.value || editor.value.pages.length >= 300 || (post && post.pageIds.length >= 30))
-        return;
-      const p = makePage(
-        'Neue Seite',
-        page?.format ?? 'feed',
-        editor.value.brand,
-        editor.value.pages.length,
-        template
-      );
-      if (
-        post?.kind === 'video' &&
-        pages
-          .filter(page => post.pageIds.includes(page.id))
-          .reduce((n, page) => n + page.duration, p.duration) > 60
-      )
-        return;
-      editor.transact(d => {
-        addPage(d, p);
-        if (post) patchPost(d, post.id, { pageIds: [...post.pageIds, p.id] });
-      });
-      setPageId(p.id);
-    },
+    insertPage: () => insertFrame(),
   };
 }

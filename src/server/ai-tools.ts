@@ -1,3 +1,4 @@
+import { buildProjectStarterTools } from './project-chat/starter-tools';
 import { tool } from 'ai';
 import { z } from 'zod';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
@@ -1072,6 +1073,116 @@ async function searchVotes(query: string, limit: number): Promise<AiChatAttachme
   });
 }
 
+/** Reload a composer attachment from canonical rows after checking the sender's
+ * own access. The returned title, preview and card payload never come from the
+ * browser. Project chat uses this before turning a private reference into a
+ * project-visible message attachment. */
+export async function resolveAiAttachmentForUser(
+  userId: string,
+  attachment: Pick<AiChatAttachment, 'entityType' | 'entityId'>
+): Promise<AiChatAttachment | null> {
+  const relationships = await loadRelationshipSets(userId);
+  return executeZeroRead(async tx => {
+    switch (attachment.entityType) {
+      case 'user': {
+        const row = (await tx.run(zql.user.where('id', attachment.entityId).one())) as
+          UserSearchRow | undefined;
+        return row && checkEntityAccess(row.visibility, true, row.id === userId)
+          ? buildUserAttachment(row)
+          : null;
+      }
+      case 'group': {
+        const row = (await tx.run(zql.group.where('id', attachment.entityId).one())) as
+          GroupSearchRow | undefined;
+        return row && checkEntityAccess(row.visibility, true, relationships.groupIds.has(row.id))
+          ? buildGroupAttachment(row)
+          : null;
+      }
+      case 'statement': {
+        const row = (await tx.run(zql.statement.where('id', attachment.entityId).one())) as
+          StatementSearchRow | undefined;
+        return row && checkEntityAccess(row.visibility, true, row.user_id === userId)
+          ? buildStatementAttachment(row)
+          : null;
+      }
+      case 'blog': {
+        const row = (await tx.run(zql.blog.where('id', attachment.entityId).one())) as
+          BlogSearchRow | undefined;
+        return row && checkEntityAccess(row.visibility, true, relationships.blogIds.has(row.id))
+          ? buildBlogAttachment(row)
+          : null;
+      }
+      case 'amendment': {
+        const row = (await tx.run(zql.amendment.where('id', attachment.entityId).one())) as
+          AmendmentSearchRow | undefined;
+        return row &&
+          checkEntityAccess(row.visibility, true, relationships.amendmentIds.has(row.id))
+          ? buildAmendmentAttachment(row)
+          : null;
+      }
+      case 'event': {
+        const row = (await tx.run(zql.event.where('id', attachment.entityId).one())) as
+          EventSearchRow | undefined;
+        return row && checkEntityAccess(row.visibility, true, relationships.eventIds.has(row.id))
+          ? buildEventAttachment(row)
+          : null;
+      }
+      case 'todo': {
+        const row = (await tx.run(zql.todo.where('id', attachment.entityId).one())) as
+          TodoSearchRow | undefined;
+        return row &&
+          checkEntityAccess(
+            row.visibility,
+            true,
+            row.creator_id === userId || relationships.todoIds.has(row.id)
+          )
+          ? buildTodoAttachment(row)
+          : null;
+      }
+      case 'election': {
+        const row = (await tx.run(zql.election.where('id', attachment.entityId).one())) as
+          ElectionSearchRow | undefined;
+        return row && checkEntityAccess(row.visibility, true, false)
+          ? buildElectionAttachment(row)
+          : null;
+      }
+      case 'vote': {
+        const row = (await tx.run(zql.vote.where('id', attachment.entityId).one())) as
+          VoteSearchRow | undefined;
+        return row && checkEntityAccess(row.visibility, true, false)
+          ? buildVoteAttachment(row)
+          : null;
+      }
+      case 'document': {
+        const row = (await tx.run(zql.document.where('id', attachment.entityId).one())) as
+          (DocumentRow & { content?: unknown }) | undefined;
+        if (!row?.amendment_id) return null;
+        const amendment = (await tx.run(zql.amendment.where('id', row.amendment_id).one())) as
+          AmendmentSearchRow | undefined;
+        if (
+          !amendment ||
+          !checkEntityAccess(
+            amendment.visibility,
+            true,
+            relationships.amendmentIds.has(amendment.id)
+          )
+        ) {
+          return null;
+        }
+        return buildAttachment(
+          'document',
+          row.id,
+          amendment.title ? `Datei zu ${amendment.title}` : 'Datei',
+          formatDate(row.updated_at),
+          truncate(richTextToPlainText(row.content), 8_000)
+        );
+      }
+      default:
+        return null;
+    }
+  });
+}
+
 async function findMyTodos(
   userId: string,
   status?: string | null,
@@ -1668,9 +1779,15 @@ function buildCreateFlowRoute(
   return query ? `${metadata.route}?${query}` : metadata.route;
 }
 
-export function buildAiTools(userId: string, timeZone = 'UTC') {
+export function buildAiTools(
+  userId: string,
+  timeZone = 'UTC',
+  currentInstruction = '',
+  currentAttachments: readonly import('@/lib/ai/schemas').AiChatAttachment[] = []
+) {
   return {
     ...buildAiCreateTools(userId, timeZone),
+    ...buildProjectStarterTools(userId, currentInstruction, currentAttachments),
     ...buildAiUpdateTools(userId, timeZone),
 
     present_findings: tool({

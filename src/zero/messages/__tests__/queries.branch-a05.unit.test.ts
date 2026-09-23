@@ -19,6 +19,7 @@ vi.mock('../../schema', () => {
     const query = {} as FakeQuery;
     const operators = {
       cmp: (...args: any[]) => ['cmp', ...args],
+      and: (...args: unknown[]) => args,
       or: (...args: any[]) => ['or', ...args],
       exists: (_relation: string, callback: (child: FakeQuery) => unknown) => {
         callback(createQuery());

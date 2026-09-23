@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { DEFAULT_AI_SKILLS } from '@/features/assistant/logic/defaultAiSkills';
 import { buildAiModelKey, getPreferredDefaultAiModelKey } from '@/lib/ai/models';
@@ -22,8 +22,10 @@ import {
 import { useMessageMutations } from './useMessageMutations';
 import { useMessageAttachments } from './useMessageAttachments';
 import { localizeAppError } from '@/features/shared/errors/app-error';
+import type { EditorContext } from '@/features/project-chat/logic/contracts';
 
 export interface AiCatalogModel {
+  supports_tools?: boolean;
   provider: AiProvider;
   id: string;
   label: string;
@@ -47,9 +49,9 @@ export interface AssistantSkillOption {
 }
 
 export interface AssistantToolOption {
-  name: AiToolName;
+  name: string;
   label: string;
-  kind: 'search' | 'create' | 'update';
+  kind: 'search' | 'create' | 'update' | 'project';
   description: string;
   enabled: boolean;
   alwaysActive: boolean;
@@ -77,6 +79,20 @@ interface AssistantChatRequestPayload {
   toolNames: AiToolName[];
   attachments: AiChatAttachment[];
   timeZone: string;
+  requestId?: string;
+  editorContext?: EditorContext;
+}
+
+export interface ProjectAssistantChatOptions {
+  beforeSend: () => Promise<EditorContext | undefined>;
+  resumeRequestId?: string | null;
+  externallyBusy?: boolean;
+  projectTools?: readonly AssistantToolOption[];
+  onCancel?: () => Promise<void>;
+}
+
+export interface UseAssistantChatOptions {
+  project?: ProjectAssistantChatOptions;
 }
 
 interface ActiveToolCallState {
@@ -95,11 +111,17 @@ function parseStoredSkillAliases(value: string | null | undefined): string[] {
     .filter(Boolean);
 }
 
-function sameToolNames(left: readonly AiToolName[], right: readonly AiToolName[]): boolean {
+function sameToolNames(left: readonly string[], right: readonly string[]): boolean {
   return left.length === right.length && left.every((toolName, index) => toolName === right[index]);
 }
 
-export function useAssistantChat(conversation: Conversation, currentUserId?: string) {
+const personalToolNames = new Set<string>(DEFAULT_AI_TOOLS.map(tool => tool.name));
+
+export function useAssistantChat(
+  conversation: Conversation,
+  currentUserId?: string,
+  controllerOptions: UseAssistantChatOptions = {}
+) {
   const isTutorialConversation = Boolean(conversation.tutorial_run_id);
   const { session } = useAuth();
   const { t } = useTranslation();
@@ -112,7 +134,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   const [selectedModelKey, setSelectedModelKey] = useState('');
   const [reasoningEffort, setReasoningEffort] = useState<AiReasoningEffort>('medium');
   const [selectedSkillSlugs, setSelectedSkillSlugs] = useState<string[]>([]);
-  const [selectedToolNames, setSelectedToolNames] = useState<AiToolName[]>([]);
+  const [selectedToolNames, setSelectedToolNames] = useState<string[]>([]);
   const [streamingText, setStreamingText] = useState('');
   const [awaitingPersistenceText, setAwaitingPersistenceText] = useState<string | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
@@ -127,6 +149,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   const [activeToolName, setActiveToolName] = useState<string | null>(null);
   const [activeToolCall, setActiveToolCall] = useState<ActiveToolCallState | null>(null);
   const [hasManualToolSelection, setHasManualToolSelection] = useState(false);
+  const abortController = useRef<AbortController | null>(null);
 
   const availableSkills = useMemo<AssistantSkillOption[]>(() => {
     const mergedSkills = new Map<string, AssistantSkillOption>();
@@ -171,15 +194,18 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   const availableTools = useMemo<AssistantToolOption[]>(() => {
     const overrideMap = new Map(tools.map(tool => [tool.tool_name, tool]));
 
-    return DEFAULT_AI_TOOLS.map(tool => ({
-      name: tool.name,
-      label: tool.label,
-      kind: tool.kind,
-      description: tool.description,
-      enabled: tool.name === 'read_polity_docs' || (overrideMap.get(tool.name)?.enabled ?? true),
-      alwaysActive: tool.name === 'read_polity_docs',
-    })).sort((left, right) => left.label.localeCompare(right.label));
-  }, [tools]);
+    return [
+      ...DEFAULT_AI_TOOLS.map(tool => ({
+        name: tool.name,
+        label: tool.label,
+        kind: tool.kind,
+        description: tool.description,
+        enabled: tool.name === 'read_polity_docs' || (overrideMap.get(tool.name)?.enabled ?? true),
+        alwaysActive: tool.name === 'read_polity_docs',
+      })),
+      ...(controllerOptions.project?.projectTools ?? []),
+    ].sort((left, right) => left.label.localeCompare(right.label));
+  }, [controllerOptions.project?.projectTools, tools]);
 
   const selectedTools = useMemo(
     () =>
@@ -316,30 +342,36 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
     );
   }, []);
 
-  const setToolSelection = useCallback((toolName: AiToolName, enabled: boolean) => {
-    if (toolName === 'read_polity_docs') return;
-    setHasManualToolSelection(true);
-    setSelectedToolNames(currentToolNames => {
-      const hasTool = currentToolNames.includes(toolName);
-      if (enabled) {
-        return hasTool ? currentToolNames : [...currentToolNames, toolName];
-      }
+  const setToolSelection = useCallback(
+    (toolName: string, enabled: boolean) => {
+      if (availableTools.find(tool => tool.name === toolName)?.alwaysActive) return;
+      setHasManualToolSelection(true);
+      setSelectedToolNames(currentToolNames => {
+        const hasTool = currentToolNames.includes(toolName);
+        if (enabled) {
+          return hasTool ? currentToolNames : [...currentToolNames, toolName];
+        }
 
-      return hasTool
-        ? currentToolNames.filter(currentToolName => currentToolName !== toolName)
-        : currentToolNames;
-    });
-  }, []);
+        return hasTool
+          ? currentToolNames.filter(currentToolName => currentToolName !== toolName)
+          : currentToolNames;
+      });
+    },
+    [availableTools]
+  );
 
-  const toggleSelectedToolName = useCallback((toolName: AiToolName) => {
-    if (toolName === 'read_polity_docs') return;
-    setHasManualToolSelection(true);
-    setSelectedToolNames(currentToolNames =>
-      currentToolNames.includes(toolName)
-        ? currentToolNames.filter(currentToolName => currentToolName !== toolName)
-        : [...currentToolNames, toolName]
-    );
-  }, []);
+  const toggleSelectedToolName = useCallback(
+    (toolName: string) => {
+      if (availableTools.find(tool => tool.name === toolName)?.alwaysActive) return;
+      setHasManualToolSelection(true);
+      setSelectedToolNames(currentToolNames =>
+        currentToolNames.includes(toolName)
+          ? currentToolNames.filter(currentToolName => currentToolName !== toolName)
+          : [...currentToolNames, toolName]
+      );
+    },
+    [availableTools]
+  );
 
   const setToolGroupSelection = useCallback(
     (kind: AssistantToolOption['kind'], enabled: boolean) => {
@@ -353,7 +385,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         const nextSelectedToolNameSet = new Set(currentToolNames);
 
         for (const toolName of toolNamesForKind) {
-          if (toolName === 'read_polity_docs') {
+          if (availableTools.find(tool => tool.name === toolName)?.alwaysActive) {
             nextSelectedToolNameSet.add(toolName);
             continue;
           }
@@ -389,7 +421,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   );
 
   const sendAssistantMessage = useCallback(
-    async (content: string, options?: SendAssistantMessageOptions): Promise<boolean> => {
+    async (content: string, sendOptions?: SendAssistantMessageOptions): Promise<boolean> => {
       if (!currentUserId) {
         toast.error(t('features.messages.ai.authRequired'));
         return false;
@@ -400,7 +432,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         return false;
       }
 
-      const requestOverride = options?.requestOverride;
+      const requestOverride = sendOptions?.requestOverride;
       if (!selectedModel && !requestOverride) {
         toast.error(t('features.messages.ai.modelRequired'));
         return false;
@@ -416,46 +448,53 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
       setAwaitingPersistenceText(null);
       setStreamError(null);
 
-      const attachmentsForRequest: AiChatAttachment[] = requestOverride
-        ? [...requestOverride.attachments]
-        : [...attachmentComposer.selectedAttachments];
-
-      if (!requestOverride) {
-        for (const selectedSkill of selectedSkills) {
-          attachmentsForRequest.push({
-            entityType: 'skill',
-            entityId: selectedSkill.slug,
-            title: selectedSkill.name,
-            subtitle: selectedSkill.slug,
-            prompt_context: selectedSkill.systemPrompt,
-          });
-        }
-      }
-
-      const contextJson = JSON.stringify(attachmentsForRequest);
-      let requestPayload: AssistantChatRequestPayload;
-      if (requestOverride) {
-        requestPayload = requestOverride;
-      } else {
-        // The prerequisite guard above proves a model exists whenever there is no override.
-        const modelForRequest = selectedModel as AiCatalogModel;
-        requestPayload = {
-          conversationId: conversation.id,
-          content,
-          model: {
-            provider: modelForRequest.provider,
-            id: modelForRequest.id,
-          },
-          reasoningEffort,
-          skillSlugs: selectedSkills.map(skill => skill.slug),
-          toolNames: selectedToolNames,
-          attachments: attachmentsForRequest,
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-        };
-      }
-
+      let requestPayload: AssistantChatRequestPayload | null = null;
       try {
-        if (!options?.skipUserMessagePersistence) {
+        const attachmentsForRequest: AiChatAttachment[] = requestOverride
+          ? [...requestOverride.attachments]
+          : [...attachmentComposer.selectedAttachments];
+
+        if (!requestOverride && !controllerOptions.project) {
+          for (const selectedSkill of selectedSkills) {
+            attachmentsForRequest.push({
+              entityType: 'skill',
+              entityId: selectedSkill.slug,
+              title: selectedSkill.name,
+              subtitle: selectedSkill.slug,
+              prompt_context: selectedSkill.systemPrompt,
+            });
+          }
+        }
+
+        const contextJson = JSON.stringify(attachmentsForRequest);
+        if (requestOverride) {
+          requestPayload = requestOverride;
+        } else {
+          // The prerequisite guard above proves a model exists whenever there is no override.
+          const modelForRequest = selectedModel as AiCatalogModel;
+          requestPayload = {
+            conversationId: conversation.id,
+            content,
+            model: {
+              provider: modelForRequest.provider,
+              id: modelForRequest.id,
+            },
+            reasoningEffort,
+            skillSlugs: selectedSkills.map(skill => skill.slug),
+            toolNames: selectedToolNames.filter((name): name is AiToolName =>
+              personalToolNames.has(name)
+            ),
+            attachments: attachmentsForRequest,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+            ...(controllerOptions.project
+              ? {
+                  requestId: crypto.randomUUID(),
+                  editorContext: await controllerOptions.project.beforeSend(),
+                }
+              : {}),
+          };
+        }
+        if (!sendOptions?.skipUserMessagePersistence && !controllerOptions.project) {
           const userMessageResult = await mutations.sendMessage(
             conversation.id,
             currentUserId,
@@ -468,11 +507,14 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
             return false;
           }
 
-          options?.onUserMessageSent?.();
+          sendOptions?.onUserMessageSent?.();
         }
 
+        const requestController = new AbortController();
+        abortController.current = requestController;
         const response = await fetch('/api/ai/chat', {
           method: 'POST',
+          signal: requestController.signal,
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
@@ -490,6 +532,9 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         }
 
         attachmentComposer.clearAttachments();
+        if (controllerOptions.project && !sendOptions?.skipUserMessagePersistence) {
+          sendOptions?.onUserMessageSent?.();
+        }
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -607,6 +652,13 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
 
         return true;
       } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          setStreamingText('');
+          setAwaitingPersistenceText(null);
+          setStreamError(null);
+          setLastFailedRequest(null);
+          return false;
+        }
         console.error('Failed to stream Aria & Kai response:', error);
         const errorMessage =
           error instanceof Error && error.message.trim()
@@ -618,11 +670,12 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         setActiveToolName(null);
         setActiveToolCall(null);
 
-        setLastFailedRequest(requestPayload);
+        if (requestPayload) setLastFailedRequest(requestPayload);
         setStreamError(errorMessage);
         toast.error(errorMessage);
         return false;
       } finally {
+        abortController.current = null;
         setIsSending(false);
         setIsCompressing(false);
         setIsThinking(false);
@@ -643,19 +696,118 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
       selectedToolNames,
       session?.access_token,
       t,
+      controllerOptions.project,
     ]
   );
 
   const retryLastAssistantMessage = useCallback(async (): Promise<boolean> => {
-    if (!lastFailedRequest || isSending) {
+    if (isSending) {
       return false;
     }
+
+    if (controllerOptions.project?.resumeRequestId && session?.access_token) {
+      setIsSending(true);
+      setIsThinking(true);
+      setStreamingText('');
+      setStreamError(null);
+      try {
+        const requestController = new AbortController();
+        abortController.current = requestController;
+        const response = await fetch('/api/ai/chat', {
+          method: 'POST',
+          signal: requestController.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            conversationId: conversation.id,
+            requestId: controllerOptions.project.resumeRequestId,
+            resume: true,
+          }),
+        });
+        if (!response.ok)
+          throw new Error(localizeAppError(await readAiChatErrorResponse(response)));
+        if (!response.body) throw new Error(t('features.messages.ai.sendFailed'));
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        const streamDecoder = new AssistantChatStreamDecoder();
+        let finalText = '';
+        const handleEvent = (event: AssistantChatStreamEvent) => {
+          if (event.type === 'text-delta') {
+            finalText += event.text;
+            setStreamingText(current => current + event.text);
+            setIsThinking(false);
+            setIsToolCalling(false);
+          } else if (event.type === 'tool-call') {
+            const label = availableTools.find(tool => tool.name === event.toolName)?.label;
+            setIsThinking(false);
+            setIsToolCalling(true);
+            setActiveToolName(label ?? event.toolName);
+            setActiveToolCall({
+              label: label ?? event.toolName,
+              preview: buildToolCallPreview(event.toolName, event.args),
+            });
+          } else if (event.type === 'tool-result') {
+            setIsToolCalling(false);
+            setIsThinking(true);
+            setActiveToolName(null);
+            setActiveToolCall(null);
+          } else if (event.type === 'compression-start') {
+            setIsCompressing(true);
+          } else if (event.type === 'error') {
+            throw new Error(localizeAppError(event.error, { logUnknown: false }));
+          }
+        };
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          for (const event of streamDecoder.push(decoder.decode(value, { stream: true }))) {
+            handleEvent(event);
+          }
+        }
+        for (const event of streamDecoder.push(decoder.decode())) handleEvent(event);
+        for (const event of streamDecoder.finish()) handleEvent(event);
+        if (finalText.trim()) setAwaitingPersistenceText(finalText.trim());
+        setStreamError(null);
+        return true;
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : t('features.messages.ai.sendFailed');
+        setStreamError(message);
+        return false;
+      } finally {
+        abortController.current = null;
+        setIsSending(false);
+        setIsThinking(false);
+        setIsToolCalling(false);
+        setIsCompressing(false);
+      }
+    }
+
+    if (!lastFailedRequest) return false;
 
     return sendAssistantMessage(lastFailedRequest.content, {
       skipUserMessagePersistence: true,
       requestOverride: lastFailedRequest,
     });
-  }, [isSending, lastFailedRequest, sendAssistantMessage]);
+  }, [
+    availableTools,
+    conversation.id,
+    controllerOptions.project?.resumeRequestId,
+    isSending,
+    lastFailedRequest,
+    sendAssistantMessage,
+    session?.access_token,
+    t,
+  ]);
+
+  const cancelAssistantMessage = useCallback(async () => {
+    abortController.current?.abort();
+    await controllerOptions.project?.onCancel?.();
+  }, [controllerOptions.project]);
+
+  const effectiveSending = isSending || Boolean(controllerOptions.project?.externallyBusy);
 
   return {
     isTutorialConversation,
@@ -690,10 +842,14 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
     createSkill,
     sendAssistantMessage,
     retryLastAssistantMessage,
-    canRetry: Boolean(lastFailedRequest) && !isSending,
+    canRetry:
+      Boolean(lastFailedRequest || controllerOptions.project?.resumeRequestId) && !effectiveSending,
+    sharesAttachmentsWithProject: Boolean(controllerOptions.project),
     streamingText,
     streamError,
-    isSending,
+    isSending: effectiveSending,
+    cancelAssistantMessage,
+    canCancel: isSending || Boolean(controllerOptions.project?.onCancel),
     isCompressing,
     isThinking,
     isToolCalling,
@@ -701,3 +857,5 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
     activeToolCall,
   };
 }
+
+export type AssistantChatController = ReturnType<typeof useAssistantChat>;

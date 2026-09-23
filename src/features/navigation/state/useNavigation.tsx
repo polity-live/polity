@@ -11,6 +11,7 @@ import { hasGroupOperationAccess } from '@/features/groups/logic/hasGroupOperati
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState.ts';
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
 import { usePermissions } from '@/zero/rbac/usePermissions.ts';
+import { openStudioPanel } from '@/features/communication-studio/logic/panel-events';
 import type { Amendment, ActionRight } from '@/zero/rbac/types.ts';
 import { useEntityUnreadCount } from '@/zero/notifications/useEntityUnreadCount.ts';
 import { getBranchPreservingAmendmentNavTarget } from '@/features/navigation/logic/amendmentBranchNavigation';
@@ -158,6 +159,39 @@ export function useNavigation() {
   });
 
   const getSecondaryNavItems = (currentPrimaryRoute: string | null) => {
+    const studioProjectOpen =
+      /^\/(?:studio|whiteboards)\/[^/]+$/.test(pathname) ||
+      /^\/group\/[^/]+\/(?:studio|whiteboards)\/[^/]+$/.test(pathname);
+    if (studioProjectOpen) {
+      const panel = (panelKey: string, navigationItemId: string) => () =>
+        openStudioPanel({ panelKey, origin: 'secondary-navigation', navigationItemId });
+      return [
+        {
+          id: 'studio-frames',
+          label: t('features.studio.layers'),
+          icon: 'Layers3' as const,
+          onClick: panel('pages', 'studio-frames'),
+        },
+        {
+          id: 'studio-assets',
+          label: t('features.studio.theme'),
+          icon: 'Palette' as const,
+          onClick: panel('theme', 'studio-assets'),
+        },
+        {
+          id: 'studio-elements',
+          label: t('features.studio.elements'),
+          icon: 'Library' as const,
+          onClick: panel('elements', 'studio-elements'),
+        },
+        {
+          id: 'studio-campaign',
+          label: t('features.studio.campaign'),
+          icon: 'Calendar' as const,
+          onClick: panel('captions', 'studio-campaign'),
+        },
+      ] satisfies NavigationItem[];
+    }
     // Determine permissions based on the hook results
     const isEventAdmin = canManage('events') || canManage('eventParticipants'); // 'manage_participants' implies manage
     const isGroupMember = isMember();

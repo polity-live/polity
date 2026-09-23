@@ -4,6 +4,12 @@ export type AppShellPageFrame = 'bare' | 'contained' | 'fullWidth' | 'messages' 
 
 const ENTITY_ROUTE_PATTERN = /^\/(?:group|user|event|amendment|blog)\/[^/]+(?:\/.*)?$/;
 
+const STUDIO_PROJECT_ROUTE_PATTERNS = [
+  /^\/studio\/[^/]+$/,
+  /^\/whiteboards\/[^/]+$/,
+  /^\/group\/[^/]+\/(?:studio|whiteboards)\/[^/]+$/,
+];
+
 const UNCONTAINED_ENTITY_ROUTE_PATTERNS = [
   /^\/group\/[^/]+\/network$/,
   /^\/user\/[^/]+\/network$/,
@@ -28,7 +34,11 @@ export function isLandingPath(pathname: string): boolean {
 }
 
 export function getAuthenticatedPageFrame(pathname: string): AppShellPageFrame {
-  if (pathname.startsWith('/docs') || pathname === '/onboarding') {
+  if (
+    pathname.startsWith('/docs') ||
+    pathname === '/onboarding' ||
+    STUDIO_PROJECT_ROUTE_PATTERNS.some(pattern => pattern.test(pathname))
+  ) {
     return 'bare';
   }
 
@@ -48,6 +58,10 @@ export function getAuthenticatedPageFrame(pathname: string): AppShellPageFrame {
 }
 
 export function getUnauthenticatedPageFrame(pathname: string): AppShellPageFrame {
+  if (STUDIO_PROJECT_ROUTE_PATTERNS.some(pattern => pattern.test(pathname))) {
+    return 'bare';
+  }
+
   if (isUncontainedEntityRoute(pathname)) {
     return 'uncontained';
   }
@@ -73,37 +87,45 @@ export function getAppShellResponsiveClasses({
   isSecondaryNavVisible: boolean;
 }): string {
   if (navigationView === 'asButton') {
-    return '[--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:0rem]';
+    const base =
+      '[--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:0rem] [--app-shell-desktop-right-offset:0rem]';
+    if (screenType === 'mobile') {
+      return `${base} [--app-shell-chat-dock-bottom-offset:5rem] [--app-shell-chat-dock-right-offset:0rem]`;
+    }
+    if (screenType === 'desktop') {
+      return `${base} [--app-shell-chat-dock-bottom-offset:0rem] [--app-shell-chat-dock-right-offset:5rem]`;
+    }
+    return `${base} [--app-shell-chat-dock-bottom-offset:5rem] [--app-shell-chat-dock-right-offset:0rem] md:[--app-shell-chat-dock-bottom-offset:0rem] md:[--app-shell-chat-dock-right-offset:5rem]`;
   }
 
   if (screenType === 'desktop') {
     if (navigationView === 'asButtonList') {
       return isSecondaryNavVisible
-        ? 'ml-16 mr-16 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:0rem]'
-        : 'ml-16 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:0rem]';
+        ? 'ml-16 mr-16 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:0rem] [--app-shell-desktop-right-offset:4rem]'
+        : 'ml-16 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:0rem] [--app-shell-desktop-right-offset:0rem]';
     }
     return isSecondaryNavVisible
-      ? 'ml-64 mr-64 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:0rem]'
-      : 'ml-64 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:0rem]';
+      ? 'ml-64 mr-64 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:0rem] [--app-shell-desktop-right-offset:16rem]'
+      : 'ml-64 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:0rem] [--app-shell-desktop-right-offset:0rem]';
   }
 
   if (screenType === 'mobile') {
     if (navigationView === 'asButtonList') {
       return isSecondaryNavVisible
-        ? 'mt-16 mb-16 [--app-shell-mobile-top-offset:4rem] [--app-shell-mobile-bottom-offset:4rem]'
-        : 'mb-16 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:4rem]';
+        ? 'mt-16 mb-16 [--app-shell-mobile-top-offset:4rem] [--app-shell-mobile-bottom-offset:4rem] [--app-shell-desktop-right-offset:0rem]'
+        : 'mb-16 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:4rem] [--app-shell-desktop-right-offset:0rem]';
     }
     return isSecondaryNavVisible
-      ? 'mt-20 mb-20 [--app-shell-mobile-top-offset:5rem] [--app-shell-mobile-bottom-offset:5rem]'
-      : 'mb-20 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:5rem]';
+      ? 'mt-20 mb-20 [--app-shell-mobile-top-offset:5rem] [--app-shell-mobile-bottom-offset:5rem] [--app-shell-desktop-right-offset:0rem]'
+      : 'mb-20 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:5rem] [--app-shell-desktop-right-offset:0rem]';
   }
 
   if (navigationView === 'asButtonList') {
     return isSecondaryNavVisible
-      ? 'mt-16 mb-16 md:mt-0 md:mb-0 md:ml-16 md:mr-16 [--app-shell-mobile-top-offset:4rem] [--app-shell-mobile-bottom-offset:4rem] md:[--app-shell-mobile-top-offset:0rem] md:[--app-shell-mobile-bottom-offset:0rem]'
-      : 'mb-16 md:mb-0 md:ml-16 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:4rem] md:[--app-shell-mobile-bottom-offset:0rem]';
+      ? 'mt-16 mb-16 md:mt-0 md:mb-0 md:ml-16 md:mr-16 [--app-shell-mobile-top-offset:4rem] [--app-shell-mobile-bottom-offset:4rem] [--app-shell-desktop-right-offset:0rem] md:[--app-shell-mobile-top-offset:0rem] md:[--app-shell-mobile-bottom-offset:0rem] md:[--app-shell-desktop-right-offset:4rem]'
+      : 'mb-16 md:mb-0 md:ml-16 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:4rem] [--app-shell-desktop-right-offset:0rem] md:[--app-shell-mobile-bottom-offset:0rem]';
   }
   return isSecondaryNavVisible
-    ? 'mt-20 mb-20 md:mt-0 md:mb-0 md:ml-64 md:mr-64 [--app-shell-mobile-top-offset:5rem] [--app-shell-mobile-bottom-offset:5rem] md:[--app-shell-mobile-top-offset:0rem] md:[--app-shell-mobile-bottom-offset:0rem]'
-    : 'mb-20 md:mb-0 md:ml-64 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:5rem] md:[--app-shell-mobile-bottom-offset:0rem]';
+    ? 'mt-20 mb-20 md:mt-0 md:mb-0 md:ml-64 md:mr-64 [--app-shell-mobile-top-offset:5rem] [--app-shell-mobile-bottom-offset:5rem] [--app-shell-desktop-right-offset:0rem] md:[--app-shell-mobile-top-offset:0rem] md:[--app-shell-mobile-bottom-offset:0rem] md:[--app-shell-desktop-right-offset:16rem]'
+    : 'mb-20 md:mb-0 md:ml-64 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:5rem] [--app-shell-desktop-right-offset:0rem] md:[--app-shell-mobile-bottom-offset:0rem]';
 }

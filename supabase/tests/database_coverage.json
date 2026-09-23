@@ -1,18 +1,18 @@
 {
   "version": 1,
   "expectedInventory": {
-    "tables": 163,
-    "columns": 1743,
-    "primaryKeys": 164,
-    "checks": 139,
-    "foreignKeys": 405,
-    "uniqueConstraints": 63,
-    "uniqueIndexes": 28,
-    "uniqueRules": 91,
-    "indexes": 681,
-    "functions": 96,
-    "triggers": 101,
-    "policies": 155,
+    "tables": 179,
+    "columns": 1884,
+    "primaryKeys": 180,
+    "checks": 158,
+    "foreignKeys": 436,
+    "uniqueConstraints": 68,
+    "uniqueIndexes": 29,
+    "uniqueRules": 97,
+    "indexes": 717,
+    "functions": 107,
+    "triggers": 106,
+    "policies": 162,
     "cronBranches": 2
   },
   "expectedBehaviorAssertions": {
@@ -277,6 +277,75 @@
       "source": "48_studio_only_collaboration.sql",
       "behavior": ["collaboration_completion.sql"],
       "securityBehavior": ["collaboration_completion.sql"]
+    },
+    {
+      "source": "49_studio_zero.sql",
+      "behavior": ["studio_zero.sql"],
+      "securityBehavior": ["studio_zero.sql"]
+    },
+    {
+      "source": "50_studio_editor_actions.sql",
+      "behavior": ["studio_zero.sql"],
+      "securityBehavior": ["studio_zero.sql"]
+    },
+    {
+      "source": "51_retire_collaboration_functions.sql",
+      "behavior": ["studio_zero.sql"],
+      "securityBehavior": ["studio_zero.sql"]
+    },
+    {
+      "source": "52_studio_function_permissions.sql",
+      "behavior": ["studio_zero.sql"],
+      "securityBehavior": ["studio_zero.sql"]
+    },
+    {
+      "source": "53_studio_editor_claim.sql",
+      "behavior": ["studio_zero.sql"],
+      "securityBehavior": ["studio_zero.sql"]
+    },
+    {
+      "source": "54_canvas_workflows.sql",
+      "behavior": ["canvas_workflows.sql"],
+      "securityBehavior": ["canvas_workflows.sql"]
+    },
+    {
+      "source": "55_canvas_capabilities.sql",
+      "behavior": ["canvas_workflows.sql"],
+      "securityBehavior": ["canvas_workflows.sql"]
+    },
+    {
+      "source": "56_canvas_authority_lock.sql",
+      "behavior": ["canvas_workflows.sql"],
+      "securityBehavior": ["canvas_workflows.sql"]
+    },
+    {
+      "source": "57_canvas_private_assets.sql",
+      "behavior": ["canvas_workflows.sql"],
+      "securityBehavior": ["canvas_workflows.sql"]
+    },
+    {
+      "source": "58_canvas_recipient_presence.sql",
+      "behavior": ["canvas_workflows.sql"],
+      "securityBehavior": ["canvas_workflows.sql"]
+    },
+    {
+      "source": "59_canvas_zero_workspaces.sql",
+      "behavior": ["canvas_workflows.sql"],
+      "securityBehavior": ["canvas_workflows.sql"]
+    },
+    {
+      "source": "60_canvas_conflict_resolution.sql",
+      "behavior": ["canvas_workflows.sql"],
+      "securityBehavior": ["canvas_workflows.sql"]
+    },
+    {
+      "source": "61_canvas_function_permissions.sql",
+      "behavior": [],
+      "securityBehavior": ["permissions_contract.sql"]
+    },
+    {
+      "source": "62_studio_document_v3.sql",
+      "behavior": ["studio_zero.sql"]
     }
   ]
 }

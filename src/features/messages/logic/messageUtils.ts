@@ -1,5 +1,5 @@
 import { ConversationDisplay } from '../types/message.types';
-import { ARIA_KAI_USER_ID } from '@/features/assistant/constants';
+import { ARIA_KAI_AVATAR_URL, ARIA_KAI_USER_ID } from '@/features/assistant/constants';
 import { resolveAssistantAvatar } from '@/features/assistant/logic/assistantHelpers';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -64,7 +64,7 @@ export const isConversationRequester = (
 ) => Boolean(currentUserId && conversation.requested_by_id === currentUserId);
 
 function isAssistantConversationLike(conversation: ConversationDisplayLike) {
-  if (conversation.assistant_for_user_id) {
+  if (conversation.type === 'project_ai' || conversation.assistant_for_user_id) {
     return true;
   }
 
@@ -78,6 +78,17 @@ export const getConversationDisplay = (
   conversation: ConversationDisplayLike,
   currentUserId?: string
 ): ConversationDisplay => {
+  if (conversation.type === 'project_ai') {
+    return {
+      name: conversation.name?.trim() || 'Project chat',
+      avatar: ARIA_KAI_AVATAR_URL,
+      handle: 'aria-kai',
+      isGroup: false,
+      isEvent: false,
+      isCollective: false,
+    };
+  }
+
   if (conversation.type === 'group') {
     return {
       name:

@@ -9,6 +9,7 @@ CREATE TABLE public.document (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID,
   content JSONB,
+  content_revision INTEGER NOT NULL DEFAULT 0 CHECK (content_revision >= 0),
   editing_mode TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

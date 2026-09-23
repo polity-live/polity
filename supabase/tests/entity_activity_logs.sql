@@ -28,9 +28,9 @@ INSERT INTO public.event_activity (id, event_id, actor_id, action, severity, cha
 INSERT INTO public.amendment_activity (id, amendment_id, actor_id, action, severity, changes, context) VALUES
   ('e9960000-0000-4000-a000-000000000001', 'e9930000-0000-4000-a000-000000000001', 'e9900000-0000-4000-a000-000000000002', 'process_started', 'high', '[]', '{}');
 
-SELECT is((SELECT count(*)::INTEGER FROM public.group_activity), 1, 'group activity accepts valid rows');
-SELECT is((SELECT count(*)::INTEGER FROM public.event_activity), 1, 'event activity accepts valid rows');
-SELECT is((SELECT count(*)::INTEGER FROM public.amendment_activity), 1, 'amendment activity accepts valid rows');
+SELECT is((SELECT count(*)::INTEGER FROM public.group_activity WHERE id='e9940000-0000-4000-a000-000000000001'), 1, 'group activity accepts valid rows');
+SELECT is((SELECT count(*)::INTEGER FROM public.event_activity WHERE id='e9950000-0000-4000-a000-000000000001'), 1, 'event activity accepts valid rows');
+SELECT is((SELECT count(*)::INTEGER FROM public.amendment_activity WHERE id='e9960000-0000-4000-a000-000000000001'), 1, 'amendment activity accepts valid rows');
 SELECT is(pg_temp.capture_sqlstate($sql$UPDATE public.group_activity SET severity='critical'$sql$), '23514', 'severity is constrained');
 SELECT is(pg_temp.capture_sqlstate($sql$UPDATE public.event_activity SET actor_type='robot'$sql$), '23514', 'actor type is constrained');
 SELECT is(pg_temp.capture_sqlstate($sql$UPDATE public.amendment_activity SET context='[]'$sql$), '23514', 'context must be an object');
@@ -45,15 +45,15 @@ SELECT has_index('public', 'amendment_activity', 'idx_amendment_activity_created
 SELECT has_index('public', 'amendment_activity', 'idx_amendment_activity_severity_created', 'amendment severity index exists');
 
 DELETE FROM public."user" WHERE id='e9900000-0000-4000-a000-000000000002';
-SELECT is((SELECT count(*)::INTEGER FROM public.group_activity WHERE actor_id IS NULL), 1, 'actor deletion sets actor to null');
-SELECT is((SELECT count(*)::INTEGER FROM public.group_activity WHERE subject_user_id IS NULL), 1, 'subject deletion sets subject to null');
+SELECT is((SELECT count(*)::INTEGER FROM public.group_activity WHERE id='e9940000-0000-4000-a000-000000000001' AND actor_id IS NULL), 1, 'actor deletion sets actor to null');
+SELECT is((SELECT count(*)::INTEGER FROM public.group_activity WHERE id='e9940000-0000-4000-a000-000000000001' AND subject_user_id IS NULL), 1, 'subject deletion sets subject to null');
 
 DELETE FROM public."group" WHERE id='e9910000-0000-4000-a000-000000000001';
 DELETE FROM public.event WHERE id='e9920000-0000-4000-a000-000000000001';
 DELETE FROM public.amendment WHERE id='e9930000-0000-4000-a000-000000000001';
-SELECT is((SELECT count(*)::INTEGER FROM public.group_activity), 0, 'group deletion cascades');
-SELECT is((SELECT count(*)::INTEGER FROM public.event_activity), 0, 'event deletion cascades');
-SELECT is((SELECT count(*)::INTEGER FROM public.amendment_activity), 0, 'amendment deletion cascades');
+SELECT is((SELECT count(*)::INTEGER FROM public.group_activity WHERE id='e9940000-0000-4000-a000-000000000001'), 0, 'group deletion cascades');
+SELECT is((SELECT count(*)::INTEGER FROM public.event_activity WHERE id='e9950000-0000-4000-a000-000000000001'), 0, 'event deletion cascades');
+SELECT is((SELECT count(*)::INTEGER FROM public.amendment_activity WHERE id='e9960000-0000-4000-a000-000000000001'), 0, 'amendment deletion cascades');
 
 SELECT * FROM finish();
 ROLLBACK;

@@ -215,7 +215,11 @@ export const updateAmendmentCityDesignSchema = baseAmendmentCityDesignSchema
     cost_summary: true,
   })
   .partial()
-  .extend({ id: z.string(), process_branch_id: z.string().nullable().optional() });
+  .extend({
+    id: z.string(),
+    process_branch_id: z.string().nullable().optional(),
+    expected_content_revision: z.number().int().nonnegative().optional(),
+  });
 
 export const deleteAmendmentCityDesignSchema = z.object({ id: z.string() });
 

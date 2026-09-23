@@ -72,6 +72,7 @@ vi.mock('@/zero/mutators', () => ({
 }));
 
 vi.mock('@/zero/mutate-with-server-check', () => ({
+  serverConfirmed: (result: unknown) => hookMocks.waitForClientApply(result),
   waitForClientApply: (result: unknown) => hookMocks.waitForClientApply(result),
   trackServerFinalization: (...args: unknown[]) => hookMocks.trackServerFinalization(...args),
 }));
@@ -185,6 +186,7 @@ describe('useEditor', () => {
     await waitFor(() =>
       expect(hookMocks.updateDocumentContent).toHaveBeenCalledWith({
         id: 'document-1',
+        expected_content_revision: 0,
         content: updatedContent,
         reconcile_orphaned_change_requests: true,
       })

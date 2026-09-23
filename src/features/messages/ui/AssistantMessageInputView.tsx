@@ -24,6 +24,7 @@ import {
   Paperclip,
   Plus,
   Send,
+  Square,
   Settings2,
   Slash,
   Sparkles,
@@ -144,6 +145,8 @@ export interface AssistantMessageInputViewProps {
   searchTools: any;
   createTools: any;
   updateTools: any;
+  projectTools?: any;
+  compact?: boolean;
   mentionQuery: any;
   skillCommand: any;
   toolCommand: any;
@@ -198,6 +201,8 @@ export function AssistantMessageInputView({
   searchTools,
   createTools,
   updateTools,
+  projectTools = [],
+  compact = false,
   attachmentTypeSuggestions,
   attachmentSuggestions,
   skillSuggestions,
@@ -225,7 +230,7 @@ export function AssistantMessageInputView({
           event.preventDefault();
           void handleSubmit();
         }}
-        minTextareaHeight={72}
+        minTextareaHeight={compact ? 52 : 72}
       >
         <div className="space-y-2">
           {assistantChat.selectedSkills.length > 0 && (
@@ -261,6 +266,11 @@ export function AssistantMessageInputView({
                 >
                   <AtSign className="h-3 w-3" />
                   {attachment.title}
+                  {assistantChat.sharesAttachmentsWithProject && (
+                    <span className="text-muted-foreground">
+                      · {t('features.projectChat.shareWithProject')}
+                    </span>
+                  )}
                   <Button
                     type="button"
                     variant="ghost"
@@ -662,7 +672,7 @@ export function AssistantMessageInputView({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="hidden h-8 px-2 sm:inline-flex"
+                  className={compact ? 'hidden' : 'hidden h-8 px-2 sm:inline-flex'}
                   data-action-id="messages.assistant.settings.popover.open"
                 >
                   <Settings2 className="mr-1 h-3.5 w-3.5" />
@@ -677,6 +687,22 @@ export function AssistantMessageInputView({
                   <CommandInput placeholder={t('features.messages.ai.searchSettings')} />
                   <CommandList className="max-h-[60vh]">
                     <CommandEmpty>{t('features.messages.ai.noSettingsFound')}</CommandEmpty>
+                    {projectTools.length > 0 && (
+                      <CommandGroup heading={t('features.projectChat.projectTools')}>
+                        {projectTools.map((tool: any) => (
+                          <div
+                            key={tool.name}
+                            className="flex items-center gap-2 px-2 py-1.5 text-sm opacity-70"
+                          >
+                            <Lock className="opacity-70" />
+                            <span className="min-w-0 flex-1 truncate">{tool.label}</span>
+                            <span className="text-muted-foreground text-xs">
+                              {t('features.messages.ai.alwaysActive', 'Always active')}
+                            </span>
+                          </div>
+                        ))}
+                      </CommandGroup>
+                    )}
                     <CommandGroup heading={t('features.messages.ai.searchToolGroup')}>
                       {searchTools.map((tool: any) => {
                         const selected = tool.alwaysActive || selectedToolKeySet.has(tool.name);
@@ -774,7 +800,7 @@ export function AssistantMessageInputView({
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-md sm:hidden"
+              className={compact ? 'h-8 w-8 rounded-md' : 'h-8 w-8 rounded-md sm:hidden'}
               onClick={() => setAssistantSettingsOpen(true)}
               title={t('features.messages.ai.settings')}
               aria-label={t('features.messages.ai.settings')}
@@ -811,20 +837,31 @@ export function AssistantMessageInputView({
               size="icon"
               className="ml-auto h-8 w-8 rounded-md"
               disabled={
-                !messageText.trim() ||
-                assistantChat.isSending ||
-                assistantChat.isUploadingAttachments ||
-                !assistantChat.selectedModel
+                assistantChat.isSending
+                  ? !assistantChat.canCancel
+                  : !messageText.trim() ||
+                    assistantChat.isUploadingAttachments ||
+                    !assistantChat.selectedModel
               }
-              title={t('common.send')}
-              aria-label={t('common.send')}
+              title={assistantChat.isSending ? t('features.projectChat.cancel') : t('common.send')}
+              aria-label={
+                assistantChat.isSending ? t('features.projectChat.cancel') : t('common.send')
+              }
               onClick={() => {
-                void handleSubmit();
+                if (assistantChat.isSending) {
+                  void assistantChat.cancelAssistantMessage();
+                } else {
+                  void handleSubmit();
+                }
               }}
               data-action-id="messages.assistant.send"
             >
               {assistantChat.isSending ? (
-                <LoaderCircle className="h-4 w-4 animate-spin" />
+                assistantChat.canCancel ? (
+                  <Square className="h-3.5 w-3.5" />
+                ) : (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                )
               ) : (
                 <Send className="h-4 w-4" />
               )}
@@ -844,14 +881,16 @@ export function AssistantMessageInputView({
           <div className="space-y-5 overflow-y-auto px-4 pb-6">
             <section className="space-y-2">
               <h3 className="text-sm font-semibold">{t('features.messages.ai.toolSelector')}</h3>
-              {[searchTools, createTools, updateTools].map((tools, index) => (
+              {[projectTools, searchTools, createTools, updateTools].map((tools, index) => (
                 <div key={index} className="space-y-1">
                   <h4 className="text-muted-foreground px-2 text-xs font-medium">
                     {index === 0
-                      ? t('features.messages.ai.searchToolGroup')
+                      ? t('features.projectChat.projectTools')
                       : index === 1
-                        ? t('features.messages.ai.createToolGroup')
-                        : t('features.messages.ai.updateToolGroup')}
+                        ? t('features.messages.ai.searchToolGroup')
+                        : index === 2
+                          ? t('features.messages.ai.createToolGroup')
+                          : t('features.messages.ai.updateToolGroup')}
                   </h4>
                   <div className="grid gap-1">
                     {tools.map((tool: any) => {

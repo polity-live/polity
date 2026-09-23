@@ -222,13 +222,16 @@ describe('message shared mutators branch coverage', () => {
     );
 
     const sender = tx();
-    sender.run.mockResolvedValueOnce({ sender_id: 'user-1', conversation_id: 'c' });
+    sender.run
+      .mockResolvedValueOnce({ sender_id: 'user-1', conversation_id: 'c' })
+      .mockResolvedValueOnce({ type: 'direct' });
     await invoke('deleteMessage', sender, { id: 'm' });
     expect(sender.mutate.message.delete).toHaveBeenCalledWith({ id: 'm' });
 
     const manager = tx();
     manager.run
       .mockResolvedValueOnce({ sender_id: 'other', conversation_id: 'c' })
+      .mockResolvedValueOnce({ type: 'direct' })
       .mockResolvedValueOnce({ requested_by_id: 'user-1' });
     await invoke('updateMessage', manager, { id: 'm', content: 'managed' });
 

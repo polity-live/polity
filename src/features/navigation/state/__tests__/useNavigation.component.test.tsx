@@ -192,6 +192,27 @@ describe('useNavigation', () => {
     ]);
   });
 
+  it('exposes Layers and anchored panel requests for open Studio projects', () => {
+    mocks.location = { pathname: '/studio/project-1', search: undefined };
+    const listener = vi.fn();
+    window.addEventListener('studio-open-panel', listener);
+    const { result } = renderHook(() => useNavigation());
+
+    expect(result.current.secondaryNavItems?.[0]).toMatchObject({
+      id: 'studio-frames',
+      icon: 'Layers3',
+      label: 'translated:features.studio.layers',
+    });
+    act(() => result.current.secondaryNavItems?.[0]?.onClick?.());
+    expect(listener).toHaveBeenCalledOnce();
+    expect((listener.mock.calls[0][0] as CustomEvent).detail).toEqual({
+      panelKey: 'pages',
+      origin: 'secondary-navigation',
+      navigationItemId: 'studio-frames',
+    });
+    window.removeEventListener('studio-open-panel', listener);
+  });
+
   it('maps a complete amendment RBAC context and preserves branch navigation', () => {
     mocks.location = { pathname: '/amendment/am-1', search: { branch: 'branch-7' } };
     mocks.unreadNotifications = 5;

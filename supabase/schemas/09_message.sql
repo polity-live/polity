@@ -16,6 +16,8 @@ CREATE TABLE public.conversation (
   group_id UUID,
   event_id UUID REFERENCES public.event (id) ON DELETE CASCADE,
   requested_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  amendment_id UUID REFERENCES public.amendment (id) ON DELETE CASCADE,
+  studio_project_id UUID,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -23,6 +25,8 @@ CREATE INDEX idx_conversation_group ON public.conversation (group_id);
 CREATE INDEX idx_conversation_event ON public.conversation (event_id);
 CREATE INDEX idx_conversation_requested_by ON public.conversation (requested_by_id);
 CREATE INDEX idx_conversation_assistant_for_user ON public.conversation (assistant_for_user_id);
+CREATE INDEX idx_conversation_amendment ON public.conversation (amendment_id);
+CREATE INDEX idx_conversation_studio_project ON public.conversation (studio_project_id);
 CREATE INDEX idx_conversation_last_message
   ON public.conversation (last_message_at DESC, id DESC);
 
@@ -37,7 +41,8 @@ CREATE TABLE public.conversation_participant (
   joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   last_read_at TIMESTAMPTZ,
   left_at TIMESTAMPTZ,
-  unread_count INTEGER NOT NULL DEFAULT 0
+  unread_count INTEGER NOT NULL DEFAULT 0,
+  project_surface TEXT CHECK (project_surface IN ('amendment_text', 'city_design'))
 );
 
 CREATE INDEX idx_conversation_participant_conversation ON public.conversation_participant (conversation_id);

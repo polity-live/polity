@@ -1,5 +1,5 @@
 import { defineMutator } from '@rocicorp/zero';
-import { sqlTransaction } from '@/server/collaboration/transaction';
+import { sqlTransaction } from '@/server/transaction';
 import { validateStudioStatementRefs } from '@/server/studio/service';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';

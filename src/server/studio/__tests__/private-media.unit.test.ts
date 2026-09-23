@@ -1,0 +1,75 @@
+import { beforeEach, it, expect, vi } from 'vitest';
+const io = vi.hoisted(() => ({
+  session: vi.fn(),
+  sql: vi.fn(),
+  access: vi.fn(),
+  sign: vi.fn(),
+  fetch: vi.fn(),
+}));
+vi.mock('@/lib/supabase/server', () => ({
+  getSession: io.session,
+  createClient: () => ({ storage: { from: () => ({ createSignedUrl: io.sign }) } }),
+}));
+vi.mock('../db', () => ({ studioSql: () => io.sql }));
+vi.mock('../workspace-access', () => ({ assertCanvasWorkspace: io.access }));
+import { privateCanvasMedia } from '../private-media';
+const id = crypto.randomUUID();
+beforeEach(() => {
+  vi.resetAllMocks();
+  vi.stubGlobal('fetch', io.fetch);
+  io.session.mockResolvedValue({ user: { id: 'actor' } });
+  io.access.mockResolvedValue(undefined);
+  io.sql.mockResolvedValue([
+    {
+      project_id: 'project',
+      workspace_id: 'draft',
+      storage_path: 'private/file',
+      mime_type: 'image/png',
+      byte_size: 3,
+    },
+  ]);
+  io.sign.mockResolvedValue({
+    data: { signedUrl: 'http://127.0.0.1/private-storage' },
+    error: null,
+  });
+  io.fetch.mockResolvedValue(
+    new Response(new Uint8Array([1, 2, 3]), { headers: { 'Content-Length': '3' } })
+  );
+});
+it('checks the current workspace before serving uncached bytes without exposing a storage URL', async () => {
+  const response = await privateCanvasMedia(
+    new Request(`http://localhost:3000/api/studio/media/${id}`),
+    id
+  );
+  expect(response.status).toBe(200);
+  expect(io.access).toHaveBeenCalledWith('actor', 'project', 'draft', false, io.sql);
+  expect(response.headers.get('Location')).toBeNull();
+  expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+  expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
+});
+it('rejects the same asset URL after access is withdrawn before contacting storage', async () => {
+  io.access.mockRejectedValue(new Error('revoked'));
+  expect((await privateCanvasMedia(new Request('http://localhost:3000'), id)).status).toBe(404);
+  expect(io.sign).not.toHaveBeenCalled();
+  expect(io.fetch).not.toHaveBeenCalled();
+});
+it('rechecks export downloads and sends an attachment without exposing a reusable storage link', async () => {
+  io.sql.mockResolvedValue([
+    {
+      project_id: 'project',
+      workspace_id: null,
+      storage_path: 'private/export',
+      mime_type: 'application/octet-stream',
+      file_name: 'Polity.pdf',
+    },
+  ]);
+  const response = await privateCanvasMedia(new Request('http://localhost:3000'), id, 'export');
+  expect(response.headers.get('Content-Disposition')).toBe(
+    "attachment; filename*=UTF-8''Polity.pdf"
+  );
+  expect(io.access).toHaveBeenCalledWith('actor', 'project', null, false, io.sql);
+  io.access.mockRejectedValue(new Error('revoked'));
+  expect(
+    (await privateCanvasMedia(new Request('http://localhost:3000'), id, 'export')).status
+  ).toBe(404);
+});

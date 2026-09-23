@@ -717,10 +717,21 @@ export const amendmentSharedMutators = {
   ),
 
   updateCityDesign: defineMutator(updateAmendmentCityDesignSchema, async ({ tx, args }) => {
-    const { process_branch_id: _processBranchId, ...cityDesign } = args;
+    const {
+      process_branch_id: _processBranchId,
+      expected_content_revision: _expectedRevision,
+      ...cityDesign
+    } = args;
     void _processBranchId;
+    const current =
+      args.design_state !== undefined
+        ? await tx.run(zql.amendment_city_design.where('id', args.id).one())
+        : undefined;
     await tx.mutate.amendment_city_design.update({
       ...cityDesign,
+      ...(args.design_state !== undefined
+        ? { content_revision: Number(current?.content_revision ?? _expectedRevision ?? 0) + 1 }
+        : {}),
       updated_at: Date.now(),
     });
   }),

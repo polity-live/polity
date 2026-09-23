@@ -1,5 +1,7 @@
 # Lokale Prüfung am 17. September 2026
 
+> Historischer V2-Prüfstand. Er gilt nicht als Abnahme für Studio V3. Der aktuelle V3-Status und die verbindlichen Rollout-Prüfungen stehen in [CANVAS-IMPLEMENTATION.md](CANVAS-IMPLEMENTATION.md) und [../../docs/studio-zero-rollout.md](../../docs/studio-zero-rollout.md).
+
 Geprüft wurde ausschließlich die lokale Entwicklungsumgebung, ohne Deployment, externe Veröffentlichung oder kostenpflichtige KI-Anfragen.
 
 Bestanden:

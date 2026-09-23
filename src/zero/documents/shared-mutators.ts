@@ -484,11 +484,22 @@ export const documentSharedMutators = {
 
   // Update document content
   updateContent: defineMutator(updateDocumentSchema, async ({ tx, ctx, args }) => {
-    const { reconcile_orphaned_change_requests: shouldReconcileOrphans, ...documentArgs } = args;
+    const {
+      reconcile_orphaned_change_requests: shouldReconcileOrphans,
+      expected_content_revision: _expectedRevision,
+      ...documentArgs
+    } = args;
+    void _expectedRevision;
     const now = Date.now();
     let content = args.content;
     let document:
-      { id: string; amendment_id?: string | null; editing_mode?: string | null } | undefined;
+      | {
+          id: string;
+          amendment_id?: string | null;
+          editing_mode?: string | null;
+          content_revision?: number | null;
+        }
+      | undefined;
     let amendmentChangeRequests: readonly Record<string, any>[] | undefined;
 
     if (tx.location !== 'client') {
@@ -506,6 +517,10 @@ export const documentSharedMutators = {
       document = await tx.run(zql.document.where('id', args.id).one());
     }
 
+    if (args.content !== undefined && !document) {
+      document = await tx.run(zql.document.where('id', args.id).one());
+    }
+
     if (shouldReconcileOrphans && document && content !== undefined && content !== null) {
       await reconcileOrphanedChangeRequests({
         tx,
@@ -519,6 +534,9 @@ export const documentSharedMutators = {
     await tx.mutate.document.update({
       ...documentArgs,
       ...(args.content !== undefined ? { content } : {}),
+      ...(args.content !== undefined
+        ? { content_revision: Number(document?.content_revision ?? _expectedRevision ?? 0) + 1 }
+        : {}),
       updated_at: now,
     });
   }),

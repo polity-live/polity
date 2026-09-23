@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as Y from 'yjs';
 import { createDocument } from '@/features/communication-studio/logic/templates';
 import { element } from '@/features/communication-studio/logic/document';
-import { projectDocument } from '@/features/collaboration/logic/codec';
+import {
+  legacyDocumentToV3,
+  v3DocumentToLegacy,
+} from '@/features/communication-studio/logic/v3-adapter';
 const io = vi.hoisted(() => ({
   sql: vi.fn(),
   transaction: vi.fn(),
@@ -37,8 +39,7 @@ vi.mock('@/lib/supabase/server', () => ({
     },
   }),
 }));
-vi.mock('@/server/collaboration/service', () => ({ openSession: io.session }));
-vi.mock('@/server/collaboration/studio-export', () => ({ queueCommittedExport: io.export }));
+vi.mock('@/server/studio/export', () => ({ queueCommittedExport: io.export }));
 import {
   assetUrls,
   beginUpload,
@@ -46,7 +47,6 @@ import {
   downloadExport,
   duplicateProject,
   finishUpload,
-  loadProject,
   queueExport,
   validateAssets,
   validateStudioStatementRefs,
@@ -80,7 +80,10 @@ beforeEach(() => {
     storage_path: 'private/export',
     file_name: 'Result.png',
   };
-  source = { group_id: 'group', document: createDocument('single', 'Original') };
+  source = {
+    group_id: 'group',
+    document: legacyDocumentToV3(createDocument('single', 'Original')),
+  };
   failInsert = false;
   Object.assign(io.sql, { json: (value: unknown) => value });
   io.sql.mockImplementation(
@@ -126,23 +129,19 @@ afterEach(() => {
 const writes = (prefix: string) =>
   io.sql.mock.calls.filter(([parts]) => Array.isArray(parts) && parts.join('?').startsWith(prefix));
 describe('Studio shared persistence and media authority', () => {
-  it('duplicates a project without inventing a missing brand logo', async () => {
-    source.document.brand.logoAssetId = null;
+  it('duplicates a V4 project without reintroducing removed brand data', async () => {
     await duplicateProject('owner', 'original');
-    const value = writes('insert into studio_state')[0][3] as any;
-    expect(value.brand.logoAssetId).toBeNull();
+    const value = writes('insert into studio_state')[0][2] as any;
+    expect(value).not.toHaveProperty('brand');
     expect(io.copy).not.toHaveBeenCalled();
   });
-  it('creates editable Yjs documents atomically and rechecks group authority inside the transaction', async () => {
-    const value = createDocument('single', 'New project');
+  it('creates editable JSON documents atomically and rechecks group authority inside the transaction', async () => {
+    const value = legacyDocumentToV3(createDocument('single', 'New project'));
     const result = await createProject('owner', 'group', value);
     expect(io.group).toHaveBeenNthCalledWith(1, 'owner', 'group');
     expect(io.group).toHaveBeenNthCalledWith(2, 'owner', 'group', io.sql);
     const row = writes('insert into studio_state')[0];
-    const y = new Y.Doc();
-    Y.applyUpdate(y, row[2] as Uint8Array);
-    expect(projectDocument('studio', y)).toEqual(value);
-    y.destroy();
+    expect(row[2]).toEqual(value);
     expect(row[1]).toBe(result.id);
     expect(io.transaction).toHaveBeenCalledTimes(1);
     io.group.mockClear();
@@ -150,46 +149,31 @@ describe('Studio shared persistence and media authority', () => {
     expect(io.group).not.toHaveBeenCalled();
   });
   it('rejects foreign media before creating a project and deduplicates legitimate media references', async () => {
-    const value = createDocument('single', 'Assets');
+    const legacy = createDocument('single', 'Assets');
     const id = crypto.randomUUID();
-    value.brand.logoAssetId = id;
-    value.pages[0].elements.push(
+    legacy.brand.logoAssetId = id;
+    legacy.pages[0].elements.push(
       element('image', { assetId: id }),
       element('image', { assetId: id })
     );
+    const value = legacyDocumentToV3(legacy);
     await expect(createProject('owner', null, value)).rejects.toThrow('A media file is missing');
     expect(io.transaction).not.toHaveBeenCalled();
     available = [{ id }];
     await validateAssets('project', value);
     expect(writes('select id from studio_asset').at(-1)![1]).toBe('project');
   });
-  it('loads only the common collaboration session and queues exports on the confirmed revision', async () => {
-    expect(await loadProject('owner', 'project')).toMatchObject({
-      id: 'project',
-      collaborationId: 'shared-doc',
-      canEdit: true,
-      revision: 3,
-    });
-    expect(io.session).toHaveBeenCalledWith('owner', {
-      kind: 'studio',
-      entityId: 'project',
-      branchId: null,
-      workspaceId: null,
-    });
-    expect(await queueExport('owner', 'project', 'pptx', ['page'], 'encoded')).toEqual({
+  it('queues exports using a confirmed content revision', async () => {
+    expect(await queueExport('owner', 'project', 'pptx', ['page'], 3)).toEqual({
       id: 'export',
       revision: 3,
     });
-    expect(io.export).toHaveBeenCalledWith('owner', 'project', 'pptx', ['page'], 'encoded');
-    io.session.mockResolvedValueOnce({ phase: 'maintenance' });
-    await expect(loadProject('owner', 'project')).rejects.toThrow('collaboration_unavailable');
-    io.session.mockResolvedValueOnce({ phase: 'active' });
-    await expect(loadProject('owner', 'project')).rejects.toThrow('collaboration_unavailable');
+    expect(io.export).toHaveBeenCalledWith('owner', 'project', 'pptx', ['page'], 3);
   });
   it('reserves uploads under current rights and quotas before issuing a signed upload token', async () => {
     const result = await beginUpload('editor', 'project', 'Photo.png', 'image/png', 16);
     expect(result).toMatchObject({ path: `project/assets/${result.id}`, token: 'upload-token' });
-    expect(io.access).toHaveBeenNthCalledWith(1, 'editor', 'project', true);
+    expect(io.access).toHaveBeenNthCalledWith(1, 'editor', 'project', true, io.sql);
     expect(io.access).toHaveBeenNthCalledWith(2, 'editor', 'project', true, io.sql);
     expect(writes('insert into studio_asset')[0][0].join('?')).toContain('false');
     usage.count = 100;
@@ -203,15 +187,29 @@ describe('Studio shared persistence and media authority', () => {
     );
   });
   it('removes the failed reservation when signing fails and denies upload after permission revocation', async () => {
-    io.signUpload.mockResolvedValueOnce({ error: new Error('signing_failed') });
-    await expect(beginUpload('editor', 'project', 'p', 'image/png', 16)).rejects.toThrow(
-      'Cannot prepare upload'
-    );
-    expect(writes('delete from studio_asset')).toHaveLength(1);
-    io.access.mockRejectedValueOnce(new Error('revoked'));
-    io.signUpload.mockClear();
-    await expect(beginUpload('editor', 'project', 'p', 'image/png', 16)).rejects.toThrow('revoked');
-    expect(io.signUpload).not.toHaveBeenCalled();
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      io.signUpload.mockResolvedValueOnce({
+        error: Object.assign(new Error('signing_failed'), { statusCode: '404' }),
+      });
+      await expect(beginUpload('editor', 'project', 'p', 'image/png', 16)).rejects.toThrow(
+        'Cannot prepare upload'
+      );
+      expect(log).toHaveBeenCalledWith('studio.upload.prepare', {
+        bucket: 'studio',
+        status: '404',
+        error: 'signing_failed',
+      });
+      expect(writes('delete from studio_asset')).toHaveLength(1);
+      io.access.mockRejectedValueOnce(new Error('revoked'));
+      io.signUpload.mockClear();
+      await expect(beginUpload('editor', 'project', 'p', 'image/png', 16)).rejects.toThrow(
+        'revoked'
+      );
+      expect(io.signUpload).not.toHaveBeenCalled();
+    } finally {
+      log.mockRestore();
+    }
   });
   it('validates stored size and actual file signatures before marking each supported media type ready', async () => {
     for (const [mime, bytes] of [
@@ -265,21 +263,17 @@ describe('Studio shared persistence and media authority', () => {
     asset = null;
     await expect(finishUpload('editor', 'missing')).rejects.toThrow('Upload not found');
   });
-  it('serves short-lived signed media and export links only after access checks', async () => {
+  it('serves authorized media and export proxy URLs only after access checks', async () => {
     available = [asset];
     expect(await assetUrls('reader', 'project')).toEqual([
-      { id: 'asset', name: 'Photo', mime: 'image/png', url: 'https://storage.example/private' },
+      { id: 'asset', name: 'Photo', mime: 'image/png', url: '/api/studio/media/asset' },
     ]);
-    expect(io.sign).toHaveBeenLastCalledWith('private/asset', 300);
+    expect(io.sign).not.toHaveBeenCalled();
     expect(await downloadExport('reader', 'export')).toEqual({
-      url: 'https://storage.example/private',
+      url: '/api/studio/exports/export',
       name: 'Result.png',
     });
-    expect(io.sign).toHaveBeenLastCalledWith('private/export', 60, { download: 'Result.png' });
-    io.sign.mockResolvedValueOnce({ error: true });
-    await expect(assetUrls('reader', 'project')).rejects.toThrow('Cannot load media');
-    io.sign.mockResolvedValueOnce({ error: true });
-    await expect(downloadExport('reader', 'export')).rejects.toThrow('Download failed');
+    expect(io.sign).not.toHaveBeenCalled();
     job.status = 'running';
     await expect(downloadExport('reader', 'export')).rejects.toThrow('Export is not ready');
     job.status = 'completed';
@@ -288,17 +282,18 @@ describe('Studio shared persistence and media authority', () => {
     job = null;
     await expect(downloadExport('reader', 'missing')).rejects.toThrow('Export not found');
   });
-  it('copies private assets before exposing a new project and remaps image and logo references', async () => {
+  it('copies private assets before exposing a new project and remaps media references', async () => {
     const image = crypto.randomUUID();
     available = [{ ...asset, id: image }];
-    source.document.brand.logoAssetId = image;
-    source.document.pages[0].elements.push(element('image', { assetId: image }));
+    const legacy = v3DocumentToLegacy(source.document);
+    legacy.pages[0].elements.push(element('image', { assetId: image }));
+    source.document = legacyDocumentToV3(legacy, source.document);
     const result = await duplicateProject('reader', 'original');
     const row = writes('insert into studio_state')[0],
-      value = row[3] as any;
+      value = row[2] as any;
     const copiedId = writes('insert into studio_asset')[0][1];
-    expect(value.brand.logoAssetId).toBe(copiedId);
-    expect(value.pages[0].elements.at(-1).assetId).toBe(copiedId);
+    expect(value).not.toHaveProperty('brand');
+    expect(value.nodes.find((node: any) => node.type === 'media').assetId).toBe(copiedId);
     expect(value.title).toBe('Original · Kopie');
     expect(row[1]).toBe(result.id);
     expect(io.access).toHaveBeenLastCalledWith('reader', 'original', false, io.sql);
@@ -330,12 +325,13 @@ describe('Studio shared persistence and media authority', () => {
   });
   it('copies personal templates without group authority and clears references without a matching asset', async () => {
     source.group_id = null;
-    source.document.brand.logoAssetId = crypto.randomUUID();
-    source.document.pages[0].elements.push(element('image', { assetId: crypto.randomUUID() }));
+    const legacy = v3DocumentToLegacy(source.document);
+    legacy.pages[0].elements.push(element('image', { assetId: crypto.randomUUID() }));
+    source.document = legacyDocumentToV3(legacy, source.document);
     await duplicateProject('owner', 'original');
-    const value = writes('insert into studio_state')[0][3] as any;
-    expect(value.brand.logoAssetId).toBeNull();
-    expect(value.pages[0].elements.at(-1).assetId).toBeNull();
+    const value = writes('insert into studio_state')[0][2] as any;
+    expect(value).not.toHaveProperty('brand');
+    expect(value.nodes.some((node: any) => node.type === 'media')).toBe(false);
     expect(io.group).not.toHaveBeenCalled();
   });
   it('allows publishing only completed Studio exports currently editable by the actor', async () => {

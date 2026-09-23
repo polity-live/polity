@@ -1,6 +1,7 @@
 -- @covers security all
 -- @covers schema 31_service_role_grants.sql
 -- @covers schema 35_security.sql
+-- @covers schema 61_canvas_function_permissions.sql
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
@@ -63,9 +64,9 @@ SELECT set_eq(
     WHERE has_function_privilege('authenticated', oid, 'EXECUTE')
   $sql$,
   $sql$
-    VALUES ('current_user_has_password()'::TEXT)
+    VALUES ('current_user_has_password()'::TEXT), ('studio_realtime_access(text)'::TEXT), ('canvas_presence_access(text)'::TEXT)
   $sql$,
-  'authenticated clients can execute only the password-inspection RPC'
+  'authenticated clients can execute only password inspection and authorized Studio Presence'
 );
 
 SELECT set_eq(
@@ -86,20 +87,12 @@ SELECT set_eq(
       ('resolve_notification_recipients(uuid)'::TEXT),
       ('studio_access(uuid,uuid,boolean)'::TEXT),
       ('studio_group_access(uuid,uuid,boolean)'::TEXT),
-      ('collaboration_version_guard()'::TEXT),
-      ('collaboration_annotation_guard()'::TEXT),
-      ('collaboration_authority_lock()'::TEXT),
-      ('collaboration_immutable_revision()'::TEXT),
-      ('collaboration_projection_guard()'::TEXT),
-      ('collaboration_mode_changed()'::TEXT),
-      ('collaboration_proposal_immutable()'::TEXT),
-      ('collaboration_cr_guard()'::TEXT),
-      ('collaboration_capture_ballot()'::TEXT),
-      ('collaboration_acl_changed()'::TEXT),
-      ('collaboration_ballot_input_guard()'::TEXT),
-      ('collaboration_source_deleted()'::TEXT),
-      ('collaboration_needs_initialization()'::TEXT),
-      ('collaboration_ballot_metadata_guard()'::TEXT)
+      ('project_content_revision()'::TEXT),
+      ('canvas_record_revision()'::TEXT),
+      ('canvas_manage(uuid,uuid)'::TEXT),
+      ('canvas_proposal_access(uuid,uuid)'::TEXT),
+      ('canvas_capability(uuid,uuid,text)'::TEXT),
+      ('studio_realtime_access(text)'::TEXT)
   $sql$,
   'the service role can execute exactly the server RPC allowlist'
 );
@@ -131,8 +124,8 @@ SELECT is(
         'TRIGGER'
       )
   ),
-  1141,
-  'the service role has all seven privileges on all 163 tables'
+  1183,
+  'the service role has all seven privileges on all 169 tables'
 );
 
 SELECT is(
@@ -143,7 +136,7 @@ SELECT is(
       AND has_sequence_privilege('service_role', sequence_definition.oid, 'SELECT')
       AND has_sequence_privilege('service_role', sequence_definition.oid, 'UPDATE')
   ),
-  4,
+  3,
   'the service role can use every application sequence'
 );
 

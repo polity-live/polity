@@ -1,4 +1,5 @@
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import { internalVoteResult } from './vote-result';
 import { zql } from '../schema';
 import { buildCanonicalChangeRequestRecords } from '@/features/change-requests/logic/canonicalChangeRequests';
 import { createChangeRequestDiffSnapshot } from '@/features/change-requests/utils/suggestion-extraction';
@@ -195,7 +196,7 @@ function countChangeRequestVotes(votes: Iterable<ChangeRequestVoteRow>) {
 }
 
 function getVoteResult(counts: { votes_for: number; votes_against: number }): VoteResult {
-  return counts.votes_for > counts.votes_against ? 'passed' : 'rejected';
+  return internalVoteResult(counts);
 }
 
 function getVoteResultFromStatus(status: string | null | undefined): VoteResult {

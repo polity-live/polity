@@ -11,6 +11,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 const OPENROUTER_FREE_MODEL_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const openRouterModelSchema = z.object({
+  supported_parameters: z.array(z.string()).optional(),
   id: z.string(),
   name: z.string().nullable().optional(),
   context_length: z.union([z.number(), z.string()]).nullable().optional(),
@@ -34,6 +35,7 @@ export interface AiModelOption {
   source: 'app' | 'byok';
   free: boolean;
   supports_reasoning_effort: boolean;
+  supports_tools?: boolean;
   context_window: number | null;
 }
 
@@ -190,7 +192,9 @@ async function fetchOpenRouterModels(
       label: model.name?.trim() || model.id,
       source,
       free: isOpenRouterFreeModel(model),
-      supports_reasoning_effort: true,
+      supports_reasoning_effort: model.supported_parameters?.includes('reasoning') ?? false,
+      supports_tools:
+        model.supported_parameters?.includes('tools') ?? model.id === 'openrouter/free',
       context_window: parseContextWindow(model.context_length),
     }));
 }

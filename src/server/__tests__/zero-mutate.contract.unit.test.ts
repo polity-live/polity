@@ -97,6 +97,19 @@ describe('Zero transaction helpers', () => {
     expect(request.mutator.fn).toHaveBeenCalledWith({ tx, ctx: context, args: request.args });
   });
 
+  it('reuses the active transaction for nested personal-tool operations', async () => {
+    const outerContext = createZeroContext('user-1');
+    const nestedContext = createZeroContext('user-1');
+    const values = await executeZeroTransaction(outerContext, async outer => {
+      const nested = await executeZeroTransaction(nestedContext, async inner => inner);
+      const read = await executeZeroRead(async inner => inner);
+      return { outer, nested, read };
+    });
+
+    expect(values).toEqual({ outer: tx, nested: tx, read: tx });
+    expect(mocks.transaction).toHaveBeenCalledOnce();
+  });
+
   it('sanitizes primitive, nested and malformed error-shaped results', () => {
     expect(sanitizeZeroMutationResult(null)).toBeNull();
     expect(sanitizeZeroMutationResult('value')).toBe('value');

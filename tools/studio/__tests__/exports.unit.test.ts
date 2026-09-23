@@ -7,6 +7,7 @@ import { PDFDocument } from 'pdf-lib';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDocument } from '../../../src/features/communication-studio/logic/templates';
 import { element } from '../../../src/features/communication-studio/logic/document';
+import { setTableBorders } from '../../../src/features/communication-studio/logic/table-operations';
 const io = vi.hoisted(() => ({
   launch: vi.fn(),
   spawn: vi.fn(),
@@ -108,6 +109,21 @@ const exportDoc = (
   cancel = vi.fn().mockResolvedValue(false)
 ) => render(doc, media, format, selected, temp, vi.fn().mockResolvedValue(undefined), cancel);
 describe('Studio export artifacts', () => {
+  it('keeps disabled table edges editable and hidden in PowerPoint', async () => {
+    const doc = createDocument('single', 'Table borders');
+    const table = element('table');
+    const selection = { anchorRow: 0, focusRow: 0, anchorColumn: 0, focusColumn: 0 };
+    table.table = setTableBorders(table.table!, selection, 'none');
+    doc.pages[0].elements.push(table);
+    const result = await exportDoc(doc, 'pptx');
+    const xml = strFromU8(unzipSync(result.bytes)['ppt/slides/slide1.xml']);
+    const firstCell = xml.match(/<a:tcPr\b[^>]*>[\s\S]*?<\/a:tcPr>/)?.[0];
+    expect(firstCell).toMatch(/<a:lnL\b[^>]*><a:noFill\/>/);
+    expect(firstCell).toMatch(/<a:lnR\b[^>]*><a:noFill\/>/);
+    expect(firstCell).toMatch(/<a:lnT\b[^>]*><a:noFill\/>/);
+    expect(firstCell).toMatch(/<a:lnB\b[^>]*><a:noFill\/>/);
+    expect(xml).toContain('<a:srgbClr val="888888"/>');
+  });
   it('fails an unavailable raster canvas without returning a misleading completed Canva export', async () => {
     const d = createDocument('single', 'Test');
     d.pages[0].elements.push(element('image', { assetId: imageId }));
@@ -269,7 +285,7 @@ describe('Studio export artifacts', () => {
     await expect(exportDoc(doc, 'mp4')).rejects.toThrow('Video exceeds 60 seconds');
     doc.pages[0].duration = 0.1;
     doc.pages[0].format = 'feed';
-    await expect(exportDoc(doc, 'mp4')).rejects.toThrow('Video requires portrait pages');
+    expect((await exportDoc(doc, 'mp4')).mime).toBe('video/mp4');
   });
   it('honors cancellation before rendering and during video generation and always closes Chromium', async () => {
     const doc = createDocument('video', 'Cancelled');

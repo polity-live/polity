@@ -206,6 +206,11 @@ export function MessageListView({
                       {...rowAttributes(row.index, row.key)}
                       className="w-full px-4 pb-4"
                     >
+                      {row.timelineBefore?.map((item: any) => (
+                        <div key={item.id} className="mb-4">
+                          {item.content}
+                        </div>
+                      ))}
                       {row.message ? (
                         <MessageBubble
                           message={resolveAppTutorialFixtureValue(row.message, {
@@ -222,6 +227,11 @@ export function MessageListView({
                           <Skeleton className="h-16 max-w-xl flex-1 rounded-2xl" />
                         </div>
                       )}
+                      {row.timelineAfter?.map((item: any) => (
+                        <div key={item.id} className="mt-4">
+                          {item.content}
+                        </div>
+                      ))}
                     </div>
                   );
                 })}

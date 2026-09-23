@@ -41,7 +41,7 @@ describe('app shell page frame routing', () => {
         isSecondaryNavVisible: true,
       })
     ).toBe(
-      'mt-20 mb-20 [--app-shell-mobile-top-offset:5rem] [--app-shell-mobile-bottom-offset:5rem]'
+      'mt-20 mb-20 [--app-shell-mobile-top-offset:5rem] [--app-shell-mobile-bottom-offset:5rem] [--app-shell-desktop-right-offset:0rem]'
     );
     expect(
       getAppShellResponsiveClasses({
@@ -50,7 +50,7 @@ describe('app shell page frame routing', () => {
         isSecondaryNavVisible: true,
       })
     ).toBe(
-      'ml-64 mr-64 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:0rem]'
+      'ml-64 mr-64 [--app-shell-mobile-top-offset:0rem] [--app-shell-mobile-bottom-offset:0rem] [--app-shell-desktop-right-offset:16rem]'
     );
   });
 
@@ -148,6 +148,21 @@ describe('app shell page frame routing', () => {
     expect(APP_SHELL_PAGE_FRAME_CLASS.messages).toContain('[--app-shell-page-frame-y:2rem]');
   });
 
+  it('renders opened Studio and whiteboard projects without a page frame', () => {
+    for (const path of [
+      '/studio/project-1',
+      '/whiteboards/project-1',
+      '/group/group-1/studio/project-1',
+      '/group/group-1/whiteboards/project-1',
+    ]) {
+      expect(getAuthenticatedPageFrame(path)).toBe('bare');
+      expect(getUnauthenticatedPageFrame(path)).toBe('bare');
+    }
+
+    expect(getAuthenticatedPageFrame('/studio')).toBe('contained');
+    expect(getAuthenticatedPageFrame('/group/group-1/studio')).toBe('contained');
+  });
+
   it('recognizes every landing path and rejects non-landing paths', () => {
     for (const path of ['/', '/features', '/solutions', '/imprint']) {
       expect(isLandingPath(path)).toBe(true);
@@ -163,6 +178,18 @@ describe('app shell page frame routing', () => {
     ) => getAppShellResponsiveClasses({ screenType, navigationView, isSecondaryNavVisible });
 
     expect(classes('automatic', 'asButton', false)).toContain('top-offset:0rem');
+    expect(classes('automatic', 'asButton', false)).toContain(
+      '[--app-shell-chat-dock-bottom-offset:5rem]'
+    );
+    expect(classes('automatic', 'asButton', false)).toContain(
+      'md:[--app-shell-chat-dock-right-offset:5rem]'
+    );
+    expect(classes('mobile', 'asButton', false)).toContain(
+      '[--app-shell-chat-dock-right-offset:0rem]'
+    );
+    expect(classes('desktop', 'asButton', false)).toContain(
+      '[--app-shell-chat-dock-bottom-offset:0rem]'
+    );
     expect(classes('desktop', 'asButtonList', true)).toContain('mr-16');
     expect(classes('desktop', 'asButtonList', false)).not.toContain('mr-16');
     expect(classes('desktop', 'asLabeledButtonList', false)).not.toContain('mr-64');
@@ -172,6 +199,15 @@ describe('app shell page frame routing', () => {
     expect(classes('automatic', 'asButtonList', false)).not.toContain('md:mr-16');
     expect(classes('automatic', 'asLabeledButtonList', true)).toContain('md:mr-64');
     expect(classes('automatic', 'asLabeledButtonList', false)).not.toContain('md:mr-64');
+    expect(classes('desktop', 'asButtonList', true)).toContain(
+      '[--app-shell-desktop-right-offset:4rem]'
+    );
+    expect(classes('automatic', 'asLabeledButtonList', true)).toContain(
+      'md:[--app-shell-desktop-right-offset:16rem]'
+    );
+    expect(classes('mobile', 'asLabeledButtonList', true)).toContain(
+      '[--app-shell-desktop-right-offset:0rem]'
+    );
   });
 
   it('keeps onboarding bare in an authenticated shell', () => {

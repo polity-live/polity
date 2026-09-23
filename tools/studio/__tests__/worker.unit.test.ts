@@ -2,6 +2,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDocument } from '../../../src/features/communication-studio/logic/templates';
+import { legacyDocumentToV3 } from '../../../src/features/communication-studio/logic/v3-adapter';
 const io = vi.hoisted(() => ({
   sql: vi.fn(),
   begin: vi.fn(),
@@ -85,7 +86,7 @@ beforeEach(() => {
     if (sql.startsWith('delete from studio_asset')) return abandoned;
     if (sql.startsWith('select * from studio_export')) return nextCount++ === 0 && job ? [job] : [];
     if (sql.startsWith('select document'))
-      return [{ document: createDocument('single', 'Snapshot') }];
+      return [{ document: legacyDocumentToV3(createDocument('single', 'Snapshot')) }];
     if (sql.startsWith('select * from studio_asset')) return rows;
     if (sql.startsWith('select status')) return status;
     if (sql.includes("set status='completed'") || sql.includes("set status='failed'"))

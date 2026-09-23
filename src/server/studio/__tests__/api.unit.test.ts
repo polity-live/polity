@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, expect, vi } from 'vitest';
-import { CollaborationError } from '@/features/collaboration/logic/types';
+import { StudioError as CollaborationError } from '../db';
 import { createDocument } from '@/features/communication-studio/logic/templates';
+import { legacyDocumentToV3 } from '@/features/communication-studio/logic/v3-adapter';
 const mocks = vi.hoisted(() => ({
   session: vi.fn(),
   enabled: vi.fn(),
@@ -10,13 +11,12 @@ const mocks = vi.hoisted(() => ({
   access: vi.fn(),
   load: vi.fn(),
   assets: vi.fn(),
-  create: vi.fn(),
+  createSelection: vi.fn(),
   download: vi.fn(),
   export: vi.fn(),
   duplicate: vi.fn(),
   beginUpload: vi.fn(),
   finishUpload: vi.fn(),
-  source: vi.fn(),
   catalog: vi.fn(),
   model: vi.fn(),
   preferred: vi.fn(),
@@ -33,14 +33,13 @@ vi.mock('../db', async original => ({
 vi.mock('../service', () => ({
   loadProject: mocks.load,
   assetUrls: mocks.assets,
-  createProject: mocks.create,
+  createProjectFromSelection: mocks.createSelection,
   downloadExport: mocks.download,
   queueExport: mocks.export,
   duplicateProject: mocks.duplicate,
   beginUpload: mocks.beginUpload,
   finishUpload: mocks.finishUpload,
 }));
-vi.mock('../sources', () => ({ studioSource: mocks.source }));
 vi.mock('@/server/ai-models', () => ({
   getAiCatalog: mocks.catalog,
   resolveLanguageModelForUser: mocks.model,
@@ -70,13 +69,12 @@ beforeEach(() => {
   mocks.access.mockResolvedValue(undefined);
   mocks.group.mockResolvedValue(undefined);
   for (const handler of [
-    mocks.create,
+    mocks.createSelection,
     mocks.download,
     mocks.export,
     mocks.duplicate,
     mocks.beginUpload,
     mocks.finishUpload,
-    mocks.source,
   ])
     handler.mockResolvedValue({ id });
   mocks.catalog.mockResolvedValue({ models: ['configured'] });
@@ -86,28 +84,35 @@ beforeEach(() => {
 describe('Studio HTTP authorization and transactional operations', () => {
   it('validates commands and forwards only the authenticated actor to shared project and media services', async () => {
     expect(await (await request({ operation: 'config' })).json()).toEqual({ enabled: true });
-    const document = createDocument('single', 'API draft');
+    const createInput = {
+      groupId: null,
+      title: 'API draft',
+      kind: 'single',
+      themeId: '00000000-0000-4000-8000-000000000001',
+      themeMode: 'light',
+      template: { kind: 'builtin', id: 'announcement' },
+      campaign: { weeks: 4, core: 3, stories: 2 },
+    } as const;
     for (const [operation, handler, extra, args] of [
       [
         'beginUpload',
         mocks.beginUpload,
         { projectId: id, name: 'image.png', mime: 'image/png', size: 16 },
-        ['actor', id, 'image.png', 'image/png', 16],
+        ['actor', id, 'image.png', 'image/png', 16, undefined],
       ],
       ['finishUpload', mocks.finishUpload, {}, ['actor', id, false]],
       ['cancelUpload', mocks.finishUpload, {}, ['actor', id, true]],
-      ['create', mocks.create, { groupId: null, document }, ['actor', null, document]],
-      ['assets', mocks.assets, {}, ['actor', id]],
+      ['create', mocks.createSelection, createInput, ['actor', createInput]],
+      ['assets', mocks.assets, {}, ['actor', id, undefined]],
       ['load', mocks.load, {}, ['actor', id]],
       ['duplicate', mocks.duplicate, {}, ['actor', id]],
       ['download', mocks.download, {}, ['actor', id]],
       [
         'export',
         mocks.export,
-        { projectId: id, format: 'pptx', state: 'saved' },
-        ['actor', id, 'pptx', [], 'saved'],
+        { projectId: id, format: 'pptx', revision: 0 },
+        ['actor', id, 'pptx', [], 0],
       ],
-      ['sources', mocks.source, { type: 'event' }, ['actor', 'event', id]],
     ] as const) {
       handler.mockResolvedValue({ id });
       const response = await request({ operation, id, ...extra, userId: 'forged' });
@@ -115,12 +120,11 @@ describe('Studio HTTP authorization and transactional operations', () => {
       expect(handler).toHaveBeenLastCalledWith(...args);
       expect(await response.json()).toEqual({ id });
     }
-    await request({ operation: 'sources', type: 'statement' });
-    expect(mocks.source).toHaveBeenLastCalledWith('actor', 'statement', undefined);
   });
   it('hands off only completed single image or video exports using their immutable revision and story pages', async () => {
-    const document = createDocument('story', 'Story');
-    const page = document.pages[0].id;
+    const legacy = createDocument('story', 'Story');
+    const document = legacyDocumentToV3(legacy);
+    const page = legacy.pages[0].id;
     for (const [name, pageIds] of [
       ['preview.png', []],
       ['video.mp4', [page]],
@@ -143,7 +147,7 @@ describe('Studio HTTP authorization and transactional operations', () => {
       mocks.sql.mockResolvedValueOnce(rows);
       expect((await request({ operation: 'handoff', id })).status).toBe(400);
     }
-    const single = createDocument('single', 'Single');
+    const single = legacyDocumentToV3(createDocument('single', 'Single'));
     mocks.sql
       .mockResolvedValueOnce([
         { id, project_id: id, file_name: 'preview.png', revision_id: id, page_ids: [] },
@@ -182,7 +186,7 @@ describe('Studio HTTP authorization and transactional operations', () => {
       })
     );
     expect(mocks.transaction).not.toHaveBeenCalled();
-    expect(mocks.create).not.toHaveBeenCalled();
+    expect(mocks.createSelection).not.toHaveBeenCalled();
     mocks.preferred.mockReturnValueOnce(null);
     expect((await request({ operation: 'generate', prompt: 'Missing model' })).status).toBe(400);
     mocks.generate.mockResolvedValueOnce({ text: '{"title":5,"posts":[]}' });

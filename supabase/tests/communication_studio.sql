@@ -1,7 +1,7 @@
 -- @covers schema 36_communication_studio.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(12);
+SELECT plan(15);
 INSERT INTO public."user"(id,handle) VALUES
 ('c9100000-0000-0000-0000-000000000001','studio-owner'),
 ('c9100000-0000-0000-0000-000000000002','studio-member'),
@@ -26,6 +26,13 @@ SELECT ok(NOT has_table_privilege('anon','public.studio_state','SELECT'),'Anonym
 SELECT ok(NOT has_table_privilege('authenticated','public.studio_revision','SELECT'),'Revisions require server authorization');
 SELECT ok(NOT has_table_privilege('authenticated','public.studio_asset','SELECT'),'Assets require server authorization');
 SELECT ok(NOT has_table_privilege('authenticated','public.studio_export','INSERT'),'Export requests require server authorization');
+SELECT ok(EXISTS(SELECT 1 FROM storage.buckets WHERE id='studio'),'Media bucket exists');
 SELECT is((SELECT public FROM storage.buckets WHERE id='studio'),false,'Media bucket is private');
+SELECT is((SELECT file_size_limit FROM storage.buckets WHERE id='studio'),104857600::bigint,'Media bucket accepts 100 MiB files');
+SELECT is(
+  (SELECT array_agg(mime ORDER BY mime) FROM storage.buckets,unnest(allowed_mime_types) mime WHERE id='studio'),
+  ARRAY['image/jpeg','image/png','image/webp','video/mp4']::text[],
+  'Media bucket allows exactly the Studio media types'
+);
 SELECT * FROM finish();
 ROLLBACK;

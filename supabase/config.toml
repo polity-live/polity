@@ -81,7 +81,7 @@ skip_nonce_check = false
 
 [storage]
 enabled = true
-file_size_limit = "50MiB"
+file_size_limit = "100MiB"
 
 [storage.vector]
 enabled = false
@@ -95,6 +95,11 @@ allowed_mime_types = ["image/png", "image/jpeg", "image/gif", "image/webp", "ima
 public = true
 file_size_limit = "50MB"
 allowed_mime_types = ["image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml", "video/mp4", "video/webm", "video/quicktime", "application/pdf"]
+
+[storage.buckets.studio]
+public = false
+file_size_limit = "100MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "video/mp4"]
 
 [storage.buckets.dataset-snapshots]
 public = false

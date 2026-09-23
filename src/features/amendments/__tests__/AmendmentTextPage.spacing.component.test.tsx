@@ -36,6 +36,9 @@ vi.mock('@/features/editor/ui/EditorView', () => ({
 vi.mock('@/features/amendments/ui/AmendmentBranchSelectorSection', () => ({
   AmendmentBranchSelectorSection: () => <div data-testid="amendment-branch-selector" />,
 }));
+vi.mock('@/features/project-chat/ui/ProjectChatPanel', () => ({
+  ProjectChatWorkspace: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,

@@ -1,0 +1,177 @@
+{
+  "version": 1,
+  "sourceReferenceAdditions": {
+    "src/features/communication-studio/logic/canvas-adapter.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves mixed native and structured layer order without rewriting unrelated records"
+      }
+    ],
+    "src/features/communication-studio/logic/canvas-layers.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "project": "unit",
+        "caseId": "preserves mixed native and structured layer order without rewriting unrelated records"
+      }
+    ],
+    "src/features/communication-studio/logic/canvas-schema.ts": [
+      {
+        "file": "src/features/communication-studio/logic/__tests__/canvas.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects executable links, duplicate IDs and executable image formats"
+      }
+    ],
+    "src/server/studio/governance.ts": [
+      {
+        "file": "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "keeps drafts private and applies exactly the immutable proposal once, retaining a conflicting second decision"
+      }
+    ],
+    "src/features/communication-studio/logic/governance.ts": [
+      {
+        "file": "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "keeps drafts private and applies exactly the immutable proposal once, retaining a conflicting second decision"
+      }
+    ],
+    "src/server/studio/presence.ts": [
+      {
+        "file": "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "does not send new presence data to an already joined user after membership revocation"
+      }
+    ],
+    "src/server/studio/workspace-access.ts": [
+      {
+        "file": "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "isolates proposal media from the canonical library and promotes only media in an applied decision"
+      }
+    ],
+    "src/server/studio/private-media.ts": [
+      {
+        "file": "src/server/studio/__tests__/private-media.unit.test.ts",
+        "project": "unit",
+        "caseId": "rejects the same asset URL after access is withdrawn before contacting storage"
+      }
+    ],
+    "src/features/communication-studio/ui/ExcalidrawCanvas.tsx": [
+      {
+        "file": "tools/e2e/studio/canvas.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "two accounts edit, propose, discuss, vote and apply without replacing canonical content"
+      }
+    ],
+    "src/features/communication-studio/ui/CanvasGovernancePanel.tsx": [
+      {
+        "file": "tools/e2e/studio/canvas.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "two accounts edit, propose, discuss, vote and apply without replacing canonical content"
+      }
+    ],
+    "src/zero/communication-studio/queries.ts": [
+      {
+        "file": "tools/e2e/studio/canvas.e2e.spec.ts",
+        "project": "playwright",
+        "caseId": "two accounts edit, propose, discuss, vote and apply without replacing canonical content"
+      }
+    ],
+    "src/routes/_authed/group/$id/whiteboards.tsx": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "renders nested Studio routes through an outlet",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises the dedicated whiteboard route."
+        }
+      }
+    ],
+    "src/routes/_authed/group/$id/whiteboards/index.tsx": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "opens the selected project without losing its workspace route",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises the dedicated whiteboard route."
+        }
+      }
+    ],
+    "src/routes/_authed/group/$id/whiteboards/$projectId.tsx": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "renders a project on its dedicated full-screen route",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises the dedicated whiteboard route."
+        }
+      }
+    ],
+    "src/routes/_authed/whiteboards.tsx": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "renders nested Studio routes through an outlet",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises the dedicated whiteboard route."
+        }
+      }
+    ],
+    "src/routes/_authed/whiteboards/index.tsx": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "opens the selected project without losing its workspace route",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises the dedicated whiteboard route."
+        }
+      }
+    ],
+    "src/routes/_authed/whiteboards/$projectId.tsx": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "renders a project on its dedicated full-screen route",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises the dedicated whiteboard route."
+        }
+      }
+    ],
+    "src/routes/api/studio/media/$id.ts": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "passes original requests to authorization handlers, including the published asset identity",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises the authorized private media boundary."
+        }
+      }
+    ],
+    "src/routes/api/studio/exports/$id.ts": [
+      {
+        "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
+        "project": "component",
+        "caseId": "passes original requests to authorization handlers, including the published asset identity",
+        "evidence": {
+          "relation": "direct",
+          "description": "Exercises the authorized private media boundary."
+        }
+      }
+    ],
+    "src/server/studio/operations.ts": [
+      {
+        "file": "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "project": "database-integration",
+        "caseId": "commits independent edits from ten distinct simultaneous editors and refuses stale generations"
+      }
+    ]
+  }
+}
