@@ -7,12 +7,7 @@ import { resolveZeroAPIURL } from '@/lib/zero-api-url';
 export function createZeroClient(userID: string, email: string) {
   const cacheURL = getRequiredEnvVar(import.meta.env.VITE_ZERO_CACHE_URL, 'VITE_ZERO_CACHE_URL');
   const appURL = getRequiredEnvVar(import.meta.env.VITE_APP_URL, 'VITE_APP_URL');
-  const zeroAPIURL = resolveZeroAPIURL(
-    appURL,
-    cacheURL,
-    import.meta.env.VITE_ZERO_API_URL,
-    import.meta.env.DEV
-  );
+  const zeroAPIURL = resolveZeroAPIURL(appURL, import.meta.env.VITE_ZERO_API_URL);
   const opts: ZeroOptions = {
     schema,
     mutators,
