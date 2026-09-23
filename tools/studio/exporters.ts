@@ -9,7 +9,10 @@ import { zipSync, strToU8 } from 'fflate';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import type { StudioDocumentV3 } from '../../src/features/communication-studio/logic/document-v3';
+import {
+  studioDocumentV3Schema,
+  type StudioDocumentV3,
+} from '../../src/features/communication-studio/logic/document-v3';
 import {
   legacyDocumentToV3,
   v3DocumentToLegacy,
@@ -35,7 +38,44 @@ const slug = (s: string) =>
     .replace(/[^a-zA-Z0-9-]+/g, '-')
     .slice(0, 70) || 'polity';
 export const pageFile = (p: StudioPage, index: number) => `${pad(index)}-${slug(p.name)}.png`;
-export async function workbook(doc: StudioDocument) {
+export function selectStudioExportDocument(document: StudioDocumentV3, selected: string[]) {
+  const roots = document.nodes.filter(
+    node =>
+      node.type === 'frame' &&
+      node.parentFrameId === null &&
+      node.id !== document.masterLayout.frameId
+  );
+  const available = new Set(roots.map(frame => frame.id));
+  if (selected.some(id => !available.has(id)))
+    throw new Error('A selected Studio frame no longer exists or cannot be exported.');
+  const selectedIds = new Set(selected.length ? selected : roots.map(frame => frame.id));
+  if (!selectedIds.size) throw new Error('Select at least one frame to export.');
+  const retained = new Set(selectedIds);
+  if (document.masterLayout.frameId) retained.add(document.masterLayout.frameId);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const node of document.nodes)
+      if (node.parentFrameId && retained.has(node.parentFrameId) && !retained.has(node.id)) {
+        retained.add(node.id);
+        changed = true;
+      }
+  }
+  return studioDocumentV3Schema.parse({
+    ...document,
+    nodes: document.nodes.filter(node => retained.has(node.id)),
+    deliverables: document.deliverables
+      .map(deliverable => ({
+        ...deliverable,
+        frameIds: deliverable.frameIds.filter(id => selectedIds.has(id)),
+      }))
+      .filter(deliverable => deliverable.frameIds.length),
+    componentInstances: document.componentInstances.filter(instance =>
+      Object.values(instance.sourceToInstance).some(id => retained.has(id))
+    ),
+  });
+}
+export async function workbook(doc: StudioDocument, originalPageIndex?: Map<string, number>) {
   const book = new ExcelJS.Workbook();
   book.creator = 'Polity';
   const plan = book.addWorksheet('Redaktionsplan');
@@ -72,7 +112,7 @@ export async function workbook(doc: StudioDocument) {
         post.pageIds
           .map(id => {
             const i = doc.pages.findIndex(p => p.id === id);
-            return i < 0 ? '' : pageFile(doc.pages[i], i);
+            return i < 0 ? '' : pageFile(doc.pages[i], originalPageIndex?.get(id) ?? i);
           })
           .join('\n'),
       ]);
@@ -147,14 +187,25 @@ export async function render(
   progress: (n: number) => Promise<void>,
   cancelled: () => Promise<boolean>
 ): Promise<ExportResult> {
-  const v5Document = 'schemaVersion' in input ? input : legacyDocumentToV3(input);
+  const sourceDocument = 'schemaVersion' in input ? input : legacyDocumentToV3(input);
+  const originalPageIndex = new Map(
+    sourceDocument.nodes
+      .filter(
+        node =>
+          node.type === 'frame' &&
+          node.parentFrameId === null &&
+          node.id !== sourceDocument.masterLayout.frameId
+      )
+      .sort((left, right) => left.zIndex - right.zIndex || left.id.localeCompare(right.id))
+      .map((frame, index) => [frame.id, index] as const)
+  );
+  const v5Document = selectStudioExportDocument(sourceDocument, selected);
   const doc: StudioDocument = v3DocumentToLegacy(v5Document, { includeMaster: true });
-  const sourcePages = selected.length ? doc.pages.filter(p => selected.includes(p.id)) : doc.pages;
-  const pages = doc.kind === 'whiteboard' ? sourcePages.map(fitWhiteboardExport) : sourcePages;
+  const pages = doc.kind === 'whiteboard' ? doc.pages.map(fitWhiteboardExport) : doc.pages;
   const name = slug(doc.title);
   if (format === 'xlsx')
     return {
-      bytes: await workbook(doc),
+      bytes: await workbook(doc, originalPageIndex),
       name: name + '.xlsx',
       mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     };
@@ -211,10 +262,7 @@ export async function render(
       for (const p of pages)
         files[
           'PNG/' +
-            pageFile(
-              p,
-              doc.pages.findIndex(x => x.id === p.id)
-            )
+            pageFile(p, originalPageIndex.get(p.id) ?? doc.pages.findIndex(x => x.id === p.id))
         ] = images[p.id];
     };
     const addPdf = async () => {
@@ -605,7 +653,7 @@ export async function render(
         files[
           `Medien/${id}.${m.mime === 'video/mp4' ? 'mp4' : m.mime === 'image/jpeg' ? 'jpg' : m.mime === 'image/webp' ? 'webp' : 'png'}`
         ] = m.bytes;
-      files['Kampagnenplan.xlsx'] = await workbook(doc);
+      files['Kampagnenplan.xlsx'] = await workbook(doc, originalPageIndex);
       files['Kanaltexte.md'] = strToU8(
         doc.posts
           .map(
