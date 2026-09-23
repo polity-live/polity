@@ -221,9 +221,6 @@ export function createStudioTemplateDocumentV5(
           `W${week + 1}-S${index + 1}`
         );
     }
-  } else if (kind === 'whiteboard') {
-    const frame = addFrame(document, title, 'widescreen', brand, 0, 'blank');
-    frame.style.fill = brand.background;
   } else addPost(kind === 'event' ? 'single' : kind, title, 0, '01');
   return document;
 }

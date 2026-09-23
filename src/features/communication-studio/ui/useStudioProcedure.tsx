@@ -11,12 +11,15 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import type { CanvasProposal, CanvasSession } from '../logic/governance';
 import type { StudioDocumentV3 } from '../logic/document-v3';
+import { diffStudio } from '../logic/operations';
+import { buildProposalAnnotations } from '../logic/change-request-annotations';
 import type { useStudioController } from '../hooks/useStudioController';
 import type { StudioAsset } from '../hooks/useStudioDocument';
 import { StudioPlateDiff, studioText } from './StudioPlateDiff';
 
 type Controller = ReturnType<typeof useStudioController>;
 const modes = ['edit', 'suggest_internal', 'vote_internal'] as const;
+type ComparisonView = 'original' | 'difference' | 'proposal';
 
 export function proposalNodeIds(proposal: CanvasProposal): string[] {
   return [
@@ -43,8 +46,11 @@ export function useStudioProcedure({
   const [session, setSession] = useState<CanvasSession | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(workspaceId ?? null);
   const [preview, setPreview] = useState<StudioDocumentV3 | null>(null);
+  const [previewBase, setPreviewBase] = useState<StudioDocumentV3 | null>(null);
+  const [draftBase, setDraftBase] = useState<StudioDocumentV3 | null>(null);
   const [previewAssets, setPreviewAssets] = useState<StudioAsset[]>([]);
-  const [showProposed, setShowProposed] = useState(false);
+  const [ghostAssets, setGhostAssets] = useState<StudioAsset[]>([]);
+  const [comparisonView, setComparisonView] = useState<ComparisonView>('difference');
   const [title, setTitle] = useState('');
   const [reason, setReason] = useState('');
   const [comment, setComment] = useState('');
@@ -78,8 +84,29 @@ export function useStudioProcedure({
   }, [projectId]);
 
   useEffect(() => {
-    setShowProposed(false);
+    setDraftBase(null);
+    if (!workspaceId) return;
+    let live = true;
+    void request<{ baseDocument?: StudioDocumentV3 }>('canvas', {
+      projectId,
+      action: 'loadDraft',
+      workspaceId,
+    })
+      .then(result => {
+        if (live && result.baseDocument) setDraftBase(result.baseDocument);
+      })
+      .catch(cause => {
+        if (live) setError(String(cause));
+      });
+    return () => {
+      live = false;
+    };
+  }, [projectId, workspaceId]);
+
+  useEffect(() => {
+    setComparisonView('difference');
     setPreview(null);
+    setPreviewBase(null);
     setPreviewAssets([]);
     if (!selectedId || selectedId === workspaceId) {
       setPreview(null);
@@ -88,7 +115,7 @@ export function useStudioProcedure({
     let live = true;
     const objectUrls: string[] = [];
     void Promise.all([
-      request<{ document: StudioDocumentV3 }>('canvas', {
+      request<{ document: StudioDocumentV3; baseDocument?: StudioDocumentV3 }>('canvas', {
         projectId,
         action: 'loadDraft',
         workspaceId: selectedId,
@@ -114,6 +141,7 @@ export function useStudioProcedure({
         );
         if (live) {
           setPreview(result.document);
+          setPreviewBase(result.baseDocument ?? null);
           setPreviewAssets(hydrated);
         }
       })
@@ -161,19 +189,81 @@ export function useStudioProcedure({
 
   const proposal = session?.proposals.find(item => item.id === (selectedId ?? workspaceId)) ?? null;
   const visible = session?.proposals.filter(item => item.state !== 'withdrawn') ?? [];
-  const markers = useMemo(
-    () =>
-      visible.flatMap(item =>
-        proposalNodeIds(item).map(nodeId => ({
-          id: `${item.id}:${nodeId}`,
-          proposalId: item.id,
-          nodeId,
-          label: item.title,
+  const mediaProposalIds = visible
+    .filter(item =>
+      item.changes?.some(
+        change =>
+          change.path[0] === 'nodes' &&
+          change.path.length === 2 &&
+          change.before.exists === false &&
+          change.after.value &&
+          typeof change.after.value === 'object' &&
+          ['media', 'chart'].includes((change.after.value as { type?: string }).type ?? '')
+      )
+    )
+    .map(item => item.id)
+    .join('|');
+  useEffect(() => {
+    setGhostAssets([]);
+    const ids = mediaProposalIds.split('|').filter(Boolean);
+    if (!ids.length) return;
+    let live = true;
+    const objectUrls: string[] = [];
+    void Promise.all(
+      ids.map(id => request<StudioAsset[]>('assets', { id: projectId, workspaceId: id }))
+    )
+      .then(async groups => {
+        const canonicalIds = new Set(c.assets.map(asset => asset.id));
+        const missing = [...new Map(groups.flat().map(asset => [asset.id, asset])).values()].filter(
+          asset => !canonicalIds.has(asset.id)
+        );
+        if (!missing.length) return [];
+        const { data } = await createClient().auth.getSession();
+        if (!data.session?.access_token) throw new Error('Please sign in');
+        return Promise.all(
+          missing.map(async asset => {
+            const response = await fetch(asset.url, {
+              headers: { Authorization: `Bearer ${data.session?.access_token}` },
+            });
+            if (!response.ok) throw new Error('Cannot load media');
+            const url = URL.createObjectURL(await response.blob());
+            objectUrls.push(url);
+            return { ...asset, url };
+          })
+        );
+      })
+      .then(assets => {
+        if (live) setGhostAssets(assets);
+      })
+      .catch(cause => {
+        if (live) setError(String(cause));
+      });
+    return () => {
+      live = false;
+      objectUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [projectId, mediaProposalIds]);
+  const markers = useMemo(() => {
+    if (comparisonView !== 'difference') return [];
+    const displayedDocument = (selectedId && !workspaceId ? preview : null) ?? c.v3Value;
+    const canonicalDocument = workspaceId ? draftBase : c.v3Value;
+    if (!displayedDocument || !canonicalDocument) return [];
+    return visible
+      .flatMap(item => {
+        const changes =
+          item.id === workspaceId && item.state === 'draft' && draftBase && c.v3Value
+            ? diffStudio(draftBase, c.v3Value)
+            : (item.changes ?? []);
+        return buildProposalAnnotations({
+          proposal: item,
+          changes,
+          canonicalDocument,
+          displayedDocument,
           selected: item.id === (selectedId ?? workspaceId),
-        }))
-      ),
-    [visible, selectedId, workspaceId]
-  );
+        });
+      })
+      .sort((left, right) => Number(left.selected) - Number(right.selected));
+  }, [visible, selectedId, workspaceId, draftBase, c.v3Value, preview, comparisonView]);
   const currentVote = proposal?.votes.find(vote => vote.user_id === user?.id)?.choice;
   const textChanges =
     proposal && preview
@@ -315,19 +405,26 @@ export function useStudioProcedure({
               {tr('Zum Projekt', 'Back to project')}
             </Button>
           )}
-          {preview && proposal.changes?.length ? (
-            <div className="flex gap-2">
+          {preview || (workspaceId === proposal.id && draftBase) ? (
+            <div role="group" aria-label={tr('Ansicht', 'View')} className="flex flex-wrap gap-2">
               <Button
-                variant="outline"
-                aria-pressed={!showProposed}
-                onClick={() => setShowProposed(false)}
+                variant={comparisonView === 'original' ? 'default' : 'outline'}
+                aria-pressed={comparisonView === 'original'}
+                onClick={() => setComparisonView('original')}
               >
                 {tr('Original', 'Original')}
               </Button>
               <Button
-                variant="outline"
-                aria-pressed={showProposed}
-                onClick={() => setShowProposed(true)}
+                variant={comparisonView === 'difference' ? 'default' : 'outline'}
+                aria-pressed={comparisonView === 'difference'}
+                onClick={() => setComparisonView('difference')}
+              >
+                {tr('Differenz', 'Difference')}
+              </Button>
+              <Button
+                variant={comparisonView === 'proposal' ? 'default' : 'outline'}
+                aria-pressed={comparisonView === 'proposal'}
+                onClick={() => setComparisonView('proposal')}
               >
                 {tr('Vorschlag', 'Proposal')}
               </Button>
@@ -470,9 +567,18 @@ export function useStudioProcedure({
     modeButton,
     canvasOverlay,
     markers,
-    previewDocument: showProposed ? preview : null,
-    previewAssets: showProposed ? previewAssets : [],
-    editingAllowed: !!workspaceId || session?.phase === 'edit',
+    previewDocument:
+      comparisonView === 'original'
+        ? workspaceId
+          ? draftBase
+          : previewBase
+        : !workspaceId
+          ? preview
+          : null,
+    previewAssets: [...(comparisonView !== 'original' ? previewAssets : []), ...ghostAssets],
+    editingAllowed:
+      (!!workspaceId || session?.phase === 'edit') &&
+      (comparisonView === 'difference' || !proposal),
     selectProposal: setSelectedId,
   };
 }

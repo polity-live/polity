@@ -145,8 +145,8 @@ describe('Studio shared persistence and media authority', () => {
   it('creates editable JSON documents atomically and rechecks group authority inside the transaction', async () => {
     const value = legacyDocumentToV3(createDocument('single', 'New project'));
     const result = await createProject('owner', 'group', value);
-    expect(io.group).toHaveBeenNthCalledWith(1, 'owner', 'group');
-    expect(io.group).toHaveBeenNthCalledWith(2, 'owner', 'group', io.sql);
+    expect(io.group).toHaveBeenNthCalledWith(1, 'owner', 'group', io.sql, true);
+    expect(io.group).toHaveBeenNthCalledWith(2, 'owner', 'group', io.sql, true);
     const row = writes('insert into studio_state')[0];
     expect(row[2]).toEqual(value);
     expect(row[1]).toBe(result.id);
@@ -320,7 +320,7 @@ describe('Studio shared persistence and media authority', () => {
     expect(value.title).toBe('Original · Kopie');
     expect(row[1]).toBe(result.id);
     expect(io.access).toHaveBeenLastCalledWith('reader', 'original', false, io.sql);
-    expect(io.group).toHaveBeenLastCalledWith('reader', 'group', io.sql);
+    expect(io.group).toHaveBeenLastCalledWith('reader', 'group', io.sql, true);
     expect(io.copy.mock.invocationCallOrder[0]).toBeLessThan(
       io.transaction.mock.invocationCallOrder[0]
     );

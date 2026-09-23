@@ -400,7 +400,7 @@ test('persists context-menu copy, paste, cut and flip actions without validation
 }) => {
   test.setTimeout(180000);
   const projectId = crypto.randomUUID();
-  const seed = createDocument('whiteboard', 'Layer actions');
+  const seed = createDocument('single', 'Layer actions');
   seed.pages[0].elements = [
     element('text', {
       x: 600,

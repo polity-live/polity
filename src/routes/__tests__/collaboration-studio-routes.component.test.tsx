@@ -34,12 +34,6 @@ import { Route as PersonalProject } from '../_authed/studio/$projectId';
 import { Route as GroupRoot } from '../_authed/group/$id/studio';
 import { Route as Group } from '../_authed/group/$id/studio/index';
 import { Route as GroupProject } from '../_authed/group/$id/studio/$projectId';
-import { Route as WhiteboardRoot } from '../_authed/whiteboards';
-import { Route as Whiteboard } from '../_authed/whiteboards/index';
-import { Route as WhiteboardProject } from '../_authed/whiteboards/$projectId';
-import { Route as GroupWhiteboardRoot } from '../_authed/group/$id/whiteboards';
-import { Route as GroupWhiteboard } from '../_authed/group/$id/whiteboards/index';
-import { Route as GroupWhiteboardProject } from '../_authed/group/$id/whiteboards/$projectId';
 import { Route as CollaborationAPI } from '../api/collaboration';
 import { Route as StudioAPI } from '../api/studio';
 import { Route as MediaAPI } from '../api/studio/published-media/$id';
@@ -56,12 +50,6 @@ it.each([
     'group',
     { to: '/group/$id/studio/$projectId', params: { id: 'group', projectId: 'next' } },
   ],
-  [Whiteboard, 'personal', { to: '/whiteboards/$projectId', params: { projectId: 'next' } }],
-  [
-    GroupWhiteboard,
-    'group',
-    { to: '/group/$id/whiteboards/$projectId', params: { id: 'group', projectId: 'next' } },
-  ],
 ] as const)(
   'opens the selected project without losing its workspace route',
   (route, scope, expected) => {
@@ -75,22 +63,17 @@ it.each([
 it.each([
   [PersonalProject, 'personal'],
   [GroupProject, 'group'],
-  [WhiteboardProject, 'personal'],
-  [GroupWhiteboardProject, 'group'],
 ] as const)('renders a project on its dedicated full-screen route', (route, scope) => {
   const Page = route.options.component as any;
   render(<Page />);
   expect(screen.getByRole('button', { name: `${scope}:project` })).toBeTruthy();
 });
 
-it.each([PersonalRoot, GroupRoot, WhiteboardRoot, GroupWhiteboardRoot])(
-  'renders nested Studio routes through an outlet',
-  route => {
-    const Page = route.options.component as any;
-    render(<Page />);
-    expect(screen.getByTestId('outlet')).toBeTruthy();
-  }
-);
+it.each([PersonalRoot, GroupRoot])('renders nested Studio routes through an outlet', route => {
+  const Page = route.options.component as any;
+  render(<Page />);
+  expect(screen.getByTestId('outlet')).toBeTruthy();
+});
 it('passes original requests to authorization handlers, including the published asset identity', async () => {
   const request = new Request('http://localhost:3000/api/collaboration', {
     method: 'POST',

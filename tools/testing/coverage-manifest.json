@@ -1322,7 +1322,27 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "e2e/studio-change-requests.e2e.spec.ts",
+      "domain": "e2e",
+      "owner": "polity/e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "e2e/studio-collaboration.e2e.spec.ts",
+      "domain": "e2e",
+      "owner": "polity/e2e",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "e2e/studio-personal-invitation.e2e.spec.ts",
       "domain": "e2e",
       "owner": "polity/e2e",
       "kind": "test-infrastructure",
@@ -1675,6 +1695,16 @@
     },
     {
       "path": "playwright.config.ts",
+      "domain": "platform",
+      "owner": "polity/platform",
+      "kind": "configuration",
+      "verification": "static-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "playwright.local-stack.config.ts",
       "domain": "platform",
       "owner": "polity/platform",
       "kind": "configuration",
@@ -8810,7 +8840,8 @@
         "src/features/amendments/collaborators/ui/__tests__/RolesManagementCardView.component.test.tsx",
         "src/features/amendments/collaborators/ui/__tests__/collaboratorsUiIndex.unit.test.ts",
         "src/features/amendments/collaborators/ui/__tests__/useRolesManagementCardController.a04.component.test.tsx",
-        "src/features/amendments/collaborators/ui/__tests__/view-callbacks.lsf-a04.component.test.tsx"
+        "src/features/amendments/collaborators/ui/__tests__/view-callbacks.lsf-a04.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx"
       ]
     },
     {
@@ -19177,6 +19208,16 @@
       ]
     },
     {
+      "path": "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -19351,6 +19392,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19361,8 +19403,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19374,6 +19415,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19384,8 +19426,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19397,6 +19438,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19407,8 +19449,30 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/logic/change-request-annotations.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19445,14 +19509,14 @@
         "e2e/studio-collaboration.e2e.spec.ts",
         "src/features/amendments/__tests__/amendment-collaboration.component-flow.test.tsx",
         "src/features/amendments/hooks/__tests__/useAmendmentCollaboration.a04.component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts"
       ]
     },
     {
@@ -19464,6 +19528,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19474,8 +19539,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19538,6 +19602,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19548,8 +19613,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19561,6 +19625,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19571,8 +19636,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19584,6 +19648,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19594,8 +19659,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19629,12 +19693,12 @@
         "src/features/app-tutorial/__tests__/city-design-fixture-document.unit.test.ts",
         "src/features/change-requests/logic/__tests__/filterDocumentToSingleSuggestion.unit.test.ts",
         "src/features/communication-studio/hooks/__tests__/document.component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts"
       ]
     },
     {
@@ -19646,6 +19710,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19656,8 +19721,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19669,6 +19733,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19679,8 +19744,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19692,6 +19756,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19702,8 +19767,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19715,6 +19779,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19725,8 +19790,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19745,6 +19809,7 @@
       ],
       "suggestedTestRefs": [
         "e2e/fixtures/domains/governance.ts",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19754,8 +19819,7 @@
         "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts"
       ]
     },
     {
@@ -19773,6 +19837,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19783,8 +19848,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19796,6 +19860,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19806,8 +19871,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19819,6 +19883,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19829,8 +19894,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19894,6 +19958,7 @@
       ],
       "suggestedTestRefs": [
         "src/features/auth/hooks/__tests__/authOperations.branch-a08.component.test.tsx",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19903,8 +19968,7 @@
         "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts"
       ]
     },
     {
@@ -19922,6 +19986,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19932,8 +19997,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19945,6 +20009,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19955,8 +20020,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19968,6 +20032,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -19978,8 +20043,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -19991,6 +20055,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -20001,8 +20066,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -20014,6 +20078,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -20024,8 +20089,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -20037,6 +20101,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -20047,8 +20112,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -20060,6 +20124,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -20070,8 +20135,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -20083,6 +20147,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -20093,8 +20158,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -20117,6 +20181,7 @@
         }
       ],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -20127,8 +20192,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -20140,6 +20204,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -20150,8 +20215,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -20163,6 +20227,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -20173,8 +20238,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -20186,6 +20250,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -20196,8 +20261,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -20209,6 +20273,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -20219,8 +20284,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -20238,30 +20302,7 @@
         }
       ],
       "suggestedTestRefs": [
-        "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
-      ]
-    },
-    {
-      "path": "src/features/communication-studio/logic/theme.ts",
-      "domain": "features:communication-studio",
-      "owner": "polity/features:communication-studio",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "new-gap",
-      "testRefs": [],
-      "suggestedTestRefs": [
-        "e2e/appearance-theme.e2e.spec.ts",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -20276,6 +20317,29 @@
       ]
     },
     {
+      "path": "src/features/communication-studio/logic/theme.ts",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "e2e/appearance-theme.e2e.spec.ts",
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/media-projection.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/operations.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/paint.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
+        "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts"
+      ]
+    },
+    {
       "path": "src/features/communication-studio/logic/v3-adapter.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -20284,6 +20348,7 @@
       "coverageStatus": "new-gap",
       "testRefs": [],
       "suggestedTestRefs": [
+        "src/features/communication-studio/logic/__tests__/change-request-annotations.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/document-v3.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/element-library.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/media-geometry.unit.test.ts",
@@ -20294,8 +20359,7 @@
         "src/features/communication-studio/logic/__tests__/selection-geometry.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts",
-        "src/features/communication-studio/logic/__tests__/studio-selection.unit.test.ts"
+        "src/features/communication-studio/logic/__tests__/studio-scene.unit.test.ts"
       ]
     },
     {
@@ -20326,15 +20390,15 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20360,15 +20424,15 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20383,15 +20447,15 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20417,15 +20481,15 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20516,15 +20580,15 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20539,15 +20603,61 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/ui/StudioInvitations.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
+        "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/ui/StudioInviteDialog.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
+        "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20562,15 +20672,15 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20585,15 +20695,38 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/ui/StudioPlateDiff.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
+        "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20608,15 +20741,38 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/communication-studio/ui/StudioProjectOverview.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
+        "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20637,15 +20793,15 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20660,15 +20816,15 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20683,15 +20839,15 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20706,15 +20862,15 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20805,15 +20961,15 @@
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
         "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/keyboard.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
       ]
     },
     {
@@ -20838,6 +20994,16 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -20877,6 +21043,26 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -20897,6 +21083,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/communication-studio/ui/__tests__/StudioStatementEntry.component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
@@ -20908,6 +21104,16 @@
     },
     {
       "path": "src/features/communication-studio/ui/__tests__/StudioTableEditor.component.test.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/__tests__/StudioTextEntry.browser-component.test.tsx",
       "domain": "features:communication-studio",
       "owner": "polity/features:communication-studio",
       "kind": "test-infrastructure",
@@ -20955,6 +21161,29 @@
       "coverageStatus": "not-instrumented",
       "testRefs": [],
       "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/communication-studio/ui/useStudioProcedure.tsx",
+      "domain": "features:communication-studio",
+      "owner": "polity/features:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioChangeRequests.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioDataProperties.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInvitations.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioInviteDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioLayersPanel.unit.test.ts",
+        "src/features/communication-studio/ui/__tests__/StudioPreviewDialog.component.test.tsx",
+        "src/features/communication-studio/ui/__tests__/StudioProcedure.component.test.tsx"
+      ]
     },
     {
       "path": "src/features/content/ui/BlogsAndStatementsView.tsx",
@@ -60028,6 +60257,46 @@
       ]
     },
     {
+      "path": "src/features/shared/ui/change-requests/CanvasChangeRequestCard.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/ui/change-requests/CanvasChangeRequestList.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/ui/change-requests/CanvasChangeRequestMarker.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/features/shared/ui/change-requests/CanvasVoteButtons.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/features/shared/ui/charting/RechartsPrimitives.ts",
       "domain": "features:shared",
       "owner": "polity/features:shared",
@@ -67777,6 +68046,28 @@
       ]
     },
     {
+      "path": "src/features/shared/ui/status/EditingModeToolbarButton.tsx",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/status/__tests__/DecisionStatusBadges.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingMode.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/EditingMode.tooltip-branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/ReasonBadges.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/RightVisuals.branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/StatusBadges.branches.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/StatusBadges.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/TableTag.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/TopicPills.component.test.tsx",
+        "src/features/shared/ui/status/__tests__/badgeClassNames.unit.test.ts",
+        "src/features/shared/ui/status/__tests__/status-wiki-tail.branch-a02.component.test.tsx"
+      ]
+    },
+    {
       "path": "src/features/shared/ui/status/ReasonBadges.tsx",
       "domain": "features:shared",
       "owner": "polity/features:shared",
@@ -73506,6 +73797,29 @@
           }
         }
       ],
+      "suggestedTestRefs": [
+        "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/Editor.mobile-spacing.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/EditorStatic.preview-spacing.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/MediaPreviewDialogView.branch-a01.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/ResponsiveDiscussionOverlay.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/TableSizePicker.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/TableToolbarButtonView.accessibility.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/ai-menu.branch-a01.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/ai-toolbar-button.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/ai-toolbar-view-tail.branch-a02.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/block-discussion.branch-a02.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/block-draggable.branch-a02.component.test.tsx"
+      ]
+    },
+    {
+      "path": "src/features/shared/ui/ui-platejs/suggestion-mark-style.ts",
+      "domain": "features:shared",
+      "owner": "polity/features:shared",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
       "suggestedTestRefs": [
         "src/features/shared/ui/ui-platejs/__tests__/ColumnGroupElementView.branch-a02.component.test.tsx",
         "src/features/shared/ui/ui-platejs/__tests__/Editor.mobile-spacing.component.test.tsx",
@@ -88731,7 +89045,9 @@
         }
       ],
       "suggestedTestRefs": [
+        "e2e/studio-change-requests.e2e.spec.ts",
         "e2e/studio-collaboration.e2e.spec.ts",
+        "e2e/studio-personal-invitation.e2e.spec.ts",
         "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
@@ -88740,9 +89056,7 @@
         "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx"
       ]
     },
     {
@@ -90569,7 +90883,9 @@
         }
       ],
       "suggestedTestRefs": [
+        "e2e/studio-change-requests.e2e.spec.ts",
         "e2e/studio-collaboration.e2e.spec.ts",
+        "e2e/studio-personal-invitation.e2e.spec.ts",
         "src/features/communication-studio/logic/__tests__/patch-studio-node.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-clipboard.unit.test.ts",
         "src/features/communication-studio/logic/__tests__/studio-crop.unit.test.ts",
@@ -90578,9 +90894,7 @@
         "src/features/communication-studio/logic/__tests__/studio.unit.test.ts",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.browser-component.test.tsx",
         "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.gestures.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
-        "src/features/communication-studio/ui/__tests__/StudioCrop.browser-component.test.tsx"
+        "src/features/communication-studio/ui/__tests__/KonvaStudioCanvas.marquee.browser-component.test.tsx"
       ]
     },
     {
@@ -94527,66 +94841,6 @@
       "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
     },
     {
-      "path": "src/routes/_authed/group/$id/whiteboards.tsx",
-      "domain": "routes:ui",
-      "owner": "polity/routes:ui",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
-          "project": "component",
-          "caseId": "renders nested Studio routes through an outlet",
-          "evidence": {
-            "relation": "direct",
-            "description": "Exercises the dedicated whiteboard route."
-          }
-        }
-      ],
-      "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
-    },
-    {
-      "path": "src/routes/_authed/group/$id/whiteboards/$projectId.tsx",
-      "domain": "routes:ui",
-      "owner": "polity/routes:ui",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
-          "project": "component",
-          "caseId": "renders a project on its dedicated full-screen route",
-          "evidence": {
-            "relation": "direct",
-            "description": "Exercises the dedicated whiteboard route."
-          }
-        }
-      ],
-      "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
-    },
-    {
-      "path": "src/routes/_authed/group/$id/whiteboards/index.tsx",
-      "domain": "routes:ui",
-      "owner": "polity/routes:ui",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
-          "project": "component",
-          "caseId": "opens the selected project without losing its workspace route",
-          "evidence": {
-            "relation": "direct",
-            "description": "Exercises the dedicated whiteboard route."
-          }
-        }
-      ],
-      "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
-    },
-    {
       "path": "src/routes/_authed/home.tsx",
       "domain": "routes:ui",
       "owner": "polity/routes:ui",
@@ -95296,66 +95550,6 @@
             "report": "coverage/coverage-final.json",
             "coveredStatements": 18,
             "totalStatements": 18
-          }
-        }
-      ],
-      "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
-    },
-    {
-      "path": "src/routes/_authed/whiteboards.tsx",
-      "domain": "routes:ui",
-      "owner": "polity/routes:ui",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
-          "project": "component",
-          "caseId": "renders nested Studio routes through an outlet",
-          "evidence": {
-            "relation": "direct",
-            "description": "Exercises the dedicated whiteboard route."
-          }
-        }
-      ],
-      "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
-    },
-    {
-      "path": "src/routes/_authed/whiteboards/$projectId.tsx",
-      "domain": "routes:ui",
-      "owner": "polity/routes:ui",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
-          "project": "component",
-          "caseId": "renders a project on its dedicated full-screen route",
-          "evidence": {
-            "relation": "direct",
-            "description": "Exercises the dedicated whiteboard route."
-          }
-        }
-      ],
-      "suggestedTestRefs": ["src/routes/__tests__/routeCatalog.contract.unit.test.ts"]
-    },
-    {
-      "path": "src/routes/_authed/whiteboards/index.tsx",
-      "domain": "routes:ui",
-      "owner": "polity/routes:ui",
-      "kind": "production-code",
-      "verification": "instrument",
-      "coverageStatus": "referenced",
-      "testRefs": [
-        {
-          "file": "src/routes/__tests__/collaboration-studio-routes.component.test.tsx",
-          "project": "component",
-          "caseId": "opens the selected project without losing its workspace route",
-          "evidence": {
-            "relation": "direct",
-            "description": "Exercises the dedicated whiteboard route."
           }
         }
       ],
@@ -99736,6 +99930,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/studio/__tests__/collaborators.unit.test.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/studio/__tests__/db.unit.test.ts",
       "domain": "server:studio",
       "owner": "polity/server:studio",
@@ -99776,7 +99980,27 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/server/studio/__tests__/private-media.unit.test.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "src/server/studio/__tests__/project-rights.database-integration.test.ts",
       "domain": "server:studio",
       "owner": "polity/server:studio",
       "kind": "test-infrastructure",
@@ -99823,13 +100047,15 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
         "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/published-media.unit.test.ts",
-        "src/server/studio/__tests__/service.unit.test.ts"
+        "src/server/studio/__tests__/project-rights.database-integration.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts"
       ]
     },
     {
@@ -99845,14 +100071,14 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
         "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/published-media.unit.test.ts",
-        "src/server/studio/__tests__/service.unit.test.ts",
-        "tools/deploy/__tests__/sync-vinxi-assets.unit.test.ts"
+        "src/server/studio/__tests__/project-rights.database-integration.test.ts"
       ]
     },
     {
@@ -99867,13 +100093,38 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
         "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/published-media.unit.test.ts",
-        "src/server/studio/__tests__/service.unit.test.ts"
+        "src/server/studio/__tests__/project-rights.database-integration.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts"
+      ]
+    },
+    {
+      "path": "src/server/studio/collaborators.ts",
+      "domain": "server:studio",
+      "owner": "polity/server:studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "src/features/amendments/collaborators/__tests__/amendmentCollaboratorsRoute.component.test.tsx",
+        "src/features/amendments/collaborators/hooks/__tests__/useCollaborators.component.test.tsx",
+        "src/features/amendments/collaborators/hooks/__tests__/useCollaboratorsPageController.a04.component.test.tsx",
+        "src/features/amendments/collaborators/ui/__tests__/CollaboratorsView.a04.component.test.tsx",
+        "src/features/amendments/collaborators/ui/__tests__/CollaboratorsView.component.test.tsx",
+        "src/features/amendments/collaborators/ui/__tests__/collaboratorsUiIndex.unit.test.ts",
+        "src/server/studio/__tests__/api.unit.test.ts",
+        "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
+        "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
+        "src/server/studio/__tests__/db.unit.test.ts",
+        "src/server/studio/__tests__/elements.unit.test.ts"
       ]
     },
     {
@@ -99909,13 +100160,15 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
         "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/published-media.unit.test.ts",
-        "src/server/studio/__tests__/service.unit.test.ts"
+        "src/server/studio/__tests__/project-rights.database-integration.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts"
       ]
     },
     {
@@ -99932,13 +100185,13 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/published-media.unit.test.ts",
-        "src/server/studio/__tests__/service.unit.test.ts"
+        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
+        "src/server/studio/__tests__/private-media.unit.test.ts"
       ]
     },
     {
@@ -99957,11 +100210,11 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
-        "src/server/studio/__tests__/media-range.unit.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts"
+        "src/server/studio/__tests__/media-range.unit.test.ts"
       ]
     },
     {
@@ -99983,14 +100236,14 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
         "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/published-media.unit.test.ts",
-        "src/server/studio/__tests__/service.unit.test.ts",
-        "src/zero/amendments/__tests__/governance-concurrency.database-integration.test.ts"
+        "src/server/studio/__tests__/project-rights.database-integration.test.ts"
       ]
     },
     {
@@ -100021,13 +100274,15 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
         "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/published-media.unit.test.ts",
-        "src/server/studio/__tests__/service.unit.test.ts"
+        "src/server/studio/__tests__/project-rights.database-integration.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts"
       ]
     },
     {
@@ -100053,10 +100308,10 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
-        "src/server/studio/__tests__/export.unit.test.ts",
-        "src/server/studio/__tests__/media-range.unit.test.ts"
+        "src/server/studio/__tests__/export.unit.test.ts"
       ]
     },
     {
@@ -100081,11 +100336,11 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
-        "src/server/studio/__tests__/media-range.unit.test.ts",
-        "src/server/studio/__tests__/private-media.unit.test.ts"
+        "src/server/studio/__tests__/media-range.unit.test.ts"
       ]
     },
     {
@@ -100106,13 +100361,15 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
         "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/published-media.unit.test.ts",
-        "src/server/studio/__tests__/service.unit.test.ts"
+        "src/server/studio/__tests__/project-rights.database-integration.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts"
       ]
     },
     {
@@ -100127,13 +100384,15 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
         "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/published-media.unit.test.ts",
-        "src/server/studio/__tests__/service.unit.test.ts"
+        "src/server/studio/__tests__/project-rights.database-integration.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts"
       ]
     },
     {
@@ -100248,13 +100507,15 @@
         "src/server/studio/__tests__/api.unit.test.ts",
         "src/server/studio/__tests__/canvas-workflow.database-integration.test.ts",
         "src/server/studio/__tests__/chat-media.unit.test.ts",
+        "src/server/studio/__tests__/collaborators.unit.test.ts",
         "src/server/studio/__tests__/db.unit.test.ts",
         "src/server/studio/__tests__/elements.unit.test.ts",
         "src/server/studio/__tests__/export.unit.test.ts",
         "src/server/studio/__tests__/media-range.unit.test.ts",
+        "src/server/studio/__tests__/personal-collaborator-access.database-integration.test.ts",
         "src/server/studio/__tests__/private-media.unit.test.ts",
-        "src/server/studio/__tests__/published-media.unit.test.ts",
-        "src/server/studio/__tests__/service.unit.test.ts"
+        "src/server/studio/__tests__/project-rights.database-integration.test.ts",
+        "src/server/studio/__tests__/published-media.unit.test.ts"
       ]
     },
     {
@@ -104379,6 +104640,29 @@
       "coverageStatus": "not-instrumented",
       "testRefs": [],
       "suggestedTestRefs": []
+    },
+    {
+      "path": "src/zero/communication-studio/access.ts",
+      "domain": "zero:communication-studio",
+      "owner": "polity/zero:communication-studio",
+      "kind": "production-code",
+      "verification": "instrument",
+      "coverageStatus": "new-gap",
+      "testRefs": [],
+      "suggestedTestRefs": [
+        "e2e/accessibility.e2e.spec.ts",
+        "src/features/auth/hooks/__tests__/useEntityRouteAccess.component.test.tsx",
+        "src/features/auth/logic/__tests__/checkEntityAccess.unit.test.ts",
+        "src/features/auth/logic/__tests__/guestEntityRouteAccess.unit.test.ts",
+        "src/features/auth/logic/__tests__/privateEntityRelationshipAccess.unit.test.ts",
+        "src/features/auth/logic/__tests__/routeVisibilityAccess.unit.test.ts",
+        "src/features/auth/ui/__tests__/AccessDenied.actions.component.test.tsx",
+        "src/features/groups/logic/__tests__/hasGroupOperationAccess.unit.test.ts",
+        "src/features/navigation/toggles/__tests__/StateSwitcherView.accessibility.component.test.tsx",
+        "src/features/shared/ui/navigation/__tests__/NavigationButtons.accessibility.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/TableToolbarButtonView.accessibility.component.test.tsx",
+        "src/features/shared/ui/ui-platejs/__tests__/media-placeholder-node.accessibility.component.test.tsx"
+      ]
     },
     {
       "path": "src/zero/communication-studio/queries.ts",
@@ -113386,6 +113670,46 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "supabase/migrations/20260923040000_group_studio_internal_modes.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260923050000_personal_studio_collaborators.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260923060000_group_studio_project_rights.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/migrations/20260923061000_retire_whiteboards.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "supabase/schemas/00_extensions.sql",
       "domain": "database",
       "owner": "polity/database",
@@ -114087,6 +114411,46 @@
     },
     {
       "path": "supabase/schemas/65_studio_export_mime_types.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/66_group_studio_internal_modes.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/67_personal_studio_collaborators.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/68_group_studio_project_rights.sql",
+      "domain": "database",
+      "owner": "polity/database",
+      "kind": "declarative",
+      "verification": "database-contract",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
+      "path": "supabase/schemas/69_retire_whiteboards.sql",
       "domain": "database",
       "owner": "polity/database",
       "kind": "declarative",
@@ -115218,7 +115582,7 @@
       "suggestedTestRefs": []
     },
     {
-      "path": "tools/studio/canvas-export-layout.ts",
+      "path": "tools/studio/cleanup-whiteboard-storage.ts",
       "domain": "tools:studio",
       "owner": "polity/tools:studio",
       "kind": "operational-code",

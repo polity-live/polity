@@ -76,11 +76,6 @@ describe('personal Studio invitations', () => {
       status: 403,
     });
     io.project.group_id = null;
-    io.project.kind = 'whiteboard';
-    await expect(inviteStudioCollaborators('owner', 'project', ['guest'])).rejects.toMatchObject({
-      status: 403,
-    });
-    io.project.kind = 'single';
     await expect(inviteStudioCollaborators('owner', 'project', ['owner'])).rejects.toThrow();
     await expect(inviteStudioCollaborators('owner', 'project', ['missing'])).rejects.toThrow();
     expect(io.rows).toHaveLength(0);

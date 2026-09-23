@@ -33,12 +33,21 @@ export async function publishedStudioMedia(request: Request, id: string) {
     if (data.user) session = { user: data.user };
   }
   const sql = studioSql();
-  const [job] = await sql`select * from studio_export where id=${id} and status='completed'`;
-  if (!job || !job.storage_path || !['.png', '.mp4'].some(ext => job.file_name?.endsWith(ext)))
+  const [job] =
+    await sql`select project_id,storage_path,file_name from studio_export where id=${id} and status='completed'`;
+  const [archived] = job
+    ? [null]
+    : await sql`select storage_path,file_name from studio_published_media_archive where id=${id}`;
+  const media = job ?? archived;
+  if (
+    !media ||
+    !media.storage_path ||
+    !['.png', '.mp4'].some(ext => media.file_name?.endsWith(ext))
+  )
     return new Response(null, { status: 404 });
   const url = '/api/studio/published-media/' + id;
   let allowed = false;
-  if (session?.user)
+  if (session?.user && job)
     try {
       await assertStudioAccess(session.user.id, job.project_id);
       allowed = true;
@@ -61,7 +70,7 @@ export async function publishedStudioMedia(request: Request, id: string) {
   if (range) {
     // Storage owns its metadata. A protected application database copy must not
     // rely on a stale copy of storage.objects when checking a newly exported file.
-    const { data: object, error } = await storage.info(job.storage_path);
+    const { data: object, error } = await storage.info(media.storage_path);
     if (error || !object) return new Response(null, { status: 404 });
     const size = Number(object.size);
     if (!validMediaRange(range, size))
@@ -70,7 +79,7 @@ export async function publishedStudioMedia(request: Request, id: string) {
         headers: { 'Content-Range': `bytes */${size}`, 'Cache-Control': 'private, no-store' },
       });
   }
-  const { data, error } = await storage.createSignedUrl(job.storage_path, 30);
+  const { data, error } = await storage.createSignedUrl(media.storage_path, 30);
   if (error || !data) return new Response(null, { status: 404 });
   // The private storage service handles video ranges and files beyond serverless response limits.
   return new Response(null, {

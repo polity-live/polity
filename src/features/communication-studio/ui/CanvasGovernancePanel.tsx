@@ -72,10 +72,7 @@ export function CanvasGovernancePanel({
       if (['submit', 'restore', 'withdraw'].includes(action)) chooseWorkspace();
       if (action === 'comment') setBody('');
       if (action === 'editComment') setCommentEdit(null);
-      if (action === 'adopt')
-        location.assign(
-          `/group/${input.groupId}/${c.value?.kind === 'whiteboard' ? 'whiteboards' : 'studio'}/${projectId}`
-        );
+      if (action === 'adopt') location.assign(`/group/${input.groupId}/studio/${projectId}`);
     } catch (e) {
       setError(String(e));
     } finally {

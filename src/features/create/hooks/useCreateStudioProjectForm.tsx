@@ -26,7 +26,6 @@ const kinds: StudioDocument['kind'][] = [
   'story',
   'video',
   'campaign',
-  'whiteboard',
 ];
 
 export function useCreateStudioProjectForm(groupId: string | null): CreateFormConfig {
@@ -170,7 +169,7 @@ export function useCreateStudioProjectForm(groupId: string | null): CreateFormCo
     onSubmit,
     steps: [
       {
-        label: 'pages.create.studioProject.details',
+        label: t('pages.create.studioProject.details'),
         isValid: () => title.trim().length > 0 && title.trim().length <= 200,
         fields: [
           {
@@ -227,7 +226,7 @@ export function useCreateStudioProjectForm(groupId: string | null): CreateFormCo
         ],
       },
       {
-        label: 'pages.create.studioProject.settings',
+        label: t('pages.create.studioProject.settings'),
         isValid: () => mode !== 'ai' || brief.trim().length > 0,
         fields: [
           field(
@@ -299,7 +298,7 @@ export function useCreateStudioProjectForm(groupId: string | null): CreateFormCo
         ],
       },
       {
-        label: 'pages.create.common.review',
+        label: t('pages.create.common.review'),
         isValid: () => title.trim().length > 0 && (mode !== 'ai' || brief.trim().length > 0),
         fields: [
           {

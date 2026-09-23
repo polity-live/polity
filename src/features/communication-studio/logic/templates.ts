@@ -161,11 +161,6 @@ export function createDocument(
           `W${w + 1}-S${i + 1}`
         );
     }
-  else if (kind === 'whiteboard')
-    pages.push({
-      ...makePage(title, 'widescreen', brand, 0, 'blank'),
-      background: brand.background,
-    });
   else addPost(kind === 'event' ? 'single' : kind, title, 0, '01');
   return { version: 2, title, kind, brand, pages, posts, startDate: '', source: null };
 }

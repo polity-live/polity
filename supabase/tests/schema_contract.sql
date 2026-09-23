@@ -31,8 +31,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND relation.relkind = 'r'
   ),
-  169,
-  'the application owns 169 public tables'
+  172,
+  'the application owns 172 public tables'
 );
 
 SELECT is(
@@ -46,8 +46,8 @@ SELECT is(
       AND column_definition.attnum > 0
       AND NOT column_definition.attisdropped
   ),
-  1793,
-  'all 1793 application columns are installed'
+  1806,
+  'all 1806 application columns are installed'
 );
 
 SELECT is(
@@ -90,8 +90,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'c'
   ),
-  147,
-  'all 147 business CHECK constraints are installed'
+  148,
+  'all 148 business CHECK constraints are installed'
 );
 
 SELECT is(
@@ -103,8 +103,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'f'
   ),
-  416,
-  'all 416 foreign keys are installed'
+  419,
+  'all 419 foreign keys are installed'
 );
 
 SELECT is(
@@ -116,8 +116,8 @@ SELECT is(
     WHERE namespace.nspname = 'public'
       AND constraint_definition.contype = 'u'
   ),
-  65,
-  'all 65 UNIQUE constraints are installed'
+  66,
+  'all 66 UNIQUE constraints are installed'
 );
 
 SELECT is(
@@ -142,8 +142,8 @@ SELECT is(
     FROM pg_indexes index_definition
     WHERE index_definition.schemaname = 'public'
   ),
-  704,
-  'all 704 application indexes are installed'
+  709,
+  'all 709 application indexes are installed'
 );
 
 SELECT is(

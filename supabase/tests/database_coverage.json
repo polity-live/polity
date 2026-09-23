@@ -1,22 +1,22 @@
 {
   "version": 1,
   "expectedInventory": {
-    "tables": 179,
-    "columns": 1884,
-    "primaryKeys": 180,
-    "checks": 158,
-    "foreignKeys": 436,
-    "uniqueConstraints": 68,
+    "tables": 185,
+    "columns": 1923,
+    "primaryKeys": 186,
+    "checks": 171,
+    "foreignKeys": 445,
+    "uniqueConstraints": 72,
     "uniqueIndexes": 29,
-    "uniqueRules": 97,
-    "indexes": 717,
-    "functions": 107,
+    "uniqueRules": 101,
+    "indexes": 730,
+    "functions": 111,
     "triggers": 106,
-    "policies": 162,
+    "policies": 165,
     "cronBranches": 2
   },
   "expectedBehaviorAssertions": {
-    "checkViolations": 113,
+    "checkViolations": 114,
     "uniqueViolations": 87
   },
   "globalTests": {
@@ -346,6 +346,37 @@
     {
       "source": "62_studio_document_v3.sql",
       "behavior": ["studio_zero.sql"]
+    },
+    {
+      "source": "63_studio_v4_themes_elements.sql",
+      "behavior": ["communication_studio.sql"]
+    },
+    {
+      "source": "64_studio_document_v5.sql",
+      "behavior": ["communication_studio.sql"]
+    },
+    {
+      "source": "65_studio_export_mime_types.sql",
+      "behavior": ["communication_studio.sql"]
+    },
+    {
+      "source": "66_group_studio_internal_modes.sql",
+      "behavior": ["canvas_workflows.sql"]
+    },
+    {
+      "source": "67_personal_studio_collaborators.sql",
+      "behavior": ["communication_studio.sql"],
+      "securityBehavior": ["communication_studio.sql"]
+    },
+    {
+      "source": "68_group_studio_project_rights.sql",
+      "behavior": ["communication_studio.sql"],
+      "securityBehavior": ["communication_studio.sql"]
+    },
+    {
+      "source": "69_retire_whiteboards.sql",
+      "behavior": ["communication_studio.sql"],
+      "securityBehavior": ["communication_studio.sql"]
     }
   ]
 }

@@ -82,7 +82,7 @@ export function buildProjectStarterTools(
           if (args.groupId) {
             const [access] = await rows(
               sql,
-              'select studio_group_access($1::uuid,$2::uuid,false) as allowed',
+              'select studio_group_access($1::uuid,$2::uuid,true) as allowed',
               [actor, args.groupId]
             );
             if (!access?.allowed) throw new ProjectToolError('permission_denied');

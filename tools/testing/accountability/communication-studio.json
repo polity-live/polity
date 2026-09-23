@@ -2288,6 +2288,106 @@
         "scenarios": ["idle", "success", "keyboard", "focus"]
       }
     ],
+    "src/features/communication-studio/ui/StudioProjectOverview.tsx#communication-studio.studio-workspace.create": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "project": "component",
+        "caseId": "opens the personal Studio create flow",
+        "scenarios": ["authorized", "deep-link"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "project": "component",
+        "caseId": "passes the fixed group context to the Studio create flow",
+        "scenarios": ["redirect"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "project": "component",
+        "caseId": "hides group creation when the current member cannot manage projects",
+        "scenarios": ["authorized"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "project": "component",
+        "caseId": "distinguishes loading, no projects, and no search results",
+        "scenarios": ["loading"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps create and project navigation usable when the project query reports a failure",
+        "scenarios": ["error"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProjectOverview.tsx#communication-studio.studio-workspace.open": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "project": "component",
+        "caseId": "opens a group Studio project within its group route",
+        "scenarios": ["authorized", "redirect"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "project": "component",
+        "caseId": "opens a personal Studio project within the personal route",
+        "scenarios": ["deep-link"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "project": "component",
+        "caseId": "distinguishes loading, no projects, and no search results",
+        "scenarios": ["loading"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "project": "component",
+        "caseId": "keeps create and project navigation usable when the project query reports a failure",
+        "scenarios": ["error"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProjectOverview.tsx#communication-studio.studio-overview.filter.all": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "project": "component",
+        "caseId": "shows own and shared projects together and filters them by ownership and title",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectOverview.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "moves focus and selection through Studio ownership tabs with the keyboard",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProjectOverview.tsx#communication-studio.studio-overview.filter.mine": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "project": "component",
+        "caseId": "shows own and shared projects together and filters them by ownership and title",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectOverview.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "moves focus and selection through Studio ownership tabs with the keyboard",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
+    "src/features/communication-studio/ui/StudioProjectOverview.tsx#communication-studio.studio-overview.filter.shared": [
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioCreateNavigation.component.test.tsx",
+        "project": "component",
+        "caseId": "shows own and shared projects together and filters them by ownership and title",
+        "scenarios": ["selected", "unselected"]
+      },
+      {
+        "file": "src/features/communication-studio/ui/__tests__/StudioProjectOverview.browser-component.test.tsx",
+        "project": "browser-component",
+        "caseId": "moves focus and selection through Studio ownership tabs with the keyboard",
+        "scenarios": ["keyboard", "focus"]
+      }
+    ],
     "src/features/communication-studio/ui/StudioWorkspace.tsx#communication-studio.studio-workspace.create": [
       {
         "file": "src/features/communication-studio/ui/__tests__/StudioWorkspace.component.test.tsx",

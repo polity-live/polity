@@ -1,6 +1,5 @@
 import { studioV5RenderBundle } from './studio-v5-render-bundle';
 import { editableV5Layers } from './editable-v5-layers';
-import { fitWhiteboardExport } from './canvas-export-layout';
 import { chromium } from 'playwright';
 import PptxGenJS from 'pptxgenjs';
 import ExcelJS from 'exceljs';
@@ -204,7 +203,7 @@ export async function render(
     includeMaster: true,
     allowLongVideo: true,
   });
-  const pages = doc.kind === 'whiteboard' ? doc.pages.map(fitWhiteboardExport) : doc.pages;
+  const pages = doc.pages;
   const name = slug(doc.title);
   if (format === 'xlsx') {
     const bytes = await workbook(doc, originalPageIndex);

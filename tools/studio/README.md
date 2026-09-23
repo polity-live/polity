@@ -1,4 +1,4 @@
-# Kommunikationsstudio und Whiteboards
+# Kommunikationsstudio
 
 Der aktuelle Implementierungs- und Prüfstand steht in [CANVAS-IMPLEMENTATION.md](CANVAS-IMPLEMENTATION.md). Die Aktivierung der neuen Studio-Engine bleibt eine separate Produktionsfreigabe.
 
@@ -7,7 +7,7 @@ Der aktuelle Implementierungs- und Prüfstand steht in [CANVAS-IMPLEMENTATION.md
 1. Abhängigkeiten mit `pnpm install` installieren; Chromium und FFmpeg werden vom Exportworker benötigt.
 2. Die bestehenden lokalen Daten erhalten. Neue Migrationen mit `pnpm exec supabase migration up --local` anwenden.
 3. `pnpm dev:stack` startet Vite auf Port 3000, Zero auf Port 4848 und den Exportworker mit der lokalen Supabase-Instanz. `pnpm dev:stack:status` prüft den Zustand. `pnpm dev:stack:stop` beendet die verwalteten Dienste. Normales Starten führt keinen Datenbank-Reset aus.
-4. Persönliche Projekte unter `/studio` und `/whiteboards`, Gruppenprojekte unter `/group/<id>/studio` und `/group/<id>/whiteboards` öffnen.
+4. Persönliche Projekte unter `/studio`, Gruppenprojekte unter `/group/<id>/studio` öffnen.
 
 Es wird kein Yjs-/Hocuspocus-Dienst benötigt. Die Text-, Blog- und Streetdesign-Editoren verwenden weiterhin ihre bestehende Infrastruktur.
 
@@ -21,7 +21,9 @@ PostgreSQL speichert bestätigte Inhalte, bedingte Elementoperationen, Generatio
 
 Hauptinhalt, private Vorschlagsentwürfe, eingereichte Fassungen und Abstimmungen sind getrennt. Ein angenommener Beschluss kann einen sichtbaren Anwendungskonflikt haben. Die unveränderte Änderung kann erneut geprüft werden; eine inhaltliche Klärung benötigt einen neuen Vorschlag und eine neue Abstimmung. Der alte Beschluss und seine Stimmen bleiben erhalten.
 
-Persönliche Projekte sind nur ihrem Besitzer zugänglich. Die explizite Übernahme in eine Gruppe gibt auch Medien, Kommentare und die Versionshistorie für berechtigte Gruppenmitglieder frei und wechselt die Generation. Gruppenrollen können Vorschlagen, Kommentieren und Abstimmen unabhängig einschränken.
+Persönliche Projekte sind dem Besitzer und Personen mit angenommener Einladung zugänglich. Gruppenprojekte und die gruppeneigene Elementbibliothek verwenden `projects:view` und `projects:manage`. Die explizite Übernahme in eine Gruppe gibt auch Medien, Kommentare und die Versionshistorie für berechtigte Gruppenmitglieder frei und wechselt die Generation. Gruppenrollen können Vorschlagen, Kommentieren und Abstimmen unabhängig einschränken.
+
+Für die Produktionsumstellung zuerst `20260923060000_group_studio_project_rights.sql` und den Medien-Endpunkt mit Archiv-Fallback bereitstellen. Erst danach `20260923061000_retire_whiteboards.sql` anwenden. Die zweite Migration übernimmt von Beiträgen verwendete Exporte ins unabhängige Archiv, löscht die Whiteboard-Daten und erfasst die übrigen Storage-Dateien. Anschließend löscht `pnpm studio:cleanup-whiteboards` die erfassten Dateien. Der Lauf ist wiederholbar und nimmt archivierte Medien aus. Dafür werden `STUDIO_DATABASE_URL`, `SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` benötigt.
 
 Das neue Studio speichert semantische Dokumente der Schemaversion 5. Bestehende Dokumente werden vor Aktivierung durch den geplanten Datenbank-Reset entfernt; eine Migration alter Canvas-Daten ist nicht vorgesehen.
 

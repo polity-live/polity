@@ -66,6 +66,7 @@ export const DEFAULT_GROUP_ROLES = [
       },
       { resource: 'groupPayments' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupPayments' as ResourceType, action: 'view' as ActionType },
+      { resource: 'projects' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupRoles' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupThemes' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupThemes' as ResourceType, action: 'view' as ActionType },
@@ -450,14 +451,14 @@ export const GROUP_ACTION_RIGHTS = [
   },
   // groupThemes
   {
-    resource: 'communicationStudio',
+    resource: 'projects',
     action: 'manage',
-    label: translateText('features.studio.manage', 'Manage communication studio'),
+    label: translateText('features.studio.manageProjects', 'Manage group studio projects'),
   },
   {
-    resource: 'communicationStudio',
-    action: 'update',
-    label: translateText('features.studio.edit', 'Edit group studio projects'),
+    resource: 'projects',
+    action: 'view',
+    label: translateText('features.studio.viewProjects', 'View group studio projects'),
   },
   {
     resource: 'groupThemes',

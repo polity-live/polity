@@ -1,7 +1,6 @@
 export const studioTranslations = {
   canvasPreviewRequired:
     'Dieses Projekt benötigt die Canvas-Vorschau. Aktiviere sie, damit alle gespeicherten Inhalte und Verfahren verfügbar bleiben.',
-  whiteboard: 'Whiteboard',
   insert: 'Einfügen',
   project: 'Projekt',
   collaboration: 'Zusammenarbeit',
@@ -34,6 +33,10 @@ export const studioTranslations = {
   resendInvitation: 'Erneut senden',
   removeCollaborator: 'Entfernen',
   sharedWithMe: 'Mit mir geteilt',
+  allProjects: 'Alle',
+  myProjects: 'Meine',
+  searchProjects: 'Projekte durchsuchen',
+  noMatchingProjects: 'Keine passenden Projekte gefunden.',
   unnamedUser: 'Person',
   arrange: 'Anordnen',
   reference: 'Bezug',
@@ -294,6 +297,8 @@ export const studioTranslations = {
   canvaHint:
     'PPTX herunterladen und in Canva importieren. Schriftarten und Animationen dort prüfen.',
   readOnly: 'Du kannst dieses Projekt ansehen.',
+  manageProjects: 'Gruppenprojekte verwalten',
+  viewProjects: 'Gruppenprojekte ansehen',
   manage: 'Kommunikationsstudio verwalten',
   edit: 'Gruppenprojekte bearbeiten',
   useTemplate: 'Vorlage verwenden',

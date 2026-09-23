@@ -29,6 +29,7 @@ const admin = createClient(local.API_URL, local.SERVICE_ROLE_KEY, {
 });
 const group = crypto.randomUUID(),
   projectId = crypto.randomUUID();
+const editorRole = crypto.randomUUID();
 const projects = [projectId];
 const users: { id: string; state: string }[] = [];
 test.beforeAll(async () => {
@@ -75,8 +76,12 @@ test.beforeAll(async () => {
     users.push({ id, state });
   }
   await sql`insert into "group"(id,name,owner_id) values(${group},'Canvas browser acceptance',${users[0].id})`;
-  await sql`insert into group_membership(id,group_id,user_id,status) values(${crypto.randomUUID()},${group},${users[1].id},'admin')`;
-  const doc = createStudioTemplateDocumentV5('whiteboard', 'Canvas acceptance', defaultBrand);
+  await sql`insert into role(id,name,scope,group_id) values(${editorRole},'Canvas editor','group',${group})`;
+  await sql`insert into action_right(resource,action,role_id,group_id) values('projects','manage',${editorRole},${group})`;
+  const memberId = crypto.randomUUID();
+  await sql`insert into group_membership(id,group_id,user_id,status) values(${memberId},${group},${users[1].id},'admin')`;
+  await sql`insert into group_membership_role(group_membership_id,role_id) values(${memberId},${editorRole})`;
+  const doc = createStudioTemplateDocumentV5('single', 'Canvas acceptance', defaultBrand);
   await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${users[0].id},${group},${doc.title},${doc.kind},5,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(JSON.parse(JSON.stringify(doc)))},0)`;
 });
@@ -96,7 +101,7 @@ test.afterAll(async () => {
   await sql.end();
 });
 async function open(page: Page, pid = projectId, loadTimeout = 20000) {
-  await page.goto(`/group/${group}/whiteboards/${pid}`);
+  await page.goto(`/group/${group}/studio/${pid}`);
   const warning = page.getByRole('button', { name: 'I understand', exact: true });
   await warning.waitFor({ timeout: 5000 }).catch(() => undefined);
   if (await warning.isVisible()) await warning.click();
@@ -123,7 +128,7 @@ test('Layers order controls shape–text–shape coverage before and during inli
   test.setTimeout(60000);
   const id = crypto.randomUUID();
   projects.push(id);
-  const document = createStudioTemplateDocumentV5('whiteboard', 'Canvas acceptance', defaultBrand);
+  const document = createStudioTemplateDocumentV5('single', 'Canvas acceptance', defaultBrand);
   const frame = document.nodes.find(node => node.type === 'frame');
   if (!frame) throw new Error('Missing frame');
   frame.style.fill = '#FFFFFF';
@@ -410,9 +415,12 @@ test('ten real accounts preserve concurrent drawings and undo only their own ope
   test.setTimeout(240000);
   const id = crypto.randomUUID();
   projects.push(id);
-  for (const u of users.slice(2))
-    await sql`insert into group_membership(id,group_id,user_id,status) values(${crypto.randomUUID()},${group},${u.id},'admin')`;
-  const doc = createStudioTemplateDocumentV5('whiteboard', 'Canvas acceptance', defaultBrand);
+  for (const u of users.slice(2)) {
+    const membershipId = crypto.randomUUID();
+    await sql`insert into group_membership(id,group_id,user_id,status) values(${membershipId},${group},${u.id},'admin')`;
+    await sql`insert into group_membership_role(group_membership_id,role_id) values(${membershipId},${editorRole})`;
+  }
+  const doc = createStudioTemplateDocumentV5('single', 'Canvas acceptance', defaultBrand);
   await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${users[0].id},${group},${doc.title},${doc.kind},5,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${id},${sql.json(JSON.parse(JSON.stringify(doc)))},0)`;
   const contexts = await Promise.all(

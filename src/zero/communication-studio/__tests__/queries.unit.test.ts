@@ -16,8 +16,28 @@ function access(table: string) {
   return evaluatePredicate(call?.[1]);
 }
 describe('Studio Zero visibility projections', () => {
+  it('shows group creation only to the owner or a role with projects:manage', () => {
+    studioQueries.manageGroup.fn({
+      args: { groupId: 'group' },
+      ctx: { userID: 'alice', email: '' },
+    });
+    const rules = access('group');
+    expect(rules).toContainEqual([
+      'where',
+      'memberships.membership_roles.role.group_action_rights',
+      'resource',
+      'projects',
+    ]);
+    expect(rules).toContainEqual([
+      'where',
+      'memberships.membership_roles.role.group_action_rights',
+      'action',
+      'IN',
+      ['manage'],
+    ]);
+  });
   it.each([null, 'group'])(
-    'scopes lists to the requested workspace (%s) and requires owner or active group membership',
+    'scopes lists to the requested workspace (%s) and requires project rights for group members',
     groupId => {
       studioQueries.list.fn({ args: { groupId }, ctx: { userID: 'alice', email: '' } });
       expect(harness.lastQuery('studio_project').calls).toEqual(
@@ -33,7 +53,19 @@ describe('Studio Zero visibility projections', () => {
       expect(rules).toContainEqual(['cmp', 'owner_id', 'alice']);
       expect(rules).toContainEqual(['where', 'collaborators', 'user_id', 'alice']);
       expect(rules).toContainEqual(['where', 'collaborators', 'status', 'active']);
-      expect(rules).toContainEqual(['cmp', 'kind', '!=', 'whiteboard']);
+      expect(rules).toContainEqual([
+        'where',
+        'memberships.membership_roles.role.group_action_rights',
+        'resource',
+        'projects',
+      ]);
+      expect(rules).toContainEqual([
+        'where',
+        'memberships.membership_roles.role.group_action_rights',
+        'action',
+        'IN',
+        ['view', 'manage'],
+      ]);
       expect(rules).toContainEqual([
         'where',
         'memberships',

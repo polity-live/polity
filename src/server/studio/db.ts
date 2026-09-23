@@ -27,10 +27,11 @@ export async function assertStudioAccess(
 export async function assertStudioGroup(
   userId: string,
   groupId: string,
-  sql: ReturnType<typeof postgres> | postgres.TransactionSql = studioSql()
+  sql: ReturnType<typeof postgres> | postgres.TransactionSql = studioSql(),
+  edit = false
 ) {
   const [row] =
-    await sql`select public.studio_group_access(${userId}::uuid,${groupId}::uuid,false) as allowed`;
+    await sql`select public.studio_group_access(${userId}::uuid,${groupId}::uuid,${edit}) as allowed`;
   if (!row?.allowed) throw new StudioError('No access to this group', 403);
 }
 export async function studioTransaction<T>(

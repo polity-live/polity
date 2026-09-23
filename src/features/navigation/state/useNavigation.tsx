@@ -160,8 +160,7 @@ export function useNavigation() {
 
   const getSecondaryNavItems = (currentPrimaryRoute: string | null) => {
     const studioProjectOpen =
-      /^\/(?:studio|whiteboards)\/[^/]+$/.test(pathname) ||
-      /^\/group\/[^/]+\/(?:studio|whiteboards)\/[^/]+$/.test(pathname);
+      /^\/studio\/[^/]+$/.test(pathname) || /^\/group\/[^/]+\/studio\/[^/]+$/.test(pathname);
     if (studioProjectOpen) {
       const panel = (panelKey: string, navigationItemId: string) => () =>
         openStudioPanel({ panelKey, origin: 'secondary-navigation', navigationItemId });

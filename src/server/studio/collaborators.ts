@@ -15,7 +15,7 @@ async function ownerProject(sql: postgres.TransactionSql, actor: string, project
   const [project] = await sql<ProjectRow[]>`
     select id,title,owner_id,group_id,kind from studio_project
     where id=${projectId} and document_schema_version=5 for update`;
-  if (!project || project.owner_id !== actor || project.group_id || project.kind === 'whiteboard')
+  if (!project || project.owner_id !== actor || project.group_id)
     throw new StudioError(
       'Only the owner of a personal Studio project can manage collaborators',
       403
@@ -41,7 +41,7 @@ export async function listMyStudioInvitations(actor: string) {
     join studio_project p on p.id=c.project_id
     join "user" u on u.id=p.owner_id
     where c.user_id=${actor} and c.status='invited'
-      and p.group_id is null and p.kind <> 'whiteboard' and p.document_schema_version=5
+      and p.group_id is null and p.document_schema_version=5
     order by c.updated_at desc`,
     { readOnly: true }
   );
@@ -108,8 +108,7 @@ export async function respondStudioInvitation(
       !invitation ||
       invitation.user_id !== actor ||
       invitation.status !== 'invited' ||
-      invitation.group_id ||
-      invitation.kind === 'whiteboard'
+      invitation.group_id
     )
       throw new StudioError('Studio invitation is no longer available', 403);
     await sql`update studio_project_collaborator

@@ -2,6 +2,7 @@ import { expect, test } from './fixtures/test';
 import { authenticateActor, removeActorAuthState } from './fixtures/auth';
 import { db } from './fixtures/db';
 import { waitForAppReady } from './fixtures/readiness';
+import { seedActiveMembership } from './fixtures/domains/groups';
 import { createDocument } from '@/features/communication-studio/logic/templates';
 import { legacyDocumentToV3 } from '@/features/communication-studio/logic/v3-adapter';
 
@@ -17,19 +18,37 @@ test('group Studio suggests, comments and votes on a canvas change request @pr',
   const projectId = crypto.randomUUID();
   const route = `/group/${seed.groupId}/studio/${projectId}`;
   const document = legacyDocumentToV3(createDocument('single', `${e2eRun.prefix} Studio`));
+  const removalTarget = document.nodes.find(node => node.type === 'shape')!;
+  removalTarget.name = 'Remove this accent';
   await authenticateActor(browser, reviewer);
   const reviewerContext = await browser.newContext({ storageState: reviewer.storageStatePath });
   const reviewerPage = await reviewerContext.newPage();
   try {
     // The seed's extra member is not a browser actor in this two-member flow.
     await sql`delete from group_membership where group_id=${seed.groupId} and user_id=${seed.extraUserId}`;
-    await sql`insert into group_membership(id,group_id,user_id,status) values(${crypto.randomUUID()},${seed.groupId},${reviewer.id},'admin')`;
+    const reviewerMembershipId = await seedActiveMembership(
+      e2eRun.prefix,
+      seed.groupId,
+      reviewer.id,
+      'admin'
+    );
+    await sql`
+      insert into action_right(id, resource, action, role_id, group_id, created_at)
+      select ${crypto.randomUUID()}, 'projects', 'manage', membership_role.role_id,
+        ${seed.groupId}, now()
+      from group_membership_role membership_role
+      where membership_role.group_membership_id = ${reviewerMembershipId}
+    `;
     await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${e2eRun.actorId},${seed.groupId},${document.title},${document.kind},5,${Date.now()},${Date.now()})`;
     await sql`insert into studio_state(project_id,document,updated_at) values(${projectId},${sql.json(JSON.parse(JSON.stringify(document)))},${Date.now()})`;
     await page.goto(route);
     await reviewerPage.goto(route);
     await waitForAppReady(page);
     await waitForAppReady(reviewerPage);
+    for (const target of [page, reviewerPage]) {
+      const acknowledge = target.getByRole('button', { name: /I understand|Verstanden/i });
+      if (await acknowledge.isVisible()) await acknowledge.click();
+    }
     const projectTitle = (target: typeof page) =>
       target.getByRole('textbox', { name: 'Title', exact: true });
     await projectTitle(page).fill('Shared group design');
@@ -59,10 +78,31 @@ test('group Studio suggests, comments and votes on a canvas change request @pr',
     await reviewerPage.getByRole('button', { name: /Start proposal|Vorschlag beginnen/i }).click();
     await expect(projectTitle(reviewerPage)).toBeEnabled();
     await projectTitle(reviewerPage).fill('Voted group design');
+    await reviewerPage.getByRole('button', { name: /Layers|Ebenen/i }).click();
+    await reviewerPage.getByRole('button', { name: 'Remove this accent', exact: true }).click();
+    await reviewerPage.keyboard.press('Delete');
+    await expect(
+      reviewerPage
+        .locator('div[data-change-request-tone="remove"][data-change-request-ghost="true"]')
+        .first()
+    ).toBeVisible();
+    await expect(page.locator('[data-change-request-tone="remove"]')).toHaveCount(0);
+    await expect
+      .poll(async () => {
+        const [row] =
+          await sql`select document from canvas_proposal where project_id=${projectId} and state='draft'`;
+        return (row?.document as { nodes?: { id: string }[] } | undefined)?.nodes?.some(
+          node => node.id === removalTarget.id
+        );
+      })
+      .toBe(false);
+    if (await reviewerPage.getByRole('tree').isVisible())
+      await reviewerPage.getByRole('button', { name: /Layers|Ebenen/i }).click();
     await reviewerPage.getByRole('button', { name: 'Frame', exact: true }).click();
     const squareFrame = reviewerPage.getByRole('menuitem', { name: /square/i });
     await expect(squareFrame).toBeEnabled({ timeout: 10_000 });
-    await squareFrame.click();
+    await squareFrame.dispatchEvent('click');
+    await expect(reviewerPage.locator('div[data-change-request-tone="add"]').first()).toBeVisible();
     await reviewerPage.getByRole('button', { name: /Submit|Einreichen/i }).click();
     await expect
       .poll(async () => {
@@ -71,8 +111,23 @@ test('group Studio suggests, comments and votes on a canvas change request @pr',
         return Number(row?.count ?? 0);
       })
       .toBeGreaterThan(1);
-    await expect(page.getByRole('button', { name: /Clearer Studio title/i })).toBeVisible();
-    await page.getByRole('button', { name: /Clearer Studio title/i }).click();
+    await expect(page.getByRole('button', { name: /Clearer Studio title/i }).first()).toBeVisible();
+    await expect(page.locator('div[data-change-request-tone="remove"]').first()).toBeVisible();
+    await page
+      .getByRole('button', { name: /Clearer Studio title/i })
+      .first()
+      .click();
+    const view = page.getByRole('group', { name: 'View' });
+    await expect(view.getByRole('button', { name: 'Difference' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    await view.getByRole('button', { name: 'Original' }).click();
+    await expect(page.locator('[data-change-request-tone]')).toHaveCount(0);
+    await view.getByRole('button', { name: 'Proposal' }).click();
+    await expect(page.locator('[data-change-request-tone]')).toHaveCount(0);
+    await view.getByRole('button', { name: 'Difference' }).click();
+    await expect(page.locator('div[data-change-request-tone="remove"]').first()).toBeVisible();
     await page.getByRole('textbox', { name: /Comment|Kommentar/i }).fill('Looks ready');
     await page.getByRole('button', { name: /Comment|Kommentieren/i }).click();
     await expect(page.getByText('Looks ready')).toBeVisible();
@@ -80,7 +135,10 @@ test('group Studio suggests, comments and votes on a canvas change request @pr',
     await page.locator('[data-action-id="communication-studio.procedure.open-mode"]').click();
     await page.getByRole('menuitemradio', { name: /Internal Voting|Intern.*Abstimm/i }).click();
     await page.locator('[data-action-id="communication-studio.procedure.vote.accept"]').click();
-    await reviewerPage.getByRole('button', { name: /Clearer Studio title/i }).click();
+    await reviewerPage
+      .getByRole('button', { name: /Clearer Studio title/i })
+      .first()
+      .click();
     await reviewerPage
       .locator('[data-action-id="communication-studio.procedure.vote.accept"]')
       .click();

@@ -496,7 +496,7 @@ export function legacyDocumentToV3(
     Object.assign(files, page.canvas?.files ?? {});
   });
   // The legacy page projection intentionally has no representation for free
-  // whiteboard nodes or the project master. Keep them intact while legacy UI
+  // root canvas nodes or the project master. Keep them intact while legacy UI
   // transactions still exist during the V4 rollout.
   if (previous) {
     const pageIds = new Set(legacy.pages.map(page => page.id));

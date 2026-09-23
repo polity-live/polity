@@ -4,11 +4,7 @@ export type AppShellPageFrame = 'bare' | 'contained' | 'fullWidth' | 'messages' 
 
 const ENTITY_ROUTE_PATTERN = /^\/(?:group|user|event|amendment|blog)\/[^/]+(?:\/.*)?$/;
 
-const STUDIO_PROJECT_ROUTE_PATTERNS = [
-  /^\/studio\/[^/]+$/,
-  /^\/whiteboards\/[^/]+$/,
-  /^\/group\/[^/]+\/(?:studio|whiteboards)\/[^/]+$/,
-];
+const STUDIO_PROJECT_ROUTE_PATTERNS = [/^\/studio\/[^/]+$/, /^\/group\/[^/]+\/studio\/[^/]+$/];
 
 const UNCONTAINED_ENTITY_ROUTE_PATTERNS = [
   /^\/group\/[^/]+\/network$/,

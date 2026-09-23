@@ -23,7 +23,13 @@ export interface CanvasProposal {
   resolves_id: string | null;
   deadline: number | null;
   electorate: string[] | null;
-  changes: { path: string[]; before: { value?: unknown }; after: { value?: unknown } }[] | null;
+  changes:
+    | {
+        path: string[];
+        before: { exists?: boolean; value?: unknown };
+        after: { exists?: boolean; value?: unknown };
+      }[]
+    | null;
   votes: { user_id: string; choice: string }[];
 }
 export interface CanvasSession {

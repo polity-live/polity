@@ -201,7 +201,7 @@ export const documentSchema = z
   .object({
     version: z.literal(2),
     title: z.string().max(200),
-    kind: z.enum(['single', 'event', 'carousel', 'story', 'video', 'campaign', 'whiteboard']),
+    kind: z.enum(['single', 'event', 'carousel', 'story', 'video', 'campaign']),
     brand: brandSchema,
     pages: z.array(pageSchema).max(300),
     posts: z.array(postSchema).max(100),

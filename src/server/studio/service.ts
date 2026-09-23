@@ -72,7 +72,7 @@ export async function resolveStudioTheme(
 }
 
 export async function createProjectFromSelection(userId: string, input: CreateProjectSelection) {
-  if (input.groupId) await assertStudioGroup(userId, input.groupId);
+  if (input.groupId) await assertStudioGroup(userId, input.groupId, studioSql(), true);
   const theme = await resolveStudioTheme(userId, input.groupId, input.themeId, input.themeMode);
   const projectId = crypto.randomUUID();
   let document: StudioDocumentV3;
@@ -137,7 +137,7 @@ export async function createProjectFromSelection(userId: string, input: CreatePr
     studioDocumentV3Schema.parse(document);
     const now = Date.now();
     await studioTransaction(async tx => {
-      if (input.groupId) await assertStudioGroup(userId, input.groupId, tx);
+      if (input.groupId) await assertStudioGroup(userId, input.groupId, tx, true);
       await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${userId},${input.groupId},${document.title},${document.kind},5,${now},${now})`;
       for (const asset of copied)
         await tx`insert into studio_asset(id,project_id,name,mime_type,byte_size,storage_path,ready,created_at) values(${asset.id},${projectId},${asset.name},${asset.mime},${asset.size},${asset.path},true,${now})`;
@@ -175,15 +175,13 @@ export async function createProject(
   groupId: string | null,
   document: StudioDocumentV3
 ) {
-  if (document.kind === 'whiteboard' && !canvasEnabled())
-    throw new StudioError('Canvas preview is not enabled', 404);
-  if (groupId) await assertStudioGroup(userId, groupId);
+  if (groupId) await assertStudioGroup(userId, groupId, studioSql(), true);
   const id = crypto.randomUUID();
   studioDocumentV3Schema.parse(document);
   await validateAssets(id, document);
   const now = Date.now();
   await studioTransaction(async tx => {
-    if (groupId) await assertStudioGroup(userId, groupId, tx);
+    if (groupId) await assertStudioGroup(userId, groupId, tx, true);
     await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${userId},${groupId},${document.title},${document.kind},5,${now},${now})`;
     await tx`insert into studio_state(project_id,document,updated_at) values(${id},${tx.json(JSON.parse(JSON.stringify(document)))},${now})`;
   });
@@ -375,12 +373,12 @@ export async function duplicateProject(userId: string, id: string) {
         node.sourceAssetId = replacements.get(node.sourceAssetId) ?? null;
     });
     await assertStudioAccess(userId, id);
-    if (source.group_id) await assertStudioGroup(userId, source.group_id);
+    if (source.group_id) await assertStudioGroup(userId, source.group_id, studioSql(), true);
     const now = Date.now();
     // A copy becomes visible only after every private asset and its document are ready.
     await studioTransaction(async tx => {
       await assertStudioAccess(userId, id, false, tx);
-      if (source.group_id) await assertStudioGroup(userId, source.group_id, tx);
+      if (source.group_id) await assertStudioGroup(userId, source.group_id, tx, true);
       await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${projectId},${userId},${source.group_id},${value.title},${value.kind},5,${now},${now})`;
       for (const asset of copies)
         await tx`insert into studio_asset(id,project_id,name,mime_type,byte_size,storage_path,created_at) values(${asset.id},${projectId},${asset.name},${asset.mime},${asset.size},${asset.path},${now})`;

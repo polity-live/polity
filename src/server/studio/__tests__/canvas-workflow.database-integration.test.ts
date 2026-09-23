@@ -41,13 +41,18 @@ const owner = crypto.randomUUID(),
   member = crypto.randomUUID(),
   outsider = crypto.randomUUID(),
   group = crypto.randomUUID();
+const memberRole = crypto.randomUUID();
 const projects: string[] = [];
 const concurrentEditors = Array.from({ length: 10 }, () => crypto.randomUUID());
 beforeAll(async () => {
   for (const id of [owner, member, outsider, ...concurrentEditors])
     await sql`insert into "user"(id) values(${id})`;
   await sql`insert into "group"(id,name,owner_id) values(${group},'Canvas integration fixture',${owner})`;
-  await sql`insert into group_membership(id,group_id,user_id,status) values(${crypto.randomUUID()},${group},${member},'active')`;
+  const membershipId = crypto.randomUUID();
+  await sql`insert into group_membership(id,group_id,user_id,status) values(${membershipId},${group},${member},'active')`;
+  await sql`insert into role(id,name,scope,group_id) values(${memberRole},'Canvas editor','group',${group})`;
+  await sql`insert into action_right(resource,action,role_id,group_id) values('projects','manage',${memberRole},${group})`;
+  await sql`insert into group_membership_role(group_membership_id,role_id) values(${membershipId},${memberRole})`;
 });
 
 it('creates signed upload tokens from the provisioned private Studio bucket', async () => {
@@ -106,7 +111,7 @@ afterAll(async () => {
 });
 
 it('isolates proposal media from the canonical library and promotes only media in an applied decision', async () => {
-  const { id, doc, command, session } = await fixture();
+  const { id, doc, command, session } = await fixture('suggest_internal');
   const { workspaceId } = await command(member, 'createDraft', {
     revision: 0,
     title: 'Private image',
@@ -122,6 +127,7 @@ it('isolates proposal media from the canonical library and promotes only media i
   const legacy = v3DocumentToLegacy(doc);
   legacy.pages[0].elements.push(element('image', { assetId: asset }));
   const next = legacyDocumentToV3(legacy, doc);
+  await sql`update canvas_control set phase='edit' where project_id=${id}`;
   await expect(
     sql.begin(tx =>
       applyStudioOperation(
@@ -140,6 +146,7 @@ it('isolates proposal media from the canonical library and promotes only media i
       )
     )
   ).rejects.toThrow('invalid_asset');
+  await sql`update canvas_control set phase='suggest_internal' where project_id=${id}`;
   await command(member, 'saveDraft', { workspaceId, revision: 0, changes: diffStudio(doc, next) });
   await command(member, 'submit', { workspaceId, revision: 1 });
   await command(owner, 'phase', { revision: 0, phase: 'vote_internal' });
@@ -148,15 +155,16 @@ it('isolates proposal media from the canonical library and promotes only media i
   await command(member, 'vote', { workspaceId, choice: 'accept' });
   expect(await assetUrls(owner, id)).toContainEqual(expect.objectContaining({ id: asset }));
 });
-async function fixture(kind: 'whiteboard' | 'single' = 'whiteboard') {
+async function fixture(phase: 'edit' | 'suggest_internal' = 'edit') {
   const id = crypto.randomUUID(),
-    legacy = createDocument(kind, 'Canvas fixture');
+    legacy = createDocument('single', 'Canvas fixture');
   projects.push(id);
   legacy.pages[0].canvas = { version: 1, elements: [], files: {} };
   const doc = legacyDocumentToV3(legacy);
   await sql`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at) values(${id},${owner},${group},${doc.title},${doc.kind},5,0,0)`;
   await sql`insert into studio_state(project_id,document,updated_at) values(${id},${sql.json(JSON.parse(JSON.stringify(doc)))},0)`;
   const session = await canvasCommand(owner, { action: 'session', projectId: id });
+  if (phase !== 'edit') await sql`update canvas_control set phase=${phase} where project_id=${id}`;
   const command = (actor: string, action: string, input: Record<string, unknown> = {}) =>
     canvasCommand(actor, {
       projectId: id,
@@ -224,22 +232,23 @@ it('recovers an already committed operation receipt after a phase change without
 });
 
 it('blocks a corrupted submitted ballot instead of inventing a replacement voting version', async () => {
-  const { id, doc, command } = await fixture();
+  const { id, doc, command } = await fixture('suggest_internal');
   const { workspaceId } = await command(member, 'createDraft', { title: 'Integrity', revision: 0 });
   const next = structuredClone(doc);
   next.title = 'The submitted text';
   await command(member, 'saveDraft', { workspaceId, revision: 0, changes: diffStudio(doc, next) });
   await command(member, 'submit', { workspaceId, revision: 1 });
-  await command(owner, 'phase', { phase: 'vote_internal', revision: 0 });
   await sql`update canvas_proposal set changes='[]' where id=${workspaceId}`;
-  await expect(command(owner, 'startVote', { workspaceId })).rejects.toThrow('integrity');
+  await expect(command(owner, 'phase', { phase: 'vote_internal', revision: 0 })).rejects.toThrow(
+    'integrity'
+  );
   expect(await sql`select * from canvas_vote where proposal_id=${workspaceId}`).toHaveLength(0);
   expect(
     (await sql`select document from studio_state where project_id=${id}`)[0].document.title
   ).toBe(doc.title);
 });
 it('opens all submitted group Studio ballots on the mode change and closes when everyone voted', async () => {
-  const { id, doc, command } = await fixture('single');
+  const { id, doc, command } = await fixture();
   await expect(command(owner, 'phase', { phase: 'view', revision: 0 })).rejects.toThrow();
   await command(owner, 'phase', { phase: 'suggest_internal', revision: 0 });
   const { workspaceId } = await command(member, 'createDraft', {
@@ -268,7 +277,7 @@ it('opens all submitted group Studio ballots on the mode change and closes when 
   ).toBe('Title after the vote');
 });
 it('keeps drafts private and applies exactly the immutable proposal once, retaining a conflicting second decision', async () => {
-  const { id, doc, command } = await fixture();
+  const { id, doc, command } = await fixture('suggest_internal');
   await expect(canvasCommand(outsider, { projectId: id, action: 'session' })).rejects.toThrow();
   const make = async (title: string) => {
     const { workspaceId } = await command(member, 'createDraft', { revision: 0, title });
@@ -371,8 +380,11 @@ it('keeps drafts private and applies exactly the immutable proposal once, retain
 
 it('commits independent edits from ten distinct simultaneous editors and refuses stale generations', async () => {
   const { id, doc, session } = await fixture();
-  for (const actor of concurrentEditors)
-    await sql`insert into group_membership(id,group_id,user_id,status) values(${crypto.randomUUID()},${group},${actor},'admin')`;
+  for (const actor of concurrentEditors) {
+    const membershipId = crypto.randomUUID();
+    await sql`insert into group_membership(id,group_id,user_id,status) values(${membershipId},${group},${actor},'admin')`;
+    await sql`insert into group_membership_role(group_membership_id,role_id) values(${membershipId},${memberRole})`;
+  }
   const edits = Array.from({ length: 10 }, (_, i) => {
     const legacy = v3DocumentToLegacy(doc);
     legacy.pages[0].canvas ??= { version: 1, elements: [], files: {} };
@@ -413,7 +425,9 @@ it('commits independent edits from ten distinct simultaneous editors and refuses
   );
   const [stored] =
     await sql`select document,content_revision from studio_state where project_id=${id}`;
-  expect(stored.document.nodes.filter((node: any) => node.type === 'shape')).toHaveLength(10);
+  expect(stored.document.nodes.filter((node: any) => node.type === 'shape')).toHaveLength(
+    doc.nodes.filter(node => node.type === 'shape').length + 10
+  );
   expect(stored.document.nodes.every((node: any) => !('excalidraw' in node))).toBe(true);
   expect(stored.content_revision).toBe(10);
   expect(elapsed.sort((a, b) => a - b)[9]).toBeLessThan(1000);
@@ -433,7 +447,7 @@ it('commits independent edits from ten distinct simultaneous editors and refuses
 });
 
 it('shares only explicit drafts, merges independent draft properties, and keeps comments after their target disappears', async () => {
-  const { id, doc, command } = await fixture();
+  const { id, doc, command } = await fixture('suggest_internal');
   const { workspaceId } = await command(member, 'createDraft', {
     revision: 0,
     title: 'Shared draft',
@@ -452,6 +466,7 @@ it('shares only explicit drafts, merges independent draft properties, and keeps 
   await command(owner, 'saveDraft', { workspaceId, revision: 0, changes: diffStudio(doc, second) });
   const loaded = await canvasCommand(owner, { action: 'loadDraft', projectId: id, workspaceId });
   expect(loaded.document.title).toBe('Shared title');
+  expect(loaded.baseDocument.title).toBe(doc.title);
   expect(
     loaded.document.nodes.find((node: any) => node.type === 'frame' && !node.parentFrameId).name
   ).toBe('Independent name');
@@ -483,7 +498,7 @@ it('shares only explicit drafts, merges independent draft properties, and keeps 
 });
 
 it('rechecks role capabilities for drafts, comments and votes while retaining earlier valid votes', async () => {
-  const { id, doc, command } = await fixture();
+  const { id, doc, command } = await fixture('suggest_internal');
   const role = crypto.randomUUID();
   await sql`insert into role(id,name,group_id) values(${role},'Canvas restricted role',${group})`;
   const [membership] =

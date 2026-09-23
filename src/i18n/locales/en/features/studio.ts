@@ -1,7 +1,6 @@
 export const studioTranslations = {
   canvasPreviewRequired:
     'This project requires the canvas preview. Enable it to keep all saved content and procedures available.',
-  whiteboard: 'Whiteboard',
   insert: 'Insert',
   project: 'Project',
   collaboration: 'Collaboration',
@@ -34,6 +33,10 @@ export const studioTranslations = {
   resendInvitation: 'Resend',
   removeCollaborator: 'Remove',
   sharedWithMe: 'Shared with me',
+  allProjects: 'All',
+  myProjects: 'Mine',
+  searchProjects: 'Search projects',
+  noMatchingProjects: 'No matching projects found.',
   unnamedUser: 'User',
   arrange: 'Arrange',
   reference: 'Reference',
@@ -291,6 +294,8 @@ export const studioTranslations = {
   cancelled: 'Cancelled',
   canvaHint: 'Download PPTX and import it into Canva. Check fonts and animations there.',
   readOnly: 'You can view this project.',
+  manageProjects: 'Manage group studio projects',
+  viewProjects: 'View group studio projects',
   manage: 'Manage communication studio',
   edit: 'Edit group projects',
   useTemplate: 'Use template',

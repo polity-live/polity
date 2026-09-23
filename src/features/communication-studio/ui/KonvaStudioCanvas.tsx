@@ -28,6 +28,7 @@ import {
 } from 'react-konva';
 import type Konva from 'konva';
 import { CanvasChangeRequestMarker } from '@/features/shared/ui/change-requests/CanvasChangeRequestMarker';
+import type { StudioChangeRequestAnnotation } from '../logic/change-request-annotations';
 import type { StudioAsset } from '../hooks/useStudioDocument';
 import type {
   StudioDocumentV3,
@@ -78,13 +79,7 @@ export interface StudioCanvasState {
   viewBounds: Bounds | null;
 }
 
-export interface StudioCanvasChangeRequestMarker {
-  id: string;
-  proposalId: string;
-  nodeId: string;
-  label: string;
-  selected: boolean;
-}
+export type StudioCanvasChangeRequestMarker = StudioChangeRequestAnnotation;
 
 export type StudioCanvasCommand =
   | { type: 'setTool'; tool: StudioTool; locked?: boolean; rounded?: boolean }
@@ -443,6 +438,67 @@ function NodeContent({
       strokeWidth={node.style.strokeWidth}
     />
   );
+}
+
+function ChangeRequestGhost({
+  annotation,
+  assets,
+  frameBackground,
+}: {
+  annotation: StudioChangeRequestAnnotation;
+  assets: StudioAsset[];
+  frameBackground: string;
+}) {
+  const node = annotation.sourceDocument.nodes.find(item => item.id === annotation.nodeId);
+  if (!node) return null;
+  const chain: StudioNode[] = [node];
+  let parentId = node.parentFrameId;
+  while (parentId) {
+    const parent = annotation.sourceDocument.nodes.find(item => item.id === parentId);
+    if (!parent) break;
+    chain.unshift(parent);
+    parentId = parent.parentFrameId;
+  }
+  let content: ReactNode = (
+    <NodeContent node={node} assets={assets} frameBackground={frameBackground} />
+  );
+  for (const item of [...chain].reverse()) {
+    const t = item.transform;
+    content = (
+      <Group
+        key={item.id}
+        x={t.x + t.width / 2}
+        y={t.y + t.height / 2}
+        offsetX={t.width / 2}
+        offsetY={t.height / 2}
+        rotation={t.rotation}
+        scaleX={t.flipX ? -1 : 1}
+        scaleY={t.flipY ? -1 : 1}
+        listening={false}
+      >
+        {content}
+      </Group>
+    );
+  }
+  return (
+    <Group opacity={0.45} listening={false}>
+      {content}
+    </Group>
+  );
+}
+
+function changeRequestOutlineColors(tone: StudioChangeRequestAnnotation['tone']) {
+  if (tone === 'add')
+    return {
+      border: 'var(--badge-success-border, #51b77c)',
+      glow: 'var(--badge-success-bg, rgb(81 183 124 / 0.18))',
+    };
+  if (tone === 'remove')
+    return {
+      border: 'var(--badge-danger-border, #e36b68)',
+      glow: 'var(--badge-danger-bg, rgb(227 107 104 / 0.18))',
+    };
+  return { border: '#f59e0b', glow: 'rgb(245 158 11 / 0.16)' };
 }
 
 function EditorPortal({
@@ -1628,6 +1684,33 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
     const activeFrame = props.document.nodes.find(
       (node): node is FrameNode => node.id === props.activeFrameId && node.type === 'frame'
     );
+    const positionedChangeRequests = (props.changeRequestMarkers ?? []).flatMap(annotation => {
+      const node = annotation.sourceDocument.nodes.find(item => item.id === annotation.nodeId);
+      if (
+        !node ||
+        !node.visible ||
+        (props.fit === 'contain' &&
+          node.id !== props.activeFrameId &&
+          !isDescendantOf(annotation.sourceDocument, node, props.activeFrameId))
+      )
+        return [];
+      const bounds = worldBounds(annotation.sourceDocument, node);
+      const left = bounds.left * zoom + pan.x;
+      const top = bounds.top * zoom + pan.y;
+      const right = bounds.right * zoom + pan.x;
+      const bottom = bounds.bottom * zoom + pan.y;
+      if (right < 0 || bottom < 0 || left > viewport.width || top > viewport.height) return [];
+      return [
+        {
+          annotation,
+          left,
+          top,
+          width: Math.max(8, right - left),
+          height: Math.max(8, bottom - top),
+          ghost: !props.document.nodes.some(item => item.id === annotation.nodeId),
+        },
+      ];
+    });
     const inspectorAnchor = clampInspectorPosition(inspectorPosition.x, inspectorPosition.y);
     const inspectorOpensUp = inspectorAnchor.y + 22 > viewport.height / 2;
     const inspectorRoom = inspectorOpensUp
@@ -1957,6 +2040,20 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
             )}
           </Layer>
           {editingNode && <Layer ref={upper}>{renderTree(null, 'upper')}</Layer>}
+          {positionedChangeRequests.some(item => item.ghost) && (
+            <Layer listening={false}>
+              {positionedChangeRequests
+                .filter(item => item.ghost)
+                .map(item => (
+                  <ChangeRequestGhost
+                    key={item.annotation.id}
+                    annotation={item.annotation}
+                    assets={props.assets}
+                    frameBackground={frameBackground}
+                  />
+                ))}
+            </Layer>
+          )}
           <Layer ref={controls}>
             {marquee?.active && (
               <Rect
@@ -2059,42 +2156,48 @@ const KonvaStudioCanvas = forwardRef<StudioCanvasHandle, Props>(
               ))}
           </Layer>
         </Stage>
-        {props.changeRequestMarkers?.map(marker => {
-          const node = props.document.nodes.find(item => item.id === marker.nodeId);
-          if (
-            !node ||
-            (node.id !== props.activeFrameId &&
-              !isDescendantOf(props.document, node, props.activeFrameId))
-          )
-            return null;
-          const bounds = worldBounds(props.document, node);
-          const left = bounds.left * zoom + pan.x;
-          const top = bounds.top * zoom + pan.y;
-          const right = bounds.right * zoom + pan.x;
-          const bottom = bounds.bottom * zoom + pan.y;
-          if (right < 0 || bottom < 0 || left > viewport.width || top > viewport.height)
-            return null;
+        {positionedChangeRequests.map(({ annotation, left, top, width, height, ghost }) => {
+          const colors = changeRequestOutlineColors(annotation.tone);
           return (
             <div
-              key={marker.id}
-              className="pointer-events-none absolute z-20 rounded border-2 border-amber-500/75"
+              key={annotation.id}
+              className="pointer-events-none absolute rounded"
+              data-change-request-tone={annotation.tone}
+              data-change-request-ghost={ghost}
+              data-change-request-selected={annotation.selected}
+              data-testid={`studio-change-outline-${annotation.id}`}
               style={{
                 left,
                 top,
-                width: Math.max(8, right - left),
-                height: Math.max(8, bottom - top),
+                width,
+                height,
+                zIndex: annotation.selected ? 21 : 20,
+                border: `2px solid ${colors.border}`,
+                boxShadow: `0 0 0 ${annotation.selected ? 4 : 3}px ${colors.glow}, 0 0 ${annotation.selected ? 22 : 16}px ${annotation.selected ? 5 : 3}px ${colors.border}`,
               }}
             >
+              {annotation.tone === 'remove' && (
+                <span
+                  data-testid={`studio-change-strike-${annotation.id}`}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-0 left-0"
+                  style={{
+                    top: '50%',
+                    borderTop: `3px solid ${colors.border}`,
+                    boxShadow: `0 0 8px 2px ${colors.border}`,
+                  }}
+                />
+              )}
               <CanvasChangeRequestMarker
                 actionId="communication-studio.procedure.select-marker"
-                displayId={marker.proposalId.slice(0, 8)}
-                label={marker.label}
-                title={marker.label}
-                tone="update"
-                selected={marker.selected}
+                displayId={annotation.proposalId.slice(0, 8)}
+                label={annotation.label}
+                title={annotation.label}
+                tone={annotation.tone}
+                selected={annotation.selected}
                 positioningClassName="-top-3 -right-3"
                 style={{}}
-                onSelect={() => props.onChangeRequestSelect?.(marker.proposalId)}
+                onSelect={() => props.onChangeRequestSelect?.(annotation.proposalId)}
               />
             </div>
           );

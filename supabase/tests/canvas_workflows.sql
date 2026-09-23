@@ -5,13 +5,17 @@
 -- @covers schema 58_canvas_recipient_presence.sql
 -- @covers schema 59_canvas_zero_workspaces.sql
 -- @covers schema 60_canvas_conflict_resolution.sql
+-- @covers schema 66_group_studio_internal_modes.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(25);
 INSERT INTO public."user"(id) VALUES('ca100000-0000-4000-8000-000000000001'),('ca100000-0000-4000-8000-000000000002');
 INSERT INTO public."group"(id,name,owner_id) VALUES('ca200000-0000-4000-8000-000000000001','Canvas SQL','ca100000-0000-4000-8000-000000000001');
 INSERT INTO public.group_membership(id,group_id,user_id,status) VALUES('ca300000-0000-4000-8000-000000000001','ca200000-0000-4000-8000-000000000001','ca100000-0000-4000-8000-000000000002','member');
-INSERT INTO public.studio_project(id,owner_id,group_id,title,kind,created_at,updated_at) VALUES('ca400000-0000-4000-8000-000000000001','ca100000-0000-4000-8000-000000000001','ca200000-0000-4000-8000-000000000001','Canvas SQL','whiteboard',0,0);
+INSERT INTO public.role(id,name,group_id) VALUES('ca600000-0000-4000-8000-000000000002','Studio Reader','ca200000-0000-4000-8000-000000000001');
+INSERT INTO public.group_membership_role(group_membership_id,role_id) VALUES('ca300000-0000-4000-8000-000000000001','ca600000-0000-4000-8000-000000000002');
+INSERT INTO public.action_right(id,role_id,group_id,resource,action) VALUES('ca800000-0000-4000-8000-000000000001','ca600000-0000-4000-8000-000000000002','ca200000-0000-4000-8000-000000000001','projects','view');
+INSERT INTO public.studio_project(id,owner_id,group_id,title,kind,created_at,updated_at) VALUES('ca400000-0000-4000-8000-000000000001','ca100000-0000-4000-8000-000000000001','ca200000-0000-4000-8000-000000000001','Canvas SQL','single',0,0);
 INSERT INTO public.studio_state(project_id,document,updated_at) VALUES('ca400000-0000-4000-8000-000000000001','{"title":"original"}',0);
 SELECT is((SELECT count(*)::int FROM canvas_history WHERE project_id='ca400000-0000-4000-8000-000000000001'),1,'Initial content is recorded');
 UPDATE canvas_control SET phase='vote_internal' WHERE project_id='ca400000-0000-4000-8000-000000000001';

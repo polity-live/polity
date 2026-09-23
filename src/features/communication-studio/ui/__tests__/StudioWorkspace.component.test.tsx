@@ -573,11 +573,6 @@ describe('Studio toolbar workflows', () => {
     await show({ projectId: 'project', open: vi.fn() });
     expect(screen.queryByRole('button', { name: 'invite' })).toBeNull();
   });
-  it('does not offer project invitations on personal whiteboards', async () => {
-    io.project = { id: 'project', owner_id: 'author', group_id: null, kind: 'whiteboard' };
-    await show({ projectId: 'project', whiteboards: true, open: vi.fn() });
-    expect(screen.queryByRole('button', { name: 'invite' })).toBeNull();
-  });
   it('renders one icon toolbar and a separate compact project status row', async () => {
     ydoc.pages[0].name = 'Different page name';
     await show();

@@ -258,7 +258,7 @@ export const studioDocumentV3Schema = z
   .object({
     schemaVersion: z.literal(STUDIO_DOCUMENT_SCHEMA_VERSION),
     title: z.string().min(1).max(200),
-    kind: z.enum(['single', 'event', 'carousel', 'story', 'video', 'campaign', 'whiteboard']),
+    kind: z.enum(['single', 'event', 'carousel', 'story', 'video', 'campaign']),
     theme: studioThemeSnapshotSchema,
     frameDefaults: z
       .object({ background: color.nullable().default(null) })

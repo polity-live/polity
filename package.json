@@ -107,6 +107,7 @@
     "deploy": "node tools/deploy/deploy.mjs",
     "deploy:dry": "node tools/deploy/deploy.mjs --dry-run",
     "studio:worker": "node --import tsx tools/studio/launch.ts worker",
+    "studio:cleanup-whiteboards": "tsx tools/studio/cleanup-whiteboard-storage.ts",
     "studio:test": "vitest run --project unit --project component src/features/communication-studio src/zero/communication-studio src/server/studio tools/studio/__tests__"
   },
   "dependencies": {

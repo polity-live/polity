@@ -216,6 +216,7 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
         return {
           canvasEnabled: true,
           document: studioDocumentV3Schema.parse(proposal.document),
+          baseDocument: studioDocumentV3Schema.parse(proposal.base_document),
           revision: proposal.revision,
           generation: control.generation,
           canEdit:
@@ -280,15 +281,14 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
         }
         case 'phase': {
           if (!capabilities.manage || !project.group_id) denied();
-          const groupStudio = project.kind !== 'whiteboard';
-          if (groupStudio && input.phase === 'view') denied();
+          if (input.phase === 'view') denied();
           if (input.revision !== canonical.content_revision)
             throw new StudioError('Canvas revision changed', 409);
           const [pending] =
             await sql`select id from canvas_proposal where project_id=${projectId} and (state='voting' or application='conflict') limit 1`;
           if (pending)
             throw new StudioError('Resolve active ballots and application conflicts first', 409);
-          if (groupStudio && input.phase === 'vote_internal' && control.phase !== 'vote_internal') {
+          if (input.phase === 'vote_internal' && control.phase !== 'vote_internal') {
             const submitted =
               await sql`select * from canvas_proposal where project_id=${projectId} and state='submitted' for update`;
             const electorate =
@@ -308,12 +308,7 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
             action === 'resolveDraft' &&
             proposal?.decision === 'accepted' &&
             proposal.application === 'conflict';
-          if (
-            action === 'createDraft' &&
-            project.group_id &&
-            project.kind !== 'whiteboard' &&
-            control.phase !== 'suggest_internal'
-          )
+          if (action === 'createDraft' && project.group_id && control.phase !== 'suggest_internal')
             denied();
           if (
             !capabilities.suggest ||
@@ -363,10 +358,7 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
           if (!changes.length) throw new StudioError('Proposal has no changes');
           await validateAssets(sql, projectId, p.document, p.id);
           const openResolutionBallot =
-            project.group_id &&
-            project.kind !== 'whiteboard' &&
-            control.phase === 'vote_internal' &&
-            !!p.resolves_id;
+            project.group_id && control.phase === 'vote_internal' && !!p.resolves_id;
           const electorate = openResolutionBallot
             ? await sql`select id from (select owner_id as id from "group" where id=${project.group_id} union select user_id as id from group_membership where group_id=${project.group_id} and status in ('active','member','admin')) members where canvas_capability(id,${projectId}::uuid,'vote')`
             : [];
@@ -387,8 +379,7 @@ export async function canvasCommand(actor: string, raw: unknown): Promise<any> {
         }
         case 'startVote': {
           // Older Studio clients may repeat the action after the group phase has opened its ballots.
-          if (project.group_id && project.kind !== 'whiteboard' && proposal?.state === 'voting')
-            break;
+          if (project.group_id && proposal?.state === 'voting') break;
           if (
             !capabilities.manage ||
             control.phase !== 'vote_internal' ||

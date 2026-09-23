@@ -148,13 +148,8 @@ describe('app shell page frame routing', () => {
     expect(APP_SHELL_PAGE_FRAME_CLASS.messages).toContain('[--app-shell-page-frame-y:2rem]');
   });
 
-  it('renders opened Studio and whiteboard projects without a page frame', () => {
-    for (const path of [
-      '/studio/project-1',
-      '/whiteboards/project-1',
-      '/group/group-1/studio/project-1',
-      '/group/group-1/whiteboards/project-1',
-    ]) {
+  it('renders opened Studio projects without a page frame', () => {
+    for (const path of ['/studio/project-1', '/group/group-1/studio/project-1']) {
       expect(getAuthenticatedPageFrame(path)).toBe('bare');
       expect(getUnauthenticatedPageFrame(path)).toBe('bare');
     }

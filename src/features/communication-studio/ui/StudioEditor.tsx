@@ -2518,10 +2518,7 @@ function StudioEditorReady({
               title={value.title}
               size="sm"
             />
-            {!groupId &&
-            c.project?.group_id === null &&
-            c.project.owner_id === c.identity.id &&
-            c.project.kind !== 'whiteboard' ? (
+            {!groupId && c.project?.group_id === null && c.project.owner_id === c.identity.id ? (
               <StudioInviteDialog projectId={projectId} currentUserId={c.identity.id} />
             ) : null}
             <OnlineCollaboratorAvatars
@@ -2616,7 +2613,7 @@ function StudioEditorReady({
                 if (!disabled && c.elementSets.some(set => set.id === setId))
                   void c.insertElementSet(setId, point);
               }}
-              assets={previewDocument ? [...c.assets, ...(previewAssets ?? [])] : c.assets}
+              assets={[...c.assets, ...(previewAssets ?? [])]}
               selected={c.selected}
               selectExact={c.selectExact}
               editable={!disabled && !previewDocument}
